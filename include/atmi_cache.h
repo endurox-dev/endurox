@@ -48,6 +48,9 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
     
 #define NDRX_TPCACHE_DEBUG
+    
+    
+#define NDRX_TPCACHE_DB_KEYWORDS       
 
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
@@ -88,6 +91,7 @@ extern "C" {
 #define NDRX_TPCACHE_ENOCACHE       -4   /* Service not in cache config      */
 #define NDRX_TPCACHE_ENOKEYDATA     -5   /* No key data found                */
 #define NDRX_TPCACHE_ENOTYPESUPP    -6   /* Type not supported               */
+#define NDRX_TPCACHE_ENOTFOUNDLIM   -7   /* not found but lookups limited    */
 
 
 #define NDRX_TPCACHE_BCAST_DFLT     ""   /* default event                    */
@@ -209,6 +213,9 @@ extern "C" {
     NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
     NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
     NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
+    NDRX_LOG(LEV, "keygroupmax=[%ld]", TPCALLCACHE->keygroupmax);\
+    NDRX_LOG(LEV, "keygroupmrej=[%s]", TPCALLCACHE->keygroupmrej);\
+    NDRX_LOG(LEV, "keygroupmrej_abuf=[%p]", TPCALLCACHE->keygroupmrej_abuf);\
     NDRX_LOG(LEV, "=================================================");
 
 
@@ -236,7 +243,59 @@ extern "C" {
         ndrx_TPset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
     
 #define NDRX_CACHE_MAGIC        0xab4388ef
+    
+    
+/* macro is used to verify cache record. */
+#define NDRX_CACHE_CHECK_DBDATA(cachedata_, exdata_, key_, atmierr_)\
+if (cachedata_->mv_size < sizeof(ndrx_tpcache_data_t))\
+    {\
+        if (atmierr_ > TPMINVAL)\
+        {\
+            NDRX_CACHE_TPERROR(atmierr_, "Corrupted cache data - invalid minimums size, "\
+                "expected: %ld, got %ld for key: [%s]", \
+                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata_->mv_size, key_);\
+        }\
+        else\
+        {\
+            NDRX_CACHE_ERROR("Corrupted cache data - invalid minimums size, "\
+                "expected: %ld, got %ld for key: [%s]", \
+                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata_->mv_size, key_);\
+        }\
+        EXFAIL_OUT(ret);\
+    }\
+    if (NDRX_CACHE_MAGIC!=exdata_->magic)\
+    {\
+        if (atmierr_ > TPMINVAL)\
+        {\
+            NDRX_CACHE_TPERROR(atmierr_, "Corrupted cache data - invalid "\
+                    "magic expected: %x got %x", exdata_->magic, NDRX_CACHE_MAGIC);\
+        }\
+        else\
+        {\
+            NDRX_CACHE_ERROR("Corrupted cache data - invalid "\
+                    "magic expected: %x got %x", exdata_->magic, NDRX_CACHE_MAGIC);\
+        }\
+        EXFAIL_OUT(ret);\
+    }
 
+/* verify key db record */
+#define NDRX_CACHE_CHECK_DBKEY(keydb_, atmierr_)\
+    if (EXEOS!=((char *)keydb_->mv_data)[keydb_->mv_size-1])\
+        {\
+            NDRX_DUMP(log_error, "Invalid cache key", \
+                        keydb_->mv_data, keydb_->mv_size);\
+            if (atmierr_ > TPMINVAL)\
+            {\
+                 NDRX_CACHE_TPERROR(atmierr_, "%s: Invalid cache key, len: %ld not "\
+                        "terminated with EOS!", __func__, keydb_->mv_size);\
+            }\
+            else\
+            {\
+                NDRX_CACHE_ERROR("%s: Invalid cache key, len: %ld not "\
+                        "terminated with EOS!", __func__, keydb_->mv_size);\
+            }\
+            EXFAIL_OUT(ret);\
+        }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -255,9 +314,7 @@ struct ndrx_tpcache_db
     long map_size;              /* db settings                                      */
     int broadcast;              /* Shall we broadcast the events                    */
     int perms;                  /* permissions of the database resource             */
-    
     char subscr[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events        */
-    
     
     /* LMDB Related */
     
@@ -340,6 +397,11 @@ struct ndrx_tpcallcache
     ndrx_tpcallcache_t *inval_cache;    /* their cache to invalidate        */
     char inval_svc[MAXTIDENT+1];        /* Service name of their cache      */
     int inval_idx;                      /* Index of their cache, 0 based    */
+    
+    long keygroupmax;   /* maximum number of keys in keygroup               */
+    char *keygroupmrej; /* Reject expression of keygroup, if max reached    */
+    char *keygroupmrej_abuf; /* Atmi allocated worker buffer for keygroy*/
+    
     
     /* this is linked list of caches */
     ndrx_tpcallcache_t *next, *prev;
@@ -438,8 +500,11 @@ struct ndrx_tpcache_typesupp
     
     /* cache delete callback, to free up memory of any */
     int (*pf_cache_delete)(ndrx_tpcallcache_t *cache);
+    
+    /* Reject when max reached in group */
+    int (*pf_cache_maxreject)(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
+        char **odata, long *olen, long flags);
 };
-
 
 /*---------------------------Globals------------------------------------*/
 
@@ -525,6 +590,10 @@ extern NDRX_API int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, char *ke
 extern NDRX_API int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache);
 extern NDRX_API int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache, 
         char *errdet, int errdetbufsz);
+
+extern NDRX_API int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen, char **odata, long *olen, long flags);
+
 extern NDRX_API int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         ndrx_tpcache_data_t *exdata,  typed_buffer_descr_t *descr, 
         char *idata, long ilen, long flags);

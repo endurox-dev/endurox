@@ -60,14 +60,188 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Add update keygroup. Only intrersting question is how about duplicate
- * keys? If it is duplciate, then key group does not change. So there shall be
+ * Perform lookup in keygroup.
+ * If keys counter is overreached and data is not found, then request shall be
+ * rejected (basically we respond from cache with reject).
+ * 
+ * If key is not found in group, then lookup again (even if it might be in the
+ * key item db (as these are two database and we might crash in the middle)...
+ * 
+ * @param cache
+ * @param idata
+ * @param ilen
+ * @param cachekey
+ * @return TPFAIL/NDRX_TPCACHE_ENOKEYDATA/NDRX_TPCACHE_ENOTFOUNDLIM - if limit
+ * /EDB_NOTFOUND
+ * reached.
+ */
+expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache, 
+            char *idata, long ilen, char **odata, long *olen, char *cachekey,
+            long flags)
+{
+    int ret = EXSUCCEED;
+    char key[NDRX_CACHE_KEY_MAX+1];
+    char errdet[MAX_TP_ERROR_LEN+1];
+    EDB_txn *txn;
+    int tran_started = EXFALSE;
+    EDB_val cachedata;
+    ndrx_tpcache_data_t *exdata;
+    typed_buffer_descr_t *buf_type = &G_buf_descr[BUF_TYPE_UBF];
+    UBFH *p_ub_keys = NULL;        /* list of keys in keygroup */
+    long rsplen;
+    Bnext_state_t state1;
+    BFLDID bfldid1;
+    long numkeys = 0;
+    BFLDOCC occ;
+    char *dptr;
+    BFLDLEN dlen;
+    int cachekey_found = EXFALSE;
+    int got_dbname = EXFALSE;
+    if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
+                cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+    }
+    
+    NDRX_LOG(log_debug, "Key group key [%s]", key);
+    
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, EDB_RDONLY)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
+    
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->keygrpdb, txn, key, &cachedata,
+            EXFALSE)))
+    {
+        /* error already provided by wrapper */
+        NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
+        goto out;
+    }
+    
+    /* Check the record validity */
+    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPESYSTEM);
+    
+    
+    /* Receive data as UBF buffer, so that we can test it... 
+     * this is just list 
+     */
+    
+    if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
+                exdata->atmi_buf_len, (char **)&p_ub_keys, &rsplen, 0))
+    {
+        /* the error shall be set already */
+        NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", key);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* iterate the buffer to find they key, and check the total count of the
+     * keys if limit is defined
+     */
+    
+    bfldid1 = BFIRSTFLDID;
+    
+    while (1)
+    {
+        ret=ndrx_Bnext(&state1, p_ub_keys, &bfldid1, &occ, NULL, &dlen, &dptr);
+        
+        if (0==ret)
+        {
+            /* we are at EOF */
+            break;
+        }
+        else if (0 > ret)
+        {
+            /* we got an error while scanning key storage */
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to iterate key group items: %s", 
+                    __func__, Bstrerror(Berror));
+            EXFAIL_OUT(ret)
+        }
+
+        switch (bfldid1)
+        {
+            /* in which db keys are stored? */
+            case EX_CACHE_DBNAME:
+                
+                got_dbname = EXTRUE;
+                if (0!=strcmp(dptr, cache->cachedbnm))
+                {
+                    NDRX_CACHE_TPERROR(TPESYSTEM, "%s: consistency error, expected "
+                            "db [%s] but got [%s] "
+                            "for group record of cache item key [%s], groupkey [%s]",
+                            __func__, cache->cachedbnm, dptr, cachekey, 
+                            key);
+                    EXFAIL_OUT(ret)
+                }
+                
+                break;
+            
+            /* keys ops */
+            case EX_CACHE_OPEXPR:
+                
+                numkeys++;
+                
+                if (0==strcmp(dptr, cachekey))
+                {
+                    cachekey_found=EXTRUE;
+                    NDRX_LOG(log_debug, "Key found in group");
+                }
+                
+                break;
+                
+            default:
+                /* raise error as key is not supported */
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Invalid field [%s][%d] in "
+                        "keygroup [%s] db [%s]",
+                        __func__, Bfname(bfldid1), bfldid1, 
+                        cachekey, cache->keygrpdb->cachedb);
+                EXFAIL_OUT(ret)
+                break;
+        }
+
+    }
+    
+    if (!got_dbname)
+    {
+        /* TODO: Generate error of invalid keygroup! */
+    }
+    
+out:
+
+    if (tran_started)
+    {
+        /* terminate transaction please */
+    }
+    return ret;
+}
+
+/**
+ * Add update keygroup. Only interesting question is how about duplicate
+ * keys? If it is duplicate, then key group does not change. So there shall be
  * no problems.
  */
 expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
-            char *idata, long ilen, char *cachekey)
+            char *idata, long ilen, char *cachekey, EDB_txn **txn)
 {
     int ret = EXSUCCEED;
+    char key[NDRX_CACHE_KEY_MAX+1];
+    char errdet[MAX_TP_ERROR_LEN+1];
+    
     /* The storage will be standard UBF buffer
      * with some extra fields, like dbname from which data is stored here...
      * EX_CACHE_DBNAME - the database of the group
@@ -75,10 +249,29 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
      */
 
     /* 1. build the key (keygrp) */
+    if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
+                cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+    }
+    
+    NDRX_LOG(log_debug, "Keygroup key=[%s] - find record", key);
     
     /* 2. Find record in their db */
     
-    /* 2.1 check all occurrenences of EX_CACHE_OPEXPR (we could use Bnext
+    
+    
+    /* 2.1 check all occurrences of EX_CACHE_OPEXPR (we could use Bnext
      * for fast data checking...), if key is found, then we are done, return. */
     
     /* 3. if not found, allocate new buffer. Add  EX_CACHE_DBNAME */
