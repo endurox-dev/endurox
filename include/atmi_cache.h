@@ -49,8 +49,11 @@ extern "C" {
     
 #define NDRX_TPCACHE_DEBUG
     
-    
-#define NDRX_TPCACHE_DB_KEYWORDS       
+/**
+ * Keywords for cache definition (KWC)
+ */
+#define NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO       "keygrpmaxtperrno"
+#define NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE      "keygrpmaxtpurcode"
 
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
@@ -216,6 +219,8 @@ extern "C" {
     NDRX_LOG(LEV, "keygroupmax=[%ld]", TPCALLCACHE->keygroupmax);\
     NDRX_LOG(LEV, "keygroupmrej=[%s]", TPCALLCACHE->keygroupmrej);\
     NDRX_LOG(LEV, "keygroupmrej_abuf=[%p]", TPCALLCACHE->keygroupmrej_abuf);\
+    NDRX_LOG(LEV, "keygroupmtperrno=[%d]", TPCALLCACHE->keygroupmtperrno);\
+    NDRX_LOG(LEV, "keygroupmtpurcode=[%ld]", TPCALLCACHE->keygroupmtpurcode);\
     NDRX_LOG(LEV, "=================================================");
 
 
@@ -402,6 +407,9 @@ struct ndrx_tpcallcache
     char *keygroupmrej; /* Reject expression of keygroup, if max reached    */
     char *keygroupmrej_abuf; /* Atmi allocated worker buffer for keygroy*/
     
+    /* might want to reject with specific ATMI code? */
+    int keygroupmtperrno;
+    long keygroupmtpurcode;
     
     /* this is linked list of caches */
     ndrx_tpcallcache_t *next, *prev;
@@ -619,6 +627,15 @@ extern NDRX_API int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache, char *svc,
 extern NDRX_API int ndrx_cache_inval_by_key_bcastonly(char *cachedbnm, char *key, 
         short nodeid);
 extern NDRX_API int ndrx_cache_events_get(string_list_t **list);
+
+/* keygroup: */
+
+extern NDRX_API int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache, 
+            char *idata, long ilen, char **odata, long *olen, char *cachekey,
+            long flags);
+
+extern NDRX_API int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
+            char *idata, long ilen, char *cachekey);
 
 #ifdef	__cplusplus
 }

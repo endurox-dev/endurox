@@ -228,7 +228,6 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
             NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to get data from db [%s] for key [%s]: %s", 
                 db->cachedb, key, edb_strerror(ret));
-            
         }
         else
         {
