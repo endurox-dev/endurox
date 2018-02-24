@@ -251,10 +251,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             }
             else
             {
-                NDRX_LOG(log_error, "Failed to build key: ", errdet);
-
-                /* generate TP error here! */
-                ndrx_TPset_error_fmt(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
                         __func__, errdet);
                 goto out;
             }
@@ -671,22 +668,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     
     /* validate record */
         
-    if (cachedata.mv_size < sizeof(ndrx_tpcache_data_t))
-    {
-        NDRX_CACHE_ERROR("Corrupted cache data - invalid minimums size, "
-                "expected: %ld, got %ld for key: [%s]", 
-                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata.mv_size, key);
-
-        EXFAIL_OUT(ret);
-    }
-
-    if (NDRX_CACHE_MAGIC!=exdata->magic)
-
-    {
-        NDRX_CACHE_ERROR("Corrupted cache data - invalid "
-                "magic expected: %x got %x", exdata->magic, NDRX_CACHE_MAGIC);
-        EXFAIL_OUT(ret);
-    }
+    NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPMINVAL);
 
     /* OK we have a raw data... lets dump something... */
 #ifdef NDRX_TPCACHE_DEBUG

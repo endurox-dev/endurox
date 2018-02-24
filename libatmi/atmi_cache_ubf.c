@@ -742,8 +742,27 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
         EXFAIL_OUT(ret);
     }
     
+    
+    /* Process reject buffer if any */
+    
+    if (NULL!=cache->keygroupmrej)
+    {
+        /* parse it. JSON2UBF */
+        UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, strlen(cache->keygroupmrej)*3+1024);
+        
+        if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub, cache->keygroupmrej))
+        {
+            snprintf(errdet, errdetbufsz, "%s: Failed to parse json: [%s]", 
+                    __func__, cache->keygroupmrej);
+            NDRX_LOG(log_error, errdet);
+            EXFAIL_OUT(ret);
+        }
+        
+        cache->keygroupmrej_abuf = (char *)p_ub;
+        
+    }
 out:
-    return ret;    
+    return ret;
 }
 
 /**
@@ -774,4 +793,20 @@ expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
     }
     
     return EXSUCCEED;
+}
+
+/**
+ * Reject request when max reached
+ * @param cache
+ * @param idata
+ * @param ilen
+ * @param odata
+ * @param olen
+ * @param flags
+ * @return 
+ */
+expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
+        char **odata, long *olen, long flags)
+{
+    return EXFAIL;
 }
