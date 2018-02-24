@@ -173,33 +173,11 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
-        {
-            NDRX_DUMP(log_error, "Invalid cache key", 
-                    keydb.mv_data, keydb.mv_size);
-            
-            NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
-                    "terminated with EOS!", __func__, keydb.mv_size);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
         
         pdata = (ndrx_tpcache_data_t *)val.mv_data;
         
-        
-        if (val.mv_size < sizeof(ndrx_tpcache_data_t))
-        {
-            NDRX_LOG(log_error, "Corrupted data - invalid minimums size, "
-                    "expected: %ld, got %ld", 
-                    (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
-            EXFAIL_OUT(ret);
-        }
-        
-        if (NDRX_CACHE_MAGIC!=pdata->magic)
-        {
-            NDRX_LOG(log_error, "Corrupted data - invalid magic expected: %x got %x",
-                    pdata->magic, NDRX_CACHE_MAGIC);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBDATA((&val), pdata, keydb.mv_data, TPMINVAL);
         
         /* we have timestamp for putting record in DB, but we need to calculate
          * the difference between 
@@ -440,33 +418,12 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
-        {
-            NDRX_DUMP(log_error, "Invalid cache key", 
-                    keydb.mv_data, keydb.mv_size);
-            
-            NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
-                    "terminated with EOS!", __func__, keydb.mv_size);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
         
         pdata = (ndrx_tpcache_data_t *)val.mv_data;
         
-        
-        if (val.mv_size < sizeof(ndrx_tpcache_data_t))
-        {
-            NDRX_LOG(log_error, "Corrupted data - invalid minimums size, "
-                    "expected: %ld, got %ld", 
-                    (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
-            EXFAIL_OUT(ret);
-        }
-        
-        if (NDRX_CACHE_MAGIC!=pdata->magic)
-        {
-            NDRX_LOG(log_error, "Corrupted data - invalid magic expected: %x got %x",
-                    pdata->magic, NDRX_CACHE_MAGIC);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBDATA((&val), pdata, keydb.mv_data, TPMINVAL);
+
         
         /* check isn't duplicate records in DB? 
          * Well we need a test case here... to see how lmdb will act in this
@@ -705,33 +662,11 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
-        {
-            NDRX_DUMP(log_error, "Invalid cache key", 
-                    keydb.mv_data, keydb.mv_size);
-            
-            NDRX_LOG(log_error, "%s: Invalid cache key, len: %ld not "
-                    "terminated with EOS!", __func__, keydb.mv_size);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
         
         pdata = (ndrx_tpcache_data_t *)val.mv_data;
         
-        
-        if (val.mv_size < sizeof(ndrx_tpcache_data_t))
-        {
-            NDRX_LOG(log_error, "Corrupted data - invalid minimums size, "
-                    "expected: %ld, got %ld", 
-                    (long)sizeof(ndrx_tpcache_data_t), (long)val.mv_size);
-            EXFAIL_OUT(ret);
-        }
-        
-        if (NDRX_CACHE_MAGIC!=pdata->magic)
-        {
-            NDRX_LOG(log_error, "Corrupted data - invalid magic expected: %x got %x",
-                    pdata->magic, NDRX_CACHE_MAGIC);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBDATA((&val), pdata, keydb.mv_data, TPMINVAL);
         
         /* store prev key */
         if (i!=0)

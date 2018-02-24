@@ -73,35 +73,35 @@ expublic ndrx_tpcache_typesupp_t ndrx_G_tpcache_types[] =
     /* typeid (idx), rule_compile func,         rule eval func,             refresh rule eval  */
     {BUF_TYPE_UBF, ndrx_cache_rulcomp_ubf,      ndrx_cache_ruleval_ubf,     ndrx_cache_refeval_ubf, 
                     ndrx_cache_keyget_ubf,      ndrx_cache_get_ubf,         ndrx_cache_put_ubf, 
-                    ndrx_cache_del_ubf,         ndrx_cache_proc_flags_ubf,  ndrx_cache_delete_ubf},
+                    ndrx_cache_del_ubf,         ndrx_cache_proc_flags_ubf,  ndrx_cache_delete_ubf, ndrx_cache_maxreject_ubf},
     /* dummy */
     {1,             NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
                     
     {BUF_TYPE_INIT, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
                     
     {BUF_TYPE_NULL, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
                     
     {BUF_TYPE_STRING,NULL,                      NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
                     
     {BUF_TYPE_CARRAY, NULL,                     NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
                     
     {BUF_TYPE_JSON, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
                     
     {BUF_TYPE_VIEW, NULL,                       NULL,                       NULL,
                     NULL,                       NULL,                       NULL,
-                    NULL,                       NULL,                       NULL},
+                    NULL,                       NULL,                       NULL, NULL},
     {EXFAIL}
 };
 
@@ -199,6 +199,16 @@ expublic void ndrx_cache_tpcallcache_free(ndrx_tpcallcache_t *tpc)
     if (tpc->delproj.regex_compiled)
     {
         ndrx_regfree(&tpc->delproj.regex);
+    }
+    
+    if (NULL!=tpc->keygroupmrej)
+    {
+        NDRX_FREE(tpc->keygroupmrej);
+    }
+    
+    if (NULL!=tpc->keygroupmrej_abuf)
+    {
+        tpfree(tpc->keygroupmrej_abuf);
     }
     
     NDRX_FREE(tpc);
@@ -1145,6 +1155,30 @@ expublic int ndrx_cache_init(int mode)
                 }
             }
             
+            /* Process the reject expression by flags func */
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygroupmrej")))
+            {
+                cache->keygroupmrej = NDRX_STRDUP(tmp);
+                
+                if (NULL==cache->keygroupmrej)
+                {
+                    int err = errno;
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to allocate [keygroupmrej] buf"
+                            "for svc [%s buffer index: %d", 
+                                svc, i, strerror(err));
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_STRCPY_SAFE(cache->keygroupmrej, tmp);
+            }
+            
+            /* set keygroup limit - keygroupmax */
+            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygroupmax")))
+            {
+                cache->keygroupmax = atol(tmp);
+            }
+            
             if (NULL!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_process_flags)
             {
                 if (EXSUCCEED!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_process_flags(cache, 
@@ -1224,6 +1258,43 @@ expublic int ndrx_cache_init(int mode)
                             "defined for [%s] database to use it for keyitems for",
                             " service [%s] buffer index %d",
                             cache->cachedb->cachedb, svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (NULL!=cache->keygroupmrej && cache->keygroupmax<=0)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmrej] defined, but "
+                            "[keygroupmax] is 0 - invalid config for"
+                            " service [%s] buffer index %d",
+                            svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (NULL==cache->keygroupmrej && cache->keygroupmax>=0)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmax] defined, but "
+                            "[keygroupmrej] not defined - invalid config for"
+                            " service [%s] buffer index %d",
+                            svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+            }
+            else
+            {
+                if (NULL!=cache->keygroupmrej)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmrej] not used as "
+                            "group format not defined - service [%s] buffer index %d",
+                            svc, i);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (cache->keygroupmax > 0)
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmax] defined, but "
+                            "group format not defined - service [%s] buffer index %d",
+                            svc, i);
                     EXFAIL_OUT(ret);
                 }
             }
