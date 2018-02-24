@@ -198,8 +198,8 @@ EX_VIEW_INCLFLDS            602         string -       Field include flags
 ################################################################################
 # Cache processing
 ################################################################################
-EX_CACHE_OPEXPR             650         string -       Operation expression
-EX_CACHE_DBNAME             651         string -       Db name of cache
+EX_CACHE_DBNAME             650         string -       Db name of cache
+EX_CACHE_OPEXPR             651         string -       Operation expression
 EX_CACHE_BUFTYP             652         short -        buffer type id
 EX_CACHE_DUMP               653         carray -       Data dump, carray
 EX_CACHE_TPERRNO            654         long -         TP Error code

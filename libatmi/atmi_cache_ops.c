@@ -358,6 +358,17 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             
     }
     
+    /* Firstly add record to the key group if needed */
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+    {
+        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, key)))
+        {
+            NDRX_LOG(log_error, "Failed to add keygroup record!");
+            goto out;
+        }
+    }
+    
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
@@ -611,6 +622,38 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     
     *should_cache=EXTRUE;
     
+    /* Check the cache group now (if defined for this cache) */
+    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+    {
+        if (EXSUCCEED!=(ret = ndrx_cache_keygrp_lookup(cache, idata, ilen, 
+                odata, olen, key, flags)))
+        {
+            /* lets see what error says us */
+            
+            switch (ret)
+            {
+                case NDRX_TPCACHE_ENOCACHEDATA:
+                    /* OK data not in cache return that not found */
+                    goto out;
+                    break;
+                case NDRX_TPCACHE_ENOTFOUNDLIM:
+                    *saved_tperrno = cache->keygroupmtperrno;
+                    *saved_tpurcode = cache->keygroupmtpurcode;
+                    
+                    
+                    NDRX_LOG(log_debug, "MAX keygroup reject tperrno: %d "
+                            "tpurcode: %ld", *saved_tperrno, *saved_tpurcode);
+                    
+                    ret=EXSUCCEED;
+                    goto out;
+                    
+                    break;
+                default:
+                    goto out;
+                    break;
+            }
+        }
+    }
     
     /* Lookup DB */
     

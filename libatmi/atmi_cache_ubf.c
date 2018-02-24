@@ -758,6 +758,16 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
             EXFAIL_OUT(ret);
         }
         
+        
+        /* reallocate the buffer to exact size */
+        
+        if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, Bused(p_ub)+1024)))
+        {
+            snprintf(errdet, errdetbufsz, "%s: to reallocate reject buffer: %s", 
+                    __func__, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
         cache->keygroupmrej_abuf = (char *)p_ub;
         
     }
@@ -808,5 +818,94 @@ expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
 expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
         char **odata, long *olen, long flags)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    long ibuf_bufsz;
+    long rej_bufsz;
+    
+    UBFH *p_ub = (UBFH *)idata;
+    UBFH *p_rej_ub = (UBFH *)cache->keygroupmrej_abuf;
+    
+    /* we have a buffer already stored in config. */
+    
+    NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    if ((rej_bufsz = Bsizeof(p_rej_ub)) < 0)
+    {
+        NDRX_CACHE_TPERROR(TPEINVAL, "Invalid reject buffer - failed "
+                "to get size: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if ((ibuf_bufsz = Bsizeof(p_ub)) < 0)
+    {
+        NDRX_CACHE_TPERRORNOU(TPEINVAL, "Invalid user buffer - failed "
+                "to get size: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
+    {    
+        /* if we look on replace then we need buffer size to be atleast in size
+         * of reject buffer */
+        if (ibuf_bufsz<rej_bufsz)
+        { 
+            if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, rej_bufsz)))
+            {
+                NDRX_CACHE_TPERROR(TPEINVAL, "Failed to reallocate user buffer: %s",
+                            tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        ndrx_debug_dump_UBF(log_debug, "Error response (replacing rsp with)", 
+                p_rej_ub);
+        
+        if (EXSUCCEED!=Bcpy(p_ub, p_rej_ub))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to preapre response buffer: %s", 
+                    __func__, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+    }
+    else if (cache->flags & NDRX_TPCACHE_TPCF_MERGE)
+    {
+        
+        ndrx_debug_dump_UBF(log_debug, "Error response (updating response with)", 
+                p_rej_ub);
+        
+        /* Ensure that in buffer we have enough space */
+        
+        if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, ibuf_bufsz+rej_bufsz+1024)))
+        {
+            NDRX_CACHE_TPERROR(TPEINVAL, "Failed to reallocate user buffer: %s",
+                        tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED!=Bupdate(p_ub, p_rej_ub))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, 
+                            "Failed to update/merge buffer: %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        ndrx_debug_dump_UBF(log_debug, "Got merged response",  p_rej_ub);
+        
+    }
+    else
+    {
+        NDRX_CACHE_TPERROR(TPEINVAL, 
+                        "Invalid buffer get mode: flags %ld", 
+                cache->flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    *odata=(char *)p_ub;
+    
+out:
+
+    return ret;
 }

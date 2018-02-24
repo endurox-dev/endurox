@@ -258,7 +258,7 @@ extern "C" {
 #define TPERFU28	28      /* reserved for future use */
 #define TPERFU29	29      /* reserved for future use */
 #define TPINITFAIL	30
-#define TPMAXVAL	31	/* max error */
+#define TPMAXVAL	30	/* max error */
 
 /*
  * events returned during conversational communication

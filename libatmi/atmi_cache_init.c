@@ -1082,10 +1082,28 @@ expublic int ndrx_cache_init(int mode)
             if (NULL!=(tmp = exjson_object_get_string(array_object, "keygrpfmt")))
             {
                 NDRX_STRCPY_SAFE(cache->keygrpfmt, tmp);
-                EXFAIL_OUT(ret);
             }
             
-            NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                                        NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO)))
+            {
+                cache->keygroupmtperrno = atoi(tmp);
+                
+                if (cache->keygroupmtperrno<TPMINVAL || 
+                        cache->keygroupmtperrno > TPMAXVAL)
+                {
+                    NDRX_LOG(log_error, "Invalid max keygroup reject tperrno code [%s] %d "
+                            "(min: %d, max: %d)", NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO, 
+                            cache->keygroupmtperrno, TPMINVAL, TPMAXVAL)
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                                        NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE)))
+            {
+                 cache->keygroupmtpurcode = atol(tmp);
+            }
             
             /* Rule to be true to save to cache */
             if (NULL!=(tmp = exjson_object_get_string(array_object, "rule")))
