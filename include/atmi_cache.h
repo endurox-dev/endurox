@@ -54,6 +54,8 @@ extern "C" {
  */
 #define NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO       "keygrpmaxtperrno"
 #define NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE      "keygrpmaxtpurcode"
+#define NDRX_TPCACHE_KWC_INVLKEYGRP             "invalkeygrp"
+#define NDRX_TPCACHE_KWC_INVAL                  "inval"
 
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
@@ -84,6 +86,7 @@ extern "C" {
 #define NDRX_TPCACHE_TPCF_DELFULL    0x00000100   /* Delete full buffer               */
 #define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200   /* Delete set of fields             */
 #define NDRX_TPCACHE_TPCF_KEYITEMS   0x00000400   /* Cache is items for group         */
+#define NDRX_TPCACHE_TPCF_INVLKEYGRP 0x00000800   /* invalidate whole group during op */
 
 #define NDRX_TPCACH_INIT_NORMAL      0   /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT        1   /* Boot mode init (ndrxd startst)   */
@@ -213,6 +216,9 @@ extern "C" {
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELSETOF));\
     NDRX_LOG(LEV, "flags (computed) key items = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_KEYITEMS));\
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", \
+                    NDRX_TPCACHE_KWC_INVLKEYGRP, \
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_INVLKEYGRP));\
     NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
     NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
     NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
@@ -635,7 +641,7 @@ extern NDRX_API int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
             long flags);
 
 extern NDRX_API int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
-            char *idata, long ilen, char *cachekey);
+            char *idata, long ilen, char *cachekey, int deleteop);
 
 #ifdef	__cplusplus
 }

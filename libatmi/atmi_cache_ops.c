@@ -362,7 +362,8 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
     {
-        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, key)))
+        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, 
+                key, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to add keygroup record!");
             goto out;

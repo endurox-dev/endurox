@@ -901,6 +901,10 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_NEXT;
                     }
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_INVLKEYGRP))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_INVLKEYGRP;
+                    }
                     else
                     {
                         NDRX_LOG(log_warn, "For service [%s] buffer index %d, "
@@ -1315,6 +1319,17 @@ expublic int ndrx_cache_init(int mode)
                             svc, i);
                     EXFAIL_OUT(ret);
                 }
+            }
+            
+            /* verify us of keygroup invalidate */
+            if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP || 
+                    !(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
+            {
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] can be only used with "
+                        "[%s] for svc [%s] idx %d",
+                        NDRX_TPCACHE_KWC_INVLKEYGRP, NDRX_TPCACHE_KWC_INVAL, 
+                            svc, i);
+                    EXFAIL_OUT(ret);
             }
             
             /* Add to linked list */
