@@ -97,6 +97,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     BFLDLEN dlen;
     int cachekey_found = EXFALSE;
     int got_dbname = EXFALSE;
+    
     if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
                 cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
     {
@@ -275,9 +276,12 @@ out:
  * Add update keygroup. Only interesting question is how about duplicate
  * keys? If it is duplicate, then key group does not change. So there shall be
  * no problems.
+ * if single keyitem is deleted in non-inval mode, then keyitem must be removed
+ * from the list. Only in inval trigger, we shall invalidate full group...
+ * @param deleteop use EXTRUE if performing delete operation from the keygroup
  */
 expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
-            char *idata, long ilen, char *cachekey)
+            char *idata, long ilen, char *cachekey, int deleteop)
 {
     int ret = EXSUCCEED;
     char key[NDRX_CACHE_KEY_MAX+1];
@@ -285,19 +289,22 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     EDB_txn *txn;
     int tran_started = EXFALSE;
     EDB_val cachedata;
-    ndrx_tpcache_data_t *exdata;
+    ndrx_tpcache_data_t *exdata=NULL;
     typed_buffer_descr_t *buf_type = &G_buf_descr[BUF_TYPE_UBF];
     UBFH *p_ub_keys = NULL;        /* list of keys in keygroup */
     long rsplen;
     Bnext_state_t state1;
     BFLDID bfldid1;
     long numkeys = 0;
-    BFLDOCC occ;
+    BFLDOCC occ, occ_found=EXFAIL;
     char *dptr;
     BFLDLEN dlen;
     int got_dbname = EXFALSE;
     int cachekey_found = EXFALSE;
     char buf[NDRX_MSGSIZEMAX];
+    
+    
+    NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
     
     if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
                 cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
@@ -337,6 +344,14 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         /* error already provided by wrapper */
         if (EDB_NOTFOUND==ret)
         {
+            if (deleteop)
+            {
+                NDRX_LOG(log_debug, "Key group record does not exists - "
+                        "assume keyitem deleted ok");
+                ret=EXSUCCEED;
+                goto out;
+            }
+            
             /* prepare buffer where to write off the keys */
             NDRX_LOG(log_debug, "Key group is missing -> must be added");
             
@@ -425,7 +440,9 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                     if (0==strcmp(dptr, cachekey))
                     {
                         cachekey_found=EXTRUE;
-                        NDRX_LOG(log_debug, "Key found in group");
+                        occ_found = occ;
+                        NDRX_LOG(log_debug, "Key found in group at occ [%d]", 
+                                occ_found);
                         break;
                     }
 
@@ -453,50 +470,78 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
 
         if (!cachekey_found)
         {
-            NDRX_LOG(log_debug, "Key not found in group");
-            ret=NDRX_TPCACHE_ENOCACHEDATA;
-            goto out;
+            if (deleteop)
+            {
+                NDRX_LOG(log_debug, "Keyitem not found in group - assume deleted ok");
+                goto out;
+            }
         }
         else
         {
             NDRX_LOG(log_debug, "Key found in group");
+            
         }
-    
     }
     
-    if (!cachekey_found)
+    if (cachekey_found && deleteop || !cachekey_found && !deleteop)
     {
-        if (NULL==(p_ub_keys = (UBFH *)tprealloc((char *)p_ub_keys, 
-                Bsizeof(p_ub_keys) + strlen(cachekey))))
+        if (deleteop)
         {
-            NDRX_LOG(log_error, "Failed to allocate UBF buffer: %s", 
-                    tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
+            NDRX_LOG(log_debug, "Removing key from the group");
+            
+            if (EXSUCCEED!=Bdel(p_ub_keys, EX_CACHE_OPEXPR, occ_found))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to delete "
+                        "EX_CACHE_OPEXPR[%d]: %s",
+                        occ_found, Bstrerror(Berror));
+                EXFAIL_OUT(ret)
+            }
         }
-        
-        if (EXSUCCEED!=Badd(p_ub_keys, EX_CACHE_OPEXPR, cachekey, 0L))
+        else
         {
-            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to add EX_CACHE_OPEXPR to UBF: %s",
-                    Bstrerror(Berror));
-            EXFAIL_OUT(ret)
-        }
+            NDRX_LOG(log_debug, "Adding key to the group");
         
+            if (NULL==(p_ub_keys = (UBFH *)tprealloc((char *)p_ub_keys, 
+                    Bsizeof(p_ub_keys) + strlen(cachekey))))
+            {
+                NDRX_LOG(log_error, "Failed to allocate UBF buffer: %s", 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+            if (EXSUCCEED!=Badd(p_ub_keys, EX_CACHE_OPEXPR, cachekey, 0L))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to add EX_CACHE_OPEXPR to UBF: %s",
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret)
+            }
+        }
         /* write record off to DB... */
         
         ndrx_debug_dump_UBF(log_debug, "Saving to keygroup", (UBFH *)p_ub_keys);
     
-        
-        memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
-    
-        exdata->magic = NDRX_CACHE_MAGIC;
-        NDRX_STRCPY_SAFE(exdata->svcnm, cache->svcnm);
-        exdata->nodeid = (short)tpgetnodeid();
+        if (NULL==exdata)
+        {
+            exdata = (ndrx_tpcache_data_t *)buf;
+            memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
+            
+            exdata->magic = NDRX_CACHE_MAGIC;
+            NDRX_STRCPY_SAFE(exdata->svcnm, cache->svcnm);
+            exdata->nodeid = (short)tpgetnodeid();
 
-        /* get current timestamp */
-        ndrx_utc_tstamp2(&exdata->t, &exdata->tusec);
+            /* get current timestamp */
+            ndrx_utc_tstamp2(&exdata->t, &exdata->tusec);
+            
+            exdata->cache_idx = cache->idx;
+        }
+        else
+        {
+            /* update existing data.. */
+            memcpy(buf, exdata, sizeof(ndrx_tpcache_data_t));
+            exdata = (ndrx_tpcache_data_t *)buf;
+        }
         
         
-        exdata->cache_idx = cache->idx;
         exdata->atmi_type_id = buf_type->type_id;
         exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
     
@@ -525,11 +570,18 @@ out:
     if (tran_started)
     {
         /* terminate transaction please */
-        if (EXSUCCEED!=ndrx_cache_edb_commit(cache->keygrpdb, txn))
+        if (EXSUCCEED==ret)
         {
-            NDRX_LOG(log_error, "Failed to commit - aborting...!");
+            if (EXSUCCEED!=ndrx_cache_edb_commit(cache->keygrpdb, txn))
+            {
+                NDRX_LOG(log_error, "Failed to commit - aborting...!");
+                ndrx_cache_edb_abort(cache->keygrpdb, txn);
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
             ndrx_cache_edb_abort(cache->keygrpdb, txn);
-            ret=EXFAIL;
         }
     }
 
@@ -537,31 +589,266 @@ out:
 }
 
 /**
- * Delete keygroup record by data.
- * Can reuse transaction...
- * use this func in ndrx_cache_inval_by_data
+ * Delete keygroup keyitems. The group by it self should be removed by outer 
+ * caller.
+ * @param db This is the db of cache 
+ * @param p_ub
+ * @param keyitem_dbname test dbname against (optional, to test if buffer compares)
+ * @return 
  */
-expublic int ndrx_cache_keygrp_inval_by_data(char *svc, ndrx_tpcallcache_t *cache, 
-        char *key, char *idata, long ilen, EDB_txn **txn)
+exprivate int ndrx_cache_invalgroup(UBFH *p_ub, char *keyitem_dbname)
 {
     int ret = EXSUCCEED;
+    Bnext_state_t state1;
+    BFLDID bfldid1;
+    BFLDOCC occ;
+    char *dptr;
+    BFLDLEN dlen;
+    long numkeys = 0;
+    EDB_txn *txn;
+    int tran_started = EXFALSE;
+    ndrx_tpcache_db_t* db = NULL;
+    
+    bfldid1 = BFIRSTFLDID;
+
+    while (1)
+    {
+         ret=ndrx_Bnext(&state1, p_ub, &bfldid1, &occ, NULL, &dlen, &dptr);
+
+         if (0==ret)
+         {
+             /* we are at EOF */
+             break;
+         }
+         else if (0 > ret)
+         {
+             /* we got an error while scanning key storage */
+             NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to iterate key group items: %s", 
+                     __func__, Bstrerror(Berror));
+             EXFAIL_OUT(ret)
+         }
+         switch (bfldid1)
+         {
+             case EX_CACHE_DBNAME:
+                /* Resolve DB name... */
+                NDRX_LOG(log_debug, "Key item DB Lookup: [%s]", dptr);
+                
+                /* Check DB name if have one... */
+                if (NULL!=keyitem_dbname)
+                {
+                    if (0!=strcmp(keyitem_dbname, dptr))
+                    {
+                        NDRX_CACHE_TPERRORNOU(TPESYSTEM, "Expected db name of keyitems "
+                                "[%s] does not match actual in UBF [%s]",
+                                keyitem_dbname, dptr);
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                
+                if (NULL==(db = ndrx_cache_dbresolve(dptr, NDRX_TPCACH_INIT_NORMAL)))
+                {
+                    NDRX_CACHE_TPERRORNOU(TPENOENT, "Failed to get db record for [%s]: %s", 
+                           dptr, tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
+                 
+                /* Open transaction here... */
+                if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
+                {
+                    NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+                    goto out;
+                }
+
+                tran_started = EXTRUE;
+
+                break;
+                 
+             /* keys ops */
+             case EX_CACHE_OPEXPR:
+
+                numkeys++;
+                
+                if (NULL==db)
+                {
+                    NDRX_CACHE_TPERROR(TPESYSTEM, "Missing EX_CACHE_DBNAME in keygroup!");
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_LOG(log_debug, "About to erase: [%s] from [%s] db", 
+                        dptr, db->cachedb);
+                
+                if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, dptr, NULL)))
+                {
+                    if (EDB_NOTFOUND==ret)
+                    {
+                        ret=EXSUCCEED;
+                    }
+                    else
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                }
+
+                break;
+         }
+     }
+    
     
 out:
-            
+                 
+    if (tran_started)
+    {
+        /* terminate transaction please */
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_LOG(log_error, "Failed to commit - aborting...!");
+                ndrx_cache_edb_abort(db, txn);
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * return a keygroup.
+ * This will start read only transactions
+ * @param db database
+ * @param txn transaction in progress
+ * @param key key to search for
+ * @param pp_ub UBF buffer with keys
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn, 
+        char *key, UBFH **pp_ub)
+{
+    int ret = EXSUCCEED;
+    EDB_val cachedata;
+    ndrx_tpcache_data_t *exdata;
+    typed_buffer_descr_t *buf_type = &G_buf_descr[BUF_TYPE_UBF];
+    long rsplen;
+    
+    NDRX_LOG(log_debug, "%s: Key group key [%s]", __func__, key);
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_get(db, txn, key, &cachedata,
+            EXFALSE)))
+    {
+        /* error already provided by wrapper */
+        NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
+        goto out;
+    }
+    
+    /* Check the record validity */
+    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPESYSTEM);
+    
+    
+    /* Receive data as UBF buffer, so that we can test it... 
+     * this is just list 
+     */
+    if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
+                exdata->atmi_buf_len, (char **)pp_ub, &rsplen, 0))
+    {
+        /* the error shall be set already */
+        NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", key);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+                    
+    NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
+
     return ret;
 }
 
 /**
  * Delete by key, group values...
  * use this func in ndrx_cache_inval_by_key()
+ * This shall be done only if we delete 
+ * 
+ * Supported modes:
+ * - delete keyitem by data - remove all group
+ * - delete keygrp by key - remove full group
+ * - all other modes works by single db record.
+ * - if we delete from keyitems, then keygroup record shall be updated accordingly... (after delete happended)
+ * @param db this is db of keygroup
+ * @param txn this is keygroup transaction, data transaction will be made internally
+ * @param keyitem_dbname
  */
-expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db, char *key, EDB_txn **txn)
+expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db, 
+        char *key, EDB_txn *txn, char *keyitem_dbname)
 {
     int ret = EXSUCCEED;
+    UBFH *p_ub = NULL;
+    
+    NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_keygrp_getgroup(db, txn, key, &p_ub)))
+    {
+        NDRX_LOG(log_info, "Failed to get keygroup: %s", tpstrerror(tperrno));
+        goto out;
+    }
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_invalgroup(p_ub, keyitem_dbname)))
+    {
+        NDRX_LOG(log_info, "Failed to get keygroup: %s", tpstrerror(tperrno));
+        goto out;
+    }
     
 out:
-            
+    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }
 
-
+/**
+ * Delete keygroup record by data.
+ * Can reuse transaction...
+ * use this func in ndrx_cache_inval_by_data
+ * So if we delete key item, that will key the keygroup fully...
+ * We shall return the status that full group is removed 
+ * @param txn this is keygroup transaction, data transaction will be made internally
+ */
+expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen, EDB_txn *txn)
+{
+    char key[NDRX_CACHE_KEY_MAX+1];
+    char errdet[MAX_TP_ERROR_LEN+1];
+    int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
+    
+    if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
+                cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+    }
+    
+    NDRX_LOG(log_debug, "%s: Key group key built [%s]", __func__, key);
+    
+    
+    ret = ndrx_cache_keygrp_inval_by_key(cache->keygrpdb, key, txn, cache->cachedbnm);
+    
+out:
+    
+    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
+    return ret;
+}
