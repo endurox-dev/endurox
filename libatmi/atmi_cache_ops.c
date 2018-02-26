@@ -291,6 +291,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
+    exdata->flags = cache->flags;
     exdata->cache_idx = cache->idx;
     exdata->atmi_type_id = buffer_info->type_id;
     exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
@@ -363,7 +364,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
     {
         if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, 
-                key, EXFALSE)))
+                key, NULL, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to add keygroup record!");
             goto out;

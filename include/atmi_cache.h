@@ -50,13 +50,24 @@ extern "C" {
 #define NDRX_TPCACHE_DEBUG
     
 /**
- * Keywords for cache definition (KWC)
+ * Keywords for cache definition (KWC) - flags
  */
 #define NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO       "keygrpmaxtperrno"
 #define NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE      "keygrpmaxtpurcode"
 #define NDRX_TPCACHE_KWC_INVLKEYGRP             "invalkeygrp"
 #define NDRX_TPCACHE_KWC_INVAL                  "inval"
+#define NDRX_TPCACHE_KWC_SAVEREG                "putrex"
+#define NDRX_TPCACHE_KWC_REPL                   "getreplace"
+#define NDRX_TPCACHE_KWC_MERGE                  "getmerge"
+#define NDRX_TPCACHE_KWC_SAVEFULL               "putfull"
+#define NDRX_TPCACHE_KWC_SAVESETOF              ""
+#define NDRX_TPCACHE_KWC_NEXT                   ""
+#define NDRX_TPCACHE_KWC_DELREG                 ""
+#define NDRX_TPCACHE_KWC_DELFULL                ""
+#define NDRX_TPCACHE_KWC_DELSETOF               ""
+#define NDRX_TPCACHE_KWC_KEYITEMS               ""
 
+    
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
 #define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /* limited, more hits, longer stay  */
@@ -200,13 +211,13 @@ extern "C" {
     NDRX_LOG(LEV, "buf_type=[%s]", TPCALLCACHE->buf_type->type);\
     NDRX_LOG(LEV, "errfmt=[%s]", TPCALLCACHE->errfmt);\
     NDRX_LOG(LEV, "flags=[%s]", TPCALLCACHE->flagsstr);\
-    NDRX_LOG(LEV, "flags, 'putrex' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_SAVEREG,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVEREG));\
-    NDRX_LOG(LEV, "flags, 'getreplace' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_REPL,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_REPL));\
-    NDRX_LOG(LEV, "flags, 'getmerge' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_MERGE,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_MERGE));\
-    NDRX_LOG(LEV, "flags, 'putfull' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_SAVEFULL,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVEFULL));\
     NDRX_LOG(LEV, "flags 'inval' = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_INVAL));\
@@ -458,6 +469,7 @@ struct ndrx_tpcache_data
     long hit_t;         /* UTC timestamp of message         */
     long hit_tusec;     /* UTC microseconds                 */
     long hits;          /* Number of cache hits             */
+    long flags;         /* cache flags                      */
     
     short nodeid;       /* Node id who put the msg          */
     short atmi_type_id; /* ATMI type id                     */
@@ -647,13 +659,17 @@ extern NDRX_API int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
             long flags);
 
 extern NDRX_API int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
-            char *idata, long ilen, char *cachekey, int deleteop);
+            char *idata, long ilen, char *cachekey, char *have_keygrp, 
+        int deleteop);
 
 extern NDRX_API int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db, 
         char *key, EDB_txn *txn, char *keyitem_dbname);
  
 extern NDRX_API int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, EDB_txn *txn);
+
+extern NDRX_API int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache, 
+        ndrx_tpcache_data_t *exdata, char *keyout, long keyout_bufsz);
 
 #ifdef	__cplusplus
 }
