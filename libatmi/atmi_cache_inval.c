@@ -95,7 +95,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         {
             /* remove just key item... and continue */
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
-                    idata, ilen, key, EXTRUE)))
+                    idata, ilen, key, NULL, EXTRUE)))
             {
                 NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
                 goto out;

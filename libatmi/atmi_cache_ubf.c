@@ -296,7 +296,22 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
     UBFH *p_ub;
     UBFH *p_ub_cache = NULL;
     long olen_merge;
+    int local_alloc = EXFALSE;
+    
     /* Figure out how data to replace, either full replace or merge */
+    
+    if (NULL==idata)
+    {
+        if (NULL!=(idata = tpalloc("UBF", 0, 1024)))
+        {
+            local_alloc = EXTRUE;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to allocate input/output buffer!")
+            EXFAIL_OUT(ret);
+        }
+    }
     
     if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
     {
@@ -370,6 +385,12 @@ out:
     if (NULL!=p_ub_cache)
     {
         tpfree((char *)p_ub_cache);
+    }
+
+    if (EXSUCCEED!=ret && local_alloc)
+    {
+        tpfree((char *)idata);
+        *odata=NULL;
     }
 
     return ret;
