@@ -223,6 +223,7 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     char errdet[MAX_TP_ERROR_LEN+1];
     int tran_started = EXFALSE;
     EDB_txn *txn = NULL;
+    int delete_from_keygroup = EXFALSE;
     
     /* find svc, find cache, build key, delete record 
      * The logic will be more or less like a cache lookup...
@@ -289,6 +290,24 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     
     NDRX_LOG(log_debug, "Delete record by key [%s] from cache svc [%s] index: %d", 
             key, cache->svcnm, cache->idx);
+    
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+    {
+        /* we are part of keyitems group... perform group operation */
+        
+        /* Delete by keygroup */
+        if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
+        {
+            /* Delete full group */
+            
+        }
+        else
+        {
+            delete_from_keygroup=EXTRUE;
+        }
+        
+    }
     
     /* start transaction */
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
