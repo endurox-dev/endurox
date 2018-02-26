@@ -102,6 +102,10 @@ extern "C" {
 
 #define NDRX_TPCACHE_BCAST_DFLT     ""   /* default event                    */
 #define NDRX_TPCACHE_BCAST_DELFULL  "F"  /* delete full                      */
+#define NDRX_TPCACHE_BCAST_DELFULLC 'C'  /* delete full                      */
+    
+#define NDRX_TPCACHE_BCAST_GROUP    "G"  /* Group operatoin                  */
+#define NDRX_TPCACHE_BCAST_GROUPC   'C'  /* Group operatoin                  */
     
 #define NDRX_CACHES_BLOCK           "caches"
 #define NDRX_CACHE_MAX_READERS_DFLT 1000
@@ -264,13 +268,13 @@ if (cachedata_->mv_size < sizeof(ndrx_tpcache_data_t))\
         {\
             NDRX_CACHE_TPERROR(atmierr_, "Corrupted cache data - invalid minimums size, "\
                 "expected: %ld, got %ld for key: [%s]", \
-                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata_->mv_size, key_);\
+                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata_->mv_size, key_?key_:"(nil)");\
         }\
         else\
         {\
             NDRX_CACHE_ERROR("Corrupted cache data - invalid minimums size, "\
                 "expected: %ld, got %ld for key: [%s]", \
-                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata_->mv_size, key_);\
+                (long)sizeof(ndrx_tpcache_data_t), (long)cachedata_->mv_size, key_?key_:"(nil)");\
         }\
         EXFAIL_OUT(ret);\
     }\
@@ -557,6 +561,8 @@ extern NDRX_API int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short no
 extern NDRX_API int ndrx_cache_maperr(int unixerr);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
+
+extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall_byidx(char *svcnm, int idx);
 
 extern NDRX_API int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b);
 
