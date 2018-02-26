@@ -643,6 +643,12 @@ extern NDRX_API int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
 extern NDRX_API int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
             char *idata, long ilen, char *cachekey, int deleteop);
 
+extern NDRX_API int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db, 
+        char *key, EDB_txn *txn, char *keyitem_dbname);
+ 
+extern NDRX_API int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
+        char *idata, long ilen, EDB_txn *txn);
+
 #ifdef	__cplusplus
 }
 #endif

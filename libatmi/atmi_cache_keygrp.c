@@ -51,6 +51,8 @@
 #include <exparson.h>
 #include <atmi_cache.h>
 #include <Exfields.h>
+#include <ubf_impl.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -588,15 +590,17 @@ out:
     return ret;
 }
 
+
 /**
  * Delete keygroup keyitems. The group by it self should be removed by outer 
  * caller.
- * @param db This is the db of cache 
+ * @param dbkeygroup This is keygroup database
  * @param p_ub
  * @param keyitem_dbname test dbname against (optional, to test if buffer compares)
  * @return 
  */
-exprivate int ndrx_cache_invalgroup(UBFH *p_ub, char *keyitem_dbname)
+exprivate int ndrx_cache_invalgroup(ndrx_tpcache_db_t* dbkeygroup, 
+        UBFH *p_ub, char *keyitem_dbname)
 {
     int ret = EXSUCCEED;
     Bnext_state_t state1;
@@ -693,6 +697,9 @@ exprivate int ndrx_cache_invalgroup(UBFH *p_ub, char *keyitem_dbname)
                 break;
          }
      }
+    
+    
+    /* TODO: Delete group by it self */
     
     
 out:
@@ -796,7 +803,7 @@ expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db,
     {
         /* start transaction locally */
         
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY)))
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
         {
             NDRX_LOG(log_error, "%s: failed to start tran", __func__);
             goto out;
@@ -811,10 +818,23 @@ expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db,
         goto out;
     }
     
-    if (EXSUCCEED!=(ret=ndrx_cache_invalgroup(p_ub, keyitem_dbname)))
+    if (EXSUCCEED!=(ret=ndrx_cache_invalgroup(db, p_ub, keyitem_dbname)))
     {
         NDRX_LOG(log_info, "Failed to get keygroup: %s", tpstrerror(tperrno));
         goto out;
+    }
+    
+    /* Remove group record by it self */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, key, NULL)))
+    {
+        if (EDB_NOTFOUND==ret)
+        {
+            ret=EXSUCCEED;
+        }
+        else
+        {
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
@@ -835,6 +855,11 @@ out:
         {
             ndrx_cache_edb_abort(db, txn);
         }
+    }
+
+    if (NULL!=p_ub)
+    {
+        NDRX_FREE((char *)p_ub);
     }
 
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
@@ -864,7 +889,7 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
     {
         /* start transaction locally */
         
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, EDB_RDONLY)))
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, 0)))
         {
             NDRX_LOG(log_error, "%s: failed to start tran", __func__);
             goto out;
@@ -895,7 +920,27 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
     NDRX_LOG(log_debug, "%s: Key group key built [%s]", __func__, key);
     
     
-    ret = ndrx_cache_keygrp_inval_by_key(cache->keygrpdb, key, txn, cache->cachedbnm);
+    if (EXSUCCEED!=(ret = ndrx_cache_keygrp_inval_by_key(cache->keygrpdb, key, 
+            txn, cache->cachedbnm)))
+    {
+        NDRX_LOG(log_error, "Failed to remove key group [%s] of db [%s]",
+                key, cache->keygrpdb->cachedb);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Remove group record by it self */
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->keygrpdb, txn, key, NULL)))
+    {
+        if (EDB_NOTFOUND==ret)
+        {
+            ret=EXSUCCEED;
+        }
+        else
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
     
 out:
                  
