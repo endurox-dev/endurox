@@ -636,6 +636,21 @@ out:
 }
 
 /**
+ * Return tpcall cache by service and index!
+ * 
+ * WARNING!!! If doing changes in idexes, then data will become invalid and shall
+ * be dropped!!!
+ * 
+ * @param svcnm
+ * @param idx
+ * @return 
+ */
+expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall_byidx(char *svcnm, int idx)
+{
+    return NULL;
+}
+
+/**
  * Find tpcall cache
  * @param idata XATMI buffer data
  * @param ilen data len
