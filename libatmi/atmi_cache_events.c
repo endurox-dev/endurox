@@ -337,7 +337,8 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     
     if (delete_from_keygroup)
     {
-        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, key, EXTRUE)))
+        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, key, 
+                NULL, EXTRUE)))
         {
             NDRX_LOG(log_error, "Failed to delete key from keygroup [%s]/[%s]!",
                     key, cache->keygrpdb->cachedb);
@@ -476,6 +477,8 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
     EDB_val keydb, val;
     int deleted = 0;
     UBFH *p_ub = NULL;
+    ndrx_tpcallcache_t* cache;
+    ndrx_tpcache_data_t *exdata;
     
     NDRX_LOG(log_info, "delete cachedb [%s] by expression [%s] from node %d", 
             cachedbnm, keyexpr, nodeid);
@@ -536,19 +539,56 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
         NDRX_CACHE_CHECK_DBKEY((&keydb), TPESYSTEM);
-        
+        exdata = (ndrx_tpcache_data_t *)val.mv_data;
+        NDRX_CACHE_CHECK_DBDATA((&val), exdata, keydb.mv_data, TPESYSTEM);
+
         /* match regex on key */
         
         if (EXSUCCEED==ndrx_regexec(&re, keydb.mv_data))
         {
+            char keygrp[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
+            
             NDRX_LOG(log_debug, "Key [%s] matched - deleting", keydb.mv_data);
             
             
-            /* TODO lookup cache and if in keygroup, then we shall recover the
+            /* lookup cache and if in keygroup, then we shall recover the
              * data (prepare incoming) and send the record for 
              * ndrx_cache_keygrp_addupd(). This will ensure that we can process
              * expiry records correctly and clean up the group accordingly.
              */
+            
+            if (exdata->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+            {
+                if (NULL==(cache = ndrx_cache_findtpcall_byidx(exdata->svcnm, 
+                    exdata->cache_idx)))
+                {
+                    NDRX_LOG(log_warn, "Failed to find tpcall cache - no group update!");
+                }
+                else if (!(cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS))
+                {
+                    NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Cache record with key indicated "
+                            "as part of keygroup, but pointed cache not! "
+                            "Have you changed cache config with saved data?");
+                    EXFAIL_OUT(ret);
+                }
+                else
+                {
+                    NDRX_LOG(log_debug, "Key is part of key-items -> recovering "
+                            "buffer and building the key");
+                    
+                    if (EXSUCCEED!=(ret = ndrx_cache_keygrp_getkey_from_data(cache, 
+                        exdata, keygrp, sizeof(keygrp))))
+                    {
+                        NDRX_LOG(log_error, "Failed to get keygroup key!");
+                        goto out;
+                    }
+                }
+            }
+            else
+            {
+                NDRX_LOG(log_warn, "Cache for svcnm [%s] by index %d not found "
+                        "- have you chagned ", exdata->svcnm, exdata->cache_idx);
+            }
             
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
@@ -556,7 +596,22 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
                         keydb.mv_data);
                 EXFAIL_OUT(ret);
             }
-
+            
+            /* OK now update group  */
+            if (EXEOS!=keygrp[0])
+            {
+                NDRX_LOG(log_debug, "Removing keyitem [%s] from keygroup [%s]",
+                        keyexpr, keygrp);
+                
+                /* remove just key item... and continue */
+                if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
+                        NULL, 0, keydb.mv_data, keygrp, EXTRUE)))
+                {
+                    NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
+                    goto out;
+                }
+            } 
+            
             deleted++;
         }
         else
@@ -676,7 +731,11 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
     UBFH *p_ub = NULL;
     int deleted = 0;
     char cmd;
-        
+    
+    EDB_val keydb, val;
+    ndrx_tpcallcache_t* cache;
+    ndrx_tpcache_data_t *exdata;
+    
     NDRX_LOG(log_info, "%s: Delete cache db [%s] record by key [%s] source node: [%hd]", 
             __func__, cachedbnm, key, nodeid);
     
@@ -698,16 +757,89 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
     
     tran_started = EXTRUE;
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, key, NULL)))
+    /* we do not know anything about they record here, is it part of cache or
+     * not?
+     * So we need to perform lookup... check flags and update keygroup if
+     * needed
+     */
+    
+    if (EXSUCCEED==(ret=ndrx_cache_edb_get(db, txn, key, &val, EXFALSE)))
     {
-        if (ret!=EDB_NOTFOUND)
+        char keygrp[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
+        
+        /* validate db rec... */
+        NDRX_CACHE_CHECK_DBKEY((&keydb), TPESYSTEM);
+        exdata = (ndrx_tpcache_data_t *)val.mv_data;
+        NDRX_CACHE_CHECK_DBDATA((&val), exdata, keydb.mv_data, TPESYSTEM);
+        
+        
+        /* get key group key */
+        if (exdata->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
         {
-            EXFAIL_OUT(ret);
-        }    
+            if (NULL==(cache = ndrx_cache_findtpcall_byidx(exdata->svcnm, 
+                exdata->cache_idx)))
+            {
+                NDRX_LOG(log_warn, "Failed to find tpcall cache - no group update!");
+            }
+            else if (!(cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS))
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Cache record with key indicated "
+                        "as part of keygroup, but pointed cache not! "
+                        "Have you changed cache config with saved data?");
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Key is part of key-items -> recovering "
+                        "buffer and building the key");
+
+                if (EXSUCCEED!=(ret = ndrx_cache_keygrp_getkey_from_data(cache, 
+                    exdata, keygrp, sizeof(keygrp))))
+                {
+                    NDRX_LOG(log_error, "Failed to get keygroup key!");
+                    goto out;
+                }
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_warn, "Cache for svcnm [%s] by index %d not found "
+                    "- have you chagned ", exdata->svcnm, exdata->cache_idx);
+        }
+        
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, key, NULL)))
+        {
+            if (ret!=EDB_NOTFOUND)
+            {
+                EXFAIL_OUT(ret);
+            }    
+        }
+        else
+        {
+            deleted = 1;
+        }
+        
+        /* OK now update group  */
+        if (EXEOS!=keygrp[0])
+        {
+            NDRX_LOG(log_debug, "Removing keyitem [%s] from keygroup [%s]",
+                    key, keygrp);
+
+            /* remove just key item... and continue */
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
+                    NULL, 0, key, keygrp, EXTRUE)))
+            {
+                NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
+                goto out;
+            }
+        }
+
+        
     }
-    else
+    else if (ret!=EDB_NOTFOUND)
     {
-        deleted = 1;
+        NDRX_LOG(log_error, "Failed to get DB record!");
+        EXFAIL_OUT(ret);
     }
     
     /* continue anyway, we need a broadcast */

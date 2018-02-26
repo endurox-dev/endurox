@@ -281,9 +281,10 @@ out:
  * if single keyitem is deleted in non-inval mode, then keyitem must be removed
  * from the list. Only in inval trigger, we shall invalidate full group...
  * @param deleteop use EXTRUE if performing delete operation from the keygroup
+ * @param have_keygrp we have a keygroup, do not use data for this purpose
  */
 expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
-            char *idata, long ilen, char *cachekey, int deleteop)
+        char *idata, long ilen, char *cachekey, char *have_keygrp, int deleteop)
 {
     int ret = EXSUCCEED;
     char key[NDRX_CACHE_KEY_MAX+1];
@@ -304,29 +305,36 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     int got_dbname = EXFALSE;
     int cachekey_found = EXFALSE;
     char buf[NDRX_MSGSIZEMAX];
+    char *kg_ptr;
     
     
-    NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
-    
-    if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
-                cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
+    if (NULL!=have_keygrp)
     {
-        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        kg_ptr=have_keygrp;
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
+
+        if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
+                    cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
         {
-            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
-            goto out;
+            if (NDRX_TPCACHE_ENOKEYDATA==ret)
+            {
+                NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+                goto out;
+            }
+            else
+            {
+                NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                        __func__, errdet);
+                goto out;
+            }
         }
-        else
-        {
-            NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
-                    __func__, errdet);
-            goto out;
-        }
+        kg_ptr = key;
     }
     
-    NDRX_LOG(log_debug, "Key group key [%s]", key);
-    
-    
+    NDRX_LOG(log_debug, "Key group key [%s]", kg_ptr);
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, EDB_RDONLY)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
@@ -340,7 +348,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         NDRX_LOG(log_error, "Failed to allocate UBF buffer: %s", tpstrerror(tperrno));
     }
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->keygrpdb, txn, key, &cachedata,
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->keygrpdb, txn, kg_ptr, &cachedata,
             EXFALSE)))
     {
         /* error already provided by wrapper */
@@ -367,7 +375,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         }
         else
         {
-            NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
+            NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, kg_ptr);
             goto out;
         }
     }
@@ -375,7 +383,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     {
         /* Check the record validity */
         exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
-        NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPESYSTEM);
+        NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, kg_ptr, TPESYSTEM);
 
 
         /* Receive data as UBF buffer, so that we can test it... 
@@ -386,7 +394,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                     exdata->atmi_buf_len, (char **)&p_ub_keys, &rsplen, 0))
         {
             /* the error shall be set already */
-            NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", key);
+            NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", kg_ptr);
             EXFAIL_OUT(ret);
         }
 
@@ -428,7 +436,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                                 "db [%s] but got [%s] "
                                 "for group record of cache item key [%s], groupkey [%s]",
                                 __func__, cache->cachedbnm, dptr, cachekey, 
-                                key);
+                                kg_ptr);
                         EXFAIL_OUT(ret)
                     }
 
@@ -560,7 +568,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         cachedata.mv_size = exdata->atmi_buf_len + sizeof(ndrx_tpcache_data_t);
         
         if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->keygrpdb, txn, 
-                key, &cachedata, 0)))
+                kg_ptr, &cachedata, 0)))
         {
             NDRX_LOG(log_debug, "Failed to put DB for keygroup...!");
             goto out;
@@ -863,6 +871,62 @@ out:
     }
 
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
+    return ret;
+}
+
+/**
+ * Extract key by cache data
+ * @param cache cache definition
+ * @param exdata 
+ * @param keyout
+ * @param keyout_bufsz
+ * @return 
+ */
+expublic int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache, 
+        ndrx_tpcache_data_t *exdata, char *keyout, long keyout_bufsz)
+{
+    int ret = EXSUCCEED;
+    char *buf = NULL;
+    long rsplen = 0;
+    char errdet[MAX_TP_ERROR_LEN+1];
+    
+    typed_buffer_descr_t *buf_type = &G_buf_descr[exdata->atmi_type_id];
+    
+    if (EXSUCCEED!=ndrx_G_tpcache_types[exdata->atmi_type_id].pf_cache_get(
+            cache, exdata, buf_type, buf, 0, &buf, &rsplen, 0))
+    {
+        NDRX_LOG(log_error, "%s: Failed to process ", __func__);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* get the key */
+    
+    NDRX_STRNCPY_SAFE(keyout, cache->keygrpfmt, keyout_bufsz);
+    
+    if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
+                cache, buf, rsplen, keyout, keyout_bufsz, errdet, sizeof(errdet))))
+    {
+        if (NDRX_TPCACHE_ENOKEYDATA==ret)
+        {
+            NDRX_LOG(log_debug, "Failed to build key (no data for key): %s", errdet);
+            goto out;
+        }
+        else
+        {
+            NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failed to build cache key: %s", 
+                    __func__, errdet);
+            goto out;
+        }
+    }
+    
+out:
+
+    /* free up the data buffer */
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
+
     return ret;
 }
 

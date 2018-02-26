@@ -641,12 +641,36 @@ out:
  * WARNING!!! If doing changes in idexes, then data will become invalid and shall
  * be dropped!!!
  * 
- * @param svcnm
- * @param idx
- * @return 
+ * @param svcnm service name to search for 
+ * @param idx cache index
+ * @return NULL (not found) or ptr to tpcall cache.
  */
 expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall_byidx(char *svcnm, int idx)
 {
+    ndrx_tpcache_svc_t *svcc;
+    ndrx_tpcallcache_t* el;
+    int ret = EXSUCCEED;
+    int i=0;
+    
+    EXHASH_FIND_STR(ndrx_G_tpcache_svc, svcnm, svcc);
+    
+    if (NULL==svcc)
+    {
+        NDRX_LOG(log_debug, "No cache defined for service [%s]", svcnm);
+        return NULL;
+    }
+    
+    DL_FOREACH(svcc->caches, el)
+    {
+        if (i==idx)
+        {
+            return el;
+        }
+        
+        i++;
+    }
+    
+out:
     return NULL;
 }
 
@@ -892,19 +916,19 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_DELFULL;
                     }
-                    else if (0==strcmp(p_flags, "putrex"))
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_SAVEREG))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEREG;
                     }
-                    else if (0==strcmp(p_flags, "getreplace")) /* default */
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_REPL)) /* default */
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_REPL;
                     }
-                    else if (0==strcmp(p_flags, "getmerge"))
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_MERGE))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
                     }
-                    else if (0==strcmp(p_flags, "putfull"))
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_SAVEFULL))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEFULL;
                     }
@@ -937,8 +961,9 @@ expublic int ndrx_cache_init(int mode)
                     )
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config - conflicting "
-                        "flags `getreplace' and `getreplace' "
-                        "for service [%s], buffer index: %d", svc, i);
+                        "flags `%s' and `%s' "
+                        "for service [%s], buffer index: %d", 
+                        NDRX_TPCACHE_KWC_REPL, NDRX_TPCACHE_KWC_MERGE, svc, i);
                 EXFAIL_OUT(ret);
             }
             
@@ -955,8 +980,10 @@ expublic int ndrx_cache_init(int mode)
                     (cache->flags & NDRX_TPCACHE_TPCF_SAVEFULL))
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config - conflicting "
-                        "flags `putrex' and `putfull' "
-                        "for service [%s], buffer index: %d", svc, i);
+                        "flags `%s' and `%s' "
+                        "for service [%s], buffer index: %d", 
+                        NDRX_TPCACHE_KWC_SAVEREG, NDRX_TPCACHE_KWC_SAVEFULL,
+                        svc, i);
                 EXFAIL_OUT(ret);
             }
             
@@ -1337,7 +1364,7 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* verify us of keygroup invalidate */
-            if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP || 
+            if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP &&
                     !(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] can be only used with "
