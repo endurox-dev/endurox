@@ -627,6 +627,7 @@ exprivate int ndrx_cache_invalgroup(UBFH *p_ub, char *keyitem_dbname)
                      __func__, Bstrerror(Berror));
              EXFAIL_OUT(ret)
          }
+         
          switch (bfldid1)
          {
              case EX_CACHE_DBNAME:
@@ -787,8 +788,22 @@ expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db,
 {
     int ret = EXSUCCEED;
     UBFH *p_ub = NULL;
+    int tran_started = EXFALSE;
     
     NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    if (NULL==txn)
+    {
+        /* start transaction locally */
+        
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY)))
+        {
+            NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+            goto out;
+        }
+
+        tran_started = EXTRUE;
+    }
     
     if (EXSUCCEED!=(ret=ndrx_cache_keygrp_getgroup(db, txn, key, &p_ub)))
     {
@@ -803,6 +818,25 @@ expublic int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db,
     }
     
 out:
+                 
+    if (tran_started)
+    {
+        /* terminate transaction please */
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
+            {
+                NDRX_LOG(log_error, "Failed to commit - aborting...!");
+                ndrx_cache_edb_abort(db, txn);
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(db, txn);
+        }
+    }
+
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }
@@ -821,8 +855,24 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
     char key[NDRX_CACHE_KEY_MAX+1];
     char errdet[MAX_TP_ERROR_LEN+1];
     int ret = EXSUCCEED;
+    int tran_started = EXFALSE;
     
     NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    
+    if (NULL==txn)
+    {
+        /* start transaction locally */
+        
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, EDB_RDONLY)))
+        {
+            NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+            goto out;
+        }
+
+        tran_started = EXTRUE;
+    }
+ 
     
     NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
     
@@ -848,7 +898,25 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
     ret = ndrx_cache_keygrp_inval_by_key(cache->keygrpdb, key, txn, cache->cachedbnm);
     
 out:
-    
+                 
+    if (tran_started)
+    {
+        /* terminate transaction please */
+        if (EXSUCCEED==ret)
+        {
+            if (EXSUCCEED!=ndrx_cache_edb_commit(cache->keygrpdb, txn))
+            {
+                NDRX_LOG(log_error, "Failed to commit - aborting...!");
+                ndrx_cache_edb_abort(cache->keygrpdb, txn);
+                ret=EXFAIL;
+            }
+        }
+        else
+        {
+            ndrx_cache_edb_abort(cache->keygrpdb, txn);
+        }
+    }
+   
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }
