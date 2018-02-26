@@ -71,6 +71,33 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     int tran_started = EXFALSE;
     EDB_txn *txn;
     
+    
+    /* If this is not full keygrp inval, then remove record from group */
+    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+    {
+        if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
+        {
+            /* Remove full group */
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(cache->keygrpdb, 
+                    key, NULL, cache->cachedbnm)))
+            {
+                NDRX_LOG(log_error, "failed to remove keygroup!");
+                goto out;
+            }
+            
+        }
+        else
+        {
+            /* remove just key item... and continue */
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
+                    idata, ilen, key, EXTRUE)))
+            {
+                NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
+                goto out;
+            }
+        }
+    }
+    
     /*
      * just delete record from theyr cache, ptr to cache we have already inside
      * the cache object 
@@ -87,7 +114,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     NDRX_LOG(log_debug, "Delete their cache [%s] idx %d",
             cache->inval_svc, cache->inval_idx);
     
-    /* TODO: If their is part of the cache group, then we shall 
+    /* If their is part of the cache group, then we shall 
      * invalidate whole group.. 
      */
     if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->inval_cache->cachedb, txn, 
