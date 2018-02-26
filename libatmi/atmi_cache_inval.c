@@ -69,6 +69,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
 {
     int ret = EXFALSE;
     int tran_started = EXFALSE;
+    char flags[]={NDRX_TPCACHE_BCAST_DELFULLC, EXEOS};
     EDB_txn *txn;
     
     
@@ -85,6 +86,10 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
                 goto out;
             }
             
+            
+            /* Broadcast the  */
+            flags[0] = NDRX_TPCACHE_BCAST_GROUPC;
+            goto ok_broadcast;
         }
         else
         {
@@ -130,12 +135,14 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         }
     }
     
+ok_broadcast:
     /* broadcast if needed */
     if (cache->inval_cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
     {
+        NDRX_LOG(log_debug, "Broadcast flags [%s]", flags);
         if (EXSUCCEED!=ndrx_cache_broadcast(cache->inval_cache, 
                 cache->inval_svc, idata, ilen, 
-                NDRX_CACHE_BCAST_MODE_DEL, NDRX_TPCACHE_BCAST_DELFULL, 0, 0, 0, 0))
+                NDRX_CACHE_BCAST_MODE_DEL, flags, 0, 0, 0, 0))
         {
             NDRX_LOG(log_error, "WARNING ! Failed to broadcast delete event - continue");
             

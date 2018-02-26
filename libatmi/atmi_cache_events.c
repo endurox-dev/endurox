@@ -297,13 +297,20 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
         /* we are part of keyitems group... perform group operation */
         
         /* Delete by keygroup */
-        if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
+        if (strchr(flags, NDRX_TPCACHE_BCAST_GROUPC))
         {
-            /* Delete full group */
+            NDRX_LOG(log_debug, "Full group delete");
             
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(cache, idata, 
+                    ilen, NULL)))
+            {
+                NDRX_LOG(log_error, "Failed to delete group!");
+                goto out;
+            }
         }
         else
         {
+            NDRX_LOG(log_debug, "Delete only keyitem from group");
             delete_from_keygroup=EXTRUE;
         }
         
@@ -317,7 +324,6 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     }
     
     /* delete record (fully) */
-    
     if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, key, NULL)))
     {
         /* ignore not deleted error... */
@@ -325,6 +331,18 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
         {
             ret=EXSUCCEED;
         }    
+    }
+    
+    /* update keygroup */
+    
+    if (delete_from_keygroup)
+    {
+        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, key, EXTRUE)))
+        {
+            NDRX_LOG(log_error, "Failed to delete key from keygroup [%s]/[%s]!",
+                    key, cache->keygrpdb->cachedb);
+            goto out;
+        }
     }
     
 out:
@@ -350,8 +368,8 @@ out:
 }
 
 /**
- * TODO: add not check for broadcast
  * Drop cache by name
+ * NOTE ! The drop will not perform dropping of keygroup.
  * This does not perform any kind of broadcast
  * @param cachedbnm cache dabase name (in config, subsect)
  * @return EXSUCCEED/EXFAIL (tperror set)
@@ -435,6 +453,8 @@ out:
 
 /**
  * Invalidate cache by expression
+ * Key group is not affected by this as we do not have reference to keygroup or
+ * recover group key from keyitem and perform delete accordingly?
  * @param cachedbnm
  * @param keyexpr
  * @cmds binary commands, here we are interested either regexp kill or 
@@ -515,23 +535,21 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
         }
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
-        
-        if (EXEOS!=((char *)keydb.mv_data)[keydb.mv_size-1])
-        {
-            NDRX_DUMP(log_error, "Invalid cache key", 
-                    keydb.mv_data, keydb.mv_size);
-            
-            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Invalid cache key, len: %ld not "
-                    "terminated with EOS!", __func__, keydb.mv_size);
-            EXFAIL_OUT(ret);
-        }
+        NDRX_CACHE_CHECK_DBKEY((&keydb), TPESYSTEM);
         
         /* match regex on key */
         
         if (EXSUCCEED==ndrx_regexec(&re, keydb.mv_data))
         {
             NDRX_LOG(log_debug, "Key [%s] matched - deleting", keydb.mv_data);
-
+            
+            
+            /* TODO lookup cache and if in keygroup, then we shall recover the
+             * data (prepare incoming) and send the record for 
+             * ndrx_cache_keygrp_addupd(). This will ensure that we can process
+             * expiry records correctly and clean up the group accordingly.
+             */
+            
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
@@ -638,6 +656,9 @@ out:
 
 /**
  * Invalidate by key (delete record too)
+ * Also this one is not accessible for keygroup as no data reference for
+ * building the key. Or we need to recover saved cache data and build key
+ * from there?
  * @param cachedbnm
  * @param keyexpr
  * @param cmds binary commands, here we are interested either regexp kill or 
