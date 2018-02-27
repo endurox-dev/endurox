@@ -37,6 +37,11 @@ folder
 13 - simple domain operations, check one way replication, domain 1 add, domain 1 delete.
 should be replicated on domain 2.
 
+14 - test timesync for caches, call DOM1 no cache add, call DOM2 no cache add. Check
+caches, there shall be duplicates. Run queries on first and second domains, 
+the duplicates shall be removed. Do the same data add of duplicates, the tpcached
+started laster, shall clean up duplicates too.
+
 
 XX - keygroup tests. Build a keygroup, a groupdb have longer expiry, keyitems
 have shorter expiry. In short period of time burst requests for number of records, 
