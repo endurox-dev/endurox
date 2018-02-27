@@ -908,11 +908,11 @@ expublic int ndrx_cache_init(int mode)
                      * New flags: delrex, delfull - used for delete buffer prepration
                      * if not set, defaults to delfull
                      */
-                    if (0==strcmp(p_flags, "delrex"))
+                    if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_DELREG))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_DELREG;
                     }
-                    else if (0==strcmp(p_flags, "delfull"))
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_DELFULL))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_DELFULL;
                     }
@@ -936,7 +936,7 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_INVAL;
                     }
-                    else if (0==strcmp(p_flags, "next"))
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_NEXT))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_NEXT;
                     }
@@ -991,8 +991,9 @@ expublic int ndrx_cache_init(int mode)
                     !(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config - conflicting "
-                        "flags `next' can be used only with `inval' "
-                        "for service [%s], buffer index: %d", svc, i);
+                        "flags `%s' can be used only with `%s' "
+                        "for service [%s], buffer index: %d", 
+                        NDRX_TPCACHE_KWC_NEXT, NDRX_TPCACHE_KWC_INVAL, svc, i);
                 EXFAIL_OUT(ret);
             }
             
