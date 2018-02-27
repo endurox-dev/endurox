@@ -468,6 +468,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
     long dbflags;
+    unsigned int flagsdb;
     /* Key size - assume 16K should be fine */
     /* get buffer type & sub-type */
     cachedata_update.mv_size = 0;
@@ -657,9 +658,21 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         }
     }
     
-    /* Lookup DB */
+    /* Lookup DB - check the flags if with update, requires update, then no read
+     * only */
     
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, EDB_RDONLY)))
+    if ( (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC) ||
+            (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_LRU) ||
+            (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_HITS))
+    {
+        flagsdb = 0;
+    }
+    else
+    {
+        flagsdb = EDB_RDONLY;
+    }
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, flagsdb)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
         goto out;
