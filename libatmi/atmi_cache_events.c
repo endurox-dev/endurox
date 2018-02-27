@@ -768,7 +768,6 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid)
         char keygrp[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
         
         /* validate db rec... */
-        NDRX_CACHE_CHECK_DBKEY((&keydb), TPESYSTEM);
         exdata = (ndrx_tpcache_data_t *)val.mv_data;
         NDRX_CACHE_CHECK_DBDATA((&val), exdata, keydb.mv_data, TPESYSTEM);
         
