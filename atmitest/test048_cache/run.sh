@@ -62,6 +62,7 @@ run_test "09_run_lru"
 run_test "10_run_hits"
 run_test "11_run_fifo"
 run_test "12_run_hitsexpiry"
+run_test "13_run_domops"
 
 echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures ($M_failstr)"
 
