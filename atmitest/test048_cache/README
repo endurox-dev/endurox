@@ -43,11 +43,14 @@ the duplicates shall be removed. Do the same data add of duplicates, the tpcache
 started laster, shall clean up duplicates too.
 
 
-XX - keygroup tests. Build a keygroup, a groupdb have longer expiry, keyitems
+15 - keygroup tests. Build a keygroup, a groupdb have longer expiry, keyitems
 have shorter expiry. In short period of time burst requests for number of records, 
 at the end we shall be rejected. Wait a time, some keyitems shall be removed,
 but some shall live again, run some unique requests, we shall got rejects on new
 reqs. Wait some time, the full group shall be dropped and once cached keys should
 should be new again.
 
+
+16. Delete with multiple caches and dbs. Including keygroup. Send different set
+of fields for delete (in some cases delete wont find anything in remote domain).
 
