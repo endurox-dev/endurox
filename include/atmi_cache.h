@@ -61,11 +61,13 @@ extern "C" {
 #define NDRX_TPCACHE_KWC_MERGE                  "getmerge"
 #define NDRX_TPCACHE_KWC_SAVEFULL               "putfull"
 #define NDRX_TPCACHE_KWC_SAVESETOF              ""
-#define NDRX_TPCACHE_KWC_NEXT                   ""
-#define NDRX_TPCACHE_KWC_DELREG                 ""
-#define NDRX_TPCACHE_KWC_DELFULL                ""
+#define NDRX_TPCACHE_KWC_NEXT                   "next"
+#define NDRX_TPCACHE_KWC_DELREG                 "delrex"
+#define NDRX_TPCACHE_KWC_DELFULL                "delfull"
 #define NDRX_TPCACHE_KWC_DELSETOF               ""
 #define NDRX_TPCACHE_KWC_KEYITEMS               ""
+    
+/* Cache settings keywords: */
 
     
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
@@ -223,9 +225,9 @@ extern "C" {
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_INVAL));\
     NDRX_LOG(LEV, "flags (computed) save list = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVESETOF));\
-    NDRX_LOG(LEV, "flags, 'delrex' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_DELREG,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELREG));\
-    NDRX_LOG(LEV, "flags, 'delfull' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_DELFULL,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELFULL));\
     NDRX_LOG(LEV, "flags (computed) delete list = [%d]", \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_DELSETOF));\
