@@ -625,6 +625,16 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     
     *should_cache=EXTRUE;
     
+    if (flags & TPNOCACHEDDATA)
+    {
+        /* in this case we must */
+        
+        NDRX_LOG(log_info, "No cache data -> request lookup");
+        
+        ret = NDRX_TPCACHE_ENOCACHEDATA;
+        goto out;
+    }
+    
     /* Check the cache group now (if defined for this cache) */
     if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
     {

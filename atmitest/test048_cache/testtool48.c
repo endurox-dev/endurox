@@ -280,7 +280,7 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
 
-    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lxm:")) != EXFAIL)
+    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lxm:d")) != EXFAIL)
     {
         NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
         
@@ -351,6 +351,9 @@ int main(int argc, char** argv)
                     M_first_goes_to_cache=EXFALSE;
                 }
                 
+                break;
+            case 'd':
+                M_tpcall_flags|=TPNOCACHEDDATA;
                 break;
             case 'l':
                 M_tpcall_flags|=TPNOCACHELOOK;
