@@ -167,7 +167,7 @@ set_dom1;
 
 (time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n1 -fY -l 2>&1) > ./13_testtool48.log
+    -cY -n1 -fY -d 2>&1) > ./14_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
@@ -182,7 +182,7 @@ set_dom2;
 
 (time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n1 -fY -l 2>&1) >> ./13_testtool48.log
+    -cY -n1 -fY -d 2>&1) >> ./14_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (2)"
@@ -192,10 +192,11 @@ fi
 
 echo "Printing dom 1 keys"
 set_dom1;
-xadmin pc 
+xadmin cs db14
 
 echo "Printing dom 2 keys"
 set_dom2;
+xadmin cs db14
 
 go_out $RET
 

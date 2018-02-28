@@ -341,7 +341,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_STRCPY_SAFE(evctl.name1, cachesvc);
         evctl.flags|=TPEVSERVICE;
         
-        if (EXSUCCEED!=tpsubscribe(el->qname, NULL, &evctl, 0L))
+        if (EXFAIL==tpsubscribe(el->qname, NULL, &evctl, 0L))
         {
             NDRX_LOG(log_error, "Failed to subscribe to event: [%s] "
                 "target service: [%s]", el->qname, evctl.name1);
