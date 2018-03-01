@@ -60,7 +60,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         
         
 	E(edb_dbi_open(txn, "id2", EDB_CREATE|EDB_DUPSORT, &dbi));
-        E(edb_set_dupsort(txn, dbi, sort_data));
+    E(edb_set_dupsort(txn, dbi, sort_data));
         
 	key.mv_size = sizeof(int);
 	key.mv_data = kval;
@@ -105,7 +105,7 @@ Ensure(test_nstd_mtest6_dupcursor)
 
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
         
-        E(edb_set_dupsort(txn, dbi, sort_data));
+    /* E(edb_set_dupsort(txn, dbi, sort_data)); */
         
         
 	E(edb_cursor_open(txn, dbi, &cursor));
@@ -126,9 +126,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         
 	edb_cursor_close(cursor);
         
-        /*
         E(edb_cursor_open(txn, dbi, &cursor));
-        */
         
         /* OK fetch the first rec of cursor, next records we shall kill (if any) */
         /* first: EDB_FIRST_DUP - this we accept and process */
