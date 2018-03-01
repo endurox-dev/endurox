@@ -558,7 +558,7 @@ extern NDRX_API char* ndrx_cache_mgt_getsvc(void);
 
 extern NDRX_API int ndrx_cache_save (char *svc, char *idata, 
         long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,
-        long t, int tusec, int is_event);
+        int tusec, long t, int is_event);
 
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
