@@ -129,7 +129,7 @@ out:
  */
 expublic int ndrx_cache_save (char *svc, char *idata, 
         long ilen, int save_tperrno, long save_tpurcode, int nodeid, long flags,
-        long t, int tusec, int is_event)
+        int tusec, long t, int is_event)
 {
     int ret = EXSUCCEED;
     /* have a buffer in size of ATMI message */
@@ -380,6 +380,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     
     
     /* Add the record to the DB, to specific key! */
+#if 0
     if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
     {
         dbflags = EDB_APPENDDUP;
@@ -388,6 +389,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     {
         dbflags = 0;
     }
+#endif
     
     cachedata.mv_data = (void *)exdata;
     cachedata.mv_size = exdata->atmi_buf_len + sizeof(ndrx_tpcache_data_t);
@@ -397,7 +399,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             svcc->svcnm, key, (long)cachedata.mv_size);
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
-            key, &cachedata, dbflags)))
+            key, &cachedata, 0)))
     {
         NDRX_LOG(log_debug, "Failed to put DB record!");
         goto out;
@@ -831,6 +833,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         /* Add record */
         
         /* dup was mandatory... flag if using sorting, afaik, or not? */
+#if 0
         if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
         {
             dbflags = EDB_APPENDDUP;
@@ -839,8 +842,9 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         {
             dbflags = 0;
         }
+#endif
         if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
-            key, &cachedata_update, dbflags)))
+            key, &cachedata_update, 0)))
         {
             NDRX_LOG(log_debug, "Failed to put/update DB record!");
             goto out;

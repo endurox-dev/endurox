@@ -165,8 +165,8 @@ xadmin pc
 echo "Running off client on domain 1"
 set_dom1;
 
-(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1"}' \
-    -m '{"T_STRING_FLD":"KEY1"}' \
+(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1"}' \
     -cY -n1 -fY -d 2>&1) > ./14_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -180,8 +180,8 @@ echo "Running off client on domain 2"
 set_dom2;
 
 
-(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1"}' \
-    -m '{"T_STRING_FLD":"KEY1"}' \
+(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
     -cY -n1 -fY -d 2>&1) >> ./14_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -189,14 +189,75 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
+#
+# Also output on both caches must be equal
+#
 
 echo "Printing dom 1 keys"
 set_dom1;
 xadmin cs db14
+ensure_keys db14 2
+
+CS1=`xadmin cs db14`
 
 echo "Printing dom 2 keys"
 set_dom2;
 xadmin cs db14
+ensure_keys db14 2
+CS2=`xadmin cs db14`
+
+if [[ "X$CS1" != "X$CS2" ]]; then
+
+        echo "Cache1 must be equal to cache2, but got [$CS1] vs [$CS2]"
+        go_out 2
+fi
+
+echo "Run second time with cached results, should clean up the db..."
+
+
+set_dom1;
+
+(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -cY -n100 -fN 2>&1) >> ./14_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (3)"
+    go_out 1
+fi
+
+ensure_keys db14 1
+
+CS1=`xadmin cs db14`
+
+
+echo "Local cleanup shall not be broadcasted"
+set_dom2;
+ensure_keys db14 2
+
+(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -cY -n100 -fN 2>&1) >> ./14_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (4)"
+    go_out 1
+fi
+
+ensure_keys db14 1
+
+CS2=`xadmin cs db14`
+
+
+if [[ "X$CS1" != "X$CS2" ]]; then
+
+        echo "(2) Cache1 must be equal to cache2, but got [$CS1] vs [$CS2]"
+        go_out 2
+fi
+
+echo "Now test with duplicate removal of tpcached..."
 
 go_out $RET
+
+
 
