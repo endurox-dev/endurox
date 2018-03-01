@@ -466,6 +466,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     int tran_started = EXFALSE;
     EDB_val cachedata;
     EDB_val cachedata_update;
+    EDB_val cachedata_delete;
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
@@ -856,12 +857,14 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         /* fetch next for dups and remove them.. if any.. */
         /* next: MDB_NEXT_DUP  - we kill this! */
         while (EXSUCCEED==(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata_update, EDB_NEXT_DUP)))
+                    key, &cachedata_delete, EDB_NEXT_DUP)))
         {
             /* delete the record, not needed, some old cache rec */
+            NDRX_DUMP(log_debug, "Deleting duplicate record...", 
+                    cachedata_delete.mv_data, cachedata_delete.mv_size);
             
             if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->cachedb, txn, 
-                    key, &cachedata)))
+                    key, &cachedata_delete)))
             {
                 if (ret!=EDB_NOTFOUND)
                 {
