@@ -96,6 +96,12 @@
             <sysopt>-e ${TESTDIR}/tpbridge-dom2_1.log -r</sysopt>
             <appopt>-f -n1 -r -i 127.0.0.1 -p 44001 -tP -z30</appopt>
         </server>
+        <server name="tpbridge">
+            <max>1</max>
+            <srvid>9002</srvid>
+            <sysopt>-e ${TESTDIR}/tpbridge-dom2_3.log -r</sysopt>
+            <appopt>-f -n3 -r -i 127.0.0.1 -p 44003 -tP -z30</appopt>
+        </server>
         <server name="cpmsrv">
             <max>1</max>
             <max>1</max>

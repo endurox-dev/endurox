@@ -255,7 +255,34 @@ if [[ "X$CS1" != "X$CS2" ]]; then
         go_out 2
 fi
 
-echo "Now test with duplicate removal of tpcached..."
+echo "Now test with duplicate removal of tpcached - domain 3 shall have two keys now"
+
+set_dom3;
+
+xadmin cs db14
+
+ensure_keys db14 2
+
+echo "starting tpcached..."
+
+xadmin bc -t CACHED
+
+echo "waiting for duplicate scan... 10 sec"
+
+sleep 10
+
+ensure_keys db14 1
+
+(time ./testtool48 -sTESTSV14 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM2"}' \
+    -cY -n100 -fN 2>&1) >> ./14_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (5)"
+    go_out 1
+fi
+
+
 
 go_out $RET
 

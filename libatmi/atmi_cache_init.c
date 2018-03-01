@@ -267,6 +267,22 @@ expublic ndrx_tpcache_db_t *ndrx_cache_dbgethash(void)
     return ndrx_G_tpcache_db;
 }
 
+
+/**
+ * Sort data blocks by date
+ * @param a
+ * @param b
+ * @return 
+ */
+exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
+{
+    ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
+    ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
+    
+    /* to get newer rec first, we change the compare order */
+    return ndrx_utc_cmp(&bd->t, &bd->tusec, &ad->t, &ad->tusec);
+}
+
 /**
  * Resolve cache db
  * @param cachedb name of cache db
@@ -572,6 +588,18 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 db->cachedb, edb_strerror(ret));
         
         EXFAIL_OUT(ret);
+    }
+    
+    if (db->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
+    {
+        if (EXSUCCEED!=(ret=edb_set_dupsort(txn, db->dbi, sort_data_bydate)))
+        {
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to begin transaction for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+            goto out;
+        }
     }
     
     if (NDRX_TPCACH_INIT_BOOT==mode &&
