@@ -121,7 +121,7 @@ expublic long ndrx_msgsizemax (void)
                 {   
                     userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
                                 "to: %ld bytes or %ld kb (calculated by: "
-                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
+                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))", 
                                 (long)M_stack_estim, (long)(M_stack_estim/1024)+1, 
                                 (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
 

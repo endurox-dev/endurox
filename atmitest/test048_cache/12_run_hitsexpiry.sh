@@ -111,6 +111,7 @@ xadmin pc
 #
 # Stop th daemon so that it does not interfere with in-progress calls
 #
+set_dom1;
 xadmin sc -t CACHED
 
 echo "Running off client"
