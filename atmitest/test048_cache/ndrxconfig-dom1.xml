@@ -112,7 +112,7 @@
     <clients>
         <!-- batch mode/% tests -->
         <client cmdline="tpcached" cctag="db01">
-                <exec tag="CACHED" autostart="Y" log="tpcached.log"/>
+                <exec tag="CACHED" autostart="Y" log="tpcached-dom1.log"/>
         </client>
     </clients>
 </endurox>
