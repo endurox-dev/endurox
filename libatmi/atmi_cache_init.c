@@ -1105,8 +1105,9 @@ expublic int ndrx_cache_init(int mode)
 
                 if (NULL==svcc)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: inval_s    vc [%s] not found, "
-                            "or defined later (at this or another config file)");
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: inval_svc [%s] not found, "
+                            "or defined later (at this or another config file)",
+                            cache->inval_svc);
                     EXFAIL_OUT(ret);
                 }
                 
@@ -1363,7 +1364,7 @@ expublic int ndrx_cache_init(int mode)
                     EXFAIL_OUT(ret);
                 }
                 
-                if (NULL==cache->keygroupmrej && cache->keygroupmax>=0)
+                if (NULL==cache->keygroupmrej && cache->keygroupmax>0)
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmax] defined, but "
                             "[keygroupmrej] not defined - invalid config for"
