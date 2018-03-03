@@ -1251,24 +1251,25 @@ expublic int ndrx_cache_init(int mode)
             
             /* Process the reject expression by flags func */
             
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygroupmrej")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_KEYGROUPMREJ)))
             {
                 cache->keygroupmrej = NDRX_STRDUP(tmp);
                 
                 if (NULL==cache->keygroupmrej)
                 {
                     int err = errno;
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to allocate [keygroupmrej] buf"
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to allocate [%s] buf"
                             "for svc [%s buffer index: %d", 
-                                svc, i, strerror(err));
+                                NDRX_TPCACHE_KWC_KEYGROUPMREJ,
+                            svc, i, strerror(err));
                     EXFAIL_OUT(ret);
                 }
-                
-                NDRX_STRCPY_SAFE(cache->keygroupmrej, tmp);
             }
             
             /* set keygroup limit - keygroupmax */
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygroupmax")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_KEYGROUPMAX)))
             {
                 cache->keygroupmax = atol(tmp);
             }
@@ -1319,7 +1320,8 @@ expublic int ndrx_cache_init(int mode)
             
             /* Validate key group storage, if used */
             
-            if (EXEOS!=cache->keygrpfmt[0])
+            if (EXEOS!=cache->keygrpfmt[0] &&
+                    !(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
             {
                 /* this cache is part of key items... */
                 cache->flags|=NDRX_TPCACHE_TPCF_KEYITEMS;
@@ -1357,19 +1359,21 @@ expublic int ndrx_cache_init(int mode)
                 
                 if (NULL!=cache->keygroupmrej && cache->keygroupmax<=0)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmrej] defined, but "
-                            "[keygroupmax] is 0 - invalid config for"
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] defined, but "
+                            "[%s] is 0 - invalid config for"
                             " service [%s] buffer index %d",
-                            svc, i);
+                            NDRX_TPCACHE_KWC_KEYGROUPMREJ, 
+                            NDRX_TPCACHE_KWC_KEYGROUPMAX, svc, i);
                     EXFAIL_OUT(ret);
                 }
                 
                 if (NULL==cache->keygroupmrej && cache->keygroupmax>0)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmax] defined, but "
-                            "[keygroupmrej] not defined - invalid config for"
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] defined, but "
+                            "[%s] not defined - invalid config for"
                             " service [%s] buffer index %d",
-                            svc, i);
+                            NDRX_TPCACHE_KWC_KEYGROUPMAX, 
+                            NDRX_TPCACHE_KWC_KEYGROUPMREJ, svc, i);
                     EXFAIL_OUT(ret);
                 }
                 
@@ -1378,17 +1382,17 @@ expublic int ndrx_cache_init(int mode)
             {
                 if (NULL!=cache->keygroupmrej)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmrej] not used as "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] not used as "
                             "group format not defined - service [%s] buffer index %d",
-                            svc, i);
+                            NDRX_TPCACHE_KWC_KEYGROUPMREJ, svc, i);
                     EXFAIL_OUT(ret);
                 }
                 
                 if (cache->keygroupmax > 0)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygroupmax] defined, but "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] defined, but "
                             "group format not defined - service [%s] buffer index %d",
-                            svc, i);
+                            NDRX_TPCACHE_KWC_KEYGROUPMAX, svc, i);
                     EXFAIL_OUT(ret);
                 }
             }
