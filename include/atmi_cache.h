@@ -68,7 +68,8 @@ extern "C" {
 #define NDRX_TPCACHE_KWC_KEYITEMS               ""
     
 /* Cache settings keywords: */
-
+#define NDRX_TPCACHE_KWC_KEYGROUPMREJ           "keygroupmrej"
+#define NDRX_TPCACHE_KWC_KEYGROUPMAX            "keygroupmax"
     
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
@@ -239,8 +240,10 @@ extern "C" {
     NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
     NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
     NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
-    NDRX_LOG(LEV, "keygroupmax=[%ld]", TPCALLCACHE->keygroupmax);\
-    NDRX_LOG(LEV, "keygroupmrej=[%s]", TPCALLCACHE->keygroupmrej);\
+    NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGROUPMAX,\
+                    TPCALLCACHE->keygroupmax);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_KEYGROUPMREJ,\
+                    TPCALLCACHE->keygroupmrej);\
     NDRX_LOG(LEV, "keygroupmrej_abuf=[%p]", TPCALLCACHE->keygroupmrej_abuf);\
     NDRX_LOG(LEV, "keygroupmtperrno=[%d]", TPCALLCACHE->keygroupmtperrno);\
     NDRX_LOG(LEV, "keygroupmtpurcode=[%ld]", TPCALLCACHE->keygroupmtpurcode);\

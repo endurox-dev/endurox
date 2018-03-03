@@ -335,7 +335,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     }
     
     NDRX_LOG(log_debug, "Key group key [%s]", kg_ptr);
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, EDB_RDONLY)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->keygrpdb, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
         goto out;

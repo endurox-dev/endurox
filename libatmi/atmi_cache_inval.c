@@ -74,18 +74,18 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     
     
     /* If this is not full keygrp inval, then remove record from group */
-    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+    if (cache->inval_cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
     {
-        if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
+        if (cache->inval_cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
         {
             /* Remove full group */
-            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(cache->keygrpdb, 
-                    key, NULL, cache->cachedbnm)))
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(
+                    cache->inval_cache->keygrpdb, 
+                    key, NULL, cache->inval_cache->cachedbnm)))
             {
                 NDRX_LOG(log_error, "failed to remove keygroup!");
                 goto out;
             }
-            
             
             /* Broadcast the  */
             flags[0] = NDRX_TPCACHE_BCAST_GROUPC;
@@ -94,7 +94,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         else
         {
             /* remove just key item... and continue */
-            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache->inval_cache, 
                     idata, ilen, key, NULL, EXTRUE)))
             {
                 NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
