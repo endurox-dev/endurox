@@ -405,7 +405,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         goto out;
     }
     
-    NDRX_LOG(log_debug, "Data cached");
+    NDRX_LOG(log_debug, "Data cached, key [%s]", key);
     
     if ((cache->cachedb->flags & NDRX_TPCACHE_FLAGS_BCASTPUT)
         && !is_event)
@@ -632,7 +632,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     {
         /* in this case we must */
         
-        NDRX_LOG(log_info, "No cache data -> request lookup");
+        NDRX_LOG(log_info, "No cache data -> request lookup for key [%s]", key);
         
         ret = NDRX_TPCACHE_ENOCACHEDATA;
         goto out;
