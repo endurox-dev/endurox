@@ -100,6 +100,8 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     int cachekey_found = EXFALSE;
     int got_dbname = EXFALSE;
     
+    NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
+    
     if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
                 cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
     {

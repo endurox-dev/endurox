@@ -167,17 +167,16 @@ set_dom1;
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>&1) > ./15_testtool48.log
+    -cY -n50 -fY 2>&1) > ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
     go_out 1
 fi
 
-
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM2","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (2)"
@@ -187,7 +186,7 @@ fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (3)"
@@ -196,7 +195,7 @@ fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (4)"
@@ -205,7 +204,7 @@ fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY5","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY5","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (5)"
@@ -214,7 +213,7 @@ fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY6","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY6","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (6)"
@@ -223,7 +222,7 @@ fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY7","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY7","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (7)"
@@ -236,7 +235,7 @@ fi
 #
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1","T_STRING_3_FLD":"REJECT"}' \
-    -cY -n1 -fY -d -r4 -e11 2>>&1) >> ./15_testtool48.log
+    -cY -n1 -fY -r4 -e11 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (8)"
@@ -266,7 +265,7 @@ sleep 15
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (8.1)"
@@ -275,7 +274,7 @@ fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY9","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -m '{"T_STRING_FLD":"KEY9","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -cY -n50 -fY -d 2>>&1) >> ./15_testtool48.log
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (8.1)"
