@@ -174,8 +174,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"2"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"2"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -184,8 +184,8 @@ if [ $? -ne 0 ]; then
 fi
 
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"3"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"3"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -193,8 +193,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"4"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"4"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -202,8 +202,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY5","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY5","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"5"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"5"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -211,8 +211,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY6","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY6","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"6"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"6"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -220,8 +220,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY7","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY7","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"7"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"7"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -233,9 +233,9 @@ fi
 #
 # This goes as reject
 #
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1","T_STRING_3_FLD":"REJECT"}' \
-    -cY -n1 -fY -r4 -e11 2>&1) >> ./15_testtool48.log
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8","T_STRING_3_FLD":"REJECT"}' \
+    -cY -n1 -fN -r4 -e11 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (8)"
@@ -244,27 +244,33 @@ fi
 
 echo "List group..."
 xadmin cs db15g
-ensure_keys db15g 7
+ensure_keys db15g 1
+
+ehco "List key items..."
+xadmin cs db15k
+ensure_keys db15k 7
+
 
 echo "Check contents of keygroup"
 xadmin cd -d db15g -k SV15KEY1 -i
 
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV151 1
-ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV151 1
-ensure_field db15g SV15KEY3 EX_CACHE_OPEXPR SV15KEY3-SV151 1
-ensure_field db15g SV15KEY4 EX_CACHE_OPEXPR SV15KEY4-SV151 1
-ensure_field db15g SV15KEY5 EX_CACHE_OPEXPR SV15KEY5-SV151 1
-ensure_field db15g SV15KEY6 EX_CACHE_OPEXPR SV15KEY6-SV151 1
-ensure_field db15g SV15KEY7 EX_CACHE_OPEXPR SV15KEY7-SV151 1
-ensure_field db15g SV15KEY8 EX_CACHE_OPEXPR SV15KEY8-SV151 0
-ensure_field db15g SV15KEY9 EX_CACHE_OPEXPR SV15KEY9-SV151 0
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV152 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV153 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV154 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV155 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV156 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV157 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 0
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 0
 
+xadmin bc -t CACHED
 echo "Sleep 15, to wait for some free slot..."
 sleep 15
 
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY8","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -272,12 +278,12 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY9","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY9","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"9"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"9"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (8.1)"
+    echo "testtool48 failed (9)"
     go_out 1
 fi
 
@@ -285,15 +291,15 @@ fi
 xadmin cs db15g
 
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV151 0
-ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV151 0
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV152 0
 
-ensure_field db15g SV15KEY8 EX_CACHE_OPEXPR SV15KEY8-SV151 1
-ensure_field db15g SV15KEY9 EX_CACHE_OPEXPR SV15KEY9-SV151 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
 
 
 echo "List keyitems"
 xadmin cs db15k
-ensure_keys db15k 1
+ensure_keys db15k 2
 
 go_out $RET
 
