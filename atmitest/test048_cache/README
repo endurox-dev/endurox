@@ -50,7 +50,9 @@ but some shall live again, run some unique requests, we shall got rejects on new
 reqs. Wait some time, the full group shall be dropped and once cached keys should
 should be new again.
 
+16 - keygroup tests with limit functionality, for example fifo..
 
-16. Delete with multiple caches and dbs. Including keygroup. Send different set
+
+17 - Delete with multiple caches and dbs. Including keygroup. Send different set
 of fields for delete (in some cases delete wont find anything in remote domain).
 

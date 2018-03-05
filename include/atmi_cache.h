@@ -1,5 +1,5 @@
 /* 
-** ATMI cache strctures
+** ATMI cache structures
 **
 ** @file atmi_cache.h
 ** 
@@ -574,7 +574,8 @@ extern NDRX_API int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen,
 extern NDRX_API int ndrx_cache_drop(char *cachedbnm, short nodeid);
 extern NDRX_API long ndrx_cache_inval_by_expr(char *cachedbnm, 
         char *keyexpr, short nodeid);
-extern NDRX_API int ndrx_cache_inval_by_key(char *cachedbnm, char *key, short nodeid);
+extern NDRX_API int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_resolved, 
+        char *key, short nodeid);
 extern NDRX_API int ndrx_cache_maperr(int unixerr);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);

@@ -444,7 +444,7 @@ exprivate int cache_del(UBFH **pp_ub)
         NDRX_LOG(log_info, "Delete by key. DB: [%s] Key: [%s]", 
                 cachedb, key);
         
-        if (0>(deleted=ndrx_cache_inval_by_key(cachedb, key, (short)tpgetnodeid())))
+        if (0>(deleted=ndrx_cache_inval_by_key(cachedb, key, NULL, (short)tpgetnodeid())))
         {
             REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
             EXFAIL_OUT(ret);
