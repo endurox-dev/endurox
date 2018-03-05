@@ -175,7 +175,7 @@ if [ $? -ne 0 ]; then
 fi
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM2","T_SHORT_FLD":"1"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"1"}' \
     -cY -n50 -fY 2>&1) >> ./15_testtool48.log
 
 if [ $? -ne 0 ]; then

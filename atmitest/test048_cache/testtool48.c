@@ -226,7 +226,8 @@ exprivate int main_loop(void)
                 
                 if (0!=Bcmp(p_ub, M_p_ub_cmp_cache))
                 {
-                    NDRX_LOG(log_error, "TESTERROR ! Failed to compare UBF buffer");
+                    NDRX_LOG(log_error, "TESTERROR ! Failed to compare UBF buffer: %s", 
+                                        Bstrerror(Berror));
                     
                     ndrx_debug_dump_UBF(log_debug, "Received for compare", p_ub);
                     
