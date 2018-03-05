@@ -688,13 +688,13 @@ out:
  * plain single key delete
  * @param nodeid nodeid posting the record, if it is ours then broadcast event, 
  * if ours then broadcast (if required)
+ * @param txn any transaction open (if not open process will open one and commit)
  * @return 0..1 - nr of recs deleted/EXFAIL (tperror set)
  */
 expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_resolved, 
-        char *key, short nodeid)
+        char *key, short nodeid, EDB_txn *txn)
 {
     int ret = EXSUCCEED;
-    EDB_txn *txn = NULL;
     ndrx_tpcache_db_t* db;
     int tran_started = EXFALSE;
     UBFH *p_ub = NULL;
@@ -724,13 +724,15 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
     }
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
+    if (NULL==txn)
     {
-        NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
-        goto out;
+        if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
+        {
+            NDRX_CACHE_TPERROR(TPESYSTEM, "%s: failed to start tran", __func__);
+            goto out;
+        }
+        tran_started = EXTRUE;
     }
-    
-    tran_started = EXTRUE;
     
     /* we do not know anything about they record here, is it part of cache or
      * not?
