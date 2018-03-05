@@ -132,7 +132,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran: %s", __func__, 
                 tpstrerror(tperrno));
@@ -240,7 +240,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
             }
 #endif
             if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
-                    keydb.mv_data, (short)nodeid))
+                    keydb.mv_data, (short)nodeid, txn))
             {
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
                         keydb.mv_data);
@@ -587,7 +587,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
             }
 #endif
             if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
-                    dsort[i]->key.mv_data, (short)nodeid))
+                    dsort[i]->key.mv_data, (short)nodeid, txn))
             {
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
                         dsort[i]->key.mv_data);
