@@ -100,6 +100,8 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     int cachekey_found = EXFALSE;
     int got_dbname = EXFALSE;
     
+    NDRX_LOG(log_debug, "%s enter", __func__);
+    
     NDRX_STRCPY_SAFE(key, cache->keygrpfmt);
     
     if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
@@ -161,7 +163,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     
     bfldid1 = BFIRSTFLDID;
     
-    while (1)
+    while (!cachekey_found)
     {
         ret=ndrx_Bnext(&state1, p_ub_keys, &bfldid1, &occ, NULL, &dlen, &dptr);
         
@@ -177,6 +179,8 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
                     __func__, Bstrerror(Berror));
             EXFAIL_OUT(ret)
         }
+        
+        ret=0;
 
         switch (bfldid1)
         {
@@ -208,7 +212,6 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
                 {
                     cachekey_found=EXTRUE;
                     NDRX_LOG(log_debug, "Key found in group");
-                    break;
                 }
                 
                 break;
@@ -233,11 +236,14 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
         EXFAIL_OUT(ret)
     }
     
+    NDRX_LOG(log_debug, "cachekey_found=%d, cache->keygroupmax=%ld numkeys=%ld",
+            cachekey_found, cache->keygroupmax, numkeys);
+    
     if (!cachekey_found && cache->keygroupmax > 0 )
     {
         /* Check the key count and see if reject is needed...? */
         
-        if (numkeys > cache->keygroupmax)
+        if (numkeys >= cache->keygroupmax)
         {
             NDRX_LOG(log_error, "Number keys in group [%ld] max allowed in group [%ld]"
                     " - reject",
@@ -252,6 +258,8 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
                 NDRX_LOG(log_error, "%s: Failed to reject user buffer!", __func__);
                 EXFAIL_OUT(ret);
             }
+            
+            goto out;
         }
     }
     
@@ -262,7 +270,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     }
     else
     {
-        NDRX_LOG(log_debug, "Key found in group");
+        NDRX_LOG(log_debug, "Key found in group, ret=%d", ret);
     }
     
 out:

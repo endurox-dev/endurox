@@ -125,13 +125,14 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     long deleted = 0;
     int tmp_is_bridge;
     char send_q[NDRX_MAX_Q_SIZE+1];
+    char prev_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
             
     ndrx_tpcache_data_t *pdata;
     
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     
     /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran: %s", __func__, 
                 tpstrerror(tperrno));
@@ -152,6 +153,9 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     
     /* loop over the db and match records  */
     
+    /* Do not process duplicate record expiries, only new rec only... 
+     * as killing new rec, old record will be killed too
+     */
     op = EDB_FIRST;
     do
     {
@@ -187,6 +191,16 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                     "record expiry %ld sec. Record expiry UTC: %ld", 
                     keydb.mv_data, t,  db->expiry, pdata->t + db->expiry);
         
+        if (EXEOS!=prev_key[0] && 0==strcmp(keydb.mv_data, prev_key))
+        {
+            NDRX_LOG(log_info, "Duplicate key - skip...");
+            goto next;
+        }
+        else 
+        {
+            NDRX_STRCPY_SAFE(prev_key, keydb.mv_data);
+        }
+        
         /* so either record is expired or service does not exists */
         if (   ((db->flags & NDRX_TPCACHE_FLAGS_EXPIRY) && (pdata->t + db->expiry < t))
                 ||
@@ -198,6 +212,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                     "record expiry %ld sec. Record expiry UTC: %ld", 
                     keydb.mv_data, t,  db->expiry, pdata->t + db->expiry);
             
+#if 0
             /* validate isn't this a record part of the group? */
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
@@ -223,8 +238,18 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                     EXFAIL_OUT(ret);
                 }
             }
+#endif
+            if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
+                    keydb.mv_data, (short)nodeid))
+            {
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
+                        keydb.mv_data);
+                EXFAIL_OUT(ret);
+            }
+            deleted++;
+            
         }
-        
+next:
         if (EDB_FIRST == op)
         {
             op = EDB_NEXT;
@@ -541,6 +566,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
             
             NDRX_LOG(log_info, "About to delete: key=[%s]", dsort[i]->key.mv_data);
             
+#if 0
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &dsort[i]->key, NULL))
             {
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
@@ -559,6 +585,15 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
                     EXFAIL_OUT(ret);
                 }
             }
+#endif
+            if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
+                    dsort[i]->key.mv_data, (short)nodeid))
+            {
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
+                        dsort[i]->key.mv_data);
+                EXFAIL_OUT(ret);
+            }
+            /* use existing delete func... */
             deleted++;
         }
     }
