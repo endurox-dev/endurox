@@ -83,7 +83,7 @@ exprivate int print_buffer(UBFH *p_ub, char *dbname)
     
     ndrx_debug_dump_UBF(log_debug, "Got reply buffer", p_ub);
     
-    if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, NULL, &keydata))
+    if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, NULL, &keydata, NULL, NULL))
     {
         NDRX_LOG(log_error, "Failed to get mandatory UBF data!");
         EXFAIL_OUT(ret);

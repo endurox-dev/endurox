@@ -126,6 +126,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     int tmp_is_bridge;
     char send_q[NDRX_MAX_Q_SIZE+1];
     char prev_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
+    char cur_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
             
     ndrx_tpcache_data_t *pdata;
     
@@ -239,11 +240,13 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                 }
             }
 #endif
+            /* copy is needed because key data might change during group delete */
+            NDRX_STRCPY_SAFE(cur_key, keydb.mv_data);
             if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
-                    keydb.mv_data, (short)nodeid, txn))
+                    cur_key, (short)nodeid, txn))
             {
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
-                        keydb.mv_data);
+                        cur_key);
                 EXFAIL_OUT(ret);
             }
             deleted++;

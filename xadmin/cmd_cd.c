@@ -71,10 +71,11 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
     long rcvlen;
     char *svcnm;
     char cmd = NDRX_CACHE_SVCMD_CLCDUMP;
-    long tperr;
     ndrx_tpcache_data_t cdata;
     char *keydata = NULL;
     char *data = NULL;
+    char *odata = NULL;
+    long olen;
     
     svcnm = ndrx_cache_mgt_getsvc();
             
@@ -98,7 +99,6 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
                 Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
-    
     
     if (EXSUCCEED!=Bchg(p_ub, EX_CACHE_OPEXPR, 0, key, 0L))
     {
@@ -127,7 +127,8 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
     /* Dump results to stdout (currently hex dump of buffer) 
      * If it is UBF buffer, then we might want to interpret it as UBF...
      */
-    if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, &data, &keydata))
+    if (EXSUCCEED!=ndrx_cache_mgt_ubf2data(p_ub, &cdata, &data, &keydata, 
+            &odata, &olen))
     {
         NDRX_LOG(log_error, "Failed to get mandatory UBF data!");
         EXFAIL_OUT(ret);
@@ -154,7 +155,7 @@ exprivate int call_cache(char *dbname, char *key, int interpret)
     
     if (interpret)
     {
-        UBFH *p_ubf_h = (UBFH *)data;
+        UBFH *p_ubf_h = (UBFH *)odata;
         /* interpret the results, currently we support UBF buffer only */
         
         if (BUF_TYPE_UBF==cdata.atmi_type_id)
@@ -175,6 +176,11 @@ out:
     if (NULL!=keydata)
     {
         NDRX_FREE(keydata);
+    }
+
+    if (NULL!=odata)
+    {
+        tpfree(odata);
     }
     
     if (NULL!=data)
