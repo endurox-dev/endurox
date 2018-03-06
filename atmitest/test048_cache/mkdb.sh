@@ -7,6 +7,7 @@
 if [ "$#" -ne 1 ]; then
     scriptname="$(basename $0)"
     echo "Illegal number of parameters. Usage: $scriptname <dbname>"
+    exit 1
 fi
 
 echo "Creating $1"

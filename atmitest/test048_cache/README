@@ -50,7 +50,6 @@ but some shall live again, run some unique requests, we shall got rejects on new
 reqs. Wait some time, the full group shall be dropped and once cached keys should
 should be new again.
 
-
 16 - keygroup, expiry by group. Clean up all records.
 
 17 - keygroup tests with limit functionality, for example fifo..

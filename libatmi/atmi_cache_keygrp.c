@@ -951,7 +951,7 @@ out:
  * @param cache tpcall cache which being invalidated
  */
 expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
-        char *idata, long ilen, EDB_txn *txn)
+        char *idata, long ilen, EDB_txn *txn, int ex_tran)
 {
     char key[NDRX_CACHE_KEY_MAX+1];
     char errdet[MAX_TP_ERROR_LEN+1];
@@ -961,7 +961,7 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
     NDRX_LOG(log_debug, "%s enter", __func__);
     
     
-    if (NULL==txn)
+    if (!ex_tran)
     {
         /* start transaction locally */
         

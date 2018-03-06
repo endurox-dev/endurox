@@ -255,7 +255,8 @@ void CACHEEV (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
         
-        if (0 > (deleted = ndrx_cache_inval_by_key(svcnm, NULL, key, nodeid, NULL)))
+        if (0 > (deleted = ndrx_cache_inval_by_key(svcnm, NULL, key, nodeid, 
+                NULL, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to delete db [%s] by key [%s]: %s",
                     svcnm, key, Bstrerror(Berror));

@@ -240,6 +240,8 @@ expublic int ndrx_cache_ruleval_ubf (ndrx_tpcallcache_t *cache,
 {
     int ret = EXFALSE;
     
+    NDRX_LOG(log_debug, "%s rule=[%s]", __func__, cache->rule);
+    
     if (EXEOS==cache->rule[0])
     {
         ret=EXTRUE;
