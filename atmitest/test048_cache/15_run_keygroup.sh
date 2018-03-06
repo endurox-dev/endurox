@@ -402,5 +402,23 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
+
+echo "Now invalidate record No 10 by ud - full group must be dropped"
+
+cat << EOF | ud
+SRVCNM	TESTSV15I2
+T_STRING_FLD	KEY2
+T_SHORT_FLD	10
+T_SHORT_2_FLD	1
+
+EOF
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 0
+
 go_out $RET
 

@@ -948,6 +948,7 @@ out:
  * So if we delete key item, that will key the keygroup fully...
  * We shall return the status that full group is removed 
  * @param txn this is keygroup transaction, data transaction will be made internally
+ * @param cache tpcall cache which being invalidated
  */
 expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, EDB_txn *txn)

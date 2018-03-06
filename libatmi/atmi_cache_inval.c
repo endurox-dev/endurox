@@ -80,9 +80,8 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         {
             NDRX_LOG(log_debug, "Invalidate whole group!");
             /* Remove full group */
-            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(
-                    cache->inval_cache->keygrpdb, 
-                    key, NULL, cache->inval_cache->cachedbnm)))
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(
+                    cache->inval_cache, idata, ilen,NULL)))
             {
                 NDRX_LOG(log_error, "failed to remove keygroup!");
                 goto out;
