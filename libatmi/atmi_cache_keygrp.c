@@ -748,7 +748,7 @@ out:
  * This will start read only transactions
  * @param db database
  * @param txn transaction in progress
- * @param key key to search for
+ * @param key key to search for (it is a group key)
  * @param pp_ub UBF buffer with keys
  * @return EXSUCCEED/EXFAIL
  */

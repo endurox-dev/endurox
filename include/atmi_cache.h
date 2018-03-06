@@ -619,7 +619,7 @@ extern NDRX_API ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
 /* management */
 
 extern NDRX_API int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata, 
-        char **data, char **keydata);
+        char **data, char **keydata, char **odata, long *olen);
 
 extern NDRX_API int ndrx_cache_mgt_data2ubf(ndrx_tpcache_data_t *cdata, char *keydata,
         UBFH **pp_ub, int incl_blob);

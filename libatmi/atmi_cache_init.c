@@ -521,6 +521,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     NDRX_TPCACHEDB_DUMPCFG(log_info, db);
 #endif
     
+    NDRX_LOG(log_debug, "YOPT cachedb: [%s] boot mode: %d  flags: %ld reset: %d",
+            db->cachedb, mode, db->flags, (int)(db->flags & NDRX_TPCACHE_FLAGS_BOOTRST));
+    
+    
     /* Open the database */
     if (EXSUCCEED!=(ret=edb_env_create(&db->env)))
     {
@@ -602,6 +606,9 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         }
     }
     
+    NDRX_LOG(log_debug, "boot mode: %d  flags: %ld reset: %d",
+            mode, db->flags, (int)(db->flags & NDRX_TPCACHE_FLAGS_BOOTRST));
+    
     if (NDRX_TPCACH_INIT_BOOT==mode &&
             db->flags & NDRX_TPCACHE_FLAGS_BOOTRST)
     {
@@ -630,11 +637,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     EXHASH_ADD_STR(ndrx_G_tpcache_db, cachedb, db);
     
-#ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "Cache [%s] path: [%s] is open!", 
-                db->resource, db->cachedb);
-#endif
-        
+    NDRX_LOG(log_debug, "Cache [%s] path: [%s] is open!", 
+            db->resource, db->cachedb);
 out:
 
     if (NULL!=csection)
@@ -784,7 +788,6 @@ expublic void ndrx_cache_uninit(void)
     ndrx_cache_dbs_free();
     
 }
-     
 
 /**
  * Normal init (used by server & clients)
@@ -860,8 +863,15 @@ expublic int ndrx_cache_init(int mode)
 #endif
         
         /* parse json block */
+        if (NULL!=root_value)
+        {
+            exjson_value_free(root_value);
+        }
+        
         root_value = exjson_parse_string_with_comments(val->val);
-
+        
+        NDRX_LOG(log_debug, "exjson_parse_string_with_comments %p", root_value);
+                
         type = exjson_value_get_type(root_value);
         NDRX_LOG(log_error, "Type is %d", type);
 
@@ -871,11 +881,11 @@ expublic int ndrx_cache_init(int mode)
                     "to parse root element", svc);
             EXFAIL_OUT(ret);
         }
-
+        
         root_object = exjson_value_get_object(root_value);
 
         nrcaches = exjson_object_get_count(root_object);
-        
+
         if (1!=nrcaches)
         {
             NDRX_CACHE_ERROR("CACHE: invalid service [%s] cache: "
@@ -903,17 +913,15 @@ expublic int ndrx_cache_init(int mode)
         NDRX_CALLOC_OUT(cachesvc, 1, sizeof(ndrx_tpcache_svc_t), ndrx_tpcache_svc_t);
         
         NDRX_STRCPY_SAFE(cachesvc->svcnm, svc);
-        
+
         for (i = 0; i < cnt; i++)
         {
             
             NDRX_CALLOC_OUT(cache, 1, sizeof(ndrx_tpcallcache_t), ndrx_tpcallcache_t);
-            
             array_object = exjson_array_get_object(array, i);
                 
             cache->idx = i;
             NDRX_STRCPY_SAFE(cache->svcnm, cachesvc->svcnm);
-            
             /* process flags.. by strtok.. but we need a temp buffer
              * Process flags first as some logic depends on them!
              */
@@ -1050,7 +1058,6 @@ expublic int ndrx_cache_init(int mode)
                         cache->str_buf_subtype);
                 EXFAIL_OUT(ret);
             }
-            
             /* get db name */
             if (!(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
                 
@@ -1248,7 +1255,6 @@ expublic int ndrx_cache_init(int mode)
                     }
                 }
             }
-            
             /* Process the reject expression by flags func */
             
             if (NULL!=(tmp = exjson_object_get_string(array_object, 
@@ -1407,7 +1413,7 @@ expublic int ndrx_cache_init(int mode)
                             svc, i);
                     EXFAIL_OUT(ret);
             }
-            
+
             /* Add to linked list */
             DL_APPEND(cachesvc->caches, cache);
             

@@ -886,6 +886,11 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     
 out:
 
+    if (NULL!=cachedata_update.mv_data)
+    {
+        NDRX_FREE(cachedata_update.mv_data);
+    }
+
     if (cursor_open)
     {
         edb_cursor_close(cursor);

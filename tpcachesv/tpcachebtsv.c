@@ -66,6 +66,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     char *env;
     long l;
     
+    
+    /* pull in init.. */
+    if (EXSUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to pre-init server");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_info, "Closing caches (1)...");
+    ndrx_cache_uninit();
+           
     /* get the env */
     
     env = getenv(CONF_NDRX_SYSFLAGS);
@@ -98,7 +109,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
 
-    NDRX_LOG(log_info, "Closing caches...");
+    NDRX_LOG(log_info, "Closing caches (2)...");
     ndrx_cache_uninit();
 out:
 
