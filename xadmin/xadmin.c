@@ -811,7 +811,7 @@ int main(int argc, char** argv) {
     signal(SIGCHLD, sign_chld_handler);
     
     /* Print the copyright notice: */
-    if (is_tty())
+    if (is_tty() && NULL==getenv(CONF_NDRX_SILENT))
     {
         NDRX_BANNER;
     }

@@ -196,6 +196,7 @@ extern "C" {
  */
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
     NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "cache ptr=[%p]", TPCALLCACHE);\
     NDRX_LOG(LEV, "cachedbnm=[%s]", TPCALLCACHE->cachedbnm);\
     NDRX_LOG(LEV, "cachedb=[%p]", TPCALLCACHE->cachedb);\
     NDRX_LOG(LEV, "idx=[%d]", TPCALLCACHE->idx);\

@@ -76,8 +76,9 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     /* If this is not full keygrp inval, then remove record from group */
     if (cache->inval_cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
     {
-        if (cache->inval_cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
+        if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
         {
+            NDRX_LOG(log_debug, "Invalidate whole group!");
             /* Remove full group */
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(
                     cache->inval_cache->keygrpdb, 
@@ -94,12 +95,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         else
         {
             /* remove just key item... and continue */
-            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache->inval_cache, 
-                    idata, ilen, key, NULL, EXTRUE)))
-            {
-                NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
-                goto out;
-            }
+            NDRX_LOG(log_debug, "Removing single key item from group (1)");
         }
     }
     
@@ -132,6 +128,19 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         else
         {
             EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* remove from group... */
+    if (cache->inval_cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS &&
+            !(cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP))
+    {
+        NDRX_LOG(log_debug, "Removing single key item from group (2)");
+        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache->inval_cache, 
+                    idata, ilen, key, NULL, EXTRUE)))
+        {
+            NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
+            goto out;
         }
     }
     
@@ -687,7 +696,8 @@ out:
  * from there?
  * @param cachedbnm
  * @param db_resolved do not lookup the hash, if already have db handler.
- * @param key note key must be copy to normal memory (not from db it self)...
+ * @param key note key must be copy to normal memory (not from db) as might cause
+ * issues with ptr shifting of mdb record.
  * @param nodeid nodeid posting the record, if it is ours then broadcast event, 
  * if ours then broadcast (if required)
  * @param txn any transaction open (if not open process will open one and commit)
