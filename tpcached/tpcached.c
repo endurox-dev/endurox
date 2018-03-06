@@ -189,8 +189,9 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
          */
         
         NDRX_LOG(log_info, "TESTING: Record with key [%s]: current UTC: %ld, "
-                    "record expiry %ld sec. Record expiry UTC: %ld", 
-                    keydb.mv_data, t,  db->expiry, pdata->t + db->expiry);
+                    "record expiry %ld sec. Record expiry UTC: %ld (delta: %ld)", 
+                    keydb.mv_data, t,  db->expiry, pdata->t + db->expiry,
+                    (long)(t - pdata->t));
         
         if (EXEOS!=prev_key[0] && 0==strcmp(keydb.mv_data, prev_key))
         {

@@ -139,7 +139,6 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     buffer_obj_t *buffer_info;
     ndrx_tpcallcache_t *cache;
     ndrx_tpcache_data_t *exdata = (ndrx_tpcache_data_t *)buf;
-    unsigned int dbflags;
     int tran_started = EXFALSE;
     EDB_txn *txn;
     char key[NDRX_CACHE_KEY_MAX+1];
@@ -271,6 +270,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
 #ifdef NDRX_TPCACHE_DEBUG
             NDRX_LOG(log_debug, "Next flag present, go to next cache (if have one)");
 #endif
+            is_matched=EXFALSE;
             continue;
         }
         else
@@ -470,7 +470,6 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
-    long dbflags;
     unsigned int flagsdb;
     /* Key size - assume 16K should be fine */
     /* get buffer type & sub-type */
@@ -524,13 +523,20 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
                 else if (EXFALSE==ret)
                 {
 #ifdef NDRX_TPCACHE_DEBUG
-                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - try next", cache->rule);
+                    NDRX_LOG(log_debug, "Buffer RULE FALSE [%s] - try next", 
+                            cache->rule);
 #endif
                     continue;
                 }
                 
                 NDRX_LOG(log_debug, "rule [%s] matched", cache->rule);
                 is_matched = EXTRUE;
+                
+                
+                /* any way if matched any then we want next cache run.. */
+                
+                *should_cache=EXTRUE;
+                
                 ret = EXSUCCEED;
             }
             else
@@ -603,6 +609,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 #ifdef NDRX_TPCACHE_DEBUG
             NDRX_LOG(log_debug, "Next flag present, go to next cache (if have one)");
 #endif
+            is_matched=EXFALSE;
             continue;
         }
         else

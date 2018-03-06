@@ -719,15 +719,23 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
     ndrx_tpcallcache_t* el;
     int ret = EXSUCCEED;
     char errdet[MAX_TP_ERROR_LEN+1];
-    int i = 0;
+    int i = -1;
     
     DL_FOREACH(svcc->caches, el)
     {
+        i++;
+        NDRX_LOG(log_error, "YOPT!!!! i=%d idx=%d", i, idx);
         if (el->buf_type->type_id == buf_type->type_id)
         {
+            NDRX_LOG(log_error, "YOPT 2!!!! i=%d idx=%d", i, idx);
             if (i==idx)
             {
                 return el;
+            }
+            /* in case if index used, no rule testing! */
+            else if ( idx > EXFAIL)
+            {
+                continue;
             }
             
             if (ndrx_G_tpcache_types[el->buf_type->type_id].pf_rule_eval)
@@ -770,8 +778,6 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
                     buf_type->type);
                 return NULL;
         }
-        
-        i++;
     }
     
     return NULL;
@@ -1107,6 +1113,9 @@ expublic int ndrx_cache_init(int mode)
                 
                 cache->inval_idx = atoi(tmp);
                 
+                NDRX_LOG(log_debug, "Searching for inval svc: [%s]/%d", 
+                        cache->inval_svc, cache->inval_idx);
+                
                 /* Find service in cache */
                 EXHASH_FIND_STR(ndrx_G_tpcache_svc, cache->inval_svc, svcc);
 
@@ -1126,7 +1135,9 @@ expublic int ndrx_cache_init(int mode)
                             cache->inval_svc, cache->inval_idx, 
                             cache->buf_type->type);
                     EXFAIL_OUT(ret);
-                }   
+                }
+                
+                NDRX_LOG(log_debug, "Service found: %p", cache->inval_cache);
             }
             
             /* get db if key group is used */
