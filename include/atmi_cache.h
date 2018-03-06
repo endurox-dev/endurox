@@ -116,10 +116,10 @@ extern "C" {
 
 #define NDRX_TPCACHE_BCAST_DFLT     ""   /* default event                    */
 #define NDRX_TPCACHE_BCAST_DELFULL  "F"  /* delete full                      */
-#define NDRX_TPCACHE_BCAST_DELFULLC 'C'  /* delete full                      */
+#define NDRX_TPCACHE_BCAST_DELFULLC 'F'  /* delete full                      */
     
 #define NDRX_TPCACHE_BCAST_GROUP    "G"  /* Group operatoin                  */
-#define NDRX_TPCACHE_BCAST_GROUPC   'C'  /* Group operatoin                  */
+#define NDRX_TPCACHE_BCAST_GROUPC   'G'  /* Group operatoin                  */
     
 #define NDRX_CACHES_BLOCK           "caches"
 #define NDRX_CACHE_MAX_READERS_DFLT 1000
@@ -576,7 +576,7 @@ extern NDRX_API int ndrx_cache_drop(char *cachedbnm, short nodeid);
 extern NDRX_API long ndrx_cache_inval_by_expr(char *cachedbnm, 
         char *keyexpr, short nodeid);
 extern NDRX_API int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_resolved, 
-        char *key, short nodeid, EDB_txn *txn);
+        char *key, short nodeid, EDB_txn *txn, int ext_tran);
 extern NDRX_API int ndrx_cache_maperr(int unixerr);
 extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc, 
         typed_buffer_descr_t *buf_type, char *idata, long ilen, int idx);
@@ -673,7 +673,7 @@ extern NDRX_API int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db,
         char *key, EDB_txn *txn, char *keyitem_dbname);
  
 extern NDRX_API int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
-        char *idata, long ilen, EDB_txn *txn);
+        char *idata, long ilen, EDB_txn *txn, int ex_tran);
 
 extern NDRX_API int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache, 
         ndrx_tpcache_data_t *exdata, char *keyout, long keyout_bufsz);
