@@ -199,10 +199,12 @@ out:
  * @param pp_ub UBF will EX_CACHE* fields
  * @param cdata output struct where to load the incoming data
  * @param data ptr to space where to allocate the incoming blob (if present in UBF)
+ * @param odata if not NULL, this is output incoming data (XATMI buffer)
+ * @param 
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata, 
-        char **blob, char **keydata)
+        char **blob, char **keydata, char **odata, long *olen)
 {
     int ret = EXSUCCEED;
     BFLDLEN len;
@@ -239,6 +241,21 @@ expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata,
                     "EX_CACHE_BUFLEN says: %ld",
                     len, cdata->atmi_buf_len);
             EXFAIL_OUT(ret);
+        }
+        
+        /* prepare incoming data if ptr present */
+        
+        if (odata!=NULL)
+        {
+            typed_buffer_descr_t *buf_type = &G_buf_descr[cdata->atmi_type_id];
+            
+            if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, *blob, 
+                len, odata, olen, 0))
+            {
+                /* the error shall be set already */
+                NDRX_LOG(log_error, "Failed to prepare incoming buffer");
+                EXFAIL_OUT(ret);
+            }
         }
     }
     

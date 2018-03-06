@@ -551,12 +551,16 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
                     }
                 }
             }
-            else
+           
+            if (db->flags & NDRX_TPCACHE_FLAGS_KEYGRP)
             {
-                NDRX_LOG(log_warn, "Cache for svcnm [%s] by index %d not found "
-                        "- have you chagned ", exdata->svcnm, exdata->cache_idx);
+               if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(db, keydb.mv_data, 
+                       txn, NULL)))
+               {
+                   NDRX_LOG(log_error, "Failed to remove group record!");
+                   EXFAIL_OUT(ret);
+               }
             }
-            
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
@@ -683,9 +687,7 @@ out:
  * from there?
  * @param cachedbnm
  * @param db_resolved do not lookup the hash, if already have db handler.
- * @param keyexpr
- * @param cmds binary commands, here we are interested either regexp kill or 
- * plain single key delete
+ * @param key note key must be copy to normal memory (not from db it self)...
  * @param nodeid nodeid posting the record, if it is ours then broadcast event, 
  * if ours then broadcast (if required)
  * @param txn any transaction open (if not open process will open one and commit)
@@ -700,6 +702,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
     UBFH *p_ub = NULL;
     int deleted = 0;
     char cmd;
+    char keygrp[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
     
     EDB_val keydb, val;
     ndrx_tpcallcache_t* cache;
@@ -742,8 +745,6 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
     
     if (EXSUCCEED==(ret=ndrx_cache_edb_get(db, txn, key, &val, EXFALSE)))
     {
-        char keygrp[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
-        
         /* validate db rec... */
         exdata = (ndrx_tpcache_data_t *)val.mv_data;
         NDRX_CACHE_CHECK_DBDATA((&val), exdata, keydb.mv_data, TPESYSTEM);
@@ -752,6 +753,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
         /* get key group key */
         if (exdata->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
         {
+            NDRX_LOG(log_debug, "record is key item of group");
             if (NULL==(cache = ndrx_cache_findtpcall_byidx(exdata->svcnm, 
                 exdata->cache_idx)))
             {
@@ -777,22 +779,32 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
                 }
             }
         }
-        else
-        {
-            NDRX_LOG(log_warn, "Cache for svcnm [%s] by index %d not found "
-                    "- have you chagned ", exdata->svcnm, exdata->cache_idx);
-        }
         
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, key, NULL)))
+        /* ok we might be a group record, this we need to remove child items... */
+        
+        if (db->flags & NDRX_TPCACHE_FLAGS_KEYGRP)
         {
-            if (ret!=EDB_NOTFOUND)
+            NDRX_LOG(log_debug, "Removing key group");
+            if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_key(db, key, txn, NULL)))
             {
+                NDRX_LOG(log_error, "Failed to remove group record!");
                 EXFAIL_OUT(ret);
-            }    
+            }
         }
         else
         {
-            deleted = 1;
+            NDRX_LOG(log_error, "Removing rec by key [%s]", key);
+            if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, key, NULL)))
+            {
+                if (ret!=EDB_NOTFOUND)
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                 deleted = 1;
+            }
         }
         
         /* OK now update group  */

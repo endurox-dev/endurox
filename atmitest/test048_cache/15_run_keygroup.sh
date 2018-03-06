@@ -289,6 +289,9 @@ fi
 
 
 xadmin cs db15g
+xadmin cs db15k
+
+xadmin cd -d db15g -k SV15KEY1 -i
 
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV151 0
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV152 0
@@ -301,7 +304,99 @@ echo "List keyitems"
 xadmin cs db15k
 ensure_keys db15k 2
 
+
+#echo now invalidate the cache, use key2
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM2","T_SHORT_FLD":"8"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM2","T_SHORT_FLD":"8"}' \
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (10)"
+    go_out 1
+fi
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"9"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"9"}' \
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (11)"
+    go_out 1
+fi
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"10"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"10"}' \
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (12)"
+    go_out 1
+fi
+
+ensure_keys db15k 5
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY2-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY2-SV159 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY2-SV1510 1
+
+echo "Now invalidate record No 2 by ud"
+
+cat << EOF | ud
+SRVCNM	TESTSV15I
+T_STRING_FLD	SV15KEY2
+T_SHORT_FLD	9
+T_SHORT_2_FLD	1
+
+EOF
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY2-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY2-SV159 0
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY2-SV1510 1
+
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM2","T_SHORT_FLD":"8"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM2","T_SHORT_FLD":"8"}' \
+    -cY -n50 -fN 2>&1) >> ./15_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (13)"
+    go_out 1
+fi
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"9"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"9"}' \
+    -cY -n50 -fY 2>&1) >> ./15_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (14)"
+    go_out 1
+fi
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"10"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"10"}' \
+    -cY -n50 -fN 2>&1) >> ./15_testtool48.log
+    
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (15)"
+    go_out 1
+fi
+
+
+(time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
+    -cY -n50 -fN 2>&1) >> ./15_testtool48.log
+    
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (16)"
+    go_out 1
+fi
+
 go_out $RET
-
-
 
