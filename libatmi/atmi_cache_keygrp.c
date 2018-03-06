@@ -292,6 +292,7 @@ out:
  * from the list. Only in inval trigger, we shall invalidate full group...
  * @param deleteop use EXTRUE if performing delete operation from the keygroup
  * @param have_keygrp we have a keygroup, do not use data for this purpose
+ * @param cachekey key item key
  */
 expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
         char *idata, long ilen, char *cachekey, char *have_keygrp, int deleteop)
