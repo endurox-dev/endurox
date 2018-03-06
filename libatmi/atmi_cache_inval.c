@@ -81,7 +81,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
             NDRX_LOG(log_debug, "Invalidate whole group!");
             /* Remove full group */
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(
-                    cache->inval_cache, idata, ilen,NULL)))
+                    cache->inval_cache, idata, ilen,NULL,EXFALSE)))
             {
                 NDRX_LOG(log_error, "failed to remove keygroup!");
                 goto out;
@@ -231,7 +231,7 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     
     
     /* find exact cache */
-    if (NULL!=(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
+    if (NULL==(cache = ndrx_cache_findtpcall(svcc, buf_type, idata, ilen, EXFAIL)))
     {
         NDRX_LOG(log_debug, "No caches matched by expressions for [%s]", svc);
         ndrx_TPset_error_fmt(TPENOENT, "No caches matched by expressions for [%s]", 
@@ -277,11 +277,13 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
             NDRX_LOG(log_debug, "Full group delete");
             
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(cache, idata, 
-                    ilen, NULL)))
+                    ilen, NULL, EXFALSE)))
             {
                 NDRX_LOG(log_error, "Failed to delete group!");
                 goto out;
             }
+            /* All already deleted... */
+            goto out;
         }
         else
         {
@@ -703,7 +705,7 @@ out:
  * @return 0..1 - nr of recs deleted/EXFAIL (tperror set)
  */
 expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_resolved, 
-        char *key, short nodeid, EDB_txn *txn)
+        char *key, short nodeid, EDB_txn *txn, int ext_tran)
 {
     int ret = EXSUCCEED;
     ndrx_tpcache_db_t* db;
@@ -736,7 +738,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
     }
     
     /* start transaction */
-    if (NULL==txn)
+    if (!ext_tran)
     {
         if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(db, &txn, 0)))
         {

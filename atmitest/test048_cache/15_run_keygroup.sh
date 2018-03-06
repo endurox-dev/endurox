@@ -246,7 +246,7 @@ echo "List group..."
 xadmin cs db15g
 ensure_keys db15g 1
 
-ehco "List key items..."
+echo "List key items..."
 xadmin cs db15k
 ensure_keys db15k 7
 
@@ -353,8 +353,12 @@ T_SHORT_2_FLD	1
 
 EOF
 
-xadmin cs db15k
+echo "Sleeping 3 to broadcast delete... (1)"
+sleep 3
 
+echo "Testing DOM 1"
+
+xadmin cs db15k
 xadmin cd -d db15g -k SV15KEY2 -i
 
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
@@ -364,6 +368,33 @@ ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 1
 ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
 ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 1
 
+
+echo "Testing DOM 2"
+set_dom2;
+xadmin cs db15k
+xadmin cd -d db15g -k SV15KEY2 -i
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 1
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 1
+
+echo "Testing DOM 3"
+set_dom3;
+xadmin cs db15k
+xadmin cd -d db15g -k SV15KEY2 -i
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 1
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 1
+
+echo "Back to DOM 1"
+set_dom1;
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
     -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
@@ -413,12 +444,37 @@ T_SHORT_2_FLD	1
 
 EOF
 
+echo "Sleeping 3 to broadcast delete... (2)"
+sleep 3
+
+echo "Testing DOM 1"
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
 ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
 
 ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 0
 ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
 ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 0
+
+echo "Testing DOM 2"
+set_dom2;
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 0
+
+echo "Testing DOM 3"
+set_dom3;
+
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
+ensure_field db15g SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 1
+
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV158 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV159 0
+ensure_field db15g SV15KEY2 EX_CACHE_OPEXPR SV15KEY2-SV1510 0
+
 
 go_out $RET
 
