@@ -359,24 +359,24 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             
     }
     
-    /* Firstly add record to the key group if needed */
-    
-    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
-    {
-        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, 
-                key, NULL, EXFALSE)))
-        {
-            NDRX_LOG(log_error, "Failed to add keygroup record!");
-            goto out;
-        }
-    }
-    
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
     {
         NDRX_LOG(log_error, "%s: failed to start tran", __func__);
         goto out;
     }
     tran_started = EXTRUE;
+    
+    /* Firstly add record to the key group if needed */
+    
+    if (cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
+    {
+        if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, 
+                key, NULL, EXFALSE, txn)))
+        {
+            NDRX_LOG(log_error, "Failed to add keygroup record!");
+            goto out;
+        }
+    }
     
     
     /* Add the record to the DB, to specific key! */
@@ -423,7 +423,8 @@ out:
 
     if (tran_started)
     {
-        if (EXSUCCEED==ret)
+        /* in case if no cache, we might have done invalidate... */
+        if (EXSUCCEED==ret || NDRX_TPCACHE_ENOCACHE==ret)
         {
             ndrx_cache_edb_commit(cache->cachedb, txn);
         }

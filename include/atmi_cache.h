@@ -125,7 +125,8 @@ extern "C" {
 #define NDRX_CACHE_MAX_READERS_DFLT 1000
 #define NDRX_CACHE_MAP_SIZE_DFLT    160000 /* 160K */
 #define NDRX_CACHE_PERMS_DFLT       0664
-
+#define NDRX_CACHE_MAX_DBS_DFLT     1
+    
 #define NDRX_CACHE_BCAST_MODE_PUT   1
 #define NDRX_CACHE_BCAST_MODE_DEL   2
 #define NDRX_CACHE_BCAST_MODE_KIL   3       /* drop the database              */
@@ -148,13 +149,16 @@ extern "C" {
     
     
 #define NDRX_CACHE_OPEXPRMAX        PATH_MAX /* max len of operation expression*/
+#define NDRX_CACHE_NAMEDBSEP        '@'     /* named db seperatror             */
 
 /**
  * Dump the cache database configuration
  */
 #define NDRX_TPCACHEDB_DUMPCFG(LEV, CACHEDB)\
     NDRX_LOG(LEV, "============ CACHE DB CONFIG DUMP ===============");\
-    NDRX_LOG(LEV, "cachedb=[%s]", CACHEDB->cachedb);\
+    NDRX_LOG(LEV, "cachedb full name=[%s]", CACHEDB->cachedb);\
+    NDRX_LOG(LEV, "cachedbnam logical name=[%s]", CACHEDB->cachedbnam);\
+    NDRX_LOG(LEV, "cachedbphy physical name=[%s]", CACHEDB->cachedbphy);\
     NDRX_LOG(LEV, "cachedb ptr=[%p]", CACHEDB);\
     NDRX_LOG(LEV, "resource=[%s]", CACHEDB->resource);\
     NDRX_LOG(LEV, "limit=[%ld]", CACHEDB->limit);\
@@ -197,8 +201,8 @@ extern "C" {
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
     NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
     NDRX_LOG(LEV, "cache ptr=[%p]", TPCALLCACHE);\
-    NDRX_LOG(LEV, "cachedbnm=[%s]", TPCALLCACHE->cachedbnm);\
-    NDRX_LOG(LEV, "cachedb=[%p]", TPCALLCACHE->cachedb);\
+    NDRX_LOG(LEV, "cachedb name full =[%s]", TPCALLCACHE->cachedb);\
+    NDRX_LOG(LEV, "cachedb_ptr=[%p]", TPCALLCACHE->cachedb);\
     NDRX_LOG(LEV, "idx=[%d]", TPCALLCACHE->idx);\
     NDRX_LOG(LEV, "keyfmt=[%s]", TPCALLCACHE->keyfmt);\
     NDRX_LOG(LEV, "keygrpfmt=[%s]", TPCALLCACHE->keygrpfmt);\
@@ -330,27 +334,45 @@ if (cachedata_->mv_size < sizeof(ndrx_tpcache_data_t))\
         }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+/**
+ * Physical db
+ */
+typedef struct ndrx_tpcache_phydb ndrx_tpcache_phydb_t;
+struct ndrx_tpcache_phydb
+{
+    char cachedb[NDRX_CCTAG_MAX+1];/*common logical name (after @)           */
+    char resource[PATH_MAX+1];     /* physical path of the cache folder       */
+    EDB_env *env; /* env handler */
+    int num_usages;                 /* number of logical dbs using this        */
+    /* Make structure hashable: */
+    EX_hash_handle hh;
+};
+
 
 /**
- * Cache database 
+ * Cache database, logical
  */
 typedef struct ndrx_tpcache_db ndrx_tpcache_db_t;
 struct ndrx_tpcache_db
 {
-    char cachedb[NDRX_CCTAG_MAX+1];/* cache db logical name (subsect of @cachedb)   */
-    char resource[PATH_MAX+1];  /* physical path of the cache folder                */
+    char cachedb[NDRX_CCTAG_MAX+1];/* full logical name with @ inside               */
+    char cachedbnam[NDRX_CCTAG_MAX+1];/* logicla name of db                         */
+    char cachedbphy[NDRX_CCTAG_MAX+1];/* physical name of db                        */
+    char resource[PATH_MAX+1];     /* physical path of the cache folder             */
+    ndrx_tpcache_phydb_t *phy;  /* link to physical db                              */
     long limit;                 /* number of records limited for cache used by 2,3,4*/
     long expiry;                /* Number of seconds for record to live             */
     long flags;                 /* configuration flags for this cache               */
     long max_readers;           /* db settings                                      */
     long map_size;              /* db settings                                      */
+    long max_dbs;               /* max number of databases                          */
     int broadcast;              /* Shall we broadcast the events                    */
     int perms;                  /* permissions of the database resource             */
     char subscr[NDRX_EVENT_EXPR_MAX]; /* expression for consuming PUT events        */
     
     /* LMDB Related */
     
-    EDB_env *env; /* env handler */
     EDB_dbi dbi;  /* named (unnamed) db */
     
     /* Make structure hashable: */
@@ -667,13 +689,13 @@ extern NDRX_API int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
 
 extern NDRX_API int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache, 
             char *idata, long ilen, char *cachekey, char *have_keygrp, 
-        int deleteop);
+        int deleteop, EDB_txn *txn);
 
 extern NDRX_API int ndrx_cache_keygrp_inval_by_key(ndrx_tpcache_db_t* db, 
         char *key, EDB_txn *txn, char *keyitem_dbname);
  
 extern NDRX_API int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache, 
-        char *idata, long ilen, EDB_txn *txn, int ex_tran);
+        char *idata, long ilen, EDB_txn *txn);
 
 extern NDRX_API int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache, 
         ndrx_tpcache_data_t *exdata, char *keyout, long keyout_bufsz);

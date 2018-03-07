@@ -72,6 +72,18 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     char flags[]={NDRX_TPCACHE_BCAST_DELFULLC, EXEOS};
     EDB_txn *txn;
     
+        /*
+     * just delete record from theyr cache, ptr to cache we have already inside
+     * the cache object 
+     */
+    
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->inval_cache->cachedb, &txn, 0)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    
+    tran_started = EXTRUE;
     
     /* If this is not full keygrp inval, then remove record from group */
     if (cache->inval_cache->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
@@ -81,7 +93,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
             NDRX_LOG(log_debug, "Invalidate whole group!");
             /* Remove full group */
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(
-                    cache->inval_cache, idata, ilen,NULL,EXFALSE)))
+                    cache->inval_cache, idata, ilen,txn)))
             {
                 NDRX_LOG(log_error, "failed to remove keygroup!");
                 goto out;
@@ -97,19 +109,6 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
             NDRX_LOG(log_debug, "Removing single key item from group (1)");
         }
     }
-    
-    /*
-     * just delete record from theyr cache, ptr to cache we have already inside
-     * the cache object 
-     */
-    
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->inval_cache->cachedb, &txn, 0)))
-    {
-        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
-        goto out;
-    }
-    
-    tran_started = EXTRUE;
     
     NDRX_LOG(log_debug, "Delete their cache [%s] idx %d",
             cache->inval_svc, cache->inval_idx);
@@ -136,7 +135,7 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     {
         NDRX_LOG(log_debug, "Removing single key item from group (2)");
         if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache->inval_cache, 
-                    idata, ilen, key, NULL, EXTRUE)))
+                    idata, ilen, key, NULL, EXTRUE, txn)))
         {
             NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
             goto out;
@@ -262,6 +261,13 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     }
     
     /* now delete the record */
+    /* start transaction */
+    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
+    {
+        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
+        goto out;
+    }
+    tran_started=EXTRUE;
     
     NDRX_LOG(log_debug, "Delete record by key [%s] from cache svc [%s] index: %d", 
             key, cache->svcnm, cache->idx);
@@ -277,7 +283,7 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
             NDRX_LOG(log_debug, "Full group delete");
             
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(cache, idata, 
-                    ilen, NULL, EXFALSE)))
+                    ilen, txn)))
             {
                 NDRX_LOG(log_error, "Failed to delete group!");
                 goto out;
@@ -291,13 +297,6 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
             delete_from_keygroup=EXTRUE;
         }
         
-    }
-    
-    /* start transaction */
-    if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->cachedb, &txn, 0)))
-    {
-        NDRX_LOG(log_error, "%s: failed to start tran", __func__);
-        goto out;
     }
     
     /* delete record (fully) */
@@ -315,7 +314,7 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     if (delete_from_keygroup)
     {
         if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, idata, ilen, key, 
-                NULL, EXTRUE)))
+                NULL, EXTRUE, txn)))
         {
             NDRX_LOG(log_error, "Failed to delete key from keygroup [%s]/[%s]!",
                     key, cache->keygrpdb->cachedb);
@@ -586,7 +585,7 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
                 
                 /* remove just key item... and continue */
                 if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
-                        NULL, 0, keydb.mv_data, keygrp, EXTRUE)))
+                        NULL, 0, keydb.mv_data, keygrp, EXTRUE, txn)))
                 {
                     NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
                     goto out;
@@ -826,7 +825,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
 
             /* remove just key item... and continue */
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_addupd(cache, 
-                    NULL, 0, key, keygrp, EXTRUE)))
+                    NULL, 0, key, keygrp, EXTRUE, txn)))
             {
                 NDRX_LOG(log_error, "Failed to remove key [%s] from keygroup!");
                 goto out;

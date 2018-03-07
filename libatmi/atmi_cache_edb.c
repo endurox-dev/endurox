@@ -123,7 +123,7 @@ expublic int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn,
 {
     int ret = EXSUCCEED;
     
-    if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, flags, txn)))
+    if (EXSUCCEED!=(ret=edb_txn_begin(db->phy->env, NULL, flags, txn)))
     {
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to begin transaction for [%s]: %s", 

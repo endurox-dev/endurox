@@ -63,6 +63,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+expublic ndrx_tpcache_phydb_t *ndrx_G_tpcache_phydb = NULL; /* ptr to phys database */
 expublic ndrx_tpcache_db_t *ndrx_G_tpcache_db = NULL; /* ptr to cache database */
 expublic ndrx_tpcache_svc_t *ndrx_G_tpcache_svc = NULL; /* service cache       */
 /*---------------------------Prototypes---------------------------------*/
@@ -156,18 +157,50 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbget(char *cachedb)
 }
 
 /**
- * Close database
+ * Get the physical database name
+ * @param cachedb cache name
+ * @return ptr to cache db or NULL if not found
+ */
+expublic ndrx_tpcache_phydb_t* ndrx_cache_phydbget(char *cachedb)
+{
+    ndrx_tpcache_phydb_t *ret;
+    
+    EXHASH_FIND_STR( ndrx_G_tpcache_phydb, cachedb, ret);
+    
+    return ret;
+}
+
+/**
+ * Close database, physical
+ * @param db descr struct
+ */
+exprivate void ndrx_cache_phydb_free(ndrx_tpcache_phydb_t *phydb)
+{
+
+    phydb->num_usages--;
+    
+    if (phydb->num_usages<=0)
+    {
+        if (NULL!=phydb->env)
+        {
+            edb_env_close(phydb->env);
+        }
+        NDRX_FREE(phydb);
+    }
+}
+
+
+/**
+ * Close database, close also reference to physical db
  * @param db descr struct
  */
 exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
 {
     /* func checks the dbi validity */
-    edb_dbi_close(db->env, db->dbi);
-
-    if (NULL!=db->env)
-    {
-        edb_env_close(db->env);
-    }
+    edb_dbi_close(db->phy->env, db->dbi);
+    
+    ndrx_cache_phydb_free(db->phy);
+    
     
     NDRX_FREE(db);
 }
@@ -284,6 +317,93 @@ exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
 }
 
 /**
+ * Resolve physical db
+ * @param db db object with filled db name and resource
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_cache_phydb_getref(ndrx_tpcache_db_t *db)
+{
+    int ret = EXSUCCEED;
+    ndrx_tpcache_phydb_t *phy;
+    
+    if (NULL!=(db->phy = ndrx_cache_phydbget(db->cachedbphy)))
+    {
+        db->phy->num_usages++;
+        
+        NDRX_LOG(log_debug, "Cache db [%s] already loaded, new usage: %d", 
+                db->cachedbphy, db->phy->num_usages);
+        goto out;       
+    }
+    
+    /* allocate new phy object */
+    NDRX_CALLOC_OUT(phy, 1, sizeof(ndrx_tpcache_phydb_t), ndrx_tpcache_phydb_t);
+    
+    /* if not found, then open the env, configure the db... and increment counter */
+    /* allocate physical db, if exist one.. */
+    /* Open the database */
+    if (EXSUCCEED!=(ret=edb_env_create(&phy->env)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "CACHE: Failed to create env for [%s]: %s", 
+                db->cachedb, edb_strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=edb_env_set_maxreaders(phy->env, db->max_readers)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "CACHE: Failed to set max readers for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=(ret=edb_env_set_maxdbs(phy->env, db->max_dbs)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to set max dbs for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=edb_env_set_mapsize(phy->env, db->map_size)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to set map size for [%s]: %s", 
+                db->cachedb, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_STRCPY_SAFE(phy->resource, db->resource);
+    NDRX_STRCPY_SAFE(phy->cachedb, db->cachedbphy);
+    
+    /* Open the DB 
+     * In case of named database, we shall search for existing env.
+     * if not found, only then we open.
+     */
+    if (EXSUCCEED!=(ret=edb_env_open(phy->env, db->resource, 0L, db->perms)))
+    {
+        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to open env [%s] [%s]: %s", 
+                db->cachedb, db->resource, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Add record to hash */
+    EXHASH_ADD_STR(ndrx_G_tpcache_phydb, cachedb, phy);
+    
+    
+    phy->num_usages++;
+    db->phy = phy;
+    
+out:
+    return ret;
+}
+
+/**
  * Resolve cache db
  * @param cachedb name of cache db
  * @param mode either normal or create mode (started by ndrxd)
@@ -337,6 +457,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     db->max_readers = NDRX_CACHE_MAX_READERS_DFLT;
     db->map_size = NDRX_CACHE_MAP_SIZE_DFLT;
     db->perms = NDRX_CACHE_PERMS_DFLT;
+    db->max_dbs = NDRX_CACHE_MAX_DBS_DFLT;
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
@@ -349,7 +470,30 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         
         if (0==strcmp(val->key, "cachedb"))
         {
-            NDRX_STRCPY_SAFE(db->cachedb, val->val);
+            
+            char *p;
+            p=strchr(val->val, NDRX_CACHE_NAMEDBSEP);
+            
+            if (NULL!=p)
+            {
+                NDRX_STRCPY_SAFE(db->cachedb, val->val);
+                
+                *p=EXEOS;
+                p++;
+                /* the first is exact name */
+                NDRX_STRCPY_SAFE(db->cachedbnam, val->val);
+                /* second is physical name */
+                NDRX_STRCPY_SAFE(db->cachedbphy, p);
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE(db->cachedbnam, val->val);
+                NDRX_STRCPY_SAFE(db->cachedb, val->val);
+                NDRX_STRCPY_SAFE(db->cachedbphy, val->val);
+            }
+            
+            NDRX_LOG(log_debug, "full name: [%s] logical name: [%s] physical name [%s]",
+                    db->cachedb, db->cachedbnam, db->cachedbphy);
         } 
         else if (0==strcmp(val->key, "resource"))
         {
@@ -449,6 +593,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         {
             db->max_readers = (long)ndrx_num_dec_parsecfg(val->val);
         }
+        else if (0==strcmp(val->key, "max_dbs"))
+        {
+            db->max_dbs = (long)ndrx_num_dec_parsecfg(val->val);
+        }
         /* Parse float: 1000.5, 1.2K, 1M, 1G */
         else if (0==strcmp(val->key, "map_size"))
         {
@@ -525,45 +673,15 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
             db->cachedb, mode, db->flags, (int)(db->flags & NDRX_TPCACHE_FLAGS_BOOTRST));
     
     
-    /* Open the database */
-    if (EXSUCCEED!=(ret=edb_env_create(&db->env)))
+    if (EXSUCCEED!=ndrx_cache_phydb_getref(db))
     {
-        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                "CACHE: Failed to create env for [%s]: %s", 
-                db->cachedb, edb_strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=(ret=edb_env_set_maxreaders(db->env, db->max_readers)))
-    {
-        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                "CACHE: Failed to set max readers for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=(ret=edb_env_set_mapsize(db->env, db->map_size)))
-    {
-        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                "Failed to set map size for [%s]: %s", 
-                db->cachedb, edb_strerror(ret));
-        
-        EXFAIL_OUT(ret);
-    }
-    
-    /* Open the DB */
-    if (EXSUCCEED!=(ret=edb_env_open(db->env, db->resource, 0L, db->perms)))
-    {
-        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                "Failed to open env [%s] [%s]: %s", 
-                db->cachedb, db->resource, edb_strerror(ret));
-        
+        NDRX_CACHE_ERROR("Failed to load physical db for [%s]/[%s]",
+                db->cachedbphy, db->cachedb);
         EXFAIL_OUT(ret);
     }
     
     /* Prepare the DB */
-    if (EXSUCCEED!=(ret=edb_txn_begin(db->env, NULL, 0, &txn)))
+    if (EXSUCCEED!=(ret=edb_txn_begin(db->phy->env, NULL, 0, &txn)))
     {
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to begin transaction for [%s]: %s", 
@@ -585,7 +703,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         dbi_flags = 0;
     }
     
-    if (EXSUCCEED!=(ret=edb_dbi_open(txn, NULL, dbi_flags, &db->dbi)))
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, db->cachedbnam, dbi_flags|EDB_CREATE, &db->dbi)))
     {
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open named db for [%s]: %s", 
