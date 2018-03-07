@@ -432,6 +432,10 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
 
     /* Lookup the section from configuration */
     
+    /* Add support for sub-sections for the key groups
+     * the group is first sub-section and actual keyitem or keygroup
+     * is second level 
+     */
     snprintf(cachesection, sizeof(cachesection), "%s/%s",
             NDRX_CONF_SECTION_CACHEDB, cachedb);
     
