@@ -185,6 +185,7 @@ exprivate void ndrx_cache_phydb_free(ndrx_tpcache_phydb_t *phydb)
         {
             edb_env_close(phydb->env);
         }
+        EXHASH_DEL(ndrx_G_tpcache_phydb, phydb);
         NDRX_FREE(phydb);
     }
 }
@@ -200,7 +201,6 @@ exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
     edb_dbi_close(db->phy->env, db->dbi);
     
     ndrx_cache_phydb_free(db->phy);
-    
     
     NDRX_FREE(db);
 }
