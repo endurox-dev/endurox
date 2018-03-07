@@ -406,6 +406,9 @@ out:
 /**
  * Resolve cache db
  * @param cachedb name of cache db
+ * @param cachedbnam database name in physical db
+ * @param cachedbphy physical database name if cachedbname same as cachedb, then
+ * two level lookup will be employed instead of three.
  * @param mode either normal or create mode (started by ndrxd)
  * @return NULL in case of failure, non NULL, resolved ptr to cache db record
  */
@@ -415,12 +418,13 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     ndrx_tpcache_db_t* db;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     /* len of @cachedb + / + subsect + EOS */
-    char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX+1];
+    char cachesection[sizeof(NDRX_CONF_SECTION_CACHEDB)+1+NDRX_CCTAG_MAX*2+1+1];
     char *p; 
     char *saveptr1 = NULL;
     EDB_txn *txn = NULL;
     unsigned int dbi_flags;
     int any_config = EXFALSE;
+    char dbnametmp[NDRX_CCTAG_MAX+1];
 
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -430,14 +434,48 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
 #endif        
     }
 
+    NDRX_CALLOC_OUT(db, 1, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
+        
     /* Lookup the section from configuration */
+    NDRX_STRCPY_SAFE(dbnametmp, cachedb);
+    
+    p=strchr(dbnametmp, NDRX_CACHE_NAMEDBSEP);
+
+    if (NULL!=p)
+    {
+        NDRX_STRCPY_SAFE(db->cachedb, dbnametmp);
+
+        *p=EXEOS;
+        p++;
+        /* the first is exact name */
+        NDRX_STRCPY_SAFE(db->cachedbnam, dbnametmp);
+        /* second is physical name */
+        NDRX_STRCPY_SAFE(db->cachedbphy, p);
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(db->cachedbnam, dbnametmp);
+        NDRX_STRCPY_SAFE(db->cachedb, dbnametmp);
+        NDRX_STRCPY_SAFE(db->cachedbphy, dbnametmp);
+    }
+
+    NDRX_LOG(log_debug, "full name: [%s] logical name: [%s] physical name [%s]",
+            db->cachedb, db->cachedbnam, db->cachedbphy);
     
     /* Add support for sub-sections for the key groups
      * the group is first sub-section and actual keyitem or keygroup
      * is second level 
      */
-    snprintf(cachesection, sizeof(cachesection), "%s/%s",
-            NDRX_CONF_SECTION_CACHEDB, cachedb);
+    if (0==strcmp(db->cachedb, db->cachedbnam))
+    {
+        snprintf(cachesection, sizeof(cachesection), "%s/%s",
+                NDRX_CONF_SECTION_CACHEDB, cachedb);
+    }
+    else
+    {
+        snprintf(cachesection, sizeof(cachesection), "%s/%s/%s",
+                NDRX_CONF_SECTION_CACHEDB, db->cachedbphy, db->cachedbnam);
+    }
     
     NDRX_LOG(log_debug, "cache db [%s] mode %d looking up: [%s]", 
             cachedb, mode, cachesection);
@@ -453,8 +491,6 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
    }
     
    /* Parse arguments in the loop */
-    
-    NDRX_CALLOC_OUT(db, 1, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
     
     /* Set max_readers, map_size defaults */
     
@@ -474,30 +510,13 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         
         if (0==strcmp(val->key, "cachedb"))
         {
-            
-            char *p;
-            p=strchr(val->val, NDRX_CACHE_NAMEDBSEP);
-            
-            if (NULL!=p)
+            if (0!=strcmp(val->val, db->cachedb))
             {
-                NDRX_STRCPY_SAFE(db->cachedb, val->val);
-                
-                *p=EXEOS;
-                p++;
-                /* the first is exact name */
-                NDRX_STRCPY_SAFE(db->cachedbnam, val->val);
-                /* second is physical name */
-                NDRX_STRCPY_SAFE(db->cachedbphy, p);
+                NDRX_CACHE_ERROR("%s: Invalid cache name [%s] for section [%s] "
+                            "should be [%s]!", 
+                __func__, val->val, cachesection, db->cachedb);
+                EXFAIL_OUT(ret);
             }
-            else
-            {
-                NDRX_STRCPY_SAFE(db->cachedbnam, val->val);
-                NDRX_STRCPY_SAFE(db->cachedb, val->val);
-                NDRX_STRCPY_SAFE(db->cachedbphy, val->val);
-            }
-            
-            NDRX_LOG(log_debug, "full name: [%s] logical name: [%s] physical name [%s]",
-                    db->cachedb, db->cachedbnam, db->cachedbphy);
         } 
         else if (0==strcmp(val->key, "resource"))
         {
@@ -770,6 +789,7 @@ out:
 
     if (EXSUCCEED!=ret)
     {
+        NDRX_FREE(db);
         
         if (NULL!=txn)
         {
@@ -1198,6 +1218,8 @@ expublic int ndrx_cache_init(int mode)
                 }
 
                 NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
+                
+                /* split up */
 
                 /* Resolve the DB */
                 if (NULL==(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
