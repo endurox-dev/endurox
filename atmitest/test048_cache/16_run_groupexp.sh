@@ -215,9 +215,9 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "List group..."
-xadmin cs db16k
-ensure_keys db16g 2
-ensure_keys db16k 5
+xadmin cs k@db16
+ensure_keys g@db16 2
+ensure_keys k@db16 5
 
 xadmin bc -t CACHED
 echo "Sleep 15, wait for cached to kill the records"
@@ -225,48 +225,48 @@ sleep 8
 
 echo "Testing DOM 1"
 
-ensure_keys db16g 1
-ensure_keys db16k 1
+ensure_keys g@db16 1
+ensure_keys k@db16 1
 
-xadmin cs db16g
-xadmin cs db16k
+xadmin cs g@db16
+xadmin cs k@db16
 
-xadmin cd -d db16g -k SV16KEY1 -i
+xadmin cd -d g@db16 -k SV16KEY1 -i
 
-ensure_field db16g SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV161 0
-ensure_field db16g SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV164 0
-ensure_field db16g SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
+ensure_field g@db16 SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV161 0
+ensure_field g@db16 SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV164 0
+ensure_field g@db16 SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
 
 
 echo "Testing DOM 2"
 set_dom2;
 
-ensure_keys db16g 1
-ensure_keys db16k 1
+ensure_keys g@db16 1
+ensure_keys k@db16 1
 
-xadmin cs db16g
-xadmin cs db16k
+xadmin cs g@db16
+xadmin cs k@db16
 
-xadmin cd -d db16g -k SV16KEY1 -i
+xadmin cd -d g@db16 -k SV16KEY1 -i
 
-ensure_field db16g SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV161 0
-ensure_field db16g SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV164 0
-ensure_field db16g SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
+ensure_field g@db16 SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV161 0
+ensure_field g@db16 SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV164 0
+ensure_field g@db16 SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
 
 echo "Testing DOM 3"
 set_dom3;
 
-ensure_keys db16g 1
-ensure_keys db16k 1
+ensure_keys g@db16 1
+ensure_keys k@db16 1
 
-xadmin cs db16g
-xadmin cs db16k
+xadmin cs g@db16
+xadmin cs k@db16
 
-xadmin cd -d db16g -k SV16KEY1 -i
+xadmin cd -d g@db16 -k SV16KEY1 -i
 
-ensure_field db16g SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV161 0
-ensure_field db16g SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV164 0
-ensure_field db16g SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
+ensure_field g@db16 SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV161 0
+ensure_field g@db16 SV16KEY1 EX_CACHE_OPEXPR SV16KEY1-SV164 0
+ensure_field g@db16 SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
 
 go_out $RET
 
