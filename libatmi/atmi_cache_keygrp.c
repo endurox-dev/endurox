@@ -902,7 +902,8 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
         EXFAIL_OUT(ret);
     }
     
-    /* Remove group record by it self */
+    /* Remove group record by it self 
+     * Already done..
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_del (cache->keygrpdb, txn, key, NULL)))
     {
@@ -915,6 +916,7 @@ expublic int ndrx_cache_keygrp_inval_by_data(ndrx_tpcallcache_t *cache,
             EXFAIL_OUT(ret);
         }
     }
+     * */
     
 out:
    

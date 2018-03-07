@@ -72,10 +72,10 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
     char flags[]={NDRX_TPCACHE_BCAST_DELFULLC, EXEOS};
     EDB_txn *txn;
     
-        /*
-     * just delete record from theyr cache, ptr to cache we have already inside
-     * the cache object 
-     */
+     /*
+      * just delete record from theyr cache, ptr to cache we have already inside
+      * the cache object 
+      */
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_begin(cache->inval_cache->cachedb, &txn, 0)))
     {
@@ -241,6 +241,7 @@ expublic int ndrx_cache_inval_by_data(char *svc, char *idata, long ilen, char *f
     
     /* now delete the record, generate key */
     /* Build the key... */
+    NDRX_STRCPY_SAFE(key, cache->keyfmt);
     if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[buffer_info->type_id].pf_get_key(
             cache, idata, ilen, key, sizeof(key), errdet, sizeof(errdet))))
     {
