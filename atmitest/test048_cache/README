@@ -54,6 +54,5 @@ should be new again.
 
 17 - keygroup tests with limit functionality, for example fifo..
 
-18 - Delete with multiple caches and dbs. Including keygroup. Send different set
-of fields for delete (in some cases delete wont find anything in remote domain).
+18 - Drop cache tests (CLI). Two modes normal DB and keygroup dbs.
 

@@ -179,7 +179,9 @@ out:
 }
 
 /**
- * Delete cache record by data
+ * Delete cache record by data.
+ * TODO: Currently not used. And this is missing broadcast part.
+ * Probably could be removed in future.
  * @param svc Service name to search cache for
  * @param idata input data (XATMI buffer) received from their node
  * @param ilen input data len (XATMI buffer)

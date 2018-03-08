@@ -198,9 +198,12 @@ exprivate void ndrx_cache_phydb_free(ndrx_tpcache_phydb_t *phydb)
 exprivate void ndrx_cache_db_free(ndrx_tpcache_db_t *db)
 {
     /* func checks the dbi validity */
-    edb_dbi_close(db->phy->env, db->dbi);
-    
-    ndrx_cache_phydb_free(db->phy);
+    if (NULL!=db->phy)
+    {
+        edb_dbi_close(db->phy->env, db->dbi);
+        ndrx_cache_phydb_free(db->phy);
+        
+    }
     
     NDRX_FREE(db);
 }
@@ -788,9 +791,7 @@ out:
     }
 
     if (EXSUCCEED!=ret)
-    {
-        NDRX_FREE(db);
-        
+    {        
         if (NULL!=txn)
         {
             edb_txn_abort(txn);
@@ -1388,7 +1389,10 @@ expublic int ndrx_cache_init(int mode)
                 }
             }
             
-            /* process delete fields */
+            /* process delete fields 
+             * RFU: Currently not used. Full buffer is used for broadcasting
+             * invalidate data.
+             */
             if (!(cache->flags & NDRX_TPCACHE_TPCF_DELFULL))
             {
                 if (NULL!=(tmp = exjson_object_get_string(array_object, "delete")))
@@ -1501,7 +1505,7 @@ expublic int ndrx_cache_init(int mode)
                 if (!(cache->keygrpdb->flags & NDRX_TPCACHE_FLAGS_KEYGRP))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygrp] flag must be "
-                            "defined for [%s] database to use it for keyitems for",
+                            "defined for [%s] database to use it for keyitems for"
                             " service [%s] buffer index %d",
                             cache->keygrpdb->cachedb, svc, i);
                     EXFAIL_OUT(ret);
