@@ -867,10 +867,8 @@ expublic ndrx_tpcallcache_t* ndrx_cache_findtpcall(ndrx_tpcache_svc_t *svcc,
     DL_FOREACH(svcc->caches, el)
     {
         i++;
-        NDRX_LOG(log_error, "YOPT!!!! i=%d idx=%d", i, idx);
         if (el->buf_type->type_id == buf_type->type_id)
         {
-            NDRX_LOG(log_error, "YOPT 2!!!! i=%d idx=%d", i, idx);
             if (i==idx)
             {
                 return el;
@@ -1074,7 +1072,8 @@ expublic int ndrx_cache_init(int mode)
             /* process flags.. by strtok.. but we need a temp buffer
              * Process flags first as some logic depends on them!
              */
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "flags")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_FLAGS)))
             {
                 NDRX_STRCPY_SAFE(flagstr, tmp);
                 
@@ -1117,7 +1116,7 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEFULL;
                     }
-                    else if (0==strcmp(p_flags, "inval"))
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_INVAL))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_INVAL;
                     }
@@ -1183,7 +1182,8 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* get buffer type */
-            if (NULL==(tmp = exjson_object_get_string(array_object, "type")))
+            if (NULL==(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_TYPE)))
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
                         "[type] for service [%s], buffer index: %d", svc, i);
@@ -1192,7 +1192,8 @@ expublic int ndrx_cache_init(int mode)
             
             NDRX_STRCPY_SAFE(cache->str_buf_type, tmp);
             
-             if (NULL!=(tmp = exjson_object_get_string(array_object, "subtype")))
+             if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                     NDRX_TPCACHE_KWC_SUBTYPE)))
             {
                 NDRX_STRCPY_SAFE(cache->str_buf_subtype, tmp);
             }
@@ -1211,10 +1212,12 @@ expublic int ndrx_cache_init(int mode)
             if (!(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
                 
             {
-                if (NULL==(tmp = exjson_object_get_string(array_object, "cachedb")))
+                if (NULL==(tmp = exjson_object_get_string(array_object, 
+                        NDRX_TPCACHE_KWC_CACHEDB)))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                            "[cachedb] for service [%s], buffer index: %d", svc, i);
+                            "[%s] for service [%s], buffer index: %d", 
+                            NDRX_TPCACHE_KWC_CACHEDB, svc, i);
                     EXFAIL_OUT(ret);
                 }
 
@@ -1239,26 +1242,31 @@ expublic int ndrx_cache_init(int mode)
                 
                 /* Get data for invalidating their cache */
                 
-                if (NULL==(tmp = exjson_object_get_string(array_object, "inval_svc")))
+                if (NULL==(tmp = exjson_object_get_string(array_object, 
+                        NDRX_TPCACHE_KWC_INVAL_SVC)))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                            "[inval_svc] for service [%s], buffer index: %d", svc, i);
+                            "[%s] for service [%s], buffer index: %d", 
+                            NDRX_TPCACHE_KWC_INVAL_SVC, svc, i);
                     EXFAIL_OUT(ret);
                 }
 
                 NDRX_STRCPY_SAFE(cache->inval_svc, tmp);
                 
                 
-                if (NULL==(tmp = exjson_object_get_string(array_object, "inval_idx")))
+                if (NULL==(tmp = exjson_object_get_string(array_object, 
+                        NDRX_TPCACHE_KWC_INVAL_IDX)))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                            "[inval_idx] for service [%s], buffer index: %d", svc, i);
+                            "[%s] for service [%s], buffer index: %d", 
+                            NDRX_TPCACHE_KWC_INVAL_IDX, svc, i);
                     EXFAIL_OUT(ret);
                 }
                 
                 cache->inval_idx = atoi(tmp);
                 
-                NDRX_LOG(log_debug, "Searching for inval svc: [%s]/%d", 
+                NDRX_LOG(log_debug, "Searching for %s: [%s]/%d", 
+                        NDRX_TPCACHE_KWC_INVAL_SVC,
                         cache->inval_svc, cache->inval_idx);
                 
                 /* Find service in cache */
@@ -1266,9 +1274,9 @@ expublic int ndrx_cache_init(int mode)
 
                 if (NULL==svcc)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: inval_svc [%s] not found, "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: %s [%s] not found, "
                             "or defined later (at this or another config file)",
-                            cache->inval_svc);
+                            NDRX_TPCACHE_KWC_INVAL_SVC, cache->inval_svc);
                     EXFAIL_OUT(ret);
                 }
                 
@@ -1287,7 +1295,8 @@ expublic int ndrx_cache_init(int mode)
             
             /* get db if key group is used */
             
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygrpdb")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_KEYGRPDB)))
             {
                 /* Resolve the DB */
                 if (NULL==(cache->keygrpdb=ndrx_cache_dbresolve((char *)tmp, mode)))
@@ -1308,17 +1317,20 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* get key format */
-            if (NULL==(tmp = exjson_object_get_string(array_object, "keyfmt")))
+            if (NULL==(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_KEYFMT)))
             {
                 NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                        "[keyfmt] for service [%s], buffer index: %d", svc, i);
+                        "[%s] for service [%s], buffer index: %d", 
+                        NDRX_TPCACHE_KWC_KEYFMT, svc, i);
                 EXFAIL_OUT(ret);
             }
             
             NDRX_STRCPY_SAFE(cache->keyfmt, tmp);
             
             
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "keygrpfmt")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_KEYGRPFMT)))
             {
                 NDRX_STRCPY_SAFE(cache->keygrpfmt, tmp);
             }
@@ -1345,16 +1357,19 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* Rule to be true to save to cache */
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "rule")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_RULE)))
             {
                 NDRX_STRCPY_SAFE(cache->rule, tmp);
             }
             else
             {
-                NDRX_LOG(log_info, "Rule is missing - assume cache always");
+                NDRX_LOG(log_info, "[%s] is missing - assume cache always",
+                        NDRX_TPCACHE_KWC_RULE);
             }
             
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "refreshrule")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_REFRESHRULE)))
             {
                 NDRX_STRCPY_SAFE(cache->refreshrule, tmp);
             }
@@ -1365,10 +1380,12 @@ expublic int ndrx_cache_init(int mode)
                     !(cache->flags & NDRX_TPCACHE_TPCF_INVAL)
                     )
             {
-                if (NULL==(tmp = exjson_object_get_string(array_object, "save")))
+                if (NULL==(tmp = exjson_object_get_string(array_object, 
+                        NDRX_TPCACHE_KWC_SAVE)))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                            "[save] for service [%s], buffer index: %d", svc, i);
+                            "[%s] for service [%s], buffer index: %d", 
+                            NDRX_TPCACHE_KWC_SAVE, svc, i);
                     EXFAIL_OUT(ret);
                 }
                 
@@ -1380,10 +1397,11 @@ expublic int ndrx_cache_init(int mode)
                     if (EXSUCCEED!=ndrx_regcomp(&cache->saveproj.regex, 
                             cache->saveproj.expression))
                     {
-                        NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile [save] "
+                        NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile [%s] "
                             "regex [%s] for svc [%s], "
                             "buffer index: %d - see ndrx logs", 
-                                svc, cache->saveproj.expression, i);
+                                NDRX_TPCACHE_KWC_SAVE, 
+                                cache->saveproj.expression, svc, i);
                     }
                     cache->saveproj.regex_compiled=EXTRUE;
                 }
@@ -1395,7 +1413,8 @@ expublic int ndrx_cache_init(int mode)
              */
             if (!(cache->flags & NDRX_TPCACHE_TPCF_DELFULL))
             {
-                if (NULL!=(tmp = exjson_object_get_string(array_object, "delete")))
+                if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                        NDRX_TPCACHE_KWC_DELETE)))
                 {                    
                     NDRX_STRCPY_SAFE(cache->delproj.expression, tmp);
 
@@ -1406,9 +1425,10 @@ expublic int ndrx_cache_init(int mode)
                                 cache->delproj.expression))
                         {
                             NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to "
-                                "compile [delete] regex [%s] for svc [%s], "
+                                "compile [%s] regex [%s] for svc [%s], "
                                 "buffer index: %d - see ndrx logs", 
-                                        svc, cache->delproj.expression, i);
+                                        NDRX_TPCACHE_KWC_DELETE, 
+                                    cache->delproj.expression, svc, i);
                         }
                         cache->delproj.regex_compiled=EXTRUE;
                     }
@@ -1425,7 +1445,7 @@ expublic int ndrx_cache_init(int mode)
                 {
                     int err = errno;
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to allocate [%s] buf"
-                            "for svc [%s buffer index: %d", 
+                            "for svc [%s] buffer index: %d", 
                                 NDRX_TPCACHE_KWC_KEYGROUPMREJ,
                             svc, i, strerror(err));
                     EXFAIL_OUT(ret);
@@ -1468,7 +1488,8 @@ expublic int ndrx_cache_init(int mode)
             }
             
             /* Get & Compile response rule */
-            if (NULL!=(tmp = exjson_object_get_string(array_object, "rsprule")))
+            if (NULL!=(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_RSPRULE)))
             {
                 NDRX_STRCPY_SAFE(cache->rsprule, tmp);
                 
@@ -1476,8 +1497,9 @@ expublic int ndrx_cache_init(int mode)
                 if (NULL==(cache->rsprule_tree=Bboolco (cache->rsprule)))
                 {
                     NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to "
-                            "compile rsprule [%s] "
+                            "compile [%s] [%s] "
                             "for service [%s], buffer index: %d: %s", 
+                            NDRX_TPCACHE_KWC_RSPRULE, 
                             cache->rsprule, svc, i, Bstrerror(Berror));
                     EXFAIL_OUT(ret);
                 }
@@ -1495,8 +1517,9 @@ expublic int ndrx_cache_init(int mode)
                 
                 if (NULL==cache->keygrpdb)
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygrpdb] must be "
-                            "defined if [keygrpfmt] is used!");
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] must be "
+                            "defined if [%s] is used!",
+                            NDRX_TPCACHE_KWC_KEYGRPDB, NDRX_TPCACHE_KWC_KEYGRPFMT);
                     EXFAIL_OUT(ret);
                 }
                 
@@ -1504,9 +1527,10 @@ expublic int ndrx_cache_init(int mode)
                 
                 if (!(cache->keygrpdb->flags & NDRX_TPCACHE_FLAGS_KEYGRP))
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keygrp] flag must be "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] flag must be "
                             "defined for [%s] database to use it for keyitems for"
                             " service [%s] buffer index %d",
+                            NDRX_TPCACHE_KWC_KEYGRPDB, 
                             cache->keygrpdb->cachedb, svc, i);
                     EXFAIL_OUT(ret);
                 }
@@ -1515,9 +1539,10 @@ expublic int ndrx_cache_init(int mode)
                 
                 if (!(cache->cachedb->flags & NDRX_TPCACHE_FLAGS_KEYITEMS))
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [keyitems] flag must be "
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] flag must be "
                             "defined for [%s] database to use it for keyitems for",
                             " service [%s] buffer index %d",
+                            NDRX_TPCACHE_KWD_KEYITEMS, 
                             cache->cachedb->cachedb, svc, i);
                     EXFAIL_OUT(ret);
                 }
@@ -1542,6 +1567,26 @@ expublic int ndrx_cache_init(int mode)
                     EXFAIL_OUT(ret);
                 }
                 
+                
+                if (0!=strcmp(cache->cachedb->cachedbphy, cache->keygrpdb->cachedbphy))
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] for when using keygroup, "
+                            "the [%s] and [%s] must come from same physical db name! "
+                            "(<name>@<physicalname>) ([%s] != [%s])",
+                            NDRX_TPCACHE_KWC_CACHEDB, NDRX_TPCACHE_KWC_KEYGRPDB,
+                            cache->cachedb->cachedbphy, cache->keygrpdb->cachedbphy);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (0!=strcmp(cache->cachedb->resource, cache->keygrpdb->resource))
+                {
+                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: [%s] for when using keygroup, "
+                            "the [%s] and [%s] must have from same physical db resource! "
+                            "(<name>@<physicalname>) ([%s] != [%s])",
+                            NDRX_TPCACHE_KWC_CACHEDB, NDRX_TPCACHE_KWC_KEYGRPDB,
+                            cache->cachedb->resource, cache->keygrpdb->resource);
+                    EXFAIL_OUT(ret);
+                }
             }
             else
             {
