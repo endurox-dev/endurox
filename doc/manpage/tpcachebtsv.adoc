@@ -1,0 +1,44 @@
+TPCACHEBTSV(8)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpcachebtsv - XATMI Cache boot server (for cache resets at boot)
+
+
+SYNOPSIS
+--------
+'*tpcachebtsv*'
+
+
+DESCRIPTION
+-----------
+This is special XATMI server which must be present before any XATMI server which
+might be subject for cache usage. The server shall be booted in single instance.
+The idea is that this server process will load all caches (under given CCTAG if
+any) and will process their 'bootreset' flags of the databases. Thus it will clear
+up any caches which at startup must be cleaned up. Also note that this clean-up
+call is not broadcasted to other Enduro/X cluster nodes.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*-1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)* *tpcachesv(8)* *tpcached(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
