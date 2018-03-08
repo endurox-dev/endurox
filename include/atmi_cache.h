@@ -70,6 +70,27 @@ extern "C" {
 /* Cache settings keywords: */
 #define NDRX_TPCACHE_KWC_KEYGROUPMREJ           "keygroupmrej"
 #define NDRX_TPCACHE_KWC_KEYGROUPMAX            "keygroupmax"
+#define NDRX_TPCACHE_KWC_FLAGS                  "flags"
+#define NDRX_TPCACHE_KWC_TYPE                   "type"
+#define NDRX_TPCACHE_KWC_SUBTYPE                "subtype"
+#define NDRX_TPCACHE_KWC_CACHEDB                "cachedb"
+#define NDRX_TPCACHE_KWC_INVAL_SVC              "inval_svc"
+#define NDRX_TPCACHE_KWC_INVAL_IDX              "inval_idx"
+#define NDRX_TPCACHE_KWC_KEYGRPDB               "keygrpdb"
+#define NDRX_TPCACHE_KWC_KEYFMT                 "keyfmt"
+#define NDRX_TPCACHE_KWC_KEYGRPFMT              "keygrpfmt"
+#define NDRX_TPCACHE_KWC_RULE                   "rule"
+#define NDRX_TPCACHE_KWC_REFRESHRULE            "refreshrule"
+#define NDRX_TPCACHE_KWC_SAVE                   "save"
+/* RFU, currently only full delete broadcast is supported */
+#define NDRX_TPCACHE_KWC_DELETE                 "delete"
+#define NDRX_TPCACHE_KWC_RSPRULE                "rsprule"
+    
+/* KWD -> keywords for database */
+    
+#define NDRX_TPCACHE_KWD_KEYITEMS               "keyitems"
+
+/* Database flags: */
     
 #define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
 #define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
