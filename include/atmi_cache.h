@@ -52,8 +52,6 @@ extern "C" {
 /**
  * Keywords for cache definition (KWC) - flags
  */
-#define NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO       "keygrpmaxtperrno"
-#define NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE      "keygrpmaxtpurcode"
 #define NDRX_TPCACHE_KWC_INVLKEYGRP             "invalkeygrp"
 #define NDRX_TPCACHE_KWC_INVAL                  "inval"
 #define NDRX_TPCACHE_KWC_SAVEREG                "putrex"
@@ -68,6 +66,8 @@ extern "C" {
 #define NDRX_TPCACHE_KWC_KEYITEMS               ""
     
 /* Cache settings keywords: */
+#define NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO       "keygrpmaxtperrno"
+#define NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE      "keygrpmaxtpurcode"
 #define NDRX_TPCACHE_KWC_KEYGROUPMREJ           "keygroupmrej"
 #define NDRX_TPCACHE_KWC_KEYGROUPMAX            "keygroupmax"
 #define NDRX_TPCACHE_KWC_FLAGS                  "flags"
@@ -244,23 +244,23 @@ extern "C" {
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
     NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
     NDRX_LOG(LEV, "cache ptr=[%p]", TPCALLCACHE);\
-    NDRX_LOG(LEV, "cachedb name full =[%s]", TPCALLCACHE->cachedb);\
+    NDRX_LOG(LEV, "%s name full =[%s]", NDRX_TPCACHE_KWC_CACHEDB,\
+                TPCALLCACHE->cachedb);\
     NDRX_LOG(LEV, "cachedb_ptr=[%p]", TPCALLCACHE->cachedb);\
     NDRX_LOG(LEV, "idx=[%d]", TPCALLCACHE->idx);\
-    NDRX_LOG(LEV, "keyfmt=[%s]", TPCALLCACHE->keyfmt);\
-    NDRX_LOG(LEV, "keygrpfmt=[%s]", TPCALLCACHE->keygrpfmt);\
-    NDRX_LOG(LEV, "save=[%s]", TPCALLCACHE->saveproj.expression);\
-    NDRX_LOG(LEV, "delete=[%s]", TPCALLCACHE->delproj.expression);\
-    NDRX_LOG(LEV, "rule=[%s]", TPCALLCACHE->rule);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_KEYFMT, TPCALLCACHE->keyfmt);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_KEYGRPFMT, TPCALLCACHE->keygrpfmt);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_SAVE, TPCALLCACHE->saveproj.expression);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_DELETE, TPCALLCACHE->delproj.expression);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_RULE, TPCALLCACHE->rule);\
     NDRX_LOG(LEV, "rule_tree=[%p]", TPCALLCACHE->rule_tree);\
-    NDRX_LOG(LEV, "refreshrule=[%s]", TPCALLCACHE->refreshrule);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_REFRESHRULE, TPCALLCACHE->refreshrule);\
     NDRX_LOG(LEV, "refreshrule_tree=[%p]", TPCALLCACHE->refreshrule_tree);\
-    NDRX_LOG(LEV, "rsprule=[%s]", TPCALLCACHE->rsprule);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_RSPRULE, TPCALLCACHE->rsprule);\
     NDRX_LOG(LEV, "rsprule_tree=[%p]", TPCALLCACHE->rsprule_tree);\
     NDRX_LOG(LEV, "str_buf_type=[%s]", TPCALLCACHE->str_buf_type);\
     NDRX_LOG(LEV, "str_buf_subtype=[%s]", TPCALLCACHE->str_buf_subtype);\
     NDRX_LOG(LEV, "buf_type=[%s]", TPCALLCACHE->buf_type->type);\
-    NDRX_LOG(LEV, "errfmt=[%s]", TPCALLCACHE->errfmt);\
     NDRX_LOG(LEV, "flags=[%s]", TPCALLCACHE->flagsstr);\
     NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_SAVEREG,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVEREG));\
@@ -286,15 +286,17 @@ extern "C" {
                     NDRX_TPCACHE_KWC_INVLKEYGRP, \
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_INVLKEYGRP));\
     NDRX_LOG(LEV, "inval_cache=[%p]", TPCALLCACHE->inval_cache);\
-    NDRX_LOG(LEV, "inval_svc=[%s]", TPCALLCACHE->inval_svc);\
-    NDRX_LOG(LEV, "inval_idx=[%d]", TPCALLCACHE->inval_idx);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_INVAL_SVC, TPCALLCACHE->inval_svc);\
+    NDRX_LOG(LEV, "%s=[%d]", NDRX_TPCACHE_KWC_INVAL_IDX, TPCALLCACHE->inval_idx);\
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGROUPMAX,\
                     TPCALLCACHE->keygroupmax);\
     NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_KEYGROUPMREJ,\
                     TPCALLCACHE->keygroupmrej);\
     NDRX_LOG(LEV, "keygroupmrej_abuf=[%p]", TPCALLCACHE->keygroupmrej_abuf);\
-    NDRX_LOG(LEV, "keygroupmtperrno=[%d]", TPCALLCACHE->keygroupmtperrno);\
-    NDRX_LOG(LEV, "keygroupmtpurcode=[%ld]", TPCALLCACHE->keygroupmtpurcode);\
+    NDRX_LOG(LEV, "%s=[%d]", NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO,\
+                    TPCALLCACHE->keygroupmtperrno);\
+    NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE,\
+                    TPCALLCACHE->keygroupmtpurcode);\
     NDRX_LOG(LEV, "=================================================");
 
 
@@ -477,18 +479,6 @@ struct ndrx_tpcallcache
     char str_buf_subtype[XATMI_SUBTYPE_LEN+1];
     
     typed_buffer_descr_t *buf_type;
-    
-    /* optional return code expression 
-     * In case if missing, only TPSUCCESS messages are saved.
-     * If expression is set, we will load the tperrno() and tpurcode() in the
-     * following UBF fields:
-     * EX_TPERRNO and TPURCODE. Then the user might evalue the value to decide
-     * keep the values or not.
-     * 
-     * The tperrno and tpurcode must be smulated when stored in cache db.
-     */
-    char errfmt[PATH_MAX/2];
-    
     
     /* For invalidating their cache, in case if rule matched */
     ndrx_tpcallcache_t *inval_cache;    /* their cache to invalidate        */
