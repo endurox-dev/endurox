@@ -395,7 +395,7 @@ expublic int ndrx_cache_drop(char *cachedbnm, short nodeid)
     
     NDRX_LOG(log_warn, "Cache [%s] dropped", cachedbnm);
     
-    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTPUT) &&
+    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL) &&
             tpgetnodeid()==nodeid )
     {
         NDRX_LOG(log_debug, "Same node -> broadcast event of drop");
@@ -611,7 +611,7 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
     } while (EXSUCCEED==ret);
     
 
-    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTPUT) &&
+    if ( (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL) &&
             tpgetnodeid()==nodeid )
     {
         char cmd;

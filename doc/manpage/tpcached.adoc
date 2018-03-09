@@ -1,0 +1,96 @@
+TPCACHED(8)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tpcached - Enduro/X cache maintenance daemon
+
+
+SYNOPSIS
+--------
+*tpcached* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+*tpcached* is daemon process started by client process monitor (*cpmsrv*) 
+(it needs to be registered in '<clients>' section 
+for Enduro/X application domain). Only one copy of *tpcached* can be stated
+per cache database. If no CC tags are used, then one copy shall be run over the
+app domain. If CC tags are used for cache configuration, then multiple *tpcached*
+daemons can be started, per CC tag. The daemon performs following functions:
+
+. Processes any cache databases if *expiry* flag is present. The daemon tests
+if records add time (UTC) plus expiry seconds are less than current system UTC
+time, then record is assumed expired and is deleted.
+
+. Process any cache databases for which *clrnosvc* flag is present. In this case
+daemon tests that if cached record's service name is not advertised in shared memory,
+then record is deleted from cache.
+
+. Process any limited cache databases having flags *lru* (last recently used),
+*hits* (number of record hits) or *fifo* (first in, first out) order. The process
+copies all records to allocated linear array and performs qsort to find records
+which are beyond the limit. If there are any such records over *limit* value,
+then those records are deleted. If duplicates were allowed for
+database (*timesync* flag set) then for limits mode, during the scanning, duplicate
+records are deleted too.
+
+. Process any database for which *scandup* flag is set. During this mode any
+duplicate records found are deleted.
+
+In case if cluster operations are configured and flag *bcastdel* is present, then
+in case of record removal, this event is broadcast to Enduro/X event server which
+then delivers the notification of record removal to all machines. The event
+is not sent in case if duplicate record is removed, as duplicate scan can be
+done by *tpcached* on other machine.
+
+KEYGROUP OPERATIONS
+-------------------
+*tpcached* can process any database. This can be normal service data storage
+databases or keygroup storage/keyitems storage - 
+used for linking some kind of records into single group (for example user
+is doing paging over its statement records). Thus for example 
+the group is user id and items are pages. In this case expiry and 
+other limits can be applied to keygroup or key items databases too. 
+In case if key item (some page expires) for db with *keyitems* flag, 
+then the item is removed from group too. In case if group 
+expires (database with *keygroup* flag), then all linked records are
+removed from keyitems database and the group record by it self is removed too.
+In case of group expire, only group key is broadcast to other nodes (if
+configured so).
+
+
+OPTIONS
+-------
+[*-i* 'INTERVAL_SLEEP_TIME']::
+'INTERVAL_SLEEP_TIME' is number of seconds for cache daemon to sleep between scans.
+The default value is *5* (seconds).
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*-1*::
+Failure
+
+
+CONFIGURATION EXAMPLE
+---------------------
+See *atmitest/test048_cache/ndrxconfig-dom1.xml* for configuration example.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)* *ex_adminman* *tpcachebtsv(8)* *tpcachesv(8)* *xadmin(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
