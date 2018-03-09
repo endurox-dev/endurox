@@ -522,11 +522,9 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     
     /* just print the sorted arrays... */
     
-    for (i=0; i<stat.ms_entries; i++)
-    {
-        NDRX_LOG(log_debug, "YOPT !>>> Cache infos: key [%s], last used: %ld.%ld", 
-                dsort[i]->key.mv_data, dsort[i]->data.hit_t, dsort[i]->data.hit_tusec);
-    }
+    /* TODO: Might want to switch to RW transaction only here and previous run as RO
+     * only how about duplicate removal?
+     */
     
     for (i=db->limit; i<stat.ms_entries; i++)
     {
@@ -543,26 +541,6 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
             
             NDRX_LOG(log_info, "About to delete: key=[%s]", dsort[i]->key.mv_data);
             
-#if 0
-            if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &dsort[i]->key, NULL))
-            {
-                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
-                        dsort[i]->key.mv_data);
-                EXFAIL_OUT(ret);
-            }
-            
-            /* Broadcast! 
-             * The broadcast event will be KEY based
-             */
-            if (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
-            {
-                if (EXSUCCEED!=ndrx_cache_inval_by_key_bcastonly(db->cachedb, 
-                        dsort[i]->key.mv_data, (short)nodeid))
-                {
-                    EXFAIL_OUT(ret);
-                }
-            }
-#endif
             if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
                     dsort[i]->key.mv_data, (short)nodeid, txn, EXTRUE))
             {
