@@ -214,33 +214,6 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                     "record expiry %ld sec. Record expiry UTC: %ld", 
                     keydb.mv_data, t,  db->expiry, pdata->t + db->expiry);
             
-#if 0
-            /* validate isn't this a record part of the group? */
-            if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
-            {
-                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
-                        keydb.mv_data);
-                EXFAIL_OUT(ret);
-            }
-            
-            deleted++;
-            
-            /* Broadcast! 
-             * The broadcast event will be KEY based
-             */
-            if (db->flags & NDRX_TPCACHE_FLAGS_BCASTDEL)
-            {
-                
-                /* lookup service definition, if have a group, then
-                 * if record is a group, then remove all children.
-                 */
-                if (EXSUCCEED!=ndrx_cache_inval_by_key_bcastonly(db->cachedb, 
-                        keydb.mv_data, (short)nodeid))
-                {
-                    EXFAIL_OUT(ret);
-                }
-            }
-#endif
             /* copy is needed because key data might change during group delete */
             NDRX_STRCPY_SAFE(cur_key, keydb.mv_data);
             if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
