@@ -511,7 +511,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                     __func__, val->key, val->val);
 #endif
         
-        if (0==strcmp(val->key, "cachedb"))
+        if (0==strcmp(val->key, NDRX_TPCACHE_KWD_CACHEDB))
         {
             if (0!=strcmp(val->val, db->cachedb))
             {
@@ -521,21 +521,21 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 EXFAIL_OUT(ret);
             }
         } 
-        else if (0==strcmp(val->key, "resource"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_RESOURCE))
         {
             NDRX_STRCPY_SAFE(db->resource, val->val);
         }
-        else if (0==strcmp(val->key, "perms"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_PERMS))
         {
             char *pend;
             db->perms = strtol(val->val, &pend, 0);
         }
         /* Also float: Parse 1000, 1K, 1M, 1G */
-        else if (0==strcmp(val->key, "limit"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_LIMIT))
         {
             db->limit = (long)ndrx_num_dec_parsecfg(val->val);
         }
-        else if (0==strcmp(val->key, "expiry"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_EXPIRY))
         {
             db->expiry = (long)ndrx_num_time_parsecfg(val->val) / 1000L;
             
@@ -550,7 +550,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
             
             db->flags|=NDRX_TPCACHE_FLAGS_EXPIRY;
         }
-        else if (0==strcmp(val->key, "flags"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_FLAGS))
         {
             /* Decode flags... */
             p = strtok_r (val->val, ",", &saveptr1);
@@ -561,47 +561,47 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 
                 /* bootreset,lru,hits,fifo */
                 
-                if (0==strcmp(p, "bootreset"))
+                if (0==strcmp(p, NDRX_TPCACHE_KWD_BOOTRST))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_BOOTRST;
                 }
-                else if (0==strcmp(p, "lru"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_LRU))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_LRU;
                 }
-                else if (0==strcmp(p, "hits"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_HITS))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_HITS;
                 }
-                else if (0==strcmp(p, "fifo"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_FIFO))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_FIFO;
                 }
-                else if (0==strcmp(p, "bcastput"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_BCASTPUT))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_BCASTPUT;
                 }
-                else if (0==strcmp(p, "bcastdel"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_BCASTDEL))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_BCASTDEL;
                 }
-                else if (0==strcmp(p, "timesync"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_TIMESYNC))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_TIMESYNC;
                 }
-                else if (0==strcmp(p, "scandup"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_SCANDUP))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_SCANDUP;
                 }
-                else if (0==strcmp(p, "clrnosvc"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_CLRNOSVC))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_CLRNOSVC;
                 }
-                else if (0==strcmp(p, "keyitems"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_KEYITEMS))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_KEYITEMS;
                 }
-                else if (0==strcmp(p, "keygroup"))
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_KEYGRP))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_KEYGRP;
                 }
@@ -615,20 +615,20 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
             }
             
         } /* Also float: Parse 1000, 1K, 1M, 1G */
-        else if (0==strcmp(val->key, "max_readers"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_MAX_READERS))
         {
             db->max_readers = (long)ndrx_num_dec_parsecfg(val->val);
         }
-        else if (0==strcmp(val->key, "max_dbs"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_MAX_DBS))
         {
             db->max_dbs = (long)ndrx_num_dec_parsecfg(val->val);
         }
         /* Parse float: 1000.5, 1.2K, 1M, 1G */
-        else if (0==strcmp(val->key, "map_size"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_MAP_SIZE))
         {
             db->map_size = (long)ndrx_num_dec_parsecfg(val->val);
         }
-        else if (0==strcmp(val->key, "subscr"))
+        else if (0==strcmp(val->key, NDRX_TPCACHE_KWD_SUBSCR))
         {
             NDRX_STRCPY_SAFE(db->subscr, val->val);
         }
@@ -643,7 +643,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     if (!any_config)
     {
-        NDRX_CACHE_ERROR("Cache db [%s] not found in configuartion", cachedb);
+        NDRX_CACHE_ERROR("Cache db [%s] not found in configuration", cachedb);
         EXFAIL_OUT(ret);
     }
     
@@ -651,13 +651,15 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     if (EXEOS==db->cachedb[0])
     {
-        NDRX_CACHE_ERROR("Missing `cachedb' parameter for cache [%s]", cachedb);
+        NDRX_CACHE_ERROR("Missing `%s' parameter for cache [%s]", 
+                NDRX_TPCACHE_KWD_CACHEDB, cachedb);
         EXFAIL_OUT(ret);
     }
     
     if (EXEOS==db->resource[0])
     {
-        NDRX_CACHE_ERROR("Missing `resource' parameter for cache [%s]", cachedb);
+        NDRX_CACHE_ERROR("Missing `%s' parameter for cache [%s]", 
+                NDRX_TPCACHE_KWD_RESOURCE, cachedb);
         EXFAIL_OUT(ret);
     }
     
@@ -695,10 +697,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     NDRX_TPCACHEDB_DUMPCFG(log_info, db);
 #endif
     
-    NDRX_LOG(log_debug, "YOPT cachedb: [%s] boot mode: %d  flags: %ld reset: %d",
+    NDRX_LOG(log_debug, "cachedb: [%s] boot mode: %d  flags: %ld reset: %d",
             db->cachedb, mode, db->flags, (int)(db->flags & NDRX_TPCACHE_FLAGS_BOOTRST));
-    
-    
     if (EXSUCCEED!=ndrx_cache_phydb_getref(db))
     {
         NDRX_CACHE_ERROR("Failed to load physical db for [%s]/[%s]",
