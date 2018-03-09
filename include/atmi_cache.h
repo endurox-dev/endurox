@@ -87,8 +87,30 @@ extern "C" {
 #define NDRX_TPCACHE_KWC_RSPRULE                "rsprule"
     
 /* KWD -> keywords for database */
+#define NDRX_TPCACHE_KWD_MAX_READERS            "max_readers"
+#define NDRX_TPCACHE_KWD_MAX_DBS                "max_dbs"
+#define NDRX_TPCACHE_KWD_MAP_SIZE               "map_size"
+#define NDRX_TPCACHE_KWD_SUBSCR                 "subscr"
+#define NDRX_TPCACHE_KWD_CACHEDB                "cachedb"
+#define NDRX_TPCACHE_KWD_RESOURCE               "resource"
+#define NDRX_TPCACHE_KWD_PERMS                  "perms"
+#define NDRX_TPCACHE_KWD_LIMIT                  "limit"
+#define NDRX_TPCACHE_KWD_EXPIRY                 "expiry"
+#define NDRX_TPCACHE_KWD_FLAGS                  "flags"
     
+/* Database flags, keywords */
+
 #define NDRX_TPCACHE_KWD_KEYITEMS               "keyitems"
+#define NDRX_TPCACHE_KWD_BOOTRST                "bootreset"
+#define NDRX_TPCACHE_KWD_LRU                    "lru"
+#define NDRX_TPCACHE_KWD_HITS                   "hits"
+#define NDRX_TPCACHE_KWD_FIFO                   "fifo"
+#define NDRX_TPCACHE_KWD_KEYGRP                 "keygroup"
+#define NDRX_TPCACHE_KWD_BCASTPUT               "bcastput"
+#define NDRX_TPCACHE_KWD_BCASTDEL               "bcastdel"
+#define NDRX_TPCACHE_KWD_TIMESYNC               "timesync"
+#define NDRX_TPCACHE_KWD_SCANDUP                "scandup"
+#define NDRX_TPCACHE_KWD_CLRNOSVC               "clrnosvc"
 
 /* Database flags: */
     
@@ -177,42 +199,42 @@ extern "C" {
  */
 #define NDRX_TPCACHEDB_DUMPCFG(LEV, CACHEDB)\
     NDRX_LOG(LEV, "============ CACHE DB CONFIG DUMP ===============");\
-    NDRX_LOG(LEV, "cachedb full name=[%s]", CACHEDB->cachedb);\
+    NDRX_LOG(LEV, "%s full name=[%s]", NDRX_TPCACHE_KWD_CACHEDB, CACHEDB->cachedb);\
     NDRX_LOG(LEV, "cachedbnam logical name=[%s]", CACHEDB->cachedbnam);\
     NDRX_LOG(LEV, "cachedbphy physical name=[%s]", CACHEDB->cachedbphy);\
-    NDRX_LOG(LEV, "cachedb ptr=[%p]", CACHEDB);\
-    NDRX_LOG(LEV, "resource=[%s]", CACHEDB->resource);\
-    NDRX_LOG(LEV, "limit=[%ld]", CACHEDB->limit);\
-    NDRX_LOG(LEV, "expiry=[%ld] sec", CACHEDB->expiry);\
-    NDRX_LOG(LEV, "flags=[%ld]", CACHEDB->flags);\
+    NDRX_LOG(LEV, "%s ptr=[%p]", NDRX_TPCACHE_KWD_CACHEDB, CACHEDB);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWD_RESOURCE, CACHEDB->resource);\
+    NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_LIMIT, CACHEDB->limit);\
+    NDRX_LOG(LEV, "%s=[%ld] sec", NDRX_TPCACHE_KWD_EXPIRY, CACHEDB->expiry);\
+    NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_FLAGS, CACHEDB->flags);\
     NDRX_LOG(LEV, "flags, 'expiry' = [%d]", \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_EXPIRY));\
-    NDRX_LOG(LEV, "flags, 'lru' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_LRU, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_LRU));\
-    NDRX_LOG(LEV, "flags, 'hits' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_HITS, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_HITS));\
-    NDRX_LOG(LEV, "flags, 'fifo' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_FIFO, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_FIFO));\
-    NDRX_LOG(LEV, "flags, 'bootreset' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_BOOTRST, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BOOTRST));\
-    NDRX_LOG(LEV, "flags, 'bcastput' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_BCASTPUT, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BCASTPUT));\
-    NDRX_LOG(LEV, "flags, 'bcastdel' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_BCASTDEL, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_BCASTDEL));\
-    NDRX_LOG(LEV, "flags, 'timesync' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_TIMESYNC, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_TIMESYNC));\
-    NDRX_LOG(LEV, "flags, 'scandup' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_SCANDUP, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_SCANDUP));\
-    NDRX_LOG(LEV, "flags, 'clrnosvc' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_CLRNOSVC, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_CLRNOSVC));\
-    NDRX_LOG(LEV, "flags, 'keyitems' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_KEYITEMS, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYITEMS));\
-    NDRX_LOG(LEV, "flags, 'keygroup' = [%d]", \
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_KEYGRP, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYGRP));\
-    NDRX_LOG(LEV, "max_readers=[%ld]", CACHEDB->max_readers);\
-    NDRX_LOG(LEV, "map_size=[%ld]", CACHEDB->map_size);\
-    NDRX_LOG(LEV, "perms=[%o]", CACHEDB->perms);\
-    NDRX_LOG(LEV, "subscr=[%s]", CACHEDB->subscr);\
+    NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_MAX_READERS, CACHEDB->max_readers);\
+    NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_MAP_SIZE, CACHEDB->map_size);\
+    NDRX_LOG(LEV, "%s=[%o]", NDRX_TPCACHE_KWD_PERMS, CACHEDB->perms);\
+    NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWD_SUBSCR, CACHEDB->subscr);\
     NDRX_LOG(LEV, "=================================================");
 
     
