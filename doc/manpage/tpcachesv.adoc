@@ -42,7 +42,24 @@ delete message is processed according to local cache definition. Service is foun
 and then record is matched according to rules. This event also can be received
 in cases when "invalidate their" cache is used.
  
-. @CKNNN/F*/S+ - drop (kill) the database. This is
+. @CKNNN/F*/D+ - drop (kill) the database. This event is published when from
+xadmin tool *xadmin ci -d D+", the database is being dropped. The event notification
+contains NULL buffer. The 'D+' is database name. Note that in case of
+keygroup (group db and key item db) there no linkage. So drop will clean
+up the database specified, and not any linked.
+
+. @CMNNN/F+/D+ - delete database (D+) records by regular expression mask
+over the cached keys. The data buffer send with this event is *UBF* typed,
+which contains one field 'EX_CACHE_OPEXPR' - regular expression mask to
+match keys with. If key is matched, then record is deleted.
+
+. @CENNN/F+/D+ - delete records by key. The database name is encoded in 'D+'.
+The key to delete is encoded in event buffer, which is *UBF* typed. Field
+'EX_CACHE_OPEXPR' keeps the key to delete. Before deleting record, it is
+read from database. The flags are checked for record. If record is part
+of the keygroup and it is keyitem. Then data buffer is recovered from data
+and group key is built. Key group is updated (key removed) and key item
+is removed.
 
 
 EXIT STATUS
