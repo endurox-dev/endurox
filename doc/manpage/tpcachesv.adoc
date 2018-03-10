@@ -1,0 +1,51 @@
+TPCACHESV(8)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpcachesv - Enduro/X real time cache management server
+
+SYNOPSIS
+--------
+*tpcachesv*
+
+
+DESCRIPTION
+-----------
+This is special XATMI server used for supporting the cluster operations
+when receiving event of message adding or removing from other cluster nodes.
+Also this server is backend for command line tools such as 'xadmin cs' (cache
+show), 'xadmin cd' (cache dump) and 'xadmin ci' (cache invalidate).
+
+For cluster operations, cache server subscribes to events specified in 'subscr'
+parameter for database. Per cluster node service name are fixed. Thus servers
+shall be booted with all CC tags set, so that it would have a visibility of
+all databases. Full visibility is required for command line tools processing
+and incoming event processing. Multiple copies of server can be booted. They 
+all will subscribe to same events. The *tpevsrv* will ensure the single event
+delivery to the same service name.
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*-1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrxd(8)*, *ex_overview*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
