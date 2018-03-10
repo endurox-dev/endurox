@@ -27,6 +27,23 @@ and incoming event processing. Multiple copies of server can be booted. They
 all will subscribe to same events. The *tpevsrv* will ensure the single event
 delivery to the same service name.
 
+During the event processing, following events can be consumed (by regexp mask
+they can be combined):
+
+. @CPNNN/F*/S+ - event is received if new data is put to cache. The data buffer
+includes full message which is being cached. The data which is written to cache
+is 
+
+. @CDNNN/F*/S+ - event is received when data is being deleted from cache. The
+data delete can be generated either from *tpcached* (when record reaches limit,
+expires or service is not available. In this case full or subset of message
+is broadcasted (according to 'delete' parameter of service cache definition). The
+delete message is processed according to local cache definition. Service is found
+and then record is matched according to rules. This event also can be received
+in cases when "invalidate their" cache is used.
+ 
+. @CKNNN/F*/S+ - drop (kill) the database. This is
+
 
 EXIT STATUS
 -----------
