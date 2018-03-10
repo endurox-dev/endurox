@@ -226,6 +226,17 @@ Cache supports different features, for example:
 
 . Drop the cache at Enduro/X boot time.
 
+=== Limitations of the chache
+
+The LMDB is build in such way way that if write transaction on the database is
+open, then other writes will not be able to process it in meantime. While read
+only transactoins are processed, while some other process holds write transactoin.
+Also if process which is holding the lock is crashed (e.g. segfaul, kill, etc..),
+then lock is automatically made free. Thus for example is using *hits* or *lru*
+limitation caches, then this automatically means that during the tpcall() chaches
+needs to be updated, thus lock is needed, and this means that all callers will
+have to sync in that place - thus makes point of bottlenc.
+
 
 :numbered!:
 

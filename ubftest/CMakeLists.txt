@@ -58,9 +58,13 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
                 test_nstd_mtest4.c test_nstd_mtest5.c test_nstd_mtest6_dupcursor.c
                 test_bcmp.c)
 
+add_executable (testedbsync test_nstd_msync.c)
+
 # Link the executable to the UBF library & others...
 
 target_link_libraries (ubfunit1 ubf cgreen m nstd ${RT_LIB} pthread)
+target_link_libraries (testedbsync ubf cgreen m nstd ${RT_LIB} pthread)
 
 set_target_properties(ubfunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(testedbsync PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
