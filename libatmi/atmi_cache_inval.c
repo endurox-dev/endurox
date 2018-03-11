@@ -842,6 +842,7 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
         NDRX_LOG(log_error, "Failed to get DB record!");
         EXFAIL_OUT(ret);
     }
+    ret=EXSUCCEED;
     
     /* continue anyway, we need a broadcast */
     
