@@ -1,0 +1,276 @@
+TPCACHE.INI(5)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpcache.ini - Enduro/X tpcall caching configuration
+
+
+SYNOPSIS
+--------
+---------------------------------------------------------------------
+[@cachedb/DBNAME]
+cachedb=DBNAME
+resource=DATABASE_FOLDER
+flags=FLAGS
+limit=LIMIT
+expiry=EXPIRY
+max_readers=MAX_READERS
+max_dbs=MAX_NAMED_DBS
+map_size=MAP_SIZE
+perms=DB_PERMISSIONS
+
+
+[@cachedb/DBNAME_2]
+...
+
+[@cachedb/DBNAME_N]
+...
+
+
+[@cache]
+svc SERVICE_NAME=
+    {
+        "caches":[
+                {
+                    "cachedb":"CACHE_DBNAME",
+                    "flags":"CACHE_FLAGS",
+                    "type":"TYPE",
+                    "subtype":"SUBTYPE",
+                    "inval_svc":"INVAL_SVC",
+                    "inval_idx":"INVAL_IDX",
+                    "rule":"RULE",
+                    "refreshrule":"REFRESHRULE",
+                    "save":"SAVE",
+                    "delete":"DELETE",
+                    "rsprule":"RSPRULE",
+                    "keygrpdb":"KEYGRPDB",
+                    "keyfmt":"KEYFMT",
+                    "keygrpfmt":"KEYGRPFMT",
+                    "keygrpmaxtperrno":"KEYGRPMAXTPERRNO",
+                    "keygrpmaxtpurcode":"KEYGRPMAXTPURCODE",
+                    "keygroupmrej":"KEYGROUPMREJ",
+                    "keygroupmax":"KEYGROUPMAX"
+                },
+                {
+                    "cachedb":"DBNAME_2",
+                    ...
+                },
+                ...
+            ]
+    }
+svc SERVICE_NAME_N=
+    {
+        "caches":[
+                {
+                    "cachedb":"DBNAME_N",
+                    ...
+                },
+                ...
+            ]
+    }
+
+
+---------------------------------------------------------------------
+
+
+DESCRIPTION
+-----------
+Enduro/X supports tpcall(3) caching, by writing results into LMDB. LMDB is
+integral par to of the Enduro/X. To avoid conflict with users choice of LMDB
+version, the embedded version is renamed to "EXDB", so that global C symbols
+does not conflict. To configure Enduro/x tpcall caching, firstly database must
+be configured. Enduro/X uses approach, that each database is stored into separate
+file system directory. On Linux systems (or others which support RAM drivers),
+the directory can be defined in RAM drive, and thus avoid the cache writing to
+disk (as the LMDB uses memory mapped files). On Linux for this purpose /dev/shm
+can be used.
+
+Caching is performed at service level. Thus when software is doing *tpcall(3)*,
+the client's call is intercepted, and tested against cache. If saved data is
+found, then data is directly returned from LMDB and no service invocation is done.
+
+Each cached item must have a key. The key is build from the call data. Key is zero
+(0x00 byte) terminated string. Key format is given in cache configuration. Before
+lookup to DB is made, rule expression is tested. This indicates either the call
+must be cached or not. If rule is true, key is built and with key DB is tested,
+if result is found, it is returned to caller. If result is not found, then service
+invocation is performed. When service responds, data is written to cache.
+
+Service can have multiple caches, with different rules. Once request is processed
+the first cache which matches the rule is used for lookup or data saving.
+
+Each cache references database definition, single database can be use by multiple
+caches or each cache can have it's own database. Keeping multiple databases
+could make better performance for caches were often writes are done. As concurrent
+writes are synchronized so that only one process writes to the same database.
+
+
+DATABASE DEFINITION
+-------------------
+
+*DBNAME*::
+    Number of seconds after which perform system sanity checks. This number
+    should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
+    is time by which 'ndrxd' sleeps periodically.
+*CHECKPM_STY*::
+    This is number of sanity cycles into which check dead processes from the
+    process model. This makes the actual checking of th PID existence system.
+    Thus if ndrxd is started in learning mode and will not receive signals
+    of the dead servers, then by setting it will discover exited processes.
+*BRIDGE_REFRESH_TIME*::
+    Number of sanity units in which 'tpbridge' refresh should be send to other node.
+    If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
+    then period between bridge refreshes will be 10*2 = 20 seconds.
+    Default value is *0* - do not send full updates.
+*MIN_RESTART_TIME*::
+    Number of sanity units in which died server will be tried to start back. This is
+    minimal time, means that this time is applied in case if server was running and died.
+    If it is consecutive try, then RESTART_STEP is applied on this timer.	
+*RESTART_STEP*::
+    Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
+    Meaning that next try of restart will tried later that previous by this
+    number of sanity units.
+*MAX_RESTART_TIME*::
+    Max number of sanity units after which server will tried to restart.
+    After each consecutive ATMI server death, next reboot is tried
+    by 'MIN_RESTART_TIME'+'RESTART_STEP'*try_count. If this goes over the
+    'MAX_RESTART_TIME' then 'MAX_RESTART_TIME' is used instead.
+*NDRXD_RESTART_TO_CHECK*::
+    Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
+    mode. Within this time no sanity checks are perfomed, but instead "learning" mode
+    is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
+    If in this time ATMI server does not responds, then ATMI server is subject
+    of sanity checks.
+
+DATABASE FLAGS
+--------------
+*NDRXD_GATHER_PQ_STATS*::
+    Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
+    stats for service queues. In future this might be used for automatic service starting
+    and stopping.
+*MIN_SERVERS_DEFAULT*::
+    Default minimum number of copies of the server which needs to be started automatically.
+    This can be overridden by 'MIN_SERVERS_SRV' per server.
+*MAX_SERVERS_DEFAULT*::
+    Max number of ATMI server copies per ATMI server entry. The difference between
+    MIN and MAX servers means the number of standby servers configured. They can be started
+    by hand with out system re-configuration. But they are not booted automatically at
+    system startup. You will have to start them with $ xadmin start -s <server_name>
+    or by $ xadmin start -i <server_id>. This can be overridden by
+    'MAX_SERVERS_SRV'.
+*AUTOKILL_DEFAULT*::
+    Should server be automatically killed (by sequence signal sequence 
+    -2, -15, -9) in case if server have been starting up too long, or
+    does not respond to pings too long, or it is performing shutdown
+    too long. This can be overridden by 'AUTOKILL_SRV' on per server
+    basis.
+*ENV_OVERRIDE_DEFAULT*::
+    Full path to file containing environment variable overrides.
+    see 'ex_envover(5)' for more details. This can be overridden
+    by per server basis by ENV_OVERRIDE_SRV. 
+    Both are optional settings.
+
+CACHE DEFINITION
+----------------
+
+*MAX_STARTUP_TIME_DEFAULT*::
+    Max time (in sanity units) in which server should start up, i.e. send init info to
+    'ndrxd'. If during this time server have not initialized, it is being restarted. This
+    can be overridden by 'MAX_STARTUP_TIME_SRV'.
+*PING_EVERY_TIME_DEFAULT*::
+    Number of sanity units in which perform periodical server pings. This can be
+    overridden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
+*MAX_PING_TIME_DEFAULT*::
+    Number of sanity units, time in which server *must* respond to ping requests.
+    If there is no response from server within this time, then restart sequence is
+    initiated. This can be overridden by 'MAX_PING_TIME_SRV'.
+*MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
+    Maximum time in which shutdown of server must complete in sanity units.
+    If in given time server is not shutdown, then forced shutdown sequence
+    is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
+    on per server basis.
+*EXPORT_SERVICES_DEFAULT*::
+    Comma separated list of services to be applied to all binaries which means the list of
+    services to be exported by *tpbridge* server to other cluster node. This can be overridden by 
+    'ATMI_SERVER_EXPORT_SERVICES'.
+*BLACKLIST_SERVICES_DEFAULT*::
+    Comma separated list of services to be applied to all server binaries which means the list of
+    services that must not be exported by *tpbridge* server to other cluster node.
+    'ATMI_SERVER_BLACKLIST_SERVICES' is first priority over the 'EXPORT_SERVICES_DEFAULT' if
+    service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
+    'ATMI_SERVER_BLACKLIST_SERVICES'. 
+*NDRXD_SRV_START_WAIT_DEFAULT*::
+    Number of seconds to wait for servers to boot. If not started in given time,
+    then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
+    Default value for this is 30 seconds.
+*NDRXD_SRV_STOP_WAIT_DEFAULT*::
+    Number of seconds to wait for server to shutdown. If not started in given time,
+    then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
+    Default value for this is 30 seconds.
+*KILL_TIME_DEFAULT*::
+    Time in sanity units after which to progress from first signal -2 to next signal
+    -15. And after -15 this time means when next -9 signal will be sent. This is used
+    if forced restart of forced shutdown was initiated by 'ndrxd'. This
+    can be overridden by 'KILL_TIME_SRV'.
+*COMMON_CONFIG_TAG_DEFAULT*::
+    Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
+    process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
+*PROTECTED_SERVER_DEFAULT*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+
+CACHE FLAGS
+-----------
+*RELOAD_ON_CHANGE_DEFAULT*::
+    If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
+    and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
+    the XATMI servers one by one. The scanning will occur at every sanity
+    cycle. This is recommended to be used *only* for development purposes. And
+    must not be used on production servers! 
+    This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+*SECONDS_TO_SLEEP_AFTER_SRV_START*::
+    Number of seconds to wait for next item to start after the server is launched.
+    This is useful in cases when for example we start bridge server, let it for some
+    seconds to connect to other node, then continue with other service startup.
+*SERVER_BINARY_NAME*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+
+
+EXAMPLE
+-------
+
+Simple cache:
+---------------------------------------------------------------------
+...
+---------------------------------------------------------------------
+
+Cache with keygroup and buffer reject:
+---------------------------------------------------------------------
+...
+---------------------------------------------------------------------
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*,
+*exencrytp(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
