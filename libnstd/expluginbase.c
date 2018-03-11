@@ -183,7 +183,7 @@ expublic int ndrx_plugins_load(void)
     
     /* Get the env and iterate it over... */
     
-    plugins = strdup(plugins_env);
+    plugins = NDRX_STRDUP(plugins_env);
     
     NDRX_LOG_EARLY(log_debug, "%s: loading plugins.... [%s]", __func__, plugins);
     
@@ -208,6 +208,10 @@ expublic int ndrx_plugins_load(void)
     }
     
 out:
+    if (NULL!=plugins)
+    {
+        NDRX_FREE(plugins);
+    }
     return ret;
 }
 
