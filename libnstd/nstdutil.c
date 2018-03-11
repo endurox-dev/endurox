@@ -492,12 +492,20 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
         if (NULL!=tempbuf)
         {
             /* fix #268 */
-            tempbuf=NULL;
             NDRX_FREE(tempbuf);
+            tempbuf=NULL;
         }
     }
     
 out:
+
+    if (NULL!=tempbuf)
+    {
+        /* fix #268 */
+        NDRX_FREE(tempbuf);
+        tempbuf=NULL;
+    }
+
     /* replace '\\' -> '\'  */
     if (strstr(str, "\\"))
     {
