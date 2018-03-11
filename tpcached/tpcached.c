@@ -47,6 +47,7 @@
 #include <ndebug.h>
 #include <getopt.h>
 #include <atmi_cache.h>
+#include "tpcached.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/    
 /*---------------------------Enums--------------------------------------*/
@@ -111,6 +112,7 @@ out:
  * loop over the db and remove expired records.
  * This also removes records for which service does not exists (if marked so
  * by flags)
+ * So we need to schedule records here for removal....
  * @param db cache database 
  * @return EXSUCCED/EXFAIL
  */
@@ -119,17 +121,20 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     int ret = EXSUCCEED;
     EDB_txn *txn = NULL;
     int tran_started = EXFALSE;
+    int cursor_open = EXFALSE;
     EDB_cursor *cursor;
     EDB_cursor_op op;
     EDB_val keydb, val;
     long t;
     long tusec;
-    long nodeid = tpgetnodeid();
     long deleted = 0;
     int tmp_is_bridge;
     char send_q[NDRX_MAX_Q_SIZE+1];
     char prev_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
     char cur_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
+    
+    ndrx_tpcached_msglist_t * exp_list = NULL;
+            
             
     ndrx_tpcache_data_t *pdata;
     
@@ -152,7 +157,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
         NDRX_LOG(log_error, "Failed to open cursor");
         EXFAIL_OUT(ret);
     }
-    
+    cursor_open = EXTRUE;
     ndrx_utc_tstamp2(&t, &tusec);
     
     /* loop over the db and match records  */
@@ -219,6 +224,8 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
             
             /* copy is needed because key data might change during group delete */
             NDRX_STRCPY_SAFE(cur_key, keydb.mv_data);
+            
+#if 0
             if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
                     cur_key, (short)nodeid, txn, EXTRUE))
             {
@@ -227,6 +234,12 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                 EXFAIL_OUT(ret);
             }
             deleted++;
+#endif
+            if (EXSUCCEED!=ndrx_tpcached_add_msg(&exp_list, &keydb, NULL))
+            {
+                NDRX_LOG(log_debug, "Failed to add record to removal list!");
+                EXFAIL_OUT(ret);
+            }
             
         }
 next:
@@ -237,26 +250,42 @@ next:
         
     } while (EXSUCCEED==ret);
     
+    /* RO tran abort, no need to commit! */
+    cursor_open = EXFALSE;
+    edb_cursor_close(cursor);
+    ndrx_cache_edb_abort(db, txn);
+    tran_started=EXFALSE;
     
-    NDRX_LOG(log_info, "Deleted %ld records", deleted);
-    
+    if (NULL!=exp_list)
+    {
+        if (0 > (deleted = ndrx_tpcached_kill_list(db, &exp_list)))
+        {
+            NDRX_LOG(log_debug, "Failed to remove expired records!");
+            EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_info, "Deleted %ld records", deleted);
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "No records expired");
+    }
+
 out:
+     
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
 
     if (tran_started)
     {
-        if (EXSUCCEED==ret)
-        {
-            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
-            {
-                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
-                    __func__, tpstrerror(tperrno));
-                ndrx_cache_edb_abort(db, txn);
-            }
-        }
-        else
-        {
-            ndrx_cache_edb_abort(db, txn);
-        }
+        ndrx_cache_edb_abort(db, txn);
+    }
+
+    /* free the list in case of failure */
+    if (NULL!=exp_list)
+    {
+        ndrx_tpcached_free_list(&exp_list);
     }
 
     return ret;
@@ -339,6 +368,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     EDB_stat stat;
     EDB_txn *txn = NULL;
     int tran_started = EXFALSE;
+    int cursor_open = EXFALSE;
     ndrx_tpcache_datasort_t **dsort = NULL;
     EDB_cursor_op op;
     EDB_val keydb, val;
@@ -347,11 +377,13 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     long i;
     long nodeid = tpgetnodeid();
     long deleted=0, dupsdel=0;
+    ndrx_tpcached_msglist_t * dup_list = NULL;
+    
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
     
     /* start transaction */
-    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY))
     {
         NDRX_LOG(log_error, "Failed start transaction: %s", 
                 tpstrerror(tperrno));
@@ -385,7 +417,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         NDRX_LOG(log_error, "Failed to open cursor!");
         EXFAIL_OUT(ret);
     }
-    
+    cursor_open = EXTRUE;
     /* I guess after cursor open entries shall not grow? */
     NDRX_CALLOC_OUT(dsort, stat.ms_entries, sizeof(ndrx_tpcache_datasort_t*), 
             void);
@@ -464,7 +496,15 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         else 
         {
             /* this is duplicate record, we will help the system and clean it up */
-            NDRX_LOG(log_debug, "Removing duplicate: [%s]", keydb.mv_data);
+            NDRX_LOG(log_debug, "Removing duplicate: [%s] (mark for del)", 
+                    keydb.mv_data);
+            if (EXSUCCEED!=ndrx_tpcached_add_msg(&dup_list, &keydb, &val))
+            {
+                NDRX_LOG(log_debug, "Failed to add record to removal list!");
+                EXFAIL_OUT(ret);
+            }
+                        
+#if 0
             if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, keydb.mv_data, &val)))
             {
                 if (ret!=EDB_NOTFOUND)
@@ -477,6 +517,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
                 }
             }
             dupsdel++;
+#endif
         }
         
         if (EDB_FIRST == op)
@@ -494,6 +535,13 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         }
         
     } while (EXSUCCEED==ret);
+    
+    /* RO tran abort... */
+    edb_cursor_close(cursor);
+    cursor_open = EXFALSE;
+    ndrx_cache_edb_abort(db, txn);
+    tran_started=EXFALSE;
+    
     
     /* sort array to according techniques:
      * lru, hits, fifo (tstamp based) */
@@ -529,6 +577,16 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
      * only how about duplicate removal?
      */
     
+    NDRX_LOG(log_debug, "%s: starting RW tran", __func__);
+    
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
+    {
+        NDRX_LOG(log_error, "Failed start transaction: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    tran_started = EXTRUE;
+    
     for (i=db->limit; i<stat.ms_entries; i++)
     {
         char *p = dsort[i]->key.mv_data;
@@ -559,7 +617,12 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     NDRX_LOG(log_info, "Deleted %ld records, %ld duplicates del", deleted, dupsdel);
 
 out:
-                
+    
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
+
     if (tran_started)
     {
         if (EXSUCCEED==ret)
@@ -575,6 +638,24 @@ out:
         {
             ndrx_cache_edb_abort(db, txn);
         }
+    }
+
+    if (NULL!=dup_list)
+    {
+        if (EXSUCCEED==ret)
+        {
+            if (0 > (deleted = ndrx_tpcached_kill_list(db, &dup_list)))
+            {
+                NDRX_LOG(log_debug, "Failed to remove duplicate records!");
+                ret=EXFAIL;
+            }
+            NDRX_LOG(log_info, "Deleted %ld records", deleted);
+        }
+    }
+
+    if (NULL!=dup_list)
+    {
+        ndrx_tpcached_free_list(&dup_list);
     }
 
     /* kill the list -> free some memory! */
@@ -605,18 +686,21 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     int ret = EXSUCCEED;
     EDB_txn *txn = NULL;
     int tran_started = EXFALSE;
+    int cursor_open = EXFALSE;
     EDB_cursor_op op;
     EDB_val keydb, val;
-    EDB_cursor *cursor;
+    EDB_cursor *cursor = NULL;
     long deleted=0;
     long i;
     ndrx_tpcache_data_t *pdata;
     char *prvkey = NULL;
+    ndrx_tpcached_msglist_t * dup_list = NULL;
+
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
     
     /* start transaction */
-    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
+    if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, EDB_RDONLY))
     {
         NDRX_LOG(log_error, "Failed start transaction: %s", 
                 tpstrerror(tperrno));
@@ -631,6 +715,7 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
         NDRX_LOG(log_error, "Failed to open cursor!");
         EXFAIL_OUT(ret);
     }
+    cursor_open = EXTRUE;
     
     /* transfer all keys to array (allocate each cell), also got to copy key data/strdup.. */
     op = EDB_FIRST;
@@ -668,7 +753,9 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
             
             if (0==strcmp(prvkey, (char *)keydb.mv_data))
             {
-                NDRX_LOG(log_debug, "Removing duplicate: [%s]", keydb.mv_data);
+                NDRX_LOG(log_debug, "Removing duplicate: [%s] (mark for removal)", 
+                        keydb.mv_data);
+#if 0
                 if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, keydb.mv_data, &val)))
                 {
                     if (ret!=EDB_NOTFOUND)
@@ -680,6 +767,7 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
                         ret=EXSUCCEED;
                     }
                 }
+#endif
             }
             else
             {
@@ -704,8 +792,26 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
         
     } while (EXSUCCEED==ret);
     
-   
-    NDRX_LOG(log_info, "Deleted %ld duplicated records", deleted);
+    /* RD only abort */
+    edb_cursor_close(cursor);
+    cursor_open = EXFALSE;
+    ndrx_cache_edb_abort(db, txn);
+    tran_started=EXFALSE;
+    
+    
+    if (NULL!=dup_list)
+    {
+        if (0 > (deleted = ndrx_tpcached_kill_list(db, &dup_list)))
+        {
+            NDRX_LOG(log_debug, "Failed to remove duplicate records!");
+            EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_info, "Deleted %ld records", deleted);
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "No records expired");
+    }
 
 out:
                 
@@ -713,22 +819,21 @@ out:
     {
         NDRX_FREE(prvkey);
     }
-                
+
+    if (NULL!=dup_list)
+    {
+        ndrx_tpcached_free_list(&dup_list);
+    }
+
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
+
+    /* rd only */
     if (tran_started)
     {
-        if (EXSUCCEED==ret)
-        {
-            if (EXSUCCEED!=ndrx_cache_edb_commit(db, txn))
-            {
-                NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to commit: %s", 
-                    __func__, tpstrerror(tperrno));
-                ndrx_cache_edb_abort(db, txn);
-            }
-        }
-        else
-        {
-            ndrx_cache_edb_abort(db, txn);
-        }
+        ndrx_cache_edb_abort(db, txn);
     }
 
     return ret;

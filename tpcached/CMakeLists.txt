@@ -44,7 +44,7 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Exectuables
-add_executable (tpcached tpcached.c)
+add_executable (tpcached tpcached.c msglist.c)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (tpcached atmiclt atmi ubf nstd ${RT_LIB} pthread m)
