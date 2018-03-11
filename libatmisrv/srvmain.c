@@ -163,7 +163,8 @@ expublic int parse_svc_arg(char *arg)
 
         NDRX_STRNCPY(entry->svc_nm, p, XATMI_SERVICE_NAME_LENGTH);
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
-
+        entry->svc_alias[0]=EXEOS;
+                
         if (EXEOS!=alias_name[0])
         {
             NDRX_STRCPY_SAFE(entry->svc_alias, alias_name);
