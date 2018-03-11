@@ -682,6 +682,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     /* Lookup DB - check the flags if with update, requires update, then no read
      * only */
     
+    /* TODO: For TIMESYNC we might move to RO and leave dupscan for tpcached! */
     if ( (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC) ||
             (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_LRU) ||
             (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_HITS))
