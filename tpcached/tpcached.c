@@ -768,6 +768,11 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
                     }
                 }
 #endif
+                if (EXSUCCEED!=ndrx_tpcached_add_msg(&dup_list, &keydb, &val))
+                {
+                    NDRX_LOG(log_debug, "Failed to add record to removal list!");
+                    EXFAIL_OUT(ret);
+                }
             }
             else
             {
@@ -810,7 +815,7 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     }
     else
     {
-        NDRX_LOG(log_debug, "No records expired");
+        NDRX_LOG(log_debug, "No duplicate expired");
     }
 
 out:

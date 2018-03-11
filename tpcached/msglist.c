@@ -132,6 +132,7 @@ expublic int ndrx_tpcached_kill_list(ndrx_tpcache_db_t *db,
     EDB_txn *txn = NULL;
     int tran_started = EXFALSE;
     int deleted = 0;
+    short nodeid = (short)tpgetnodeid();
     /* start new rw transaction  */
     
     if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
@@ -164,19 +165,15 @@ expublic int ndrx_tpcached_kill_list(ndrx_tpcache_db_t *db,
         }
         else
         {
-            NDRX_LOG(log_debug, "Delete by key only (key: [%s])", el->keydb.mv_data);
+            NDRX_LOG(log_debug, "Delete by key only with bcast(key: [%s])", 
+                    el->keydb.mv_data);
             
-            if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, el->keydb.mv_data, 
-                    NULL)))
+            if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
+                    el->keydb.mv_data, nodeid, txn, EXTRUE))
             {
-                if (ret!=EDB_NOTFOUND)
-                {
-                    EXFAIL_OUT(ret);
-                }
-                else
-                {
-                    ret=EXSUCCEED;
-                }
+                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
+                        el->keydb.mv_data);
+                EXFAIL_OUT(ret);
             }
         }
         
