@@ -56,3 +56,12 @@ should be new again.
 
 18 - Drop cache tests (CLI). Two modes normal DB and keygroup dbs.
 
+19 - Multi-threaded operations. We configure simple cache, but call it with
+multiple pthreads. From the same client.
+
+22 - Multi-process DB access. Run serveral testtools on the same database.
+
+21 - Delete buffer configuration, one test with insufficient field defintions
+and another cache with sufficient. For insufficient we use list of fields,
+for suffcient we use regexp.
+
