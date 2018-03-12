@@ -296,7 +296,6 @@ int run_threads(void)
     }
     
     return EXSUCCEED;
-        
 }
 
 /**
@@ -312,6 +311,7 @@ int run_threads(void)
  * [-l <look in cache flag>, TPNOCACHELOOK tpcall flag]
  * [-x <do not add to cache>, TPNOCACHEADD tpcall flag]
  * [-t <number of threads>]
+ * [-r, perform fork ops]
  */
 int main(int argc, char** argv)
 {
@@ -500,8 +500,13 @@ out:
         tpfree((char *)M_p_ub_cmp_cache);
     }
 
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "TESTERROR!");
+    }
+
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
-
+    
     return ret;
 }
