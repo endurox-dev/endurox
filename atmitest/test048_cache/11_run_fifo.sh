@@ -117,7 +117,7 @@ echo "Running off client"
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n100 -fY 2>&1) > ./10_testtool48.log
+    -cY -n100 -fY 2>&1) > ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (1)"
@@ -126,7 +126,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY2"}' \
     -m '{"T_STRING_FLD":"KEY2"}' \
-    -cY -n91 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n91 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (2)"
@@ -136,7 +136,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY3"}' \
     -m '{"T_STRING_FLD":"KEY3"}' \
-    -cY -n92 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n92 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (3)"
@@ -146,7 +146,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY4"}' \
     -m '{"T_STRING_FLD":"KEY4"}' \
-    -cY -n93 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n93 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (4)"
@@ -155,7 +155,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY5"}' \
     -m '{"T_STRING_FLD":"KEY5"}' \
-    -cY -n94 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n94 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (5)"
@@ -165,7 +165,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY6"}' \
     -m '{"T_STRING_FLD":"KEY6"}' \
-    -cY -n95 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n95 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (6)"
@@ -175,7 +175,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY7"}' \
     -m '{"T_STRING_FLD":"KEY7"}' \
-    -cY -n96 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n96 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (7)"
@@ -184,7 +184,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY8"}' \
     -m '{"T_STRING_FLD":"KEY8"}' \
-    -cY -n97 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n97 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (8)"
@@ -194,7 +194,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY9"}' \
     -m '{"T_STRING_FLD":"KEY9"}' \
-    -cY -n98 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n98 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (9)"
@@ -204,7 +204,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY10"}' \
     -m '{"T_STRING_FLD":"KEY10"}' \
-    -cY -n99 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n99 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (10)"
@@ -214,7 +214,7 @@ fi
 
 (time ./testtool48 -sTESTSV11 -b '{"T_STRING_FLD":"KEY11"}' \
     -m '{"T_STRING_FLD":"KEY11"}' \
-    -cY -n100 -fY 2>&1) >> ./10_testtool48.log
+    -cY -n100 -fY 2>&1) >> ./11_testtool48.log
 
 if [ $? -ne 0 ]; then
     echo "testtool48 failed (11)"
