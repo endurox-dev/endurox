@@ -72,13 +72,14 @@ exprivate int M_tperrno = 0;
 exprivate int M_first_goes_to_cache = EXTRUE; /* first call goes to cache (basically from svc) */
 exprivate long M_tpcall_flags = 0; /* Additional tpcall flags */
 exprivate int M_threads = 1; /* Number of threads */
+exprivate int M_failed = EXFALSE; /* Set to true by failed thread */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Perform the testing
  * @return 
  */
-exprivate int main_loop(void)
+exprivate int main_loop(void *ptr)
 {
     int ret = EXSUCCEED;
     long i;
@@ -253,7 +254,49 @@ out:
         tpfree((char *)p_ub);
     }
 
+    if (EXSUCCEED!=ret)
+    {
+        M_failed=EXTRUE;
+    }
+
     return ret;
+}
+
+/**
+ * Run cache processing in multiple threads.
+ * @return 
+ */
+int run_threads(void)
+{
+    pthread_t thread1, thread2, thread3, thread4, thread5;  /* thread variables */
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
+    
+    
+    /* create threads 1 and 2 */    
+    pthread_create (&thread1, &pthread_custom_attr, (void *) &main_loop, NULL);
+    pthread_create (&thread2, &pthread_custom_attr, (void *) &main_loop, NULL);
+    /*sleep(1);  Have some async works... WHY? */
+    pthread_create (&thread3, &pthread_custom_attr, (void *) &main_loop, NULL);
+    pthread_create (&thread4, &pthread_custom_attr, (void *) &main_loop, NULL);
+    pthread_create (&thread5, &pthread_custom_attr, (void *) &main_loop, NULL);
+
+    /* Main block now waits for both threads to terminate, before it exits
+       If main block exits, both threads exit, even if the threads have not
+       finished their work */ 
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+    pthread_join(thread3, NULL);
+    pthread_join(thread4, NULL);
+    pthread_join(thread5, NULL);
+   
+    if (M_failed)
+    {
+        return EXFAIL;
+    }
+    
+    return EXSUCCEED;
+        
 }
 
 /**
@@ -429,11 +472,20 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: run multiple threads, if M_threads > 1*/
     /* loop over */
-    if (EXSUCCEED!=main_loop())
+    if (M_threads > 1)
     {
-        EXFAIL_OUT(ret);
+        if (EXSUCCEED!=run_threads())
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    else 
+    {
+        if (EXSUCCEED!=main_loop(NULL))
+        {
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:

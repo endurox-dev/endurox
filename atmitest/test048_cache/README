@@ -42,7 +42,6 @@ caches, there shall be duplicates. Run queries on first and second domains,
 the duplicates shall be removed. Do the same data add of duplicates, the tpcached
 started laster, shall clean up duplicates too.
 
-
 15 - keygroup tests. Build a keygroup, a groupdb have longer expiry, keyitems
 have shorter expiry. In short period of time burst requests for number of records, 
 at the end we shall be rejected. Wait a time, some keyitems shall be removed,
