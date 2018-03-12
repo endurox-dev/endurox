@@ -11,9 +11,9 @@ tpcache.ini - Enduro/X tpcall caching configuration
 SYNOPSIS
 --------
 ---------------------------------------------------------------------
-[@cachedb/DBNAME]
-cachedb=DBNAME
-resource=DATABASE_FOLDER
+[@cachedb/DBNAME_SECTION]
+cachedb=DBNAME_DB
+resource=DATABASE_DIRECTORY
 flags=FLAGS
 limit=LIMIT
 expiry=EXPIRY
@@ -107,37 +107,57 @@ caches or each cache can have it's own database. Keeping multiple databases
 could make better performance for caches were often writes are done. As concurrent
 writes are synchronized so that only one process writes to the same database.
 
+If writing to the same database, user shall ensure that keys are unique between
+different service cache definitions. This can be reached by adding different
+prefixes in key format.
+
+DEFINITIONS
+-----------
+
+*Simple cache* - this is cache were data is saved in one cache database. No
+linked databases are used.
+
+*Keygroup* is separate database where records can be grouped. For example 
+by user id. The group record holds the *UBF* buffer with string key occurrences
+which are linked in the group. Keygroup database name is encoded as 
+
+*Keyitem* is linked record to the group.
+
 
 DATABASE DEFINITION
 -------------------
 
-*DBNAME*::
-    Number of seconds after which perform system sanity checks. This number
-    should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
-    is time by which 'ndrxd' sleeps periodically.
-*CHECKPM_STY*::
-    This is number of sanity cycles into which check dead processes from the
-    process model. This makes the actual checking of th PID existence system.
-    Thus if ndrxd is started in learning mode and will not receive signals
-    of the dead servers, then by setting it will discover exited processes.
-*BRIDGE_REFRESH_TIME*::
-    Number of sanity units in which 'tpbridge' refresh should be send to other node.
-    If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
-    then period between bridge refreshes will be 10*2 = 20 seconds.
-    Default value is *0* - do not send full updates.
-*MIN_RESTART_TIME*::
-    Number of sanity units in which died server will be tried to start back. This is
-    minimal time, means that this time is applied in case if server was running and died.
-    If it is consecutive try, then RESTART_STEP is applied on this timer.	
-*RESTART_STEP*::
-    Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
-    Meaning that next try of restart will tried later that previous by this
-    number of sanity units.
-*MAX_RESTART_TIME*::
-    Max number of sanity units after which server will tried to restart.
-    After each consecutive ATMI server death, next reboot is tried
-    by 'MIN_RESTART_TIME'+'RESTART_STEP'*try_count. If this goes over the
-    'MAX_RESTART_TIME' then 'MAX_RESTART_TIME' is used instead.
+*DBNAME_SECTION*::
+    In case of simple database. This is a name of the database. For example
+    "cachedb1". Allowed symbols a-z, A-Z, 0-9. In case of keygroup or keyitems
+    databases, format for section is "<dbname>/<logical_db_name>. For the caches
+    the db names are encoded as "<logical_db_name>@<dbname>". Parameter is
+    *mandatory*.
+*DBNAME_DB*::
+    This is database name. For simple caches, name must be the same as 
+    *DBNAME_SECTION*. For keygroup or keyitems databases name format is
+    "<logical_db_name>@<dbname>". Parameter is *mandatory*.
+*DATABASE_DIRECTORY*::
+    This is file system directory where cache database is located. The directory
+    must exist when application domain is started. In case of keygroup 
+    and keyitems databases, the directory must be the same.
+    Parameter is *mandatory*.
+*FLAGS*::
+    This is comma separated list of keywords - flags. See next section for list
+    of flags supported for cache db.
+*LIMIT*::
+    If number of cached items in database must be limited (for example 1000 recs
+    max), then the number is defined by this parameter. If this parameter is set
+    then one of the following flags must be present *fifo*, *lru* or *hits* - 
+    delete strategy. So that *tpcached(8)* process would know how to sort and
+    which records to remove. The limit is not guaranteed maximum. As records are
+    removed by *tpcached* daemon, there could be times that limit is overreached,
+    because *tpcached* works with periods. And during the sleep time, more records
+    could be added to db and only after sleep period *tpcached* will zap them.
+*MAX_READERS*::
+    See LMDB documentation for this. Basically this is number of threads used
+    by process. See LMDB's mdb_env_set_maxreaders() function description. The
+    default value set by Enduro/X is *64*.
 *NDRXD_RESTART_TO_CHECK*::
     Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
     mode. Within this time no sanity checks are perfomed, but instead "learning" mode
