@@ -71,6 +71,7 @@ exprivate long M_tpurcode = 0;
 exprivate int M_tperrno = 0;
 exprivate int M_first_goes_to_cache = EXTRUE; /* first call goes to cache (basically from svc) */
 exprivate long M_tpcall_flags = 0; /* Additional tpcall flags */
+exprivate int M_threads = 1; /* Number of threads */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -267,6 +268,7 @@ out:
  * [-f <first_should_cache Y|N, if -n > 1 >, dftl Y]
  * [-l <look in cache flag>, TPNOCACHELOOK tpcall flag]
  * [-x <do not add to cache>, TPNOCACHEADD tpcall flag]
+ * [-t <number of threads>]
  */
 int main(int argc, char** argv)
 {
@@ -340,6 +342,9 @@ int main(int argc, char** argv)
                 break;
             case 'e':
                 M_tperrno = atoi(optarg);
+                break;
+            case 't':
+                M_threads = atoi(optarg);
                 break;
             case 'f':
                 
@@ -424,6 +429,7 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    /* TODO: run multiple threads, if M_threads > 1*/
     /* loop over */
     if (EXSUCCEED!=main_loop())
     {
