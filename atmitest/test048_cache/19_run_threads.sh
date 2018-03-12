@@ -121,12 +121,78 @@ fi
 echo "Running threaded operations"
 (time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
     -m '{"T_STRING_FLD":"KEY1"}' \
-    -cY -n100 -fN -t5 2>&1) > ./19_testtool48.log
+    -cY -n100 -fN -t5 2>&1) >> ./19_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (1)"
+    echo "testtool48 failed (2)"
     go_out 2
 fi
 
+echo "Test MP..."
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_1.log & 
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_2.log & 
+
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_3.log & 
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_4.log & 
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_5.log & 
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_6.log & 
+
+
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_6.log & 
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_7.log & 
+
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_8.log & 
+
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_9.log & 
+
+(time ./testtool48 -sTESTSV19 -b '{"T_STRING_FLD":"KEY1"}' \
+    -m '{"T_STRING_FLD":"KEY1"}' \
+    -cY -n100 -fN 2>&1) >> ./19_testtool48_10.log & 
+
+FAIL=0
+
+
+for job in `jobs -p`
+do
+echo $job
+    wait $job || let "FAIL+=1"
+done
+
+echo "FAIL=$FAIL"
+
+if [ $FAIL -ne 0 ]; then
+    echo "some process failed!!!"
+    go_out 3
+fi
 
 go_out $RET
