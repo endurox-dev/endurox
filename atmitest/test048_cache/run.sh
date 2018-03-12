@@ -68,6 +68,7 @@ run_test "15_run_keygroup"
 run_test "16_run_groupexp"
 run_test "17_run_grouplim"
 run_test "18_run_dropdb"
+run_test "19_run_threads"
 
 echo "*** SUMMARY $M_tests tests executed. $M_ok passes, $M_fail failures ($M_failstr)"
 
