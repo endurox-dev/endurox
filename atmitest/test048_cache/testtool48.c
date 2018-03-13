@@ -441,7 +441,7 @@ int main(int argc, char** argv)
     NDRX_LOG(log_debug, "M_p_ub_cmp_cache = %p", M_p_ub_cmp_cache);
     NDRX_LOG(log_debug, "M_result_must_from_cache=%d", M_result_must_from_cache);
     NDRX_LOG(log_debug, "M_numcalls=%d", M_numcalls);
-    NDRX_LOG(log_debug, "%M_tpurcode=ld", M_tpurcode);
+    NDRX_LOG(log_debug, "M_tpurcode=ld", M_tpurcode);
     NDRX_LOG(log_debug, "M_errcode=%d", M_tperrno);
     NDRX_LOG(log_debug, "M_first_goes_to_cache=%d", M_first_goes_to_cache);
     NDRX_LOG(log_debug, "M_tpcall_flags %ld", M_tpcall_flags);

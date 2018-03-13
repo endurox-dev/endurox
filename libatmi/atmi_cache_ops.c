@@ -263,6 +263,8 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             {
                 NDRX_LOG(log_error, "Failed to invalidate their cache!");
             }
+            
+            is_matched=EXFALSE;
         }
         
         if (cache->flags & NDRX_TPCACHE_TPCF_NEXT)
@@ -625,8 +627,8 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     {
         
 #ifdef NDRX_TPCACHE_DEBUG
-        NDRX_LOG(log_debug, "No cache defined for [%s], buffer type [%s] "
-                "or all was invalidate", svc, buf_type->type);
+        NDRX_LOG(log_debug, "No cache defined for [%s], buffer type [%s] ", 
+                svc, buf_type->type);
 #endif
         ret = NDRX_TPCACHE_ENOCACHE;
         goto out;
@@ -636,6 +638,13 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     
     *should_cache=EXTRUE;
     
+    if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
+    {
+        NDRX_LOG(log_info, "Last was invalidate cache -> let save process to inval!");
+        ret = NDRX_TPCACHE_ENOCACHEDATA;
+        goto out;
+    }
+        
     if (flags & TPNOCACHEDDATA)
     {
         /* in this case we must */
