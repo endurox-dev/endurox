@@ -142,7 +142,7 @@ expublic int ndrx_cache_broadcast(ndrx_tpcallcache_t *cache,
     NDRX_LOG(log_debug, "Broadcasting event: [%s] user1=%d user2=%ld "
             "user3=%d user4=%ld", event, user1, user2, user3, user4);
     
-    if (EXFAIL==ndrx_tppost(event, idata, ilen, TPNOTRAN|TPNOREPLY, user1, user2,
+    if (EXFAIL==ndrx_tppost(event, odata, olen, TPNOTRAN|TPNOREPLY, user1, user2,
             user3, user4))
     {
         NDRX_CACHE_ERROR("Failed to send event [%s]: %s", 

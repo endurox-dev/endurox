@@ -1040,7 +1040,7 @@ out:
         {
             /* return error if failed to cache? */
             
-            if (EXSUCCEED!=ret2)
+            if (EXSUCCEED!=ret2 && NDRX_TPCACHE_ENOCACHE!=ret2)
             {
                 NDRX_LOG(log_error, "Failed to cache data!");
                 ret=EXFAIL;

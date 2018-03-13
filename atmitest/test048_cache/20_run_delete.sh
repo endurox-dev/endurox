@@ -163,8 +163,8 @@ xadmin pc
 echo "Run "
 set_dom1;
 
-(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_2_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_2_FLD":"1"}' \
+(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_3_FLD":"1"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_3_FLD":"1"}' \
     -cY -n50 -fY 2>&1) > ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -172,8 +172,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_2_FLD":"2"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_2_FLD":"2"}' \
+(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_3_FLD":"2"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_3_FLD":"2"}' \
     -cY -n50 -fY 2>&1) >> ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -181,8 +181,8 @@ if [ $? -ne 0 ]; then
     go_out 2
 fi
 
-(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_2_FLD":"3"}' \
-    -m '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_2_FLD":"3"}' \
+(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_3_FLD":"3"}' \
+    -m '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_3_FLD":"3"}' \
     -cY -n50 -fY 2>&1) >> ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -190,8 +190,8 @@ if [ $? -ne 0 ]; then
     go_out 3
 fi
 
-(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE4","T_LONG_2_FLD":"4"}' \
-    -m '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE3","T_LONG_2_FLD":"4"}' \
+(time ./testtool48 -sTESTSV20 -b '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE4","T_LONG_3_FLD":"4"}' \
+    -m '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE4","T_LONG_3_FLD":"4"}' \
     -cY -n50 -fY 2>&1) >> ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
@@ -201,40 +201,40 @@ fi
 
 echo "Calling inval..."
 
-(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_2_FLD":"1"}' \
-    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_2_FLD":"1"}' \
+(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_3_FLD":"1"}' \
+    -m '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"CACHE1","T_LONG_3_FLD":"1"}' \
     -cY -n1 -fY 2>&1) > ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (1)"
-    go_out 1
+    echo "testtool48 failed (5)"
+    go_out 5
 fi
 
-(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_2_FLD":"2"}' \
-    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_2_FLD":"2"}' \
+(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_3_FLD":"2"}' \
+    -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"CACHE2","T_LONG_3_FLD":"2"}' \
     -cY -n1 -fY 2>&1) >> ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (2)"
-    go_out 2
+    echo "testtool48 failed (6)"
+    go_out 6
 fi
 
-(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_2_FLD":"3"}' \
-    -m '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_2_FLD":"3"}' \
+(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_3_FLD":"3"}' \
+    -m '{"T_STRING_FLD":"KEY3","T_STRING_2_FLD":"CACHE3","T_LONG_3_FLD":"3"}' \
     -cY -n1 -fY 2>&1) >> ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (3)"
-    go_out 3
+    echo "testtool48 failed (7)"
+    go_out 7
 fi
 
-(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE4","T_LONG_2_FLD":"4"}' \
-    -m '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE3","T_LONG_2_FLD":"4"}' \
+(time ./testtool48 -sTESTSV20I -b '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE4","T_LONG_3_FLD":"4"}' \
+    -m '{"T_STRING_FLD":"KEY4","T_STRING_2_FLD":"CACHE4","T_LONG_3_FLD":"4"}' \
     -cY -n1 -fY 2>&1) >> ./20_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (4)"
-    go_out 4
+    echo "testtool48 failed (8)"
+    go_out 8
 fi
 
 
@@ -248,21 +248,25 @@ echo "Testing domain 2"
 set_dom2;
 
 ensure_keys db20 2
-ensure_field db20 KEY1 T_STRING_2_FLD CACHE1 1
-ensure_field db20 KEY2 T_STRING_2_FLD CACHE2 0
-ensure_field db20 KEY3 T_STRING_2_FLD CACHE3 1
-ensure_field db20 KEY4 T_STRING_2_FLD CACHE3 0
+
+xadmin cs db20
+
+ensure_field db20 SV20_1KEY1 T_STRING_2_FLD CACHE1 1
+ensure_field db20 SV20_2KEY2 T_STRING_2_FLD CACHE2 0
+ensure_field db20 SV20_3KEY3 T_STRING_2_FLD CACHE3 1
+ensure_field db20 SV20_4KEY4 T_STRING_2_FLD CACHE4 0
 
 
 echo "Testing domain 3"
 set_dom3;
 
-ensure_keys db20 2
-ensure_field db20 KEY1 T_STRING_2_FLD CACHE1 1
-ensure_field db20 KEY2 T_STRING_2_FLD CACHE2 0
-ensure_field db20 KEY3 T_STRING_2_FLD CACHE3 1
-ensure_field db20 KEY4 T_STRING_2_FLD CACHE3 0
+xadmin cs db20
 
+ensure_keys db20 2
+ensure_field db20 SV20_1KEY1 T_STRING_2_FLD CACHE1 1
+ensure_field db20 SV20_2KEY2 T_STRING_2_FLD CACHE2 0
+ensure_field db20 SV20_3KEY3 T_STRING_2_FLD CACHE3 1
+ensure_field db20 SV20_4KEY4 T_STRING_2_FLD CACHE4 0
 
 go_out $RET
 
