@@ -166,7 +166,7 @@ extern "C" {
     
 #define NDRX_CACHES_BLOCK           "caches"
 #define NDRX_CACHE_MAX_READERS_DFLT 64
-#define NDRX_CACHE_MAP_SIZE_DFLT    160000 /* 160K */
+#define NDRX_CACHE_MAP_SIZE_DFLT    10485760 /* 10M */
 #define NDRX_CACHE_PERMS_DFLT       0664
 #define NDRX_CACHE_MAX_DBS_DFLT     1
     

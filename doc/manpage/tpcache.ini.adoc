@@ -154,16 +154,23 @@ DATABASE DEFINITION
     removed by *tpcached* daemon, there could be times that limit is overreached,
     because *tpcached* works with periods. And during the sleep time, more records
     could be added to db and only after sleep period *tpcached* will zap them.
+*EXPIRY*::
+    Time specification for record to live in cache. After time is passed, the
+    *tpcached* process will zap the record. The configuration is specified as:
+    N+s for seconds, (e.g. 20s), N+.D+m for minutes (e.g. 30.5m - 30 min, 30 sec)
+    or N+.D+h for hours (e.g 3.5h, will store message for 3 hours and 30 minutes).
 *MAX_READERS*::
     See LMDB documentation for this. Basically this is number of threads used
     by process. See LMDB's mdb_env_set_maxreaders() function description. The
     default value set by Enduro/X is *64*.
-*NDRXD_RESTART_TO_CHECK*::
-    Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
-    mode. Within this time no sanity checks are perfomed, but instead "learning" mode
-    is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
-    If in this time ATMI server does not responds, then ATMI server is subject
-    of sanity checks.
+*MAP_SIZE*::
+    Maximum size of the database in bytes. The size must be multiple of OS page
+    size. See LMDB's mdb_env_set_mapsize() function description. The default 
+    value used by Enduro/X is *10485760*. Postifx multiplier can be used for
+    value in configuration: kK(x1000) mM (x1000'000) gG (x1000'000'000) e.g. 10M.
+
+*DB_PERMISSIONS*::
+    Octal permissions for map files on file system. The default value is *0664*.
 
 DATABASE FLAGS
 --------------
@@ -192,6 +199,7 @@ DATABASE FLAGS
     see 'ex_envover(5)' for more details. This can be overridden
     by per server basis by ENV_OVERRIDE_SRV. 
     Both are optional settings.
+
 
 CACHE DEFINITION
 ----------------
