@@ -497,6 +497,8 @@ expublic int ndrx_cache_prepproj_ubf (ndrx_tpcallcache_t *cache,
         }
     }
     
+    ndrx_debug_dump_UBF(log_debug, "Got output UBF",  *p_ub_out);
+    
 out:
 
     if (NULL!=list)
@@ -521,7 +523,7 @@ expublic int ndrx_cache_del_ubf (ndrx_tpcallcache_t *cache, char *idata, long il
 {
     int ret = EXSUCCEED;
     
-    if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->saveproj,
+    if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->delproj,
         (UBFH *)idata, (UBFH **)odata,
             NDRX_TPCACHE_TPCF_DELREG, 
             NDRX_TPCACHE_TPCF_DELFULL, 
