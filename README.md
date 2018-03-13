@@ -282,6 +282,8 @@ when threaded logger using for multi-contexting (like go runtime)
 - Version 5.2.16 released on 09/02/2018. (stable) Feature #282 - new UBF api Baddfast(), finished
 documentation and added unit tests.
 
+- Version 5.3.1 released on 14/03/2018 (development) Feature #272 - tpcall cache
+
 # Build configurations
 
 ## Configure make with: 
