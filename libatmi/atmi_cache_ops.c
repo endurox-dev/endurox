@@ -325,6 +325,12 @@ expublic int ndrx_cache_save (char *svc, char *idata,
         
         ret = EXSUCCEED;
     }
+    else if (0!=save_tperrno)
+    {
+        NDRX_LOG(log_info, "Not storing error responses (by default)");
+        ret = EXSUCCEED;
+        goto out;
+    }
     
     if (EXSUCCEED!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_cache_put(
             cache, exdata, buf_type, idata, ilen, flags))
