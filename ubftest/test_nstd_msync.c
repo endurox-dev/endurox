@@ -64,22 +64,22 @@ int main(int argc, char **argv)
 
     if (2==argc)
     {
-	printf("About to begin RW....\n");
+	fprintf(stderr, "About to begin RW....\n");
 	E(edb_txn_begin(env, NULL, 0, &txn));
-	printf("After begin RW....\n");
+	fprintf(stderr, "After begin RW....\n");
 	E(edb_dbi_open(txn, "id1", EDB_CREATE, &dbi));
     }
     else
     {
-	printf("About to begin RO (env)....\n");
+	fprintf(stderr, "About to begin RO (env)....\n");
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
-	printf("After begin RO (env)....\n");
+	fprintf(stderr, "After begin RO (env)....\n");
 	E(edb_dbi_open(txn, "id1", 0, &dbi));
     }
 
-	printf("About to commit (env)....\n");
+	fprintf(stderr, "About to commit (env)....\n");
 	E(edb_txn_commit(txn));
-	printf("About commit (env)....\n");
+	fprintf(stderr, "About commit (env)....\n");
     
    
 	key.mv_size = sizeof(int);
@@ -90,13 +90,13 @@ int main(int argc, char **argv)
      */
     if (2==argc)
     {
-	printf("About to begin RW....\n");
+	fprintf(stderr, "About to begin RW....\n");
 	E(edb_txn_begin(env, NULL, 0, &txn));
-	printf("After begin RW....\n");
-	printf("Adding %d values -> about to sleep (2) %d sec\n", count, sleeps);
+	fprintf(stderr, "After begin RW....\n");
+	fprintf(stderr, "Adding %d values -> about to sleep (2) %d sec\n", count, sleeps);
     sleep(atoi(argv[1]));
 
-	printf("COUNT=%d, After sleep (1) %d sec\n", count, sleeps);
+	fprintf(stderr, "COUNT=%d, After sleep (1) %d sec\n", count, sleeps);
 	for (i=0;i<count;i++) {	
 		sprintf(sval, "%03x %d foo bar %d", values[i], values[i], sleeps);
 		data.mv_size = sizeof(sval);
@@ -105,23 +105,23 @@ int main(int argc, char **argv)
 			j++;
 	}
 
-	if (j) printf("%d duplicates skipped\n", j);
+	if (j) fprintf(stderr, "%d duplicates skipped\n", j);
     
-	printf("About to begin RW COMMIT....\n");
+	fprintf(stderr, "About to begin RW COMMIT....\n");
 	E(edb_txn_commit(txn));
-	printf("After RW COMMIT....\n");
+	fprintf(stderr, "After RW COMMIT....\n");
     }
 
 	E(edb_env_stat(env, &mst));
 
     
-	printf("About to begin RO TRAN....\n");
+	fprintf(stderr, "About to begin RO TRAN....\n");
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
-	printf("After RO TRAN....\n");
+	fprintf(stderr, "After RO TRAN....\n");
 
 	E(edb_cursor_open(txn, dbi, &cursor));
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %p %.*s, data: %p %.*s\n",
+		fprintf(stderr, "key: %p %.*s, data: %p %.*s\n",
 			key.mv_data,  (int) key.mv_size,  (char *) key.mv_data,
 			data.mv_data, (int) data.mv_size, (char *) data.mv_data);
 	}
@@ -135,38 +135,38 @@ int main(int argc, char **argv)
 		j++;
 		txn=NULL;
 
-	    printf("About to begin RW TRAN....\n");
+	    fprintf(stderr, "About to begin RW TRAN....\n");
 		E(edb_txn_begin(env, NULL, 0, &txn));
-	    printf("After begin RW TRAN....\n");
+	    fprintf(stderr, "After begin RW TRAN....\n");
 
 		sprintf(sval, "%03x ", values[i]);
 		if (RES(EDB_NOTFOUND, edb_del(txn, dbi, &key, NULL))) {
 			j--;
-	        printf("About to ABORT RW TRAN....\n");
+	        fprintf(stderr, "About to ABORT RW TRAN....\n");
 			edb_txn_abort(txn);
-	        printf("After ABORT RW TRAN....\n");
+	        fprintf(stderr, "After ABORT RW TRAN....\n");
 		} else {
-	        printf("About to COMMIT RW TRAN....\n");
+	        fprintf(stderr, "About to COMMIT RW TRAN....\n");
 			E(edb_txn_commit(txn));
-	        printf("After COMMIT RW TRAN....\n");
+	        fprintf(stderr, "After COMMIT RW TRAN....\n");
 		}
 	}
 	free(values);
-	printf("Deleted %d values\n", j);
+	fprintf(stderr, "Deleted %d values\n", j);
 
 	E(edb_env_stat(env, &mst));
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
 	E(edb_cursor_open(txn, dbi, &cursor));
-	printf("Cursor next\n");
+	fprintf(stderr, "Cursor next\n");
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
 	CHECK(rc == EDB_NOTFOUND, "edb_cursor_get");
-	printf("Cursor prev\n");
+	fprintf(stderr, "Cursor prev\n");
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_PREV)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
