@@ -62,14 +62,14 @@ Ensure(test_nstd_mtest4)
 	data.mv_size = sizeof(sval);
 	data.mv_data = sval;
 
-	printf("Adding %d values\n", count);
+	fprintf(stderr, "Adding %d values\n", count);
 	strcpy(kval, "001");
 	for (i=0;i<count;i++) {
 		sprintf(sval, "%07x", values[i]);
 		if (RES(EDB_KEYEXIST, edb_put(txn, dbi, &key, &data, EDB_NODUPDATA)))
 			j++;
 	}
-	if (j) printf("%d duplicates skipped\n", j);
+	if (j) fprintf(stderr, "%d duplicates skipped\n", j);
 	E(edb_txn_commit(txn));
 	E(edb_env_stat(env, &mst));
 
@@ -78,7 +78,7 @@ Ensure(test_nstd_mtest4)
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
 	E(edb_cursor_open(txn, dbi, &cursor));
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %p %.*s, data: %p %.*s\n",
+		fprintf(stderr, "key: %p %.*s, data: %p %.*s\n",
 			key.mv_data,  (int) key.mv_size,  (char *) key.mv_data,
 			data.mv_data, (int) data.mv_size, (char *) data.mv_data);
 	}
@@ -116,7 +116,7 @@ Ensure(test_nstd_mtest4)
 	E(edb_txn_begin(env, NULL, 0, &txn));
 	E(edb_cursor_open(txn, dbi, &cursor));
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT_MULTIPLE)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
@@ -142,21 +142,21 @@ Ensure(test_nstd_mtest4)
 		}
 	}
 	free(values);
-	printf("Deleted %d values\n", j);
+	fprintf(stderr, "Deleted %d values\n", j);
 
 	E(edb_env_stat(env, &mst));
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
 	E(edb_cursor_open(txn, dbi, &cursor));
-	printf("Cursor next\n");
+	fprintf(stderr, "Cursor next\n");
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
 	CHECK(rc == EDB_NOTFOUND, "edb_cursor_get");
-	printf("Cursor prev\n");
+	fprintf(stderr, "Cursor prev\n");
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_PREV)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}

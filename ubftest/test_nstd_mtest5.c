@@ -65,7 +65,7 @@ Ensure(test_nstd_mtest5)
 	data.mv_size = sizeof(sval);
 	data.mv_data = sval;
 
-	printf("Adding %d values\n", count);
+	fprintf(stderr, "Adding %d values\n", count);
 	for (i=0;i<count;i++) {
 		if (!(i & 0x0f))
 			sprintf(kval, "%03x", values[i]);
@@ -73,7 +73,7 @@ Ensure(test_nstd_mtest5)
 		if (RES(EDB_KEYEXIST, edb_cursor_put(cursor, &key, &data, EDB_NODUPDATA)))
 			j++;
 	}
-	if (j) printf("%d duplicates skipped\n", j);
+	if (j) fprintf(stderr, "%d duplicates skipped\n", j);
 	edb_cursor_close(cursor);
 	E(edb_txn_commit(txn));
 	E(edb_env_stat(env, &mst));
@@ -81,7 +81,7 @@ Ensure(test_nstd_mtest5)
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
 	E(edb_cursor_open(txn, dbi, &cursor));
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %p %.*s, data: %p %.*s\n",
+		fprintf(stderr, "key: %p %.*s, data: %p %.*s\n",
 			key.mv_data,  (int) key.mv_size,  (char *) key.mv_data,
 			data.mv_data, (int) data.mv_size, (char *) data.mv_data);
 	}
@@ -109,21 +109,21 @@ Ensure(test_nstd_mtest5)
 		}
 	}
 	free(values);
-	printf("Deleted %d values\n", j);
+	fprintf(stderr, "Deleted %d values\n", j);
 
 	E(edb_env_stat(env, &mst));
 	E(edb_txn_begin(env, NULL, EDB_RDONLY, &txn));
 	E(edb_cursor_open(txn, dbi, &cursor));
-	printf("Cursor next\n");
+	fprintf(stderr, "Cursor next\n");
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
 	CHECK(rc == EDB_NOTFOUND, "edb_cursor_get");
-	printf("Cursor prev\n");
+	fprintf(stderr, "Cursor prev\n");
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_PREV)) == 0) {
-		printf("key: %.*s, data: %.*s\n",
+		fprintf(stderr, "key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
