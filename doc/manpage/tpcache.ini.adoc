@@ -175,27 +175,24 @@ DATABASE DEFINITION
 DATABASE FLAGS
 --------------
 *bootreset*::
-    Clean up the cache database when Enduor/X application domain is booting. The
+    Clean up the cache database when Enduro/X application domain is booting. The
     reset is performed by *tpcachebtsv* binary. Thus this binary must be configured
     in *ndrxconfig.xml(5)*. And it should be one of the first XATMI servers booted.
 *bcastput*::
-    Max number of ATMI server copies per ATMI server entry. The difference between
-    MIN and MAX servers means the number of standby servers configured. They can be started
-    by hand with out system re-configuration. But they are not booted automatically at
-    system startup. You will have to start them with $ xadmin start -s <server_name>
-    or by $ xadmin start -i <server_id>. This can be overridden by
-    'MAX_SERVERS_SRV'.
+    Should process perform broadcast (send event) of putting data in cache. If
+    this is set and data is put into cache. This invokes calling *tpevsrv* with
+    current tpcall response data buffer. Event is @CPNNN//<SVCNM>. Where NNN is
+    cluster node id.
 *bcastdel*::
-    Should server be automatically killed (by sequence signal sequence 
-    -2, -15, -9) in case if server have been starting up too long, or
-    does not respond to pings too long, or it is performing shutdown
-    too long. This can be overridden by 'AUTOKILL_SRV' on per server
-    basis.
-*bcastput*::
-    Full path to file containing environment variable overrides.
-    see 'ex_envover(5)' for more details. This can be overridden
-    by per server basis by ENV_OVERRIDE_SRV. 
-    Both are optional settings.
+    When cache data is deleted either by invalidate cache or by *tpcached*
+    operations, if flag is set, the event is broadcasted to *tpevsrv*. The event
+    in case of invalidated is @CDNNN/F/<SVCNM> (which contains the data buffer 
+    by which data is deleted. It is buffer which performs invalidate, not 
+    the actually stored data. Data is processed by cache's *delete* parameter
+    which might limit the data sent for deletion over the event server - in order
+    to save some traffic). The NNN is cluster node id which initiates the
+    invalidate. The F is flags, in case if is 'G', then whole group is deleted if
+    record is part of the keygroup, otherwise 'F' flag (full) is sent.
 *timesync*::
     Full path to file containing environment variable overrides.
     see 'ex_envover(5)' for more details. This can be overridden
