@@ -1380,30 +1380,32 @@ expublic int ndrx_cache_init(int mode)
                     !(cache->flags & NDRX_TPCACHE_TPCF_INVAL)
                     )
             {
-                if (NULL==(tmp = exjson_object_get_string(array_object, 
+                if (NULL!=(tmp = exjson_object_get_string(array_object, 
                         NDRX_TPCACHE_KWC_SAVE)))
                 {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                            "[%s] for service [%s], buffer index: %d", 
-                            NDRX_TPCACHE_KWC_SAVE, svc, i);
-                    EXFAIL_OUT(ret);
-                }
-                
-                NDRX_STRCPY_SAFE(cache->saveproj.expression, tmp);
-                
-                /* if it is regex, then compile */
-                if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
-                {
-                    if (EXSUCCEED!=ndrx_regcomp(&cache->saveproj.regex, 
-                            cache->saveproj.expression))
+
+                    NDRX_STRCPY_SAFE(cache->saveproj.expression, tmp);
+
+                    /* if it is regex, then compile */
+                    if (cache->flags & NDRX_TPCACHE_TPCF_SAVEREG)
                     {
-                        NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile [%s] "
-                            "regex [%s] for svc [%s], "
-                            "buffer index: %d - see ndrx logs", 
-                                NDRX_TPCACHE_KWC_SAVE, 
-                                cache->saveproj.expression, svc, i);
+                        if (EXSUCCEED!=ndrx_regcomp(&cache->saveproj.regex, 
+                                cache->saveproj.expression))
+                        {
+                            NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: failed to compile [%s] "
+                                "regex [%s] for svc [%s], "
+                                "buffer index: %d - see ndrx logs", 
+                                    NDRX_TPCACHE_KWC_SAVE, 
+                                    cache->saveproj.expression, svc, i);
+                        }
+                        cache->saveproj.regex_compiled=EXTRUE;
                     }
-                    cache->saveproj.regex_compiled=EXTRUE;
+                }
+                else
+                {
+                    NDRX_LOG(log_info, "No save strategy specified - default "
+                            "to full save");
+                    cache->flags |= NDRX_TPCACHE_TPCF_SAVEFULL;
                 }
             }
             

@@ -95,6 +95,12 @@
             <srvid>140</srvid>
             <sysopt>-e ${TESTDIR}/atmisv48-dom1.log -sTESTSV16/TESTSV17/TESTSV18_1/TESTSV18_2/TESTSV19/TESTSV20/TESTSV20I:OKSVC -r</sysopt>
         </server>
+        <server name="atmi.sv48">
+            <max>1</max>
+            <cctag></cctag>
+            <srvid>160</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv48-dom1.log -sTESTSV21OK:OKSVC -sTESTSV21FAIL:FAILSVC -r</sysopt>
+        </server>
         <!-- Establish bridge connection -->
         <server name="tpbridge">
             <max>1</max>
