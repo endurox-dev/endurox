@@ -227,9 +227,9 @@ xadmin bc -t CACHED
 echo "let client to boot..."
 sleep 5
 
-echo "wait for tpcached to complete scanning... (every 5 sec)"
+echo "wait for tpcached to complete scanning... (every 20 sec)"
 
-sleep 7
+sleep 20
 
 echo "There must be 5 keys"
 ensure_keys db12 5
@@ -249,8 +249,8 @@ ensure_field db12 SV12KEY2 T_STRING_FLD KEY2 0
 ensure_field db12 SV12KEY1 T_STRING_FLD KEY1 1
 
 
-echo "Waiting for expiry to zap records..."
-sleep 15
+echo "Waiting for expiry to zap records... (60s)"
+sleep 60
 
 
 ensure_keys db12 0
