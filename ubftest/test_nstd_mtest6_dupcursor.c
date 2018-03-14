@@ -32,7 +32,7 @@ int sort_data(const EDB_val *a, const EDB_val *b)
 {
     int ret = strcmp((char *)b->mv_data, (char *)a->mv_data);
     
-    printf("sort called [%s] vs [%s]=%d\n", (char *)a->mv_data, (char *)b->mv_data, ret);
+    fprintf(stderr, "sort called [%s] vs [%s]=%d\n", (char *)a->mv_data, (char *)b->mv_data, ret);
     return ret;
 }
 
@@ -72,7 +72,7 @@ Ensure(test_nstd_mtest6_dupcursor)
 	data.mv_size = sizeof(sval);
 	data.mv_data = sval;
 
-	printf("Adding %d values\n", count);
+	fprintf(stderr, "Adding %d values\n", count);
 	for (i=0;i<count;i++) {
             sprintf(kval, "%03d", i);
             sprintf(sval, "%03d %03d foo bar", i, i);
@@ -115,7 +115,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         
 	E(edb_cursor_open(txn, dbi, &cursor));
 	while ((rc = edb_cursor_get(cursor, &key, &data, EDB_NEXT)) == 0) {
-		printf("key: %p %.*s, data: %p %.*s\n",
+		fprintf(stderr, "key: %p %.*s, data: %p %.*s\n",
 			key.mv_data,  (int) key.mv_size,  (char *) key.mv_data,
 			data.mv_data, (int) data.mv_size, (char *) data.mv_data);
 	}
@@ -124,7 +124,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         
         /* get stats... */
         E(edb_stat(txn, dbi, &mst));
-        printf("keys in db: %d\n", (int)mst.ms_entries);
+        fprintf(stderr, "keys in db: %d\n", (int)mst.ms_entries);
         
         /* TODO: get first? */
         
