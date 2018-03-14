@@ -57,6 +57,7 @@ Ensure(test_nstd_mtest5)
 
 	E(edb_txn_begin(env, NULL, 0, &txn));
 	E(edb_dbi_open(txn, "id2", EDB_CREATE|EDB_DUPSORT, &dbi));
+	E(edb_drop(txn, dbi, 0));
 	E(edb_cursor_open(txn, dbi, &cursor));
 
 	key.mv_size = sizeof(int);

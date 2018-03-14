@@ -49,6 +49,8 @@ Ensure(test_nstd_mtest6_dupcursor)
 	char sval[32];
 	char kval[sizeof(int)];
 
+#define KEY_SIZE	4 /* 3 + EOS */
+
 	memset(sval, 0, sizeof(sval));
 
 	E(edb_env_create(&env));
@@ -60,9 +62,12 @@ Ensure(test_nstd_mtest6_dupcursor)
         
         
 	E(edb_dbi_open(txn, "id2", EDB_CREATE|EDB_DUPSORT, &dbi));
-    E(edb_set_dupsort(txn, dbi, sort_data));
+	E(edb_set_dupsort(txn, dbi, sort_data));
+	/* drop database */
+        E(edb_drop(txn, dbi, 0));
+	
         
-	key.mv_size = sizeof(int);
+	key.mv_size = KEY_SIZE;
 	key.mv_data = kval;
 	data.mv_size = sizeof(sval);
 	data.mv_data = sval;
@@ -90,13 +95,13 @@ Ensure(test_nstd_mtest6_dupcursor)
                     
         i=16;
         sprintf(kval, "%03d", i);
-        sprintf(sval, "%03d %d foo bar", i, 17);
+        sprintf(sval, "%03d %03d foo bar", i, 17);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
         
         
         i=25;
         sprintf(kval, "%03d", i);
-        sprintf(sval, "%03d %d foo bar", i, 14);
+        sprintf(sval, "%03d %03d foo bar", i, 14);
         RES(0, edb_put(txn, dbi, &key, &data, 0L));
         
         
@@ -133,7 +138,7 @@ Ensure(test_nstd_mtest6_dupcursor)
         
         sprintf(kval, "%03d", 5);
         
-        key.mv_size = sizeof(int);
+        key.mv_size = KEY_SIZE;
 	key.mv_data = kval;
         
         /* E(edb_get(txn, dbi, &key, &data)); */
