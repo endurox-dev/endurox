@@ -699,6 +699,54 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     NDRX_LOG(log_debug, "cachedb: [%s] boot mode: %d  flags: %ld reset: %d",
             db->cachedb, mode, db->flags, (int)(db->flags & NDRX_TPCACHE_FLAGS_BOOTRST));
+    
+    if (NDRX_TPCACH_INIT_BOOT==mode &&
+            db->flags & NDRX_TPCACHE_FLAGS_BOOTRST)
+    {
+        char data_file[PATH_MAX+1];
+        char lock_file[PATH_MAX+1];
+        
+        snprintf(data_file, sizeof(data_file), "%s/data.edb", db->resource);
+        snprintf(lock_file, sizeof(data_file), "%s/lock.edb", db->resource);
+        
+        NDRX_LOG(log_info, "Resetting cache db [%s], data file: [%s], lock file: [%s]", 
+                db->cachedb, data_file, lock_file);
+        
+        if (EXSUCCEED!=unlink(data_file))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "unlink [%s] failed: %s", data_file, strerror(err));
+            if (ENOENT!=err)
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, 
+                    "Failed to unlink: [%s]", strerror(err));
+            }
+        }
+        
+        if (EXSUCCEED!=unlink(lock_file))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "unlink [%s] failed: %s", lock_file, strerror(err));
+            if (ENOENT!=err)
+            {
+                NDRX_CACHE_TPERROR(TPESYSTEM, 
+                    "Failed to unlink: [%s]", strerror(err));
+            }
+        }
+        
+        #if 0
+        if (EXSUCCEED!=(ret=edb_drop(txn, db->dbi, 0)))
+        {
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                    "CACHE: Failed to clear db: [%s]: %s", 
+                    db->cachedb, edb_strerror(ret));
+
+            EXFAIL_OUT(ret);
+        }
+        #endif
+    }
+    
+    
     if (EXSUCCEED!=ndrx_cache_phydb_getref(db))
     {
         NDRX_CACHE_ERROR("Failed to load physical db for [%s]/[%s]",
@@ -752,20 +800,6 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     
     NDRX_LOG(log_debug, "boot mode: %d  flags: %ld reset: %d",
             mode, db->flags, (int)(db->flags & NDRX_TPCACHE_FLAGS_BOOTRST));
-    
-    if (NDRX_TPCACH_INIT_BOOT==mode &&
-            db->flags & NDRX_TPCACHE_FLAGS_BOOTRST)
-    {
-        NDRX_LOG(log_info, "Resetting cache db [%s]", db->cachedb);
-        if (EXSUCCEED!=(ret=edb_drop(txn, db->dbi, 0)))
-        {
-            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-                    "CACHE: Failed to clear db: [%s]: %s", 
-                    db->cachedb, edb_strerror(ret));
-
-            EXFAIL_OUT(ret);
-        }
-    }
     
     /* commit the tran */
     if (EXSUCCEED!=(ret=edb_txn_commit(txn)))

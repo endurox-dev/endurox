@@ -654,7 +654,7 @@ extern NDRX_API int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
         char *key, EDB_val *data);
 
 extern NDRX_API int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data, unsigned int flags);
+        char *key, EDB_val *data, unsigned int flags, int ignore_err);
 
 extern NDRX_API int ndrx_cache_edb_stat (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         EDB_stat * stat);

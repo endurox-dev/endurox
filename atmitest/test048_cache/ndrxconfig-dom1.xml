@@ -99,7 +99,7 @@
             <max>1</max>
             <cctag></cctag>
             <srvid>160</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv48-dom1.log -sTESTSV21OK:OKSVC -sTESTSV21FAIL:FAILSVC -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv48-dom1.log -sTESTSV21OK/TESTSV22:OKSVC -sTESTSV21FAIL:FAILSVC -r</sysopt>
         </server>
         <!-- Establish bridge connection -->
         <server name="tpbridge">

@@ -165,9 +165,7 @@ int main(int argc, char** argv)
         }
         else if (i_res_prev != i_res)
         {
-            
-            /*  */
-            strcpy(tstamp_prev, tstamp);
+            NDRX_STRCPY_SAFE(tstamp_prev, tstamp);
             i_res_prev = i_res;
         }
         else
