@@ -412,7 +412,7 @@ out:
  * @return EXSUCCEED/LMDB err
  */
 expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data, unsigned int flags)
+        char *key, EDB_val *data, unsigned int flags, int ignore_err)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
@@ -422,9 +422,18 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
             
     if (EXSUCCEED!=(ret=edb_put(txn, db->dbi, &keydb, data, flags)))
     {
-        NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
-            "Failed to to put to db [%s] key [%s], data: %p: %s", 
-            db->cachedb, key, data, edb_strerror(ret));
+        if (ignore_err)
+        {
+            NDRX_CACHE_ERROR(ndrx_cache_maperr(ret), 
+                "Failed to to put to db [%s] key [%s], data: %p: %s", 
+                db->cachedb, key, data, edb_strerror(ret));
+        }
+        else
+        {
+            NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
+                "Failed to to put to db [%s] key [%s], data: %p: %s", 
+                db->cachedb, key, data, edb_strerror(ret));
+        }
     }
 out:
     return ret;

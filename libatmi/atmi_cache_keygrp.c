@@ -571,7 +571,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         cachedata.mv_size = exdata->atmi_buf_len + sizeof(ndrx_tpcache_data_t);
         
         if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->keygrpdb, txn, 
-                kg_ptr, &cachedata, 0)))
+                kg_ptr, &cachedata, 0, EXFALSE)))
         {
             NDRX_LOG(log_debug, "Failed to put DB for keygroup...!");
             goto out;
