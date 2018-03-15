@@ -63,3 +63,7 @@ Run serveral testtools on the same database.
 and another cache with sufficient. For insufficient we use list of fields,
 for suffcient we use regexp.
 
+21 - test defaults (minimum settings to cache)
+
+22 - test what happens if cache is full?
+
