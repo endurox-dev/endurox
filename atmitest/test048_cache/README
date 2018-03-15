@@ -65,5 +65,6 @@ for suffcient we use regexp.
 
 21 - test defaults (minimum settings to cache)
 
-22 - test what happens if cache is full?
+22 - test what happens if cache is full? This could be also case when running
+in hits mode? Will it be able to update?
 
