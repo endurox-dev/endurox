@@ -407,7 +407,7 @@ expublic int ndrx_cache_save (char *svc, char *idata,
             svcc->svcnm, key, (long)cachedata.mv_size);
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
-            key, &cachedata, 0)))
+            key, &cachedata, 0, EXFALSE)))
     {
         NDRX_LOG(log_debug, "Failed to put DB record!");
         goto out;
@@ -480,6 +480,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
     unsigned int flagsdb;
+    int force_abort = EXFALSE;
     /* Key size - assume 16K should be fine */
     /* get buffer type & sub-type */
     cachedata_update.mv_size = 0;
@@ -868,13 +869,13 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
             dbflags = 0;
         }
 #endif
-        if (EXSUCCEED!=(ret=ndrx_cache_edb_put (cache->cachedb, txn, 
-            key, &cachedata_update, 0)))
+        if (EXSUCCEED!=ndrx_cache_edb_put (cache->cachedb, txn, 
+            key, &cachedata_update, 0, EXTRUE))
         {
-            NDRX_LOG(log_debug, "Failed to put/update DB record!");
+            NDRX_LOG(log_debug, "Failed to put/update DB record - ignore error");
+            force_abort = EXTRUE;
             goto out;
         }
-        
     }
     else if (cache->cachedb->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
     {
@@ -922,7 +923,7 @@ out:
 
     if (tran_started)
     {
-        if (EXSUCCEED==ret)
+        if (EXSUCCEED==ret && !force_abort)
         {
             ndrx_cache_edb_commit(cache->cachedb, txn);
         }

@@ -188,13 +188,13 @@ cmd_mapping_t M_command_map[] =
                                      "\t tagets/types available:", cmd_gen_help},
     {"cs",        cmd_cs,EXFAIL,   1,  3,  1, "Cache show\n"
                                             "\t args: cs <cache_db_name>|-d <cache_db_name>", NULL},
-    {"cacheshow", cmd_cs,EXFAIL,   2,  3,  1, "Alias for `cs' ", NULL},
+    {"cacheshow", cmd_cs,EXFAIL,   1,  3,  1, "Alias for `cs' ", NULL},
     {"cd",        cmd_cd,EXFAIL,   3,  4,  1, "Dump message in cache\n"
                                     "\t args: cd -d <dbname> -k <key> [-i interpret_result]", NULL},
     {"cachedump", cmd_cd,EXFAIL,   3,  4,  1, "Alias for `cd' ", NULL},
     {"ci",        cmd_ci,EXFAIL,   2,  4,  1, "Invalidate cache\n"
                                     "\t args: ci -d <dbname> [-k <key>][-r use_regexp]", NULL},
-    {"cacheinval",cmd_ci,EXFAIL,   3,  4,  1, "Alias for `ci' ", NULL}
+    {"cacheinval",cmd_ci,EXFAIL,   2,  4,  1, "Alias for `ci' ", NULL}
 };
 
 /*
@@ -504,11 +504,11 @@ exprivate int get_cmd(int *p_have_next)
         {
             if (EXEOS!=M_buffer_prev[0] && '/' == M_buffer[0])
             {
-                strcpy(M_buffer, M_buffer_prev);
+                NDRX_STRCPY_SAFE(M_buffer, M_buffer_prev);
             }
             else if (EXEOS!=M_buffer[0])
             {
-                strcpy(M_buffer_prev, M_buffer);
+                NDRX_STRCPY_SAFE(M_buffer_prev, M_buffer);
             }
         }
         
@@ -522,7 +522,7 @@ exprivate int get_cmd(int *p_have_next)
             if (!G_cmd_argc_logical)
                 G_cmd_argc_logical = 1;
             
-            strcpy(G_cmd_argv[G_cmd_argc_raw], p);
+            NDRX_STRCPY_SAFE(G_cmd_argv[G_cmd_argc_raw], p);
             G_cmd_argc_raw++;
             
             p = strtok (NULL, ARG_DEILIM);
