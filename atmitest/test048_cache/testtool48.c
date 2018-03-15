@@ -57,6 +57,7 @@ extern int optind, optopt, opterr;
 extern char *optarg;
 
 /*---------------------------Macros-------------------------------------*/
+#define BUFS_EXTRA  1024*5
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -73,6 +74,8 @@ exprivate int M_first_goes_to_cache = EXTRUE; /* first call goes to cache (basic
 exprivate long M_tpcall_flags = 0; /* Additional tpcall flags */
 exprivate int M_threads = 1; /* Number of threads */
 exprivate int M_failed = EXFALSE; /* Set to true by failed thread */
+exprivate int M_bigmsg = EXFALSE;   /* should we test big message ~ 5K? */
+exprivate char M_bigmsg_buf[BUFS_EXTRA]; /* extra buffer for big msg, random */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -94,14 +97,14 @@ exprivate int main_loop(void *ptr)
     
     long olen;
     int data_from_cache;
-    /* take a copy from UBF */
     
+    /* take a copy from UBF */
     
     for (i=0; i<M_numcalls; i++)
     {
         NDRX_LOG(log_debug, "into loop %ld", i);
         
-        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024)))
+        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024+BUFS_EXTRA)))
         {
             NDRX_LOG(log_error, "Failed to allocate test buffer: %s", 
                     tpstrerror(tperrno));
@@ -114,7 +117,7 @@ exprivate int main_loop(void *ptr)
                     Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
-        
+
         /* get tstamp here... */
         ndrx_utc_tstamp2(&t, &tusec);
         
@@ -326,12 +329,16 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
 
-    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lxm:d")) != EXFAIL)
+    while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lxm:dB")) != EXFAIL)
     {
         NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
         
         switch (c)
         {
+            case 'B':
+                /* test big messages */
+                M_bigmsg = EXTRUE;
+                break;
             case 's':
                 NDRX_STRCPY_SAFE(M_svcnm, optarg);
                 break;
@@ -470,6 +477,27 @@ int main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "-n: Number of call must be possitive!");
         EXFAIL_OUT(ret);
+    }
+    
+    if (M_bigmsg)
+    {
+        /* prepare compare buffer - add */
+
+        if (EXSUCCEED!=Bchg(M_p_ub, T_CARRAY_3_FLD, 0, M_bigmsg_buf, 
+                sizeof(M_bigmsg_buf)))
+        {
+            NDRX_LOG(log_error, "Failed to add T_CARRAY_3_FLD (bigmsg) to M_p_ub: %s", 
+                Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=Bchg(M_p_ub_cmp_cache, T_CARRAY_3_FLD, 0, M_bigmsg_buf, 
+                sizeof(M_bigmsg_buf)))
+        {
+            NDRX_LOG(log_error, "Failed to add T_CARRAY_3_FLD (bigmsg) to M_p_ub_cmp_cache: %s", 
+                Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     
     /* loop over */
