@@ -91,9 +91,12 @@ expublic int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache,
         if (cache->flags & NDRX_TPCACHE_TPCF_INVLKEYGRP)
         {
             NDRX_LOG(log_debug, "Invalidate whole group!");
-            /* Remove full group */
+            /* Remove full group
+             * key group data must be filled in inval cache!
+             * TODO: Maybe we need some tests in init?
+             */
             if (EXSUCCEED!=(ret=ndrx_cache_keygrp_inval_by_data(
-                    cache->inval_cache, idata, ilen,txn)))
+                    cache, idata, ilen,txn)))
             {
                 NDRX_LOG(log_error, "failed to remove keygroup!");
                 goto out;
