@@ -39,13 +39,13 @@ svc SERVICE_NAME=
                     "flags":"CACHE_FLAGS",
                     "type":"TYPE",
                     "subtype":"SUBTYPE",
-                    "inval_svc":"INVAL_SVC",
-                    "inval_idx":"INVAL_IDX",
                     "rule":"RULE",
-                    "refreshrule":"REFRESHRULE",
                     "save":"SAVE",
                     "delete":"DELETE",
                     "rsprule":"RSPRULE",
+                    "refreshrule":"REFRESHRULE",
+                    "inval_svc":"INVAL_SVC",
+                    "inval_idx":"INVAL_IDX",
                     "keygrpdb":"KEYGRPDB",
                     "keyfmt":"KEYFMT",
                     "keygrpfmt":"KEYGRPFMT",
@@ -162,13 +162,16 @@ DATABASE DEFINITION
 *MAX_READERS*::
     See LMDB documentation for this. Basically this is number of threads used
     by process. See LMDB's mdb_env_set_maxreaders() function description. The
-    default value set by Enduro/X is *64*.
+    default value set by Enduro/X is *1000*.
 *MAP_SIZE*::
     Maximum size of the database in bytes. The size must be multiple of OS page
     size. See LMDB's mdb_env_set_mapsize() function description. The default 
     value used by Enduro/X is *10485760*. Postifx multiplier can be used for
     value in configuration: kK(x1000) mM (x1000'000) gG (x1000'000'000) e.g. 10M.
-
+*MAX_NAMED_DBS*::
+    Maximum number of "named" logical databases in given resource. Named DB is
+    only uses with "@" syntax, and usually only for keygroups (to keep transactions
+    atomic between two DBs). The default value is *2*.
 *DB_PERMISSIONS*::
     Octal permissions for map files on file system. The default value is *0664*.
 
@@ -178,6 +181,7 @@ DATABASE FLAGS
     Clean up the cache database when Enduro/X application domain is booting. The
     reset is performed by *tpcachebtsv* binary. Thus this binary must be configured
     in *ndrxconfig.xml(5)*. And it should be one of the first XATMI servers booted.
+    The *tpcachetbsv* simple removes database files at boot.
 *bcastput*::
     Should process perform broadcast (send event) of putting data in cache. If
     this is set and data is put into cache. This invokes calling *tpevsrv* with
@@ -215,50 +219,100 @@ DATABASE FLAGS
 
 CACHE DEFINITION
 ----------------
-
-*MAX_STARTUP_TIME_DEFAULT*::
-    Max time (in sanity units) in which server should start up, i.e. send init info to
-    'ndrxd'. If during this time server have not initialized, it is being restarted. This
-    can be overridden by 'MAX_STARTUP_TIME_SRV'.
-*PING_EVERY_TIME_DEFAULT*::
-    Number of sanity units in which perform periodical server pings. This can be
-    overridden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
-*MAX_PING_TIME_DEFAULT*::
-    Number of sanity units, time in which server *must* respond to ping requests.
-    If there is no response from server within this time, then restart sequence is
-    initiated. This can be overridden by 'MAX_PING_TIME_SRV'.
-*MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
-    Maximum time in which shutdown of server must complete in sanity units.
-    If in given time server is not shutdown, then forced shutdown sequence
-    is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
-    on per server basis.
-*EXPORT_SERVICES_DEFAULT*::
+*CACHE_DBNAME*::
+    Reference to database name. This must match with chosen storage db *DBNAME_DB*.
+*CACHE_FLAGS*::
+    Flags of the cache (comma separate of flags for cache). See section bellow for
+    flags available.
+*TYPE*::
+    This is buffer type name for which cache is designed. Currently supported type
+    is *UBF*.
+*SUBTYPE*::
+    This is buffer sub type. For example for *VIEW* buffers this is view name.
+    Currently this parameter is reserved for future use.
+*RULE*::
+    Number of seconds to wait for servers to boot. If not started in given time,
+    then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
+    Default value for this is 30 seconds.
+*SAVE*::
+    Time in sanity units after which to progress from first signal -2 to next signal
+    -15. And after -15 this time means when next -9 signal will be sent. This is used
+    if forced restart of forced shutdown was initiated by 'ndrxd'. This
+    can be overridden by 'KILL_TIME_SRV'.
+*DELETE*::
+    Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
+    process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
+*RSPRULE*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*REFRESHRULE*::
+    Number of seconds to wait for server to shutdown. If not started in given time,
+    then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
+    Default value for this is 30 seconds.
+*INVAL_SVC*::
     Comma separated list of services to be applied to all binaries which means the list of
     services to be exported by *tpbridge* server to other cluster node. This can be overridden by 
     'ATMI_SERVER_EXPORT_SERVICES'.
-*BLACKLIST_SERVICES_DEFAULT*::
+*INVAL_IDX*::
     Comma separated list of services to be applied to all server binaries which means the list of
     services that must not be exported by *tpbridge* server to other cluster node.
     'ATMI_SERVER_BLACKLIST_SERVICES' is first priority over the 'EXPORT_SERVICES_DEFAULT' if
     service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
     'ATMI_SERVER_BLACKLIST_SERVICES'. 
-*NDRXD_SRV_START_WAIT_DEFAULT*::
-    Number of seconds to wait for servers to boot. If not started in given time,
-    then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
-    Default value for this is 30 seconds.
-*NDRXD_SRV_STOP_WAIT_DEFAULT*::
-    Number of seconds to wait for server to shutdown. If not started in given time,
-    then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
-    Default value for this is 30 seconds.
-*KILL_TIME_DEFAULT*::
-    Time in sanity units after which to progress from first signal -2 to next signal
-    -15. And after -15 this time means when next -9 signal will be sent. This is used
-    if forced restart of forced shutdown was initiated by 'ndrxd'. This
-    can be overridden by 'KILL_TIME_SRV'.
-*COMMON_CONFIG_TAG_DEFAULT*::
-    Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
-    process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
-*PROTECTED_SERVER_DEFAULT*::
+*KEYGRPDB*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*KEYFMT*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*KEYGRPFMT*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*KEYGRPMAXTPERRNO*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*KEYGRPMAXTPURCODE*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*KEYGROUPMREJ*::
+    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
+    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
+    won't work on these because '-c' is not supposed to be used by restart.
+    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
+    something else which is involved into 'ndrxd' daemon management it self.
+    This can be overridden by 'PROTECTED_SERVER'.
+*KEYGROUPMAX*::
     Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
     'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
     stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
@@ -267,20 +321,56 @@ CACHE DEFINITION
     something else which is involved into 'ndrxd' daemon management it self.
     This can be overridden by 'PROTECTED_SERVER'.
 
+
 CACHE FLAGS
 -----------
-*RELOAD_ON_CHANGE_DEFAULT*::
+*invalkeygrp*::
     If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
     and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
     the XATMI servers one by one. The scanning will occur at every sanity
     cycle. This is recommended to be used *only* for development purposes. And
     must not be used on production servers! 
     This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
-*SECONDS_TO_SLEEP_AFTER_SRV_START*::
+*inval*::
     Number of seconds to wait for next item to start after the server is launched.
     This is useful in cases when for example we start bridge server, let it for some
-    seconds to connect to other node, then continue with other service startup.
-*SERVER_BINARY_NAME*::
+    seconds to connect to other node, then continue with other service startup.s
+*putrex*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*getreplace*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*getmerge*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*putfull*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*next*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*delrex*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*delrex*::
+    ATMI server executable's name. The executable must be in $PATH.
+    This name cannot contain special symbols like path seperator '/'
+    and it cannot contains commas ','! Commas are used as internal
+    queue seperator combined with binary names.
+*delfull*::
     ATMI server executable's name. The executable must be in $PATH.
     This name cannot contain special symbols like path seperator '/'
     and it cannot contains commas ','! Commas are used as internal

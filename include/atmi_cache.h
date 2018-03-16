@@ -165,10 +165,10 @@ extern "C" {
 #define NDRX_TPCACHE_BCAST_GROUPC   'G'  /* Group operatoin                  */
     
 #define NDRX_CACHES_BLOCK           "caches"
-#define NDRX_CACHE_MAX_READERS_DFLT 64
+#define NDRX_CACHE_MAX_READERS_DFLT 1000
 #define NDRX_CACHE_MAP_SIZE_DFLT    10485760 /* 10M */
 #define NDRX_CACHE_PERMS_DFLT       0664
-#define NDRX_CACHE_MAX_DBS_DFLT     1
+#define NDRX_CACHE_MAX_DBS_DFLT     2
     
 #define NDRX_CACHE_BCAST_MODE_PUT   1
 #define NDRX_CACHE_BCAST_MODE_DEL   2
