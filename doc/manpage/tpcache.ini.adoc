@@ -40,6 +40,7 @@ svc SERVICE_NAME=
                     "type":"TYPE",
                     "subtype":"SUBTYPE",
                     "rule":"RULE",
+                    "keyfmt":"KEYFMT",
                     "save":"SAVE",
                     "delete":"DELETE",
                     "rsprule":"RSPRULE",
@@ -47,7 +48,6 @@ svc SERVICE_NAME=
                     "inval_svc":"INVAL_SVC",
                     "inval_idx":"INVAL_IDX",
                     "keygrpdb":"KEYGRPDB",
-                    "keyfmt":"KEYFMT",
                     "keygrpfmt":"KEYGRPFMT",
                     "keygrpmaxtperrno":"KEYGRPMAXTPERRNO",
                     "keygrpmaxtpurcode":"KEYGRPMAXTPURCODE",
@@ -235,6 +235,14 @@ CACHE DEFINITION
     the call shall be cached/cache-looked-up or not. If rule is not specified, then
     by default call is accepted for cache. In case if *TYPE* is UBF, then standard
     boolean expression applies here.
+*KEYFMT*::
+    This is buffer type specific format. For *UBF* fields this is format string
+    which might contain field free text with format of '$(UBF_FIELD)', where 
+    given construction will be substituted with UBF field value of field 'UBF_FIELD'.
+    For example having 'T_STRING_3_FLD' equal to *ABC* and 'T_STRING_2_FLD' occurrence 2
+    equal to  XX' and format string 'SV1$(T_STRING_3_FLD)-$(T_STRING_2_FLD[1])', 
+    then key will render as 'SV1ABC-XX'. Key is used to distinguish under which
+    record to save the data and how to lookup data into database.
 *SAVE*::
     This field specifies how data is saved into cache. It is type specific and
     and flags specific. For *UBF* buffer with flag *putfull* full UBF buffer is
@@ -273,7 +281,8 @@ CACHE DEFINITION
     the other service cache, specified in 'INVAL_SVC' will be reset (removed
     cached data). The key used for data access is build by this invalidate cache
     and not by target 'INVAL_SVC' cache definition. If target cache uses
-    *invalkeygrp* flag, then then whole group 
+    *invalkeygrp* flag, then then whole group is invalidated. The group access is
+    made by 'KEYGRPDB' and 'KEYGRPFMT'.
     
 *INVAL_IDX*::
     Comma separated list of services to be applied to all server binaries which means the list of
@@ -282,14 +291,6 @@ CACHE DEFINITION
     service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
     'ATMI_SERVER_BLACKLIST_SERVICES'. 
 *KEYGRPDB*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
-*KEYFMT*::
     Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
     'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
     stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
