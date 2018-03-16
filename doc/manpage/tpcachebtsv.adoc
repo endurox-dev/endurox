@@ -20,7 +20,8 @@ might be subject for cache usage. The server shall be booted in single instance.
 The idea is that this server process will load all caches (under given CCTAG if
 any) and will process their 'bootreset' flags of the databases. Thus it will clear
 up any caches which at startup must be cleaned up. Also note that this clean-up
-call is not broadcasted to other Enduro/X cluster nodes.
+call is not broadcasted to other Enduro/X cluster nodes. The clean up consists
+of removeing "data.edb" and "lock.edb" files from resource directory.
 
 EXIT STATUS
 -----------
@@ -36,7 +37,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxconfig.xml(5)* *tpcachesv(8)* *tpcached(8)*
+*ndrxconfig.xml(5)* *tpcachesv(8)* *tpcached(8)* *tpcache.ini(5)*
 
 COPYING
 -------
