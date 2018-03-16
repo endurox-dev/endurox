@@ -258,21 +258,23 @@ CACHE DEFINITION
     on buffer fields (names). The names which matches expression are added to
     to buffer which is sent to other cluster node.
 *RSPRULE*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
+    This is boolean expression with following two fields in buffer *EX_TPERRNO*
+    which corresponds to *tperrno* of tpcall() and *EX_TPURCODE* corresponds to
+    tpcall() user return code. If *RSPRULE* setting is not present, then cached
+    are only successful calls (i.e. EX_TPERRNO==0).
 *REFRESHRULE*::
-    Number of seconds to wait for server to shutdown. If not started in given time,
-    then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
-    Default value for this is 30 seconds.
+    Optional type specific expression. When performing tpcall(), the saved data
+    is returned from cache. In case if this expression is defined, the real service
+    call will be performed, even data in cache are present. For *UBF* buffers
+    this is boolean expression.
 *INVAL_SVC*::
-    Comma separated list of services to be applied to all binaries which means the list of
-    services to be exported by *tpbridge* server to other cluster node. This can be overridden by 
-    'ATMI_SERVER_EXPORT_SERVICES'.
+    This is service name if "their" service to be invalidated. When service call
+    is performed, this "allows" to intercept the call and when response is recieved
+    the other service cache, specified in 'INVAL_SVC' will be reset (removed
+    cached data). The key used for data access is build by this invalidate cache
+    and not by target 'INVAL_SVC' cache definition. If target cache uses
+    *invalkeygrp* flag, then then whole group 
+    
 *INVAL_IDX*::
     Comma separated list of services to be applied to all server binaries which means the list of
     services that must not be exported by *tpbridge* server to other cluster node.

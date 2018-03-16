@@ -1243,30 +1243,28 @@ expublic int ndrx_cache_init(int mode)
                 EXFAIL_OUT(ret);
             }
             /* get db name */
-            if (!(cache->flags & NDRX_TPCACHE_TPCF_INVAL))
-                
+
+            if (NULL==(tmp = exjson_object_get_string(array_object, 
+                    NDRX_TPCACHE_KWC_CACHEDB)))
             {
-                if (NULL==(tmp = exjson_object_get_string(array_object, 
-                        NDRX_TPCACHE_KWC_CACHEDB)))
-                {
-                    NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
-                            "[%s] for service [%s], buffer index: %d", 
-                            NDRX_TPCACHE_KWC_CACHEDB, svc, i);
-                    EXFAIL_OUT(ret);
-                }
-
-                NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
-                
-                /* split up */
-
-                /* Resolve the DB */
-                if (NULL==(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
-                {
-                    NDRX_LOG(log_error, "%s failed", __func__);
-                    EXFAIL_OUT(ret);
-                }
+                NDRX_CACHE_TPERROR(TPEINVAL, "CACHE: invalid config missing "
+                        "[%s] for service [%s], buffer index: %d", 
+                        NDRX_TPCACHE_KWC_CACHEDB, svc, i);
+                EXFAIL_OUT(ret);
             }
-            else
+
+            NDRX_STRCPY_SAFE(cache->cachedbnm, tmp);
+
+            /* split up */
+
+            /* Resolve the DB */
+            if (NULL==(cache->cachedb=ndrx_cache_dbresolve(cache->cachedbnm, mode)))
+            {
+                NDRX_LOG(log_error, "%s failed", __func__);
+                EXFAIL_OUT(ret);
+            }
+                
+            if (cache->flags & NDRX_TPCACHE_TPCF_INVAL)
             {
                 ndrx_tpcache_svc_t *svcc;
                 /* 
