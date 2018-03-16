@@ -231,17 +231,32 @@ CACHE DEFINITION
     This is buffer sub type. For example for *VIEW* buffers this is view name.
     Currently this parameter is reserved for future use.
 *RULE*::
-    Number of seconds to wait for servers to boot. If not started in given time,
-    then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
-    Default value for this is 30 seconds.
+    This is buffer type specific expression for defining the rule in which case
+    the call shall be cached/cache-looked-up or not. If rule is not specified, then
+    by default call is accepted for cache. In case if *TYPE* is UBF, then standard
+    boolean expression applies here.
 *SAVE*::
-    Time in sanity units after which to progress from first signal -2 to next signal
-    -15. And after -15 this time means when next -9 signal will be sent. This is used
-    if forced restart of forced shutdown was initiated by 'ndrxd'. This
-    can be overridden by 'KILL_TIME_SRV'.
+    This field specifies how data is saved into cache. It is type specific and
+    and flags specific. For *UBF* buffer with flag *putfull* full UBF buffer is
+    saved. If flag is not specified and 'SAVE' is set to "*", then full buffer
+    is saved too. If flags is not specified, but it is comma separated list of
+    *UBF* fields, then only those fields are saved to cache. If flags is set to
+    *putrex*, then 'SAVE' field shall contain regular expression which is executed
+    on buffer fields (names). The names which matches expression are added to
+    cache.
 *DELETE*::
-    Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
-    process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
+    This field specifies field which shall be broadcast to other cluster node
+    in case if invalidate their cache is performed. This makes a projection of
+    incoming buffer in order to save the traffic. The projected buffer is then
+    sent to event server for other cluster node processing. Rules for
+    the field syntax is similar to the 'SAVE' parameter.
+    For *UBF* buffer with flag *delfull* full UBF buffer is sent in event.
+    If flag is not specified and 'SAVE' is set to "*", then full buffer
+    is sent too. If flags is not specified, but it is comma separated list of
+    *UBF* fields, then only those fields are sent in event. If flags is set to
+    *delrex*, then 'DELETE' field shall contain regular expression which is executed
+    on buffer fields (names). The names which matches expression are added to
+    to buffer which is sent to other cluster node.
 *RSPRULE*::
     Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
     'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
