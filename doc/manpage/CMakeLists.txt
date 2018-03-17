@@ -35,7 +35,7 @@ find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
 set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf
-                viewfile)
+                viewfile tpcache.ini)
 
 set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            tprecover cpmsrv tmqueue cconfsrv tpbrdcstsv uvlog xmemck
