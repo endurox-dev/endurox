@@ -42,7 +42,7 @@ fi
 #
 export NDRX_BENCH_TITLE="Tpcall cache benchmark"
 export NDRX_BENCH_X_LABEL="Msg Size (KB)"
-export NDRX_BENCH_Y_LABEL="Calls Per Second (tpenqueue()/sec)"
+export NDRX_BENCH_Y_LABEL="Calls Per Second (tpcall()/sec)"
 export NDRX_BENCH_OUTFILE="06_tpcache.png"
 R -f genchart.r
 
