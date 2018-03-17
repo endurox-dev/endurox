@@ -56,8 +56,6 @@ export TESTDIR_SHM=$TESTDIR
 
 source ./test-func-include.sh
 
-
-
 if [ -d "/dev/shm" ]; then
 
     echo "Preparing ramdrive..."
