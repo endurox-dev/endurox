@@ -25,6 +25,28 @@ function clean_lines {
 }
 
 ################################################################################
+# 6. tpcache
+################################################################################
+export NDRX_BENCH_FILE=`pwd`/06_tpcache.txt
+
+if [[ "$NDRX_BENCH_CONFIGNAME" != "r" ]]; then
+    clean_lines;
+    pushd .
+    cd ../../atmitest/test048_cache
+    ./benchmark.sh
+    popd
+fi
+
+#
+# Generate the chart
+#
+export NDRX_BENCH_TITLE="Tpcall cache benchmark"
+export NDRX_BENCH_X_LABEL="Msg Size (KB)"
+export NDRX_BENCH_Y_LABEL="Calls Per Second (tpenqueue()/sec)"
+export NDRX_BENCH_OUTFILE="06_tpcache.png"
+R -f genchart.r
+
+################################################################################
 # 5. tpenqueue() - persistent storage
 ################################################################################
 export NDRX_BENCH_FILE=`pwd`/05_persistent_storage.txt
