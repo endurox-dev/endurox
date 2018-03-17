@@ -113,6 +113,21 @@ out:
                 0L);
 }
 
+/**
+ * Standard service entry
+ */
+void BENCH48 (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    
+    /* do nothing... */
+out:
+    tpreturn(  TPSUCCESS,
+                0L,
+                p_svc->data,
+                0L,
+                0L);
+}
 
 /**
  * Standard service entry
@@ -237,6 +252,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=tpadvertise("BENCH48", BENCH48))
+    {
+        NDRX_LOG(log_error, "Failed to initialize BENCH48!");
+        EXFAIL_OUT(ret);
+    }
     
 out:
     return ret;

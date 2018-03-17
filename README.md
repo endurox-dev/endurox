@@ -129,6 +129,12 @@ storage.
 ![Alt text](doc/benchmark/05_persistent_storage.png?raw=true "Network 
 tpenqueue() performance")
 
+
+## Tpcall cache benchmark
+This benchmark shows the performance of cached XATMI service calls.
+
+![Alt text](doc/benchmark/06_tpcache.png?raw=true "tpcall() cache performance")
+
 # Releases
 
 - Version 2.5.1 released on 18/05/2016. Support for transactional 

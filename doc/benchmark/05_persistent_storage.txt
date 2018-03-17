@@ -69,3 +69,17 @@
 "i7_6gen_o2_4_10lin" 45 1739
 "i7_6gen_o2_4_10lin" 49 1670
 "i7_6gen_o2_4_10lin" 53 1608
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 1 1312
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 5 1332
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 9 1258
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 13 1220
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 17 1205
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 21 1179
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 25 1175
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 29 1139
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 33 1089
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 37 1061
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 41 1040
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 45 1032
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 49 984
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 53 976
