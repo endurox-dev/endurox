@@ -246,7 +246,7 @@ CACHE DEFINITION
 *SAVE*::
     This field specifies how data is saved into cache. It is type specific and
     and flags specific. For *UBF* buffer with flag *putfull* full UBF buffer is
-    saved. If flag is not specified and 'SAVE' is set to "*", then full buffer
+    saved. If flag is not specified and 'SAVE' is set to * then full buffer
     is saved too. If flags is not specified, but it is comma separated list of
     *UBF* fields, then only those fields are saved to cache. If flags is set to
     *putrex*, then 'SAVE' field shall contain regular expression which is executed
@@ -259,7 +259,7 @@ CACHE DEFINITION
     sent to event server for other cluster node processing. Rules for
     the field syntax is similar to the 'SAVE' parameter.
     For *UBF* buffer with flag *delfull* full UBF buffer is sent in event.
-    If flag is not specified and 'SAVE' is set to "*", then full buffer
+    If flag is not specified and 'SAVE' is set to  * then full buffer
     is sent too. If flags is not specified, but it is comma separated list of
     *UBF* fields, then only those fields are sent in event. If flags is set to
     *delrex*, then 'DELETE' field shall contain regular expression which is executed
@@ -277,7 +277,7 @@ CACHE DEFINITION
     even if data in cache are present. For *UBF* buffers this is boolean expression.
 *INVAL_SVC*::
     This is service name if "their" service to be invalidated. When service call
-    is performed, this "allows" to intercept the call and when response is recieved
+    is performed, this "allows" to intercept the call and when response is received
     the other service cache, specified in 'INVAL_SVC' will be reset (removed
     cached data). The key used for data access is build by this invalidate cache
     and not by target 'INVAL_SVC' cache definition. If target cache uses
@@ -349,45 +349,133 @@ CACHE FLAGS
     be processed, after this one. Flag is suitable for cases when current cache
     is invalidate their. Thus invalidate is performed and for example at next
     cache would be actually save results. Or multiple invalidates can be configured.
-*delrex*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
-*delrex*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
 *delfull*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
-*invalkeygrp*::
-    If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
-    and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
-    the XATMI servers one by one. The scanning will occur at every sanity
-    cycle. This is recommended to be used *only* for development purposes. And
-    must not be used on production servers! 
-    This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+    When using invalidate cache, then this flag indicates that full XATMI buffer
+    sent to tpcall() shall be broadcasted (published in event) to other nodes.
+    In case of UBF buffer if flag is not present, then * in 'DELETE' cache
+    parameter indicates all fields must be Broadcast. If not * then it is
+    comma separated list of fields.
+*delrex*::
+    This indicates that 'DELETE' parameter is regular expression. In case of
+    UBF buffer, the expression is executed on each field in incoming buffer,
+    if field name matches expression, then it is added to broadcast list.
 *inval*::
-    Number of seconds to wait for next item to start after the server is launched.
-    This is useful in cases when for example we start bridge server, let it for some
-    seconds to connect to other node, then continue with other service startup.s
+    Flag indicates that this cache is invalidate. In this case cache parameters
+    'INVAL_SVC' and 'INVAL_IDX' must be present.
+*invalkeygrp*::
+    If performing invalidated of record and record is part of key group, then
+    delete whole key group (all linked records and group by it self). If flag
+    is not present, then single record is delete (keyitem) and group is updated
+    (linkage removed from group). This flag applies to all mechanisms how
+    record can be removed, either by invalidate their, or zapped by *tpcached*
+    or deleted by xadmin tooling.
+
+PERFORMANCE
+-----------
+For performance reasons, if non persistent cache is required, it is recommended
+to store data file in RAM driver, for example on GNU/Linux systems it is
+*/dev/shm*. It is considered that in such scenario LMDB will use twice the
+memory. As one is a copy in RAM drive and another is mapped pages in process
+to the file. It is up to kernel realization to make some optimizations here.
 
 EXAMPLE
 -------
 
-Simple cache:
+Simple caches
 ---------------------------------------------------------------------
-...
+[@cachedb/db02_1]
+cachedb=db02_1
+resource=${TESTDIR_DB}/db02_1
+flags=bootreset
+
+[@cachedb/db02_2]
+cachedb=db02_2
+resource=${TESTDIR_DB}/db02_2
+flags=bootreset
+
+
+[@cache]
+svc TESTSV02=
+    {
+        "caches":[
+                {
+                    "cachedb":"db02_1",
+                    "type":"UBF",
+                    "keyfmt":"SV2-$(T_STRING_FLD)",
+                    "save":"*",
+                    "rule":"T_STRING_2_FLD=='HELLO CACHE 1'"
+                },
+                {
+                    "cachedb":"db02_2",
+                    "type":"UBF",
+                    "keyfmt":"SV2-$(T_STRING_FLD)",
+                    "save":"T_STRING.*|T_FLOAT.*|T_LONG_2_FLD|T_SHORT.*",
+                    "flags":"putrex"
+                }
+            ]
+    }
+
+svc SOMEOTHERSVC=
+    {
+        "caches":[
+                {
+                    "cachedb":"db02_1",
+                    "type":"UBF",
+                    "keyfmt":"SVOTHER-$(T_STRING_FLD)",
+                    "save":"*",
+                }
+            ]
+    }
+
 ---------------------------------------------------------------------
+
 
 Cache with keygroup and buffer reject:
 ---------------------------------------------------------------------
-...
+[@cachedb/db15]
+max_dbs=2
+resource=${TESTDIR_DB}/db15
+subscr=@C.001/.*/.*|@C.002/.*/.*
+
+#
+# These two inherits settings from above.
+#
+[@cachedb/db15/g]
+cachedb=g@db15
+flags=bootreset,bcastput,bcastdel,keygroup
+expiry=30s
+
+[@cachedb/db15/k]
+cachedb=k@db15
+flags=bootreset,bcastput,bcastdel,keyitems
+expiry=10s
+
+
+[@cache]
+
+svc TESTSV15=
+    {
+        "caches":[
+                {
+                    "cachedb":"k@db15",
+                    "keygrpdb":"g@db15",
+                    "type":"UBF",
+                    "keyfmt":"SV15$(T_STRING_FLD)-SV15$(T_SHORT_FLD)",
+                    "keygrpfmt":"SV15$(T_STRING_FLD)",
+                    "save":"T_STRING_FLD,T_STRING_2_FLD,T_LONG_2_FLD,T_SHORT_FLD",
+                    "flags":"getmerge",
+                    "keygroupmax":"7",
+                    "keygroupmrej":"{\"T_STRING_3_FLD\":\"REJECT\",\"T_LONG_2_FLD\":[\"1\", \"2\"]}",
+                    "keygrpmaxtperrno":"11",
+                    "keygrpmaxtpurcode":"4"
+                }
+            ]
+    }
+
 ---------------------------------------------------------------------
+
+For more unit tests please see 'atmitest/test048_cache' unit test folder ini
+files.
 
 
 BUGS
@@ -396,7 +484,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8), *ndrxd(8)* *ndrxconfig.xml(5)* *tpcached(8)* *tpcachesv(8)* *tpcachebtsv(8)*
+*xadmin(8) *ndrxd(8)* *ndrxconfig.xml(5)* *tpcached(8)* *tpcachesv(8)* *tpcachebtsv(8)*
 
 COPYING
 -------
