@@ -295,85 +295,60 @@ CACHE DEFINITION
     be the same for LMDB, for need to ensure transactional consistency between
     group and items.
 *KEYGRPFMT*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
-*KEYGRPMAXTPERRNO*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
-*KEYGRPMAXTPURCODE*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
-*KEYGROUPMREJ*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
+    This format string to build a key for a group. It shall be lower level
+    of object "resolution", to have something common between linked 'KEYFMT'.
+    For example if paging (user iterates over her statement) needs to be cached
+    and invalidated at any single transaction, then 'KEYGRPFMT' is the userid
+    and 'KEYFMT' shall contain userid and page number. The syntax for 'KEYGRPFMT'
+    is the same as for 'KEYFMT' is buffer type specific. Field is *conditional*,
+    must be present when configuring key group.
 *KEYGROUPMAX*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
-    The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
-    This can be overridden by 'PROTECTED_SERVER'.
-
+    Key group can be used to protect against DoS attacks - by limiting number
+    of "new" records that can appear in key group. The time component is
+    processed by *tpcached* binary, which could remove key group after it is
+    expired. They 'KEYGROUPMAX' is number records allowed in key group.
+    Parameter is *optional*.
+*KEYGROUPMREJ*::
+    This is buffer definition which shall be filled in response (merged or
+    replaced according to flags) in case if cache lookup is made, request is
+    part of key group, record does not exists and number of records in key
+    group already reached 'KEYGROUPMAX'. In this case service call is denied
+    and response is filled with buffer definition found in this parameter. For
+    *UBF* buffers, it is UBF buffer defined in JSON format (see tpjsontoubf(3)
+    man page). Parameter is *conditional* and must be present in case if 'KEYGROUPMAX'
+    is set.
+*KEYGRPMAXTPERRNO*::
+    In case of doing reject for 'KEYGROUPMAX' max reached, this is TP error code
+    that tpcall(3) will return. Normally it would be *11* (service routine error).
+    Parameter is *optional*, if not present the error value will be *0* - no
+    error, thus data should indicate that reject was performed.
+*KEYGRPMAXTPURCODE*::
+    Value of user return code in case if doing key group max reject. See
+    *tpurcode(3)*. Parameter is *optional* and if not set and reject will be
+    performed, user return code value will be *0*.
 
 CACHE FLAGS
 -----------
-*invalkeygrp*::
-    If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
-    and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
-    the XATMI servers one by one. The scanning will occur at every sanity
-    cycle. This is recommended to be used *only* for development purposes. And
-    must not be used on production servers! 
-    This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
-*inval*::
-    Number of seconds to wait for next item to start after the server is launched.
-    This is useful in cases when for example we start bridge server, let it for some
-    seconds to connect to other node, then continue with other service startup.s
-*putrex*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
-*getreplace*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
-*getmerge*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
 *putfull*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
+    Flag indicates that when saving data to cache full XATMI buffer shall be
+    saved. In case if *putfull* or *putrex* is not present then 'SAVE' parameter
+    is analyzed.
+*putrex*::
+    Indicates that 'SAVE' field is regular expression. *putfull* and *putrex*
+    flags cannot be mixed.
+*getreplace*::
+    Flag indicates that if data is returned from, then buffer passed to
+    *tpcall(3)* must be replaced with data from cache.
+*getmerge*::
+    Flag indicates that if data is returned from, then buffer passed to
+    *tpcall(3)* must be merged with incoming data. If using *UBF* buffer type
+    then for merge operation *Bupdate(3)* is used. Where destination buffer
+    is buffer passed to *tpcall(3)* and source buffer is one save in cache.
 *next*::
-    ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
-    and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
+    Flag indicates that next cache (if having multiple for single service) should
+    be processed, after this one. Flag is suitable for cases when current cache
+    is invalidate their. Thus invalidate is performed and for example at next
+    cache would be actually save results. Or multiple invalidates can be configured.
 *delrex*::
     ATMI server executable's name. The executable must be in $PATH.
     This name cannot contain special symbols like path seperator '/'
@@ -389,7 +364,17 @@ CACHE FLAGS
     This name cannot contain special symbols like path seperator '/'
     and it cannot contains commas ','! Commas are used as internal
     queue seperator combined with binary names.
-
+*invalkeygrp*::
+    If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
+    and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
+    the XATMI servers one by one. The scanning will occur at every sanity
+    cycle. This is recommended to be used *only* for development purposes. And
+    must not be used on production servers! 
+    This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+*inval*::
+    Number of seconds to wait for next item to start after the server is launched.
+    This is useful in cases when for example we start bridge server, let it for some
+    seconds to connect to other node, then continue with other service startup.s
 
 EXAMPLE
 -------
