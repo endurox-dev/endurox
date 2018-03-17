@@ -57,7 +57,7 @@ image:benchmark/05_persistent_storage.png[caption="Figure 5: ", title="Persisten
 
 Running the benchmarks
 ----------------------
-It is possible to run benchmarkings on your ownsystem. Not that for chart plotting R language is used. If R will not
+It is possible to run benchmarkings on your ownsystem. Note that for chart plotting R language is used. If R will not
 be installed, then charts will not be generated. But results still can be read from data files. Benchmark script is
 located in 'doc/benchmark' folder, named 'build.sh <configuration name>'. The configuration name is arbritrary description
 of your system on which you perform tne tests. Shall not contain spaces. Results are plotten into text files located
