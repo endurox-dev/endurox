@@ -424,8 +424,7 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
     {
         if (ignore_err)
         {
-            NDRX_CACHE_ERROR(ndrx_cache_maperr(ret), 
-                "Failed to to put to db [%s] key [%s], data: %p: %s", 
+            NDRX_CACHE_ERROR("Failed to to put to db [%s] key [%s], data: %p: %s", 
                 db->cachedb, key, data, edb_strerror(ret));
         }
         else
