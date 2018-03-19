@@ -53,6 +53,7 @@ export NDRX_TOUT=10
 export NDRX_ULOG=$TESTDIR
 export TESTDIR_DB=$TESTDIR
 export TESTDIR_SHM=$TESTDIR
+
 #
 # Domain 1 - here client will live
 #
