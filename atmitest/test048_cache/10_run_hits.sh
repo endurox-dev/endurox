@@ -59,8 +59,13 @@ source ./test-func-include.sh
 if [ -d "/dev/shm" ]; then
 
     echo "Preparing ramdrive..."
-    mkdir -rf /dev/shm 2>/dev/null
+
+    mkdir -rf /dev/shm/benchmark 2>/dev/null
+    mkdir /dev/shm/benchmark
+
+    mkdir -rf /dev/shm/db10 2>/dev/null
     mkdir /dev/shm/db10
+
     export TESTDIR_SHM="/dev/shm"
 fi
 
