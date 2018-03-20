@@ -174,7 +174,7 @@ variable, see ex_env(5) man page.
 Also what should be noted, as Enduro/X mostly uses stack allocation
 instead of heap allocation (for safer and faster code), then there are requirements
 against the stack size. The stack size (ulimit -s) must be at least size of message
-multiplied with 30. So for example is message size is set to 1 MegaByte, then stack
+multiplied with 30. So for example if message size is set to 1 MegaByte, then stack
 size shall be set to 30 Mega bytes (ulimit -s 30720 KB). If the stack is not sufficient
 the following error will be print when attempting to run any Enduro/X based software:
 
@@ -210,6 +210,65 @@ not all space can be used by sending some data (for example CARRAY or UBF buffer
 Some overhead is added by Enduro/X, message headers, for bridge protocol format
 extra data is added for TLV structure. Thus to be safe, for example if expected
 data size is 64K, then message size should be set to something like 80KB.
+
+== Enduro/X Smart Cache
+
+Enduro/X support SOA level cache. This means that administrator can configure
+system configuration, so that certain services are cached. Thus if some client
+process calls some service X, and it gets valid results back, then data key is
+built (specified in config) and for this key data is saved to 
+Lightning Memory-Mapped Database (LMDB). Next time service is called, the cache
+is checked, again, key is built, and lookup to LMDB is made. If results are found
+in db, then actual service is X is not called, but instead saved buffer from
+cache is returned back to caller. Cache works for tpcall() function.
+
+Cache supports different features:
+
+. Limited or unlimited caches are available. The unlimited cache is bound to
+physical dimensions of db file (also specified in configuration). In case of
+limited cache, number of logical items stored in cache can be specified. This is
+set by 'limit' parameter for database configuration. In case if limit is specified
+the strategy how to remove over-reached records can be specified in database
+flags. The strategies supported are following: *LRU* - keep records recently
+used, *FIFO* - delete records by chronological order (older records added to
+cache are being deleted), *HITS* - records mostly accessed stays in cache.
+
+. Multiple physical storage definitions, so that XATMI services can be allocated
+in different or same physical storage. This can help to solve challenges between
+storage space limitations and performance limitations (when multiple writes are
+done in same physical storage).
+
+. Cache is Enduro/X cluster aware. Records can be distributed and deleted across
+the cluster nodes. Time based sync is supported when in the same time both nodes
+adds records to non existing cache cell. On both cluster nodes will survive record
+which is fresher. The older duplicate is zapped by tpcall() or by tpcached.
+
+. Records can be grouped for example statement pages can be all linked to single
+user. If transaction happens for user, then whole group can be invalidated. Thus
+build cache again. Grouping can be also used for Denial Of Service (DoS)
+protection. Enduro/X can be configured to limit the max number of new records in
+group, after which any new non existing data element lookup in group will make
+request buffer to reject with configured tperrno, user return code and buffer.
+
+. Records in cache can be cross-invalidated. Meaning that "hooks" can be put on
+certain service calls in order to invalidate - zap contents of some other
+cache.
+
+. Cache supports refresh conditions. So that in case if specific condition over
+the data is true, the cached data not returned, but service invocation is performed
+and re-cached (old data overwritten).
+
+=== Limitations of the cache
+
+The LMDB is build in such way that if write transaction on the database is
+open, then other writes will not be able to process it in meantime. While read
+only transactions are processed, while some other process holds write transaction.
+Also if process which is holding the lock is crashed (e.g. segfaul, kill, etc..),
+then lock is automatically made free. Thus for example is using *hits* or *lru*
+limitation caches, then this automatically means that during the tpcall() chaches
+needs to be updated, thus lock is needed, and this means that all callers will
+have to sync in that place - thus makes point of bottleneck.
+
 
 :numbered!:
 

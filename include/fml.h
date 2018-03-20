@@ -168,6 +168,8 @@ extern "C" {
 #define Frstrindex Brstrindex
 #define Ferror Berror
 #define Fielded Bisubf
+#define Fcmp Bcmp
+#define Fsubset Bsubset
     
 /* VIEW related */
 #define Fvnull Bvnull

@@ -47,6 +47,7 @@
 #include <signal.h>
 
 #include "userlog.h"
+#include "atmi_cache.h"
 
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
@@ -217,10 +218,9 @@ int main_init(int argc, char** argv)
     if (EXSUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
-
+    
     /* We will ignore all stuff requesting shutdown! */
     signal(SIGHUP, SIG_IGN);
     signal(SIGTERM, SIG_IGN);

@@ -12,6 +12,19 @@ Different aspects are being tested and performance results are analyzed. Testing
 funamental message exchange between client and server, synchrouns and asynchrouns aspects are tested.
 Document also covers persistent storage benchmarks.
 
+== Prepration
+
+This section gives some notes how to prepare for benchmark. What packages are required to
+be installed. This assumes that standard Enduro/X build installation is peformed.
+
+=== Preparing on Unbuntu/Debian like system
+
+---------------------------------------------------------------------
+
+$ sudo apt-get install r-base
+
+---------------------------------------------------------------------
+
 Asynchrouns tpacall()
 ---------------------
 This tests uses one way calls to the server process. At the end of the calls it is ensured that
@@ -55,9 +68,18 @@ XA transaction takes some disk resources too.
 
 image:benchmark/05_persistent_storage.png[caption="Figure 5: ", title="Persistent storage", alt="persistent_storage"]
 
+
+Single-threaded tpcall() on cached service
+------------------------------------------
+This tests performs benchmark over the service for which results are cached. For
+best results cache database is stored on RAM driver (on Linux system).
+
+image:benchmark/06_tpcache.png[caption="Figure 6: ", title="Cache performance", alt="review on cache performance"]
+
+
 Running the benchmarks
 ----------------------
-It is possible to run benchmarkings on your ownsystem. Not that for chart plotting R language is used. If R will not
+It is possible to run benchmarkings on your ownsystem. Note that for chart plotting R language is used. If R will not
 be installed, then charts will not be generated. But results still can be read from data files. Benchmark script is
 located in 'doc/benchmark' folder, named 'build.sh <configuration name>'. The configuration name is arbritrary description
 of your system on which you perform tne tests. Shall not contain spaces. Results are plotten into text files located

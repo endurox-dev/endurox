@@ -1,4 +1,5 @@
 /* 
+** Event broker
 **
 ** @file tpevsv.h
 ** 
@@ -37,6 +38,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -46,8 +48,8 @@ typedef struct event_entry event_entry_t;
 
 struct event_entry
 {
-    char eventexpr[255+1]; /* Compile the regex? */
-    char filter[255+1];
+    char eventexpr[NDRX_EVENT_EXPR_MAX+1]; /* Compile the regex? */
+    char filter[NDRX_EVENT_EXPR_MAX+1];
     char name1[32]; /* currently service name only */
     long flags;
     regex_t re; /* compiled regex */

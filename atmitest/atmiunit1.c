@@ -391,6 +391,20 @@ Ensure(test046_twopasscfg)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test049_masksvc)
+{
+    int ret;
+    ret=system_dbg("test049_masksvc/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test048_cache)
+{
+    int ret;
+    ret=system_dbg("test048_cache/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 
 TestSuite *atmi_test_all(void)
 {
@@ -471,6 +485,8 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test044_ping);
     add_test(suite,test045_tpcallnoblock);
     add_test(suite,test046_twopasscfg);
+    add_test(suite,test048_cache);
+    add_test(suite,test049_masksvc);
             
     return suite;
 }

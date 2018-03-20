@@ -74,7 +74,7 @@ expublic int ndrx_Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
     BFLDLEN len=0;
     Bnext_state_t state;
     int nxt_stat;
-    get_fld_loc_info_t chg_state;
+    Bfld_loc_info_t chg_state;
     memset(&chg_state, 0, sizeof(chg_state));
     memset(&state, 0, sizeof(state));
     chg_state.last_checked = &hdr->bfldid;
@@ -114,7 +114,7 @@ expublic int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     BFLDLEN len=0;
     Bnext_state_t state;
     int nxt_stat;
-    get_fld_loc_info_t add_state;
+    Bfld_loc_info_t add_state;
 
    
     memset(&add_state, 0, sizeof(add_state));
@@ -126,9 +126,11 @@ expublic int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
                1==(nxt_stat=ndrx_Bnext(&state, p_ub_src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
-         * Add new occurrances to the buffer.
+         * Add new occurrences to the buffer.
+	 * TODO: might want to optimise if adding same field... with next_fld
          */
-        if (EXSUCCEED!=(ret=ndrx_Badd(p_ub_dst, bfldid, p_fld, len, &add_state)))
+        if (EXSUCCEED!=(ret=ndrx_Badd(p_ub_dst, bfldid, p_fld, len, 
+		&add_state, NULL)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]",
                                                 ndrx_Bfname_int(bfldid), occ);

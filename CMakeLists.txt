@@ -32,7 +32,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "5.2.6")
+set(VERSION "5.3.1")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -70,6 +70,7 @@ ELSE ()
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+#       SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
         SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
@@ -296,6 +297,8 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
 ENDIF()
 
 add_subdirectory (tpevsrv)
+add_subdirectory (tpcachesv)
+add_subdirectory (tpcached)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
@@ -308,6 +311,7 @@ ENDIF()
 add_subdirectory (viewc) # View compiler
 add_subdirectory (ndrxd) # Enduro X daemon
 add_subdirectory (xadmin) # Enduro X command line interface
+add_subdirectory (lmdb_util) # LMDB/EXDB Admin utilities
 add_subdirectory (xmemck) # Enduro X memcory checking tool
 add_subdirectory (bridge) # Cluster bridge server
 add_subdirectory (tmsrv) # Transaction Manager server for XA transactions

@@ -1,5 +1,5 @@
 /* 
-** EnduroX server API functions
+** Enduro/X server API functions
 **
 ** @file init.c
 ** 
@@ -31,8 +31,6 @@
 */
 
 /*---------------------------Includes-----------------------------------*/
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -78,8 +76,11 @@ exprivate svc_entry_fn_t* resolve_service_entry(char *svc)
 {
     svc_entry_fn_t *ret=NULL, eltmp;
 
-    NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
-    DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, svc_entry_fn_cmp);
+    if (NULL!=svc)
+    {
+        NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
+        DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, svc_entry_fn_cmp);
+    }
 
     return ret;
 }
@@ -109,8 +110,8 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
 
     if (NULL==svc_fn)
     {
-        ndrx_TPset_error_fmt(TPENOENT, "There is no entry for [%s]",
-                        svn_nm_srch);
+        ndrx_TPset_error_fmt(TPENOENT, "There is no entry for [%s] [%s]",
+                        svn_nm_srch, svn_nm_add);
         ret=EXFAIL;
     }
     else
@@ -294,22 +295,35 @@ expublic int atmisrv_build_advertise_list(void)
 
     }
     
-    /* phase 2. advertise all, that we have from tpadvertise (only in case if we have -A) */
+    /* phase 2. advertise all, that we have from tpadvertise 
+     * (only in case if we have -A) 
+     */
     if (G_server_conf.advertise_all)
     {
         DL_FOREACH_SAFE(G_server_conf.service_raw_list,f_el,f_tmp)
         {
+            
+            /* check that this service isn't masked out for advertise */
+            
+            if (ndrx_skipsvc_chk(f_el->svc_nm))
+            {
+                NDRX_LOG(log_info, "%s masked by -n - not advertising", 
+                        f_el->svc_nm);
+                continue;
+            }
+            
             svn_nm_srch=f_el->svc_nm;
             svn_nm_add=f_el->svc_nm;
 
-             if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, svn_nm_add, NULL)))
-             {
-                 NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
-                 goto out;
-             }
+            if (EXSUCCEED!=(ret=sys_advertise_service(svn_nm_srch, 
+                    svn_nm_add, NULL)))
+            {
+                NDRX_LOG(log_error, "Phase 2 advertise FAIL!");
+                goto out;
+            }
         }
     }
-
+    
     ret=build_service_array_list();
 
 out:
@@ -417,8 +431,8 @@ expublic void atmisrv_un_initialize(int fork_uninit)
     
     /* close XA if was open.. */
     atmi_xa_uninit();
-    
-    /* Mark our environment as un-initialised 
+    ndrx_skipsvc_delhash();
+    /* Mark our environment as un-initialized 
      * In external main() function cases, they might want to reuse the ATMI
      * context, and it is not server any more.
      */

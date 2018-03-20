@@ -445,9 +445,10 @@ expublic unsigned int ndrx_hash_fn( void *k )
 /**
  * Returns true if service is available.
  * @param svc
+ * @param have_shm set to EXTRUE, if shared memory is attached.
  * @return TRUE/FALSE/FAIL (on fail proceed because no SHM)
  */
-expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
+expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have_shm)
 {
     int ret=EXSUCCEED;
     int pos=EXFAIL;
@@ -470,6 +471,10 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge)
         ret = ndrx_get_cached_svc_q(send_q);
 #endif
         goto out; /* do not fail, try locally */
+    }
+    if (NULL!=have_shm)
+    {
+        *have_shm = EXTRUE;
     }
     
     /* Get the service entry */

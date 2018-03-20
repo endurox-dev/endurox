@@ -1,0 +1,16 @@
+"Configuration" "MsgSize" "CallsPerSec"
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 0 838056
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 1 857801
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 5 772830
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 9 686960
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 13 580993
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 17 480469
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 21 440430
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 25 406551
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 29 370679
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 33 350835
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 37 326375
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 41 309132
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 45 288451
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 49 273523
+"Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 53 256803

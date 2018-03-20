@@ -63,8 +63,8 @@ rm *.log
 sleep 2
 # Start subscribers
 (./atmisv4_1ST -t 4 -i 100 2>&1) > ./atmisv4_1ST.log &
-(./atmisv4_1ST -t 4 -i 120 2>&1) > ./atmisv4_1ST-2.log &
-(./atmisv4_1ST -t 4 -i 121 2>&1) > ./atmisv4_1ST-3.log &
+#(./atmisv4_1ST -t 4 -i 120 2>&1) > ./atmisv4_1ST-2.log &
+#(./atmisv4_1ST -t 4 -i 121 2>&1) > ./atmisv4_1ST-3.log &
 # Start subscribers
 (./atmisv4_2ND -i 110 2>&1) > ./atmisv4_2ND.log &
 (./atmisv4_2ND -i 130 2>&1) > ./atmisv4_2ND-2.log &

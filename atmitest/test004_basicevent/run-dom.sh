@@ -177,13 +177,14 @@ set_dom1;
 # Run the client test...
 echo "Starting to issue calls:"
 
-(./atmiclt4 2>&1) > ./atmiclt-dom1.log
+# Networked mode
+(./atmiclt4 Y 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
 
-echo "*** LSOF ***"
-lsof 2>/dev/null
-echo "*** LSOF ***"
+#echo "*** LSOF ***"
+#lsof 2>/dev/null
+#echo "*** LSOF ***"
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

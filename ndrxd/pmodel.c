@@ -797,6 +797,24 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     if( pid == 0)
     {
+        char sysflags_str[30];
+        long sysflags = 0;
+        
+        /* Export startup mode */
+        
+        if (G_sys_config.fullstart)
+        {
+            sysflags |= NDRX_PRC_SYSFLAGS_FULLSTART;
+        }
+        
+        snprintf(sysflags_str, sizeof(sysflags_str), "%ld", sysflags);
+        
+        if (EXSUCCEED!=setenv(CONF_NDRX_SYSFLAGS, sysflags_str, EXTRUE))
+        {
+            NDRX_LOG(log_error, "Failed to set env: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
@@ -1101,6 +1119,11 @@ expublic int app_startup(command_startstop_t *call,
     }
     else /* process this if request for srvnm or full startup... */
     {
+        if (EXEOS==call->binary_name[0])
+        {
+            G_sys_config.fullstart=EXTRUE;
+        }
+        
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
@@ -1120,8 +1143,13 @@ expublic int app_startup(command_startstop_t *call,
                 }
             }
         } /* DL_FORACH pm. */
+        
+        if (G_sys_config.fullstart)
+        {
+            /* downgrade back to partial start */
+            G_sys_config.fullstart=EXFALSE;
+        }
     }
-    
 out:
     return ret;
 }

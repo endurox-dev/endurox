@@ -229,29 +229,18 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* fr
     char svc_q[NDRX_MAX_Q_SIZE+1];
     int is_bridge = EXFALSE;
 
-    if (ATMI_COMMAND_EVPOST==call->command_id)
+    /* Resolve the service in SHM 
+     *   sprintf(svc_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, call->name); */
+
+    if (EXSUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge, NULL))
     {
-        if (EXSUCCEED!=_get_evpost_sendq(svc_q, sizeof(svc_q), call->extradata))
-        {
-            NDRX_LOG(log_error, "Failed figure out postage Q");
-            ret=EXFAIL;
-            goto out;
-        }
+        NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
+                call->name);
+        userlog("Failed to get local service [%s] for bridge call!", call->name);
+        br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
+        EXFAIL_OUT(ret);
     }
-    else
-    {
-        /* Resolve the service in SHM 
-         *   sprintf(svc_q, NDRX_SVC_QFMT, G_server_conf.q_prefix, call->name); */
-                                                                                
-        if (EXSUCCEED!=ndrx_shm_get_svc(call->name, svc_q, &is_bridge))
-        {
-            NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
-                    call->name);
-            userlog("Failed to get local service [%s] for bridge call!", call->name);
-            br_process_error((char *)call, len, ret, from_q, PACK_TYPE_TOSVC);
-            EXFAIL_OUT(ret);
-        }
-    }
+
     
     NDRX_LOG(log_debug, "Calling service: %s", svc_q);
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
@@ -281,7 +270,7 @@ expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t
     
     snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
 
-    if (EXSUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svcnm, svc_q, &is_bridge, NULL))
     {
         NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
                 svcnm);
@@ -465,7 +454,6 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
             case ATMI_COMMAND_CONNUNSOL:
             case ATMI_COMMAND_CONVACK:
             case ATMI_COMMAND_SHUTDOWN:
-            case ATMI_COMMAND_EVPOST:
                 
                 NDRX_LOG(log_debug, "TPREPLY/CONVERSATION from Q");
                 

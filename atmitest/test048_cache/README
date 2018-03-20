@@ -1,0 +1,70 @@
+List of test cases
+
+01 - Simple cache, perform one call, get tstamp. Perform another call, the 
+timestamp shall be the same. Perform another call, to get second record in cache. 
+Use xadmin cs and xadmin cd to dup the results. Before test db shall be cleaned 
+up with xadmin ci <dbname>.
+
+
+02 - Test service dissappear after server shutdown. After bootup have cached results
+as "clrnosvc" was not specified for db. Two db setup.
+
+03 - Test "clrnosvc", the cached results after boot shall dissappear.
+
+04 - timed cache with expiry. Use different service cache and different database. 
+Use flag to drop the db at startup, by ndrxd. Record shall be limited to 10seconds. 
+Add few recs, check they exist in cache with `cs'. wait 10 sec, 
+they should be removed from cache. DB set expiry=10s
+
+05 - refresh local cache by special key. tpcache config refreshrule=<some expr>
+
+06 - boot cache reset tests, try to reboot the only tpcachebt server, no
+changes shall be made to cache
+
+07 - negative response caching tests (rsprule)
+
+08 - invalidate their (two add services, inval 1, inval 2, cache result)
+
+09 - limited cache, LRU tests
+
+10 - limited cache, HITS tests, if running on linux, try /dev/shm as storage
+folder
+
+11 - limited cache, fifo tests
+
+12 - limited cache, HITS + expiry
+
+13 - simple domain operations, check one way replication, domain 1 add, domain 1 delete.
+should be replicated on domain 2.
+
+14 - test timesync for caches, call DOM1 no cache add, call DOM2 no cache add. Check
+caches, there shall be duplicates. Run queries on first and second domains, 
+the duplicates shall be removed. Do the same data add of duplicates, the tpcached
+started laster, shall clean up duplicates too.
+
+15 - keygroup tests. Build a keygroup, a groupdb have longer expiry, keyitems
+have shorter expiry. In short period of time burst requests for number of records, 
+at the end we shall be rejected. Wait a time, some keyitems shall be removed,
+but some shall live again, run some unique requests, we shall got rejects on new
+reqs. Wait some time, the full group shall be dropped and once cached keys should
+should be new again.
+
+16 - keygroup, expiry by group. Clean up all records.
+
+17 - keygroup tests with limit functionality, for example fifo..
+
+18 - Drop cache tests (CLI). Two modes normal DB and keygroup dbs.
+
+19 - Multi-threaded operations. We configure simple cache, but call it with
+multiple pthreads. From the same client. Also test multi-process DB access.
+Run serveral testtools on the same database.
+
+20 - Delete buffer configuration, one test with insufficient field defintions
+and another cache with sufficient. For insufficient we use list of fields,
+for suffcient we use regexp.
+
+21 - test defaults (minimum settings to cache)
+
+22 - test what happens if cache is full? This could be also case when running
+in hits mode? Will it be able to update?
+

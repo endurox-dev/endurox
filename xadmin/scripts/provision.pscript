@@ -267,7 +267,6 @@ class Provision extends WizardBase {
 		*** For more info see ndrxconfig.xml(5) man page. ***
 	-->
 	<appconfig>
-	
 		<!-- 
 			ALL BELLOW ONES USES <sanity> periodical timer
 			Sanity check time, sec
@@ -311,13 +310,12 @@ class Provision extends WizardBase {
 			then queue stats are on. Default is off.
 		-->
 		<gather_pq_stats>Y</gather_pq_stats>
-		
+
 	</appconfig>
 	<defaults>
-	
+
 		<min>1</min>
 		<max>2</max>
-		
 		<!-- 
 			Kill the process which have not started in <start_max> time
 		-->
@@ -327,25 +325,25 @@ class Provision extends WizardBase {
 			The maximum time while process can hang in 'starting' state i.e.
 			have not completed initialization, sec X <= 0 = disabled  
 		-->
-		<start_max>2</start_max>
+		<start_max>10</start_max>
 		
 		<!--
 			Ping server in every X seconds (step is <sanity>).
 		-->
-		<pingtime>10</pingtime>
+		<pingtime>100</pingtime>
 		
 		<!--
 			Max time in seconds in which server must respond.
 			The granularity is sanity time.
 			X <= 0 = disabled 
 		-->
-		<ping_max>30</ping_max>
+		<ping_max>800</ping_max>
 		
 		<!--
 			Max time to wait until process should exit on shutdown
 			X <= 0 = disabled 
 		-->
-		<end_max>3</end_max>
+		<end_max>10</end_max>
 		
 		<!-- 
 			Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
