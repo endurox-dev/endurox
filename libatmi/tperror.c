@@ -257,7 +257,7 @@ expublic void ndrx_TPoverride_code(int error_code)
  * Advanced error setting function, uses format list
  * Use this only in case where it is really needed.
  * @param error_code - error code
- * @param fmt - format stirng
+ * @param fmt - format string
  * @param ... - format details
  */
 expublic void ndrx_TPset_error_fmt(int error_code, const char *fmt, ...)
@@ -406,7 +406,7 @@ expublic void atmi_xa_set_error(UBFH *p_ub, short error_code, short reason)
 }
 
 /**
- * I nternetal function for setting
+ * Internal function for setting
  * @param error_code
  * @param msg
  * @return

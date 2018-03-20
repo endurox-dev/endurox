@@ -94,7 +94,6 @@ expublic typed_buffer_descr_t G_buf_descr[] =
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-
 /**
  * Compares two buffers in linked list (for search purposes)
  * @param a

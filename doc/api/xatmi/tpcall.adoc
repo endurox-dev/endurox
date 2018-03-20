@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpacall(char \*'svc', char \*'idata', long 'ilen', char **'odata', long *'olen', long 'flags');
+int tpcall(char \*'svc', char \*'idata', long 'ilen', char **'odata', long *'olen', long 'flags');
 
 
 For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
@@ -59,7 +59,10 @@ request part of the call. This flag does not affect waiting for response from se
 
 RETURN VALUE
 ------------ 
-set to indicate the error.
+On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+with *tperrno* set to indicate the error. When server did tpreturn(), the 'rcode'
+value is accessible by caller by using tpurcode().
+
 
 ERRORS
 ------

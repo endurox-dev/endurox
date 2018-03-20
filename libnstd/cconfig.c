@@ -64,6 +64,8 @@ int G_tried_to_load = EXFALSE; /* did we try to load the config? */
 exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL, 
                         NDRX_CONF_SECTION_DEBUG, 
                         NDRX_CONF_SECTION_QUEUE, 
+                        NDRX_CONF_SECTION_CACHE,
+                        NDRX_CONF_SECTION_CACHEDB,
                         NULL};
 
 /* for first pass load only global! */
@@ -82,7 +84,8 @@ exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal,
  * @param section
  * @return 
  */
-expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, ndrx_inicfg_section_keyval_t **out)
+expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section, 
+        ndrx_inicfg_section_keyval_t **out)
 {
     int ret = EXSUCCEED;
     int len;

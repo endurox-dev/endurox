@@ -147,6 +147,12 @@ struct Bvnext_state
 };
 typedef struct Bvnext_state Bvnext_state_t;
 
+/* get_loc state info */
+typedef struct
+{
+    BFLDID *last_checked;
+} Bfld_loc_info_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -172,6 +178,7 @@ extern NDRX_API char * Bfind (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ, BFLDLEN *
 extern NDRX_API int Bboolev (UBFH * p_ub, char *tree);
 extern NDRX_API double Bfloatev (UBFH * p_ub, char *tree);
 extern NDRX_API int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
+extern NDRX_API int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, Bfld_loc_info_t *next_fld);
 extern NDRX_API void B_error (char *str);
 extern NDRX_API char * Bstrerror (int err);
 extern NDRX_API BFLDID Bmkfldid (int fldtype, BFLDID bfldid);
@@ -224,6 +231,9 @@ extern NDRX_API int Brstrindex (UBFH * p_ub, BFLDOCC occ);
 
 extern NDRX_API int Bjoin(UBFH *dest, UBFH *src);
 extern NDRX_API int Bojoin(UBFH *dest, UBFH *src);
+
+extern NDRX_API int Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
+extern NDRX_API int Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
 
 /* VIEW related */
 extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);

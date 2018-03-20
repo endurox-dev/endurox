@@ -71,7 +71,7 @@ extern "C" {
 #define ATMI_COMMAND_CONNUNSOL  8
 #define ATMI_COMMAND_CONVACK    9
 #define ATMI_COMMAND_SHUTDOWN   10
-#define ATMI_COMMAND_EVPOST     11
+/* #define ATMI_COMMAND_EVPOST     11 */
 #define ATMI_COMMAND_SELF_SD    12      /* Self shutdown                */
 #define ATMI_COMMAND_TPNOTIFY   13      /* Notification message         */
 #define ATMI_COMMAND_BROADCAST  14      /* Broadcast notification       */
@@ -110,10 +110,10 @@ extern "C" {
 #define Q_SEND_GRACE            10              /* Number of messages for q to wait to process */
     
 /* Even processing */
-#define EV_TPEVSUBS         "TPEVSUBS"
-#define EV_TPEVUNSUBS       "TPEVUNSUBS"
-#define EV_TPEVPOST         "TPEVPOST"
-#define EV_TPEVDOPOST       "TPEVDOPOST"
+#define EV_TPEVSUBS         "TPEVSUBS%03hd"
+#define EV_TPEVUNSUBS       "TPEVUNSUBS%03hd"
+#define EV_TPEVPOST         "TPEVPOST%03hd"
+#define EV_TPEVDOPOST       "TPEVDOPOST%03hd"
     
 /* RECOVERY processing */
 #define TPRECOVERSVC        "TPRECOVER"     /* Recovery administrative service */
@@ -223,10 +223,15 @@ extern "C" {
                     __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
     fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-    fprintf(stderr, "Copyright (C) 2017 Mavimax Ltd. All Rights Reserved.\n\n");\
+    fprintf(stderr, "Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
     fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
     
+    
+    
+/* Used by NDRX_SYSFLAGS env variable */
+#define NDRX_PRC_SYSFLAGS_FULLSTART     0x00000001      /* Full application start */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -412,6 +417,8 @@ typedef struct tp_command_generic tp_command_generic_t;
 
 /*
  * Call handler.
+ * For storing the tppost associated timestamp, we could allow data to be installed
+ * in the rval/rcode for requests...
  */
 struct tp_command_call
 {
@@ -429,9 +436,19 @@ struct tp_command_call
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
-    int rval;
+    /* User1 field in request: */
+    int rval;   /* This also should be present only on reply... */
+    /* User2 field in request: */
     long rcode; /* should be preset on reply only */
-    char extradata[31+1]; /* Extra char data to be passed over the call */
+    int user3;  /* user field 3, request */
+    long user4; /* user field 4, request */
+    /* Extended size for storing cache updates in format
+     * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
+     * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
+     * where @CA -> Cache Add, @CD -> Cache delete, 002 -> source node id
+     * Flgs -> max 4 flags ascii letters. And service name
+     */
+    char extradata[XATMI_EVENT_MAX+1]; /* Extra char data to be passed over the call */
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
@@ -447,6 +464,7 @@ struct tp_command_call
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;
     
+    /* Payload: */
     long data_len;
     char data[0];
 };
@@ -482,9 +500,9 @@ struct tp_notif_call
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
     int cd;
-    int rval;
-    long rcode; /* should be preset on reply only */
-    long flags; /* should be preset on reply only */
+    int rval; /* on request -> userfield1 */
+    long rcode; /* should be preset on reply only, on request -> userfield2 */
+    long flags; 
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
     /* message sequence for conversational over multithreaded bridges*/
@@ -608,6 +626,28 @@ struct ndrx_qdet
 
 typedef struct ndrx_qdet ndrx_qdet_t;
 
+
+
+/**
+ * tpcall() cache control structure - additional data to tpacall for providing
+ * results back if cache lookup is done (i.e. service is present and 
+ * result is found. Needed for cases to detect actual service existence
+ * if service does not exists, then cache will not provide any results back.
+ * because cache is transparent and shall not interfere with logic if service
+ * does not exists.
+ */
+struct ndrx_tpcall_cache_ctl
+{
+    int should_cache;           /* should we cache response?            */
+    int cached_rsp;             /* data is in cache, respond with them  */
+    int saved_tperrno;
+    long saved_tpurcode;
+    long *olen;
+    char **odata;
+};
+typedef struct ndrx_tpcall_cache_ctl ndrx_tpcall_cache_ctl_t;
+
+
 /* This may have some issues with alignment and this make
  * actual size smaller than 1 char */
 #define MAX_CALL_DATA_SIZE (NDRX_MSGSIZEMAX-sizeof(tp_command_call_t))
@@ -664,7 +704,8 @@ extern NDRX_API int ndrx_atmiutil_init(void);
 /* ATMI calls */
 extern NDRX_API int ndrx_tpacall (char *svc, char *data,
                long len, long flags, char *extradata, int dest_node, int ex_flags,
-                TPTRANID *p_tran);
+               TPTRANID *p_tran, int user1, long user2, int user3, long user4,
+               ndrx_tpcall_cache_ctl_t *p_cachectl);
 extern NDRX_API int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid, 
         char *cltq, /* client q already built by broadcast */
         char *data, long len, long flags, 
@@ -701,23 +742,27 @@ extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);
 /* Extended version of tpcall, accepts extradata (31+1) symbols */
 extern NDRX_API int tpcallex (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags);
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2, int user3, long user4);
 
 extern NDRX_API int tpacallex (char *svc, char *data, 
-        long len, long flags, char *extradata, int dest_node, int is_evpost);
+        long len, long flags, char *extradata, int dest_node, int is_evpost,
+        int user1, long user2, int user3, long user4);
 /* event API implementation */
 extern NDRX_API long ndrx_tpunsubscribe(long subscription, long flags);
 extern NDRX_API long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
-extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flags);
+extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flags,
+        int user1, long user2, int user3, long user4);
+
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
-extern NDRX_API int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata);
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 extern NDRX_API int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags);
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2, int user3, long user4);
 extern NDRX_API int ndrx_tpgetrply (int *cd,
                        int cd_exp,
                        char * *data ,
@@ -736,6 +781,7 @@ extern NDRX_API int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, cha
         char **data, long *len, long flags);
 
 extern NDRX_API void ndrx_tpfreectxt(TPCONTEXT_T context);
+extern NDRX_API int ndrx_tpconvert(char *str, char *bin, long flags);
 
 /* debug logging */
 extern NDRX_API int ndrx_tplogsetreqfile(char **data, char *filename, char *filesvc);

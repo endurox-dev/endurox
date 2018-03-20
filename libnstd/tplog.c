@@ -109,6 +109,37 @@ exprivate void logfile_close(FILE *p)
 }
 
 /**
+ * Close any TLS loggers if open
+ * @param tls thread local storage for ATMI lib
+ */
+expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
+{
+    
+    ndrx_debug_t *logger[] = {&tls->threadlog_ndrx, &tls->threadlog_ubf, 
+        &tls->threadlog_tp, &tls->requestlog_ndrx, &tls->requestlog_ubf, 
+        &tls->requestlog_tp, NULL};
+    
+    int i=0;
+    
+    while (NULL!=logger[i])
+    {
+        if (NULL!=logger[i]->dbg_f_ptr && stderr!=logger[i]->dbg_f_ptr)
+        {
+            /* Close intelligently to avoid closing  */
+            if (logger[i]->dbg_f_ptr!=G_ndrx_debug.dbg_f_ptr &&
+                    logger[i]->dbg_f_ptr!=G_ubf_debug.dbg_f_ptr &&
+                    logger[i]->dbg_f_ptr!=G_tp_debug.dbg_f_ptr)
+            {
+                NDRX_FCLOSE(logger[i]->dbg_f_ptr);
+                logger[i]->dbg_f_ptr = NULL;
+            }
+        }
+        i++;
+    }
+    
+}
+
+/**
  * Set the thread based log file
  * TODO: Later we need a wrapper to set file from buffer.
  * @param logger logging sub-system
@@ -196,7 +227,8 @@ exprivate int logfile_change_name(int logger, char *filename)
         int err = errno;
         userlog("Failed to open %s: %s",l->filename, strerror(err));
         
-        _Nset_error_fmt(NESYSTEM, "Failed to open %s: %s",l->filename, strerror(err));
+        _Nset_error_fmt(NESYSTEM, "Failed to open %s: %s", 
+                l->filename, strerror(err));
         
         l->filename[0] = EXEOS;
         l->dbg_f_ptr = stderr;
@@ -339,7 +371,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (EXFAIL==G_nstd_tls->threadlog_ndrx.level)
             {
                 memcpy(&G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
-                G_nstd_tls->threadlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
+                G_nstd_tls->threadlog_ndrx.code = LOG_FACILITY_NDRX_THREAD;
             }
             l = &G_nstd_tls->threadlog_ndrx;
         }
@@ -360,7 +392,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (EXFAIL==G_nstd_tls->threadlog_ubf.level)
             {
                 memcpy(&G_nstd_tls->threadlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
-                G_nstd_tls->threadlog_ubf.code = LOG_CODE_NDRX_REQUEST;
+                G_nstd_tls->threadlog_ubf.code = LOG_CODE_UBF_THREAD;
             }
             l = &G_nstd_tls->threadlog_ubf;
         }
@@ -622,6 +654,3 @@ expublic void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int
 {
     UBF_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
-
-
-

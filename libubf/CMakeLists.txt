@@ -79,6 +79,7 @@ add_library (ubf SHARED
 		view_access.c
 		${BISON_EXPRPARSER_OUTPUTS} 
 		${FLEX_EXPRSCANNER_OUTPUTS}
+                bcmp.c
 	)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

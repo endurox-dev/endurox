@@ -40,6 +40,7 @@ extern "C" {
 #include <regex.h>
 #include <ndrstandard.h>
 #include <ubf_int.h>
+#include <errno.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_TP_ERROR_LEN   1024

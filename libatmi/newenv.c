@@ -146,7 +146,7 @@ expublic int ndrx_load_new_env(char *file)
         
         if (EXSUCCEED!=setenv(p, e, EXTRUE))
         {
-            NDRX_LOG(log_error, "");
+            NDRX_LOG(log_error, "Failed to set env: %s", strerror(errno));
             EXFAIL_OUT(ret);
         }
     }

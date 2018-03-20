@@ -63,7 +63,7 @@
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n1 -r -i 0.0.0.0 -p 44001 -tP -z30</appopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 44001 -tP -z30</appopt>
             <blacklistsvcs>UNIXINFO,UNIX2</blacklistsvcs>
         </server>
         

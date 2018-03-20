@@ -253,18 +253,11 @@ exprivate int get_bridges_rply_request(char *buf, long len)
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry = G_server_conf.service_array[ATMI_SRV_ADMIN_Q];
     command_call_t *p_adm_cmd = (command_call_t *)buf;
+    
     /* we should re-queue back the stuff... */
     sleep(0); /* requeue stuff... */
     
-    if (ATMI_COMMAND_EVPOST==p_adm_cmd->command_id)
-    {
-        NDRX_LOG(log_debug, "Resubmitting event postage to admin Q");
-        ret = ndrx_generic_qfd_send(entry->q_descr, buf, len, 0);
-    }
-    else
-    {
-        ret = process_admin_req(buf, len, &G_shutdown_req);
-    }
+    ret = process_admin_req(buf, len, &G_shutdown_req);
     
     if (ndrx_stopwatch_get_delta_sec(&M_getbrs_timer) > ndrx_get_G_atmi_env()->time_out)
     {

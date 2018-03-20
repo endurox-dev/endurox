@@ -100,7 +100,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 cmd_mqch.c cmd_mqrm.c cmd_mqmv.c cmd_killall.c cmd_qrm.c
                 provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
                 gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
-                gen_test_local)
+                gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

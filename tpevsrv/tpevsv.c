@@ -1,5 +1,8 @@
 /* 
 ** Event Broker services
+** TODO: We should send only once to services with the same name!!!
+** for each broadcast, if matched, we shall put the made call in hashlist and 
+** and next time check was there broadcast or not.
 **
 ** @file tpevsv.c
 ** 
@@ -38,6 +41,7 @@
 
 #include <ndebug.h>
 #include <atmi.h>
+#include <sys_unix.h>
 #include <atmi_int.h>
 #include <typed_buf.h>
 #include <ndrstandard.h>
@@ -110,15 +114,18 @@ exprivate int compile_eventexpr(event_entry_t *p_ee)
  */
 exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
 {
-       int ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     char *data = p_svc->data;
     event_entry_t *elt, *tmp;
     long numdisp = 0;
-    
+    char tmpsvc[MAXTIDENT+1];
     char buf_type[9];
     char buf_subtype[17];
     long buf_len;
     tp_command_call_t * last_call;
+    
+    /* Support #279 */
+    string_hash_t *dup_chk = NULL;
     
     memset(buf_type, 0, sizeof(buf_type));
     memset(buf_subtype, 0, sizeof(buf_subtype));
@@ -174,8 +181,24 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                                                     elt->name1, elt->my_id);
 
                     /* todo: Call in async: Do we need to pass there original flags? */
+                    
+                    /* Support #279: check for duplicate */
+                    if (ndrx_string_hash_get(dup_chk, elt->name1))
+                    {
+                        NDRX_LOG(log_debug, "Service already called: [%s] - skip dup",
+                                elt->name1);
+                        continue; /* <<<<<<<<<<<<<<< CONTINUE! */
+                    }
+                    
+                    NDRX_LOG(log_debug, "Calling service %s/%s in async mode (2)",
+                                                    elt->name1, elt->my_id);
+                    
                     if (EXFAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
-                                    elt->flags | TPNOREPLY, elt->my_id, EXFAIL, EXTRUE)))
+                                    elt->flags | TPNOREPLY, last_call->extradata, 
+                                    EXFAIL, EXTRUE,
+                                    /* Pass user data in request via these rsp fields */
+                                    last_call->rval, last_call->rcode, 
+                                    last_call->user3, last_call->user4)))
                     {
                         NDRX_LOG(log_error, "Failed to call service [%s/%s]: %s"
                                 " - unsubscribing %ld",
@@ -186,6 +209,14 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     }
                     else
                     {
+                        /* Add to hash */
+                        if (EXSUCCEED!=ndrx_string_hash_add(&dup_chk, elt->name1))
+                        {
+                            NDRX_LOG(log_error, "Failed to add service [%s] to "
+                                    "dup hash list!", elt->name1);
+                            EXFAIL_OUT(ret);
+                        }
+                        
                         numdisp++;
 			/* free up connection descriptor */
                         if (err)
@@ -244,9 +275,15 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                     break;
                 }
                 
-                if (EXFAIL==(tpcallex (NDRX_SYS_SVC_PFX EV_TPEVDOPOST, p_svc->data, p_svc->len,  
+                /* make dopost service */
+                snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVDOPOST, 
+                        (short)nodeid);
+                if (EXFAIL==(tpcallex (tmpsvc, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
-                        0, last_call->extradata, nodeid, TPCALL_BRCALL)))
+                        0, last_call->extradata, nodeid, TPCALL_BRCALL, 
+                        /* we re-use for requests rval as user1 and rcode as user2 */
+                        last_call->rval, last_call->rcode,
+                        last_call->user3, last_call->user4)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
                                     nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));
@@ -269,6 +306,12 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     }
     
 out:
+
+    if (NULL!=dup_chk)
+    {
+        ndrx_string_hash_free(dup_chk);
+    }
+                                
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 numdisp,
                 NULL,
@@ -346,8 +389,8 @@ out:
 
 /**
  * Subscribe to event
- * EV_MASK - event mask (char 255)
- * EV_FILTER - filter (char 255)
+ * EV_MASK - event mask (NDRX_EVENT_EXPR_MAX)
+ * EV_FILTER - filter (NDRX_EVENT_EXPR_MAX)
  * EV_FLAGS - flags
  * -- Part of TPEVCTL --
  * EV_SRVCNM - name1 (service name)
@@ -376,7 +419,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
 
     memset((char *)p_ee, 0, sizeof(event_entry_t));
 
-    strcpy(p_ee->my_id, ndrx_get_G_last_call()->my_id);
+    NDRX_STRCPY_SAFE(p_ee->my_id, ndrx_get_G_last_call()->my_id);
     len=sizeof(p_ee->eventexpr);
     if (Bpres(p_ub, EV_MASK, 0) && EXFAIL==Bget(p_ub, EV_MASK, 0,
                             p_ee->eventexpr, &len))
@@ -457,31 +500,37 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
+    
     NDRX_LOG(log_debug, "tpsvrinit called");
-
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVSUBS, TPEVSUBS))
+    
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVSUBS, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVSUBS))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVSUBS!");
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, TPEVUNSUBS))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVUNSUBS))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVUNSUBS!");
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVPOST, TPEVPOST))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVPOST, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVPOST))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVPOST!");
         ret=EXFAIL;
         goto out;
     }
     
-    if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX EV_TPEVDOPOST, TPEVDOPOST))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVDOPOST, nodeid);
+    if (EXSUCCEED!=tpadvertise(tmpsvc, TPEVDOPOST))
     {
         NDRX_LOG(log_error, "Failed to initialize TPEVDOPOST!");
         ret=EXFAIL;

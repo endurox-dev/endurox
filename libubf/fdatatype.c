@@ -44,6 +44,7 @@
 #include "ferror.h"
 #include "atmi_tls.h"
 #include <ubf_tls.h>
+#include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -100,14 +101,14 @@ char *tallocdlft (struct dtype_ext1 *t, int *len);
 /**
  * Functions to compare field values.
  */
-int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
-int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2);
+int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
 
 #define DEFAULT_ALIGN       4
 /**
@@ -812,46 +813,136 @@ char *tallocdlft (struct dtype_ext1 *t, int *len)
 /* part of dtype_ext1->p_cmp                                                  */
 /******************************************************************************/
 
-int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     short *s1 = (short *)val1;
     short *s2 = (short *)val2;
-    return (*s1==*s2);
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        return  *s1 - *s2;
+    }
+    else
+    {
+        return (*s1==*s2);
+    }
 }
 
-int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     long *l1 = (long *)val1;
     long *l2 = (long *)val2;
-    return (*l1==*l2);
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        long lres = *l1 - *l2;
+        
+        if (lres > 0)
+            return 1;
+        else if (lres < 0)
+            return -1;
+        else
+            return 0;
+    }
+    else
+    {
+        return (*l1==*l2);
+    }
 }
 
-int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     int *i1 = (int *)val1;
     int *i2 = (int *)val2;
-    return (*i1==*i2);
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        return (*i1 - *i2);
+    }
+    else
+    {
+        return (*i1==*i2);
+    }
 }
 
-int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     unsigned char *c1 = (unsigned char *)val1;
     unsigned char *c2 = (unsigned char *)val2;
-    return (*c1==*c2);
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        return (*c1 - *c2);
+    }
+    else
+    {
+        return (*c1==*c2);
+    }
 }
 
-int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     float *f1 = (float *)val1;
     float *f2 = (float *)val2;
-    return (fabs(*f1-*f2)<FLOAT_EQUAL);
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        float f = *f1-*f2;
+        
+        if (fabs(f) < FLOAT_EQUAL )
+        {
+            return 0;
+        }
+        else if (f > 0)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+        
+    }
+    else
+    {
+        return (fabs(*f1-*f2)<FLOAT_EQUAL);
+    }
+    
 }
 
-int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     double *f1 = (double *)val1;
     double *f2 = (double *)val2;
-    return (fabs(*f1-*f2)<DOUBLE_EQUAL);
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        double f = *f1-*f2;
+        
+        if (fabs(f) < FLOAT_EQUAL )
+        {
+            return 0;
+        }
+        else if (f > 0)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+        
+    }
+    else
+    {
+        return (fabs(*f1-*f2)<DOUBLE_EQUAL);
+    }
 }
 
 /**
@@ -864,14 +955,19 @@ int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
  * @param len2 - if !=0, then using regexp
  * @return
  */
-int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
     int ret=EXSUCCEED;
     char *fn = "cmp_string";
 
-    if (0==len2)
+    if (mode & UBF_CMP_MODE_STD)
     {
-        ret=(0==strcmp(val2, val1));
+        return strcmp(val1, val2);
+    }
+    else if (0==len2)
+    {
+        ret=(0==strcmp(val1, val2));
     }
     else
     {
@@ -885,7 +981,7 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
         {
             if (NULL!=cashed_string)
             {
-                UBF_LOG(log_debug, "Freeing-up reviosly allocated "
+                UBF_LOG(log_debug, "Freeing-up previously allocated "
                                                     "resources");
                 NDRX_FREE(cashed_string);
                 regfree(&re);
@@ -948,11 +1044,11 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
             }
         }
 
-		if (EXSUCCEED==ret && EXSUCCEED==regexec(&re, val1, (size_t) 0, NULL, 0))
-		{
+        if (EXSUCCEED==ret && EXSUCCEED==regexec(&re, val1, (size_t) 0, NULL, 0))
+        {
             UBF_LOG(log_debug, "%s:REGEX: Matched", fn);
             ret=EXTRUE;
-		}
+        }
         else
         {
             UBF_LOG(log_debug, "%s:REGEX: NOT Matched", fn);
@@ -962,10 +1058,32 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
     return ret;
 }
 
-int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2)
+int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+    long mode)
 {
-    if (len1!=len2)
-        return 0;
-    return (0==memcmp(val1, val2, len1));
+    
+    if (mode & UBF_CMP_MODE_STD)
+    {
+        long ldiff = len1 - len2;
+        
+        
+        if ( ldiff > 0)
+        {
+            return 1;
+        }
+        else if ( ldiff < 0)
+        {
+            return -1;
+        }
+        
+        return memcmp(val1, val2, len1);
+    }
+    else
+    {
+        if (len1!=len2)
+            return EXFALSE;
+        
+        return (0==memcmp(val1, val2, len1));
+    }
 }
 

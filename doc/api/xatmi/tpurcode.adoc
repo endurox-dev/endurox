@@ -1,0 +1,38 @@
+TPURCODE(3)
+===========
+:doctype: manpage
+
+NAME
+----
+tpurcode - Read the value of user specific return code provided by XATMI server
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+#define tpurcode (*_exget_tpurcode_addr())
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Macro returns the 'rcode' value which is returned by XATMI server. The value is
+saved in global variable after *tpcall(3)* performed. The 'rcode' is available
+(i.e. reset to new value) only if server processes did generate the response.
+I.e. in case of *TPENOENT* error, the tpurcode() will return previous value.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpreturn(3)* *tpcall(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

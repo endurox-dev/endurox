@@ -74,25 +74,25 @@ expublic char *ndrx_decode_msec(long t, int slot, int level, int levels)
     
     if ((double)t/DEC_SECOND < 1.0) /* Less that second */
     {
-        sprintf(tmp, "%ldms", t);
+        snprintf(tmp, sizeof(tmp), "%ldms", t);
     }
     else if ((double)t/DEC_MINUTE < 1.0) /* less than minute */
     {
-        sprintf(tmp, "%lds", t/DEC_SECOND);
+        snprintf(tmp, sizeof(tmp), "%lds", t/DEC_SECOND);
         
         if (level<levels)
             next_t = t%DEC_SECOND;
     }
     else if ((double)t/DEC_HOUR < 1.0) /* less that minute */
     {
-        sprintf(tmp, "%ldm", t/DEC_MINUTE);
+        snprintf(tmp, sizeof(tmp), "%ldm", t/DEC_MINUTE);
         
         if (level<levels)
             next_t = t%DEC_MINUTE;
     }
     else if ((double)t/DEC_DAY < 1.0) /* less than hour */
     {
-        sprintf(tmp, "%ldh", t/DEC_HOUR);
+        snprintf(tmp, sizeof(tmp), "%ldh", t/DEC_HOUR);
         
         if (level<levels)
             next_t = t%DEC_HOUR;
@@ -100,28 +100,28 @@ expublic char *ndrx_decode_msec(long t, int slot, int level, int levels)
     /* Days */
     else if ((double)t/DEC_WEEK < 1.0) /* Less that week */
     {
-        sprintf(tmp, "%ldd", t/DEC_DAY);
+        snprintf(tmp, sizeof(tmp), "%ldd", t/DEC_DAY);
         
         if (level<levels)
             next_t = t%DEC_DAY;
     }
     else if ((double)t/DEC_MONTH < 1.0) /* less than month */
     {
-        sprintf(tmp, "%ldw", t/DEC_WEEK);
+        snprintf(tmp, sizeof(tmp), "%ldw", t/DEC_WEEK);
         
         if (level<levels)
             next_t = t%DEC_WEEK;
     }
     else if ((double)t/DEC_YEAR < 1.0) /* less than year */
     {
-        sprintf(tmp, "%lldM", t/DEC_MONTH);
+        snprintf(tmp, sizeof(tmp), "%lldM", t/DEC_MONTH);
         
         if (level<levels)
             next_t = t%DEC_MONTH;
     }
     else if ((double)t/DEC_MILLENIUM < 1.0) /* less than 1000 years */
     {
-        sprintf(tmp, "%lldY", t/DEC_YEAR);
+        snprintf(tmp, sizeof(tmp), "%lldY", t/DEC_YEAR);
         
         if (level<levels)
             next_t = t%DEC_YEAR;

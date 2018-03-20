@@ -51,15 +51,16 @@ extern NDRX_API ndrx_debug_t G_ndrx_debug;
 extern NDRX_API ndrx_debug_t G_stdout_debug;
 extern NDRX_API volatile int G_ndrx_debug_first;
 /*---------------------------Macros-------------------------------------*/
-/**
+
+/*
  * Log levels
  */
-#define log_always      1 
-#define log_error       2
-#define log_warn        3
-#define log_info        4
-#define log_debug       5
-#define log_dump        6
+#define log_always                  1 
+#define log_error                   2
+#define log_warn                    3
+#define log_info                    4
+#define log_debug                   5
+#define log_dump                    6
 
 /*
  * Logging settings
@@ -74,17 +75,17 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define LOG_FACILITY_NDRX_REQUEST   0x00080 /* ndrx request logging             */
 #define LOG_FACILITY_UBF_REQUEST    0x00100 /* ubf request logging              */
     
-#define LOG_CODE_NDRX       'N'
-#define LOG_CODE_UBF        'U'
-#define LOG_CODE_TP         't'
-#define LOG_CODE_TP_THREAD  'T'
-#define LOG_CODE_TP_REQUEST 'R'
+#define LOG_CODE_NDRX               'N'
+#define LOG_CODE_UBF                'U'
+#define LOG_CODE_TP                 't'
+#define LOG_CODE_TP_THREAD          'T'
+#define LOG_CODE_TP_REQUEST         'R'
 
-#define LOG_CODE_NDRX_THREAD  'n'
-#define LOG_CODE_NDRX_REQUEST 'm'
+#define LOG_CODE_NDRX_THREAD        'n'
+#define LOG_CODE_NDRX_REQUEST       'm'
 
-#define LOG_CODE_UBF_THREAD  'u'
-#define LOG_CODE_UBF_REQUEST 'v'
+#define LOG_CODE_UBF_THREAD         'u'
+#define LOG_CODE_UBF_REQUEST        'v'
     
 #define NDRX_DBG_MAX_LEV log_dump
 /* Have double check on G_ndrx_debug_first, as on after getting first mutex, object
@@ -102,59 +103,59 @@ extern NDRX_API volatile int G_ndrx_debug_first;
  * Thus we run alternate route in case init lock is acquired.
  */
 #define NDRX_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
-            __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
-            NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+    __ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+    NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
+    {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 #define UBF_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
-            __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
-            NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+    __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+    NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
+    {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 #define TP_LOG_EARLY(lev, fmt, ...) {if (ndrx_dbg_intlock_isset()) {\
-            __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
-            NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
+    __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);} else {\
+    NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
+    {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}}
 
 /*
  * Normal loggers 
  */
 #define NDRX_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
 #define UBF_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 /* User logging */
 #define TP_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
 /* Extended user logging, with filename name and line */
 #define TP_LOGEX(lev, file, line, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug__(&G_tp_debug, lev, file, line, __func__, fmt, ##__VA_ARGS__);}}
+    {__ndrx_debug__(&G_tp_debug, lev, file, line, __func__, fmt, ##__VA_ARGS__);}}
 
 #define TP_LOGGETIFLAGS {NDRX_DBG_INIT_ENTRY; return G_tp_debug.iflags; }
 
 #define UBF_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug_dump__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define NDRX_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug_dump__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define STDOUT_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_stdout_debug.level)\
-            {__ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 #define TP_DUMP(lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
+    {__ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);}}
 
 
 #define UBF_DUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
-            {__ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+    {__ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define NDRX_DUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
-            {__ndrx_debug_dump_diff__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+    {__ndrx_debug_dump_diff__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define TP_DUMP_DIFF(lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
-            {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
+    {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);}}
 
 #define NDRX_DBG_SETTHREAD(X) ndrx_dbg_setthread(X)
 
@@ -188,6 +189,46 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 
 #endif
+
+
+/* Quick macros for standard memory allocation with error printing and
+ * returning to out with ret flag
+ */
+
+/**
+ * Allocate buffer, if error goto out. Do not init memory to 0
+ * @param PTR__ pointer to give the address to 
+ * @param SIZE__ number of bytes to allocate
+ * @param TYPE__ type to allocated buffer (dest type not ptr)
+ */
+#define NDRX_MALLOC_OUT(PTR__, SIZE__, TYPE__) \
+if ( (PTR__ = (TYPE__ *)NDRX_MALLOC(SIZE__)) == NULL) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "%s: Failed to mallocate %ld bytes: %s",\
+        __func__, (long)SIZE__, strerror(ERR__));\
+    userlog("%s: Failed to mallocate %ld bytes: %s",\
+        __func__, (long)SIZE__, strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
+
+/**
+ * Allocate buffer, if error goto out. Do init memory to 0
+ * @param PTR__ pointer to give the address to 
+ * @param NMEMB__ Number of members
+ * @param SIZE__ number of bytes to allocate
+ * @param TYPE__ type to allocated buffer (dest type not ptr)
+ */
+#define NDRX_CALLOC_OUT(PTR__, NMEMB__, SIZE__, TYPE__) \
+if ( (PTR__ = (TYPE__ *)NDRX_CALLOC(NMEMB__, SIZE__)) == NULL) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "%s: Failed to callocate %ld bytes: %s",\
+        __func__, (long)(NMEMB__ *SIZE__), strerror(ERR__));\
+    userlog("%s: Failed to mallocate %ld bytes: %s",\
+        __func__, (long)(NMEMB__ *SIZE__), strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -244,6 +285,7 @@ extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *m
 extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
+extern NDRX_API void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls);
 
 /* memory debugging */
 extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func);
