@@ -98,10 +98,10 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		message("GNU compiler")
-		set ( CMAKE_C_FLAGS "-D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
+		set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
 		message("XL compiler")
-		set ( CMAKE_C_FLAGS " -D_THREAD_SAFE -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99 -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
+		set ( CMAKE_C_FLAGS " -D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -qwarn64 -qpic -bexpfull -b64 -brtl -qtls -q64 -qlanglvl=extc99 -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
 
 		if (NOT DEFINE_RELEASEBUILD)
 			message("XL compiler: with -g (debug symbols...)")
