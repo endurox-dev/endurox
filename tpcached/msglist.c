@@ -42,7 +42,6 @@
 #include <ubf.h>
 #include <ubf_int.h>
 #include <ndebug.h>
-#include <getopt.h>
 #include <atmi_cache.h>
 #include "tpcached.h"
 #include "utlist.h"

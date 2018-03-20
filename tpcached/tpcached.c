@@ -45,7 +45,11 @@
 #include <ubf.h>
 #include <ubf_int.h>
 #include <ndebug.h>
+
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
 #include <atmi_cache.h>
 #include "tpcached.h"
 /*---------------------------Externs------------------------------------*/

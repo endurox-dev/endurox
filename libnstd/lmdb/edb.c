@@ -130,6 +130,7 @@ extern int cacheflush(char *addr, int nbytes, int cache);
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ndrx_config.h>
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -153,7 +154,7 @@ typedef SSIZE_T	ssize_t;
 #include <resolv.h>	/* defines BYTE_ORDER on HPUX and Solaris */
 #endif
 
-#if defined(__APPLE__) || defined (BSD) || defined(__FreeBSD_kernel__)
+#if defined(__APPLE__) || defined (BSD) || defined(__FreeBSD_kernel__) || defined (EX_OS_AIX)
 # if !(defined(EDB_USE_POSIX_MUTEX) || defined(EDB_USE_POSIX_SEM))
 # define EDB_USE_SYSV_SEM	1
 # endif
@@ -11128,3 +11129,4 @@ utf8_to_utf16(const char *src, EDB_name *dst, int xtra)
 }
 #endif /* defined(_WIN32) */
 /** @} */
+
