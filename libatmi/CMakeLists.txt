@@ -42,7 +42,8 @@ ELSE ($ENV{RELEASE_BUILD})
 ENDIF ($ENV{RELEASE_BUILD})
 
 # Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd) 
+include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
+                ${ENDUROX_SOURCE_DIR}/libubf) 
 include_directories (/opt/freeware/include) 
 # Create a library called "ATMI" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
@@ -84,6 +85,14 @@ add_library (atmi SHARED
                 onerror.c
                 tpnotify.c
                 identifiers.c
+                atmi_cache_init.c
+                atmi_cache_edb.c
+                atmi_cache_ops.c
+                atmi_cache_ubf.c
+                atmi_cache_events.c
+                atmi_cache_inval.c
+                atmi_cache_mgt.c
+                atmi_cache_keygrp.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")

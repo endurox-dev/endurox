@@ -55,6 +55,7 @@
 #include <xa_cmn.h>
 #include <atmi_shm.h>
 #include <atmi_tls.h>
+#include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -385,11 +386,18 @@ expublic void cancel_if_expected(tp_command_call_t *call)
  * @param len
  * @param flags - should be managed from parent function (is it real async call
  *                  or tpcall wrapper)
+ * @param user1 - user data field 1
+ * @param user2 - user data field 2
+ * @param user3 - user data field 3
+ * @param user4 - user data field 4
+ * @param p_cachectl cache control - if cache used must be not NULL, else NULL
  * @return call descriptor
  */
 expublic int ndrx_tpacall (char *svc, char *data,
                 long len, long flags, char *extradata, 
-                int dest_node, int ex_flags, TPTRANID *p_tranid)
+                int dest_node, int ex_flags, TPTRANID *p_tranid, 
+                int user1, long user2, int user3, long user4, 
+                ndrx_tpcall_cache_ctl_t *p_cachectl)
 {
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
@@ -401,6 +409,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     time_t timestamp;
     int is_bridge;
     int tpcall_cd;
+    int have_shm = EXFALSE;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -410,9 +419,6 @@ expublic int ndrx_tpacall (char *svc, char *data,
         atmi_xa_print_knownrms(log_info, "Known RMs before call: ",
                     G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms);
     }
-    
-     /* Might want to remove in future... but it might be dangerouse!*/
-     memset(call, 0, sizeof(tp_command_call_t));
     
     /* Check service availability by SHM? 
      * TODO: We might want to check the flags, the service might be marked for shutdown!
@@ -440,18 +446,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
 #endif
         is_bridge=EXTRUE;
     }
-    else if (ex_flags & TPCALL_EVPOST)
-    {
-        if (EXSUCCEED!=_get_evpost_sendq(send_q, sizeof(send_q), extradata))
-        {
-            NDRX_LOG(log_error, "%s: Cannot get send Q for server: [%s]", 
-                     __func__, extradata);
-            ndrx_TPset_error_fmt(TPENOENT, "%s: Cannot get send Q for server: [%s]", 
-                     __func__, extradata);
-            EXFAIL_OUT(ret);
-        }
-    }
-    else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge))
+    else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge, &have_shm))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);
@@ -460,12 +455,60 @@ expublic int ndrx_tpacall (char *svc, char *data,
                  __func__, svc);
         goto out;
     }
+    
+    /* In case of non shared memory mode, check that queue file exists! */
+    if (!have_shm)
+    {
+        /* test queue */
+        if (!ndrx_q_exists(send_q))
+        {
+            NDRX_LOG(log_error, "%s: Queue [%s] does not exists for %s", 
+                    __func__, send_q);
+            ndrx_TPset_error_fmt(TPENOENT, "%s: Queue [%s] does not exists for %s", 
+                    __func__, send_q);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* ok service is found we can process cache here */
+    
+    if (!(flags & TPNOCACHELOOK) && NULL!=p_cachectl)
+    {
+        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svc, data, len, 
+                p_cachectl->odata, p_cachectl->olen, flags, 
+                &p_cachectl->should_cache, 
+                &p_cachectl->saved_tperrno, 
+                &p_cachectl->saved_tpurcode, EXFALSE)))
+        {
+            /* failed to get cache data */
+            if (EXFAIL==ret)
+            {
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                /* ignore the error (probably data not found) */
+                NDRX_LOG(log_debug, "Cache lookup failed ... continue with svc call");
+            }
+        }
+        else
+        {
+            p_cachectl->cached_rsp = EXTRUE;
+            /* data from cache, return... */
+            goto out;
+        }
+    }
+    
+    /* Might want to remove in future... but it might be dangerous!*/
+     memset(call, 0, sizeof(tp_command_call_t));
+     
 
     if (NULL!=data)
     {
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
         {
-            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!",
+                __func__, data);
             EXFAIL_OUT(ret);
         }
     }
@@ -497,14 +540,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
         call->buffer_type_id = buffer_info->type_id;
 
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
-    if (!(ex_flags & TPCALL_EVPOST))
-    {
-        call->command_id = ATMI_COMMAND_TPCALL;
-    }
-    else
-    {
-        call->command_id = ATMI_COMMAND_EVPOST;
-    }
+    
+    call->command_id = ATMI_COMMAND_TPCALL;
+    
     
     NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
@@ -556,12 +594,20 @@ expublic int ndrx_tpacall (char *svc, char *data,
     call->cd = tpcall_cd;
     call->timestamp = timestamp;
     
+    call->rval = user1;
+    call->rcode = user2;
+    
+    call->user3 = user3;
+    call->user4 = user4;
+    
     /* Reset call timer */
     ndrx_stopwatch_reset(&call->timer);
     
     NDRX_STRCPY_SAFE(call->my_id, G_atmi_tls->G_atmi_conf.my_id); /* Setup my_id */
-    NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d callseq=%u", 
-            send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq);
+    NDRX_LOG(log_debug, "Sending request to: [%s] my_id=[%s] reply_to=[%s] cd=%d "
+            "callseq=%u (user1=%d, user2=%ld, user3=%d, user4=%ld)", 
+            send_q, call->my_id, call->reply_to, tpcall_cd, call->callseq,
+            call->rval, call->rcode, call->user3, call->user4);
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
@@ -596,7 +642,6 @@ out:
 
 /**
  * Internal version of tpgetrply.
- * TODO: How about TPGETANY|TPNOCHANGE?
  * @param cd
  * @param data
  * @param len
@@ -610,7 +655,6 @@ expublic int ndrx_tpgetrply (int *cd,
                        TPTRANID *p_tranid)
 {
     int ret=EXSUCCEED;
-    char fn[] = "_tpgetrply";
     char *pbuf = NULL;
     long rply_len;
     unsigned prio;
@@ -810,7 +854,8 @@ expublic int ndrx_tpgetrply (int *cd,
                  */
                 if (TPSUCCESS!=rply->rval)
                 {
-                    ndrx_TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
+                    ndrx_TPset_error_fmt(TPESVCFAIL, "Service returned %d", 
+                            rply->rval);
                     ret=EXFAIL;
                     goto out;
                 }
@@ -853,10 +898,13 @@ out:
         NDRX_FREE(pbuf);
     }
                 
-    NDRX_LOG(log_debug, "%s return %d", __func__, ret);
+    NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d", 
+            __func__, ret, G_atmi_tls->M_svc_return_code, G_atmi_tls->M_atmi_error);
     /* mvitolin 12/12/2015 - according to spec we must return 
      * service returned return code
+     * mvitolin, 18/02/2018 Really? Cannot find any references...
      */
+    /*
     if (EXSUCCEED==ret)
     {
         return G_atmi_tls->M_svc_return_code;
@@ -865,6 +913,9 @@ out:
     {
         return ret;
     }
+    */
+    
+    return ret;
 }
 
 /**
@@ -879,18 +930,27 @@ out:
  * @param odata
  * @param olen
  * @param flags
+ * @param user1 user data field 1
+ * @param user2 user data field 2
  * @return
  */
 expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
-                char *extradata, int dest_node, int ex_flags)
+                char *extradata, int dest_node, int ex_flags,
+                int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     int cd_req = 0;
     int cd_rply = 0;
+    ndrx_tpcall_cache_ctl_t cachectl;
+    int cache_used = EXFALSE;
+    
     TPTRANID tranid, *p_tranid;
     
     NDRX_LOG(log_debug, "%s: enter", __func__);
+    
+    cachectl.should_cache = EXFALSE;
+    cachectl.cached_rsp = EXFALSE;
 
     if (flags & TPTRANSUSPEND)
     {
@@ -902,13 +962,40 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
         p_tranid = NULL;
     }
     
+    if (ndrx_cache_used())
+    {
+        cache_used = EXTRUE;
+        memset(&cachectl, 0, sizeof(cachectl));
+        
+        cachectl.odata = odata;
+        cachectl.olen = olen;
+    }
+    
     if (EXFAIL==(cd_req=ndrx_tpacall (svc, idata, ilen, flags, extradata, 
-            dest_node, ex_flags, p_tranid)))
+            dest_node, ex_flags, p_tranid, user1, user2, user3, user4,
+            (cache_used?&cachectl:NULL) )))
     {
         NDRX_LOG(log_error, "_tpacall to %s failed", svc);
         ret=EXFAIL;
         goto out;
     } 
+    
+    if (cachectl.cached_rsp)
+    {
+        NDRX_LOG(log_debug, "Reply from cache");
+        
+        NDRX_LOG(log_info, "Response read form cache!");
+        G_atmi_tls->M_svc_return_code = cachectl.saved_tpurcode;
+
+        if (0!=cachectl.saved_tperrno)
+        {
+            ndrx_TPset_error_msg(cachectl.saved_tperrno, "Cached error response");
+            ret=EXFAIL;
+        }
+        
+        /*  We are already in cache! */
+        goto out;
+    }
 
     /* Support #259 Do this only after tpacall, because we might do
      * non blocked requests, but responses we way in blocked mode.
@@ -916,27 +1003,55 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     flags&=~TPNOBLOCK; /* we are working in sync (blocked) mode
                         * because we do want answer back! */
     
-    if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
-            p_tranid)))
+    /* event posting might be done with out reply... */
+    if (!(flags&TPNOREPLY))
     {
-        NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
-        goto out;
-    }
+        if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
+                p_tranid)))
+        {
+            NDRX_LOG(log_error, "_tpgetrply to %s failed", svc);
+            goto out;
+        }
 
-    /*
-     * Did we get back what we asked for?
-     */
-    if (cd_req!=cd_rply)
-    {
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
-                                         __func__, cd_req, cd_rply);
-        goto out;
+        /*
+         * Did we get back what we asked for?
+         */
+        if (cd_req!=cd_rply)
+        {
+            ret=EXFAIL;
+            ndrx_TPset_error_fmt(TPEPROTO, "%s: Got invalid reply! cd_req: %d, cd_rply: %d",
+                                             __func__, cd_req, cd_rply);
+            goto out;
+        }
     }
-
 
 out:
     NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
+
+    /* tpcall cache implementation: add to cache if required */
+    if (!(flags & TPNOCACHEADD) && cachectl.should_cache && !cachectl.cached_rsp)
+    {
+        int ret2;
+        
+        /* lookup cache */
+        if (EXSUCCEED!=(ret2=ndrx_cache_save (svc, *odata, 
+            *olen, tperrno, G_atmi_tls->M_svc_return_code, 
+                G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL, EXFALSE)))
+        {
+            /* return error if failed to cache? */
+            
+#if 0
+            Service result have more signficance
+            if (EXSUCCEED!=ret2 && NDRX_TPCACHE_ENOCACHE!=ret2)
+            {
+                NDRX_LOG(log_error, "Failed to cache data!");
+                ret=EXFAIL;
+            }
+#endif
+            userlog("Failed to save service [%s] cache results: %s",
+                tpstrerror(tperrno));
+        }
+    }
 
     return ret;
 }
@@ -977,79 +1092,5 @@ expublic long * _exget_tpurcode_addr (void)
     ATMI_TLS_ENTRY;
     return &G_atmi_tls->M_svc_return_code;
 }
-
-/**
- * Get the queue name where we shall post the event!
- * @param send_q
- * @param extradata
- * @return 
- */
-expublic int _get_evpost_sendq(char *send_q, size_t send_q_bufsz, char *extradata)
-{
-    int ret=EXSUCCEED;
-    char fn[] = "get_evpost_sendq";
-    TPMYID myid;
-    ATMI_TLS_ENTRY;
-    if (NULL==extradata || EXEOS==extradata[0] || NULL==send_q)
-    {
-        NDRX_LOG(log_error, "Invalid arguments");
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    NDRX_LOG(log_debug, "%s: server's id=[%s]", __func__, extradata);
-    
-    if (EXSUCCEED!=ndrx_myid_parse(extradata, &myid, EXFALSE))
-    {
-        NDRX_LOG(log_error, "Failed to parse my_id string [%s]", extradata);
-        /* Do fail? */
-        goto out;
-    }
-    
-    NDRX_LOG(log_debug, "Parsed: binary=[%s] srvid=%d pid=%d contextid=%ld nodeid=%d",
-            myid.binary_name, myid.srv_id, myid.pid, myid.contextid, myid.nodeid);
-   
-    
-    if (G_atmi_env.our_nodeid!=myid.nodeid)
-    {
-        NDRX_LOG(log_debug, "Server is located on different server, "
-                "our nodeid=%d their=%d",
-                G_atmi_env.our_nodeid, myid.nodeid);
-#ifdef EX_USE_POLL
-        /* poll() mode: */
-        {
-            int is_bridge;
-            char tmpsvc[MAXTIDENT+1];
-
-            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, myid.nodeid);
-
-            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &is_bridge))
-            {
-                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
-                        tmpsvc);
-                EXFAIL_OUT(ret);
-            }
-        }
-#else
-        snprintf(send_q, send_q_bufsz, NDRX_SVC_QBRDIGE, 
-                G_atmi_tls->G_atmi_conf.q_prefix, myid.nodeid);
-#endif
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "This is local server");
-        snprintf(send_q, send_q_bufsz, NDRX_ADMIN_FMT, 
-                G_atmi_tls->G_atmi_conf.q_prefix, myid.binary_name, 
-                myid.srv_id, myid.pid);
-    }
-    
-out:
-                
-    NDRX_LOG(log_debug, "%s returns send_q=[%s] ret=%d", 
-                     __func__, send_q, ret);
-
-    return ret;
-}
-
 
 

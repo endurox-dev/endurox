@@ -5,7 +5,7 @@ TPEVSRV(8)
 
 NAME
 ----
-tpevsrv - EnduroX Local Event Broker server.
+tpevsrv - Enduro/X Local Event Broker server.
 
 
 SYNOPSIS
@@ -21,11 +21,14 @@ to other cluster nodes local event brokers, which dispatches events locally
 to subscribed servers.
 Following special services are advertised by 'tpevsrv':
 
-* @TPEVSUBS 	- Service for doing local subscription to event receive by server.
-* @TPEVUNSUBS	- Service for unsubscribing from event (by server).
-* @TPEVPOST	- Do global posting. This is called actually by 'tppost()'.
+. @TPEVSUBS - Service for doing local subscription to event receive by server.
+
+. @TPEVUNSUBS - Service for unsubscribing from event (by server).
+
+. @TPEVPOST - Do global posting. This is called actually by 'tppost()'.
 			It dispatches events to local servers and does bridge calls.
-* @TPEVDOPOST	- This is local only posting. Used by bridges when they receive remote
+
+. @TPEVDOPOST - This is local only posting. Used by bridges when they receive remote
 			event postings.
 
 Subscriptions to events are supported by per ATMI server instance.
@@ -36,23 +39,19 @@ EXIT STATUS
 *0*::
 Success
 
-*1*::
+*-1*::
 Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
 *ndrxd(8)*, *ex_overview*
 
-AUTHOR
-------
-EnduroX is created by Madars Vitolins.
-
 
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, Ltd
 

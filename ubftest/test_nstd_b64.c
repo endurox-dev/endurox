@@ -83,7 +83,7 @@ Ensure(test_nstd_base64)
 }
 
 /**
- * Common suite entry
+ * LMDB/EXDB tests
  * @return
  */
 TestSuite *ubf_nstd_base64(void)

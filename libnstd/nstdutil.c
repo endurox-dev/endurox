@@ -85,7 +85,31 @@ expublic int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
     return (int)res3;
     
 }
-
+/**
+ * Return -1 in case if t1/tusec1 is less than t2/tusec2
+ * return 0 in case if t1/tusec1 equals t2/tusec2
+ * return 1 in case if t1/tusec1 greater t2/tusec2
+ * @param t1 tstamp1
+ * @param tusec1 tstamp1 (microsec)
+ * @param t2 tstamp2
+ * @param tusec2 tstamp2 (microsec)
+ * @return see descr
+ */
+expublic int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2)
+{
+    if (*t1 < *t2 || *t1 == *t2 && *tusec1 < *tusec2)
+    {
+        return -1;
+    }
+    else if (*t1 == *t2 && *tusec1 == *tusec2)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
 
 /**
  * Return timestamp split in two fields
@@ -179,17 +203,12 @@ expublic unsigned long long ndrx_utc_tstamp_micro(void)
  * @param ts
  * @return 
  */
-expublic char * ndrx_get_strtstamp_from_micro(int slot, unsigned long long ts)
+expublic char * ndrx_get_strtstamp_from_sec(int slot, long ts)
 {
     time_t t;
     struct tm utc;
     
     NSTD_TLS_ENTRY;
-    
-    if (sizeof(unsigned long long)>=8) 
-    {
-        ts = ts / 1000000;
-    }
     
     t = ts;
     gmtime_r(&t, &utc);
@@ -473,6 +492,146 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
         if (NULL!=tempbuf)
         {
             /* fix #268 */
+            NDRX_FREE(tempbuf);
+            tempbuf=NULL;
+        }
+    }
+    
+out:
+
+    if (NULL!=tempbuf)
+    {
+        /* fix #268 */
+        NDRX_FREE(tempbuf);
+        tempbuf=NULL;
+    }
+
+    /* replace '\\' -> '\'  */
+    if (strstr(str, "\\"))
+    {
+        malloced = ndrx_str_replace(str, "\\\\", "\\");
+        strcpy(str, malloced);
+        NDRX_FREE(malloced);
+    }
+    
+    return str;
+}
+
+/* TODO: we need a callback for value getter. Also how we determine 
+ * temp buffer size? Alloc temp space in the size of the buf_size? 
+ * Also we need to have configurable open/close symbols.
+ * We will have two data pointers
+ * This works with NDRX logger.
+ */
+expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char closesymb,
+        void *data1, void *data2, void *data3, void *data4,
+        int (*pf_get_data) (void *data1, void *data2, void *data3, void *data4,
+            char *symbol, char *outbuf, long outbufsz))
+{
+    char *p, *p2, *p3;
+    char *next = str;
+    char symbol[1024];
+    char *malloced;
+    char *tempbuf = NULL;
+    char open1[]={'$',opensymb,EXEOS};
+    char open2[]={'\\', '$', opensymb, EXEOS};
+    char open3[]={'\\', '\\', '$', opensymb, EXEOS};
+    char *outbuf = NULL;
+    int ret = EXSUCCEED;
+    
+    NDRX_MALLOC_OUT(outbuf, buf_size, char);
+    
+    while (NULL!=(p=strstr(next, open1)))
+    {
+        p2=strstr(next, open2);
+        p3=strstr(next, open3);
+        
+        /* this is escaped stuff, we shall ignore that */
+        if (p == p3+2)
+        {
+            /* This is normally escaped \, thus ignore & continue 
+             * Does not affects our value
+             */
+        }
+        else if (p == (p2+1))
+        {
+            /* This is our placeholder escaped, thus skip 
+             * But we need to kill the escape
+             */
+            memmove(p2, p, strlen(p)+1);
+            next=p+3; 
+            continue;
+        }
+        
+        char *close =strchr(next, closesymb);
+        if (NULL!=close)
+        {
+            long bufsz;
+            int cpylen = close-p-2;
+            int envlen;
+            /* do substitution */
+            NDRX_STRNCPY(symbol, p+2, cpylen);
+            symbol[cpylen] = EXEOS;
+            
+            if (EXSUCCEED!=(ret=pf_get_data(data1, data2, data3, data4,
+                    symbol, outbuf, buf_size)))
+            {
+                NDRX_LOG(log_error, "Failed to substitute [%s] error: %d", symbol, ret);
+                goto out;
+            }
+            
+            envlen = strlen(outbuf);
+            
+            /* fix up the buffer!!! */
+            if (cpylen+3==envlen)
+            {
+                memcpy(p, outbuf, envlen);
+            }
+            else if (cpylen+3 > envlen)
+            {
+                int totlen;
+                /* if buf_len == 0, skip the checks. */
+                if (buf_size > 0 && 
+                        (totlen=(strlen(str) + (cpylen+3 - envlen))) > buf_size-1 /*incl EOS*/)
+                {
+                    if (NULL!=tempbuf)
+                    {
+                        NDRX_FREE(tempbuf);
+                    }
+                    /* cannot continue it is buffer overrun! Maybe fail here? */
+                    NDRX_LOG(log_error, "buffer overrun in string "
+                            "formatting totlen=%d, bufsz-1=%d", totlen, buf_size-1);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /*int overleft = cpylen+2 - envlen; */
+                /* copy there, and reduce total len */
+                memcpy(p, outbuf, envlen);
+                /* copy left overs after } at the end of the env, including eos */
+                memmove(p+envlen, close+1, strlen(close+1)+1);
+            }
+            else if (cpylen+3 < envlen)
+            {
+                int missing = envlen - (cpylen+2);
+                
+                /* we have to stretch that stuff and then copy in, including eos */
+                memmove(close+missing, close+1, strlen(close+1)+1);
+                memcpy(p, outbuf, envlen);
+            }
+            
+            /* free-up if temp buffer allocated. */
+            
+            next = p+envlen;
+        }
+        else
+        {
+            /* just step forward... */
+            next+=2;
+        }
+        
+        if (NULL!=tempbuf)
+        {
+            /* fix #268 */
             tempbuf=NULL;
             NDRX_FREE(tempbuf);
         }
@@ -486,9 +645,15 @@ out:
         strcpy(str, malloced);
         NDRX_FREE(malloced);
     }
-    
-    return str;
+
+    if (NULL!=outbuf)
+    {
+        NDRX_FREE(outbuf);
+    }
+
+    return ret;
 }
+
 
 /**
  * Unknown buffer len.
@@ -499,13 +664,108 @@ expublic char * ndrx_str_env_subs(char * str)
 {
     return ndrx_str_env_subs_len(str, 0);
 }
+
+/**
+ * Decode numbers from config file ending with K, M, G
+ * NOTE! This does change the str value!!!!
+ * @param str
+ * @return number parsed/built
+ */
+expublic double ndrx_num_dec_parsecfg(char * str)
+{
+    double ret = 0;
+    double multipler = 1;
+    int len = strlen(str);
+    int mapplied = EXFALSE;
+    
+    if (len>1)
+    {
+        switch (str[len-1])
+        {
+            case 'k':
+            case 'K':
+                multipler = 1000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'm':
+            case 'M':
+                multipler = 1000000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'g':
+            case 'G':
+                multipler = 1000000000.0f;
+                mapplied = EXTRUE;
+                break;
+        }
+        /* Avoid precision issues... */
+        if (mapplied)
+        {
+            str[len-1] = EXEOS;
+        }
+    }
+    
+    ret = atof(str);
+    
+    ret*=multipler;
+    
+    return ret;
+}
+
+/**
+ * Parse milli-seconds based record
+ * @param str NOTE string is modified (last postfix removed for parsing)
+ * @return parsed number of milliseconds
+ */
+expublic double ndrx_num_time_parsecfg(char * str)
+{
+    double ret = 0;
+    double multipler = 1;
+    int len = strlen(str);
+    int mapplied = EXFALSE;
+    
+    if (len>1)
+    {
+        switch (str[len-1])
+        {
+            case 's':
+                /* second */
+                multipler = 1000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'm':
+                /* minute */
+                multipler = 60.0f * 1000.0f;
+                mapplied = EXTRUE;
+                break;
+            case 'h':
+                /* hour */
+                multipler = 60.0f * 60.0f * 1000.0f;
+                mapplied = EXTRUE;
+                break;
+        }
+        /* Avoid precision issues... */
+        if (mapplied)
+        {
+            str[len-1] = EXEOS;
+        }
+    }
+    
+    ret = atof(str);
+    
+    ret*=multipler;
+    
+    return ret;
+}
+
+
 /**
  * Decode number
  * @param t
  * @param slot
  * @return 
  */
-char *ndrx_decode_num(long tt, int slot, int level, int levels)
+expublic char *ndrx_decode_num(long tt, int slot, int level, int levels)
 {
     char tmp[128];
     long next_t=0;

@@ -1,0 +1,77 @@
+EDB_STAT(8)
+===========
+:doctype: manpage
+
+
+NAME
+----
+edb_stat - LMDB/EXDB environment status tool
+
+
+SYNOPSIS
+--------
+*edb_stat* [*-V*] [*-e*] [*-f*[*f*[*f*]]] [*-n*] [*-r*[*r*]] [*-a* | *-s* 'subdb']  *envpath*
+
+
+DESCRIPTION
+-----------
+
+The *edb_stat* utility displays the status of an EXDB environment.
+
+
+OPTIONS
+-------
+
+[*-V*]::
+Write the library version number to the standard output, and exit.
+
+[*-e*]::
+Display information about the database environment.
+
+[*-f*]::
+Display information about the environment freelist.  
+If *-ff* is given, summarize each freelist entry.  If *-fff* is given, 
+display the full list of page IDs in the freelist.
+
+[*-n*]::
+Display the status of an EXDB database which does not use subdirectories.
+
+[*-r*]::
+Display  information about the environment reader table.  Shows the process ID, 
+thread ID, and transaction ID for each active reader slot. 
+The process ID and transaction ID are in decimal, the thread ID is in hexadecimal. 
+The transaction ID is displayed as "-" if the reader does not currently have a 
+read transaction open.  If -rr is given, check for stale entries in the 
+reader table and clear them. The reader table will be  printed again after 
+the check is performed.
+
+[*-a*]::
+Display the status of all of the subdatabases in the environment.
+
+[*-s*]:: 'subdb'
+Display the status of a specific subdatabase.
+
+
+EXIT STATUS
+-----------
+Exit status is zero if no errors occur. Errors result in a non-zero exit 
+status and a diagnostic message being written to standard error.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+AUTHOR
+------
+Howard Chu of Symas Corporation <http://www.symas.com>
+
+
+SEE ALSO
+--------
+*edb_copy(8)*
+
+COPYING
+-------
+(C) Symas Corporation
+(C) Mavimax, Ltd
+

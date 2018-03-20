@@ -658,7 +658,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     NDRX_LOG(log_debug, "%s: called", __func__);
 
     /* Check service availability */
-    if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge, NULL))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
                 svc);

@@ -43,6 +43,7 @@
 #include <ndebug.h>
 #include <ubf.h>
 #include <ubf_int.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IS_NOT_PRINTABLE(X) !(isprint(X) && !iscntrl(X))
@@ -243,7 +244,7 @@ expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
     ndrx_debug_t * dbg = debug_get_ndrx_ptr();
     if (dbg->level>=lev)
     {
-        UBF_LOG(lev, "%s", title);
+        NDRX_LOG(lev, "%s", title);
         Bfprint(p_ub, dbg->dbg_f_ptr);
     }
 }

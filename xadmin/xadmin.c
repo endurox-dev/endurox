@@ -185,7 +185,16 @@ cmd_mapping_t M_command_map[] =
     {"gen",       cmd_gen,EXFAIL, 0,  999,  0, "Generate sources\n"
                                      "\t args: gen <target> <type> [-d] "
                                      "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
-                                     "\t tagets/types available:", cmd_gen_help}
+                                     "\t tagets/types available:", cmd_gen_help},
+    {"cs",        cmd_cs,EXFAIL,   1,  3,  1, "Cache show\n"
+                                            "\t args: cs <cache_db_name>|-d <cache_db_name>", NULL},
+    {"cacheshow", cmd_cs,EXFAIL,   1,  3,  1, "Alias for `cs' ", NULL},
+    {"cd",        cmd_cd,EXFAIL,   3,  4,  1, "Dump message in cache\n"
+                                    "\t args: cd -d <dbname> -k <key> [-i interpret_result]", NULL},
+    {"cachedump", cmd_cd,EXFAIL,   3,  4,  1, "Alias for `cd' ", NULL},
+    {"ci",        cmd_ci,EXFAIL,   2,  4,  1, "Invalidate cache\n"
+                                    "\t args: ci -d <dbname> [-k <key>][-r use_regexp]", NULL},
+    {"cacheinval",cmd_ci,EXFAIL,   2,  4,  1, "Alias for `ci' ", NULL}
 };
 
 /*
@@ -495,11 +504,11 @@ exprivate int get_cmd(int *p_have_next)
         {
             if (EXEOS!=M_buffer_prev[0] && '/' == M_buffer[0])
             {
-                strcpy(M_buffer, M_buffer_prev);
+                NDRX_STRCPY_SAFE(M_buffer, M_buffer_prev);
             }
             else if (EXEOS!=M_buffer[0])
             {
-                strcpy(M_buffer_prev, M_buffer);
+                NDRX_STRCPY_SAFE(M_buffer_prev, M_buffer);
             }
         }
         
@@ -513,7 +522,7 @@ exprivate int get_cmd(int *p_have_next)
             if (!G_cmd_argc_logical)
                 G_cmd_argc_logical = 1;
             
-            strcpy(G_cmd_argv[G_cmd_argc_raw], p);
+            NDRX_STRCPY_SAFE(G_cmd_argv[G_cmd_argc_raw], p);
             G_cmd_argc_raw++;
             
             p = strtok (NULL, ARG_DEILIM);
@@ -560,11 +569,13 @@ exprivate int process_command_buffer(int *p_have_next)
         {
             fprintf(stderr, "Syntax error, too few args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
+            ret=EXFAIL;
         }
         else if ( G_cmd_argc_logical > map->max_args)
         {
             fprintf(stderr, "Syntax error, too many args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
+            ret=EXFAIL;
         }
         else if (map->reqidle && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
         {
@@ -714,7 +725,7 @@ expublic int ndrx_init(int need_init)
         
         if (NULL==cctag)
         {
-            strcpy(cfg_section, "@xadmin");
+            NDRX_STRCPY_SAFE(cfg_section, "@xadmin");
         }
         else
         {
@@ -800,7 +811,7 @@ int main(int argc, char** argv) {
     signal(SIGCHLD, sign_chld_handler);
     
     /* Print the copyright notice: */
-    if (is_tty())
+    if (is_tty() && NULL==getenv(CONF_NDRX_SILENT))
     {
         NDRX_BANNER;
     }

@@ -1,4 +1,5 @@
 /* 
+** UBF and standard library unit tests..
 **
 ** @file ubfunit1.h
 ** 
@@ -82,11 +83,18 @@ extern TestSuite *ubf_print_tests(void);
 extern TestSuite *ubf_macro_tests(void);
 extern TestSuite *ubf_readwrite_tests(void);
 extern TestSuite *ubf_mkfldhdr_tests(void);
+extern TestSuite *ubf_bcmp_tests(void);
 
 /* Standard library suites */
 extern TestSuite *ubf_nstd_crypto(void);
 extern TestSuite *ubf_nstd_base64(void);
 
+extern TestSuite *ubf_nstd_mtest(void);
+extern TestSuite *ubf_nstd_mtest2(void);
+extern TestSuite *ubf_nstd_mtest3(void);
+extern TestSuite *ubf_nstd_mtest4(void);
+extern TestSuite *ubf_nstd_mtest5(void);
+extern TestSuite *ubf_nstd_mtest6_dupcursor(void);
 #ifdef	__cplusplus
 }
 #endif

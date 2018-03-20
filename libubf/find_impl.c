@@ -255,7 +255,7 @@ expublic BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN l
         p_dat = p_fld+dlen;
         step = dtype->p_next(dtype, p_fld, &dlen);
         /* Now do compare */
-        cmp_ret=dtype_ext1->p_cmp(dtype_ext1, p_dat, dlen, buf, len);
+        cmp_ret=dtype_ext1->p_cmp(dtype_ext1, p_dat, dlen, buf, len, 0L);
         if (EXTRUE==cmp_ret)
         {
             UBF_LOG(log_debug, "%s: Found occurrance: %d", fn, iocc);

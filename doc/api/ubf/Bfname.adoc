@@ -39,7 +39,7 @@ Report bugs to madars.vitolins@gmail.com
 
 SEE ALSO
 --------
-*Bfname(3)*
+*Bfldid(3)*
 
 COPYING
 -------

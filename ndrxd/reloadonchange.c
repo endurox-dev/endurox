@@ -187,7 +187,8 @@ expublic int roc_check_binary(char *binary_path, unsigned sanity_cycle)
     /* search for bin, if not exists, then get checksum & add */
     if (NULL==(bin=rco_get_binary(binary_path, sanity_cycle)))
     {
-        NDRX_LOG(log_error, "Failed to get RCO binary (%s) - memory issues", binary_path);
+        NDRX_LOG(log_error, "Failed to get reload-on-change binary "
+            "(%s) - memory issues", binary_path);
         ret=EXFALSE;
         goto out;
     }

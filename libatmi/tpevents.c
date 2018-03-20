@@ -57,13 +57,15 @@
  * Internal version of tpsubscribe.
  * Actually do the main logic of the function
  */
-long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
+expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
     char *ret_buf;
     long ret_len;
-
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
+    
     NDRX_LOG(log_debug, "%s enter", __func__);
 
     if (NULL==eventexpr || EXEOS==eventexpr[0])
@@ -143,8 +145,10 @@ long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long flags)
         ret=EXFAIL;
         goto out;
     }
-
-    if (EXFAIL!=(ret=tpcall(NDRX_SYS_SVC_PFX "TPEVSUBS", (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
+    
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVSUBS, nodeid);
+    
+    if (EXFAIL!=(ret=tpcall(tmpsvc, (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }
@@ -169,12 +173,14 @@ out:
  * Internal version of tpunsubscribe.
  * Actually do the main logic of the function
  */
- long ndrx_tpunsubscribe(long subscription, long flags)
+expublic long ndrx_tpunsubscribe(long subscription, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
     char *ret_buf;
     long ret_len;
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
 
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -203,7 +209,9 @@ out:
         goto out;
     }
 
-    if (EXFAIL!=(ret=tpcall(NDRX_SYS_SVC_PFX "TPEVUNSUBS", (char *)p_ub, 0L, &ret_buf, &ret_len, flags)))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVUNSUBS, nodeid);
+    if (EXFAIL!=(ret=tpcall(tmpsvc, (char *)p_ub, 0L, 
+            &ret_buf, &ret_len, flags)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }
@@ -224,18 +232,23 @@ out:
 }
 
 /**
- *
+ * Internal version of tppost
  * @param eventname
  * @param data
  * @param len
  * @param flags
+ * @param user1 user data field 1
+ * @param user2 user data field 2
  * @return
  */
-int ndrx_tppost(char *eventname, char *data, long len, long flags)
+expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
+            int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
     char *ret_buf;
     long ret_len;
+    short nodeid = (short)tpgetnodeid();
+    char tmpsvc[MAXTIDENT+1];
     
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -247,8 +260,9 @@ int ndrx_tppost(char *eventname, char *data, long len, long flags)
     }
 
     /* Post the */
-    if (EXFAIL!=(ret=tpcallex(NDRX_SYS_SVC_PFX EV_TPEVPOST, 
-            data, len, &ret_buf, &ret_len, flags, eventname, EXFAIL, 0)))
+    snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVPOST, nodeid);
+    if (EXFAIL!=(ret=ndrx_tpcall(tmpsvc, data, len, &ret_buf, &ret_len, flags, 
+            eventname, EXFAIL, 0, user1, user2, user3, user4)))
     {
         ret=tpurcode; /* Return code - count of events applied */
     }
