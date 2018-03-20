@@ -18,6 +18,8 @@
 #include <string.h>
 #include <time.h>
 #include <cgreen/cgreen.h>
+#include <ndebug.h>
+#include <edbutil.h>
 #include "exdb.h"
 
 #define E(expr) CHECK((rc = (expr)) == EDB_SUCCESS, #expr)
@@ -38,7 +40,8 @@ Ensure(test_nstd_mtest3)
 	int *values;
 	char sval[32];
 	char kval[sizeof(int)];
-
+        char errdet[PATH_MAX];
+        
 	srand(time(NULL));
 
 	memset(sval, 0, sizeof(sval));
@@ -50,6 +53,9 @@ Ensure(test_nstd_mtest3)
 		values[i] = rand()%1024;
 	}
 
+        E(ndrx_mdb_unlink("./testdb", errdet, sizeof(errdet), 
+            LOG_FACILITY_UBF));
+        
 	E(edb_env_create(&env));
 	E(edb_env_set_mapsize(env, 10485760));
 	E(edb_env_set_maxdbs(env, 4));
@@ -57,7 +63,6 @@ Ensure(test_nstd_mtest3)
 
 	E(edb_txn_begin(env, NULL, 0, &txn));
 	E(edb_dbi_open(txn, "id2", EDB_CREATE|EDB_DUPSORT, &dbi));
-        E(edb_drop(txn, dbi, 0));
 
 	key.mv_size = sizeof(int);
 	key.mv_data = kval;
