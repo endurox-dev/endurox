@@ -202,8 +202,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-echo "sleeping 20 for next record"
-sleep 20
+echo "sleeping 40 for next record"
+sleep 40
 
 (time ./testtool48 -sTESTSV16 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"4"}' \
     -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"4"}' \
