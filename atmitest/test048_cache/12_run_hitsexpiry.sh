@@ -250,7 +250,7 @@ ensure_field db12 SV12KEY1 T_STRING_FLD KEY1 1
 
 
 echo "Waiting for expiry to zap records... (60s)"
-sleep 60
+sleep 100
 
 
 ensure_keys db12 0
