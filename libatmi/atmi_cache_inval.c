@@ -365,7 +365,7 @@ expublic int ndrx_cache_drop(char *cachedbnm, short nodeid)
     int tran_started = EXFALSE;
     
     NDRX_LOG(log_info, "Resetting cache db [%s] source node: [%hd]", 
-            db->cachedb, nodeid);
+            cachedbnm, nodeid);
     
     /* find cachedb */
     
