@@ -1785,7 +1785,7 @@ expublic char * ndrx_Bboolco (char * expr)
     else
     {
         /* All OK */
-        NDRX_STRNCPY_SAFE(expr_int, expr, buf_len-1);
+        NDRX_STRNCPY_SAFE(expr_int, expr, buf_len);
         strcat(expr_int, "\n");
 
         yy_scan_string(expr_int);
