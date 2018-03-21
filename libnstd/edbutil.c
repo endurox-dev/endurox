@@ -119,4 +119,7 @@ expublic int ndrx_mdb_unlink(char *resource, char *errdet, int errdetbufsz,
             ret=EXFAIL;
         }
     }
+
+    return ret;
 }
+
