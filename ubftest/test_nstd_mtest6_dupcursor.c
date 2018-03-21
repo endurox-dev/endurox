@@ -20,6 +20,8 @@
 #include <string.h>
 #include <time.h>
 #include <cgreen/cgreen.h>
+#include <ndebug.h>
+#include <edbutil.h>
 #include "exdb.h"
 
 #define E(expr) CHECK((rc = (expr)) == EDB_SUCCESS, #expr)
@@ -48,11 +50,14 @@ Ensure(test_nstd_mtest6_dupcursor)
 	int count=100;
 	char sval[32];
 	char kval[sizeof(int)];
-
+        char errdet[PATH_MAX];
 #define KEY_SIZE	4 /* 3 + EOS */
 
 	memset(sval, 0, sizeof(sval));
 
+        E(ndrx_mdb_unlink("./testdb", errdet, sizeof(errdet), 
+            LOG_FACILITY_UBF));
+        
 	E(edb_env_create(&env));
 	E(edb_env_set_mapsize(env, 10485760));
 	E(edb_env_set_maxdbs(env, 4));
@@ -63,8 +68,6 @@ Ensure(test_nstd_mtest6_dupcursor)
         
 	E(edb_dbi_open(txn, "id2", EDB_CREATE|EDB_DUPSORT, &dbi));
 	E(edb_set_dupsort(txn, dbi, sort_data));
-	/* drop database */
-        E(edb_drop(txn, dbi, 0));
 	
         
 	key.mv_size = KEY_SIZE;
