@@ -49,6 +49,7 @@
 #include <atmi.h>
 #include <atmi_tls.h>
 #include <typed_buf.h>
+#include <edbutil.h>
 
 #include "thlock.h"
 #include "userlog.h"
@@ -703,35 +704,13 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     if (NDRX_TPCACH_INIT_BOOT==mode &&
             db->flags & NDRX_TPCACHE_FLAGS_BOOTRST)
     {
-        char data_file[PATH_MAX+1];
-        char lock_file[PATH_MAX+1];
+        char errdet[PATH_MAX+1];
         
-        snprintf(data_file, sizeof(data_file), "%s/data.edb", db->resource);
-        snprintf(lock_file, sizeof(data_file), "%s/lock.edb", db->resource);
-        
-        NDRX_LOG(log_info, "Resetting cache db [%s], data file: [%s], lock file: [%s]", 
-                db->cachedb, data_file, lock_file);
-        
-        if (EXSUCCEED!=unlink(data_file))
+        if (EXSUCCEED!=ndrx_mdb_unlink(db->resource, errdet, sizeof(errdet), 
+                LOG_FACILITY_NDRX))
         {
-            int err = errno;
-            NDRX_LOG(log_error, "unlink [%s] failed: %s", data_file, strerror(err));
-            if (ENOENT!=err)
-            {
-                NDRX_CACHE_TPERROR(TPESYSTEM, 
-                    "Failed to unlink: [%s]", strerror(err));
-            }
-        }
-        
-        if (EXSUCCEED!=unlink(lock_file))
-        {
-            int err = errno;
-            NDRX_LOG(log_error, "unlink [%s] failed: %s", lock_file, strerror(err));
-            if (ENOENT!=err)
-            {
-                NDRX_CACHE_TPERROR(TPESYSTEM, 
-                    "Failed to unlink: [%s]", strerror(err));
-            }
+            NDRX_CACHE_TPERROR(TPESYSTEM, errdet);
+            EXFAIL_OUT(ret);
         }
         
         #if 0

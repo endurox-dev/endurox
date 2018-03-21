@@ -258,6 +258,10 @@ cache.
 the data is true, the cached data not returned, but service invocation is performed
 and re-cached (old data overwritten).
 
+
+image:tpcache.png[caption="Figure 1: ", title="Enduro/X Smart Cache", alt="endurox start cache"]
+
+
 === Limitations of the cache
 
 The LMDB is build in such way that if write transaction on the database is
