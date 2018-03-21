@@ -202,7 +202,7 @@ exprivate int add_specific_queue(char *qname, int is_admin)
 
     svc_entry_fn_t *entry;
     /* phase 0. Generate admin q */
-    if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
+    if ( (entry = (svc_entry_fn_t*)NDRX_CALLOC(1, sizeof(svc_entry_fn_t))) == NULL)
     {
         NDRX_LOG(log_error, "Failed to allocate %d bytes for admin service entry",
                                         sizeof(svc_entry_fn_t));
@@ -212,7 +212,7 @@ exprivate int add_specific_queue(char *qname, int is_admin)
     }
     else
     {
-        memset(entry, 0, sizeof(svc_entry_fn_t));
+        entry->q_descr=(mqd_t)EXFAIL;
         entry->p_func=NULL;
         entry->is_admin = is_admin;
         NDRX_STRCPY_SAFE(entry->listen_q, qname);
@@ -389,8 +389,16 @@ expublic void atmisrv_un_initialize(int fork_uninit)
     {
         for (i=0; i<G_server_conf.adv_service_count; i++)
         {
+
+            if (NULL==G_server_conf.service_array[i])
+            {
+                /* nothing to do if NULL */
+                continue;
+            }
+
             /* just close it, no error check */
-            if(EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
+            if(((mqd_t)EXFAIL)!=G_server_conf.service_array[i]->q_descr &&
+			EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
             {
 
                 NDRX_LOG(log_error, "Failed to close q descr %d: %d/%s",
@@ -460,7 +468,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
     ndrx_TPunset_error();
 
     /* allocate memory for entry */
-    if ( (entry = (svc_entry_fn_t*)NDRX_MALLOC(sizeof(svc_entry_fn_t))) == NULL)
+    if ( (entry = (svc_entry_fn_t*)NDRX_CALLOC(1, sizeof(svc_entry_fn_t))) == NULL)
     {
             ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
                                 sizeof(svc_entry_fn_t));
@@ -471,7 +479,6 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
     {
         svc_entry_fn_t *existing=NULL;
         /* fill entry details */
-        memset(entry, 0, sizeof(svc_entry_fn_t));
         NDRX_STRNCPY(entry->svc_nm, svc_nm, XATMI_SERVICE_NAME_LENGTH);
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
         NDRX_STRNCPY(entry->fn_nm, fn_nm, XATMI_SERVICE_NAME_LENGTH);
@@ -480,7 +487,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         
         entry->fn_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
         entry->p_func = p_func;
-        entry->is_admin = 0;
+        entry->q_descr = (mqd_t)EXFAIL;
         
         /* search for existing entry */
         NDRX_STRCPY_SAFE(eltmp.svc_nm, entry->svc_nm);
