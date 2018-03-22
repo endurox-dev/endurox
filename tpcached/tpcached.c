@@ -809,6 +809,24 @@ out:
 
     return ret;
 }
+
+/**
+ * Check that we are pending some signals (specially for Apple...)
+ * @return EXTRUE/EXFALSE
+ */
+exprivate int is_shutdown_pending(void)
+{
+    sigset_t pending;
+    sigpending(&pending);
+    if (sigismember(&pending, SIGINT) ||
+        sigismember(&pending, SIGTERM))
+    {
+        return EXTRUE;
+    }
+    
+    return EXFALSE;
+}
+
 /**
  * Main entry point for `tpcached' utility
  */
@@ -820,6 +838,7 @@ expublic int main(int argc, char** argv)
     struct timespec timeout;
     siginfo_t info;
     int result = 0;
+    int i;
     ndrx_tpcache_db_t *dbh, *el, *elt;
 
     /* local init */
@@ -854,7 +873,27 @@ expublic int main(int argc, char** argv)
     while (!M_shutdown)
     {
         /* wait for signal or timeout... */
+#if EX_OS_DARWIN
+        for (i=0; i<M_sleep; i++)
+        {
+            if (is_shutdown_pending())
+            {
+                NDRX_LOG(log_debug, "Shutdown requested by signal...");
+                M_shutdown = EXTRUE;
+                break;
+            }
+            else
+            {
+                sleep(1);
+            }
+        }
+        if (M_shutdown)
+        {
+            break;
+        }
+#else
         result = sigtimedwait( &M_mask, &info, &timeout );
+#endif
 
         if (result > 0)
         {
