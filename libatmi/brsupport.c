@@ -117,7 +117,7 @@ expublic int fill_reply_queue(char *nodestack,
                 
                 snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, nodeid);
                 
-                if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, reply_to, &is_bridge))
+                if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, reply_to, &is_bridge, NULL))
                 {
                     NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                             tmpsvc);
