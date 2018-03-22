@@ -667,7 +667,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         sprintf(tmpsvc, NDRX_SVC_BRIDGE, chosen_node);
         
         NDRX_LOG(log_debug, "Recursive service lookup: [%s] ret %d", tmpsvc, ret);
-        ret = ndrx_shm_get_svc(tmpsvc, send_q, is_bridge);
+        ret = ndrx_shm_get_svc(tmpsvc, send_q, is_bridge, NULL);
         *is_bridge = EXTRUE;
     }
     
