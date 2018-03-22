@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <signal.h>
 
 #include <atmi.h>
 #include <atmi_int.h>
