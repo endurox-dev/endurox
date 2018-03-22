@@ -123,7 +123,8 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
             
             snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, dest_node);
 
-            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge,
+                NULL))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
