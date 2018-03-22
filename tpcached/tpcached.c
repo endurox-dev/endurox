@@ -229,17 +229,7 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
             
             /* copy is needed because key data might change during group delete */
             NDRX_STRCPY_SAFE(cur_key, keydb.mv_data);
-            
-#if 0
-            if (EXSUCCEED!=ndrx_cache_inval_by_key(db->cachedb, db, 
-                    cur_key, (short)nodeid, txn, EXTRUE))
-            {
-                NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
-                        cur_key);
-                EXFAIL_OUT(ret);
-            }
-            deleted++;
-#endif
+
             if (EXSUCCEED!=ndrx_tpcached_add_msg(&exp_list, &keydb, NULL))
             {
                 NDRX_LOG(log_debug, "Failed to add record to removal list!");
@@ -508,21 +498,6 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
                 NDRX_LOG(log_debug, "Failed to add record to removal list!");
                 EXFAIL_OUT(ret);
             }
-                        
-#if 0
-            if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, keydb.mv_data, &val)))
-            {
-                if (ret!=EDB_NOTFOUND)
-                {
-                    EXFAIL_OUT(ret);
-                }
-                else
-                {
-                    ret=EXSUCCEED;
-                }
-            }
-            dupsdel++;
-#endif
         }
         
         if (EDB_FIRST == op)
@@ -572,16 +547,15 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
         EXFAIL_OUT(ret);
     }    
     
+    if (db->limit >= stat.ms_entries)
+    {
+        NDRX_LOG(log_debug, "Nothing to delete");
+        goto out;
+    }
+    
     /* empty lists are always at the end of the array */
-    
     /* then go over the linear array, and remove records which goes over the cache */
-    
     /* just print the sorted arrays... */
-    
-    /* TODO: Might want to switch to RW transaction only here and previous run as RO
-     * only how about duplicate removal?
-     */
-    
     NDRX_LOG(log_debug, "%s: starting RW tran", __func__);
     
     if (EXSUCCEED!=ndrx_cache_edb_begin(db, &txn, 0))
@@ -760,19 +734,6 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
             {
                 NDRX_LOG(log_debug, "Removing duplicate: [%s] (mark for removal)", 
                         keydb.mv_data);
-#if 0
-                if (EXSUCCEED!=(ret=ndrx_cache_edb_del (db, txn, keydb.mv_data, &val)))
-                {
-                    if (ret!=EDB_NOTFOUND)
-                    {
-                        EXFAIL_OUT(ret);
-                    }
-                    else
-                    {
-                        ret=EXSUCCEED;
-                    }
-                }
-#endif
                 if (EXSUCCEED!=ndrx_tpcached_add_msg(&dup_list, &keydb, &val))
                 {
                     NDRX_LOG(log_debug, "Failed to add record to removal list!");
@@ -848,6 +809,24 @@ out:
 
     return ret;
 }
+
+/**
+ * Check that we are pending some signals (specially for Apple...)
+ * @return EXTRUE/EXFALSE
+ */
+exprivate int is_shutdown_pending(void)
+{
+    sigset_t pending;
+    sigpending(&pending);
+    if (sigismember(&pending, SIGINT) ||
+        sigismember(&pending, SIGTERM))
+    {
+        return EXTRUE;
+    }
+    
+    return EXFALSE;
+}
+
 /**
  * Main entry point for `tpcached' utility
  */
@@ -859,6 +838,7 @@ expublic int main(int argc, char** argv)
     struct timespec timeout;
     siginfo_t info;
     int result = 0;
+    int i;
     ndrx_tpcache_db_t *dbh, *el, *elt;
 
     /* local init */
@@ -893,6 +873,25 @@ expublic int main(int argc, char** argv)
     while (!M_shutdown)
     {
         /* wait for signal or timeout... */
+#if EX_OS_DARWIN
+        for (i=0; i<M_sleep; i++)
+        {
+            if (is_shutdown_pending())
+            {
+                NDRX_LOG(log_debug, "Shutdown requested by signal...");
+                M_shutdown = EXTRUE;
+                break;
+            }
+            else
+            {
+                sleep(1);
+            }
+        }
+        if (M_shutdown)
+        {
+            break;
+        }
+#else
         result = sigtimedwait( &M_mask, &info, &timeout );
 
         if (result > 0)
@@ -917,10 +916,9 @@ expublic int main(int argc, char** argv)
                 NDRX_LOG(log_error, "sigtimedwait failed: %s", strerror(err));
                 EXFAIL_OUT(ret);
             }
-            
-            NDRX_LOG(log_debug, "Scanning...");
         }
-
+#endif
+        NDRX_LOG(log_debug, "Scanning...");
         /* Get the DBs */
         /* interval process */
         dbh = ndrx_cache_dbgethash();
