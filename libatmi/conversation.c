@@ -222,7 +222,8 @@ expublic int accept_connection(void)
 
             sprintf(tmpsvc, NDRX_SVC_BRIDGE, (int)G_atmi_tls->G_last_call.callstack[0]);
 
-            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge,
+                    NULL))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
