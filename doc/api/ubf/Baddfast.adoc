@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-dd field to UBF buffer. By difference to Badd, this function offers to add next
+Add field to UBF buffer. By difference to Badd, this function offers to add next
 occurrence of the field just right after the previous Baddfast function. So basically
 if batch of occurrences needs to be loaded to buffer or incrementing BFLDID of the
 same type needs to be added to the buffer in quick manner, then at first call
