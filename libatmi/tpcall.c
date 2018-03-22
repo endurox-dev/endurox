@@ -433,7 +433,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
             
             snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, dest_node);
 
-            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge, NULL))
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, send_q, &tmp_is_bridge))
             {
                 NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
                         tmpsvc);
@@ -1040,15 +1040,7 @@ out:
         {
             /* return error if failed to cache? */
             
-#if 0
-            Service result have more signficance
-            if (EXSUCCEED!=ret2 && NDRX_TPCACHE_ENOCACHE!=ret2)
-            {
-                NDRX_LOG(log_error, "Failed to cache data!");
-                ret=EXFAIL;
-            }
-#endif
-            userlog("Failed to save service [%s] cache results: %s",
+            userlog("Failed to save service [%s] cache results: %s", svc,
                 tpstrerror(tperrno));
         }
     }
