@@ -8,7 +8,7 @@ v1.0, 2016-06:
 About manual
 ------------
 This manual describes how to build 'Enduro/X' FreeBSD platform. Document is based
-on FreeBSD 10.3 on amd64 machine. Default FreeBSD c/c++ compiler is used.
+on FreeBSD 10.3 on amd64 machine. Default FreeBSD C/C++ compiler is used.
 
 == Overview
 
@@ -63,6 +63,21 @@ EOF
 
 # sysctl -f /etc/sysctl.conf
 ---------------------------------------------------------------------
+
+For LMDB testing more semaphores shall be allowed
+
+---------------------------------------------------------------------
+# cat << EOF >> /boot/loader.conf
+
+# kernel tunables for Enduro/X:
+kern.ipc.semmns=2048
+kern.ipc.semmni=500
+
+EOF
+
+---------------------------------------------------------------------
+
+After chaning /boot/loader.conf, reboot of system is required.
 
 Enduor/X testing framework uses '/bin/bash' in scripting, thus we must
 get it working. Also perl is assumed to to be '/usr/bin/perl'. Thus:

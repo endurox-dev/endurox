@@ -104,6 +104,8 @@ NtClose(HANDLE h);
 #include <fcntl.h>
 #endif
 
+#include <ndebug.h>
+
 #if defined(__mips) && defined(__linux)
 /* MIPS has cache coherency issues, requires explicit cache control */
 #include <asm/cachectl.h>
@@ -4538,7 +4540,11 @@ edb_fname_init(const char *path, unsigned envflags, EDB_name *fname)
 		strcpy(fname->mn_val, path);
 	}
 	else
+	{
+		NDRX_LOG(log_error, "%s: malloc fail: %s",
+			__func__, strerror(errno));
 		return ENOMEM;
+	}
 	return EDB_SUCCESS;
 #endif
 }
@@ -4779,8 +4785,11 @@ edb_env_open2(EDB_env *env, int prev)
 		 * and map address which does not suit the main program.
 		 */
 		rc = edb_env_init_meta(env, &meta);
-		if (rc)
+		if (rc) {
+			NDRX_LOG(log_error, "%s: edb_env_init_meta failed: %d",
+				__func__, rc);
 			return rc;
+		}
 		newenv = 0;
 	}
 #ifdef _WIN32
@@ -4797,8 +4806,11 @@ edb_env_open2(EDB_env *env, int prev)
 #endif
 
 	rc = edb_env_map(env, (flags & EDB_FIXEDMAP) ? meta.mm_address : NULL);
-	if (rc)
+	if (rc) {
+		NDRX_LOG(log_error, "%s: edb_env_map failed: %d",
+			__func__, rc);
 		return rc;
+	}
 
 	if (newenv) {
 		if (flags & EDB_FIXEDMAP)
@@ -5109,18 +5121,24 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 	off_t size, rsize;
 
 	rc = edb_fopen(env, fname, EDB_O_LOCKS, mode, &env->me_lfd);
+	NDRX_LOG(log_debug, "%s: edb_fopen fname [%s]: %d", __func__, fname, rc);
 	if (rc) {
 		/* Omit lockfile if read-only env on read-only filesystem */
 		if (rc == EDB_ERRCODE_ROFS && (env->me_flags & EDB_RDONLY)) {
 			return EDB_SUCCESS;
 		}
+		NDRX_LOG(log_debug, "%s: edb_fopen fname [%s]: %d - FAIL",
+			__func__, fname, rc);
 		goto fail;
 	}
 
 	if (!(env->me_flags & EDB_NOTLS)) {
 		rc = pthread_key_create(&env->me_txkey, edb_env_reader_dest);
-		if (rc)
+		if (rc) {
+			NDRX_LOG(log_debug, "%s: pthread_key_create failed: %d",
+				__func__, rc);
 			goto fail;
+		}
 		env->me_flags |= EDB_ENV_TXKEY;
 #ifdef _WIN32
 		/* Windows TLS callbacks need help finding their TLS info. */
@@ -5141,7 +5159,12 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 	size = GetFileSize(env->me_lfd, NULL);
 #else
 	size = lseek(env->me_lfd, 0, SEEK_END);
-	if (size == -1) goto fail_errno;
+	if (size == -1) {
+		int err_ = errno;
+		NDRX_LOG(log_error, "%s: lseek failed: %s", __func__, strerror(err_));
+		errno = err_;
+		goto fail_errno;
+	}
 #endif
 	rsize = (env->me_maxreaders-1) * sizeof(EDB_reader) + sizeof(EDB_txninfo);
 	if (size < rsize && *excl > 0) {
@@ -5169,7 +5192,13 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 #else
 		void *m = mmap(NULL, rsize, PROT_READ|PROT_WRITE, MAP_SHARED,
 			env->me_lfd, 0);
-		if (m == MAP_FAILED) goto fail_errno;
+		if (m == MAP_FAILED) {
+			int err_ = errno;
+			NDRX_LOG(log_error, "%s: mmap failed: %s",
+				__func__, strerror(err_));
+			errno = err_;
+			goto fail_errno;
+		}
 		env->me_txns = m;
 #endif
 	}
@@ -5236,14 +5265,29 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 #elif defined(EDB_USE_SYSV_SEM)
 		unsigned short vals[2] = {1, 1};
 		key_t key = ftok(fname->mn_val, 'M'); /* fname is lockfile path now */
-		if (key == -1)
+		if (key == -1) {
+			int err_ = errno;
+			NDRX_LOG(log_error, "%s: ftok failed: %s",
+				__func__, strerror(err_));
+			errno = err_;
 			goto fail_errno;
+		}
 		semid = semget(key, 2, (mode & 0777) | IPC_CREAT);
-		if (semid < 0)
+		if (semid < 0) {
+			int err_ = errno;
+			NDRX_LOG(log_error, "%s: semget failed: %s",
+				__func__, strerror(err_));
+			errno = err_;
 			goto fail_errno;
+		}
 		semu.array = vals;
-		if (semctl(semid, 0, SETALL, semu) < 0)
+		if (semctl(semid, 0, SETALL, semu) < 0) {
+			int err_ = errno;
+			NDRX_LOG(log_error, "%s: semctl failed: %s",
+				__func__, strerror(err_));
+			errno = err_;
 			goto fail_errno;
+		}
 		env->me_txns->mti_semid = semid;
 		env->me_txns->mti_rlocked = 0;
 		env->me_txns->mti_wlocked = 0;
@@ -5266,8 +5310,11 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 		if (!rc) rc = pthread_mutex_init(env->me_txns->mti_rmutex, &mattr);
 		if (!rc) rc = pthread_mutex_init(env->me_txns->mti_wmutex, &mattr);
 		pthread_mutexattr_destroy(&mattr);
-		if (rc)
+		if (rc) {
+			NDRX_LOG(log_error, "%s: pthread_mutexattr_destroy failed: %s",
+				__func__, strerror(errno));
 			goto fail;
+		}
 #endif	/* _WIN32 || ... */
 
 		env->me_txns->mti_magic = EDB_MAGIC;
@@ -5280,18 +5327,19 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 		struct semid_ds buf;
 #endif
 		if (env->me_txns->mti_magic != EDB_MAGIC) {
-			DPUTS("lock region has invalid magic");
+			NDRX_LOG(log_error, "lock region has invalid magic");
 			rc = EDB_INVALID;
 			goto fail;
 		}
 		if (env->me_txns->mti_format != EDB_LOCK_FORMAT) {
-			DPRINTF(("lock region has format+version 0x%x, expected 0x%x",
-				env->me_txns->mti_format, EDB_LOCK_FORMAT));
+			NDRX_LOG(log_error, "lock region has format+version 0x%x, expected 0x%x",
+				env->me_txns->mti_format, EDB_LOCK_FORMAT);
 			rc = EDB_VERSION_MISMATCH;
 			goto fail;
 		}
 		rc = ErrCode();
 		if (rc && rc != EACCES && rc != EAGAIN) {
+			NDRX_LOG(log_error, "Invalid rc=%d", rc);
 			goto fail;
 		}
 #ifdef _WIN32
@@ -5310,11 +5358,21 @@ edb_env_setup_locks(EDB_env *env, EDB_name *fname, int mode, int *excl)
 		semid = env->me_txns->mti_semid;
 		semu.buf = &buf;
 		/* check for read access */
-		if (semctl(semid, 0, IPC_STAT, semu) < 0)
+		if (semctl(semid, 0, IPC_STAT, semu) < 0) {
+			int err_ = errno;
+			NDRX_LOG(log_error, "%s: semctl failed: %s",
+				__func__, strerror(err_));
+			errno = err_;
 			goto fail_errno;
+		}
 		/* check for write access */
-		if (semctl(semid, 0, IPC_SET, semu) < 0)
+		if (semctl(semid, 0, IPC_SET, semu) < 0) {
+			int err_ = errno;
+			NDRX_LOG(log_error, "%s: semctl failed: %s",
+				__func__, strerror(err_));
+			errno = err_;
 			goto fail_errno;
+		}
 #endif
 	}
 #ifdef EDB_USE_SYSV_SEM
@@ -5381,7 +5439,11 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 #else
 	rc = pthread_mutex_init(&env->me_rpmutex, NULL);
 	if (rc)
+	{
+		NDRX_LOG(log_error, "%s: pthread_mutex_init failed: %d",
+			__func__, rc);
 		goto leave;
+	}
 #endif
 #endif
 	flags |= EDB_ENV_ACTIVE;	/* tell edb_env_close0() to clean up */
@@ -5392,7 +5454,10 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 	} else {
 		if (!((env->me_free_pgs = edb_eidl_alloc(EDB_IDL_UM_MAX)) &&
 			  (env->me_dirty_list = calloc(EDB_IDL_UM_SIZE, sizeof(EDB_ID2)))))
+		{
+			NDRX_LOG(log_error, "edb_eidl_alloc failed");
 			rc = ENOMEM;
+		}
 	}
 
 	env->me_flags = flags;
@@ -5403,6 +5468,8 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 	{
 		env->me_rpages = malloc(EDB_ERPAGE_SIZE * sizeof(EDB_ID3));
 		if (!env->me_rpages) {
+			NDRX_LOG(log_error, "malloc failed: %ld",
+					(long)(EDB_ERPAGE_SIZE * sizeof(EDB_ID3)));
 			rc = ENOMEM;
 			goto leave;
 		}
@@ -5416,6 +5483,8 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 	env->me_dbflags = calloc(env->me_maxdbs, sizeof(uint16_t));
 	env->me_dbiseqs = calloc(env->me_maxdbs, sizeof(unsigned int));
 	if (!(env->me_dbxs && env->me_path && env->me_dbflags && env->me_dbiseqs)) {
+		NDRX_LOG(log_error, "calloc failed: %p %p %p %p",
+			env->me_path, env->me_dbxs, env->me_dbflags, env->me_dbiseqs);
 		rc = ENOMEM;
 		goto leave;
 	}
@@ -5424,8 +5493,11 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 	/* For RDONLY, get lockfile after we know datafile exists */
 	if (!(flags & (EDB_RDONLY|EDB_NOLOCK))) {
 		rc = edb_env_setup_locks(env, &fname, mode, &excl);
-		if (rc)
+		if (rc) {
+			NDRX_LOG(log_error, "%s: edb_env_setup_locks failed: %d",
+				__func__, rc);
 			goto leave;
+		}
 	}
 
 	rc = edb_fopen(env, &fname,
@@ -5436,8 +5508,11 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 
 	if ((flags & (EDB_RDONLY|EDB_NOLOCK)) == EDB_RDONLY) {
 		rc = edb_env_setup_locks(env, &fname, mode, &excl);
-		if (rc)
+		if (rc) {
+			NDRX_LOG(log_error, "%s: edb_env_setup_locks (2) failed: %d",
+				__func__, rc);
 			goto leave;
+		}
 	}
 
 	if ((rc = edb_env_open2(env, flags & EDB_PREVMETA)) == EDB_SUCCESS) {
@@ -5446,8 +5521,11 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 			 * EDB_NOSYNC/EDB_NOMETASYNC, in case these get reset.
 			 */
 			rc = edb_fopen(env, &fname, EDB_O_META, mode, &env->me_mfd);
-			if (rc)
+			if (rc) {
+				NDRX_LOG(log_error, "%s: edb_fopen failed: %d",
+					__func__, rc);
 				goto leave;
+			}
 		}
 		DPRINTF(("opened dbenv %p", (void *) env));
 		if (excl > 0) {
@@ -5470,6 +5548,7 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 #ifdef EDB_VL32
 				txn->mt_rpages = malloc(EDB_TRPAGE_SIZE * sizeof(EDB_ID3));
 				if (!txn->mt_rpages) {
+					NDRX_LOG(log_error, "malloc failed: %s", strerror(errno));
 					free(txn);
 					rc = ENOMEM;
 					goto leave;
@@ -5481,6 +5560,7 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 				txn->mt_flags = EDB_TXN_FINISHED;
 				env->me_txn0 = txn;
 			} else {
+				NDRX_LOG(log_error, "malloc failed: %s", strerror(errno));
 				rc = ENOMEM;
 			}
 		}
