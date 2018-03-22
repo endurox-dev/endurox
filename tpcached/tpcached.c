@@ -893,7 +893,6 @@ expublic int main(int argc, char** argv)
         }
 #else
         result = sigtimedwait( &M_mask, &info, &timeout );
-#endif
 
         if (result > 0)
         {
@@ -917,10 +916,9 @@ expublic int main(int argc, char** argv)
                 NDRX_LOG(log_error, "sigtimedwait failed: %s", strerror(err));
                 EXFAIL_OUT(ret);
             }
-            
-            NDRX_LOG(log_debug, "Scanning...");
         }
-
+#endif
+        NDRX_LOG(log_debug, "Scanning...");
         /* Get the DBs */
         /* interval process */
         dbh = ndrx_cache_dbgethash();
