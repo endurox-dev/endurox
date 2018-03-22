@@ -474,7 +474,7 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
          * LMDB sorts ok. no problem where. As first comes the highest order
          * entry (higher timestamp), thus second we remove...
          */
-        if (i>0 && 0!=strcmp(dsort[i-1]->key.mv_data, keydb.mv_data) || 0==i)
+        if ((i>0 && 0!=strcmp(dsort[i-1]->key.mv_data, keydb.mv_data)) || 0==i)
         {
             /* populate array */
             
