@@ -175,8 +175,8 @@ fi
 
 ensure_keys db04 2
 
-echo "Waiting for records to expire..."
-sleep 25
+echo "Waiting for records to expire... (40s)"
+sleep 40
 
 #
 # now we shall get cached results...
