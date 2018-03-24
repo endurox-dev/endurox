@@ -178,10 +178,9 @@ Mandatory Env. Variables
     This is semicolon separated string which denotes the list Enduro/X
     plugins which needs to be loaded at any XATMI program startup. Following plugins
     are provided with Enduro/X: libcryptohost.so - cryptography key by hostname.
-*NDRX_SYSFLAGS*='NDRX_SYSFLAGS'::
-    System flags for booting the proceses from *ndrxd*. Currently defined *0x00000001* -
-    process is booted by full application start.
-
+*NDRX_SILENT*='SILENT_SETTING'::
+    If environment variable is present (and set to *Y*), the *xadmin* tool
+    will not print banner header at startup.
 
 EXAMPLE
 -------
