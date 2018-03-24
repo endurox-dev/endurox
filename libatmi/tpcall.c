@@ -1040,15 +1040,7 @@ out:
         {
             /* return error if failed to cache? */
             
-#if 0
-            Service result have more signficance
-            if (EXSUCCEED!=ret2 && NDRX_TPCACHE_ENOCACHE!=ret2)
-            {
-                NDRX_LOG(log_error, "Failed to cache data!");
-                ret=EXFAIL;
-            }
-#endif
-            userlog("Failed to save service [%s] cache results: %s",
+            userlog("Failed to save service [%s] cache results: %s", svc,
                 tpstrerror(tperrno));
         }
     }
