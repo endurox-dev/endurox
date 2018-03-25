@@ -92,6 +92,7 @@ cmd_mapping_t M_command_map[] =
 {
     {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, "Quit from command line utility", NULL},
     {"q",       cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
+    {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
     {"echo",    cmd_echo,  EXFAIL,              1,  999,0, "Echo text back to terminal", NULL},
     {"idle",    cmd_idle,  EXFAIL,              1,  1,  0, "Enter daemon process in idle state (if not started)", NULL},
     {"help",    cmd_help,  EXFAIL,              1,  2,  0, "Print help (this output)\n"

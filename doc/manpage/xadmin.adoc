@@ -44,6 +44,8 @@ COMMANDS
 	Quit from command line utility
 *q*::
 	Alias for quit
+*exit*::
+	Alias for quit
 *echo*::
 	Echo text back to terminal
 *idle*::

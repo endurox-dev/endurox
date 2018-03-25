@@ -96,9 +96,9 @@ expublic int shm_init(char *q_prefix, int max_servers, int max_svcs)
     G_srvinfo.fd = EXFAIL;
     G_brinfo.fd = EXFAIL;
     
-    sprintf(G_srvinfo.path, NDRX_SHM_SRVINFO, q_prefix);
-    sprintf(G_svcinfo.path, NDRX_SHM_SVCINFO, q_prefix);
-    sprintf(G_brinfo.path,  NDRX_SHM_BRINFO,  q_prefix);
+    snprintf(G_srvinfo.path, sizeof(G_srvinfo.path), NDRX_SHM_SRVINFO, q_prefix);
+    snprintf(G_svcinfo.path, sizeof(G_svcinfo.path), NDRX_SHM_SVCINFO, q_prefix);
+    snprintf(G_brinfo.path,  sizeof(G_brinfo.path), NDRX_SHM_BRINFO,  q_prefix);
     
     G_max_servers = max_servers;
     G_max_svcs = max_svcs;
@@ -931,7 +931,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
         }
         else
         {
-            strcpy(SHM_SVCINFO_INDEX(svcinfo, pos)->service, svc);
+            NDRX_STRCPY_SAFE(SHM_SVCINFO_INDEX(svcinfo, pos)->service, svc);
             /* Basically just override the init flag */
             SHM_SVCINFO_INDEX(svcinfo, pos)->flags = flags | NDRXD_SVCINFO_INIT;
             NDRX_LOG(log_debug, "Svc [%s] not found in shm, "
