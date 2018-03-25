@@ -52,7 +52,7 @@
 #include <cmd_processor.h>
 #include <signal.h>
 #include <bridge_int.h>
-
+#include <atmi_shm.h>
 #include "userlog.h"
 #include "sys_unix.h"
 
@@ -109,7 +109,7 @@ expublic int do_sanity_check(void)
     if (first)
     {
         ndrx_stopwatch_reset(&timer);
-        /* Initialise q prefixes, +1 for skipping initial / */
+        /* Initialize q prefixes, +1 for skipping initial / */
         snprintf(client_prefix, sizeof(client_prefix), NDRX_CLT_QREPLY_PFX, 
                 G_sys_config.qprefix);
         client_prefix_len=strlen(client_prefix);
@@ -160,6 +160,7 @@ expublic int do_sanity_check(void)
         LL_FOREACH(qlist,elt)
         {
             NDRX_LOG(6, "Checking... [%s]", elt->qname);
+            
             if (0==strncmp(elt->qname, client_prefix, 
                     client_prefix_len))
             {
@@ -237,7 +238,6 @@ exprivate void parse_q(char *qname, int is_server, char *process, pid_t *p_pid,
 {   
     char buf[NDRX_MAX_Q_SIZE+1];
     char *p;
-    int len;
     
     NDRX_STRCPY_SAFE(buf, qname);
     

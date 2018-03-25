@@ -416,7 +416,8 @@ expublic int ndrx_myid_parse_srv(char *my_id, TPMYID *out, int iscnv_initator)
  */
 expublic int ndrx_myid_is_alive(TPMYID *p_myid)
 {
-    if (tpgetnodeid()==G_atmi_env.our_nodeid)
+    /* Bug #291 2018/03/25 */
+    if (p_myid->nodeid==G_atmi_env.our_nodeid)
     {
         /* cltname same pos as server proc name */
         return ndrx_sys_is_process_running(p_myid->pid, p_myid->binary_name);
