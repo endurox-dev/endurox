@@ -467,7 +467,7 @@ exprivate int get_cmd(int *p_have_next)
                 G_cmd_argc_logical = 1;
             
             /* Migrate to raw format: */
-            strcpy(G_cmd_argv[i-1], M_argv[i]);
+            NDRX_STRNCPY_SAFE(G_cmd_argv[i-1], M_argv[i], MAX_ARG_LEN);
             G_cmd_argc_raw++;
         }
         
@@ -523,7 +523,7 @@ exprivate int get_cmd(int *p_have_next)
             if (!G_cmd_argc_logical)
                 G_cmd_argc_logical = 1;
             
-            NDRX_STRCPY_SAFE(G_cmd_argv[G_cmd_argc_raw], p);
+            NDRX_STRNCPY_SAFE(G_cmd_argv[G_cmd_argc_raw], p, MAX_ARG_LEN);
             G_cmd_argc_raw++;
             
             p = strtok (NULL, ARG_DEILIM);
