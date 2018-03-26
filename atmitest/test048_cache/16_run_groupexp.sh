@@ -202,8 +202,8 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-echo "sleeping 40 for next record"
-sleep 40
+echo "sleeping 110 for next record"
+sleep 110
 
 (time ./testtool48 -sTESTSV16 -b '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"4"}' \
     -m '{"T_STRING_FLD":"KEY2","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"4"}' \
@@ -220,8 +220,8 @@ ensure_keys g@db16 2
 ensure_keys k@db16 5
 
 xadmin bc -t CACHED
-echo "Sleep 15, wait for cached to kill the records"
-sleep 8
+echo "Sleep 11, wait for cached to kill the records"
+sleep 11
 
 echo "Testing DOM 1"
 
