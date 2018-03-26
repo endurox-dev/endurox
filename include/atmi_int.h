@@ -372,6 +372,7 @@ struct atmi_lib_env
     int     our_nodeid;
     int     ldbal;  /* Load balance settings */
     int     is_clustered; /* Will we run in cluster mode or not? */
+    int     testmode; /* Do we run in test mode? */
     
     /* <XA Protocol configuration> */
     short xa_rmid;    /* XA Resource ID 1..255 range */
