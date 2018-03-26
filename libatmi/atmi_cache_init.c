@@ -1033,7 +1033,7 @@ expublic int ndrx_cache_init(int mode)
         NDRX_LOG(log_debug, "exjson_parse_string_with_comments %p", root_value);
                 
         type = exjson_value_get_type(root_value);
-        NDRX_LOG(log_error, "Type is %d", type);
+        NDRX_LOG(log_debug, "Type is %d", type);
 
         if (exjson_value_get_type(root_value) != EXJSONObject)
         {
