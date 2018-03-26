@@ -785,8 +785,10 @@ expublic void tm_ping_db(void *ptr, int *p_finish_off)
         }
         else
         {
-            NDRX_LOG(log_debug, "RMID %hd TID: %lu: PING OK %d", 
-                    G_atmi_env.xa_rmid, tid, ret);
+            /* for tests needs higher debug level to reduce space */
+            NDRX_LOG(G_atmi_env.testmode?log_error:log_debug,
+		"RMID %hd TID: %lu: PING OK %d", 
+                G_atmi_env.xa_rmid, tid, ret);
         }
     }
 
