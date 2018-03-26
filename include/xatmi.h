@@ -217,11 +217,12 @@ extern "C" {
 #define CONF_NDRX_NRSEMS_DFLT    30                 /* default number of semphoares  */
 #define CONF_NDRX_MAXSVCSRVS     "NDRX_MAXSVCSRVS"  /* Max servers per service (only for poll() mode) */
 #define CONF_NDRX_MAXSVCSRVS_DFLT 30                /* default for NDRX_MAXSVCSRVS param */
-#define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG"  /* Xadmin config file */
-#define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /* debug config file */
+#define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG"  /* Xadmin config file          */
+#define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /* debug config file              */
 #define CONF_NDRX_PLUGINS        "NDRX_PLUGINS"     /* list of plugins, ';' seperated */
 #define CONF_NDRX_SYSFLAGS       "NDRX_SYSFLAGS"    /* Additional flags to process    */
-#define CONF_NDRX_SILENT         "NDRX_SILENT"      /* Make xadmin silent    */
+#define CONF_NDRX_SILENT         "NDRX_SILENT"      /* Make xadmin silent             */
+#define CONF_NDRX_TESTMODE       "NDRX_TESTMODE"    /* Is Enduro/X test mode enabled  */
                                                     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

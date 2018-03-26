@@ -32,6 +32,7 @@
 export TESTNO="021"
 export TESTNAME_SHORT="xafull"
 export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
+export NDRX_TESTMODE=1
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
