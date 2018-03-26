@@ -125,6 +125,12 @@ exprivate void * check_child_exit(void *arg)
         
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
+
+    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: pthread_sigmask failed (thread): %s",
+            __func__, strerror(errno));
+    }
     
     NDRX_LOG(log_debug, "check_child_exit - enter...");
     for (;;)
@@ -136,7 +142,6 @@ exprivate void * check_child_exit(void *arg)
  */
 #ifndef EX_OS_DARWIN
         NDRX_LOG(log_debug, "about to sigwait()");
-        userlog("about to sigwait() 1");
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
@@ -145,11 +150,8 @@ exprivate void * check_child_exit(void *arg)
 #endif
         
         NDRX_LOG(log_debug, "about to wait()");
-        userlog("about to wait() 2");
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
-            userlog("got signal");
-            
             /* Bug #108 01/04/2015, mvitolin
              * If config file is changed by foreground thread in this time,
              * then we must synchronize with them.
@@ -158,11 +160,9 @@ exprivate void * check_child_exit(void *arg)
             
             cpm_process_t * c = cpm_get_client_by_pid(chldpid);
             got_something++;
-            userlog("got signal 2");
                    
             if (NULL!=c)
             {
-                userlog("got child");
                 c->dyn.cur_state = CLT_STATE_NOTRUN;
                 c->dyn.exit_status = stat_loc;
                 /* Set status change time */
@@ -172,6 +172,7 @@ exprivate void * check_child_exit(void *arg)
             cpm_unlock_config(); /* we are done... */
             
         }
+
 #if EX_OS_DARWIN
         NDRX_LOG(6, "wait: %s", strerror(errno));
         if (!got_something)
@@ -207,10 +208,12 @@ expublic void ndrxd_sigchld_init(void)
      * Thus we will handle the stuff in as it was in Enduro/X 2.5
      */
     
+#if 0
     /* sa.sa_handler = sign_chld_handler; they are blocked... */
     sigemptyset (&sa.sa_mask);
     sa.sa_flags = SA_RESTART; /* restart system calls please... */
     sigaction (SIGCHLD, &sa, 0);
+#endif
     
     /* Block the notification signal (do not need it here...) */
     
