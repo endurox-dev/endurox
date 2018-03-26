@@ -207,9 +207,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_config.chk_interval = CLT_CHK_INTERVAL_DEFAULT;
     }
     
+    /* Bug #293 - was not setting kill interval correclty... */
     if (EXFAIL==G_config.kill_interval)
     {
-        G_config.chk_interval = CLT_KILL_INTERVAL_DEFAULT;
+        G_config.kill_interval = CLT_KILL_INTERVAL_DEFAULT;
     }
 #if 0
     /* < seems with out this, sigaction on linux does not work... >*/
