@@ -111,6 +111,8 @@ extern "C" {
 #define NDRX_TPCACHE_KWD_TIMESYNC               "timesync"
 #define NDRX_TPCACHE_KWD_SCANDUP                "scandup"
 #define NDRX_TPCACHE_KWD_CLRNOSVC               "clrnosvc"
+#define NDRX_TPCACHE_KWD_NOSYNC                 "nosync"
+#define NDRX_TPCACHE_KWD_NOMETASYNC             "nometasync"
 
 /* Database flags: */
     
@@ -124,6 +126,8 @@ extern "C" {
 #define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /* Perfrom timsync                  */
 #define NDRX_TPCACHE_FLAGS_SCANDUP   0x00000100   /* Scan for duplicates by tpcached  */
 #define NDRX_TPCACHE_FLAGS_CLRNOSVC  0x00000200   /* Clean unadvertised svc records   */
+#define NDRX_TPCACHE_FLAGS_NOSYNC    0x00000400   /* Do not flush to disk at commit   */
+#define NDRX_TPCACHE_FLAGS_NOMETASYNC 0x00000800  /* Do not flush to disk metadata    */
     
 /* so in case if this is key item, then add record to keygroup
  * if removing key group, then remove all linked key items.
@@ -231,6 +235,10 @@ extern "C" {
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYITEMS));\
     NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_KEYGRP, \
                     !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_KEYGRP));\
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_NOSYNC, \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_NOSYNC));\
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWD_NOMETASYNC, \
+                    !!(CACHEDB->flags &  NDRX_TPCACHE_FLAGS_NOMETASYNC));\
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_MAX_READERS, CACHEDB->max_readers);\
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_MAP_SIZE, CACHEDB->map_size);\
     NDRX_LOG(LEV, "%s=[%o]", NDRX_TPCACHE_KWD_PERMS, CACHEDB->perms);\
