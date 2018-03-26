@@ -328,6 +328,7 @@ exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
 exprivate int ndrx_cache_phydb_getref(ndrx_tpcache_db_t *db)
 {
     int ret = EXSUCCEED;
+    unsigned int dbflags=0;
     ndrx_tpcache_phydb_t *phy;
     
     if (NULL!=(db->phy = ndrx_cache_phydbget(db->cachedbphy)))
@@ -383,11 +384,21 @@ exprivate int ndrx_cache_phydb_getref(ndrx_tpcache_db_t *db)
     NDRX_STRCPY_SAFE(phy->resource, db->resource);
     NDRX_STRCPY_SAFE(phy->cachedb, db->cachedbphy);
     
+    if (db->flags & NDRX_TPCACHE_FLAGS_NOSYNC)
+    {
+        dbflags|=EDB_NOSYNC;
+    }
+
+    if (db->flags & NDRX_TPCACHE_FLAGS_NOMETASYNC)
+    {
+        dbflags|=EDB_NOMETASYNC;
+    }
+
     /* Open the DB 
      * In case of named database, we shall search for existing env.
      * if not found, only then we open.
      */
-    if (EXSUCCEED!=(ret=edb_env_open(phy->env, db->resource, 0L, db->perms)))
+    if (EXSUCCEED!=(ret=edb_env_open(phy->env, db->resource, dbflags, db->perms)))
     {
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open env [%s] [%s]: %s", 
@@ -605,6 +616,14 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
                 else if (0==strcmp(p, NDRX_TPCACHE_KWD_KEYGRP))
                 {
                     db->flags|=NDRX_TPCACHE_FLAGS_KEYGRP;
+                }
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_NOSYNC))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_NOSYNC;
+                }
+                else if (0==strcmp(p, NDRX_TPCACHE_KWD_NOMETASYNC))
+                {
+                    db->flags|=NDRX_TPCACHE_FLAGS_NOMETASYNC;
                 }
                 else
                 {

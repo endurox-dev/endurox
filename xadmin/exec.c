@@ -262,18 +262,25 @@ expublic int start_daemon_idle(void)
     {
         int i;
         int started=EXFALSE;
-        /* this is parent for child, wait 1 sec */
+        /* this is parent for child, wait 1 sec  */
         sleep(1);
         started=is_ndrxd_running();
-#if 0
-        for (i=0; i<40; i++)
-        {
-            usleep(50000);
-            started=is_ndrxd_running();
-            if (started)
-                break;
+
+#define MAX_WSLEEP	5
+	/* give another 5 seconds... to start ndrxd */
+	if (!started)
+	{
+        	for (i=0; i<MAX_WSLEEP; i++)
+        	{
+			fprintf(stderr, ">>> still not started, waiting %d/%d",
+                                    i, MAX_WSLEEP);
+            		sleep(1);
+            		started=is_ndrxd_running();
+            		if (started)
+                		break;
+		}
         }
-#endif
+
         if (started)
         {
             fprintf(stderr, ">>> ndrxd idle instance started.\n");
