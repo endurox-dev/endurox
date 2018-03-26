@@ -265,8 +265,8 @@ ensure_field g@db15 SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 0
 ensure_field g@db15 SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 0
 
 xadmin bc -t CACHED
-echo "Sleep 66, to wait for some free slot..."
-sleep 66
+echo "Sleep 210, to wait for some free slot..."
+sleep 210
 
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \
