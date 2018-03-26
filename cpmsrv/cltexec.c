@@ -85,6 +85,7 @@ expublic void sign_chld_handler(int sig)
                                            chldpid, stat_loc);
         
         /* Search for the client & mark it as dead */
+        cpm_lock_config();
         
         c = cpm_get_client_by_pid(chldpid);
         
@@ -99,6 +100,8 @@ expublic void sign_chld_handler(int sig)
         {
             NDRX_LOG(log_error, "PID not found %d in client registry!",chldpid);
         }
+
+        cpm_unlock_config(); /* we are done... */
         
     }
 
@@ -133,6 +136,7 @@ exprivate void * check_child_exit(void *arg)
  */
 #ifndef EX_OS_DARWIN
         NDRX_LOG(log_debug, "about to sigwait()");
+        userlog("about to sigwait() 1");
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
@@ -141,8 +145,10 @@ exprivate void * check_child_exit(void *arg)
 #endif
         
         NDRX_LOG(log_debug, "about to wait()");
+        userlog("about to wait() 2");
         while ((chldpid = wait(&stat_loc)) >= 0)
         {
+            userlog("got signal");
             
             /* Bug #108 01/04/2015, mvitolin
              * If config file is changed by foreground thread in this time,
@@ -152,9 +158,11 @@ exprivate void * check_child_exit(void *arg)
             
             cpm_process_t * c = cpm_get_client_by_pid(chldpid);
             got_something++;
+            userlog("got signal 2");
                    
             if (NULL!=c)
             {
+                userlog("got child");
                 c->dyn.cur_state = CLT_STATE_NOTRUN;
                 c->dyn.exit_status = stat_loc;
                 /* Set status change time */
