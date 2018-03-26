@@ -48,6 +48,10 @@ run_test () {
                 M_fail=$((M_fail + 1))
                 M_failstr="$M_failstr $test.sh"
         fi
+
+	echo "fsync..."
+	sync;sync;sync
+	sleep 2
 }
 
 run_test "01_run"
