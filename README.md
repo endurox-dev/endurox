@@ -319,6 +319,8 @@ documentation and added unit tests.
 
 - Version 5.3.2 released on 25/03/2018 (stable) Fixes on Feature #272, Bug #291, Feature #287, Bug #290, Support #279
 
+- Version 5.3.4 released on 26/03/2018 (stable) Feature #294, Bug #293
+
 # Build configurations
 
 ## Configure make with: 

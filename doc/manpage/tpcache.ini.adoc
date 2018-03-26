@@ -216,6 +216,15 @@ DATABASE FLAGS
     This database is for storing key-groups. Note that when using key-group, both
     keyitems and keygroup must be in the same physical resource. And syntax
     for boths databases must be "<logical_db_name>@<dbname>".
+*nosync*::
+    Do not perform fsync (flush to disk) when committing transaction. This is
+    suitable for caches which are reset at boot. Used for performance increase.
+    In case of persisted databases (used after reboot), at case of crash, this
+    data might be corrupt. See *MDB_NOSYNC* mode for mdb_env_open().
+*nometasync*::
+    Flush metadata only when doing commit. The risks are the same as with *nosync*.
+    Recommended for non persisted caches. See *MDB_NOMETASYNC* for mdb_env_open()
+    function.
 
 CACHE DEFINITION
 ----------------
