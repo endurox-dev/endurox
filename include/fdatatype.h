@@ -185,21 +185,22 @@ typedef struct UBF_long UBF_long_t;
  */
 struct UBF_generic
 {
-    BFLDID   bfldid;
+    BFLDID bfldid;
     char d[1];
 };
 typedef struct UBF_generic UBF_generic_t;
 
 
-/*
+/**
  * field definition found in .fd files
  */
 typedef struct UBF_field_def UBF_field_def_t;
 struct UBF_field_def
 {
-    BFLDID		bfldid;
-    _UBF_SHORT	fldtype;
-    char		fldname[UBFFLDMAX+1];
+    BFLDID bfldid;
+    _UBF_SHORT fldtype;
+    char fldname[UBFFLDMAX+1];
+    
     EX_hash_handle hh; /* makes this structure hashable */
     UBF_field_def_t *next; /* next with the same hash ID! */
 };

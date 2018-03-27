@@ -80,6 +80,7 @@ add_library (ubf SHARED
 		${BISON_EXPRPARSER_OUTPUTS} 
 		${FLEX_EXPRSCANNER_OUTPUTS}
                 bcmp.c
+                fielddb.c
 	)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
