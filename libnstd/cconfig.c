@@ -66,6 +66,7 @@ exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL,
                         NDRX_CONF_SECTION_QUEUE, 
                         NDRX_CONF_SECTION_CACHE,
                         NDRX_CONF_SECTION_CACHEDB,
+                        NDRX_CONF_SECTION_UBFDB,
                         NULL};
 
 /* for first pass load only global! */
