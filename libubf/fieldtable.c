@@ -256,7 +256,7 @@ expublic UBF_field_def_t * ndrx_fldnmhash_get(char *key)
     int hash_key = str_hash_from_key_fn(key) % M_hash2_size;
     UBF_field_def_t *ret=NULL;
     UBF_field_def_t tmp;
-    strcpy(tmp.fldname, key);
+    NDRX_STRCPY_SAFE(tmp.fldname, key);
     LL_SEARCH(M_fldnmhash2[hash_key],ret,&tmp,UBF_field_def_nm_cmp);
 
 #ifdef EXTRA_FT_DEBUG
@@ -308,7 +308,7 @@ exprivate int _ubf_load_def_table(void)
 
     NDRX_STRCPY_SAFE(tmp_flds, flds);
     p=strtok(tmp_flds, ",");
-    while (NULL!=p && EXSUCCEED==ret)
+    while (NULL!=p)
     {
         snprintf(tmp, sizeof(tmp), "%s/%s", flddir, p);
         /* Open field table file */
@@ -326,13 +326,13 @@ exprivate int _ubf_load_def_table(void)
         NDRX_FCLOSE(fp);
         p=strtok(NULL, ",");
     }
+    
+    /* Load FIeld database... if have one! */
 
+    M_field_def_loaded = EXTRUE;
+    
 out:
 
-    if (EXSUCCEED==ret)
-    {
-        M_field_def_loaded = EXTRUE;
-    }
     return ret;
 }
 
