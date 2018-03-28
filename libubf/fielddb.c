@@ -244,14 +244,63 @@ out:
 
 /**
  * Add the field to database
+ * @param txn exdb(lmdb) transaction
  * @param bfldid field id (non compiled)
  * @param fldtype filed id
  * @param fldname field name
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_ubfdb_Bfldadd(BFLDID bfldid, _UBF_SHORT fldtype, char *fldname)
+expublic int ndrx_ubfdb_Bfldadd(EDB_txn *txn, BFLDID bfldid, 
+        short fldtype, char *fldname)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    ndrx_ubfdb_entry_t entry;
+    BFLDID idcomp = Bmkfldid(fldtype, bfldid);
+    EDB_val key;
+    EDB_val data;
+    
+    /* prepare data object */
+    entry.bfldid = idcomp;
+    NDRX_STRCPY_SAFE(entry.fldname, fldname);
+    
+    data.mv_size = sizeof(entry);
+    data.mv_data = &entry;
+    
+    
+    key.mv_data = &idcomp;
+    key.mv_size = sizeof(idcomp);
+    
+    /* Add ID: */
+    UBF_LOG(log_debug, "About to put ID record (%d) / [%s]", (int)idcomp, 
+            entry.fldname);
+    
+    if (EXSUCCEED!=(ret=edb_put(txn, ndrx_G_ubf_db.dbi_id, &key, &data, 0)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to put ID (id=%d/[%s]) record: %s", 
+                __func__, (int)idcomp, entry.fldname, edb_strerror(ret));   
+        EXFAIL_OUT(ret);
+    }
+    
+    UBF_LOG(log_debug, "About to put NAME record (%d) / [%s]", (int)idcomp, 
+            entry.fldname);
+    
+    key.mv_data = entry.fldname;
+    key.mv_size = strlen(entry.fldname)+1;
+    
+    if (EXSUCCEED!=(ret=edb_put(txn, ndrx_G_ubf_db.dbi_nm, &key, &data, 0)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to put ID (id=%d/[%s]) record: %s", 
+                __func__, (int)idcomp, entry.fldname, edb_strerror(ret));   
+        EXFAIL_OUT(ret);
+    }
+    
+out:    
+
+    UBF_LOG(log_debug, "%s returns %d", __func__, ret);
+
+    return ret;
 }
 
 /**
@@ -259,9 +308,69 @@ expublic int ndrx_ubfdb_Bfldadd(BFLDID bfldid, _UBF_SHORT fldtype, char *fldname
  * @param fldname
  * @return 
  */
-expublic int ndrx_ubfdb_Bflddel(char *fldname)
+expublic int ndrx_ubfdb_Bflddel(EDB_txn *txn, BFLDID bfldid)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    char fldname[UBFFLDMAX+1] = {EXEOS};
+    char *p;
+    EDB_val key;
+    
+    key.mv_data = &bfldid;
+    key.mv_size = sizeof(bfldid);
+    
+    if (NULL==(p = Bfname(bfldid)))
+    {
+        NDRX_UBFDB_BERRORNOU(BNOTPRES, "Field by id: %d not found!",
+                    (int)bfldid);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_STRCPY_SAFE(fldname, p);
+    /* Delete ID: */
+    UBF_LOG(log_debug, "%s: delete by %d", __func__, (int)bfldid);
+    
+    if (EXSUCCEED!=(ret=edb_del(txn, ndrx_G_ubf_db.dbi_id, &key, NULL)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                    "%s: Failed to delete by ID (id=%d) record: %s", 
+                    __func__, (int)bfldid, edb_strerror(ret));   
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            UBF_LOG(log_info, "%s: Field [%d] not found in db", __func__, 
+                    (int)bfldid);
+        }
+    }
+    
+    UBF_LOG(log_debug, "About to delete by NAME [%s]", fldname);
+    
+    key.mv_data = fldname;
+    key.mv_size = strlen(fldname)+1;
+    
+    if (EXSUCCEED!=(ret=edb_del(txn, ndrx_G_ubf_db.dbi_nm, &key, NULL)))
+    {
+        if (ret!=EDB_NOTFOUND)
+        {
+            NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                    "%s: Failed to delete by field name ([%s]) record: %s", 
+                    __func__, fldname, edb_strerror(ret));   
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            UBF_LOG(log_info, "%s: Field [%s] not found in db", 
+                    __func__, fldname);
+        }
+    }
+    
+out:    
+
+    UBF_LOG(log_debug, "%s returns %d", __func__, ret);
+
+    return ret;
 }
 
 /**
@@ -277,25 +386,25 @@ expublic int ndrx_ubfdb_Bfldunlink(void)
  * Delete all records form db
  * @return 
  */
-expublic int ndrx_ubfdb_Bflddrop(void)
+expublic int ndrx_ubfdb_Bflddrop(EDB_txn *txn)
 {
     return EXFAIL;
 }
 
 /**
  * Loop over the fields
- * @return 
+ * @param key key returned by cursor
+ * @param val value returned by cursor
+ * @param p_bfldid field id to return (plain id)
+ * @param p_bfldidcomp compiled filed id
+ * @param p_fldtype field type id
+ * @param fldname field name
+ * @param fldname_bufsz filed name buffer size
+ * @return EXSUCCEED/EXFAIL (Berror set)
  */
-expublic int ndrx_ubfdb_Bfldnext(void)
-{
-    return EXFAIL;
-}
-
-/**
- * Close the loop over the fields
- * @return 
- */
-expublic int ndrx_ubfdb_Bfldnextclose(void)
+expublic int ndrx_ubfdb_Bfldget(EDB_val *key, EDB_val *data, 
+        BFLDID *p_bfldid, BFLDID *p_bfldidcomp, 
+        short *p_fldtype, char *fldname, int fldname_bufsz)
 {
     return EXFAIL;
 }
