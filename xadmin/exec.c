@@ -272,7 +272,7 @@ expublic int start_daemon_idle(void)
 	{
         	for (i=0; i<MAX_WSLEEP; i++)
         	{
-			fprintf(stderr, ">>> still not started, waiting %d/%d",
+			fprintf(stderr, ">>> still not started, waiting %d/%d\n",
                                     i, MAX_WSLEEP);
             		sleep(1);
             		started=is_ndrxd_running();
