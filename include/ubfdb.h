@@ -113,7 +113,6 @@ typedef struct ndrx_ubfdb_entry ndrx_ubfdb_entry_t;
 struct  ndrx_ubfdb_entry
 {
     BFLDID bfldid;
-    _UBF_SHORT fldtype;
     char fldname[UBFFLDMAX+1];
 };
 
