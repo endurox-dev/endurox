@@ -124,9 +124,9 @@
 #define	EX_NETFLAGS	((BFLDID32)167772814)	/* number: 654	 type: string */
 #define	EX_NETCONNIDCOMP	((BFLDID32)33555087)	/* number: 655	 type: long */
 #define	EX_NETOURIP	((BFLDID32)167772816)	/* number: 656	 type: string */
-#define	EX_NETOURPORT	((BFLDID32)657)	/* number: 657	 type: short */
+#define	EX_NETOURPORT	((BFLDID32)33555089)	/* number: 657	 type: long */
 #define	EX_NETTHEIRIP	((BFLDID32)167772818)	/* number: 658	 type: string */
-#define	EX_NETTHEIRPORT	((BFLDID32)659)	/* number: 659	 type: short */
+#define	EX_NETTHEIRPORT	((BFLDID32)33555091)	/* number: 659	 type: long */
 #define	EX_NETCONMODE	((BFLDID32)67109524)	/* number: 660	 type: char */
 #define	EX_VIEW_NAME	((BFLDID32)167772860)	/* number: 700	 type: string */
 #define	EX_VIEW_CKSUM	((BFLDID32)33555133)	/* number: 701	 type: long */

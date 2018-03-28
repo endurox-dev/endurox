@@ -180,9 +180,9 @@ EX_NETFLAGS                 554         string  -       Flags of the network cal
 EX_NETCONNIDCOMP            555         long    -       Compiled connection id
 # Feature #288
 EX_NETOURIP                 556         string  -       Our client/server IP address
-EX_NETOURPORT               557         short   -       Our client/server port
+EX_NETOURPORT               557         long    -       Our client/server port
 EX_NETTHEIRIP               558         string  -       Their client/server IP address
-EX_NETTHEIRPORT             559         short   -       Their client/server port
+EX_NETTHEIRPORT             559         long    -       Their client/server port
 #
 # A - we are client (Aactive, performing connect)
 # P - we are server (Passive, wait for incoming call)
