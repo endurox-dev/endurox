@@ -92,9 +92,6 @@ extern "C" {
 typedef struct ndrx_ubf_db ndrx_ubf_db_t;
 struct ndrx_ubf_db
 {
-    int is_init;                /* Have init done?                         */
-    int is_loaded;              /* Is loaded (have data)?                  */
-    
     char resource[PATH_MAX+1];  /* physical path of the cache folder        */
     long max_readers;           /* db settings                              */
     long map_size;              /* db settings                              */
