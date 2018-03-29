@@ -50,9 +50,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-expublic ndrx_ubf_db_t ndrx_G_ubf_db = {.is_init = EXFALSE, 
-                .is_loaded = EXFALSE,
-                .resource[0] = EXEOS};
+expublic ndrx_ubf_db_t * ndrx_G_ubf_db = NULL;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -91,18 +89,38 @@ expublic int ndrx_ubf_db_load(void)
     EDB_txn *txn = NULL;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        UBF_LOG(log_warn, "UBF DB already loaded!");
+        goto out;
+    }
+    
+    if (NULL==(ndrx_G_ubf_db = NDRX_CALLOC(1, sizeof(ndrx_ubf_db_t))))
+    {
+        int err = errno;
+        UBF_LOG(log_error, "%s: Failed to alloc %d bytes: %s",
+                    __func__, sizeof(ndrx_ubf_db_t), strerror(err));
+        
+        ndrx_Bset_error_fmt(BEUNIX, "%s: Failed to alloc %d bytes: %s",
+                    __func__, sizeof(ndrx_ubf_db_t), strerror(err));
+        
+        userlog("%s: Failed to alloc %d bytes: %s",
+                    __func__, sizeof(ndrx_ubf_db_t), strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXSUCCEED!=ndrx_cconfig_get(NDRX_CONF_SECTION_UBFDB, &csection))
     {
         UBF_LOG(log_debug, "UBF DB not defined");
-        ndrx_G_ubf_db.is_init = EXTRUE;
-        ndrx_G_ubf_db.is_loaded = EXFALSE;
+        ndrx_G_ubf_db->is_init = EXTRUE;
+        ndrx_G_ubf_db->is_loaded = EXFALSE;
         goto out;
     }
     
     /* loop over the config... */
-    ndrx_G_ubf_db.max_readers = NDRX_UBFDB_MAX_READERS_DFLT;
-    ndrx_G_ubf_db.map_size = NDRX_UBFDB_MAP_SIZE_DFLT;
-    ndrx_G_ubf_db.perms = NDRX_UBFDB_PERMS_DFLT;
+    ndrx_G_ubf_db->max_readers = NDRX_UBFDB_MAX_READERS_DFLT;
+    ndrx_G_ubf_db->map_size = NDRX_UBFDB_MAP_SIZE_DFLT;
+    ndrx_G_ubf_db->perms = NDRX_UBFDB_PERMS_DFLT;
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
@@ -114,33 +132,33 @@ expublic int ndrx_ubf_db_load(void)
         
         if (0==strcmp(val->key, NDRX_UBFDB_KWD_RESOURCE))
         {
-            NDRX_STRCPY_SAFE(ndrx_G_ubf_db.resource, val->val);
+            NDRX_STRCPY_SAFE(ndrx_G_ubf_db->resource, val->val);
         }
         else if (0==strcmp(val->key, NDRX_UBFDB_KWD_PERMS))
         {
             char *pend;
-            ndrx_G_ubf_db.perms = strtol(val->val, &pend, 0);
+            ndrx_G_ubf_db->perms = strtol(val->val, &pend, 0);
         }
         /* Also float: Parse 1000, 1K, 1M, 1G */
         else if (0==strcmp(val->key, NDRX_UBFDB_KWD_MAX_READERS))
         {
-            ndrx_G_ubf_db.max_readers = (long)ndrx_num_dec_parsecfg(val->val);
+            ndrx_G_ubf_db->max_readers = (long)ndrx_num_dec_parsecfg(val->val);
         }
         /* Parse float: 1000.5, 1.2K, 1M, 1G */
         else if (0==strcmp(val->key, NDRX_UBFDB_KWD_MAP_SIZE))
         {
-            ndrx_G_ubf_db.map_size = (long)ndrx_num_dec_parsecfg(val->val);
+            ndrx_G_ubf_db->map_size = (long)ndrx_num_dec_parsecfg(val->val);
         }
         else
         {
-            NDRX_LOG(log_warn, "Ignoring unknown cache configuration param: [%s]", 
+            UBF_LOG(log_warn, "Ignoring unknown cache configuration param: [%s]", 
                     val->key);
             userlog("Ignoring unknown cache configuration param: [%s]", 
                     val->key);
         }
     }
  
-    if (EXSUCCEED!=(ret=edb_env_create(&ndrx_G_ubf_db.env)))
+    if (EXSUCCEED!=(ret=edb_env_create(&ndrx_G_ubf_db->env)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to create env for UBF table DB: %s", 
@@ -149,8 +167,8 @@ expublic int ndrx_ubf_db_load(void)
     }
     
     
-    if (EXSUCCEED!=(ret=edb_env_set_maxreaders(ndrx_G_ubf_db.env, 
-            ndrx_G_ubf_db.max_readers)))
+    if (EXSUCCEED!=(ret=edb_env_set_maxreaders(ndrx_G_ubf_db->env, 
+            ndrx_G_ubf_db->max_readers)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to set max readers for ubf db: %s", 
@@ -159,7 +177,7 @@ expublic int ndrx_ubf_db_load(void)
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=(ret=edb_env_set_maxdbs(ndrx_G_ubf_db.env, 2)))
+    if (EXSUCCEED!=(ret=edb_env_set_maxdbs(ndrx_G_ubf_db->env, 2)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to set max dbs for ubf db: %s", 
@@ -168,8 +186,8 @@ expublic int ndrx_ubf_db_load(void)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=(ret=edb_env_set_mapsize(ndrx_G_ubf_db.env, 
-            ndrx_G_ubf_db.map_size)))
+    if (EXSUCCEED!=(ret=edb_env_set_mapsize(ndrx_G_ubf_db->env, 
+            ndrx_G_ubf_db->map_size)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to set map size for ubf db: %s", 
@@ -179,7 +197,7 @@ expublic int ndrx_ubf_db_load(void)
     }
     
     /* Prepare the DB */
-    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db.env, NULL, 0, &txn)))
+    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, 0, &txn)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to begin transaction for ubf db: %s", 
@@ -189,7 +207,7 @@ expublic int ndrx_ubf_db_load(void)
     }
     
     /* name database */
-    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "nm", 0, &ndrx_G_ubf_db.dbi_nm)))
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "nm", 0, &ndrx_G_ubf_db->dbi_nm)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to open named db for ubf db: %s", 
@@ -199,7 +217,7 @@ expublic int ndrx_ubf_db_load(void)
     }
     
     /* id database */
-    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "id", 0, &ndrx_G_ubf_db.dbi_id)))
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "id", 0, &ndrx_G_ubf_db->dbi_id)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to open named db for ubf db: %s", 
@@ -218,15 +236,20 @@ expublic int ndrx_ubf_db_load(void)
         EXFAIL_OUT(ret);        
     }
     
-    ndrx_G_ubf_db.is_init = EXTRUE;
-    ndrx_G_ubf_db.is_loaded = EXTRUE;
+    ndrx_G_ubf_db->is_init = EXTRUE;
+    ndrx_G_ubf_db->is_loaded = EXTRUE;
     
-    NDRX_UBFDB_DUMPCFG(log_debug, (&ndrx_G_ubf_db));
+    NDRX_UBFDB_DUMPCFG(log_debug, ndrx_G_ubf_db);
     
 out:
 
     if (EXSUCCEED!=ret)
     {        
+        if (NULL!=ndrx_G_ubf_db)
+        {
+            NDRX_FREE(ndrx_G_ubf_db);
+        }
+        
         if (NULL!=txn)
         {
             edb_txn_abort(txn);
@@ -274,7 +297,7 @@ expublic int ndrx_ubfdb_Bfldadd(EDB_txn *txn, BFLDID bfldid,
     UBF_LOG(log_debug, "About to put ID record (%d) / [%s]", (int)idcomp, 
             entry.fldname);
     
-    if (EXSUCCEED!=(ret=edb_put(txn, ndrx_G_ubf_db.dbi_id, &key, &data, 0)))
+    if (EXSUCCEED!=(ret=edb_put(txn, ndrx_G_ubf_db->dbi_id, &key, &data, 0)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to put ID (id=%d/[%s]) record: %s", 
@@ -288,7 +311,7 @@ expublic int ndrx_ubfdb_Bfldadd(EDB_txn *txn, BFLDID bfldid,
     key.mv_data = entry.fldname;
     key.mv_size = strlen(entry.fldname)+1;
     
-    if (EXSUCCEED!=(ret=edb_put(txn, ndrx_G_ubf_db.dbi_nm, &key, &data, 0)))
+    if (EXSUCCEED!=(ret=edb_put(txn, ndrx_G_ubf_db->dbi_nm, &key, &data, 0)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to put ID (id=%d/[%s]) record: %s", 
@@ -304,9 +327,10 @@ out:
 }
 
 /**
- * Delete field by name
- * @param fldname
- * @return 
+ * Delete field by id (deletes from both NM & ID bases)
+ * @param txn LMDB transaction into which delete the field
+ * @param bfldid compiled field id
+ * @return EXSUCCEED/EXFAIL (Berror set)
  */
 expublic int ndrx_ubfdb_Bflddel(EDB_txn *txn, BFLDID bfldid)
 {
@@ -329,7 +353,7 @@ expublic int ndrx_ubfdb_Bflddel(EDB_txn *txn, BFLDID bfldid)
     /* Delete ID: */
     UBF_LOG(log_debug, "%s: delete by %d", __func__, (int)bfldid);
     
-    if (EXSUCCEED!=(ret=edb_del(txn, ndrx_G_ubf_db.dbi_id, &key, NULL)))
+    if (EXSUCCEED!=(ret=edb_del(txn, ndrx_G_ubf_db->dbi_id, &key, NULL)))
     {
         if (ret!=EDB_NOTFOUND)
         {
@@ -350,7 +374,7 @@ expublic int ndrx_ubfdb_Bflddel(EDB_txn *txn, BFLDID bfldid)
     key.mv_data = fldname;
     key.mv_size = strlen(fldname)+1;
     
-    if (EXSUCCEED!=(ret=edb_del(txn, ndrx_G_ubf_db.dbi_nm, &key, NULL)))
+    if (EXSUCCEED!=(ret=edb_del(txn, ndrx_G_ubf_db->dbi_nm, &key, NULL)))
     {
         if (ret!=EDB_NOTFOUND)
         {
@@ -373,21 +397,59 @@ out:
     return ret;
 }
 
+
+/**
+ * Delete all records form db (ID & NM)
+ * @return 
+ */
+expublic int ndrx_ubfdb_Bflddrop(EDB_txn *txn)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=edb_drop(txn, ndrx_G_ubf_db->dbi_id, 0)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                    "%s: Failed to drop ID database: %s",
+                    __func__, edb_strerror(ret));   
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=edb_drop(txn, ndrx_G_ubf_db->dbi_nm, 0)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                    "%s: Failed to drop ID database: %s",
+                    __func__, edb_strerror(ret));   
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Close the database
+ * @return 
+ */
+expublic int ndrx_ubfdb_uninit(void)
+{
+    
+    edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_id);
+    edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_nm);
+    edb_env_close(ndrx_G_ubf_db->env);
+ 
+    return EXFAIL;
+}
+
+
 /**
  * Unlink the field database (delete data files)
  * @return 
  */
 expublic int ndrx_ubfdb_Bfldunlink(void)
 {
-    return EXFAIL;
-}
-
-/**
- * Delete all records form db
- * @return 
- */
-expublic int ndrx_ubfdb_Bflddrop(EDB_txn *txn)
-{
+    /* TODO: Get config section & lookup resource by hash key... 
+     * and delete the files! 
+     */
     return EXFAIL;
 }
 
@@ -410,16 +472,8 @@ expublic int ndrx_ubfdb_Bfldget(EDB_val *key, EDB_val *data,
 }
 
 /**
- * Close the database
- * @return 
- */
-expublic int ndrx_ubfdb_uninit(void)
-{
-    return EXFAIL;
-}
-
-/**
  * Resolve field id from field name
+ * Lookup transaction is generated locally.
  * @param fldnm
  * @return 
  */
@@ -430,6 +484,7 @@ expublic BFLDID ndrx_ubfdb_Bfldid (char *fldnm)
 
 /**
  * Return field name, stored in TLS, only one copy at the time!
+ * Lookup transaction is generated locally.
  * @param bfldid
  * @return 
  */
