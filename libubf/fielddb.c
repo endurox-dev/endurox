@@ -45,11 +45,14 @@
 #include "ubf_tls.h"
 #include "cconfig.h"
 #include <ubfdb.h>
+#include <edbutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic int ndrx_G_ubf_db_triedload = EXFALSE; /* Have we tried to load? */
+/* If NULL and tried, then no db defined  */
 expublic ndrx_ubf_db_t * ndrx_G_ubf_db = NULL;
 
 /*---------------------------Statics------------------------------------*/
@@ -89,6 +92,8 @@ expublic int ndrx_ubf_db_load(void)
     EDB_txn *txn = NULL;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
+    ndrx_G_ubf_db_triedload=EXTRUE;
+            
     if (NULL!=ndrx_G_ubf_db)
     {
         UBF_LOG(log_warn, "UBF DB already loaded!");
@@ -112,8 +117,6 @@ expublic int ndrx_ubf_db_load(void)
     if (EXSUCCEED!=ndrx_cconfig_get(NDRX_CONF_SECTION_UBFDB, &csection))
     {
         UBF_LOG(log_debug, "UBF DB not defined");
-        ndrx_G_ubf_db->is_init = EXTRUE;
-        ndrx_G_ubf_db->is_loaded = EXFALSE;
         goto out;
     }
     
@@ -236,13 +239,13 @@ expublic int ndrx_ubf_db_load(void)
         EXFAIL_OUT(ret);        
     }
     
-    ndrx_G_ubf_db->is_init = EXTRUE;
-    ndrx_G_ubf_db->is_loaded = EXTRUE;
-    
     NDRX_UBFDB_DUMPCFG(log_debug, ndrx_G_ubf_db);
     
 out:
 
+    if (NULL!=csection)
+        ndrx_keyval_hash_free(csection);
+            
     if (EXSUCCEED!=ret)
     {        
         if (NULL!=ndrx_G_ubf_db)
@@ -404,53 +407,66 @@ out:
  */
 expublic int ndrx_ubfdb_Bflddrop(EDB_txn *txn)
 {
-    int ret = EXSUCCEED;
-    
-    if (EXSUCCEED!=(ret=edb_drop(txn, ndrx_G_ubf_db->dbi_id, 0)))
-    {
-        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
-                    "%s: Failed to drop ID database: %s",
-                    __func__, edb_strerror(ret));   
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=(ret=edb_drop(txn, ndrx_G_ubf_db->dbi_nm, 0)))
-    {
-        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
-                    "%s: Failed to drop ID database: %s",
-                    __func__, edb_strerror(ret));   
-        EXFAIL_OUT(ret);
-    }
-    
-out:
-    return ret;
+    /* drop dbs */
 }
 
 /**
  * Close the database
  * @return 
  */
-expublic int ndrx_ubfdb_uninit(void)
+expublic void ndrx_ubfdb_uninit(void)
 {
+    ndrx_G_ubf_db_triedload=EXFALSE;
     
-    edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_id);
-    edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_nm);
-    edb_env_close(ndrx_G_ubf_db->env);
- 
-    return EXFAIL;
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_id);
+        edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_nm);
+        edb_env_close(ndrx_G_ubf_db->env);
+    } 
 }
-
 
 /**
  * Unlink the field database (delete data files)
- * @return 
+ * @return EXSUCCEED/EXFAIL (UBF error set)
  */
 expublic int ndrx_ubfdb_Bfldunlink(void)
 {
-    /* TODO: Get config section & lookup resource by hash key... 
-     * and delete the files! 
-     */
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    char errdet[MAX_TP_ERROR_LEN+1];
+    ndrx_inicfg_section_keyval_t * csection = NULL, *res = NULL;
+    
+    if (EXSUCCEED!=ndrx_cconfig_get(NDRX_CONF_SECTION_UBFDB, &csection))
+    {
+        UBF_LOG(log_debug, "UBF DB not defined");
+        goto out;
+    }
+    
+    EXHASH_FIND_STR( csection, NDRX_UBFDB_KWD_RESOURCE, res);
+    
+    if (NULL!=res)
+    {
+        if (EXSUCCEED!=ndrx_mdb_unlink(res->val, errdet, sizeof(errdet), 
+                LOG_CODE_UBF))
+        {
+            NDRX_UBFDB_BERROR(BEUNIX, 
+                    "%s: Failed to unlink [%s] UBF DB: %s", 
+                    __func__, res->val, errdet);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        UBF_LOG(log_debug, "%s: no UBF DB [%s] section found in config", 
+                __func__, NDRX_CONF_SECTION_UBFDB);
+    }
+    
+out:
+
+    if (NULL!=csection)
+        ndrx_keyval_hash_free(csection);
+
+    return ret;
 }
 
 /**
