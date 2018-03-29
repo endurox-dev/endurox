@@ -119,7 +119,7 @@ struct  ndrx_ubfdb_entry
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-extern NDRX_API ndrx_ubf_db_t ndrx_G_ubf_db;
+extern NDRX_API ndrx_ubf_db_t *ndrx_G_ubf_db;
         
 /*---------------------------Prototypes---------------------------------*/
 
