@@ -551,7 +551,7 @@ expublic char * ndrx_ubfdb_Bflddbname (BFLDID bfldid)
     static __thread char fname[UBFFLDMAX+1];
     ndrx_ubfdb_entry_t *entry;
     /* Prepare the DB */
-    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, 0, &txn)))
+    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, EDB_RDONLY, &txn)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to begin transaction for ubf db: %s", 
@@ -629,8 +629,9 @@ expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
     int tran_started = EXFALSE;
     EDB_val key, data;
     ndrx_ubfdb_entry_t *entry;
+    
     /* Prepare the DB */
-    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, 0, &txn)))
+    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, EDB_RDONLY, &txn)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to begin transaction for ubf db: %s", 
@@ -695,3 +696,25 @@ out:
 
     return ret;
 }
+
+/**
+ * Get the LMDB database environment handle
+ * @param[out] dbi_id id database handler
+ * @param[out] dbi_nm name database handler
+ * @return NULL if no env set, or env ptr
+ */
+expublic EDB_env * ndrx_ubfdb_Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm)
+{
+    EDB_env * ret = NULL;
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        *dbi_id = &ndrx_G_ubf_db->dbi_id;
+        *dbi_nm = &ndrx_G_ubf_db->dbi_nm;
+        ret = ndrx_G_ubf_db->env;
+    }
+    
+out:
+    return ret;
+}
+

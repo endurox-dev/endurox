@@ -88,6 +88,7 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
     int tran_started = EXFALSE;
     ndrx_tpcache_data_t *cdata;
     long revent;
+    int cursor_open = EXFALSE;
     
     /* ok get db name */
     
@@ -229,6 +230,11 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
     } while (EXSUCCEED==ret);
     
 out:
+    
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
 
     if (tran_started)
     {
