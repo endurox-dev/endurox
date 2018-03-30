@@ -46,6 +46,7 @@
 #include <ubf.h>
 #include <exdb.h>
 #include <fdatatype.h>
+#include <cconfig.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -77,6 +78,18 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     short fldtype;
     char fldname[UBFFLDMAX+1];
     int first = EXTRUE;
+    
+    if (EXSUCCEED!=ndrx_cconfig_load())
+    {
+        fprintf(stderr, "ERROR ! Failed to load common-config\n");
+        EXFAIL_OUT(ret);  
+    }
+    
+    if (NULL==ndrx_get_G_cconfig())
+    {
+        fprintf(stderr, "NOTE: No common config defined!\n");
+        goto out;
+    }
     
     /* Load UBF fields (if no already loaded...) */
     if (EXSUCCEED!=Bflddbload())

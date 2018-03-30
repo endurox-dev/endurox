@@ -132,6 +132,7 @@ extern int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
         short *p_fldtype, char *fldname, int fldname_bufsz);
 extern char * ndrx_ubfdb_Bflddbname (BFLDID bfldid);
 extern BFLDID ndrx_ubfdb_Bflddbid (char *fldname);
+extern EDB_env * ndrx_ubfdb_Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
 
 #ifdef	__cplusplus
 }
