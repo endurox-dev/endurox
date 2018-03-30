@@ -49,6 +49,7 @@
 #include "ndebug.h"
 #include "ubf_tls.h"
 #include <thlock.h>
+#include <ubfdb.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -560,6 +561,12 @@ expublic int ndrx_prepare_type_tables(void)
             {
                 ret=_ubf_load_def_table();
             }
+            /* Feature #295 */
+            if (EXSUCCEED==ret)
+            {
+                /* try to load UBF DB */
+                ret = ndrx_ubfdb_Bflddbload();
+            }
 
             MUTEX_UNLOCK;
             return ret;
@@ -594,6 +601,24 @@ expublic char * ndrx_Bfname_int (BFLDID bfldid)
 
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
+    
+    if (NULL==p_fld)
+    {
+        char *p;
+        p = ndrx_ubfdb_Bflddbname(bfldid);
+        if (NULL==p)
+        {
+            if (BNOTFLD==Berror)
+            {
+                ndrx_Bunset_error();
+            }
+        }
+        else
+        {
+            return p; /* return ptr to field */
+        }
+    }
+    
     if (NULL==p_fld)
     {
         snprintf(G_ubf_tls->bfname_buf, sizeof(G_ubf_tls->bfname_buf),
@@ -645,10 +670,25 @@ expublic BFLDID ndrx_Bfldid_int (char *fldnm)
     
     /* Now we can try to do lookup */
     p_fld = ndrx_fldnmhash_get(fldnm);
+    
+    if (NULL==p_fld)
+    {
+        if (BBADFLD==(bfldid = ndrx_ubfdb_Bflddbid(fldnm)))
+        {
+            if (BNOTFLD==Berror)
+            {
+                ndrx_Bunset_error();
+            }
+        }
+        else
+        {
+            return bfldid;
+        }
+    }
 
     if (NULL!=p_fld)
     {
-            return p_fld->bfldid;
+        return p_fld->bfldid;
     }
     else if (0==strncmp(fldnm, "((BFLDID32)", 10))
     {

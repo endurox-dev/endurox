@@ -23,11 +23,15 @@ Return the field name loaded for given compiled field id 'bfldid'. Field id is c
 
 RETURN VALUE
 ------------
-On success, *Bfname()* returns field name in thread local storage stored char array. On failure function returns field name in form of "((BFLDID32)%d)".
+On success, *Bfname()* returns field name in thread local storage stored char array.
+If field is unknown to the system, function returns NULL and the error is set.
 
 ERRORS
 ------
-No errors are returned by this function.
+In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
+generic error message plus custom message with  debug info from last function call.
+
+*BBADFLD* field not found in field tables.
 
 EXAMPLE
 -------
@@ -35,7 +39,7 @@ See *ubftest/ubfunit1.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

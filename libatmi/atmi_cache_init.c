@@ -440,6 +440,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     unsigned int dbi_flags;
     int any_config = EXFALSE;
     char dbnametmp[NDRX_CCTAG_MAX+1];
+    int tran_started = EXFALSE;
 
     if (NULL!=(db = ndrx_cache_dbget(cachedb)))
     {
@@ -761,6 +762,7 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         
         EXFAIL_OUT(ret);
     }
+    tran_started = EXTRUE;
     
     /* open named db */
     if (db->flags & NDRX_TPCACHE_FLAGS_TIMESYNC)
@@ -805,9 +807,9 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
         NDRX_CACHE_TPERROR(ndrx_cache_maperr(ret), 
                 "Failed to open named db for [%s]: %s", 
                 db->cachedb, edb_strerror(ret));
-        txn = NULL;
         EXFAIL_OUT(ret);        
     }
+    tran_started = EXFALSE;
     
     /* Add object to the hash */
     
@@ -822,13 +824,13 @@ out:
         ndrx_keyval_hash_free(csection);
     }
 
+    if (tran_started)
+    {
+        edb_txn_abort(txn);
+    }
+
     if (EXSUCCEED!=ret)
     {        
-        if (NULL!=txn)
-        {
-            edb_txn_abort(txn);
-        }
-        
         if (NULL!=db)
         {
             ndrx_cache_db_free(db);

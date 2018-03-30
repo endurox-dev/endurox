@@ -43,6 +43,7 @@ extern "C" {
 #include <ubf_int.h>
 #include <fdatatype.h>
 #include <ndrstandard.h>
+#include <exdb.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define UBF_BINARY_SEARCH_OK(bfldid) ((bfldid>>EFFECTIVE_BITS) < BFLD_STRING)
@@ -122,6 +123,7 @@ extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, cha
 
 extern int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
 extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
+
 
 #ifdef	__cplusplus
 }
