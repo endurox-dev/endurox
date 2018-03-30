@@ -236,6 +236,10 @@ extern int cmd_gen(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
 extern int cmd_cs(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_cd(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_ci(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* UBF Field Database: */
+extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 #ifdef	__cplusplus
 }
 #endif
