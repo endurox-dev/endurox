@@ -139,6 +139,7 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             {
                 fprintf(stderr, "EOF\n");
             }
+            goto out;
         }
         
         if (EXSUCCEED!=Bflddbget(&keydb, &data,
@@ -177,6 +178,8 @@ out:
     {
         edb_txn_abort(txn);
     }
+
+    Bflddbunload();
 
     return ret;
 }

@@ -163,6 +163,8 @@ expublic int ndrx_ubfdb_Bflddbload(void)
         }
     }
  
+    NDRX_UBFDB_DUMPCFG(log_debug, ndrx_G_ubf_db);
+    
     if (EXSUCCEED!=(ret=edb_env_create(&ndrx_G_ubf_db->env)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
@@ -201,6 +203,16 @@ expublic int ndrx_ubfdb_Bflddbload(void)
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=(ret=edb_env_open(ndrx_G_ubf_db->env, ndrx_G_ubf_db->resource, 
+            0, ndrx_G_ubf_db->perms)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to open env for resource [%s]: %s", 
+                __func__, ndrx_G_ubf_db->resource, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+    
     /* Prepare the DB */
     if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, 0, &txn)))
     {
@@ -213,7 +225,7 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     tran_started = EXTRUE;
     
     /* name database */
-    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "nm", 0, &ndrx_G_ubf_db->dbi_nm)))
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "nm", EDB_CREATE, &ndrx_G_ubf_db->dbi_nm)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
                 "%s: Failed to open named db for ubf db: %s", 
@@ -223,10 +235,10 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     }
     
     /* id database */
-    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "id", 0, &ndrx_G_ubf_db->dbi_id)))
+    if (EXSUCCEED!=(ret=edb_dbi_open(txn, "id", EDB_CREATE, &ndrx_G_ubf_db->dbi_id)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
-                "%s: Failed to open named db for ubf db: %s", 
+                "%s: Failed to open named id for ubf db: %s", 
                 __func__, edb_strerror(ret));
         
         EXFAIL_OUT(ret);
@@ -236,7 +248,7 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     if (EXSUCCEED!=(ret=edb_txn_commit(txn)))
     {
         NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
-                "%s: Failed to open named db for ubf db: %s", 
+                "%s: Failed to open named commit: %s", 
                 __func__, edb_strerror(ret));
         txn = NULL;
         EXFAIL_OUT(ret);        
@@ -244,8 +256,6 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     
     tran_started = EXFALSE;
     
-    
-    NDRX_UBFDB_DUMPCFG(log_debug, ndrx_G_ubf_db);
     
 out:
 
@@ -259,12 +269,21 @@ out:
         edb_txn_abort(txn);
     }
 
+    
+
     if (EXSUCCEED!=ret)
     {        
         if (NULL!=ndrx_G_ubf_db)
         {
+            if (NULL!=ndrx_G_ubf_db->env)
+            {
+                edb_env_close(ndrx_G_ubf_db->env);
+            }
+
             NDRX_FREE(ndrx_G_ubf_db);
         }
+        
+        ndrx_G_ubf_db = NULL;
     }
 
     /* return  */
@@ -450,6 +469,10 @@ expublic void ndrx_ubfdb_Bflddbunload(void)
         edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_id);
         edb_dbi_close(ndrx_G_ubf_db->env, ndrx_G_ubf_db->dbi_nm);
         edb_env_close(ndrx_G_ubf_db->env);
+        
+        NDRX_FREE(ndrx_G_ubf_db);
+        
+        ndrx_G_ubf_db = NULL;
     } 
 }
 
