@@ -55,8 +55,8 @@ extern "C" {
         userlog(fmt, ##__VA_ARGS__);
     
     
-#define NDRX_UBFDB_BERRORNOU(atmierr, fmt, ...)\
-        UBF_LOG(log_error, fmt, ##__VA_ARGS__);\
+#define NDRX_UBFDB_BERRORNOU(errlev, atmierr, fmt, ...)\
+        UBF_LOG(errlev, fmt, ##__VA_ARGS__);\
         ndrx_Bset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
     
 #define NDRX_UBFDB_MAGIC        0xf19c5da3
@@ -117,8 +117,21 @@ struct  ndrx_ubfdb_entry
 /*---------------------------Statics------------------------------------*/
 
 extern NDRX_API ndrx_ubf_db_t *ndrx_G_ubf_db;
+extern NDRX_API int ndrx_G_ubf_db_triedload; /* did we try to load? */
         
 /*---------------------------Prototypes---------------------------------*/
+extern int ndrx_ubfdb_Bflddbload(void);
+extern int ndrx_ubfdb_Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
+        short fldtype, char *fldname);
+extern int ndrx_ubfdb_Bflddbdel(EDB_txn *txn, BFLDID bfldid);
+extern int ndrx_ubfdb_Bflddbdrop(EDB_txn *txn);
+extern void ndrx_ubfdb_Bflddbunload(void);
+extern int ndrx_ubfdb_Bflddbunlink(void);
+extern int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
+        BFLDID *p_bfldno, BFLDID *p_bfldid, 
+        short *p_fldtype, char *fldname, int fldname_bufsz);
+extern char * ndrx_ubfdb_Bflddbname (BFLDID bfldid);
+extern BFLDID ndrx_ubfdb_Bflddbid (char *fldname);
 
 #ifdef	__cplusplus
 }
