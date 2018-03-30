@@ -55,6 +55,7 @@
 #include <expr.h>
 #include <thlock.h>
 #include <typed_view.h>
+#include <ubfdb.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -373,19 +374,24 @@ expublic BFLDID Bfldid (char *fldnm)
 
     if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
-            return BBADFLDID;
+        return BBADFLDID;
     }
     /* Now we can try to do lookup */
     p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {
-            return p_fld->bfldid;
+        return p_fld->bfldid;
+    }
+    else if (NULL!=ndrx_G_ubf_db)
+    {
+        /* lookup into db */
+        return ndrx_ubfdb_Bflddbid(fldnm);
     }
     else
     {
-            ndrx_Bset_error(BBADNAME);
-            return BBADFLDID;
+        ndrx_Bset_error(BBADNAME);
+        return BBADFLDID;
     }
 }
 /**
@@ -403,10 +409,19 @@ expublic char * Bfname (BFLDID bfldid)
 
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
+    
+    
     if (NULL==p_fld)
     {
-        ndrx_Bset_error(BBADFLD);
-        goto out;
+        if (NULL!=ndrx_G_ubf_db)
+        {
+            return ndrx_ubfdb_Bflddbname(bfldid);
+        }
+        else
+        {
+            ndrx_Bset_error(BBADFLD);
+            goto out;
+        }
     }
     else
     {
@@ -2573,5 +2588,78 @@ out:
     UBF_LOG(log_debug, "%s: return %d", __func__, ret);
     
     return ret;
+}
+
+/**
+ * Load LMBB database of fields (usable only if tables not loaded already)
+ * @return EXSUCCEED/EXFAIL (B error set)
+ */
+expublic int Bflddbload(void) 
+{
+    int ret = EXSUCCEED;
+    
+    API_ENTRY;
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
+                __func__, ndrx_G_ubf_db);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = ndrx_ubfdb_Bflddbload();
+out:   
+    return ret;
+}
+
+/**
+ * Add field to database
+ * @param txn LMDB transaction
+ * @param bfldno field number (not compiled)
+ * @param fldtype filed type, see BFLD_*
+ * @param fldname field name
+ * @return EXSUCCEED/EXFAIL (B error set)
+ */
+expublic int Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
+        short fldtype, char *fldname)
+{
+    
+}
+
+expublic int Bflddbdel(EDB_txn *txn, BFLDID bfldid)
+{
+    
+}
+
+expublic int Bflddbdrop(EDB_txn *txn)
+{
+    
+}
+
+expublic void Bflddbunload(void)
+{
+    
+}
+
+expublic int Bflddbunlink(void)
+{
+    
+}
+
+expublic int Bflddbget(EDB_val *key, EDB_val *data,
+        BFLDID *p_bfldno, BFLDID *p_bfldid, 
+        short *p_fldtype, char *fldname, int fldname_bufsz)
+{
+    
+}
+
+expublic char * Bflddbname (BFLDID bfldid)
+{
+    
+}
+
+expublic BFLDID Bflddbid (char *fldname)
+{
+    
 }
 

@@ -301,7 +301,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf)
             NDRX_STRNCPY(fldnm, p, cpylen);
             fldnm[cpylen]=EXEOS;
             /* Copy off value */
-            strcpy(value, tok+1);
+            NDRX_STRCPY_SAFE(value, tok+1);
             UBF_LOG(log_debug, "Got [%s]:[%s]", fldnm, value);
             
             /*

@@ -44,6 +44,7 @@
 #include "ndebug.h"
 #include "ubf_tls.h"
 #include "cconfig.h"
+#include "expr.h"
 #include <ubfdb.h>
 #include <edbutil.h>
 /*---------------------------Externs------------------------------------*/
@@ -71,7 +72,7 @@ expublic int ndrx_ubfdb_maperr(int unixerr)
     {
         case EDB_NOTFOUND:
             
-            ret = BNOTPRES;
+            ret = BBADFLD;
             
             break;
     }
@@ -84,11 +85,12 @@ expublic int ndrx_ubfdb_maperr(int unixerr)
  * 
  * @return -1 EXFAIL, 0 -> no DB defined, 1 -> DB defined and loaded
  */
-expublic int ndrx_ubf_db_load(void)
+expublic int ndrx_ubfdb_Bflddbload(void)
 {
     int ret = EXSUCCEED;
     int is_loaded=EXFALSE;
     int any_config=EXFALSE;
+    int tran_started = EXFALSE;
     EDB_txn *txn = NULL;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
@@ -208,6 +210,7 @@ expublic int ndrx_ubf_db_load(void)
         
         EXFAIL_OUT(ret);
     }
+    tran_started = EXTRUE;
     
     /* name database */
     if (EXSUCCEED!=(ret=edb_dbi_open(txn, "nm", 0, &ndrx_G_ubf_db->dbi_nm)))
@@ -239,23 +242,28 @@ expublic int ndrx_ubf_db_load(void)
         EXFAIL_OUT(ret);        
     }
     
+    tran_started = EXFALSE;
+    
+    
     NDRX_UBFDB_DUMPCFG(log_debug, ndrx_G_ubf_db);
     
 out:
 
     if (NULL!=csection)
+    {
         ndrx_keyval_hash_free(csection);
-            
+    }
+         
+    if (tran_started)
+    {
+        edb_txn_abort(txn);
+    }
+
     if (EXSUCCEED!=ret)
     {        
         if (NULL!=ndrx_G_ubf_db)
         {
             NDRX_FREE(ndrx_G_ubf_db);
-        }
-        
-        if (NULL!=txn)
-        {
-            edb_txn_abort(txn);
         }
     }
 
@@ -271,17 +279,17 @@ out:
 /**
  * Add the field to database
  * @param txn exdb(lmdb) transaction
- * @param bfldid field id (non compiled)
+ * @param bfldno field number (not compiled)
  * @param fldtype filed id
  * @param fldname field name
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_ubfdb_Bfldadd(EDB_txn *txn, BFLDID bfldid, 
+expublic int ndrx_ubfdb_Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
         short fldtype, char *fldname)
 {
     int ret = EXSUCCEED;
     ndrx_ubfdb_entry_t entry;
-    BFLDID idcomp = Bmkfldid(fldtype, bfldid);
+    BFLDID idcomp = Bmkfldid(fldtype, bfldno);
     EDB_val key;
     EDB_val data;
     
@@ -335,7 +343,7 @@ out:
  * @param bfldid compiled field id
  * @return EXSUCCEED/EXFAIL (Berror set)
  */
-expublic int ndrx_ubfdb_Bflddel(EDB_txn *txn, BFLDID bfldid)
+expublic int ndrx_ubfdb_Bflddbdel(EDB_txn *txn, BFLDID bfldid)
 {
     int ret = EXSUCCEED;
     char fldname[UBFFLDMAX+1] = {EXEOS};
@@ -347,7 +355,7 @@ expublic int ndrx_ubfdb_Bflddel(EDB_txn *txn, BFLDID bfldid)
     
     if (NULL==(p = Bfname(bfldid)))
     {
-        NDRX_UBFDB_BERRORNOU(BNOTPRES, "Field by id: %d not found!",
+        NDRX_UBFDB_BERRORNOU(log_info, BNOTPRES, "Field by id: %d not found!",
                     (int)bfldid);
         EXFAIL_OUT(ret);
     }
@@ -400,21 +408,40 @@ out:
     return ret;
 }
 
-
 /**
  * Delete all records form db (ID & NM)
- * @return 
+ * @param txn LMDB transaction into which delete the fields
+ * @return EXSUCCEED/EXFAIL (B error set)
  */
-expublic int ndrx_ubfdb_Bflddrop(EDB_txn *txn)
+expublic int ndrx_ubfdb_Bflddbdrop(EDB_txn *txn)
 {
-    /* drop dbs */
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=edb_drop(txn, ndrx_G_ubf_db->dbi_id, 0)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to drop id db: %s", 
+                __func__, edb_strerror(ret));   
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=(ret=edb_drop(txn, ndrx_G_ubf_db->dbi_nm, 0)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to drop name db: %s", 
+                __func__, edb_strerror(ret));   
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
 }
 
 /**
  * Close the database
  * @return 
  */
-expublic void ndrx_ubfdb_uninit(void)
+expublic void ndrx_ubfdb_Bflddbunload(void)
 {
     ndrx_G_ubf_db_triedload=EXFALSE;
     
@@ -430,7 +457,7 @@ expublic void ndrx_ubfdb_uninit(void)
  * Unlink the field database (delete data files)
  * @return EXSUCCEED/EXFAIL (UBF error set)
  */
-expublic int ndrx_ubfdb_Bfldunlink(void)
+expublic int ndrx_ubfdb_Bflddbunlink(void)
 {
     int ret = EXSUCCEED;
     char errdet[MAX_TP_ERROR_LEN+1];
@@ -473,18 +500,40 @@ out:
  * Loop over the fields
  * @param key key returned by cursor
  * @param val value returned by cursor
- * @param p_bfldid field id to return (plain id)
- * @param p_bfldidcomp compiled filed id
+ * @param p_bfldno field number
+ * @param p_bfldid field id
  * @param p_fldtype field type id
  * @param fldname field name
  * @param fldname_bufsz filed name buffer size
  * @return EXSUCCEED/EXFAIL (Berror set)
  */
-expublic int ndrx_ubfdb_Bfldget(EDB_val *key, EDB_val *data, 
-        BFLDID *p_bfldid, BFLDID *p_bfldidcomp, 
+expublic int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
+        BFLDID *p_bfldno, BFLDID *p_bfldid, 
         short *p_fldtype, char *fldname, int fldname_bufsz)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    ndrx_ubfdb_entry_t *entry;
+    
+    if (data->mv_size!=sizeof(ndrx_ubfdb_entry_t))
+    {
+        NDRX_UBFDB_BERROR(BEINVAL, 
+                    "%s: Expected data size %d, but got %d!", 
+                    __func__, (int)sizeof(ndrx_ubfdb_entry_t), (int)data->mv_size);
+            EXFAIL_OUT(ret);
+    }
+    
+    entry = (ndrx_ubfdb_entry_t *)data->mv_data;
+    
+    *p_bfldid = entry->bfldid;
+    *p_bfldno = entry->bfldid & EFFECTIVE_BITS_MASK;
+    *p_fldtype = entry->bfldid >> EFFECTIVE_BITS;
+    
+    NDRX_STRNCPY_SAFE(fldname, entry->fldname, fldname_bufsz);
+    
+    UBF_LOG(log_debug, "%s: fldno=%d fldid=%d fldtype=%d fldname=[%s]",
+                __func__, *p_bfldno, *p_bfldid, *p_fldtype, fldname);
+out:   
+    return ret;
 }
 
 /**
@@ -493,18 +542,156 @@ expublic int ndrx_ubfdb_Bfldget(EDB_val *key, EDB_val *data,
  * @param fldnm
  * @return 
  */
-expublic BFLDID ndrx_ubfdb_Bfldid (char *fldnm)
+expublic char * ndrx_ubfdb_Bflddbname (BFLDID bfldid)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    EDB_txn *txn = NULL;
+    int tran_started = EXFALSE;
+    EDB_val key, data;
+    static __thread char fname[UBFFLDMAX+1];
+    ndrx_ubfdb_entry_t *entry;
+    /* Prepare the DB */
+    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, 0, &txn)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to begin transaction for ubf db: %s", 
+                __func__, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+
+    tran_started = EXTRUE;
+    
+    key.mv_size = sizeof(bfldid);
+    key.mv_data = &bfldid;
+    
+    if (EXSUCCEED!=(ret=edb_get(txn, ndrx_G_ubf_db->dbi_id, &key, &data)))
+    {
+        if (ret==EDB_NOTFOUND)
+        {
+            /* ok, this is weak error */
+            NDRX_UBFDB_BERRORNOU(log_info, ndrx_ubfdb_maperr(ret), 
+                    "%s: Field not present in UBF DB (%d): %s", 
+                    __func__, (int)bfldid, edb_strerror(ret));
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                    "%s: Failed to get data by field id %d: %s", 
+                    __func__, (int)bfldid, edb_strerror(ret));
+        }
+        EXFAIL_OUT(ret);
+    }
+    
+    if (sizeof(*entry)!=data.mv_size)
+    {
+        NDRX_UBFDB_BERROR(BEINVAL, 
+                "%s: Invalid data size expected %d got %d", 
+                __func__, (int)sizeof(*entry), (int)data.mv_size);
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    entry = (ndrx_ubfdb_entry_t *)data.mv_data;
+    
+    NDRX_STRCPY_SAFE(fname, entry->fldname);
+    
+    
+    UBF_LOG(log_debug, "%s: bfldid=%d resolved to [%s]", __func__, bfldid, 
+            fname);
+    
+out:
+    
+    /* for reads we can abort easily */
+    if (tran_started)
+    {
+        edb_txn_abort(txn);
+    }
+
+    if (EXSUCCEED==ret)
+    {
+        return fname;
+    }
+
+    return NULL;
 }
 
 /**
- * Return field name, stored in TLS, only one copy at the time!
- * Lookup transaction is generated locally.
- * @param bfldid
- * @return 
+ * Resolve field by name
+ * @param fldname filed name
+ * @return Field id or EXFAIL (B error set)
  */
-expublic char * ndrx_ubfdb_Bfname (BFLDID bfldid)
+expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
 {
-    return NULL;
+    int ret = EXSUCCEED;
+    EDB_txn *txn = NULL;
+    int tran_started = EXFALSE;
+    EDB_val key, data;
+    ndrx_ubfdb_entry_t *entry;
+    /* Prepare the DB */
+    if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, 0, &txn)))
+    {
+        NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                "%s: Failed to begin transaction for ubf db: %s", 
+                __func__, edb_strerror(ret));
+        
+        EXFAIL_OUT(ret);
+    }
+
+    tran_started = EXTRUE;
+    
+    key.mv_size = strlen(fldname)+1;
+    key.mv_data = fldname;
+    
+    if (EXSUCCEED!=(ret=edb_get(txn, ndrx_G_ubf_db->dbi_nm, &key, &data)))
+    {
+        if (ret==EDB_NOTFOUND)
+        {
+            /* ok, this is weak error */
+            NDRX_UBFDB_BERRORNOU(log_info, ndrx_ubfdb_maperr(ret), 
+                    "%s: Field not present in UBF DB by name [%s]: %s", 
+                    __func__, fldname, edb_strerror(ret));
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            NDRX_UBFDB_BERROR(ndrx_ubfdb_maperr(ret), 
+                    "%s: Failed to get data by field name [%s]: %s", 
+                    __func__, fldname, edb_strerror(ret));
+        }
+        EXFAIL_OUT(ret);
+    }
+    
+    if (sizeof(*entry)!=data.mv_size)
+    {
+        NDRX_UBFDB_BERROR(BEINVAL, 
+                "%s: Invalid data size expected %d got %d", 
+                __func__, (int)sizeof(*entry), (int)data.mv_size);
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    entry = (ndrx_ubfdb_entry_t *)data.mv_data;
+    
+    ret = entry->bfldid;
+    
+    
+    UBF_LOG(log_debug, "%s: name [%s] resolved to field id %d", __func__, 
+            fldname, ret);
+    
+out:
+    
+    /* for reads we can abort easily */
+    if (tran_started)
+    {
+        edb_txn_abort(txn);
+    }
+
+    if (ret<0)
+    {
+        return BBADFLDID;
+    }
+
+    return ret;
 }
