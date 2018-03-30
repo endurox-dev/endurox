@@ -2590,6 +2590,7 @@ out:
     return ret;
 }
 
+
 /**
  * Load LMBB database of fields (usable only if tables not loaded already)
  * @return EXSUCCEED/EXFAIL (B error set)
@@ -2612,6 +2613,55 @@ out:
     return ret;
 }
 
+#define DB_API_ENTRY if (!ndrx_G_ubf_db_triedload)\
+    {\
+        /* error will be set here */\
+        if (EXSUCCEED!=ndrx_ubfdb_Bflddbload())\
+        {\
+            EXFAIL_OUT(ret);\
+        }\
+    }
+
+/**
+ * Return LMDB database handler
+ * @param [out] dbi_id id -> name mapping database interface
+ * @param [out] dbi_nm name -> id database handler
+ * @return DB Env handler or NULL (B error set)
+ */
+expublic EDB_env * Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm)
+{
+    int ret = EXSUCCEED;
+    EDB_env *dbenv = NULL;
+    
+    API_ENTRY;
+    DB_API_ENTRY;
+    
+    if (NULL==dbi_id)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "dbi_id is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==dbi_nm)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "dbi_nm is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    dbenv = ndrx_ubfdb_Bfldddbgetenv(dbi_id, dbi_nm);
+    
+out:
+                        
+    if (EXSUCCEED!=ret)
+    {
+        return NULL;
+    }
+
+    return dbenv;
+}
+
+
+
 /**
  * Add field to database
  * @param txn LMDB transaction
@@ -2623,43 +2673,251 @@ out:
 expublic int Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
         short fldtype, char *fldname)
 {
+    int ret=EXSUCCEED;
     
+    API_ENTRY;
+    DB_API_ENTRY;
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
+                __func__, ndrx_G_ubf_db);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==txn)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "txn is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (bfldno <= 0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "invalid bfldno = %d!", 
+                (int)bfldno);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (fldtype < BFLD_MIN || fldtype > BFLD_MAX)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "invalid field type: %d", (int)fldtype);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fldname)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldname is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==fldname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldname is empty (EOS)!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_ubfdb_Bflddbadd(txn, bfldno, fldtype, fldname);
+    
+ out:   
+    return ret;
 }
 
+/**
+ * Delete field from UBF db
+ * @param txn LMDB transaction
+ * @param bfldid Field
+ * @return EXSUCCEED/EXFAIL (B error set)
+ */
 expublic int Bflddbdel(EDB_txn *txn, BFLDID bfldid)
 {
+    int ret=EXSUCCEED;
     
+    API_ENTRY;
+    DB_API_ENTRY;
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
+                __func__, ndrx_G_ubf_db);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==txn)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "txn is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (bfldid <= 0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "invalid bfldno = %d!", 
+                (int)bfldid);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_ubfdb_Bflddbdel(txn, bfldid);
+    
+ out:   
+    return ret;
 }
 
+/**
+ * Drop database
+ * @param txn LMDB transaction
+ * @return EXSUCCEED/EXFAIL (B error set)
+ */
 expublic int Bflddbdrop(EDB_txn *txn)
 {
+    int ret=EXSUCCEED;
     
+    API_ENTRY;
+    DB_API_ENTRY;
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
+                __func__, ndrx_G_ubf_db);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==txn)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "txn is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_ubfdb_Bflddbdrop(txn);
+    
+ out:   
+    return ret;
 }
 
+/**
+ * Unload UBF database
+ */
 expublic void Bflddbunload(void)
 {
-    
+    ndrx_ubfdb_Bflddbunload();
 }
 
+/**
+ * Unlink database
+ * @return EXSUCCEED/EXFAIL (B error set)
+ */
 expublic int Bflddbunlink(void)
 {
-    
+    API_ENTRY;
+    return ndrx_ubfdb_Bflddbunlink();
 }
 
+/**
+ * Get field infos from cursor data
+ * @param key
+ * @param data
+ * @param p_bfldno
+ * @param p_bfldid
+ * @param p_fldtype
+ * @param fldname
+ * @param fldname_bufsz
+ * @return 
+ */
 expublic int Bflddbget(EDB_val *key, EDB_val *data,
         BFLDID *p_bfldno, BFLDID *p_bfldid, 
         short *p_fldtype, char *fldname, int fldname_bufsz)
 {
+    API_ENTRY;
+    int ret = EXSUCCEED;
     
+    if (NULL==key)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "key is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==data)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "data is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_bfldno)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_bfldno is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_bfldid)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_bfldno is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_fldtype)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_fldtype is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fldname)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldname is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (fldname_bufsz<=0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Invalid buffer size, must be >=0, got %d",
+                fldname_bufsz);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_ubfdb_Bflddbget(key, data, p_bfldno, p_bfldid, 
+            p_fldtype, fldname, fldname_bufsz);
+    
+ out:   
+    return ret;
 }
 
+/**
+ * Resolve field name from id (compiled)
+ * @param bfldid field id
+ * @return field name (one slot stored in TLS) or NULL (B error set)
+ */
 expublic char * Bflddbname (BFLDID bfldid)
 {
+    int ret=EXSUCCEED;
+    char *f = NULL;
+    API_ENTRY;
+    DB_API_ENTRY;   
     
+    f = ndrx_ubfdb_Bflddbname (bfldid);
+    
+ out:   
+
+    if (EXSUCCEED!=ret)
+    {
+        return NULL;
+    }
+ 
+    return f;
 }
 
+/**
+ * Resolve field id from field name
+ * @param fldname field name
+ * @return field id or BBADFLDID (B error set)
+ */
 expublic BFLDID Bflddbid (char *fldname)
 {
+    BFLDID ret=EXSUCCEED;
+    API_ENTRY;
+    DB_API_ENTRY;   
     
+    ret = ndrx_ubfdb_Bflddbid (fldname);
+    
+ out:
+
+    return ret;
 }
 
+expublic 

@@ -37,8 +37,9 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
 #include <stdio.h>
+#include <ndrx_config.h>
+#include <exdb.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -262,6 +263,24 @@ extern NDRX_API void * ndrx_ubf_tls_get(void);
 extern NDRX_API int ndrx_ubf_tls_set(void *data);
 extern NDRX_API void ndrx_ubf_tls_free(void *data);
 extern NDRX_API void * ndrx_ubf_tls_new(int auto_destroy, int auto_set);
+
+
+/* Custom field database API: */
+
+extern NDRX_API EDB_env * Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
+extern NDRX_API int Bflddbload(void);
+extern NDRX_API BFLDID Bflddbid (char *fldname);
+extern NDRX_API char * Bflddbname (BFLDID bfldid);
+extern NDRX_API int Bflddbget(EDB_val *key, EDB_val *data,
+        BFLDID *p_bfldno, BFLDID *p_bfldid, 
+        short *p_fldtype, char *fldname, int fldname_bufsz);
+extern NDRX_API int Bflddbunlink(void);
+extern NDRX_API void Bflddbunload(void);
+extern NDRX_API int Bflddbdrop(EDB_txn *txn);
+extern NDRX_API int Bflddbdel(EDB_txn *txn, BFLDID bfldid);
+extern NDRX_API int Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
+        short fldtype, char *fldname);
+
 
 #if defined(__cplusplus)
 }

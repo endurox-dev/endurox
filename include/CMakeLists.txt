@@ -68,6 +68,7 @@ install (FILES
     tpadm.h
     evt_mib.h
     view_cmn.h
+    exdb.h
     DESTINATION include)
 
 install (FILES

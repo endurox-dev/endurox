@@ -195,7 +195,8 @@ cmd_mapping_t M_command_map[] =
     {"cachedump", cmd_cd,EXFAIL,   3,  4,  1, "Alias for `cd' ", NULL},
     {"ci",        cmd_ci,EXFAIL,   2,  4,  1, "Invalidate cache\n"
                                     "\t args: ci -d <dbname> [-k <key>][-r use_regexp]", NULL},
-    {"cacheinval",cmd_ci,EXFAIL,   2,  4,  1, "Alias for `ci' ", NULL}
+    {"cacheinval",cmd_ci,EXFAIL,   2,  4,  1, "Alias for `ci' ", NULL},
+    {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL}
 };
 
 /*
