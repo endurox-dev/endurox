@@ -1,0 +1,69 @@
+BFLDDDBGETENV(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+Bfldddbgetenv - get UBF custom field LMDB database handlers
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+EDB_env * Bfldddbgetenv (EDB_dbi **'dbi_id', EDB_dbi **'dbi_nm');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function returns EXDB (formerly LMDB) handlers for custom fields storage database.
+Parameter 'dbi_id' is handler for fields hashed by field id (compiled). The key
+in this case is field id, key bytes equals to sizeof(BFLDID). The 'dbi_nm' is
+handler for named name database. The key in this case is field id + EOS (0x00)
+byte. Function returns the EXDB/LMDB environment handler.
+
+This function shall be used to acquire handlers for getting transaction object
+which is need for field adding/deleting/db dropping and for performing iteration
+over the fields stored.
+
+When function is called. And attempt to parse and load '[@ubfdb]' ini section
+from common-configuration is performed.
+
+RETURN VALUE
+------------
+On success, *Bfldddbgetenv()* returns EXDB environment handler.
+In case of error, function returns NULL and the error is set.
+
+ERRORS
+------
+In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
+generic error message plus custom message with  debug info from last function call.
+
+*BEINVAL* 'dbi_id', 'dbi_nm' is NULL. 'resource' parameter is missing 
+for '[@ubfdb]' section.
+
+*BMALLOC* malloc failed.
+
+*BEUNIX* failed to load ini file(s). EXDB failed.
+
+
+EXAMPLE
+-------
+See *ubftest/ubfunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bflddbload(3)* *Bflddbid(3)* *Bflddbname(3)* *Bflddbget(3)* *Bflddbunload(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
