@@ -1,0 +1,60 @@
+BFLDDBID(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+Bflddbid - Get UBF field id from field name
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+BFLDID Bflddbid (char *fldname);
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Resolve field id from name directly from custom UBF field database. If datab
+
+RETURN VALUE
+------------
+On success, *Bfldid()* returns compiled file id; on error, *BBADFLDID* is returned.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BEINVAL* corrupted data stored in LMDB.
+
+*BEUNIX* LMDB Error.
+
+*BBADNAME* name not found or no database defined.
+
+*BMALLOC* failed to allocate database structures.
+
+*BNOSPACE* lmdb max readers reached or other limit, see logs for details.
+
+EXAMPLE
+-------
+See *atmitest/test050_ubfdb/atmiclt50.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bflddbname(3)* *Bflddbget(3)* *Bflddbload(3)* *Bflddbunload(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
+

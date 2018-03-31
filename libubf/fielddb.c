@@ -73,7 +73,15 @@ expublic int ndrx_ubfdb_maperr(int unixerr)
         case EDB_NOTFOUND:
             
             ret = BBADFLD;
-            
+            break;
+        case EDB_MAP_FULL:
+        case EDB_DBS_FULL:
+        case EDB_READERS_FULL:
+        case EDB_TLS_FULL:
+        case EDB_TXN_FULL:
+        case EDB_CURSOR_FULL:
+        case EDB_PAGE_FULL:
+            ret = BNOSPACE;
             break;
     }
     
@@ -94,6 +102,12 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
     ndrx_G_ubf_db_triedload=EXTRUE;
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        UBF_LOG(log_warn, "UBF DB already loaded!");
+        goto out;
+    }
             
     /* might be already loaded - no problem, it is singleton */
     if (EXSUCCEED!=(ret=ndrx_cconfig_load()))
@@ -108,18 +122,6 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     if (NULL==ndrx_get_G_cconfig())
     {
         UBF_LOG(log_info, "Common Config not defined - nothing to do!");
-        goto out;
-    }
-    
-    if (NULL!=ndrx_G_ubf_db)
-    {
-        UBF_LOG(log_warn, "UBF DB already loaded!");
-        goto out;
-    }
-    
-    if (NULL!=ndrx_G_ubf_db)
-    {
-        UBF_LOG(log_warn, "UBF DB already loaded!");
         goto out;
     }
     
