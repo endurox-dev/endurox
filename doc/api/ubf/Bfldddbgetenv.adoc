@@ -52,7 +52,7 @@ for '[@ubfdb]' section.
 
 EXAMPLE
 -------
-See *ubftest/ubfunit1.c* for sample code.
+See *atmitest/test050_ubfdb/atmiclt50.c* for sample code.
 
 BUGS
 ----
@@ -61,7 +61,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *Bflddbload(3)* *Bflddbid(3)* *Bflddbname(3)* *Bflddbget(3)* *Bflddbunload(3)*
-*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
 
 COPYING
 -------

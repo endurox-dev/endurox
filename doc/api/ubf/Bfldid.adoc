@@ -19,11 +19,14 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Get field id by field name passed in 'fldnm' parameter. Note that field must be defined in field tables (*fd* files) (see ex_env(5), variables *FIELDTBLS*, *FLDTBLDIR*). 
+Get field id by field name passed in 'fldnm' parameter. Note that field
+must be defined in field tables (*fd* files) (see ex_env(5),
+variables *FIELDTBLS*, *FLDTBLDIR*). 
 
 RETURN VALUE
 ------------
-On success, *Bfldid()* returns compiled file id; on error, *BBADFLDID* is returned.
+On success, *Bfldid()* returns compiled file id; on error,
+*BBADFLDID* is returned.
 
 ERRORS
 ------
@@ -35,11 +38,11 @@ See *ubftest/ubfunit1.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bfname(3)*
+*Bfname(3)* *Bflddbid(3)*
 
 COPYING
 -------
