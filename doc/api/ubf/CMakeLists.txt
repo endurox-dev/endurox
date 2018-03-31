@@ -115,6 +115,8 @@ set(MAN3_NAMES
     Bcmp
     Bsubset
     Bfldddbgetenv
+    Bflddbload
+    Bflddbid
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

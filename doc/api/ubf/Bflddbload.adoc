@@ -1,0 +1,67 @@
+BFLDDBLOAD(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+Bflddbload - load UBF custom field database manually
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bflddbload(void);
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Load (and open EXDB/LMDB) handlers to the UBF custom field storage database.
+This function is automatically called when accessing UBF commands which require
+field tables, for converting field IDs to string names and vice versa.
+
+This function could be useful in cases when manually closing the database
+by *Bflddbunload(3)*, performing unlink by *Bflddbunlink(3)* and then opening
+the handlers again. Because in cases if UBF standard functions already pulled
+in the init of field tables, it will not do it again.
+
+RETURN VALUE
+------------
+On success, *Bflddbload()* returns *1* (meaning common-configuration (CC)
+and '[@ubfdb]' section found. Function returns *0* in case if CC configuration
+not found or '[@ubfdb]' configuration section is not found. In case of error
+*-1* is returned.
+
+ERRORS
+------
+In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
+generic error message plus custom message with  debug info from last function call.
+
+*BEINVAL* 'resource' parameter is missing for '[@ubfdb]' section.
+
+*BMALLOC* malloc failed.
+
+*BEUNIX* failed to load ini file(s). EXDB failed.
+
+*BNOSPACE* lmdb max readers reached or other limit, see logs for details.
+
+EXAMPLE
+-------
+See *atmitest/test050_ubfdb/atmiclt50.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bflddbid(3)* *Bflddbname(3)* *Bflddbget(3)* *Bflddbunload(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
