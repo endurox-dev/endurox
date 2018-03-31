@@ -391,13 +391,6 @@ Ensure(test046_twopasscfg)
     assert_equal(ret, EXSUCCEED);
 }
 
-Ensure(test049_masksvc)
-{
-    int ret;
-    ret=system_dbg("test049_masksvc/run.sh");
-    assert_equal(ret, EXSUCCEED);
-}
-
 Ensure(test048_cache)
 {
     int ret;
@@ -405,6 +398,19 @@ Ensure(test048_cache)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test049_masksvc)
+{
+    int ret;
+    ret=system_dbg("test049_masksvc/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test050_ubfdb)
+{
+    int ret;
+    ret=system_dbg("test050_ubfdb/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
 
 TestSuite *atmi_test_all(void)
 {
@@ -487,6 +493,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test046_twopasscfg);
     add_test(suite,test048_cache);
     add_test(suite,test049_masksvc);
+    add_test(suite,test050_ubfdb);
             
     return suite;
 }
