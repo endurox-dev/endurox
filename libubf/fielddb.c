@@ -88,7 +88,6 @@ expublic int ndrx_ubfdb_maperr(int unixerr)
 expublic int ndrx_ubfdb_Bflddbload(void)
 {
     int ret = EXSUCCEED;
-    int is_loaded=EXFALSE;
     int any_config=EXFALSE;
     int tran_started = EXFALSE;
     EDB_txn *txn = NULL;
@@ -96,6 +95,28 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     
     ndrx_G_ubf_db_triedload=EXTRUE;
             
+    /* might be already loaded - no problem, it is singleton */
+    if (EXSUCCEED!=(ret=ndrx_cconfig_load()))
+    {
+        ndrx_Bset_error_fmt(BEUNIX, "%s: Failed to load common-config (CC)",
+                __func__);
+        
+        UBF_LOG(log_error, "Failed to load Common config!");
+        goto out;
+    }
+    
+    if (NULL==ndrx_get_G_cconfig())
+    {
+        UBF_LOG(log_info, "Common Config not defined - nothing to do!");
+        goto out;
+    }
+    
+    if (NULL!=ndrx_G_ubf_db)
+    {
+        UBF_LOG(log_warn, "UBF DB already loaded!");
+        goto out;
+    }
+    
     if (NULL!=ndrx_G_ubf_db)
     {
         UBF_LOG(log_warn, "UBF DB already loaded!");
@@ -269,8 +290,6 @@ out:
         edb_txn_abort(txn);
     }
 
-    
-
     if (EXSUCCEED!=ret)
     {        
         if (NULL!=ndrx_G_ubf_db)
@@ -287,7 +306,7 @@ out:
     }
 
     /* return  */
-    if (EXSUCCEED==ret && is_loaded)
+    if (EXSUCCEED==ret && NULL!=ndrx_G_ubf_db)
     {
         return EXTRUE;
     }
@@ -298,13 +317,13 @@ out:
 /**
  * Add the field to database
  * @param txn exdb(lmdb) transaction
- * @param bfldno field number (not compiled)
  * @param fldtype filed id
+ * @param bfldno field number (not compiled)
  * @param fldname field name
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_ubfdb_Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
-        short fldtype, char *fldname)
+expublic int ndrx_ubfdb_Bflddbadd(EDB_txn *txn, 
+        short fldtype, BFLDID bfldno, char *fldname)
 {
     int ret = EXSUCCEED;
     ndrx_ubfdb_entry_t entry;
@@ -417,6 +436,7 @@ expublic int ndrx_ubfdb_Bflddbdel(EDB_txn *txn, BFLDID bfldid)
         {
             UBF_LOG(log_info, "%s: Field [%s] not found in db", 
                     __func__, fldname);
+            ret=EXSUCCEED;
         }
     }
     
@@ -523,16 +543,16 @@ out:
  * Loop over the fields
  * @param key key returned by cursor
  * @param val value returned by cursor
+ * @param p_fldtype field type id
  * @param p_bfldno field number
  * @param p_bfldid field id
- * @param p_fldtype field type id
  * @param fldname field name
  * @param fldname_bufsz filed name buffer size
  * @return EXSUCCEED/EXFAIL (Berror set)
  */
 expublic int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
-        BFLDID *p_bfldno, BFLDID *p_bfldid, 
-        short *p_fldtype, char *fldname, int fldname_bufsz)
+        short *p_fldtype, BFLDID *p_bfldno, BFLDID *p_bfldid, 
+        char *fldname, int fldname_bufsz)
 {
     int ret = EXSUCCEED;
     ndrx_ubfdb_entry_t *entry;
@@ -563,7 +583,7 @@ out:
  * Resolve field id from field name
  * Lookup transaction is generated locally.
  * @param fldnm
- * @return 
+ * @return ptr to field (TLS) or NULL (B error set)
  */
 expublic char * ndrx_ubfdb_Bflddbname (BFLDID bfldid)
 {
@@ -573,6 +593,14 @@ expublic char * ndrx_ubfdb_Bflddbname (BFLDID bfldid)
     EDB_val key, data;
     static __thread char fname[UBFFLDMAX+1];
     ndrx_ubfdb_entry_t *entry;
+    
+    if (NULL==ndrx_G_ubf_db)
+    {
+        NDRX_UBFDB_BERRORNOU(log_error, BBADFLD, 
+                "%s: no CC config defined for UBF DB", __func__);
+        return NULL;
+    }
+    
     /* Prepare the DB */
     if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, EDB_RDONLY, &txn)))
     {
@@ -643,7 +671,7 @@ out:
 /**
  * Resolve field by name
  * @param fldname filed name
- * @return Field id or EXFAIL (B error set)
+ * @return Field id or BBADFLDID (B error set)
  */
 expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
 {
@@ -652,6 +680,13 @@ expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
     int tran_started = EXFALSE;
     EDB_val key, data;
     ndrx_ubfdb_entry_t *entry;
+    
+    if (NULL==ndrx_G_ubf_db)
+    {
+        NDRX_UBFDB_BERRORNOU(log_error, BBADNAME, 
+                "%s: no CC config defined for UBF DB", __func__);
+        return BBADFLDID;
+    }
     
     /* Prepare the DB */
     if (EXSUCCEED!=(ret=edb_txn_begin(ndrx_G_ubf_db->env, NULL, EDB_RDONLY, &txn)))
@@ -673,7 +708,7 @@ expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
         if (ret==EDB_NOTFOUND)
         {
             /* ok, this is weak error */
-            NDRX_UBFDB_BERRORNOU(log_info, ndrx_ubfdb_maperr(ret), 
+            NDRX_UBFDB_BERRORNOU(log_info, BBADNAME, 
                     "%s: Field not present in UBF DB by name [%s]: %s", 
                     __func__, fldname, edb_strerror(ret));
             EXFAIL_OUT(ret);

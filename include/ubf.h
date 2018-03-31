@@ -271,15 +271,14 @@ extern NDRX_API EDB_env * Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
 extern NDRX_API int Bflddbload(void);
 extern NDRX_API BFLDID Bflddbid (char *fldname);
 extern NDRX_API char * Bflddbname (BFLDID bfldid);
-extern NDRX_API int Bflddbget(EDB_val *key, EDB_val *data,
-        BFLDID *p_bfldno, BFLDID *p_bfldid, 
-        short *p_fldtype, char *fldname, int fldname_bufsz);
+extern NDRX_API int Bflddbget(EDB_val *key, EDB_val *data, short *p_fldtype,
+        BFLDID *p_bfldno, BFLDID *p_bfldid, char *fldname, int fldname_bufsz);
 extern NDRX_API int Bflddbunlink(void);
 extern NDRX_API void Bflddbunload(void);
 extern NDRX_API int Bflddbdrop(EDB_txn *txn);
 extern NDRX_API int Bflddbdel(EDB_txn *txn, BFLDID bfldid);
-extern NDRX_API int Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
-        short fldtype, char *fldname);
+extern NDRX_API int Bflddbadd(EDB_txn *txn, short fldtype, BFLDID bfldno, 
+        char *fldname);
 
 
 #if defined(__cplusplus)

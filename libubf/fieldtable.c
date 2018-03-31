@@ -565,7 +565,10 @@ expublic int ndrx_prepare_type_tables(void)
             if (EXSUCCEED==ret)
             {
                 /* try to load UBF DB */
-                ret = ndrx_ubfdb_Bflddbload();
+                if (EXFAIL==ndrx_ubfdb_Bflddbload())
+                {
+                    ret=EXFAIL;
+                }
             }
 
             MUTEX_UNLOCK;
@@ -602,7 +605,7 @@ expublic char * ndrx_Bfname_int (BFLDID bfldid)
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
     
-    if (NULL==p_fld)
+    if (NULL==p_fld && NULL!=ndrx_G_ubf_db)
     {
         char *p;
         p = ndrx_ubfdb_Bflddbname(bfldid);
@@ -657,7 +660,7 @@ expublic BFLDID ndrx_Bfldid_int (char *fldnm)
     if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
         /* extending support for BFLDID syntax for read. */
-        if (0==strncmp(fldnm, "((BFLDID32)", 10))
+        if (0==strncmp(fldnm, "((BFLDID32)", 11))
         {
             bfldid = get_from_bfldidstr(fldnm);
             return bfldid;
@@ -671,9 +674,9 @@ expublic BFLDID ndrx_Bfldid_int (char *fldnm)
     /* Now we can try to do lookup */
     p_fld = ndrx_fldnmhash_get(fldnm);
     
-    if (NULL==p_fld)
+    if (NULL==p_fld && NULL!=ndrx_G_ubf_db)
     {
-        if (BBADFLD==(bfldid = ndrx_ubfdb_Bflddbid(fldnm)))
+        if (BBADFLDID==(bfldid = ndrx_ubfdb_Bflddbid(fldnm)))
         {
             if (BNOTFLD==Berror)
             {
@@ -690,7 +693,7 @@ expublic BFLDID ndrx_Bfldid_int (char *fldnm)
     {
         return p_fld->bfldid;
     }
-    else if (0==strncmp(fldnm, "((BFLDID32)", 10))
+    else if (0==strncmp(fldnm, "((BFLDID32)", 11))
     {
         bfldid = get_from_bfldidstr(fldnm);
         return bfldid;

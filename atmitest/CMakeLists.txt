@@ -94,6 +94,7 @@ add_subdirectory (test047_oradb)
 ENDIF()
 add_subdirectory (test048_cache)
 add_subdirectory (test049_masksvc)
+add_subdirectory (test050_ubfdb)
 
 ################################################################################
 # Master test case driver
