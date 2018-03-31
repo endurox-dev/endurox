@@ -129,7 +129,7 @@ expublic int ndrx_ubfdb_Bflddbload(void)
         UBF_LOG(log_error, "%s: Failed to alloc %d bytes: %s",
                     __func__, sizeof(ndrx_ubf_db_t), strerror(err));
         
-        ndrx_Bset_error_fmt(BEUNIX, "%s: Failed to alloc %d bytes: %s",
+        ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to alloc %d bytes: %s",
                     __func__, sizeof(ndrx_ubf_db_t), strerror(err));
         
         userlog("%s: Failed to alloc %d bytes: %s",
@@ -182,6 +182,14 @@ expublic int ndrx_ubfdb_Bflddbload(void)
             userlog("Ignoring unknown cache configuration param: [%s]", 
                     val->key);
         }
+    }
+
+    if (EXEOS==ndrx_G_ubf_db->resource[0])
+    {
+        NDRX_UBFDB_BERROR(BEINVAL, 
+                "%s: [%s] attrib is missing for [%s] section!", 
+                __func__, NDRX_UBFDB_KWD_RESOURCE, NDRX_CONF_SECTION_UBFDB);
+        EXFAIL_OUT(ret);
     }
  
     NDRX_UBFDB_DUMPCFG(log_debug, ndrx_G_ubf_db);
