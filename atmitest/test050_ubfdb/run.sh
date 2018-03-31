@@ -62,6 +62,7 @@ set_dom1() {
     export NDRX_LOG=$TESTDIR/ndrx-dom1.log
     export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
     export NDRX_CCONFIG=$TESTDIR
+    export NDRX_SILENT=Y
 }
 
 #
