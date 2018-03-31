@@ -372,21 +372,33 @@ expublic BFLDID Bfldid (char *fldnm)
 
     API_ENTRY;
 
+    UBF_LOG(log_error, "YOPT 4444!!!!");
+    
     if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
+        UBF_LOG(log_error, "YOPT 3444!!!!");
         return BBADFLDID;
     }
+    
+    UBF_LOG(log_error, "YOPT 2444!!!!");
+    
     /* Now we can try to do lookup */
     p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {
+        UBF_LOG(log_error, "YOPT 1444!!!!");
         return p_fld->bfldid;
     }
     else if (NULL!=ndrx_G_ubf_db)
     {
+        int ret;
         /* lookup into db */
-        return ndrx_ubfdb_Bflddbid(fldnm);
+        UBF_LOG(log_error, "YOPT 555!!!!");
+        ret=ndrx_ubfdb_Bflddbid(fldnm);
+        
+        UBF_LOG(log_error, "YOPT 555!!!! be=%d ret=%d", Berror, ret);
+        return ret;
     }
     else
     {
@@ -2616,7 +2628,7 @@ out:
 #define DB_API_ENTRY if (!ndrx_G_ubf_db_triedload)\
     {\
         /* error will be set here */\
-        if (EXSUCCEED!=ndrx_ubfdb_Bflddbload())\
+        if (EXFAIL==ndrx_ubfdb_Bflddbload())\
         {\
             EXFAIL_OUT(ret);\
         }\
@@ -2665,23 +2677,23 @@ out:
 /**
  * Add field to database
  * @param txn LMDB transaction
- * @param bfldno field number (not compiled)
  * @param fldtype filed type, see BFLD_*
+ * @param bfldno field number (not compiled)
  * @param fldname field name
  * @return EXSUCCEED/EXFAIL (B error set)
  */
-expublic int Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
-        short fldtype, char *fldname)
+expublic int Bflddbadd(EDB_txn *txn,
+        short fldtype, BFLDID bfldno, char *fldname)
 {
     int ret=EXSUCCEED;
     
     API_ENTRY;
     DB_API_ENTRY;
     
-    if (NULL!=ndrx_G_ubf_db)
+    if (NULL==ndrx_G_ubf_db)
     {
-        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
-                __func__, ndrx_G_ubf_db);
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db not loaded!",
+                __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -2716,7 +2728,7 @@ expublic int Bflddbadd(EDB_txn *txn, BFLDID bfldno,
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_ubfdb_Bflddbadd(txn, bfldno, fldtype, fldname);
+    ret=ndrx_ubfdb_Bflddbadd(txn, fldtype, bfldno, fldname);
     
  out:   
     return ret;
@@ -2735,10 +2747,10 @@ expublic int Bflddbdel(EDB_txn *txn, BFLDID bfldid)
     API_ENTRY;
     DB_API_ENTRY;
     
-    if (NULL!=ndrx_G_ubf_db)
+    if (NULL==ndrx_G_ubf_db)
     {
-        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
-                __func__, ndrx_G_ubf_db);
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db not loaded!",
+                __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -2773,10 +2785,10 @@ expublic int Bflddbdrop(EDB_txn *txn)
     API_ENTRY;
     DB_API_ENTRY;
     
-    if (NULL!=ndrx_G_ubf_db)
+    if (NULL==ndrx_G_ubf_db)
     {
-        ndrx_Bset_error_fmt(BEINVAL, "%s: field db tables already loaded (%p)",
-                __func__, ndrx_G_ubf_db);
+        ndrx_Bset_error_fmt(BEINVAL, "%s: field db not loaded!",
+                __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -2814,16 +2826,16 @@ expublic int Bflddbunlink(void)
  * Get field infos from cursor data
  * @param key
  * @param data
+ * @param p_fldtype
  * @param p_bfldno
  * @param p_bfldid
- * @param p_fldtype
  * @param fldname
  * @param fldname_bufsz
  * @return 
  */
 expublic int Bflddbget(EDB_val *key, EDB_val *data,
-        BFLDID *p_bfldno, BFLDID *p_bfldid, 
-        short *p_fldtype, char *fldname, int fldname_bufsz)
+        short *p_fldtype, BFLDID *p_bfldno, BFLDID *p_bfldid, 
+        char *fldname, int fldname_bufsz)
 {
     API_ENTRY;
     int ret = EXSUCCEED;
@@ -2871,8 +2883,8 @@ expublic int Bflddbget(EDB_val *key, EDB_val *data,
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_ubfdb_Bflddbget(key, data, p_bfldno, p_bfldid, 
-            p_fldtype, fldname, fldname_bufsz);
+    ret=ndrx_ubfdb_Bflddbget(key, data, p_fldtype, p_bfldno, p_bfldid,
+            fldname, fldname_bufsz);
     
  out:   
     return ret;

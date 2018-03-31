@@ -56,7 +56,7 @@ extern "C" {
     
     
 #define NDRX_UBFDB_BERRORNOU(errlev, atmierr, fmt, ...)\
-        UBF_LOG(errlev, fmt, ##__VA_ARGS__);\
+        UBF_LOG(log_error, fmt, ##__VA_ARGS__);\
         ndrx_Bset_error_fmt(atmierr, fmt, ##__VA_ARGS__);
     
 #define NDRX_UBFDB_MAGIC        0xf19c5da3
@@ -76,12 +76,12 @@ extern "C" {
  * Dump the UBF database configuration
  */
 #define NDRX_UBFDB_DUMPCFG(LEV, UBFDB)\
-    NDRX_LOG(LEV, "============== UBF FIELD TABLE DB ===============");\
-    NDRX_LOG(LEV, "%s=[%s]", NDRX_UBFDB_KWD_RESOURCE, UBFDB->resource);\
-    NDRX_LOG(LEV, "%s=[%ld]", NDRX_UBFDB_KWD_MAX_READERS, UBFDB->max_readers);\
-    NDRX_LOG(LEV, "%s=[%ld]", NDRX_UBFDB_KWD_MAP_SIZE, UBFDB->map_size);\
-    NDRX_LOG(LEV, "%s=[%o]", NDRX_UBFDB_KWD_PERMS, UBFDB->perms);\
-    NDRX_LOG(LEV, "=================================================");
+    UBF_LOG(LEV, "============== UBF FIELD TABLE DB ===============");\
+    UBF_LOG(LEV, "%s=[%s]", NDRX_UBFDB_KWD_RESOURCE, UBFDB->resource);\
+    UBF_LOG(LEV, "%s=[%ld]", NDRX_UBFDB_KWD_MAX_READERS, UBFDB->max_readers);\
+    UBF_LOG(LEV, "%s=[%ld]", NDRX_UBFDB_KWD_MAP_SIZE, UBFDB->map_size);\
+    UBF_LOG(LEV, "%s=[%o]", NDRX_UBFDB_KWD_PERMS, UBFDB->perms);\
+    UBF_LOG(LEV, "=================================================");
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -121,15 +121,15 @@ extern NDRX_API int ndrx_G_ubf_db_triedload; /* did we try to load? */
         
 /*---------------------------Prototypes---------------------------------*/
 extern int ndrx_ubfdb_Bflddbload(void);
-extern int ndrx_ubfdb_Bflddbadd(EDB_txn *txn, BFLDID bfldno, 
-        short fldtype, char *fldname);
+extern int ndrx_ubfdb_Bflddbadd(EDB_txn *txn, short fldtype, BFLDID bfldno, 
+        char *fldname);
 extern int ndrx_ubfdb_Bflddbdel(EDB_txn *txn, BFLDID bfldid);
 extern int ndrx_ubfdb_Bflddbdrop(EDB_txn *txn);
 extern void ndrx_ubfdb_Bflddbunload(void);
 extern int ndrx_ubfdb_Bflddbunlink(void);
 extern int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
-        BFLDID *p_bfldno, BFLDID *p_bfldid, 
-        short *p_fldtype, char *fldname, int fldname_bufsz);
+        short *p_fldtype, BFLDID *p_bfldno, BFLDID *p_bfldid, 
+        char *fldname, int fldname_bufsz);
 extern char * ndrx_ubfdb_Bflddbname (BFLDID bfldid);
 extern BFLDID ndrx_ubfdb_Bflddbid (char *fldname);
 extern EDB_env * ndrx_ubfdb_Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
