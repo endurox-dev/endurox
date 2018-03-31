@@ -79,25 +79,22 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     char fldname[UBFFLDMAX+1];
     int first = EXTRUE;
     
-    if (EXSUCCEED!=ndrx_cconfig_load())
-    {
-        fprintf(stderr, "ERROR ! Failed to load common-config\n");
-        EXFAIL_OUT(ret);  
-    }
-    
-    if (NULL==ndrx_get_G_cconfig())
-    {
-        fprintf(stderr, "NOTE: No common config defined!\n");
-        goto out;
-    }
-    
     /* Load UBF fields (if no already loaded...) */
-    if (EXSUCCEED!=Bflddbload())
+    if (EXFAIL==(ret=Bflddbload()))
     {
         fprintf(stderr, "ERROR ! Failed to load UBF field database: %s\n", 
                 Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
+    
+    if (EXTRUE!=ret)
+    {
+        fprintf(stderr, "WARNING ! No configuration defined for UBF DB!\n");
+        goto out;
+    }
+    
+    /* reset back to succeed */
+    ret = EXSUCCEED;
     
     /* get DB Env */
     if (NULL==(dbenv=Bfldddbgetenv(&dbi_id, &dbi_nm)))
@@ -135,16 +132,11 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             {
                 fprintf(stderr, "ERROR ! cursor get failed: %s\n", edb_strerror(ret));
             }
-            else
-            {
-                fprintf(stderr, "EOF\n");
-            }
             goto out;
         }
         
         if (EXSUCCEED!=Bflddbget(&keydb, &data,
-            &bfldno, &bfldid, 
-            &fldtype, fldname, sizeof(fldname)))
+            &fldtype, &bfldno, &bfldid, fldname, sizeof(fldname)))
         {
             fprintf(stderr, "ERROR ! failed to decode db data: %s\n", 
                     Bstrerror(Berror));
@@ -154,8 +146,9 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         /* print the data on screen */
         if (first)
         {
-            fprintf(stderr, "NO         ID         TYPE          Field Name\n");
-            fprintf(stderr, "---------- ---------- ----------    --------------------\n");
+            fprintf(stderr, "NO         ID         TYPE       Field Name\n");
+            fprintf(stderr, "---------- ---------- ---------- --------------------\n");
+            first = EXFALSE;
         }
         printf("%-10d %-10d %-10.10s %s\n",
            bfldno, bfldid, G_dtype_str_map[fldtype].fldname, fldname);
