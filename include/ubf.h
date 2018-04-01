@@ -50,8 +50,11 @@ extern "C" {
 
 /* UFB field types, suggest the c data types */
     
+/** Minimum data type code */
 #define BFLD_MIN        0
+/** 'short' C data type for UBF buffer */
 #define BFLD_SHORT	0
+/** 'long' C data type for UBF buffer */
 #define BFLD_LONG	1
 #define BFLD_CHAR	2
 #define BFLD_FLOAT	3
@@ -271,7 +274,7 @@ extern NDRX_API EDB_env * Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
 extern NDRX_API int Bflddbload(void);
 extern NDRX_API BFLDID Bflddbid (char *fldname);
 extern NDRX_API char * Bflddbname (BFLDID bfldid);
-extern NDRX_API int Bflddbget(EDB_val *key, EDB_val *data, short *p_fldtype,
+extern NDRX_API int Bflddbget(EDB_val *data, short *p_fldtype,
         BFLDID *p_bfldno, BFLDID *p_bfldid, char *fldname, int fldname_bufsz);
 extern NDRX_API int Bflddbunlink(void);
 extern NDRX_API void Bflddbunload(void);
