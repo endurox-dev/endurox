@@ -135,8 +135,8 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             goto out;
         }
         
-        if (EXSUCCEED!=Bflddbget(&keydb, &data,
-            &fldtype, &bfldno, &bfldid, fldname, sizeof(fldname)))
+        if (EXSUCCEED!=Bflddbget(&data, &fldtype, &bfldno, &bfldid, 
+                fldname, sizeof(fldname)))
         {
             fprintf(stderr, "ERROR ! failed to decode db data: %s\n", 
                     Bstrerror(Berror));
