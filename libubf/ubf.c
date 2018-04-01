@@ -371,33 +371,24 @@ expublic BFLDID Bfldid (char *fldnm)
     UBF_field_def_t *p_fld=NULL;
 
     API_ENTRY;
-
-    UBF_LOG(log_error, "YOPT 4444!!!!");
     
     if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
-        UBF_LOG(log_error, "YOPT 3444!!!!");
         return BBADFLDID;
     }
-    
-    UBF_LOG(log_error, "YOPT 2444!!!!");
     
     /* Now we can try to do lookup */
     p_fld = ndrx_fldnmhash_get(fldnm);
 
     if (NULL!=p_fld)
     {
-        UBF_LOG(log_error, "YOPT 1444!!!!");
         return p_fld->bfldid;
     }
     else if (NULL!=ndrx_G_ubf_db)
     {
         int ret;
         /* lookup into db */
-        UBF_LOG(log_error, "YOPT 555!!!!");
         ret=ndrx_ubfdb_Bflddbid(fldnm);
-        
-        UBF_LOG(log_error, "YOPT 555!!!! be=%d ret=%d", Berror, ret);
         return ret;
     }
     else
