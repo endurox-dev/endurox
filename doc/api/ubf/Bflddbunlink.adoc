@@ -1,0 +1,57 @@
+BFLDDBUNLINK(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+Bflddbunlink - unlink field database files.
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bflddbunlink(void);
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Unlink the database files. This function is useful in cases if configuration
+parameters are changed for database. The simple db drop will not cause new
+parameters to become in use. Thus when db is closed, it can be unlinked with 
+this function. Next access to DB will create new database with new parameters.
+
+Note this function does not close database handlers. Thus to work properly
+the DB shall not be open. Or it should be closed with *Bflddbunload(3)*.
+
+RETURN VALUE
+------------
+On success, *Bflddbunlink()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
+generic error message plus custom message with  debug info from last function call.
+
+*BEUNIX* unlink of data files failed.
+
+EXAMPLE
+-------
+See *atmitest/test050_ubfdb/atmiclt50.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bflddbid(3)* *Bflddbname(3)* *Bflddbload(3)* *Bflddbunload(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbget(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
