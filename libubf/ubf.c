@@ -2824,27 +2824,20 @@ expublic int Bflddbunlink(void)
 
 /**
  * Get field infos from cursor data
- * @param key
- * @param data
- * @param p_fldtype
- * @param p_bfldno
- * @param p_bfldid
- * @param fldname
- * @param fldname_bufsz
+ * @param[in] data UBF data record
+ * @param[out] p_fldtype ptr field type
+ * @param[out] p_bfldno field number (not compiled
+ * @param[out] p_bfldid filed id (compiled)
+ * @param[out] fldname field name to store
+ * @param[in] fldname_bufsz size of field name variable
  * @return 
  */
-expublic int Bflddbget(EDB_val *key, EDB_val *data,
+expublic int Bflddbget(EDB_val *data,
         short *p_fldtype, BFLDID *p_bfldno, BFLDID *p_bfldid, 
         char *fldname, int fldname_bufsz)
 {
     API_ENTRY;
     int ret = EXSUCCEED;
-    
-    if (NULL==key)
-    {
-        ndrx_Bset_error_msg(BEINVAL, "key is NULL!");
-        EXFAIL_OUT(ret);
-    }
     
     if (NULL==data)
     {
@@ -2883,7 +2876,7 @@ expublic int Bflddbget(EDB_val *key, EDB_val *data,
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_ubfdb_Bflddbget(key, data, p_fldtype, p_bfldno, p_bfldid,
+    ret=ndrx_ubfdb_Bflddbget(data, p_fldtype, p_bfldno, p_bfldid,
             fldname, fldname_bufsz);
     
  out:   
@@ -2900,7 +2893,13 @@ expublic char * Bflddbname (BFLDID bfldid)
     int ret=EXSUCCEED;
     char *f = NULL;
     API_ENTRY;
-    DB_API_ENTRY;   
+    DB_API_ENTRY;
+    
+    if (0>=bfldid)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Invalid field id (<=0)");
+        EXFAIL_OUT(ret);
+    }
     
     f = ndrx_ubfdb_Bflddbname (bfldid);
     
@@ -2923,7 +2922,13 @@ expublic BFLDID Bflddbid (char *fldname)
 {
     BFLDID ret=EXSUCCEED;
     API_ENTRY;
-    DB_API_ENTRY;   
+    DB_API_ENTRY;
+    
+    if (NULL==fldname || EXEOS==fldname[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Invalid field id null or empty!");
+        EXFAIL_OUT(ret);
+    }
     
     ret = ndrx_ubfdb_Bflddbid (fldname);
     
