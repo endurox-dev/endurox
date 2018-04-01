@@ -1,11 +1,11 @@
-TPCACHE.INI(5)
-==============
+UBFDB.INI(5)
+============
 :doctype: manpage
 
 
 NAME
 ----
-tpcache.ini - Enduro/X tpcall caching configuration
+ubfdb.ini - Enduro/X UBF custom field database configuration file
 
 
 SYNOPSIS
@@ -48,13 +48,15 @@ DATABASE DEFINITION
 *MAP_SIZE*::
     Maximum size of the database in bytes. The size must be multiple of OS page
     size. See LMDB's mdb_env_set_mapsize() function description. The default 
-    value used by Enduro/X is *10485760*. Postifx multiplier can be used for
+    value used by Enduro/X is *512000*. Postifx multiplier can be used for
     value in configuration: kK(x1000) mM (x1000'000) gG (x1000'000'000) e.g. 10M.
 *DB_PERMISSIONS*::
     Octal permissions for map files on file system. The default value is *0664*.
 
 EXAMPLE
 -------
+
+Simple configuration:
 
 ---------------------------------------------------------------------
 [@cachedb]
