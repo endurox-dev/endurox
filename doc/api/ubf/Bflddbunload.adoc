@@ -23,6 +23,9 @@ is not thread safe in respect to other Bflddb* functions.
 
 If DB is already closed, then function will do nothing.
 
+Currently Enduro/X at process exist does not unload the database handles. It is
+expected that OS will free any IPC (semaphores) automatically.
+
 RETURN VALUE
 ------------
 There is no return value.
