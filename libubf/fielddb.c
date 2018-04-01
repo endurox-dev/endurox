@@ -128,24 +128,27 @@ expublic int ndrx_ubfdb_Bflddbload(void)
         goto out;
     }
     
-    if (NULL==(ndrx_G_ubf_db = NDRX_CALLOC(1, sizeof(ndrx_ubf_db_t))))
-    {
-        int err = errno;
-        UBF_LOG(log_error, "%s: Failed to alloc %d bytes: %s",
-                    __func__, sizeof(ndrx_ubf_db_t), strerror(err));
-        
-        ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to alloc %d bytes: %s",
-                    __func__, sizeof(ndrx_ubf_db_t), strerror(err));
-        
-        userlog("%s: Failed to alloc %d bytes: %s",
-                    __func__, sizeof(ndrx_ubf_db_t), strerror(err));
-        EXFAIL_OUT(ret);
-    }
-    
     if (EXSUCCEED!=ndrx_cconfig_get(NDRX_CONF_SECTION_UBFDB, &csection))
     {
         UBF_LOG(log_debug, "UBF DB not defined");
         goto out;
+    }
+
+    if (NULL==ndrx_G_ubf_db)
+    {
+        if (NULL==(ndrx_G_ubf_db = NDRX_CALLOC(1, sizeof(ndrx_ubf_db_t))))
+        {
+            int err = errno;
+            UBF_LOG(log_error, "%s: Failed to alloc %d bytes: %s",
+                        __func__, sizeof(ndrx_ubf_db_t), strerror(err));
+
+            ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to alloc %d bytes: %s",
+                        __func__, sizeof(ndrx_ubf_db_t), strerror(err));
+
+            userlog("%s: Failed to alloc %d bytes: %s",
+                        __func__, sizeof(ndrx_ubf_db_t), strerror(err));
+            EXFAIL_OUT(ret);
+        }
     }
     
     /* loop over the config... */
@@ -155,9 +158,8 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     
     EXHASH_ITER(hh, csection, val, val_tmp)
     {
-        
         any_config = EXTRUE;
-        
+
         UBF_LOG(log_debug, "%s: config: key: [%s] value: [%s]",
                     __func__, val->key, val->val);
         
@@ -188,7 +190,16 @@ expublic int ndrx_ubfdb_Bflddbload(void)
                     val->key);
         }
     }
-
+    
+    if (!any_config)
+    {
+        NDRX_FREE(ndrx_G_ubf_db);
+        ndrx_G_ubf_db=NULL;
+        UBF_LOG(log_info, "%s: no [%s] section defined - nothing to do!",
+                __func__, NDRX_CONF_SECTION_UBFDB);
+        goto out;
+    }
+    
     if (EXEOS==ndrx_G_ubf_db->resource[0])
     {
         NDRX_UBFDB_BERROR(BEINVAL, 
@@ -206,7 +217,6 @@ expublic int ndrx_ubfdb_Bflddbload(void)
                 __func__, edb_strerror(errno));
         EXFAIL_OUT(ret);
     }
-    
     
     if (EXSUCCEED!=(ret=edb_env_set_maxreaders(ndrx_G_ubf_db->env, 
             ndrx_G_ubf_db->max_readers)))
