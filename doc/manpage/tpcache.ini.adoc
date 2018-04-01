@@ -493,7 +493,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8) *ndrxd(8)* *ndrxconfig.xml(5)* *tpcached(8)* *tpcachesv(8)* *tpcachebtsv(8)*
+*xadmin(8)* *ndrxd(8)* *ndrxconfig.xml(5)* *tpcached(8)* *tpcachesv(8)* *tpcachebtsv(8)*
 
 COPYING
 -------

@@ -1,0 +1,80 @@
+TPCACHE.INI(5)
+==============
+:doctype: manpage
+
+
+NAME
+----
+tpcache.ini - Enduro/X tpcall caching configuration
+
+
+SYNOPSIS
+--------
+
+---------------------------------------------------------------------
+[@ubfdb[/CCTAG]]
+cachedb=DBNAME_DB
+resource=DATABASE_DIRECTORY
+max_readers=MAX_READERS
+map_size=MAP_SIZE
+perms=DB_PERMISSIONS
+---------------------------------------------------------------------
+
+
+DESCRIPTION
+-----------
+This is optional LMDB database used for custom UBF field storage. Database
+must be defined in common-configuration environment. The DB must defined in
+order to use following functions: *Bflddbname(3)*, *Bflddbload(3)*,
+*Bflddbunload(3)*, *Bflddbdrop(3)*, *Bflddbdel(3)*, *Bflddbadd(3)*, 
+*Bflddbunlink(3)*.
+
+DATABASE DEFINITION
+-------------------
+
+*CCTAG*::
+    Is optional configuration sub-section. All processes which are willing to 
+    use the specific database shall be configured under this tag. Otherwise
+    the global tag could be used, that will be visible by all local domain
+    processes.
+*DATABASE_DIRECTORY*::
+    This is file system directory where UBF custom field database is located.
+    Parameter is *mandatory*, in case if '[@ubfdb]' section is defined.
+*MAX_READERS*::
+    See LMDB documentation for this. Basically this is number of threads or
+    processes using the database. See LMDB's mdb_env_set_maxreaders() 
+    function description. The
+    default value set by Enduro/X is *1000*.
+*MAP_SIZE*::
+    Maximum size of the database in bytes. The size must be multiple of OS page
+    size. See LMDB's mdb_env_set_mapsize() function description. The default 
+    value used by Enduro/X is *10485760*. Postifx multiplier can be used for
+    value in configuration: kK(x1000) mM (x1000'000) gG (x1000'000'000) e.g. 10M.
+*DB_PERMISSIONS*::
+    Octal permissions for map files on file system. The default value is *0664*.
+
+EXAMPLE
+-------
+
+---------------------------------------------------------------------
+[@cachedb]
+resource=/home/user1/test/db
+---------------------------------------------------------------------
+
+For more unit tests please see 'atmitest/test050_ubfdb' unit test folder ini
+files.
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*xadmin(8)* *Bflddbname(3)*, *Bflddbload(3)* *Bflddbunload(3)* *Bflddbdrop(3)*
+*Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

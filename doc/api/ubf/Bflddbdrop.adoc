@@ -1,30 +1,28 @@
-BFLDDBUNLINK(3)
-===============
+BFLDDBDROP(3)
+=============
 :doctype: manpage
 
 
 NAME
 ----
-Bflddbunlink - unlink field database files.
+Bflddbdrop - drop LMDB database.
 
 SYNOPSIS
 --------
 
 #include <ubf.h>
 
-int Bflddbunlink(void);
+int Bflddbdrop(EDB_txn *'txn');
 
 Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Unlink the database files. This function is useful in cases if configuration
-parameters are changed for database. The simple db drop will not cause new
-parameters to become in use. Thus when db is closed, it can be unlinked with 
-this function. Next access to DB will create new database with new parameters.
-
-Note this function does not close database handlers. Thus to work properly
-the DB shall not be open. Or it should be closed with *Bflddbunload(3)*.
+Drop the LMDB UFB custom field databases. Note that if parameters in configuration
+are changed (like map size or max readers), after this call these parameters
+are not re-applied. The drop is done as part of the LMDB transaction, passed in
+the 'txn' variable. The transaction is open by edb_txn_begin() and finished by
+edb_txn_commit() or edb_txn_abort().
 
 RETURN VALUE
 ------------
@@ -36,7 +34,11 @@ ERRORS
 In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
 generic error message plus custom message with  debug info from last function call.
 
-*BEUNIX* unlink of data files failed.
+*BEINVAL* database is not loaded.
+
+*BNOSPACE* LMDB error - no space, see logs. 
+
+*BEUNIX* LMDB error, see logs.
 
 EXAMPLE
 -------
@@ -49,7 +51,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *Bflddbid(3)* *Bflddbname(3)* *Bflddbload(3)* *Bflddbunload(3)*
-*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbget(3)* *ubfdb.ini(5)*
+*Bflddbunlink(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbget(3)*
 
 COPYING
 -------

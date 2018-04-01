@@ -13,7 +13,7 @@ SYNOPSIS
 
 #include <ubf.h>
 
-char * Bflddbname (BFLDID bfldid);
+char * Bflddbname (BFLDID 'bfldid');
 
 Link with '-lubf -lnstd -lm -lpthread'
 
@@ -55,7 +55,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *Bflddbid(3)* *Bflddbget(3)* *Bflddbload(3)* *Bflddbunload(3)*
-*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)* *ubfdb.ini(5)*
 
 COPYING
 -------
