@@ -56,6 +56,9 @@ expublic int ndrx_G_ubf_db_triedload = EXFALSE; /* Have we tried to load? */
 /* If NULL and tried, then no db defined  */
 expublic ndrx_ubf_db_t * ndrx_G_ubf_db = NULL;
 
+/* have some thread safety here */
+MUTEX_LOCKDECL(M_ubdb_init);
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -101,14 +104,14 @@ expublic int ndrx_ubfdb_Bflddbload(void)
     EDB_txn *txn = NULL;
     ndrx_inicfg_section_keyval_t * csection = NULL, *val = NULL, *val_tmp = NULL;
     
-    ndrx_G_ubf_db_triedload=EXTRUE;
+    MUTEX_LOCK_V(M_ubdb_init);
     
     if (NULL!=ndrx_G_ubf_db)
     {
         UBF_LOG(log_warn, "UBF DB already loaded!");
         goto out;
     }
-            
+    
     /* might be already loaded - no problem, it is singleton */
     if (EXSUCCEED!=(ret=ndrx_cconfig_load()))
     {
@@ -315,12 +318,16 @@ out:
         ndrx_G_ubf_db = NULL;
     }
 
+    ndrx_G_ubf_db_triedload=EXTRUE;
+    
     /* return  */
     if (EXSUCCEED==ret && NULL!=ndrx_G_ubf_db)
     {
+        MUTEX_UNLOCK_V(M_ubdb_init);
         return EXTRUE;
     }
 
+    MUTEX_UNLOCK_V(M_ubdb_init);
     return ret;
 }
 
@@ -550,8 +557,7 @@ out:
 }
 
 /**
- * Loop over the fields
- * @param key key returned by cursor
+ * Extract data from UBF DB record
  * @param val value returned by cursor
  * @param p_fldtype field type id
  * @param p_bfldno field number
@@ -560,7 +566,7 @@ out:
  * @param fldname_bufsz filed name buffer size
  * @return EXSUCCEED/EXFAIL (Berror set)
  */
-expublic int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
+expublic int ndrx_ubfdb_Bflddbget(EDB_val *data,
         short *p_fldtype, BFLDID *p_bfldno, BFLDID *p_bfldid, 
         char *fldname, int fldname_bufsz)
 {

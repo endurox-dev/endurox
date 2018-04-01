@@ -127,7 +127,7 @@ extern int ndrx_ubfdb_Bflddbdel(EDB_txn *txn, BFLDID bfldid);
 extern int ndrx_ubfdb_Bflddbdrop(EDB_txn *txn);
 extern void ndrx_ubfdb_Bflddbunload(void);
 extern int ndrx_ubfdb_Bflddbunlink(void);
-extern int ndrx_ubfdb_Bflddbget(EDB_val *key, EDB_val *data,
+extern int ndrx_ubfdb_Bflddbget(EDB_val *data,
         short *p_fldtype, BFLDID *p_bfldno, BFLDID *p_bfldid, 
         char *fldname, int fldname_bufsz);
 extern char * ndrx_ubfdb_Bflddbname (BFLDID bfldid);
