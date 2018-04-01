@@ -59,7 +59,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *Bflddbid(3)* *Bflddbname(3)* *Bflddbget(3)* *Bflddbunload(3)*
-*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)* *ubfdb.ini(5)*
 
 COPYING
 -------

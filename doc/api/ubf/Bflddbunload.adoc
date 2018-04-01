@@ -1,0 +1,46 @@
+BFLDDBUNLOAD(3)
+===============
+:doctype: manpage
+
+
+NAME
+----
+Bflddbunload - close LMDB field database handlers.
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+void Bflddbunload(void);
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function closes LMDB handlers which are open for custom field database. Function
+is not thread safe in respect to other Bflddb* functions.
+
+If DB is already closed, then function will do nothing.
+
+RETURN VALUE
+------------
+There is no return value.
+
+EXAMPLE
+-------
+See *atmitest/test050_ubfdb/atmiclt50.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bflddbid(3)* *Bflddbname(3)* *Bflddbload(3)* *Bflddbunlink(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbget(3)* *ubfdb.ini(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

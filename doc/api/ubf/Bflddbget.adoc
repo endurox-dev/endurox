@@ -13,8 +13,8 @@ SYNOPSIS
 
 #include <ubf.h>
 
-int Bflddbget(EDB_val *data, short *p_fldtype,
-        BFLDID *p_bfldno, BFLDID *p_bfldid, char *fldname, int fldname_bufsz);
+int Bflddbget(EDB_val *'data', short *'p_fldtype',
+        BFLDID *'p_bfldno', BFLDID *'p_bfldid', char *'fldname', int 'fldname_bufsz');
 
 Link with '-lubf -lnstd -lm -lpthread'
 
@@ -53,7 +53,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *Bflddbid(3)* *Bflddbname(3)* *Bflddbload(3)* *Bflddbunload(3)*
-*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)*
+*Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbadd(3)* *Bflddbunlink(3)* *ubfdb.ini(5)*
 
 COPYING
 -------

@@ -1,0 +1,67 @@
+BFLDDBADD(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+Bflddbadd - add field to UBF custom field database.
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bflddbadd(EDB_txn *txn, short fldtype, BFLDID bfldno, char *fldname);
+
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function is used to populate UBF database with custom fields. Note that function
+is not cluster aware, thus Enduro/X programmer for distributed operations shall
+create it's own mechanisms for cluster aware field database. For example use
+Enduro/X eventing mechanisms and some XATMI servers which subscribes to the
+events and then by events populate the records in local UBF database by using
+this function. The field number (non compiled) is passed in the 'bfldno' field,
+The field name is passed in the 'fldname' parameter.
+
+Field is added as part of the LMDB transaction, which is passed
+in the 'txn' variable. The transaction is open by edb_txn_begin() and finished by
+edb_txn_commit() or edb_txn_abort().
+
+RETURN VALUE
+------------
+On success, *Bflddbadd()* return zero; on error, -1 is returned, with *Berror* set to 
+indicate the error.
+
+ERRORS
+------
+In case of error *Berror* will be non *0*. Note that *Bstrerror()* returns 
+generic error message plus custom message with  debug info from last function call.
+
+*BEINVAL* 'txn' transaction object is NULL. Field id in 'bfldno' <=0. 'fldtype'
+is out of range of *BFLD_MIN* and *BFLD_MAX*. 'fldname' is NULL or empty.
+
+*BNOSPACE* LMDB error - no space, see logs. 
+
+*BEUNIX* LMDB error, see logs.
+
+EXAMPLE
+-------
+See *atmitest/test050_ubfdb/atmiclt50.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bflddbid(3)* *Bflddbname(3)* *Bflddbload(3)* *Bflddbunload(3)*
+*Bflddbunlink(3)* *Bflddbdrop(3)* *Bflddbdel(3)* *Bflddbget(3)* *ubfdb.ini(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
