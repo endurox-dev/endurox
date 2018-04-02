@@ -69,6 +69,7 @@ extern NDRX_API char * OBfind(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldid, B
 extern NDRX_API int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree);
 extern NDRX_API double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree);
 extern NDRX_API int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
+extern NDRX_API int OBaddfast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, Bfld_loc_info_t *next_fld);
 extern NDRX_API void OB_error(TPCONTEXT_T *p_ctxt, char *str);
 extern NDRX_API char * OBstrerror(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid);
@@ -114,6 +115,8 @@ extern NDRX_API long OBidxused(TPCONTEXT_T *p_ctxt, UBFH * p_ub);
 extern NDRX_API int OBrstrindex(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDOCC occ);
 extern NDRX_API int OBjoin(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
 extern NDRX_API int OBojoin(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
+extern NDRX_API int OBcmp(TPCONTEXT_T *p_ctxt, UBFH *p_ubf1, UBFH *p_ubf2);
+extern NDRX_API int OBsubset(TPCONTEXT_T *p_ctxt, UBFH *p_ubf1, UBFH *p_ubf2);
 extern NDRX_API int OBvnull(TPCONTEXT_T *p_ctxt, char *cstruct, char *cname, BFLDOCC occ, char *view);
 extern NDRX_API int OBvselinit(TPCONTEXT_T *p_ctxt, char *cstruct, char *cname, char *view);
 extern NDRX_API int OBvsinit(TPCONTEXT_T *p_ctxt, char *cstruct, char *view);
@@ -132,5 +135,15 @@ extern NDRX_API void * Ondrx_ubf_tls_get(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Ondrx_ubf_tls_set(TPCONTEXT_T *p_ctxt, void *data);
 extern NDRX_API void Ondrx_ubf_tls_free(TPCONTEXT_T *p_ctxt, void *data);
 extern NDRX_API void * Ondrx_ubf_tls_new(TPCONTEXT_T *p_ctxt, int auto_destroy, int auto_set);
+extern NDRX_API EDB_env * OBfldddbgetenv(TPCONTEXT_T *p_ctxt, EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
+extern NDRX_API int OBflddbload(TPCONTEXT_T *p_ctxt);
+extern NDRX_API BFLDID OBflddbid(TPCONTEXT_T *p_ctxt, char *fldname);
+extern NDRX_API char * OBflddbname(TPCONTEXT_T *p_ctxt, BFLDID bfldid);
+extern NDRX_API int OBflddbget(TPCONTEXT_T *p_ctxt, EDB_val *data, short *p_fldtype,BFLDID *p_bfldno, BFLDID *p_bfldid, char *fldname, int fldname_bufsz);
+extern NDRX_API int OBflddbunlink(TPCONTEXT_T *p_ctxt);
+extern NDRX_API void OBflddbunload(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int OBflddbdrop(TPCONTEXT_T *p_ctxt, EDB_txn *txn);
+extern NDRX_API int OBflddbdel(TPCONTEXT_T *p_ctxt, EDB_txn *txn, BFLDID bfldid);
+extern NDRX_API int OBflddbadd(TPCONTEXT_T *p_ctxt, EDB_txn *txn, short fldtype, BFLDID bfldno, char *fldname);
 #endif  /* __OUBF_H */
 
