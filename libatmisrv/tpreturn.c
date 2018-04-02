@@ -82,10 +82,19 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     tp_command_call_t * last_call;
     int was_auto_buf = EXFALSE;
+
+    last_call = ndrx_get_G_last_call();
+    
+    if (last_call->flags & TPNOREPLY)
+    {
+        NDRX_LOG(log_debug, "No reply expected - return to main()!, "
+                "flags; %ld", last_call->flags);
+        goto return_to_main;
+    }
+
     /* client with last call is acceptable...! 
      * As it can be a server's companion thread
      */
-    last_call = ndrx_get_G_last_call();
     if (p_atmi_lib_conf->is_client && !last_call->cd)
     {
         /* this is client */
@@ -94,13 +103,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
                 last_call->cd);
         ndrx_TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
         return; /* <<<< RETURN */
-    }
-
-    if (last_call->flags & TPNOREPLY)
-    {
-        NDRX_LOG(log_debug, "No reply expected - return to main()!, "
-                "flags; %ld", last_call->flags);
-        goto return_to_main;
     }
 
     memset(call, 0, sizeof(*call));
