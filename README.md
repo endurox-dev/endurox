@@ -15,7 +15,8 @@ For local inter-process-communication (IPC) Enduro/X uses kernel memory based Po
 queues to avoid overhead of the TCP/IP protocol which is used in other middlewares
 or REST based microservice architectures. Thus this approach greatly increases
 application speed, as kernel queues is basically a matter of block memory
-copy from one process to another (by contrast of 7 layers of TCP/IP stack). 
+copy from one process to another (by contrast of 7 layers of TCP/IP stack and
+streaming nature of the sockets vs block copy). 
 
 Enduro/X provides SOA architecture for C/C++ applications and allows to cluster 
 application in fault tolerant way over multiple physical servers. 
