@@ -3,7 +3,7 @@ EnduroX is Open Source Middleware Platform for Distributed Transaction
 Processing
 
 It is modern, microservices based middleware for writing distributed, open
-systems based (program consists of several executables) applications. Thus 
+systems (program consists of several executables) based applications. Thus 
 by using Enduro/X programmers do not have to worry about threads and concurrency 
 anymore, the load balacing and multi-CPU loading is done by Enduro/X middleware by it self,
 administrator only have to determine how many copies of particular services should
