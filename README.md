@@ -2,9 +2,20 @@
 EnduroX is Open Source Middleware Platform for Distributed Transaction 
 Processing
 
-Platform provides X/Open XATMI and XA APIs for C/C++ applications. Enduro/X can 
-be considered as replacement for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), 
-Hitachi OpenTP1 and other XATMI middlewares.
+It is modern, microservices based middleware for writing distributed, open
+systems based (program consists of several executables) applications. Thus 
+by using Enduro/X programmers do not have to worry about threads and concurrency 
+anymore, the load balacing and multi-CPU loading is done by Enduro/X middleware by it self,
+administrator only have to determine how many copies of particular services should
+be started. Of-course Enduro/X supports multi-threaded applications too, but now
+system architects have a choice either to design multi-threaded executables or
+just configure number of executables to start.
+
+For local inter-process-communication (IPC) Enduro/X uses kernel memory based Posix
+queues thus avoid overhead of the TCP/IP protocol which is used in other middlewares
+or REST based microservice architectures. Thus this approach greatly increases
+application speed, as kernel queues is basically a matter of block memory
+copy from one process to another (by contrast of 7 layers of TCP/IP stack). 
 
 Enduro/X provides SOA architecture for C/C++ applications and allows to cluster 
 application in fault tolerant way over multiple physical servers. 
@@ -12,6 +23,10 @@ Enduro/X provides Oracle(R) Tuxedo(R) FML/FML32 library emulation,
 including boolean expressions. Other Tuxedo specific APIs are supported, 
 such as tpforward() and work with distributed transactions (tpbegin(), 
 tpcommit(), etc.).
+
+Platform provides X/Open XATMI and XA interfaces/APIs for C/C++ applications. Enduro/X can 
+be considered as replacement for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), 
+Hitachi OpenTP1 and other XATMI middlewares.
 
 EnduroX have binddings for:
 - Golang (client & server)
