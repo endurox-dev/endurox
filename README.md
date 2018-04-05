@@ -12,7 +12,7 @@ system architects have a choice either to design multi-threaded executables or
 just configure number of executables to start.
 
 For local inter-process-communication (IPC) Enduro/X uses kernel memory based Posix
-queues thus avoid overhead of the TCP/IP protocol which is used in other middlewares
+queues to avoid overhead of the TCP/IP protocol which is used in other middlewares
 or REST based microservice architectures. Thus this approach greatly increases
 application speed, as kernel queues is basically a matter of block memory
 copy from one process to another (by contrast of 7 layers of TCP/IP stack). 
