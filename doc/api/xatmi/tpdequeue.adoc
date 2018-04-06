@@ -96,6 +96,10 @@ Note that each byte in 'msgid' is significant.
 
 *TPQPEEK* Return the message from queue by not actually removing it.
 
+*TPNOABORT* Do not abort global transaction, even if queue failed (could be
+suitable in cases when for example polling on Q is done (request for next msg
+and queue is empty).
+
 Fields 'TPQCTL.deq_time', 'TPQCTL.priority', 'TPQCTL.urcode', 'TPQCTL.appkey', 
 'TPQCTL.delivery_qos', 'TPQCTL.reply_qos', 'TPQCTL.exp_time' are reserved for 
 future use. 'TPQCTL.cltid' is set to client id string which enqueued the message.

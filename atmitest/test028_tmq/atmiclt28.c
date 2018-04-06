@@ -62,6 +62,7 @@ exprivate int basic_rndfail(void);
 exprivate int basic_enqcarray(void);
 exprivate int basic_autoq_deadq(void);
 exprivate int basic_rndfail(void);
+exprivate int noabort_q_test(void);
 
 
 int main(int argc, char** argv)
@@ -139,6 +140,10 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "carr"))
     {
         return basic_enqcarray();
+    }
+    else if (0==strcmp(argv[1], "noabort"))
+    {
+        return noabort_q_test();
     }
     else
     {
@@ -583,6 +588,88 @@ out:
     return ret;
 }
 
+/**
+ * Ensure that queues are empty (no tran abort..)
+ * @return 
+ */
+exprivate int noabort_q_test(void)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    long len;
+    UBFH *buf = (UBFH *)tpalloc("UBF", "", 1024);
+    int i;
+    
+    if (NULL==buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to allocate buffer: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    for (i=0; i<5000; i++)
+    {
+        /**********************************************************************/
+        NDRX_LOG(log_warn, "Test auto transaction mark for abort");
+        /**********************************************************************/
+        if (EXSUCCEED!=tpbegin(90, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
+            EXFAIL_OUT(ret);
+        } 
+
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TESTA", &qc, (char **)&buf, &len, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TESTA not empty!");
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED==tpcommit(0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR! Transaction must NOT BE committed!");
+            EXFAIL_OUT(ret);
+        }
+
+        if (TPEABORT!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR! Error must be TPEABORT!");
+            EXFAIL_OUT(ret);
+        }
+        /**********************************************************************/
+        NDRX_LOG(log_warn, "Feature #299 test TPNOABORT");
+        /**********************************************************************/
+        if (EXSUCCEED!=tpbegin(90, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
+            EXFAIL_OUT(ret);
+        } 
+
+        memset(&qc, 0, sizeof(qc));
+
+        if (EXSUCCEED==tpdequeue("MYSPACE", "TESTA", &qc, (char **)&buf, &len, TPNOABORT))
+        {
+            NDRX_LOG(log_error, "TESTERROR: TESTA not empty!");
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED!=tpcommit(0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR! Transaction MUST BE committed but fail: %s",
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+    }
+out:
+    if (NULL!=buf)
+    {
+        tpfree((char *)buf);
+    }
+     
+    return ret;
+}
 
 /**
  * Test message get by msgid

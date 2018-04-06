@@ -86,6 +86,9 @@ or flags does not allow to change the value.
 
 *TPEBLOCK* Service request queue was full and *TPNOBLOCK* flag was specified.
 
+*TPNOABORT* Do not abort global transaction (if one in progress), even if service
+failed.
+
 EXAMPLE
 -------
 See *atmitest/test001_basiccall/atmiclt1.c* for sample code.
