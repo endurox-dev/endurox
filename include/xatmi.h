@@ -35,18 +35,25 @@ extern "C" {
 #define TPSENDONLY	0x00000800
 #define TPRECVONLY	0x00001000
 #define TPACK		0x00002000
-#define TPTRANSUSPEND	0x00040000	/* Suspend current transaction          */
-#define TPSOFTTIMEOUT	0x00080000	/* Soft timout condition -> ret TPETIME */
-#define TPSOFTENOENT    0x00100000	/* Simulate that service is not found   */
-#define TPNOAUTBUF      0x00200000	/* Don't restore autbuf in srv context  */
-#define RESERVED_BIT1   0x00400000      /* RFU, tux compatiblity */
-#define TPREGEXMATCH    0x00800000      /* Use regular expressoins for match    */
-#define TPNOCACHELOOK   0x01000000      /* Do not lookup cache                  */
-#define TPNOCACHEADD    0x02000000      /* Do not save data to cache            */
-#define TPNOCACHEDDATA  0x04000000      /* Do not use cached data               */
-/**
- * Do not abort global transaction, even if service failed
- */
+/** Suspend current transaction          */
+#define TPTRANSUSPEND	0x00040000
+/** Soft timout condition -> ret TPETIME */
+#define TPSOFTTIMEOUT	0x00080000
+/** Simulate that service is not found   */
+#define TPSOFTENOENT    0x00100000
+/** Don't restore autbuf in srv context  */
+#define TPNOAUTBUF      0x00200000
+/** RFU, tux compatiblity */
+#define RESERVED_BIT1   0x00400000
+/** Use regular expressoins for match    */
+#define TPREGEXMATCH    0x00800000
+/** Do not lookup cache                  */
+#define TPNOCACHELOOK   0x01000000
+/** Do not save data to cache            */
+#define TPNOCACHEADD    0x02000000
+/** Do not use cached data               */
+#define TPNOCACHEDDATA  0x04000000
+/** Do not abort global transaction, even if service failed */
 #define TPNOABORT       0x08000000
 
 #define TPEVSERVICE	0x00000001
