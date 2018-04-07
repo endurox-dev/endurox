@@ -49,8 +49,7 @@ $/**
 $ * Web service test ud file.
 $ *
 $ * @file       testws.fd
-$ * @author     madars Vitolins
-$ * @copyright  madars Vitolins
+$ * @copyright  Mavimax, ltd
 $ * @version    SVN: $Id$
 $ */
 
@@ -92,8 +91,7 @@ Example output after utility run (testws.fd.h):
  * Web service test ud file.
  *
  * @file       testws.fd
- * @author     madars Vitolins
- * @copyright  madars Vitolins
+ * @copyright  Mavimax, ltd
  * @version    SVN: $Id$
  */
 #ifndef __TEST_FD
@@ -152,18 +150,13 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
 *ex_overview*, *ex_env(5)*
 
-AUTHOR
-------
-EnduroX is created by Madars Vitolins.
-
-
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, Ltd
 

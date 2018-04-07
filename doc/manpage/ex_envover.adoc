@@ -56,18 +56,12 @@ NDRX_NODEID=9
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to (C) Mavimax, Ltd
 
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ndrxconfig.xml(5)*
 
-AUTHOR
-------
-EnduroX is created by Madars Vitolins.
-
-
 COPYING
 -------
-(C) Madars Vitolins
-
+(C) Mavimax, Ltd
