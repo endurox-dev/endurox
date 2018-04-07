@@ -80,11 +80,6 @@ SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*
 
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
-
-
 COPYING
 -------
 (C) Mavimax, Ltd

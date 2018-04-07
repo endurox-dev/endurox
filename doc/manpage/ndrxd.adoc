@@ -59,18 +59,13 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
 *xadmin(8)*
 
-AUTHOR
-------
-EnduroX is created by Madars Vitolins.
-
-
 COPYING
 -------
-(C) Madars Vitolins
+(C) Mavimax, Ltd
 
