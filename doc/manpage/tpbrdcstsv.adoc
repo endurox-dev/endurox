@@ -35,16 +35,11 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
 *ndrxconfig.xml(5)* *tpnotify(3)* *tpbroadcast(3)* *tpchkunsol(3)* *tpsetunsol(3)*
-
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
-
 
 COPYING
 -------

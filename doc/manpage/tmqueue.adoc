@@ -122,16 +122,11 @@ Failure
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
 *xadmin(8)* *q.conf(5)*
-
-AUTHOR
-------
-Enduro/X is created by Madars Vitolins.
-
 
 COPYING
 -------

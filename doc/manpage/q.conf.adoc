@@ -126,18 +126,12 @@ queue2=svcnm=TESTSV,autoq=y,tries=3,waitinit=1,waitretry=5,waitretryinc=2,waitre
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)* *common_configuration(guides)*
 
-AUTHOR
-------
-EnduroX is created by Madars Vitolins.
-
-
 COPYING
 -------
-(C) Madars Vitolins
-
+(C) Mavimax, Ltd
