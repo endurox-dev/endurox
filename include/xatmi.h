@@ -44,6 +44,10 @@ extern "C" {
 #define TPNOCACHELOOK   0x01000000      /* Do not lookup cache                  */
 #define TPNOCACHEADD    0x02000000      /* Do not save data to cache            */
 #define TPNOCACHEDDATA  0x04000000      /* Do not use cached data               */
+/**
+ * Do not abort global transaction, even if service failed
+ */
+#define TPNOABORT       0x08000000
 
 #define TPEVSERVICE	0x00000001
 #define TPEVQUEUE       0x00000002 /* RFU */

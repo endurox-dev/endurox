@@ -882,7 +882,9 @@ out:
         ret = EXFAIL;
     }
 
-    if ( !(flags & TPNOTRAN) &&  /* Do not abort, if TPNOTRAN specified. */
+    /* Do not abort, if TPNOTRAN specified. */
+    /* Feature #299 */
+    if ( !(flags & TPNOTRAN) && !(flags & TPNOABORT) &&
 	G_atmi_tls->G_atmi_xa_curtx.txinfo &&
 	(EXSUCCEED!=ret || is_abort_only))
     {

@@ -366,6 +366,16 @@ fi
 
 test_empty_qspace;
 
+echo "Running: dequeue - empty (no abort)"
+(./atmiclt28 noabort 2>&1) >> ./atmiclt-dom1.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+test_empty_qspace;
+
 echo "Running: msgid tests"
 (./atmiclt28 msgid 2>&1) >> ./atmiclt-dom1.log
 RET=$?

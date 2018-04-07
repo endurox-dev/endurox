@@ -54,6 +54,7 @@ do not wait on queue, but return error. The error code for this
 situation is *TPEBLOCK*. This affects only request part of the call. 
 This flag does not affect waiting for response from the TMQ server.
 
+*TPNOABORT* Do not abort global transaction, even if queue failed.
 
 The *TPQCTL* structure is following:
 
