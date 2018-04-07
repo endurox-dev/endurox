@@ -21,28 +21,43 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Get the response from asynchronous service call. The 'cd' is pointer to call descriptor to which value might be set, in that case only matched reply is returned, other messages are dropped. 'data' and 'len' are field used for storing the reply messages. Fields must be allocated by *tpalloc()*. In case if *TPGETANY* flag is used, then any first response which is received is returned to user application.
+Get the response from asynchronous service call. The 'cd' is pointer to call 
+descriptor to which value might be set, in that case only matched reply is 
+returned, other messages are dropped. 'data' and 'len' are field used for 
+storing the reply messages. Fields must be allocated by *tpalloc()*. 
+In case if *TPGETANY* flag is used, then any first response which is 
+received is returned to user application.
 
 *Valid flags*
 
-*TPGETANY* Return first response message received. The connection identifier is stored into 'cd'.
+*TPGETANY* Return first response message received. The connection identifier is 
+stored into 'cd'.
 
-*TPNOBLOCK* Do not block for waiting on response message. Instead function returns with 'cd' equals to 0. And function return result is SUCCEED (0).
+*TPNOBLOCK* Do not block for waiting on response message. Instead function 
+returns with 'cd' equals to 0. And function return result is SUCCEED (0).
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlaying mq_* function calls.
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. 
+This affects only underlaying mq_* function calls.
 
-*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for indefinitely.
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). 
+Wait for reply for indefinitely.
 
-*TPNOCHANGE* Do not allow to change the reply buffer type. If flag is set and different buffer type is received than original, then error *TPEINVAL* is returned.
+*TPNOCHANGE* Do not allow to change the reply buffer type. If flag is set and 
+different buffer type is received than original, then error *TPEINVAL* is returned.
+
+*TPNOABORT* Do not abort global transaction (if one in progress), even if service
+failed.
 
 RETURN VALUE
 ------------
-On success, *tpgetrply()* returns 0; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpgetrply()* returns 0; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* for last calls returns generic error message plus custom message with debug info from last call.
+Note that *tpstrerror()* for last calls returns generic error message plus 
+custom message with debug info from last call.
 
 *TPEINVAL* Invalid parameter is given to function. Particularly pointer parameters are NULL.
 
@@ -50,11 +65,14 @@ Note that *tpstrerror()* for last calls returns generic error message plus custo
 
 *TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
 
-*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+*TPESVCERR* System level service failure. Server died during the message presence 
+in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info.
 
 EXAMPLE
 -------
@@ -62,7 +80,7 @@ See *atmitest/test018_tpacalltout/atmiclt18.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
