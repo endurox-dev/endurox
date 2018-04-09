@@ -148,6 +148,29 @@ if [[ "X$EXP" == "X" ]]; then
         go_out -2
 fi
 
+
+set_dom2;
+echo "Let xadmin to expire the call for service shutdown..."
+
+export NDRX_XADMINTOUT=1
+OUT=`xadmin stop -s atmi.sv51 2>&1`
+RET=$?
+
+echo "output: [$OUT]"
+
+if [[ "X$RET" == "X0" ]]; then
+    echo "xadmin must fail, but was ok (1)!"
+    go_out -3
+fi
+
+
+if [[ ! "$OUT" =~ "timeout" ]]; then
+
+    echo "expected output to contain [timeout] but got [$OUT]"
+    go_out -4
+fi
+
+
 echo "Testing xadmin's timeout overrid -> set invalid value, xadmin must fail"
 
 export NDRX_XADMINTOUT=0
@@ -157,13 +180,16 @@ xadmin echo OK
 RET=$?
 
 if [[ "X$RET" == "X0" ]]; then
-    echo "xadmin must fail, but was ok!"
+    echo "xadmin must fail, but was ok (2)!"
     go_out -3
 fi
 
 unset NDRX_XADMINTOUT
 
 
+echo "sleep 5 - attach to console session"
+#xadmin cat
+sleep 5
 
 echo "Testing double shutdown... (shall not hang)..."
 xadmin stop -y
