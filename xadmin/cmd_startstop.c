@@ -253,6 +253,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
     short keep_running_ndrxd = EXFALSE;
+    short force_off = EXFALSE;  /* force shutdown (for malfunction/no pid instances) */
     short dummy;
     
     ncloptmap_t clopt[] =
@@ -268,6 +269,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Left for compatibility"},
         {'k', BFLD_SHORT, (void *)&keep_running_ndrxd, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
+        {'f', BFLD_SHORT, (void *)&force_off, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Force shutdown"},
         {0}
     };
         
@@ -315,6 +318,19 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         /* do full shutdown by default */
         call.complete_shutdown = EXTRUE;
     }
+    
+    if (call.complete_shutdown && !is_ndrxd_running() && !force_off)
+    {
+        fprintf(stderr, "WARNING ! `ndrxd' daemon is in `%s', use -f "
+                "to force shutdown!\n",
+                NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat?"not started":"malfunction");
+
+        NDRX_LOG(log_warn, "WARNING ! `ndrxd' daemon is in `%s' state, use -f "
+                "to force shutdown!\n",
+                NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat?"not started":"malfunction");
+        EXFAIL_OUT(ret);
+    }
+    
     call.srvid = srvid;
     NDRX_STRCPY_SAFE(call.binary_name, srvnm);
 

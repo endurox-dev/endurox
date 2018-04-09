@@ -234,7 +234,10 @@ extern "C" {
 #define CONF_NDRX_SYSFLAGS       "NDRX_SYSFLAGS"    /* Additional flags to process    */
 #define CONF_NDRX_SILENT         "NDRX_SILENT"      /* Make xadmin silent             */
 #define CONF_NDRX_TESTMODE       "NDRX_TESTMODE"    /* Is Enduro/X test mode enabled  */
-                                                    
+
+/** call/receive timeout for xadmin - override of NDRX_TOUT */
+#define CONF_NDRX_XADMINTOUT     "NDRX_XADMINTOUT" 
+    
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
 
@@ -634,6 +637,10 @@ extern NDRX_API void (*tpsetunsol (void (*disp) (char *data, long len, long flag
 extern NDRX_API int tpnotify(CLIENTID *clientid, char *data, long len, long flags);
 extern NDRX_API int tpbroadcast(char *lmid, char *usrname, char *cltname, char *data,  long len, long flags);
 extern NDRX_API int tpchkunsol(void);
+
+extern NDRX_API int tptoutset(int tout);
+extern NDRX_API int tptoutget(void);
+
 
 /* in external application: */
 extern NDRX_API void tpsvrdone(void);

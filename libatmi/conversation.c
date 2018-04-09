@@ -683,6 +683,9 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     
     memset(call, 0, sizeof(*call));
 
+    /* Bug #300 */
+    call->clttout = G_atmi_env.time_out;
+    
     /*
      * Prepare some data if have something to prepare
      */

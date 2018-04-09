@@ -91,6 +91,28 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Configure/override `NDRX_TOUT'
+ * The env must be loaded to use this function...
+ * @param[in] tout number of seconds for timeout call/wait timeout
+ */
+expublic void ndrx_tptoutset(int tout)
+{
+    NDRX_LOG(log_info, "%s: NDRX_TOUT override to from %d to %d seconds", 
+            __func__, G_atmi_env.time_out, tout);
+    G_atmi_env.time_out = tout;
+}
+
+/**
+ * Get the ATMI timeout configuration
+ * @return number of seconds for timeout
+ */
+expublic int ndrx_tptoutget(void)
+{
+    return G_atmi_env.time_out;
+}
+
 /**
  * When tons of messages are sent to xadmin, then we might gets some sleep,
  * so that console is ready to display complete stuff..!
@@ -815,8 +837,8 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
                             arglist[ndrxd_cmd].p_put_output,
                             arglist[ndrxd_cmd].need_reply,
                             reply_only,
-			    /* xadmin on solaris fails to recieve answers when ndrxd exits.. */
-                            NULL, NULL, TPNOTIME | TPSIGRSTRT, NULL);
+			    /* xadmin on solaris fails to receive answers when ndrxd exits.. */
+                            NULL, NULL, /* TPNOTIME | - removed by Bug #300 */TPSIGRSTRT, NULL);
 }
 
 /**

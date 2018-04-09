@@ -95,10 +95,17 @@ out:
 
 /**
  * Remove pid file
+ * @param [in] second_call general call at the main() flow (not after shutdown)
  * @return SUCCEED/FAIL
  */
-exprivate int unlink_pid_file(void)
+expublic int ndrxd_unlink_pid_file(int second_call)
 {
+    /* second time no error checking... */
+    if (second_call && !ndrx_file_exists(G_sys_config.pidfile))
+    {
+        return EXSUCCEED;
+    }
+    
     if (EXSUCCEED!=unlink(G_sys_config.pidfile))
     {
         NDRX_LOG(log_error, "Failed to unlink to PID file %s: %s",
@@ -422,7 +429,7 @@ int main_uninit(void)
     cmd_close_queue();
 
     /* Remove pid file */
-    unlink_pid_file();
+    ndrxd_unlink_pid_file(EXTRUE);
     
     return EXSUCCEED;
 }

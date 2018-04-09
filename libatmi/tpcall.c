@@ -538,6 +538,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
         call->buffer_type_id = BUF_TYPE_NULL;
     else
         call->buffer_type_id = buffer_info->type_id;
+    
+    call->clttout = G_atmi_env.time_out;
 
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
     
