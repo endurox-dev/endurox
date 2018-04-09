@@ -576,6 +576,10 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     do
     {
         command_call_t *test_call = (command_call_t *)msg_buffer_max;
+        
+        
+        /* TODO: have an selector for ptr functions for CAT operations! */
+        
         /* Error could be also -2..! */
         if (0>(reply_len=ndrx_generic_q_receive(reply_queue, NULL, NULL,
                 msg_buffer_max, sizeof(msg_buffer_max), &prio, flags)))
@@ -583,7 +587,10 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             NDRX_LOG(log_error, "Failed to receive reply from ndrxd!");
 
             if (NULL!=p_put_output)
-                p_put_output("Failed to receive reply from ndrxd!");
+            {
+                p_put_output("ERROR ! Failed to receive reply from ndrxd\n(if timeout - check "
+                        "NDRX_TOUT or NDRX_XADMINTOUT settings)!");
+            }
 
             ret=EXFAIL;
             goto out;

@@ -111,5 +111,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
+    
+    /* have xadmin some wait! */
+    sleep(3);
+    
 }
 
