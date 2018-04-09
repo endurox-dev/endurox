@@ -1,0 +1,48 @@
+TPTOUTGET(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tptoutget - Get current XATMI timeout setting
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tptoutget(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function returns currently configured number of seconds used by ATMI library
+for timeout control when performing timed service calls and waiting for reply.
+Note that correct value is only returned when there was *tpinit(3)* issued
+(which pulls in common environment settings). For server processes that is
+already done automatically - at stage tpsrvinit().
+
+RETURN VALUE
+------------
+Returns number of currently configure seconds for ATMI library to use for timed
+send and receive operations (like tpcall(), tpgetrply(), etc.).
+
+EXAMPLE
+-------
+See *atmitest/test051_settout/atmiclt51.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tptoutset(3)* *tpinit(3)* *ex_env(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -343,6 +343,8 @@ documentation and added unit tests.
 
 - Version 5.3.8 released on 06/04/2018 (stable) Implemented Feature #299 - new flag TPNOABORT
 
+- Version 5.3.9 released on 09/04/2018 (development) Fixed Bug #300
+
 # Build configurations
 
 ## Configure make with: 

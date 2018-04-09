@@ -1513,3 +1513,40 @@ out:
     }
 }
 
+/**
+ * Set ATMI timeout (for tpcall send & receive)
+ * WARNING ! No init performed, if called befor tpinit(), you may expect
+ * that results will be overwritten by tpinit().
+ * @param tout number of seconds to wait
+ * @return EXSUCCED/EXFAIL (tpinit fail)
+ */
+expublic int tptoutset(int tout)
+{    
+    int ret=EXSUCCEED;
+    
+    if (tout <=0 )
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "tout is <= 0");
+        EXFAIL_OUT(ret);
+    }
+        
+    ndrx_tptoutset(tout);
+    
+out:
+    return ret;
+}
+
+/**
+ * Get current timeout configuration
+ * @return EXUSCEED/EXFAIL (in case of tpinit fail)
+ */
+expublic int tptoutget(void)
+{
+    int ret;
+    
+    ret=ndrx_tptoutget();
+    
+out:
+    return ret;
+}
+

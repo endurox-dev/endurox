@@ -250,6 +250,12 @@ expublic int cmd_stop (command_call_t * call, char *data, size_t len, int contex
     
     ret = app_shutdown(stop, shutdown_progress, &processes_shutdown);
 
+    if (stop->complete_shutdown)
+    {
+        NDRX_LOG(log_warn, "Unlinking pid-file before shutdown down reply...");
+        ndrxd_unlink_pid_file(EXFALSE);
+    }
+    
     if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 
             processes_shutdown, 0, NULL))
     {

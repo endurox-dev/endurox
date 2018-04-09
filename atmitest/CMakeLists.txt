@@ -95,6 +95,7 @@ ENDIF()
 add_subdirectory (test048_cache)
 add_subdirectory (test049_masksvc)
 add_subdirectory (test050_ubfdb)
+add_subdirectory (test051_settout)
 
 ################################################################################
 # Master test case driver

@@ -108,8 +108,8 @@ cmd_mapping_t M_command_map[] =
                                                             "\t args: psc [-s]\n"
                                                             "\t -s : print full service name"
                                                          , NULL},
-    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  4,  0, "Stop application domain\n"
-                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k]", NULL},
+    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  0, "Stop application domain\n"
+                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]", NULL},
     {"down",    cmd_fdown, EXFAIL,              1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
                                                          "\t args: fdown [-y]\n"
                                                          "\t RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!", NULL},
@@ -208,7 +208,6 @@ char *M_noinit[] = {
     ,"h"
     ,"killall"
     ,"gen"
-    ,"echo"
 };
 
 /**

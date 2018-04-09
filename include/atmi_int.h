@@ -443,6 +443,7 @@ struct tp_command_call
     long rcode; /* should be preset on reply only */
     int user3;  /* user field 3, request */
     long user4; /* user field 4, request */
+    int clttout; /* client process timeout setting */
     /* Extended size for storing cache updates in format
      * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
@@ -677,6 +678,8 @@ extern NDRX_API int ndrx_setup_queue_attrs(struct mq_attr *p_q_attr,
                                 long flags);
 extern NDRX_API mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern NDRX_API mqd_t ndrx_mq_open_at_wrp(char *name, int oflag);
+extern NDRX_API void ndrx_tptoutset(int tout);
+extern NDRX_API int ndrx_tptoutget();
 extern NDRX_API void ndrx_mq_fix_mass_send(int *cntr);
 extern NDRX_API int ndrx_q_setblock(mqd_t q_descr, int blocked);
 
