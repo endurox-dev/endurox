@@ -111,6 +111,8 @@ set(MAN3_NAMES
         tpjsontoview
         tpconvert
         tpurcode
+        tptoutset
+        tptoutget
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

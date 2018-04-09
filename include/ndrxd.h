@@ -312,6 +312,8 @@ extern int app_startup(command_startstop_t *call,
         long *p_processes_started); /* have some progress feedback */
 extern int is_srvs_down(void);
 
+extern int ndrxd_unlink_pid_file(int second_call);
+
 /* Error handling API */
 extern void NDRXD_error (char *str);
 extern void NDRXD_set_error(int error_code);

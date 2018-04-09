@@ -73,7 +73,19 @@ expublic int load_env_config(void)
         ret=EXFAIL;
         goto out;
     }
-
+    
+    /* set custom timeout if available */
+    if (NULL!=(p = getenv(CONF_NDRX_XADMINTOUT)))
+    {
+        int tout = atoi(p);
+        if (EXSUCCEED!=tptoutset(tout))
+        {
+            NDRX_LOG(log_error, "Failed to set `xadmin' Q timeout to: %d: %s",
+                    tout, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     if (NULL==(p=getenv(CONF_NDRX_DPID)))
     {
         NDRX_LOG(log_error, "Missing %s environment variable!", CONF_NDRX_DPID);
@@ -134,7 +146,7 @@ expublic int load_env_config(void)
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_DMNLOG);
         ret=EXFAIL;
         goto out;
-    }
+    }    
 
 out:
     return ret;

@@ -234,16 +234,16 @@ expublic int sv_serve_call(int *service, int *status)
 
     NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d (id: %d%d) callseq: %u, "
 			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
-                        " reply_to: %s",
+                        " reply_to: %s, clttout: %d",
                     	call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, 
 			call->name, call->flags, call_age, call->data_len,
-                        call->my_id, call->reply_to);
+                        call->my_id, call->reply_to, call->clttout);
     
-    if (env->time_out>0 && call_age >= env->time_out && 
+    if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, timeout = %d s", call_age, env->time_out);
+                "call age = %ld s, client timeout = %d s", call_age, call->clttout);
         *status=EXFAIL;
         goto out;
     }
@@ -499,16 +499,16 @@ expublic int sv_serve_connect(int *service, int *status)
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     
-    NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %hu",
-                                        call->cd, call->timestamp, call->callseq);
+    NDRX_LOG(log_debug, "got connect, cd: %d timestamp: %d callseq: %hu, clttout",
+                        call->cd, call->timestamp, call->callseq, call->clttout);
     
     call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
     
-    if (env->time_out>0 && call_age >= env->time_out && 
+    if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
         NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, timeout = %d s", call_age, env->time_out);
+                "call age = %ld s, client timeout = %d s", call_age, call->clttout);
         *status=EXFAIL;
         goto out;
     }

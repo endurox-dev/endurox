@@ -450,6 +450,8 @@ expublic void _tpforward (char *svc, char *data,
 
     call->buffer_type_id = (short)buffer_info->type_id; /* < caused core dumps! */
     NDRX_STRCPY_SAFE(call->reply_to, last_call->reply_to); /* <<< main difference from call! */
+    
+    call->clttout = last_call->clttout; /* store the client timeout setting */
     call->command_id = ATMI_COMMAND_TPCALL;
 
     NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);

@@ -412,6 +412,13 @@ Ensure(test050_ubfdb)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test051_settout)
+{
+    int ret;
+    ret=system_dbg("test051_settout/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -494,6 +501,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test048_cache);
     add_test(suite,test049_masksvc);
     add_test(suite,test050_ubfdb);
+    add_test(suite,test051_settout);
             
     return suite;
 }
@@ -518,6 +526,7 @@ int main(int argc, char** argv) {
     {
         ret=run_test_suite(suite, create_text_reporter());
     }
+    
     destroy_test_suite(suite);
 
     return ret;

@@ -1,0 +1,66 @@
+TPSETTOUT(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tptoutset - Set timeout configuration for ATMI library
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tptoutset(int 'tout');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Configure ATMI library for using different timeout setting for performing
+timed service calls and waiting for answers. This function overrides the
+setting found in *NDRX_TOUT* environment variable. Note that this function
+does not pull-in *tpinit(3)* automatically (nor it loads the environment
+configuration). Thus if *tptoutset()* function is called before ATMI init,
+the current value will be overwritten.
+
+For server processes at *tpsrvinit()* stage timeout value is already correct
+and can be overwritten.
+
+*tout* is number of seconds that shall be configured as max wait/send time.
+It must be greater than *0*.
+
+The function configures the value on process bases, and is not thread safe
+(shall be called only by one concurrent thread only).
+
+RETURN VALUE
+------------
+On success, *tptoutset()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* 'tout' parameter is less or equal to *0*.
+
+EXAMPLE
+-------
+See *atmitest/test051_settout/atmiclt51.c* for sample code.
+    
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tptoutget(3)* *tpinit(3)* *ex_env(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
