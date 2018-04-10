@@ -511,7 +511,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
 
     NDRX_LOG(log_debug, "gencall command: %d, reply_only=%d, need_reply=%d "
             "call flags=0x%x, getcall flags=%d",
-            ndrxd_cmd, reply_only, need_reply, call->flags, flags);
+            ndrxd_cmd, reply_only, need_reply, (NULL!=call?call->flags:0), flags);
     
     if (NULL!=rply_buf_out && NULL==rply_buf_out_len)
     {
