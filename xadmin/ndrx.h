@@ -107,6 +107,7 @@ typedef struct ndrx_config
     int  ndrxd_stat;                       /* Back-end status        */
     short is_idle;                         /* Are we idle?           */
     char *ndrxd_logfile;                   /* Log filename for ndrxd */
+    long listcall_flags;                   /* flags used by list call */
 } ndrx_config_t;
 
 

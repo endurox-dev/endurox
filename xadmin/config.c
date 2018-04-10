@@ -85,6 +85,13 @@ expublic int load_env_config(void)
             EXFAIL_OUT(ret);
         }
     }
+    else
+    {
+        /* set the list call flags 
+         * default to no timeout use
+         */
+        G_config.listcall_flags|=TPNOTIME;
+    }
     
     if (NULL==(p=getenv(CONF_NDRX_DPID)))
     {

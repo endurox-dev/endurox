@@ -69,7 +69,8 @@ expublic int at_rsp_process(command_reply_t *reply, size_t reply_len)
                             0, NULL,
                             NULL,
                             G_call_args,
-                            EXTRUE);
+                            EXTRUE,
+                            G_config.listcall_flags);
 }
 
 /**
@@ -96,7 +97,8 @@ expublic int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                             argc, argv,
                             p_have_next,
                             G_call_args,
-                            EXFALSE);
+                            EXFALSE,
+                            G_config.listcall_flags);
     
     return ret;
 }

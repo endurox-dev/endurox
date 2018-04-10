@@ -588,8 +588,8 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
 
             if (NULL!=p_put_output)
             {
-                p_put_output("ERROR ! Failed to receive reply from ndrxd\n(if timeout - check "
-                        "NDRX_TOUT or NDRX_XADMINTOUT settings)!");
+                p_put_output("\nERROR ! Failed to receive reply from ndrxd\n(if timeout - check "
+                        "NDRX_XADMINTOUT settings)!");
             }
 
             ret=EXFAIL;
@@ -819,6 +819,7 @@ expublic int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
  * @param p_have_next
  * @param arglist
  * @param reply_only
+ * @param flags additional flags for queue call
  * @return
  */
 extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
@@ -830,7 +831,8 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
                             int argc, char **argv,
                             int *p_have_next,
                             gencall_args_t *arglist/* this is list of process */,
-                            int reply_only)
+                            int reply_only,
+                            long flags)
 {
         return cmd_generic_call_2(ndrxd_cmd, msg_src, msg_type,
                             call, call_size,
@@ -845,7 +847,7 @@ extern int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_type,
                             arglist[ndrxd_cmd].need_reply,
                             reply_only,
 			    /* xadmin on solaris fails to receive answers when ndrxd exits.. */
-                            NULL, NULL, /* TPNOTIME | - removed by Bug #300 */TPSIGRSTRT, NULL);
+                            NULL, NULL, TPSIGRSTRT | flags, NULL);
 }
 
 /**
