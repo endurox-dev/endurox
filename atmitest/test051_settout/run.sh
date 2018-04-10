@@ -188,8 +188,8 @@ unset NDRX_XADMINTOUT
 
 
 echo "sleep 5 - attach to console session"
-#xadmin cat
-sleep 5
+xadmin cat
+#sleep 5
 
 echo "Testing double shutdown... (shall not hang)..."
 xadmin stop -y
