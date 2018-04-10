@@ -84,7 +84,8 @@ extern NDRX_API int cmd_generic_listcall(int ndrxd_cmd, int msg_src, int msg_typ
                             int argc, char **argv,
                             int *p_have_next,
                             gencall_args_t *arglist/* this is list of process */,
-                            int reply_only);
+                            int reply_only,
+                            long flags);
 
 extern NDRX_API int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
