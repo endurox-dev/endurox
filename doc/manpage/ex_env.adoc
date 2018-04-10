@@ -183,10 +183,13 @@ Mandatory Env. Variables
     will not print banner header at startup.
 *NDRX_XADMINTOUT*='XADMIN_TOUT'::
     This override of 'NDRX_TOUT' configuration for xadmin queue operations.
-    This timeout is used for certain calls to `ndrxd' (for example startup,
+    This timeout is used for certain calls to *ndrxd* (for example startup,
     shutdown, service listing, etc). Also it is used for communication
     with XATMI servers like *cpmsrv* and *tmsrv*. This is number of seconds,
-    the value must be greater than 0.
+    the value must be greater than 0. If parameter is set, then this will
+    enable timeout control for communication with *ndrxd* daemon, if parameter
+    is not set, the code will work in legacy mode, meaning that list calls
+    to ndrxd will never get timeout.
 
 EXAMPLE
 -------
