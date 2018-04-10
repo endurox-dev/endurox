@@ -345,6 +345,8 @@ documentation and added unit tests.
 
 - Version 5.3.9 released on 09/04/2018 (development) Fixed Bug #300
 
+- Version 5.3.10 released on 10/04/2018 (stable) Fixed Support #301
+
 # Build configurations
 
 ## Configure make with: 
