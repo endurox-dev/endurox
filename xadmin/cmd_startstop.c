@@ -231,7 +231,8 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        EXFALSE);
+                        EXFALSE,
+                        G_config.listcall_flags);
 out:
     return ret;
 }
@@ -344,7 +345,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                     argc, argv,
                     p_have_next,
                     G_call_args,
-                    EXFALSE);
+                    EXFALSE,
+                    G_config.listcall_flags);
 out:
     return ret;
 }
@@ -461,7 +463,8 @@ expublic int cmd_cabort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        EXFALSE);
+                        EXFALSE,
+                        G_config.listcall_flags);
 out:
     return ret;
 }
@@ -536,7 +539,8 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        EXFALSE);
+                        EXFALSE,
+                        G_config.listcall_flags);
 out:
     return ret;
 }

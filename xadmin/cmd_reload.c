@@ -108,7 +108,8 @@ expublic int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        EXFALSE);
+                        EXFALSE,
+                        G_config.listcall_flags);
 }
 
 /**
@@ -133,5 +134,6 @@ expublic int cmd_testcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
                         argc, argv,
                         p_have_next,
                         G_call_args,
-                        EXFALSE);
+                        EXFALSE,
+                        G_config.listcall_flags);
 }
