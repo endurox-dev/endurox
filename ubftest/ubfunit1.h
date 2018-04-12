@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 #include <cgreen/cgreen.h>
+#include <ubf.h>
 
 
 #define BIG_TEST_STRING \
@@ -95,6 +96,10 @@ extern TestSuite *ubf_nstd_mtest3(void);
 extern TestSuite *ubf_nstd_mtest4(void);
 extern TestSuite *ubf_nstd_mtest5(void);
 extern TestSuite *ubf_nstd_mtest6_dupcursor(void);
+
+extern TestSuite *test_nstd_macros(void);
+
+
 #ifdef	__cplusplus
 }
 #endif

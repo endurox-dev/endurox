@@ -347,6 +347,8 @@ documentation and added unit tests.
 
 - Version 5.3.10 released on 10/04/2018 (stable) Fixed Support #301
 
+- Version 5.3.12 released on 12/04/2018 (stable) Support #302 - added last 8 chars of hostname to logfile
+
 # Build configurations
 
 ## Configure make with: 
