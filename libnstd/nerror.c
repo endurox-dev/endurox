@@ -1,5 +1,5 @@
 /* 
-** NDR Stnadard library error handling
+** Enduro/X standard library - error handling
 **
 ** @file nerror.c
 ** 

@@ -175,7 +175,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	}
 #endif
 
-/* in case if dest buffer allows, we copy EOS too
+/**
+ * in case if dest buffer allows, we copy EOS too
  * This is compatible with strncpy
  */
 #define NDRX_STRNCPY(X, Y, N) {\
@@ -187,14 +188,32 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	}
 
-/* Copy the maxing at source buffer, not checking the dest
+/**
+ * Copy the maxing at source buffer, not checking the dest
  * N - number of symbols to test in source buffer.
  * The dest buffer is assumed to be large enough.
  */
 #define NDRX_STRNCPY_SRC(X, Y, N) {\
-	int ndrx_I5SmWDM_len = NDRX_STRNLEN(Y, N);\
-	memcpy(X, Y, ndrx_I5SmWDM_len);\
+            int ndrx_I5SmWDM_len = NDRX_STRNLEN(Y, N);\
+            memcpy(X, Y, ndrx_I5SmWDM_len);\
 	}
+
+/**
+ * Copy last NRLAST_ chars from SRC_ to DEST_
+ * safe mode with target buffer size checking.
+ * @param DEST_ destination buffer where to copy the string (should be static def)
+ * @param SRC_ source string to copy last bytes off
+ * @param NRLAST_ number of bytes to copy from string to dest
+ */
+#define NDRX_STRCPY_LAST_SAFE(DEST_, SRC_, NRLAST_) {\
+            int ndrx_KFWnP6Q_len = strlen(SRC_);\
+            if (ndrx_KFWnP6Q_len > NRLAST_) {\
+                NDRX_STRCPY_SAFE(DEST_, (SRC_+ (ndrx_KFWnP6Q_len - NRLAST_)) );\
+            } else {\
+                NDRX_STRCPY_SAFE(DEST_, SRC_);\
+            }\
+	}
+
 /*
  * So we use these two macros where we need know that more times they will be
  * true, than false. This makes some boost for CPU code branching.

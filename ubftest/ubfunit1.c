@@ -511,6 +511,8 @@ int main(int argc, char** argv)
     /*
      * NSTD Library tests
      */
+    
+    add_suite(suite, test_nstd_macros());
     add_suite(suite, ubf_nstd_crypto());
     add_suite(suite, ubf_nstd_base64());
     
