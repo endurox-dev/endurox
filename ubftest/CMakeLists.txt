@@ -56,7 +56,7 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
                 test_nstd_crypto.c test_nstd_b64.c
                 test_nstd_mtest.c test_nstd_mtest2.c test_nstd_mtest3.c
                 test_nstd_mtest4.c test_nstd_mtest5.c test_nstd_mtest6_dupcursor.c
-                test_bcmp.c)
+                test_bcmp.c test_nstd_macros.c)
 
 add_executable (testedbsync test_nstd_msync.c)
 
