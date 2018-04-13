@@ -102,7 +102,7 @@
     .threadnr=0,\
     .flags=FLAGS,\
     .memlog=NULL,\
-    .hostname={EXEOS}\
+    .hostnamecrc32=0x0\
 }
 
 /*---------------------------Enums--------------------------------------*/
@@ -593,11 +593,10 @@ expublic void ndrx_init_debug(void)
     
     ndrx_sys_get_hostname(hostname, sizeof(hostname));
     /* copy number of chars specified in hostname if debug config */
-    NDRX_STRCPY_LAST_SAFE(G_tp_debug.hostname, hostname, sizeof(G_tp_debug.hostname)-1);
     
-    NDRX_STRCPY_SAFE(G_ubf_debug.hostname, G_tp_debug.hostname);
-    NDRX_STRCPY_SAFE(G_ndrx_debug.hostname, G_tp_debug.hostname);
-    NDRX_STRCPY_SAFE(G_stdout_debug.hostname, G_tp_debug.hostname);
+    G_tp_debug.hostnamecrc32 = G_ubf_debug.hostnamecrc32 = 
+                G_ndrx_debug.hostnamecrc32 = G_stdout_debug.hostnamecrc32 = 
+                ndrx_Crc32_ComputeBuf(0, hostname, strlen(hostname));
     
     cconfig = ndrx_get_G_cconfig();
     
@@ -1055,9 +1054,9 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
     snprintf(line_start, sizeof(line_start), 
-        "%c:%s:%d:%-8.8s:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
-        dbg_ptr->code, org_ptr->module, lev, dbg_ptr->hostname, (int)dbg_ptr->pid, 
-        (unsigned long long)(ostid), thread_nr, ldate, ltime, 
+        "%c:%s:%d:%08x:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+        dbg_ptr->code, org_ptr->module, lev, (unsigned int)dbg_ptr->hostnamecrc32, 
+            (int)dbg_ptr->pid, (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec/1000), line_print, line);
     
     if (!M_is_initlock_owner)

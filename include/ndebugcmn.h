@@ -65,8 +65,8 @@ typedef struct
     char filename[PATH_MAX];
     char filename_th_template[PATH_MAX]; /* template for thread logging... */
     pid_t pid;
-    /** Last 8 symbols from the hostname */
-    char hostname[8+1];
+    /** Hashed hostname */
+    unsigned long hostnamecrc32;
     int buf_lines; 
     int buffer_size;
     int lines_written;
