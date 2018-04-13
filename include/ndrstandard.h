@@ -140,11 +140,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #endif
     
 #ifdef HAVE_STRLCPY
-#define NDRX_STRCPY_SAFE(X, Y) {strlcpy(X, Y, sizeof(X)-1);\
-                          X[sizeof(X)-1]=EXEOS;}
+#define NDRX_STRCPY_SAFE(X, Y) strlcpy(X, Y, sizeof(X));
 	
-#define NDRX_STRNCPY_SAFE(X, Y, N) {strlcpy(X, Y, N-1);\
-                          X[N-1]=EXEOS;}
+#define NDRX_STRNCPY_SAFE(X, Y, N) strlcpy(X, Y, N);
     
 #else
     
