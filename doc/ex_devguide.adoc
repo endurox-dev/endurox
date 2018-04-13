@@ -436,7 +436,7 @@ t:USER:5:test1pc :11064:000:20160928:100225252:ogtest.c:0007:Hello from macro lo
 So in general log line format is following:
 
 --------------------------------------------------------------------------------
-<LOGGER_FACILITY>:<MODULE>:<LOG_LEVEL>:<HOSTNM>:<PID>:<OS_THREAD_ID>:<THREAD_ID>:<DATE>:<TIME_MS>:<SOURCE_FILE>:<LINE>:<MESSAGE>
+<LOGGER_FACILITY>:<MODULE>:<LOG_LEVEL>:<HOSCR>:<PID>:<OS_THREAD_ID>:<THREAD_ID>:<DATE>:<TIME_MS>:<SOURCE_FILE>:<LINE>:<MESSAGE>
 --------------------------------------------------------------------------------
 
 Where:
@@ -452,7 +452,7 @@ request logger, 'u' - UBF thread logger, 'v' - UBF request logger.
 
 - 'LOG_LEVEL' - message log level digit.
 
-- 'HOSTNM' - are last 8 chars of the host name, padded with spaces.
+- 'HOSTCR' - hostname crc32.
 
 - 'PID' - process id.
 
