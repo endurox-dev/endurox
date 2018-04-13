@@ -76,5 +76,10 @@ if [ "X`grep '>>> LEAK' memck.out`" != "X" ]; then
         RET=-2
 fi
 
+#
+# print some stats...
+#
+grep with test.out
+
 exit $RET
 
