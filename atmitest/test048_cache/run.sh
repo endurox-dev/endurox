@@ -47,6 +47,9 @@ run_test () {
         else
                 M_fail=$((M_fail + 1))
                 M_failstr="$M_failstr $test.sh"
+		# mvitolin 2018/04/16
+		echo "Failing on first... to have logs from the case!"
+		exit 1
         fi
 
 	echo "fsync..."
