@@ -1,5 +1,5 @@
 # endurox
-EnduroX is Open Source Middleware Platform for Distributed Transaction 
+Enduro/X is Open Source Middleware Platform for Distributed Transaction 
 Processing
 
 It is modern, microservices based middleware for writing distributed, open
