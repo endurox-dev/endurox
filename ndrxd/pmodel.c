@@ -1127,9 +1127,14 @@ expublic int app_startup(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+            
+            /* Bug #306 auto start affects also server boot by name
+             * Only autostart instances needs to be booted.
+             */
+            if (p_pm->autostart &&
+                    ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    (EXEOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
+                    (EXEOS==call->binary_name[0] ))) /* or If full shutdown requested */
             {
                 start_process(call, p_pm, p_startup_progress, 
                         p_processes_started, EXFALSE, &abort);
