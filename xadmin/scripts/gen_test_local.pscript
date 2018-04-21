@@ -603,14 +603,16 @@ go_out $RET
         <killtime>20</killtime>
     </defaults>
     <servers>
-    " +("n"==::prov.dom1?
-@"            <server name=""atmisv.sv"+::prov.testid+@""">
-                <min>1</min>
-                <max>1</max>
-                <srvid>10</srvid>
-                <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
-            </server>":""
-        )+ @"<server name=""tpbridge"">
+    " +("n"==::prov.dom2?
+@"      <server name=""atmi.sv"+::prov.testid+@""">
+            <min>1</min>
+            <max>1</max>
+            <srvid>10</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+        </server>
+         ":""
+        )+ 
+@"      <server name=""tpbridge"">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
