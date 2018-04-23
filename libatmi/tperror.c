@@ -138,6 +138,18 @@ struct err_msg_xa
 };
 
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Return error code in string format
+ * note in case of invalid error code, the max or min values will be returned.
+ * @param err error code
+ * @return ptr to constant string (error code)
+ */
+expublic char * tpecodestr(int err)
+{
+    return ATMI_ERROR_DESCRIPTION(err);
+}
+
 /**
  * Standard.
  * Printer error to stderr

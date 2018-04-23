@@ -53,6 +53,10 @@
  * Function returns error description
  */
 #define UBF_ERROR_DESCRIPTION(X) (M_ubf_error_defs[X<BMINVAL?BMINVAL:(X>BMAXVAL?BMAXVAL:X)].msg)
+#define UBF_ERROR_CODESTR(X) (M_ubf_error_defs[X<BMINVAL?BMINVAL:(X>BMAXVAL?BMAXVAL:X)].codestr)
+
+
+#define UBFE(X) X,  #X
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -65,34 +69,46 @@
 struct err_msg
 {
     int id;
+    char *codestr;
     char *msg;
 } M_ubf_error_defs [] =
 {
-    {BMINVAL,   "No error"}, /* 0 */
-    {BERFU0,    "BERFU0"}, /* 1 */
-    {BALIGNERR, "Bisubf buffer not aligned"}, /* 2 */
-    {BNOTFLD,   "Buffer not bisubf"}, /* 3 */
-    {BNOSPACE,  "No space in bisubf buffer"}, /* 4 */
-    {BNOTPRES,  "Field not present"}, /* 5 */
-    {BBADFLD,   "Unknown field number or type"}, /* 6 */
-    {BTYPERR,   "Illegal field type"}, /* 7 */
-    {BEUNIX,    "Unix system call error"}, /* 8 */
-    {BBADNAME,  "Unknown field name"}, /* 9 */
-    {BMALLOC,   "Malloc failed"}, /* 10 */
-    {BSYNTAX,   "Bad syntax in boolean expression"}, /* 11 */
-    {BFTOPEN,   "Cannot find or open field table"}, /* 12 */
-    {BFTSYNTAX, "Syntax error in field table"}, /* 13 */
-    {BEINVAL,   "Invalid argument to function"}, /* 14 */
-    {BERFU1,    "BERFU1"}, /* 15 */
-    {BBADTBL,   "Bad access to field table"}, /* 16 */
-    {BBADVIEW,  "Bad view name/not loaded"}, /* 17 */
-    {BVFSYNTAX, "View file syntax error"}, /* 18 */
-    {BVFOPEN,   "Failed to open view file"}, /* 19 */
-    {BBADACM,   "View array count indicator negative"}, /* 20 */
-    {BNOCNAME,  "Structure field (cname) not found"},
-    {BEBADOP,  "Bad operation"}, /* 21 */
+    {UBFE(BMINVAL),   "No error"}, /* 0 */
+    {UBFE(BERFU0),    "BERFU0"}, /* 1 */
+    {UBFE(BALIGNERR), "Bisubf buffer not aligned"}, /* 2 */
+    {UBFE(BNOTFLD),   "Buffer not bisubf"}, /* 3 */
+    {UBFE(BNOSPACE),  "No space in bisubf buffer"}, /* 4 */
+    {UBFE(BNOTPRES),  "Field not present"}, /* 5 */
+    {UBFE(BBADFLD),   "Unknown field number or type"}, /* 6 */
+    {UBFE(BTYPERR),   "Illegal field type"}, /* 7 */
+    {UBFE(BEUNIX),    "Unix system call error"}, /* 8 */
+    {UBFE(BBADNAME),  "Unknown field name"}, /* 9 */
+    {UBFE(BMALLOC),   "Malloc failed"}, /* 10 */
+    {UBFE(BSYNTAX),   "Bad syntax in boolean expression"}, /* 11 */
+    {UBFE(BFTOPEN),   "Cannot find or open field table"}, /* 12 */
+    {UBFE(BFTSYNTAX), "Syntax error in field table"}, /* 13 */
+    {UBFE(BEINVAL),   "Invalid argument to function"}, /* 14 */
+    {UBFE(BERFU1),    "BERFU1"}, /* 15 */
+    {UBFE(BBADTBL),   "Bad access to field table"}, /* 16 */
+    {UBFE(BBADVIEW),  "Bad view name/not loaded"}, /* 17 */
+    {UBFE(BVFSYNTAX), "View file syntax error"}, /* 18 */
+    {UBFE(BVFOPEN),   "Failed to open view file"}, /* 19 */
+    {UBFE(BBADACM),   "View array count indicator negative"}, /* 20 */
+    {UBFE(BNOCNAME),  "Structure field (cname) not found"},
+    {UBFE(BEBADOP),  "Bad operation"}, /* 21 */
 };
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Return error code in string format
+ * note in case of invalid error code, the max or min values will be returned.
+ * @param err error code
+ * @return ptr to constant string (error code)
+ */
+expublic char * Becodestr(int err)
+{
+    return UBF_ERROR_CODESTR(err);
+}
 /**
  * Standard.
  * Printer error to stderr
