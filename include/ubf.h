@@ -183,6 +183,7 @@ extern NDRX_API int Bboolev (UBFH * p_ub, char *tree);
 extern NDRX_API double Bfloatev (UBFH * p_ub, char *tree);
 extern NDRX_API int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
 extern NDRX_API int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, Bfld_loc_info_t *next_fld);
+extern NDRX_API char * Becodestr(int err);
 extern NDRX_API void B_error (char *str);
 extern NDRX_API char * Bstrerror (int err);
 extern NDRX_API BFLDID Bmkfldid (int fldtype, BFLDID bfldid);
