@@ -65,6 +65,7 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern NDRX_API char * ndrx_Necodestr(int err);
 extern NDRX_API void _Nset_error(int error_code);
 extern NDRX_API char * Nstrerror (int err);
 extern NDRX_API void _Nset_error_msg(int error_code, char *msg);
