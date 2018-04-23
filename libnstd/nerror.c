@@ -49,6 +49,9 @@
  * Function returns error description
  */
 #define NSTD_ERROR_DESCRIPTION(X) (M_nstd_error_defs[X<NMINVAL?NMINVAL:(X>NMAXVAL?NMAXVAL:X)].msg)
+#define NSTD_ERROR_CODESTR(X) (M_nstd_error_defs[X<NMINVAL?NMINVAL:(X>NMAXVAL?NMAXVAL:X)].codestr)
+
+#define STDE(X) X,  #X
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -61,23 +64,24 @@
 struct err_msg
 {
     int id;
+    char *codestr;
     char *msg;
 } M_nstd_error_defs [] =
 {
-    {BMINVAL,       "No error"},        /* 0 */
-    {NEINVALINI,    "Invalid INI file"}, /* 1 */
-    {NEMALLOC,      "Malloc failed"},    /* 2 */
-    {NEUNIX,        "Unix system call failed"},    /* 3 */
-    {NEINVAL,       "Invalid paramter passed to function"}, /* 4 */
-    {NESYSTEM,      "System failure"}, /* 5 */
-    {NEMANDATORY,   "Mandatory key/field missing"}, /* 6 */
-    {NEFORMAT,      "Invalid format"}, /* 7 */
-    {NETOUT,        "Timed-out"}, /* 8 */
-    {NENOCONN,      "No Connection"}, /* 9 */
-    {NELIMIT,       "Limit reached"}, /* 10 */
-    {NEPLUGIN,      "Plugin error"}, /* 11 */
-    {NENOSPACE,     "No space to store output buffer"}, /* 12 */
-    {NEINVALKEY,    "Probably invalid encryption key"} /* 13 */
+    {STDE(BMINVAL),       "No error"},        /* 0 */
+    {STDE(NEINVALINI),    "Invalid INI file"}, /* 1 */
+    {STDE(NEMALLOC),      "Malloc failed"},    /* 2 */
+    {STDE(NEUNIX),        "Unix system call failed"},    /* 3 */
+    {STDE(NEINVAL),       "Invalid paramter passed to function"}, /* 4 */
+    {STDE(NESYSTEM),      "System failure"}, /* 5 */
+    {STDE(NEMANDATORY),   "Mandatory key/field missing"}, /* 6 */
+    {STDE(NEFORMAT),      "Invalid format"}, /* 7 */
+    {STDE(NETOUT),        "Timed-out"}, /* 8 */
+    {STDE(NENOCONN),      "No Connection"}, /* 9 */
+    {STDE(NELIMIT),       "Limit reached"}, /* 10 */
+    {STDE(NEPLUGIN),      "Plugin error"}, /* 11 */
+    {STDE(NENOSPACE),     "No space to store output buffer"}, /* 12 */
+    {STDE(NEINVALKEY),    "Probably invalid encryption key"} /* 13 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -97,6 +101,17 @@ expublic void N_error (char *str)
         fprintf(stderr, "%s:%d:%s\n", str, 
                 G_nstd_tls->M_nstd_error, 
                 NSTD_ERROR_DESCRIPTION(G_nstd_tls->M_nstd_error));
+}
+
+/**
+ * Return error code in string format
+ * note in case of invalid error code, the max or min values will be returned.
+ * @param err error code
+ * @return ptr to constant string (error code)
+ */
+expublic char * ndrx_Necodestr(int err)
+{
+    return NSTD_ERROR_CODESTR(err);
 }
 
 /**

@@ -351,6 +351,8 @@ documentation and added unit tests.
 
 - Version 5.3.14 released on 21/04/2018 (stable) Bug #306
 
+- Version 5.3.15 released on 23/04/2018 (development) Feature #307
+
 # Build configurations
 
 ## Configure make with: 
