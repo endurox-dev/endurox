@@ -419,6 +419,13 @@ Ensure(test051_settout)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test052_minstart)
+{
+    int ret;
+    ret=system_dbg("test052_minstart/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -502,6 +509,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test049_masksvc);
     add_test(suite,test050_ubfdb);
     add_test(suite,test051_settout);
+    add_test(suite,test052_minstart);
             
     return suite;
 }
