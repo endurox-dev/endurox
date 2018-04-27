@@ -120,7 +120,7 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 	libgpgme11-dev libxml2-dev git
 ---------------------------------------------------------------------
 
-==== System level dependencies - for Ubuntu 16.04 (Mint 18)
+==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04
 ---------------------------------------------------------------------
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
