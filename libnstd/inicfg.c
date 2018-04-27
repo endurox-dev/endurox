@@ -998,7 +998,7 @@ exprivate int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg,
                 {
                     found = EXTRUE;
                 }
-                else while (EXEOS!=section_start_with[i])
+                else while (NULL!=section_start_with[i])
                 {
                     len = NDRX_MIN(strlen(section->section), strlen(section_start_with[i]));
                     if (0==strncmp(section->section, section_start_with[i], len))
