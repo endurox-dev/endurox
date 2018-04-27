@@ -87,6 +87,7 @@ For Ubuntu 18 you may do following:
 ---------------------------------------------------------------------
 $ sudo systemctl start rc-local
 $ sudo systemctl status rc-local
+$ sudo systemctl enable rc-local
 ---------------------------------------------------------------------
 
 == Getting the source & building
