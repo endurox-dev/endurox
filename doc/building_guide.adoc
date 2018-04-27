@@ -45,7 +45,8 @@ $
 === Message Queue Configuration
 At the startup of the system needs to mount a Posix Queues folder, and needs to 
 set a appropriate limits. To do this automatically at system startup, 
-Linuxes which supports '/etc/rc.local', must add following lines before "exit 0":
+Linuxes which supports '/etc/rc.local', must add following lines before "exit 0".
+For Ubuntu 18.x+ create file from scratch (also add "exit 0" there at the end):
 
 ---------------------------------------------------------------------
 #!/bin/bash
@@ -68,11 +69,24 @@ echo 1049600 > /proc/sys/fs/mqueue/msgsize_max
 echo 10000 > /proc/sys/fs/mqueue/queues_max
 ---------------------------------------------------------------------
 
-Note for Centos/RHEL/Oracle Linux 7 you need to give execute 
+Note for Centos/RHEL/Oracle Linux 7+/Ubuntu 18 you need to give execute 
 permissions for rc.local:
 
 ---------------------------------------------------------------------
 # chmod +x /etc/rc.local
+---------------------------------------------------------------------
+
+Load the configuartion by doing:
+
+---------------------------------------------------------------------
+# /etc/rc.local
+---------------------------------------------------------------------
+
+For Ubuntu 18 you may do following:
+
+---------------------------------------------------------------------
+$ sudo systemctl start rc-local
+$ sudo systemctl status rc-local
 ---------------------------------------------------------------------
 
 == Getting the source & building
