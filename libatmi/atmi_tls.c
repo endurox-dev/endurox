@@ -404,11 +404,25 @@ expublic int ndrx_tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     
     if (context == TPNULLCONTEXT)
     {
+        TPCONTEXT_T tmp;
+        int dealloc = EXFALSE;
+        
+        /* deallocate the context (if needed so...) */
+        
         if (NULL!=G_atmi_tls && G_atmi_tls->is_auto)
         {
-            /* free the current thread context data (only in case if it was auto) */
-            ndrx_tpfreectxt((TPCONTEXT_T)G_atmi_tls);
+            dealloc = EXTRUE;
         }
+        
+        /* Bug #311: disassociate context */
+        ndrx_tpgetctxt(&tmp, 0L, priv_flags);
+        
+        if (dealloc)
+        {
+            /* free the current thread context data (only in case if it was auto) */
+            ndrx_tpfreectxt((TPCONTEXT_T)tmp);
+        }
+        
         /* In case if we are already in NULL context, then go out... */
         goto out; /* we are done. */
     }
