@@ -80,7 +80,8 @@ debug info from last function call.
 error also can be generated in case if the environment is not configured for 
 Enduro/X properly.
 
-*TPEOTYPE* Invalid type specified to function.
+*TPEOTYPE* Invalid type specified to function. VIEW sub-type not found or
+environment is not configured.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info.
@@ -89,15 +90,13 @@ debugs for more info.
 debugs for more info. In case of insufficient memory this error will be 
 generated too.
 
-*TPEOTYPE* VIEW sub-type not found or environment is not configured.
-
 EXAMPLE
 -------
 See *atmitest/test001_basiccall/atmiclt1.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
