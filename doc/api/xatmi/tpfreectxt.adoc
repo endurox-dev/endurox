@@ -18,15 +18,31 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 
 DESCRIPTION
 -----------
-Function frees up the context data which was returned by *tpgetctxt(3)* function call. Function does not do the *tpterm(3)*. Thus to remove context data fully, firstly thread running with context must call *tpterm(3)*, then *tpgetctxt(3)* and then call *tpfreectxt()*.
+Function frees up the context data which was returned by *tpgetctxt(3)* function 
+call. Function does not do the *tpterm(3)*. Thus to remove context data fully, 
+firstly thread running with context must call *tpterm(3)*, then *tpgetctxt(3)* 
+and then call *tpfreectxt()*.
 
-This function uses underlaying thread local storage infrastructure which is provided separately for each of the major Enduro/X libraries - libnstd (Standard library), libufb (UBF buffer library) and libatmi (ATMI library). If operations at library levels are required, then following functions can be used:
+This function uses underlaying thread local storage infrastructure which is 
+provided separately for each of the major Enduro/X libraries - libnstd 
+(Standard library), libufb (UBF buffer library) and libatmi (ATMI library). 
+If operations at library levels are required, then following functions can be used:
 
-1. ndrx_nstd_tls_new(), ndrx_ubf_tls_new(), ndrx_atmi_tls_new() - allocate TLS data for library.
-2. ndrx_nstd_tls_get(), ndrx_ubf_tls_get(), ndrx_atmi_tls_get() - get the TLS data for library (currently associated with thread).
-3. ndrx_nstd_tls_set(), ndrx_ubf_tls_set(), ndrx_atmi_tls_set() - set the thread local data from saved pointer.
-4. ndrx_nstd_tls_free(), ndrx_ubf_tls_free(), ndrx_atmi_tls_free() - free the thread local data.
+1. ndrx_nstd_tls_new(), ndrx_ubf_tls_new(), ndrx_atmi_tls_new() - allocate TLS 
+data for library.
 
+2. ndrx_nstd_tls_get(), ndrx_ubf_tls_get(), ndrx_atmi_tls_get() - get the TLS 
+data for library (currently associated with thread).
+
+3. ndrx_nstd_tls_set(), ndrx_ubf_tls_set(), ndrx_atmi_tls_set() - set the thread
+ local data from saved pointer.
+
+4. ndrx_nstd_tls_free(), ndrx_ubf_tls_free(), ndrx_atmi_tls_free() - free the
+ thread local data.
+
+
+Function call run in NULL context. If current TLS context equals to 'context'
+then current thread is set to NULL context.
 
 RETURN VALUE
 ------------
@@ -42,11 +58,12 @@ See *atmitest/test016_contextsw/atmiclt16.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpgetctxt(3)* *tpsetctxt(3)* *tpsrvsetctxdata(3)* *tpsrvgetctxdata(3)* *tpcontinue(3)* *tpinit(3)*
+*tpgetctxt(3)* *tpsetctxt(3)* *tpsrvsetctxdata(3)* *tpsrvgetctxdata(3)* 
+*tpcontinue(3)* *tpinit(3)*
 
 COPYING
 -------
