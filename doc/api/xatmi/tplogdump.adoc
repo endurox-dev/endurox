@@ -88,7 +88,7 @@ t:USER:5:10598:000:20160928:095228766:mptest.c:0015:The dump from TP_DUMP
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

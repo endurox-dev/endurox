@@ -76,7 +76,7 @@ t:USER:5:11064:000:20160928:100225252:ogtest.c:0007:Hello from macro logger [log
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
