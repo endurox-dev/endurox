@@ -311,6 +311,19 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 }
 
 /**
+ * Return Quick infos about logging conditions 
+ * TODO!
+ * @return bitwise 32bit integer
+ */
+expublic int ndrx_tplogqinfo(int lev, long flags)
+{
+
+    int ret  = 0;
+    
+    return ret;
+}
+
+/**
  * Parser sharing the functionality with common config & old style debug.conf
  * User update mode: tok1 == NULL, tok2 config string
  * CConfig mode: tok1 != NULL, tok2 != NULL
