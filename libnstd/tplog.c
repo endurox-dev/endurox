@@ -654,3 +654,60 @@ expublic void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int
 {
     UBF_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
+
+/**
+ * Oldest byte (signed) is log level, next TPLOGQI flags, then log facility follows
+ * Feature #312
+ * TODO: Needs unit test.
+ * @return signed 32bit integer
+ */
+expublic long tplogqinfo(int lev, long flags)
+{
+    int ret  = 0;
+    int tmp;
+    ndrx_debug_t *dbg;
+    
+    API_ENTRY;
+    
+    if (flags & TPLOGQI_GET_NDRX)
+    {
+        dbg = debug_get_ndrx_ptr();
+    }
+    else if (flags & TPLOGQI_GET_TP)
+    {
+        dbg = debug_get_tp_ptr();
+    }
+    else if (flags & TPLOGQI_GET_TP)
+    {
+        dbg = debug_get_ubf_ptr();
+    }
+    else 
+    {
+        _Nset_error_fmt(NEINVAL, "%s: Invalid flags: %ld", __func__, flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!(flags & TPLOGQI_EVAL_RETURN) || lev > dbg->level)
+    {
+        goto out;
+    }
+    
+    ret|=(((int)dbg->flags) & 0x0000ffff);
+    
+    if (flags & TPLOGQI_EVAL_DETAILED)
+    {
+        if (NULL!=strstr(dbg->iflags, "detailed"))
+        {
+            ret|=TPLOGQI_RET_HAVDETAILED;
+        }
+    }
+    tmp = dbg->level;
+    
+    tmp << 24;
+    
+    ret|=tmp;
+    
+out:
+            
+    return ret;
+}

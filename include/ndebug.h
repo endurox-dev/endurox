@@ -65,15 +65,39 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 /*
  * Logging settings
  */
-#define LOG_FACILITY_NDRX           0x00001 /* settings for ATMI logging        */
-#define LOG_FACILITY_UBF            0x00002 /* settings for UBF logging         */
-#define LOG_FACILITY_TP             0x00004 /* settings for TP logging          */
-#define LOG_FACILITY_TP_THREAD      0x00008 /* settings for TP, thread based logging */
-#define LOG_FACILITY_TP_REQUEST     0x00010 /* tp, Request logging, thread based*/
-#define LOG_FACILITY_NDRX_THREAD    0x00020 /* ndrx thread logging              */
-#define LOG_FACILITY_UBF_THREAD     0x00040 /* ubf thread logging               */
-#define LOG_FACILITY_NDRX_REQUEST   0x00080 /* ndrx request logging             */
-#define LOG_FACILITY_UBF_REQUEST    0x00100 /* ubf request logging              */
+/** settings for ATMI logging        */
+#define LOG_FACILITY_NDRX           0x00000001
+/** settings for UBF logging         */
+#define LOG_FACILITY_UBF            0x00000002
+/** settings for TP logging          */
+#define LOG_FACILITY_TP             0x00000004
+/** settings for TP, thread based logging */
+#define LOG_FACILITY_TP_THREAD      0x00000008
+/** tp, Request logging, thread based*/
+#define LOG_FACILITY_TP_REQUEST     0x00000010
+/** ndrx thread logging              */
+#define LOG_FACILITY_NDRX_THREAD    0x00000020
+/** ubf thread logging               */
+#define LOG_FACILITY_UBF_THREAD     0x00000040
+/** ndrx request logging             */
+#define LOG_FACILITY_NDRX_REQUEST   0x00000080
+/** ubf request logging              */
+#define LOG_FACILITY_UBF_REQUEST    0x00000100
+
+/** first byte is reserved for log level (should not collide with LOG_FACILITY!) */
+#define TPLOGQI_RET_HAVDETAILED     0x00010000
+
+/** Get log level for NDRXD        */
+#define TPLOGQI_GET_NDRX            0x00000001
+/** Get log level for UBF        */
+#define TPLOGQI_GET_UBF             0x00000002
+/** Get level for tp logger */
+#define TPLOGQI_GET_TP              0x00000004
+/** Eval detailed flag  */
+#define TPLOGQI_EVAL_DETAILED       0x00000008
+/** Return results (log level & detailed flag) event logging shall not be done */
+#define TPLOGQI_EVAL_RETURN         0x00000010
+
     
 #define LOG_CODE_NDRX               'N'
 #define LOG_CODE_UBF                'U'
