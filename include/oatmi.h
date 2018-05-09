@@ -71,6 +71,7 @@ extern NDRX_API int Otpopen(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpclose(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpgetlev(TPCONTEXT_T *p_ctxt);
 extern NDRX_API char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err);
+extern NDRX_API char * Otpecodestr(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API long Otpgetnodeid(TPCONTEXT_T *p_ctxt);
 extern NDRX_API long Otpsubscribe(TPCONTEXT_T *p_ctxt, char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
 extern NDRX_API int Otpunsubscribe(TPCONTEXT_T *p_ctxt, long subscription, long flags);
@@ -83,6 +84,8 @@ extern NDRX_API void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *dat
 extern NDRX_API int Otpnotify(TPCONTEXT_T *p_ctxt, CLIENTID *clientid, char *data, long len, long flags);
 extern NDRX_API int Otpbroadcast(TPCONTEXT_T *p_ctxt, char *lmid, char *usrname, char *cltname, char *data,  long len, long flags);
 extern NDRX_API int Otpchkunsol(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otptoutset(TPCONTEXT_T *p_ctxt, int tout);
+extern NDRX_API int Otptoutget(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
 extern NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
