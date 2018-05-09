@@ -656,9 +656,11 @@ expublic void ubflogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int
 }
 
 /**
+ * TPLOG Query Information
  * Oldest byte (signed) is log level, next TPLOGQI flags, then log facility follows
  * Feature #312
- * TODO: Needs unit test.
+ * @lev debug level (normally 1..5, 6 - dump)
+ * @flags see TPLOGQI_GET flags
  * @return signed 32bit integer
  */
 expublic long tplogqinfo(int lev, long flags)
@@ -673,13 +675,13 @@ expublic long tplogqinfo(int lev, long flags)
     {
         dbg = debug_get_ndrx_ptr();
     }
-    else if (flags & TPLOGQI_GET_TP)
+    else if (flags & TPLOGQI_GET_UBF)
     {
-        dbg = debug_get_tp_ptr();
+        dbg = debug_get_ubf_ptr();
     }
     else if (flags & TPLOGQI_GET_TP)
     {
-        dbg = debug_get_ubf_ptr();
+        dbg = debug_get_tp_ptr();
     }
     else 
     {
@@ -687,24 +689,23 @@ expublic long tplogqinfo(int lev, long flags)
         EXFAIL_OUT(ret);
     }
     
-    if (!(flags & TPLOGQI_EVAL_RETURN) || lev > dbg->level)
+    if (!(flags & TPLOGQI_EVAL_RETURN) && lev > dbg->level)
     {
         goto out;
     }
     
-    ret|=(((int)dbg->flags) & 0x0000ffff);
+    ret|=(((int)dbg->flags) & LOG_FACILITY_MASK);
     
     if (flags & TPLOGQI_EVAL_DETAILED)
     {
-        if (NULL!=strstr(dbg->iflags, "detailed"))
+        if (NULL!=strstr(dbg->iflags, LOG_IFLAGS_DETAILED))
         {
             ret|=TPLOGQI_RET_HAVDETAILED;
         }
     }
     tmp = dbg->level;
     
-    tmp << 24;
-    
+    tmp <<= TPLOGQI_RET_DBGLEVBITS;
     ret|=tmp;
     
 out:

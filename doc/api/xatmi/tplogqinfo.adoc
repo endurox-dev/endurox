@@ -1,0 +1,102 @@
+TPLOGQINFO(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+tplogqinfo - Query log configuration information
+
+
+SYNOPSIS
+--------
+#include <ndebug.h>
+#include <nerror.h>
+
+long tplogqinfo(int lev, long flags);
+
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used to query information about current thread logging configuration.
+By default if 'lev' is passed and infos are queried for given loggers 
+(passed in 'flags'):
+
+-------------------------------------------------------------------------------
+
+#define TPLOGQI_GET_NDRX            0x00000001
+#define TPLOGQI_GET_UBF             0x00000002
+#define TPLOGQI_GET_TP              0x00000004
+
+-------------------------------------------------------------------------------
+
+and if 'lev' is higher, than currently configured, function will return *0*. If
+'lev' equals or is lower than currently configured log level, the informations
+are returned. Returned infos may be forced to be returned by *TPLOGQI_EVAL_RETURN*
+flag. The 'iflags' of the loggers can be evaluate, and currently supported operation
+is *TPLOGQI_EVAL_DETAILED* (in flags), if set, the test for *detailed* flag is
+made. If flag is present in *iflags* of logger config, then return value will
+contain then *TPLOGQI_RET_HAVDETAILED* bit.
+
+
+RETURN VALUE
+------------
+On success, *tplogqinfo()* returns following infos in 32bit integer:
+first 0x0000ffff bits contains the actual logger facility currently in use for
+matched *TPLOGQI_GET* logger:
+
+-------------------------------------------------------------------------------
+
+#define LOG_FACILITY_NDRX           0x00000001
+#define LOG_FACILITY_UBF            0x00000002
+#define LOG_FACILITY_TP             0x00000004
+#define LOG_FACILITY_TP_THREAD      0x00000008
+#define LOG_FACILITY_TP_REQUEST     0x00000010
+#define LOG_FACILITY_NDRX_THREAD    0x00000020
+#define LOG_FACILITY_UBF_THREAD     0x00000040
+#define LOG_FACILITY_NDRX_REQUEST   0x00000080
+#define LOG_FACILITY_UBF_REQUEST    0x00000100
+
+-------------------------------------------------------------------------------
+
+If *detailed* flag is evaluated positive, then following bit is returned too
+in return value:
+
+-------------------------------------------------------------------------------
+
+#define TPLOGQI_RET_HAVDETAILED     0x00010000
+
+-------------------------------------------------------------------------------
+
+The current debug level for given logger is returned in oldest 8 bits of the
+return value, i.e. extracted in mask 0xff000000.
+
+On error, -1 is returned, with *Nerror* set to indicate the error.
+
+ERRORS
+------
+Note that *Nstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
+
+*NEINVAL* Invalid flags passed to function. None of *TPLOGQI_GET_NDRX*, 
+*TPLOGQI_GET_UBF* or *TPLOGQI_GET_TP* are present.
+
+EXAMPLE
+-------
+See *ubftest/test_nstd_debug.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* 
+*tplogsetreqfile(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)* *tplogconfig(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

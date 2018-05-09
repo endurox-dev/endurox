@@ -20,17 +20,20 @@ Link with '-lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Function does configure logging facilities - *NDRX* (XATMI internal logs), *UBF* (UBF internal logs( and *TP* (User logs). 
-If not already logger started, then this function will initiate Enduro/X framework to 
-load the logging settings from [@debug] ini section or from *ndrxdebug.conf(5)*. Then
-with help of this function user is able to override loaded settings.
+Function does configure logging facilities - *NDRX* (XATMI internal logs), 
+*UBF* (UBF internal logs( and *TP* (User logs). 
+If not already logger started, then this function will initiate Enduro/X 
+framework to  load the logging settings from [@debug] ini section or from 
+*ndrxdebug.conf(5)*. Then with help of this function user is able to 
+override loaded settings.
 
-Also it is possible to set per thread logging, if facility code used here is *LOG_FACILITY_TP_THREAD*. Or it is possible
-to configure request based logging from this function, but *tplogsetreqfile_direct(3)* and *tplogsetreqfile(3)* is
+Also it is possible to set per thread logging, if facility code used here is 
+*LOG_FACILITY_TP_THREAD*. Or it is possible to configure request based logging 
+from this function, but *tplogsetreqfile_direct(3)* and *tplogsetreqfile(3)* is
 recommended to use instead.
 
-The logging facility is set in 'logger' parameter, you may unify settings for multiple facilities with bitwise OR. Th facilities
-defined are following:
+The logging facility is set in 'logger' parameter, you may unify settings 
+for multiple facilities with bitwise OR. Th facilities defined are following:
 
 -------------------------------------------------------------------------------
 
@@ -42,7 +45,8 @@ defined are following:
 
 -------------------------------------------------------------------------------
 
-'logger' is mandatory parameter to the function. To configure logging level for given facilities, you may use 'lev' to indicate one of the
+'logger' is mandatory parameter to the function. To configure logging level 
+for given facilities, you may use 'lev' to indicate one of the
 following levels:
 
 -------------------------------------------------------------------------------
@@ -54,28 +58,37 @@ following levels:
 #define log_dump        6 /* this is un-offical level, normally use 1..5 */
 -------------------------------------------------------------------------------
 
-'lev' is optional parameter, and if not used, then set it to  '-1'. Function accepts optional parameter 'debug_string', which 
-is Enduro/X standard debug string. If field not set then it might be NULL or empty (EOS). If set, then it contains the
-configuration settings described in *ndrxdebug.conf(5)* or see *ex_devguide(guides)*. One special note here is that,
-with debug string you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *NDRX* and *UBF* log levels will affect the
-per-process common settings, i.e. they are common for thread and request logging. However *TP* will change the level of the
-given logger facility, per process (*LOG_FACILITY_TP*), per thread (*LOG_FACILITY_TP_THREAD*) or per request (*LOG_FACILITY_TP_REQUEST*).
+'lev' is optional parameter, and if not used, then set it to  '-1'. Function 
+accepts optional parameter 'debug_string', which  is Enduro/X standard debug 
+string. If field not set then it might be NULL or empty (EOS). If set, then it
+contains the configuration settings described in *ndrxdebug.conf(5)* or 
+see *ex_devguide(guides)*. One special note here is that, with debug string 
+you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *NDRX* and 
+*UBF* log levels will affect the per-process common settings, i.e. 
+they are common for thread and request logging. However *TP* will change the 
+level of the given logger facility, per process (*LOG_FACILITY_TP*), per thread 
+(*LOG_FACILITY_TP_THREAD*) or per request (*LOG_FACILITY_TP_REQUEST*).
 
-If the 'lev' parameter is present and it will override the given loggers settings from 'debug_string'. The same applies if 'debug_string'
-contains the logging file, the 'new_file' is present (not NULL and not EOS) will override the output file setting if *file* param is
+If the 'lev' parameter is present and it will override the given loggers 
+settings from 'debug_string'. The same applies if 'debug_string'
+contains the logging file, the 'new_file' is present (not NULL and not EOS) 
+will override the output file setting if *file* param is
 present in 'debug_string'.
 
-'module' module indicates the module code string which is plotted in each logged line. This is valid only for *TP* loggers for
+'module' module indicates the module code string which is plotted in each 
+logged line. This is valid only for *TP* loggers for
 *NDRX* and *UBF* it is ignored.
 
 
 RETURN VALUE
 ------------
-On success, *tplogconfig()* returns 0. On error, -1 is returned, with *Nerror* set to indicate the error.
+On success, *tplogconfig()* returns 0. On error, -1 is returned, with 
+*Nerror* set to indicate the error.
 
 ERRORS
 ------
-Note that *Nstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Nstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
 *NEFORMAT* Invalid format for 'debug_string'.
 
@@ -92,7 +105,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *ex_devguide(guides)* ndrxdebug.conf(5)
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* 
+*tplogsetreqfile(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)* *tplogqinfo(3)*
 
 COPYING
 -------
