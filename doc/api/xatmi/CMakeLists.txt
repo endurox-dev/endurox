@@ -102,6 +102,7 @@ set(MAN3_NAMES
         tploggetbufreqfile
         tplogdelbufreqfile
         tplogprintubf
+        tplogqinfo
         tpisautobuf
         tpsetunsol
         tpnotify
