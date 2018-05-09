@@ -84,8 +84,14 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 /** ubf request logging              */
 #define LOG_FACILITY_UBF_REQUEST    0x00000100
 
+/** Mask of the log facility bitwise flags */
+#define LOG_FACILITY_MASK           0x0000ffff
+
 /** first byte is reserved for log level (should not collide with LOG_FACILITY!) */
 #define TPLOGQI_RET_HAVDETAILED     0x00010000
+/** Bit */
+#define TPLOGQI_RET_DBGLEVBITS      24
+#define TPLOGQI_RET_DBGLEVGET(LEV)  LEV >> TPLOGQI_RET_DBGLEVBITS
 
 /** Get log level for NDRXD        */
 #define TPLOGQI_GET_NDRX            0x00000001
@@ -97,6 +103,10 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define TPLOGQI_EVAL_DETAILED       0x00000008
 /** Return results (log level & detailed flag) event logging shall not be done */
 #define TPLOGQI_EVAL_RETURN         0x00000010
+
+
+/** Integration flags, detailed logging (incl. stack backtrace) */
+#define LOG_IFLAGS_DETAILED         "detailed"
 
     
 #define LOG_CODE_NDRX               'N'
@@ -290,6 +300,8 @@ extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_fi
 extern NDRX_API void tplogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, int len);
 extern NDRX_API void tplogdump(int lev, char *comment, void *ptr, int len);
 extern NDRX_API void tplog(int lev, char *message);
+extern NDRX_API long tplogqinfo(int lev, long flags);
+
 /* extended logging: */
 extern NDRX_API void tplogex(int lev, char *file, long line, char *message);
 
