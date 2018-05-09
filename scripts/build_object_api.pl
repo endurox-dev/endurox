@@ -991,6 +991,7 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/^tplogdump$/
                 && $func_name !~ m/^tplog$/
                 && $func_name !~ m/^tplogex$/
+                && $func_name !~ m/^tplogqinfo$/
                 && $func_name !~ m/^tploggetiflags$/
 
                 && $func_name !~ m/^ndrxlogdumpdiff$/

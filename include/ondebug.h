@@ -49,6 +49,7 @@ extern "C" {
 extern NDRX_API void Otplogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr1, void *ptr2, int len);
 extern NDRX_API void Otplogdump(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr, int len);
 extern NDRX_API void Otplog(TPCONTEXT_T *p_ctxt, int lev, char *message);
+extern NDRX_API long Otplogqinfo(TPCONTEXT_T *p_ctxt, int lev, long flags);
 extern NDRX_API void Otplogex(TPCONTEXT_T *p_ctxt, int lev, char *file, long line, char *message);
 extern NDRX_API char * Otploggetiflags(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Ondrxlogdumpdiff(TPCONTEXT_T *p_ctxt, int lev, char *comment, void *ptr1, void *ptr2, int len);
