@@ -89,8 +89,10 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 /** first byte is reserved for log level (should not collide with LOG_FACILITY!) */
 #define TPLOGQI_RET_HAVDETAILED     0x00010000
-/** Bit */
+/** Bit offset for log level in return of info query */
 #define TPLOGQI_RET_DBGLEVBITS      24
+
+/** Macros for extracting log level from query results */
 #define TPLOGQI_RET_DBGLEVGET(LEV)  LEV >> TPLOGQI_RET_DBGLEVBITS
 
 /** Get log level for NDRXD        */
