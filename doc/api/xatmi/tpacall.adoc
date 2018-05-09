@@ -76,6 +76,9 @@ or debugs for more info.
 
 *TPEBLOCK* Service queue was full and *TPNOBLOCK* flag was specified.
 
+*TPNOTIME* Do not expire call by server process, if message age is older
+than 'NDRX_TOUT' timeout (or timeout overridden by *tptoutset(3)*).
+
 EXAMPLE
 -------
 See *atmitest/test001_basiccall/atmiclt1.c* for sample code.
@@ -86,7 +89,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpcall(3)* *tpgetrply(3)* *tpcancel(3)*
+*tpcall(3)* *tpgetrply(3)* *tpcancel(3)* *tptoutset(3)*
 
 COPYING
 -------
