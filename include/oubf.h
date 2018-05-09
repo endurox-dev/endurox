@@ -70,6 +70,7 @@ extern NDRX_API int OBboolev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree);
 extern NDRX_API double OBfloatev(TPCONTEXT_T *p_ctxt, UBFH * p_ub, char *tree);
 extern NDRX_API int OBadd(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len);
 extern NDRX_API int OBaddfast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, Bfld_loc_info_t *next_fld);
+extern NDRX_API char * OBecodestr(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API void OB_error(TPCONTEXT_T *p_ctxt, char *str);
 extern NDRX_API char * OBstrerror(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API BFLDID OBmkfldid(TPCONTEXT_T *p_ctxt, int fldtype, BFLDID bfldid);
