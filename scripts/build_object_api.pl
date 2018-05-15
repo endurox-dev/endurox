@@ -997,10 +997,12 @@ NEXT: while( my $line = <$info>)
                 && $func_name !~ m/^ndrxlogdumpdiff$/
                 && $func_name !~ m/^ndrxlogdump$/
                 && $func_name !~ m/^ndrxlog$/
+                && $func_name !~ m/^ndrxlogex$/
 
                 && $func_name !~ m/^ubflogdumpdiff$/
                 && $func_name !~ m/^ubflogdump$/
                 && $func_name !~ m/^ubflog$/
+                && $func_name !~ m/^ubflogex$/
 
                 && $func_name !~ m/^tploggetreqfile$/
                 && $func_name !~ m/^tplogconfig$/
