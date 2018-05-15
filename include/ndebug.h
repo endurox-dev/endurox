@@ -159,8 +159,15 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
     {__ndrx_debug__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
 
+#define NDRX_LOGEX(lev, file, line, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
+    {__ndrx_debug__(&G_ndrx_debug, lev, file, line, __func__, fmt, ##__VA_ARGS__);}}
+
 #define UBF_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
     {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
+
+#define UBF_LOGEX(lev, file, line, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
+    {__ndrx_debug__(&G_ubf_debug, lev, file, line, __func__, fmt, ##__VA_ARGS__);}}
+
 /* User logging */
 #define TP_LOG(lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
     {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);}}
@@ -306,6 +313,8 @@ extern NDRX_API long tplogqinfo(int lev, long flags);
 
 /* extended logging: */
 extern NDRX_API void tplogex(int lev, char *file, long line, char *message);
+extern NDRX_API void ndrxlogex(int lev, char *file, long line, char *message);
+extern NDRX_API void ubflogex(int lev, char *file, long line, char *message);
 
 /* get integration flags: */
 extern NDRX_API char * tploggetiflags(void);

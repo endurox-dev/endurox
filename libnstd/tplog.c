@@ -518,7 +518,7 @@ expublic int tploggetreqfile(char *filename, int bufsize)
         }
         else
         {
-            strcpy(filename, G_nstd_tls->requestlog_tp.filename);
+            NDRX_STRNCPY_SAFE(filename, G_nstd_tls->requestlog_tp.filename, bufsize);
         }
     }
     
@@ -538,7 +538,7 @@ expublic void tplog(int lev, char *message)
 }
 
 /**
- * Extended logging
+ * Extended logging (TP)
  * @param lev
  * @param message
  */
@@ -594,6 +594,19 @@ expublic void ndrxlog(int lev, char *message)
 }
 
 /**
+ * Extended logging (NDRX)
+ * @param lev log level
+ * @param file source file name
+ * @param line source line number
+ * @param message log message
+ */
+expublic void ndrxlogex(int lev, char *file, long line, char *message)
+{
+    /* do not want to interpret the format string */
+    NDRX_LOGEX(lev, file, line, "%s", message);
+}
+
+/**
  * Do the hex dump, ndrx facility
  * @param lev
  * @param comment
@@ -617,7 +630,6 @@ expublic void ndrxlogdumpdiff(int lev, char *comment, void *ptr1, void *ptr2, in
 {
     NDRX_DUMP_DIFF(lev, comment, (char *)ptr1, (char *)ptr2, len);
 }
-
  
 /**
  * Log the message to configured device, ubf facility
@@ -628,6 +640,19 @@ expublic void ubflog(int lev, char *message)
 {
     /* do not want to interpret the format string */
     UBF_LOG(lev, "%s", message);
+}
+
+/**
+ * Extended logging (UBF)
+ * @param lev log level
+ * @param file source file name
+ * @param line source line number
+ * @param message log message
+ */
+expublic void ubflogex(int lev, char *file, long line, char *message)
+{
+    /* do not want to interpret the format string */
+    UBF_LOGEX(lev, file, line, "%s", message);
 }
 
 /**
