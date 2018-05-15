@@ -814,7 +814,6 @@ exprivate int tm_tout_check(void)
         }
     }
     
-    
     return EXSUCCEED;
 }
 
@@ -841,3 +840,5 @@ expublic void tm_thread_shutdown(void *ptr, int *p_finish_off)
     
     *p_finish_off = EXTRUE;
 }
+
+/* vim: set ts=4 sw=4 et cindent: */
