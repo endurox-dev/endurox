@@ -336,6 +336,7 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
     char *malloced;
     char *pval;
     char *tempbuf = NULL;
+    char *close;
     
 #define FUNCTION_SEPERATOR  '='
     
@@ -361,7 +362,8 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
             continue;
         }
         
-        char *close =strchr(next, '}');
+        /* Bug #317 */
+        close =strchr(p, '}');
         if (NULL!=close)
         {
             long bufsz;
@@ -522,6 +524,7 @@ out:
  * Also we need to have configurable open/close symbols.
  * We will have two data pointers
  * This works with NDRX logger.
+ * Note that value cannot contain '}' for the functions and env variables
  */
 expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char closesymb,
         void *data1, void *data2, void *data3, void *data4,
@@ -538,6 +541,7 @@ expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char
     char open3[]={'\\', '\\', '$', opensymb, EXEOS};
     char *outbuf = NULL;
     int ret = EXSUCCEED;
+    char *close;
     
     NDRX_MALLOC_OUT(outbuf, buf_size, char);
     
@@ -563,7 +567,8 @@ expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char
             continue;
         }
         
-        char *close =strchr(next, closesymb);
+        /* Bug #317*/
+        close =strchr(p, closesymb);
         if (NULL!=close)
         {
             long bufsz;
