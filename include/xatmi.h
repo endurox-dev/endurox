@@ -237,6 +237,8 @@ extern "C" {
 
 /** call/receive timeout for xadmin - override of NDRX_TOUT */
 #define CONF_NDRX_XADMINTOUT     "NDRX_XADMINTOUT" 
+/** Alternate command line options (used by interpretators normally like java) */
+#define CONF_NDRX_ALTCLOPT       "NDRX_ALTCLOPT" 
     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
@@ -708,3 +710,5 @@ extern NDRX_API void ndrx_ndrx_tmunsolerr_handler(char *data, long len, long fla
 #endif
 
 #endif /* __XATMI_H__ */
+
+/* vim: set ts=4 sw=4 et cindent: */
