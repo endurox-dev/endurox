@@ -61,6 +61,7 @@ install (FILES
     odebug.h
     ondebug.h
     onerror.h
+    oatmisrv_integra.h
     oatmi.h
     oatmisrv.h
     Exfields.h
