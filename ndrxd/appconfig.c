@@ -1005,15 +1005,15 @@ exprivate int parse_servers(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     for (; cur ; cur=cur->next)
     {
-            if (0==strcmp((char*)cur->name, "server"))
+        if (0==strcmp((char*)cur->name, "server"))
+        {
+            /* Get the server name */
+            if (EXSUCCEED!=parse_server(config, doc, cur))
             {
-                /* Get the server name */
-                if (EXSUCCEED!=parse_server(config, doc, cur))
-                {
-                    ret=EXFAIL;
-                    goto out;
-                }
+                ret=EXFAIL;
+                goto out;
             }
+        }
     }
 out:
     return ret;
