@@ -128,6 +128,13 @@ struct pm_node
 {
     conf_server_node_t *conf; /* <<< This can be NULL?  */
     char binary_name[MAXTIDENT+1]; /* Name of the binary*/
+    
+    /** binary name extracted from command line 
+     * if this is set, then for sanity checks will be used this name instead of
+     * the binary_name
+     */
+    char binary_name_cmdline[MAXTIDENT+1];
+    
     int srvid;
     char clopt[PATH_MAX - 128]; /* take off -i xxxxx PID and some key       */
     long state;             /* process state code (current)                 */
