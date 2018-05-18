@@ -234,11 +234,12 @@ extern "C" {
 #define CONF_NDRX_SYSFLAGS       "NDRX_SYSFLAGS"    /* Additional flags to process    */
 #define CONF_NDRX_SILENT         "NDRX_SILENT"      /* Make xadmin silent             */
 #define CONF_NDRX_TESTMODE       "NDRX_TESTMODE"    /* Is Enduro/X test mode enabled  */
-
 /** call/receive timeout for xadmin - override of NDRX_TOUT */
 #define CONF_NDRX_XADMINTOUT     "NDRX_XADMINTOUT" 
-/** Alternate command line options (used by interpretators normally like java) */
-#define CONF_NDRX_ALTCLOPT       "NDRX_ALTCLOPT" 
+/** Service process name */
+#define CONF_NDRX_SVPROCNAME     "NDRX_SVPROCNAME" 
+/** Service command line */
+#define CONF_NDRX_SVCLOPT        "NDRX_SVCLOPT" 
     
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

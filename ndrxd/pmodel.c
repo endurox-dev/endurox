@@ -57,6 +57,21 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/** Step to realloc the CMD line */
+#define REALLOC_CMD_STEP    10
+#define REALLOC_CMD alloc_args+=REALLOC_CMD_STEP; \
+                    cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
+                    if (NULL==cmd) \
+                    {\
+                        int err = errno;\
+                        fprintf(stderr, "%s: failed to realloc %ld bytes: %s\n", __func__, \
+                            (long)sizeof(char *)*alloc_args, strerror(err));\
+                        userlog("%s: failed to realloc %ld bytes: %s\n", __func__, \
+                            (long)sizeof(char *)*alloc_args, strerror(err));\
+                        exit(1);\
+                    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -761,11 +776,11 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     /* prepare args for execution... */
     char cmd_str[PATH_MAX];
-    char *cmd[PATH_MAX]; /* splitted pointers.. */
+    char **cmd; /* splitted pointers.. */
     char separators[]   = " ,\t\n";
     char *token;
     int numargs;
-
+    int alloc_args;
 
     NDRX_LOG(log_warn, "*********processing for startup %s/%d*********",
                                     p_pm->binary_name, p_pm->srvid);
@@ -822,31 +837,100 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             NDRX_LOG(log_error, "Failed to close: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
         }
-
+        
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
-        NDRX_STRCPY_SAFE(cmd_str, p_pm->clopt);
-
-        if (EXEOS!=p_pm->conf->fullpath[0])
+        
+        if (EXEOS!=p_pm->conf->cmdline[0])
         {
-            cmd[0] = p_pm->conf->fullpath;
+            NDRX_STRCPY_SAFE(cmd_str, p_pm->conf->cmdline);
+            
+            /* export intermediate variables 
+             * CONF_NDRX_SVPROCNAME -> binary_name
+             * CONF_NDRX_SVCLOPT-> dynamic clopt built
+             */
+            if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_pm->binary_name, EXTRUE))
+            {
+                int err = errno;
+                
+                fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, 
+                    CONF_NDRX_SVPROCNAME, p_pm->binary_name, strerror(err));
+                userlog("%s: failed to set %s=[%s]: %s", __func__, 
+                    CONF_NDRX_SVPROCNAME, p_pm->binary_name, strerror(err));
+                
+                exit(1);
+            }
+            
+            if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT,  p_pm->clopt, EXTRUE))
+            {
+                int err = errno;
+                
+                fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, 
+                    CONF_NDRX_SVCLOPT, p_pm->clopt, strerror(err));
+                userlog("%s: failed to set %s=[%s]: %s", __func__, 
+                    CONF_NDRX_SVCLOPT, p_pm->clopt, strerror(err));
+                
+                exit(1);
+            }
+            
+            /* format the cmdline */
+            ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
+            
+            /* unset variables */
+            unsetenv(CONF_NDRX_SVPROCNAME);
+            unsetenv(CONF_NDRX_SVCLOPT);
+            
+            numargs=0;
+            alloc_args = 0;
+
+            token = strtok(cmd_str, separators);
+            while( token != NULL )
+            {
+                if (numargs+1 > alloc_args)
+                {
+                    /* realloc the cmd storage */
+                    REALLOC_CMD;
+                }
+                cmd[numargs] = token;
+                token = strtok( NULL, separators );
+                numargs++;
+            }
+            cmd[numargs] = NULL;
+            
         }
         else
         {
-            cmd[0] = p_pm->binary_name;
-        }
-        numargs=1;
+            NDRX_STRCPY_SAFE(cmd_str, p_pm->clopt);
 
-        token = strtok(cmd_str, separators);
-        while( token != NULL )
-        {
-            cmd[numargs] = token;
-            token = strtok( NULL, separators );
-            numargs++;
+            numargs=1;
+            REALLOC_CMD;
+            
+            if (EXEOS!=p_pm->conf->fullpath[0])
+            {
+                cmd[0] = p_pm->conf->fullpath;
+            }
+            else
+            {
+                cmd[0] = p_pm->binary_name;
+            }
+            
+            token = strtok(cmd_str, separators);
+            while( token != NULL )
+            {
+                if (numargs+1 > alloc_args)
+                {
+                    /* realloc the cmd storage */
+                    REALLOC_CMD;
+                }
+                
+                cmd[numargs] = token;
+                token = strtok( NULL, separators );
+                numargs++;
+            }
+            cmd[numargs] = NULL;
         }
-        cmd[numargs] = NULL;
         
         /*  Override environment, if there is such thing */
         if (EXEOS!=p_pm->conf->env[0])
