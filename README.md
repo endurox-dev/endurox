@@ -355,6 +355,8 @@ documentation and added unit tests.
 
 - Version 5.3.16 released on 16/05/2018 (stable) Bug #317
 
+- Version 5.3.17 released on 18/05/2018 (stable) Feature #320 - cmdline tag for server in xml config
+
 # Build configurations
 
 ## Configure make with: 
