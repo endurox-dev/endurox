@@ -956,6 +956,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         unsetenv(CONF_NDRX_SVPROCNAME);
         unsetenv(CONF_NDRX_SVCLOPT);
     }
+    else
+    {
+        NDRX_STRCPY_SAFE(p_srvnode->binary_name_real, srvnm);
+    }
     
     if (EXFAIL==p_srvnode->max)
         p_srvnode->max=config->default_max;
