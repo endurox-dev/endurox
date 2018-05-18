@@ -71,6 +71,8 @@ struct conf_server_node
 {
     char binary_name[MAXTIDENT+1]; /* Name of the binary */
     char fullpath[PATH_MAX+1]; /* full path to executable, optional */
+    /** Command line format (optional) */
+    char cmdfmt[PATH_MAX+1];
     int srvid;
     int min;
     int max;
