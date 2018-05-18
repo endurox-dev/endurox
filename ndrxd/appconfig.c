@@ -895,7 +895,13 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             
             NDRX_LOG(log_debug, "fullpath: [%s]", p_srvnode->fullpath);
         }
-        
+        else if (0==strcmp((char*)cur->name, "cmdline"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            NDRX_STRCPY_SAFE(p_srvnode->cmdline, p);
+            xmlFree(p);
+            NDRX_LOG(log_debug, "cmdline: [%s]", p_srvnode->cmdline);
+        }
     }
     snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
             "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
@@ -973,17 +979,19 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
-	    "RESPAWN=\"%c\" FULLPATH=\"%s\"",
+	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\"",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
-                    p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, p_srvnode->ping_max,
+                    p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, 
+                    p_srvnode->ping_max,
                     p_srvnode->exportsvcs,
                     p_srvnode->srvstartwait,
                     p_srvnode->srvstopwait,
                     p_srvnode->cctag,
                     p_srvnode->reloadonchange?'Y':'N',
 		    p_srvnode->respawn?'Y':'N',
-                    p_srvnode->fullpath
+                    p_srvnode->fullpath,
+                    p_srvnode->cmdline
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 
