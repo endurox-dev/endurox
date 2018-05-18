@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <libgen.h>
 #include <memory.h>
 #include <libxml/xmlreader.h>
 #include <errno.h>
@@ -629,6 +630,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     xmlAttrPtr attr;
     char srvnm[MAXTIDENT+1]={EXEOS};
     char tmp[128];
+    char tmppath[PATH_MAX+1];
 #if 0
     
     int srvid = EXFAIL;
@@ -905,8 +907,56 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     }
     snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
             "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
+    
     NDRX_STRCPY_SAFE(p_srvnode->binary_name, srvnm);
+    
+    /* build process real name  */
+    if (EXEOS!=p_srvnode->cmdline[0])
+    {
+        NDRX_STRCPY_SAFE(tmppath, p_srvnode->cmdline);
+        
+        /* substitute env */
+        
+        if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_srvnode->binary_name, EXTRUE))
+        {
+            NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
+                CONF_NDRX_SVPROCNAME, p_srvnode->binary_name, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
 
+        if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT, p_srvnode->clopt, EXTRUE))
+        {
+            NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
+                CONF_NDRX_SVCLOPT, p_srvnode->clopt, strerror(errno));
+
+            EXFAIL_OUT(ret);
+        }
+        
+        /* format the cmdline */
+        ndrx_str_env_subs_len(tmppath, sizeof(tmppath));
+        
+        /* extract binary name for the path... */
+        p = strtok(tmppath, " \t");
+        
+        if (NULL==p)
+        {
+            NDRX_LOG(log_error, "Missing process name in server's <cmdline> tag for [%s]",
+                    p_srvnode->binary_name);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* get the base name */
+        p = basename(tmppath);
+        NDRX_STRCPY_SAFE(p_srvnode->binary_name_real, p);
+        
+        NDRX_LOG(log_debug, "Extracted real binary name [%s] from [%s]", 
+                p_srvnode->binary_name_real, p);
+
+        /* unset variables */
+        unsetenv(CONF_NDRX_SVPROCNAME);
+        unsetenv(CONF_NDRX_SVCLOPT);
+    }
+    
     if (EXFAIL==p_srvnode->max)
         p_srvnode->max=config->default_max;
 
