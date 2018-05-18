@@ -126,7 +126,8 @@ expublic int cmd_srvpingrsp (command_call_t * call, char *data, size_t len, int 
     else if (p_pm->pingseq == ping->seq)
     {
         NDRX_LOG(log_info, "Server id=%d ok, binary: [%s] ping reply seq: %d, rsptime: %s", 
-                ping->srvid, p_pm->binary_name, ping->seq, ndrx_stopwatch_decode(&p_pm->pingroundtrip, 0));
+                ping->srvid, p_pm->binary_name, ping->seq, 
+                ndrx_stopwatch_decode(&p_pm->pingroundtrip, 0));
         
         /* Well... we should not count the time unless the
          * ping has been issued.

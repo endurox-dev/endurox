@@ -61,16 +61,16 @@
 /** Step to realloc the CMD line */
 #define REALLOC_CMD_STEP    10
 #define REALLOC_CMD alloc_args+=REALLOC_CMD_STEP; \
-                    cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
-                    if (NULL==cmd) \
-                    {\
-                        int err = errno;\
-                        fprintf(stderr, "%s: failed to realloc %ld bytes: %s\n", __func__, \
-                            (long)sizeof(char *)*alloc_args, strerror(err));\
-                        userlog("%s: failed to realloc %ld bytes: %s\n", __func__, \
-                            (long)sizeof(char *)*alloc_args, strerror(err));\
-                        exit(1);\
-                    }
+        cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
+        if (NULL==cmd) \
+        {\
+            int err = errno;\
+            fprintf(stderr, "%s: failed to realloc %ld bytes: %s\n", __func__, \
+                (long)sizeof(char *)*alloc_args, strerror(err));\
+            userlog("%s: failed to realloc %ld bytes: %s\n", __func__, \
+                (long)sizeof(char *)*alloc_args, strerror(err));\
+            exit(1);\
+        }
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -93,7 +93,7 @@ expublic int self_sreload(pm_node_t *p_pm)
     memset(&call, 0, sizeof(call));
     
     call.srvid = EXFAIL;
-    strcpy(call.binary_name, p_pm->binary_name);
+    NDRX_STRCPY_SAFE(call.binary_name, p_pm->binary_name);
     
     NDRX_LOG(log_debug, "Sending sreload command that [%s] must be reloaded, rq [%s]",
             call.binary_name, call.call.reply_queue);
@@ -536,6 +536,8 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
 
             /* format the process model entry */
             NDRX_STRCPY_SAFE(p_pm->binary_name, p_conf->binary_name);
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, p_conf->binary_name_real);
+            
             /* get the path of the binary... */
             if (p_conf->reloadonchange)
             {
@@ -634,8 +636,8 @@ expublic char * get_srv_admin_q(pm_node_t * p_pm)
 {
     static char ret[NDRX_MAX_Q_SIZE+1];
     
-    snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, p_pm->binary_name, 
-            p_pm->srvid, p_pm->pid);
+    snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
+            p_pm->binary_name, p_pm->srvid, p_pm->pid);
     
     return ret;
 }
@@ -648,9 +650,10 @@ expublic char * get_srv_admin_q(pm_node_t * p_pm)
  * @param pm_pid - Optional, if provided then PIDs of p_pm & pm_pid ir tested.
  *                 If they are different then only record from pidhash is removed
  *                 with PID of pm_pid.
- * @return
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid)
+expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm, 
+        pm_pidhash_t *pm_pid)
 {
     int ret=EXSUCCEED;
     pm_node_svc_t *elt, *tmp;
@@ -715,7 +718,8 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t
         int last;
         if (NULL==svcnm || 0==strcmp(elt->svc.svc_nm, svcnm))
         {
-            NDRX_LOG(log_warn, "Removing pid's %d service [%s]", p_pm->pid, elt->svc.svc_nm);
+            NDRX_LOG(log_warn, "Removing pid's %d service [%s]", p_pm->pid, 
+                    elt->svc.svc_nm);
             /* Remove from shm */
             
             /* ###################### CRITICAL SECTION ###################### */
