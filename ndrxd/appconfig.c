@@ -1361,23 +1361,25 @@ expublic int test_config(int reload, command_call_t * call,
         t_process_model_pid_hash = NULL;
 
         /* free up old config */
-        config_free(&old_app_config, &old_process_model, &old_process_model_hash, &old_process_model_pid_hash);
+        config_free(&old_app_config, &old_process_model, &old_process_model_hash, 
+                &old_process_model_pid_hash);
 
         NDRX_LOG(log_debug, "Configuration successfully reloaded!");
     }
     else
     {
         /* free up test config */
-        config_free(&t_app_config, &t_process_model, &t_process_model_hash, &t_process_model_pid_hash);
+        config_free(&t_app_config, &t_process_model, &t_process_model_hash, 
+                &t_process_model_pid_hash);
     }
 
 out:
 
     if (EXSUCCEED!=ret)
     {
-        config_free(&t_app_config, &t_process_model, &t_process_model_hash, &t_process_model_pid_hash);
+        config_free(&t_app_config, &t_process_model, &t_process_model_hash, 
+                &t_process_model_pid_hash);
     }
-
 
     return ret;
 }
