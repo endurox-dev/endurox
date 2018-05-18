@@ -81,6 +81,9 @@ extern "C" {
 #define EXTRUE         1
 #endif
 
+/** Directory seperator symbol */
+#define EXDIRSEP      '/'
+
 #define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
 
 #ifndef EXFAIL_OUT
@@ -95,7 +98,6 @@ extern "C" {
 #define EXOFFSET(STRUCT,ELM)   ((const int) &(((STRUCT *)0)->ELM) )
 #endif
 #endif
-
     
 #define NDRX_WORD_SIZE  (int)sizeof(void *)*8
 
