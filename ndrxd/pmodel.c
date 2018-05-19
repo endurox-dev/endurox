@@ -882,10 +882,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
             
-            /* unset variables */
-            unsetenv(CONF_NDRX_SVPROCNAME);
-            unsetenv(CONF_NDRX_SVCLOPT);
-            
             numargs=0;
             alloc_args = 0;
 
