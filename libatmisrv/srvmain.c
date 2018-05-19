@@ -486,7 +486,7 @@ int ndrx_main(int argc, char** argv)
 {
     int ret=EXSUCCEED;
 
-    /* do internal initialisation, get configuration, request for admin q */
+    /* do internal initialization, get configuration, request for admin q */
     if (EXSUCCEED!=ndrx_init(argc, argv))
     {
         NDRX_LOG(log_error, "ndrx_init() fail");
