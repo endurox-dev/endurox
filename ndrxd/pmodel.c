@@ -637,7 +637,7 @@ expublic char * get_srv_admin_q(pm_node_t * p_pm)
     static char ret[NDRX_MAX_Q_SIZE+1];
     
     snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
-            p_pm->binary_name, p_pm->srvid, p_pm->pid);
+            p_pm->binary_name_real, p_pm->srvid, p_pm->pid);
     
     return ret;
 }
@@ -1066,7 +1066,7 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     command_call_t call;
     ndrx_stopwatch_t timer;
     int finished = EXFALSE;
-    char srv_queue[NDRX_MAX_Q_SIZE+1];
+    char *srv_queue;
     char fn[] = "stop_process";
 
     memset(&call, 0, sizeof(call));
@@ -1104,9 +1104,12 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     if (NULL!=cmd_call && NULL!=p_shutdown_progress)
         p_shutdown_progress((command_call_t*)cmd_call, p_pm, NDRXD_CALL_TYPE_PM_STOPPING);
 
-    /* Form a call queue, probably we need move all stuff to atmienv!  */
+    /* Form a call queue, probably we need move all stuff to atmienv!  
     snprintf(srv_queue, sizeof(srv_queue), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
-            p_pm->binary_name, p_pm->srvid, p_pm->pid);
+            p_pm->binary_name, p_pm->srvid, p_pm->pid);*/
+    
+    srv_queue = get_srv_admin_q(p_pm);
+    
     NDRX_LOG(log_debug, "%s: calling up: [%s]", fn, srv_queue);
     
     /* Then get listing... */
