@@ -85,7 +85,8 @@ expublic int report_to_ndrxd(void)
     svc_entry_fn_t *entry;
     size_t  send_size;
 
-    memset(buf, 0, sizeof(buf));
+    /* shall we do full memset? */
+    memset(buf, 0, sizeof(srv_status_t));
     
     /* format out the status report */
     status->srvinfo.pid = getpid();
