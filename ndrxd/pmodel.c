@@ -881,6 +881,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
+            NDRX_LOG(log_debug, "Got process command line: [%s]", cmd_str);
             
             numargs=0;
             alloc_args = 0;
