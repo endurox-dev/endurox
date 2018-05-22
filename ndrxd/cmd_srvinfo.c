@@ -140,6 +140,8 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->exec_seq_try = 0; /* Reset counter as we are good */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
         }
         else if (p_pm_chk->state != NDRXD_PM_RUNNING_OK)
         {
@@ -164,6 +166,8 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             /* Bridge stuff: */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
         }
         else
         {
