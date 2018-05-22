@@ -379,15 +379,8 @@ exprivate int check_server(char *qname)
     srv_status_t *status = (srv_status_t *)buf;
     int ret=EXSUCCEED;
     
-    /* TODO: Remap back to real process name?
-     * Only needs to think what will happen if server is booted,
-     * queues are open, but there was no reporting done to ndrxd.
-     * Thus we will get unknown name and possibly we will try to
-     * remove the queue.
-     * maybe needs to delay the srv_id testing so that we act here
-     * only server is reported (marked as started) or stopwatch
-     * for startup is exceeded. Then we can perform tests.
-     */
+    memset((char *)status, 0, sizeof(srv_status_t));
+    
     parse_q(qname, EXTRUE, process, &pid, &srv_id, EXFALSE);
     
     if (!ndrx_sys_is_process_running(pid, process))

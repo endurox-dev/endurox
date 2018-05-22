@@ -51,6 +51,22 @@
 #include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+    
+/** Alloc the CLOPTS */
+#define REALLOC_CLOPT_STEP    10
+#define REALLOC_CLOPT alloc_args+=REALLOC_CLOPT_STEP; \
+    argv = NDRX_REALLOC(argv, sizeof(char *)*alloc_args); \
+    if (NULL==argv) \
+    {\
+        int err = errno;\
+        fprintf(stderr, "%s: failed to realloc %ld bytes: %s\n", __func__, \
+            (long)sizeof(char *)*alloc_args, strerror(err));\
+        userlog("%s: failed to realloc %ld bytes: %s\n", __func__, \
+            (long)sizeof(char *)*alloc_args, strerror(err));\
+        exit(1);\
+    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -485,7 +501,74 @@ out:
 int ndrx_main(int argc, char** argv)
 {
     int ret=EXSUCCEED;
-
+    char *env_procname;
+    char *env_clopt = NULL;
+    int i;
+    
+    /* in case of argc/argv are empty, we shall attempt  */
+    
+    if (argc<=0 || NULL==argv)
+    {
+        char *p;
+        char *saveptr1;
+        char *tok;
+        int alloc_args = 0;
+        /* try to lookup env variables */
+        
+        env_procname = getenv(CONF_NDRX_SVPROCNAME);
+        p = getenv(CONF_NDRX_SVCLOPT);
+        
+        if (NULL==env_procname || NULL==p)
+        {
+            NDRX_LOG(log_error, "%s: argc/argv are empty an %s/%s env vars not "
+                    "present - missing server params", __func__, 
+                    CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
+            userlog("%s: argc/argv are empty an %s/%s env vars not "
+                    "present - missing server params", __func__, 
+                    CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: argc/argv are empty an %s/%s env vars not "
+                    "present - missing server params", __func__, 
+                    CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL==(env_clopt=NDRX_STRDUP(p)))
+        {
+            int err;
+            
+            NDRX_LOG(log_error, "%s: Failed to strdup: %s", __func__, 
+                    strerror(err));
+            userlog("%s: Failed to strdup: %s", __func__, 
+                    strerror(err));
+            ndrx_TPset_error_fmt(TPEOS, "%s: Failed to strdup: %s", __func__, 
+                    strerror(err));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* realloc some space */
+        REALLOC_CLOPT;
+        
+        argc=1;
+        argv[0] = env_procname;
+        
+        tok = strtok_r(env_clopt, " \t", &saveptr1);
+        while (NULL!=tok)
+        {
+            argc++;
+            
+            if (argc > alloc_args)
+            {
+                REALLOC_CLOPT;
+            }
+            
+            argv[argc-1] = tok;
+            
+            /* Get next */
+            tok = strtok_r(NULL, " \t", &saveptr1);
+        }
+        
+    }
+    
     /* do internal initialization, get configuration, request for admin q */
     if (EXSUCCEED!=ndrx_init(argc, argv))
     {
@@ -576,6 +659,25 @@ out:
     }
     
     fprintf(stderr, "Server exit: %d, id: %d\n", ret, G_srv_id);
+    
+    if (NULL!=env_clopt)
+    {
+        NDRX_FREE(env_clopt);
+        
+        if (NULL!=argv)
+        {
+            /* the first argument comes from env */
+            for (i=1; i<argc; i++)
+            {
+                if (NULL!=argv[i])
+                {
+                    NDRX_FREE(argv[i]);
+                }
+            }
+            
+            NDRX_FREE(argv);
+        }
+    }
 
     return ret;
 }
