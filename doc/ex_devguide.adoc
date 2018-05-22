@@ -1633,6 +1633,69 @@ so that it does not crash with unknown keys. Also Enduro/X XATMI server will not
 tolerate any other third party keys. Those other keys user might add it "appopts"
 section, followed by "--". See ndrxconfig.xml(5) for more details.
 
+=== Enduro/X Process naming strategies
+
+The process naming strategies are complex ones, due to fact that server processes
+can be booted for shell-scripts and Enduro/X sees the upper level script name
+and not the actual binary which performs the XATMI work. The process name
+participates in following functional areas:
+
+. For clients, is opening of client's reply queue
+
+. For servers, it is used for admin queues and reply queues.
+
+The *ndrxd* daemon performs sanity checks, and it is doing cross-validation,
+that server queue with process name X and PID Y exists in system. While for queue
+cross validation, all is ok, as X and Y exists, the problem is with cases when
+*ndrxd* performs server PINGs. To build admin queue name to send ping to, *ndrxd*
+uses the binary name it knows (either server name or real name extracted from
+command line). As command line can contain shell script, *ndrxd* will not be
+able to send PINGs to server process, as queue will be different, and then *ndrxd*
+will kill the process as not pingable.
+
+
+==== Strategy 1
+
+To cope with above cases, Enduro/X uses following solution:
+
+. If NDRX_SVPROCNAME is exported, then server process opens queue with this name.
+
+. In normal case NDRX_SVPROCNAME matches the server binary name, thus no changes
+for existing system logic.
+
+. In case of Java env, the 'argv[0]' will be set to this environment variable
+or it will use just keyword "java" if variable is not available.
+
+
+To check that process exists, for servers this could be done in this way:
+
+. Check the PID existence (extracted from Q name)
+
+. Check the Process name existence (extracted from Q), does it match the PID
+(exec in the same approach of first test)
+
+. If does not exists, lookup the Process Model (PM). If the extracted name matches
+process name in PM, and the name from CLI matches the real name, the process exists.
+
+. If above does not work out, lookup the environment variables of the process,
+check the existence of NDRX_SVPROCNAME variable. If value matches the name extracted
+from queue, then process is alive.
+
+. Otherwise process is dead. 
+
+
+==== Strategy 2
+
+The server process reports the final process name to the *ndrxd* while it reports
+it's status and advertised services. At this point *ndrxd* may start to send pings
+to server. Regarding of pinging non reported servers, this is up to *ndrxd* current
+algorithms of when to ping.
+
+
+The Strategy 2 is simpler to implement. The Strategy 1 shows the server queues
+as virtual process names. That might be simpler for admins to understand
+to whom the queue belongs to.
+
 numbered!:
 
 [bibliography]
