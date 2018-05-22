@@ -1691,10 +1691,29 @@ it's status and advertised services. At this point *ndrxd* may start to send pin
 to server. Regarding of pinging non reported servers, this is up to *ndrxd* current
 algorithms of when to ping.
 
+Initially we take server name or exe name from command line as one to which admin
+messages shall be sent (prior receiving the name from the process).
+
 
 The Strategy 2 is simpler to implement. The Strategy 1 shows the server queues
 as virtual process names. That might be simpler for admins to understand
 to whom the queue belongs to.
+
+
+=== Booting processes as XATMI servers with out CLOPT
+
+There could be server processes like Tomcat or JBoss App servers which we might
+want to boot as XATMI servers. For these command line options cannot be passed
+in. Thus at ps -ef the output will not show Enduro/X specific flags like -k (
+unique app key), -i (server instance id), -e (error log), etc.
+
+One approach would be to pass these command line options in NDRX_SVCLOPT variable.
+But again we will have an issue with some functional areas - like "xadmin down"
+command.
+
+This could be solved by doing peek into other process environment. If we find
+the unique string there - then server process is subject for killing.
+
 
 numbered!:
 
