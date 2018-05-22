@@ -240,9 +240,7 @@ extern "C" {
 #define CONF_NDRX_SVPROCNAME     "NDRX_SVPROCNAME" 
 /** Service command line */
 #define CONF_NDRX_SVCLOPT        "NDRX_SVCLOPT" 
-/** Real name of the executable of server process */
-#define CONF_NDRX_SVREALNAME      "NDRX_SVREALNAME" 
-    
+
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
 
