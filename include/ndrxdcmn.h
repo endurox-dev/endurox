@@ -684,10 +684,12 @@ typedef struct
 typedef struct
 {
    int srvid;              /* server id sending this info                   */
-   pid_t  pid;           /* server's process id (for crosscheck alarming) */
+   pid_t  pid;             /* server's process id (for crosscheck alarming) */
+   /** Real name of server process */
+   char binary_name_real[MAXTIDENT+1];
    int state;              /* server's state (the same as for process       */
    int flags;              /* servers flags                                 */
-   int nodeid;           /* Other node id of the bridge                   */
+   int nodeid;             /* Other node id of the bridge                   */
 } srv_key_t;
 
 /**
