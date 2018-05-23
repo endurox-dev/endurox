@@ -485,6 +485,10 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
             sleep(EX_KILL_SLEEP_SECS);
         }
     }
+
+    /* TODO: Kill servers by looking up environment variables!!!
+     * needs to implement API calls for linux/mac/freebsd/aix/solaris
+     */
     
     NDRX_LOG(log_warn, "Removing all client processes.. (by Q)");
     /* Kill the children against the Q 
