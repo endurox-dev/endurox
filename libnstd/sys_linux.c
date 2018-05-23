@@ -127,3 +127,18 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_st
 {
     return ndrx_sys_folder_list(qpath, return_status);
 }
+
+/**
+ * Test the pid to contain regexp 
+ * @param pid process id to test
+ * @param p_re compiled regexp to test against
+ * @return -1 failed, 0 - not matched, 1 - matched
+ */
+expublic int ndrx_sys_test_env(pid_t pid, regex_t *p_re)
+{
+    /* TODO: */
+    return EXFAIL;
+}
+
+/* vim: set ts=4 sw=4 et cindent: */
+
