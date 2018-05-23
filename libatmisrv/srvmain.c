@@ -515,10 +515,15 @@ int ndrx_main(int argc, char** argv)
         int alloc_args = 0;
         /* try to lookup env variables */
         
-        env_procname = getenv(CONF_NDRX_SVPROCNAME);
+        /* well, for server process we need a real binary name
+         * the env is just logical server process name
+         * thus we have to use our macros here
+         */
+        env_procname = EX_PROGNAME;/* getenv(CONF_NDRX_SVPROCNAME); */
+        
         p = getenv(CONF_NDRX_SVCLOPT);
         
-        if (NULL==env_procname || NULL==p)
+        if (NULL==p)
         {
             NDRX_LOG(log_error, "%s: argc/argv are empty an %s/%s env vars not "
                     "present - missing server params", __func__, 
