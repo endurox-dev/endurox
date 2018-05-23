@@ -84,6 +84,7 @@ M_descr [] =
  */
 exprivate void print_hdr(void)
 {
+    /* TODO: we shall print the `real' process name too */
     fprintf(stderr, "Binary    SRVID PID   STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
     fprintf(stderr, "--------- ----- ----- ----- ----- -- ---- ---- ---- ---- - ---- -----\n");
 }

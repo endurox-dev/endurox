@@ -519,7 +519,7 @@ int ndrx_main(int argc, char** argv)
          * the env is just logical server process name
          * thus we have to use our macros here
          */
-        env_procname = EX_PROGNAME;/* getenv(CONF_NDRX_SVPROCNAME); */
+        env_procname = (char *)EX_PROGNAME;/* getenv(CONF_NDRX_SVPROCNAME); */
         
         p = getenv(CONF_NDRX_SVCLOPT);
         
