@@ -507,7 +507,7 @@ int ndrx_main(int argc, char** argv)
     
     /* in case of argc/argv are empty, we shall attempt  */
     
-    if (argc<=0 || NULL==argv)
+    if (argc<=1 || NULL==argv)
     {
         char *p;
         char *saveptr1;
@@ -551,6 +551,7 @@ int ndrx_main(int argc, char** argv)
         }
         
         /* realloc some space */
+        argv = NULL;
         REALLOC_CLOPT;
         
         argc=1;
