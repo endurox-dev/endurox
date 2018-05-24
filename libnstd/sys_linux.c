@@ -54,6 +54,7 @@
 #include <limits.h>
 
 #include <sys_unix.h>
+#include <exregex.h>
 
 #include <utlist.h>
 
@@ -149,12 +150,16 @@ expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
         EXFAIL_OUT(ret);
     }
     
-    /* read environ */
+    /* read environ 
+     * TODO: use ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream);
+     */
     while(NULL!=fgets(buf,sizeof(buf),f)) 
     {
         /* test regexp on env */
+        NDRX_LOG(log_debug, "Testing env [%s] for pid %d", buf, (int)pid);
         if (EXSUCCEED==ndrx_regexec(p_re, buf))
         {
+            NDRX_LOG(log_debug, "Env matched");
             ret=EXTRUE;
             goto out;
         }
