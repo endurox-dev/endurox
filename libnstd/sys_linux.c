@@ -140,7 +140,15 @@ expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
     FILE *f = NULL;
     char path[256];
     int ret = EXSUCCEED;
-    char buf [PATH_MAX];
+    char *buf = NULL;
+    size_t n = PATH_MAX;
+
+    /* Alloc the buffer buffer */
+    if (NULL==(buf=NDRX_MALLOC(n)))
+    {
+        NDRX_LOG(log_error, "Failed to malloc: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
     
     snprintf(path, sizeof(path), "/proc/%d/environ", (int)pid);
     
@@ -153,13 +161,12 @@ expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
     /* read environ 
      * TODO: use ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream);
      */
-    while(NULL!=fgets(buf,sizeof(buf),f)) 
+    while(EXFAIL!=getdelim(&buf, &n, 0x0, f)) 
     {
         /* test regexp on env */
-        NDRX_LOG(log_debug, "Testing env [%s] for pid %d", buf, (int)pid);
         if (EXSUCCEED==ndrx_regexec(p_re, buf))
         {
-            NDRX_LOG(log_debug, "Env matched");
+            NDRX_LOG(log_debug, "Matched env [%s] for pid %d", buf, (int)pid);
             ret=EXTRUE;
             goto out;
         }
@@ -171,8 +178,13 @@ out:
     {
         NDRX_FCLOSE(f);
     }
+
+    if (NULL!=buf)
+    {
+        NDRX_FREE(buf);
+    }
     
-    return EXFAIL;
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et cindent: */
