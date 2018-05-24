@@ -498,7 +498,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     
     was_any = EXFALSE;
     
-    snprintf(env_mask, sizeof(env_mask), "%s.{0,2}%s.*-i [0-9]+ --",
+    snprintf(env_mask, sizeof(env_mask), "%s.{0,2}%s.*-i [0-9]+.*--",
                 CONF_NDRX_SVCLOPT, test_string2);
     
     /* Compile regex */
