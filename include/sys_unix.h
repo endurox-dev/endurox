@@ -38,6 +38,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 #include <stdint.h>
+#include <regex.h>
 #include <ubf.h>
 #include <atmi.h>
 #include <sys_mqueue.h>
@@ -303,6 +304,12 @@ extern NDRX_API char * ndrx_sys_get_proc_name_getprocs(void);
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status);
 /* emulated message queue: */
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *return_status);
+
+
+/** Test environmental variables of the PID 
+ Sample regex: NDRX_SVCLOPT.{0..2}-k 0myWI5nu.*-i [0-9]+ --
+ */
+extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
 
 #ifdef EX_USE_EMQ
 
