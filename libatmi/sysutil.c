@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <memory.h>
 #include <errno.h>
 #include <dlfcn.h>
@@ -52,7 +53,8 @@
 #include <sys_mqueue.h>
 #include <utlist.h>
 #include <atmi_shm.h>
-#include <unistd.h>
+#include <exregex.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -250,6 +252,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     int i;
     string_list_t* qlist = NULL;
     string_list_t* srvlist = NULL;
+    string_list_t* srvlist2 = NULL;
     string_list_t* ndrxdlist = NULL;
     string_list_t* cpmsrvs = NULL;
     string_list_t* xadminlist = NULL;
@@ -271,6 +274,9 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     int was_any = EXFALSE;
     pid_t my_pid = getpid();
     char *username;
+    char env_mask[PATH_MAX];
+    regex_t srv2rex;
+    int srv2rex_compiled = EXFALSE;
     NDRX_LOG(log_warn, "****** Forcing system down ******");
     
     
@@ -486,9 +492,55 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
         }
     }
 
-    /* TODO: Kill servers by looking up environment variables!!!
+    /* Kill servers by looking up environment variables!!!
      * needs to implement API calls for linux/mac/freebsd/aix/solaris
      */
+    
+    was_any = EXFALSE;
+    
+    snprintf(env_mask, sizeof(env_mask), "%s.{0,2}%s.*-i [0-9]+ --",
+                CONF_NDRX_SVCLOPT, test_string2);
+    
+    /* Compile regex */
+    if (EXSUCCEED!=ndrx_regcomp(&srv2rex, env_mask))
+    {
+        NDRX_LOG(log_error, "Failed to compile regexp [%s]", env_mask);
+        EXFAIL_OUT(ret);
+    }
+    srv2rex_compiled = EXTRUE;
+    
+    NDRX_LOG(log_warn, "Removing server processes for user [%s] and env mask [%s]", 
+        username, test_string2);
+    
+    srvlist2 = ndrx_sys_ps_list(username, "", 
+                "", "", "");
+            
+    for (i=0; i<max_signals; i++)
+    {
+        LL_FOREACH(srvlist2,elt)
+        {
+            /* Parse out process name & pid */
+            NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
+            
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) &&
+                    EXTRUE==ndrx_sys_env_test(pid, &srv2rex))
+            {
+                 NDRX_LOG(log_error, "! killing  sig=%d "
+                         "pid=[%d] (%s)", signals[i], pid, elt->qname);
+                 
+                 if (EXSUCCEED!=kill(pid, signals[i]))
+                 {
+                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                             signals[i], pid, strerror(errno));
+                 }
+                 was_any = EXTRUE;
+            }
+        }
+        if (0==i && was_any)
+        {
+            sleep(EX_KILL_SLEEP_SECS);
+        }
+    }
     
     NDRX_LOG(log_warn, "Removing all client processes.. (by Q)");
     /* Kill the children against the Q 
@@ -640,11 +692,17 @@ out:
 
     ndrx_string_list_free(qlist);
     ndrx_string_list_free(srvlist);
+    ndrx_string_list_free(srvlist2);
     ndrx_string_list_free(xadminlist);
     ndrx_string_list_free(cpmsrvs);
     ndrx_string_list_free(qclts);
     ndrx_string_list_free(ndrxdlist);
     ndrx_string_list_free(cltchildren);
+    
+    if (srv2rex_compiled)
+    {
+        ndrx_regfree(&srv2rex);
+    }
     
     return ret;
 }

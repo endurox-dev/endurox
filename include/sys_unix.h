@@ -307,7 +307,7 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *r
 
 
 /** Test environmental variables of the PID 
- Sample regex: NDRX_SVCLOPT.{0..2}-k 0myWI5nu.*-i [0-9]+ --
+ Sample regex: NDRX_SVCLOPT.{0,2}-k 0myWI5nu.*-i [0-9]+ --
  */
 extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
 
