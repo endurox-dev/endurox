@@ -134,11 +134,40 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_st
  * @param p_re compiled regexp to test against
  * @return -1 failed, 0 - not matched, 1 - matched
  */
-expublic int ndrx_sys_test_env(pid_t pid, regex_t *p_re)
+expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
 {
-    /* TODO: */
+    FILE *f = NULL;
+    char path[256];
+    int ret = EXSUCCEED;
+    char buf [PATH_MAX];
+    
+    snprintf(path, sizeof(path), "/proc/%d/environ", (int)pid);
+    
+    if (NULL==(f=NDRX_FOPEN(path, "r")))
+    {
+        NDRX_LOG(log_error, "Failed to open: [%s]: %s", path, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* read environ */
+    while(NULL!=fgets(buf,sizeof(buf),f)) 
+    {
+        /* test regexp on env */
+        if (EXSUCCEED==ndrx_regexec(p_re, buf))
+        {
+            ret=EXTRUE;
+            goto out;
+        }
+    }
+    
+out:
+   
+    if (NULL!=f)
+    {
+        NDRX_FCLOSE(f);
+    }
+    
     return EXFAIL;
 }
 
 /* vim: set ts=4 sw=4 et cindent: */
-
