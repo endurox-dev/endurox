@@ -136,7 +136,8 @@ expublic void ndrx_dbg_reply_memlog(ndrx_debug_t *dbg)
     MUTEX_LOCK_V(M_memlog_lock);
     DL_FOREACH_SAFE(dbg->memlog, line, tmp)
     {
-        if (dbg->level <= dbg->level)
+        /* Bug #321 */
+        if (line->level <= dbg->level)
         {
             BUFFERED_PRINT_LINE(dbg, line->line)
         }
