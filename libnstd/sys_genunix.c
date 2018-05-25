@@ -262,3 +262,15 @@ expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
     return EXFAIL;
 }
 
+/**
+ * Enduro/X Cross platform getline version (system version, more close to GNU)
+ * @param lineptr must be pre-allocated (for Macos will use fgets on this buffer)
+ * @param n buffer size (ptr to)
+ * @param stream file to read from
+ * @return number bytes read for Macos will return just 1 or -1
+ */
+expublic ssize_t ndrx_sys_getline(char **lineptr, size_t *n, FILE *stream)
+{
+    return EXFAIL;
+}
+
