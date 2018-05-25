@@ -502,13 +502,18 @@ expublic int tmq_reload_conf(char *cf)
                 EXFAIL_OUT(ret);
             }
         }
-#ifdef HAVE_GETLINE
-        NDRX_FREE(line);
-#endif
     }
     
     
 out:
+
+    /* 25/04/2018 moved down here, to avoid any memory leak if loop fails */
+#ifdef HAVE_GETLINE
+    if (NULL!=line)
+    {
+        NDRX_FREE(line);
+    }
+#endif
                 
     if (NULL!=csection)
     {
@@ -1640,3 +1645,4 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
 /*                         COMMAND LINE SUPPORT                               */
 /******************************************************************************/
 
+/* vim: set ts=4 sw=4 et cindent: */
