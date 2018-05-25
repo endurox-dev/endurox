@@ -289,11 +289,18 @@ if [[ "$CNT" -ne "1" ]]; then
     go_out 16
 fi
 
+CNT=`$PSCMD | grep atmisv_2_37 | grep -v grep |wc | awk '{print $1}'`
+echo "atmisv_2_37 $CNT"
+if [[ "$CNT" -ne "1" ]]; then 
+    echo "TESTERROR! Only one copy of atmisv_2_37 must be left!"
+    go_out 17
+fi
+
 CNT=`$PSCMD | grep tprecover | grep -v grep | wc | awk '{print $1}'`
 echo "tprecover: $CNT"
 if [[ "$CNT" -ne "1" ]]; then 
     echo "TESTERROR! Only one copy of tprecover must be left!"
-    go_out 17
+    go_out 18
 fi
 
 #
@@ -343,14 +350,21 @@ CNT=`xadmin pqa -a | wc | awk '{print $1}'`
 echo "DOM1 Queues: $CNT"
 if [[ "$CNT" -ne "1" ]]; then 
     echo "TESTERROR! Dom1 & 2 all queues must be removed except 1 for xadmin!"
-    go_out 20
+    go_out 30
 fi
 
 CNT=`$PSCMD | grep atmisv37 | grep -v grep | wc | awk '{print $1}'`
 echo "Finally atmisv37: $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
     echo "TESTERROR! All atmisv37 must be killed!"
-    go_out 21
+    go_out 31
+fi
+
+CNT=`$PSCMD | grep atmisv_2_37 | grep -v grep | wc | awk '{print $1}'`
+echo "Finally atmisv_2_37 $CNT"
+if [[ "$CNT" -ne "0" ]]; then 
+    echo "TESTERROR! All atmisv_2_37 must be killed!"
+    go_out 32
 fi
 
 # Catch is there is test error!!!

@@ -247,3 +247,18 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *return_s
 {
     return ndrx_sys_folder_list(qpath, return_status);
 }
+
+/**
+ * Test the regexp against the command output strings.
+ * This will be used for aix/freebsd/macos/solaris
+ * @param fmt format string for command, must contain %d for pid
+ * @param pid process id to test
+ * @param p_re regular expression to match the output
+ * @return EXFAIL (failed) / EXSUCCEED (0) - not matched, EXTRUE (1) - matched
+ */
+expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
+{
+    /* popen the process and match th output lines to the format */
+    return EXFAIL;
+}
+
