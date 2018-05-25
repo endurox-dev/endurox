@@ -670,17 +670,9 @@ out:
     {
         NDRX_FREE(env_clopt);
         
+        /* all pointers comes from other variables */
         if (NULL!=argv)
         {
-            /* the first argument comes from env */
-            for (i=1; i<argc; i++)
-            {
-                if (NULL!=argv[i])
-                {
-                    NDRX_FREE(argv[i]);
-                }
-            }
-            
             NDRX_FREE(argv);
         }
     }
@@ -688,4 +680,4 @@ out:
     return ret;
 }
 
-
+/* vim: set ts=4 sw=4 et cindent: */
