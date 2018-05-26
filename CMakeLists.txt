@@ -290,12 +290,13 @@ add_subdirectory (libnetproto)
 add_subdirectory (libthpool)
 add_subdirectory (ubftest)
 add_subdirectory (mkfldhdr)
-# EnduroX sub-directories for ATMI
+# Enduro/X sub-directories for ATMI
 add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
 add_subdirectory (libexnet)
 add_subdirectory (libexmemck)
+add_subdirectory (libexenv)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (libps) # Platform script

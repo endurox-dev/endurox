@@ -141,7 +141,7 @@ extern void exnet_rwlock_mainth_read(exnetcon_t *net);
 extern void exnet_add_con(exnetcon_t *net);
 extern void exnet_del_con(exnetcon_t *net);
 extern exnetcon_t * extnet_get_con_head(void);
-expublic exnetcon_t *exnet_find_free_conn(void);
+extern exnetcon_t *exnet_find_free_conn(void);
 extern void exnet_remove_incoming(exnetcon_t *net);
 
 #endif /* EXNET_H_ */
