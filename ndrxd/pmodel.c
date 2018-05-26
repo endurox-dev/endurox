@@ -637,7 +637,7 @@ expublic char * get_srv_admin_q(pm_node_t * p_pm)
     static char ret[NDRX_MAX_Q_SIZE+1];
     
     snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
-            p_pm->binary_name_real, p_pm->srvid, p_pm->pid);
+            p_pm->binary_name_real, p_pm->srvid, p_pm->svpid);
     
     return ret;
 }
@@ -785,6 +785,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     char *token;
     int numargs;
     int alloc_args;
+    char tmp[256];
 
     NDRX_LOG(log_warn, "*********processing for startup %s/%d*********",
                                     p_pm->binary_name, p_pm->srvid);
@@ -847,37 +848,37 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
         
+        
+        /* export intermediate variables 
+         * CONF_NDRX_SVPROCNAME -> binary_name
+         * CONF_NDRX_SVCLOPT-> dynamic clopt built
+         */
+#define NDRX_PM_SET_ENV(ENV__, VAL__) if (EXSUCCEED!=setenv(ENV__, VAL__, EXTRUE))\
+        {\
+           int err = errno;\
+            fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, \
+                ENV__, VAL__, strerror(err));\
+            userlog("%s: failed to set %s=[%s]: %s", __func__, \
+                ENV__, VAL__, strerror(err));\
+            exit(1);\
+        }
+        
+        NDRX_PM_SET_ENV(CONF_NDRX_SVPROCNAME, p_pm->binary_name);
+        NDRX_PM_SET_ENV(CONF_NDRX_SVCLOPT, p_pm->clopt);        
+        /* export server id... */
+        snprintf(tmp, sizeof(tmp), "%d", (int)p_pm->srvid);
+        NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, p_pm->clopt);
+        
+        /* ... and export PID 
+         * This might be a parent process of the script
+         * thus we need to pass it down to th client process.
+         */
+        snprintf(tmp, sizeof(tmp), "%d", (int)getpid());
+        
+
         if (EXEOS!=p_pm->conf->cmdline[0])
         {
             NDRX_STRCPY_SAFE(cmd_str, p_pm->conf->cmdline);
-            
-            /* export intermediate variables 
-             * CONF_NDRX_SVPROCNAME -> binary_name
-             * CONF_NDRX_SVCLOPT-> dynamic clopt built
-             */
-            if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_pm->binary_name, EXTRUE))
-            {
-                int err = errno;
-                
-                fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, 
-                    CONF_NDRX_SVPROCNAME, p_pm->binary_name, strerror(err));
-                userlog("%s: failed to set %s=[%s]: %s", __func__, 
-                    CONF_NDRX_SVPROCNAME, p_pm->binary_name, strerror(err));
-                
-                exit(1);
-            }
-            
-            if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT,  p_pm->clopt, EXTRUE))
-            {
-                int err = errno;
-                
-                fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, 
-                    CONF_NDRX_SVCLOPT, p_pm->clopt, strerror(err));
-                userlog("%s: failed to set %s=[%s]: %s", __func__, 
-                    CONF_NDRX_SVCLOPT, p_pm->clopt, strerror(err));
-                
-                exit(1);
-            }
             
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
@@ -972,6 +973,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         int finished = EXFALSE;
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
+        /* currently assume they are the same */
+        p_pm->svpid = pid;
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
         
         /* Reset PM timer */
@@ -1452,3 +1455,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et cindent: */

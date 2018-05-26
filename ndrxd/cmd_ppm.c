@@ -69,6 +69,7 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
 
     /* Copy data to reply structure */
     NDRX_STRCPY_SAFE(ppm_info->binary_name, p_pm->binary_name);
+    NDRX_STRCPY_SAFE(ppm_info->binary_name_real, p_pm->binary_name_real);
     ppm_info->srvid = p_pm->srvid;
     ppm_info->state = p_pm->state;
     ppm_info->reqstate = p_pm->reqstate;
@@ -79,6 +80,7 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     ppm_info->last_sig = p_pm->last_sig;
     ppm_info->autokill = p_pm->autokill;
     ppm_info->pid = p_pm->pid;
+    ppm_info->svpid = p_pm->svpid;
     ppm_info->state_changed = p_pm->state_changed;
     ppm_info->flags = p_pm->flags;
     ppm_info->nodeid = p_pm->nodeid;
@@ -126,13 +128,14 @@ expublic int cmd_ppm (command_call_t * call, char *data, size_t len, int context
     /* list all services from all servers, right? */
     DL_FOREACH(G_process_model, pm)
     {
-            ppm_progress(call, pm);
+        ppm_progress(call, pm);
     }
 
     if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
     {
         userlog("Failed to send reply back to [%s]", call->reply_queue);
     }
+    
     NDRX_LOG(log_warn, "cmd_ppm returns with status %d", ret);
     
 out:

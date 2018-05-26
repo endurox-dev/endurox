@@ -1,7 +1,7 @@
 /* 
-** BSD Abstraction Layer (BAL)
+** Test that nothing is logged if switched off - server
 **
-** @file sys_freebsd.c
+** @file atmisv53.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,29 +30,16 @@
 ** -----------------------------------------------------------------------------
 */
 
-/*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-
-
-#include <unistd.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <memory.h>
-#include <errno.h>
-#include <signal.h>
-#include <limits.h>
-#include <pthread.h>
-#include <string.h>
-#include <dirent.h>
-
-#include <ndrstandard.h>
 #include <ndebug.h>
-#include <nstdutil.h>
-#include <limits.h>
-#include <sys_unix.h>
-#include <utlist.h>
-
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include "test53.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -63,23 +50,61 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Return list of message queues (actually it is list of named pipes
- * as work around for missing posix queue listing functions.
+ * Standard service entry
  */
-expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status)
+void TESTSV (TPSVCINFO *p_svc)
 {
-    return ndrx_sys_folder_list(qpath, return_status);
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
 }
 
 /**
- * Test the pid to contain regexp 
- * @param pid process id to test
- * @param p_re compiled regexp to test against
- * @return -1 failed, 0 - not matched, 1 - matched
+ * Do initialization
  */
-expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
-    return ndrx_sys_cmdout_test("ps -p %d -wwwe", pid, p_re);
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TESTSV!");
+    }
+    
+    return EXSUCCEED;
 }
 
-/* vim: set ts=4 sw=4 et cindent: */
+/**
+ * Do de-initialization
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+

@@ -148,9 +148,15 @@ struct pm_node
     int num_term_sigs;      /* Number of times to send term sig, before -9  */
     long last_sig;          /* Time when signal was sent                    */
     int autokill;           /* Kill the process if not started in time      */
-    int killreq;            /* process kill is requested (long startup, 
-                             * no ping, long shutdown)                      */
-    pid_t pid;              /* process PID                                  */
+    /**
+     * process kill is requested (long startup, 
+     * no ping, long shutdown)                      
+     */
+    int killreq;            
+    /** process PID parent/root */
+    pid_t pid;
+    /** server process pid */
+    pid_t svpid;
     long state_changed;     /* Timer for state changed                      */
     pm_node_svc_t   *svcs;  /* list of services                             */
     int flags;              /* Flags sent by server info                    */

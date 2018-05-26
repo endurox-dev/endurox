@@ -288,11 +288,13 @@ extern NDRX_API int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid);
 extern NDRX_API void ndrx_proc_kill_list(string_list_t *list);
 extern NDRX_API int ndrx_proc_children_get_recursive(string_list_t **list, pid_t pid);
 extern NDRX_API int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos);
-    
+extern NDRX_API int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re);
+
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);
 extern NDRX_API int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);
 extern NDRX_API int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
+
 
 /* sys_linux.c: */
 extern NDRX_API int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name);
@@ -304,6 +306,7 @@ extern NDRX_API char * ndrx_sys_get_proc_name_getprocs(void);
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status);
 /* emulated message queue: */
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *return_status);
+
 
 
 /** Test environmental variables of the PID 
@@ -328,3 +331,4 @@ extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
 
 #endif	/* SYS_UNIX_H */
 
+/* vim: set ts=4 sw=4 et cindent: */

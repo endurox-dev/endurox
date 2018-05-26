@@ -100,11 +100,12 @@ extern NDRX_API int ndrx_nr_chars(char *str, char character);
 
 extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);
-extern NDRX_API char * ndrx_getline(char *buf, int bufsz);
+extern NDRX_API char * ndrx_fgets_stdin_strip(char *buf, int bufsz);
 
 extern NDRX_API char * ndrx_get_executable_path(char * out_path, size_t bufsz, 
         char * in_binary);
 extern NDRX_API int ndrx_get_cksum(char *file);
+extern NDRX_API ssize_t ndrx_getline(char **lineptr, size_t *n, FILE *stream);
 extern NDRX_API char * ndrx_memdup(char *org, size_t len);
 extern NDRX_API int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
         int tokens_elmsz, int len);
