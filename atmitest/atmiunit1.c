@@ -426,6 +426,14 @@ Ensure(test052_minstart)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test053_logoff)
+{
+    int ret;
+    ret=system_dbg("test053_logoff/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -510,6 +518,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test050_ubfdb);
     add_test(suite,test051_settout);
     add_test(suite,test052_minstart);
+    add_test(suite,test053_logoff);
             
     return suite;
 }
