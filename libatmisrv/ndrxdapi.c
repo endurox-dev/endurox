@@ -45,6 +45,7 @@
 #include <atmi_int.h>
 #include <ndrxdcmn.h>
 #include <unistd.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -84,12 +85,40 @@ expublic int report_to_ndrxd(void)
     int i, offset=0;
     svc_entry_fn_t *entry;
     size_t  send_size;
-
+    static int first = EXTRUE;
+    static int ppid = EXFAIL;
+    char *p;
     /* shall we do full memset? */
     memset(buf, 0, sizeof(srv_status_t));
     
     /* format out the status report */
-    status->srvinfo.pid = getpid();
+    
+    /* Feature #76, provide parent (script?) pid from env variables if available
+     * if not available, then assume that current pid is a server process pid
+     * and there are no wrappers used.
+     * it is expected that multi-threaded calls will not be made here.
+     * and evne if multi-thread is done, the worst thing that might happen
+     * is reading env twice and writting ppid twice - no problem at all.
+     */
+    if (first)
+    {
+        p = getenv(CONF_NDRX_SVPPID);
+        
+        if (NULL!=p)
+        {
+            ppid = atoi(p);
+        }
+        
+        if (ppid <= 0)
+        {
+            ppid = getpid();
+        }
+        first = EXFALSE;
+    }
+    
+    status->srvinfo.pid = ppid;
+    status->srvinfo.svpid = getpid();
+    
     status->srvinfo.state = NDRXD_PM_RUNNING_OK;
     status->srvinfo.srvid = G_server_conf.srv_id;
     status->srvinfo.flags = G_server_conf.flags;
@@ -392,3 +421,5 @@ expublic int pingrsp_to_ndrxd(command_srvping_t *ping)
 out:
     return ret;
 }
+
+/* vim: set ts=4 sw=4 et cindent: */

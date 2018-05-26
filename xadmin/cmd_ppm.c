@@ -85,8 +85,8 @@ M_descr [] =
 exprivate void print_hdr(void)
 {
     /* TODO: we shall print the `real' process name too */
-    fprintf(stderr, "Binary    SRVID PID   STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
-    fprintf(stderr, "--------- ----- ----- ----- ----- -- ---- ---- ---- ---- - ---- -----\n");
+    fprintf(stderr, "BINARY   SVBIN SRVID PID   SVPID STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
+    fprintf(stderr, "-------- ----- ----- ----- ----- ----- ----- -- ---- ---- ---- ---- - ---- -----\n");
 }
 
 /**
@@ -109,7 +109,7 @@ exprivate char *get_status_descr(long status)
             goto out;
         }
     }
-    sprintf(buf, "%ld", status);
+    snprintf(buf, sizeof(buf), "%ld", status);
     ret = buf;
     
 out:
@@ -156,10 +156,13 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
     {
         command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
         FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
-        fprintf(stdout, "%-9.9s %-5d %-5d %-5.5s %-5.5s %-2hd %-4.4s %-4.4s %-4.4s %-4.4s %-1d %-4.4s %-5.5s\n", 
+        fprintf(stdout, "%-8.8s %-5.5s %-5d %-5d %-5d %-5.5s %-5.5s %-2hd %-4.4s "
+                "%-4.4s %-4.4s %-4.4s %-1d %-4.4s %-5.5s\n", 
                 ppm_info->binary_name,
+                ppm_info->binary_name_real,
                 ppm_info->srvid,
                 ppm_info->pid, 
+                ppm_info->svpid,
                 get_status_descr(ppm_info->state),
                 get_status_descr(ppm_info->reqstate),
                 ppm_info->autostart,
@@ -205,3 +208,4 @@ expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         G_config.listcall_flags);
 }
 
+/* vim: set ts=4 sw=4 et cindent: */

@@ -263,7 +263,7 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
         ret = NULL;
     }
 
-    return ret;   
+    return ret;
 }
     
 
@@ -852,4 +852,62 @@ out:
     return ret;
 }
 
+/**
+ * Test the regexp against the command output strings.
+ * This will be used for aix/freebsd/macos/solaris
+ * NOTE: This generate sign child due to fork.
+ * @param fmt format string for command, must contain %d for pid
+ * @param pid process id to test
+ * @param p_re regular expression to match the output
+ * @return EXFAIL (failed) / EXSUCCEED (0) - not matched, EXTRUE (1) - matched
+ */
+expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
+{
+    char cmd[PATH_MAX];
+    FILE *fp=NULL;
+    char *buf = NULL;
+    size_t n = PATH_MAX;
+    int ret = EXSUCCEED;
+    
+    /* allocate buffer first */
+    
+    NDRX_MALLOC_OUT(buf, n, char);
+    
+    snprintf(cmd, sizeof(cmd), fmt, pid);
+    
+    fp = popen(cmd, "r");
+    
+    if (fp == NULL)
+    {
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
+    }
+    
+    while (ndrx_getline(&buf, &n, fp))
+    {
+        /* test the output... */
+        if (EXSUCCEED==ndrx_regexec(p_re, buf))
+        {
+            NDRX_LOG(log_debug, "Matched env [%s] for pid %d", buf, (int)pid);
+            ret=EXTRUE;
+            goto out;
+        }
+    }
+    
+ out:
+                
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+ 
+    if (NULL!=buf)
+    {
+        NDRX_FREE(buf);
+    }
+ 
+    return ret;
+}
 
+/* vim: set ts=4 sw=4 et cindent: */

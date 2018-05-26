@@ -109,8 +109,10 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
     /* TODO: If server was shutdown, but we got call, then update PID! */
     
     /* crosscheck PID?  - if we start process in manual mode, then this does not matter!
-     better update PID!*/
-    
+     * better update PID!
+     * In case if booted from script too, then PID shall be used the one the
+     * server reports and not the actual one with which server was booted.
+     */
     pm_pid =pid_hash_get(G_process_model_pid_hash, srvinfo->srvinfo.pid);
 
     if (NULL!=pm_pid)
@@ -142,6 +144,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
             NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
                     srvinfo->srvinfo.binary_name_real);
+            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
         }
         else if (p_pm_chk->state != NDRXD_PM_RUNNING_OK)
         {
@@ -168,6 +171,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
             NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
                     srvinfo->srvinfo.binary_name_real);
+            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
         }
         else
         {
@@ -197,7 +201,11 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         /* Bridge stuff: */
         p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
         p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
-            
+        
+        NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+        p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+        
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
     }
     
@@ -218,10 +226,11 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             goto out;
         }
 
-        /* initialise service info sent from server. */
+        /* initialize service info sent from server. */
         svc_info->svc = srvinfo->svcs[i];
-        NDRX_LOG(log_debug, "Server [%s] advertizes: svc: [%s] func: [%s]",
-                                p_pm->binary_name, svc_info->svc.svc_nm, svc_info->svc.fn_nm);
+        NDRX_LOG(log_debug, "Server [%s] advertises: svc: [%s] func: [%s]",
+                                p_pm->binary_name, svc_info->svc.svc_nm, 
+                svc_info->svc.fn_nm);
         /* Add this to the list */
         DL_APPEND(p_pm->svcs, svc_info);
         /* add stuff to bridge service hash */
@@ -250,3 +259,4 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et cindent: */

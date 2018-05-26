@@ -1053,16 +1053,17 @@ expublic int ndrx_file_regular(char *path)
 }
 
 /**
- * Read the line
+ * read from stdin with stripping of trailing \r or \n
  * @return NULL or allocated stdin string read
  */
-expublic char * ndrx_getline(char *buf, int bufsz)
+expublic char * ndrx_fgets_stdin_strip(char *buf, int bufsz)
 {
     int len;
 
     if (NULL==fgets(buf, bufsz, stdin))
     {
         userlog("%s: fgets fail: %s", __func__, strerror(errno));
+        return NULL;
     }
     
     len = strlen(buf);
@@ -1086,6 +1087,32 @@ expublic char * ndrx_getline(char *buf, int bufsz)
     }
         
     return buf;
+}
+
+
+/**
+ * Enduro/X Cross platform getline version (system version, more close to GNU)
+ * @param lineptr must be pre-allocated (for Macos will use fgets on this buffer)
+ * @param n buffer size (ptr to)
+ * @param stream file to read from
+ * @return number bytes read for Macos will return just 1 or -1
+ */
+expublic ssize_t ndrx_getline(char **lineptr, size_t *n, FILE *stream)
+{
+#ifdef HAVE_GETLINE
+    
+    return getline(lineptr, n, stream);
+    
+#else
+    if (NULL==fgets(*lineptr, *n, f))
+    {
+        return EXFAIL;
+    }
+    else
+    {
+        return EXTRUE;
+    }
+#endif
 }
 
 /**
