@@ -570,6 +570,9 @@ typedef struct
     command_reply_t rply;
     /* list some process ifo */
     char binary_name[MAXTIDENT+1]; /* Name of the binary*/
+    
+    /** Real binary name (reported by server it self */
+    char binary_name_real[MAXTIDENT+1];
     int srvid;
     long state;             /* process state code (current)  */
     long reqstate;          /* Requested state               */
@@ -580,7 +583,10 @@ typedef struct
     int num_term_sigs;      /* Number of times to send term sig, before -9 */
     long last_sig;          /* Time when signal was sent     */
     int autokill;           /* Kill the process if not started in time */
-    pid_t pid;            /* process PID                   */
+    /** Parent process PID (or if server if only process then it is real PID */
+    pid_t pid;
+    /** Server process PID (if parent is script, then this is real one) */
+    pid_t svpid;
     long state_changed;     /* Timer for state changed       */
     int flags;              /* Flags sent by server info     */
     short   nodeid;         /* other node id, if this is bridge */
@@ -685,6 +691,8 @@ typedef struct
 {
    int srvid;              /* server id sending this info                   */
    pid_t  pid;             /* server's process id (for crosscheck alarming) */
+   /** real server PID */
+   pid_t svpid;
    /** Real name of server process */
    char binary_name_real[MAXTIDENT+1];
    int state;              /* server's state (the same as for process       */
@@ -775,3 +783,4 @@ extern NDRX_API void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
 
 #endif	/* NDRXDCMN_H */
 
+/* vim: set ts=4 sw=4 et cindent: */

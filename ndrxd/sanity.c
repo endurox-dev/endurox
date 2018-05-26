@@ -485,20 +485,20 @@ out:
  */
 
 /**
- * Kill the process
+ * Kill the process - #76 we will kill the reported PID (real server PID)
  * @param p_pm
  * @return 
  */
 exprivate int send_kill(pm_node_t *p_pm, int sig, int delta)
 {
-    NDRX_LOG(log_warn, "Killing PID: %d/%s/%d with signal -%d", 
-            p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
-    userlog("Killing PID: %d/%s/%d with signal -%d", 
-            p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
-    if (EXSUCCEED!=kill(p_pm->pid, sig))
+    NDRX_LOG(log_warn, "Killing PID: %d (ppid: %d)/%s/%d with signal -%d", 
+            p_pm->svpid, p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
+    userlog("Killing PID: %d (ppid: %d)/%s/%d with signal -%d", 
+            p_pm->svpid, p_pm->pid, p_pm->binary_name, p_pm->srvid, sig);
+    if (EXSUCCEED!=kill(p_pm->svpid, sig))
     {
-        NDRX_LOG(log_error, "Failed to kill PID %d with error: %s",
-                p_pm->pid, strerror(errno));
+        NDRX_LOG(log_error, "Failed to kill PID %d (ppid: %d) with error: %s",
+                p_pm->svpid, p_pm->pid, strerror(errno));
     }
     
     return EXSUCCEED;
@@ -805,3 +805,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et cindent: */

@@ -1,7 +1,7 @@
 /* 
-** BSD Abstraction Layer (BAL)
+** Test that nothing is logged if switched off - client
 **
-** @file sys_freebsd.c
+** @file atmiclt53.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,31 +29,22 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-
-/*---------------------------Includes-----------------------------------*/
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-
-#include <unistd.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include <memory.h>
-#include <errno.h>
-#include <signal.h>
-#include <limits.h>
-#include <pthread.h>
-#include <string.h>
-#include <dirent.h>
+#include <math.h>
 
-#include <ndrstandard.h>
+#include <atmi.h>
+#include <ubf.h>
 #include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <nstdutil.h>
-#include <limits.h>
-#include <sys_unix.h>
-#include <utlist.h>
-
-
+#include "test53.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -63,23 +54,34 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Return list of message queues (actually it is list of named pipes
- * as work around for missing posix queue listing functions.
+ * Do the test call to the server
  */
-expublic string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *return_status)
+int main(int argc, char** argv)
 {
-    return ndrx_sys_folder_list(qpath, return_status);
+
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
+    
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpterm();
+    tplog(log_info, "Test Exit");
+
+    return ret;
 }
 
-/**
- * Test the pid to contain regexp 
- * @param pid process id to test
- * @param p_re compiled regexp to test against
- * @return -1 failed, 0 - not matched, 1 - matched
- */
-expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
-{
-    return ndrx_sys_cmdout_test("ps -p %d -wwwe", pid, p_re);
-}
-
-/* vim: set ts=4 sw=4 et cindent: */

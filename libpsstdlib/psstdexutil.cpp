@@ -52,7 +52,7 @@ static PSInteger _exutil_getline(HPSCRIPTVM v)
 {
     char ln[PATH_MAX+1];
     
-    ndrx_getline(ln, sizeof(ln));
+    ndrx_fgets_stdin_strip(ln, sizeof(ln));
     
     ps_pushstring(v,ln,-1);
 
