@@ -631,10 +631,6 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char srvnm[MAXTIDENT+1]={EXEOS};
     char tmp[128];
     char tmppath[PATH_MAX+1];
-#if 0
-    
-    int srvid = EXFAIL;
-#endif
     conf_server_node_t *p_srvnode=NULL;
     char *p;
     /* first of all, we need to get server name from attribs */
@@ -673,7 +669,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             xmlFree(p);
         }
     }
-    /**/
+
     if (EXEOS==srvnm[0])
     {
         NDRX_LOG(log_error, "No server name at line %hd", cur->line);
