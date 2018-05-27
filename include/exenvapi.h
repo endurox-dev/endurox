@@ -1,7 +1,7 @@
 /* 
 ** Enduro/X client & server environment configuration structures
 **
-** @file exenv.h
+** @file exenvapi.h
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,86 +29,31 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef EXENV_H_
-#define EXENV_H_
+#ifndef EXENVAPI_H_
+#define EXENVAPI_H_
 
 /*------------------------------Includes--------------------------------------*/
+#include <libxml/xmlreader.h>
+
 #include <ndrstandard.h>
 #include <atmi.h>
 #include <exhash.h>
+#include <exenv.h>
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
-/* So we need following data structures:
- * 1. Linked list for storing key/values of the any group or process
- * 2. Hash list for storing group lists of envs
- * 3. Linked list for process storing key/values (could be structure 1.)
- * 4. Linked list for storing resolve links to 2. hashes for processing groups
- * firstly
- */
-
-/**
- * Linked list of env variable values
- */
-typedef struct ndrx_env_list ndrx_env_list_t;
-struct ndrx_env_list
-{
-    /** env variable (allocated) */
-    char *key;
-    
-    /** env value (allocated) */
-    char *value;
-    
-    /** make it a linked list... */
-    ndrx_env_list_t *next, *prev;
-};
-
-/**
- * Group hash of environment variables
- */
-typedef struct ndrx_env_group ndrx_env_group_t;
-struct ndrx_env_group
-{
-    /** name of the group */
-    char group[MAXTIDENT+1];
-    /** List of environment variable groups */
-    ndrx_env_list_t *envs;
-    
-    /** makes this structure hashable */
-    EX_hash_handle hh;
-};
-
-/**
- * List of environment groups
- */
-typedef struct ndrx_env_grouplist ndrx_env_grouplist_t;
-struct ndrx_env_grouplist
-{
-    /** pointer to group */
-    ndrx_env_group_t *group;
-    /** linked list */
-    ndrx_env_grouplist_t *next, *prev;
-};
-
-/* Following API functions are needed:
- * 
- * 1) parse envs: IN: xmlDocPtr doc, xmlNodePtr cur, OUT: allocated: ndrx_env_list_t
- * Usable for both group level parsing and process level parsing.
- * 
- * 2) parse group  IN: xmlDocPtr doc, xmlNodePtr cur, OUT: allocated: ndrx_env_group_t
- * (i.e. added record to hash)
- * 
- * 3) update 1) to parse <usegroup>. In case if ndrx_env_grouplist_t parameter
- * is present, the load the resolved tags into this linked list. If parameter
- * is not present and usegroup is found, then merge the group into current
- * env list.
- */
-
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 
-#endif /* EXENV_H_ */
+extern int ndrx_ndrxconf_envs_group_parse(xmlDocPtr doc, xmlNodePtr cur, 
+         ndrx_env_group_t **grouphash);
+
+extern int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur, 
+        ndrx_env_list_t **envs, ndrx_env_group_t *grouphash, 
+        ndrx_env_grouplist_t **grouplist);
+
+#endif /* EXENVAPI_H_ */
 
 /* vim: set ts=4 sw=4 et cindent: */

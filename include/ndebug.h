@@ -43,6 +43,7 @@ extern "C" {
 #include <stdarg.h>
 #include <ndebugcmn.h>
 #include <nstd_tls.h>
+#include <userlog.h>
     
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API ndrx_debug_t G_ubf_debug;
@@ -252,6 +253,22 @@ if ( (PTR__ = (TYPE__ *)NDRX_MALLOC(SIZE__)) == NULL) \
         __func__, (long)SIZE__, strerror(ERR__));\
     userlog("%s: Failed to mallocate %ld bytes: %s",\
         __func__, (long)SIZE__, strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
+
+/**
+ * Duplicate the string and in case of error fail out in standard way
+ * @param DST__ dest pointer
+ * @param SRC__ source pointer
+ */
+#define NDRX_STRDUP_OUT(DST__, SRC__) \
+if ( (DST__ = NDRX_STRDUP(SRC__)) == NULL) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "%s: Failed to strdup [%s]: %s",\
+        __func__, SRC__, strerror(ERR__));\
+    userlog("%s: Failed to strdup [%s] bytes: %s",\
+        __func__, SRC__, strerror(ERR__));\
     EXFAIL_OUT(ret);\
 }
 
