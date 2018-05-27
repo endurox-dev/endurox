@@ -277,7 +277,7 @@ exprivate void env_free(ndrx_env_list_t *env)
  * Free up the environments list
  * @param envs list of 
  */
-exprivate void  ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs)
+expublic void  ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs)
 {
     ndrx_env_list_t * el, *elt;
     
@@ -295,7 +295,8 @@ exprivate void  ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs)
  * @param grouphash hash list to remove from (if set)
  * @param group group to delete
  */
-exprivate void  ndrx_ndrxconf_envs_group_free(ndrx_env_group_t **grouphash, ndrx_env_group_t *group)
+exprivate void  ndrx_ndrxconf_envs_group_free(ndrx_env_group_t **grouphash, 
+        ndrx_env_group_t *group)
 {
      ndrx_ndrxconf_envs_envs_free(&group->envs);
     
@@ -307,7 +308,34 @@ exprivate void  ndrx_ndrxconf_envs_group_free(ndrx_env_group_t **grouphash, ndrx
     NDRX_FREE(group);
 }
 
-/* TODO: Have a envs_grouplists_free() */
+/**
+ * Delete group lists
+ * @param grouplist group list
+ */
+expublic void ndrx_ndrxconf_envs_grouplists_free(ndrx_env_grouplist_t **grouplist)
+{
+    ndrx_env_grouplist_t *el, *elt;
+    
+    DL_FOREACH_SAFE(*grouplist, el, elt)
+    {
+        DL_DELETE(*grouplist, el);
+        NDRX_FREE(el);
+    }
+}
+
+/**
+ * Remove all groups noted in hash
+ * @param grouphash group hash to clean up
+ */
+expublic void ndrx_ndrxconf_envs_groups_free(ndrx_env_group_t **grouphash)
+{
+    ndrx_env_group_t *el, *elt;
+    
+    EXHASH_ITER(hh, *grouphash, el, elt)
+    {
+        ndrx_ndrxconf_envs_group_free(grouphash, el);
+    }
+}
 
 /**
  * Parse group tag and fill up the hash list
@@ -372,6 +400,19 @@ out:
     return ret;
 }
 
+/**
+ * Apply environment variables from the group list and individuals from the
+ * list (load variables into environment)
+ * @param grouplist process references to group listings
+ * @param envs process specific environment variables
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_ndrxconf_envs_apply(ndrx_env_grouplist_t **grouplist, 
+        ndrx_env_list_t **envs)
+{
+    /* TODO: */
+    return EXFAIL;
+}
 
 /* vim: set ts=4 sw=4 et cindent: */
 
