@@ -54,6 +54,7 @@
 #include <bridge_int.h>
 #include <atmi_shm.h>
 #include <sys_unix.h>
+#include <exenvapi.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -867,14 +868,14 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         NDRX_PM_SET_ENV(CONF_NDRX_SVCLOPT, p_pm->clopt);        
         /* export server id... */
         snprintf(tmp, sizeof(tmp), "%d", (int)p_pm->srvid);
-        NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, p_pm->clopt);
+        NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, tmp);
         
         /* ... and export PID 
          * This might be a parent process of the script
          * thus we need to pass it down to th client process.
          */
         snprintf(tmp, sizeof(tmp), "%d", (int)getpid());
-        
+        NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, tmp);
 
         if (EXEOS!=p_pm->conf->cmdline[0])
         {
@@ -953,6 +954,15 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                         NDRX_CCTAG, p_pm->conf->cctag, strerror(errno));
                 exit(1);
             }
+        }
+        
+        /* process env variables defined in ndrxconfig.xml */
+        
+        if (EXSUCCEED!=ndrx_ndrxconf_envs_applyall(p_pm->conf->envgrouplist,
+                p_pm->conf->envlist))
+        {
+            fprintf(stderr, "Failed to load config from ndrxconfig.xml!\n");
+            exit(1);
         }
         
         if (EXSUCCEED != execvp (cmd[0], cmd))
