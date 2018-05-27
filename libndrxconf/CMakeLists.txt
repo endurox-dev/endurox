@@ -1,5 +1,5 @@
 ## 
-## Enduro/X shared environment processing library for configuration XML
+## Enduro/X App config (ndrxconfig.xml) common parsing routines
 ##
 ## @file CMakeLists.txt
 ## 
@@ -47,17 +47,17 @@ ENDIF ($ENV{RELEASE_BUILD})
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
             ${LIBXML2_INCLUDE_DIR})
 
-add_library (exenv SHARED
+add_library (ndrxconf SHARED
    	        envapi.c)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(exenv atmisrvinteg atmi nstd)
+    target_link_libraries(ndrxconf atmisrvinteg atmi nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(exenv atmisrvinteg atmi nstd)
+    target_link_libraries(ndrxconf atmisrvinteg atmi nstd)
 endif()
 
 install (TARGETS 
-    exenv 
+    ndrxconf 
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries
