@@ -277,7 +277,7 @@ exprivate void env_free(ndrx_env_list_t *env)
  * Free up the environments list
  * @param envs list of 
  */
-exprivate void envs_free(ndrx_env_list_t **envs)
+exprivate void  ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs)
 {
     ndrx_env_list_t * el, *elt;
     
@@ -295,9 +295,9 @@ exprivate void envs_free(ndrx_env_list_t **envs)
  * @param grouphash hash list to remove from (if set)
  * @param group group to delete
  */
-exprivate void group_free(ndrx_env_group_t **grouphash, ndrx_env_group_t *group)
+exprivate void  ndrx_ndrxconf_envs_group_free(ndrx_env_group_t **grouphash, ndrx_env_group_t *group)
 {
-    envs_free(&group->envs);
+     ndrx_ndrxconf_envs_envs_free(&group->envs);
     
     if (NULL!=grouphash)
     {
@@ -306,6 +306,8 @@ exprivate void group_free(ndrx_env_group_t **grouphash, ndrx_env_group_t *group)
     
     NDRX_FREE(group);
 }
+
+/* TODO: Have a envs_grouplists_free() */
 
 /**
  * Parse group tag and fill up the hash list
@@ -364,7 +366,7 @@ out:
     /* delete invalid group */
     if (EXSUCCEED!=ret && NULL!=group)
     {
-        group_free(NULL, group);
+         ndrx_ndrxconf_envs_group_free(NULL, group);
     }
         
     return ret;
