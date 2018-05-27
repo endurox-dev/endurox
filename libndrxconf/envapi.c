@@ -401,17 +401,71 @@ out:
 }
 
 /**
+ * Load environment from list
+ * @param envs linked list with env settings
+ * @return EXSUCCED/EXFAIL
+ */
+expublic int ndrx_ndrxconf_envs_apply(ndrx_env_list_t *envs)
+{
+    int ret = EXSUCCEED;
+    char tmp[PATH_MAX];
+    ndrx_env_list_t *el;
+    
+    DL_FOREACH(envs, el)
+    {
+        NDRX_STRCPY_SAFE(tmp, el->value);
+        ndrx_str_env_subs_len(tmp, sizeof(tmp));
+        
+        NDRX_LOG(log_dump, "Setting env [%s]=[%s]",
+                el->key, tmp);
+        
+        if (EXSUCCEED!=setenv(el->key, tmp, EXTRUE))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "Failed to set [%s]=[%s]: %s",
+                    el->key, tmp, strerror(err));
+            userlog("Failed to set [%s]=[%s]: %s",
+                    el->key, tmp, strerror(err));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Apply environment variables from the group list and individuals from the
  * list (load variables into environment)
  * @param grouplist process references to group listings
  * @param envs process specific environment variables
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_ndrxconf_envs_apply(ndrx_env_grouplist_t **grouplist, 
-        ndrx_env_list_t **envs)
+expublic int ndrx_ndrxconf_envs_applyall(ndrx_env_grouplist_t *grouplist, 
+        ndrx_env_list_t *envs)
 {
-    /* TODO: */
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    ndrx_env_grouplist_t *el;
+    
+    DL_FOREACH(grouplist, el)
+    {
+        NDRX_LOG(log_debug, "Loading group envs [%s]", el->group->group);
+     
+        if (EXSUCCEED!=ndrx_ndrxconf_envs_apply(el->group->envs))
+        {
+            NDRX_LOG(log_error, "Failed to load group envs [%s]", 
+                    el->group->group);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    if (EXSUCCEED!=ndrx_ndrxconf_envs_apply(envs))
+    {
+        NDRX_LOG(log_error, "Failed to load process specific envs!");
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et cindent: */
