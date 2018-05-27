@@ -39,6 +39,8 @@
 
 #include <ndrstandard.h>
 #include <ndrxd.h>
+#include <exenv.h>
+#include <exenvapi.h>
 
 #include "ndebug.h"
 #include "utlist.h"
@@ -51,22 +53,22 @@
 
 /*---------------------------Globals------------------------------------*/
 
-/*
+/**
  * Active monitor configuration
  */
 config_t *G_app_config=NULL;
 
-/*
+/**
  * Active process model handler - linked list
  */
 pm_node_t *G_process_model = NULL;
 
-/*
+/**
  * Active Hash list by service IDs
  */
 pm_node_t **G_process_model_hash = NULL;
 
-/*
+/**
  * PID Hash table
  */
 pm_pidhash_t **G_process_model_pid_hash = NULL;
@@ -76,6 +78,8 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
 
 /**
  * Free up config memory
+ * TODO: Free up the list of environments in defaults section and in process
+ * sections.
  * @param app_config
  * @param process_model
  * @param process_model_hash
@@ -225,7 +229,6 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char *p;
     char tmp[PATH_MAX];
     
-    
     config->default_respawn = 1; /* we want respawn by default! */
     
     if (NULL!=cur)
@@ -277,6 +280,15 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 ndrx_str_env_subs(config->default_env);
                 
                 xmlFree(p);
+            }
+            else if (0==strcmp("envs", (char *)cur->name))
+            {
+                if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, 
+                    &config->envgrouphash))
+                {
+                    NDRX_LOG(log_error, "Failed to parse <envs> tag!");
+                    EXFAIL_OUT(ret);
+                }
             }
             /* Startup control moved here...: */
             else if (0==strcmp((char*)cur->name, "start_max"))
@@ -639,8 +651,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (NULL==p_srvnode)
     {
         NDRX_LOG(log_error, "malloc failed for srvnode!");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
     memset(p_srvnode, 0, sizeof(conf_server_node_t));
     p_srvnode->srvid = EXFAIL;
@@ -899,6 +910,20 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             NDRX_STRCPY_SAFE(p_srvnode->cmdline, p);
             xmlFree(p);
             NDRX_LOG(log_debug, "cmdline: [%s]", p_srvnode->cmdline);
+        }
+        else if (0==strcmp((char*)cur->name, "envs"))
+        {
+            
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_parse(doc, cur, 
+                &p_srvnode->envlist, config->envgrouphash, 
+                        &p_srvnode->envgrouplist))
+            {
+                NDRX_LOG(log_error, "Failed to load environment variables for server [%d]", 
+                        p_srvnode->srvid);
+                userlog("Failed to load environment variables for server [%d]", 
+                        p_srvnode->srvid);
+                EXFAIL_OUT(ret);
+            }
         }
     }
     snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
@@ -1441,3 +1466,5 @@ out:
 
     return ret;
 }
+
+/* vim: set ts=4 sw=4 et cindent: */

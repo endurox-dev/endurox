@@ -43,6 +43,7 @@ extern "C" {
 #include <ndrxdcmn.h>
 #include <nstopwatch.h>
 #include <cconfig.h>
+#include <exenv.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define PARSE_SECTION_FAIL         EXFAIL
@@ -105,6 +106,14 @@ struct conf_server_node
     
     int reloadonchange; /* Reload binary on change - this max the monitoring of the bin */
     int respawn;	/* Should we ndrxd respawn process automatically when dead */
+    
+    /* have entries for environment */
+    
+    /** linked environment groups */
+    ndrx_env_grouplist_t *envgrouplist;
+    
+    /** individual environment variables */
+    ndrx_env_list_t *envlist;
     
     /* Linked list */
     conf_server_node_t *prev;
@@ -228,6 +237,9 @@ typedef struct
     int gather_pq_stats;	/* if set to 1, then queue stats will be gathered */
     int default_isprotected;	/* if set to 1, then xadmin stop will not shutdown the process (only with -c) */
     int default_respawn;	/* Set to 1 if auto respawn is required for process */
+    
+    /** Environment group hash */
+    ndrx_env_group_t *envgrouphash;
     
 } config_t;
 
