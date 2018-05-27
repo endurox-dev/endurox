@@ -78,7 +78,7 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
 
 /**
  * Free up config memory
- * TODO: Free up the list of environments in defaults section and in process
+ * Free up the list of environments in defaults section and in process
  * sections.
  * @param app_config
  * @param process_model
@@ -97,10 +97,19 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
         {
             DL_FOREACH_SAFE((*app_config)->monitor_config,elt,tmp)
             {
+                
+                /* free up envs, if any */
+                ndrx_ndrxconf_envs_envs_free(&elt->envlist);
+                ndrx_ndrxconf_envs_grouplists_free(&elt->envgrouplist);
+                
                 DL_DELETE((*app_config)->monitor_config,elt);
                 NDRX_FREE(elt);
             }
         }
+        
+        /* kill any env groups */
+        ndrx_ndrxconf_envs_groups_free(&(*app_config)->envgrouphash);
+        
         NDRX_FREE(*app_config);
 
         *app_config = NULL;
