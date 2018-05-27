@@ -83,9 +83,9 @@ add_executable (ndrxd   ndrxd.c
                         reloadonchange.c)
 
 # Link the executable to the UBF library & others...
-target_link_libraries (ndrxd m nstd atmi ubf atmiclt ${RT_LIB} ${LIBXML2_LIBRARIES} pthread)
+target_link_libraries (ndrxd atmiclt atmi ndrxconf ubf nstd m 
+        ${RT_LIB} ${LIBXML2_LIBRARIES} pthread)
 set_target_properties(ndrxd PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-
 
 # Install bin
 install (TARGETS 
