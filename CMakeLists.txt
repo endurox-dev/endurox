@@ -296,7 +296,7 @@ add_subdirectory (libatmisrv) #  ATMI server library
 add_subdirectory (libatmiclt) #  ATMI client library 
 add_subdirectory (libexnet)
 add_subdirectory (libexmemck)
-add_subdirectory (libexenv)
+add_subdirectory (libndrxconf)
 
 IF (NOT DEFINE_DISABLEPSCRIPT)
 	add_subdirectory (libps) # Platform script
