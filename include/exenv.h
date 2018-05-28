@@ -38,6 +38,9 @@
 #include <exhash.h>
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
+
+/** unset field action */
+#define NDRX_ENV_ACTION_UNSET              0x0001
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 /* So we need following data structures:
@@ -59,6 +62,9 @@ struct ndrx_env_list
     
     /** env value (allocated) */
     char *value;
+    
+    /** flags for the field */
+    unsigned short flags;
     
     /** make it a linked list... */
     ndrx_env_list_t *next, *prev;

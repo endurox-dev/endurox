@@ -42,7 +42,7 @@ extern "C" {
 #include <nstopwatch.h>
 #include <cpm.h>
 #include <cconfig.h>
-#include <ndrx_config.h>
+#include <exenv.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -95,6 +95,9 @@ struct cpm_static_info
     char env[PATH_MAX+1];
     char cctag[NDRX_CCTAG_MAX+1];
     long flags;              /* flags of the process */
+    
+    /** list of process specific environment variables */
+    ndrx_env_list_t *envs;
 };
 typedef struct cpm_static_info cpm_static_info_t;
 

@@ -43,6 +43,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <nstdutil.h>
+#include <exenv.h>
+#include <exenvapi.h>
 
 #include "cpmsrv.h"
 /*---------------------------Externs------------------------------------*/
@@ -52,10 +54,15 @@
 
 /*---------------------------Globals------------------------------------*/
 
-/*
+/**
  * Active monitor configuration
  */
 expublic cpm_process_t *G_clt_config=NULL;
+
+/**
+ * Global environment groups
+ */
+exprivate ndrx_env_group_t * M_envgrouphash = NULL;
 
 MUTEX_LOCKDECL(M_config_lock) 
 /*---------------------------Statics------------------------------------*/
@@ -282,6 +289,16 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
+        else if (0==strcmp((char *)attr->name, "envs"))
+        {
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_parse(doc, cur, &cltproc.stat.envs,
+                    M_envgrouphash, NULL))
+            {
+                NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
+                userlog("Failed to parse environment groups for clients!");
+                EXFAIL_OUT(ret);
+            }
+        }
     }
     
     /* Check the client config... */
@@ -310,7 +327,18 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             }
             
             memcpy(p_cltproc, &cltproc, sizeof(cltproc));
-
+            p_cltproc->stat.envs = NULL;
+            
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_append(&p_cltproc->stat.envs, 
+                    cltproc.stat.envs))
+            {
+                NDRX_LOG(log_error, "Failed to join envs %p %p", p_cltproc->stat.envs, 
+                        cltproc.stat.envs);
+                userlog("Failed to join envs %p %p", p_cltproc->stat.envs, 
+                        cltproc.stat.envs);
+                EXFAIL_OUT(ret);
+            }
+            
             /* Now override the config: */
             for (attr=cur->properties; attr; attr = attr->next)
             {
@@ -429,7 +457,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             /* Default the subsect */
             if (EXEOS==p_cltproc->subsect[0])
             {
-                strcpy(p_cltproc->subsect, "-");
+                NDRX_STRCPY_SAFE(p_cltproc->subsect, "-");
             }
             
             /* Render the final command line */
@@ -483,7 +511,12 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                         p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
                 p_cl->is_cfg_refresh = EXTRUE;
                 
+                /* free up current env... */
+                ndrx_ndrxconf_envs_envs_free(&p_cl->stat.envs);
+                
+                /* this will make use of newly allocated env */
                 memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
+                
                 NDRX_FREE(p_cltproc);
             }
         }
@@ -496,8 +529,15 @@ out:
         NDRX_FREE(p_cltproc);
     }
 
+    /* free up envs of the temp process */
+    if (NULL!=cltproc.stat.envs)
+    {
+        ndrx_ndrxconf_envs_envs_free(&cltproc.stat.envs);
+    }
+
     return ret;
 }
+
 /**
  * parse client entries
  * @param doc
@@ -507,23 +547,44 @@ out:
 exprivate int parse_clients(xmlDocPtr doc, xmlNodePtr cur)
 {
     int ret=EXSUCCEED;
-    char *p;
-    
+
     for (; cur ; cur=cur->next)
     {
-            if (0==strcmp((char*)cur->name, "client"))
+        if (0==strcmp((char*)cur->name, "client"))
+        {
+            /* Get the client name */
+            if (EXSUCCEED!=parse_client(doc, cur))
             {
-                /* Get the client name */
-                if (EXSUCCEED!=parse_client(doc, cur))
-                {
-                    ret=EXFAIL;
-                    goto out;
-                }
+                ret=EXFAIL;
+                goto out;
             }
+        }
     }
 out:
     return ret;
 }
+
+/**
+ * parse client entries
+ * @param doc XML document
+ * @param cur current cursor pointing to <envs> tag
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int parse_envs(xmlDocPtr doc, xmlNodePtr cur)
+{
+    int ret=EXSUCCEED;
+
+    if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, &M_envgrouphash))
+    {
+        NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
+        userlog("Failed to parse environment groups for clients!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
 
 /**
  * Parse config out...
@@ -548,8 +609,12 @@ exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
         if (0==strcmp((char*)cur->name, "clients")
                 && EXSUCCEED!=parse_clients(doc, cur->children))
         {
-            ret=EXFAIL;
-            goto out;
+            EXFAIL_OUT(ret);
+        }
+        else if (0==strcmp((char*)cur->name, "envs")
+                && EXSUCCEED!=parse_envs(doc, cur->children))
+        {
+            EXFAIL_OUT(ret);
         }
         
         cur=cur->next;
@@ -609,7 +674,7 @@ out:
 
 /**
  * Load the active configuration.
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int load_config(void)
 {
