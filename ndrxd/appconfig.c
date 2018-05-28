@@ -1302,7 +1302,7 @@ expublic int test_config(int reload, command_call_t * call,
      * 2. loop
      * We go over the old PM, and check new hash.
      * If server names & id not the same, then current must be shutdown
-     * If server id not presnet in hash, then this must be shutdown
+     * If server id not present in hash, then this must be shutdown
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      * We will loop over all details, so that in log we could lookup for full
      * error details.
@@ -1408,6 +1408,8 @@ expublic int test_config(int reload, command_call_t * call,
             {
                 NDRX_LOG(log_debug, "Saving pid %d in new config", old->pid);
                 new->pid = old->pid;
+                new->svpid = old->svpid;
+                NDRX_STRCPY_SAFE(new->binary_name_real, old->binary_name_real);
                 new->state = old->state;
                 /* Link existing service info to new PM! */
                 new->svcs = old->svcs;
