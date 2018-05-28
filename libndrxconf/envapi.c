@@ -79,6 +79,7 @@ out:
         return NULL;
     }
 
+    return cpy;
 }
 
 /**
