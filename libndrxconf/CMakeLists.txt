@@ -47,7 +47,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
             ${LIBXML2_INCLUDE_DIR})
 
-add_library (ndrxconf SHARED
+add_library (ndrxconf STATIC
    	        envapi.c)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
@@ -56,9 +56,3 @@ elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(ndrxconf atmisrvinteg atmi nstd)
 endif()
 
-install (TARGETS 
-    ndrxconf 
-    DESTINATION "${INSTALL_LIB_DIR}"
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-    COMPONENT libraries
-    )
