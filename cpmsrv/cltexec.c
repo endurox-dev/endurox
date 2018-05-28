@@ -33,22 +33,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <libxml/xmlreader.h>
-#include <errno.h>
-#include <unistd.h>
-#include <ndrstandard.h>
-#include <userlog.h>
-#include <atmi.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <signal.h>
-
 #include <sys/param.h>
 #include <sys_mqueue.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <libxml/xmlreader.h>
+#include <errno.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
+#include <ndrstandard.h>
+#include <userlog.h>
+#include <atmi.h>
+#include <exenvapi.h>
 
 #include "cpmsrv.h"
 #include "../libatmisrv/srv_int.h"
@@ -576,6 +576,14 @@ expublic int cpm_exec(cpm_process_t *c)
                         NDRX_CCTAG, c->stat.cctag, strerror(errno));
                 exit(1);
             }
+        }
+        
+        /* load envs from xml config */
+        if (EXSUCCEED!=ndrx_ndrxconf_envs_apply(c->stat.envs))
+        {
+            userlog("Cannot load XML env for %s/%s: %s", 
+                    NDRX_CCTAG, c->tag,c->subsect, strerror(errno));
+            exit(1);
         }
         
         /* Change working dir */

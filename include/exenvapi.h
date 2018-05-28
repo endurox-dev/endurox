@@ -61,6 +61,9 @@ extern void  ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs);
 
 extern int ndrx_ndrxconf_envs_applyall(ndrx_env_grouplist_t *grouplist, 
         ndrx_env_list_t *envs);
+extern int ndrx_ndrxconf_envs_apply(ndrx_env_list_t *envs);
+
+extern int ndrx_ndrxconf_envs_append(ndrx_env_list_t **dest, ndrx_env_list_t *source);
 
 #endif /* EXENVAPI_H_ */
 

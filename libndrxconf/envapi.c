@@ -69,6 +69,7 @@ exprivate ndrx_env_list_t * copy_list_entry(ndrx_env_list_t *el)
     NDRX_MALLOC_OUT(cpy, sizeof(ndrx_env_list_t), ndrx_env_list_t);
     NDRX_STRDUP_OUT(cpy->key, el->key);
     NDRX_STRDUP_OUT(cpy->value, el->value);
+    cpy->flags = el->flags;
     
 out:
     
@@ -157,18 +158,35 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
                     }
                     xmlFree(p);
                 }
+                else if (0==strcmp((char *)attr->name, "unset"))
+                {
+                    
+                    p = (char *)xmlNodeGetContent(attr->children);
+                    
+                    if (0==strcmp(p, "Y") || 0==strcmp(p, "y") ||
+                            0==strcmp(p, "Yes") || 0==strcmp(p, "yes"))
+                    {
+                        env->flags|=NDRX_ENV_ACTION_UNSET;
+                    }
+                    xmlFree(p);
+                }
             }
             
             /* extract value */
             p = (char *)xmlNodeGetContent(cur);
-            env->value = NDRX_STRDUP(p);
             
-            if (NULL==env->value)
+            /* no need for value if action unset */
+            if (!(env->flags & NDRX_ENV_ACTION_UNSET))
             {
-                NDRX_LOG(log_error, "Failed to strdup: %s", 
-                                strerror(errno));
-                xmlFree(p);
-                EXFAIL_OUT(ret);
+                env->value = NDRX_STRDUP(p);
+
+                if (NULL==env->value)
+                {
+                    NDRX_LOG(log_error, "Failed to strdup: %s", 
+                                    strerror(errno));
+                    xmlFree(p);
+                    EXFAIL_OUT(ret);
+                }
             }
             xmlFree(p);
             
@@ -412,21 +430,38 @@ expublic int ndrx_ndrxconf_envs_apply(ndrx_env_list_t *envs)
     ndrx_env_list_t *el;
     
     DL_FOREACH(envs, el)
-    {
-        NDRX_STRCPY_SAFE(tmp, el->value);
-        ndrx_str_env_subs_len(tmp, sizeof(tmp));
-        
-        NDRX_LOG(log_dump, "Setting env [%s]=[%s]",
-                el->key, tmp);
-        
-        if (EXSUCCEED!=setenv(el->key, tmp, EXTRUE))
+    {   
+        if (el->flags & NDRX_ENV_ACTION_UNSET)
         {
-            int err = errno;
-            NDRX_LOG(log_error, "Failed to set [%s]=[%s]: %s",
-                    el->key, tmp, strerror(err));
-            userlog("Failed to set [%s]=[%s]: %s",
-                    el->key, tmp, strerror(err));
-            EXFAIL_OUT(ret);
+            NDRX_LOG(log_dump, "Unsetting env [%s]", el->key);
+
+            if (EXSUCCEED!=unsetenv(el->key))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to set [%s]=[%s]: %s",
+                        el->key, tmp, strerror(err));
+                userlog("Failed to set [%s]=[%s]: %s",
+                        el->key, tmp, strerror(err));
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            NDRX_STRCPY_SAFE(tmp, el->value);
+            ndrx_str_env_subs_len(tmp, sizeof(tmp));
+
+            NDRX_LOG(log_dump, "Setting env [%s]=[%s]",
+                    el->key, tmp);
+
+            if (EXSUCCEED!=setenv(el->key, tmp, EXTRUE))
+            {
+                int err = errno;
+                NDRX_LOG(log_error, "Failed to set [%s]=[%s]: %s",
+                        el->key, tmp, strerror(err));
+                userlog("Failed to set [%s]=[%s]: %s",
+                        el->key, tmp, strerror(err));
+                EXFAIL_OUT(ret);
+            }
         }
     }
     
