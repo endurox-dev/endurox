@@ -143,6 +143,7 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
             /* extract attributes */
             for (attr=cur->properties; attr; attr = attr->next)
             {
+                /* TODO: Test that name is mandatory */
                 if (0==strcmp((char *)attr->name, "name"))
                 {
                     
@@ -376,6 +377,7 @@ expublic int ndrx_ndrxconf_envs_group_parse(xmlDocPtr doc, xmlNodePtr cur,
     /* extract the  group code */
     for (attr=cur->properties; attr; attr = attr->next)
     {
+        /* TODO: Test that name is mandatory! */
         if (0==strcmp((char *)attr->name, "group"))
         {
             p = (char *)xmlNodeGetContent(attr->children);
