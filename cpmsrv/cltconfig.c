@@ -540,6 +540,27 @@ out:
 
 /**
  * parse client entries
+ * @param doc XML document
+ * @param cur current cursor pointing to <envs> tag
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int parse_envs(xmlDocPtr doc, xmlNodePtr cur)
+{
+    int ret=EXSUCCEED;
+
+    if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, &M_envgrouphash))
+    {
+        NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
+        userlog("Failed to parse environment groups for clients!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:    
+    return ret;
+}
+
+/**
+ * parse client entries
  * @param doc
  * @param cur
  * @return
@@ -559,32 +580,22 @@ exprivate int parse_clients(xmlDocPtr doc, xmlNodePtr cur)
                 goto out;
             }
         }
+        else if (0==strcmp((char*)cur->name, "envs")
+                && EXSUCCEED!=parse_envs(doc, cur))
+        {
+            EXFAIL_OUT(ret);
+        }
     }
 out:
-    return ret;
-}
 
-/**
- * parse client entries
- * @param doc XML document
- * @param cur current cursor pointing to <envs> tag
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int parse_envs(xmlDocPtr doc, xmlNodePtr cur)
-{
-    int ret=EXSUCCEED;
-
-    if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, &M_envgrouphash))
+    if (NULL!=M_envgrouphash)
     {
-        NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
-        userlog("Failed to parse environment groups for clients!");
-        EXFAIL_OUT(ret);
+       ndrx_ndrxconf_envs_groups_free(&M_envgrouphash);
     }
+
     
-out:
     return ret;
 }
-
 
 /**
  * Parse config out...
@@ -611,16 +622,12 @@ exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
         {
             EXFAIL_OUT(ret);
         }
-        else if (0==strcmp((char*)cur->name, "envs")
-                && EXSUCCEED!=parse_envs(doc, cur->children))
-        {
-            EXFAIL_OUT(ret);
-        }
         
         cur=cur->next;
     } while (cur);
     
 out:
+    
     return ret;
 }
 
@@ -760,4 +767,4 @@ out:
     return ret;    
 }
 
-
+/* vim: set ts=4 sw=4 et cindent: */
