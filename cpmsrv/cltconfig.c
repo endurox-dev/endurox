@@ -289,16 +289,6 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
             xmlFree(p);
         }
-        else if (0==strcmp((char *)attr->name, "envs"))
-        {
-            if (EXSUCCEED!=ndrx_ndrxconf_envs_parse(doc, cur, &cltproc.stat.envs,
-                    M_envgrouphash, NULL))
-            {
-                NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
-                userlog("Failed to parse environment groups for clients!");
-                EXFAIL_OUT(ret);
-            }
-        }
     }
     
     /* Check the client config... */
@@ -314,8 +304,18 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
     for (; cur; cur=cur->next)
     {
-        if (0==strcmp("exec", (char *)cur->name))
-         {
+        if (0==strcmp("envs", (char *)cur->name))
+        {
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_parse(doc, cur, &cltproc.stat.envs,
+                    M_envgrouphash, NULL))
+            {
+                NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
+                userlog("Failed to parse environment groups for clients!");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (0==strcmp("exec", (char *)cur->name))
+        {
            /* Copy stuff from root elem to heap */
             
             p_cltproc = NDRX_MALLOC(sizeof(cpm_process_t));
