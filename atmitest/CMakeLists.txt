@@ -98,6 +98,7 @@ add_subdirectory (test050_ubfdb)
 add_subdirectory (test051_settout)
 add_subdirectory (test052_minstart)
 add_subdirectory (test053_logoff)
+add_subdirectory (test054_svwrap)
 
 ################################################################################
 # Master test case driver
