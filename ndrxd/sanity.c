@@ -676,10 +676,11 @@ exprivate int check_dead_processes(void)
             p_pm->state<=NDRXD_PM_MAX_RUNNING &&
                 p_pm->state_changed > G_app_config->checkpm)
         {
-            if (!ndrx_sys_is_process_running(p_pm->pid, p_pm->binary_name))
+            if (!ndrx_sys_is_process_running(p_pm->svpid, p_pm->binary_name_real))
             {
-                NDRX_LOG(log_warn, "Pid %d/%s in state %d is actually dead",
-                        p_pm->pid, p_pm->binary_name, p_pm->state);
+                NDRX_LOG(log_warn, "Pid %d/%s/%s in state %d is actually dead",
+                        p_pm->pid, p_pm->binary_name, p_pm->binary_name_real, 
+                        p_pm->state);
                 /*Send self notification*/
                 
                 memset(buf, 0, sizeof(buf));

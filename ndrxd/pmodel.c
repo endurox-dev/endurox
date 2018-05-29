@@ -698,7 +698,7 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
         p_pm->killreq = EXFALSE;
         
         /* Remove any queues used... */
-        remove_server_queues(p_pm->binary_name, p_pm->pid, p_pm->srvid, NULL);
+        remove_server_queues(p_pm->binary_name_real, p_pm->pid, p_pm->srvid, NULL);
         
     }
     
@@ -875,7 +875,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
          * thus we need to pass it down to th client process.
          */
         snprintf(tmp, sizeof(tmp), "%d", (int)getpid());
-        NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, tmp);
+        NDRX_PM_SET_ENV(CONF_NDRX_SVPPID, tmp);
 
         if (EXEOS!=p_pm->conf->cmdline[0])
         {
