@@ -122,7 +122,8 @@ out:
  * @return 
  */
 expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur, 
-        ndrx_env_list_t **envs, ndrx_env_group_t *grouphash, ndrx_env_grouplist_t **grouplist)
+        ndrx_env_list_t **envs, ndrx_env_group_t *grouphash, 
+        ndrx_env_grouplist_t **grouplist)
 {
     int ret = EXSUCCEED;
     xmlAttrPtr attr;
@@ -143,10 +144,8 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
             /* extract attributes */
             for (attr=cur->properties; attr; attr = attr->next)
             {
-                /* TODO: Test that name is mandatory */
                 if (0==strcmp((char *)attr->name, "name"))
                 {
-                    
                     p = (char *)xmlNodeGetContent(attr->children);
                     
                     env->key = NDRX_STRDUP(p);
@@ -172,6 +171,13 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
                     }
                     xmlFree(p);
                 }
+            }
+            
+            if (EXEOS==env->key[0])
+            {
+                NDRX_LOG(log_error, "XML config <envs> tag name attrib!", p);
+                userlog("XML config <envs> tag name attrib!", p);
+                EXFAIL_OUT(ret);
             }
             
             /* extract value */
@@ -218,7 +224,8 @@ expublic int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
             if (NULL!=grouplist)
             {
                 /* add the group to the list */
-                NDRX_CALLOC_OUT(glist, 1, sizeof(ndrx_env_grouplist_t), ndrx_env_grouplist_t);
+                NDRX_CALLOC_OUT(glist, 1, sizeof(ndrx_env_grouplist_t), 
+                        ndrx_env_grouplist_t);
                 glist->group = pullin;
                 
                 DL_APPEND(*grouplist, glist);
@@ -384,6 +391,13 @@ expublic int ndrx_ndrxconf_envs_group_parse(xmlDocPtr doc, xmlNodePtr cur,
             NDRX_STRCPY_SAFE(group->group, p);
             xmlFree(p);
         }
+    }
+    
+    if (EXEOS==group->group[0])
+    {
+        NDRX_LOG(log_error, "ERROR ! missing group name in XML config, <envs> tag");
+        userlog("ERROR ! missing group name in XML config, <envs> tag");
+        EXFAIL_OUT(ret);
     }
     
     /* test group code against hash list if found, then reject with error */
