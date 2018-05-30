@@ -144,6 +144,16 @@ expublic int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name)
 }
 
 /**
+ * Test is pid alive
+ * @param pid pid number to test
+ * @return EXTRUE/EXFALSE/EXFAIL
+ */
+expublic int ndrx_sys_is_process_running_by_pid(pid_t pid)
+{
+    return ndrx_sys_is_process_running_by_kill(pid, NULL);
+}
+
+/**
  * Get the process name. No debug please, at it gets locked
  * because mostly it is firstly called from debug lib, if we call debug
  * again it will lock against semaphore.

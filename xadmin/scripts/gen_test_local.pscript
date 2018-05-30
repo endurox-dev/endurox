@@ -718,7 +718,7 @@ xadmin file=${TESTDIR}/xadmin-dom1.log
 ndrxd file=${TESTDIR}/ndrxd-dom1.log
 atmiclt"+::prov.testid+@" file=${TESTDIR}/atmiclt-dom1.log
 "+("y"==::prov.dom1 && "n"==::prov.dom2?@"
-atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv-dom2.log
+atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv-dom1.log
 ":"")+@"
 tpbridge file=${TESTDIR}/tpbridge-dom1.log threaded=y
 "))
