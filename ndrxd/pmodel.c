@@ -1030,11 +1030,12 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
             
             /* Check for process name & pid */
-            if (ndrx_sys_is_process_running(pid, p_pm->binary_name))
+            if (ndrx_sys_is_process_running(p_pm->svpid, p_pm->binary_name_real))
             {
                 /*Should be set at info: p_pm->state = NDRXD_PM_RUNNING;*/
-                NDRX_LOG(log_debug, "binary %s, srvid %d started with pid %d",
-                            p_pm->binary_name, p_pm->srvid, pid);
+                NDRX_LOG(log_debug, "binary %s/%s, srvid %d started with pid %d/%d",
+                            p_pm->binary_name,p_pm->binary_name_real, p_pm->srvid, 
+                        pid, p_pm->svpid);
                 (*p_processes_started)++;
             }
             else if (NDRXD_PM_NOT_STARTED==p_pm->state)
@@ -1210,7 +1211,7 @@ expublic int app_startup(command_startstop_t *call,
             }
             else
             {
-                NDRX_LOG(log_error, "Srvid: %d not initialized", call->srvid);
+                NDRX_LOG(log_error, "Srvid: %d not initialised", call->srvid);
             }
         }
         else

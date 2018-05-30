@@ -294,6 +294,7 @@ extern NDRX_API int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re);
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);
 extern NDRX_API int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);
 extern NDRX_API int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
+extern NDRX_API int ndrx_sys_is_process_running_by_pid(pid_t pid);
 
 
 /* sys_linux.c: */

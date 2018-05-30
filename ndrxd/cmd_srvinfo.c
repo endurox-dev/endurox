@@ -131,6 +131,11 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         if (NDRXD_PM_STARTING == p_pm_chk->state)
         {
             NDRX_LOG(log_warn, "Binary was starting up, updating status");
+            
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+            
             p_pm->state = srvinfo->srvinfo.state;
             p_pm->state_changed = SANITY_CNT_START;
             /* Assume we inter in running state, thus reset ping timer */
@@ -142,14 +147,17 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->exec_seq_try = 0; /* Reset counter as we are good */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
-            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
-                    srvinfo->srvinfo.binary_name_real);
-            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+            
         }
         else if (p_pm_chk->state != NDRXD_PM_RUNNING_OK)
         {
             NDRX_LOG(log_warn, "We assume that this PID is good "
                     "one & will remove old one!");
+            
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+            
             p_pm->state = srvinfo->srvinfo.state;
             p_pm->state_changed = SANITY_CNT_START;
             /* Assume we inter in running state, thus reset ping timer */
@@ -169,9 +177,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             /* Bridge stuff: */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
-            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
-                    srvinfo->srvinfo.binary_name_real);
-            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+            
         }
         else
         {
@@ -187,6 +193,12 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
          * so we register it in PID list */
         NDRX_LOG(log_warn, "Seems like server is not started by ndrxd! "
                 "The pid %d was not found in PID hash", srvinfo->srvinfo.pid);
+        
+        
+        NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+        p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+        
         p_pm->pid = srvinfo->srvinfo.pid;
         p_pm->state = srvinfo->srvinfo.state;
         p_pm->reqstate = NDRXD_PM_RUNNING_OK;/* If process is now running, 
@@ -201,10 +213,6 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         /* Bridge stuff: */
         p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
         p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
-        
-        NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
-                    srvinfo->srvinfo.binary_name_real);
-        p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
         
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
     }
