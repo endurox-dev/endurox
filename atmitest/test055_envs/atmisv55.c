@@ -88,23 +88,126 @@ out:
                 0L);
 }
 
-/*
- * Do initialization
+/**
+ * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
+    int ret = EXSUCCEED;
+    char *p;
     NDRX_LOG(log_debug, "tpsvrinit called");
-
-    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+      
+    /* test environment variables... */
+    
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO1", getenv("HELLO1"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO2", getenv("HELLO2"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO3", getenv("HELLO3"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO4", getenv("HELLO4"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO5", getenv("HELLO5"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO6", getenv("HELLO6"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO7", getenv("HELLO7"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO10", getenv("HELLO10"));
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO11", getenv("HELLO11"));
+    
+    if (10==tpgetsrvid())
     {
-        NDRX_LOG(log_error, "Failed to initialize TESTSV!");
+        if (0!=strcmp((p=getenv("HELLO1")), "THIS IS 1"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 1] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp((p=getenv("HELLO2")), "THIS IS 2"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 2] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp((p=getenv("HELLO3")), "THIS IS 3"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 3] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=(p=getenv("HELLO4")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO4 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp((p=getenv("HELLO5")), "THIS IS 5"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 5] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+
+        if (NULL!=(p=getenv("HELLO6")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO6 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=(p=getenv("HELLO7")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO7 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }        
+    }
+    else if (11==tpgetsrvid())
+    {
+        if (0!=strcmp((p=getenv("HELLO6")), "THIS IS 6"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 6] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp((p=getenv("HELLO7")), "THIS IS 7"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 7] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp((p=getenv("HELLO5")), "THIS IS 5"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 5] got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=(p=getenv("HELLO1")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO1 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=(p=getenv("HELLO2")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO2 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=(p=getenv("HELLO3")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO3 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=(p=getenv("HELLO4")))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Expected NULL for HELLO4 but got [%s]", p);
+            EXFAIL_OUT(ret);
+        }
     }
     
-    return EXSUCCEED;
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+    }
+out:
+    return ret;
 }
 
 /**
- * Do de-initialization
+ * Do de-initialisation
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {

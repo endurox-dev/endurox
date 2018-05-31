@@ -92,10 +92,7 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
-
-
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 30
 RET=0
 
 xadmin psc

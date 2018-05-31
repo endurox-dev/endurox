@@ -334,8 +334,8 @@ out:
                 0L);
 }
 
-/*
- * Do initialization
+/**
+ * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
@@ -343,14 +343,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     if (EXSUCCEED!=tpadvertise(""TESTSV"", TESTSV))
     {
-        NDRX_LOG(log_error, ""Failed to initialize TESTSV!"");
+        NDRX_LOG(log_error, ""Failed to initialise TESTSV!"");
     }
     
     return EXSUCCEED;
 }
 
 /**
- * Do de-initialization
+ * Do de-initialisation
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
@@ -583,7 +583,7 @@ go_out $RET
         <!-- Do not need respawning! -->
         <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
-        have not completed initialization, sec -->
+        have not completed initialisation, sec -->
         <start_max>20</start_max>
         <!--
         Ping server in every X sanity units
@@ -669,7 +669,7 @@ go_out $RET
         <!-- Do not need respawning! -->
         <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
-        have not completed initialization, sec -->
+        have not completed initialisation, sec -->
         <start_max>20</start_max>
         <!--
         Ping server in every X sanity checks
