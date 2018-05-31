@@ -53,10 +53,10 @@
 		<killtime>20</killtime>
 	</defaults>
 	<servers>
-		<server name="cpmsrv">
-			<srvid>10</srvid>
-			<sysopt>-e ${TESTDIR}/cpmsrv.log -r -- -k3 -i1</sysopt>
-		</server>
+            <server name="cpmsrv">
+                <srvid>10</srvid>
+                <sysopt>-e ${TESTDIR}/cpmsrv.log -r -- -k3 -i1</sysopt>
+            </server>
         </servers>
 	<!-- Client section -->
         <clients>
