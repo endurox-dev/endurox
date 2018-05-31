@@ -433,6 +433,14 @@ Ensure(test053_logoff)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test054_svwrap)
+{
+    int ret;
+    ret=system_dbg("test054_svwrap/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 
 TestSuite *atmi_test_all(void)
 {
@@ -519,6 +527,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test051_settout);
     add_test(suite,test052_minstart);
     add_test(suite,test053_logoff);
+    add_test(suite,test054_svwrap);
             
     return suite;
 }
