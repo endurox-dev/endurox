@@ -781,7 +781,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     /* prepare args for execution... */
     char cmd_str[PATH_MAX];
-    char **cmd; /* splitted pointers.. */
+    char **cmd = NULL; /* splitted pointers.. */
     char separators[]   = " ,\t\n";
     char *token;
     int numargs;
@@ -832,20 +832,21 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         
         if (EXSUCCEED!=setenv(CONF_NDRX_SYSFLAGS, sysflags_str, EXTRUE))
         {
-            NDRX_LOG(log_error, "Failed to set env: %s", strerror(errno));
-            EXFAIL_OUT(ret);
+            userlog("Failed to set env: %s", strerror(errno));
+            exit(1);
         }
         
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
         {
-            NDRX_LOG(log_error, "Failed to close: [%s] err: %s",
+            userlog("Failed to close: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
         }
         
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
+        
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
         
@@ -857,8 +858,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 #define NDRX_PM_SET_ENV(ENV__, VAL__) if (EXSUCCEED!=setenv(ENV__, VAL__, EXTRUE))\
         {\
            int err = errno;\
-            fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, \
-                ENV__, VAL__, strerror(err));\
             userlog("%s: failed to set %s=[%s]: %s", __func__, \
                 ENV__, VAL__, strerror(err));\
             exit(1);\
@@ -883,7 +882,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
-            NDRX_LOG(log_debug, "Got process command line: [%s]", cmd_str);
             
             numargs=0;
             alloc_args = 0;
@@ -940,7 +938,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         {
             if (EXSUCCEED!=ndrx_load_new_env(p_pm->conf->env))
             {
-                fprintf(stderr, "Failed to load custom env from: %s!\n", 
+                userlog("Failed to load custom env from: %s!", 
                         p_pm->conf->env);
                 exit(1);
             }
@@ -950,7 +948,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         {
             if (EXSUCCEED!=setenv(NDRX_CCTAG, p_pm->conf->cctag, EXTRUE))
             {
-                fprintf(stderr, "Cannot set [%s] to [%s]: %s\n", 
+                userlog("Cannot set [%s] to [%s]: %s", 
                         NDRX_CCTAG, p_pm->conf->cctag, strerror(errno));
                 exit(1);
             }
@@ -961,7 +959,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         if (EXSUCCEED!=ndrx_ndrxconf_envs_applyall(p_pm->conf->envgrouplist,
                 p_pm->conf->envlist))
         {
-            fprintf(stderr, "Failed to load config from ndrxconfig.xml!\n");
+            userlog("Failed to load config from ndrxconfig.xml!");
             exit(1);
         }
         
