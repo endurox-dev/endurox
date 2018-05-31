@@ -794,7 +794,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     if (NDRXD_PM_RUNNING_OK==p_pm->state)
     {
 
-        NDRX_LOG(log_warn, "Not starting %s/%d, laready in "
+        NDRX_LOG(log_warn, "Not starting %s/%d, already in "
                                       "running state!",
                                       p_pm->binary_name, p_pm->srvid);
         goto out;
@@ -1211,7 +1211,7 @@ expublic int app_startup(command_startstop_t *call,
             }
             else
             {
-                NDRX_LOG(log_error, "Srvid: %d not initialised", call->srvid);
+                NDRX_LOG(log_error, "Srvid: %d not initialized", call->srvid);
             }
         }
         else
