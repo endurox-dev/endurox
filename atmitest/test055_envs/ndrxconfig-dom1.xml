@@ -92,27 +92,30 @@
             <srvid>11</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
         </server>
-        
+        <server name="cpmsrv">
+            <srvid>9999</srvid>
+            <sysopt>-e ${TESTDIR}/cpmsrv.log -r -- -k3 -i1</sysopt>
+        </server>
     </servers>
     <clients>
         <envs group="G1">
-            <env name="HELLO1">THIS IS 1</env>
-            <env name="HELLO2">THIS IS 2</env>
+            <env name="HELLO1">YTHIS IS 1</env>
+            <env name="HELLO2">YTHIS IS 2</env>
         </envs>
         <envs group="G2">
-            <env name="HELLO3">THIS IS 3</env>
-            <env name="HELLO4">THIS IS 4</env>
+            <env name="HELLO3">YTHIS IS 3</env>
+            <env name="HELLO4">YTHIS IS 4</env>
         </envs>
         <envs group="G5">
-            <env name="HELLO6">THIS IS 6</env>
-            <env name="HELLO7">THIS IS 7</env>
+            <env name="HELLO6">YTHIS IS 6</env>
+            <env name="HELLO7">YTHIS IS 7</env>
         </envs>
         <!-- batch mode/% tests -->
         <client cmdline="teset55.sh">
             <envs>
                 <usegroup>G1</usegroup>
                 <usegroup>G5</usegroup>
-                <env name="HELLO10">THIS IS 10</env>
+                <env name="HELLO10">YTHIS IS 10</env>
                 <env name="HELLO6" unset="y" />
             </envs>
             <exec tag="TEST1" autostart="Y" log="test55.sh"/>
@@ -120,7 +123,7 @@
         <client cmdline="teset55.sh">
             <envs>
                 <usegroup>G1</usegroup>
-                <env name="HELLO11">THIS IS 10</env>
+                <env name="HELLO11">YTHIS IS 10</env>
             </envs>
             <exec tag="TEST2" autostart="Y" log="test55-2.sh"/>
         </client>

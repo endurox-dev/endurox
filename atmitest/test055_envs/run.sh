@@ -97,6 +97,8 @@ RET=0
 
 xadmin psc
 xadmin ppm
+xadmin reload
+
 echo "Running off client"
 
 set_dom1;
