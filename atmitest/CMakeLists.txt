@@ -99,6 +99,7 @@ add_subdirectory (test051_settout)
 add_subdirectory (test052_minstart)
 add_subdirectory (test053_logoff)
 add_subdirectory (test054_svwrap)
+add_subdirectory (test055_envs)
 
 ################################################################################
 # Master test case driver
