@@ -80,6 +80,19 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
         </server>
+        
+        <server name="atmi.sv55">
+            <envs>
+                <usegroup>G3</usegroup>
+                <env name="HELLO5">THIS IS 5</env>
+                <env name="HELLO4" unset="y" />
+            </envs>
+            <min>1</min>
+            <max>1</max>
+            <srvid>11</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+        </server>
+        
     </servers>
     <clients>
         <envs group="G1">
@@ -102,7 +115,14 @@
                 <env name="HELLO10">THIS IS 10</env>
                 <env name="HELLO6" unset="y" />
             </envs>
-            <exec tag="TEST1" autostart="Y" log="teset55.sh"/>
+            <exec tag="TEST1" autostart="Y" log="test55.sh"/>
+        </client>
+        <client cmdline="teset55.sh">
+            <envs>
+                <usegroup>G1</usegroup>
+                <env name="HELLO11">THIS IS 10</env>
+            </envs>
+            <exec tag="TEST2" autostart="Y" log="test55-2.sh"/>
         </client>
     </clients>
 </endurox>
