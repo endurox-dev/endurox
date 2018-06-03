@@ -119,13 +119,17 @@ fi
 if [ "X`tail -n1 test55.sh.log`" != "Xtest55.sh - done" ]; then
         echo "test55.sh not done!"
         RET=-2
+fi
 
+if [ "X`tail -n1 test55-2.sh.log`" != "Xtest55-2.sh - done" ]; then
+        echo "test55-2.sh not done!"
+        RET=-3
 fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
         echo "Test error detected!"
-        RET=-3
+        RET=-4
 fi
 
 

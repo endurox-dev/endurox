@@ -122,7 +122,7 @@
         <client cmdline="test55-2.sh">
             <envs>
                 <usegroup>G1</usegroup>
-                <env name="HELLO11">YTHIS IS 10</env>
+                <env name="HELLO11">YTHIS IS 11</env>
             </envs>
             <exec tag="TEST2" autostart="Y" log="test55-2.sh.log"/>
         </client>
