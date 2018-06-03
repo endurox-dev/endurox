@@ -66,9 +66,14 @@ exprivate ndrx_env_list_t * copy_list_entry(ndrx_env_list_t *el)
     int ret = EXSUCCEED;
     ndrx_env_list_t * cpy = NULL;
     
-    NDRX_MALLOC_OUT(cpy, sizeof(ndrx_env_list_t), ndrx_env_list_t);
+    NDRX_MALLOC_OUT(cpy, sizeof(ndrx_env_list_t), ndrx_env_list_t);    
     NDRX_STRDUP_OUT(cpy->key, el->key);
-    NDRX_STRDUP_OUT(cpy->value, el->value);
+    
+    if (NULL!=el->value)
+    {
+        /* in case of unset this is NULL */
+        NDRX_STRDUP_OUT(cpy->value, el->value);
+    }
     cpy->flags = el->flags;
     
 out:
