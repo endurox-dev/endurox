@@ -110,22 +110,21 @@
             <env name="HELLO6">YTHIS IS 6</env>
             <env name="HELLO7">YTHIS IS 7</env>
         </envs>
-        <!-- batch mode/% tests -->
-        <client cmdline="teset55.sh">
+        <client cmdline="test55.sh">
             <envs>
                 <usegroup>G1</usegroup>
                 <usegroup>G5</usegroup>
                 <env name="HELLO10">YTHIS IS 10</env>
                 <env name="HELLO6" unset="y" />
             </envs>
-            <exec tag="TEST1" autostart="Y" log="test55.sh"/>
+            <exec tag="TEST1" autostart="Y" log="test55.sh.log"/>
         </client>
-        <client cmdline="teset55.sh">
+        <client cmdline="test55-2.sh">
             <envs>
                 <usegroup>G1</usegroup>
                 <env name="HELLO11">YTHIS IS 10</env>
             </envs>
-            <exec tag="TEST2" autostart="Y" log="test55-2.sh"/>
+            <exec tag="TEST2" autostart="Y" log="test55-2.sh.log"/>
         </client>
     </clients>
 </endurox>

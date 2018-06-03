@@ -92,6 +92,11 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
+# let clients to boot
+sleep 10
+# let cpmsrv to reload config...
+touch ndrxconfig-dom1.xml
+sleep 10
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 RET=0
 
@@ -111,10 +116,16 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+if [ "X`tail -n1 test55.sh.log`" != "Xtest55.sh - done" ]; then
+        echo "test55.sh not done!"
+        RET=-2
+
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
         echo "Test error detected!"
-        RET=-2
+        RET=-3
 fi
 
 

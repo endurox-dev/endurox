@@ -508,14 +508,29 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             else
             {
                 NDRX_LOG(log_info, "Refreshing %s/%s [%s] ...", 
-                        p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
+                        p_cltproc->tag, p_cltproc->subsect, 
+                        p_cltproc->stat.command_line);
                 p_cl->is_cfg_refresh = EXTRUE;
                 
-                /* free up current env... */
-                ndrx_ndrxconf_envs_envs_free(&p_cl->stat.envs);
                 
                 /* this will make use of newly allocated env */
                 memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
+                
+                p_cl->stat.envs = NULL;
+            
+                if (EXSUCCEED!=ndrx_ndrxconf_envs_append(&p_cl->stat.envs, 
+                        p_cltproc->stat.envs))
+                {
+                    NDRX_LOG(log_error, "Failed to join envs %p %p", &p_cl->stat.envs, 
+                            p_cltproc->stat.envs);
+                    userlog("Failed to join envs %p %p", "Failed to join envs %p %p", 
+                            &p_cl->stat.envs, 
+                            p_cltproc->stat.envs);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* free up current env... */
+                ndrx_ndrxconf_envs_envs_free(&p_cltproc->stat.envs);
                 
                 NDRX_FREE(p_cltproc);
             }
@@ -753,6 +768,13 @@ expublic int load_config(void)
         if (!c->is_cfg_refresh && CLT_STATE_NOTRUN==c->dyn.cur_state)
         {
             NDRX_LOG(log_error, "Removing process: [%s]", c->stat.command_line);
+            
+            /* clean up environments... */
+            if (NULL!=c->stat.envs)
+            {
+                ndrx_ndrxconf_envs_envs_free(&c->stat.envs);
+            }
+            
             EXHASH_DEL(G_clt_config, c);
             NDRX_FREE(c);
         }
