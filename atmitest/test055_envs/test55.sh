@@ -12,7 +12,7 @@ if [ "X$HELLO6" != "X" ]; then
     echo "TESTERROR ! Invalid value for HELLO6: [$HELLO6]"
 fi
 
-if [ "X$HELLO7" != "XYTHIS IS 7" ]; then
+if [ "X$HELLO7" != "XYTHIS IS 6" ]; then
     echo "TESTERROR ! Invalid value for HELLO7: [$HELLO7]"
 fi
 
