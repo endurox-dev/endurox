@@ -40,14 +40,14 @@ SYNOPSIS
         <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
         <protected>PROTECTED_SERVER_DEFAULT</protected>
         <reloadonchange>RELOAD_ON_CHANGE_DEFAULT</reloadonchange>
-        <envs group="SV_ENV_GROUP_NAME">
-            <env name="SV_ENV_VARIABLE_NAME">SV_ENV_VARIABLE_VALUE</env>
-            <env name="SV_ENV_VARIABLE_NAME_UNSET" unset="y" />
+        <envs group="SVGRPENV_GROUP_NAME">
+            <env name="SVGRPENV_VARIABLE_NAME">SVGRPENV_VARIABLE_VALUE</env>
+            <env name="SVGRPENV_VARIABLE_NAME_UNSET" unset="y" />
             ...
-            <env name="SV_ENV_VARIABLE_NAME_N">SV_ENV_VARIABLE_VALUE_N</env>
+            <env name="SVGRPENV_VARIABLE_NAME_N">SVGRPENV_VARIABLE_VALUE_N</env>
         </envs>
         ...
-        <envs group="SV_ENV_GROUP_NAME_N">
+        <envs group="SVGRPENV_GROUP_NAME_N">
             ...
         </envs>
     </defaults>
@@ -76,9 +76,9 @@ SYNOPSIS
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
             <envs>
-                <usegroup>SV_ENV_GROUP_NAME</usegroup>
+                <usegroup>SVGRPENV_GROUP_NAME</usegroup>
                 ...
-                <usegroup>SV_ENV_GROUP_NAME_N</usegroup>
+                <usegroup>SVGRPENV_GROUP_NAME_N</usegroup>
                 <env name="SVPROC_ENV_VARIABLE_NAME">SVPROC_ENV_VARIABLE_VALUE</env>
                 <env name="SVPROC_ENV_VARIABLE_NAME_UNSET" unset="y" />
                 ...
@@ -91,30 +91,30 @@ SYNOPSIS
         </server>
     </servers>
     <clients>
-        <envs group="CLT_ENV_GROUP_NAME">
-            <env name="CLT_ENV_VARIABLE_NAME">CLT_ENV_VARIABLE_VALUE</env>
-            <env name="CLT_ENV_VARIABLE_NAME_UNSET" unset="y" />
+        <envs group="CLTGRP_ENV_GROUP_NAME">
+            <env name="CLTGRP_ENV_VARIABLE_NAME">CLTGRP_ENV_VARIABLE_VALUE</env>
+            <env name="CLTGRP_ENV_VARIABLE_NAME_UNSET" unset="y" />
             ...
-            <env name="CLT_ENV_VARIABLE_NAME_N">CLT_ENV_VARIABLE_VALUE_N</env>
+            <env name="CLTGRP_ENV_VARIABLE_NAME_N">CLTGRP_ENV_VARIABLE_VALUE_N</env>
         </envs>
         ...
-        <envs group="CLT_ENV_GROUP_NAME_N">
+        <envs group="CLTGRP_ENV_GROUP_NAME_N">
             ...
         </envs>
         <client cmdline="CLT_COMMAND_LINE [${NDRX_CLTTAG} ${NDRX_CLTSUBSECT}]" 
             log="CLT_LOG" 
             stdout="CLT_STDOUT"
             stderr="CLT_STDERR"
-            env="CLT_ENV"
+            env="CLTGRP_ENV"
             CCTAG="CLT_CCTAG"
             wd="CLT_WD"
             klevel="CLT_KLEVEL"
             autostart="CLT_AUTOSTART">
 
             <envs>
-                <usegroup>CLT_ENV_GROUP_NAME</usegroup>
+                <usegroup>CLTGRP_ENV_GROUP_NAME</usegroup>
                 ...
-                <usegroup>CLT_ENV_GROUP_NAME_N</usegroup>
+                <usegroup>CLTGRP_ENV_GROUP_NAME_N</usegroup>
                 <env name="CLTPROC_ENV_VARIABLE_NAME">CLTPROC_ENV_VARIABLE_VALUE</env>
                 <env name="CLTPROC_ENV_VARIABLE_NAME_UNSET" unset="y" />
                 ...
@@ -126,7 +126,7 @@ SYNOPSIS
                 log="CLT_LOG_EXEC" 
                 stdout="CLT_STDOUT_EXEC" 
                 stderr="CLT_STDERR_EXEC" 
-                env="CLT_ENV_EXEC" 
+                env="CLTGRP_ENV_EXEC" 
                 cctag="CLT_CCTAG_EXEC" 
                 wd="CLT_WD_EXEC" 
                 autostart="CLT_AUTOSTART_EXEC"
@@ -338,6 +338,24 @@ DEBUG CONFIGURATION FILE SYNTAX
     full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
     of process model checks, the ndrxd will find out that wrapped binary name does not
     contain the *SERVER_BINARY_NAME*, thus will reboot the process.
+*SVGRPENV_GROUP_NAME*::
+    Environment variable group name for the servers section. Identifier max length
+    is 30 chars. Same group can be used for different server processes. One server
+    may import multiple groups. For client processes groups are defined 
+    *CLTGRP_ENV_GROUP_NAME* name at '<clients> section.
+*SVGRPENV_VARIABLE_NAME*::
+    This server server's group environment variable name, that shall be set for
+    process which uses this group. For client processes *CLTGRP_ENV_VARIABLE_NAME*
+    set the variable name at group definition. Individual environment variables
+    can be set at process level. For server processes that is set by
+    *SVPROC_ENV_VARIABLE_NAME* and for client processes by *CLTPROC_ENV_VARIABLE_NAME*.
+*SVGRPENV_VARIABLE_VALUE*::
+    This is environment variable value to be set. For client process groups this
+    is defined by *CLTGRP_ENV_VARIABLE_VALUE*. For individual processes value is
+    defined by *SVPROC_ENV_VARIABLE_NAME* and *CLTPROC_ENV_VARIABLE_NAME*
+    accordingly. The value is interpreted by variable substitution algorithm (see 
+    bellow). The value is interpreted at time when process is spawned (not defined),
+    meaning that it have access to full process variables at startup moment.
 *CLT_COMMAND_LINE*::
     Executable name and arguments for client program. Command line basically is a format
     string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
@@ -351,8 +369,8 @@ DEBUG CONFIGURATION FILE SYNTAX
 *CLT_STDERR*::
     File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
     for each individual process. Optional attribute.
-*CLT_ENV*::
-    Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLT_ENV_EXEC'
+*CLTGRP_ENV*::
+    Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLTGRP_ENV_EXEC'
     for each individual process. Optional attribute.
 *CLT_CCTAG*::
     ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
@@ -372,7 +390,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     of the client, *1* - do kill child processes only when performing 
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
     The default is *0*.
-	
+
 VARIABLE SUBSTITUTION
 ---------------------
 

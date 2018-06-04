@@ -108,7 +108,7 @@
         </envs>
         <envs group="G5">
             <env name="HELLO6">YTHIS IS 6</env>
-            <env name="HELLO7">YTHIS IS 7</env>
+            <env name="HELLO7">${HELLO6}</env>
         </envs>
         <client cmdline="test55.sh">
             <envs>
