@@ -40,6 +40,16 @@ SYNOPSIS
         <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
         <protected>PROTECTED_SERVER_DEFAULT</protected>
         <reloadonchange>RELOAD_ON_CHANGE_DEFAULT</reloadonchange>
+        <envs group="SV_ENV_GROUP_NAME">
+            <env name="SV_ENV_VARIABLE_NAME">SV_ENV_VARIABLE_VALUE</env>
+            <env name="SV_ENV_VARIABLE_NAME_UNSET" unset="y" />
+            ...
+            <env name="SV_ENV_VARIABLE_NAME_N">SV_ENV_VARIABLE_VALUE_N</env>
+        </envs>
+        ...
+        <envs group="SV_ENV_GROUP_NAME_N">
+            ...
+        </envs>
     </defaults>
     <servers>
         <server name="SERVER_BINARY_NAME">
@@ -65,6 +75,15 @@ SYNOPSIS
             <protected>PROTECTED_SERVER</protected>
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
+            <envs>
+                <usegroup>SV_ENV_GROUP_NAME</usegroup>
+                ...
+                <usegroup>SV_ENV_GROUP_NAME_N</usegroup>
+                <env name="SVPROC_ENV_VARIABLE_NAME">SVPROC_ENV_VARIABLE_VALUE</env>
+                <env name="SVPROC_ENV_VARIABLE_NAME_UNSET" unset="y" />
+                ...
+                <env name="SVPROC_ENV_VARIABLE_NAME_N">SVPROC_ENV_VARIABLE_VALUE_N</env>
+            </envs>
         </server>
         ...
         <server name="SERVER_BINARY_NAME_N">
@@ -72,6 +91,16 @@ SYNOPSIS
         </server>
     </servers>
     <clients>
+        <envs group="CLT_ENV_GROUP_NAME">
+            <env name="CLT_ENV_VARIABLE_NAME">CLT_ENV_VARIABLE_VALUE</env>
+            <env name="CLT_ENV_VARIABLE_NAME_UNSET" unset="y" />
+            ...
+            <env name="CLT_ENV_VARIABLE_NAME_N">CLT_ENV_VARIABLE_VALUE_N</env>
+        </envs>
+        ...
+        <envs group="CLT_ENV_GROUP_NAME_N">
+            ...
+        </envs>
         <client cmdline="CLT_COMMAND_LINE [${NDRX_CLTTAG} ${NDRX_CLTSUBSECT}]" 
             log="CLT_LOG" 
             stdout="CLT_STDOUT"
@@ -81,6 +110,16 @@ SYNOPSIS
             wd="CLT_WD"
             klevel="CLT_KLEVEL"
             autostart="CLT_AUTOSTART">
+
+            <envs>
+                <usegroup>CLT_ENV_GROUP_NAME</usegroup>
+                ...
+                <usegroup>CLT_ENV_GROUP_NAME_N</usegroup>
+                <env name="CLTPROC_ENV_VARIABLE_NAME">CLTPROC_ENV_VARIABLE_VALUE</env>
+                <env name="CLTPROC_ENV_VARIABLE_NAME_UNSET" unset="y" />
+                ...
+                <env name="CLPROC_ENV_VARIABLE_NAME_N">CLTPROC_ENV_VARIABLE_VALUE_N</env>
+            </envs>
 
             <exec tag="CLT_TAG_EXEC" 
                 subsect="CLT_SUBSECT_EXEC" 
