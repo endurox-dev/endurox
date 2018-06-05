@@ -190,6 +190,27 @@ Mandatory Env. Variables
     enable timeout control for communication with *ndrxd* daemon, if parameter
     is not set, the code will work in legacy mode, meaning that list calls
     to ndrxd will never get timeout.
+*NDRX_SVPROCNAME*='SERVER_PROC_NAME'::
+    Server process name exported by *ndrxd* at XATMI server process boot time.
+    The name is either server name extracted by "<server>" or extracted by sub
+    tag "<cmdline>".
+*NDRX_SVCLOPT*='SERVER_COMMAND_LINE'::
+    Server process command line. Generated and exported at the moment of XATMI
+    server boot. If no command line options are passed to XATMI server, then
+    *libatmisrv* tries to extract the parameter from this environment variable
+    before failing, due to missing command line arguments.
+*NDRX_SVPPID*='SERVER_PARENT_PID'::
+    Parent process PID of server process. This process basically is the one
+    which is booted by *ndrxd*. In case if server definition contains some
+    wrapper processes (or scripts), then this basically is different than value
+    of the real XATMI server. This variable is used by XATMI server library
+    to report both PIDs to the *ndrxd*, the parent PID and the real process PID.
+*NDRX_SVSRVID*='SERVER_PROCESS_ID'::
+    This is XATMI server id set in '<srvid>' tag. The variable can be used
+    for example is wrapper scripts to modify some resources used by process.
+    For example if booting something like Tomcat app server, the admin TCP ports
+    can be adjusted by this environment variable in order to avoid conflicts for
+    booting multiple instances.
 
 EXAMPLE
 -------

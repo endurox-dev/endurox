@@ -40,14 +40,14 @@ SYNOPSIS
         <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
         <protected>PROTECTED_SERVER_DEFAULT</protected>
         <reloadonchange>RELOAD_ON_CHANGE_DEFAULT</reloadonchange>
-        <envs group="SVGRPENV_GROUP_NAME">
-            <env name="SVGRPENV_VARIABLE_NAME">SVGRPENV_VARIABLE_VALUE</env>
-            <env name="SVGRPENV_VARIABLE_NAME_UNSET" unset="y" />
+        <envs group="SVGRP_ENV_GROUP_NAME">
+            <env name="SVGRP_ENV_VARIABLE_NAME">SVGRP_ENV_VARIABLE_VALUE</env>
+            <env name="SVGRP_ENV_VARIABLE_NAME_1" unset="SVGRP_ENV_UNSET" />
             ...
-            <env name="SVGRPENV_VARIABLE_NAME_N">SVGRPENV_VARIABLE_VALUE_N</env>
+            <env name="SVGRP_ENV_VARIABLE_NAME_N">SVGRP_ENV_VARIABLE_VALUE_N</env>
         </envs>
         ...
-        <envs group="SVGRPENV_GROUP_NAME_N">
+        <envs group="SVGRP_ENV_GROUP_NAME_N">
             ...
         </envs>
     </defaults>
@@ -76,11 +76,11 @@ SYNOPSIS
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
             <envs>
-                <usegroup>SVGRPENV_GROUP_NAME</usegroup>
+                <usegroup>SVGRP_ENV_GROUP_NAME</usegroup>
                 ...
-                <usegroup>SVGRPENV_GROUP_NAME_N</usegroup>
+                <usegroup>SVGRP_ENV_GROUP_NAME_N</usegroup>
                 <env name="SVPROC_ENV_VARIABLE_NAME">SVPROC_ENV_VARIABLE_VALUE</env>
-                <env name="SVPROC_ENV_VARIABLE_NAME_UNSET" unset="y" />
+                <env name="SVPROC_ENV_VARIABLE_NAME_UNSET" unset="SVPROC_ENV_UNSET" />
                 ...
                 <env name="SVPROC_ENV_VARIABLE_NAME_N">SVPROC_ENV_VARIABLE_VALUE_N</env>
             </envs>
@@ -93,7 +93,7 @@ SYNOPSIS
     <clients>
         <envs group="CLTGRP_ENV_GROUP_NAME">
             <env name="CLTGRP_ENV_VARIABLE_NAME">CLTGRP_ENV_VARIABLE_VALUE</env>
-            <env name="CLTGRP_ENV_VARIABLE_NAME_UNSET" unset="y" />
+            <env name="CLTGRP_ENV_VARIABLE_NAME_UNSET" unset="CLTGRP_ENV_UNSET" />
             ...
             <env name="CLTGRP_ENV_VARIABLE_NAME_N">CLTGRP_ENV_VARIABLE_VALUE_N</env>
         </envs>
@@ -116,7 +116,7 @@ SYNOPSIS
                 ...
                 <usegroup>CLTGRP_ENV_GROUP_NAME_N</usegroup>
                 <env name="CLTPROC_ENV_VARIABLE_NAME">CLTPROC_ENV_VARIABLE_VALUE</env>
-                <env name="CLTPROC_ENV_VARIABLE_NAME_UNSET" unset="y" />
+                <env name="CLTPROC_ENV_VARIABLE_NAME_UNSET" unset="CLTPROC_ENV_UNSET" />
                 ...
                 <env name="CLPROC_ENV_VARIABLE_NAME_N">CLTPROC_ENV_VARIABLE_VALUE_N</env>
             </envs>
@@ -338,24 +338,34 @@ DEBUG CONFIGURATION FILE SYNTAX
     full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
     of process model checks, the ndrxd will find out that wrapped binary name does not
     contain the *SERVER_BINARY_NAME*, thus will reboot the process.
-*SVGRPENV_GROUP_NAME*::
+*SVGRP_ENV_GROUP_NAME*::
     Environment variable group name for the servers section. Identifier max length
     is 30 chars. Same group can be used for different server processes. One server
     may import multiple groups. For client processes groups are defined 
-    *CLTGRP_ENV_GROUP_NAME* name at '<clients> section.
-*SVGRPENV_VARIABLE_NAME*::
+    *CLTGRP_ENV_GROUP_NAME* name at '<clients>' section. At process level groups
+    can be imported by using tag '<usegroup>' and specifying the group name. At
+    that moment all variables defined in group are import for process. 
+*SVGRP_ENV_VARIABLE_NAME*::
     This server server's group environment variable name, that shall be set for
     process which uses this group. For client processes *CLTGRP_ENV_VARIABLE_NAME*
     set the variable name at group definition. Individual environment variables
     can be set at process level. For server processes that is set by
     *SVPROC_ENV_VARIABLE_NAME* and for client processes by *CLTPROC_ENV_VARIABLE_NAME*.
-*SVGRPENV_VARIABLE_VALUE*::
+*SVGRP_ENV_VARIABLE_VALUE*::
     This is environment variable value to be set. For client process groups this
     is defined by *CLTGRP_ENV_VARIABLE_VALUE*. For individual processes value is
     defined by *SVPROC_ENV_VARIABLE_NAME* and *CLTPROC_ENV_VARIABLE_NAME*
     accordingly. The value is interpreted by variable substitution algorithm (see 
     bellow). The value is interpreted at time when process is spawned (not defined),
     meaning that it have access to full process variables at startup moment.
+*SVGRP_ENV_UNSET*::
+    If set to 'y' or 'Y' then environment's environment variable is unset (removed)
+    from environment. This can be used if some specific variable for process is
+    not needed. At client environment group level this can be set by *CLTGRP_ENV_UNSET*,
+    at process levels this can be set by *SVPROC_ENV_UNSET* and *CLTPROC_ENV_UNSET*
+    accordingly. If any value is present for this variable, it is ignored, as the
+    main action of this tag is unset the value and only what matters here is the
+    variable name.
 *CLT_COMMAND_LINE*::
     Executable name and arguments for client program. Command line basically is a format
     string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
@@ -370,8 +380,8 @@ DEBUG CONFIGURATION FILE SYNTAX
     File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
     for each individual process. Optional attribute.
 *CLTGRP_ENV*::
-    Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLTGRP_ENV_EXEC'
-    for each individual process. Optional attribute.
+    Environment override file. See *ex_envover(5)* for syntax. Can be overridden 
+    by 'CLTGRP_ENV_EXEC' for each individual process. Optional attribute.
 *CLT_CCTAG*::
     ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
     for each individual process. Optional attribute.
@@ -435,6 +445,9 @@ Sample configuration:
         <ping_max>4</ping_max>
         <end_max>3</end_max>
         <killtime>1</killtime>
+        <envs group="JAVAENV">
+            <env name="_JAVA_OPTIONS">-Xmx1g</env>
+        </envs>
     </defaults>
     <servers>
         <server name="tpevsrv">
@@ -451,6 +464,17 @@ Sample configuration:
             <sysopt>-e /tmp/BRIDGE -r</sysopt>
             <appopt>-n2 -r -i 0.0.0.0 -p 4433 -tA</appopt>
         </server>
+        <server name="jserver2">
+            <max>1</max>
+            <srvid>200</srvid>
+            <sysopt>-e /tmp/BRIDGE -r</sysopt>
+            <envs>
+                <usegroup>JAVAENV</usegroup>
+                <env name="CLASSPATH">${NDRX_APPHOME}/libs/somelib.jar</env>
+                <env name="CLASSPATH">${CLASSPATH}:${NDRX_APPHOME}/libs/${NDRX_SVPROCNAME}.jar</env>
+            </envs>
+            <cmdline>java</cmdline>
+        </server>
         <server name="cpmsrv">
             <cctag>RM2</cctag>
             <srvid>9999</srvid>
@@ -459,7 +483,7 @@ Sample configuration:
     </servers>
     <clients>
         <client cmdline="testbinary -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}" autostart="Y" cctag="RM4">
-            <exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log"cctag="RM5"/>
+            <exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log" cctag="RM5"/>
             <exec tag="TAG2" subsect="SUBSECTION2" log="${APP_LOG}/testbin1-2.log"/>
         </client>
         <client cmdline="testenv.sh" env="environment.override1" log="env1.log">
