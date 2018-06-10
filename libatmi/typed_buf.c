@@ -83,11 +83,6 @@ expublic typed_buffer_descr_t G_buf_descr[] =
                                 JSON_tpalloc, JSON_tprealloc, JSON_tpfree, JSON_test},
     {BUF_TYPE_VIEW,   "VIEW", "VIEW32",     NULL, VIEW_prepare_outgoing, VIEW_prepare_incoming,
                                 VIEW_tpalloc, VIEW_tprealloc, VIEW_tpfree, VIEW_test},
-#if 0
-/* Those bellow ones are not supported! */
-    {BUF_TYPE_STRING,"STRING",  NULL,      NULL, /* todo:  */NULL, /* todo: */NULL, NULL},
-    {BUF_TYPE_CARRAY,"CARRAY",  "X_OCTET", NULL, /* todo:  */NULL, /* todo: */NULL, NULL},
-#endif
     {EXFAIL}
 };
 
