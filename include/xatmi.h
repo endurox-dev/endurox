@@ -72,12 +72,13 @@ extern "C" {
     short tmnodeid; /* initial node id */\
     short tmsrvid; /* initial TM server id */\
     char tmknownrms[NDRX_MAX_RMS+1]; /* valid values 1..32-1, 0 - reserved + EOS */
-/*
- * values for rval in tpreturn
- */
+
+/** rval in tpreturn - Service failed */
 #define TPFAIL		0x00000001
+/** rval in tpreturn - Service Succeed */
 #define TPSUCCESS	0x00000002
-#define TPEXIT          0x08000000 /* RFU. */
+/** rval in tpreturn - RFU */
+#define TPEXIT          0x08000000
 
 /*
  * Posix Queue processing path prefixes
