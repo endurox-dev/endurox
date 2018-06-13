@@ -47,7 +47,7 @@ Function does not return any errors.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

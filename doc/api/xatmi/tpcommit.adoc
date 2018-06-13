@@ -55,7 +55,7 @@ See *atmitest/test021_xafull/atmiclt21.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
