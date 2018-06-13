@@ -72,7 +72,7 @@ See *atmitest/test003_basicconvers/atmisv3.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

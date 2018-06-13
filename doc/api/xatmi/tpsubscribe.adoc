@@ -78,7 +78,7 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 EXAMPLE
 -------

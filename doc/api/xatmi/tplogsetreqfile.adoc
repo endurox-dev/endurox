@@ -80,7 +80,7 @@ See *atmitest/test031_logging/atmiclt31.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
