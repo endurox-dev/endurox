@@ -54,6 +54,7 @@
 #include <gencall.h>
 #include <tperror.h>
 #include <userlog.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /* THIS IS HOOK FOR TESTING!! */
 expublic void (*___G_test_delayed_startup)(void) = NULL;

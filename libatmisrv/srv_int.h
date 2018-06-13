@@ -44,6 +44,7 @@ extern NDRX_API "C" {
 #include <ndrxdcmn.h>
 #include <exhash.h>
 #include <sys_unix.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -62,8 +63,6 @@ extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long j
 #define ATMI_SRV_REPLY_Q            1           /* This is reply queue */
 #define ATMI_SRV_Q_ADJUST           2           /* Adjustment for Q nr */
     
-#define ATMI_SRVLIB_NOLONGJUMP     0x00000001 /* Do not use long jump   */
-
 #ifndef EPOLLEXCLUSIVE
 
 #define EPOLLEXCLUSIVE (1 << 28)
