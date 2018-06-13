@@ -487,6 +487,10 @@ extern "C" {
 #define TPMYIDTYP_CLIENT       1 /* Q identifier is client */
 #define TPMYIDTYP_SERVER       2 /* Q identifier is server */
     
+
+/** flag for ndrx_main_integra: Do not use long jump   */
+#define ATMI_SRVLIB_NOLONGJUMP     0x00000001
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
