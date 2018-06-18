@@ -57,7 +57,7 @@ extern int ndrx_ndrxconf_envs_parse(xmlDocPtr doc, xmlNodePtr cur,
 
 extern void ndrx_ndrxconf_envs_groups_free(ndrx_env_group_t **grouphash);
 extern void ndrx_ndrxconf_envs_grouplists_free(ndrx_env_grouplist_t **grouplist);
-extern void  ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs);
+extern void ndrx_ndrxconf_envs_envs_free(ndrx_env_list_t **envs);
 
 extern int ndrx_ndrxconf_envs_applyall(ndrx_env_grouplist_t *grouplist, 
         ndrx_env_list_t *envs);
