@@ -876,6 +876,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         snprintf(tmp, sizeof(tmp), "%d", (int)getpid());
         NDRX_PM_SET_ENV(CONF_NDRX_SVPPID, tmp);
 
+        alloc_args = 0;
+        REALLOC_CMD;
+        
         if (EXEOS!=p_pm->conf->cmdline[0])
         {
             NDRX_STRCPY_SAFE(cmd_str, p_pm->conf->cmdline);
@@ -883,13 +886,12 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
             
-            numargs=0;
-            alloc_args = 0;
-
+            numargs=0;    
             token = strtok(cmd_str, separators);
             while( token != NULL )
             {
-                if (numargs+1 > alloc_args)
+                /* the alloc args are zero based index.. */
+                if (numargs+1 >= alloc_args)
                 {
                     /* realloc the cmd storage */
                     REALLOC_CMD;
@@ -906,8 +908,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             NDRX_STRCPY_SAFE(cmd_str, p_pm->clopt);
 
             numargs=1;
-            REALLOC_CMD;
-            
+                
             if (EXEOS!=p_pm->conf->fullpath[0])
             {
                 cmd[0] = p_pm->conf->fullpath;
@@ -920,7 +921,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             token = strtok(cmd_str, separators);
             while( token != NULL )
             {
-                if (numargs+1 > alloc_args)
+                /* the alloc args are zero based index.. */
+                if (numargs+1 >= alloc_args)
                 {
                     /* realloc the cmd storage */
                     REALLOC_CMD;
