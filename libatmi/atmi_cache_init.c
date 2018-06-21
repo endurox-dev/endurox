@@ -446,8 +446,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     {
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Cache db [%s] already loaded", cachedb);
-        goto out;
 #endif        
+        goto out;
     }
 
     NDRX_CALLOC_OUT(db, 1, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
