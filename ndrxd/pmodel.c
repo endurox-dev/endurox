@@ -850,6 +850,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
         
+<<<<<<< HEAD
         
         /* export intermediate variables 
          * CONF_NDRX_SVPROCNAME -> binary_name

@@ -66,6 +66,9 @@ v->dyn_alloc=0;\
 #define DUMP_VALUE_BLOCK(TEXT, V) {}
 #endif
 
+/** Compare the the float to test against is it 0 or not */
+#define IS_FLOAT_0(X) (X < 0.000000001 && X > -0.000000001)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -647,7 +650,7 @@ int get_float(value_block_t *v)
     else if (VALUE_TYPE_LONG==v->value_type)
     {
         v->value_type = VALUE_TYPE_FLOAT;
-        v->floatval= (float) v->longval;
+        v->floatval= (double) v->longval;
     }
     else if (VALUE_TYPE_STRING==v->value_type || VALUE_TYPE_FLD_STR==v->value_type)
     {
@@ -661,7 +664,7 @@ int get_float(value_block_t *v)
         ret=EXFAIL;
     }
 	
-	return ret;
+    return ret;
 }
 /**
  * Dump value block
@@ -817,7 +820,7 @@ int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_
             }
             else if (NODE_TYPE_MULTOP==type && MULOP_DIV==sub_type)
             {
-                if (0.0==rval->floatval) /* Original system specifics... */
+                if (IS_FLOAT_0(rval->floatval)) /* Original system specifics... */
                     rval->floatval = 0;
                 else
                     v->floatval=lval->floatval/rval->floatval;
@@ -831,7 +834,7 @@ int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_
             }
             
             /* Set TRUE/FALSE flag */
-            if (v->floatval)
+            if (!IS_FLOAT_0(v->floatval))
                 v->boolval=EXTRUE;
             else
                 v->boolval=EXFALSE;
@@ -1496,20 +1499,25 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
             /* it must be long */
             is_long=EXTRUE;
             l = pri.longval;
-        }
-        else
+        } /* Bug #325 */
+        else if (VALUE_TYPE_BOOL!=pri.value_type)
         {
-            UBF_LOG(log_warn, "Unknown value type %d", 
-                                pri.value_type);
+            UBF_LOG(log_warn, "Unknown value type %d op: %d", 
+                                pri.value_type, op);
             return EXFAIL;
         }
-
-        if ((op==UNARY_CMPL || op==UNARY_INV) && !is_long)
+        
+#if 0
+        - Bug #325
+        if (((op==UNARY_CMPL || op==UNARY_INV) && !is_long) 
+                && VALUE_TYPE_BOOL!=pri.value_type)
         {
             /* Convert to long */
             UBF_LOG(log_warn, "! or ~ converting double to long!");
             l = (long) f;
         }
+#endif
+        
         v->boolval = pri.boolval;
 
         switch (op)
@@ -1520,11 +1528,21 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
                 {
                     v->value_type=VALUE_TYPE_LONG;
                     v->longval = l;
+                    
+                    if (v->longval)
+                        v->boolval=EXTRUE;
+                    else
+                        v->boolval=EXFALSE;
+                    
                 }
                 else /* float */
                 {
                     v->value_type=VALUE_TYPE_FLOAT;
                     v->floatval = f;
+                    if (!IS_FLOAT_0(v->floatval))
+                        v->boolval=EXTRUE;
+                    else
+                        v->boolval=EXFALSE;
                 }
                 break;
             case ADDOP_MINUS:
@@ -1533,11 +1551,22 @@ int process_unary(UBFH *p_ub, int op, struct ast *a, value_block_t *v)
                 {
                     v->value_type=VALUE_TYPE_LONG;
                     v->longval = -l;
+                    
+                    if (v->longval)
+                        v->boolval=EXTRUE;
+                    else
+                        v->boolval=EXFALSE;
+                    
                 }
                 else /* float */
                 {
                     v->value_type=VALUE_TYPE_FLOAT;
                     v->floatval = -f;
+                    
+                    if (!IS_FLOAT_0(v->floatval))
+                        v->boolval=EXTRUE;
+                    else
+                        v->boolval=EXFALSE;
                 }
                 break;
             case UNARY_CMPL:
@@ -1730,7 +1759,7 @@ int eval(UBFH *p_ub, struct ast *a, value_block_t *v)
                 struct ast_float * a_f = (struct ast_float*)a;
                 v->floatval = a_f->d;
                 /* Set the boolean value of this stuff */
-                if (v->floatval)
+                if (!IS_FLOAT_0(v->floatval))
                     v->boolval = EXTRUE;
                 else
                     v->boolval = EXFALSE;
