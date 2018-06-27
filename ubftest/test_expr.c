@@ -278,6 +278,34 @@ Ensure(test_expr_basic_logic)
         assert_not_equal(tree, NULL);
         assert_equal(Bboolev(p_ub, tree), EXFALSE);
         Btreefree(tree);
+        
+        /*----------------------------------------------------------*/
+        /* Bug #325 */
+        s = 1;
+        /* assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED); */
+        assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, "2", 0, BFLD_STRING), EXSUCCEED);
+        assert_equal(Bdel(p_ub, T_SHORT_FLD, 0), EXSUCCEED);
+        
+        tree=Bboolco ("((T_CHAR_FLD== '1') || (T_CHAR_FLD == '2') || (T_CHAR_FLD=='3') || (T_CHAR_FLD=='4') || (T_CHAR_FLD=='Y')) && !(T_SHORT_FLD==1)");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
+        Btreefree(tree);
+        
+        tree=Bboolco ("((T_CHAR_FLD== '1') || (T_CHAR_FLD == '2') || (T_CHAR_FLD=='3') || (T_CHAR_FLD=='4') || (T_CHAR_FLD=='Y')) && !(1-2)");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
+        Btreefree(tree);
+        
+        tree=Bboolco ("(!(2-1)+1)==(!(4-3)+1)");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
+        Btreefree(tree);
+        
+        tree=Bboolco ("(4-4)");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXFALSE);
+        Btreefree(tree);
+        
     /*----------------------------------------------------------*/
      /* Basic not XOR testing */
         tree=Bboolco ("1 ^ 1"); /* false */
