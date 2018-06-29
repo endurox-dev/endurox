@@ -783,7 +783,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     /* prepare args for execution... */
     char cmd_str[PATH_MAX];
-    char **cmd; /* splitted pointers.. */
+    char **cmd = NULL; /* splitted pointers.. */
     char separators[]   = " ,\t\n";
     char *token;
     int numargs;
