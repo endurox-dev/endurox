@@ -56,7 +56,10 @@
 /** Alloc the CLOPTS */
 #define REALLOC_CLOPT_STEP    10
 #define REALLOC_CLOPT alloc_args+=REALLOC_CLOPT_STEP; \
-    argv = NDRX_REALLOC(argv, sizeof(char *)*alloc_args); \
+    if (NULL==argv) \
+        argv = NDRX_MALLOC(sizeof(char *)*alloc_args); \
+    else \
+        argv = NDRX_REALLOC(argv, sizeof(char *)*alloc_args); \
     if (NULL==argv) \
     {\
         int err = errno;\
