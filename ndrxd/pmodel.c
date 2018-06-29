@@ -61,7 +61,10 @@
 /** Step to realloc the CMD line */
 #define REALLOC_CMD_STEP    10
 #define REALLOC_CMD alloc_args+=REALLOC_CMD_STEP; \
-        cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
+	if (NULL==cmd) \
+        	cmd = NDRX_MALLOC(sizeof(char *)*alloc_args); \
+	else \
+        	cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
         if (NULL==cmd) \
         {\
             int err = errno;\
