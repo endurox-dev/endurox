@@ -135,7 +135,7 @@ Directory where to dump the generated header files.
 
 *-m* 'LANGUAGE_MODE'::
 Language mode. Value '0' (default) for C language header. '1' for GO language
-constants file.
+constants file. '2' for Java constant classes.
 
 *-p* 'LANG_PRIVATE_DATA'::
 Private data for language module. For GO language it is used for package name.
