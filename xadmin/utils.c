@@ -48,7 +48,7 @@
 #include <userlog.h>
 
 /*---------------------------Externs------------------------------------*/
-extern const char G_resource_Exfields[];
+extern const char ndrx_G_resource_Exfields[];
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -326,7 +326,7 @@ out:
 static PSInteger _xadmin_getExfields(HPSCRIPTVM v)
 {
     
-    ps_pushstring(v,G_resource_Exfields,-1);
+    ps_pushstring(v,ndrx_G_resource_Exfields,-1);
 
     return 1;
 }
