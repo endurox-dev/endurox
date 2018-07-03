@@ -64,12 +64,12 @@
 #ifndef NDRX_DISABLEPSCRIPT
 /*---------------------------Externs------------------------------------*/
 
-extern const char G_resource_gen_go_server[];
-extern const char G_resource_gen_go_client[];
-extern const char G_resource_gen_c_client[];
-extern const char G_resource_gen_c_server[];
-extern const char G_resource_gen_ubf_tab[];
-extern const char G_resource_gen_test_local[];
+extern const char ndrx_G_resource_gen_go_server[];
+extern const char ndrx_G_resource_gen_go_client[];
+extern const char ndrx_G_resource_gen_c_client[];
+extern const char ndrx_G_resource_gen_c_server[];
+extern const char ndrx_G_resource_gen_ubf_tab[];
+extern const char ndrx_G_resource_gen_test_local[];
 
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
@@ -203,12 +203,12 @@ expublic int cmd_gen_load_scripts(void)
     
     
     /* 1. List strings in memory, start with "gen_001" */
-    if (EXSUCCEED!=reg_cmd("go server", G_resource_gen_go_server, NULL)
-        || EXSUCCEED!=reg_cmd("go client", G_resource_gen_go_client, NULL)
-        || EXSUCCEED!=reg_cmd("c server", G_resource_gen_c_server, NULL)
-        || EXSUCCEED!=reg_cmd("c client", G_resource_gen_c_client, NULL)
-        || EXSUCCEED!=reg_cmd("ubf tab", G_resource_gen_ubf_tab, NULL)
-        || EXSUCCEED!=reg_cmd("test local", G_resource_gen_test_local, NULL)
+    if (EXSUCCEED!=reg_cmd("go server", ndrx_G_resource_gen_go_server, NULL)
+        || EXSUCCEED!=reg_cmd("go client", ndrx_G_resource_gen_go_client, NULL)
+        || EXSUCCEED!=reg_cmd("c server", ndrx_G_resource_gen_c_server, NULL)
+        || EXSUCCEED!=reg_cmd("c client", ndrx_G_resource_gen_c_client, NULL)
+        || EXSUCCEED!=reg_cmd("ubf tab", ndrx_G_resource_gen_ubf_tab, NULL)
+        || EXSUCCEED!=reg_cmd("test local", ndrx_G_resource_gen_test_local, NULL)
        )
     {
         EXFAIL_OUT(ret);

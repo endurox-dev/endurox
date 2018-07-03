@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     /* write header */
     
     fprintf(out, "#include <stdlib.h>\n");
-    fprintf(out, "const char G_resource_%s[] = {\n", outfpfx);
+    fprintf(out, "const char ndrx_G_resource_%s[] = {\n", outfpfx);
     
     /* read  & write */
     while (EOF!=(c=(fgetc(in))))
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
     fprintf(out, "0x00\n};\n");
     
     /* write off length (with out EOS..) */
-    fprintf(out, "const size_t G_resource_%s_len = %d;\n", outfpfx, counter);
+    fprintf(out, "const size_t ndrx_G_resource_%s_len = %d;\n", outfpfx, counter);
     
     /* put the EOL... (additionally so that we can easy operate resource as string) */
     
