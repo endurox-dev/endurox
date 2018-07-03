@@ -51,42 +51,42 @@ include_directories (${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
 
 add_custom_command(
   OUTPUT provision.c
-  COMMAND embedfile scripts/provision.pscript provision
+  COMMAND exembedfile scripts/provision.pscript provision
   DEPENDS scripts/provision.pscript)
 
 add_custom_command(
   OUTPUT gen_go_server.c
-  COMMAND embedfile scripts/gen_go_server.pscript gen_go_server
+  COMMAND exembedfile scripts/gen_go_server.pscript gen_go_server
   DEPENDS scripts/gen_go_server.pscript)
 
 add_custom_command(
   OUTPUT gen_go_client.c
-  COMMAND embedfile scripts/gen_go_client.pscript gen_go_client
+  COMMAND exembedfile scripts/gen_go_client.pscript gen_go_client
   DEPENDS scripts/gen_go_client.pscript)
   
 add_custom_command(
   OUTPUT gen_ubf_tab.c
-  COMMAND embedfile scripts/gen_ubf_tab.pscript gen_ubf_tab
+  COMMAND exembedfile scripts/gen_ubf_tab.pscript gen_ubf_tab
   DEPENDS scripts/gen_ubf_tab.pscript)
 
 add_custom_command(
   OUTPUT Exfields.c
-  COMMAND embedfile ../include/Exfields Exfields
+  COMMAND exembedfile ../include/Exfields Exfields
   DEPENDS ../include/Exfields)
   
 add_custom_command(
   OUTPUT gen_c_client.c
-  COMMAND embedfile scripts/gen_c_client.pscript gen_c_client
+  COMMAND exembedfile scripts/gen_c_client.pscript gen_c_client
   DEPENDS scripts/gen_c_client.pscript)
 
 add_custom_command(
   OUTPUT gen_c_server.c
-  COMMAND embedfile scripts/gen_c_server.pscript gen_c_server
+  COMMAND exembedfile scripts/gen_c_server.pscript gen_c_server
   DEPENDS scripts/gen_c_server.pscript)
 
 add_custom_command(
   OUTPUT gen_test_local.c
-  COMMAND embedfile scripts/gen_test_local.pscript gen_test_local
+  COMMAND exembedfile scripts/gen_test_local.pscript gen_test_local
   DEPENDS scripts/gen_test_local.pscript)
   
   
