@@ -10,11 +10,60 @@ Enduro/X Development standard
 Enduro/X build system is CMake. Version used should be 2.8 and above. It uses
 Flex and Bison for building UBF (FML) Expressions.
 
-Intension is done with as 4x spaces. Enduro/X is programmed in NetBeans C/C++
-project. NetBeans supports CMake projects.
+Enduro/X is programmed in NetBeans C/C++ project. NetBeans supports CMake projects.
 
 Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
 and cgreen (integrated into Enduro/X) for unit testing.
+
+=== C Programming style
+
+This chapter points out key aspects of doing code changes in Enduro/X C core.
+
+==== Indentation
+
+For code formatting Enduro/X C code uses Allman Indentation style, e.g.
+
+--------------------------------------------------------------------------------
+
+void something(void)
+{
+    ...
+}
+
+while (x == y)
+{
+    something();
+    somethingelse();
+}
+
+finalthing();
+
+--------------------------------------------------------------------------------
+
+with intension of 4 spaces.
+
+==== Error handling
+
+Enduro/X uses "goto" as escape from function in case of error. The all functions
+that shall handle the errors (i.e. and not return any other error identifier like
+NULL pointer), the function shall bring with it self an 'ret' (return state) variable
+the simple integer. The 'ret' by default shall be set to 'EXSUCCEED' from ndrstandard.h
+header. The exit of function shall be marked with "out" label. After the out some
+de-init and status printing could be done. When error occurs, recommended way
+to escape is to write some log about the situation and use macro EXFAIL_OUT(ret),
+which effectively set the 'ret' to EXFAIL and performs 'goto out;'.
+
+Some examples of error handling:
+
+--------------------------------------------------------------------------------
+
+TODO: 
+
+--------------------------------------------------------------------------------
+
+==== Code with
+
+TODO..
 
 === Reserved identifier prefixes
 
