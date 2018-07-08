@@ -49,6 +49,7 @@
 #include <sys_unix.h>
 #include <errno.h>
 #include <ndebug.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -81,8 +82,6 @@ exprivate ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
 exprivate void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h);
 exprivate int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out);
-exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
-        char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
 exprivate int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
         char **resources,
         char **section_start_with, 
@@ -865,17 +864,22 @@ out:
  * @param subsect
  * @return 
  */
-exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+expublic int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg, 
         char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
 {
     int ret = EXSUCCEED;
-    char fn[] = "_ndrx_inicfg_section_keyval_t";
     char *tmp = NULL;
     char *p;
     
+    if (NULL==cfg)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: `cfg' cannot be NULL!", __func__);
+        EXFAIL_OUT(ret);
+    }
+    
     if (NULL==section)
     {
-        _Nset_error_fmt(NEINVAL, "%s: section cannot be NULL!", fn);
+        _Nset_error_fmt(NEINVAL, "%s: `section' cannot be NULL!", __func__);
         EXFAIL_OUT(ret);
     }
 
@@ -883,7 +887,7 @@ exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
 
     if (NULL==tmp)
     {
-        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -1257,7 +1261,7 @@ expublic int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
 {
     API_ENTRY;
     
-    return _ndrx_inicfg_get_subsect(cfg, resources, section, out);
+    return ndrx_inicfg_get_subsect_int(cfg, resources, section, out);
 }
 
 /**
