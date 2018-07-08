@@ -70,6 +70,7 @@ install (FILES
     evt_mib.h
     view_cmn.h
     exdb.h
+    nstopwatch.h
     DESTINATION include)
 
 install (FILES

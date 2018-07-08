@@ -42,6 +42,8 @@
 #include <ini.h>
 #include <inicfg.h>
 #include <nerror.h>
+#include <ndebug.h>
+#include <nstd_int.h>
 #include <sys_unix.h>
 #include <errno.h>
 #include <inicfg.h>
@@ -92,9 +94,22 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
     int len;
     char *tmp1 = NULL; /* lookup section  */
     char *tmp2 = NULL; /* token cctag */
-    char fn[] = "ndrx_cconfig_get";
     char *saveptr1;
     char *token_cctag;
+    
+    _Nunset_error();
+    
+    if (NULL==cfg)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: `cfg' cannot be NULL!", __func__);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==section)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: `section' cannot be NULL!", __func__);
+        EXFAIL_OUT(ret);
+    }
     
     /*  if we have CC tag, with sample value "RM1/DBG2"
      * Then lookup will take in this order:
@@ -111,14 +126,14 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
 
         if (NULL==(tmp1 = NDRX_MALLOC(len+2))) /* 1 for eos, another for seperator */
         {
-            userlog("%s: tmp1 malloc failed: %s", fn, strerror(errno));
+            userlog("%s: tmp1 malloc failed: %s", __func__, strerror(errno));
             EXFAIL_OUT(ret);
         }
 
 
         if (NULL==(tmp2 = NDRX_MALLOC(strlen(G_cctag)+1)))
         {
-            userlog("%s: tmp2 malloc failed: %s", fn, strerror(errno));
+            userlog("%s: tmp2 malloc failed: %s", __func__, strerror(errno));
             EXFAIL_OUT(ret);
         }
 
@@ -133,12 +148,12 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
             strcat(tmp1, NDRX_INICFG_SUBSECT_SPERATOR_STR);
             strcat(tmp1, token_cctag);
 
-            if (EXSUCCEED!=ndrx_inicfg_get_subsect(cfg, 
+            if (EXSUCCEED!=ndrx_inicfg_get_subsect_int(cfg, 
                                 NULL,  /* all config files */
                                 tmp1,  /* global section */
                                 out))
             {
-                userlog("%s: %s", fn, Nstrerror(Nerror));
+                userlog("%s: %s", __func__, Nstrerror(Nerror));
                 EXFAIL_OUT(ret);
             }
             
@@ -150,7 +165,7 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
                                 section,  /* global section */
                                 out))
     {
-        userlog("%s: %s", fn, Nstrerror(Nerror));
+        userlog("%s: %s", __func__, Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
     
@@ -165,7 +180,6 @@ out:
     {
         NDRX_FREE(tmp2);
     }
-
 
     return ret;
 }
