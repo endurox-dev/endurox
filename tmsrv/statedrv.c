@@ -117,7 +117,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             switch (op_code)
             {
                 case XA_OP_NOP:
-                    NDRX_LOG(log_error, "OP_NOP");
+                    NDRX_LOG(log_info, "OP_NOP");
                     break;
                 case XA_OP_PREPARE:
                     NDRX_LOG(log_error, "Prepare RMID %d", i+1);
@@ -128,7 +128,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     }
                     break;
                 case XA_OP_COMMIT:
-                    NDRX_LOG(log_error, "Commit RMID %d", i+1);
+                    NDRX_LOG(log_info, "Commit RMID %d", i+1);
                     if (EXSUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1)))
                     {
                         op_reason = atmi_xa_get_reason();
@@ -136,7 +136,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     }
                     break;
                 case XA_OP_ROLLBACK:
-                    NDRX_LOG(log_error, "Rollback RMID %d", i+1);
+                    NDRX_LOG(log_info, "Rollback RMID %d", i+1);
                     if (EXSUCCEED!=(op_ret = tm_rollback_combined(p_xai, i+1)))
                     {
                         op_reason = atmi_xa_get_reason();

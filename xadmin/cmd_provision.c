@@ -62,7 +62,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /* Have some access to resources */
-extern const char G_resource_provision[];
+extern const char ndrx_G_resource_provision[];
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -168,8 +168,8 @@ expublic int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int 
 
     
     /* do some stuff with pscript here */
-    if (PS_FAILED(ps_compilebuffer(v, G_resource_provision, 
-                strlen(G_resource_provision), "provision.ps", PSTrue)))
+    if (PS_FAILED(ps_compilebuffer(v, ndrx_G_resource_provision, 
+                strlen(ndrx_G_resource_provision), "provision.ps", PSTrue)))
     {
         fprintf(stderr, "Failed to compile...\n");
 

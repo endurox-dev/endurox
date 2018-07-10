@@ -47,7 +47,8 @@ extern "C" {
 #define HDR_MIN_LANG            0
 #define HDR_C_LANG              0         /* Default goes to C                */
 #define HDR_GO_LANG             1         /* Golang                           */
-#define HDR_MAX_LANG            1
+#define HDR_JAVA_LANG           2         /* Java language moder              */
+#define HDR_MAX_LANG            2
 
     
 /*---------------------------Enums--------------------------------------*/

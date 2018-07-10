@@ -72,7 +72,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpconnect(3)* *tpsend(3)* *tpdiscon(3)* *tpreturn(3)*
+*tpconnect(3)* *tprecv(3)* *tpdiscon(3)* *tpreturn(3)*
 
 COPYING
 -------

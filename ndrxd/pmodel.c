@@ -62,7 +62,10 @@
 /** Step to realloc the CMD line */
 #define REALLOC_CMD_STEP    10
 #define REALLOC_CMD alloc_args+=REALLOC_CMD_STEP; \
-        cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
+	if (NULL==cmd) \
+        	cmd = NDRX_MALLOC(sizeof(char *)*alloc_args); \
+	else \
+        	cmd = NDRX_REALLOC(cmd, sizeof(char *)*alloc_args); \
         if (NULL==cmd) \
         {\
             int err = errno;\
@@ -849,8 +852,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
-        
-<<<<<<< HEAD
         
         /* export intermediate variables 
          * CONF_NDRX_SVPROCNAME -> binary_name
