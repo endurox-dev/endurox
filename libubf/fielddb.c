@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <tperror.h>
 #include <fieldtable.h>
 #include <fdatatype.h>
 #include <ferror.h>

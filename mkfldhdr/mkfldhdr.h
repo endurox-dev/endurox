@@ -77,4 +77,12 @@ extern int go_put_def_line (UBF_field_def_t *def);
 extern int go_file_open (char *fname);
 extern int go_file_close (char *fname);
 
+/* Java lang: */
+extern void java_get_fullname(char *data);
+extern int java_put_text_line (char *text);
+extern int java_put_got_base_line(char *base);
+extern int java_put_def_line (UBF_field_def_t *def);
+extern int java_file_open (char *fname);
+extern int java_file_close (char *fname);
+
 #endif /* MKFLDHDR_H_ */

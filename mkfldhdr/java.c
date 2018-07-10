@@ -1,7 +1,7 @@
 /* 
-** 'C' lang support
+** Java language support
 **
-** @file clang.c
+** @file java.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -55,12 +55,12 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Get the c lang output file name
+ * Get the java lang output file name
  * @param data
  */
-expublic void c_get_fullname(char *data)
+expublic void java_get_fullname(char *data)
 {
-    sprintf(data, "%s/%s.h", G_output_dir, G_active_file);
+    sprintf(data, "%s/%s.java", G_output_dir, G_active_file);
 }
 
 /**
@@ -68,9 +68,17 @@ expublic void c_get_fullname(char *data)
  * @param text
  * @return
  */
-expublic int c_put_text_line (char *text)
+expublic int java_put_text_line (char *text)
 {
     int ret=EXSUCCEED;
+    
+    if (0==strncmp(text, "#ifndef", 7) || 
+        0==strncmp(text, "#define", 7) ||
+        0==strncmp(text, "#endif", 6))
+    {
+        /* just ignore these special C lines */
+        goto out;
+    }
     
     fprintf(G_outf, "%s", text);
     
@@ -78,9 +86,10 @@ expublic int c_put_text_line (char *text)
     if (ferror(G_outf))
     {
         ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
-        ret=EXFAIL;
+        EXFAIL_OUT(ret);
     }
-
+    
+out:
     return ret;
 }
 
@@ -89,18 +98,18 @@ expublic int c_put_text_line (char *text)
  * @param base
  * @return
  */
-expublic int c_put_got_base_line(char *base)
+expublic int java_put_got_base_line(char *base)
 {
 
     int ret=EXSUCCEED;
 
-    fprintf(G_outf, "/*\tfname\tbfldid            */\n"
-                    "/*\t-----\t-----            */\n");
+    fprintf(G_outf, "public final class %s\n{\n", G_active_file);
 
     /* Check errors */
     if (ferror(G_outf))
     {
-        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
+        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]",
+                strerror(errno));
         ret=EXFAIL;
     }
 
@@ -112,20 +121,21 @@ expublic int c_put_got_base_line(char *base)
  * @param def
  * @return
  */
-expublic int c_put_def_line (UBF_field_def_t *def)
+expublic int java_put_def_line (UBF_field_def_t *def)
 {
     int ret=EXSUCCEED;
     int type = def->bfldid>>EFFECTIVE_BITS;
     BFLDID number = def->bfldid & EFFECTIVE_BITS_MASK;
-
-    fprintf(G_outf, "#define\t%s\t((BFLDID32)%d)\t/* number: %d\t type: %s */\n",
-            def->fldname, def->bfldid, number,
-            G_dtype_str_map[type].fldname);
     
+    fprintf(G_outf, "\t  /** number: %d type: %s*/\n", 
+            number, G_dtype_str_map[type].fldname);
+    fprintf(G_outf, "\t  public final static int %s = %d;\n", 
+            def->fldname, def->bfldid);
     /* Check errors */
     if (ferror(G_outf))
     {
-        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", strerror(errno));
+        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", 
+                strerror(errno));
         ret=EXFAIL;
     }
 
@@ -137,8 +147,18 @@ expublic int c_put_def_line (UBF_field_def_t *def)
  * @param fname
  * @return 
  */
-expublic int c_file_open (char *fname)
+expublic int java_file_open (char *fname)
 {
+    
+    if (EXEOS!=G_privdata[0])
+    {
+        fprintf(G_outf, "package %s;\n\n", G_privdata);
+    }
+    else
+    {
+        fprintf(G_outf, "package %s;\n\n", G_active_file);
+    }
+    
     return EXSUCCEED;
 }
 
@@ -147,9 +167,20 @@ expublic int c_file_open (char *fname)
  * @param fname
  * @return 
  */
-expublic int c_file_close (char *fname)
+expublic int java_file_close (char *fname)
 {
-    return EXSUCCEED;
+    fprintf(G_outf, "}\n");
+
+    /* Check errors */
+    if (ferror(G_outf))
+    {
+        ndrx_Bset_error_fmt(BFTOPEN, "Failed to write to output file: [%s]", 
+                strerror(errno));
+        return EXFAIL;
+    }
+    
+    return EXSUCCEED;   
 }
 
 /* vim: set ts=4 sw=4 et cindent: */
+

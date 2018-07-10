@@ -44,5 +44,11 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Exectuables
-add_executable (embedfile embedfile.c)
+add_executable (exembedfile embedfile.c)
+
+# Install bin
+install (TARGETS 
+    exembedfile
+    DESTINATION bin)
+
 
