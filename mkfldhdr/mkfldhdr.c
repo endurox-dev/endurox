@@ -67,7 +67,7 @@ exprivate char **M_argv;
 exprivate int M_argc;
 expublic FILE *G_outf=NULL;
 
-/*
+/**
  * Mode functions
  */
 expublic renderer_descr_t M_renderer_tab[] =
@@ -76,6 +76,8 @@ expublic renderer_descr_t M_renderer_tab[] =
                  c_put_got_base_line, c_file_open, c_file_close},
     {HDR_GO_LANG, go_get_fullname, go_put_text_line, go_put_def_line, 
                  go_put_got_base_line, go_file_open, go_file_close},
+    {HDR_JAVA_LANG, java_get_fullname, java_put_text_line, java_put_def_line, 
+                 java_put_got_base_line, java_file_open, java_file_close},
     {EXFAIL}
 };
 
@@ -201,8 +203,16 @@ int main(int argc, char **argv)
                 ret=EXFAIL;
                 break;
             case 'h': case '?':
-                printf("usage: %s [-D dbglev, legacy] [-d target directory] [field table ...]\n",
+                printf("usage: %s [-D dbglev, legacy] [-d target directory] [-m lang_mode] [-p priv_data] [field table ...]\n\n",
                         argv[0]);
+                printf("OPTIONS\n");
+                printf("\tlang_mode:\n");
+                printf("\t\t0 - C (default)\n");
+                printf("\t\t1 - Go\n");
+                printf("\t\t2 - Java\n");
+                printf("\tpriv_data:\n");
+                printf("\t\tFor Go - package name\n");
+                printf("\t\tFor Java - package name\n");
                 
                 return EXFAIL;
                 break;
@@ -372,3 +382,6 @@ exprivate int generate_files(void)
     
     return ret;
 }
+
+
+/* vim: set ts=4 sw=4 et cindent: */
