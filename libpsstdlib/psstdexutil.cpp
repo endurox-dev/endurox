@@ -44,7 +44,7 @@
 #include <errno.h>
 
 
-extern const char G_resource_WizardBase[];
+extern const char ndrx_G_resource_WizardBase[];
 
 //Read the line from terminal
 //@return line read string
@@ -70,7 +70,7 @@ static PSInteger _exutil_getosname(HPSCRIPTVM v)
 //Return wizard base script
 static PSInteger _exutil_getwizardbase(HPSCRIPTVM v)
 {
-    ps_pushstring(v,G_resource_WizardBase,-1);
+    ps_pushstring(v,ndrx_G_resource_WizardBase,-1);
     
     return 1;
 }
