@@ -72,7 +72,39 @@ int
 --------------------------------------------------------------------------------
 
 ==== Code with
-...
+
+The code line lenght should be more or less 80 symbols. If function arguments
+are going wider, then moved some to next line. If string goes over the 80 chars
+then string shall be splitted with standard compiler contactination done by C.
+
+
+Typcal word wrap should look like:
+
+--------------------------------------------------------------------------------
+
+    /* lock call descriptor */
+    if (!(flags & TPNOREPLY))
+    {
+        /* get the call descriptor */
+        if (EXFAIL==(tpcall_cd = get_call_descriptor_and_lock(&call->callseq, 
+                timestamp, flags)))
+        {
+            NDRX_LOG(log_error, "Do not have resources for "
+                                "track this call!");
+            ndrx_TPset_error_fmt(TPELIMIT, "%s:All call descriptor entries have been used "
+                                "(check why they do not free up? Maybe need to "
+                                "use tpcancel()?)", __func__);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_warn, "TPNOREPLY => cd=0");
+        tpcall_cd = 0;
+    }
+
+--------------------------------------------------------------------------------
+
 
 ==== Function visibility
 ...
