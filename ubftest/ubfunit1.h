@@ -89,6 +89,7 @@ extern TestSuite *ubf_bcmp_tests(void);
 /* Standard library suites */
 extern TestSuite *ubf_nstd_crypto(void);
 extern TestSuite *ubf_nstd_base64(void);
+extern TestSuite *ubf_nstd_growlist(void);
 
 extern TestSuite *ubf_nstd_mtest(void);
 extern TestSuite *ubf_nstd_mtest2(void);

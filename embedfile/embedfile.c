@@ -66,14 +66,21 @@ int main(int argc, char** argv)
 
     if (argc<3)
     {
-        fprintf(stderr, "syntax: %s <input file> <output file>\n", argv[0]);
+        fprintf(stderr, "syntax: %s <input file> <output file> [extension_override]\n", argv[0]);
         EXFAIL_OUT(ret);
     }
     
     inf = argv[INF];
     outfpfx = argv[OUTF];
     
-    sprintf(outf, "%s.c", outfpfx);
+    if (argc > 3)
+    {
+        sprintf(outf, "%s.%s", outfpfx, argv[3]);
+    }
+    else
+    {
+        sprintf(outf, "%s.c", outfpfx);
+    }
     
     if (NULL==(in=fopen(inf, "rb")))
     {
@@ -114,6 +121,7 @@ int main(int argc, char** argv)
     
     /* write off length (with out EOS..) */
     fprintf(out, "const size_t ndrx_G_resource_%s_len = %d;\n", outfpfx, counter);
+    fprintf(out, "#define ndrx_G_resource_%s_len_def %d\n", outfpfx, counter);
     
     /* put the EOL... (additionally so that we can easy operate resource as string) */
     
