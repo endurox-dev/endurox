@@ -1323,3 +1323,82 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
     
     return(p - str);
 }
+
+/**
+ * Initialize the grow list
+ * @param list ptr to list (can be un-initialized memory)
+ * @param step number of elements by which to reallocate ahead
+ * @param size number of element
+ */
+expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
+{
+    list->items = 0;
+    list->step = step;
+    list->size = size;
+    list->mem = NULL;
+}
+
+/**
+ * Add element to the list. Allocate/reallocate linear array as needed.
+ * @param list list struct pointer
+ * @param item ptr to item
+ * @param index zero based item index in the memory
+ * @return EXSUCCEED (all OK), EXFAIL (failed to allocate or invalid index)
+ */
+expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
+{
+    int ret = EXSUCCEED;
+    int next_blocks;
+    size_t new_size;
+
+    if (list->mem)
+    {
+        new_size = list->step * list->size;
+        if (NULL==(list->mem = NDRX_MALLOC(list->step * list->size)))
+        {
+            userlog("Failed to alloc %d bytes: %s", new_size,
+                        strerror(errno));
+            
+            EXFAIL_OUT(ret);
+        }
+        
+        list->items+=list->step;
+    }
+    
+    while (index+1 > list->items)
+    {
+        list->items+=list->step;
+        
+        next_blocks = list->items / list->step;
+        
+        new_size = next_blocks * list->step * list->size;
+        
+        if (NULL==(list->mem = NDRX_REALLOC(list->mem, new_size)))
+        {
+            userlog("Failed to realloc %d bytes (%d blocks): %s", new_size,
+                        next_blocks, strerror(errno));
+            
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* finally we are ready for data */
+    
+    memcpy( ((char *)list->mem) + (index * list->size), item, list->size);
+    
+out:
+
+    return ret;
+    
+}
+
+/**
+ * Free up the grow list. User is completely responsible for any data to be freed
+ * from the mem block
+ * @param list ptr to list
+ */
+expublic void ndrx_growlist_free(ndrx_growlist_t *list)
+{
+    NDRX_FREE(list->mem);
+}
+
