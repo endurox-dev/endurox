@@ -44,7 +44,7 @@ sub buildmain {
     $options{l} = "";
 
     # Bug #254 29/11/2017
-    getopts("o:f:s:a:l:", \%options);
+    getopts("o:f:s:a:l:n", \%options);
 
     my $CFLAGS = $ENV{'CFLAGS'};
 
@@ -100,7 +100,15 @@ sub buildmain {
         $dyn_libs = "-ldl -lpthread";
     }
 
-    my $command="$CC $CFLAGS -o $options{o} $options{l} $options{f} -latmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL $NDRX_LIBPATH";
+    my $atmisrv = "atmisrv";
+
+    # No main please
+    if ($options{n})
+    {
+        $atmisrv = "atmisrvinteg";
+    }
+
+    my $command="$CC $CFLAGS -o $options{o} $options{l} $options{f} -l$atmisrv -latmi -lubf -lnstd $dyn_libs -lm -lc -lpthread $options{a} $NDRX_INCL $NDRX_LIBPATH";
 
     # print the build output
     print "$command\n";

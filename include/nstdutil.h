@@ -67,9 +67,29 @@ struct charstrmap
     char *to;
 };
 
+/** Keeps the growing list */
+typedef struct ndrx_growlist ndrx_growlist_t;
+struct ndrx_growlist
+{
+    /** number of items used */
+    int items;
+    /** allocate increment step */
+    int step;
+    
+    /** elm size */
+    size_t size;
+    
+    /** memory pointer alloc/realloc */
+    void *mem;
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size);
+extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);
+extern NDRX_API void ndrx_growlist_free(ndrx_growlist_t *list);
 
 extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
 extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
