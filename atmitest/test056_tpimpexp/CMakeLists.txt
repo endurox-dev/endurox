@@ -1,5 +1,5 @@
 ## 
-## tpimport/tpexport function tests - makefile
+## tpimport()/tpexport() function tests - makefile
 ##
 ## @file CMakeLists.txt
 ## 
@@ -50,13 +50,13 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmiclt056 atmiclt056.c)
+add_executable (atmiclt56 atmiclt56.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmiclt056 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt56 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
-set_target_properties(atmiclt056 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt56 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 

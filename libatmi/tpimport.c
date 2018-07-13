@@ -1,7 +1,9 @@
 /* 
-** tpimport()/tpexport() function tests - client
+** ATMI tpimport/tpexport function implementation (Common version)
+** TODO
+** TODO
 **
-** @file atmiclt56.c
+** @file tpimport.c
 ** 
 ** -----------------------------------------------------------------------------
 ** Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -29,22 +31,30 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#include <string.h>
+
+/*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdarg.h>
 #include <memory.h>
-#include <math.h>
+#include <stdlib.h>
+#include <errno.h>
+//#include <sys_mqueue.h>
+//#include <fcntl.h>
 
 #include <atmi.h>
-#include <ubf.h>
+#include <userlog.h>
 #include <ndebug.h>
-#include <test.fd.h>
-#include <ndrstandard.h>
-#include <nstopwatch.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <nstdutil.h>
-#include "test56.h"
+#include <tperror.h>
+#include <typed_buf.h>
+#include <atmi_int.h>
+
+//#include "../libatmisrv/srv_int.h"
+//#include "ndrxd.h"
+//#include "utlist.h"
+//#include <thlock.h>
+//#include <xa_cmn.h>
+//#include <atmi_shm.h>
+//#include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -53,34 +63,16 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Do the test call to the server
- */
-int main(int argc, char** argv)
+expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
+        char *idata, long ilen, char **odata, long *olen, long flags)
 {
-
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
-    int i;
     int ret=EXSUCCEED;
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
-    {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
-
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
+    NDRX_LOG(log_debug, "%s: enter", __func__);
     
+
 out:
-    tpterm();
-    fprintf(stderr, "Exit with %d\n", ret);
+    NDRX_LOG(log_debug, "%s: return %d", __func__, ret);
 
     return ret;
 }

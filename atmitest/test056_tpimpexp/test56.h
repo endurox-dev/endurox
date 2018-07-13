@@ -1,5 +1,5 @@
 /* 
-** tpimport/tpexport function tests - common header
+** tpimport()/tpexport() function tests - common header
 **
 ** @file testtest056_tpimpexp.h
 ** 
@@ -29,8 +29,8 @@
 ** contact@mavimax.com
 ** -----------------------------------------------------------------------------
 */
-#ifndef TEST056_H
-#define TEST056_H
+#ifndef TEST56_H
+#define TEST56_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -43,5 +43,5 @@ extern "C" {
 }
 #endif
 
-#endif  /* TEST056_H */
+#endif  /* TEST56_H */
 
