@@ -1332,6 +1332,7 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
  */
 expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
 {
+    list->maxindexused = EXFAIL;
     list->items = 0;
     list->step = step;
     list->size = size;
@@ -1343,15 +1344,16 @@ expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
  * @param list list struct pointer
  * @param item ptr to item
  * @param index zero based item index in the memory
- * @return EXSUCCEED (all OK), EXFAIL (failed to allocate or invalid index)
+ * @return EXSUCCEED (all OK), EXFAIL (failed to allocate)
  */
 expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
 {
     int ret = EXSUCCEED;
     int next_blocks;
     size_t new_size;
+    char *p;
 
-    if (list->mem)
+    if (NULL==list->mem)
     {
         new_size = list->step * list->size;
         if (NULL==(list->mem = NDRX_MALLOC(list->step * list->size)))
@@ -1372,7 +1374,10 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
         next_blocks = list->items / list->step;
         
         new_size = next_blocks * list->step * list->size;
-        
+        /*
+        NDRX_LOG(log_debug, "realloc: new_size: %d (index: %d items: %d)", 
+                new_size, index, list->items);
+        */
         if (NULL==(list->mem = NDRX_REALLOC(list->mem, new_size)))
         {
             userlog("Failed to realloc %d bytes (%d blocks): %s", new_size,
@@ -1383,13 +1388,38 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
     }
     
     /* finally we are ready for data */
+    p = list->mem;
+    p+=(index * list->size);
     
-    memcpy( ((char *)list->mem) + (index * list->size), item, list->size);
+    /*
+    NDRX_LOG(log_debug, "Ptr: %p, write ptr %p, from %p (size: %d, index: %d)",
+            list->mem, p, item, (int)list->size, index);
+    
+    NDRX_DUMP(log_debug, "data for writting", item, list->size);
+    */
+    memcpy( p, item, list->size);
+    
+    
+    if (index > list->maxindexused)
+    {
+        list->maxindexused = index;
+    }
     
 out:
 
     return ret;
     
+}
+
+/**
+ * Append entry (at the end of the array)
+ * @param list list to be appended
+ * @param item item to be added to the end of the array
+ * @return EXSUCCEED/EXFAIL (out of the mem)
+ */
+expublic int ndrx_growlist_append(ndrx_growlist_t *list, void *item)
+{
+    return ndrx_growlist_add(list, item, list->maxindexused+1);
 }
 
 /**
