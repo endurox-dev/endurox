@@ -41,28 +41,53 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "xatmi.h"
+#include <nstdutil.h>
 
 /**
  * Basic grow list testing
  */
 Ensure(test_nstd_growlist)
 {
-#if 0
-    char bin[TPCONVMAXSTR];
-    char str[TPCONVMAXSTR];
-    size_t outlen;
+    ndrx_growlist_t list;
+    long i;
+    long *data;
     
-    assert_not_equal(ndrx_xa_base64_encode((unsigned char *)M_bin_data, sizeof(M_bin_data), 
-            &outlen, str), NULL);
+    ndrx_growlist_init(&list, 11, sizeof(void *));
     
-    str[outlen] = EXEOS;
-    NDRX_LOG(log_debug, "Got b64 string: [%s]", str);
+    for (i=0; i<100; i++)
+    {
+        assert_equal(EXSUCCEED, ndrx_growlist_add(&list, (void *)&i, i));
+    }
     
-    assert_not_equal(ndrx_xa_base64_decode((unsigned char *)str, strlen(str),
-            &outlen, bin), NULL);
+    for (i=0; i<100; i++)
+    {
+        data = (long*)((char *)(list.mem) + i * sizeof(void *));
+        
+        assert_equal( i, *data);
+    }
     
-    assert_equal(memcmp(bin, M_bin_data, sizeof(M_bin_data)), 0);
-#endif
+    assert_equal(list.maxindexused, 99);
+    
+    i = 777;
+    assert_equal(EXSUCCEED, ndrx_growlist_add(&list, (void *)&i, 999));
+    
+    assert_equal(list.maxindexused, 999);
+    
+    data = (long*)((char *)(list.mem) + 999 * sizeof(void *));
+        
+    assert_equal( i, *data);
+    
+    i=1001;
+    assert_equal(EXSUCCEED, ndrx_growlist_append(&list, (void *)&i));
+    
+    assert_equal(*NDRX_GROWLIST_ACCESS(&list, 1000, long), (long)1001);
+    
+    data = (long*)((char *)(list.mem) + 1000 * list.size);
+        
+    assert_equal( i, *data);
+    
+    
+    ndrx_growlist_free(&list);
     
 }
 
