@@ -50,6 +50,16 @@ extern "C" {
                 t[sizeof(t)-1] = (char)0;\
                 ndrx_str_env_subs_len(t, sizeof(t));
 
+   
+/**
+ * Access the GROWLIST element by index and cast to the type
+ * @param LIST__ pointer to growlist
+ * @param INDEX__ index to be accessed
+ * @param TYPE__ pointer type
+ */
+#define NDRX_GROWLIST_ACCESS(LIST__, INDEX__, TYPE__) \
+    (TYPE__*)(((char *)(LIST__)->mem) + (INDEX__) * (LIST__)->size)
+            
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -69,12 +79,16 @@ struct charstrmap
 
 /** Keeps the growing list */
 typedef struct ndrx_growlist ndrx_growlist_t;
+/** Linear array growing support structure */
 struct ndrx_growlist
 {
     /** number of items used */
     int items;
     /** allocate increment step */
     int step;
+    
+    /** Maximum index used by add function, -1 if not added any elm */
+    int maxindexused;
     
     /** elm size */
     size_t size;
@@ -89,6 +103,7 @@ struct ndrx_growlist
 
 extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size);
 extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);
+extern NDRX_API int ndrx_growlist_append(ndrx_growlist_t *list, void *item);
 extern NDRX_API void ndrx_growlist_free(ndrx_growlist_t *list);
 
 extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
