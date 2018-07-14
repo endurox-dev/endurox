@@ -67,7 +67,31 @@ Some examples of error handling:
 
 -------------------------------------------------------------------------------- 
 
-int 
+#include <ndrstandard.h>
+
+...
+
+/**
+ * Some error function
+ * @param some_arg cannot be less than 0
+ * @return EXFAIL (on failure), EXSUCCEED (all OK)
+ */
+expublic int ndrx_some_func(int some_arg)
+{
+    int ret = EXSUCCEED;
+
+    if (some_arg < 0)
+    {
+        /* what is ret=EXFAIL; goto out; */
+        EXFAIL_OUT(ret);
+    }
+
+
+out:
+
+    return ret;    
+}
+
 
 --------------------------------------------------------------------------------
 
@@ -75,7 +99,7 @@ int
 
 The code line lenght should be more or less 80 symbols. If function arguments
 are going wider, then moved some to next line. If string goes over the 80 chars
-then string shall be splitted with standard compiler contactination done by C.
+then string shall be splitted with standard compiler concatenation done by C.
 
 
 Typcal word wrap should look like:
@@ -107,6 +131,11 @@ Typcal word wrap should look like:
 
 
 ==== Function visibility
+...
+
+
+
+==== Code documentation
 ...
 
 
