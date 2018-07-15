@@ -73,7 +73,7 @@ ELSE ()
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-#       SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+#      SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
         SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
@@ -212,6 +212,8 @@ CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
+
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" HAVE_STRCAT_S)
 
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)

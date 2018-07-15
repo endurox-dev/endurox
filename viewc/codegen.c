@@ -106,7 +106,7 @@ expublic int ndrx_view_generate_code(char *outdir, char *basename,
         char *vsrcfile, char *Vfile, int no_UBF)
 {
     int ret = EXSUCCEED;
-    FILE *f;
+    FILE *f = NULL;
     char cfile[PATH_MAX+1];
     char ofile[PATH_MAX+1];
     ndrx_typedview_t * views = ndrx_view_get_handle();
