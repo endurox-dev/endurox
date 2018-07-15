@@ -100,6 +100,7 @@ extern TestSuite *ubf_nstd_mtest6_dupcursor(void);
 extern TestSuite *test_nstd_macros(void);
 
 extern TestSuite * ubf_nstd_debug(void);
+extern TestSuite * ubf_nstd_standard(void);
 
 
 #ifdef	__cplusplus
