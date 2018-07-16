@@ -130,6 +130,19 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 	libgpgme11-dev libxml2-dev libxml2-utils git
 ---------------------------------------------------------------------
 
+For Linux Mint Mate 19+ additional packages are required (or you get
+following error during build):
+
+---------------------------------------------------------------------
+a2x: ERROR: missing configuration file: /etc/asciidoc/dblatex/asciidoc-dblatex.xsl
+---------------------------------------------------------------------
+
+Install:
+
+---------------------------------------------------------------------
+$ sudo apt-get update asciidoc-dblatex
+---------------------------------------------------------------------
+
 ==== System level dependencies - for Centos 6.x
 As some packages like `dia' does not exists in base Centos install,
 then few of them we will borrow from Fedora project via epel-release.
