@@ -60,6 +60,7 @@
 #include "userlog.h"
 #include "exregex.h"
 #include "exparson.h"
+#include "atmi_int.h"
 
 
 
@@ -908,6 +909,14 @@ expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
     }
  
     return ret;
+}
+
+/**
+ * Print Enduro/X Banner
+ */
+expublic void ndrx_sys_banner(void)
+{
+    NDRX_BANNER;
 }
 
 /* vim: set ts=4 sw=4 et cindent: */
