@@ -5,7 +5,7 @@ MKFLDHDR(8)
 
 NAME
 ----
-mkfldhdr - Generate C header files for UBF field defintions.
+mkfldhdr - Generate C header files for UBF field definitions.
 
 
 SYNOPSIS
@@ -26,7 +26,7 @@ There is special syntax within field tables.
 * The base number is declared as '*base NUMBER'. The number is logical field
 offset.
 * Empty lines are ignored.
-* '#' Is comment, which is ingored.
+* '#' Is comment, which is ignored.
 * All other are treated as field name in start of the line.
 * Syntax for field definition is following: "FIELD_NAME	ID	TYPE	OCC	DESCRIPTION"
 where
@@ -34,11 +34,11 @@ where
 *FIELD_NAME*::
 	Is field UBF field name.
 *ID*::
-	Is relative field it whitin '*base'. '*base'+field ID must be bellow 'NDRX_UBFMAXFLDS' number
-	defined in environment. Max number is 33554432 (25 bit).
+	Is relative field it within '*base'. '*base'+field ID must be bellow 
+    'NDRX_UBFMAXFLDS' number defined in environment. Max number is 33554432 (25 bit).
 
 *OCC*::
-	Occurrances, 1 - single field. M - maybe be multiple fields.
+	Occurrences, 1 - single field. M - maybe be multiple fields.
 *DESCRIPTION*::
 	Field description.
 
@@ -122,13 +122,19 @@ Example output after utility run (testws.fd.h):
 #endif
 -----------------------------------------------------
 
-Note that program uses 'FIELDTBLS' and 'FLDTBLDIR' environment variables 
-for accessing field tables.
+
+ENVIRONMENT
+-----------
+*FIELDTBLS*::
+Comma separated list of field table file names.
+
+*FLDTBLDIR*::
+Directory where field tables are located.
 
 OPTIONS
 -------
 *-D* 'DEBUG_LEVEL'::
-Not used. Left for capablity with Tuxedo.
+Not used. Left for capability with Tuxedo.
 
 *-d* 'OUTPUT_DIR'::
 Directory where to dump the generated header files.
@@ -139,6 +145,7 @@ constants file. '2' for Java constant classes.
 
 *-p* 'LANG_PRIVATE_DATA'::
 Private data for language module. For GO language it is used for package name.
+
 
 EXIT STATUS
 -----------

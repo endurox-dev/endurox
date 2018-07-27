@@ -9,7 +9,7 @@ About the guide
 ---------------
 Getting started tutorial covers Enduro/X installation from binary package,
 environment setup, creating a sample Enduro/X server and creating sample client.
-This include creating a neccessary configuration files. Finally the applicatioin is booted,
+This include creating a necessary configuration files. Finally the application is booted,
 and client process calls the sample server process.
 
 == Configuring Linux Kernel parameters
@@ -67,7 +67,9 @@ We will also need a gcc compiler to build our bankapp
 ---------------------------------------------------------------------
 
 == Configuring the application environment 
-We will run our app "app1" from new user "user1". Application domain will be located in /opt/app1 folder. With follwing direcotry structure:
+We will run our app "app1" from new user "user1". Application domain will be 
+located in /opt/app1 folder. With follwing direcotry structure:
+
 [options="compact"]
 - /opt/app1/conf - will contain configuration files.
 - /opt/app1/src/bankcl - Enduro/X sample client process source
@@ -280,8 +282,8 @@ exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
 	process id=1698 ... No such file or directory.
 Startup finished. 0 processes started.
 ---------------------------------------------------------------------
-This is ok, we have configured two copies of eserver Enduro/X servers, which we are not yet built,
-thus we get the error.
+This is ok, we have configured two copies of eserver Enduro/X servers, 
+which we are not yet built, thus we get the error.
 
 If you run `xadmin' and get following error:
 
@@ -290,16 +292,19 @@ $ xadmin
 Failed to initialize!
 ---------------------------------------------------------------------
 
-Then this typically means, that you do not have run /etc/rc.local (either by root or by reboot). More info is logged
-to /opt/app1/log/xadmin.log
+Then this typically means, that you do not have run /etc/rc.local (either by 
+root or by reboot). More info is logged to /opt/app1/log/xadmin.log
 
 == Creating the server process
-Firstly to create a "bank" server, we will have to define the fields in which we will transfer the data. We will need following fields:
+Firstly to create a "bank" server, we will have to define the fields in 
+which we will transfer the data. We will need following fields:
 [options="compact"]
 - T_ACCNUM - Account number, type string
 - T_ACCCUR - Account currency, type string
 - T_AMTAVL - Available balance in account, type double
-So we will create a service "BALANCE" to which we will T_ACCNUM and T_ACCCUR. The process will return balance in T_AMTAVL.
+
+So we will create a service "BALANCE" to which we will T_ACCNUM and T_ACCCUR. 
+The process will return balance in T_AMTAVL.
 
 === Defining the UBF fields
 Requried fields will be define into /opt/app1/ubftab/bank.fd with follwing contents:
@@ -344,7 +349,9 @@ total 16
 ---------------------------------------------------------------------
 
 === Server source code
-We will have sample server process which will just print in trace file account, currency. In return it will set "random" balance in field "T_AMTAVL". The source code of /opt/app1/banksv/banksv.c looks as follows:
+We will have sample server process which will just print in trace file account, 
+currency. In return it will set "random" balance in field "T_AMTAVL". 
+The source code of /opt/app1/src/banksv/banksv.c looks as follows:
 
 ---------------------------------------------------------------------
 #include <stdio.h>
@@ -460,14 +467,14 @@ Very simple Makefile will look like (/opt/app1/src/banksv/Makefile):
 
 ---------------------------------------------------------------------
 banksv: banksv.c
-	gcc -o banksv banksv.c -I. -I ../../ubftab -latmisrv -latmi -lubf -lnstd -lrt -ldl -lm
+	cc -o banksv banksv.c -I. -I ../../ubftab -latmisrv -latmi -lubf -lnstd -lrt -ldl -lm
 ---------------------------------------------------------------------
 
 Build the binary:
 ---------------------------------------------------------------------
 $ cd /opt/app1/src/banksv
 $ make
-gcc -o banksv banksv.c -I. -I ../../ubftab -latmisrv -latmi -lubf -lnstd -lrt -ldl -lm
+cc -o banksv banksv.c -I. -I ../../ubftab -latmisrv -latmi -lubf -lnstd -lrt -ldl -lm
 ls -l
 total 20
 -rwxrwxr-x. 1 user1 user1 9937 Nov 16 04:11 banksv
@@ -482,7 +489,9 @@ To start the binary, first we need to copy it to binary directory:
 $ cp /opt/app1/src/banksv/banksv /opt/app1/bin/banksv
 ---------------------------------------------------------------------
 
-Now start it with "xadmin start". This will cause to boot any unbooted processes to start (which previosly did not start because we didn't have `banksv' executable in bin directory.
+Now start it with "xadmin start". This will cause to boot any unbooted 
+processes to start (which previosly did not start because we didn't have 
+`banksv' executable in bin directory.
 
 ---------------------------------------------------------------------
 $ xadmin start
@@ -503,7 +512,8 @@ exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
 Startup finished. 2 processes started.
 ---------------------------------------------------------------------
 
-To check that our BALANCE service is advertized, we can execute command "xadmin psc" - print services:
+To check that our BALANCE service is advertised, we can execute command 
+"xadmin psc" - print services:
 
 ---------------------------------------------------------------------
 $ xadmin psc
@@ -522,10 +532,16 @@ Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 1  BALANCE      BALANCE      banksv    2     0     0     0ms      0ms      AVAIL
 ---------------------------------------------------------------------
 
-We see here two copies for banksv binaries running (Server ID 1 & 2). Both advertizes "BALANCE" service.
+We see here two copies for banksv binaries running (Server ID 1 & 2). 
+Both advertises "BALANCE" service.
 
 === Testing the service with "ud" command
-It is possible to call the service with out a client process. This is useful for testing. Service can be called with `ud' utility. In which we define the target service name and any additional UBF buffer fields. In our case these fields are T_ACCNUM and T_ACCCUR, which are mandatory for the service. So we will create a `test.ud' file in folder /opt/app1/test. /opt/app1/test/test.ud looks like:
+It is possible to call the service with out a client process. This is useful 
+for testing. Service can be called with `ud' utility. In which we define the 
+target service name and any additional UBF buffer fields. In our case these 
+fields are T_ACCNUM and T_ACCCUR, which are mandatory for the service. So we
+will create a `test.ud' file in folder /opt/app1/test. /opt/app1/test/test.ud 
+looks like:
 
 ---------------------------------------------------------------------
 SRVCNM	BALANCE
@@ -545,13 +561,17 @@ T_AMTAVL	1355808545.118969
 T_ACCNUM	ABC123467890
 T_ACCCUR	EUR
 ---------------------------------------------------------------------
-We see that our "dummy" balance returned is "1355808545.118969". So test service is working ok. Now we should write a client app, which could call the service via tpcall() XATMI API call.
+We see that our "dummy" balance returned is "1355808545.118969". 
+So test service is working ok. Now we should write a client app, which could 
+call the service via tpcall() XATMI API call.
 
 == Creating the client application
-Bank client application will setup T_ACCNUM and T_ACCCUR fields and will call "BALANCE" service, after the call client application will print the balance on screen.
+Bank client application will setup T_ACCNUM and T_ACCCUR fields and will 
+call "BALANCE" service, after the call client application will 
+print the balance on screen.
 
 === Client binary source code
-Code for client application: /opt/app1/bankcl/bankcl.c
+Code for client application: /opt/app1/src/bankcl/bankcl.c
 
 ---------------------------------------------------------------------
 #include <string.h>
@@ -634,7 +654,7 @@ Makefile (/opt/app1/src/bankcl/Makefile) looks like:
 
 ---------------------------------------------------------------------
 bankcl: bankcl.c
-	gcc -o bankcl bankcl.c -I. -I ../../ubftab -latmiclt -latmi -lubf -lnstd -lrt -ldl -lm
+	cc -o bankcl bankcl.c -I. -I ../../ubftab -latmiclt -latmi -lubf -lnstd -lrt -ldl -lm
 ---------------------------------------------------------------------
 
 Once both bankcl.c and Makefile is created, you can run the build process:
@@ -656,9 +676,22 @@ $ /opt/app1/src/bankcl/bankcl
 Account balance is: 883078058.68 USD
 ---------------------------------------------------------------------
 
+
+== Deploy "banksv" in Docker container
+
+To deploy the example files in Docker container, follow the instructions found
+in endurox-docker repository: https://github.com/endurox-dev/endurox-docker
+
+
 == Conclusions
-From the above sample it could be seen that creating a ATMI application ir pretty easy and stright forward. This application was very basic, just doing the call to Enduro/X service. However the same application could work in cluster, where "BALANCE" service can be located on different physical machine and `bankcl' will still work, as platform will ensure the visibility of the "BALANCE" service, see the <<TPBRIDGE>> for clustering.
-The source files of the sample app are located in "getting_started_tutorial-files/opt/app1" folder.
+From the above sample it could be seen that creating a ATMI application is 
+pretty easy and straight forward. This application was very basic, 
+just doing the call to Enduro/X service. However the same application 
+could work in cluster, where "BALANCE" service can be located on different 
+physical machine and `bankcl' will still work, as platform will ensure the 
+visibility of the "BALANCE" service, see the <<TPBRIDGE>> for clustering.
+The source files of the sample app are located in 
+"getting_started_tutorial-files/opt/app1" folder.
 
 :numbered!:
 
