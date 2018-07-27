@@ -86,7 +86,7 @@ expublic renderer_descr_t M_renderer_tab[] =
 /*
  * Function for retrieving next file name
  */
-char *(*M_get_next) (int *ret);
+exprivate char *(*M_get_next) (int *ret);
 exprivate int generate_files(void);
 
 
@@ -95,7 +95,7 @@ exprivate int generate_files(void);
  * @param ret
  * @return
  */
-char *get_next_from_arg (int *ret)
+exprivate char *get_next_from_arg (int *ret)
 {
 
     *ret=EXSUCCEED;
@@ -116,7 +116,7 @@ char *get_next_from_arg (int *ret)
  * @param ret
  * @return
  */
-char *get_next_from_env (int *ret)
+exprivate char *get_next_from_env (int *ret)
 {
     static int first = 1;
     static char *flddir=NULL;
@@ -125,6 +125,7 @@ char *get_next_from_env (int *ret)
     static char tmp[FILENAME_MAX+1];
     char *ret_ptr=NULL;
     
+    NDRX_LOG(log_debug, "%s enter", __func__);
     if (first)
     {
         first=0;
@@ -137,7 +138,7 @@ char *get_next_from_env (int *ret)
             *ret=EXFAIL;
             return NULL;
         }
-        UBF_LOG(log_debug, "Load field dir [%s]", flddir);
+        NDRX_LOG(log_debug, "Load field dir [%s]", flddir);
 
         flds = (char *)getenv(FIELDTBLS);
         if (NULL==flds)
@@ -148,7 +149,7 @@ char *get_next_from_env (int *ret)
             return NULL;
         }
 
-        UBF_LOG(log_debug, "About to load fields list [%s]", flds);
+        NDRX_LOG(log_debug, "About to load fields list [%s]", flds);
 
         NDRX_STRCPY_SAFE(tmp_flds, flds);
         ret_ptr=strtok(tmp_flds, ",");
@@ -244,14 +245,14 @@ int main(int argc, char **argv)
     /* list other options */
     if (optind < argc)
     {
-        NDRX_LOG(log_debug, "Reading files from command line");
         M_get_next = get_next_from_arg;
+        NDRX_LOG(log_debug, "Reading files from command line %p", M_get_next);
     }
     else
     {
         /* Use environment variables */
-        NDRX_LOG(log_debug, "Use environment variables");
         M_get_next = get_next_from_env;
+        NDRX_LOG(log_debug, "Use environment variables %p", M_get_next);
     }
 
     ret=generate_files();
@@ -310,11 +311,12 @@ exprivate int generate_files(void)
 
     _ubf_loader_init();
 
-    NDRX_LOG(log_debug, "enter generate_files()");
+    NDRX_LOG(log_debug, "enter generate_files() func: %p", M_get_next);
+
     /*
      * Process file by file
      */
-    while (EXSUCCEED==ret && NULL!=(fname=M_get_next(&ret)))
+    while (NULL!=(fname=M_get_next(&ret)))
     {
         out_f_name[0] = EXEOS;
 
@@ -323,7 +325,7 @@ exprivate int generate_files(void)
         {
             ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                 fname, strerror(errno));
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
 
         /* Open output file */
@@ -338,7 +340,7 @@ exprivate int generate_files(void)
             {
                 ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]",
                                             out_f_name, strerror(errno));
-                ret=EXFAIL;
+                EXFAIL_OUT(ret);
             }
             else
             {
@@ -346,11 +348,12 @@ exprivate int generate_files(void)
             }
         }
 
-        if (EXSUCCEED==ret)
-        {
             /* This will also do the check for duplicates! */
-            ret=ndrx_ubf_load_def_file(inf, M_renderer->put_text_line, M_renderer->put_def_line, 
-                                        M_renderer->put_got_base_line, fname, EXTRUE);
+        if (EXSUCCEED!=ndrx_ubf_load_def_file(inf, M_renderer->put_text_line,
+                                M_renderer->put_def_line, M_renderer->put_got_base_line,
+                                fname, EXTRUE))
+        {
+            EXFAIL_OUT(ret);
         }
 
         /* close opened files. */
@@ -367,17 +370,16 @@ exprivate int generate_files(void)
             G_outf=NULL;
         }
 
-        if (EXSUCCEED!=ret && EXEOS!=out_f_name[0])
-        {
-            /* unlink last file */
-            NDRX_LOG(log_debug, "Unlinking %s",out_f_name);
-            unlink(out_f_name);
-        }
-        else if (EXSUCCEED==ret)
-        {
-            NDRX_LOG(log_debug, "%s processed OK, output: %s",
+        NDRX_LOG(log_debug, "%s processed OK, output: %s",
                                             fname, out_f_name);
-        }
+    }
+
+out:
+    if (EXSUCCEED!=ret && EXEOS!=out_f_name[0])
+    {
+        /* unlink last file */
+        NDRX_LOG(log_debug, "Unlinking %s",out_f_name);
+        unlink(out_f_name);
     }
     
     return ret;
