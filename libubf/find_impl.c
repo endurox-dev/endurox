@@ -181,6 +181,7 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
                         extralen)))
         {
             UBF_LOG(log_error, "%s: get_cbuf failed!", __func__);
+            ndrx_Bset_error_fmt(BEUNIX, "%s: get_cbuf failed!", __func__);
             /* Error should be already set */
             return NULL; /* <<<< RETURN!!!! */
         }
@@ -196,6 +197,7 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
         if (NULL==ret)
         {
             UBF_LOG(log_error, "%s: failed to convert data!", __func__);
+            ndrx_Bset_error_fmt(BEUNIX, "%s: failed to convert data!", __func__);
             /* Error should be provided by conversation function */
             ret=NULL;
         }
