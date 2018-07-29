@@ -257,6 +257,12 @@ Ensure(test_cbfind)
     assert_equal(strncmp(CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_CARRAY), "12312.1111", 10), 0);
     assert_equal(strncmp(CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_CARRAY), "TEST STR VAL", 12), 0);
     assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
+    
+    /* Bug #330 */
+    assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
+    assert_equal(len, len);
+    
+    len = 0;
 
     /* Now test the thing that we have different pointers for each of the data type
      * also fields will corss match their types.

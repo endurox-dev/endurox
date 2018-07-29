@@ -143,7 +143,7 @@ expublic char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
 }
 
 /**
- * Internal version of CBFind
+ * Internal version of CBFind.
  * @param p_ub
  * @param bfldid
  * @param occ
@@ -161,7 +161,6 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
     char *fb_data;
     char *alloc_buf=NULL;
     int alloc_size = 0;
-    char fn[]="_CBfind";
     char *ret=NULL;
 /***************************************** DEBUG *******************************/
     #ifdef UBF_API_DEBUG
@@ -174,30 +173,36 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
     if (NULL!=fb_data)
     {
         /* Allocate the buffer */
-        if (NULL==(cvn_buf=ndrx_ubf_get_cbuf(from_type,usrtype,
+        if (NULL==(cvn_buf=ndrx_ubf_get_cbuf(from_type, usrtype,
                         NULL, fb_data, tmp_len,
                         &alloc_buf,
                         &alloc_size,
                         mode,
                         extralen)))
         {
-            UBF_LOG(log_error, "%s: get_cbuf failed!", fn);
+            UBF_LOG(log_error, "%s: get_cbuf failed!", __func__);
             /* Error should be already set */
             return NULL; /* <<<< RETURN!!!! */
         }
-
+        
+        /* Bug #330*/
+        if (NULL!=len)
+        {
+            *len = alloc_size;
+        }
+        
         ret = ndrx_ubf_convert(from_type, CNV_DIR_OUT, fb_data, tmp_len,
                                     usrtype, cvn_buf, len);
         if (NULL==ret)
         {
-            UBF_LOG(log_error, "%s: failed to convert data!", fn);
+            UBF_LOG(log_error, "%s: failed to convert data!", __func__);
             /* Error should be provided by conversation function */
             ret=NULL;
         }
     }
     else
     {
-        UBF_LOG(log_error, "%s: Field not present!", fn);
+        UBF_LOG(log_error, "%s: Field not present!", __func__);
         ret=NULL;
     }
 /***************************************** DEBUG *******************************/
@@ -335,8 +340,8 @@ expublic BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLE
     /* if types are not the same then go the long way... */
 
     /* Allocate the buffer dynamically or statically */
-    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf,value, len, &alloc_buf, &cvn_len,
-                                CB_MODE_DEFAULT, 0)))
+    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf,value, len, 
+            &alloc_buf, &cvn_len, CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "%s: Malloc failed!", fn);
         return EXFAIL; /* <<<< RETURN!!!! */
