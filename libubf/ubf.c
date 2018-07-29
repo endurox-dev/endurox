@@ -1433,15 +1433,14 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 expublic char * CBfind (UBFH * p_ub, 
                     BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype)
 {
-    char *fn = "CBfind";
     API_ENTRY;
 
-    UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", fn, bfldid, occ);
+    UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", __func__, bfldid, occ);
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return NULL;
     }
     
