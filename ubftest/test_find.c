@@ -262,6 +262,9 @@ Ensure(test_cbfind)
     assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
     assert_equal(len, len);
     
+    assert_equal(CBfind(p_ub, T_CARRAY_3_FLD, 0, &len, BFLD_CARRAY), NULL);
+    assert_equal(Berror, BNOTPRES);
+    
     len = 0;
 
     /* Now test the thing that we have different pointers for each of the data type
