@@ -1,22 +1,22 @@
 #!/bin/bash
 ## 
-## @(#) Test008, extension test (polling + timer)
-## WARNING: THIS TEST REQUIRES THAT LOCALHOST:22 IS OPEN FOR SSH!
-## Otherwise it might fail!?!?
+## @brief @(#) Test008, extension test (polling + timer)
+##   WARNING: THIS TEST REQUIRES THAT LOCALHOST:22 IS OPEN FOR SSH!
+##   Otherwise it might fail!?!?
 ##
 ## @file run.sh
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## GPL or Mavimax's license for commercial use.
+## GPL or ATR Baltic's license for commercial use.
 ## -----------------------------------------------------------------------------
 ## GPL license:
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
