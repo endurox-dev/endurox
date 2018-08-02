@@ -7,7 +7,7 @@
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or ATR Baltic's license for commercial use.
+ * GPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
  * GPL license:
  * 
