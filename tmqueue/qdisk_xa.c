@@ -1,72 +1,61 @@
 /* 
-** Q XA Backend 
-**
-** Prepare the folders & subfolders 
-** So we will have following directory structure:
-** - active
-** - prepared
-** - committed
-** 
-** Initialy file will be named after the XID
-** Once it becomes committed, it is named after message_id
-** 
-** If we have a update to Q (try counter for example)
-** Then we issue new transaction file with different command inside, but it contains
-** the message_id 
-** 
-** Once do the commit and it is not and message, but update file, then
-** we update message file.
-** 
-** If the command is delete, then we unlink the file.
-** 
-** Once Queue record is completed (rolled back or committed) we shall send ACK
-** of COMMAND BLOCK back to queue server via TPCALL command to QSPACE server.
-** this will allow to synchornize internal status of the messages. 
-** 
-** Initially (active) file is named is named after XID. When doing commit, it is
-** renamed to msg_id.
-** 
-** If we restore the system after the restart, then committed & prepare directory is scanned.
-** If msg is committed + there is command in prepared, then it is marked as locked.
-** When scanning prepared directory, we shall read the msg_id from files.
-** 
-** We shall support multiple TMQs running over single Q space, but they each should,
-** manage it's own set of queued messages.
-** The queued file names shall contain [QSPACE].[SERVERID].[MSG_ID|XID]
-** To post the updates to proper TMQ, it should advertise QSPACE.[SERVER_ID]
-** In case of Active-Active env, servers only on node shall be run.
-** 
-** On the other node we could put in standby qspace+server_id on the same shared dir.
-** 
-**
-** @file qdisk_xa.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+ * @brief Q XA Backend
+ *   Prepare the folders & subfolders
+ *   So we will have following directory structure:
+ *   - active
+ *   - prepared
+ *   - committed
+ *   Initialy file will be named after the XID
+ *   Once it becomes committed, it is named after message_id
+ *   If we have a update to Q (try counter for example)
+ *   Then we issue new transaction file with different command inside, but it contains
+ *   the message_id
+ *   Once do the commit and it is not and message, but update file, then
+ *   we update message file.
+ *   If the command is delete, then we unlink the file.
+ *   Once Queue record is completed (rolled back or committed) we shall send ACK
+ *   of COMMAND BLOCK back to queue server via TPCALL command to QSPACE server.
+ *   this will allow to synchornize internal status of the messages.
+ *   Initially (active) file is named is named after XID. When doing commit, it is
+ *   renamed to msg_id.
+ *   If we restore the system after the restart, then committed & prepare directory is scanned.
+ *   If msg is committed + there is command in prepared, then it is marked as locked.
+ *   When scanning prepared directory, we shall read the msg_id from files.
+ *   We shall support multiple TMQs running over single Q space, but they each should,
+ *   manage it's own set of queued messages.
+ *   The queued file names shall contain [QSPACE].[SERVERID].[MSG_ID|XID]
+ *   To post the updates to proper TMQ, it should advertise QSPACE.[SERVER_ID]
+ *   In case of Active-Active env, servers only on node shall be run.
+ *   On the other node we could put in standby qspace+server_id on the same shared dir.
+ *
+ * @file qdisk_xa.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or ATR Baltic's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
