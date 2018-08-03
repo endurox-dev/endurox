@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed JSON testing
  *
  * @file atmiclt26.c

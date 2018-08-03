@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief LMDB support function
  *
  * @file edbutil.c

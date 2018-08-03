@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro Execution platform's UBF library
 ##   We are using flex & bison for boolean expressions!
 ##

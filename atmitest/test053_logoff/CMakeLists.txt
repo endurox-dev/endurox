@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test that nothing is logged if switched off - makefile
 ##
 ## @file CMakeLists.txt

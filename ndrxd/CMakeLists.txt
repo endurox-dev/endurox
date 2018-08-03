@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `ndrxd' EnduroX Monitor Daemon
 ##
 ## @file CMakeLists.txt

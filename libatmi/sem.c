@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Semaphore handling
  *
  * @file sem.c

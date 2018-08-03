@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-## 
+##
 ## @brief @(#) Enduro/X log analyzer - join all the log files in the chronological order
 ##
 ## @file uvlog

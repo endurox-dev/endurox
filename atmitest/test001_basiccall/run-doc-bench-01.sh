@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test1 Launcher (Benchmark for documentation)
 ##
 ## @file run-doc-bench-01.sh

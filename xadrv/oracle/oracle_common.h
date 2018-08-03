@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common handler
  *
  * @file oracle_common.h

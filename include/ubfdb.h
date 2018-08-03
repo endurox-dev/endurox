@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF field database
  *
  * @file ubfdb.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Start & stop command backend.
  *
  * @file cmd_startstop.c

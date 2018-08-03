@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X common-config
  *
  * @file cconfig.h

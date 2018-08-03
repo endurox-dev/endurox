@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test007, advertise & unadvertise
 ##
 ## @file run.sh

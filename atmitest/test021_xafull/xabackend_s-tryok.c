@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Static driver, test case for Bug #123, test that try counter attempted
  *   and succeeded
  *

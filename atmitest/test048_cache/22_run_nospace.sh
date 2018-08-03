@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Test updates with no space
 ##
 ## @file 22_run_nospace.sh

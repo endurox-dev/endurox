@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test Bug #306 - xadmin start -s should start only min number servers - makefile
 ##
 ## @file CMakeLists.txt

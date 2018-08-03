@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Perform cache bechmark
 ##
 ## @file benchmark.sh

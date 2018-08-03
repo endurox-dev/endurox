@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test023 Launcher - CARRAY typed buffer test
 ##
 ## @file run.sh

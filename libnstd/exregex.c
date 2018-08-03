@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Regex common routines
  *
  * @file exregex.c

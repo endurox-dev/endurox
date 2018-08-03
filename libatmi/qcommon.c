@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Persistent queue commons (used between tmqsrv and "userspace" api)
  *
  * @file qcommon.c

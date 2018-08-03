@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X server main entry point
  *
  * @file srvmain.c

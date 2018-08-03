@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Java language support
  *
  * @file java.c

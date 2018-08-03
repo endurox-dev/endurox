@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Reload Q config
  *
  * @file cmd_mqrc.c

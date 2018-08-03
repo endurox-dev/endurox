@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief User log
  *
  * @file ulog.c

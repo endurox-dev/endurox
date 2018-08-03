@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test001 - clusterised version (for doc, benchmark)
 ##
 ## @file run-doc-bench-02.sh

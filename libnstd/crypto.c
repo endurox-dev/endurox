@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cryptography related routines
  *   We have a poor logging options where, because logger might not be initialized
  *   when we will require to log some messages. Thus critical things will be logged

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief AIX Abstraction Layer (AAL)
  *
  * @file sys_aix.c

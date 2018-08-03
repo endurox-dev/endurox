@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro X administration utility.
  *
  * @file xadmin.c

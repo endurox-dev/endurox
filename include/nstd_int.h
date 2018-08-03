@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard Library internals
  *
  * @file nstd_int.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Logic that needs to be processed in case of ndrxd restart.
  *
  * @file restart.c

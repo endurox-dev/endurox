@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command's `ppm' backend
  *
  * @file cmd_ppm.c

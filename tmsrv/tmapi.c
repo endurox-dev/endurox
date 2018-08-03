@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Tmsrv server - transaction monitor
  *   After that log transaction to hash & to disk for tracking the stuff...
  *   TODO: We should have similar control like "TP_COMMIT_CONTROL" -

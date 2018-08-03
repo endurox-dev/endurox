@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command's `shm_psrv' backend
  *
  * @file cmd_shm_psrv.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed VIEW tests
  *
  * @file test040.h

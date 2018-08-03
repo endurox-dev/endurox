@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief PSCRIPT tests
  *
  * @file test027.h

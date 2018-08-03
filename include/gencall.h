@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Generic Posix queue call
  *
  * @file gencall.h

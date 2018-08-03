@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test of tptoutset()/get() - makefile
 ##
 ## @file CMakeLists.txt

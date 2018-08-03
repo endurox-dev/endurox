@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Debug library header
  *
  * @file ndebug.h

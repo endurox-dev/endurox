@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test server connection to Oracle DB from C - makefile
 ##
 ## @file CMakeLists.txt

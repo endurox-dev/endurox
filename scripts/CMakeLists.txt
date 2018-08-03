@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Scripts for distribution
 ##
 ## @file CMakeLists.txt

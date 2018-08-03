@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Static driver, tase case for Bug #105
  *
  * @file xabackend_s-startfail.c

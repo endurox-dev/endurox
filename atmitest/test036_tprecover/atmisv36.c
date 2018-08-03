@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dummy service for TP Recovery testing
  *
  * @file atmisv36.c

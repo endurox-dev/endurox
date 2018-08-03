@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `shm_psrv' command implementation - SHM - print servers
  *
  * @file cmd_shm_psrv.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Implements main functions for conversational server
  *   Some thoughts:
  *   1. Control is on that side which sends the message.

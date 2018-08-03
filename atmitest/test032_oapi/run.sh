@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test32 Launcher
 ##
 ## @file run.sh

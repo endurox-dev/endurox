@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard header tests
  *
  * @file test_nstd_standard.c

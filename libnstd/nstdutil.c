@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief NDR 'standard' common utilites
  *   Enduro Execution system platform library
  *

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `psc' command implementation
  *
  * @file cmd_psc.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Main Entry for EnduroX Daemon process
  *
  * @file ndrxd.c

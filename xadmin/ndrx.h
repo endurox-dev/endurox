@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief xadmin tooling header file
  *
  * @file ndrx.h

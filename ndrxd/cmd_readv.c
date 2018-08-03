@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Re-advertise related command back-end
  *
  * @file cmd_readv.c

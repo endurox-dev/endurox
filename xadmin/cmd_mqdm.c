@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dump the message to stdout.
  *
  * @file cmd_mqdm.c

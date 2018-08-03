@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Persistent queue tests
 ##
 ## @file CMakeLists.txt

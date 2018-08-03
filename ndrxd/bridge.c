@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief This file contains routines for bridge/cluster support.
  *   Basically if server tells about it self that it is bridge, we add it to
  *   Linked list & hash (just like we do for process mode server ids...!).

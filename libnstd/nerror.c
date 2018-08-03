@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X standard library - error handling
  *
  * @file nerror.c

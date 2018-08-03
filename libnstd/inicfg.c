@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X advanced configuration driver
  *   We have a problem with logging here - chicken-egg issue.
  *   We cannot start to log unless debug is initialised. But debug init depends

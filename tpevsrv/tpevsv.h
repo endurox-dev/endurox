@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Event broker
  *
  * @file tpevsv.h

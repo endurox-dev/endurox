@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Big messages over the network - common header
  *
  * @file test42.h

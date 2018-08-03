@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Build the Oracle XA/enduro driver libs
 ##
 ## @file CMakeLists.txt

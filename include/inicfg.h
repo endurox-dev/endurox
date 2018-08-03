@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X ini config driver
  *
  * @file inicfg.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI Server Integration Level Object API code (auto-generated)
  *   oatmisrv_integra.c
  *

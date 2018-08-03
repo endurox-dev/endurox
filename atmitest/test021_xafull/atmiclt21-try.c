@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Try counter testing
  *
  * @file atmiclt21-try.c

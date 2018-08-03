@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief CARRAY buffer support
  *
  * @file typed_carray.c

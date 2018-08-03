@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Error processing for admins (i.e. keep last error message) to provide back to admin.
  *
  * @file admerror.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief System utilities
  *
  * @file sysutil.c

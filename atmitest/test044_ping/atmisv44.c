@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test ndrxd ping procedures - server
  *
  * @file atmisv44.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Thread synchronization routines. Mutexes & Spinlocks.
  *
  * @file thlock.h

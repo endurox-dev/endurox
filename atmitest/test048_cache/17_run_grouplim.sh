@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Keygroup tests, limited by keys and by group..
 ##
 ## @file 17_run_grouplim.sh

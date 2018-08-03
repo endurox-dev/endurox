@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Integration mode
  *
  * @file rawmain_integra.c

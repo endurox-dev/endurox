@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X client & server environment configuration structures
  *
  * @file exenv.h

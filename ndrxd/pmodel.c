@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Build process model structure
  *
  * @file pmodel.c

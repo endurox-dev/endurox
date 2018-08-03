@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load wsmq drivers - static version
  *
  * @file wsmq_common.c

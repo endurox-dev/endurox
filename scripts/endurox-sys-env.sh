@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Initialize system environment
 ##
 ## @file endurox-sys-env.sh

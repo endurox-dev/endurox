@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief User log access functions
  *
  * @file userlog.h

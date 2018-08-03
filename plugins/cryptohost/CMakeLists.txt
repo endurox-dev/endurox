@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Cryptohost (use hostname as encryption key) providers/plugin
 ##
 ## @file CMakeLists.txt

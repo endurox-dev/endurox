@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief General purpose *get* testing file
  *
  * @file test_get.c

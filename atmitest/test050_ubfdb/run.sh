@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) UBF Field table database tests - test launcher
 ##
 ## @file run.sh

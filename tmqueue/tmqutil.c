@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Q util
  *
  * @file tmqutil.c

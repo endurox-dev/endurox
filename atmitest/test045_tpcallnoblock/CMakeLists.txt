@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test tpcall noblock operation - makefile
 ##
 ## @file CMakeLists.txt

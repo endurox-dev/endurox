@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Execute client processes (start, stop and signal handling...)
  *
  * @file cltexec.c

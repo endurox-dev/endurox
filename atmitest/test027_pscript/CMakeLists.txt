@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Tests for PSCRIPT buffer testing
 ##
 ## @file CMakeLists.txt

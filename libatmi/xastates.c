@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief State transition handling of XA transactions
  *
  * @file xastates.c

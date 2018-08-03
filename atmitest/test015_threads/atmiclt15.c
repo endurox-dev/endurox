@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Basic test client
  *
  * @file atmiclt15.c

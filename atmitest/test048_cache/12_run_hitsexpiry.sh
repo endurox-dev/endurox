@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Limited cache, records with more hits live longer, zapped by expiry
 ##
 ## @file 12_run_hitsexpiry.sh

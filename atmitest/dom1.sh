@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test domain 1
 ##
 ## @file dom1.sh

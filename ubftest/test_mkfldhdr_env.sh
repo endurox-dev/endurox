@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ##
 ## @file test_mkfldhdr_env.sh
 ##

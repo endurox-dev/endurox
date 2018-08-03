@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI lib part for XA api - utils
  *
  * @file xautils.c

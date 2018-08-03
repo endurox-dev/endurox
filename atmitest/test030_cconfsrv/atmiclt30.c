@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common-config server tests
  *
  * @file atmiclt30.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Functions for tracking open connections.
  *   Contains doubly linked list.
  *   So we will track all incoming & outgoing connections, right?

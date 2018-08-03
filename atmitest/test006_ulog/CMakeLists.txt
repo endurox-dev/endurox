@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Basic Call Testing
 ##
 ## @file CMakeLists.txt

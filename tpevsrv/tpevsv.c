@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Event Broker services
  *   TODO: We should send only once to services with the same name!!!
  *   for each broadcast, if matched, we shall put the made call in hashlist and

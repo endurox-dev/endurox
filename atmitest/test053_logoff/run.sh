@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test that nothing is logged if switched off - test launcher
 ##
 ## @file run.sh

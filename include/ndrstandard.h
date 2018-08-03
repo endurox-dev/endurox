@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Standard library
  *
  * @file ndrstandard.h

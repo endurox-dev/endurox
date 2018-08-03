@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Base64 handling
  *
  * @file exbase64.c

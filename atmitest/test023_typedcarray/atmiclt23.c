@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed CARRAY testing
  *
  * @file atmiclt23.c

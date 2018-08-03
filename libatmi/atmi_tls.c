@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Globals/TLS for libatmi
  *
  * @file atmi_tls.c

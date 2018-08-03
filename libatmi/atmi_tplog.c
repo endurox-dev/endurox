@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief TPLog routines at ATMI level
  *
  * @file atmi_tplog.c

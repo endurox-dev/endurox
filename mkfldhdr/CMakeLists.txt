@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro/X Execution platform's UBF library's mkfldhdr utility
 ##
 ## @file CMakeLists.txt

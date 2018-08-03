@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test of tptoutset()/get() - client
  *
  * @file atmiclt51.c

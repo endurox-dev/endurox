@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Implementation for start & stop commands.
  *
  * @file cmd_startstop.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Master Configuration for ndrx command line utility!
  *
  * @file config.c

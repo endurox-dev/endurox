@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library, field table handling routines (i.e. .fd files)
  *
  * @file fieldtable.h

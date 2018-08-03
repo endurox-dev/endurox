@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Field database support routines
  *
  * @file fielddb.c

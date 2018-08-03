@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test000 Launcher - JSON typed buffer test
 ##
 ## @file run.sh

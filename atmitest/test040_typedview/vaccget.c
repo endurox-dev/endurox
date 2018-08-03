@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief View access unit
  *
  * @file vaccget.c

@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test race conditions that might happen due to queue link & unlink in same time
 ##
 ## @file CMakeLists.txt

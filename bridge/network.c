@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Contains network processing part of the bridge.
  *
  * @file network.c

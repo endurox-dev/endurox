@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Bug #236 - two pass config (global section reference to global) and process cfg reload - test launcher
 ##
 ## @file run.sh

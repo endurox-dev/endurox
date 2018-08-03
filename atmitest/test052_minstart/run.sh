@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test Bug #306 - xadmin start -s should start only min number servers - test launcher
 ##
 ## @file run.sh

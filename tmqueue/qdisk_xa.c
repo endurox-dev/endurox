@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Q XA Backend
  *   Prepare the folders & subfolders
  *   So we will have following directory structure:

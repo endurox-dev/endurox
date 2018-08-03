@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Process messages from linked list (deletes to avoid RW cursors)
  *
  * @file msglist.c

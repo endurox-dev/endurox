@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Environment API (groups & lists) for XATMI servers and clients (by cpmsrv)
  *
  * @file envapi.c

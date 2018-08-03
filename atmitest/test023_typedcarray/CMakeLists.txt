@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Tests for CARRAY buffer testing
 ##
 ## @file CMakeLists.txt

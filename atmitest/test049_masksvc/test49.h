@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Mask service in server config (no advertise by -n) - common header
  *
  * @file test49.h

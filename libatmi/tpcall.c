@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI tpcall function implementation (Common version)
  *   This will have to make the call and wait back for answer.
  *   This should pass to function file descriptor for reply back queue.

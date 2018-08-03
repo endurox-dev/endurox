@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test Buffer compare routines (Bcmp and Bsubset)
  *
  * @file test_bcmp.c

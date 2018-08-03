@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Base64 tests (Bug #261)
  *
  * @file test_nstd_b64.c

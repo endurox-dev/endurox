@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cryptography related
  *
  * @file excrypto.h

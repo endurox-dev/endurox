@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Event MIB compatiblity
  *
  * @file evt_mib.h

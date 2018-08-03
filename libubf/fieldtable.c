@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library, filed table handling routins (i.e. .fd files)
  *   !!! THERE IS NO SUPPORT for multiple directories with in FLDTBLDIR !!!
  *   Also the usage of default `fld.tbl' is not supported, as seems to be un-needed

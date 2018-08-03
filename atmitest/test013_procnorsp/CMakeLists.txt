@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Analyzes the case when there are queued message but server dies unexpectedly.
 ##   In This case, then caller will get timeout, but those others in queue,
 ##   Should receive server error.

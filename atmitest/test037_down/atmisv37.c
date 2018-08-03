@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief 'xadmin down' tests, have some server too...
  *
  * @file atmisv37.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed CARRAY tests
  *
  * @file test023.h

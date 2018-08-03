@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Transaction Monitor server
 ##
 ## @file CMakeLists.txt

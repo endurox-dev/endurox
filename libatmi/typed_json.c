@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief JSON buffer support
  *
  * @file typed_json.c

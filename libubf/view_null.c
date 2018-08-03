@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief NULL Value handling in views
  *
  * @file view_null.c

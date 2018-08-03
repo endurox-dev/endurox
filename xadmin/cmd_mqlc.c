@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief List queue configuration
  *
  * @file cmd_mqlc.c

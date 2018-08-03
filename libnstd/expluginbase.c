@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Plugin base
  *
  * @file expluginbase.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief view<->json conversion lib
  *
  * @file view2exjson.h

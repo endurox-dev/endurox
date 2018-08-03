@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test039 - TP Broadcast tests
 ##
 ## @file run.sh

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Persistent queue commons
  *
  * @file qcommon.h

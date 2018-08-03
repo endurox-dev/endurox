@@ -1,4 +1,4 @@
-## 
+##
 ## @brief tpnotify tests
 ##
 ## @file CMakeLists.txt

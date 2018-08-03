@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command's `pq' - Print Queue backend
  *   This includes backend processing (gathering statistics by sanity callback)
  *   This is server side statistics grabber. command "pq"

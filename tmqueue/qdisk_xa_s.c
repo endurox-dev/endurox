@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Static driver
  *
  * @file qdisk_xa_s.c

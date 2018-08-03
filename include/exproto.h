@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Network Protocol lib
  *
  * @file exproto.h

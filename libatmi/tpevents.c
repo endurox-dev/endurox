@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief API functions for Events:
  *   - tpsubscribe
  *   - tpunsubscribe

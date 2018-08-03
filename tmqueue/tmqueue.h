@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Q for EnduroX, shared header between XA driver and TMQ server
  *
  * @file tmqueue.h

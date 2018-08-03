@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI Level UBF utilities
  *
  * @file ubfutil.h

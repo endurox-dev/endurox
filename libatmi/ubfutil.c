@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Unified Buffer Format utils
  *
  * @file ubfutil.c

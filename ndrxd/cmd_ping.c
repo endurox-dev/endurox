@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Ping command related routines (i.e send ping from ndrxd and get reply from server)
  *
  * @file cmd_ping.c

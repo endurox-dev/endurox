@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test027 Launcher - PSCRIPT typed buffer test
 ##
 ## @file run.sh

@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test Environment in ndrxconfig.xml - test launcher
 ##
 ## @file run.sh

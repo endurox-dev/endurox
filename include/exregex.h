@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X regexp support routines
  *
  * @file exregex.h

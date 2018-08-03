@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Server wrapper script - client
  *
  * @file atmiclt54.c

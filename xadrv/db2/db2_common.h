@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common handler
  *
  * @file db2_common.h

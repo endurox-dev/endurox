@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Request for unadvertise
  *
  * @file cmd_unadv.c

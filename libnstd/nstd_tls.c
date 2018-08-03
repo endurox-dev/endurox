@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Globals/TLS for libnstd
  *   All stuff here must work. thus if something is very bad, we ill print to stderr.
  *

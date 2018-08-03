@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Plugin Architecture
  *
  * @file expluginbase.h

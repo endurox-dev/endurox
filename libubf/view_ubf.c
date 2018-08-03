@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief VIEW UBF operations (UBF->C struct, C struct->UBF)
  *
  * @file view_ubf.c

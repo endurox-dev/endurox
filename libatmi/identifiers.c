@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X identifiers routines (queue names, client ids, etc...)
  *
  * @file identifiers.c

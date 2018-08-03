@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Basic Event Testing
 ##
 ## @file CMakeLists.txt

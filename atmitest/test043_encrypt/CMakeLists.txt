@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test encrypt/decrypt functionality... - makefile
 ##
 ## @file CMakeLists.txt

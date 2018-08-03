@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Create new environment for process.
  *
  * @file newenv.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Daemon support routines
  *
  * @file tpcached.h

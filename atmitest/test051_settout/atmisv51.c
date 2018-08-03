@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test of tptoutset()/get() - server
  *
  * @file atmisv51.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief File Descriptor based Poll Abstraction Layer (FAL)
  *
  * @file sys_fdpoll.c

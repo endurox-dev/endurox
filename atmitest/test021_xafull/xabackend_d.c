@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dynamic driver
  *
  * @file xabackend_d.c

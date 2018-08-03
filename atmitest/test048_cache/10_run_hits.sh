@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Limited cache, records with more hits live longer, test linux shm
 ##
 ## @file 10_run_hits.sh

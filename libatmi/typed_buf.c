@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief General routines for handling buffer conversation
  *
  * @file typed_buf.c

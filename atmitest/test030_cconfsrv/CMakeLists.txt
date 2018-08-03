@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Common-config server tests
 ##
 ## @file CMakeLists.txt

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Background transaction completion & recovery
  *   For tlog background scanning with must:
  *   - Just lock for writing the hash (while iterate over) & prepare console results

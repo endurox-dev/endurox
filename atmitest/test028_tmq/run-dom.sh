@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test028 - clusterised version
 ##
 ## @file run-dom.sh

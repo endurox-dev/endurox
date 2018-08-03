@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load oracle drivers - static version
  *
  * @file oracle_common.c

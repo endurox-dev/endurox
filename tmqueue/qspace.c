@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Memory based structures for Q.
  *
  * @file qspace.c

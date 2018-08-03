@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test036 - TP Recovery testing
 ##
 ## @file run.sh

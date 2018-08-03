@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Send notification message to client
  *
  * @file tpnotify.c

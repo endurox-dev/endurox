@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test Environment in ndrxconfig.xml - server
  *
  * @file atmisv55.c

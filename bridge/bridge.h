@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Bridge commons
  *
  * @file bridge.h

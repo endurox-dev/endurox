@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test030 - test the config server
 ##
 ## @file run.sh

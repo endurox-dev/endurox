@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test that nothing is logged if switched off - client
  *
  * @file atmiclt53.c
