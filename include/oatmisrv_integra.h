@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI Server integration level Object API header (auto-generated)
  *
  * @file oatmisrv_integra.h

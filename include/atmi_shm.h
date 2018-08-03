@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Shared memory API for Enduro/X ATMI
  *
  * @file atmi_shm.h

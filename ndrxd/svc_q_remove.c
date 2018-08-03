@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Remove service queue.
  *   We should open the service queue, receive all messages and reply back with failure.
  *   Thus function shall be called after the service shared memory block is uninstalled!

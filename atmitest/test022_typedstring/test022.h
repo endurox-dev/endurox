@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed STRING tests
  *
  * @file test022.h

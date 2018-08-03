@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Object-API Debug library header, ATMI level
  *
  * @file odebug.h

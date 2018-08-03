@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Generate application sources
  *
  * @file cmd_gen.c

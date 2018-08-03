@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Contains routines for testing find kind functions
  *
  * @file test_find.c

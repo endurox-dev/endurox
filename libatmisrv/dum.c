@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dummy ATMI server (for cygwin build)
  *
  * @file dum.c

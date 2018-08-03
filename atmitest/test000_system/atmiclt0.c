@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief System tests, firstly Thread Local Storage (TLS) must work
  *
  * @file atmiclt0.c

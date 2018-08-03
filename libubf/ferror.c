@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF error handling routines.
  *   Also provides functions for general purpose error handling
  *   The emulator of UBF library

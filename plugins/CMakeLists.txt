@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Plugins directory
 ##
 ## @file CMakeLists.txt

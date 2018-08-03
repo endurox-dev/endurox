@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Encrypt string
  *
  * @file exencrypt.c

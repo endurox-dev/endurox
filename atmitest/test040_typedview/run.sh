@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test040 Launcher - STRING typed buffer test
 ##
 ## @file run.sh

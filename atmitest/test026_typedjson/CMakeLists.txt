@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Tests for JSON buffer testing
 ##
 ## @file CMakeLists.txt

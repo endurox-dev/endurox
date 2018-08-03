@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief XA transaction processing, tests, test case for #105
  *
  * @file atmiclt21-105.c

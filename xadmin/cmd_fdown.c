@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `down' command implementation
  *
  * @file cmd_fdown.c

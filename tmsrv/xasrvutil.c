@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Tmsrv server - transaction monitor, XA util part
  *
  * @file xasrvutil.c

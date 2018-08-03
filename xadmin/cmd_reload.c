@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ReLoad config (reload) command.
  *
  * @file cmd_reload.c

@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Net big message test - makefile
 ##
 ## @file CMakeLists.txt

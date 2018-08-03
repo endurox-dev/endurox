@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common/shared data structures between server & client.
  *
  * @file ndrxdcmn.h

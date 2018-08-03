@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test025, Client Process Monitor tests
 ##   Currently will test for
 ##   - Auto startup

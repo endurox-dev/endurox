@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF field type convertion functions
  *
  * @file cf.c

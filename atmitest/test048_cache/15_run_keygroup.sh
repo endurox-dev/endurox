@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Keygroup tests
 ##
 ## @file 15_run_keygroup.sh

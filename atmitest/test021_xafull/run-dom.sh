@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test021 - XA testing
 ##
 ## @file run-dom.sh

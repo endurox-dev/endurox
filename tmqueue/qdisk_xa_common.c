@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load XA driver...
  *
  * @file qdisk_xa_common.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Solaris Abstraction Layer (SAL)
  *
  * @file sys_solaris.c

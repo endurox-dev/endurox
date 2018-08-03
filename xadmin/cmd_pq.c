@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `pq' print queues frontend.
  *
  * @file cmd_pq.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cache sanity daemon - this will remove expired records from db
  *   We shall move all scanning to RO mode. Build the list for removal
  *   and process the writes in separate run (if requied). Also duplicate processing

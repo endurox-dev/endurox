@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X standard utilities
  *
  * @file psstdexutil.cpp

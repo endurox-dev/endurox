@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Bridge command back-ends.
  *
  * @file cmd_bridge.c

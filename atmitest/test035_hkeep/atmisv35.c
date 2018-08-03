@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Conversational tests
  *
  * @file atmisv35.c

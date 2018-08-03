@@ -1,4 +1,4 @@
-## 
+##
 ## @brief EnduroX Network Library
 ##
 ## @file CMakeLists.txt

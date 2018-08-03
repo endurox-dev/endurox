@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Standard library thread local storage
  *
  * @file nstd_tls.h

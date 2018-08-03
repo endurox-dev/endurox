@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Move message from one qspace to another qspace + qname
  *   uses local XA connection
  *

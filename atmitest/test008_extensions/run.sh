@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test008, extension test (polling + timer)
 ##   WARNING: THIS TEST REQUIRES THAT LOCALHOST:22 IS OPEN FOR SSH!
 ##   Otherwise it might fail!?!?

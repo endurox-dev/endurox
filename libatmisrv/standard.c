@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard Enduro/X server configuration, i.e. not the integra mode.
  *   Use long jumps...
  *

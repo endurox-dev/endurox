@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Advertise & unadvertise testing, includes ndrxd
 ##
 ## @file CMakeLists.txt

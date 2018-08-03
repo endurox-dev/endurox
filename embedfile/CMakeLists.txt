@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `embedfile' writes sources in c hex
 ##
 ## @file CMakeLists.txt

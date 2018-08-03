@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `xmemck' utility for sending UFB buffer to service
 ##
 ## @file CMakeLists.txt

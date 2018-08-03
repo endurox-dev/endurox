@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test server connection to Oracle DB from C - test launcher
 ##
 ## @file run.sh

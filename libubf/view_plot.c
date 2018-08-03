@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief VIEW buffer type support - generate view object file
  *
  * @file view_plot.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief VIEW buffer type support - structure management
  *
  * @file view_struct.c

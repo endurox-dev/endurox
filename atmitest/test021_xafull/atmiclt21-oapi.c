@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief XA transaction processing, cli tests (listing & commit & abort)
  *
  * @file atmiclt21-oapi.c

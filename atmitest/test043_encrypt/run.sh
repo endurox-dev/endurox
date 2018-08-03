@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test encryption - test launcher
 ##
 ## @file run.sh

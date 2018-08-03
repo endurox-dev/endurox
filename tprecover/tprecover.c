@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ndrxd monitor & recover process.
  *
  * @file tprecover.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Feature #139 mvitolin, 09/05/2017
  *   Test the shared memory service registry reuse - when unique service names
  *   in app session overflows the NDRX_SVCMAX

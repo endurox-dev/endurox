@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed c-array support
  *
  * @file typed_carray.h

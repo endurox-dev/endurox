@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test Environment in ndrxconfig.xml - client
  *
  * @file atmiclt55.c

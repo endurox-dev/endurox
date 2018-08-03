@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `ppm' command implementation - Print process model
  *
  * @file cmd_ppm.c

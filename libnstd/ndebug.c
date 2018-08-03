@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief NDR Debug library routines
  *   Enduro Execution system platform library
  *

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Generic unix abstractions
  *
  * @file sys_genunix.c

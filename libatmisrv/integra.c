@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Integration library with different platforms.
  *   Currently provides linked entry points of tpsvrinit() and tpsvrdone(),
  *   but does call the registered callbacks (currently needed for golang linking)

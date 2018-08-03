@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed json support
  *
  * @file typed_json.h

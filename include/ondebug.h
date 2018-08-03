@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard library debug routines
  *
  * @file ondebug.h

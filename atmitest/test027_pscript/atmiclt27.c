@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Basic PScript tests...
  *
  * @file atmiclt27.c

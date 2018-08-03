@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI API functions
  *
  * @file atmi.c

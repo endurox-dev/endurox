@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Memory checking routines
  *
  * @file exmemck.h

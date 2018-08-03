@@ -1,4 +1,4 @@
-## 
+##
 ## @brief EnduroX Cluster Protocol Library
 ##
 ## @file CMakeLists.txt

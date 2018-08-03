@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief XATMI Typed buffer support
  *
  * @file typed_buf.h

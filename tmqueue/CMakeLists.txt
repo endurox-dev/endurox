@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Persisted Queue Server
 ##
 ## @file CMakeLists.txt

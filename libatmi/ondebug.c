@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard library debugging object API code (auto-generated)
  *   ondebug.c
  *

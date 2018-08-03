@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `at' command implementation
  *
  * @file cmd_at.c

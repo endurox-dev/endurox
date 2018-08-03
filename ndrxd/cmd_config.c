@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command with prefix config. Supported commands:
  *   1. config.load     - for first time
  *   2. config.reload   - for configuration re-load

@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test037 - Test "xadmin down" - wipe out all Enduro/X runtime resources.
 ##   NOTE: We also test removal of client processes childs for cpm and standalone..
 ##

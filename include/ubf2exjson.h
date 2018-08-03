@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ubf<->json conversion lib
  *
  * @file ubf2exjson.h

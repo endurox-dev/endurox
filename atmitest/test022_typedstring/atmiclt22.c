@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed STRING testing
  *
  * @file atmiclt22.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard library error handler
  *
  * @file onerror.h

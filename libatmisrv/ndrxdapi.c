@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief API to NDRXD admin server
  *   TODO: Might think to convert all ndrxd API operations to adminQ!
  *   Due to possible collisions with async replies in Q....

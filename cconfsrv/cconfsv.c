@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common config server
  *
  * @file cconfsv.c

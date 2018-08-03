@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief This simulates ATM configuration server
  *
  * @file atmisv005.c

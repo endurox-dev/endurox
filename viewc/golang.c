@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Go language support
  *
  * @file golang.c

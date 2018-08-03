@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Mask service in server config (no advertise by -n) - test launcher
 ##
 ## @file run.sh

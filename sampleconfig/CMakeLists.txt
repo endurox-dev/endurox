@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Sample configuration files
 ##
 ## @file CMakeLists.txt

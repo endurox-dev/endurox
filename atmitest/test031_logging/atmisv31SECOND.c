@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Second server, will use debug defaults..
  *
  * @file atmisv31SECOND.c

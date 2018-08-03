@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro Execution platform main Make descriptor
 ##
 ## @file CMakeLists.txt

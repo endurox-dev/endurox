@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Static driver
  *
  * @file xabackend_s.c

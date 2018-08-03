@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Feature #139 mvitolin, 09/05/2017
  *   Call the server with GETNEXT which will unadvertise old service and advertise
  *   New name. This should exceed NDRX_SVCMAX and complete successfully.

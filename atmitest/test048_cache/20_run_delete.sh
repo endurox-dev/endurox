@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Drop database CLI tests.
 ##
 ## @file 20_run_delete.sh

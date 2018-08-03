@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `pscript' shell
 ##
 ## @file CMakeLists.txt

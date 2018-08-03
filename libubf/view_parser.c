@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief VIEW buffer type support - parser
  *
  * @file view_parser.c

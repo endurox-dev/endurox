@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF API library
  *
  * @file ubf.h

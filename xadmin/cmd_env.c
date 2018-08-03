@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Environment management, commands: `set', `unset', printenv (pe)
  *   TODO: Improve error handling (print more accurate error from ndrxd instead of 0)
  *

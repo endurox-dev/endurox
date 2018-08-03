@@ -1,4 +1,4 @@
-/* 
+/**
  *
  * @file test_readwrite.c
  */

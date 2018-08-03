@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cache event receiver, but what we do not want is to subscribe on local events
  *   if subscribed by mask, but if it is local node, then just ignore
  *   Also we advertise service name with node id in it. So that remote node in future

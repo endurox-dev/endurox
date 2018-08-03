@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief VIEW buffer type support
  *   Basically all data is going to be stored in FB.
  *   For view not using base as 3000. And the UBF field numbers follows the

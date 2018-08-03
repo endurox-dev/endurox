@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Housekeep routine tests
 ##
 ## @file CMakeLists.txt

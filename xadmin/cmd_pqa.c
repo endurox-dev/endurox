@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `pqa' print queues, all
  *
  * @file cmd_pqa.c

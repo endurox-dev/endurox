@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Main header for NDRXD command processor
  *
  * @file cmd_processor.h

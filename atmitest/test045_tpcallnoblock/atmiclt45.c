@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test tpcall noblock operation - client
  *
  * @file atmiclt45.c

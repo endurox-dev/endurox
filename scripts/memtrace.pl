@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-## 
+##
 ## @brief @(#) Trace Enduro/X memory allocation
 ##
 ## @file memtrace.pl

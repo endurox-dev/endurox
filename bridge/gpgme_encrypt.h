@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief GPG-ME based message encryption routines
  *
  * @file gpgme_encrypt.h

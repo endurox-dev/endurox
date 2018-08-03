@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common bridge utilites.
  *
  * @file brutils.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Servers SRVINFO command from EnduroX server (which reports it's status, etc...)
  *
  * @file cmd_srvinfo.c

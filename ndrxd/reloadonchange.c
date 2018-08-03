@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Reload services on change - support library.
  *   NOTE: Currently list will not clean up during the runtime.
  *   So if config changes tons of times with different bins, then this will grow,

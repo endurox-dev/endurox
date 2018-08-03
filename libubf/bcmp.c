@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Implementation of Bcmp and Bsubset
  *   TODO: Might increase speed if we would use Bfind?
  *

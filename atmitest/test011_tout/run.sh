@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test011, Testing the case when server dies & queue is being removed.
 ##   The svcerr reply is passed back to client!#
 ##   THIS CURRENLTY COVERS THE CASE WHEN SHUTDOWN IS REQUESTED, SERVER EXISTS, BUT

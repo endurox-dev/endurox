@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Generate code for size & offset calculations done by compile & exec of the binary
  *   The generated binary will actually plot the object .V file.
  *

@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test33 Test provision script
 ##
 ## @file run.sh

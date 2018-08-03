@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library
  *   Header file of auxiliary functions
  *

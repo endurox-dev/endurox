@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `printtrans' aka `pt' command implementation
  *
  * @file cmd_pt.c

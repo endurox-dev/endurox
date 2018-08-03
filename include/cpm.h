@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Client Process Monitor interface
  *
  * @file cpm.h

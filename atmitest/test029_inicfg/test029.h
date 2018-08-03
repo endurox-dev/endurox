@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief INICFG tests
  *
  * @file test029.h

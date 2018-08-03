@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Run refresh rule
 ##
 ## @file 05_run_refresh.sh

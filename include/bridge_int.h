@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief NDRXD Bridge internal structures.
  *
  * @file bridge_int.h

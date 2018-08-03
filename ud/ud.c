@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Send buffer from stdin to specified service,
  *   i.e. using SRVCNM.
  *

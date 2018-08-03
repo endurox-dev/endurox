@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief TPNULL buffer type support
  *
  * @file typed_null.c

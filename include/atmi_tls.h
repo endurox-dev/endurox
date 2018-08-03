@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X ATMI library thread local storage
  *
  * @file atmi_tls.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief JSON buffer support (Recieve converted buffer)
  *
  * @file atmisv26.c

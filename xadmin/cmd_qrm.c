@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Remove all matched queues
  *
  * @file cmd_qrm.c

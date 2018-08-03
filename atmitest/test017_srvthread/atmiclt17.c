@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Simple thread server caller.
  *
  * @file atmiclt17.c

@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro/X App config (ndrxconfig.xml) common parsing routines
 ##
 ## @file CMakeLists.txt

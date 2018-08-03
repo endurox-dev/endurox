@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library
  *   Bfprint & Bextread implementations.
  *

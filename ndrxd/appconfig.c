@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Configuration handling.
  *
  * @file appconfig.c

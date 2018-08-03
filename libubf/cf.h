@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Conversation functions
  *
  * @file cf.h

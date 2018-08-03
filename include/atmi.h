@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief User defines for XATMI standard.
  *
  * @file atmi.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief XA testing backend
  *   Comments:
  *   - Will assume that our resource is file system.

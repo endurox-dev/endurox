@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Server wrapper script - test launcher
 ##
 ## @file run.sh

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Server wrapper script - server
  *
  * @file atmisv54.c

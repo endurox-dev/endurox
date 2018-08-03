@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Kqueue Abstraction Layer (KAL) for BSD
  *
  * @file sys_kqueue.c

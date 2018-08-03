@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test that nothing is logged if switched off - common header
  *
  * @file test53.h

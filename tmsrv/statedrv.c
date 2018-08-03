@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Transaction state driver (uses libatmi/xastates.c for driving)
  *
  * @file statedrv.c

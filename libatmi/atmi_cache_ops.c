@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI level cache - operations.
  *   Inval - their change only at point when we are going to save the results
  *   in DB. And hopefully we get hopefully we get the newest result?

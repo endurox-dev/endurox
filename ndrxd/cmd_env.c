@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command `pe', `set', `unset' backend
  *
  * @file cmd_env.c

@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Test parallel operations
 ##
 ## @file 19_run_threads.sh

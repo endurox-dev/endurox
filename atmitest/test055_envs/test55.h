@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test Environment in ndrxconfig.xml - common header
  *
  * @file test55.h

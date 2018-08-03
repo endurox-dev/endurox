@@ -1,4 +1,4 @@
-## 
+##
 ## @brief LMDB/EDB admin utilties
 ##
 ## @file CMakeLists.txt

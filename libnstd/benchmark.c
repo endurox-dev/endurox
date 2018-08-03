@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common routines for system benchmarking
  *
  * @file benchmark.c

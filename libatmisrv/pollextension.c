@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief EnduroX server poller extension.
  *   TODO: Use hash table for searching for FD!
  *

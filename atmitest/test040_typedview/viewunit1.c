@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief View unit tests.
  *
  * @file viewunit1.c

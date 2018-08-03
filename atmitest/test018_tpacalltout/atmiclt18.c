@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test for NOBLOCK operations
  *
  * @file atmiclt18.c

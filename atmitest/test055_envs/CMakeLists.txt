@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test Environment in ndrxconfig.xml - makefile
 ##
 ## @file CMakeLists.txt

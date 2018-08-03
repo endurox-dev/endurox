@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Sanity checking routines.
  *   This will do following:
  *   - scan all stuff for:

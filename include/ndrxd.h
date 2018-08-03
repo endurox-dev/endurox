@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Deamon definitions
  *
  * @file ndrxd.h

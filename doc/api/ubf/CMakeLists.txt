@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Build documentation, XATMI API
 ##
 ## @file CMakeLists.txt

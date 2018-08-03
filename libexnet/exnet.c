@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X server net/socket client lib
  *   Network object needs to be synchronize otherwise unexpected core dumps might
  *   Locking:

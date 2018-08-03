@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro Execution platform's ATMI server library
 ##
 ## @file CMakeLists.txt

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Posix queues support
  *
  * @file sys_posixq.c

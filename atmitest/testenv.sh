@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ##
 ## @file testenv.sh
 ##

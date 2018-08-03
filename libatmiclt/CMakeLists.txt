@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro Execution platform's client library
 ##
 ## @file CMakeLists.txt

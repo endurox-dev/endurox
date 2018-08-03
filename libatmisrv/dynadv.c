@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dynamic advertise & unadvertise routines
  *
  * @file dynadv.c

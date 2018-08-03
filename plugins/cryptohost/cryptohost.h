@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Crypto host plugin
  *
  * @file cryptohost.h

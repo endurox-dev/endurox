@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `xadmin down' tests with two domains
 ##
 ## @file CMakeLists.txt

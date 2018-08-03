@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief TPINIT buffer type support
  *
  * @file typed_tpinit.c

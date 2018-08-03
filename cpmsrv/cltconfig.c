@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Client configuration
  *
  * @file cltconfig.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Simple ulog function test
  *
  * @file atmiclt006.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load oracle drivers, get handler..
  *
  * @file oracle_d.c

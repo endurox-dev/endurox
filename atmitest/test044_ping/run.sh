@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test ndrxd ping procedures - test launcher (Bug #255)
 ##
 ## @file run.sh

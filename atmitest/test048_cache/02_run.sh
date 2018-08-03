@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Test second cache db, test service dissapearance after shutdown
 ##   have cached results when service is back.
 ##

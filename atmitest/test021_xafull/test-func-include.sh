@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test021 - XA testing, common functions, include
 ##
 ## @file test-func-include.sh
