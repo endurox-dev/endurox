@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common command line options handler
  *
  * @file nclopt.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI internals
  *
  * @file atmi_int.h

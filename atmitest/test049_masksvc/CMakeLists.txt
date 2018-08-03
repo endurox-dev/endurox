@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Mask service in server config (no advertise by -n) - makefile
 ##
 ## @file CMakeLists.txt

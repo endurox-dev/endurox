@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `pc' (print clients) command implementation
  *
  * @file cmd_pc.c

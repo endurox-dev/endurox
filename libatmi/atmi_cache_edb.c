@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI level cache, EDB access
  *
  * @file atmi_cache_edb.c

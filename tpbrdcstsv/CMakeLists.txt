@@ -1,4 +1,4 @@
-## 
+##
 ## @brief TP Event Server
 ##
 ## @file CMakeLists.txt

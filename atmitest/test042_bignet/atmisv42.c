@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief test big messages over 64kb - server
  *
  * @file atmisv42.c

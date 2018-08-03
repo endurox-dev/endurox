@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Clock related routines.
  *
  * @file clock.c

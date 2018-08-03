@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief View access unit tests - set field value
  *
  * @file vaccset.c

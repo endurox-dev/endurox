@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test012, Test semaphore for startup, so that if process is killed other processes can continue to work!
 ##
 ## @file run.sh

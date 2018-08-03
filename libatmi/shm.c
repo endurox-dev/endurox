@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common shared memory routines for EnduroX.
  *   Generally we do not use any global vars because this stuff should
  *   generic one.

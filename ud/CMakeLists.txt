@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `ud' utility for sending UFB buffer to service
 ##
 ## @file CMakeLists.txt

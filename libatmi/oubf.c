@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Object API code (auto-generated)
  *   oubf.c
  *

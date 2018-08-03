@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common handler
  *
  * @file wsmq_common.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dynamic VIEW access functions
  *
  * @file view_access.c

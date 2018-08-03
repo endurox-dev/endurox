@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Object API header (auto-generated)
  *
  * @file oubf.h

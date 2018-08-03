@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Field table database tests - client
  *
  * @file atmiclt50.c

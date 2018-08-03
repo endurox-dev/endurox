@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Internal servers header.
  *
  * @file srv_int.h

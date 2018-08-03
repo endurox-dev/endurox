@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test of tptoutset()/get() - test launcher (Bug #300)
 ##
 ## @file run.sh

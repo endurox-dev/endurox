@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief View access unit test, utility funcs
  *
  * @file vaccutil.c

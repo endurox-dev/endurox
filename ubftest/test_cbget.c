@@ -1,4 +1,4 @@
-/* 
+/**
  *
  * @file test_cbget.c
  */

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library internals
  *
  * @file ubf_int.h

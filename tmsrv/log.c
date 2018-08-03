@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief tmsrv - transaction logging & accounting
  *
  * @file log.c

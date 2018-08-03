@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Create and application instance
  *
  * @file cmd_provision.c

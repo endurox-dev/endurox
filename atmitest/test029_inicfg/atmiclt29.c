@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Basic INI tests...
  *
  * @file atmiclt29.c

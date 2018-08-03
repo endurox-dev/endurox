@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Service failure result cache
 ##
 ## @file 07_run_failsvc.sh

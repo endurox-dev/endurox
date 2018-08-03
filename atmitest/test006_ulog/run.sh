@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test006 Launcher
 ##
 ## @file run.sh

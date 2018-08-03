@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Remove message from Qspace
  *
  * @file cmd_mqrm.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Main ATMI unit test dispatcher.
  *
  * @file atmiunit1.c

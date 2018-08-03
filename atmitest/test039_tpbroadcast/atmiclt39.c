@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief tpbroadcast tests
  *
  * @file atmiclt39.c

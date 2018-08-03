@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief XA Driver loader common, hdr
  *
  * @file xabackend_common.h

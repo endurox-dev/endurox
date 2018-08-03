@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI Object API header (auto-generated)
  *
  * @file oatmi.h

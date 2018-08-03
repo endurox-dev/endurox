@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Queue processing (ATMI/NDRXD queues).
  *   Addtional processing:
  *   Internal message queue used for cases when target

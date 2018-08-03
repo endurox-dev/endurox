@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Server API functions
  *
  * @file serverapi.c

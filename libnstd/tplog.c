@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief TP LOG, full feature logging system for user, mainly for exporting to
  *   to other languages. C/C++ can use ndebug.h
  *

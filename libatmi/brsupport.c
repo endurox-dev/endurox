@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Bridge support functions
  *
  * @file brsupport.c

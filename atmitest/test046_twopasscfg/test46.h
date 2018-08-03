@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Bug #236 - two pass config (global section reference to global) and process cfg reload - common header
  *
  * @file test46.h

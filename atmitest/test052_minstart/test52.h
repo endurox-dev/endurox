@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test Bug #306 - xadmin start -s should start only min number servers - common header
  *
  * @file test52.h

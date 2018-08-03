@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Growlist testing from Enduro/X Standard Library
  *
  * @file test_nstd_growlist.c

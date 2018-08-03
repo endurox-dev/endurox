@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Go language support - format the GO package with field constants
  *
  * @file golang.c

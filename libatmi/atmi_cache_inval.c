@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI level cache - invalidate
  *
  * @file atmi_cache_inval.c

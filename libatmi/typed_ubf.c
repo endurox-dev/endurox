@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF buffer support
  *
  * @file typed_ubf.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief XA Enduro/X Common header
  *
  * @file xa_cmn.h

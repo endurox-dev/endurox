@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) test big messages over 64kb - test launcher
 ##
 ## @file run.sh

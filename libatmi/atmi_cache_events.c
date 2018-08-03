@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI level cache - event processing (distributed cache)
  *
  * @file atmi_cache_events.c

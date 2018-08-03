@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Housekeeping testing
  *
  * @file atmiclt35.c

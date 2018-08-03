@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test029 Launcher - INICFG typed buffer test
 ##
 ## @file run.sh

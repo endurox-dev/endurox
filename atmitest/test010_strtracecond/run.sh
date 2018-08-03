@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test010, Test semaphore for startup, so that if process is killed other processes can continue to work!
 ##   TODO: Only for epoll() version. For unix load balancer we will need different one..
 ##

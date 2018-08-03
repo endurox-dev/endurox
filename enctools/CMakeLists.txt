@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Encryption tools
 ##
 ## @file CMakeLists.txt

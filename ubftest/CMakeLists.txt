@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro Execution platform's UBF library tests
 ##   Using Cgreen framework for tests.
 ##

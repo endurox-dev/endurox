@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test ndrxd ping procedures - makefile
 ##
 ## @file CMakeLists.txt

@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test028 - Trnsactional Message Queue tests (with static & dynamic XA drivers)
 ##
 ## @file run.sh

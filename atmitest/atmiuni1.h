@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI unit tests
  *
  * @file atmiuni1.h

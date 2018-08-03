@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Basic stop-watch implementation.
  *
  * @file nstopwatch.c

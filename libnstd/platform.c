@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief System platform related utilities
  *
  * @file platform.c

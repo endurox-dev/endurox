@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X Network Access library (client/server)
  *
  * @file exnet.h

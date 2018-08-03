@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief VIEW Support structures
  *
  * @file ubfview.h

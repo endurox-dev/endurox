@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Respawning dead server processes.
  *
  * @file respawn.c

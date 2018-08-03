@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief test big messages over 64kb - client
  *
  * @file atmiclt42.c

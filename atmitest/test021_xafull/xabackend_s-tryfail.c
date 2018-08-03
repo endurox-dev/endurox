@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Static driver, test case for Bug #123, test try counter exceeded limit
  *
  * @file xabackend_s-tryfail.c

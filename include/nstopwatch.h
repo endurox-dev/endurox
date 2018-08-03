@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Timer handler
  *
  * @file nstopwatch.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `shm_psvc' command implementation - SHM - print services
  *
  * @file cmd_shm_psvc.c

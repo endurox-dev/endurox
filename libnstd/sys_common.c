@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Commons for system abstractions
  *
  * @file sys_common.c

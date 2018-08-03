@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief NDRX helper functions.
  *
  * @file utils.c

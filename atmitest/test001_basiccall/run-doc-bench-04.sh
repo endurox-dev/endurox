@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test1 Launcher (Benchmark for documentation, tpacall())
 ##
 ## @file run-doc-bench-04.sh

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Max message size determination functions
  *
  * @file msgsizemax.c

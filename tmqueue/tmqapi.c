@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Tmqueue server - transaction monitor
  *
  * @file tmqapi.c

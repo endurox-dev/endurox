@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief TMQ test client.
  *
  * @file atmiclt28.c

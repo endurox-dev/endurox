@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Tests for STRING buffer testing
 ##
 ## @file CMakeLists.txt

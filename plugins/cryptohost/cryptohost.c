@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cryptokey by hostname
  *
  * @file cryptohost.c

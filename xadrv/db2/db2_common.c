@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load db2 drivers - static version
  *
  * @file db2_common.c

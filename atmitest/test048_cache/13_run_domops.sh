@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Basic domain operations
 ##
 ## @file 13_run_domops.sh

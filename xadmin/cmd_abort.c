@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `aborttrans' aka `abort' command implementation
  *
  * @file cmd_abort.c

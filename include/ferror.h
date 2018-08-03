@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library - header file for UBF error handling.
  *
  * @file ferror.h

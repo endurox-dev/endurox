@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test encrypt/decrypt functionality... - client
  *
  * @file atmiclt43.c

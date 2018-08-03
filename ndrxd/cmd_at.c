@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command's `psc' backend
  *
  * @file cmd_at.c

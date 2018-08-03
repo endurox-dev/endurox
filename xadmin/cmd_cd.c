@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cache Dump - dump cache data to console
  *
  * @file cmd_cd.c

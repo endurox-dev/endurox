@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI level cache - keygroup routines
  *   Invalidate their cache shall be done by buffer. And not by key. Thus for
  *   invalidate their, our key is irrelevant.

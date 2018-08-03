@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Dynamic driver
  *
  * @file qdisk_xa_d.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief This implements server part of network library.
  *
  * @file server.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load config (ldcf) command.
  *
  * @file cmd_config.c

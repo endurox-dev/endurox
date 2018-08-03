@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Command line argument parsing
  *
  * @file nclopt.c

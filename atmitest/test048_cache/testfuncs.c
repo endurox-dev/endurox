@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test functions
  *
  * @file testfuncs.c

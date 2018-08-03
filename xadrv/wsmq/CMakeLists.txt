@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Build the Wsmq XA/enduro driver libs
 ##
 ## @file CMakeLists.txt

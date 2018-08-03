@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test encrypt/decrypt functionality... - common header
  *
  * @file test43.h

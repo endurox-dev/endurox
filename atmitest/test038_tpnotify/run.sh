@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test038 - TP Notify tests
 ##
 ## @file run.sh

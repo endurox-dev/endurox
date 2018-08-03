@@ -1,4 +1,4 @@
-## 
+##
 ## @brief System tests for valid Enduro/X operations
 ##
 ## @file CMakeLists.txt

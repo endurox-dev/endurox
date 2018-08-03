@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test ndrxd ping procedures - common header
  *
  * @file test44.h

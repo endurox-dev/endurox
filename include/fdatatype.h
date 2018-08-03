@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Data type definitions headers/functions externs
  *
  * @file fdatatype.h

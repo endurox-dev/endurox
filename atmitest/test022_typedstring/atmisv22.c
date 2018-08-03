@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed STRING tests
  *
  * @file atmisv22.c

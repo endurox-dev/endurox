@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Routines for checking & starting daemon process
  *
  * @file exec.c

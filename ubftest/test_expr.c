@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test expression compiler & evaluator
  *
  * @file test_expr.c

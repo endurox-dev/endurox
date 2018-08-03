@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Drivers for XA processing
 ##
 ## @file CMakeLists.txt

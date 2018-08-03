@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Library initialization & configuration.
  *   This also serves as init for client part (may be called via atmi.c)
  *   We will support simple threading. Support for tpgetctx() and tpsetctx()

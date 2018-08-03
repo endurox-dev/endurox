@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI cache management routines
  *
  * @file atmi_cache_mgt.c

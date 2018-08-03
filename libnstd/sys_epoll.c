@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Epoll Abstraction Layer (EAL)
  *
  * @file sys_epoll.c

@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test028 - Trnsactional Message Queue tests static driver, for documentation
 ##
 ## @file run-doc-bench-05.sh

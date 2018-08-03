@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Transaction Managed Queue - daemon header
  *
  * @file tmqd.h

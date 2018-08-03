@@ -1,4 +1,4 @@
-## 
+##
 ## @brief UBF Field table database tests - makefile
 ##
 ## @file CMakeLists.txt

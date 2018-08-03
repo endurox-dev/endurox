@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Memory checking library
  *
  * @file exmemcklib.c

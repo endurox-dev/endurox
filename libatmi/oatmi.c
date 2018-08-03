@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI Object API code (auto-generated)
  *   oatmi.c
  *

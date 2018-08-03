@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Generate source code for resource file
  *
  * @file embedfile.c

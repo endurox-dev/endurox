@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Domain duplicate records
 ##
 ## @file 14_run_domdups.sh

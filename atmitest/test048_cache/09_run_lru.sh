@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Limited cache, recently used lives...
 ##
 ## @file 09_run_lru.sh

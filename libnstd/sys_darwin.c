@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Darwin Abstraction Layer (DAL)
  *
  * @file sys_darwin.c

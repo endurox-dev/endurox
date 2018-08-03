@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cache Invalidate - delete cache records
  *
  * @file cmd_ci.c

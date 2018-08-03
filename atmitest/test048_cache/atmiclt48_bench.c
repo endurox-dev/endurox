@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Basic test client
  *
  * @file atmiclt48_bench.c

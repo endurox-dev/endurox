@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief 'C' lang support
  *
  * @file clang.c

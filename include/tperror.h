@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X ATMI Error handling header
  *
  * @file tperror.h

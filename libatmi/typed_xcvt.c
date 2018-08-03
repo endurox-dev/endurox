@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed buffer conversion, core operations
  *
  * @file typed_xcvt.c

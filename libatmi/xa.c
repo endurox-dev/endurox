@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI lib part for XA api
  *   Responsible for:
  *   - Loading the drivers in app.

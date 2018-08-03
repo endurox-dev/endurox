@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Debug commons
  *
  * @file ndebugcmn.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Load db2 drivers, get handler..
  *
  * @file db2_d.c

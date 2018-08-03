@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Request for re-advertise
  *
  * @file cmd_readv.c

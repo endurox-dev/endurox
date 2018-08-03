@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief `committrans' aka `commit' command implementation
  *
  * @file cmd_commit.c

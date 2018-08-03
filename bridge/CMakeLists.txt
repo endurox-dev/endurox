@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Cluster bridge server.
 ##
 ## @file CMakeLists.txt

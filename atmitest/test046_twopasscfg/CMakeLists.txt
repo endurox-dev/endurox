@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Test two pass config processing (global reference to global)
 ##
 ## @file CMakeLists.txt

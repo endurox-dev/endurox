@@ -1,4 +1,4 @@
-## 
+##
 ## @brief EnduroX Platform Script Standard Library
 ##
 ## @file CMakeLists.txt

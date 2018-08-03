@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI Server Level Object API code (auto-generated)
  *   oatmisrv.c
  *

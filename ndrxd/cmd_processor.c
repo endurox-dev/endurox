@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Main command processor.
  *   This serves requests/responses either from ndrx (admin utlity)
  *   or from EnduroX servers.

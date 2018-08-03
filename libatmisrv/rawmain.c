@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Simple static main library
  *
  * @file rawmain.c

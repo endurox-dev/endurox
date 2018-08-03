@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Standard library tests - macros
  *
  * @file test_nstd_macros.c

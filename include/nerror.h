@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief NSTD library - header file for error handling.
  *
  * @file nerror.h

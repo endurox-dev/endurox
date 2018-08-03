@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common reply handler on requests
  *
  * @file cmd_reply.c

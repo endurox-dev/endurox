@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library
  *   Declarations for a expression evaluator.
  *

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test server connection to Oracle DB from C - client
  *
  * @file atmiclt47.c

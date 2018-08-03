@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Utility functions for ATMI (generic send, etc...)
  *   We might want to monitor with `stat' the disk inode of the queue
  *   and we could cache the opened queues, so that we do not open them

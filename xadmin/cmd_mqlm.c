@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief List messages
  *
  * @file cmd_mqlm.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Un-advertise related command back-end
  *
  * @file cmd_unadv.c

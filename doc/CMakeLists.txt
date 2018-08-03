@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Build documentation
 ##
 ## @file CMakeLists.txt

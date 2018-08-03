@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Globals/TLS for libubf
  *
  * @file ubf_tls.c

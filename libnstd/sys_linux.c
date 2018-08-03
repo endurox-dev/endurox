@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Linux Abstraction Layer (LAL)
  *
  * @file sys_linux.c

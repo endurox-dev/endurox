@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed string support
  *
  * @file typed_string.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF library
  *   Date type functions. Sizes, put/read data
  *   Enduro Execution Library

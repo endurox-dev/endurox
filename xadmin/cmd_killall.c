@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X version of killall - kills by 9 all match strstr processes
  *
  * @file cmd_killall.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Header generator
  *
  * @file viewc.h

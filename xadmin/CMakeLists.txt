@@ -1,4 +1,4 @@
-## 
+##
 ## @brief `ndrx' EnduroX Administration utility.
 ##
 ## @file CMakeLists.txt

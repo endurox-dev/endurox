@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Poll Abstraction Layer (PAL)
  *   NOTE: Thread shall not modify the ndrx_epoll sets. That must be managed from
  *   one thread only

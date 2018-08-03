@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief STRING buffer support
  *
  * @file typed_string.c

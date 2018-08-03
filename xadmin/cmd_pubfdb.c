@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Print UBF Database
  *
  * @file cmd_pubfdb.c

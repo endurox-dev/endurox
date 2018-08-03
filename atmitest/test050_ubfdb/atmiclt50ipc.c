@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Field table database tests - client, IPC part
  *
  * @file atmiclt50ipc.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Change queue attributes
  *
  * @file cmd_mqch.c

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief View unit tests, shared functions between unit testing & integration testing
  *
  * @file shared.c

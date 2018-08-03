@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI error library
  *   Also used by XA lib & TM process.
  *

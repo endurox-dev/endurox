@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test the tpconvert() function
  *
  * @file atmiclt21-tpconvert.c

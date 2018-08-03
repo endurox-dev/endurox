@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X server API functions
  *
  * @file init.c

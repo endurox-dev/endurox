@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test013, Test process auto restart at no response (long startup, no ping rsp, or long shutdown)
 ##
 ## @file run.sh

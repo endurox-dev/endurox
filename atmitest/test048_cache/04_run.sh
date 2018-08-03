@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Test record expiry
 ##
 ## @file 04_run.sh

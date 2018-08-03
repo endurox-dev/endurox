@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI cache structures
  *
  * @file atmi_cache.h

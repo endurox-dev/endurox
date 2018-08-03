@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed JSON tests
  *
  * @file test026.h

@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Tests for inicfg/cconig
 ##
 ## @file CMakeLists.txt

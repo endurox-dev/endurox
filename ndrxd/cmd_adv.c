@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Advertise related command back-end
  *   Currently only for SRVADV comand i.e. server requests advertise.
  *

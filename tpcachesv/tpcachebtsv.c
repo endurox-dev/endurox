@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Cache boot server, for full startup will reset databases which are marked
  *   for startup clean up (bootreset flag)
  *

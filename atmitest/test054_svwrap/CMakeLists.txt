@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Server wrapper script - makefile
 ##
 ## @file CMakeLists.txt

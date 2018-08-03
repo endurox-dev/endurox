@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Field table database tests - server
  *
  * @file atmisv50.c

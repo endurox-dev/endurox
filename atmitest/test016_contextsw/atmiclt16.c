@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test the full Enduro/X multi-contexting.
  *
  * @file atmiclt16.c

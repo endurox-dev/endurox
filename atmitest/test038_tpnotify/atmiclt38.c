@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief xadmin down tests
  *
  * @file atmiclt38.c

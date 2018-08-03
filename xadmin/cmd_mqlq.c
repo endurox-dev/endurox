@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief List persistent queues
  *
  * @file cmd_mqlq.c

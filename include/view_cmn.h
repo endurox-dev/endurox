@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Common view structures
  *
  * @file view_cmn.h

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief JSON<->UBF testing
  *
  * @file atmiclt24.c

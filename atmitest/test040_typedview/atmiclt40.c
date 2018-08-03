@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Typed VIEW testing
  *
  * @file atmiclt40.c

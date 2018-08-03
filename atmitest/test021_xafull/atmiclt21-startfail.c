@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief xa_start command fails. This could be problems with connections to DB.
  *   thus if RECON flags are set, it must succeed. If flags are not set, the
  *   test case must fail.

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief ATMI level cache
  *   No using named databases. Each environment is associated with single db
  *   To resolve conflicts in cluster mode we shall compare time with a microseconds

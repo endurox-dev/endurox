@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Routines related with local RM management.
  *
  * @file local.c

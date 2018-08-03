@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Net big message test - test launcher
 ##
 ## @file run.sh

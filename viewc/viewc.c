@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Part of UBF library
  *   Utility for generating field header files.
  *   !!! THERE IS NO SUPPORT for multiple directories with in FLDTBLDIR!!!

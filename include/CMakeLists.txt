@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Makefile for header file for distribution
 ##
 ## @file CMakeLists.txt

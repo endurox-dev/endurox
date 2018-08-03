@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief EnduroX cluster protocol.
  *   TLV will be simple structure:
  *   Tag: 2 bytes

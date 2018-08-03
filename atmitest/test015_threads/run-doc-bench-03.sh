@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test15 Launcher, for benchmark
 ##
 ## @file run-doc-bench-03.sh

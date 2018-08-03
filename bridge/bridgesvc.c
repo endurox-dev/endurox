@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Bridge server
  *   This is special kind of EnduroX Server.
  *   It does configures the library to work in bridged mode.

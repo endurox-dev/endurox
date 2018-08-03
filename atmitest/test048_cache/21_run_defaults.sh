@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) See README. Test some defaults
 ##
 ## @file 21_run_defaults.sh

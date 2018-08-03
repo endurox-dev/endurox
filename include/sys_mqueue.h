@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Message queue abstractions
  *
  * @file sys_mqueue.h

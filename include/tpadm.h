@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Enduro/X application server administration interface
  *
  * @file tpadm.h

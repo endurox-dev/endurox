@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro Execution platform's ATMI library/ies tests
 ##   Using Cgreen framework for tests.
 ##

@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief UBF Support for ATMI cache
  *
  * @file atmi_cache_ubf.c

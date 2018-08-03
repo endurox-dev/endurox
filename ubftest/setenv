@@ -1,4 +1,4 @@
-## 
+##
 ## @brief export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
 ##
 ## @file setenv

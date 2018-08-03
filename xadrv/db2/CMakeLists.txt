@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Build the Db2 XA/enduro driver libs
 ##
 ## @file CMakeLists.txt

@@ -1,4 +1,4 @@
-## 
+##
 ## @brief Enduro standard library
 ##   Enduro Execution platform
 ##

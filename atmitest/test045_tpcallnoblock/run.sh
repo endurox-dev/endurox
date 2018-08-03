@@ -1,5 +1,5 @@
 #!/bin/bash
-## 
+##
 ## @brief @(#) Test tpcall noblock operation - test launcher
 ##
 ## @file run.sh

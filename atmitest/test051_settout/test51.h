@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test of tptoutset()/get() - common header
  *
  * @file test51.h

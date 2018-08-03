@@ -1,4 +1,4 @@
-/* 
+/**
  * @brief Test that nothing is logged if switched off - server
  *
  * @file atmisv53.c
