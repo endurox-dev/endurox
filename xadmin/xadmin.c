@@ -563,6 +563,7 @@ exprivate int process_command_buffer(int *p_have_next)
     if (NULL==map)
     {
         fprintf(stderr, "Command `%s' not found!\n", G_cmd_argv[0]);
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -571,17 +572,17 @@ exprivate int process_command_buffer(int *p_have_next)
         {
             fprintf(stderr, "Syntax error, too few args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else if ( G_cmd_argc_logical > map->max_args)
         {
             fprintf(stderr, "Syntax error, too many args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else if (map->reqidle && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
         {
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -591,7 +592,7 @@ exprivate int process_command_buffer(int *p_have_next)
                                     G_cmd_argc_raw, (char **)G_cmd_argv, p_have_next);
         }
     }
-    
+out:
     return ret;
 }
 
