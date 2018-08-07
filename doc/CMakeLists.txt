@@ -93,6 +93,7 @@ add_custom_target(html ALL DEPENDS ${HTML_FILES})
 
 add_subdirectory (manpage)
 add_subdirectory (api)
+add_subdirectory (doxygen)
 # end.
 
 
