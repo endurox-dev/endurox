@@ -324,7 +324,7 @@ struct call_descriptor_state
 };
 typedef struct call_descriptor_state call_descriptor_state_t;
 
-/*
+/**
  * Structure for holding atmi library configuration and other global
  * variables.
  * 
@@ -333,27 +333,33 @@ typedef struct call_descriptor_state call_descriptor_state_t;
  */
 struct atmi_lib_conf
 {
-    int is_client; /* Is this client? */
-    char reply_q_str[NDRX_MAX_Q_SIZE+1]; /* Provide reply q better debug */
-    mqd_t reply_q; /* Reply queue */
-    /* queue attributes */
-    struct mq_attr reply_q_attr; /* Queue attributes of replyq */
-    /*
+    /** Is this client? */
+    int is_client;
+    /** Provide reply q better debug */
+    char reply_q_str[NDRX_MAX_Q_SIZE+1];
+    /** Reply queue */
+    mqd_t reply_q;
+    /** queue attributes - of replyq*/
+    struct mq_attr reply_q_attr;
+    /**
      * ID string. For example:
      * srv.testsrv-1
      * or
      * clt.testclt-1265
      */
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* Id of the resource */
+    char my_id[NDRX_MAX_ID_SIZE+1];
 
-    /* Queue prefix (from environment) */
+    /** Queue prefix (from environment) */
     char q_prefix[NDRX_MAX_Q_SIZE+1];
 
+    /** Queue name for ndrxd connection */
     char ndrxd_q_str[NDRX_MAX_Q_SIZE+1]; /* Queue name for ndrxd connection */
     
-    long contextid;         /* In which context lib is initialized? */
+    /** In which context lib is initialized? */
+    long contextid;
     
 };
+/** typedef for atmi_lib_conf structure */
 typedef struct atmi_lib_conf atmi_lib_conf_t;
 
 /**
@@ -404,7 +410,7 @@ struct atmi_lib_env
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
-/*
+/**
  * Generic command handler, tp commands.
  */
 struct tp_command_generic
@@ -417,7 +423,7 @@ struct tp_command_generic
 };
 typedef struct tp_command_generic tp_command_generic_t;
 
-/*
+/**
  * Call handler.
  * For storing the tppost associated timestamp, we could allow data to be installed
  * in the rval/rcode for requests...
