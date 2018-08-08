@@ -11,6 +11,15 @@ Enduro/X build system is CMake. Version used should be 2.8 and above. It uses
 Flex and Bison for building UBF (FML) Expressions.
 
 Enduro/X is programmed in NetBeans C/C++ project. NetBeans supports CMake projects.
+Some command line editing usually is done by using VIM editor. The source code is
+appended with mode line settings. Thus to get the proper indention enabled, configure
+VIM editor before doing any edits append ~/.vimrc with following commands:
+
+--------------------------------------------------------------------------------
+set nocompatible 
+filetype plugin on
+set modeline 
+--------------------------------------------------------------------------------
 
 Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
 and cgreen (integrated into Enduro/X) for unit testing.
@@ -40,7 +49,7 @@ finalthing();
 
 --------------------------------------------------------------------------------
 
-with intension of 4 spaces.
+with indention of 4 spaces.
 
 ==== Error handling
 
@@ -102,7 +111,7 @@ are going wider, then moved some to next line. If string goes over the 80 chars
 then string shall be splitted with standard compiler concatenation done by C.
 
 
-Typcal word wrap should look like:
+Typical word wrap should look like:
 
 --------------------------------------------------------------------------------
 

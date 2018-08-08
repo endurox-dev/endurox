@@ -368,44 +368,45 @@ typedef struct atmi_lib_conf atmi_lib_conf_t;
 struct atmi_lib_env
 {   
     /* Other global settings */
-    int     max_servers; /* Max server instance count - CONF_NDRX_SRVMAX*/
-    int     max_svcs;   /* Max services per server - CONF_NDRX_SVCMAX*/
-    char    rnd_key[NDRX_MAX_KEY_SIZE];   /* random key to be passed to all EnduroX servers in session */
-    int     msg_max;    /* maximum number of messages in a posix queue */
-    int     msgsize_max;    /* maximum message size for a posix queue */
-    key_t   ipckey;            /* IPC Key */
-    int     time_out; /* Timeout in seconds to be applied for calls */
-    /* Cluster node id */
-    int     our_nodeid;
-    int     ldbal;  /* Load balance settings */
-    int     is_clustered; /* Will we run in cluster mode or not? */
-    int     testmode; /* Do we run in test mode? */
+    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX*/
+    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX*/
+    char    rnd_key[NDRX_MAX_KEY_SIZE];   /**< random key to be passed to all EnduroX servers in session */
+    int     msg_max;     /**< maximum number of messages in a posix queue */
+    int     msgsize_max; /**< maximum message size for a posix queue */
+    key_t   ipckey;      /**< IPC Key */
+    int     time_out;    /**< Timeout in seconds to be applied for calls */
+    int     our_nodeid;  /**< Cluster node id */
+    int     ldbal;       /**< Load balance settings */
+    int     is_clustered;/**< Will we run in cluster mode or not? */
+    int     testmode; 	 /**< Do we run in test mode? */
     
-    /* <XA Protocol configuration> */
-    short xa_rmid;    /* XA Resource ID 1..255 range */
-    char xa_open_str[PATH_MAX]; /* XA Open string           */
-    char xa_close_str[PATH_MAX];/* XA Close string          */
-    char xa_driverlib[PATH_MAX];/* Enduro RM Library/driver */
-    char xa_rmlib[PATH_MAX];    /* RM library               */
-    int  xa_lazy_init;          /* Should we  init lately?  */
-    char xa_flags[PATH_MAX];    /* Specific flags for XA    */
-    struct xa_switch_t * xa_sw; /* handler to XA switch     */
-    
+    /**
+     * @defgroup xa_params XA configuration parameters
+     * @{
+     */
+    short xa_rmid;    /**< XA Resource ID 1..255 range */
+    char xa_open_str[PATH_MAX]; /**< XA Open string           */
+    char xa_close_str[PATH_MAX];/**< XA Close string          */
+    char xa_driverlib[PATH_MAX];/**< Enduro RM Library/driver */
+    char xa_rmlib[PATH_MAX];    /**< RM library               */
+    int  xa_lazy_init;          /**< Should we  init lately?  */
+    char xa_flags[PATH_MAX];    /**< Specific flags for XA    */
+    struct xa_switch_t * xa_sw; /**< handler to XA switch     */
     
     char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
-    int xa_recon_times;         /* Number of times to retry the recon    */
-    long xa_recon_usleep;       /* Microseconds to sleep between retries */
+    int xa_recon_times;         /**< Number of times to retry the recon    */
+    long xa_recon_usleep;       /**< Microseconds to sleep between retries */
     
-    /* </XA Protocol configuration> */
+    /**@}*/
     
-    int     nrsems; /* number of sempahores for poll() mode of service mem */
+    int     nrsems; /**< number of sempahores for poll() mode of service mem */
     
-    int     maxsvcsrvs; /* Max servers per service (only for poll() mode) */
+    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode) */
     
-    char    qprefix[NDRX_MAX_Q_SIZE+1]; /* Queue prefix (common, finally!) */
-    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /* Includes separator at the end */
-    int     qprefix_match_len;              /* Includes number bytes to match */
-    char    qpath[PATH_MAX+1]; /* Queue path (common, finally!) */
+    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!) */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
+    int     qprefix_match_len;              /**< Includes number bytes to match */
+    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
