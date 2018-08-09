@@ -61,3 +61,4 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     return ndrx_get_xa_switch_int("ndrxstatswtryok", "Loading XA_Test Static "
                                     "XA driver (Bug #123) - commit tries ok finally");
 }
+/* vim: set ts=4 sw=4 et smartindent: */

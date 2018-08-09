@@ -1242,3 +1242,4 @@ expublic char * ndrx_poll_strerror(int err)
     return G_nstd_tls->poll_strerr;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

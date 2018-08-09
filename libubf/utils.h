@@ -56,3 +56,4 @@ extern int ndrx_normalize_string(char *str, int *out_len);
 
 #endif	/* UTILS_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

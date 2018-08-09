@@ -583,3 +583,4 @@ expublic int cmd_gen_load_scripts(void)
 }
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

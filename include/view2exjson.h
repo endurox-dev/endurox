@@ -51,3 +51,4 @@ extern char* ndrx_tpjsontoview(char *view, char *buffer);
 #endif /* VIEW2EXJSON_H_ */
 
 
+/* vim: set ts=4 sw=4 et smartindent: */

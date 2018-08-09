@@ -1433,3 +1433,4 @@ expublic void ndrx_growlist_free(ndrx_growlist_t *list)
     NDRX_FREE(list->mem);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

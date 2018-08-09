@@ -95,3 +95,4 @@ TestSuite *ubf_nstd_base64(void)
             
     return suite;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

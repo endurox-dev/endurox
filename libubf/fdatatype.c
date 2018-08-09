@@ -1088,3 +1088,4 @@ int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
     }
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

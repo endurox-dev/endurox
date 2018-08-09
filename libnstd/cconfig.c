@@ -493,3 +493,4 @@ expublic ndrx_inicfg_t *ndrx_get_G_cconfig(void)
     }
     return G_cconfig;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

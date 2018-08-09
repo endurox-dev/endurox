@@ -239,3 +239,4 @@ extern NDRX_API int ndrx_Bvnext (Bvnext_state_t *state, char *view,
 
 #endif	/* TYPED_VIEW_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

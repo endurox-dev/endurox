@@ -49,3 +49,4 @@ ret=$?
 # Remove temp dir
 rm -rf $DIR
 exit $ret
+# vim: set ts=4 sw=4 et smartindent:

@@ -140,3 +140,4 @@ extern EDB_env * ndrx_ubfdb_Bfldddbgetenv (EDB_dbi **dbi_id, EDB_dbi **dbi_nm);
 #endif
 
 #endif	/* __UBFDB_H */
+/* vim: set ts=4 sw=4 et smartindent: */

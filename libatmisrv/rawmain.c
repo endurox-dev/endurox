@@ -51,3 +51,4 @@ int main(int argc, char** argv) {
     return ndrx_main(argc, argv);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

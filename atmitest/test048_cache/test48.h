@@ -55,3 +55,4 @@ extern int test048_stamp_isequal(char *stamp1, char *stamp2);
 
 #endif  /* TEST48_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

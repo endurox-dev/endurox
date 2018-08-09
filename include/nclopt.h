@@ -69,3 +69,4 @@ extern NDRX_API int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
 
 #endif	/* NCLOPT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -118,3 +118,4 @@ install (TARGETS
 install (TARGETS 
     tmqueue
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

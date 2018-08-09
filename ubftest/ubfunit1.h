@@ -110,3 +110,4 @@ extern TestSuite * ubf_nstd_standard(void);
 
 #endif	/* UBFUNIT1_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

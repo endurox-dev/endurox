@@ -380,3 +380,4 @@ ensure_field db13 SV13KEY9 T_STRING_FLD KEY9 1
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

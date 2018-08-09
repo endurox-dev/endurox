@@ -289,3 +289,4 @@ exprivate void base64_cleanup(void)
 }
 #endif
 
+/* vim: set ts=4 sw=4 et smartindent: */

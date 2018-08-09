@@ -68,3 +68,4 @@ struct event_entry
 
 #endif	/* CCONFSV_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

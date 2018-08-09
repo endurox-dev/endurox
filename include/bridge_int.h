@@ -121,3 +121,4 @@ extern int brd_del_bridge(int nodeid);
 
 #endif	/* BRIDGE_INT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

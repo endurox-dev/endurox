@@ -408,3 +408,4 @@ int main(int argc, char** argv)
     exit(0);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

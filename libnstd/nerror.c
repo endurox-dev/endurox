@@ -255,3 +255,4 @@ expublic void _Nappend_error_msg(char *msg)
     strncat(G_nstd_tls->M_nstd_error_msg_buf, msg, n);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

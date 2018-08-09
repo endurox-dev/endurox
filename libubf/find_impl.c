@@ -449,3 +449,4 @@ expublic char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

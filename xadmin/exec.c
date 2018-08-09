@@ -300,3 +300,4 @@ expublic int start_daemon_idle(void)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

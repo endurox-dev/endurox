@@ -403,3 +403,4 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

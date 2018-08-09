@@ -107,3 +107,4 @@ extern NDRX_API void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, U
 extern NDRX_API void Ondrx_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags);
 #endif  /* __OATMI_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

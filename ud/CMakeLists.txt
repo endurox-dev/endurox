@@ -56,3 +56,4 @@ set_target_properties(ud PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 install (TARGETS 
     ud
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

@@ -209,3 +209,4 @@ void _free_parser(void)
 	yylex_destroy();
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

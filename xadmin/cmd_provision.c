@@ -232,3 +232,4 @@ expublic int cmd_provision(cmd_mapping_t *p_cmd_map, int argc, char **argv, int 
 }
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

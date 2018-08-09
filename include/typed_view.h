@@ -68,3 +68,4 @@ extern NDRX_API char * VIEW_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr
 
 #endif	/* TYPED_VIEW_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

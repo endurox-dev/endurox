@@ -92,3 +92,4 @@ extern NDRX_API int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
 
 #endif	/* _CCONFIG_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

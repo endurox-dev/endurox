@@ -153,3 +153,4 @@ expublic long ndrx_msgsizemax (void)
     return M_maxmsgsize;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

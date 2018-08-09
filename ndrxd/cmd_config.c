@@ -74,3 +74,4 @@ expublic int cmd_config_load (command_call_t * call, char *data, size_t len, int
     return EXSUCCEED; /* Do not want to break the system! */
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

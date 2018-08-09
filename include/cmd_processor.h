@@ -144,3 +144,4 @@ extern int cmd_unset (command_call_t * call, char *data, size_t len, int context
 
 #endif	/* CMD_PROCESSOR_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

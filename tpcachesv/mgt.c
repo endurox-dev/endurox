@@ -556,3 +556,4 @@ out:
         0L);
 
 }
+/* vim: set ts=4 sw=4 et smartindent: */

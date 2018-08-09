@@ -487,3 +487,4 @@ expublic int ndrx_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
     return EXSUCCEED;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

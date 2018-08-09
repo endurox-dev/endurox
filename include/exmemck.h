@@ -153,3 +153,4 @@ extern NDRX_API int ndrx_memck_tick(void);
 
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

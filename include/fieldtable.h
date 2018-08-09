@@ -79,3 +79,4 @@ extern NDRX_API int ndrx_ubf_load_def_file(FILE *fp,
 
 #endif	/* FIELDTABLE_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

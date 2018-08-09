@@ -137,3 +137,4 @@ extern NDRX_API void ndrx_reply_with_failure(tp_command_call_t *tp_call, long fl
 
 #endif	/* GENCALL_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

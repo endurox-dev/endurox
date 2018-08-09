@@ -68,3 +68,4 @@ extern NDRX_API void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp
 
 #endif	/* FERROR_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

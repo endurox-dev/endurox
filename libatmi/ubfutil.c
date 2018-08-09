@@ -167,3 +167,4 @@ expublic int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_struct, lon
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

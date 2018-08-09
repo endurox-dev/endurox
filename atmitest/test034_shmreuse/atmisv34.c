@@ -202,3 +202,4 @@ int main(int argc, char** argv)
     return ndrx_main_integra(argc, argv, init, uninit, 0);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

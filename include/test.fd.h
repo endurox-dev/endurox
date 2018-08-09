@@ -65,3 +65,4 @@
 #define	T_CARRAY_2_FLD	((BFLDID32)201327674)	/* number: 1082	 type: carray */
 #define	T_CARRAY_3_FLD	((BFLDID32)201327675)	/* number: 1083	 type: carray */
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -72,3 +72,4 @@ extern NDRX_API void ndrx_view_deleteall(void);
 
 #endif	/* VIEW_CMN_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -343,3 +343,4 @@ expublic int xa_txstage2tperrno(short txstage, int master_op)
     return ret->tpe;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

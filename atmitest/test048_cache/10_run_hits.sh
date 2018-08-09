@@ -262,3 +262,4 @@ ensure_field db10 SV10KEY2 T_STRING_FLD KEY2 0
 ensure_field db10 SV10KEY1 T_STRING_FLD KEY1 1
 
 go_out $RET
+# vim: set ts=4 sw=4 et smartindent:

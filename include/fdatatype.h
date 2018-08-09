@@ -219,3 +219,4 @@ extern NDRX_API dtype_ext1_t G_dtype_ext1_map[];
 
 #endif	/* FDATATYPE_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -54,3 +54,4 @@ extern "C" {
 
 #endif	/* EVT_MIB_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

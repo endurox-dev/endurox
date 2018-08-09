@@ -56,3 +56,4 @@ set_target_properties(tpcached PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 install (TARGETS 
     tpcached
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

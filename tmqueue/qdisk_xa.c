@@ -1500,3 +1500,4 @@ expublic int xa_complete_entry_dyn(int *handle, int *retval, int rmid, long flag
 {
     return xa_complete_entry(&ndrxqdynsw, handle, retval, rmid, flags);
 }
+/* vim: set ts=4 sw=4 et smartindent: */

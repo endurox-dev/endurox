@@ -68,4 +68,4 @@ extern int ndrx_ndrxconf_envs_append(ndrx_env_list_t **dest, ndrx_env_list_t *so
 
 #endif /* EXENVAPI_H_ */
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -69,3 +69,4 @@ install (TARGETS
     edb_dump
     edb_copy
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

@@ -62,3 +62,4 @@ extern int CARRAY_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char
 
 #endif	/* __TYPED_CARRAY_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

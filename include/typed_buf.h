@@ -122,3 +122,4 @@ extern NDRX_API int typed_xcvt_view2json(buffer_obj_t **buffer, long flags);
 
 #endif	/* TYPED_BUF_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

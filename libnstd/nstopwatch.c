@@ -268,3 +268,4 @@ expublic void ndrx_stopwatch_minus(ndrx_stopwatch_t *timer, long long msec)
     }
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

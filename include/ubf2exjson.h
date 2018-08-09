@@ -49,3 +49,4 @@ extern int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 #endif /* UBF2EXJSON_H_ */
 
 
+/* vim: set ts=4 sw=4 et smartindent: */

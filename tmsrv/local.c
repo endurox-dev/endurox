@@ -288,3 +288,4 @@ expublic int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

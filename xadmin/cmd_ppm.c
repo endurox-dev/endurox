@@ -209,4 +209,4 @@ expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         G_config.listcall_flags);
 }
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

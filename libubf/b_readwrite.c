@@ -206,3 +206,4 @@ expublic int ndrx_Bwrite (UBFH *p_ub, FILE * outf)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

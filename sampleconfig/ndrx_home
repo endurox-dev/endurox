@@ -47,3 +47,4 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/mvitolin/projects/endurox/dist/lib
 export export FLDTBLDIR=/home/mvitolin/projects/endurox/ubftest/ubftab
 
 export LD_LIBRARY_PATH=/home/mvitolin/projects/endurox/dist/lib:/home/mvitolin/tmp/lib/instantclient_12_1
+# vim: set ts=4 sw=4 et smartindent:

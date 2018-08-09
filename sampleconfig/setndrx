@@ -89,3 +89,4 @@ export FIELDTBLS=Exfields,test.fd
 #export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
 export NDRX_XA_LAZY_INIT=1
 # XA SECTION, END
+# vim: set ts=4 sw=4 et smartindent:

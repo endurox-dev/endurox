@@ -146,3 +146,4 @@ extern NDRX_API void ndrx_build_printable_string(char *out, int out_len, char *i
 #endif
 
 #endif	/* __UBF_INT_H */
+/* vim: set ts=4 sw=4 et smartindent: */

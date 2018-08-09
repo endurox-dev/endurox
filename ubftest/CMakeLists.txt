@@ -70,3 +70,4 @@ target_link_libraries (testedbsync ubf cgreen m nstd ${RT_LIB} pthread)
 set_target_properties(ubfunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(testedbsync PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
+# vim: set ts=4 sw=4 et smartindent:

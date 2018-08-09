@@ -375,3 +375,4 @@ extern NDRX_API void ndrx_dbg_intlock_unset(void);
 
 #endif	/* NDEBUG_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

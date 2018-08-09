@@ -147,3 +147,4 @@ extern NDRX_API  void ndrx_inicfg_free(ndrx_inicfg_t *cfg);
 
 #endif	/* _INICFG_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

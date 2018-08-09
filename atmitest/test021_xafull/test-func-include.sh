@@ -44,3 +44,4 @@ ensure_tran () {
         fi
 }
 
+# vim: set ts=4 sw=4 et smartindent:

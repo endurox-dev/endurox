@@ -248,3 +248,4 @@ expublic void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle)
         bin->reload_issued = EXFALSE;
     }
 }
+/* vim: set ts=4 sw=4 et smartindent: */
