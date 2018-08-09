@@ -381,3 +381,4 @@ extern NDRX_API atmi_xa_curtx_t *ndrx_get_G_atmi_xa_curtx(void);
 
 #endif	/* XA_CMN */
 
+/* vim: set ts=4 sw=4 et smartindent: */

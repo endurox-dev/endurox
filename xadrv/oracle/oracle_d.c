@@ -68,3 +68,4 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     return ndrx_get_xa_switch_int("xaoswd", "Loading Oracle Dynamic Reg XA driver");
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

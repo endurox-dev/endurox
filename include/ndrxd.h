@@ -375,3 +375,4 @@ extern int self_sreload(pm_node_t *p_pm);
 
 #endif	/* NDRXD_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

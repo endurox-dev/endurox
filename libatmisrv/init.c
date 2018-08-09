@@ -640,3 +640,4 @@ expublic int atmisrv_array_remove_element(void *arr, int elem, int len, int sz)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

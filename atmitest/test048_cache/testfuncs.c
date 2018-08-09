@@ -82,3 +82,4 @@ expublic int test048_stamp_isequal(char *stamp1, char *stamp2)
     return strcmp(stamp1, stamp2);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

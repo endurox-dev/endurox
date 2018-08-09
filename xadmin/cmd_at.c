@@ -103,3 +103,4 @@ expublic int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

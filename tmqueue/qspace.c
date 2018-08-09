@@ -1646,4 +1646,4 @@ expublic void tmq_get_q_stats(char *qname, long *p_msgs, long *p_locked)
 /*                         COMMAND LINE SUPPORT                               */
 /******************************************************************************/
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

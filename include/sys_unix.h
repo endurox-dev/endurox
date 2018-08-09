@@ -334,4 +334,4 @@ extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
 
 #endif	/* SYS_UNIX_H */
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

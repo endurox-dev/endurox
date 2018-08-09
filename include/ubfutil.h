@@ -78,3 +78,4 @@ extern NDRX_API void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p
 
 #endif	/* UBFUTIL_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

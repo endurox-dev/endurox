@@ -181,3 +181,4 @@ extern NDRX_API unsigned long ndrx_Crc32_ComputeBuf( unsigned long inCrc32, cons
 
 #endif	/* NSTDUTIL_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

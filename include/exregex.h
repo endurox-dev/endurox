@@ -62,3 +62,4 @@ extern NDRX_API void ndrx_regasc_cpyesc(char *dest, char *src,
 
 #endif	/* UBF_CONTEXT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

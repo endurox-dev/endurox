@@ -68,3 +68,4 @@ extern NDRX_API void Otplogclosethread(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void Otplogsetreqfile_direct(TPCONTEXT_T *p_ctxt, char *filename);
 #endif  /* __ONDEBUG_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

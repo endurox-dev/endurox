@@ -48,3 +48,4 @@ install (PROGRAMS
     endurox-sys-env.sh
     DESTINATION share/endurox/config)
 
+# vim: set ts=4 sw=4 et smartindent:

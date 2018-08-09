@@ -134,3 +134,4 @@ ensure_field db22 SV22KEY2 T_STRING_FLD KEY2 0
 
 
 go_out $RET
+# vim: set ts=4 sw=4 et smartindent:

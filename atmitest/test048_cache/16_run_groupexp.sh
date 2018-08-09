@@ -271,3 +271,4 @@ ensure_field g@db16 SV16KEY2 EX_CACHE_OPEXPR SV16KEY2-SV164 1
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

@@ -114,3 +114,4 @@ foreach my $key (keys %M_allocs)
 close $ifh unless $is_stdin;
 
 
+# vim: set ts=4 sw=4 et smartindent:

@@ -103,3 +103,4 @@ extern int pgpa_decrypt(pgpgme_enc_t *p_enc, char *in_data_p_enc, int in_data_le
 		char *out_data_clr, int *out_data_len_clr);
 /* __GPGME_ENCRYPT_H*/
 #endif 
+/* vim: set ts=4 sw=4 et smartindent: */

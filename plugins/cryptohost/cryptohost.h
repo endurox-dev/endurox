@@ -58,3 +58,4 @@ extern NDRX_API int ndrx_plugin_crypto_getkey(char *keybuf, int keybuf_bufsz);
 
 #endif	/* CRYPTOHOST_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

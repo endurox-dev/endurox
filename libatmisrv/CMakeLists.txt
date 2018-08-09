@@ -136,3 +136,4 @@ install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/atmisrvinteg.pc"
         DESTINATION "${INSTALL_LIB_DIR}/pkgconfig/")
 #################################################################################
 
+# vim: set ts=4 sw=4 et smartindent:

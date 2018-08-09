@@ -273,3 +273,4 @@ out:
     NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

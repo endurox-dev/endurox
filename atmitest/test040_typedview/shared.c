@@ -342,3 +342,4 @@ expublic int validate_MYVIEW1(struct MYVIEW1 *v)
     
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

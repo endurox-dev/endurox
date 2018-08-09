@@ -50,3 +50,4 @@ extern "C" {
 extern NDRX_API int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags);
 #endif  /* __OATMISRV_INTEGRA_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

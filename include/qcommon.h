@@ -88,3 +88,4 @@ extern NDRX_API int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, cha
 
 #endif	/* QCOMMON_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

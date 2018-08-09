@@ -34,3 +34,4 @@ cmake_minimum_required(VERSION 2.8)
 
 # Sub Dirs
 add_subdirectory (cryptohost)
+# vim: set ts=4 sw=4 et smartindent:

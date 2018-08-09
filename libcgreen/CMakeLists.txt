@@ -71,3 +71,4 @@ posix_runner_platform.c
 posix_cgreen_pipe.c
    	        )
 
+# vim: set ts=4 sw=4 et smartindent:

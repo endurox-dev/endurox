@@ -195,3 +195,4 @@ extern int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_block
 
 #endif	/* TMQUEUE_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

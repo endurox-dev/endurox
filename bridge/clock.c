@@ -143,3 +143,4 @@ expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 #endif
         
 }
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -64,3 +64,4 @@ TestSuite *ubf_mkfldhdr_tests(void)
 }
 
 
+/* vim: set ts=4 sw=4 et smartindent: */

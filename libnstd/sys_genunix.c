@@ -261,4 +261,4 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *return_s
     return ndrx_sys_folder_list(qpath, return_status);
 }
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

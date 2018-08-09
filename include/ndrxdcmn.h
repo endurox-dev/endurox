@@ -784,4 +784,4 @@ extern NDRX_API void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
 
 #endif	/* NDRXDCMN_H */
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

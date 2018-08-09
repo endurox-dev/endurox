@@ -78,3 +78,4 @@ install (FILES
     Exfields
     Excompat
     DESTINATION share/endurox/ubftab)
+# vim: set ts=4 sw=4 et smartindent:

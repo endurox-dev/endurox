@@ -47,3 +47,4 @@ extern NDRX_API int ndrx_mdb_unlink(char *resource, char *errdet, int errdetbufs
         int log_facility);
 
 #endif /* EDBUTIL_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

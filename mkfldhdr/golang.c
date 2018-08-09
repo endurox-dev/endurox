@@ -184,4 +184,4 @@ expublic int go_file_close (char *fname)
     return EXSUCCEED;   
 }
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -82,3 +82,4 @@ if [[ "X$RET" != "X0" ]]; then
     exit 1
 fi
 
+# vim: set ts=4 sw=4 et smartindent:

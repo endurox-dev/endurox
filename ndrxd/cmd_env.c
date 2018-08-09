@@ -223,3 +223,4 @@ expublic int cmd_unset (command_call_t * call, char *data, size_t len, int conte
     return cmd_set_common (call, data, len, context);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

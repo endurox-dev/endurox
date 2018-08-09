@@ -47,3 +47,4 @@ extern int exproto_ex2proto(char *ex_buf, long ex_len,
 	char *proto_buf, long *proto_len, long proto_bufsz);
 
 #endif /* EXPROTO_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

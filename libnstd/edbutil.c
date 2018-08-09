@@ -124,3 +124,4 @@ expublic int ndrx_mdb_unlink(char *resource, char *errdet, int errdetbufsz,
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

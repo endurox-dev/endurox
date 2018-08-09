@@ -225,3 +225,4 @@ fi
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

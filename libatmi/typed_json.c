@@ -306,3 +306,4 @@ expublic int JSON_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char
 }
 
 
+/* vim: set ts=4 sw=4 et smartindent: */

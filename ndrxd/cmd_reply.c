@@ -122,3 +122,4 @@ expublic int simple_command_reply(command_call_t * call,
 
 
 
+/* vim: set ts=4 sw=4 et smartindent: */

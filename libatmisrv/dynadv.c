@@ -452,3 +452,4 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

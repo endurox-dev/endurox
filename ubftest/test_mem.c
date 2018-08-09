@@ -101,3 +101,4 @@ TestSuite *ubf_mem_tests(void)
     return suite;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

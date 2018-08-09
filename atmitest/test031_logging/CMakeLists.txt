@@ -65,3 +65,4 @@ set_target_properties(atmisv31FIRST PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmisv31SECOND PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt31 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
+# vim: set ts=4 sw=4 et smartindent:

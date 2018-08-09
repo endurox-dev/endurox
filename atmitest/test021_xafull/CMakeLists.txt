@@ -167,3 +167,4 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
     target_link_libraries(xadrv_d pthread)
 endif()
 ################################################################################
+# vim: set ts=4 sw=4 et smartindent:

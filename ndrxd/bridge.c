@@ -830,3 +830,4 @@ expublic void brd_send_periodrefresh(void)
         } /* If connected */
     } /* EXHASH_ITER */
 }
+/* vim: set ts=4 sw=4 et smartindent: */

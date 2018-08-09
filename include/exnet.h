@@ -146,3 +146,4 @@ extern exnetcon_t *exnet_find_free_conn(void);
 extern void exnet_remove_incoming(exnetcon_t *net);
 
 #endif /* EXNET_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

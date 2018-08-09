@@ -748,3 +748,4 @@ extern NDRX_API int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache
 
 #endif	/* ATMI_CACHE_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -62,3 +62,4 @@ set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 install (TARGETS 
     tmsrv
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

@@ -838,3 +838,4 @@ expublic int VIEW_test(typed_buffer_descr_t *descr, char *buf, BFLDLEN len, char
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

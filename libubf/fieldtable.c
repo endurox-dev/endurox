@@ -704,3 +704,4 @@ expublic BFLDID ndrx_Bfldid_int (char *fldnm)
         return BBADFLDID;
     }
 }
+/* vim: set ts=4 sw=4 et smartindent: */

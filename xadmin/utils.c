@@ -348,3 +348,4 @@ expublic int register_getExfields(HPSCRIPTVM v)
 }
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -160,3 +160,4 @@ echo "Doing dynamic registration tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libxadrv_d.$SUFFIX
 ./run-dom.sh || exit $?
 
+# vim: set ts=4 sw=4 et smartindent:

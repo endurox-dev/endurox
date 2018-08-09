@@ -77,3 +77,4 @@ expublic int cmd_ldcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                         G_config.listcall_flags);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

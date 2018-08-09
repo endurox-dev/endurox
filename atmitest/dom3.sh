@@ -38,3 +38,4 @@ export NDRX_QPREFIX=/dom3
 export NDRX_NODEID=3
 export NDRX_DPID=/tmp/ndrxd-dom3.pid
 
+# vim: set ts=4 sw=4 et smartindent:

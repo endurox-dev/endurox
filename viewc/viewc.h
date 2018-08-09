@@ -45,3 +45,4 @@ extern int ndrx_view_generate_code(char *outdir, char *basename,
         char *vsrcfile, char *Vfile, int no_UBF);
 extern int ndrx_view_plot_c_header(char *outdir, char *basename);
 #endif /* VIEWC_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -70,3 +70,4 @@ extern int validate_MYVIEW3(struct MYVIEW3 *v);
 
 #endif	/* TEST040_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

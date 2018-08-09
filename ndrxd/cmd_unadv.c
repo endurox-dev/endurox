@@ -130,3 +130,4 @@ expublic int cmd_srvunadv (command_call_t * call, char *data, size_t len, int co
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

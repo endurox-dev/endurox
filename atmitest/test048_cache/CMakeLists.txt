@@ -73,3 +73,4 @@ set_target_properties(testtool48 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt48_bench PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
+# vim: set ts=4 sw=4 et smartindent:

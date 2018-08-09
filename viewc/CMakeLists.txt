@@ -51,3 +51,4 @@ target_link_libraries (viewc atmiclt atmi ubf m nstd ${RT_LIB} pthread)
 install (TARGETS 
     viewc 
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

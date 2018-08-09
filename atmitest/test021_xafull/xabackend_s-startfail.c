@@ -60,3 +60,4 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     return ndrx_get_xa_switch_int("ndrxstatsw_startfail", "Loading XA_Test Static "
                                     "XA driver (bug #160 - start fail)");
 }
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -150,3 +150,4 @@
 #define	EX_CACHE_NRDUPDEL	((BFLDID32)33555197)	/* number: 765	 type: long */
 #define	EX_CACHE_BUFLEN	((BFLDID32)33555199)	/* number: 767	 type: long */
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

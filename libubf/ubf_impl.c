@@ -1860,3 +1860,4 @@ expublic int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */
