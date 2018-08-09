@@ -89,3 +89,4 @@ expublic int cmd_at (command_call_t * call, char *data, size_t len, int context)
     return EXSUCCEED; /* Do not want to break the system! */
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

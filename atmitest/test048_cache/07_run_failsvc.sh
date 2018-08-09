@@ -166,3 +166,4 @@ ensure_keys db07_2 2
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

@@ -70,3 +70,4 @@ install (TARGETS
     ndrxxawsmqd
     DESTINATION "${INSTALL_LIB_DIR}"
     )
+# vim: set ts=4 sw=4 et smartindent:

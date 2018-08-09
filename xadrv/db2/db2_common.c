@@ -103,3 +103,4 @@ out:
 
 
 #undef __USE_GNU
+/* vim: set ts=4 sw=4 et smartindent: */

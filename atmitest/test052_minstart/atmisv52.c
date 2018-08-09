@@ -112,3 +112,4 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called");
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

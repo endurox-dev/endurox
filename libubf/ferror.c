@@ -307,3 +307,4 @@ expublic void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp)
     NDRX_FREE(errmsg);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -122,3 +122,4 @@ extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg);
 
 #endif	/* ATMI_SHM_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

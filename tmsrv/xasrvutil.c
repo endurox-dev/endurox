@@ -108,3 +108,4 @@ expublic void atmi_xa_new_xid(XID *xid)
     MUTEX_UNLOCK_V(M_xid_gen_lock);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

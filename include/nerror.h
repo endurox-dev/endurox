@@ -85,3 +85,4 @@ extern NDRX_API int * _Nget_Nerror_addr (void);
 
 #endif	/* NERROR_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

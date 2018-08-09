@@ -55,3 +55,4 @@ extern void CACHEMG (TPSVCINFO *p_svc);
 
 #endif	/* TPCACHESV_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

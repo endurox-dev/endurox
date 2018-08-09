@@ -322,3 +322,4 @@ do
 foreach my $handle (@M_files) {
     close $handle;
 }
+# vim: set ts=4 sw=4 et smartindent:

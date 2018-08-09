@@ -248,3 +248,4 @@ extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 
 #endif	/* NDRX_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

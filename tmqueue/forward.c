@@ -475,3 +475,4 @@ expublic void forward_process_init(void)
     pthread_create(&G_forward_thread, &pthread_custom_attr, 
             forward_process, NULL);  
 }
+/* vim: set ts=4 sw=4 et smartindent: */

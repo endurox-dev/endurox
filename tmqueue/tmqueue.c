@@ -573,3 +573,4 @@ expublic void tmq_thread_shutdown(void *ptr, int *p_finish_off)
     
     *p_finish_off = EXTRUE;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

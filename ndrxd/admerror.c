@@ -232,3 +232,4 @@ expublic void NDRXD_append_error_msg(char *msg)
     strncat(M_ndrxd_error_msg_buf, msg, n);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

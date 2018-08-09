@@ -117,3 +117,4 @@ int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **),
     return ndrx_main(argc, argv);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

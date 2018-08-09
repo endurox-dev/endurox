@@ -122,3 +122,4 @@ TestSuite *ubf_nstd_crypto(void)
             
     return suite;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

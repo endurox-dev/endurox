@@ -122,3 +122,4 @@ extern "C" {
 
 #endif	/* ODEBUG_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

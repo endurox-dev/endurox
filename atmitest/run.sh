@@ -84,3 +84,4 @@ grep with test.out
 
 exit $RET
 
+# vim: set ts=4 sw=4 et smartindent:

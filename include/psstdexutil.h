@@ -44,3 +44,4 @@ PSCRIPT_API PSInteger psstd_register_exutillib(HPSCRIPTVM v);
 #endif
 
 #endif /* _PSSTD_EXUTILLIB_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

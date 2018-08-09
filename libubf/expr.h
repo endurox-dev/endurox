@@ -250,3 +250,4 @@ extern __thread int G_error;
 #endif
 
 #endif	/* __EXPR_H */
+/* vim: set ts=4 sw=4 et smartindent: */

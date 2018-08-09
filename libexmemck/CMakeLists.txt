@@ -64,3 +64,4 @@ install (TARGETS
     COMPONENT libraries
     )
 
+# vim: set ts=4 sw=4 et smartindent:

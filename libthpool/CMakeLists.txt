@@ -41,4 +41,4 @@ include_directories (. ../include)
 # Generate library from our source files
 
 add_library (thpool STATIC thpool.c)
-target_link_libraries(thpool nstd)
+target_link_libraries(thpool nstd)# vim: set ts=4 sw=4 et smartindent:

@@ -796,3 +796,4 @@ expublic int tmq_mqch(UBFH *p_ub)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

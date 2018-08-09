@@ -185,3 +185,4 @@ extern void sign_chld_handler(int sig);
 
 #endif	/* CPMSRV_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

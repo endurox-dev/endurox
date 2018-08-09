@@ -148,3 +148,4 @@ extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TL
 
 #endif	/* ATMI_CONTEXT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

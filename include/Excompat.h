@@ -1350,3 +1350,4 @@
 #define	TQ_REPLYQOS	((BFLDID32)3314)	/* number: 3314	 type: short */
 #define	TQ_TIME	((BFLDID32)3315)	/* number: 3315	 type: short */
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

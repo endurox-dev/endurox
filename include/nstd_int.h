@@ -58,3 +58,4 @@ extern NDRX_API int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg,
 
 #endif	/* NSTD_INT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

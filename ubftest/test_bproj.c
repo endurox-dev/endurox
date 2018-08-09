@@ -474,3 +474,4 @@ TestSuite *ubf_fproj_tests(void)
     return suite;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

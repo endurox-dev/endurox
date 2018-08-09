@@ -62,3 +62,4 @@ extern NDRX_API int ndrx_crypto_dec_string(char *input, char *output, long olen)
 
 #endif	/* EXCRYPTO_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

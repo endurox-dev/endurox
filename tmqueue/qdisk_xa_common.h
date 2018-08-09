@@ -62,3 +62,4 @@ struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr);
 
 #endif	/* XABACKEND_COMMON_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

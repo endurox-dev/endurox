@@ -103,3 +103,4 @@ extern NDRX_API __thread ubf_tls_t *G_ubf_tls; /* Enduro/X standard library TLS 
 
 #endif	/* UBF_CONTEXT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

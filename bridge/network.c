@@ -687,3 +687,4 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

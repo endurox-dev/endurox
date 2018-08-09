@@ -132,3 +132,4 @@ extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
 
 #endif	/* _UBF_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

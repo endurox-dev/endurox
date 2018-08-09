@@ -1318,3 +1318,4 @@ expublic void ndrx_inicfg_free(ndrx_inicfg_t *cfg)
     _ndrx_inicfg_free(cfg);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

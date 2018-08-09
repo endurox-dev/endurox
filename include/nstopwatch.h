@@ -75,3 +75,4 @@ extern NDRX_API void ndrx_stopwatch_plus(ndrx_stopwatch_t *timer, long long msec
 
 #endif	/* NSTOPWATCH_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

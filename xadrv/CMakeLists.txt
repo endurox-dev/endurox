@@ -37,3 +37,4 @@ add_subdirectory (oracle)
 add_subdirectory (db2)
 add_subdirectory (wsmq)
 
+# vim: set ts=4 sw=4 et smartindent:

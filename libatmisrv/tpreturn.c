@@ -611,3 +611,4 @@ expublic void _tpcontinue (void)
         /* NDRX_LOG(log_error, "doing nothing after long jmp!"); - not reached. */
     }
 }
+/* vim: set ts=4 sw=4 et smartindent: */

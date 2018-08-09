@@ -174,3 +174,4 @@ expublic void ndrx_regasc_cpyesc(char *dest, char *src,
  * 
  */
 
+/* vim: set ts=4 sw=4 et smartindent: */

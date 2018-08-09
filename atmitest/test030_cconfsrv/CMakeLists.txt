@@ -58,3 +58,4 @@ add_executable (atmiclt30 atmiclt30.c)
 target_link_libraries (atmiclt30 m ubf nstd atmi atmiclt ${RT_LIB} pthread)
 set_target_properties(atmiclt30 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
+# vim: set ts=4 sw=4 et smartindent:

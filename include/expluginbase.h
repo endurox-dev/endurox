@@ -91,3 +91,4 @@ extern ndrx_pluginbase_t ndrx_G_plugins;
 extern NDRX_API int ndrx_plugins_load(void);
 
 #endif /* EXPROTO_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

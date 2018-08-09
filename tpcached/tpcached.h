@@ -79,3 +79,4 @@ extern void ndrx_tpcached_free_list(ndrx_tpcached_msglist_t ** list);
 
 #endif	/* TPCACHED_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

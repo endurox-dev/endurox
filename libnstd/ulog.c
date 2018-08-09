@@ -146,3 +146,4 @@ expublic int userlog_const (const char *msg)
     return userlog("%s", msg);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

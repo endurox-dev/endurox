@@ -610,3 +610,4 @@ expublic void ndrx_TPrestore_error(atmi_error_t *p_err)
     G_atmi_tls->M_atmi_reason = p_err->atmi_reason;
     NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, p_err->atmi_error_msg_buf);
 }
+/* vim: set ts=4 sw=4 et smartindent: */

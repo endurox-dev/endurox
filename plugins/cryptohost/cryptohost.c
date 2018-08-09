@@ -95,3 +95,4 @@ expublic int ndrx_plugin_crypto_getkey(char *keybuf, int keybuf_bufsz)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

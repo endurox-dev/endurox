@@ -2928,4 +2928,4 @@ expublic BFLDID Bflddbid (char *fldname)
     return ret;
 }
 
-expublic 
+expublic /* vim: set ts=4 sw=4 et smartindent: */

@@ -233,3 +233,4 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 {
     /* just for build... */
 }
+/* vim: set ts=4 sw=4 et smartindent: */

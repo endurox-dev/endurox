@@ -262,3 +262,4 @@ extern NDRX_API void ndrx_skipsvc_delhash(void);
 
 #endif	/* SRV_INT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

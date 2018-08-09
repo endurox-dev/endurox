@@ -62,3 +62,4 @@ target_link_libraries (atmiclt_007 m ubf nstd atmi atmiclt ${RT_LIB} pthread)
 set_target_properties(atmisv_007 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt_007 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
+# vim: set ts=4 sw=4 et smartindent:

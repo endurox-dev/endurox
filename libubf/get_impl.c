@@ -283,3 +283,4 @@ expublic int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

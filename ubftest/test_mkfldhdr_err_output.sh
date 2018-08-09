@@ -42,3 +42,4 @@ ret=0
 ret=$?
 
 exit $ret
+# vim: set ts=4 sw=4 et smartindent:

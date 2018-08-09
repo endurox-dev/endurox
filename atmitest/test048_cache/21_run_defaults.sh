@@ -136,3 +136,4 @@ ensure_field db21 SV21FAILKEY2 T_STRING_2_FLD FAIL 0
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

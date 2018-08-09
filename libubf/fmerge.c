@@ -144,3 +144,4 @@ expublic int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

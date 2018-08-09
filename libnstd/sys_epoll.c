@@ -165,3 +165,4 @@ expublic inline char * ndrx_poll_strerror(int err)
     return strerror(err);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

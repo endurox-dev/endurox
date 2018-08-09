@@ -49,3 +49,4 @@ extern NDRX_API int userlog_const (const char *msg);
 
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

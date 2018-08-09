@@ -251,3 +251,4 @@ ensure_field db11 SV11KEY2 T_STRING_FLD KEY2 0
 ensure_field db11 SV11KEY1 T_STRING_FLD KEY1 0
 
 go_out $RET
+# vim: set ts=4 sw=4 et smartindent:

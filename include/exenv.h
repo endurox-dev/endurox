@@ -118,4 +118,4 @@ struct ndrx_env_grouplist
 
 #endif /* EXENV_H_ */
 
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -52,3 +52,4 @@ extern NDRX_API char * ONstrerror(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt);
 #endif  /* __ONERROR_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

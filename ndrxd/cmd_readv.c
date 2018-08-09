@@ -146,3 +146,4 @@ out:
     return EXSUCCEED; /* Do not want to break the system! */
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

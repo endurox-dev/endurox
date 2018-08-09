@@ -795,3 +795,4 @@ int main(int argc, char** argv)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

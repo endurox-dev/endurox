@@ -72,3 +72,4 @@ extern char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
 
 #endif	/* CF_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

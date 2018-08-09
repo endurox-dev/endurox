@@ -32,3 +32,4 @@
 ##
 export FLDTBLDIR=`pwd`/ubftab
 export FIELDTBLS=test.fd,Exfields
+# vim: set ts=4 sw=4 et smartindent:

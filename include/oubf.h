@@ -149,3 +149,4 @@ extern NDRX_API int OBflddbdel(TPCONTEXT_T *p_ctxt, EDB_txn *txn, BFLDID bfldid)
 extern NDRX_API int OBflddbadd(TPCONTEXT_T *p_ctxt, EDB_txn *txn, short fldtype, BFLDID bfldno, char *fldname);
 #endif  /* __OUBF_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

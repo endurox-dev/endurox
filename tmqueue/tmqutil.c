@@ -101,3 +101,4 @@ expublic char * tmq_corid_serialize(char *corid_in, char *corid_str_out)
     
     return corid_str_out;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

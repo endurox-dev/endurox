@@ -75,3 +75,4 @@ extern NDRX_API unsigned char *ndrx_xa_base64_decode(unsigned char *data,
 
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -87,3 +87,4 @@ extern int java_file_open (char *fname);
 extern int java_file_close (char *fname);
 
 #endif /* MKFLDHDR_H_ */
+/* vim: set ts=4 sw=4 et smartindent: */

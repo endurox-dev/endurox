@@ -822,3 +822,4 @@ extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
 
 #endif	/* ATMI_INT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

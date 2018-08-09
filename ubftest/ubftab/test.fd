@@ -70,3 +70,4 @@ T_CARRAY_3_FLD		83	carray	- 1 Carray test field 3
 
 $#endif
 
+$/* vim: set ts=4 sw=4 et smartindent: */

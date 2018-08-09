@@ -804,3 +804,4 @@ exprivate int cpm_rc(UBFH *p_ub, int cd)
     NDRX_LOG(log_debug, "Into %s", __func__);
     return cpm_bcscrc(p_ub, cd, cpm_rc_obj, "restarted");
 }
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -291,3 +291,4 @@ extern NDRX_API int Bflddbadd(EDB_txn *txn, short fldtype, BFLDID bfldno,
 #endif
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

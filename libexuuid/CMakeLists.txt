@@ -60,3 +60,4 @@ add_library (exuuid STATIC
     unpack.c
     unparse.c
     )
+# vim: set ts=4 sw=4 et smartindent:

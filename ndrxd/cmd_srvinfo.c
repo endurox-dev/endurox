@@ -268,4 +268,4 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
 out:
     return ret;
 }
-/* vim: set ts=4 sw=4 et cindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

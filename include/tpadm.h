@@ -57,3 +57,4 @@ extern NDRX_API int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags);
 
 #endif	/* TPADM_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -111,3 +111,4 @@ add_executable (atmiunit1 atmiunit1.c)
 target_link_libraries (atmiunit1 ubf cgreen m nstd ${RT_LIB} pthread)
 set_target_properties(atmiunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
+# vim: set ts=4 sw=4 et smartindent:

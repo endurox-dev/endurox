@@ -155,3 +155,4 @@ expublic int ndrx_mq_unlink_with_registry (char *name)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

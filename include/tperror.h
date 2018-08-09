@@ -94,3 +94,4 @@ extern NDRX_API short atmi_xa_get_reason(void);
 
 #endif	/* TPERROR_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -66,3 +66,4 @@ extern NDRX_API int Otpgetsrvid(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Ondrx_main(TPCONTEXT_T *p_ctxt, int argc, char **argv);
 #endif  /* __OATMISRV_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

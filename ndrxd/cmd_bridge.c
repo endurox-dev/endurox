@@ -328,3 +328,4 @@ expublic int cmd_getbrs (command_call_t * call, char *data, size_t len, int cont
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

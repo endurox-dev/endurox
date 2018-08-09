@@ -68,3 +68,4 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     return ndrx_get_xa_switch_int("MQRMIXASwitchDynamic", "Loading IBM Websphere MQ Dynamic Reg XA driver");
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

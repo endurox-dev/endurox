@@ -139,3 +139,4 @@ extern int ndrx_mq_unlink_with_registry (char *name);
 
 #endif	/* _SYS_MQUEUE_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -41,3 +41,4 @@ export PATH=$PATH:../../xadmin
 
 # Clean up q Space (remove all queues matching the symbol)
 xadmin qrmall ,
+# vim: set ts=4 sw=4 et smartindent:

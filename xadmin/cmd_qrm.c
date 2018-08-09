@@ -155,3 +155,4 @@ out:
     ndrx_string_list_free(qlist);
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

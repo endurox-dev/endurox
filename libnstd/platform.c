@@ -94,3 +94,4 @@ expublic long ndrx_platf_stack_get_size(void)
    
     return M_stack_size;
 }
+/* vim: set ts=4 sw=4 et smartindent: */
