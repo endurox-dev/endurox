@@ -92,37 +92,37 @@ function install()
 //
         if (!::prov.writeFile(::prov.hdr,
 
-@"/* 
-** "+::prov.descr+@" - common header
-**
-** @file test"+::prov.testname+@".h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+@"/**
+ * @brief "+::prov.descr+@" - common header
+ *
+ * @file test"+::prov.testname+@".h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
 #ifndef TEST"+::prov.testid+@"_H
 #define TEST"+::prov.testid+@"_H
 
@@ -139,6 +139,8 @@ extern ""C"" {
 
 #endif  /* TEST"+::prov.testid+@"_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */
+
 "))
         {
             return false;
@@ -148,37 +150,37 @@ extern ""C"" {
 //
 		if (!::prov.writeFile(::prov.client, 
 
-@"/* 
-** "+::prov.descr+@" - client
-**
-** @file atmiclt"+::prov.testid+@".c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+@"/**
+ * @brief "+::prov.descr+@" - client
+ *
+ * @file atmiclt"+::prov.testid+@".c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -234,6 +236,9 @@ out:
 
     return ret;
 }
+
+/* vim: set ts=4 sw=4 et smartindent: */
+
 "))
 		{
 			return false;
@@ -244,38 +249,37 @@ out:
 //
 		if (!::prov.writeFile(::prov.server, 
 
-@"/* 
-** "+::prov.descr+@" - server
-**
-** @file atmisv"+::prov.testid+@".c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
-
+@"/**
+ * @brief "+::prov.descr+@" - server
+ *
+ * @file atmisv"+::prov.testid+@".c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
 #include <ndebug.h>
@@ -357,6 +361,8 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, ""tpsvrdone called"");
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */
+
 "))
 		{
 			return false;
@@ -366,14 +372,15 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 //
 		if (!::prov.writeFile(::prov.make, 
 
-@"## 
-## "+::prov.descr+@" - makefile
+@"##
+## @brief "+::prov.descr+@" - server
 ##
-## @file CMakeLists.txt
-## 
+## @file atmisv"+::prov.testid+@".c
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -381,7 +388,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -430,7 +437,7 @@ set_target_properties(atmi.sv"+::prov.testid+@" PROPERTIES LINK_FLAGS ""$ENV{MYL
 set_target_properties(atmiclt"+::prov.testid+@" PROPERTIES LINK_FLAGS ""$ENV{MYLDFLAGS}"")
 ################################################################################
 
-
+# vim: set ts=4 sw=4 et smartindent:
 "))
 		{
 			return false;
@@ -455,14 +462,15 @@ atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
 		if ("n"==::prov.dom1 && "n"==::prov.dom2 && !::prov.writeFile(::prov.run, 
 
 @"#!/bin/bash
-## 
-## @(#) "+::prov.descr+@" - test launcher
+##
+## @brief "+::prov.descr+@" - test launcher
 ##
 ## @file run.sh
-## 
+##
 ## -----------------------------------------------------------------------------
-## Enduro/X Middleware PlatfoRm for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -470,7 +478,7 @@ atmi.sv"+::prov.testid+@" file=${TESTDIR}/atmisv"+::prov.testid+@".log
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -536,6 +544,8 @@ if [ ""X`grep TESTERROR *.log`"" != ""X"" ]; then
 fi
 
 go_out $RET
+
+# vim: set ts=4 sw=4 et smartindent:
 
 "))
 		{
@@ -746,14 +756,15 @@ tpbridge file=${TESTDIR}/tpbridge-dom2.log threaded=y
         if ("y"==::prov.dom1 && !::prov.writeFile(::prov.run, 
 
 @"#!/bin/bash
-## 
-## @(#) "+::prov.descr+@" - test launcher
+##
+## @brief "+::prov.descr+@" - test launcher
 ##
 ## @file run.sh
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -761,7 +772,7 @@ tpbridge file=${TESTDIR}/tpbridge-dom2.log threaded=y
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -777,7 +788,6 @@ tpbridge file=${TESTDIR}/tpbridge-dom2.log threaded=y
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-
 export TESTNAME="""+::prov.testname+@"""
 
 PWD=`pwd`
@@ -885,6 +895,9 @@ fi
 
 
 go_out $RET
+
+
+# vim: set ts=4 sw=4 et smartindent:
 
 "))
         {
