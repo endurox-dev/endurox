@@ -61,7 +61,9 @@ OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
 
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
-SET(CMAKE_C_FLAGS "-Wno-format-truncation ${CMAKE_C_FLAGS}")
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
+    SET(CMAKE_C_FLAGS "-Wno-format-truncation ${CMAKE_C_FLAGS}")
+endif()
 
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
