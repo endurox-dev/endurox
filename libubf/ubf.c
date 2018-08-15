@@ -1656,7 +1656,37 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, outf);
+    return ndrx_Bfprint (p_ub, outf, NULL, NULL);
+}
+
+/**
+ * Print UBF buffer by using callback function for data outputting
+ * @param p_ub UBF buffer to print
+ * @param dataptr1 user pointer passed back to callback
+ * @param p_writef callback function for data output. Note that 'buffer' argument
+ *  is allocated and deallocated by Bfprintcb it self. The string is zero byte
+ *  terminated. The dataptr1 passed to function is forwarded to callback func.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bfprintcb (UBFH *p_ub, 
+        int (*p_writef)(char *buffer, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_writef callback cannot be NULL!");
+        return EXFAIL;
+    }
+
+    return ndrx_Bfprint (p_ub, NULL, p_writef, dataptr1);
 }
 
 /**
@@ -1668,17 +1698,16 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
  */
 expublic int Bprint (UBFH *p_ub)
 {
-    char *fn = "Bprint";
     API_ENTRY;
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, stdout);
+    return ndrx_Bfprint (p_ub, stdout, NULL, NULL);
 }
 
 /**

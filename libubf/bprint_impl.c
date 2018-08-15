@@ -65,12 +65,15 @@
  * Also will re-use Fnext for iterating throught the buffer.
  * @param p_ub - UBF buffer
  * @param outf - file descriptor to print to
+ * @param p_writef callback function which overrides outf (i.e. it can be set to
+ *  NULL for particular case). Then for data output callback is used.
+ * @param dataptr1 optional argument to p_writef if callback present
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
+expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
+           int (*p_writef)(char *buffer, void *dataptr1), void *dataptr1)
 {
     int ret=EXSUCCEED;
-   /* static __thread Bnext_state_t state; */
     BFLDID bfldid;
     BFLDLEN  len;
     BFLDOCC occ;
@@ -79,7 +82,6 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
     char *cnv_buf = NULL;
     char *tmp_buf = NULL;
     BFLDLEN cnv_len;
-    char fn[] = "_Bfprint";
     
     UBF_TLS_ENTRY;
     
@@ -144,7 +146,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
                 tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
                 if (NULL==tmp_buf)
                 {
-                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ",
+                            __func__, temp_len+1);
                     EXFAIL_OUT(ret);
                 }
 
@@ -160,7 +163,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
                 
                 if (NULL==tmp_buf)
                 {
-                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", 
+                            __func__, temp_len+1);
                     EXFAIL_OUT(ret);
                 }
                 tmp_buf[temp_len] = EXEOS;
@@ -168,14 +172,74 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
             }
         }
 
-
         /* value is kept in p */
         if (len>0)
-            fprintf(outf, "%s\t%s\n", ndrx_Bfname_int(bfldid), p);
+        {
+#define OUTPUT_FORMAT_WDATA "%s\t%s\n", ndrx_Bfname_int(bfldid), p
+            if (NULL!=p_writef)
+            {
+                char *tmp;
+                
+                NDRX_ASPRINTF(&tmp, OUTPUT_FORMAT_WDATA);
+                
+                if (NULL==tmp)
+                {
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: NDRX_ASPRINTF failed", 
+                            __func__);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (EXSUCCEED!=(ret=p_writef(tmp, dataptr1)))
+                {
+                    ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
+                            "failed with %d for [%s]", 
+                            __func__, ret, tmp);
+                    EXFAIL_OUT(ret);
+                }
+                        
+                NDRX_FREE(tmp);
+            }
+            else
+            {
+                fprintf(outf, OUTPUT_FORMAT_WDATA);
+            }
+            
+        }
         else
-            fprintf(outf, "%s\t\n", ndrx_Bfname_int(bfldid));
-
-        if (ferror(outf))
+        {
+#define OUTPUT_FORMAT_NDATA "%s\t\n", ndrx_Bfname_int(bfldid)
+            
+            if (NULL!=p_writef)
+            {
+                char *tmp;
+                
+                NDRX_ASPRINTF(&tmp, OUTPUT_FORMAT_WDATA);
+                
+                if (NULL==tmp)
+                {
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: NDRX_ASPRINTF failed 2", 
+                            __func__);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (EXSUCCEED!=(ret=p_writef(tmp, dataptr1)))
+                {
+                    ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
+                            "failed with %d for [%s] 2", 
+                            __func__, ret, tmp);
+                    EXFAIL_OUT(ret);
+                }
+                        
+                NDRX_FREE(tmp);
+            }
+            else
+            {
+                fprintf(outf, OUTPUT_FORMAT_NDATA);
+            }
+    
+        }
+        
+        if (NULL!=p_writef && ferror(outf))
         {
             ndrx_Bset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
                         strerror(errno));

@@ -219,6 +219,8 @@ CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" HAVE_STRCAT_S)
 
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" HAVE_ASPRINTF)
+
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
 CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)

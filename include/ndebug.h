@@ -210,6 +210,32 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 /* Memory debug macros */
 
+
+#ifdef EX_HAVE_ASPRINTF
+
+#define NDRX_ASPRINTF_INT(strp, fmt, ...) \
+    *strp = NULL;\
+    if (asprintf(strp, fmt, ##__VA_ARGS__) < 0 && NULL!=*strp)  \
+    {\
+        NDRX_FREE(*strp); \
+        *strp=NULL;\
+    }
+
+#else
+
+#define NDRX_ASPRINTF_INT(strp, fmt, ...) \
+    int Emh39KCmwH0M_numbytes;\
+    *strp = NULL;\
+    Emh39KCmwH0M_numbytes = sprintf( (char*)NULL, fmt, ##__VA_ARGS__);\
+    if (Emh39KCmwH0M_numbytes > 0)\
+    {\
+        *strp = NDRX_MALLOC(Emh39KCmwH0M_numbytes+1);\
+        snprintf( *strp, Emh39KCmwH0M_numbytes, fmt, ##__VA_ARGS__);\
+    }
+
+#endif
+
+
 #ifdef NDRX_MEMORY_DEBUG
 
 #define NDRX_MALLOC(size) ndrx_malloc_dbg(size, __LINE__, __FILE__, __func__)
@@ -221,6 +247,10 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FOPEN(path, mode) ndrx_fopen_dbg(path, mode, __LINE__, __FILE__, __func__)
 #define NDRX_FCLOSE(fp) ndrx_fclose_dbg(fp,__LINE__, __FILE__, __func__)
 
+/* Have some extra debug here */
+#define NDRX_ASPRINTF(strp, fmt, ...) \
+    NDRX_ASPRINTF_INT(strp, fmt, ##__VA_ARGS__)\
+    userlog("[%p] <= asprintf(%s):%s %s:%ld", *strp, fmt, func, file, line);
 #else
 
 #define NDRX_MALLOC(size) malloc(size)
@@ -232,9 +262,15 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FOPEN(path, mode) fopen(path, mode)
 #define NDRX_FCLOSE(fp) fclose(fp)
 
+/**
+ * Sprintf with memory allocation. In case of error, strp will be NULL.
+ * @param strp double ptr to hander that will be allocated
+ * @param fmt format string
+ * @param ... var args
+ */
+#define NDRX_ASPRINTF(strp, fmt, ...) NDRX_ASPRINTF_INT(strp, fmt, ##__VA_ARGS__)
 
 #endif
-
 
 /* Quick macros for standard memory allocation with error printing and
  * returning to out with ret flag
