@@ -62,6 +62,24 @@ Ensure(test_nstd_ndrx_strcpy_s)
 }
 
 /**
+ * Test NDRX_ASPRINTF
+ */
+Ensure(test_nstd_ndrx_asprintf)
+{
+    char *p = (char *)123;
+    
+    NDRX_ASPRINTF(&p, "Hello %d %s", 1, "world");
+    
+    assert_not_equal(p, NULL);
+    assert_not_equal(p, 123);
+    
+    assert_string_equal(p, "Hello 1 world");
+    
+    NDRX_FREE(p);
+    
+}
+
+/**
  * Standard header tests
  * @return
  */
