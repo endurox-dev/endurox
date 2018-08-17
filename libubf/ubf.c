@@ -1666,10 +1666,11 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
  * @param p_writef callback function for data output. Note that 'buffer' argument
  *  is allocated and deallocated by Bfprintcb it self. The string is zero byte
  *  terminated. The dataptr1 passed to function is forwarded to callback func.
+ *  *datalen* includes the EOS byte.
  * @return EXSUCCEED/EXFAIL
  */
 expublic int Bfprintcb (UBFH *p_ub, 
-        int (*p_writef)(char *buffer, void *dataptr1), void *dataptr1)
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
     API_ENTRY;
 
