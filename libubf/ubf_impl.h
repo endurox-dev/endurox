@@ -101,7 +101,7 @@ extern char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
 
 extern int ndrx_Bfprint (UBFH *p_ub, FILE * outf, 
-        int (*p_writef)(char *buffer, void *dataptr1), void *dataptr1);
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
 
 extern int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                 BFLDOCC *occ, char *buf, BFLDLEN *len,

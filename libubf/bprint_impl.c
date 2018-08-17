@@ -71,7 +71,7 @@
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
-           int (*p_writef)(char *buffer, void *dataptr1), void *dataptr1)
+           int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
     int ret=EXSUCCEED;
     BFLDID bfldid;
@@ -179,8 +179,9 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             if (NULL!=p_writef)
             {
                 char *tmp;
+                long tmp_len;
                 
-                NDRX_ASPRINTF(&tmp, OUTPUT_FORMAT_WDATA);
+                NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
                 
                 if (NULL==tmp)
                 {
@@ -189,7 +190,9 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                     EXFAIL_OUT(ret);
                 }
                 
-                if (EXSUCCEED!=(ret=p_writef(tmp, dataptr1)))
+                tmp_len++;
+                
+                if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
                 {
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
                             "failed with %d for [%s]", 
@@ -212,8 +215,9 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             if (NULL!=p_writef)
             {
                 char *tmp;
+                long tmp_len;
                 
-                NDRX_ASPRINTF(&tmp, OUTPUT_FORMAT_WDATA);
+                NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
                 
                 if (NULL==tmp)
                 {
@@ -222,7 +226,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                     EXFAIL_OUT(ret);
                 }
                 
-                if (EXSUCCEED!=(ret=p_writef(tmp, dataptr1)))
+                if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
                 {
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
                             "failed with %d for [%s] 2", 
