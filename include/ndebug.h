@@ -213,26 +213,30 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 #ifdef EX_HAVE_ASPRINTF
 
-#define NDRX_ASPRINTF_INT(strp, fmt, ...) \
-    *strp = NULL;\
-    if (asprintf(strp, fmt, ##__VA_ARGS__) < 0 && NULL!=*strp)  \
+#define NDRX_ASPRINTF_INT(strp, lenp, fmt, ...) \
+    (*strp) = NULL;\
+    if (((*lenp) = asprintf(strp, fmt, ##__VA_ARGS__)) < 0 && NULL!=*strp)  \
     {\
-        NDRX_FREE(*strp); \
-        *strp=NULL;\
+        NDRX_FREE((*strp)); \
+        (*strp)=NULL;\
     }
 
 #else
 
-#define NDRX_ASPRINTF_INT(strp, fmt, ...) \
+#define NDRX_ASPRINTF_INT(strp, lenp, fmt, ...) \
     int Emh39KCmwH0M_numbytes;\
-    *strp = NULL;\
+    (*strp) = NULL;\
     Emh39KCmwH0M_numbytes = sprintf( (char*)NULL, fmt, ##__VA_ARGS__);\
     if (Emh39KCmwH0M_numbytes > 0)\
     {\
-        *strp = NDRX_MALLOC(Emh39KCmwH0M_numbytes+1);\
-        snprintf( *strp, Emh39KCmwH0M_numbytes, fmt, ##__VA_ARGS__);\
+        (*strp) = NDRX_MALLOC(Emh39KCmwH0M_numbytes+1);\
+        (*lenp) = snprintf( (*strp), Emh39KCmwH0M_numbytes, fmt, ##__VA_ARGS__);\
+        if ((*lenp) < 0) \
+        {\
+            NDRX_FREE((*strp)); \
+            (*strp)=NULL;\
+        }\
     }
-
 #endif
 
 
@@ -248,8 +252,8 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FCLOSE(fp) ndrx_fclose_dbg(fp,__LINE__, __FILE__, __func__)
 
 /* Have some extra debug here */
-#define NDRX_ASPRINTF(strp, fmt, ...) \
-    NDRX_ASPRINTF_INT(strp, fmt, ##__VA_ARGS__)\
+#define NDRX_ASPRINTF(strp, lenp, fmt, ...) \
+    NDRX_ASPRINTF_INT(strp, lenp, fmt, ##__VA_ARGS__)\
     userlog("[%p] <= asprintf(%s):%s %s:%ld", *strp, fmt, func, file, line);
 #else
 
@@ -268,7 +272,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
  * @param fmt format string
  * @param ... var args
  */
-#define NDRX_ASPRINTF(strp, fmt, ...) NDRX_ASPRINTF_INT(strp, fmt, ##__VA_ARGS__)
+#define NDRX_ASPRINTF(strp, lenp, fmt, ...) NDRX_ASPRINTF_INT(strp, lenp, fmt, ##__VA_ARGS__)
 
 #endif
 

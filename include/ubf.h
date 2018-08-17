@@ -215,6 +215,8 @@ extern NDRX_API int Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len);
 extern NDRX_API int Bprint (UBFH *p_ub);
 extern NDRX_API int Bfprint (UBFH *p_ub, FILE * outf);
+extern NDRX_API int Bfprintcb (UBFH *p_ub, 
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
 extern NDRX_API char * Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
 extern NDRX_API int Bextread (UBFH * p_ub, FILE *inf);
