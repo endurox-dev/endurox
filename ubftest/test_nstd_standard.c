@@ -73,7 +73,7 @@ Ensure(test_nstd_ndrx_asprintf)
     
     assert_not_equal(p, NULL);
     assert_not_equal(p, 123);
-    assert_equal(len, 14);
+    assert_equal(len, 13);
     
     assert_string_equal(p, "Hello 1 world");
     

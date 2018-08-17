@@ -45,6 +45,7 @@ extern "C" {
 #include <ndebugcmn.h>
 #include <nstd_tls.h>
 #include <userlog.h>
+#include <errno.h>
     
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API ndrx_debug_t G_ubf_debug;
@@ -223,22 +224,29 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 #else
 
+/**
+ * Perform sprintf to newly allocated buffer
+ * @param strp double ptr to char buffer that will be allocated. In case of error it will
+ *  be deallocated and set to NULL
+ * @param lenp ptr to long type where on error -1 is returned, for 
+ */
 #define NDRX_ASPRINTF_INT(strp, lenp, fmt, ...) \
     int Emh39KCmwH0M_numbytes;\
     (*strp) = NULL;\
-    Emh39KCmwH0M_numbytes = sprintf( (char*)NULL, fmt, ##__VA_ARGS__);\
+    Emh39KCmwH0M_numbytes = snprintf( (char*)NULL, 0, fmt, ##__VA_ARGS__);\
     if (Emh39KCmwH0M_numbytes > 0)\
     {\
         (*strp) = NDRX_MALLOC(Emh39KCmwH0M_numbytes+1);\
-        (*lenp) = snprintf( (*strp), Emh39KCmwH0M_numbytes, fmt, ##__VA_ARGS__);\
+        (*lenp) = snprintf( (*strp), Emh39KCmwH0M_numbytes+1, fmt, ##__VA_ARGS__);\
         if ((*lenp) < 0) \
         {\
+            int Emh39KCmwH0M_errno = errno;\
             NDRX_FREE((*strp)); \
+            errno = Emh39KCmwH0M_errno;\
             (*strp)=NULL;\
         }\
     }
 #endif
-
 
 #ifdef NDRX_MEMORY_DEBUG
 
