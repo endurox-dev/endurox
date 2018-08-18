@@ -77,11 +77,11 @@ exprivate long round_long( double r ) {
  * @param buffer - json text to parse
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
+expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object)
 {
     int ret = EXSUCCEED;
     EXJSON_Value *root_value;
-    EXJSON_Object *root_object;
+    EXJSON_Object *root_object=data_object;
     EXJSON_Array *array;
     size_t i, cnt, j, arr_cnt;
     int type;
@@ -94,20 +94,22 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
     char bin_buf[CARR_BUFFSIZE+1];
     char	*s_ptr;
 
-    NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
-
-    root_value = exjson_parse_string_with_comments(buffer);
-    type = exjson_value_get_type(root_value);
-    NDRX_LOG(log_error, "Type is %d", type);
-
-    if (exjson_value_get_type(root_value) != EXJSONObject)
+    if ( NULL != buffer )
     {
-        NDRX_LOG(log_error, "Failed to parse root element");
-        ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
-        return EXFAIL;
-    }
-    root_object = exjson_value_get_object(root_value);
+        NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
 
+        root_value = exjson_parse_string_with_comments(buffer);
+        type = exjson_value_get_type(root_value);
+        NDRX_LOG(log_error, "Type is %d", type);
+
+        if (exjson_value_get_type(root_value) != EXJSONObject)
+        {
+            NDRX_LOG(log_error, "Failed to parse root element");
+            ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
+            return EXFAIL;
+        }
+        root_object = exjson_value_get_object(root_value);
+    }
     cnt = exjson_object_get_count(root_object);
     NDRX_LOG(log_debug, "cnt = %d", cnt);
 
@@ -613,7 +615,7 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
 
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpjsontoubf(tmp, (*buffer)->buf))
+    if (EXSUCCEED!=ndrx_tpjsontoubf(tmp, (*buffer)->buf, NULL))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert JSON->UBF: %s", tpstrerror(tperrno));

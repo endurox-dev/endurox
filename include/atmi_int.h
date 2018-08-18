@@ -49,6 +49,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <userlog.h>
 #include <tperror.h>
+#include <exparson.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -654,6 +655,37 @@ typedef struct ndrx_tpcall_cache_ctl ndrx_tpcall_cache_ctl_t;
  * actual size smaller than 1 char */
 #define MAX_CALL_DATA_SIZE (NDRX_MSGSIZEMAX-sizeof(tp_command_call_t))
 
+
+/* Indicators for  tpexportex() and tpimportex() */
+struct ndrx_expbufctl
+{
+    char buftype[XATMI_TYPE_LEN+1];
+    short buftype_ind;
+
+    char subtype[XATMI_SUBTYPE_LEN+1];
+    short subtype_ind;
+
+    char version[MAXTIDENT+1];
+    short version_ind;
+
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+    short svcnm_ind;
+
+    int rval;
+    short rval_ind;
+
+    long rcode;
+    short rcode_ind;
+
+    int tperror;
+    short tperror_ind;
+
+    char tpstrerror[MAX_TP_ERROR_LEN+1];
+    short tpstrerror_ind;
+};
+
+typedef struct ndrx_expbufctl ndrx_expbufctl_t;
+
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
 extern NDRX_API int G_srv_id;
@@ -761,7 +793,7 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 
-extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
+extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 extern NDRX_API int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
@@ -807,6 +839,23 @@ extern NDRX_API tp_command_call_t *ndrx_get_G_last_call(void);
 extern NDRX_API atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
 extern NDRX_API atmi_lib_env_t *ndrx_get_G_atmi_env(void);
 extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
+
+/* */
+extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
+
+extern NDRX_API int tpimportex(ndrx_expbufctl_t *bufctl,
+        char *istr, long ilen, char **obuf, long *olen, long flags);
+
+extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
+        char *istr, long ilen, char **obuf, long *olen, long flags);
+
+extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
+
+extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, 
+        char *ibuf, long ilen, char *ostr, long *olen, long flags);
+
+extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, 
+        char *ibuf, long ilen, char *ostr, long *olen, long flags);
 
 #ifdef	__cplusplus
 }
