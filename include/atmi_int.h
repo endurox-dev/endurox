@@ -252,10 +252,14 @@ struct buffer_obj
     EX_hash_handle hh;         /* makes this structure hashable */
 };
 
-/*
- * Typed buffer descriptor table
+/**
+ * Typed buffer descriptor table. Type of \ref typed_buffer_descr
  */
 typedef struct typed_buffer_descr typed_buffer_descr_t;
+
+/**
+ * Buffer type descriptor structure
+ */
 struct typed_buffer_descr
 {
     int type_id;
