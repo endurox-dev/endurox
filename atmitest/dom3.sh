@@ -1,12 +1,13 @@
 #!/bin/bash
-## 
-## @(#) Test domain 3
+##
+## @brief @(#) Test domain 3
 ##
 ## @file dom3.sh
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -14,7 +15,7 @@
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -37,3 +38,4 @@ export NDRX_QPREFIX=/dom3
 export NDRX_NODEID=3
 export NDRX_DPID=/tmp/ndrxd-dom3.pid
 
+# vim: set ts=4 sw=4 et smartindent:

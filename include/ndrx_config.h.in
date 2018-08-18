@@ -23,6 +23,10 @@
 
 #cmakedefine HAVE_STRLCPY @HAVE_STRLCPY@
 
+#cmakedefine EX_HAVE_ASPRINTF @HAVE_ASPRINTF@
+
+#cmakedefine EX_HAVE_STRCAT_S @HAVE_STRCAT_S@
+
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 
 #cmakedefine EX_USE_POLL @EX_USE_POLL@

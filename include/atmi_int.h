@@ -1,34 +1,35 @@
-/* 
-** ATMI internals
-**
-** @file atmi_int.h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI internals
+ *
+ * @file atmi_int.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 #ifndef ATMI_INT_H
 #define	ATMI_INT_H
@@ -252,10 +253,14 @@ struct buffer_obj
     EX_hash_handle hh;         /* makes this structure hashable */
 };
 
-/*
- * Typed buffer descriptor table
+/**
+ * Typed buffer descriptor table. Type of \ref typed_buffer_descr
  */
 typedef struct typed_buffer_descr typed_buffer_descr_t;
+
+/**
+ * Buffer type descriptor structure
+ */
 struct typed_buffer_descr
 {
     int type_id;
@@ -324,7 +329,7 @@ struct call_descriptor_state
 };
 typedef struct call_descriptor_state call_descriptor_state_t;
 
-/*
+/**
  * Structure for holding atmi library configuration and other global
  * variables.
  * 
@@ -333,27 +338,33 @@ typedef struct call_descriptor_state call_descriptor_state_t;
  */
 struct atmi_lib_conf
 {
-    int is_client; /* Is this client? */
-    char reply_q_str[NDRX_MAX_Q_SIZE+1]; /* Provide reply q better debug */
-    mqd_t reply_q; /* Reply queue */
-    /* queue attributes */
-    struct mq_attr reply_q_attr; /* Queue attributes of replyq */
-    /*
+    /** Is this client? */
+    int is_client;
+    /** Provide reply q better debug */
+    char reply_q_str[NDRX_MAX_Q_SIZE+1];
+    /** Reply queue */
+    mqd_t reply_q;
+    /** queue attributes - of replyq*/
+    struct mq_attr reply_q_attr;
+    /**
      * ID string. For example:
      * srv.testsrv-1
      * or
      * clt.testclt-1265
      */
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* Id of the resource */
+    char my_id[NDRX_MAX_ID_SIZE+1];
 
-    /* Queue prefix (from environment) */
+    /** Queue prefix (from environment) */
     char q_prefix[NDRX_MAX_Q_SIZE+1];
 
+    /** Queue name for ndrxd connection */
     char ndrxd_q_str[NDRX_MAX_Q_SIZE+1]; /* Queue name for ndrxd connection */
     
-    long contextid;         /* In which context lib is initialized? */
+    /** In which context lib is initialized? */
+    long contextid;
     
 };
+/** typedef for atmi_lib_conf structure */
 typedef struct atmi_lib_conf atmi_lib_conf_t;
 
 /**
@@ -362,49 +373,50 @@ typedef struct atmi_lib_conf atmi_lib_conf_t;
 struct atmi_lib_env
 {   
     /* Other global settings */
-    int     max_servers; /* Max server instance count - CONF_NDRX_SRVMAX*/
-    int     max_svcs;   /* Max services per server - CONF_NDRX_SVCMAX*/
-    char    rnd_key[NDRX_MAX_KEY_SIZE];   /* random key to be passed to all EnduroX servers in session */
-    int     msg_max;    /* maximum number of messages in a posix queue */
-    int     msgsize_max;    /* maximum message size for a posix queue */
-    key_t   ipckey;            /* IPC Key */
-    int     time_out; /* Timeout in seconds to be applied for calls */
-    /* Cluster node id */
-    int     our_nodeid;
-    int     ldbal;  /* Load balance settings */
-    int     is_clustered; /* Will we run in cluster mode or not? */
-    int     testmode; /* Do we run in test mode? */
+    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX*/
+    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX*/
+    char    rnd_key[NDRX_MAX_KEY_SIZE];   /**< random key to be passed to all EnduroX servers in session */
+    int     msg_max;     /**< maximum number of messages in a posix queue */
+    int     msgsize_max; /**< maximum message size for a posix queue */
+    key_t   ipckey;      /**< IPC Key */
+    int     time_out;    /**< Timeout in seconds to be applied for calls */
+    int     our_nodeid;  /**< Cluster node id */
+    int     ldbal;       /**< Load balance settings */
+    int     is_clustered;/**< Will we run in cluster mode or not? */
+    int     testmode; 	 /**< Do we run in test mode? */
     
-    /* <XA Protocol configuration> */
-    short xa_rmid;    /* XA Resource ID 1..255 range */
-    char xa_open_str[PATH_MAX]; /* XA Open string           */
-    char xa_close_str[PATH_MAX];/* XA Close string          */
-    char xa_driverlib[PATH_MAX];/* Enduro RM Library/driver */
-    char xa_rmlib[PATH_MAX];    /* RM library               */
-    int  xa_lazy_init;          /* Should we  init lately?  */
-    char xa_flags[PATH_MAX];    /* Specific flags for XA    */
-    struct xa_switch_t * xa_sw; /* handler to XA switch     */
-    
+    /**
+     * @defgroup xa_params XA configuration parameters
+     * @{
+     */
+    short xa_rmid;    /**< XA Resource ID 1..255 range */
+    char xa_open_str[PATH_MAX]; /**< XA Open string           */
+    char xa_close_str[PATH_MAX];/**< XA Close string          */
+    char xa_driverlib[PATH_MAX];/**< Enduro RM Library/driver */
+    char xa_rmlib[PATH_MAX];    /**< RM library               */
+    int  xa_lazy_init;          /**< Should we  init lately?  */
+    char xa_flags[PATH_MAX];    /**< Specific flags for XA    */
+    struct xa_switch_t * xa_sw; /**< handler to XA switch     */
     
     char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
-    int xa_recon_times;         /* Number of times to retry the recon    */
-    long xa_recon_usleep;       /* Microseconds to sleep between retries */
+    int xa_recon_times;         /**< Number of times to retry the recon    */
+    long xa_recon_usleep;       /**< Microseconds to sleep between retries */
     
-    /* </XA Protocol configuration> */
+    /**@}*/
     
-    int     nrsems; /* number of sempahores for poll() mode of service mem */
+    int     nrsems; /**< number of sempahores for poll() mode of service mem */
     
-    int     maxsvcsrvs; /* Max servers per service (only for poll() mode) */
+    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode) */
     
-    char    qprefix[NDRX_MAX_Q_SIZE+1]; /* Queue prefix (common, finally!) */
-    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /* Includes separator at the end */
-    int     qprefix_match_len;              /* Includes number bytes to match */
-    char    qpath[PATH_MAX+1]; /* Queue path (common, finally!) */
+    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!) */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
+    int     qprefix_match_len;              /**< Includes number bytes to match */
+    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
-/*
+/**
  * Generic command handler, tp commands.
  */
 struct tp_command_generic
@@ -417,7 +429,7 @@ struct tp_command_generic
 };
 typedef struct tp_command_generic tp_command_generic_t;
 
-/*
+/**
  * Call handler.
  * For storing the tppost associated timestamp, we could allow data to be installed
  * in the rval/rcode for requests...
@@ -863,3 +875,4 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
 
 #endif	/* ATMI_INT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

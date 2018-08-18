@@ -82,15 +82,15 @@ extern "C" {
 /** rval in tpreturn - RFU */
 #define TPEXIT          0x08000000
 
-/*
+/**
  * Posix Queue processing path prefixes
  */
-#define NDRX_FMT_SEP      ','                   /* Seperator in qnames      */
-#define NDRX_FMT_SEP_STR  ","                   /* Seperator in qnames      */
+#define NDRX_FMT_SEP      ','                   /**< Seperator in qnames      */
+#define NDRX_FMT_SEP_STR  ","                   /**< Seperator in qnames      */
 #define NDRX_NDRXD        "%s,sys,bg,ndrxd"
-#define NDRX_QTYPE_NDRXD    1                   /* ndrxd backend q          */
+#define NDRX_QTYPE_NDRXD    1                   /**< ndrxd backend q          */
 #define NDRX_NDRXCLT      "%s,sys,bg,xadmin,%d"
-#define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin," /* Prefix for sanity check    */
+#define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin,"   /**< Prefix for sanity check    */
 
 
 #define NDRX_SVC_QFMT     "%s,svc,%s"            /* Q format in epoll mode (one q multiple servers) */

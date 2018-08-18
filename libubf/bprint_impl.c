@@ -1,35 +1,36 @@
-/* 
-** UBF library
-** Bfprint & Bextread implementations.
-**
-** @file bprint_impl.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief UBF library
+ *   Bfprint & Bextread implementations.
+ *
+ * @file bprint_impl.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <string.h>
@@ -64,12 +65,15 @@
  * Also will re-use Fnext for iterating throught the buffer.
  * @param p_ub - UBF buffer
  * @param outf - file descriptor to print to
+ * @param p_writef callback function which overrides outf (i.e. it can be set to
+ *  NULL for particular case). Then for data output callback is used.
+ * @param dataptr1 optional argument to p_writef if callback present
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
+expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
+           int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
     int ret=EXSUCCEED;
-   /* static __thread Bnext_state_t state; */
     BFLDID bfldid;
     BFLDLEN  len;
     BFLDOCC occ;
@@ -78,7 +82,6 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
     char *cnv_buf = NULL;
     char *tmp_buf = NULL;
     BFLDLEN cnv_len;
-    char fn[] = "_Bfprint";
     
     UBF_TLS_ENTRY;
     
@@ -143,7 +146,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
                 tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
                 if (NULL==tmp_buf)
                 {
-                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ",
+                            __func__, temp_len+1);
                     EXFAIL_OUT(ret);
                 }
 
@@ -159,7 +163,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
                 
                 if (NULL==tmp_buf)
                 {
-                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", fn, temp_len+1);
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", 
+                            __func__, temp_len+1);
                     EXFAIL_OUT(ret);
                 }
                 tmp_buf[temp_len] = EXEOS;
@@ -167,14 +172,78 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf)
             }
         }
 
-
         /* value is kept in p */
         if (len>0)
-            fprintf(outf, "%s\t%s\n", ndrx_Bfname_int(bfldid), p);
+        {
+#define OUTPUT_FORMAT_WDATA "%s\t%s\n", ndrx_Bfname_int(bfldid), p
+            if (NULL!=p_writef)
+            {
+                char *tmp;
+                long tmp_len;
+                
+                NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
+                
+                if (NULL==tmp)
+                {
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: NDRX_ASPRINTF failed", 
+                            __func__);
+                    EXFAIL_OUT(ret);
+                }
+                
+                tmp_len++;
+                
+                if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
+                {
+                    ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
+                            "failed with %d for [%s]", 
+                            __func__, ret, tmp);
+                    EXFAIL_OUT(ret);
+                }
+                        
+                NDRX_FREE(tmp);
+            }
+            else
+            {
+                fprintf(outf, OUTPUT_FORMAT_WDATA);
+            }
+            
+        }
         else
-            fprintf(outf, "%s\t\n", ndrx_Bfname_int(bfldid));
-
-        if (ferror(outf))
+        {
+#define OUTPUT_FORMAT_NDATA "%s\t\n", ndrx_Bfname_int(bfldid)
+            
+            if (NULL!=p_writef)
+            {
+                char *tmp;
+                long tmp_len;
+                
+                NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
+                
+                if (NULL==tmp)
+                {
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: NDRX_ASPRINTF failed 2", 
+                            __func__);
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
+                {
+                    ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
+                            "failed with %d for [%s] 2", 
+                            __func__, ret, tmp);
+                    EXFAIL_OUT(ret);
+                }
+                        
+                NDRX_FREE(tmp);
+            }
+            else
+            {
+                fprintf(outf, OUTPUT_FORMAT_NDATA);
+            }
+    
+        }
+        
+        if (NULL!=p_writef && ferror(outf))
         {
             ndrx_Bset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
                         strerror(errno));
@@ -402,3 +471,4 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf)
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

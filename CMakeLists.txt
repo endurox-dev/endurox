@@ -1,11 +1,12 @@
-## 
-## Enduro Execution platform main Make descriptor
+##
+## @brief Enduro Execution platform main Make descriptor
 ##
 ## @file CMakeLists.txt
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -13,7 +14,7 @@
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -60,7 +61,10 @@ OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
 
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
-SET(CMAKE_C_FLAGS "-Wno-format-truncation ${CMAKE_C_FLAGS}")
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
+    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
+    SET(CMAKE_C_FLAGS "-Wformat-overflow=0 ${CMAKE_C_FLAGS}")
+endif()
 
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -212,6 +216,10 @@ CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
+
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" HAVE_STRCAT_S)
+
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" HAVE_ASPRINTF)
 
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)
@@ -466,6 +474,16 @@ set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
 
 include(CPack)
 ################################################################################
+# Source indexing for quick symbol lookup
+# note that "glimpse" package must be installed.
+# to exclude any directory or name from indexing,
+# put the name in the glimpse_index/.glimpse_exclude
+################################################################################
 
+add_custom_target(index glimpseindex -H ./glimpse_index ${PROJECT_SOURCE_DIR}
+                    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/glimpse_index/glim.cmake)
+#this also shall generate the glimp command in the current project
+
+# vim: set ts=4 sw=4 et smartindent:
 
 
