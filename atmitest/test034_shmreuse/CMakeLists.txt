@@ -1,11 +1,12 @@
-## 
-## Shared memory reuse of when performing massive service advertise & unadvertise
+##
+## @brief Shared memory reuse of when performing massive service advertise & unadvertise
 ##
 ## @file CMakeLists.txt
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -13,7 +14,7 @@
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -22,7 +23,7 @@
 ##
 ## You should have received a copy of the GNU General Public License along with
 ## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 334, Boston, MA 02111-1347 USA
+## Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -62,3 +63,4 @@ set_target_properties(atmiclt34 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 target_link_libraries (atmisv34 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 set_target_properties(atmisv34 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
+# vim: set ts=4 sw=4 et smartindent:

@@ -1,34 +1,35 @@
-/* 
-** Enduro/X Debug library header
-**
-** @file ndebug.h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X Debug library header
+ *
+ * @file ndebug.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #ifndef NDEBUG_H
 #define	NDEBUG_H
 
@@ -44,6 +45,7 @@ extern "C" {
 #include <ndebugcmn.h>
 #include <nstd_tls.h>
 #include <userlog.h>
+#include <errno.h>
     
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API ndrx_debug_t G_ubf_debug;
@@ -209,6 +211,43 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 /* Memory debug macros */
 
+
+#ifdef EX_HAVE_ASPRINTF
+
+#define NDRX_ASPRINTF_INT(strp, lenp, fmt, ...) \
+    (*strp) = NULL;\
+    if (((*lenp) = asprintf(strp, fmt, ##__VA_ARGS__)) < 0 && NULL!=*strp)  \
+    {\
+        NDRX_FREE((*strp)); \
+        (*strp)=NULL;\
+    }
+
+#else
+
+/**
+ * Perform sprintf to newly allocated buffer
+ * @param strp double ptr to char buffer that will be allocated. In case of error it will
+ *  be deallocated and set to NULL
+ * @param lenp ptr to long type where on error -1 is returned, for 
+ */
+#define NDRX_ASPRINTF_INT(strp, lenp, fmt, ...) \
+    int Emh39KCmwH0M_numbytes;\
+    (*strp) = NULL;\
+    Emh39KCmwH0M_numbytes = snprintf( (char*)NULL, 0, fmt, ##__VA_ARGS__);\
+    if (Emh39KCmwH0M_numbytes > 0)\
+    {\
+        (*strp) = NDRX_MALLOC(Emh39KCmwH0M_numbytes+1);\
+        (*lenp) = snprintf( (*strp), Emh39KCmwH0M_numbytes+1, fmt, ##__VA_ARGS__);\
+        if ((*lenp) < 0) \
+        {\
+            int Emh39KCmwH0M_errno = errno;\
+            NDRX_FREE((*strp)); \
+            errno = Emh39KCmwH0M_errno;\
+            (*strp)=NULL;\
+        }\
+    }
+#endif
+
 #ifdef NDRX_MEMORY_DEBUG
 
 #define NDRX_MALLOC(size) ndrx_malloc_dbg(size, __LINE__, __FILE__, __func__)
@@ -220,6 +259,10 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FOPEN(path, mode) ndrx_fopen_dbg(path, mode, __LINE__, __FILE__, __func__)
 #define NDRX_FCLOSE(fp) ndrx_fclose_dbg(fp,__LINE__, __FILE__, __func__)
 
+/* Have some extra debug here */
+#define NDRX_ASPRINTF(strp, lenp, fmt, ...) \
+    NDRX_ASPRINTF_INT(strp, lenp, fmt, ##__VA_ARGS__)\
+    userlog("[%p] <= asprintf(%s):%s %s:%ld", *strp, fmt, func, file, line);
 #else
 
 #define NDRX_MALLOC(size) malloc(size)
@@ -231,9 +274,15 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_FOPEN(path, mode) fopen(path, mode)
 #define NDRX_FCLOSE(fp) fclose(fp)
 
+/**
+ * Sprintf with memory allocation. In case of error, strp will be NULL.
+ * @param strp double ptr to hander that will be allocated
+ * @param fmt format string
+ * @param ... var args
+ */
+#define NDRX_ASPRINTF(strp, lenp, fmt, ...) NDRX_ASPRINTF_INT(strp, lenp, fmt, ##__VA_ARGS__)
 
 #endif
-
 
 /* Quick macros for standard memory allocation with error printing and
  * returning to out with ret flag
@@ -374,3 +423,4 @@ extern NDRX_API void ndrx_dbg_intlock_unset(void);
 
 #endif	/* NDEBUG_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

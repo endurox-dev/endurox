@@ -1,48 +1,49 @@
-/* 
-** Bridge server
-** This is special kind of EnduroX Server.
-** It does configures the library to work in bridged mode.
-** It parses command line by looking of following config:
-** In client mode (-tA = type [A]ctive, connect to server)
-** -n <Node id of server> -i <IP of the server> -p <Port of the server> -tA
-** In server mode (-tP = type [P]asive, wait for call)
-** -n <node id of server> -i <Bind address usually 0.0.0.0> -p <Port to bind on> -tP
-** Notes for multi thread:
-** - Outgoing message fully received by xatmi main thread, 
-** and is submitted to thread pool. The treads perform async send to network.
-** - Incoming message from network also are fully received from main thread.
-** Once read fully, submitted to thread pool for further processing.
-** In case if thread count is set to 0, then do not use threading model, just
-** just do direct calls if send & receive.
-**
-** @file bridgesvc.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Bridge server
+ *   This is special kind of EnduroX Server.
+ *   It does configures the library to work in bridged mode.
+ *   It parses command line by looking of following config:
+ *   In client mode (-tA = type [A]ctive, connect to server)
+ *   -n <Node id of server> -i <IP of the server> -p <Port of the server> -tA
+ *   In server mode (-tP = type [P]asive, wait for call)
+ *   -n <node id of server> -i <Bind address usually 0.0.0.0> -p <Port to bind on> -tP
+ *   Notes for multi thread:
+ *   - Outgoing message fully received by xatmi main thread,
+ *   and is submitted to thread pool. The treads perform async send to network.
+ *   - Incoming message from network also are fully received from main thread.
+ *   Once read fully, submitted to thread pool for further processing.
+ *   In case if thread count is set to 0, then do not use threading model, just
+ *   just do direct calls if send & receive.
+ *
+ * @file bridgesvc.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrx_config.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -459,3 +460,4 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     
 }
+/* vim: set ts=4 sw=4 et smartindent: */

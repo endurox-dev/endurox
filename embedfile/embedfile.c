@@ -1,34 +1,35 @@
-/* 
-** Generate source code for resource file
-**
-** @file embedfile.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Generate source code for resource file
+ *
+ * @file embedfile.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,14 +67,21 @@ int main(int argc, char** argv)
 
     if (argc<3)
     {
-        fprintf(stderr, "syntax: %s <input file> <output file>\n", argv[0]);
+        fprintf(stderr, "syntax: %s <input file> <output file> [extension_override]\n", argv[0]);
         EXFAIL_OUT(ret);
     }
     
     inf = argv[INF];
     outfpfx = argv[OUTF];
     
-    sprintf(outf, "%s.c", outfpfx);
+    if (argc > 3)
+    {
+        sprintf(outf, "%s.%s", outfpfx, argv[3]);
+    }
+    else
+    {
+        sprintf(outf, "%s.c", outfpfx);
+    }
     
     if (NULL==(in=fopen(inf, "rb")))
     {
@@ -114,6 +122,7 @@ int main(int argc, char** argv)
     
     /* write off length (with out EOS..) */
     fprintf(out, "const size_t ndrx_G_resource_%s_len = %d;\n", outfpfx, counter);
+    fprintf(out, "#define ndrx_G_resource_%s_len_def %d\n", outfpfx, counter);
     
     /* put the EOL... (additionally so that we can easy operate resource as string) */
     
@@ -136,3 +145,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

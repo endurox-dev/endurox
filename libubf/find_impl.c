@@ -1,35 +1,36 @@
-/* 
-** UBF library
-** This file implements find functions.
-**
-** @file find_impl.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief UBF library
+ *   This file implements find functions.
+ *
+ * @file find_impl.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
@@ -143,7 +144,7 @@ expublic char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
 }
 
 /**
- * Internal version of CBFind
+ * Internal version of CBFind.
  * @param p_ub
  * @param bfldid
  * @param occ
@@ -161,7 +162,6 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
     char *fb_data;
     char *alloc_buf=NULL;
     int alloc_size = 0;
-    char fn[]="_CBfind";
     char *ret=NULL;
 /***************************************** DEBUG *******************************/
     #ifdef UBF_API_DEBUG
@@ -174,30 +174,38 @@ expublic char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
     if (NULL!=fb_data)
     {
         /* Allocate the buffer */
-        if (NULL==(cvn_buf=ndrx_ubf_get_cbuf(from_type,usrtype,
+        if (NULL==(cvn_buf=ndrx_ubf_get_cbuf(from_type, usrtype,
                         NULL, fb_data, tmp_len,
                         &alloc_buf,
                         &alloc_size,
                         mode,
                         extralen)))
         {
-            UBF_LOG(log_error, "%s: get_cbuf failed!", fn);
+            UBF_LOG(log_error, "%s: get_cbuf failed!", __func__);
+            ndrx_Bset_error_fmt(BEUNIX, "%s: get_cbuf failed!", __func__);
             /* Error should be already set */
             return NULL; /* <<<< RETURN!!!! */
         }
-
+        
+        /* Bug #330*/
+        if (NULL!=len)
+        {
+            *len = alloc_size;
+        }
+        
         ret = ndrx_ubf_convert(from_type, CNV_DIR_OUT, fb_data, tmp_len,
                                     usrtype, cvn_buf, len);
         if (NULL==ret)
         {
-            UBF_LOG(log_error, "%s: failed to convert data!", fn);
+            UBF_LOG(log_error, "%s: failed to convert data!", __func__);
+            ndrx_Bset_error_fmt(BEUNIX, "%s: failed to convert data!", __func__);
             /* Error should be provided by conversation function */
             ret=NULL;
         }
     }
     else
     {
-        UBF_LOG(log_error, "%s: Field not present!", fn);
+        UBF_LOG(log_error, "%s: Field not present!", __func__);
         ret=NULL;
     }
 /***************************************** DEBUG *******************************/
@@ -335,8 +343,8 @@ expublic BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLE
     /* if types are not the same then go the long way... */
 
     /* Allocate the buffer dynamically or statically */
-    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf,value, len, &alloc_buf, &cvn_len,
-                                CB_MODE_DEFAULT, 0)))
+    if (NULL==(p=ndrx_ubf_get_cbuf(usrtype, to_type, tmp_buf,value, len, 
+            &alloc_buf, &cvn_len, CB_MODE_DEFAULT, 0)))
     {
         UBF_LOG(log_error, "%s: Malloc failed!", fn);
         return EXFAIL; /* <<<< RETURN!!!! */
@@ -441,3 +449,4 @@ expublic char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */
