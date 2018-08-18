@@ -1,41 +1,42 @@
-/* 
-** UBF library
-** The emulator of UBF library
-** Enduro Execution Library
-** Debug ideas:
-** - on API entry take copy of FB
-** - on API exit make diff of the FB memory. Also diff the memory usage
-** - provide the information about count of bytes from source element added
-** - on exit, dump the first BFLDID element address
-**
-** @file ubf.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief UBF library
+ *   The emulator of UBF library
+ *   Enduro Execution Library
+ *   Debug ideas:
+ *   - on API entry take copy of FB
+ *   - on API exit make diff of the FB memory. Also diff the memory usage
+ *   - provide the information about count of bytes from source element added
+ *   - on exit, dump the first BFLDID element address
+ *
+ * @file ubf.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <string.h>
@@ -1433,15 +1434,14 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 expublic char * CBfind (UBFH * p_ub, 
                     BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype)
 {
-    char *fn = "CBfind";
     API_ENTRY;
 
-    UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", fn, bfldid, occ);
+    UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", __func__, bfldid, occ);
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return NULL;
     }
     
@@ -1656,7 +1656,38 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, outf);
+    return ndrx_Bfprint (p_ub, outf, NULL, NULL);
+}
+
+/**
+ * Print UBF buffer by using callback function for data outputting
+ * @param p_ub UBF buffer to print
+ * @param dataptr1 user pointer passed back to callback
+ * @param p_writef callback function for data output. Note that 'buffer' argument
+ *  is allocated and deallocated by Bfprintcb it self. The string is zero byte
+ *  terminated. The dataptr1 passed to function is forwarded to callback func.
+ *  *datalen* includes the EOS byte.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bfprintcb (UBFH *p_ub, 
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_writef callback cannot be NULL!");
+        return EXFAIL;
+    }
+
+    return ndrx_Bfprint (p_ub, NULL, p_writef, dataptr1);
 }
 
 /**
@@ -1668,17 +1699,16 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
  */
 expublic int Bprint (UBFH *p_ub)
 {
-    char *fn = "Bprint";
     API_ENTRY;
 
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, stdout);
+    return ndrx_Bfprint (p_ub, stdout, NULL, NULL);
 }
 
 /**
@@ -2928,4 +2958,4 @@ expublic BFLDID Bflddbid (char *fldname)
     return ret;
 }
 
-expublic 
+expublic /* vim: set ts=4 sw=4 et smartindent: */

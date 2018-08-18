@@ -1,12 +1,13 @@
-## 
-## Enduro Execution platform's ATMI library/ies tests
-## Using Cgreen framework for tests.
+##
+## @brief Enduro Execution platform's ATMI library/ies tests
+##   Using Cgreen framework for tests.
 ##
 ## @file CMakeLists.txt
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
 ## GPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
@@ -14,7 +15,7 @@
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
+## Foundation; either version 3 of the License, or (at your option) any later
 ## version.
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -101,6 +102,7 @@ add_subdirectory (test053_logoff)
 add_subdirectory (test054_svwrap)
 add_subdirectory (test055_envs)
 add_subdirectory (test056_tpimpexp)
+add_subdirectory (test057_invlcmd)
 
 ################################################################################
 # Master test case driver
@@ -110,3 +112,4 @@ add_executable (atmiunit1 atmiunit1.c)
 target_link_libraries (atmiunit1 ubf cgreen m nstd ${RT_LIB} pthread)
 set_target_properties(atmiunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
+# vim: set ts=4 sw=4 et smartindent:

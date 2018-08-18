@@ -1,35 +1,36 @@
-/* 
-** NDR 'standard' common utilites
-** Enduro Execution system platform library
-**
-** @file nstdutil.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief NDR 'standard' common utilites
+ *   Enduro Execution system platform library
+ *
+ * @file nstdutil.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
@@ -1323,3 +1324,113 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
     
     return(p - str);
 }
+
+/**
+ * Initialize the grow list
+ * @param list ptr to list (can be un-initialized memory)
+ * @param step number of elements by which to reallocate ahead
+ * @param size number of element
+ */
+expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
+{
+    list->maxindexused = EXFAIL;
+    list->items = 0;
+    list->step = step;
+    list->size = size;
+    list->mem = NULL;
+}
+
+/**
+ * Add element to the list. Allocate/reallocate linear array as needed.
+ * @param list list struct pointer
+ * @param item ptr to item
+ * @param index zero based item index in the memory
+ * @return EXSUCCEED (all OK), EXFAIL (failed to allocate)
+ */
+expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
+{
+    int ret = EXSUCCEED;
+    int next_blocks;
+    size_t new_size;
+    char *p;
+
+    if (NULL==list->mem)
+    {
+        new_size = list->step * list->size;
+        if (NULL==(list->mem = NDRX_MALLOC(list->step * list->size)))
+        {
+            userlog("Failed to alloc %d bytes: %s", new_size,
+                        strerror(errno));
+            
+            EXFAIL_OUT(ret);
+        }
+        
+        list->items+=list->step;
+    }
+    
+    while (index+1 > list->items)
+    {
+        list->items+=list->step;
+        
+        next_blocks = list->items / list->step;
+        
+        new_size = next_blocks * list->step * list->size;
+        /*
+        NDRX_LOG(log_debug, "realloc: new_size: %d (index: %d items: %d)", 
+                new_size, index, list->items);
+        */
+        if (NULL==(list->mem = NDRX_REALLOC(list->mem, new_size)))
+        {
+            userlog("Failed to realloc %d bytes (%d blocks): %s", new_size,
+                        next_blocks, strerror(errno));
+            
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* finally we are ready for data */
+    p = list->mem;
+    p+=(index * list->size);
+    
+    /*
+    NDRX_LOG(log_debug, "Ptr: %p, write ptr %p, from %p (size: %d, index: %d)",
+            list->mem, p, item, (int)list->size, index);
+    
+    NDRX_DUMP(log_debug, "data for writting", item, list->size);
+    */
+    memcpy( p, item, list->size);
+    
+    
+    if (index > list->maxindexused)
+    {
+        list->maxindexused = index;
+    }
+    
+out:
+
+    return ret;
+    
+}
+
+/**
+ * Append entry (at the end of the array)
+ * @param list list to be appended
+ * @param item item to be added to the end of the array
+ * @return EXSUCCEED/EXFAIL (out of the mem)
+ */
+expublic int ndrx_growlist_append(ndrx_growlist_t *list, void *item)
+{
+    return ndrx_growlist_add(list, item, list->maxindexused+1);
+}
+
+/**
+ * Free up the grow list. User is completely responsible for any data to be freed
+ * from the mem block
+ * @param list ptr to list
+ */
+expublic void ndrx_growlist_free(ndrx_growlist_t *list)
+{
+    NDRX_FREE(list->mem);
+}
+
+/* vim: set ts=4 sw=4 et smartindent: */

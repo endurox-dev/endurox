@@ -1,34 +1,35 @@
-/* 
-** Enduro X administration utility.
-**
-** @file xadmin.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro X administration utility.
+ *
+ * @file xadmin.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * GPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * GPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -562,6 +563,7 @@ exprivate int process_command_buffer(int *p_have_next)
     if (NULL==map)
     {
         fprintf(stderr, "Command `%s' not found!\n", G_cmd_argv[0]);
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -570,17 +572,17 @@ exprivate int process_command_buffer(int *p_have_next)
         {
             fprintf(stderr, "Syntax error, too few args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else if ( G_cmd_argc_logical > map->max_args)
         {
             fprintf(stderr, "Syntax error, too many args (min %d, max %d, got %d)!\n",
                                 map->min_args, map->max_args, G_cmd_argc_logical);
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else if (map->reqidle && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
         {
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else
         {
@@ -590,7 +592,7 @@ exprivate int process_command_buffer(int *p_have_next)
                                     G_cmd_argc_raw, (char **)G_cmd_argv, p_have_next);
         }
     }
-    
+out:
     return ret;
 }
 
@@ -851,3 +853,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */
