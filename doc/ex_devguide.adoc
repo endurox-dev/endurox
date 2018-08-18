@@ -51,6 +51,36 @@ finalthing();
 
 with indention of 4 spaces.
 
+
+==== Variable compare with constants
+
+In case if in C compare variable with constants, the constant must be first
+and the follow the variable. This allows to escape from the errors when accidentally
+by writing single *=* assignment is made instead of compare, which might lead
+to unpredictable errors.
+
+For example
+
+--------------------------------------------------------------------------------
+
+#define SOME_CONST 10
+int i=5;
+
+/* THIS IS BAD STYLE */
+if (i==SOME_CONST)
+{
+    ...
+}
+
+/* THIS IS GOOD STYLE */
+if (SOME_CONST==I)
+{
+    ...
+}
+
+--------------------------------------------------------------------------------
+
+
 ==== Error handling
 
 All API calls which Enduro/X uses, must be error checked. When error is detected,
