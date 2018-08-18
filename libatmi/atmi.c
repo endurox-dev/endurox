@@ -895,7 +895,7 @@ expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
     int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    ret = ndrx_tpjsontoubf(p_ub, buffer);
+    ret = ndrx_tpjsontoubf(p_ub, buffer, NULL);
     
 out:
     return ret;
@@ -1550,3 +1550,176 @@ out:
     return ret;
 }
 
+/**
+ * 
+ * @param idata input data
+ * @param ilen 
+ * @param odata
+ * @param olen
+ * @param flags
+ * @return 
+ */
+expublic int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (istr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "istr cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (obuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "obuf cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    ret=ndrx_tpimportex(NULL, istr, ilen, obuf, olen, flags);
+
+out:
+    return ret;
+}
+
+/**
+ * 
+ * @param bufctl
+ * @param idata
+ * @param ilen
+ * @param odata
+ * @param olen
+ * @param flags
+ * @return 
+ */
+expublic int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (istr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "istr cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (obuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "obuf cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    ret=ndrx_tpimportex(bufctl, istr, ilen, obuf, olen, flags);
+
+out:
+    return ret;
+}
+
+/**
+ * 
+ * @param ibuf
+ * @param ilen
+ * @param ostr
+ * @param olen
+ * @param flags
+ * @return 
+ */
+extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+   /* Check some other parameters */
+    if (ibuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ibuf cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (ostr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags);
+
+out:
+    return ret;
+}
+
+/**
+ * 
+ * @param bufctl
+ * @param ibuf
+ * @param ilen
+ * @param ostr
+ * @param olen
+ * @param flags
+ * @return 
+ */
+extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, 
+        char *ibuf, long ilen, char *ostr, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+
+   /* Check some other parameters */
+    if (ibuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ibuf cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (ostr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    ret=ndrx_tpexportex(bufctl, ibuf, ilen, ostr, olen, flags);
+
+out:
+    return ret;
+}
