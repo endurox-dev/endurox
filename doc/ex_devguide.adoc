@@ -73,7 +73,7 @@ if (i==SOME_CONST)
 }
 
 /* THIS IS GOOD STYLE */
-if (SOME_CONST==I)
+if (SOME_CONST==i)
 {
     ...
 }
