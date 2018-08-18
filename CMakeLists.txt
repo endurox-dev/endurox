@@ -474,7 +474,16 @@ set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
 
 include(CPack)
 ################################################################################
+# Source indexing for quick symbol lookup
+# note that "glimpse" package must be installed.
+# to exclude any directory or name from indexing,
+# put the name in the glimpse_index/.glimpse_exclude
+################################################################################
 
-
+add_custom_target(index glimpseindex -H ./glimpse_index ${PROJECT_SOURCE_DIR}
+                    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/glimpse_index/glim.cmake)
+#this also shall generate the glimp command in the current project
 
 # vim: set ts=4 sw=4 et smartindent:
+
+
