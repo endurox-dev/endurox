@@ -1378,6 +1378,59 @@ Ensure(test_bboolpr)
     Btreefree(tree);
 }
 
+/**
+ * Just add the data/concat data buffer to dataptr...
+ * @param buffer token to print
+ * @param datalen token len including EOS byte
+ * @param dataptr1 output byte
+ */
+exprivate void bboolprcb_callback(char *buffer, long datalen, void *dataptr1)
+{
+    assert_equal(datalen, strlen(buffer)+1);
+    strcat((char *)dataptr1, buffer);
+}
+
+/**
+ * Test tree printing routine, with callback
+ */
+Ensure(test_bboolprcb)
+{
+    char *tree;
+    char buf[640];
+    UBFH *p_ub = (UBFH *)buf;
+    char testbuf[640];
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    assert_not_equal((tree=Bboolco ("2 * ( 4 + 5 ) || 5 && 'abc' %% '..b' && 2/2*4==5")), NULL);
+    testbuf[0] = EXEOS;
+    Bboolprcb(tree, bboolprcb_callback, testbuf);
+    
+    /* clear off newlines from the testbuf */
+    
+    
+    ndrx_str_strip(testbuf, " \n");
+    assert_string_equal(testbuf,"((2*(4+5))||((5&&('abc'%%'..b'))&&(((2/2)*4)==5)))");
+    
+    Btreefree(tree);
+
+    /* test negation */
+    assert_not_equal((tree=Bboolco ("!( 'a'!='b' ) || !( 'c'&&'b' )")), NULL);
+    testbuf[0] = EXEOS;
+    Bboolprcb(tree, bboolprcb_callback, testbuf);
+    ndrx_str_strip(testbuf, " \n");
+    assert_string_equal(testbuf, "((!('a'!='b'))||(!('c'&&'b')))");
+    Btreefree(tree);
+
+    /* Some other tests... */
+    assert_not_equal((tree=Bboolco ("1<1&&2>1&&2>=1&&1<=~2&&2^1")), NULL);
+    testbuf[0] = EXEOS;
+    Bboolprcb(tree, bboolprcb_callback, testbuf);
+    ndrx_str_strip(testbuf, " \n");
+    assert_string_equal(testbuf, "(((((1<1)&&(2>1))&&(2>=1))&&(1<=(~2)))&&(2^1))");
+    Btreefree(tree);
+}
+
 /* -------------------------------------------------------------------------- */
 long callback_function_true(UBFH *p_ub, char *funcname)
 {
@@ -1547,7 +1600,8 @@ TestSuite *ubf_expr_tests(void)
     add_test(suite, test_expr_basic_relational);
     add_test(suite, test_expr_basic_scopes);
     add_test(suite, test_bboolpr);
-
+    add_test(suite, test_bboolprcb);
+    
     /* Test float ev */
     add_test(suite, test_expr_basic_floatev);
 

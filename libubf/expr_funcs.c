@@ -47,6 +47,7 @@
 #include <regex.h>
 #include <expr.tab.h>
 #include <exhash.h>
+#include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /* make llvm silent.. */
 extern void yy_scan_string (char *yy_str  );
@@ -1976,21 +1977,42 @@ expublic void ndrx_Btreefree (char *tree)
  * Print expression tree to file
  * @param tree - evaluation tree
  * @param outf - file to print to 
+ * @param[in] p_writef callback to data writer function. Either outf must be
+ *  present or this parameter
+ * @param[in] dataptr1 optional data parameter forwarded to p_wirtef if invoked.
  */
-expublic void ndrx_Bboolpr (char * tree, FILE *outf)
+expublic void ndrx_Bboolpr (char * tree, FILE *outf, 
+        void (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
-    int ret=EXSUCCEED;
-
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
+    char *tmp;
+    long tmp_len;
 
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
 
-
-    if (ferror(outf))
+    if (NULL!=outf && ferror(outf))
     {
         return;
+    }
+    
+#define NDRX_BBOOLPR_FMT(...) \
+    if (NULL!=p_writef)\
+    {\
+        NDRX_ASPRINTF(&tmp, &tmp_len, ##__VA_ARGS__);\
+        if (NULL==tmp)\
+        {\
+            int err = errno;\
+            UBF_LOG(log_error, "Failed to asprintf: %s", strerror(err));\
+            userlog("Failed to asprintf: %s", strerror(err));\
+        }\
+        tmp_len++;\
+        p_writef(tmp, tmp_len, dataptr1);\
+    }\
+    else\
+    {\
+        fprintf(outf, ##__VA_ARGS__);\
     }
 
     switch (a->nodetype)
@@ -1999,23 +2021,29 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf)
             {
                 /* print func */
                 struct ast_func *a_func = (struct ast_func *)tree;
-                fprintf(outf, "%s()", a_func->funcname);
+                
+                NDRX_BBOOLPR_FMT("%s()", a_func->funcname);
+                
             }
             break;
         case NODE_TYPE_FLD:
             {
                 /* print field */
                 struct ast_fld *a_fld = (struct ast_fld *)tree;
-                fprintf(outf, "%s", a_fld->fld.fldnm);
+                NDRX_BBOOLPR_FMT("%s", a_fld->fld.fldnm);
             }
             break;
         case NODE_TYPE_STR:
             
             /* print string value */
             if (NULL!=a_string->str)
-                fprintf(outf, "'%s'", a_string->str);
+            {
+                NDRX_BBOOLPR_FMT("'%s'", a_string->str);
+            }
             else
-                fprintf(outf, "<null>");
+            {
+                NDRX_BBOOLPR_FMT("<null>");
+            }
             
             break;
         case NODE_TYPE_FLOAT:
@@ -2023,28 +2051,28 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf)
                 /* Print float value */
                 struct ast_float *a_float = (struct ast_float *)tree;
                 /* print field */
-                fprintf(outf, "%.*lf", DOUBLE_RESOLUTION, a_float->d);
+                NDRX_BBOOLPR_FMT("%.*lf", DOUBLE_RESOLUTION, a_float->d);
             }
             break;
         case NODE_TYPE_LONG:
             {
                 /* Print long value */
                 struct ast_long *a_long = (struct ast_long *)tree;
-                fprintf(outf, "%ld", a_long->l);
+                NDRX_BBOOLPR_FMT("%ld", a_long->l);
             }
             break;
         default:
-            fprintf(outf, "(");
+            NDRX_BBOOLPR_FMT("(");
             if (a->l)
             {
-                ndrx_Bboolpr ((char *)a->l, outf);
+                ndrx_Bboolpr ((char *)a->l, outf, p_writef, dataptr1);
             }
-            fprintf(outf, "%s", M_subtypes_sign_only[a->sub_type]);
+            NDRX_BBOOLPR_FMT("%s", M_subtypes_sign_only[a->sub_type]);
             if (a->r)
             {
-                ndrx_Bboolpr ((char *)a->r, outf);
+                ndrx_Bboolpr ((char *)a->r, outf, p_writef, dataptr1);
             }
-            fprintf(outf, ")");
+            NDRX_BBOOLPR_FMT(")");
             break;
     }
 }
