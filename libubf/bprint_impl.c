@@ -197,6 +197,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
                             "failed with %d for [%s]", 
                             __func__, ret, tmp);
+                    NDRX_FREE(tmp);
                     EXFAIL_OUT(ret);
                 }
                         
@@ -233,6 +234,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
                             "failed with %d for [%s] 2", 
                             __func__, ret, tmp);
+                    NDRX_FREE(tmp);
                     EXFAIL_OUT(ret);
                 }
                         

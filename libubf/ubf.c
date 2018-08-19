@@ -1795,7 +1795,6 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
  */
 expublic void Bboolpr (char * tree, FILE *outf)
 {
-    char *fn = "Bboolpr";
     API_ENTRY;
 
     /* Do standard validation */
@@ -1811,9 +1810,40 @@ expublic void Bboolpr (char * tree, FILE *outf)
         return;
     }
 
-    ndrx_Bboolpr (tree, outf);
+    ndrx_Bboolpr (tree, outf, NULL, NULL);
     /* put newline at the end. */
     fprintf(outf, "\n");
+}
+
+/**
+ * API entry for Bboolpr. Print boolean expression to callback function.
+ * @param[in] tree compiled boolean expression tree to print
+ * @param[in] p_writef callback function to which print the buffer. The datalen
+ *  includes the EOS symbol.
+ * @param[in] dataptr1 user pointer to forward to \p p_writef function
+ */
+expublic void Bboolprcb (char * tree, 
+        void (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (NULL==tree)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Evaluation tree cannot be NULL!");
+        return;
+    }
+    /* check output file */
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Input callback function p_writef "
+                "cannot be NULL!");
+        return;
+    }
+
+    ndrx_Bboolpr (tree, NULL, p_writef, dataptr1);
+    /* put newline at the end. */
+    p_writef("\n", 2, dataptr1);
 }
 
 /**
