@@ -226,6 +226,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                     EXFAIL_OUT(ret);
                 }
                 
+                tmp_len++;
+                
                 if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
                 {
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
@@ -243,7 +245,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
     
         }
         
-        if (NULL!=p_writef && ferror(outf))
+        if (NULL!=outf && ferror(outf))
         {
             ndrx_Bset_error_fmt(BEUNIX, "Failed to write to file with error: [%s]",
                         strerror(errno));

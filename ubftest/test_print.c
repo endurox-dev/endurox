@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include "ndebug.h"
 
 /**
  * Reference output that should be printed to log file.
@@ -206,6 +207,68 @@ Ensure(test_bfprint)
 
     /* cannot print on null file */
     assert_equal(Bfprint(p_ub, NULL), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+}
+
+/**
+ * Test data holder for bfprintcb_data
+ */
+typedef struct bfprintcb_data bfprintcb_data_t;
+struct bfprintcb_data
+{
+    int nrlines;
+    char lines[1024][100];
+};
+
+/**
+ * Write callback, this will fill in passed array
+ * @param buffer
+ * @param datalen
+ * @param dataptr1
+ * @return 
+ */
+exprivate int test_bfprintcb_writef(char *buffer, long datalen, void *dataptr1)
+{
+    bfprintcb_data_t *data = (bfprintcb_data_t *)dataptr1;
+    
+    assert_equal(strlen(buffer)+1, datalen);
+    
+    NDRX_STRCPY_SAFE(data->lines[data->nrlines], buffer);
+    data->nrlines++;
+    return EXSUCCEED;
+}
+
+/**
+ * Bfprintcb testing (i.e. callback testing...)
+ * @return
+ */
+Ensure(test_bfprintcb)
+{
+    char fb[1024];
+    UBFH *p_ub = (UBFH *)fb;
+    bfprintcb_data_t data;
+    int line_counter=0;
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+
+    memset(&data, 0, sizeof(data));
+    load_print_test_data(p_ub);
+    load_field_table();
+    
+    assert_equal(Bfprintcb(p_ub, test_bfprintcb_writef, (void *)&data), EXSUCCEED);
+    UBF_LOG(log_error, "Bfprintcb: %s", Bstrerror(Berror));
+    
+    /* compare the buffers */
+    for (line_counter=0; line_counter<N_DIM(ref_print)-1; line_counter++)
+    {
+        assert_string_equal(data.lines[line_counter], ref_print[line_counter]);
+        line_counter++;
+    }
+    
+    assert_equal(data.nrlines, N_DIM(ref_print)-1);
+    
+    /* cannot print on null file */
+    assert_equal(Bfprintcb(p_ub, NULL, NULL), EXFAIL);
     assert_equal(Berror, BEINVAL);
     
 }
@@ -792,6 +855,7 @@ TestSuite *ubf_print_tests(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_bfprint);
+    add_test(suite, test_bfprintcb);
     add_test(suite, test_bprint);
     add_test(suite, test_bextread_bfldid);
     add_test(suite, test_bextread_fldnm);
