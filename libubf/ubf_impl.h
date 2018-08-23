@@ -119,7 +119,7 @@ extern int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
                                    BFLDOCC *occ, char *buf, BFLDLEN *len);
 extern int ndrx_Bextread (UBFH * p_ub, FILE *inf);
 extern void ndrx_Bboolpr (char * tree, FILE *outf, 
-        void (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
 extern int ndrx_Bread  (UBFH * p_ub, FILE * inf);
 extern int ndrx_Bwrite (UBFH *p_ub, FILE * outf);
 extern int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
