@@ -1982,7 +1982,7 @@ expublic void ndrx_Btreefree (char *tree)
  * @param[in] dataptr1 optional data parameter forwarded to p_wirtef if invoked.
  */
 expublic void ndrx_Bboolpr (char * tree, FILE *outf, 
-        void (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
@@ -2008,7 +2008,10 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf,
             userlog("Failed to asprintf: %s", strerror(err));\
         }\
         tmp_len++;\
-        p_writef(tmp, tmp_len, dataptr1);\
+        if (EXSUCCEED!=p_writef(tmp, tmp_len, dataptr1))\
+        {\
+            return;\
+        }\
     }\
     else\
     {\
