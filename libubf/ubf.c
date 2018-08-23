@@ -1823,7 +1823,7 @@ expublic void Bboolpr (char * tree, FILE *outf)
  * @param[in] dataptr1 user pointer to forward to \p p_writef function
  */
 expublic void Bboolprcb (char * tree, 
-        void (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
     API_ENTRY;
 

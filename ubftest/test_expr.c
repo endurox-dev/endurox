@@ -1384,10 +1384,11 @@ Ensure(test_bboolpr)
  * @param datalen token len including EOS byte
  * @param dataptr1 output byte
  */
-exprivate void bboolprcb_callback(char *buffer, long datalen, void *dataptr1)
+exprivate int bboolprcb_callback(char *buffer, long datalen, void *dataptr1)
 {
     assert_equal(datalen, strlen(buffer)+1);
     strcat((char *)dataptr1, buffer);
+    return EXSUCCEED;
 }
 
 /**
