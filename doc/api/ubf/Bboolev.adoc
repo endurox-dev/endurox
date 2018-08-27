@@ -5,7 +5,7 @@ BBOOLEV(3)
 
 NAME
 ----
-Bboolev - Evaulate compiled expression tree against UBF buffer
+Bboolev - Evaluate compiled expression tree against UBF buffer
 
 
 SYNOPSIS
@@ -19,15 +19,20 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Evaluate compiled boolean expresion in 'tree' against UBF buffer in 'p_ub'.
+Evaluate compiled boolean expression in 'tree' against UBF buffer in 'p_ub'.
 
 RETURN VALUE
 ------------
-On success, *Bboolev()* and result is TRUE, then *1* is returned. ON success but statement is FALSE, then *0* is returned. On error *-1* is returned, with *Berror* set to indicate the error.
+On success, *Bboolev()* and result is TRUE, then *1* is returned. ON 
+success but statement is FALSE, then *0* is returned. 
+On error *-1* is returned, with *Berror* set to indicate the error.
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BNOTFLD* 'p_ub' is not fielded buffer or argument NULL.
 
 *BEINVAL* 'tree' parameter is NULL.
 
