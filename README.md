@@ -29,6 +29,10 @@ Platform provides X/Open XATMI and XA interfaces/APIs for C/C++ applications. En
 be considered as replacement for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), 
 Hitachi OpenTP1 and other XATMI middlewares.
 
+Dual licensed under Affero General Public License Version 3 for use in Open
+Source project or Commercial license Acquired from Mavimax Ltd 
+(https://www.mavimax.com),
+
 EnduroX have binddings for:
 - Golang (client & server)
 - PHP (client)
@@ -41,29 +45,46 @@ Enduro/X provides following features:
 * Standards based APIs - SCA, The Open Group XATMI
 Communication types - Synchronous, Asynchronous, Conversational, Publish/subscribe
 * Typed buffers
-  * UBF (Unified Buffer Format) which provides emulation of Tuxedo's FML/FML32 format. UBF if high performance binary protocol buffer format. Buffer is indexed by binary search on fixed data types.
+  * UBF (Unified Buffer Format) which provides emulation of Tuxedo's FML/FML32 
+        format. UBF if high performance binary protocol buffer format. Buffer is 
+        indexed by binary search on fixed data types.
   * STRING buffer format.
   * CARRAY (byte array) buffer format.
   * JSON buffer format, automatic conversion between JSON and UBF available.
-  * VIEW buffer (starting from version 5.0+). This offer C structure sending between processes in cross platform way. Also this allows to map UBF fields to VIEW fields, thus helping developer quicker to develop applications, by combining UBF and VIEW buffers.
+  * VIEW buffer (starting from version 5.0+). This offer C structure sending
+        between processes in cross platform way. Also this allows to map UBF 
+        fields to VIEW fields, thus helping developer quicker to develop applications, 
+        by combining UBF and VIEW buffers.
 * Transaction Management - Global Transactions - Two-phase commit protocol - X/Open XA
 * Clustering - on peer-to-peer basis
 * Event broker (also called publish and subscribe messaging)
 * Security - Cluster link encryption with GNU PGP framework
 * System process monitoring and self healing (pings and restarts)
-* SOA Service cache. XATMI services can be cached to LMDB database. Resulting that next call to service from any local client receives results directly from cache (mainly from direct memory read).
+* SOA Service cache. XATMI services can be cached to LMDB database. Resulting 
+        that next call to service from any local client receives results 
+        directly from cache (mainly from direct memory read).
 * Dynamic re-configuration
 * Custom server polling extensions
 * XATMI sub-system is able to work with out main application server daemon (ndrxd)
-* Main application server daemon (ndrxd) can be restarted (if crashed). When started back it enters in learning mode for some period of time, in which in gathers information about system, what services are running, etc. After learning =-period, it starts to do normal operations
+* Main application server daemon (ndrxd) can be restarted (if crashed). 
+        When started back it enters in learning mode for some period of time, 
+        in which in gathers information about system, what services are running, 
+        etc. After learning =-period, it starts to do normal operations
 * tpforward() call
 * ATMI server threads may become clients, and can do tpcall()
-* Extensive logging & debugging. Enduro/X logging can be configured per binary with different log levels. As ATMI servers can be started outside of appserver, it is possible to debug them from programming IDE or with tools like valgrind.
+* Extensive logging & debugging. Enduro/X logging can be configured per binary 
+        with different log levels. As ATMI servers can be started outside of 
+        appserver, it is possible to debug them from programming IDE or with 
+        tools like valgrind.
 * For quality assurance project uses automated unit-testing and integration-testing
 * Built in ATMI service profiling.
-* Environment variables can be updated for XATMI server processes with out full application reboot.
-* Generic client process monitor (cpm). Subsystem allows to start/stop/monitor client executables. At client process crashes, cpm will start it back.
-* Starting with version 5.2 Enduro/X provides configuration data encryption feature, so that software which is built on top of Enduro/X may comply with Payment Card Industry Data Security Standard (PCI/DSS).
+* Environment variables can be updated for XATMI server processes with 
+        out full application reboot.
+* Generic client process monitor (cpm). Subsystem allows to start/stop/monitor 
+        client executables. At client process crashes, cpm will start it back.
+* Starting with version 5.2 Enduro/X provides configuration data encryption feature, 
+        so that software which is built on top of Enduro/X may comply with 
+        Payment Card Industry Data Security Standard (PCI/DSS).
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
