@@ -136,7 +136,7 @@ Ensure(test_expr_basic)
     /* Test OK */
     tree=Bboolco ("2+2*4==10 && 'abc' %% '.bc'");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(NULL, tree), EXTRUE);
+    assert_equal(Bboolev(NULL, tree), EXFAIL);
     Btreefree(tree);
     /*----------------------------------------------------------*/
     /* We have failure somehere! */
@@ -1588,6 +1588,40 @@ Ensure(test_cbfunc)
 }
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Test invalid arguments to eval functions
+ */
+Ensure(test_expr_argsval)
+{
+    char buf[640];
+    UBFH *p_ub = (UBFH *)buf;
+    char *tree = NULL;
+    
+    memset(buf, 0, sizeof(buf));
+
+    /* This should be true */
+    tree=Bboolco ("1==1");
+    assert_not_equal(tree, NULL);
+    
+    assert_equal(Bboolev(p_ub, tree), EXFAIL);
+    assert_equal(Berror, BNOTFLD);
+    
+    assert_double_equal(Bfloatev(p_ub, tree), -1);
+    assert_equal(Berror, BNOTFLD);
+    
+    Btreefree(tree);
+    tree = NULL;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    assert_equal(Bboolev(p_ub, tree), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_double_equal(Bfloatev(p_ub, tree), -1);
+    assert_equal(Berror, BEINVAL);
+    
+}
+
 TestSuite *ubf_expr_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -1611,6 +1645,10 @@ TestSuite *ubf_expr_tests(void)
     
     /* Function callback tests... */
     add_test(suite, test_cbfunc);
+    
+    /* #338 */
+    add_test(suite, test_expr_argsval);
+    
 
     return suite;
 }
