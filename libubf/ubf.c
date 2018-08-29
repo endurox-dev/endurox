@@ -863,9 +863,28 @@ expublic char * Bboolco (char * expr)
     }
 }
 
+/**
+ * Evaluate boolean expression
+ * @param[in] p_ub UBF buffer
+ * @param[in] tree compiled expression tree
+ * @return 0 - false, 1 - true
+ */
 expublic int Bboolev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    
+    if (NULL==tree)
+    {
+         ndrx_Bset_error_fmt(BEINVAL, "tree is NULL");
+         return EXFAIL;
+    }
+    
     return ndrx_Bboolev (p_ub, tree);
 }
 
@@ -878,6 +897,19 @@ expublic int Bboolev (UBFH * p_ub, char *tree)
 expublic double Bfloatev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    
+    if (NULL==tree)
+    {
+         ndrx_Bset_error_fmt(BEINVAL, "tree is NULL");
+         return EXFAIL;
+    }
+    
     return ndrx_Bfloatev (p_ub, tree);
 }
 
