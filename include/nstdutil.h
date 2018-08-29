@@ -61,6 +61,7 @@ extern "C" {
 #define NDRX_GROWLIST_ACCESS(LIST__, INDEX__, TYPE__) \
     (TYPE__*)(((char *)(LIST__)->mem) + (INDEX__) * (LIST__)->size)
             
+#define NDRX_LOCALE_STOCK_DECSEP        '.'    /**< default decimal seperator */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -150,6 +151,8 @@ extern NDRX_API uint32_t ndrx_rotl32b (uint32_t x, uint32_t n);
 extern NDRX_API int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz);
 
 extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
+
+extern NDRX_API double ndrx_atof(char *str);
 
 /* Mapping functions: */
 extern NDRX_API char *ndrx_dolongstrgmap(longstrmap_t *map, long val, long endval);
