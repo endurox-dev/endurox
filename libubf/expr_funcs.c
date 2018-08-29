@@ -193,7 +193,8 @@ void yyerror(char *s, ...)
         va_start(ap, s);
         char errbuf[2048];
 
-        sprintf(errbuf, ". Near of %d-%d: ", yylloc.first_column, yylloc.last_column);
+        snprintf(errbuf, sizeof(errbuf), ". Near of %d-%d: ", 
+                yylloc.first_column, yylloc.last_column);
         vsprintf(errbuf+strlen(errbuf), s, ap);
 
         if (ndrx_Bis_error())
@@ -457,7 +458,7 @@ int set_func(char *funcname, functionPtr_t functionPtr)
             goto out;
         }
 
-        strcpy(tmp->name, funcname);
+        NDRX_STRCPY_SAFE(tmp->name, funcname);
         tmp->fptr = functionPtr;
         EXHASH_ADD_STR( M_func_hash, name, tmp );
     }
@@ -570,6 +571,8 @@ struct ast * newfloat(double d)
 {
     struct ast_float *a = NDRX_MALLOC(sizeof(struct ast_float));
     memset(a, 0, sizeof(struct ast_float));
+    
+    UBF_LOG(log_debug, "YOPT ! FLOAT !!!!!!! %lf", d);
 
     if(!a) {
         yyerror("out of space");
@@ -593,7 +596,7 @@ struct ast * newfloat(double d)
     G_node_count++;
     
     UBF_LOG(log_debug, "adding newflt: id: %02d, type: %s, sub-type:%s "
-            "value: [%0.13f]",
+            "value: [%0.13lf]",
             a->nodeid,
             M_nodetypes[a->nodetype],
             M_subtypes[a->sub_type],
@@ -1087,7 +1090,7 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
             {
                 ret=op_equal_long_cmp(type, sub_type, &lval, &rval, v);
             }
-            else /* Nothing to do:- downgrate to float comparsation */
+            else /* Nothing to do:- downgrade to float compare */
             {
                 ret=op_equal_float_cmp(type, sub_type, &lval, &rval, v);
             } /* else */
