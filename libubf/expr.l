@@ -41,6 +41,7 @@
 #include <ndebug.h>
 #include <stdlib.h>
 #include <string.h>
+#include <nstdutil.h>
 
  /* Handle locations */
  int yycolumn = 1;
@@ -107,7 +108,7 @@ FUNC ([_a-zA-Z][_a-zA-Z0-9]*"()")
 [0-9]+"."[0-9]*{EXP}? |
 "."?[0-9]+{EXP}? {
                                         /* TODO: fix sperator according to locale */
-					yylval.d = atof(yytext); 
+					yylval.d = ndrx_atof(yytext); 
                                         
                                         UBF_LOG(log_debug, "FLOAT: (%s): %lf %lf %lf %lf",
                                                 yytext, yylval.d, atof(yytext), atof("1.3"), atof("1,3"));
