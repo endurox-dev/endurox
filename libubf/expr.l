@@ -39,6 +39,7 @@
 #include "expr.h"
 #include "expr.tab.h"
 #include <ndebug.h>
+#include <stdlib.h>
 #include <string.h>
 
  /* Handle locations */
@@ -105,8 +106,12 @@ FUNC ([_a-zA-Z][_a-zA-Z0-9]*"()")
 				}
 [0-9]+"."[0-9]*{EXP}? |
 "."?[0-9]+{EXP}? {
- 
-					yylval.d = atof(yytext); return UFLOAT;
+                                        /* TODO: fix sperator according to locale */
+					yylval.d = atof(yytext); 
+                                        
+                                        UBF_LOG(log_debug, "FLOAT: (%s): %lf %lf %lf %lf",
+                                                yytext, yylval.d, atof(yytext), atof("1.3"), atof("1,3"));
+                                        return UFLOAT;
 				}
  /* Custom function */
 {FUNC}          {
