@@ -29,7 +29,7 @@ Platform provides X/Open XATMI and XA interfaces/APIs for C/C++ applications. En
 be considered as replacement for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), 
 Hitachi OpenTP1 and other XATMI middlewares.
 
-Dual licenses under AFFERO GENERAL PUBLIC LICENSE Version 3 for use in Open
+Dual licensed under Affero General Public License Version 3 for use in Open
 Source project or Commercial license Acquired from Mavimax Ltd 
 (https://www.mavimax.com),
 
