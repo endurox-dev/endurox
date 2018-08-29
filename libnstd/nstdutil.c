@@ -1224,6 +1224,46 @@ expublic char * ndrx_memdup(char *org, size_t len)
 }
 
 /**
+ * Locale independent atof
+ * Basically this assumes that home decimal separator is '.'. I.e. \r str must
+ * contain only '.'.
+ * @param str string to convert to float, decimal separator is '.'.
+ * @return converted decimal value
+ */
+expublic double ndrx_atof(char *str)
+{
+    char test[5];
+    char buf[128];
+    char *p;
+    int len, i;
+    
+    /* extract the decimal separator... */
+    snprintf(test, sizeof(test), "%.1f", 0.0f);
+    
+    if (NDRX_LOCALE_STOCK_DECSEP!=test[1])
+    {
+        NDRX_STRCPY_SAFE(buf, str);
+        len = strlen(buf);
+        
+        for (i=0; i<len; i++)
+        {
+            if (NDRX_LOCALE_STOCK_DECSEP==buf[i])
+            {
+                buf[i] = test[1];
+            }
+        }
+        
+        p = buf;
+    }
+    else
+    {
+        p = str;
+    }
+    
+    return atof(p);
+}
+
+/**
  * Extract tokens from string
  * @param str
  * @param fmt   Format string for scanf
