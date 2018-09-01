@@ -87,6 +87,7 @@ set(MAN3_NAMES
     Bread
     Breadcb
     Bwrite
+    Bwritecb
     Btreefree
     Bboolsetcbf
     Badds
