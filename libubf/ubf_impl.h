@@ -117,7 +117,8 @@ extern BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len
 extern BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype);
 extern int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
                                    BFLDOCC *occ, char *buf, BFLDLEN *len);
-extern int ndrx_Bextread (UBFH * p_ub, FILE *inf);
+extern int ndrx_Bextread (UBFH * p_ub, FILE *inf,
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern void ndrx_Bboolpr (char * tree, FILE *outf, 
         int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
 extern int ndrx_Bread  (UBFH * p_ub, FILE * inf,

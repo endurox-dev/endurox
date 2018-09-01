@@ -1817,7 +1817,40 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
         return EXFAIL;
     }
     
-    return ndrx_Bextread (p_ub, inf);
+    return ndrx_Bextread (p_ub, inf, NULL, NULL);
+}
+
+/**
+ * Read UBF buffer from printed/text format UBF.
+ * @param p_ub ptr to UBF buffer
+ * @param p_readf callback to read function. Function shall provide back data
+ *  to ndrx_Bextread(). The reading must be feed line by line. The input line
+ *  must be terminated with EOS. The buffer size which accepts the input line
+ *  is set by `bufsz'. The function receives forwarded \p dataptr1 argument.
+ *  Once EOF is reached, the callback shall return read of 0 bytes. Otherwise
+ *  it must return number of bytes read, including EOS.
+ * @param dataptr1 option user pointer forwarded to \p p_readf.
+ * @return SUCCEED/FAIL
+ */
+expublic int Bextreadcb (UBFH * p_ub, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_readf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Callback function cannot be NULL!");
+        return EXFAIL;
+    }
+    
+    return ndrx_Bextread (p_ub, NULL, p_readf, dataptr1);
 }
 
 /**
