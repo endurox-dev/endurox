@@ -224,7 +224,11 @@ extern NDRX_API void Bboolpr (char * tree, FILE *outf);
 extern NDRX_API void Bboolprcb (char * tree, 
         int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
 extern NDRX_API int Bread (UBFH * p_ub, FILE * inf);
+extern int Breadcb (UBFH * p_ub, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern NDRX_API int Bwrite (UBFH *p_ub, FILE * outf);
+extern NDRX_API int Bwritecb (UBFH *p_ub, 
+        long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern NDRX_API void Btreefree (char *tree);
 /* Callback function that can be used from expressions */
 extern NDRX_API int Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
