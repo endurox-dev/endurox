@@ -129,6 +129,73 @@ Ensure(test_readwrite_invalid_descr)
     remove_test_temp();
 }
 
+/**
+ * Place where to put the read/write data
+ */
+exprivate char M_temp_space[1024];
+exprivate int M_cur_offset;
+
+/**
+ * Write function to buffer
+ * @param buffer buffer received
+ * @param bufsz buffer to write
+ * @param dataptr1 extra ptr must be 239
+ * @return  number of bytes written
+ */
+
+exprivate long test_writef(char *buffer, long bufsz, void *dataptr1)
+{
+    memcpy(M_temp_space+M_cur_offset, buffer, bufsz);
+    
+    M_cur_offset+=(int)bufsz;
+    
+    assert_equal(dataptr1, (char *)675);
+    
+    return bufsz;
+}
+
+/**
+ * Read data from buffer
+ * @param buffer buffer to read from
+ * @param bufsz data size to fill in the buffer / requested
+ * @param dataptr1 optional ptr must be 675
+ * @return 
+ */
+exprivate long test_readf(char *buffer, long bufsz, void *dataptr1)
+{
+    memcpy(buffer, M_temp_space+M_cur_offset, bufsz);
+    
+    M_cur_offset+=(int)bufsz;
+    
+    assert_equal(dataptr1, (char *)239);
+    
+    return bufsz;
+}
+
+/**
+ * Perform testing of Brwritecb() and Breadcb()
+ */
+Ensure(test_readwrite_callbacked)
+{
+    char fb[1024];
+    UBFH *p_ub = (UBFH *)fb;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+
+    /* Load test stuff */
+    set_up_dummy_data(p_ub);
+    
+    M_cur_offset = 0;
+    assert_equal(Bwritecb(p_ub, test_writef, (char *)675), EXSUCCEED);
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    
+    M_cur_offset = 0;
+    assert_equal(Breadcb(p_ub, test_readf, (char *)239), EXSUCCEED);
+    
+    do_dummy_data_test(p_ub);
+}
+
 TestSuite *ubf_readwrite_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -136,6 +203,7 @@ TestSuite *ubf_readwrite_tests(void)
     add_test(suite, test_readwrite);
     add_test(suite, test_readwrite_err_space);
     add_test(suite, test_readwrite_invalid_descr);
+    add_test(suite, test_readwrite_callbacked);
 
     return suite;
 }
