@@ -220,6 +220,8 @@ extern NDRX_API int Bfprintcb (UBFH *p_ub,
 extern NDRX_API char * Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
 extern NDRX_API int Bextread (UBFH * p_ub, FILE *inf);
+extern NDRX_API int Bextreadcb (UBFH * p_ub, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern NDRX_API void Bboolpr (char * tree, FILE *outf);
 extern NDRX_API void Bboolprcb (char * tree, 
         int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);

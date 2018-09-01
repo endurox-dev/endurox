@@ -58,6 +58,7 @@ set(MAN3_NAMES
     Bnext
     Bboolco
     Bboolpr
+    Bboolprcb
     Bfind
     CBfind
     Bboolev
@@ -82,6 +83,7 @@ set(MAN3_NAMES
     Bgetlast
     Bprint
     Bfprint
+    Bfprintcb
     Btypcvt
     Bextread
     Bread

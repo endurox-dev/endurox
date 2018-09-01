@@ -1,11 +1,12 @@
-BFPRINT(3)
-==========
+BFPRINTCB(3)
+============
 :doctype: manpage
 
 
 NAME
 ----
-Bfprint - Print the buffer output in human readable form to specified io stream
+Bfprintcb - Print the buffer output in human/machine readable format to 
+    callback function
 
 
 SYNOPSIS
@@ -13,15 +14,17 @@ SYNOPSIS
 
 #include <ubf.h>
 
-int Bfprint (UBFH *'p_ub', FILE *'outf');
+int Bfprintcb (UBFH *'p_ub', int (*'p_writef')(char *'buffer', long 'datalen', 
+    void *'dataptr1'), void *'dataptr1');
+
 
 Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Function prints the 'p_ub' buffer content to io stream at 'outf'. The format of 
-the output is "<FIELD><TAB><VALUE><NEW_LINE>". The *BFLD_CARRAY* 
-fields are printed in the way that non readable characters are 
+Function prints the 'p_ub' buffer content to callback function 'p_writef'. 
+The format of the output is "<FIELD><TAB><VALUE><NEW_LINE><EOS(0x00)>". 
+The *BFLD_CARRAY*  fields are printed in the way that non readable characters are 
 printed in hex-decimal format, prefixed with \. If value 
 contains \ char, then it is printed as \\. Example:
 
@@ -38,9 +41,14 @@ T_STRING_FLD    HELLO WORLD
 T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
 --------------------------------------------------------------------------------
 
+The callback receives 'buffer' parameter with ASCII chars to print. The 'datalen'
+indicates the data length in the 'buffer', this includes a newline and EOS byte.
+'dataptr1' is forwarded from the main *Bfprintcb()* call.
+
+
 RETURN VALUE
 ------------
-On success, *Bfprint()* return zero; on error, -1 is returned, with 
+On success, *Bfprintcb()* return zero; on error, -1 is returned, with 
 *Berror* set to indicate the error.
 
 ERRORS
@@ -64,7 +72,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bfprintcb(3)* *Bextread(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)*
+*Bfprint(3)* *Bextread(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)*
 
 COPYING
 -------
