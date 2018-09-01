@@ -1942,10 +1942,10 @@ expublic char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 }
 
 /**
- * API entry for Bread
- * @param p_ub
- * @param inf
- * @return
+ * API entry for Bread. Read binary UBF buffer form input stream
+ * @param p_ub UBF buffer
+ * @param inf input file stream
+ * @return EXSUCCEED(0)/EXFAIL(-1)
  */
 expublic int Bread (UBFH * p_ub, FILE * inf)
 {
@@ -1965,14 +1965,14 @@ expublic int Bread (UBFH * p_ub, FILE * inf)
         return EXFAIL;
     }
 
-    return ndrx_Bread (p_ub, inf);
+    return ndrx_Bread (p_ub, inf, NULL, NULL);
 }
 
 /**
- * API entry for Bwrite
- * @param p_ub
- * @param outf
- * @return
+ * API entry for Bwrite. Write binary buffer to output stream.
+ * @param p_ub UBF buffer to read from
+ * @param outf output stream to write to
+ * @return EXSUCCEED/EXFAIL, Berror set in case of problems.
  */
 expublic int Bwrite (UBFH *p_ub, FILE * outf)
 {
@@ -1987,13 +1987,80 @@ expublic int Bwrite (UBFH *p_ub, FILE * outf)
     /* check output file */
     if (NULL==outf)
     {
-        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Output file cannot be NULL!");
         return EXFAIL;
     }
 
-    return ndrx_Bwrite (p_ub, outf);
+    return ndrx_Bwrite (p_ub, outf, NULL, NULL);
 }
 
+/**
+ * Read UBF buffer from callback function. The format is binary, platform specific.
+ * @param p_ub UBF buffer to write to
+ * @param[in] p_readf is a callback function which is used to read data from.
+ *  The special requirement of this callback is that, The number of bytes which
+ *  must be read are specified in `bufsz', otherwise error will occur. In case of
+ *  callback function error by it self, -1 can be returned in that case. `buffer'
+ *  is buffer where read data must be put in. `dataptr1` is forwarded from \p
+ *  dataptr1 argument.
+ * @param[in] dataptr1 is value which is forwarded to \p p_writef. This is optional
+ *  and may contain NULL.
+ * @return EXSUCCEED/EXFAIL, Berror set in case of problems.
+ */
+expublic int Breadcb (UBFH * p_ub, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_readf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Read callback function must not be NULL!");
+        return EXFAIL;
+    }
+
+    return ndrx_Bread (p_ub, NULL, p_readf, dataptr1);
+}
+
+/**
+ * Write UBF buffer to callback function
+ * @param p_ub UBF buffer to read from
+ * @param[in] p_writef is a callback function which receives portions of UBF buffer.
+ *  once function is called, all `bufsz' bytes must be accepted. And function
+ *  at success must return the number of bytes written (i.e. the same `bufsz')
+ *  other cases are considered as errro. The `buffer' is pointer where buffer
+ *  bytes are stored. The `dataptr1' is a value forwarded from the Bwritecb()
+ *  arguments.
+ * @param[in] dataptr1 is value which is forwarded to \p p_writef. This is optional
+ *  and may contain NULL.
+ * @return EXSUCCEED/EXFAIL, Berror set in case of problems.
+ */
+expublic int Bwritecb (UBFH *p_ub, 
+        long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Output callback function must not be NULL!");
+        return EXFAIL;
+    }
+
+    return ndrx_Bwrite (p_ub, NULL, p_writef, dataptr1);
+}
 
 /**
  * Get the length of the field
