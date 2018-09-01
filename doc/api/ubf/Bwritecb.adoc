@@ -44,7 +44,7 @@ with debug info from last function call.
 
 *BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
 
-*BEINVAL* 'outf' is NULL.
+*BEINVAL* 'p_writef' is NULL.
 
 *BEUNIX* Failed to read from stream.
 

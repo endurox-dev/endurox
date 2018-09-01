@@ -1,0 +1,86 @@
+BBOOLPRCB(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+Bboolprcb - Print the compiler boolean expression AST to callback function
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+void Bboolprcb (char * 'tree', 
+        int (*'p_writef')(char *'buffer', long 'datalen', void *'dataptr1'), 
+        void *'dataptr1');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Print the compiled UBF buffer boolean expression evaluation Abstract Syntax Tree
+ (AST) at 'tree' hander to 'p_writef' callback function. 
+The sample output for AST is following:
+
+--------------------------------------------------------------------------------
+
+
+int writef(char *buffer, long datalen, void *dataptr1)
+{
+    /* in total this will get buffer fragments like
+     * ((2*(4+5)) || ((5 && ('abc' %% '..b')) && (((2/2)*4) == 5))
+     * note there could be newlines (\n) between calls
+     */
+    return 0;
+}
+
+...
+tree=Bboolco ("2 * ( 4 + 5 ) || 5 && 'abc' %% '..b' && 2/2*4==5")
+...
+Bboolprcb(tree, writef, NULL);
+
+--------------------------------------------------------------------------------
+
+The callback function will called several times as portions of the AST are
+traversed with each call line is terminated with EOS (0x00 byte) symbol. 
+The compiled tree to function is presented by 'tree' argument, the callback
+is set by 'p_writef' function. Function accepts optional 'dataptr1' argument
+which is user pointer forwarded to 'p_writef' callback. The 'dataptr1' can be NULL.
+
+The 'p_writef' by it self receives 'buffer' which contains ASCII chars of the
+AST representation, 'datalen' includes the data buffer received (note EOS are
+note included in intermediate calls). The 'dataptr1' is user pointer passed to
+*Bboolprcb()*. In case of success the callback shall return 0, and in cases
+of failure a non zero value. When error occurs, the function terminates the
+printing.
+
+The last call to printing includes newline and then 0x00 follows.
+
+
+RETURN VALUE
+------------
+Function is void and does not return any value.
+
+ERRORS
+------
+Function is void and does not return any error.
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bboolpr(3)* *Bboolev(3)* *Bfloatev(3)* *Btreefree(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
