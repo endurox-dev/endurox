@@ -63,8 +63,8 @@ SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flag
 
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
-#    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
-    SET(CMAKE_C_FLAGS "-Wformat-overflow=0 ${CMAKE_C_FLAGS}")
+    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
+#    SET(CMAKE_C_FLAGS "-Wformat-overflow=0 ${CMAKE_C_FLAGS}")
 endif()
 
 # Enable release only if specified.
@@ -78,8 +78,8 @@ ELSE ()
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-      SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-#        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
+#      SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
 SET(RT_LIB rt dl)
