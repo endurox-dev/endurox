@@ -178,7 +178,6 @@ Ensure(ubfdb_local_tests)
     assert_equal(Berror, BBADNAME);
     
     /* the same here */
-    UBF_LOG(log_error, "YOPTEL 88888!!!!");
     assert_equal(Bfldid("T_HELLO_STR"), BBADFLDID);
     assert_equal(Berror, BBADNAME);
     

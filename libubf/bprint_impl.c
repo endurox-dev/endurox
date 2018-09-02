@@ -33,8 +33,12 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
-#include <string.h>
+/* needed for asprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
+
+#include <string.h>
+
 #include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
@@ -293,9 +297,9 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
 {
     int ret=EXSUCCEED;
     int line=0;
-    char readbuf[EXTREAD_BUFFSIZE];
-    char fldnm[EXTREAD_BUFFSIZE];
-    char value[EXTREAD_BUFFSIZE];
+    char readbuf[NDRX_MSGSIZEMAX];
+    char fldnm[UBFFLDMAX+1];
+    char value[NDRX_MSGSIZEMAX];
     char flag;
     char *p;
     char *tok;
@@ -326,21 +330,24 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
             }
             ret = EXSUCCEED;
         }
-        else if (NULL==fgets(readbuf, sizeof(readbuf), inf))
+        else 
         {
-            /* terminate the loop */
-            /*
-             * Check errors on file.
-             */
-            if (!feof(inf))
+            if (NULL==fgets(readbuf, sizeof(readbuf), inf))
             {
-               /* some other error happened!?! */
-               ndrx_Bset_error_fmt(BEUNIX, "Failed to read from file with error: [%s]",
-                                    strerror(errno));
-               EXFAIL_OUT(ret);
+                /* terminate the loop */
+                /*
+                 * Check errors on file.
+                 */
+                if (!feof(inf))
+                {
+                   /* some other error happened!?! */
+                   ndrx_Bset_error_fmt(BEUNIX, "Failed to read from file "
+                           "with error: [%s]", strerror(errno));
+                   EXFAIL_OUT(ret);
+                }
+
+                break;
             }
-            
-            break;
         }
                 
         len = strlen(readbuf);
