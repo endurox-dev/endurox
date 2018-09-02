@@ -280,9 +280,9 @@ Ensure(test_bfprintcb)
  */
 Ensure(test_bprint)
 {
-    char fb[2024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
-    char fb2[1024];
+    char fb2[2048];
     UBFH *p_ub2 = (UBFH *)fb2;
     BFLDLEN len=0;
     FILE *f;
@@ -297,14 +297,15 @@ Ensure(test_bprint)
     /* nothing much to test here... */
     close(1); /* close stdout */
     assert_not_equal((f=fopen(filename, "w")), NULL);
-    fstdout = dup(fileno(f)); /* make file appear as stdout */
+    fstdout = dup2(fileno(f), 1); /* make file appear as stdout */
     assert_equal(Bprint(p_ub), NULL);
     fclose(f);
 
     /* OK, if we have that output, try to extread it! */
     assert_not_equal((f=fopen(filename, "r")), NULL);
+
     assert_equal(Bextread(p_ub2, f), EXSUCCEED);
-    /* compare readed buffer */
+    /* compare read buffer */
     assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
@@ -854,10 +855,11 @@ TestSuite *ubf_print_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
-    add_test(suite, test_bfprint);
     
     add_test(suite, test_bfprintcb);
+     
     add_test(suite, test_bprint);
+    add_test(suite, test_bfprint);
     
     add_test(suite, test_bextread_bfldid);
     add_test(suite, test_bextread_fldnm);

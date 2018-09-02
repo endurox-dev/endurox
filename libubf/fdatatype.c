@@ -51,13 +51,13 @@
 
 #if EX_ALIGNMENT_BYTES == 8
 
-#define ALIGNED_SIZE(DSIZE) (sizeof(BFLDID)*2 + DSIZE) + DEFAULT_ALIGN - \ 
-    (sizeof(BFLDID)*2 + DSIZE) % DEFAULT_ALIGN;
+#define ALIGNED_SIZE(DSIZE) \
+    (sizeof(BFLDID)*2 + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID)*2 + DSIZE) % DEFAULT_ALIGN;
 
 #else
 
-#define ALIGNED_SIZE(DSIZE) (sizeof(BFLDID) + DSIZE) + DEFAULT_ALIGN - \ 
-    (sizeof(BFLDID) + DSIZE) % DEFAULT_ALIGN;
+#define ALIGNED_SIZE(DSIZE) \
+    (sizeof(BFLDID) + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID) + DSIZE) % DEFAULT_ALIGN;
 
 #endif
 /*---------------------------Enums--------------------------------------*/
