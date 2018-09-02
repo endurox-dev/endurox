@@ -93,8 +93,10 @@ extern "C" {
 #define BFLD_CARRAY_SIZE	0
 #define BFLD_INT_SIZE		sizeof(int)
 
-/* #define UBF_API_DEBUG   1 *//* Provide lots of debugs from UBF API? */
 
+/* #define UBF_API_DEBUG   1 *//* Provide lots of debugs from UBF API? */
+/* #define BIN_SEARCH_DEBUG        1*/
+    
 #define VALIDATE_MODE_NO_FLD    0x1
 
 #define IS_TYPE_INVALID(T) (T<BFLD_MIN || T>BFLD_MAX)

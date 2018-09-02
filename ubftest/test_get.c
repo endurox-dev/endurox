@@ -125,7 +125,7 @@ void load_get_test_data_2(UBFH *p_ub)
  */
 Ensure(test_cbgetalloc)
 {
-    char fb[1048];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_find_test_data(p_ub);

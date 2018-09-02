@@ -39,7 +39,7 @@ set(RELEASE "1")
 
 
 ################################################################################
-# OS Confiugration
+# OS Configuration
 ################################################################################
 
 EXEC_PROGRAM(uname ARGS -a OUTPUT_VARIABLE _TMP_CMAKE_OS_NAME)
@@ -57,6 +57,7 @@ OPTION(DEFINE_FORCEKQUEUE "Force Kqueue (BSD poll framework)" OFF)
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
 OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 
+SET (EX_ALIGNMENT_BYTES "8")
 
 SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
 
@@ -77,8 +78,8 @@ ELSE ()
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-#      SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
+      SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+#        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
 ENDIF ()
 
 SET(RT_LIB rt dl)
@@ -129,8 +130,13 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
 	set(EX_OS_HPUX "1")
     set(NDRX_LD_LIBRARY_PATH "SHLIB_PATH")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
-	set(EX_OS_SUNOS "1")
+    set(EX_OS_SUNOS "1")
     set(EX_USE_POLL "1")
+
+    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
+        set(EX_ALIGNMENT_BYTES "8")
+    ENDIF ()
+
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 	# Bug #219 !!! _REENTRANT makes errno thread safe
 	SET(CMAKE_C_FLAGS "-D_REENTRANT")
@@ -190,6 +196,9 @@ IF(DEFINE_FORCEKQUEUE)
     set(EX_USE_KQUEUE "1")
 ENDIF()
 
+
+message("CMake EX_ALIGNMENT_BYTES  = ${EX_ALIGNMENT_BYTES}")
+
 ################################################################################
 # "Configure"
 ################################################################################
@@ -217,9 +226,9 @@ CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char s
 
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
 
-CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" HAVE_STRCAT_S)
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" EX_HAVE_STRCAT_S)
 
-CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" HAVE_ASPRINTF)
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" EX_HAVE_ASPRINTF)
 
 # To check for an include file you do this: 
 CHECK_INCLUDE_FILE("stdint.h"        HAVE_STDINT_H)

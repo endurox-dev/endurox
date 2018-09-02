@@ -45,8 +45,8 @@
  */
 Ensure(test_Bcpy)
 {
-    char buf1[550];
-    char buf2[480];
+    char buf1[1550];
+    char buf2[200];
     char data_buf[480];
 
     BFLDLEN len;
@@ -267,8 +267,9 @@ Ensure(test_btypcvt)
  */
 Ensure(ubf_test_struct)
 {
-    /* test data structures */
+    /* test data structures  -why?
     assert_equal(sizeof(UBF_header_t), 48);
+    */
 }
 
 /**

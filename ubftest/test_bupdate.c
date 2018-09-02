@@ -298,9 +298,9 @@ Ensure(test_fupdate)
     load_update_test_data(p_ub);
     /* Do the full copy - output should be the same */
     assert_equal(Bupdate(p_ub2, p_ub), EXSUCCEED);
-    assert_equal(memcmp(p_ub2, p_ub, Bused(p_ub2)), 0);
+    assert_equal(Bcmp(p_ub2, p_ub), 0);
     /* Do the update over again - should be the same */
-    assert_equal(memcmp(p_ub2, p_ub, Bused(p_ub2)), 0);
+    assert_equal(Bcmp(p_ub2, p_ub), 0);
     test_update_data_1(p_ub2);
     /* -------------------------------------------------------- */
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);

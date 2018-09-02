@@ -95,8 +95,8 @@ void load_fdel_test_data(UBFH *p_ub)
  */
 Ensure(test_fnext_simple)
 {
-    char fb[400];
-    char fb_2[400];
+    char fb[1400];
+    char fb_2[1400];
     UBFH *p_ub = (UBFH *)fb;
     UBFH *p_ub_2 = (UBFH *)fb;
     BFLDID bfldid;
@@ -137,7 +137,7 @@ Ensure(test_fnext_simple)
  */
 Ensure(test_fnext_chk_errors)
 {
-    char fb[400];
+    char fb[1400];
     UBFH *p_ub = (UBFH *)fb;
     BFLDID bfldid;
     BFLDOCC occ;
