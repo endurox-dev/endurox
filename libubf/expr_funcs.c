@@ -33,6 +33,8 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
+/* needed for asprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -572,8 +574,6 @@ struct ast * newfloat(double d)
     struct ast_float *a = NDRX_MALLOC(sizeof(struct ast_float));
     memset(a, 0, sizeof(struct ast_float));
     
-    UBF_LOG(log_debug, "YOPT ! FLOAT !!!!!!! %lf", d);
-
     if(!a) {
         yyerror("out of space");
         ndrx_Bset_error_msg(BMALLOC, "out of memory for new newfloat");

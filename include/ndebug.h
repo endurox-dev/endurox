@@ -38,7 +38,6 @@ extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <limits.h>
 #include <thlock.h>
@@ -277,6 +276,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 /**
  * Sprintf with memory allocation. In case of error, strp will be NULL.
+ * Note that this requires _GNU_SOURCE before include of stdio in start of C file.
  * @param strp double ptr to hander that will be allocated
  * @param fmt format string
  * @param ... var args
