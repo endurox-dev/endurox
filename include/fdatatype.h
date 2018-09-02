@@ -51,6 +51,13 @@ extern "C" {
 #define HDR_JAVA_LANG           2         /* Java language moder              */
 #define HDR_MAX_LANG            2
 
+/* first field used bytes: */
+#if EX_ALIGNMENT_BYTES == 8
+#define FF_USED_BYTES   (sizeof(BFLDID)*2)
+#else
+#define FF_USED_BYTES   sizeof(BFLDID)
+#endif
+    
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -112,7 +119,15 @@ struct UBF_header
     BFLDLEN      buf_len; /* includes header */
     _UBF_INT     opts;
     BFLDLEN      bytes_used;
+#if EX_ALIGNMENT_BYTES == 8
+    /* inject algin by 8 */
+    long         padding1;
+#endif
     BFLDID       bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    /* thus two integers get 8 too... so we are fine to start! */
+    BFLDID       passing2;
+#endif
 };
 
 typedef struct UBF_header UBF_header_t;
@@ -124,6 +139,9 @@ typedef struct UBF_header UBF_header_t;
 struct UBF_string
 {
     BFLDID   bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     char str[1];
 };
 typedef struct UBF_string UBF_string_t;
@@ -134,6 +152,11 @@ typedef struct UBF_string UBF_string_t;
 struct UBF_carray
 {
     BFLDID   bfldid;
+    
+    /* TODO consider remove padding here... as duplicate of dlen */
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     BFLDLEN  dlen; /* Data len */
     /* If len is 0, then this already part of next structure?!?! */
     char carr[1];
@@ -146,6 +169,9 @@ typedef struct UBF_carray UBF_carray_t;
 struct UBF_char
 {
     BFLDID   bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     UBF_CHAR cval;
 };
 typedef struct UBF_char UBF_char_t;
@@ -157,6 +183,9 @@ typedef struct UBF_char UBF_char_t;
 struct UBF_double
 {
     BFLDID   bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     UBF_DOUBLE dval;
 };
 typedef struct UBF_double UBF_double_t;
@@ -167,6 +196,9 @@ typedef struct UBF_double UBF_double_t;
 struct UBF_float
 {
     BFLDID   bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     UBF_FLOAT dval;
 };
 typedef struct UBF_float UBF_float_t;
@@ -177,6 +209,9 @@ typedef struct UBF_float UBF_float_t;
 struct UBF_long
 {
     BFLDID   bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     UBF_LONG lval;
 };
 typedef struct UBF_long UBF_long_t;
@@ -188,6 +223,9 @@ typedef struct UBF_long UBF_long_t;
 struct UBF_generic
 {
     BFLDID bfldid;
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
     char d[1];
 };
 typedef struct UBF_generic UBF_generic_t;

@@ -38,6 +38,7 @@ extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <limits.h>
 #include <thlock.h>

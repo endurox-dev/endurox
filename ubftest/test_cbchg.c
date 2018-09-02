@@ -543,13 +543,13 @@ Ensure(test_Bchg_carray_org)
 
 Ensure(test_Bchg_simple)
 {
-    char fb[1048];
-    char buf[1048]="This is test...";
-    int len = sizeof(buf);
+    char fb[1024];
+    char buf[1024]="This is test...";
+    int len = sizeof(fb);
     
     UBFH *p_ub = (UBFH *)fb;
     assert_equal(Binit(p_ub, len), EXSUCCEED);
-    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, buf, len-64, BFLD_CARRAY), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, buf, len-84, BFLD_CARRAY), EXSUCCEED);
 }
 
 TestSuite *ubf_cfchg_tests(void)

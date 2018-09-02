@@ -191,7 +191,7 @@ Ensure(test_expr_basic)
  */
 Ensure(test_expr_basic_logic)
 {
-    char buf[128];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     double f;
@@ -334,7 +334,7 @@ Ensure(test_expr_basic_logic)
  */
 Ensure(test_expr_basic_equality)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -455,7 +455,7 @@ Ensure(test_expr_basic_equality)
  */
 Ensure(test_expr_basic_unary)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -517,7 +517,7 @@ Ensure(test_expr_basic_unary)
  */
 Ensure(test_expr_basic_additive)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -617,7 +617,7 @@ Ensure(test_expr_basic_additive)
  */
 Ensure(test_expr_basic_multiplicative)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -788,7 +788,7 @@ Ensure(test_expr_basic_multiplicative)
  */
 Ensure(test_expr_basic_floatev)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -880,7 +880,7 @@ Ensure(test_expr_basic_floatev)
  */
 Ensure(test_expr_basic_relational)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -1248,7 +1248,7 @@ Ensure(test_expr_basic_relational)
 
 Ensure(test_expr_basic_scopes)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);

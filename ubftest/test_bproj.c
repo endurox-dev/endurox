@@ -145,7 +145,7 @@ void load_proj_test_data(UBFH *p_ub)
  */
 Ensure(test_proj_simple)
 {
-    char fb[400];
+    char fb[1400];
     UBFH *p_ub = (UBFH *)fb;
     char data_buf[100];
     BFLDLEN  len;
@@ -240,12 +240,12 @@ Ensure(test_proj_simple)
  */
 Ensure(test_projcpy)
 {
-    char fb_src[400];
+    char fb_src[600];
     UBFH *p_ub_src = (UBFH *)fb_src;
     char fb_src2[2400];
     UBFH *p_ub_src2 = (UBFH *)fb_src2;
     
-    char fb_dst[400];
+    char fb_dst[600];
     UBFH *p_ub_dst = (UBFH *)fb_dst;
     
     UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
