@@ -185,10 +185,10 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -205,12 +205,12 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after delete_buffer_data: ",
                                 p_ub, hdr->bytes_used);
@@ -404,10 +404,10 @@ out:
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -425,12 +425,12 @@ out:
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after _Bproj: ",p_ub, hdr->bytes_used);
     NDRX_FREE(__p_ub_copy);
@@ -517,10 +517,10 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr_dst;
-    __dbg_p_new+= (hdr_dst->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr_dst->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -537,12 +537,12 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub_dst, hdr_dst->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after delete_buffer_data: ",
                                 p_ub_dst, hdr_dst->bytes_used);
@@ -720,10 +720,10 @@ out:
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr_dst;
-    __dbg_p_new+= (hdr_dst->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr_dst->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -741,12 +741,12 @@ out:
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of dst data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub_dst, hdr_dst->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after _Bprojcpy: ",p_ub_dst,
                                                         hdr_dst->bytes_used);

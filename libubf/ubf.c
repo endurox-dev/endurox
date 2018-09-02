@@ -123,7 +123,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
-        ubf_h->bytes_used = sizeof(UBF_header_t) - sizeof(BFLDID); /* so this is not used.. */
+        ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES; /* so this is not used.. */
     }
     
     return ret;
@@ -307,10 +307,10 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -327,12 +327,12 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "Bdel: last %d bytes of data\n org=%p new %p",
-                          sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After Badd", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after: ",p_ub, hdr->bytes_used);
     NDRX_FREE(__p_ub_copy);
@@ -1292,7 +1292,7 @@ expublic int Bfree (UBFH *p_ub)
 expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 {
     UBFH *p_ub=NULL;
-    long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
+    long alloc_size = f*(FF_USED_BYTES) + f*v + sizeof(UBF_header_t);
     API_ENTRY;
     
     if ( alloc_size > MAXUBFLEN)
@@ -1335,7 +1335,7 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
-    long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
+    long alloc_size = f*(FF_USED_BYTES) + f*v + sizeof(UBF_header_t);
     API_ENTRY;
 
     UBF_LOG(log_debug, "Brealloc: enter p_ub=%p!", p_ub);

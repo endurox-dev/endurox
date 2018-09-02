@@ -6,7 +6,9 @@
 #ifndef _NDRX_CONFIG_H_
 #define _NDRX_CONFIG_H_
 
-/* Define to 1 if you have the <stdint.h> header file. */
+/* Define to 1 if you have the <stdint.h> header file. 
+ * NOTE: the cmake variable name must match the define !!!
+ */
 #cmakedefine HAVE_STDINT_H @HAVE_STDINT_H@
 
 #cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@
@@ -23,9 +25,11 @@
 
 #cmakedefine HAVE_STRLCPY @HAVE_STRLCPY@
 
-#cmakedefine EX_HAVE_ASPRINTF @HAVE_ASPRINTF@
+#cmakedefine EX_ALIGNMENT_BYTES @EX_ALIGNMENT_BYTES@
 
-#cmakedefine EX_HAVE_STRCAT_S @HAVE_STRCAT_S@
+#cmakedefine EX_HAVE_ASPRINTF @EX_HAVE_ASPRINTF@
+
+#cmakedefine EX_HAVE_STRCAT_S @EX_HAVE_STRCAT_S@
 
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 

@@ -169,7 +169,7 @@ void load_print_test_data(UBFH *p_ub)
  */
 Ensure(test_bfprint)
 {
-    char fb[1024];
+    char fb[2024];
     UBFH *p_ub = (UBFH *)fb;
     BFLDLEN len=0;
     FILE *f=NULL;
@@ -245,7 +245,7 @@ exprivate int test_bfprintcb_writef(char *buffer, long datalen, void *dataptr1)
  */
 Ensure(test_bfprintcb)
 {
-    char fb[1024];
+    char fb[2024];
     UBFH *p_ub = (UBFH *)fb;
     bfprintcb_data_t data;
     int line_counter=0;
@@ -280,7 +280,7 @@ Ensure(test_bfprintcb)
  */
 Ensure(test_bprint)
 {
-    char fb[1024];
+    char fb[2024];
     UBFH *p_ub = (UBFH *)fb;
     char fb2[1024];
     UBFH *p_ub2 = (UBFH *)fb2;
@@ -305,7 +305,7 @@ Ensure(test_bprint)
     assert_not_equal((f=fopen(filename, "r")), NULL);
     assert_equal(Bextread(p_ub2, f), EXSUCCEED);
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
@@ -343,7 +343,7 @@ Ensure(test_bextread_bfldid)
     fclose(f);
     
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
@@ -380,7 +380,7 @@ Ensure(test_bextread_fldnm)
     fclose(f);
 
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
@@ -686,7 +686,7 @@ Ensure(test_bextread_minus)
     assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), NULL);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
 }
 
 /**
@@ -735,7 +735,7 @@ Ensure(test_bextread_plus)
     assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "CDE", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), NULL);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
 }
 
 
@@ -855,8 +855,10 @@ TestSuite *ubf_print_tests(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_bfprint);
+    
     add_test(suite, test_bfprintcb);
     add_test(suite, test_bprint);
+    
     add_test(suite, test_bextread_bfldid);
     add_test(suite, test_bextread_fldnm);
     add_test(suite, test_bextread_chk_errors);
@@ -865,6 +867,7 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_plus);
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
+    
 
 
     return suite;
