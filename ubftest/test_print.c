@@ -405,13 +405,15 @@ exprivate long bextreadcb_readf(char *buffer, long bufsz, void *dataptr1)
         "T_LONG_FLD\t-1021\n",
         "T_LONG_FLD\t-2\n",
         "T_LONG_FLD\t0\n",
-        "T_LONG_FLD\t0", /* <<< error line */
+        "T_LONG_FLD\t0\n", /* <<< error line */
         NULL
     };
     
     if (NULL!=data_buffers[*idx])
     {
         NDRX_STRNCPY_SAFE(buffer, data_buffers[*idx], bufsz);
+        
+        (*idx)++;
         return strlen(buffer)+1;
     }
     else
@@ -427,8 +429,23 @@ Ensure(test_bextreadcb)
 {
     char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
+    int idx = 0;
+    char *tree;
     
-    /* TODO... */
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Bextreadcb(p_ub, bextreadcb_readf, (void *)&idx), EXSUCCEED);
+    
+    /* test with boolean expression */
+    tree = Bboolco("T_SHORT_FLD == 88 && T_SHORT_FLD[1] == -1 && T_SHORT_2_FLD==0 "
+            "&& T_SHORT_2_FLD[1]==212 && T_LONG_FLD==-1021 && T_LONG_FLD[1]==-2 "
+            "&& T_LONG_FLD[2]==0 && T_LONG_FLD[3]==0");
+    
+    assert_not_equal(tree, NULL);
+    
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
+    
+    Btreefree(tree);
+
 }
 
 /**
@@ -915,7 +932,7 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_plus);
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
-    
+    add_test(suite, test_bextreadcb);
 
 
     return suite;
