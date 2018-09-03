@@ -86,6 +86,7 @@ set(MAN3_NAMES
     Bfprintcb
     Btypcvt
     Bextread
+    Bextreadcb
     Bread
     Breadcb
     Bwrite

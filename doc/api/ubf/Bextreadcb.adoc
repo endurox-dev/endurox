@@ -1,11 +1,11 @@
-BEXTREAD(3)
-===========
+BEXTREADCB(3)
+=============
 :doctype: manpage
 
 
 NAME
 ----
-Bextread - Restore the buffer from printed text stream
+Bextreadcb - Restore the buffer from printed text received from callback function
 
 
 SYNOPSIS
@@ -13,16 +13,18 @@ SYNOPSIS
 
 #include <ubf.h>
 
-int Bextread (UBFH *'p_ub', FILE *'inf');
+int Bextreadcb (UBFH * 'p_ub', 
+        long (*'p_readf')(char *'buffer', long 'bufsz', void *'dataptr1'), void *'dataptr1');
 
 Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Restore the buffer from text populated by *Bprint(3)* or *Bprintf(3)*.
+Restore the buffer from text populated by *Bprint(3)*, *Bprintf(3)* 
+or *Bprintfcb(3)*.
 
-The read format is "[COMMAND]<FIELD><TAB><VALUE><NEW_LINE>". Input also 
-support fields by id, then format for <FIELD> is "((BFLDID32)<FIELD_ID>)"
+The read format is "[COMMAND]<FIELD><TAB><VALUE><NEW_LINE>". Input also support 
+fields by id, then format for <FIELD> is "((BFLDID32)<FIELD_ID>)".
 
 Sample buffer:
 
@@ -40,7 +42,15 @@ T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00\\
 ((BFLDID32)167772261)   HELLOSVC
 --------------------------------------------------------------------------------
 
-'p_ub' is buffer to write the data to, 'inf' is input stream.
+'p_ub' is buffer to write the data to, 'p_readf' is function from which to read
+the line by line data. Each call to callback shall return zero terminated 
+line with exactly one field, value and newline in the end. 
+The 'bufsz' denotes the buffer size of 'buffer', where data shall be put. 
+In case if success, the 'p_readf' must return number bytes written to 'buffer'.
+At the end of the buffer, the 'p_readf' must return *0*. In case of error, callback
+function shall return *-1*. The *dataptr1* passed to *Bextreadcb()* is forwarded
+to callback function and is meant to be used by user specific purposes. Field
+is optional and may be set to NULL, if not used by callback.
 
 Input format supports also macro commands. This is optional *COMMAND* block, 
 that can have following values:
@@ -76,8 +86,8 @@ arbitrary buffer to specified service.
 
 RETURN VALUE
 ------------
-On success, *Bextread()* return zero; on error, -1 is returned, with 
-*Berror* set to indicate the error.
+On success, *Bextreadcb()* return zero; on error, -1 is returned, with *Berror* 
+set to indicate the error.
 
 ERRORS
 ------
@@ -88,7 +98,7 @@ debug info from last function call.
 
 *BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
 
-*BEINVAL* 'inf' is NULL.
+*BEINVAL* 'p_readf' is NULL.
 
 *BSYNTAX* Missing tab between field id or missing newline.
 
@@ -104,7 +114,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bextreadcb(3)* *Bfprint(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)* *ud(8)*
+*Bextread(3)* *Bfprint(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)* *ud(8)*
 
 COPYING
 -------
