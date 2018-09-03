@@ -161,8 +161,13 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	X[ndrx_I5SmWDM_len]=0;\
 	}
     
-/* N - buffer size of X 
+/**
+ * Safe copy to target buffer (not overflowing it...)
+ * N - buffer size of X 
  * This always copies EOS
+ * @param X dest buffer
+ * @param Y source buffer
+ * @param N dest buffer size
  */	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
