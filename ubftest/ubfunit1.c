@@ -398,7 +398,7 @@ Ensure(test_Bunused)
 #if EX_ALIGNMENT_BYTES == 8
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID)*2);
 #else
-    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID)*2);
+    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID));
 #endif
     
 #if EX_ALIGNMENT_BYTES != 8
