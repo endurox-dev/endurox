@@ -72,7 +72,7 @@ export NDRX_LOG=/tmp/ndrx.log
 export NDRX_LEV=5
 
 # UBFTAB
-export FLDTBLDIR=$NDRX_APPHOME/ubftest/ubftab
+#export FLDTBLDIR=$NDRX_APPHOME/ubftest/ubftab
 export FIELDTBLS=Exfields,test.fd
 
 # XA SECTION
