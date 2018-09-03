@@ -385,6 +385,52 @@ Ensure(test_bextread_fldnm)
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
+
+/**
+ * Return the buffer line
+ * @param buffer buffer to put in the result. Note that is should go line by line
+ * @param bufsz buffer size
+ * @param dataptr1 user data ptr
+ * @return number of bytes written to buffer
+ */
+exprivate long bextreadcb_readf(char *buffer, long bufsz, void *dataptr1)
+{
+    int *idx = (int *)dataptr1;
+    
+    char *data_buffers[]= {
+        "T_SHORT_FLD\t88\n",
+        "T_SHORT_FLD\t-1\n",
+        "T_SHORT_2_FLD\t0\n",
+        "T_SHORT_2_FLD\t212\n",
+        "T_LONG_FLD\t-1021\n",
+        "T_LONG_FLD\t-2\n",
+        "T_LONG_FLD\t0\n",
+        "T_LONG_FLD\t0", /* <<< error line */
+        NULL
+    };
+    
+    if (NULL!=data_buffers[*idx])
+    {
+        NDRX_STRNCPY_SAFE(buffer, data_buffers[*idx], bufsz);
+        return strlen(buffer)+1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/**
+ * Test extread with callbacks
+ */
+Ensure(test_bextreadcb)
+{
+    char fb[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    
+    /* TODO... */
+}
+
 /**
  * Testing extread for errors
  */
