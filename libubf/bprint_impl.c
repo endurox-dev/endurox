@@ -405,17 +405,26 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
             ndrx_Bset_error_fmt(BSYNTAX, "Line should not start with tab on "
                                         "line %d!", line);
             EXFAIL_OUT(ret);
-        }
-        else if (p[strlen(p)-1]!='\n')
-        {
-            ndrx_Bset_error_fmt(BSYNTAX, "Line %d does not "
-                    "terminate with newline!", line);
-            EXFAIL_OUT(ret);
-        }
+        } 
         else
         {
+            int tmpl = strlen(p);
             /* seems to be ok, remove trailing newline */
-            p[strlen(p)-1]=EXEOS;
+            
+            if (p[tmpl-1]!='\n')
+            {
+                /* new line at the end is optional for callbacks... */
+                if (NULL==p_readf)
+                {
+                    ndrx_Bset_error_fmt(BSYNTAX, "Line %d does not "
+                            "terminate with newline!", line);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                p[tmpl-1]=EXEOS;
+            }
         }
 
         /* now read field number + value */
