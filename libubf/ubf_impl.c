@@ -1687,6 +1687,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             goto out;
         }
         dtype=&G_dtype_str_map[type];
+        
         /*
          * Return the pointer to start of the field.
          */
@@ -1701,11 +1702,13 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             *d_ptr=p+dlen;
 
             /* Now return the len if needed */
+#if 0
             if (NULL!=len)
             {
                /* *len = data_len;*/
                dtype->p_next(dtype, (char *)p, len);
             }
+#endif
         }
 
         if (NULL!=buf)
@@ -1724,6 +1727,11 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                                 buf, len);
             }
 #endif
+        }
+        else if (NULL!=len)
+        {
+            /* return length only... */
+            dtype->p_next(dtype, p, len);
         }
         else
         {
