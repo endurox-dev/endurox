@@ -167,7 +167,58 @@ Ensure(test_fnext_chk_errors)
     bfldid = BFIRSTFLDID;
     assert_equal(Bnext(NULL, &bfldid, &occ, data_buf, &len), EXFAIL);
     assert_equal(Berror, BNOTFLD);
+}
 
+/**
+ * Ensure that we return length even if output buffer is not present
+ * Bug #341
+ */
+Ensure(test_fnext_len)
+{
+    char fb[1400];
+    UBFH *p_ub = (UBFH *)fb;
+    BFLDID bfldid;
+    BFLDOCC occ;
+    BFLDLEN len;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, "1", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, "1", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, "1", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, "1", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, "1", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, "123", 0L, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, "123", 0L, BFLD_STRING), EXSUCCEED);
+    
+    bfldid = BFIRSTFLDID;
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_SHORT_FLD);
+    assert_equal(len, sizeof(short));
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_LONG_FLD);
+    assert_equal(len, sizeof(long));
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_CHAR_FLD);
+    assert_equal(len, sizeof(char));
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_FLOAT_FLD);
+    assert_equal(len, sizeof(float));
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_DOUBLE_FLD);
+    assert_equal(len, sizeof(double));
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_STRING_FLD);
+    assert_equal(len, 4); /* + EOS*/
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_CARRAY_FLD);
+    assert_equal(len, 3); /* + EOS*/
     
 }
 
@@ -177,6 +228,7 @@ TestSuite *ubf_fnext_tests(void)
 
     add_test(suite, test_fnext_simple);
     add_test(suite, test_fnext_chk_errors);
+    add_test(suite, test_fnext_len);
 
     return suite;
 }
