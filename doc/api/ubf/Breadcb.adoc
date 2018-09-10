@@ -28,8 +28,9 @@ are performed by the function. The first reads the header and the scond extracts
 from the header buffer length and remaining bytes are read. The 'dataptr1' argument
 to callback are forwarded from main function arguments. This is usable for cases
 when some other control objects must be passed to callback. The callback must
-return number of bytes read from the source. For success case the number parameter
-'bufsz' bytes must be return from the callback, otherwise *Breadcb()* will fail.
+return number of bytes read from the source. For success case parameter
+'bufsz' must be return from the callback (i.e. read bytes matches),
+otherwise *Breadcb()* will fail.
 In case of failure inside the callback, return value *-1*.
 
 RETURN VALUE
