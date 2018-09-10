@@ -57,57 +57,57 @@ extern "C" {
 
 #define OUBF_LOG(p_ctxt, lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ubf_debug.level)\
             {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);\
+            __ndrx_debug__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
     
 /* User logging */
 #define OTP_LOG(p_ctxt, lev, fmt, ...) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);\
+            __ndrx_debug__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 
 #define OUBF_DUMP(p_ctxt, lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
+            __ndrx_debug_dump__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 #define ONDRX_DUMP(p_ctxt, lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
+            __ndrx_debug_dump__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 #define OSTDOUT_DUMP(p_ctxt, lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_stdout_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
+            __ndrx_debug_dump__(&G_stdout_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 #define OTP_DUMP(p_ctxt, lev,comment,ptr,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
+            __ndrx_debug_dump__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 #define OUBF_DUMP_DIFF(p_ctxt, lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump_diff__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);\
+            __ndrx_debug_dump_diff__(&G_ndrx_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 #define ONDRX_DUMP_DIFF(p_ctxt, lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_ndrx_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);\
+            __ndrx_debug_dump_diff__(&G_ubf_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 
 #define OTP_DUMP_DIFF(p_ctxt, lev,comment,ptr,ptr2,len) {NDRX_DBG_INIT_ENTRY; if (lev<=G_tp_debug.level)\
         {ndrx_tpsetctxt(*p_ctxt, 0, CTXT_PRIV_NSTD); \
-            {__ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);\
+            __ndrx_debug_dump_diff__(&G_tp_debug, lev, __FILE__, __LINE__, __func__, comment, ptr, ptr2, len);\
             ndrx_tpgetctxt(p_ctxt, 0, CTXT_PRIV_NSTD);\
             }}
 /*---------------------------Enums--------------------------------------*/
