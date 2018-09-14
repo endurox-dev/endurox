@@ -3,7 +3,7 @@
  *   NOTE: Thread shall not modify the ndrx_epoll sets. That must be managed from
  *   one thread only
  *   NOTE: Only one POLL set actually is supported. This is due to
- *   Notificatio thread locking while we are not polling (to void mqds in pipe)
+ *   Notification thread locking while we are not polling (to void mqds in pipe)
  *   which we have already processed.
  *
  * @file sys_poll.c
@@ -106,7 +106,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-/*
+/**
  * Hash list of File descriptors we monitor..
  */
 struct ndrx_epoll_fds
@@ -116,7 +116,7 @@ struct ndrx_epoll_fds
 };
 typedef struct ndrx_epoll_fds ndrx_epoll_fds_t;
 
-/*
+/**
  * Hash list of File descriptors we monitor..
  */
 struct ndrx_epoll_mqds
@@ -127,7 +127,7 @@ struct ndrx_epoll_mqds
 };
 typedef struct ndrx_epoll_mqds ndrx_epoll_mqds_t;
 
-/*
+/**
  * Our internal 'epoll' set
  */
 struct ndrx_epoll_set
@@ -248,7 +248,6 @@ exprivate int signal_handle_event(void)
                 {
                     NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
                 }
-
             }
         }
 
@@ -753,9 +752,6 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         }
         
 #endif
-        
-        
-        
     }
     else if (EX_EPOLL_CTL_DEL == op)
     {
@@ -983,7 +979,8 @@ out:
  * @param timeout
  * @return 
  */
-expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
+        int maxevents, int timeout)
 {
     int ret = EXSUCCEED;
     int numevents = 0;
