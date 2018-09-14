@@ -169,6 +169,8 @@ EX_CC_VALUE                 411         string -        Corresponding occurrence
 ################################################################################
 EX_IF_ECODE                 500         short  -        Result code (error code)
 EX_IF_EMSG                  501         string -        Result message
+# REST interface caller URL
+EX_IF_URL                   502         string -        Called URL for REST interface
 ################################################################################
 # TCP Inter-connecting
 ################################################################################
