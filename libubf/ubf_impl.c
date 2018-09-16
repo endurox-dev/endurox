@@ -467,8 +467,10 @@ get_last:
  * @param bfldid
  * @param last_matched - last matched field (can be used together with last_occ),
  *                       It is optional (pas NULL if not needed).
- * @param lat_checked  - if not NULL, then function will try find the last occ of the type (even not matched).
- *              In case of EOF/not found, this might point to address outside the bytes_used scope!!!
+ * @param last_checked  - if not NULL, then function will try find the last occ 
+ *      of the type (even not matched).
+ *      In case of EOF/not found, this might point to address outside 
+ *      the bytes_used scope!!!
  * @param occ - occurrence to get. If less than -1, then get out the count
  * @param last_occ last check occurrence
  * @return - ptr to field.
