@@ -149,8 +149,9 @@ expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf,
     {
         ndrx_Bset_error_fmt(BEUNIX, "%s:Failed to read buffer data from "
                                 " input file %d (read) vs %d (expected), unix err: [%s]",
+                                __func__,
                                 read, to_read,
-                                __func__, strerror(errno));
+                                strerror(errno));
         EXFAIL_OUT(ret);
     }
     else
