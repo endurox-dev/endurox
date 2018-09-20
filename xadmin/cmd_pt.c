@@ -317,6 +317,7 @@ expublic int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 
         call_tm(el->svcnm);
         /* Have some housekeep. */
+        LL_DELETE(list,el);
         NDRX_FREE(el);
     }
     
