@@ -61,6 +61,9 @@
 /* Use emulated message queue: */
 #cmakedefine EX_USE_EMQ @EX_USE_EMQ@
 
+/* Use System V message queue */
+#cmakedefine EX_USE_SYSVQ @EX_USE_SYSVQ@
+
 /* Do not use threading model in client proces monitor
  * for example on AIX 7.2 it causes core dumps...
  */

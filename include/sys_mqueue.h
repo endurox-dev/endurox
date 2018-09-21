@@ -39,21 +39,31 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 
-#ifdef EX_USE_EMQ
-
+#if 1==EX_USE_SYSVQ
+#include <sys_svq.h>
+#elif 1==EX_USE_EMQ
 /* use queue emulation: */
 #include <sys_emqueue.h>
-
 #else
-
 #include <mqueue.h>
-
 #endif
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if 1==EX_USE_EMQ
+#if 1==EX_USE_SYSVQ
+    
+/* Feature #281 */
+#define  ndrx_mq_timedreceive ndrx_svq_timedreceive
+#define  ndrx_mq_timedsend    ndrx_svq_timedsend
+#define  ndrx_mq_close        ndrx_svq_close
+#define  ndrx_mq_getattr      ndrx_svq_getattr
+#define  ndrx_mq_notify       ndrx_svq_notify
+#define  ndrx_mq_receive      ndrx_svq_receive
+#define  ndrx_mq_send         ndrx_svq_send
+#define  ndrx_mq_setattr      ndrx_svq_setattr
+    
+#elif 1==EX_USE_EMQ
 
 #define  ndrx_mq_timedreceive emq_timedreceive
 #define  ndrx_mq_timedsend    emq_timedsend
@@ -103,8 +113,14 @@ extern int ndrx_mq_unlink_with_registry (char *name);
 #define  ndrx_mq_unlink       ndrx_mq_unlink_with_registry
 
 #else
-    
-#if 1==EX_USE_EMQ
+
+#if 1==EX_USE_SYSVQ
+
+/* Feature #281 */
+#define  ndrx_mq_open         ndrx_svq_open
+#define  ndrx_mq_unlink       ndrx_svq_unlink
+
+#elif 1==EX_USE_EMQ
 
 #define  ndrx_mq_open         emq_open
 #define  ndrx_mq_unlink       emq_unlink
