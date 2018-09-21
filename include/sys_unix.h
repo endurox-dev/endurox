@@ -52,7 +52,11 @@ extern "C" {
 #include <mach/clock.h>
 #endif
 
-#if defined(EX_USE_EPOLL)
+#if defined(EX_USE_SYSVQ) 
+/* Feature #281 */
+#include <sys_svq.h>
+#include <poll.h>
+#elif defined(EX_USE_EPOLL)
 #include <sys/epoll.h>
 #elif defined(EX_USE_KQUEUE)
 #include <sys/event.h>
@@ -60,11 +64,17 @@ extern "C" {
 #include <poll.h>
 #endif
 
-
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if defined(EX_USE_EPOLL)
+#if defined(EX_USE_SYSVQ)
+    
+#define EX_EPOLL_CTL_ADD        1
+#define EX_EPOLL_CTL_DEL        2
+    
+#define EX_EPOLL_FLAGS          POLLIN
+    
+#elif defined(EX_USE_EPOLL)
 
 #define EX_EPOLL_CTL_ADD        EPOLL_CTL_ADD
 #define EX_EPOLL_CTL_DEL        EPOLL_CTL_DEL
@@ -162,11 +172,11 @@ extern NDRX_API const char * __progname;
  * (E)poll data
  */
 typedef union ndrx_epoll_data {
-        void    *ptr;
-        int      fd;
-        uint32_t u32;
-        uint64_t u64;
-        mqd_t    mqd;
+    void    *ptr;
+    int      fd;
+    uint32_t u32;
+    uint64_t u64;
+    mqd_t    mqd;
 } ndrx_epoll_data_t;
 
 /**
@@ -174,16 +184,16 @@ typedef union ndrx_epoll_data {
  */
 struct ndrx_epoll_event {
 
-        uint32_t     events;    /* Epoll events */
+    uint32_t     events;    /* Epoll events */
 
-        ndrx_epoll_data_t data;      /* User data variable */
-        
-        /* The structure generally is the same as for linux epoll_wait
-         * This bellow is extension for non linux version.
-         */
-        #ifndef EX_USE_EPOLL
-        int         is_mqd;      /* Set to TRUE, if call is for message q */
-        #endif
+    ndrx_epoll_data_t data;      /* User data variable */
+
+    /* The structure generally is the same as for linux epoll_wait
+     * This bellow is extension for non linux version.
+     */
+    #ifndef EX_USE_EPOLL
+    int         is_mqd;      /* Set to TRUE, if call is for message q */
+    #endif
 };
 
 
