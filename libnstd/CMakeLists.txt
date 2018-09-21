@@ -40,7 +40,10 @@ include_directories (. ../include)
 
 SET(NSTD_POLLER "invalid_poller.c")
 
-if (DEFINED EX_USE_KQUEUE)
+if(DEFINED EX_USE_SYSVQ)
+    SET(NSTD_POLLER "sys_svqpoll.c")
+    SET(NSTD_SYS_3 "sys_svq.c")
+elseif (DEFINED EX_USE_KQUEUE)
     SET(NSTD_POLLER "sys_kqueue.c")
 elseif(DEFINED EX_USE_POLL)
     SET(NSTD_POLLER "sys_poll.c")
