@@ -1060,10 +1060,10 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
     snprintf(line_start, sizeof(line_start), 
-        "%c:%s:%d:%08x:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:",
+        "%c:%s:%d:%08x:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-8.8s:%04ld:%-8.8s",
         dbg_ptr->code, org_ptr->module, lev, (unsigned int)dbg_ptr->hostnamecrc32, 
             (int)dbg_ptr->pid, (unsigned long long)(ostid), thread_nr, ldate, ltime, 
-        (int)(lusec/1000), line_print, line);
+        (int)(lusec/1000), line_print, line, func);
     
     if (!M_is_initlock_owner)
     {

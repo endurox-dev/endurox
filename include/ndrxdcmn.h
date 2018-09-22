@@ -164,7 +164,7 @@ extern "C" {
 #define NDRXD_CTX_STOP              2    /* Stop context/command is running  */
 
 /* Max number of services can be advertised by servers! */
-#define MAX_SVC_PER_SVR     50
+#define MAX_SVC_PER_SVR             50
 
 #define MAX_NDRXD_ERROR_LEN         2048
 /* NDRXD Error sesction */
@@ -310,7 +310,7 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-/*
+/**
  * Shared memory entry for server ID
  */
 typedef struct shm_srvinfo shm_srvinfo_t;
@@ -324,25 +324,25 @@ struct shm_srvinfo
     unsigned min_rsp_msec[MAX_SVC_PER_SVR];
     unsigned max_rsp_msec[MAX_SVC_PER_SVR];
     unsigned last_rsp_msec[MAX_SVC_PER_SVR];
-    short svc_status[MAX_SVC_PER_SVR];      /* The status of the service    */
+    short svc_status[MAX_SVC_PER_SVR];     /**< The status of the service    */
 
-    char last_reply_q[NDRX_MAX_Q_SIZE+1];    /* Last queue on it should reply */
-    unsigned last_call_flags;              /* Flags for last call           */
-    short status;                          /* Glboal status, avail or busy  */
-    short last_command_id;                 /* Last command ID received      */
+    char last_reply_q[NDRX_MAX_Q_SIZE+1];  /**< Last queue on it should reply */
+    unsigned last_call_flags;              /**< Flags for last call           */
+    short status;                          /**< Glboal status, avail or busy  */
+    short last_command_id;                 /**< Last command ID received      */
 };
 
-/*
+/**
  * Basic cluster node info
  */
 typedef struct cnodeinfo cnodeinfo_t;
 struct cnodeinfo
 {
-    int latency;        /* Latency in ms */
-    int srvs;           /* Number of serves on this cluster node */
+    int latency;        /**< Latency in ms */
+    int srvs;           /**< Number of serves on this cluster node */
 };
 
-/*
+/**
  * Shared memory entry for service
  */
 typedef struct shm_svcinfo shm_svcinfo_t;
@@ -360,7 +360,6 @@ struct shm_svcinfo
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
     short srvids[0];                     /*  Servers id's offering this service */
 };
-
 
 /* Macros for shm service size */
 #define SHM_SVCINFO_SIZEOF  (sizeof(shm_svcinfo_t) + sizeof(short)*G_atmi_env.maxsvcsrvs)

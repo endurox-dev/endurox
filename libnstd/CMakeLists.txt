@@ -43,6 +43,7 @@ SET(NSTD_POLLER "invalid_poller.c")
 if(DEFINED EX_USE_SYSVQ)
     SET(NSTD_POLLER "sys_svqpoll.c")
     SET(NSTD_SYS_3 "sys_svq.c")
+    SET(NSTD_SYS_4 "sys_svqshm.c")
 elseif (DEFINED EX_USE_KQUEUE)
     SET(NSTD_POLLER "sys_kqueue.c")
 elseif(DEFINED EX_USE_POLL)
@@ -83,14 +84,13 @@ elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
 endif ()
 
-
 add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         ini.c inicfg.c cconfig.c nerror.c nstd_tls.c ulog.c
                         sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
                         sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
                         exregex.c platform.c msgsizemax.c exaes.c exsha1.c
                         exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/edb.c
-                        edbutil.c crc32.c
+                        edbutil.c crc32.c nstd_shm.c
                         )
 
 if(${CMAKE_OS_NAME} STREQUAL "AIX")

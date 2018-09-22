@@ -799,7 +799,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             }
             
             /* Attach to client shared memory? */
-            if (EXSUCCEED==shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
+            if (EXSUCCEED==ndrx_shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
                         G_atmi_env.max_servers, G_atmi_env.max_svcs))
             {
                 if (init_data->is_client)

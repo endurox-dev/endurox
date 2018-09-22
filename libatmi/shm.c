@@ -1,5 +1,5 @@
 /**
- * @brief Common shared memory routines for EnduroX.
+ * @brief Common shared memory routines for EnduroX. - ATMI level..
  *   Generally we do not use any global vars because this stuff should
  *   generic one.
  *   SHM Example see here:
@@ -87,7 +87,7 @@ int M_init = EXFALSE;                 /* no init yet done */
  * @param ndrx_prefix
  * @return 
  */
-expublic int shm_init(char *q_prefix, int max_servers, int max_svcs)
+expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
 {
     memset(&G_srvinfo, 0, sizeof(G_srvinfo));
     memset(&G_svcinfo, 0, sizeof(G_svcinfo));
@@ -163,94 +163,35 @@ out:
 }
 
 /**
- * Open service info shared memory segment
- * @return
- */
-exprivate int ndrxd_shm_open(ndrx_shm_t *shm)
-{
-    int ret=EXSUCCEED;
-    char *fn = "ndrxd_shm_open";
-
-    NDRX_LOG(log_debug, "%s enter", fn);
-    /**
-     * Library not initialized
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "ndrx shm library not initialized");
-        ret=EXFAIL;
-        goto out;
-    }
-
-    /* creating the shared memory object --  shm_open() */
-    shm->fd = shm_open(shm->path, O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG);
-
-    if (shm->fd < 0) {
-        NDRX_LOG(log_error, "%s: Failed to create shm [%s]: %s",
-                            fn, shm->path, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (EXSUCCEED!=ftruncate(shm->fd, shm->size))
-    {
-        NDRX_LOG(log_error, "%s: Failed to set [%s] fd: %d to size %d bytes: %s",
-                            fn, shm->path, shm->fd, shm->size, strerror(errno));
-        ret=EXFAIL;
-        goto out;        
-    }
-
-    shm->mem = (char *)mmap(NULL, shm->size, 
-                        PROT_READ | PROT_WRITE, MAP_SHARED, shm->fd, 0);
-    if (MAP_FAILED==shm->mem)
-    {
-        NDRX_LOG(log_error, "%s: Failed to map memory for [%s] fd %d bytes %d: %s",
-                            fn, shm->path, shm->fd, shm->size, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-    /* Reset SHM */
-    memset(shm->mem, 0, shm->size);
-    NDRX_LOG(log_debug, "Shm: [%s] created", shm->path);
-    
-out:
-    /*
-     * Should close the SHM if failed to open.
-     */
-    if (EXSUCCEED!=ret && EXFAIL!=shm->fd)
-    {
-        if (shm_unlink(shm->path) != 0) {
-            NDRX_LOG(log_error, "%s: Failed to unlink [%s]: %s",
-                            fn, shm->path, strerror(errno));
-        }
-    }
-
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
-
-    return ret;
-}
-
-/**
  * Open shared memory
  * @return
  */
 expublic int ndrxd_shm_open_all(void)
 {
     int ret=EXSUCCEED;
+    
+    /**
+     * Library not initialized
+     */
+    if (!M_init)
+    {
+        NDRX_LOG(log_error, "ndrx shm library not initialized");
+        EXFAIL_OUT(ret);
+    }
 
-    if (EXSUCCEED!=ndrxd_shm_open(&G_srvinfo))
+    if (EXSUCCEED!=ndrx_shm_open(&G_srvinfo, EXFALSE))
     {
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=ndrxd_shm_open(&G_svcinfo))
+    if (EXSUCCEED!=ndrx_shm_open(&G_svcinfo, EXFALSE))
     {
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=ndrxd_shm_open(&G_brinfo))
+    if (EXSUCCEED!=ndrx_shm_open(&G_brinfo, EXFALSE))
     {
         ret=EXFAIL;
         goto out;
@@ -304,88 +245,11 @@ expublic int ndrxd_shm_delete(void)
     }
     else
     {
-            NDRX_LOG(log_error, "SHM library not initialized!");
-            return EXFAIL;
+        NDRX_LOG(log_error, "SHM library not initialized!");
+        return EXFAIL;
     }
 
     return EXSUCCEED;
-}
-
-/**
- * Returns true if currently attached to shm
- * WARNING: This assumes that fd 0 could never be used by shm!
- * @return TRUE/FALSE
- */
-expublic int ndrxd_shm_is_attached(ndrx_shm_t *shm)
-{
-    int ret=EXTRUE;
-    
-    if (shm->fd <=0 || shm->fd <=0)
-    {
-        ret=EXFALSE;
-    }
-
-    return ret;
-}
-
-/**
- * Attach to shared memory block
- * @return
- */
-expublic int ndrx_shm_attach(ndrx_shm_t *shm)
-{
-    int ret=EXSUCCEED;
-    char *fn = "ndrx_shm_attach";
-
-    NDRX_LOG(log_debug, "%s enter", fn);
-    /**
-     * Library not initialised
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "%s: ndrx shm library not initialised!", fn);
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (ndrxd_shm_is_attached(shm))
-    {
-        NDRX_LOG(log_debug, "%s: shm %s already attached", shm->path);
-        goto out;
-    }
-    
-    /* Attach to shared memory block */
-    shm->fd = shm_open(shm->path, O_RDWR, S_IRWXU | S_IRWXG);
-
-    if (shm->fd < 0) {
-        NDRX_LOG(log_error, "%s: Failed to attach shm [%s]: %s",
-                            fn, shm->path, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-    shm->mem = (char *)mmap(NULL, shm->size,
-                        PROT_READ | PROT_WRITE, MAP_SHARED, shm->fd, 0);
-    if (MAP_FAILED==shm->mem)
-    {
-        NDRX_LOG(log_error, "%s: Failed to map memory for [%s] fd %d bytes %d: %s",
-                            fn, shm->path, shm->fd, shm->size, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-    NDRX_LOG(log_debug, "Shm: [%s] attach", shm->path);
-
-out:
-    /*
-     * Should close the SHM if failed to open.
-     */
-    if (EXSUCCEED!=ret)
-    {
-        shm->fd=EXFAIL;
-    }
-
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
-    return ret;
 }
 
 /**
@@ -396,6 +260,15 @@ out:
 expublic int ndrx_shm_attach_all(int lev)
 {
    int ret=EXSUCCEED;
+   
+   /**
+     * Library not initialised
+     */
+    if (!M_init)
+    {
+        NDRX_LOG(log_error, "ndrx shm library not initialised!");
+        EXFAIL_OUT(ret);
+    }
    
    /* Attached to service shared mem */
    if (lev & NDRX_SHM_LEV_SVC)
@@ -429,21 +302,6 @@ out:
 }
 
 /**
- * Make key out of string. Gen
- */
-expublic unsigned int ndrx_hash_fn( void *k )
-{
-    unsigned int hash = 5381;
-    int c;
-    char *str = (char *)k;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-    return hash;
-}
-
-/**
  * Returns true if service is available.
  * @param svc
  * @param have_shm set to EXTRUE, if shared memory is attached.
@@ -462,10 +320,10 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     
     *is_bridge=EXFALSE;
     
-    /* Initially we stick to the local service */
+    /* Initialy we stick to the local service */
     sprintf(send_q, NDRX_SVC_QFMT, G_atmi_tls->G_atmi_conf.q_prefix, svc);
     
-    if (!ndrxd_shm_is_attached(&G_svcinfo))
+    if (!ndrx_shm_is_attached(&G_svcinfo))
     {
 #ifdef EX_USE_POLL
         /* lookup first service in cache: */
@@ -698,7 +556,7 @@ expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
     
     *len = 0;
     
-    if (!ndrxd_shm_is_attached(&G_svcinfo))
+    if (!ndrx_shm_is_attached(&G_svcinfo))
     {
         ret=EXFAIL;
         goto out; /* do not fail, try locally */
@@ -1257,7 +1115,7 @@ expublic shm_srvinfo_t* ndrxd_shm_getsrv(int srvid)
     int pos=EXFAIL;
     shm_srvinfo_t *srvinfo = (shm_srvinfo_t *) G_srvinfo.mem;
 
-    if (!ndrxd_shm_is_attached(&G_srvinfo))
+    if (!ndrx_shm_is_attached(&G_srvinfo))
     {
         ret=NULL;
         goto out;
@@ -1289,7 +1147,7 @@ expublic int ndrx_shm_birdge_getnodesconnected(char *outputbuf)
     int i;
     int pos=0;
     
-    if (!ndrxd_shm_is_attached(&G_brinfo))
+    if (!ndrx_shm_is_attached(&G_brinfo))
     {
         EXFAIL_OUT(ret);
     }
@@ -1317,7 +1175,7 @@ expublic int ndrx_shm_birdge_set_flags(int nodeid, int flags, int op_end)
     int ret=EXSUCCEED;
     int *brinfo = (int *) G_brinfo.mem;
 
-    if (!ndrxd_shm_is_attached(&G_brinfo))
+    if (!ndrx_shm_is_attached(&G_brinfo))
     {
         ret=EXFAIL;
         goto out;
@@ -1372,7 +1230,7 @@ expublic int ndrx_shm_bridge_is_connected(int nodeid)
     int *brinfo = (int *) G_brinfo.mem;
     int ret=EXFALSE;
     
-    if (!ndrxd_shm_is_attached(&G_brinfo))
+    if (!ndrx_shm_is_attached(&G_brinfo))
     {
         goto out;
     }
