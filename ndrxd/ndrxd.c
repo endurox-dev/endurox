@@ -335,7 +335,7 @@ int main_init(int argc, char** argv)
         goto out;
     }
     /* and then shm: initialise shared memory */
-    if (EXSUCCEED!=shm_init(G_sys_config.qprefix,
+    if (EXSUCCEED!=ndrx_shm_init(G_sys_config.qprefix,
                             ndrx_get_G_atmi_env()->max_servers,
                             ndrx_get_G_atmi_env()->max_svcs))
     {

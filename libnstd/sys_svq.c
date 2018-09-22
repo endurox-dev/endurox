@@ -54,6 +54,8 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+#if 0
 struct qd_hash
 {
     void *qd;
@@ -61,10 +63,13 @@ struct qd_hash
 };
 typedef struct qd_hash qd_hash_t;
 
+#endif
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+#if 0
 MUTEX_LOCKDECL(M_lock);
 qd_hash_t *M_qd_hash = NULL;
 
@@ -149,6 +154,8 @@ exprivate void qd_hash_del(mqd_t qd)
     MUTEX_UNLOCK_V(M_lock);
 }
 
+#endif
+
 /**
  * Close queue. Basically we remove the dynamic data associated with queue
  * the queue id by it self continues to live on... until it is unlinked
@@ -177,9 +184,53 @@ expublic int ndrx_svq_notify(mqd_t emqd, const struct sigevent *notification)
     return EXFAIL;
 }
 
-expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, ...)
+/**
+ * Open queue this, will include following steps:
+ * - build queue object
+ * - register into hash list
+ * - Generate next queue id, according shm
+ * - if fails, something then queue must be removed from shm
+ * @param pathname queue path
+ * @param oflag queue flags
+ * @param mode unix permissions mode
+ * @param mq_attr attributes
+ * @return queue descriptor or EXFAIL
+ */
+expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode, 
+        struct mq_attr *attr)
 {
-    return EXFAIL;
+    /* Allocate queue object */
+    int ret = EXSUCCEED;
+    mqd_t mq = (mqd_t)EXFAIL;
+    
+    mq = NDRX_CALLOC(1, sizeof(struct ndrx_svq_info));
+    
+    if (NULL==mq)
+    {
+        NDRX_LOG(log_error, "Failed to malloc %d bytes queue descriptor", 
+                (int)sizeof(struct ndrx_svq_info));
+        userlog("%s: Failed to malloc %d bytes queue descriptor", 
+                __func__, (int)sizeof(struct ndrx_svq_info));
+        mq = (mqd_t)EXFAIL;
+        EXFAIL_OUT(ret);
+    }
+    
+    /* so we have an options:
+     * - if we create a Q, then alloc new ID
+     * - if queue already exists SHM, then we can use that ID directly
+     */
+    
+out:
+    
+    if (EXSUCCEED!=ret)
+    {
+        if (NULL!=(mqd_t)EXFAIL)
+        {
+            
+        }
+    }
+
+    return mq;
 }
 
 expublic ssize_t ndrx_svq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, 
