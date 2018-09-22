@@ -41,9 +41,9 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrxdcmn.h>
 #include <sys/sem.h>
+#include <nstd_shm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_MAX_SHM_SIZE     128           /* Max shared memory file name len */
 
 /* ATMI SHM Level */
 #define NDRX_SHM_LEV_SVC               0x01    /* Service array */
@@ -54,21 +54,6 @@ extern "C" {
 #define NDRX_SHM_BR_CONNECTED          0x01    /* Bridge is connected */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-typedef struct
-{
-    char path[NDRX_MAX_SHM_SIZE];       /* name of shm                  */
-    int fd;                             /* opened fd                    */
-    char *mem;                          /* mapped memory                */
-    int size;                           /* size used by this shm block  */
-} ndrx_shm_t;
-
-typedef struct
-{
-    key_t key;            /* Key for semaphore... */
-    int semid;
-    /*struct sembuf sem[2];  sembuf defined in sys/sem.h */
-    short attached;                     /* Is attached?                 */
-} ndrx_sem_t;
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API int G_max_svcs;
 extern NDRX_API ndrx_shm_t G_svcinfo;
@@ -76,11 +61,10 @@ extern NDRX_API int G_max_servers;
 extern NDRX_API ndrx_shm_t G_srvinfo;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int shm_init(char *q_prefix, int max_servers, int max_svcs);
+extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs);
 extern NDRX_API int ndrxd_shm_open_all(void);
 extern NDRX_API int ndrxd_shm_close_all(void);
 extern NDRX_API int ndrxd_shm_delete(void);
-extern NDRX_API int ndrx_shm_attach(ndrx_shm_t *shm);
 extern NDRX_API int ndrx_shm_attach_all(int lev);
 extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge,
                         int *have_shm);
@@ -107,11 +91,9 @@ extern NDRX_API int ndrxd_sem_open_all(void);
 extern NDRX_API int ndrxd_sem_close_all(void);
 extern NDRX_API int ndrxd_sem_delete(void);
 extern NDRX_API void ndrxd_sem_delete_with_init(char *q_prefix);
-extern NDRX_API int ndrxd_sem_is_attached(ndrx_sem_t *sem);
 extern NDRX_API int ndrx_sem_attach_all(void);
 extern NDRX_API int ndrx_lock_svc_op(const char *msg);
 extern NDRX_API int ndrx_unlock_svc_op(const char *msg);
-extern NDRX_API unsigned int ndrx_hash_fn( void *k );
 
 extern NDRX_API int ndrx_lock_svc_nm(char *svcnm, const char *msg);
 extern NDRX_API int ndrx_unlock_svc_nm(char *svcnm, const char *msg);

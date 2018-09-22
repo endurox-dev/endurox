@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <sys/signal.h>
 #include <time.h>
+#include <atmi.h>
 
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
@@ -47,11 +48,37 @@
 #define NDRX_SVQ_EV_DATA    2   /**< Main thread got some data          */
 #define NDRX_SVQ_EV_FD      3   /**< File descriptor got something      */
 
-#define SIG SIGUSR1
+#define SIG SIGUSR2             /**< Signal used for timeout wakeups    */
+
+#define NDRX_SVQ_MAP_ISUSED       0x00000001  /**< Queue is used              */
+#define NDRX_SVQ_MAP_WASUSED      0x00000002  /**< Queue was used (or is used)*/
+
+/** For quick access to  */
+#define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
 
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 
+/**
+ * Shared memory entry for service
+ */
+typedef struct ndrx_svq_map ndrx_svq_map_t;
+struct ndrx_svq_map
+{
+    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string */
+    int qid;                            /**< System V Queue id       */
+    short status;                       /**< See NDRX_SVQ_MAP_STAT_* */
+};
+
+/**
+ * Message queue attributes
+ */
+struct mq_attr {
+    long mq_flags;
+    long mq_maxmsg;
+    long mq_msgsize;
+    long mq_curmsgs;
+};
 
 /**
  * Queue entry
@@ -73,6 +100,10 @@ struct ndrx_svq_info
     time_t stamp_time;          /**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
     
+    
+    mode_t mode;                /**< permissions on new queue               */
+    struct mq_attr attr;        /**< attributes for the queue, if creating  */
+    
     /**
      * thread operating with queue... 
      * Also note that one thread might operate with multiple queues.
@@ -84,7 +115,6 @@ typedef struct ndrx_svq_info *mqd_t;
 
 
 typedef struct ndrx_svq_ev ndrx_svq_ev_t;
-
 /**
  * Event queue, either timeout, data or waken up by poller
  */
@@ -99,27 +129,24 @@ struct ndrx_svq_ev
     ndrx_svq_ev_t *next;    /**< Linked list of event enqueued              */
 };
 
-/**
- * Message queue attributes
+
+/* TODO: We need a structure for mapping the Posix Q names -> System V 
+ * and vice versa
  */
-struct mq_attr {
-    long mq_flags;
-    long mq_maxmsg;
-    long mq_msgsize;
-    long mq_curmsgs;
-};
+
 
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 
-extern int     ndrx_svq_close(mqd_t);
-extern int     ndrx_svq_getattr(mqd_t, struct mq_attr *);
-extern int     ndrx_svq_notify(mqd_t, const struct sigevent *);
-extern mqd_t   ndrx_svq_open(const char *, int, ...);
+extern int ndrx_svq_close(mqd_t);
+extern int ndrx_svq_getattr(mqd_t, struct mq_attr *);
+extern int ndrx_svq_notify(mqd_t, const struct sigevent *);
+extern mqd_t   ndrx_svq_open(const char *pathname, int oflag, mode_t mode, 
+                struct mq_attr *attr);
 extern ssize_t ndrx_svq_receive(mqd_t, char *, size_t, unsigned int *);
-extern int     ndrx_svq_send(mqd_t, const char *, size_t, unsigned int);
-extern int     ndrx_svq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
+extern int ndrx_svq_send(mqd_t, const char *, size_t, unsigned int);
+extern int ndrx_svq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
 extern int     ndrx_svq_unlink(const char *name);
 
 extern int ndrx_svq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,

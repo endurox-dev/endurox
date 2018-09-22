@@ -266,9 +266,9 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     pid_t pid, ppid;
     long th;
     char test_string2[NDRX_MAX_KEY_SIZE+4];
-    char srvinfo[NDRX_MAX_SHM_SIZE];
-    char svcinfo[NDRX_MAX_SHM_SIZE];
-    char brinfo[NDRX_MAX_SHM_SIZE];
+    char srvinfo[NDRX_SHM_PATH_MAX];
+    char svcinfo[NDRX_SHM_PATH_MAX];
+    char brinfo[NDRX_SHM_PATH_MAX];
     char *shm[] = {srvinfo, svcinfo, brinfo};
     char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
     int max_signals = 2;
