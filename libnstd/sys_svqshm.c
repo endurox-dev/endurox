@@ -240,7 +240,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     *pos=EXFAIL;
     *have_value = EXFALSE;
     
-    NDRX_LOG(log_debug, "Key for [%s] is %d, shm is: %p", 
+    NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p", 
                                         pathname, try, svq);
     /*
      * So we loop over filled entries until we found empty one or
@@ -252,7 +252,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
             && (!overflow || (overflow && try < start)))
     {
         
-        if (0==strcmp(NDRX_SVQ_INDEX(svq, try)->, svc))
+        if (0==strcmp(NDRX_SVQ_INDEX(svq, try)->qstr, pathname))
         {
             ret=EXTRUE;
             *pos=try;
@@ -284,11 +284,11 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
         {
             try = 0;
             overflow=EXTRUE;
-            NDRX_LOG(log_debug, "Overflow reached for search of [%s]", svc);
+            NDRX_LOG(log_debug, "Overflow reached for search of [%s]", pathname);
         }
         interations++;
         
-        NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
+        NDRX_LOG(log_debug, "Trying %d for [%s]", try, pathname);
     }
     
     *pos=try;
@@ -320,8 +320,8 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
     *pos=EXFAIL;
     *have_value = EXFALSE;
     
-    NDRX_LOG(log_debug, "Key for [%s] is %d, shm is: %p", 
-                                        pathname, try, svq);
+    NDRX_LOG(log_debug, "Try key qid [%d] is %d, shm is: %p", 
+                                        qid, try, svq);
     /*
      * So we loop over filled entries until we found empty one or
      * one which have been initialised by this service.
@@ -364,81 +364,108 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
         {
             try = 0;
             overflow=EXTRUE;
-            NDRX_LOG(log_debug, "Overflow reached for search of [%s]", svc);
+            NDRX_LOG(log_debug, "Overflow reached for search of [%d]", qid);
         }
         interations++;
         
-        NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
+        NDRX_LOG(log_debug, "Trying %d for [%s]", try, qid);
     }
     
     *pos=try;
-    NDRX_LOG(log_debug, "qstr_position_get [%s] - result: %d, "
+    NDRX_LOG(log_debug, "[%d] - result: %d, "
                             "interations: %d, pos: %d, have_value: %d",
-                             pathname, ret, interations, *pos, *have_value);
+                             qid, ret, interations, *pos, *have_value);
     return ret;
 }
 
 /**
  * Get queue from shared memory.
  * In case of O_CREAT + O_EXCL return EEXIST error!
- * @param pathname queue path
+ * @param qstr queue path
  * @param oflag are we creating a queue?
+ * @param remove should we actually remove the queue?
  * @return resolve queue id
  */
-expublic int ndrx_svqshm_get(char *pathname, int oflag)
+expublic int ndrx_svqshm_get(char *qstr, int oflag)
 {
-    int ret = EXFAIL;
+    int ret = EXSUCCEED;
+    int qid;
     int found;
     int have_value;
     int pos;
+    
+    int found_2;
+    int have_value_2;
+    int pos_2;
+    
     int err = 0;
+    
+    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
+    
+    ndrx_svq_map_t *pm;      /* Posix map           */
+    ndrx_svq_map_t *sm;      /* System V map        */
     
     INIT_ENTRY;
     
     /* Calculate first position of queue lookup */
     
-    /* Read lock */
+    /* Read lock, only if attempting to open existing queue
+     * For creating queues, we need to count the actual number
+     * of creates called. So that we could sync with ndrxd the zapping of Queues.
+     */
     
-    /* ###################### CRITICAL SECTION ############################### */
-    if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
+    if (!(oflag & O_CREAT))
     {
-        goto out;
-    }
-
-    found = position_get_qstr(pathname, oflag, &pos, &have_value);
-    if (found)
-    {
-        ret = NDRX_SVQ_INDEX(svq, try)->qid;
-    }
-
-    ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
-    /* ###################### CRITICAL SECTION, END ########################## */
-
-    if (have_value)
-    {
-        
-        if (oflag & (O_CREAT | O_EXCL))
+        /* ###################### CRITICAL SECTION ############################### */
+        if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
         {
-            /* ###################### CRITICAL SECTION, END ########################## */
-            ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
-            NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
-                    "it already exists at position with qid %d", pathname, ret);
-            err = EEXIST;
-            ret=EXFAIL;
+            goto out;
+        }
+
+        found = position_get_qstr(qstr, oflag, &pos, &have_value);
+        
+        if (have_value)
+        {
+            pm = NDRX_SVQ_INDEX(svq, pos);
+            qid = pm->qid;
+        }
+
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
+        /* ###################### CRITICAL SECTION, END ########################## */
+    
+        if (have_value)
+        {
+            if (oflag & (O_CREAT | O_EXCL))
+            {
+                /* ###################### CRITICAL SECTION, END ########################## */
+                ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+                NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
+                        "it already exists at position with qid %d", qstr, ret);
+                err = EEXIST;
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                qid = NDRX_SVQ_INDEX(svq, pos)->qid;
+                NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", qstr, ret);
+            }
+
+            /* finish with it */
+            goto out;
         }
         else
         {
-            ret = NDRX_SVQ_INDEX(svq, try)->qid;
-            NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", pathname, ret);
+            /* queue not found and we are in read mode... */
+            NDRX_LOG(log_debug, "Queue not found for: [%s]", qstr);
+            err = ENOENT;
+            EXFAIL_OUT(ret);
         }
-        
-        /* finish with it */
-        goto out;
     }
-
+    
     /* queue missing, release read lock, get write lock */
-    NDRX_LOG(log_info, "[%s] queue not registered or write requested %d - opening...", 
-            pathname, oflag);
+    NDRX_LOG(log_info, "[%s] queue not registered or write requested %d - Writ try...", 
+            qstr, oflag);
     
     /* ###################### CRITICAL SECTION ############################### */
     if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE))
@@ -446,30 +473,56 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
         goto out;
     }
     
-    found = position_get_qstr(pathname, oflag, &pos, &have_value);
+    found = position_get_qstr(qstr, oflag, &pos, &have_value);
     
+    /* check that we have found! */
+    
+    if (!found)
+    {
+        NDRX_LOG(log_error, "Location not found for [%s] - memory full?", qstr);
+        userlog("Location not found for [%s] - memory full?", qstr);
+        err = ENOMEM;
+        EXFAIL_OUT(ret);
+    }
+    
+    pm = NDRX_SVQ_INDEX(svq, pos);
     /* while we were locked, somebody may added such queue already...! */
+
     if (have_value)
     {
-        ret = NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->qid;
+        qid = pm->qid;
         
         if (oflag & (O_CREAT | O_EXCL))
         {
             /* ###################### CRITICAL SECTION, END ########################## */
             ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
             NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
-                    "it already exists at position with qid %d", pathname, ret);
+                    "it already exists at position with qid %d", qstr, ret);
             err = EEXIST;
-            ret=EXFAIL;
+            EXFAIL_OUT(ret);
         }
         else
         {
-  
+            /* update the usage statistics */
+            
+            /* Lookup the second table... so that we can update
+             * usage statistics
+             */
+            qid = pm->qid;
+            
+            found_2 = position_get_qid(qid, oflag, &pos_2, &have_value_2);
+            sm = NDRX_SVQ_INDEX(svq2, pos_2);
+            
+            ndrx_stopwatch_reset(&(pm->ctime));
+            ndrx_stopwatch_reset(&(sm->ctime));
+            
+            ret = sm->qid;
+            
             ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
             /* ###################### CRITICAL SECTION, END ########################## */
             
-            NDRX_LOG(log_error, "Queue [%s] mapped to qid %d, 
-                    pathname, ret);
+            NDRX_LOG(log_info, "Queue [%s] mapped to qid %d", 
+                    qstr, qid);
         }
         /* finish with it */
         goto out;
@@ -478,34 +531,253 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
     /* open queue, install mappings in both tables */
     
     /* extract only known flags.. */
-    if (EXFAIL==(ret = msgget(IPC_PRIVATE, ( (oflag & O_CREAT) | (oflag & O_EXCL)))))
+    if (EXFAIL==(qid = msgget(IPC_PRIVATE, ( (oflag & O_CREAT) | (oflag & O_EXCL)))))
     {
         int err = errno;
-        
         ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
         /* ###################### CRITICAL SECTION, END ########################## */
         
-        NDRX_LOG(log_error, "Failed msgget: %s for [%s]", strerror(err), pathname);
-        userlog("Failed msgget: %s for [%s]", strerror(err), pathname);
+        NDRX_LOG(log_error, "Failed msgget: %s for [%s]", strerror(err), qstr);
+        userlog("Failed msgget: %s for [%s]", strerror(err), qstr);
+        EXFAIL_OUT(ret);
     }
     
     /* write handlers off */
-    NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->qid = ret;
-    NDRX_STRCPY_SAFE( (NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->qstr), pathname);
-    NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->status = NDRX_SVQ_MAP_ISUSED | NDRX_SVQ_MAP_WASUSED;
+    pm->qid = ret;
+    NDRX_STRCPY_SAFE(pm->qstr, qstr);
+    pm->flags = (NDRX_SVQ_MAP_ISUSED | NDRX_SVQ_MAP_WASUSED);
     
-    /* now locate the pid to string mapping... */
+    /* now locate the pid to string mapping... 
+      * TODO: lookup the second table by new qid/ret
+     */
+    /* Lookup the second table... so that we can update
+     * usage statistics
+     */
+    qid = pm->qid;
+    found_2 = position_get_qid(qid, oflag, &pos_2, &have_value_2);
+    
+    if (!found_2)
+    {
+        NDRX_LOG(log_error, "Location not found for qid [%d] - memory full?", qid);
+        userlog("Location not found for qid [%d] - memory full?", qid);
+        err = ENOMEM;
+        EXFAIL_OUT(ret);
+    }
+    
+    sm = NDRX_SVQ_INDEX(svq2, pos_2);
+    
+    sm->qid = ret;
+    NDRX_STRCPY_SAFE( sm->qstr, qstr);
+    sm->flags = (NDRX_SVQ_MAP_ISUSED | NDRX_SVQ_MAP_WASUSED);
+    
+    /* reset last create time... */
+    ndrx_stopwatch_reset(&(pm->ctime));
+    ndrx_stopwatch_reset(&(sm->ctime));
     
     ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
     /* ###################### CRITICAL SECTION, END ########################## */
     
-    NDRX_LOG(log_debug, "Open queue: [%s] to system v: [%d]", pathname, ret);
+    NDRX_LOG(log_debug, "Open queue: [%s] to system v: [%d]", qstr, qid);
     
+out:
+    
+    if (EXSUCCEED!=ret)
+    {
+        errno = err;
+        return EXFAIL;
+    }
+    else
+    {
+        return qid;
+    }
+}
+
+/**
+ * Perform control operations over the shared memory / queue maps
+ * @param qstr conditional queue string, depending from which side we do
+ *  lookup. Either \p qstr or \p qid must be present
+ * @param qid queue ID, conditional, if not set then EXFAIL.
+ * @param cmd currently only IPC_RMID operation is supported. It is expected
+ *  that IPC_RMID will be called only by NDRXD when it expects that queue
+ *  needs to be unlinked. But at which point? 
+ *  Probably this way:
+ *      1) ndrxd locks the svqshm, svc shm, br shm
+ *      a)   Note that during this time some server is booting and might 
+ *      b)   have grabbed the queued id, thus also increased the counter
+ *      2) ndrxd scans the service lists. Find that particular qid is not used
+ *      3) then it shall be removed from svqshm, but there is problem,
+ *          as the a) have created the Q, and not yet reported to NDRXD,
+ *          the operation shall be delayed. Thus we need a last creation
+ *          timestamp. So that ndrxd removes un-used queues only after some
+ *          time of not "created".
+ *          for this scenario we will pass "arg1" which will give number of
+ *          seconds to be exceeded for unlink.
+ *          if unlink is needed immediately, then use -1.
+ * @return EXFAIL, or Op related value. For example for IPC_RMID it will
+ *  return number of instances left for the queue servers.
+ */
+expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
+{
+    int ret = EXSUCCEED;
+    
+    int delta;
+    
+    int found;
+    int have_value;
+    int pos;
+    
+    int found_2;
+    int have_value_2;
+    int pos_2;
+    
+    int err = 0;
+    int is_locked = EXFALSE;
+    
+    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
+    
+    ndrx_svq_map_t *pm;      /* Posix map           */
+    ndrx_svq_map_t *sm;      /* System V map        */
+    
+    INIT_ENTRY;
+    
+    /* ###################### CRITICAL SECTION ############################### */
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE))
+    {
+        goto out;
+    }
+    
+    is_locked = EXTRUE;
+    
+    if (qstr)
+    {
+        found = position_get_qstr(qstr, 0, &pos, &have_value);
+        
+        if (have_value)
+        {
+            pm = NDRX_SVQ_INDEX(svq, pos);
+            
+            found_2 = position_get_qid(pm->qid, 0, 
+                    &pos_2, &have_value_2);
+            
+            if (!have_value_2)
+            {
+                
+                NDRX_LOG(log_error, "qstr [%s] map not in sync with qid %d "
+                        "map (have_value_2 is false)",
+                        qstr, pm->qid);
+                userlog("qstr [%s] map not in sync with qid %d "
+                        "map (have_value_2 is false)",
+                        qstr, pm->qid);
+                err = EBADF;
+                EXFAIL_OUT(ret);
+            }
+            
+            sm = NDRX_SVQ_INDEX(svq2, pos_2);
+        }
+        
+    }
+    else if (EXFAIL!=qid)
+    {
+        found_2 = position_get_qid(qid, 0, 
+                    &pos_2, &have_value_2);
+        
+        if (have_value_2)
+        {
+            sm = NDRX_SVQ_INDEX(svq2, pos_2);
+            
+            found = position_get_qstr(sm->qstr, 0, &pos, &have_value);
+            
+            if (!have_value)
+            {
+                NDRX_LOG(log_error, "qstr [%s] map not in sync with qid %d "
+                        "map (have_value is false)",
+                        sm->qstr, qstr, qid);
+                
+                userlog("qstr [%s] map not in sync with qid %d "
+                        "map (have_value is false)",
+                        sm->qstr, qstr, qid);
+                err = EBADF;
+                EXFAIL_OUT(ret);
+            }
+            
+            pm = NDRX_SVQ_INDEX(svq, pos);
+            
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "qstr and qid are invalid => FAIL");
+        err = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+        
+    switch (cmd)
+    {
+        case IPC_RMID:
+            
+            if (!have_value)
+            {
+                NDRX_LOG(log_error, "Queue not found [%s]/%d", 
+                        qstr?qstr:"NULL", qid);
+                err = ENOENT;
+                EXFAIL_OUT(ret);
+            }
+            
+            delta = ndrx_stopwatch_get_delta_sec( &(pm->ctime));
+            
+            if ( delta > arg1)
+            {
+                NDRX_LOG(log_warn, "Unlinking queue: [%s]/%d (delta: %d, limit: %d)",
+                        pm->qstr, pm->qid, delta, arg1);
+                
+                /* unlink the q and remove entries from shm */
+                
+                if (EXSUCCEED!=msgctl(pm->qid, IPC_RMID, NULL))
+                {
+                    err = errno;
+                    
+                    if (EIDRM!=err && EINVAL!=err)
+                    {
+                        NDRX_LOG(log_error, "got error when removing %d: %s", 
+                            pm->qid, strerror(err));
+                        userlog("got error when removing %d: %s", 
+                            pm->qid, strerror(err));
+                        EXFAIL_OUT(ret);
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_warn, "got error when removing %d: %s - ignore", 
+                            pm->qid, strerror(err));
+                    }
+                    
+                    NDRX_LOG(log_debug, "Removing P2S and S2P shared mem entries...");
+                    
+                    pm->flags &= ~(NDRX_SVQ_MAP_ISUSED);
+                    sm->flags &= ~(NDRX_SVQ_MAP_ISUSED);
+                }
+            }
+            
+            break;
+        
+        default:
+            
+            NDRX_LOG(log_error, "Unsupported command: %d", cmd);
+            err=EINVAL;
+            EXFAIL_OUT(ret);
+            break;
+            
+    }
     
     
 out:
     
+    if (is_locked)
+    {
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+        /* ###################### CRITICAL SECTION, END ########################## */
+    }
+    
     errno = err;
     return ret;
 }
-

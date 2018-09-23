@@ -40,6 +40,7 @@
 #include <sys/signal.h>
 #include <time.h>
 #include <atmi.h>
+#include <nstopwatch.h>
 
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
@@ -65,10 +66,11 @@
 typedef struct ndrx_svq_map ndrx_svq_map_t;
 struct ndrx_svq_map
 {
-    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string */
-    int qid;                            /**< System V Queue id       */
-    int nrcreated;                      /**< Number of create instances */
-    short status;                       /**< See NDRX_SVQ_MAP_STAT_* */
+    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string    */
+    int qid;                            /**< System V Queue id          */
+    short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
+    /* put stopwatch for last create time */
+    ndrx_stopwatch_t ctime;             /**< change time                */
 };
 
 /**
@@ -86,7 +88,8 @@ struct mq_attr {
  */
 struct ndrx_svq_info
 {
-    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string */
+    char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string               */
+    int qid;                    /**< System V Queue ID                      */
     /* Locks for synchronous or other event wakeup */
     pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
     pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
@@ -151,12 +154,17 @@ extern int ndrx_svq_send(mqd_t, const char *, size_t, unsigned int);
 extern int ndrx_svq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
 extern int     ndrx_svq_unlink(const char *name);
 
-extern int ndrx_svq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio,
+extern int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, unsigned int prio,
         const struct timespec *__abs_timeout); 
 
-extern  ssize_t ndrx_svq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
+extern  ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec * __abs_timeout);
 
 extern void ndrx_svq_set_lock_timeout(int secs);
+
+
+/* internals... */
+
+extern int ndrx_svqshm_get(char *qstr, int oflag);
         
 #endif

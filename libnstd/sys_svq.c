@@ -159,28 +159,47 @@ exprivate void qd_hash_del(mqd_t qd)
 /**
  * Close queue. Basically we remove the dynamic data associated with queue
  * the queue id by it self continues to live on... until it is unlinked
- * @param emqd queue descriptor
+ * @param mqd queue descriptor
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svq_close(mqd_t emqd)
+expublic int ndrx_svq_close(mqd_t mqd)
+{
+    NDRX_LOG(log_debug, "close %p mqd", mqd);
+    
+    if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
+    {
+        NDRX_FREE(mqd);
+        return EXSUCCEED;
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Invalid mqd %p!", mqd);
+        errno = EBADF;
+        return EXFAIL;
+    }
+}
+
+/**
+ * Get attributes of the queue
+ * @param mqd queue descriptor / ptr to descr block
+ * @param emqstat queue stats
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *emqstat)
 {
     return EXFAIL;
 }
 
 /**
- * Get attributes of the queue
- * @param emqd queue descriptor / ptr to descr block
- * @param emqstat queue stats
- * @return EXSUCCEED/EXFAIL
+ * Perform notification - not supported
+ * @param mqd queue descriptor 
+ * @param notification signal event descr
+ * @return EXFAIL
  */
-expublic int ndrx_svq_getattr(mqd_t emqd, struct mq_attr *emqstat)
+expublic int ndrx_svq_notify(mqd_t mqd, const struct sigevent *notification)
 {
-    return EXFAIL;
-}
-
-expublic int ndrx_svq_notify(mqd_t emqd, const struct sigevent *notification)
-{
-    /* TODO: Not supported! */
+    NDRX_LOG(log_error, "mq_notify() not supported by System V queue emulation!");
+    userlog("mq_notify() not supported by System V queue emulation!");
     return EXFAIL;
 }
 
@@ -200,9 +219,10 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
         struct mq_attr *attr)
 {
     /* Allocate queue object */
-    int ret = EXSUCCEED;
     mqd_t mq = (mqd_t)EXFAIL;
+    int ret = EXSUCCEED;
     
+    NDRX_LOG(log_debug, "enter");
     mq = NDRX_CALLOC(1, sizeof(struct ndrx_svq_info));
     
     if (NULL==mq)
@@ -219,6 +239,11 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      * - if we create a Q, then alloc new ID
      * - if queue already exists SHM, then we can use that ID directly
      */
+    mq->qid = ndrx_svqshm_get((char *)pathname, oflag);
+    mq->thread = pthread_self();
+    NDRX_STRCPY_SAFE(mq->qstr, pathname);
+    mq->mode = mode;
+    memcpy(&(mq->attr), attr, sizeof (*attr));
     
 out:
     
@@ -226,38 +251,40 @@ out:
     {
         if (NULL!=(mqd_t)EXFAIL)
         {
-            
+            NDRX_FREE((char *)mq);
+            mq = (mqd_t)EXFAIL;
         }
     }
 
+    NDRX_LOG(log_debug, "return %p/%d", mq, (int)mq);
     return mq;
 }
 
-expublic ssize_t ndrx_svq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, 
+expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen, 
         unsigned int *priop, const struct timespec *__abs_timeout)
 {
     return EXFAIL;
 }
 
-expublic int ndrx_svq_timedsend(mqd_t emqd, const char *ptr, size_t len, 
+expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, 
         unsigned int prio, const struct timespec *__abs_timeout)
 {
     return EXFAIL;
 }
 
-expublic int ndrx_svq_send(mqd_t emqd, const char *ptr, size_t len, 
+expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len, 
         unsigned int prio)
 {
     return EXFAIL;
 }
 
-expublic ssize_t ndrx_svq_receive(mqd_t emqd, char *ptr, size_t maxlen, 
+expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen, 
         unsigned int *priop)
 {
     return EXFAIL;
 }
 
-expublic int ndrx_svq_setattr(mqd_t emqd, const struct mq_attr *emqstat, 
+expublic int ndrx_svq_setattr(mqd_t mqd, const struct mq_attr *emqstat, 
         struct mq_attr *oemqstat)
 {
     return EXFAIL;
