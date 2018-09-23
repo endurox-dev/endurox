@@ -42,6 +42,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>           /* For O_* constants */
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
 #include <ndrstandard.h>
 
 #include <nstopwatch.h>
@@ -52,109 +56,18 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#define VALIDATE_MQD if ( NULL==mqd || (mqd_t)EXFAIL==mqd)\
+    {\
+        NDRX_LOG(log_error, "Invalid queue descriptor %p", mqd);\
+        errno = EINVAL;\
+        EXFAIL_OUT(ret);\
+    }
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-#if 0
-struct qd_hash
-{
-    void *qd;
-    EX_hash_handle hh; /* makes this structure hashable        */
-};
-typedef struct qd_hash qd_hash_t;
-
-#endif
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-#if 0
-MUTEX_LOCKDECL(M_lock);
-qd_hash_t *M_qd_hash = NULL;
-
-exprivate int M_lock_secs = 0; /* Lock timeout... */
-/**
- * Add queue descriptor to hash
- * @param q queue descriptor
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int qd_exhash_add(mqd_t q)
-{
-    int ret = EXSUCCEED;
-    qd_hash_t * el = NDRX_CALLOC(1, sizeof(qd_hash_t));
-    
-    NDRX_LOG(log_dump, "Registering %p as mqd_t", q);
-    if (NULL==el)
-    {
-        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    
-    el->qd  = (void *)q;
-    
-    MUTEX_LOCK_V(M_lock);
-    
-    EXHASH_ADD_PTR(M_qd_hash, qd, el);
-    NDRX_LOG(log_dump, "added...");
-    
-    MUTEX_UNLOCK_V(M_lock);
-    
-out:
-
-    return ret;
-}
-
-/**
- * Check is queue descriptor logged
- * @param q queue descriptor
- * @return EXSUCCEED/EXFAIL
- */
-exprivate int qd_hash_chk(mqd_t qd)
-{
-    qd_hash_t *ret = NULL;
-    
-    NDRX_LOG(log_dump, "checking qd %p", qd);
-    
-    MUTEX_LOCK_V(M_lock);
-    
-    EXHASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
-    
-    MUTEX_UNLOCK_V(M_lock);
-    
-    if (NULL!=ret)
-    {
-        return EXTRUE;
-    }
-    else
-    {
-        return EXFALSE;
-    }
-}
-
-/**
- * Delete queue descriptor
- * @param q queue descriptor
- */
-exprivate void qd_hash_del(mqd_t qd)
-{
-    qd_hash_t *ret = NULL;
-    
-    NDRX_LOG(log_dump, "Unregistering %p as mqd_t", qd);
-    
-    MUTEX_LOCK_V(M_lock);
-    EXHASH_FIND_PTR( M_qd_hash, ((void **)&qd), ret);
-    
-    if (NULL!=ret)
-    {
-        EXHASH_DEL(M_qd_hash, ret);
-        NDRX_FREE(ret);
-    }
-    
-    MUTEX_UNLOCK_V(M_lock);
-}
-
-#endif
 
 /**
  * Close queue. Basically we remove the dynamic data associated with queue
@@ -182,12 +95,27 @@ expublic int ndrx_svq_close(mqd_t mqd)
 /**
  * Get attributes of the queue
  * @param mqd queue descriptor / ptr to descr block
- * @param emqstat queue stats
+ * @param attr queue stats
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *emqstat)
+expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *attr)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    
+    VALIDATE_MQD;
+    
+    if (NULL==attr)
+    {
+        NDRX_LOG(log_error, "Invalid attr is null", mqd);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+    
+    memcpy(attr, &(mqd->attr), sizeof(*attr));
+
+out:
+    
+    return ret;
 }
 
 /**
@@ -240,7 +168,7 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      * - if queue already exists SHM, then we can use that ID directly
      */
     mq->qid = ndrx_svqshm_get((char *)pathname, oflag);
-    mq->thread = pthread_self();
+    /* mq->thread = pthread_self(); - set only in timed functions */
     NDRX_STRCPY_SAFE(mq->qstr, pathname);
     mq->mode = mode;
     memcpy(&(mq->attr), attr, sizeof (*attr));
@@ -266,32 +194,161 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     return EXFAIL;
 }
 
+/**
+ * Sned message with timeout option
+ * @param mqd message queue descriptor
+ * @param ptr data ptr including mtype - long
+ * @param len data len including mtype - long
+ * @param prio message priority, not used
+ * @param __abs_timeout time out..., from this we calculate the time diff
+ *  for setting the delta time we shall spend in Q
+ * @return EXSUCCEED/EXFAIL
+ */
 expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, 
         unsigned int prio, const struct timespec *__abs_timeout)
 {
     return EXFAIL;
 }
 
+/**
+ * Just send msg, no timeout control.
+ * This are also not used by polling interfaces...
+ * @param mqd message queue descriptor
+ * @param ptr data ptr to send. Note that structures include first field as
+ *  long, due to System V IPC requirements!
+ * @param len the full message size includes first long field. The
+ *  function will do the internal wrappings by it self
+ * @param prio priority, not used.
+ * @return EXSUCCEED/EXFAIL
+ */
 expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len, 
         unsigned int prio)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    long *l;
+    int msgflg;
+    
+    NDRX_LOG(log_debug, "sending msg mqd=%p, ptr=%p, len=%d",
+                mqgd, ptr, (int)len);
+    
+    VALIDATE_MQD;
+    
+    if (len<sizeof(long))
+    {
+        NDRX_LOG(log_error, "Invalid message size, the minimum is %d but got %d", 
+                (int)sizeof(long), (int)len);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+    
+    l = (long *)ptr;    
+    *l = 1;
+    
+    if (mqd->attr.mq_flags & O_NONBLOCK)
+    {
+        msgflg = IPC_NOWAIT;
+    }
+    else
+    {
+        msgflg = 0;
+    }
+    
+    ret = msgsnd(mqd->qid, ptr, len-sizeof(long), msgflg);
+    
+    /* no logging here, as we need to keep errno */
+out:
+    return ret;
 }
 
+/**
+ * Receive message from queue, no timeout.
+ * This are also not used by polling interfaces...
+ * @param mqd message queue descriptor
+ * @param ptr data ptr (this will include initial long field - message type)
+ * @param maxlen max buffer size with out initial long
+ * @param priop not used
+ * @return EXSUCCEED/EXFAIL
+ */
 expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen, 
         unsigned int *priop)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    long *l;
+    int msgflg;
+    
+    NDRX_LOG(log_debug, "receiving msg mqd=%p, ptr=%p, len=%d",
+                mqgd, ptr, (int)len);
+    
+    VALIDATE_MQD;
+    
+    if (maxlen<sizeof(long))
+    {
+        NDRX_LOG(log_error, "Invalid message size, the minimum is %d but got %d", 
+                (int)sizeof(long), (int)maxlen);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+    
+    l = (long *)ptr;    
+    *l = 1;
+    
+    if (mqd->attr.mq_flags & O_NONBLOCK)
+    {
+        msgflg = IPC_NOWAIT;
+    }
+    else
+    {
+        msgflg = 0;
+    }
+    
+    ret = msgrcv(mqd->qid, ptr, maxlen-sizeof(long), 0, msgflg);
+    
+    /* no logging here, as we need to keep errno */
+out:
+    return ret;
 }
 
-expublic int ndrx_svq_setattr(mqd_t mqd, const struct mq_attr *emqstat, 
-        struct mq_attr *oemqstat)
+/**
+ * set queue attributes
+ * @param mqd queue descriptor
+ * @param attr new queue stat
+ * @param oattr old queue stat (returned if not NULL)
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_svq_setattr(mqd_t mqd, const struct mq_attr *attr, 
+        struct mq_attr *oattr)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    
+    VALIDATE_MQD;
+    
+    if (NULL==attr)
+    {
+        NDRX_LOG(log_error, "Invalid attr is null", mqd);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+    
+    /* old ret old attribs */
+    if (NULL!=oattr)
+    {
+        memcpy(oattr, &(mqd->attr), sizeof(*oattr));
+    }
+    
+    memcpy(&(mqd->attr), oattr, sizeof(*oattr));
+    
+out:
+    return ret;
 }
 
+/**
+ * Unlink queue 
+ * @param pathname queue string
+ * @return EXSUCCEED/EXFAIL
+ */
 expublic int ndrx_svq_unlink(const char *pathname)
 {
-    return EXFAIL;
+    /* for ndrxd service queue unlinks we shall use ndrx_svqshm_ctl directly */
+    return ndrx_svqshm_ctl(pathname, EXFAIL, IPC_RMID, EXFAIL);    
 }
 

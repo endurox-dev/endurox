@@ -45,11 +45,12 @@
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
+#define NDRX_SVQ_EV_NONE    0   /**< No event received, just normal msg */
 #define NDRX_SVQ_EV_TOUT    1   /**< Timeout event                      */
 #define NDRX_SVQ_EV_DATA    2   /**< Main thread got some data          */
 #define NDRX_SVQ_EV_FD      3   /**< File descriptor got something      */
 
-#define SIG SIGUSR2             /**< Signal used for timeout wakeups    */
+#define NDRX_SVQ_SIG SIGUSR2    /**< Signal used for timeout wakeups    */
 
 #define NDRX_SVQ_MAP_ISUSED       0x00000001  /**< Queue is used              */
 #define NDRX_SVQ_MAP_WASUSED      0x00000002  /**< Queue was used (or is used)*/
@@ -113,6 +114,9 @@ struct ndrx_svq_info
      * thread operating with queue... 
      * Also note that one thread might operate with multiple queues.
      * but only one queue will be blocked at the same time.
+     * WARNING !!! This needs to be set every time we enter in wait mode...
+     * cannot be set initially because threads might be switched
+     * in high level, Object API modes.
      */
     pthread_t thread;
 };
@@ -144,27 +148,26 @@ struct ndrx_svq_ev
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 
-extern int ndrx_svq_close(mqd_t);
-extern int ndrx_svq_getattr(mqd_t, struct mq_attr *);
-extern int ndrx_svq_notify(mqd_t, const struct sigevent *);
-extern mqd_t   ndrx_svq_open(const char *pathname, int oflag, mode_t mode, 
+extern NDRX_API int ndrx_svq_close(mqd_t);
+extern NDRX_API int ndrx_svq_getattr(mqd_t, struct mq_attr * attr);
+extern NDRX_API int ndrx_svq_notify(mqd_t, const struct sigevent *);
+extern NDRX_API mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode, 
                 struct mq_attr *attr);
-extern ssize_t ndrx_svq_receive(mqd_t, char *, size_t, unsigned int *);
-extern int ndrx_svq_send(mqd_t, const char *, size_t, unsigned int);
-extern int ndrx_svq_setattr(mqd_t, const struct mq_attr *, struct mq_attr *);
-extern int     ndrx_svq_unlink(const char *name);
+extern NDRX_API ssize_t ndrx_svq_receive(mqd_t, char *, size_t, unsigned int *);
+extern NDRX_API int ndrx_svq_send(mqd_t, const char *, size_t, unsigned int);
+extern NDRX_API int ndrx_svq_setattr(mqd_t, const struct mq_attr *attr, struct mq_attr *oattr);
+extern NDRX_API int ndrx_svq_unlink(const char *name);
 
-extern int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, unsigned int prio,
+extern NDRX_API  int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, unsigned int prio,
         const struct timespec *__abs_timeout); 
 
-extern  ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen, unsigned int *priop,
+extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec * __abs_timeout);
 
-extern void ndrx_svq_set_lock_timeout(int secs);
-
+extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 
 /* internals... */
-
-extern int ndrx_svqshm_get(char *qstr, int oflag);
+extern NDRX_API int ndrx_svqshm_get(char *qstr, int oflag);
+extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
         
 #endif
