@@ -388,7 +388,7 @@ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 
 ### Flags:
 
-- To enable System V message queue, pass '-DEFINE_SYSVQ=ON' to cmake
+- To enable System V message queue, pass '-DDEFINE_SYSVQ=ON' to cmake
 
 - To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
 

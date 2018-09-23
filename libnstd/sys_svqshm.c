@@ -41,6 +41,10 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <ndrstandard.h>
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
 #include <nstopwatch.h>
 #include <nstd_tls.h>
 #include <exhash.h>
@@ -90,8 +94,10 @@ exprivate ndrx_sem_t M_map_sem;          /**< RW semaphore for SHM protection */
 
 /* Also we need some array of semaphores for RW locking */
 
-exprivate char *M_qprefix = NULL;       /**< Queue prefix used by mappings */
-exprivate long M_queuesmax = 0;         /**< Max number of queues          */
+exprivate char *M_qprefix = NULL;       /**< Queue prefix used by mappings  */
+exprivate long M_queuesmax = 0;         /**< Max number of queues           */
+exprivate int  M_readersmax = 0;        /**< Max number of concurrent lckrds*/
+exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -117,16 +123,39 @@ exprivate int ndrx_svqshm_init(void)
         EXFAIL_OUT(ret);
     }
 
-    tmp = getenv(CONF_NDRX_QPREFIX);
+    /* get number of concurrent rheads */
+    tmp = getenv(CONF_NDRX_SVQREADERSMAX);
+    if (NULL==tmp)
+    {
+        M_readersmax = MAX_READERS;
+        NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
+                CONF_NDRX_MSGQUEUES_MAX, M_readersmax);
+    }
+    else
+    {
+        M_readersmax = atol(tmp);
+    }
+    
+    /* Get SV5 IPC */
+    tmp = getenv(CONF_NDRX_IPCKEY);
     if (NULL==tmp)
     {
         /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_MSGQUEUES_MAX);
-        userlog("Missing config key %s - FAIL", CONF_NDRX_MSGQUEUES_MAX);
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        EXFAIL_OUT(ret)
+    }
+    else
+    {
+	int tmpkey;
+        
+        sscanf(tmp, "%x", &tmpkey);
+	M_sem_key = tmpkey;
+
+        NDRX_LOG(log_debug, "(sysv queues): SystemV SEM IPC Key set to: [%x]",
+                            M_sem_key);
     }
     
-    M_queuesmax = atol(tmp);
     
     memset(&M_map_p2s, 0, sizeof(M_map_p2s));
     memset(&M_map_s2p, 0, sizeof(M_map_s2p));
@@ -156,10 +185,10 @@ exprivate int ndrx_svqshm_init(void)
         EXFAIL_OUT(ret);
     }
     
-    memset(&G_sem_svcop, 0, sizeof(G_sem_svcop));
+    memset(&M_map_sem, 0, sizeof(M_map_sem));
     
     /* Service queue ops */
-    M_map_sem.key = G_atmi_env.ipckey + NDRX_SEM_SV5LOCKS;
+    M_map_sem.key = M_sem_key + NDRX_SEM_SV5LOCKS;
     
     /*
      * Currently using single semaphore.
@@ -170,11 +199,13 @@ exprivate int ndrx_svqshm_init(void)
      * semaphores, so maybe this can be used to increase performance.
      */
     M_map_sem.nrsems = 1;
-    NDRX_LOG(log_debug, "Using service semaphore key: [%d]", 
-            M_map_sem.key);
+    M_map_sem.maxreaders = M_readersmax;
+    
+    NDRX_LOG(log_debug, "Using service semaphore key: %d max readers: %d", 
+            M_map_sem.key, M_readersmax);
     
     /* OK, either create or attach... */
-    if (EXSUCCEED!=ndrxd_sem_open(&M_map_sem, MAX_READERS))
+    if (EXSUCCEED!=ndrxd_sem_open(&M_map_sem))
     {
         NDRX_LOG(log_error, "Failed to open semaphore for System V queue "
                 "map shared mem");
@@ -195,7 +226,7 @@ out:
  * @param[out] have_value valid value is found? EXTRUE/EXFALSE.
  * @return EXTRUE -> found position/ EXFALSE - no position found
  */
-exprivate int qstr_position_get(char *pathname, int oflag, int *pos, 
+exprivate int position_get_qstr(char *pathname, int oflag, int *pos, 
         int *have_value)
 {
     int ret=EXFALSE;
@@ -267,6 +298,86 @@ exprivate int qstr_position_get(char *pathname, int oflag, int *pos,
     return ret;
 }
 
+
+/**
+ * Get position queue id record
+ * @param qid queue id
+ * @param[out] pos position found suitable to succeed request
+ * @param[out] have_value valid value is found? EXTRUE/EXFALSE.
+ * @return EXTRUE -> found position/ EXFALSE - no position found
+ */
+exprivate int position_get_qid(int qid, int oflag, int *pos, 
+        int *have_value)
+{
+    int ret=EXFALSE;
+    int try = qid % M_queuesmax;
+    int start = try;
+    int overflow = EXFALSE;
+    int interations = 0;
+    
+    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_s2p.mem;
+
+    *pos=EXFAIL;
+    *have_value = EXFALSE;
+    
+    NDRX_LOG(log_debug, "Key for [%s] is %d, shm is: %p", 
+                                        pathname, try, svq);
+    /*
+     * So we loop over filled entries until we found empty one or
+     * one which have been initialised by this service.
+     *
+     * So if there was overflow, then loop until the start item.
+     */
+    while ((NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
+            && (!overflow || (overflow && try < start)))
+    {
+        
+        if (NDRX_SVQ_INDEX(svq, try)->qid == qid)
+        {
+            ret=EXTRUE;
+            *pos=try;
+            
+            if (NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED)
+            {
+                *have_value=EXTRUE;
+            }
+            
+            break;  /* <<< Break! */
+        }
+        
+	if (oflag & O_CREAT)
+	{
+            if (!(NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED))
+            {
+                /* found used position */
+                break; /* <<< break! */
+            }
+	}
+
+        try++;
+        
+        /* we loop over... 
+         * Feature #139 mvitolin, 09/05/2017
+         * Fix potential overflow issues at the border... of SHM...
+         */
+        if (try>=M_queuesmax)
+        {
+            try = 0;
+            overflow=EXTRUE;
+            NDRX_LOG(log_debug, "Overflow reached for search of [%s]", svc);
+        }
+        interations++;
+        
+        NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
+    }
+    
+    *pos=try;
+    NDRX_LOG(log_debug, "qstr_position_get [%s] - result: %d, "
+                            "interations: %d, pos: %d, have_value: %d",
+                             pathname, ret, interations, *pos, *have_value);
+    return ret;
+}
+
 /**
  * Get queue from shared memory.
  * In case of O_CREAT + O_EXCL return EEXIST error!
@@ -281,7 +392,6 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
     int have_value;
     int pos;
     int err = 0;
-    /* as this may come first, we have to initialize the shared mem first */
     
     INIT_ENTRY;
     
@@ -294,22 +404,23 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
     {
         goto out;
     }
-    
-    found = qstr_position_get(pathname, oflag, &pos, &have_value);
+
+    found = position_get_qstr(pathname, oflag, &pos, &have_value);
     if (found)
     {
         ret = NDRX_SVQ_INDEX(svq, try)->qid;
     }
-    
+
     ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
     /* ###################### CRITICAL SECTION, END ########################## */
-    
+
     if (have_value)
     {
-        ret = NDRX_SVQ_INDEX(svq, try)->qid;
         
-        if (oflag * (O_CREAT | O_EXCL))
+        if (oflag & (O_CREAT | O_EXCL))
         {
+            /* ###################### CRITICAL SECTION, END ########################## */
+            ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
             NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
                     "it already exists at position with qid %d", pathname, ret);
             err = EEXIST;
@@ -317,14 +428,17 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
         }
         else
         {
+            ret = NDRX_SVQ_INDEX(svq, try)->qid;
             NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", pathname, ret);
         }
+        
         /* finish with it */
         goto out;
     }
-    
+
     /* queue missing, release read lock, get write lock */
-    NDRX_LOG(log_info, "[%s] queue not registered - opening...", pathname);
+    NDRX_LOG(log_info, "[%s] queue not registered or write requested %d - opening...", 
+            pathname, oflag);
     
     /* ###################### CRITICAL SECTION ############################### */
     if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE))
@@ -332,23 +446,17 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
         goto out;
     }
     
-    found = qstr_position_get(pathname, oflag, &pos, &have_value);
-    if (found)
-    {
-        ret = NDRX_SVQ_INDEX(svq, try)->qid;
-    }
-    
+    found = position_get_qstr(pathname, oflag, &pos, &have_value);
     
     /* while we were locked, somebody may added such queue already...! */
     if (have_value)
     {
-        ret = NDRX_SVQ_INDEX(svq, try)->qid;       
+        ret = NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->qid;
         
-        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
-        /* ###################### CRITICAL SECTION, END ########################## */
-        
-        if (oflag * (O_CREAT | O_EXCL))
+        if (oflag & (O_CREAT | O_EXCL))
         {
+            /* ###################### CRITICAL SECTION, END ########################## */
+            ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
             NDRX_LOG(log_error, "Queue [%s] was requested with O_CREAT | O_EXCL, but "
                     "it already exists at position with qid %d", pathname, ret);
             err = EEXIST;
@@ -356,16 +464,44 @@ expublic int ndrx_svqshm_get(char *pathname, int oflag)
         }
         else
         {
-            NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", pathname, ret);
+  
+            ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+            /* ###################### CRITICAL SECTION, END ########################## */
+            
+            NDRX_LOG(log_error, "Queue [%s] mapped to qid %d, 
+                    pathname, ret);
         }
         /* finish with it */
         goto out;
     }
     
-    /* TODO: open queue, install mappings in both tables */
+    /* open queue, install mappings in both tables */
+    
+    /* extract only known flags.. */
+    if (EXFAIL==(ret = msgget(IPC_PRIVATE, ( (oflag & O_CREAT) | (oflag & O_EXCL)))))
+    {
+        int err = errno;
+        
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
+        /* ###################### CRITICAL SECTION, END ########################## */
+        
+        NDRX_LOG(log_error, "Failed msgget: %s for [%s]", strerror(err), pathname);
+        userlog("Failed msgget: %s for [%s]", strerror(err), pathname);
+    }
+    
+    /* write handlers off */
+    NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->qid = ret;
+    NDRX_STRCPY_SAFE( (NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->qstr), pathname);
+    NDRX_SVQ_INDEX(M_map_p2s.mem, pos)->status = NDRX_SVQ_MAP_ISUSED | NDRX_SVQ_MAP_WASUSED;
+    
+    /* now locate the pid to string mapping... */
     
     ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE);
     /* ###################### CRITICAL SECTION, END ########################## */
+    
+    NDRX_LOG(log_debug, "Open queue: [%s] to system v: [%d]", pathname, ret);
+    
+    
     
 out:
     

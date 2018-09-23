@@ -67,6 +67,7 @@ struct ndrx_svq_map
 {
     char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string */
     int qid;                            /**< System V Queue id       */
+    int nrcreated;                      /**< Number of create instances */
     short status;                       /**< See NDRX_SVQ_MAP_STAT_* */
 };
 
@@ -83,8 +84,9 @@ struct mq_attr {
 /**
  * Queue entry
  */
-struct ndrx_svq_info 
+struct ndrx_svq_info
 {
+    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string */
     /* Locks for synchronous or other event wakeup */
     pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
     pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
