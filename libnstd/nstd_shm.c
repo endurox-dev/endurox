@@ -105,21 +105,23 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
 {
     int ret=EXSUCCEED;
     
-    mode_t add_flags = O_EXCL;
-    
     NDRX_LOG(log_debug, "enter");
     
-    if (attach_on_exists)
-    {
-        add_flags = 0;
-    }
-
     /* creating the shared memory object --  shm_open() */
-    shm->fd = shm_open(shm->path, O_CREAT | add_flags | O_RDWR, S_IRWXU | S_IRWXG);
+    shm->fd = shm_open(shm->path, O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG);
 
     if (shm->fd < 0)
     {
         int err = errno;
+        
+        /* if failed to create with EEXISTS error, try to attach */
+        
+        if (EEXIST==err && attach_on_exists)
+        {
+            NDRX_LOG(log_error, "Shared memory created [%s] - attaching",
+                    shm->path);
+            return ndrx_shm_attach(shm);
+        }
         
         NDRX_LOG(log_error, "Failed to create shm [%s]: %s",
                             shm->path, strerror(err));
