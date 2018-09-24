@@ -55,7 +55,6 @@ extern "C" {
  */
 typedef struct
 {
-    /*struct timeval  timeval;*/
     struct timespec t;
 } ndrx_stopwatch_t;
 /*---------------------------Globals------------------------------------*/

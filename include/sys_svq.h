@@ -1,5 +1,7 @@
 /**
  * @brief Enduro/X System V message queue support
+ *  Also in case of system exit, we will use "atexit(3)" call to register
+ *  termination handlers.
  *
  * @file sys_svsvq.h
  */
@@ -58,6 +60,13 @@
 /** For quick access to  */
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
 
+
+#define NDRX_SVQ_MON_TOUT         1 /**< Request for timeout                  */
+#define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
+#define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
+#define NDRX_SVQ_MON_TERM         4 /**< Termination handler calls us         */
+#define NDRX_SVQ_MON_QRM          5 /**< Queue unlink request                 */
+
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 
@@ -84,6 +93,24 @@ struct mq_attr {
     long mq_curmsgs;
 };
 
+typedef struct ndrx_svq_ev ndrx_svq_ev_t;
+/**
+ * Event queue, either timeout, data or waken up by poller
+ */
+struct ndrx_svq_ev
+{
+    int ev;                 /**< Event code received                        */
+
+    char *data;             /**< Associate data received                    */
+    long datalen;           /**< Assocate data len                          */
+    
+    time_t stamp_time;      /**< timestamp for timeout waiting              */
+    unsigned long stamp_seq;/**< stamp sequence                             */
+    
+    int fd;                 /**< Linked file descriptor generating FD event */
+    ndrx_svq_ev_t *next, *prev;/**< Linked list of event enqueued           */
+};
+
 /**
  * Queue entry
  */
@@ -94,6 +121,7 @@ struct ndrx_svq_info
     /* Locks for synchronous or other event wakeup */
     pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
     pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
+    ndrx_svq_ev_t eventq;         /**< Events queued for this ipc q           */
     pthread_mutex_t border;     /**< Border lock after msgrcv woken up      */
    
     pthread_mutex_t qlock;      /**< Queue lock (event queue)               */
@@ -103,7 +131,8 @@ struct ndrx_svq_info
      * if needed. If not then event will be discarded because of stamps
      * does not match.
      */
-    time_t stamp_time;          /**< timestamp for timeout waiting          */
+    pthread_mutex_t stamplock;  /**< Stamp change lock                      */
+    ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
     
     
@@ -119,30 +148,28 @@ struct ndrx_svq_info
      * in high level, Object API modes.
      */
     pthread_t thread;
+
 };
 typedef struct ndrx_svq_info *mqd_t;
 
 
-typedef struct ndrx_svq_ev ndrx_svq_ev_t;
 /**
- * Event queue, either timeout, data or waken up by poller
+ * Command block for monitoring thread
  */
-struct ndrx_svq_ev
+typedef struct
 {
-    int ev;                 /**< Event code received                        */
-
-    char *data;             /**< Associate data received                    */
-    long datalen;           /**< Assocate data len                          */
+    int cmd;                    /**< See NDRX_SVQ_MON_* commands            */
+    struct timespec abs_timeout;/**< timeout value when the wait shell tout */
     
-    int fd;                 /**< Linked file descriptor generating FD event */
-    ndrx_svq_ev_t *next;    /**< Linked list of event enqueued              */
-};
-
-
-/* TODO: We need a structure for mapping the Posix Q names -> System V 
- * and vice versa
- */
-
+    /* Data for timeout request: */
+    ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
+    unsigned long stamp_seq;    /**< stamp sequence                         */
+    
+    int fd;                     /** file descriptor for related cmds        */
+    
+    mqd_t mqd;                  /** message queue requesting an event       */
+    
+} ndrx_svq_mon_cmd_t;
 
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
@@ -168,6 +195,6 @@ extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 
 /* internals... */
 extern NDRX_API int ndrx_svqshm_get(char *qstr, int oflag);
-extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
+extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
         
 #endif

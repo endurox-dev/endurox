@@ -44,6 +44,7 @@ if(DEFINED EX_USE_SYSVQ)
     SET(NSTD_POLLER "sys_svqpoll.c")
     SET(NSTD_SYS_3 "sys_svq.c")
     SET(NSTD_SYS_4 "sys_svqshm.c")
+    SET(NSTD_SYS_5 "sys_svqevent.c")
 elseif (DEFINED EX_USE_KQUEUE)
     SET(NSTD_POLLER "sys_kqueue.c")
 elseif(DEFINED EX_USE_POLL)
@@ -90,7 +91,7 @@ add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
                         exregex.c platform.c msgsizemax.c exaes.c exsha1.c
                         exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/edb.c
-                        edbutil.c crc32.c nstd_shm.c ${NSTD_SYS_4}
+                        edbutil.c crc32.c nstd_shm.c ${NSTD_SYS_4} ${NSTD_SYS_5}
                         )
 
 if(${CMAKE_OS_NAME} STREQUAL "AIX")
