@@ -109,6 +109,9 @@ extern NDRX_API int ndrx_growlist_append(ndrx_growlist_t *list, void *item);
 extern NDRX_API void ndrx_growlist_free(ndrx_growlist_t *list);
 
 extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
+extern NDRX_API long ndrx_timespec_get_delta(struct timespec *stop, struct timespec *start);
+
+extern NDRX_API long ndrx_ceil(long x, long y);
 extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
 extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
 extern NDRX_API char * ndrx_get_strtstamp_from_sec(int slot, long ts);

@@ -184,7 +184,7 @@ out:
         }
     }
 
-    NDRX_LOG(log_debug, "return %p/%d", mq, (int)mq);
+    NDRX_LOG(log_debug, "return %p/%ld", mq, (long)mq);
     return mq;
 }
 
@@ -229,7 +229,7 @@ expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len,
     int msgflg;
     
     NDRX_LOG(log_debug, "sending msg mqd=%p, ptr=%p, len=%d",
-                mqgd, ptr, (int)len);
+                mqd, ptr, (int)len);
     
     VALIDATE_MQD;
     
@@ -276,8 +276,8 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
     long *l;
     int msgflg;
     
-    NDRX_LOG(log_debug, "receiving msg mqd=%p, ptr=%p, len=%d",
-                mqgd, ptr, (int)len);
+    NDRX_LOG(log_debug, "receiving msg mqd=%p, ptr=%p, maxlen=%d",
+                mqd, ptr, (int)maxlen);
     
     VALIDATE_MQD;
     
@@ -349,6 +349,6 @@ out:
 expublic int ndrx_svq_unlink(const char *pathname)
 {
     /* for ndrxd service queue unlinks we shall use ndrx_svqshm_ctl directly */
-    return ndrx_svqshm_ctl(pathname, EXFAIL, IPC_RMID, EXFAIL);    
+    return ndrx_svqshm_ctl((char *)pathname, EXFAIL, IPC_RMID, EXFAIL);    
 }
 
