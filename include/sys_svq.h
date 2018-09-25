@@ -121,9 +121,8 @@ struct ndrx_svq_info
     /* Locks for synchronous or other event wakeup */
     pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
     pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
-    ndrx_svq_ev_t eventq;         /**< Events queued for this ipc q           */
+    ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q           */
     pthread_mutex_t border;     /**< Border lock after msgrcv woken up      */
-   
     pthread_mutex_t qlock;      /**< Queue lock (event queue)               */
 
     /* Timeout matching.
@@ -150,7 +149,7 @@ struct ndrx_svq_info
     pthread_t thread;
 
 };
-typedef struct ndrx_svq_info *mqd_t;
+typedef struct ndrx_svq_info * mqd_t;
 
 
 /**
@@ -192,9 +191,12 @@ extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxle
         const struct timespec * __abs_timeout);
 
 extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
+extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
 
 /* internals... */
 extern NDRX_API int ndrx_svqshm_get(char *qstr, int oflag);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
+
+
         
 #endif

@@ -47,6 +47,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <sys/msg.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -57,6 +58,7 @@
 #include <sys/epoll.h>
 
 #include <utlist.h>
+#include <sys_svq.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -286,6 +288,198 @@ exprivate int ndrx_svq_mqd_hash_findtout(void)
 }
 
 /**
+ * Dispatch any pending timeouts
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_svq_mqd_hash_dispatch(void)
+{
+    int ret = EXSUCCEED;
+    ndrx_svq_mqd_hash_t * r, *rt;
+    long delta;
+    struct timespec abs_timeout;
+    struct timeval  timeval;
+    ndrx_svq_ev_t * ev = NULL;
+    int err;
+    
+    gettimeofday (&timeval, NULL);
+    abs_timeout.tv_sec = timeval.tv_sec;
+    abs_timeout.tv_nsec = timeval.tv_usec*1000;
+    
+    EXHASH_ITER(hh, (M_mon.mqdhash), r, rt)
+    {
+        delta = ndrx_timespec_get_delta(&(r->abs_timeout), &abs_timeout);
+        
+        if (delta <= 0)
+        {
+            NDRX_LOG(log_warn, "Timeout condition: mqd %p time spent: %ld", 
+                        r->mqd, delta);
+            
+            /* lets put the event to the message queue... 
+             * firstly we need to allocate the event.
+             */            
+            if (NULL==(ev = NDRX_MALLOC(sizeof(ndrx_svq_ev_t))))
+            {
+                err = errno;
+                NDRX_LOG(log_error, "Failed to allocate ndrx_svq_ev_t: %s", 
+                            strerror(err));
+                userlog("Failed to allocate ndrx_svq_ev_t: %s", 
+                            strerror(err));
+                EXFAIL_OUT(ret);
+            }
+
+            ev->ev = NDRX_SVQ_EV_TOUT;
+            ev->stamp_seq = r->stamp_seq;
+            ev->stamp_time = r->stamp_time;
+            
+            if (EXSUCCEED!=ndrx_svq_mqd_put_event((mqd_t)r->mqd, ev))
+            {
+                NDRX_LOG(log_error, "Failed to put event for %p typ %d",
+                        r->mqd, ev->ev);
+                EXFAIL_OUT(ret);
+            }
+            
+        }
+    }
+out:
+    
+    if (EXSUCCEED!=ret && NULL!=ev)
+    {
+        NDRX_FREE(ev);
+    }
+
+    return ret;
+}
+
+/**
+ * What about admin msg thread? If we get admin message, then
+ * we need to forward the message to main thread, not?
+ * this down mixing we will do at poller level..
+ * 
+ * @param mqd message queue descriptor
+ * @param ev allocate event structure
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
+{
+    int ret = EXSUCCEED;
+    int l2, l1;
+    int sigs = 0;
+
+    /* Append messages to Q: */
+    pthread_mutex_lock(&(mqd->qlock));
+    DL_APPEND(mqd->eventq, ev);
+    pthread_mutex_unlock(&(mqd->qlock));
+    
+    /* now emit the wakeup call */
+    /* put borderlock */	
+    pthread_mutex_lock(&(mqd->border));
+
+    l1=pthread_mutex_trylock(&(mqd->rcvlockb4));
+    l2=pthread_mutex_trylock(&(mqd->rcvlock));
+
+
+    if (0==l1)
+    {
+        /* nothing todo, not locked... 
+         * thus......
+         * assume that it will pick the msg up in next loop
+         */
+        /* fprintf(stderr, "we locked b4 area, thus process is in workload\n"); */
+        pthread_mutex_unlock(&(mqd->rcvlockb4));
+
+        if (0==l2)
+        {
+            pthread_mutex_unlock(&(mqd->rcvlock));
+        }
+
+    }
+    else
+    {
+
+        /* both locked...
+         * so we will signal the thread
+         */
+
+        /* unlock our fired, so that it can step forward
+         */
+        if (0==l1)
+        {
+            pthread_mutex_unlock(&(mqd->rcvlockb4));
+        }
+
+        if (0==l2)
+        {
+            pthread_mutex_unlock(&(mqd->rcvlock));
+        }
+
+        /* reseync on Q lock so that main thread goes into both locked state*/
+        pthread_mutex_lock(&(mqd->qlock));
+        pthread_mutex_unlock(&(mqd->qlock));
+
+        /* now loop the locking until we get both locked 
+         * or both non locked
+         */
+        while (1)
+        {
+            /* try lock again... */
+            l1=pthread_mutex_trylock(&(mqd->rcvlockb4));
+            l2=pthread_mutex_trylock(&(mqd->rcvlock));
+
+            /* both not locked, then we need to interrupt the thread */
+
+            if (0==l1 && 0==l2)
+            {
+                /* then it will process or queued event anyway... */
+
+                pthread_mutex_unlock(&(mqd->rcvlockb4));
+                pthread_mutex_unlock(&(mqd->rcvlock));
+
+                break;
+            }
+            else if (0!=l1 && 0!=l2)
+            {
+                /*Maybe try to send only 1 signal?*/
+
+                if (0==sigs)
+                {
+                    if (0!=pthread_kill(mqd->thread, NDRX_SVQ_SIG))
+                    {
+                        int err = errno;
+                        NDRX_LOG(log_error, "pthread_kill(%d) failed: %s", 
+                                NDRX_SVQ_SIG, strerror(err));
+                        userlog("pthread_kill(%d) failed: %s", 
+                                NDRX_SVQ_SIG, strerror(err));
+                        EXFAIL_OUT(ret);
+                    }
+                    sigs++;
+                }
+            }
+
+            if (0==l1)
+            {
+                pthread_mutex_unlock(&(mqd->rcvlockb4));
+            }
+
+            if (0==l2)
+            {
+                pthread_mutex_unlock(&(mqd->rcvlock));
+            }
+
+            /* TODO: Maybe do yeald... */
+            usleep(1);
+
+        }
+    }
+
+    pthread_mutex_unlock(&(mqd->border));
+    
+out:
+    return ret;        
+}
+
+
+
+/**
  * Wakup signal handling
  * @param sig
  */
@@ -353,6 +547,16 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             /* 
              * now detect queues/threads to which this event shall be submitted
              */
+            if (EXSUCCEED!=ndrx_svq_mqd_hash_dispatch())
+            {
+                NDRX_LOG(log_error, "Failed to dispatch events - general failure "
+                        "- reboot to avoid lockups!");
+                userlog("Failed to dispatch events - general failure "
+                        "- reboot to avoid lockups!");
+                
+                /* better reboot process, so that we avoid any lockups! */
+                exit(EXFAIL);
+            }
             
         }
         else for (i=0; i<M_mon.nrfds; i++)
@@ -362,9 +566,11 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 NDRX_LOG(log_debug, "%d revents=%d", i, M_mon.fdtab[i].revents);
                 if (PIPE_POLL_IDX==i)
                 {
-                    /* We got something from command object, thus 
+                    /* We got something from command pipe, thus 
                      * we alter our selves
                      */
+                    
+                    /* TODO: receive the command first... */
                     
                     
                 }
@@ -654,7 +860,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     if (NULL!=mqd->eventq)
     {
         *ev = mqd->eventq;
-        DEL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, mqd->eventq);
         pthread_mutex_unlock(&(mqd->qlock));
         
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
@@ -679,7 +885,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * send until both are unlocked or stamp is changed.
      */
     
-    ret=msgrcv (mqd->qid, ptr, maxlen - sizeof(long), 0, 0);
+    ret=msgrcv (mqd->qid, ptr, *maxlen - sizeof(long), 0, 0);
     
     err=errno;
 
