@@ -81,7 +81,7 @@ struct ndrx_svq_mqd_hash
 {
     void *mqd;                  /**< Queue handler hashed               */
     
-    time_t stamp_time;          /**< timestamp for timeout waiting      */
+    ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting      */
     unsigned long stamp_seq;    /**< stamp sequence                     */
     
     struct timespec abs_timeout;/**< actual future timeout time         */
@@ -146,6 +146,119 @@ exprivate int M_shutdown = EXFALSE;         /**< is shutdown requested? */
 
 
 /**
+ * Add FD to polling structure
+ * @param fd file descriptor to add for polling
+ */
+exprivate void ndrx_svq_fd_hash_addpoll(int fd)
+{
+    
+}
+
+/**
+ * Remove FD from polling struct
+ * @param fd file descriptor
+ */
+exprivate void ndrx_svq_fd_hash_delpoll(int fd)
+{
+    
+}
+
+/**
+ * Check queue for FD presence in hash
+ * @param fd queue descriptor ptr
+ * @return q descriptor or NULL
+ */
+exprivate ndrx_svq_fd_hash_t * ndrx_svq_fd_hash_find(int fd)
+{
+    ndrx_svq_fd_hash_t *ret = NULL;
+    
+    EXHASH_FIND_PTR( (M_mon.fdhash), ((void **)&fd), ret);
+    
+    NDRX_LOG(log_dump, "checking fd %d -> %p", fd, ret);
+    
+    return ret;
+}
+
+/**
+ * Add queue to timeout monitor
+ * @param fd message queue descriptor
+ * @param stamp_time timestamp when we are going to expire
+ * @param stamp_seq sequence number for expiry
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd)
+{
+    int ret = EXSUCCEED;
+    ndrx_svq_fd_hash_t * el;
+    
+    el = ndrx_svq_fd_hash_find(fd);
+    
+    if (NULL==el)
+    {
+        el = NDRX_CALLOC(1, sizeof(ndrx_svq_fd_hash_t));
+
+        NDRX_LOG(log_dump, "Registering %p as int", fd);
+
+        if (NULL==el)
+        {
+            int err = errno;
+
+            NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+            userlog("Failed to alloc: %s", strerror(err));
+
+            EXFAIL_OUT(ret);
+        }
+
+        el->fd  = fd;
+        el->mqd = mqd;
+        
+        /* TODO: alter the polling structure...! */
+        
+        EXHASH_ADD_PTR((M_mon.fdhash), fd, el);
+    }
+    else
+    {
+        /* just update entry...  */
+        el->mqd = mqd;
+    }
+    
+out:
+    
+    return ret;
+}
+
+/**
+ * Delete single entry from queue hash
+ * @param fd queue ptr
+ */
+exprivate void ndrx_svq_fd_hash_del(int fd)
+{
+    ndrx_svq_fd_hash_t *ret = NULL;
+
+    /* remove from polling array!  */
+    ndrx_svq_fd_hash_delpoll(fd);
+    
+    /* remove form FD registry */
+    EXHASH_FIND_INT( (M_mon.fdhash), &fd, ret);
+    
+    if (NULL!=ret)
+    {
+        EXHASH_DEL((M_mon.fdhash), ret);
+        NDRX_FREE(ret);
+    }
+}
+
+/**
+ * Delete record from fdhash by matching the queue descriptor
+ * @param mqd queue descriptor ptr
+ */
+exprivate void ndrx_svq_fd_hash_delbymqd(mqd_t mqd)
+{
+    /* TODO: remove from polling array */
+    
+}
+
+/**
  * Check queue descriptor presence in hash
  * @param mqd queue descriptor ptr
  * @return q descriptor or NULL
@@ -154,9 +267,9 @@ exprivate ndrx_svq_mqd_hash_t * ndrx_svq_mqd_hash_find(mqd_t mqd)
 {
     ndrx_svq_mqd_hash_t *ret = NULL;
     
-    NDRX_LOG(log_dump, "checking mqd %p", mqd);
-    
     EXHASH_FIND_PTR( (M_mon.mqdhash), ((void **)&mqd), ret);
+    
+    NDRX_LOG(log_dump, "checking mqd %p -> %p", mqd, ret);
     
     return ret;
 }
@@ -168,7 +281,7 @@ exprivate ndrx_svq_mqd_hash_t * ndrx_svq_mqd_hash_find(mqd_t mqd)
  * @param stamp_seq sequence number for expiry
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_svq_mqd_hash_add(mqd_t mqd, time_t *stamp_time, 
+exprivate int ndrx_svq_mqd_hash_add(mqd_t mqd, ndrx_stopwatch_t *stamp_time, 
         unsigned long stamp_seq, struct timespec *abs_timeout)
 {
     int ret = EXSUCCEED;
@@ -218,9 +331,29 @@ out:
 exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
 {
     ndrx_svq_mqd_hash_t *ret = NULL;
+    ndrx_svq_ev_t *elt, *tmp;
+    /* Remove queue completely */
     
+    NDRX_LOG(log_debug, "Unlinking queue %p qstr:[%s] qid:%d", 
+            mqd, mqd->qstr, mqd->qid);
+    
+    if (EXSUCCEED!=msgctl(mqd->qid, IPC_RMID, NULL))
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to unlink qid:%d - ignore", strerror(err));
+        userlog("Failed to unlink qid:%d - ignore", strerror(err));
+    }
+            
     NDRX_LOG(log_dump, "Unregistering %p as mqd_t from timeout mon", mqd);
     
+    /* Remove any un-processed queued events... */
+    DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
+    {
+        DL_DELETE(mqd->eventq, elt);
+        NDRX_FREE(elt);
+    }
+    
+    /* remove from timeout hash */
     EXHASH_FIND_PTR( (M_mon.mqdhash), ((void **)&mqd), ret);
     
     if (NULL!=ret)
@@ -228,6 +361,17 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
         EXHASH_DEL((M_mon.mqdhash), ret);
         NDRX_FREE(ret);
     }
+}
+
+/**
+ * Remove from MQ hash and remove linked file descriptors 
+ * @param mqd queue descriptor to remove
+ */
+exprivate void ndrx_svq_mqd_hash_delfull(mqd_t mqd)
+{
+    /* remove FD firstly, if any */
+    
+    ndrx_svq_mqd_hash_del(mqd);
 }
 
 /* TODO: We need a full delete where we scan the FD hash and remove any related
@@ -503,6 +647,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int timeout;
     int i;
     int err;
+    ndrx_svq_mon_cmd_t cmd;
     
     /* we shall receive unnamed pipe
      * in thread.
@@ -570,8 +715,54 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                      * we alter our selves
                      */
                     
-                    /* TODO: receive the command first... */
+                    /* receive the command first... */
+                    if (EXFAIL==read(M_mon.evpipe[READ], &cmd, sizeof(cmd)))
+                    {
+                        err = errno;
+                        
+                        NDRX_LOG(log_error, "Failed to receive command block by "
+                                "System V monitoring thread: %s", strerror(err));
+                        userlog("Failed to receive command block by "
+                                "System V monitoring thread: %s", strerror(err));
+                        EXFAIL_OUT(ret);
+                    }
                     
+                    switch (cmd.cmd)
+                    {
+                        case NDRX_SVQ_MON_TOUT:
+                            
+                            if (EXSUCCEED!=ndrx_svq_mqd_hash_add(cmd.mqd, 
+                                    &(cmd.stamp_time), cmd.stamp_seq, &(cmd.abs_timeout)))
+                            {
+                                NDRX_LOG(log_error, "Failed to register timeout for %p!",
+                                        cmd.mqd);
+                                userlog("Failed to register timeout for %p!",
+                                        cmd.mqd);
+                                EXFAIL_OUT(ret);
+                            }
+                            
+                            break;
+                        case NDRX_SVQ_MON_ADDFD:
+                            
+                            /* TODO: */
+                            
+                            break;
+                            
+                        case NDRX_SVQ_MON_RMFD:
+                            
+                            /* TODO: */
+                            
+                            break;
+                        case NDRX_SVQ_MON_TERM:
+                            NDRX_LOG(log_info, "Terminate request...");
+                            goto out;
+                            break;
+                        case NDRX_SVQ_MON_QRM:
+                            NDRX_LOG(log_info, "Unlink queue %p command",
+                                    cmd.mqd);
+                            ndrx_svq_mqd_hash_delfull(cmd.mqd);
+                            break;
+                    }
                     
                 }
                 else

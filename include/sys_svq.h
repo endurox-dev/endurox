@@ -100,11 +100,8 @@ typedef struct ndrx_svq_ev ndrx_svq_ev_t;
 struct ndrx_svq_ev
 {
     int ev;                 /**< Event code received                        */
-
-    char *data;             /**< Associate data received                    */
-    long datalen;           /**< Assocate data len                          */
     
-    time_t stamp_time;      /**< timestamp for timeout waiting              */
+    ndrx_stopwatch_t stamp_time; /**< timestamp for timeout waiting         */
     unsigned long stamp_seq;/**< stamp sequence                             */
     
     int fd;                 /**< Linked file descriptor generating FD event */
@@ -133,7 +130,6 @@ struct ndrx_svq_info
     pthread_mutex_t stamplock;  /**< Stamp change lock                      */
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
-    
     
     mode_t mode;                /**< permissions on new queue               */
     struct mq_attr attr;        /**< attributes for the queue, if creating  */
