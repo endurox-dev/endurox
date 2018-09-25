@@ -1,7 +1,7 @@
 /**
- * @brief System tests, firstly Thread Local Storage (TLS) must work
+ * @brief Simple message queue server process
  *
- * @file atmiclt0.c
+ * @file atmiclt0_mqsv.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -36,7 +36,8 @@
 #include <memory.h>
 #include <pthread.h>
 #include <unistd.h>
-
+#include <fcntl.h>
+#include <sys_mqueue.h>
 #include "test000.h"
 
 /*---------------------------Externs------------------------------------*/
@@ -47,58 +48,76 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-__thread int M_field;
-
-void *M_ptrs[3] = {NULL, NULL, NULL};
-
-void* t1(void *arg)
-{    
-    M_ptrs[1] = &M_field;
-    sleep(1);
-    return NULL;
-}
-
-void* t2(void *arg)
-{   
-        M_ptrs[2] = &M_field;
-	sleep(1);
-	return NULL;
-}
-
+/**
+ * This will open some message queue (say, "test000_server") and will provide responses
+ * back to "test000_client".
+ * We will use standard API here via sys_mqueue.h
+ * @param argc
+ * @param argv
+ * @return 
+ */
 int main( int argc , char **argv )
 {
-    pthread_t pth1={0}, pth2={0};
-    void *mb1=0, *mb2 =0;
-    pthread_attr_t pthrat={0};
-    pthread_attr_init(&pthrat);
-    pthread_attr_setstacksize(&pthrat, 1<<20);
-    unsigned int n_pth=0;
+    int ret = EXSUCCEED;
+    mqd_t mq = (mqd_t)EXFAIL;
+    struct mq_attr attr;
+    char buffer[TEST_REPLY_SIZE];
+    int must_stop = 0;
+    struct   timespec tm;
+    
+    /* initialize the queue attributes */
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = TEST_REPLY_SIZE;
+    attr.mq_curmsgs = 0;
 
-    M_ptrs[0] = &M_field;
-
-    if( pthread_create( &pth1, &pthrat, t1,&mb1) == 0)
-        n_pth += 1;
-    if( pthread_create( &pth2, &pthrat, t2,&mb2) == 0)
-        n_pth += 1;
-    if( n_pth > 0 )
-        pthread_join( pth1, &mb1 );
-    if( n_pth > 1 )
-        pthread_join( pth2, &mb2 );
-    pthread_attr_destroy(&pthrat);
-
-    fprintf(stderr,"main : %p %p %p\n", M_ptrs[0], M_ptrs[1], M_ptrs[2]);
-
-    if (M_ptrs[0] == M_ptrs[1] || M_ptrs[0] == M_ptrs[2] ||
-            M_ptrs[1] == M_ptrs[2])
+    /* create the message queue */
+    if ((mqd_t *)EXFAIL==(mq = ndrx_mq_open(SV_QUEUE_NAME, O_CREAT | O_RDONLY, 0644, &attr)))
     {
-        fprintf(stderr, "TESTERROR: Thread Local Storage not working!\n");
-        return -1;
+        NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                SV_QUEUE_NAME, strerror(errno));
+        EXFAIL_OUT(ret);
     }
-    else
+    
+    do 
     {
-        fprintf(stderr, "Thread Local Storage OK!\n");
-        return 0;
+        ssize_t bytes_read;
+
+        /* receive the message 
+         * Maybe have some timed receive
+         */
+        clock_gettime(CLOCK_REALTIME, &tm);
+        tm.tv_sec += 20;  /* Set for 20 seconds */
+
+        if (EXFAIL==(bytes_read=ndrx_mq_receive(mq, buffer, TEST_REPLY_SIZE, NULL)))
+        {
+            NDRX_LOG(log_error, "Failed to get message: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (100==buffer[15])
+        {
+            must_stop = EXTRUE;
+        }
+        
+    } while (!must_stop);
+
+out:
+    /* cleanup */
+    
+    if ((mqd_t)EXFAIL!=mq && EXFAIL==mq_close(mq))
+    {
+        NDRX_LOG(log_error, "Failed to close queue: %s", tpstrerror(errno));
     }
+    
+    if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_unlink(SV_QUEUE_NAME))
+    {
+        NDRX_LOG(log_error, "Failed to unlink q: %s", tpstrerror(errno));
+        EXFAIL_OUT(ret);
+    }
+
+
+    return ret;
 }
 
 

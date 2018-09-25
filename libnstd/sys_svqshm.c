@@ -123,7 +123,7 @@ exprivate int ndrx_svqshm_init(void)
         EXFAIL_OUT(ret);
     }
 
-    /* get number of concurrent rheads */
+    /* get number of concurrent threads */
     tmp = getenv(CONF_NDRX_SVQREADERSMAX);
     if (NULL==tmp)
     {
@@ -155,7 +155,6 @@ exprivate int ndrx_svqshm_init(void)
         NDRX_LOG(log_debug, "(sysv queues): SystemV SEM IPC Key set to: [%x]",
                             M_sem_key);
     }
-    
     
     memset(&M_map_p2s, 0, sizeof(M_map_p2s));
     memset(&M_map_s2p, 0, sizeof(M_map_s2p));

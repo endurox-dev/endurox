@@ -789,14 +789,14 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             if (err==EINTR)
             {
                 NDRX_LOG(log_warn, "poll() interrupted... ignore...: %s", 
-                        tpstrerror(err));
+                        strerror(err));
             }
             else
             {
                 NDRX_LOG(log_error, "System V auxiliary event poll() got error: %s", 
-                        tpstrerror(err));
+                        strerror(err));
                 userlog("System V auxiliary event poll() got error: %s", 
-                        tpstrerror(err));
+                        strerror(err));
                 EXFAIL_OUT(ret);
             }
         }
@@ -886,6 +886,15 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             goto out;
                             break;
                         case NDRX_SVQ_MON_QRM:
+                            
+                            /*
+                             * TODO: Only needs to think what will happen
+                             * if process performs exit when we have issued
+                             * delete by main thread and this is not yet
+                             * unlinked the q.
+                             * maybe we need a atexit() to allow 
+                             * poller thread to finish off.
+                             */
                             NDRX_LOG(log_info, "Unlink queue %p command",
                                     cmd.mqd);
                             if (EXSUCCEED!=ndrx_svq_mqd_hash_delfull(cmd.mqd))
@@ -955,6 +964,19 @@ out:
     }
 
     return NULL;
+}
+
+/**
+ * Terminate the poller thread
+ */
+exprivate void ndrx_svq_event_exit(void)
+{
+    NDRX_LOG(log_debug, "Terminating event thread...");
+    ndrx_svq_moncmd_term();
+    if (pthread_self()!=M_mon.evthread)
+    {
+        pthread_join(M_mon.evthread, NULL);
+    }
 }
 
 /**
@@ -1036,6 +1058,17 @@ expublic int ndrx_svq_event_init(void)
     NDRX_LOG(log_debug, "Starting System V event monitoring thread...");
     
     pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL);
+    
+    /* have exit handler */
+    if (EXSUCCEED!=atexit(ndrx_svq_event_exit))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to register ndrx_svq_event_exit with atexit(): %s",
+                strerror(err));
+        userlog("Failed to register ndrx_svq_event_exit with atexit(): %s",
+                strerror(err));
+        EXFAIL_OUT(ret);
+    }
     
 out:
     errno = err;
