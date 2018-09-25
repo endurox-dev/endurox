@@ -337,6 +337,12 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     NDRX_LOG(log_debug, "Unlinking queue %p qstr:[%s] qid:%d", 
             mqd, mqd->qstr, mqd->qid);
     
+    /* for service queues, the ndrxd will which are subject for removal
+     * and for which timestamp is older than configure time frame
+     * this is due to fact, that queue might be open, but not yet reported
+     * to ndrxd or shm.
+     * thus here we just remove direclty.
+     */
     if (EXSUCCEED!=msgctl(mqd->qid, IPC_RMID, NULL))
     {
         int err = errno;
@@ -731,6 +737,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                     {
                         case NDRX_SVQ_MON_TOUT:
                             
+                            NDRX_LOG(log_dump, "register timeout");
                             if (EXSUCCEED!=ndrx_svq_mqd_hash_add(cmd.mqd, 
                                     &(cmd.stamp_time), cmd.stamp_seq, &(cmd.abs_timeout)))
                             {
@@ -744,14 +751,22 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             break;
                         case NDRX_SVQ_MON_ADDFD:
                             
-                            /* TODO: */
+                            NDRX_LOG(log_info, "register fd %d for %p", 
+                                    cmd.fd, cmd.mqd);
+                            if (EXSUCCEED!=ndrx_svq_fd_hash_add(cmd.fd, cmd.mqd))
+                            {
+                                NDRX_LOG(log_error, "Failed to register timeout for %p!",
+                                        cmd.mqd);
+                                userlog("Failed to register timeout for %p!",
+                                        cmd.mqd);
+                                EXFAIL_OUT(ret);
+                            }
                             
                             break;
                             
                         case NDRX_SVQ_MON_RMFD:
-                            
-                            /* TODO: */
-                            
+                            NDRX_LOG(log_info, "deregister fd %d from polling");
+                            ndrx_svq_fd_hash_del(cmd.fd);
                             break;
                         case NDRX_SVQ_MON_TERM:
                             NDRX_LOG(log_info, "Terminate request...");
@@ -768,7 +783,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 else
                 {
                     /* this one is from related file descriptor... 
-                     * thus needs to publish an event.
+                     * thus needs to put an event.
                      */
                 }
             }
