@@ -196,6 +196,8 @@ extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
 extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send);
 
+extern NDRX_API int ndrx_svq_moncmd_term(void);
+
 /* internals... */
 extern NDRX_API int ndrx_svqshm_get(char *qstr, int oflag);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);

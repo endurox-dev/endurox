@@ -249,16 +249,6 @@ expublic int ndrxd_sem_open(ndrx_sem_t *sem)
 
     NDRX_LOG(log_debug, "enter");
     
-    /**
-     * Library not initialized
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "ndrx sem library not initialized");
-        ret=EXFAIL;
-        goto out;
-    }
-    
     /* creating the semaphore object --  sem_open() 
      * this will attach anyway?
      */
@@ -279,7 +269,7 @@ expublic int ndrxd_sem_open(ndrx_sem_t *sem)
     if (semctl(sem->semid, 0, SETVAL, arg) == -1) 
     {
         NDRX_LOG(log_error, "Failed to reset to 0, key[%x], semid: %d: %s",
-                            fsem->key, sem->semid, strerror(errno));
+                            sem->key, sem->semid, strerror(errno));
         ret=EXFAIL;
         goto out;
     }
@@ -351,7 +341,7 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
     }
     
     /* Attach to semaphore block */
-    sem->semid = semget(sem->key, G_atmi_env.nrsems, IPC_EXCL);
+    sem->semid = semget(sem->key, sem->nrsems, IPC_EXCL);
 
     if (EXFAIL==sem->semid) 
     {
