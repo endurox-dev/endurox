@@ -105,6 +105,11 @@ struct ndrx_svq_ev
     unsigned long stamp_seq;/**< stamp sequence                             */
     
     int fd;                 /**< Linked file descriptor generating FD event */
+    uint32_t revents;       /**< events occurred                            */
+    
+    size_t datalen;         /**< data event len, by admin thread            */
+    char *data;             /**< event data                                 */
+    
     ndrx_svq_ev_t *next, *prev;/**< Linked list of event enqueued           */
 };
 
@@ -161,7 +166,7 @@ typedef struct
     unsigned long stamp_seq;    /**< stamp sequence                         */
     
     int fd;                     /** file descriptor for related cmds        */
-    
+    uint32_t events;            /** events requested for fd monitor         */
     mqd_t mqd;                  /** message queue requesting an event       */
     
 } ndrx_svq_mon_cmd_t;
@@ -188,6 +193,8 @@ extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxle
 
 extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
+extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
+        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send);
 
 /* internals... */
 extern NDRX_API int ndrx_svqshm_get(char *qstr, int oflag);
