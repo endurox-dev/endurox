@@ -188,10 +188,47 @@ out:
     return mq;
 }
 
+/**
+ * Timed queue receive operation
+ * @param mqd queue descriptor
+ * @param ptr data ptr
+ * @param maxlen buffer size
+ * @param priop not used
+ * @param __abs_timeout absolute time out according to mq_timedreceive(3)
+ * @return data len received
+ */
 expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen, 
         unsigned int *priop, const struct timespec *__abs_timeout)
 {
-    return EXFAIL;
+    ssize_t ret = maxlen;
+    ndrx_svq_ev_t *ev = NULL;
+    int err = 0;
+    
+    if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
+            (struct timespec *)__abs_timeout, &ev, EXFALSE))
+    {
+        if (NULL!=ev && NDRX_SVQ_EV_TOUT==ev->ev)
+        {
+            NDRX_LOG(log_warn, "Timed out");
+            err = EAGAIN;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
+            err = EBADF;
+        }
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (NULL!=ev)
+    {
+        NDRX_FREE(ev);
+    }
+    
+    errno = err;
+    return ret;
 }
 
 /**

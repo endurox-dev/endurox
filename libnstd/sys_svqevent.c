@@ -148,19 +148,81 @@ exprivate int M_shutdown = EXFALSE;         /**< is shutdown requested? */
 /**
  * Add FD to polling structure
  * @param fd file descriptor to add for polling
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate void ndrx_svq_fd_hash_addpoll(int fd)
+exprivate int ndrx_svq_fd_hash_addpoll(int fd, uint32_t events)
 {
+    int ret = EXSUCCEED;
     
+    /* resize/realloc events list, add fd */
+    M_mon.nrfds++;
+
+    NDRX_LOG(log_info, "set nrfds incremented to %d", M_mon.nrfds);
+
+    if (NULL==(M_mon.fdtab=NDRX_REALLOC(M_mon.fdtab, sizeof(struct pollfd)*M_mon.nrfds)))
+    {
+        NDRX_LOG(log_error, "Failed to realloc %d/%d", 
+                M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds);
+        EXFAIL_OUT(ret);
+    }
+
+    M_mon.fdtab[M_mon.nrfds-1].fd = fd;
+    M_mon.fdtab[M_mon.nrfds-1].events = events;
+    
+out:
+    return ret;
 }
 
 /**
  * Remove FD from polling struct
  * @param fd file descriptor
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate void ndrx_svq_fd_hash_delpoll(int fd)
+exprivate int ndrx_svq_fd_hash_delpoll(int fd)
 {
+    int ret = EXSUCCEED;
+    int i;
     
+    for (i = 0; i < M_mon.nrfds; i++)
+    {
+        if (M_mon.fdtab[i].fd == fd)
+        {
+            /* kill the element */
+            if (i!=M_mon.nrfds-1 && M_mon.nrfds>1)
+            {
+                memmove(&M_mon.fdtab[i], &M_mon.fdtab[i+1], 
+                        sizeof(struct pollfd)*(M_mon.nrfds-i-1));
+            }
+
+            M_mon.nrfds--;
+
+            NDRX_LOG(log_info, "set nrfds decremented to %d fdtab=%p", 
+                     M_mon.nrfds, M_mon.fdtab);
+
+            if (0==M_mon.nrfds)
+            {
+                NDRX_LOG(log_warn, "set->nrfds == 0, => free");
+                NDRX_FREE((char *)M_mon.fdtab);
+            }
+            else if (NULL==(M_mon.fdtab=NDRX_REALLOC(M_mon.fdtab, 
+                    sizeof(struct pollfd)*M_mon.nrfds)))
+            {
+                int err = errno;
+                userlog("Failed to realloc %d/%d: %s", 
+                        M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds, 
+                        strerror(err));
+
+                NDRX_LOG(log_error, "Failed to realloc %d/%d: %s", 
+                        M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds, 
+                        strerror(err));
+
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
+out:
+    return ret;
 }
 
 /**
@@ -186,7 +248,7 @@ exprivate ndrx_svq_fd_hash_t * ndrx_svq_fd_hash_find(int fd)
  * @param stamp_seq sequence number for expiry
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd)
+exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd, uint32_t events)
 {
     int ret = EXSUCCEED;
     ndrx_svq_fd_hash_t * el;
@@ -212,9 +274,8 @@ exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd)
         el->fd  = fd;
         el->mqd = mqd;
         
-        /* TODO: alter the polling structure...! */
-        
-        EXHASH_ADD_PTR((M_mon.fdhash), fd, el);
+        ndrx_svq_fd_hash_addpoll(fd, events);
+        EXHASH_ADD_INT((M_mon.fdhash), fd, el);
     }
     else
     {
@@ -230,32 +291,62 @@ out:
 /**
  * Delete single entry from queue hash
  * @param fd queue ptr
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate void ndrx_svq_fd_hash_del(int fd)
+exprivate int ndrx_svq_fd_hash_del(int fd)
 {
-    ndrx_svq_fd_hash_t *ret = NULL;
+    int ret = EXSUCCEED;
+    ndrx_svq_fd_hash_t *el;
 
     /* remove from polling array!  */
-    ndrx_svq_fd_hash_delpoll(fd);
+    if (EXSUCCEED!=ndrx_svq_fd_hash_delpoll(fd))
+    {
+        EXFAIL_OUT(ret);
+    }
     
     /* remove form FD registry */
-    EXHASH_FIND_INT( (M_mon.fdhash), &fd, ret);
+    EXHASH_FIND_INT( (M_mon.fdhash), &fd, el);
     
-    if (NULL!=ret)
+    if (NULL!=el)
     {
-        EXHASH_DEL((M_mon.fdhash), ret);
-        NDRX_FREE(ret);
+        EXHASH_DEL((M_mon.fdhash), el);
+        NDRX_FREE(el);
     }
+    
+out:
+    return ret;
 }
 
 /**
  * Delete record from fdhash by matching the queue descriptor
  * @param mqd queue descriptor ptr
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate void ndrx_svq_fd_hash_delbymqd(mqd_t mqd)
+exprivate int ndrx_svq_fd_hash_delbymqd(mqd_t mqd)
 {
-    /* TODO: remove from polling array */
+    int ret = EXSUCCEED;
+    ndrx_svq_fd_hash_t *e=NULL, *et=NULL;
     
+    /* remove from polling array */
+    EXHASH_ITER(hh, M_mon.fdhash, e, et)
+    {
+        if (e->mqd == mqd)
+        {
+            /* delete from polling struct */
+            if (EXSUCCEED!=ndrx_svq_fd_hash_delpoll(e->fd))
+            {
+                EXFAIL_OUT(ret);
+            }
+            
+            /* delete the entry by it self */
+            EXHASH_DEL(M_mon.fdhash, e);
+            NDRX_FREE(e);
+            break;
+        }
+    }
+    
+out:
+    return ret;
 }
 
 /**
@@ -373,11 +464,19 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
  * Remove from MQ hash and remove linked file descriptors 
  * @param mqd queue descriptor to remove
  */
-exprivate void ndrx_svq_mqd_hash_delfull(mqd_t mqd)
+exprivate int ndrx_svq_mqd_hash_delfull(mqd_t mqd)
 {
-    /* remove FD firstly, if any */
+    int ret = EXSUCCEED;
     
+    /* remove FD firstly, if any */
+    if (EXSUCCEED!=ndrx_svq_fd_hash_delbymqd(mqd))
+    {
+        EXFAIL_OUT(ret);
+    }
     ndrx_svq_mqd_hash_del(mqd);
+    
+out:
+    return ret;
 }
 
 /* TODO: We need a full delete where we scan the FD hash and remove any related
@@ -654,6 +753,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int i;
     int err;
     ndrx_svq_mon_cmd_t cmd;
+    ndrx_svq_ev_t *ev;
     
     /* we shall receive unnamed pipe
      * in thread.
@@ -668,6 +768,18 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     
     while (!M_shutdown)
     {
+        timeout = ndrx_svq_mqd_hash_findtout();
+        
+        if (EXFAIL==timeout || 0==timeout)
+        {
+            NDRX_LOG(log_error, "Invalid System V poller timeout!");
+            userlog("Invalid System V poller timeout!");
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_debug, "About to poll for: %d nrfds=%d",
+                timeout, M_mon.nrfds);
+        
         retpoll = poll( M_mon.fdtab, M_mon.nrfds, timeout);
         
         if (EXFAIL==retpoll)
@@ -751,9 +863,10 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             break;
                         case NDRX_SVQ_MON_ADDFD:
                             
-                            NDRX_LOG(log_info, "register fd %d for %p", 
-                                    cmd.fd, cmd.mqd);
-                            if (EXSUCCEED!=ndrx_svq_fd_hash_add(cmd.fd, cmd.mqd))
+                            NDRX_LOG(log_info, "register fd %d for %p events %ld", 
+                                    cmd.fd, cmd.mqd, (long)cmd.events);
+                            if (EXSUCCEED!=ndrx_svq_fd_hash_add(cmd.fd, cmd.mqd, 
+                                    cmd.events))
                             {
                                 NDRX_LOG(log_error, "Failed to register timeout for %p!",
                                         cmd.mqd);
@@ -765,7 +878,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             break;
                             
                         case NDRX_SVQ_MON_RMFD:
-                            NDRX_LOG(log_info, "deregister fd %d from polling");
+                            NDRX_LOG(log_info, "Deregister fd %d from polling");
                             ndrx_svq_fd_hash_del(cmd.fd);
                             break;
                         case NDRX_SVQ_MON_TERM:
@@ -775,19 +888,56 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         case NDRX_SVQ_MON_QRM:
                             NDRX_LOG(log_info, "Unlink queue %p command",
                                     cmd.mqd);
-                            ndrx_svq_mqd_hash_delfull(cmd.mqd);
+                            if (EXSUCCEED!=ndrx_svq_mqd_hash_delfull(cmd.mqd))
+                            {
+                                EXFAIL_OUT(ret);
+                            }
                             break;
                     }
                     
                 }
                 else
                 {
+                    ndrx_svq_fd_hash_t *fdh =  ndrx_svq_fd_hash_find(M_mon.fdtab[i].fd);
+                    
+                    if (NULL==fdh)
+                    {
+                        NDRX_LOG(log_error, "File descriptor %d not registered"
+                                " int System V poller - FAIL", M_mon.fdtab[i].fd);
+                        userlog("File descriptor %d not registered"
+                                " int System V poller - FAIL", M_mon.fdtab[i].fd);
+                        EXFAIL_OUT(ret);
+                    }
+                            
                     /* this one is from related file descriptor... 
                      * thus needs to put an event.
                      */
+                   if (NULL==(ev = NDRX_MALLOC(sizeof(*ev))))
+                   {
+                       err = errno;
+                       NDRX_LOG(log_error, "Failed to malloc ndrx_svq_ev_t: %s", 
+                               strerror(err));
+                       userlog("Failed to malloc ndrx_svq_ev_t: %s", 
+                               strerror(err));
+                       EXFAIL_OUT(ret);
+                   }
+                   
+                   ev->ev = NDRX_SVQ_EV_FD;
+                   ev->fd = M_mon.fdtab[i].fd;
+                   ev->revents = M_mon.fdtab[i].revents;
+                   
+                   /* get queue descriptor  
+                    * the data is deallocated by target thread
+                    */
+                   if (EXSUCCEED!=ndrx_svq_mqd_put_event(fdh->mqd, ev))
+                   {
+                       NDRX_LOG(log_error, "Failed to put FD event for %p - FAIL", 
+                               fdh->mqd);
+                       EXFAIL_OUT(ret);
+                   }
                 }
-            }
-        }
+            } /* if got revents */
+        } /* for events... */
     } /* while not shutdown... */
     
 out:
@@ -1006,21 +1156,32 @@ expublic int ndrx_svq_moncmd_qrm(mqd_t mqd)
 }
 
 /**
- * Event receive includes timeout processing and other events
- * defined in  NDRX_SVQ_EV*
+ * Send/Receive data with timeout and other events option
  * @param mqd queue descriptor (already validated)
  * @param ptr data ptr 
- * @param maxlen buffer size for receive
+ * @param maxlen buffer size for receive. For sending it is data len
  * @param abs_timeout absolute timeout passed to posix q
  * @param ev if event received, then pointer is set to dequeued event.
  * @param p_ptr allocate data buffer for NDRX_SVQ_EV_DATA event.
+ * @param is_send do we send? if EXFALSE, we do receive
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
-        struct timespec *abs_timeout, ndrx_svq_ev_t **ev)
+        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send)
 {
     int ret = EXSUCCEED;
     int err;
+    int msgflg;
+    
+    /* set the flag value */
+    if (mqd->attr.mq_flags & O_NONBLOCK)
+    {
+        msgflg = IPC_NOWAIT;
+    }
+    else
+    {
+        msgflg = 0;
+    }
     
     *ev = NULL; /* no event... */
     
@@ -1043,6 +1204,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     if (EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
             abs_timeout))
     {
+        err = EFAULT;
         NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_moncmd_tout()");
         userlog("Failed to request timeout to ndrx_svq_moncmd_tout()");
         EXFAIL_OUT(ret);
@@ -1091,7 +1253,10 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * send until both are unlocked or stamp is changed.
      */
     
-    ret=msgrcv (mqd->qid, ptr, *maxlen - sizeof(long), 0, 0);
+    if (is_send)
+        ret=msgsnd (mqd->qid, ptr, *maxlen - sizeof(long), msgflg);
+    else
+        ret=msgrcv (mqd->qid, ptr, *maxlen - sizeof(long), 0, msgflg);
     
     err=errno;
 
