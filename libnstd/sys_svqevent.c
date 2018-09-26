@@ -904,9 +904,15 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                                 ret = EXFAIL;
                             }
                             
-                            /* ??? signal back that we are done */
-                            pthread_cond_signal (&cmd.del_cond);
+                            pthread_mutex_lock(cmd.del_lock);
                             
+                            /* ??? signal back that we are done */
+                            pthread_cond_signal (cmd.del_cond);
+                            
+                            pthread_mutex_unlock(cmd.del_lock);
+                            
+                            
+                            NDRX_LOG(log_debug, "After cond_signal");
                             if (EXSUCCEED!=ret)
                             {
                                 goto out;
@@ -1197,6 +1203,8 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
 {
     int ret;
     ndrx_svq_mon_cmd_t cmd;
+    pthread_mutex_t del_lock;   /** delete lock                             */
+    pthread_cond_t del_cond;     /** conditional variable for delete         */
     
     memset(&cmd, 0, sizeof(cmd));
     
@@ -1204,21 +1212,30 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
     cmd.mqd = mqd;
     
     /* init condition */
-    pthread_mutex_init(&cmd.del_lock, NULL);
-    pthread_cond_init(&cmd.del_cond, NULL);
+    
+    /* seems we cannot pass posix locks directly around... */
+    cmd.del_lock = &del_lock;
+    cmd.del_cond = &del_cond;
+    pthread_mutex_init(cmd.del_lock, NULL);
+    pthread_cond_init(cmd.del_cond, NULL);
     
     
     /* get lock */
-    pthread_mutex_lock (&cmd.del_lock);
+    pthread_mutex_lock (cmd.del_lock);
     
     /* perform sync off */
     ret = ndrx_svq_moncmd_send(&cmd);
     
     NDRX_LOG(log_debug, "Waiting for delete to complete...");
     /* the condition will make us to get a lock */
-    pthread_cond_wait (&cmd.del_cond, &cmd.del_lock);
-    pthread_mutex_unlock (&cmd.del_lock);
+    pthread_cond_wait (cmd.del_cond, cmd.del_lock);
+    
+    pthread_mutex_unlock (cmd.del_lock);
     NDRX_LOG(log_debug, "Delete to completed");
+    
+    /* TODO: How about other mutexes? */
+    pthread_cond_destroy(cmd.del_cond);
+    pthread_mutex_destroy(cmd.del_lock);
     
 }
 
