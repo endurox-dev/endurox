@@ -220,6 +220,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXFALSE))
     {
+        err = errno;
         if (NULL!=ev)
         {
             if (NDRX_SVQ_EV_TOUT==ev->ev)
@@ -233,6 +234,22 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
                 err = EBADF;
             }
         }
+        else
+        {
+            /* translate the error codes */
+            if (ENOMSG==err)
+            {
+                NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    strerror(err));
+                err = EAGAIN;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    strerror(err));
+            }
+        }
+        
         EXFAIL_OUT(ret);
     }
     
@@ -389,8 +406,20 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
     if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, maxlen-sizeof(long), 0, msgflg)))
     {
         int err = errno;
-        NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+        
+        /* translate the error codes */
+        if (ENOMSG==err)
+        {
+            NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
                 strerror(err));
+            err = EAGAIN;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                strerror(err));
+        }
+        
         errno = err;
     }
     
@@ -426,7 +455,7 @@ expublic int ndrx_svq_setattr(mqd_t mqd, const struct mq_attr *attr,
         memcpy(oattr, &(mqd->attr), sizeof(*oattr));
     }
     
-    memcpy(&(mqd->attr), oattr, sizeof(*oattr));
+    memcpy(&(mqd->attr), attr, sizeof(*attr));
     
 out:
     return ret;
