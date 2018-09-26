@@ -123,11 +123,14 @@ void *local_test(void *vargp)
 {
     int ret = EXSUCCEED;
     
+    /* create queue + try exclusive access - shall fail properly */
     if (EXSUCCEED!=local_test_exlc((char *)vargp))
     {
         EXFAIL_OUT(ret);
     }
-    /* TODO: create queue + try exclusive access - shall fail properly */
+    
+    /* TODO: Test delayed unlink... */
+    
     /* TODO: test open of non existing queue in not create mode */
     
     /* TODO: receive: timed + blocked */
@@ -144,7 +147,7 @@ void *local_test(void *vargp)
     /* TODO: send: non timed + non blocked fill up the queue, will EAGAIN */
     /* TODO: Test in loop queue open, put msg, close, delete (check that conditionals works */
     
-    /* Test delayed unlink... */
+    
 out:
     if (EXSUCCEED==ret)
     {
