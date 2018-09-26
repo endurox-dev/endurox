@@ -137,9 +137,9 @@ int local_test_unlink(char *pfx)
     attr.mq_msgsize = TEST_REPLY_SIZE;
     attr.mq_curmsgs = 0;
     
-    for (i=0; i<1000000; i++)
+    for (i=0; i<1000; i++)
     {
-        if ((mqd_t)EXFAIL==(mq1 = ndrx_mq_open(qstr, O_CREAT | O_EXCL, 0644, &attr)))
+        if ((mqd_t)EXFAIL==(mq1 = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
         {
             NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
                     qstr, strerror(errno));
