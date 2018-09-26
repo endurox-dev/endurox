@@ -432,9 +432,10 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
      * and for which timestamp is older than configure time frame
      * this is due to fact, that queue might be open, but not yet reported
      * to ndrxd or shm.
-     * thus here we just remove direclty.
+     * thus here we just remove directly.
      */
-    if (EXSUCCEED!=msgctl(mqd->qid, IPC_RMID, NULL))
+    /* remove from SHM */
+    if (EXSUCCEED!=ndrx_svqshm_ctl(mqd->qstr, mqd->qid, IPC_RMID, EXFAIL))
     {
         int err = errno;
         NDRX_LOG(log_error, "Failed to unlink qid:%d - ignore", strerror(err));
@@ -586,6 +587,10 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
                         r->mqd, ev->ev);
                 EXFAIL_OUT(ret);
             }
+            
+            /* delete timeout object from hash as no more relevant... */
+            
+            EXHASH_DEL((M_mon.mqdhash), r);
             
         }
     }
@@ -780,8 +785,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         NDRX_LOG(log_debug, "About to poll for: %d nrfds=%d",
                 timeout, M_mon.nrfds);
         
-        retpoll = poll( M_mon.fdtab, M_mon.nrfds, timeout);
+        retpoll = poll( M_mon.fdtab, M_mon.nrfds, timeout*1000);
         
+        NDRX_LOG(log_debug, "poll() ret = %d", retpoll);
         if (EXFAIL==retpoll)
         {
             err = errno;
@@ -800,7 +806,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 EXFAIL_OUT(ret);
             }
         }
-        else if (0==M_mon.nrfds)
+        else if (0==retpoll)
         {
             /* 
              * we got timeout, so lets scan the hash lists to detect
@@ -845,11 +851,14 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         EXFAIL_OUT(ret);
                     }
                     
+                    NDRX_LOG(log_debug, "Got command: %d", cmd.cmd);
+                    
                     switch (cmd.cmd)
                     {
                         case NDRX_SVQ_MON_TOUT:
                             
-                            NDRX_LOG(log_dump, "register timeout");
+                            NDRX_LOG(log_debug, "register timeout");
+                            
                             if (EXSUCCEED!=ndrx_svq_mqd_hash_add(cmd.mqd, 
                                     &(cmd.stamp_time), cmd.stamp_seq, &(cmd.abs_timeout)))
                             {
@@ -1032,7 +1041,8 @@ expublic int ndrx_svq_event_init(void)
                 strerror(err));
         EXFAIL_OUT(ret);
     }
-
+#if 0
+    /* leave as blocked... */
     if (EXFAIL==fcntl(M_mon.evpipe[WRITE], F_SETFL, 
                 fcntl(M_mon.evpipe[WRITE], F_GETFL) | O_NONBLOCK))
     {
@@ -1041,6 +1051,7 @@ expublic int ndrx_svq_event_init(void)
                 strerror(err));
         EXFAIL_OUT(ret);
     }
+#endif
 
     M_mon.nrfds = 1; /* initially only pipe wait */
     if (NULL==(M_mon.fdtab = NDRX_CALLOC(M_mon.nrfds, sizeof(struct pollfd))))
@@ -1055,7 +1066,8 @@ expublic int ndrx_svq_event_init(void)
     M_mon.fdtab[PIPE_POLL_IDX].events = POLLIN;
     
     /* startup tup the thread */
-    NDRX_LOG(log_debug, "Starting System V event monitoring thread...");
+    NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write: %d",
+                            M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
     pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL);
     
@@ -1205,6 +1217,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     int ret = EXSUCCEED;
     int err;
     int msgflg;
+    int len;
     
     /* set the flag value */
     if (mqd->attr.mq_flags & O_NONBLOCK)
@@ -1217,7 +1230,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     }
     
     *ev = NULL; /* no event... */
-    
+    len = *maxlen - sizeof(long);
     /* to avoid the deadlocks, we shall register the timeout here...
      * if we do it after the "rcvlockb4" then we might 
      * but then if we got any applied event, we shall change the
@@ -1285,14 +1298,12 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * to process...
      * send until both are unlocked or stamp is changed.
      */
-    
     if (is_send)
-        ret=msgsnd (mqd->qid, ptr, *maxlen - sizeof(long), msgflg);
+        ret=msgsnd (mqd->qid, ptr, len, msgflg);
     else
-        ret=msgrcv (mqd->qid, ptr, *maxlen - sizeof(long), 0, msgflg);
+        ret=msgrcv (mqd->qid, ptr, len, 0, msgflg);
     
     err=errno;
-
     pthread_mutex_unlock(&(mqd->rcvlock));
     pthread_mutex_unlock(&(mqd->rcvlockb4));
 
@@ -1310,6 +1321,17 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         ret=EXSUCCEED;
         goto out;
     }
+    else
+    {
+        NDRX_LOG(log_error, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
+                mqd->qid, len, msgflg, strerror(err));
+        
+        if (EINTR!=err)
+        {
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     
     ret=EXSUCCEED;
     
@@ -1325,7 +1347,9 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         pthread_mutex_unlock(&(mqd->qlock));
         
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
-        goto out;
+        
+        /* failed to receive, got event! */
+        EXFAIL_OUT(ret);
     }
 
     /* unlock queue  */

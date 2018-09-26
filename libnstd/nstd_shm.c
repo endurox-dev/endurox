@@ -105,8 +105,6 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
 {
     int ret=EXSUCCEED;
     
-    NDRX_LOG(log_debug, "enter");
-    
     /* creating the shared memory object --  shm_open() */
     shm->fd = shm_open(shm->path, O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG);
 
@@ -145,7 +143,8 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
     }
     /* Reset SHM */
     memset(shm->mem, 0, shm->size);
-    NDRX_LOG(log_debug, "Shm: [%s] created size: %d", shm->path, shm->size);
+    NDRX_LOG(log_debug, "Shm: [%s] created size: %d mem: %p", 
+            shm->path, shm->size, shm->mem);
     
 out:
     /*
@@ -172,8 +171,6 @@ out:
 expublic int ndrx_shm_attach(ndrx_shm_t *shm)
 {
     int ret=EXSUCCEED;
-
-    NDRX_LOG(log_debug, "enter");
     
     if (ndrx_shm_is_attached(shm))
     {
@@ -200,7 +197,9 @@ expublic int ndrx_shm_attach(ndrx_shm_t *shm)
                             shm->path, shm->fd, shm->size, strerror(errno));
         EXFAIL_OUT(ret);
     }
-    NDRX_LOG(log_debug, "Shm: [%s] attach size: %d", shm->path, shm->size);
+    
+    NDRX_LOG(log_debug, "Shm: [%s] attach size: %d mem: %p", 
+            shm->path, shm->size, shm->mem);
 
 out:
     /*

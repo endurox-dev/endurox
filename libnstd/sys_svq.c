@@ -167,7 +167,11 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      * - if we create a Q, then alloc new ID
      * - if queue already exists SHM, then we can use that ID directly
      */
-    mq->qid = ndrx_svqshm_get((char *)pathname, oflag);
+    if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, oflag)))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
     /* mq->thread = pthread_self(); - set only in timed functions */
     NDRX_STRCPY_SAFE(mq->qstr, pathname);
     mq->mode = mode;
@@ -207,15 +211,18 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXFALSE))
     {
-        if (NULL!=ev && NDRX_SVQ_EV_TOUT==ev->ev)
+        if (NULL!=ev)
         {
-            NDRX_LOG(log_warn, "Timed out");
-            err = EAGAIN;
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
-            err = EBADF;
+            if (NDRX_SVQ_EV_TOUT==ev->ev)
+            {
+                NDRX_LOG(log_warn, "Timed out");
+                err = EAGAIN;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
+                err = EBADF;
+            }
         }
         EXFAIL_OUT(ret);
     }
@@ -244,7 +251,36 @@ out:
 expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, 
         unsigned int prio, const struct timespec *__abs_timeout)
 {
-    return EXFAIL;
+    ssize_t ret = len;
+    ndrx_svq_ev_t *ev = NULL;
+    int err = 0;
+    
+    if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
+            (struct timespec *)__abs_timeout, &ev, EXTRUE))
+    {
+        if (NULL!=ev && NDRX_SVQ_EV_TOUT==ev->ev)
+        {
+            NDRX_LOG(log_warn, "Timed out");
+            err = EAGAIN;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
+            err = EBADF;
+        }
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = EXSUCCEED;
+out:
+    
+    if (NULL!=ev)
+    {
+        NDRX_FREE(ev);
+    }
+    
+    errno = err;
+    return ret;
 }
 
 /**
@@ -313,10 +349,10 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
     long *l;
     int msgflg;
     
-    NDRX_LOG(log_debug, "receiving msg mqd=%p, ptr=%p, maxlen=%d",
-                mqd, ptr, (int)maxlen);
-    
     VALIDATE_MQD;
+    
+    NDRX_LOG(log_debug, "receiving msg mqd=%p, ptr=%p, maxlen=%d flags: %ld qid: %d",
+                mqd, ptr, (int)maxlen, mqd->attr.mq_flags, mqd->qid);
     
     if (maxlen<sizeof(long))
     {
@@ -338,7 +374,13 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
         msgflg = 0;
     }
     
-    ret = msgrcv(mqd->qid, ptr, maxlen-sizeof(long), 0, msgflg);
+    if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, maxlen-sizeof(long), 0, msgflg)))
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                strerror(err));
+        errno = err;
+    }
     
     /* no logging here, as we need to keep errno */
 out:
