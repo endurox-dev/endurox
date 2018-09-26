@@ -81,6 +81,12 @@ expublic int ndrx_svq_close(mqd_t mqd)
     
     if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
     {
+        /* close the queue */
+        if (EXSUCCEED!=ndrx_svq_moncmd_close(mqd))
+        {
+            NDRX_LOG(log_error, "Failed to close queue %p", mqd);
+            userlog("Failed to close queue %p", mqd);
+        }
         NDRX_FREE(mqd);
         return EXSUCCEED;
     }
@@ -421,13 +427,18 @@ out:
 }
 
 /**
- * Unlink queue 
+ * Unlink queue should simply lookup the tables and remove the id
  * @param pathname queue string
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_svq_unlink(const char *pathname)
 {
     /* for ndrxd service queue unlinks we shall use ndrx_svqshm_ctl directly */
+    
+    /* TODO: we might need a condition variable to be sent in command
+     * so that back thread can update it once delete is fine...! */
+    
     return ndrx_svqshm_ctl((char *)pathname, EXFAIL, IPC_RMID, EXFAIL);    
+    
 }
 

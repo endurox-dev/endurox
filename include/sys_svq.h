@@ -65,7 +65,7 @@
 #define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
 #define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
 #define NDRX_SVQ_MON_TERM         4 /**< Termination handler calls us         */
-#define NDRX_SVQ_MON_QRM          5 /**< Queue unlink request                 */
+#define NDRX_SVQ_MON_CLOSE          5 /**< Queue unlink request                 */
 
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -169,6 +169,10 @@ typedef struct
     uint32_t events;            /** events requested for fd monitor         */
     mqd_t mqd;                  /** message queue requesting an event       */
     
+    /* in case of mqd delete, we shall sync off with the back thread */
+    pthread_mutex_t del_lock;   /** delete lock                             */
+    pthread_cond_t del_cond;     /** conditional variable for delete         */
+    
 } ndrx_svq_mon_cmd_t;
 
 /*------------------------------Globals---------------------------------------*/
@@ -197,6 +201,7 @@ extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send);
 
 extern NDRX_API int ndrx_svq_moncmd_term(void);
+extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
 extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */

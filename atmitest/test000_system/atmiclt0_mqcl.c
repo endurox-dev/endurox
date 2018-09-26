@@ -49,6 +49,30 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Perform local tests, we will run in threads too. so that we see that
+ * threaded mode is ok for our queues.
+ */
+int local_test(char *pfx)
+{
+    /* TODO: create queue + try exclusive access - shall fail properly */
+    /* TODO: test open of non existing queue in not create mode */
+    
+    /* TODO: receive: timed + blocked */
+    /* TODO: receive: timed + non blocked */
+    /* TODO: receive: non timed + non blocked */
+    
+    /* TODO: send: timed + blocked - ok (first msg) */
+    /* TODO: send: timed + non blocked - ok (second msg) */
+    /* TODO: send: non timed + blocked - ok (third msg) */
+    /* TODO: send: non timed + non blocked - ok (forth msg) */
+    
+    /* TODO: send: timed + blocked fill up the queue, will get timeout */
+    /* TODO: send: timed + non blocked fill up the queue, will get EAGAIN in non timeout period (shorter) */
+    /* TODO: send: non timed + non blocked fill up the queue, will EAGAIN */
+    /* TODO: Test in loop queue open, put msg, close, delete (check that conditionals works */
+}
+
+/**
  * Send some stuff to test000_server Q
  * TODO: Test cases
  * - queue not found in read mode... - fail

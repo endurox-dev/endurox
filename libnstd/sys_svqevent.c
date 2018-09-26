@@ -434,13 +434,6 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
      * to ndrxd or shm.
      * thus here we just remove directly.
      */
-    /* remove from SHM */
-    if (EXSUCCEED!=ndrx_svqshm_ctl(mqd->qstr, mqd->qid, IPC_RMID, EXFAIL))
-    {
-        int err = errno;
-        NDRX_LOG(log_error, "Failed to unlink qid:%d - ignore", strerror(err));
-        userlog("Failed to unlink qid:%d - ignore", strerror(err));
-    }
             
     NDRX_LOG(log_dump, "Unregistering %p as mqd_t from timeout mon", mqd);
     
@@ -894,7 +887,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             NDRX_LOG(log_info, "Terminate request...");
                             goto out;
                             break;
-                        case NDRX_SVQ_MON_QRM:
+                        case NDRX_SVQ_MON_CLOSE:
                             
                             /*
                              * TODO: Only needs to think what will happen
@@ -908,8 +901,18 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                                     cmd.mqd);
                             if (EXSUCCEED!=ndrx_svq_mqd_hash_delfull(cmd.mqd))
                             {
-                                EXFAIL_OUT(ret);
+                                ret = EXFAIL;
                             }
+                            
+                            /* signal back that we are done */
+                            
+                            pthread_cond_signal (&cmd.del_cond);
+                            
+                            if (EXSUCCEED!=ret)
+                            {
+                                goto out;
+                            }
+                            
                             break;
                     }
                     
@@ -1184,20 +1187,40 @@ expublic int ndrx_svq_moncmd_term(void)
 }
 
 /**
- * Remove message queue from the monitor
+ * Remove message queue from the monitor.
+ * Well what will happen if Queue is closed and mqd deleted?
+ * we will not be able to delete them from hashes...
+ * thus close shall finish off any timeouts
  * @param mqd message queue descriptor to remove
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svq_moncmd_qrm(mqd_t mqd)
+expublic int ndrx_svq_moncmd_close(mqd_t mqd)
 {
+    int ret;
     ndrx_svq_mon_cmd_t cmd;
     
     memset(&cmd, 0, sizeof(cmd));
     
-    cmd.cmd = NDRX_SVQ_MON_QRM;
+    cmd.cmd = NDRX_SVQ_MON_CLOSE;
     cmd.mqd = mqd;
     
-    return ndrx_svq_moncmd_send(&cmd);
+    /* init condition */
+    pthread_mutex_init(&cmd.del_lock, NULL);
+    pthread_cond_init(&cmd.del_cond, NULL);
+    
+    
+    /* get lock */
+    pthread_mutex_lock (&cmd.del_lock);
+    
+    /* perform sync off */
+    ret = ndrx_svq_moncmd_send(&cmd);
+    
+    NDRX_LOG(log_debug, "Waiting for delete to complete...");
+    /* the condition will make us to get a lock */
+    pthread_cond_wait (&cmd.del_cond, &cmd.del_lock);
+    pthread_mutex_unlock (&cmd.del_lock);
+    NDRX_LOG(log_debug, "Delete to completed");
+    
 }
 
 /**

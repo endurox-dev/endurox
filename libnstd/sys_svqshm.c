@@ -870,7 +870,6 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
             err=EINVAL;
             EXFAIL_OUT(ret);
             break;
-            
     }
     
     
