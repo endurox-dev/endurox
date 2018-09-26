@@ -104,11 +104,70 @@ out:
         ret=EXFAIL;
     }
 
+    /* something does not work right here! */
     if (EXSUCCEED!=ndrx_mq_unlink(qstr))
     {
         NDRX_LOG(log_error, "Failed to unlink [%p]: %s", qstr, strerror(errno));
         ret=EXFAIL;
     }
+
+    NDRX_LOG(log_error, "%s returns %d", __func__, ret);
+    
+    return ret;
+}
+
+/**
+ * Test exclusive access to queue
+ * @param pfx test prefix
+ * @return EXSUCCEED/EXFAIL
+ */
+int local_test_unlink(char *pfx)
+{
+    int ret = EXSUCCEED;
+    char qstr[128];
+    struct mq_attr attr;
+    char buffer[TEST_REPLY_SIZE];
+    int i;
+    mqd_t mq1 = (mqd_t)EXFAIL;
+    
+    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_unl", pfx);
+    
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = TEST_REPLY_SIZE;
+    attr.mq_curmsgs = 0;
+    
+    for (i=0; i<1000000; i++)
+    {
+        if ((mqd_t)EXFAIL==(mq1 = ndrx_mq_open(qstr, O_CREAT | O_EXCL, 0644, &attr)))
+        {
+            NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                    qstr, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* send one block */
+        if (EXFAIL==ndrx_mq_send(mq1, buffer, 
+                    TEST_REPLY_SIZE, 0))
+        {
+            NDRX_LOG(log_error, "Failed to send message: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED!=ndrx_mq_close(mq1))
+        {
+            NDRX_LOG(log_error, "Failed to close %p: %s", mq1, strerror(errno));
+            ret=EXFAIL;
+        }
+
+        if (EXSUCCEED!=ndrx_mq_unlink(qstr))
+        {
+            NDRX_LOG(log_error, "Failed to unlink [%p]: %s", qstr, strerror(errno));
+            ret=EXFAIL;
+        }
+    }
+    
+out:
 
     NDRX_LOG(log_error, "%s returns %d", __func__, ret);
     
@@ -123,13 +182,18 @@ void *local_test(void *vargp)
 {
     int ret = EXSUCCEED;
     
-    /* create queue + try exclusive access - shall fail properly */
+    NDRX_LOG(log_info, "create queue + try exclusive access - shall fail properly");
     if (EXSUCCEED!=local_test_exlc((char *)vargp))
     {
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: Test delayed unlink... */
+    NDRX_LOG(log_info, "Test delayed unlink...");
+    
+    if (EXSUCCEED!=local_test_unlink((char *)vargp))
+    {
+        EXFAIL_OUT(ret);
+    }
     
     /* TODO: test open of non existing queue in not create mode */
     
