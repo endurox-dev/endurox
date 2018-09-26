@@ -179,7 +179,7 @@ typedef struct
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 
-extern NDRX_API int ndrx_svq_close(mqd_t);
+extern NDRX_API int ndrx_svq_close(mqd_t mqd);
 extern NDRX_API int ndrx_svq_getattr(mqd_t, struct mq_attr * attr);
 extern NDRX_API int ndrx_svq_notify(mqd_t, const struct sigevent *);
 extern NDRX_API mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode, 
@@ -205,7 +205,7 @@ extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
 extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */
-extern NDRX_API int ndrx_svqshm_get(char *qstr, int oflag);
+extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
 
 
