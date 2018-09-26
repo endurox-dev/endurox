@@ -175,6 +175,147 @@ out:
 }
 
 /**
+ * Test non existing queue open with out create
+ * @param pfx test prefix
+ * @return EXSUCCEED/EXFAIL
+ */
+int local_test_nonexists(char *pfx)
+{
+    int ret = EXSUCCEED;
+    char qstr[128];
+    struct mq_attr attr;
+    int i;
+    mqd_t mq1 = (mqd_t)EXFAIL;
+    int err;
+    
+    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_none", pfx);
+    
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = TEST_REPLY_SIZE;
+    attr.mq_curmsgs = 0;
+    
+    for (i=0; i<1000; i++)
+    {
+        if ((mqd_t)EXFAIL!=(mq1 = ndrx_mq_open(qstr, 0, 0644, &attr)))
+        {
+            NDRX_LOG(log_error, "Queue opened for some reason but shall not: [%s]", 
+                    qstr);
+            EXFAIL_OUT(ret);
+        }
+        err = errno;
+        
+        if (err!=ENOENT)
+        {
+            NDRX_LOG(log_error, "Expected error %d (ENOENT) got %d", ENOENT, err);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+
+    NDRX_LOG(log_error, "%s returns %d", __func__, ret);
+    
+    return ret;
+}
+
+/**
+ * Receive tests with different modes
+ * @param pfx queue prefix
+ * @return EXSUCCEED/EXFAIL
+ */
+int local_test_receive(char *pfx)
+{
+    int ret = EXSUCCEED;
+    struct mq_attr attr;
+    char buffer[TEST_REPLY_SIZE];
+    struct   timespec tm;
+    int i;
+    char qstr[128];
+    mqd_t mq = (mqd_t)EXFAIL;
+    int err;
+    ssize_t bytes_read;
+    ndrx_stopwatch_t t;
+    int tim;
+    
+    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_rcv", pfx);
+    
+    /* initialize the queue attributes */
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = TEST_REPLY_SIZE;
+    attr.mq_curmsgs = 0;
+
+    /* create the message queue */
+    if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
+    {
+        NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                SV_QUEUE_NAME, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "receive: timed + blocked");
+    
+    ndrx_stopwatch_reset(&t);
+    /* receive the message 
+     * Maybe have some timed receive
+     */
+    clock_gettime(CLOCK_REALTIME, &tm);
+    tm.tv_sec += 2;  /* Set for 20 seconds */
+    
+    if (EXSUCCEED==(bytes_read=ndrx_mq_timedreceive(mq, buffer, 
+            TEST_REPLY_SIZE, NULL, &tm)))
+    {
+        NDRX_LOG(log_error, "Got message at len %d but expected error!", bytes_read);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* the error shall be timeout... */
+    
+    err = errno;
+    
+    if (EAGAIN!=err)
+    {
+        NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", EAGAIN, err);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* test the timeout */
+    tim = ndrx_stopwatch_get_delta_sec(&t);
+    
+    if (tim<2 ||tim > 3)
+    {
+        NDRX_LOG(log_error, "Expected timeout 2 spent %d", tim);
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "receive: timed + non blocked");
+    
+    /* we should get EAGAIN and time shall be less than second */
+    
+    
+out:
+    /* cleanup */
+    
+    if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_close(mq))
+    {
+        NDRX_LOG(log_error, "Failed to close queue: %s", strerror(errno));
+        ret=EXFAIL;
+        
+    }
+
+    if (EXSUCCEED!=ndrx_mq_unlink(qstr))
+    {
+        NDRX_LOG(log_error, "Failed to unlink [%p]: %s", qstr, strerror(errno));
+        ret=EXFAIL;
+    }
+
+    return ret;
+   
+
+}
+    
+/**
  * Perform local tests, we will run in threads too. so that we see that
  * threaded mode is ok for our queues.
  */
@@ -195,9 +336,22 @@ void *local_test(void *vargp)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: test open of non existing queue in not create mode */
+    NDRX_LOG(log_info, "test open of non existing queue in not create mode");
     
-    /* TODO: receive: timed + blocked */
+    if (EXSUCCEED!=local_test_nonexists((char *)vargp))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    /* receive: timed + blocked */
+    
+    if (EXSUCCEED!=local_test_receive((char *)vargp))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    
     /* TODO: receive: timed + non blocked */
     /* TODO: receive: non timed + non blocked */
     
