@@ -60,6 +60,7 @@ int main( int argc , char **argv )
 {
     int ret = EXSUCCEED;
     mqd_t mq = (mqd_t)EXFAIL;
+    mqd_t mq_clt = (mqd_t)EXFAIL;
     struct mq_attr attr;
     char buffer[TEST_REPLY_SIZE];
     int must_stop = 0;
@@ -100,9 +101,29 @@ int main( int argc , char **argv )
         
         NDRX_LOG(log_debug, "Read bytes: %d", bytes_read);
         
-        if (100==buffer[15])
+        
+        /* Sender reply */
+        
+        if ((mqd_t)EXFAIL==(mq_clt = ndrx_mq_open(CL_QUEUE_NAME, 0, 0644, &attr)))
         {
-            must_stop = EXTRUE;
+            NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                    SV_QUEUE_NAME, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXFAIL==ndrx_mq_send(mq_clt, buffer, 
+                TEST_REPLY_SIZE, 0))
+        {
+            NDRX_LOG(log_error, "Failed to send message: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* close server queue... */
+        if (EXFAIL==ndrx_mq_close(mq_clt))
+        {
+            NDRX_LOG(log_error, "Failed to close client queue: %s", 
+                    strerror(errno));
+            EXFAIL_OUT(ret);
         }
         
     } while (!must_stop);
@@ -112,7 +133,7 @@ out:
     
     if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_close(mq))
     {
-        NDRX_LOG(log_error, "Failed to close queue: %s", tpstrerror(errno));
+        NDRX_LOG(log_error, "Failed to close queue: %s", strerror(errno));
     }
 
     return ret;
