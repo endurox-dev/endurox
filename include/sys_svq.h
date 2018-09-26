@@ -170,8 +170,8 @@ typedef struct
     mqd_t mqd;                  /** message queue requesting an event       */
     
     /* in case of mqd delete, we shall sync off with the back thread */
-    pthread_mutex_t del_lock;   /** delete lock                             */
-    pthread_cond_t del_cond;     /** conditional variable for delete         */
+    pthread_mutex_t *del_lock;   /** delete lock                             */
+    pthread_cond_t *del_cond;     /** conditional variable for delete         */
     
 } ndrx_svq_mon_cmd_t;
 
