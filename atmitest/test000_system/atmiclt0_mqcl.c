@@ -227,7 +227,7 @@ out:
 int local_test_receive(char *pfx)
 {
     int ret = EXSUCCEED;
-    struct mq_attr attr;
+    struct mq_attr attr, attrnew, attrold;
     char buffer[TEST_REPLY_SIZE];
     struct   timespec tm;
     int i;
@@ -240,78 +240,150 @@ int local_test_receive(char *pfx)
     
     snprintf(qstr, sizeof(qstr), "/%s_test000_clt_rcv", pfx);
     
-    /* initialize the queue attributes */
-    attr.mq_flags = 0;
-    attr.mq_maxmsg = 10;
-    attr.mq_msgsize = TEST_REPLY_SIZE;
-    attr.mq_curmsgs = 0;
+    for (i=0; i<4; i++)
+    {
+        /* initialize the queue attributes */
+        attr.mq_flags = 0;
+        attr.mq_maxmsg = 10;
+        attr.mq_msgsize = TEST_REPLY_SIZE;
+        attr.mq_curmsgs = 0;
 
-    /* create the message queue */
-    if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
-    {
-        NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
-                SV_QUEUE_NAME, strerror(errno));
-        EXFAIL_OUT(ret);
+        /* create the message queue */
+        if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
+        {
+            NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                    SV_QUEUE_NAME, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "receive: timed + blocked");
+
+        ndrx_stopwatch_reset(&t);
+        /* receive the message 
+         * Maybe have some timed receive
+         */
+        clock_gettime(CLOCK_REALTIME, &tm);
+        tm.tv_sec += 2;  /* Set for 20 seconds */
+
+        if (EXSUCCEED==(bytes_read=ndrx_mq_timedreceive(mq, buffer, 
+                TEST_REPLY_SIZE, NULL, &tm)))
+        {
+            NDRX_LOG(log_error, "Got message at len %d but expected error!", bytes_read);
+            EXFAIL_OUT(ret);
+        }
+
+        /* the error shall be timeout... */
+
+        err = errno;
+
+        if (EAGAIN!=err)
+        {
+            NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", EAGAIN, err);
+            EXFAIL_OUT(ret);
+        }
+
+        /* test the timeout */
+        tim = ndrx_stopwatch_get_delta_sec(&t);
+
+        if (tim<2 ||tim > 3)
+        {
+            NDRX_LOG(log_error, "Expected timeout 2 spent %d", tim);
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "receive: timed + non blocked");
+
+        /* we should get EAGAIN and time shall be less than second */
+        memcpy(&attrnew, &attr, sizeof(attr));
+
+        attrnew.mq_flags = O_NONBLOCK;
+
+        if (EXSUCCEED!=ndrx_mq_setattr(mq, &attrnew, &attrold))
+        {
+            NDRX_LOG(log_error, "Failed to set new attr: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* compare the attribs with initial, must match */
+
+        if (0!=memcmp((char *)&attr, &attrold, sizeof(attrold)))
+        {
+            NDRX_LOG(log_error, "Org attrs does not match!");
+            EXFAIL_OUT(ret);
+        }
+
+        clock_gettime(CLOCK_REALTIME, &tm);
+        tm.tv_sec += 2;  /* Set for 20 seconds */
+        ndrx_stopwatch_reset(&t);
+
+        if (EXSUCCEED==(bytes_read=ndrx_mq_timedreceive(mq, buffer, 
+                TEST_REPLY_SIZE, NULL, &tm)))
+        {
+            NDRX_LOG(log_error, "Got message at len %d but expected error!", 
+                    bytes_read);
+            EXFAIL_OUT(ret);
+        }
+
+        /* the error shall be timeout... */
+
+        err = errno;
+
+        if (EAGAIN!=err)
+        {
+            NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", EAGAIN, err);
+            EXFAIL_OUT(ret);
+        }
+
+        /* test the timeout */
+        tim = ndrx_stopwatch_get_delta_sec(&t);
+
+        if (0!=tim)
+        {
+            NDRX_LOG(log_error, "Expected spent 0 as non blocked q, but got %d", 
+                    tim);
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, ">>> receive: non timed + non blocked");
+
+        if (EXSUCCEED==(bytes_read=ndrx_mq_receive(mq, buffer, 
+                TEST_REPLY_SIZE, NULL)))
+        {
+            NDRX_LOG(log_error, "Got message with len %d but expected error!", 
+                    bytes_read);
+            EXFAIL_OUT(ret);
+        }
+
+        /* the error shall be timeout... */
+
+        err = errno;
+
+        if (EAGAIN!=err)
+        {
+            NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", 
+                    EAGAIN, err);
+            EXFAIL_OUT(ret);
+        }
+
+        /* cleanup */
+
+        if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_close(mq))
+        {
+            NDRX_LOG(log_error, "Failed to close queue: %s", strerror(errno));
+            ret=EXFAIL;
+
+        }
+
+        if (EXSUCCEED!=ndrx_mq_unlink(qstr))
+        {
+            NDRX_LOG(log_error, "Failed to unlink [%p]: %s", 
+                    qstr, strerror(errno));
+            ret=EXFAIL;
+        }
     }
-    
-    NDRX_LOG(log_debug, "receive: timed + blocked");
-    
-    ndrx_stopwatch_reset(&t);
-    /* receive the message 
-     * Maybe have some timed receive
-     */
-    clock_gettime(CLOCK_REALTIME, &tm);
-    tm.tv_sec += 2;  /* Set for 20 seconds */
-    
-    if (EXSUCCEED==(bytes_read=ndrx_mq_timedreceive(mq, buffer, 
-            TEST_REPLY_SIZE, NULL, &tm)))
-    {
-        NDRX_LOG(log_error, "Got message at len %d but expected error!", bytes_read);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* the error shall be timeout... */
-    
-    err = errno;
-    
-    if (EAGAIN!=err)
-    {
-        NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", EAGAIN, err);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* test the timeout */
-    tim = ndrx_stopwatch_get_delta_sec(&t);
-    
-    if (tim<2 ||tim > 3)
-    {
-        NDRX_LOG(log_error, "Expected timeout 2 spent %d", tim);
-        EXFAIL_OUT(ret);
-    }
-    
-    NDRX_LOG(log_debug, "receive: timed + non blocked");
-    
-    /* we should get EAGAIN and time shall be less than second */
-    
-    
+
 out:
-    /* cleanup */
-    
-    if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_close(mq))
-    {
-        NDRX_LOG(log_error, "Failed to close queue: %s", strerror(errno));
-        ret=EXFAIL;
-        
-    }
-
-    if (EXSUCCEED!=ndrx_mq_unlink(qstr))
-    {
-        NDRX_LOG(log_error, "Failed to unlink [%p]: %s", qstr, strerror(errno));
-        ret=EXFAIL;
-    }
-
     return ret;
-   
 
 }
     
@@ -351,10 +423,6 @@ void *local_test(void *vargp)
     }
     
     
-    
-    /* TODO: receive: timed + non blocked */
-    /* TODO: receive: non timed + non blocked */
-    
     /* TODO: send: timed + blocked - ok (first msg) */
     /* TODO: send: timed + non blocked - ok (second msg) */
     /* TODO: send: non timed + blocked - ok (third msg) */
@@ -363,7 +431,6 @@ void *local_test(void *vargp)
     /* TODO: send: timed + blocked fill up the queue, will get timeout */
     /* TODO: send: timed + non blocked fill up the queue, will get EAGAIN in non timeout period (shorter) */
     /* TODO: send: non timed + non blocked fill up the queue, will EAGAIN */
-    /* TODO: Test in loop queue open, put msg, close, delete (check that conditionals works */
     
     
 out:
