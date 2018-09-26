@@ -143,7 +143,7 @@ exprivate int ndrx_svqshm_init(void)
     {
         M_queuesmax = MAX_QUEUES;
         NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_MSGQUEUESMAX, M_readersmax);
+                CONF_NDRX_MSGQUEUESMAX, M_queuesmax);
     }
     else
     {
@@ -357,9 +357,9 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     }
     
     NDRX_LOG(log_debug, "qstr_position_get [%s] - result: %d, "
-                            "interations: %d, pos: %d, have_value: %d flags: %hd",
+                            "interations: %d, pos: %d, have_value: %d flags: %hd [%s]",
                             pathname, ret, interations, *pos, *have_value, 
-                            NDRX_SVQ_INDEX(svq, try)->flags);
+                            NDRX_SVQ_INDEX(svq, try)->flags, NDRX_SVQ_INDEX(svq, try)->qstr);
     
     return ret;
 }
@@ -550,8 +550,7 @@ expublic int ndrx_svqshm_get(char *qstr, int oflag)
             }
             else
             {
-                qid = NDRX_SVQ_INDEX(svq, pos)->qid;
-                NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", qstr, ret);
+                NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", qstr, qid);
             }
 
             /* finish with it */

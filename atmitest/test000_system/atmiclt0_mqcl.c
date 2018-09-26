@@ -60,6 +60,7 @@ int main( int argc , char **argv )
 {
     int ret = EXSUCCEED;
     mqd_t mq = (mqd_t)EXFAIL;
+    mqd_t mq_srv = (mqd_t)EXFAIL;
     struct mq_attr attr;
     char buffer[TEST_REPLY_SIZE];
     int must_stop = 0;
@@ -74,14 +75,14 @@ int main( int argc , char **argv )
     /* create the message queue 
      * TODO: use mode flags!
      */
-    if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(SV_QUEUE_NAME, 0, 0644, &attr)))
+    if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(CL_QUEUE_NAME, O_CREAT, 0644, &attr)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
-                SV_QUEUE_NAME, strerror(errno));
+                CL_QUEUE_NAME, strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    for (i=0; i<1000000; i++)
+    for (i=0; i<100; i++)
     {
         ssize_t bytes_read;
         /* receive the message 
@@ -92,19 +93,39 @@ int main( int argc , char **argv )
 
         NDRX_LOG(log_debug, "About to SND!");
         
-        if (EXFAIL==(bytes_read=ndrx_mq_timedsend(mq, buffer, 
-                TEST_REPLY_SIZE, 0, &tm)))
+        /* open server queue */
+        if ((mqd_t)EXFAIL==(mq_srv = ndrx_mq_open(SV_QUEUE_NAME, 0, 0644, &attr)))
+        {
+            NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                    SV_QUEUE_NAME, strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXFAIL==ndrx_mq_send(mq_srv, buffer, 
+                TEST_REPLY_SIZE, 0))
         {
             NDRX_LOG(log_error, "Failed to send message: %s", strerror(errno));
             EXFAIL_OUT(ret);
         }
         
+        /* close server queue... */
+        if (EXFAIL==ndrx_mq_close(mq_srv))
+        {
+            NDRX_LOG(log_error, "Failed to close server queue: %s", 
+                    strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* receive stuff back */
+        if (EXFAIL==(bytes_read=ndrx_mq_timedreceive(mq, buffer, 
+                TEST_REPLY_SIZE, NULL, &tm)))
+        {
+            NDRX_LOG(log_error, "Failed to get message: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+        
         NDRX_LOG(log_debug, "Read bytes: %d", bytes_read);
         
-        if (100==buffer[15])
-        {
-            must_stop = EXTRUE;
-        }
         
     }
 
@@ -113,12 +134,12 @@ out:
     
     if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_close(mq))
     {
-        NDRX_LOG(log_error, "Failed to close queue: %s", tpstrerror(errno));
+        NDRX_LOG(log_error, "Failed to close queue: %s", strerror(errno));
     }
     
-    if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_unlink(SV_QUEUE_NAME))
+    if ((mqd_t)EXFAIL!=mq && EXFAIL==ndrx_mq_unlink(CL_QUEUE_NAME))
     {
-        NDRX_LOG(log_error, "Failed to unlink q: %s", tpstrerror(errno));
+        NDRX_LOG(log_error, "Failed to unlink q: %s", strerror(errno));
     }
 
 
