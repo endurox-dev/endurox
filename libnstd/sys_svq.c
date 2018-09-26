@@ -173,7 +173,7 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      * - if we create a Q, then alloc new ID
      * - if queue already exists SHM, then we can use that ID directly
      */
-    if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, oflag)))
+    if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, mode, oflag)))
     {
         EXFAIL_OUT(ret);
     }
@@ -213,6 +213,9 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     ssize_t ret = maxlen;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
+    
+    /* set thread handler - for interrupts */
+    mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXFALSE))
@@ -260,6 +263,9 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     ssize_t ret = len;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
+    
+    /* set thread handler - for interrupts */
+    mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXTRUE))

@@ -482,11 +482,12 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
  * Get queue from shared memory.
  * In case of O_CREAT + O_EXCL return EEXIST error!
  * @param qstr queue path
+ * @param mode access mode/permissions
  * @param oflag are we creating a queue?
  * @param remove should we actually remove the queue?
  * @return resolve queue id
  */
-expublic int ndrx_svqshm_get(char *qstr, int oflag)
+expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
 {
     int ret = EXSUCCEED;
     int qid;
@@ -632,7 +633,7 @@ expublic int ndrx_svqshm_get(char *qstr, int oflag)
     /* open queue, install mappings in both tables */
     
     /* extract only known flags.. */
-    if (EXFAIL==(qid = msgget(IPC_PRIVATE, 0660 | IPC_CREAT | 
+    if (EXFAIL==(qid = msgget(IPC_PRIVATE, mode | IPC_CREAT | 
             ( (oflag & O_CREAT) | (oflag & O_EXCL)))))
     {
         int err = errno;

@@ -45,15 +45,88 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+int M_ok = 0;
+MUTEX_LOCKDECL(M_ok_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Test exclusive access to queue
+ * @param pfx test prefix
+ * @return EXSUCCEED/EXFAIL
+ */
+int local_test_exlc(char *pfx)
+{
+    int ret = EXSUCCEED;
+    char qstr[128];
+    struct mq_attr attr;
+    int err;
+    
+    snprintf(qstr, sizeof(qstr), "/%s_test000_clt", pfx);
+    
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = TEST_REPLY_SIZE;
+    attr.mq_curmsgs = 0;
+    
+    mqd_t mq1 = (mqd_t)EXFAIL;
+    mqd_t mq2 = (mqd_t)EXFAIL;
+    
+    if ((mqd_t)EXFAIL==(mq1 = ndrx_mq_open(qstr, O_CREAT | O_EXCL, 0644, &attr)))
+    {
+        NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
+                qstr, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* try open second time should fail! */
+    
+    if ((mqd_t)EXFAIL!=(mq2 = ndrx_mq_open(qstr, O_CREAT | O_EXCL, 0644, &attr)))
+    {
+        NDRX_LOG(log_error, "Second time open must fail!: [%s]: %s", 
+                qstr, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    err = errno;
+    
+    if (EEXIST!=err)
+    {
+        NDRX_LOG(log_error, "Unit test failed: expected error %d (EEXIST) got %d", 
+                EEXIST, err);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    
+    if (EXSUCCEED!=ndrx_mq_close(mq1))
+    {
+        NDRX_LOG(log_error, "Failed to close %p: %s", mq1, strerror(errno));
+        ret=EXFAIL;
+    }
+
+    if (EXSUCCEED!=ndrx_mq_unlink(qstr))
+    {
+        NDRX_LOG(log_error, "Failed to unlink [%p]: %s", qstr, strerror(errno));
+        ret=EXFAIL;
+    }
+
+    NDRX_LOG(log_error, "%s returns %d", __func__, ret);
+    
+    return ret;
+}
 
 /**
  * Perform local tests, we will run in threads too. so that we see that
  * threaded mode is ok for our queues.
  */
-int local_test(char *pfx)
+void *local_test(void *vargp) 
 {
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=local_test_exlc((char *)vargp))
+    {
+        EXFAIL_OUT(ret);
+    }
     /* TODO: create queue + try exclusive access - shall fail properly */
     /* TODO: test open of non existing queue in not create mode */
     
@@ -70,6 +143,17 @@ int local_test(char *pfx)
     /* TODO: send: timed + non blocked fill up the queue, will get EAGAIN in non timeout period (shorter) */
     /* TODO: send: non timed + non blocked fill up the queue, will EAGAIN */
     /* TODO: Test in loop queue open, put msg, close, delete (check that conditionals works */
+    
+    /* Test delayed unlink... */
+out:
+    if (EXSUCCEED==ret)
+    {
+        MUTEX_LOCK_V(M_ok_lock);
+        M_ok++;
+        MUTEX_UNLOCK_V(M_ok_lock);
+    }
+
+    return NULL;
 }
 
 /**
@@ -87,9 +171,27 @@ int main( int argc , char **argv )
     mqd_t mq_srv = (mqd_t)EXFAIL;
     struct mq_attr attr;
     char buffer[TEST_REPLY_SIZE];
-    int must_stop = 0;
     struct   timespec tm;
     int i;
+    char *pfx1="th1";
+    pthread_t thread_id1;
+    
+    char *pfx2="th1";
+    pthread_t thread_id2;
+    
+    
+    /* we will run some detailed test and after wards the integration test... */
+    pthread_create(&thread_id1, NULL, local_test, pfx1); 
+    
+    /* wait for thread to complete.. */
+    pthread_join(thread_id1, NULL); 
+    
+    if (1!=M_ok)
+    {
+        NDRX_LOG(log_error, "unit test failed!");
+        EXFAIL_OUT(ret);
+    }
+    
     /* initialize the queue attributes */
     attr.mq_flags = 0;
     attr.mq_maxmsg = 10;
@@ -149,7 +251,6 @@ int main( int argc , char **argv )
         }
         
         NDRX_LOG(log_debug, "Read bytes: %d", bytes_read);
-        
         
     }
 
