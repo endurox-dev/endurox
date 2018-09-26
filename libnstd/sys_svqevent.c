@@ -904,8 +904,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                                 ret = EXFAIL;
                             }
                             
-                            /* signal back that we are done */
-                            
+                            /* ??? signal back that we are done */
                             pthread_cond_signal (&cmd.del_cond);
                             
                             if (EXSUCCEED!=ret)
