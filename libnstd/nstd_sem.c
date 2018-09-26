@@ -246,8 +246,6 @@ expublic int ndrxd_sem_open(ndrx_sem_t *sem)
         struct semid_ds *buf;
         ushort *array;
     } arg;
-
-    NDRX_LOG(log_debug, "enter");
     
     /* creating the semaphore object --  sem_open() 
      * this will attach anyway?
