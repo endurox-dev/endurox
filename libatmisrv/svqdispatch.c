@@ -129,7 +129,7 @@ expublic int sv_open_queue(void)
                     ndrx_poll_strerror(ndrx_epoll_errno()))
         }
 #endif
-        
+        /* TODO: open service Q, also give some svc name here!  */
         entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
                 O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
         
@@ -1089,8 +1089,6 @@ expublic int sv_wait_for_request(void)
     mqd_t evmqd;
     ndrx_stopwatch_t   dbg_time;   /* Generally this is used for debug. */
     ndrx_stopwatch_t   periodic_cb;
-    command_call_t *p_adm_cmd = (command_call_t *)msg_buf;
-    tp_command_call_t *call =  (tp_command_call_t*)msg_buf;
     
     if (G_server_conf.periodcb_sec)
     {
@@ -1133,14 +1131,28 @@ expublic int sv_wait_for_request(void)
             }
         }
         
+        /* some epoll backends can return already buffer recieved
+         * for example System V Queues
+         * for others it is just -1
+         * 
+         * So the plan is following for SystemV:
+         * - first service Q is open as real queue and main dispatcher
+         * - the other queues are just open as some dummy pointers with
+         *  service name recorded inside and we return it as mqd_t
+         *  so that pointers can be compared
+         * - when epoll_wait gets the message, we trace down the pointer
+         *  by the service name in the message and then we return then
+         *  we will events correspondingly.
+         */
+        len = sizeof(msg_buf);
         nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
-                G_server_conf.max_events, tout);
+                G_server_conf.max_events, tout, msg_buf, &len);
         
         /* Print stuff if there is no timeout set or there is some value out there */
         
         if (nfds || EXFAIL==tout)
         {
-            NDRX_LOG(log_debug, "Poll says: %d", nfds);
+            NDRX_LOG(log_debug, "Poll says: %d len: %d", nfds, len);
         }
         
         /* If there are zero FDs &  */
@@ -1175,7 +1187,7 @@ expublic int sv_wait_for_request(void)
         }
         
         /*
-         * TODO: We should have algorythm which checks request in round robin way.
+         * TODO: We should have algorithm which checks request in round robin way.
          * So that if there is big load for first service, and there is outstanding calls to second,
          * then we should process also the second.
          * Maybe not? Maybe kernel already does that?
@@ -1193,8 +1205,10 @@ expublic int sv_wait_for_request(void)
             is_mq_only = G_server_conf.events[n].is_mqd;
 #endif
 
-            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, is_mq_only: %d, G_pollext=%p",
-                        n, G_server_conf.events[n].data.u32, evfd, evmqd, is_mq_only, G_pollext);
+            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, "
+                    "is_mq_only: %d, G_pollext=%p",
+                    n, G_server_conf.events[n].data.u32, evfd, evmqd, 
+                    is_mq_only, G_pollext);
             
             /* Check poller extension */
             if (NULL!=G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
@@ -1225,7 +1239,7 @@ expublic int sv_wait_for_request(void)
                 continue;
             }
             
-            if (EXFAIL==(len=ndrx_mq_receive (evmqd,
+            if (EXFAIL!=len && EXFAIL==(len=ndrx_mq_receive (evmqd,
                 (char *)msg_buf, sizeof(msg_buf), &prio)))
             {
                 if (EAGAIN==errno)
@@ -1240,7 +1254,8 @@ expublic int sv_wait_for_request(void)
                 else
                 {
                     ret=EXFAIL;
-                    ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", strerror(errno));
+                    ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", 
+                            strerror(errno));
                 }
             }
             else

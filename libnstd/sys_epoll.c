@@ -141,8 +141,10 @@ expublic inline int ndrx_epoll_close(int fd)
  * @param timeout
  * @return 
  */
-expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
+        int maxevents, int timeout, char *buf, int *buf_len)
 {
+    *buf_len = EXFAIL;
     return epoll_wait(epfd, (struct epoll_event *) events, maxevents, timeout);
 }
 

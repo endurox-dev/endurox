@@ -183,6 +183,7 @@ endif()
 IF(DEFINE_SYSVQ)
     message("Using System V message queue")
     set(EX_USE_SYSVQ "1")
+    unset(EX_USE_EPOLL)
 ENDIF()
 
 # Use emulated message queue
