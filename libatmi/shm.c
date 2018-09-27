@@ -1106,6 +1106,8 @@ expublic void ndrxd_shm_resetsrv(int srvid)
 
 /**
  * Get handler for server
+ * Well event if we run with out ndrxd, we shall open the shared memory
+ * blocks. This will make streamline testing in different modes, Posix and System V
  * @param srvid
  * @return
  */

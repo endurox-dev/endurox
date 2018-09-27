@@ -341,6 +341,7 @@ expublic int atmisrv_initialise_atmi_library(void)
     int ret=EXSUCCEED;
     atmi_lib_conf_t conf;
     pid_t pid = getpid();
+    
     memset(&conf, 0, sizeof(conf));
 
     /* Generate my_id */
@@ -365,6 +366,7 @@ expublic int atmisrv_initialise_atmi_library(void)
     
     /* Try to open shm... */
     G_shm_srv = ndrxd_shm_getsrv(G_srv_id);
+    
     /* Mark stuff as used! */
     if (NULL!=G_shm_srv)
     {
