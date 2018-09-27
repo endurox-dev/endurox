@@ -57,14 +57,33 @@ xadmin down -y
 
 RET=$?
 
+# run queue tests...
+./atmiclt0_mqsv &
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start atmiclt0_mqsv"
+    RET=-3
+fi
+sleep 1
+
+# run off the client
+./atmiclt0_mqcl
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start atmiclt0_mqcl"
+    RET=-4
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
 	RET=-2
 fi
 
-killall atmisv0 2>/dev/null
-killall atmiclt0 2>/dev/null
+xadmin killall atmisv0 2>/dev/null
+xadmin killall atmiclt0 2>/dev/null
+# kill both client & server
+xadmin killall atmiclt0_ 2>/dev/null
 
 popd 2>/dev/null
 

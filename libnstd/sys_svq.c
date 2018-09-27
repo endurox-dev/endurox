@@ -107,6 +107,8 @@ expublic int ndrx_svq_close(mqd_t mqd)
 expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *attr)
 {
     int ret = EXSUCCEED;
+    int err = 0;
+    struct msqid_ds buf;
     
     VALIDATE_MQD;
     
@@ -118,9 +120,21 @@ expublic int ndrx_svq_getattr(mqd_t mqd, struct mq_attr *attr)
     }
     
     memcpy(attr, &(mqd->attr), sizeof(*attr));
+    
+    /* read the queue stats */
+    if (EXSUCCEED!=msgctl(mqd->qid, IPC_STAT, &buf))
+    {
+        err = errno;
+        NDRX_LOG(log_debug, "Failed to get queue qid %d stats: %s",
+                mqd->qid, strerror(err));
+        userlog("Failed to get queue qid %d stats: %s",
+                mqd->qid, strerror(err));
+    }
+    
+    attr->mq_curmsgs = (long)buf.msg_qnum;
 
 out:
-    
+    errno = err;
     return ret;
 }
 
@@ -287,16 +301,36 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXTRUE))
     {
-        if (NULL!=ev && NDRX_SVQ_EV_TOUT==ev->ev)
+        err = errno;
+        if (NULL!=ev)
         {
-            NDRX_LOG(log_warn, "Timed out");
-            err = EAGAIN;
+            if (NDRX_SVQ_EV_TOUT==ev->ev)
+            {
+                NDRX_LOG(log_warn, "Timed out");
+                err = EAGAIN;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
+                err = EBADF;
+            }
         }
         else
         {
-            NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
-            err = EBADF;
+            /* translate the error codes */
+            if (ENOMSG==err)
+            {
+                NDRX_LOG(log_debug, "msgsnd(qid=%d) failed: %s", mqd->qid, 
+                    strerror(err));
+                err = EAGAIN;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "msgsnd(qid=%d) failed: %s", mqd->qid, 
+                    strerror(err));
+            }
         }
+        
         EXFAIL_OUT(ret);
     }
     
