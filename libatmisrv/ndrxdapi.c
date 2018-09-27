@@ -307,6 +307,7 @@ exprivate int get_bridges_rply_request(char *buf, long len)
  * this causes corruption of response.
  * !!!NOTE: Might want to store connected nodes in shared mem!!!!!!
  * ndrxd could update shared mem for bridges, for full refresh and for delete updates...
+ * !!! looks like not used any more...!!!
  * @return
  */
 expublic int ndrxd_get_bridges(char *nodes_out)
