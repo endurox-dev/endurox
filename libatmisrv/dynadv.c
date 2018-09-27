@@ -371,8 +371,10 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     }
 
     /* Open the queue */
-    entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, O_RDWR | O_CREAT | O_NONBLOCK, 
-                                            S_IWUSR | S_IRUSR, NULL);
+    
+    /* TODO: open service Q, also give some svc name here!  */
+    entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
+                            O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
     /*
      * Check are we ok or failed?
      */

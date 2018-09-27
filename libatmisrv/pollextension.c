@@ -131,7 +131,8 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             fd, &ev))
     {
-        ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
+        ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", 
+                ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=EXFAIL;
         goto out;
     }
