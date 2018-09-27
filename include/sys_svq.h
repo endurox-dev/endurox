@@ -202,6 +202,9 @@ extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
 
 extern NDRX_API int ndrx_svq_moncmd_term(void);
 extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
+extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd);
+extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
+
 extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */

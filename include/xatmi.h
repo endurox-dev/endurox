@@ -61,9 +61,9 @@ extern "C" {
 #define TPEVTRAN        0x00000004 /* RFU */
 #define TPEVPERSIST	0x00000008
 
-#define NDRX_XID_SERIAL_BUFSIZE     48 /* Serialized size (base64) xid */
-#define NDRX_MAX_RMS                32  /* Number of resource managers supported */
-#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /* transaction is marked as abort only */
+#define NDRX_XID_SERIAL_BUFSIZE     48 /**< Serialized size (base64) xid */
+#define NDRX_MAX_RMS                32  /**< Number of resource managers supported */
+#define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /**< transaction is marked as abort only */
 
 #define ATMI_XA_TX_INFO_FIELDS      \
     short tmtxflags;                   /* See TMTXFLAGS_* */\
@@ -91,110 +91,110 @@ extern "C" {
 #define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin,"   /**< Prefix for sanity check    */
 
 
-#define NDRX_SVC_QFMT     "%s,svc,%s"            /* Q format in epoll mode (one q multiple servers) */
-#define NDRX_SVC_QFMT_PFX "%s,svc,"              /* Service Q prefix */
-#define NDRX_QTYPE_SVC      2                    /* Service Q */
-#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%hd"      /* Q format in poll mode (use server id) */
+#define NDRX_SVC_QFMT     "%s,svc,%s"            /**< Q format in epoll mode (one q multiple servers) */
+#define NDRX_SVC_QFMT_PFX "%s,svc,"              /**< Service Q prefix */
+#define NDRX_QTYPE_SVC      2                    /**< Service Q */
+#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%hd"      /**< Q format in poll mode (use server id) */
 #define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
 
-#define NDRX_SYS_SVC_PFX          "@"                    /* Prefix used for system services */
-#define NDRX_SVC_BRIDGE_STATLEN   9                      /* Static len of bridge name       */
-#define NDRX_SVC_BRIDGE           "@TPBRIDGE%03d"        /* Bridge service format           */
-#define NDRX_SVC_QBRDIGE          "%s,svc,@TPBRIDGE%03d" /* Bridge service Q format         */
+#define NDRX_SYS_SVC_PFX          "@"                    /**< Prefix used for system services */
+#define NDRX_SVC_BRIDGE_STATLEN   9                      /**< Static len of bridge name       */
+#define NDRX_SVC_BRIDGE           "@TPBRIDGE%03d"        /**< Bridge service format           */
+#define NDRX_SVC_QBRDIGE          "%s,svc,@TPBRIDGE%03d" /**< Bridge service Q format         */
     
-#define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"     /* notify/broadcast remote dispatcher */
+#define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher */
 
-#define NDRX_SVC_RM       "@TM-%d"              /* resource_id */
-#define NDRX_SVC_TM       "@TM-%d-%d"           /* Node_idresource_id */
-#define NDRX_SVC_TM_I     "@TM-%d-%d-%d"        /* Node_id,resource_id,instance/srvid */
+#define NDRX_SVC_RM       "@TM-%d"              /**< resource_id */
+#define NDRX_SVC_TM       "@TM-%d-%d"           /**< Node_idresource_id */
+#define NDRX_SVC_TM_I     "@TM-%d-%d-%d"        /**< Node_id,resource_id,instance/srvid */
     
-#define NDRX_SVC_TMQ      "@TMQ-%ld-%d"         /* Node_id,srvid */
+#define NDRX_SVC_TMQ      "@TMQ-%ld-%d"         /**< Node_id,srvid */
 /* QSPACE service format */
-#define NDRX_SVC_QSPACE   "@QSP%s"              /* Q space format string (for service) */
+#define NDRX_SVC_QSPACE   "@QSP%s"              /**< Q space format string (for service) */
     
-#define NDRX_SVC_CPM      "@CPMSVC"             /* Client Process Monitor svc */
+#define NDRX_SVC_CPM      "@CPMSVC"             /**< Client Process Monitor svc */
     
-#define NDRX_SVC_CCONF    "@CCONF"              /* Common-config server */
+#define NDRX_SVC_CCONF    "@CCONF"              /**< Common-config server */
 
-#define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /* Prefix for sanity check. */
-#define NDRX_QTYPE_SRVADM   3                   /* Server Admin Q */
+#define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
+#define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
     
-#define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d" /* qpfx, procname, serverid, pid */
-#define NDRX_SVR_QREPLY_PFX "%s,srv,reply," /* Prefix for sanity check. */
-#define NDRX_QTYPE_SRVRPLY  4                   /* Server Reply Q */
+#define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d" /**< qpfx, procname, serverid, pid */
+#define NDRX_SVR_QREPLY_PFX "%s,srv,reply," /**< Prefix for sanity check. */
+#define NDRX_QTYPE_SRVRPLY  4                   /**< Server Reply Q */
 
 /* this may end up in "112233-" if client is not properly initialised */
 /* NOTE: Myid contains also node_id, the client Q does not contain it
  * as it is local
  */
-#define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld" /* pfx, name, pid, context id*/
+#define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld" /**< pfx, name, pid, context id*/
 /* client rply q parse  */
-#define NDRX_CLT_QREPLY_PARSE "%s clt reply %s %d %ld" /* pfx, name, pid, context_id*/
+#define NDRX_CLT_QREPLY_PARSE "%s clt reply %s %d %ld" /**< pfx, name, pid, context_id*/
     
-#define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /* Prefix for sanity check */
-#define NDRX_QTYPE_CLTRPLY  5                   /* Client Reply Q */
-#define NDRX_CLT_QREPLY_CHK   ",clt,reply," /* (verify that it is reply q) */
+#define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /**< Prefix for sanity check */
+#define NDRX_QTYPE_CLTRPLY  5                   /**< Client Reply Q */
+#define NDRX_CLT_QREPLY_CHK   ",clt,reply," /**< (verify that it is reply q) */
 
 #define NDRX_ADMIN_SVC     "%s-%d"
 
 /* This queue basically links two process IDs for conversation */
-#define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d" /* Conversation initiator */
-#define NDRX_CONV_INITATOR_Q_PFX "%s,cnv,c," /* Prefix for sanity check. */
-#define NDRX_QTYPE_CONVINIT 6                   /* Conv initiator Q */
-#define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /* Conversation server Q */
-#define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /* Prefix for sanity check. */
-#define NDRX_QTYPE_CONVSRVQ 7                   /* Conv server Q */
+#define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d" /**< Conversation initiator */
+#define NDRX_CONV_INITATOR_Q_PFX "%s,cnv,c," /**< Prefix for sanity check. */
+#define NDRX_QTYPE_CONVINIT 6                   /**< Conv initiator Q */
+#define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /**< Conversation server Q */
+#define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /**< Prefix for sanity check. */
+#define NDRX_QTYPE_CONVSRVQ 7                   /**< Conv server Q */
 
-#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d" /* binary name, server id, pid, contextid, nodeid */
-#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d" /* binary name, server id, pid, contextid, nodeid for parse */
-#define NDRX_MY_ID_SRV_NRSEPS  5 /* Number of separators in myid of server */
+#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d" /**< binary name, server id, pid, contextid, nodeid */
+#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d" /**< binary name, server id, pid, contextid, nodeid for parse */
+#define NDRX_MY_ID_SRV_NRSEPS  5 /**< Number of separators in myid of server */
     
-#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d" /* binary name, server id, pid, contextid, nodeid, cd for parse */
-#define NDRX_MY_ID_SRV_CNV_NRSEPS  6 /* Number of separators in myid of server */
+#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d" /**< binary name, server id, pid, contextid, nodeid, cd for parse */
+#define NDRX_MY_ID_SRV_CNV_NRSEPS  6 /**< Number of separators in myid of server */
     
-#define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d" /* cltname, pid, contextid, nodeid */
-#define NDRX_MY_ID_CLT_PARSE  "clt %s %d %ld %d" /* cltname, pid, contextid, nodeid */
-#define NDRX_MY_ID_CLT_NRSEPS  4 /* Number of separators in myid of client */
+#define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d" /**< cltname, pid, contextid, nodeid */
+#define NDRX_MY_ID_CLT_PARSE  "clt %s %d %ld %d" /**< cltname, pid, contextid, nodeid */
+#define NDRX_MY_ID_CLT_NRSEPS  4 /**< Number of separators in myid of client */
     
-#define NDRX_MY_ID_CLT_CNV_PARSE  "clt %s %d %ld %d %d" /* cltname, pid, contextid, nodeid, cd */
-#define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /* Number of separators in myid of client */
+#define NDRX_MY_ID_CLT_CNV_PARSE  "clt %s %d %ld %d %d" /**< cltname, pid, contextid, nodeid, cd */
+#define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /**< Number of separators in myid of client */
 
 /* Shared memory formats */
-#define NDRX_SHM_SRVINFO        "%s,shm,srvinfo"    /* Server info SHM               */
-#define NDRX_SHM_SVCINFO        "%s,shm,svcinfo"    /* Service info SHM              */
-#define NDRX_SHM_BRINFO         "%s,shm,brinfo"     /* Bridge info SHM               */
-#define NDRX_SHM_P2S            "%s,shm,p2s"        /* Posix to System V             */
-#define NDRX_SHM_S2P            "%s,shm,s2p"        /* System V to Posix             */
-#define NDRX_SEM_SVCOP          "%s,sem,svcop"      /* Service operations...         */
+#define NDRX_SHM_SRVINFO        "%s,shm,srvinfo"    /**< Server info SHM               */
+#define NDRX_SHM_SVCINFO        "%s,shm,svcinfo"    /**< Service info SHM              */
+#define NDRX_SHM_BRINFO         "%s,shm,brinfo"     /**< Bridge info SHM               */
+#define NDRX_SHM_P2S            "%s,shm,p2s"        /**< Posix to System V             */
+#define NDRX_SHM_S2P            "%s,shm,s2p"        /**< System V to Posix             */
+#define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
 
-#define NDRX_KEY_FMT            "-k %s"             /* format string for process key */
+#define NDRX_KEY_FMT            "-k %s"             /**< format string for process key */
 
 /* Format @C<P|D>NID/Flags/<Service name> */
-#define NDRX_CACHE_EV_PFXLEN    6                   /* prefix len @CXNNN             */
-#define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"     /* Put data in cache, event      */
-#define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"     /* Delete data form cache, event */
-#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"     /* Kill the database             */
-#define NDRX_CACHE_EV_MSKDEL    "@CM%03d/%s/%s"     /* Delete by mask                */
-#define NDRX_CACHE_EV_KEYDEL    "@CE%03d/%s/%s"     /* Delete by key                 */
-#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /* Cache event service, delete   */
-#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /* Cache managemtn service       */
+#define NDRX_CACHE_EV_PFXLEN    6                   /**< prefix len @CXNNN             */
+#define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"     /**< Put data in cache, event      */
+#define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"     /**< Delete data form cache, event */
+#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"     /**< Kill the database             */
+#define NDRX_CACHE_EV_MSKDEL    "@CM%03d/%s/%s"     /**< Delete by mask                */
+#define NDRX_CACHE_EV_KEYDEL    "@CE%03d/%s/%s"     /**< Delete by key                 */
+#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /**< Cache event service, delete   */
+#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /**< Cache managemtn service       */
     
-#define NDRX_CACHE_EV_LEN       3                   /* Number of chars in command    */
+#define NDRX_CACHE_EV_LEN       3                   /**< Number of chars in command    */
     
-#define NDRX_CACHE_EV_PUTCMD    "@CP"               /* Put command in event          */
-#define NDRX_CACHE_EV_DELCMD    "@CD"               /* Delete command in event       */
-#define NDRX_CACHE_EV_KILCMD    "@CK"               /* Kill/drop ache event          */
-#define NDRX_CACHE_EV_MSKDELCMD "@CM"               /* Delete data by mask, event    */
-#define NDRX_CACHE_EV_KEYDELCMD "@CE"               /* Delete by key event           */
+#define NDRX_CACHE_EV_PUTCMD    "@CP"               /**< Put command in event          */
+#define NDRX_CACHE_EV_DELCMD    "@CD"               /**< Delete command in event       */
+#define NDRX_CACHE_EV_KILCMD    "@CK"               /**< Kill/drop ache event          */
+#define NDRX_CACHE_EV_MSKDELCMD "@CM"               /**< Delete data by mask, event    */
+#define NDRX_CACHE_EV_KEYDELCMD "@CE"               /**< Delete by key event           */
 
 /*
  * globals
  */
 #define ATMI_MSG_MAX_SIZE   NDRX_MSGSIZEMAX
 #define NDRX_MAX_Q_SIZE     128
-#define NDRX_MAX_ID_SIZE    96      /* pfx + binary name + server id + pid + nodeid */
-#define NDRX_MAX_KEY_SIZE   128     /* Key size for random key                      */
-#define NDRX_QDIAG_MSG_SIZE 256     /* Q diagnostic message size                    */
+#define NDRX_MAX_ID_SIZE    96      /**< pfx + binary name + server id + pid + nodeid */
+#define NDRX_MAX_KEY_SIZE   128     /**< Key size for random key                      */
+#define NDRX_QDIAG_MSG_SIZE 256     /**< Q diagnostic message size                    */
 /* List of configuration environment variables */
 #define CONF_NDRX_TOUT           "NDRX_TOUT"
 #define CONF_NDRX_ULOG           "NDRX_ULOG"
@@ -283,12 +283,12 @@ extern "C" {
 #define	TPEMATCH	23
 #define TPEDIAGNOSTIC	24
 #define TPEMIB		25    
-#define TPERFU26        26      /* reserved for future use */
-#define TPERFU27	27      /* reserved for future use */
-#define TPERFU28	28      /* reserved for future use */
-#define TPERFU29	29      /* reserved for future use */
+#define TPERFU26        26      /**< reserved for future use */
+#define TPERFU27	27      /**< reserved for future use */
+#define TPERFU28	28      /**< reserved for future use */
+#define TPERFU29	29      /**< reserved for future use */
 #define TPINITFAIL	30
-#define TPMAXVAL	30	/* max error */
+#define TPMAXVAL	30	/**< max error */
 
 /*
  * events returned during conversational communication
@@ -313,29 +313,29 @@ extern "C" {
 /* 
  * used by tpconvert()
  */
-#define TPCONVMAXSTR    512         /* Max identifier buffer                */
-#define TPTOSTRING      0x00000001  /* Covnert to string                    */
-#define TPCONVCLTID     0x00000002  /* Convert client id                    */
-#define TPCONVTRANID    0x00000004  /* Convert transaction id               */
-#define TPCONVXID       0x00000008  /* Convert XID (current not supported   */
+#define TPCONVMAXSTR    512         /**< Max identifier buffer                */
+#define TPTOSTRING      0x00000001  /**< Covnert to string                    */
+#define TPCONVCLTID     0x00000002  /**< Convert client id                    */
+#define TPCONVTRANID    0x00000004  /**< Convert transaction id               */
+#define TPCONVXID       0x00000008  /**< Convert XID (current not supported   */
 
 /*  Size of TPINIT struct */
 #define TPINITNEED(u)	sizeof(TPINIT)
 
-#define CTXT_PRIV_NONE	0x00000         /* no context data */
-#define	CTXT_PRIV_NSTD	0x00001		/* standard library TLS data */
-#define	CTXT_PRIV_UBF   0x00002		/* UBF TLS data */
-#define	CTXT_PRIV_ATMI	0x00004		/* ATMI level private data */
-#define	CTXT_PRIV_TRAN	0x00008         /* ATMI + Global transaction */
-#define	CTXT_PRIV_NOCHK	0x00010		/* Do not check signatures */
-#define	CTXT_PRIV_IGN	0x00020		/* Ignore existing context */
+#define CTXT_PRIV_NONE	0x00000         /**< no context data */
+#define	CTXT_PRIV_NSTD	0x00001		/**< standard library TLS data */
+#define	CTXT_PRIV_UBF   0x00002		/**< UBF TLS data */
+#define	CTXT_PRIV_ATMI	0x00004		/**< ATMI level private data */
+#define	CTXT_PRIV_TRAN	0x00008         /**< ATMI + Global transaction */
+#define	CTXT_PRIV_NOCHK	0x00010		/**< Do not check signatures */
+#define	CTXT_PRIV_IGN	0x00020		/**< Ignore existing context */
 
 
 /* Multi contexting */    
 #define TPINVALIDCONTEXT    -1
-#define TPSINGLECONTEXT     -2 /* Not used by Enduro/X */
+#define TPSINGLECONTEXT     -2 /**< Not used by Enduro/X */
     
-#define TPNULLCONTEXT       0 /* basically NULL pointer */
+#define TPNULLCONTEXT       0 /**< basically NULL pointer */
 #define TPMULTICONTEXTS     0x00000040
     
 /*
@@ -345,20 +345,20 @@ extern "C" {
 #define X_C_TYPE	"X_C_TYPE"
 #define X_COMMON	"X_COMMON"
 
-#define MAXTIDENT                   30      /* Internal identifed max len   */
+#define MAXTIDENT                   30      /**< Internal identifed max len   */
 #define XATMI_SERVICE_NAME_LENGTH   MAXTIDENT
-#define XATMI_TYPE_LEN              8       /* Max type len                 */
-#define XATMI_SUBTYPE_LEN           33      /* Max sub-type len             */
-#define XATMI_EVENT_MAX             42      /* Max len of event to bcast    */
+#define XATMI_TYPE_LEN              8       /**< Max type len                 */
+#define XATMI_SUBTYPE_LEN           33      /**< Max sub-type len             */
+#define XATMI_EVENT_MAX             42      /**< Max len of event to bcast    */
      
 /* Range for cluster ID's
  * Currently we allow 254 nodes.
  */
-#define CONF_NDRX_NODEID_MIN        1       /* Min Node ID                  */
-#define CONF_NDRX_NODEID_MAX        33      /* Max Node ID                  */
+#define CONF_NDRX_NODEID_MIN        1       /**< Min Node ID                  */
+#define CONF_NDRX_NODEID_MAX        33      /**< Max Node ID                  */
 /* Total count of cluster nodes */
 #define CONF_NDRX_NODEID_COUNT (CONF_NDRX_NODEID_MAX-CONF_NDRX_NODEID_MIN)
-#define CONF_NDRX_MAX_SRVIDS_XADMIN 512    /* max number of server IDs for 
+#define CONF_NDRX_MAX_SRVIDS_XADMIN 512    /**< max number of server IDs for 
                                                xadmin printing in poll mode */
     
 /* Max calls at the same tame
@@ -383,19 +383,19 @@ extern "C" {
     
     
 #define NDRX_EVENT_EXPR_MAX     255
-#define NDRX_CACHE_KEY_MAX      16384      /* Max size of cache key            */
-#define NDRX_CACHE_FLAGS_MAX    512        /* Max flags string size            */
+#define NDRX_CACHE_KEY_MAX      16384      /**< Max size of cache key            */
+#define NDRX_CACHE_FLAGS_MAX    512        /**< Max flags string size            */
     
 /* EnduroX system ATMI flags */
 #define SYS_FLAG_REPLY_ERROR    0x00000001
-#define SYS_CONVERSATION        0x00000002 /* We have or was open conversation */
-#define SYS_SRV_THREAD          0x00000004 /* This is new server thread        */
+#define SYS_CONVERSATION        0x00000002 /**< We have or was open conversation */
+#define SYS_SRV_THREAD          0x00000004 /**< This is new server thread        */
 /* buffer management flags: */
-#define SYS_SRV_CVT_JSON2UBF    0x00000008 /* Message is converted from JSON to UBF */
-#define SYS_SRV_CVT_UBF2JSON    0x00000010 /* Message is converted from UBF to JSON */
+#define SYS_SRV_CVT_JSON2UBF    0x00000008 /**< Message is converted from JSON to UBF */
+#define SYS_SRV_CVT_UBF2JSON    0x00000010 /**< Message is converted from UBF to JSON */
 
-#define SYS_SRV_CVT_JSON2VIEW   0x00000020 /* Message is converted from JSON to VIEW */
-#define SYS_SRV_CVT_VIEW2JSON   0x00000040 /* Message is converted from UBF to JSON (non NULL)*/
+#define SYS_SRV_CVT_JSON2VIEW   0x00000020 /**< Message is converted from JSON to VIEW */
+#define SYS_SRV_CVT_VIEW2JSON   0x00000040 /**< Message is converted from UBF to JSON (non NULL)*/
     
 /* Test is any flag set */
 #define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
@@ -414,32 +414,32 @@ extern "C" {
     
 /* structure elements that are valid - set in flags */
 #define TPNOFLAGS	0x00000		
-#define	TPQCORRID	0x00001		/* set/get correlation id */		
-#define	TPQFAILUREQ	0x00002		/* set/get failure queue */		
-#define	TPQBEFOREMSGID	0x00004		/* RFU, enqueue before message id */		
-#define	TPQGETBYMSGIDOLD 0x00008	/* RFU, deprecated */		
-#define	TPQMSGID	0x00010		/* get msgid of enq/deq message */		
-#define	TPQPRIORITY	0x00020		/* set/get message priority */		
-#define	TPQTOP		0x00040		/* RFU, enqueue at queue top */		
-#define	TPQWAIT		0x00080		/* RFU, wait for dequeuing */		
-#define	TPQREPLYQ	0x00100		/* set/get reply queue */		
-#define	TPQTIME_ABS	0x00200		/* RFU, set absolute time */		
-#define	TPQTIME_REL	0x00400		/* RFU, set absolute time */		
-#define	TPQGETBYCORRIDOLD 0x00800	/* deprecated */		
-#define	TPQPEEK		0x01000		/* peek */		
-#define TPQDELIVERYQOS  0x02000         /* RFU, delivery quality of service */		
-#define TPQREPLYQOS     0x04000         /* RFU, reply message quality of service */		
-#define TPQEXPTIME_ABS  0x08000         /* RFU, absolute expiration time */		
-#define TPQEXPTIME_REL  0x10000         /* RFU, relative expiration time */		
-#define TPQEXPTIME_NONE 0x20000        	/* RFU, never expire */		
-#define	TPQGETBYMSGID	0x40008		/* dequeue by msgid */		
-#define	TPQGETBYCORRID	0x80800		/* dequeue by corrid */		
-#define TPQASYNC        0x100000        /* Async complete */
+#define	TPQCORRID	0x00001		/**< set/get correlation id */		
+#define	TPQFAILUREQ	0x00002		/**< set/get failure queue */		
+#define	TPQBEFOREMSGID	0x00004		/**< RFU, enqueue before message id */		
+#define	TPQGETBYMSGIDOLD 0x00008	/**< RFU, deprecated */		
+#define	TPQMSGID	0x00010		/**< get msgid of enq/deq message */		
+#define	TPQPRIORITY	0x00020		/**< set/get message priority */		
+#define	TPQTOP		0x00040		/**< RFU, enqueue at queue top */		
+#define	TPQWAIT		0x00080		/**< RFU, wait for dequeuing */		
+#define	TPQREPLYQ	0x00100		/**< set/get reply queue */		
+#define	TPQTIME_ABS	0x00200		/**< RFU, set absolute time */		
+#define	TPQTIME_REL	0x00400		/**< RFU, set absolute time */		
+#define	TPQGETBYCORRIDOLD 0x00800	/**< deprecated */		
+#define	TPQPEEK		0x01000		/**< peek */		
+#define TPQDELIVERYQOS  0x02000         /**< RFU, delivery quality of service */		
+#define TPQREPLYQOS     0x04000         /**< RFU, reply message quality of service */		
+#define TPQEXPTIME_ABS  0x08000         /**< RFU, absolute expiration time */		
+#define TPQEXPTIME_REL  0x10000         /**< RFU, relative expiration time */		
+#define TPQEXPTIME_NONE 0x20000        	/**< RFU, never expire */		
+#define	TPQGETBYMSGID	0x40008		/**< dequeue by msgid */		
+#define	TPQGETBYCORRID	0x80800		/**< dequeue by corrid */		
+#define TPQASYNC        0x100000        /**< Async complete */
 		
 /* Valid flags for the quality of service fileds in the TPQCTLstructure */		
-#define TPQQOSDEFAULTPERSIST  0x00001   /* queue's default persistence policy */		
-#define TPQQOSPERSISTENT      0x00002   /* disk message */		
-#define TPQQOSNONPERSISTENT   0x00004   /* memory message */		
+#define TPQQOSDEFAULTPERSIST  0x00001   /**< queue's default persistence policy */		
+#define TPQQOSPERSISTENT      0x00002   /**< disk message */		
+#define TPQQOSNONPERSISTENT   0x00004   /**< memory message */		
 
 #define QMEINVAL	-1
 #define QMEBADRMID	-2
@@ -464,24 +464,24 @@ extern "C" {
  * - _tpgetctxt();
  * - _tpsetctxt();
  */
-#define CTXT_PRIV_NONE	0x00000         /* no context data */
-#define	CTXT_PRIV_NSTD	0x00001		/* standard library TLS data */
-#define	CTXT_PRIV_UBF   0x00002		/* UBF TLS data */
-#define	CTXT_PRIV_ATMI	0x00004		/* ATMI level private data */
-#define	CTXT_PRIV_TRAN	0x00008         /* ATMI + Global transaction */
-#define	CTXT_PRIV_NOCHK	0x00010		/* Do not check signatures */
-#define	CTXT_PRIV_IGN	0x00020		/* Ignore existing context */
+#define CTXT_PRIV_NONE	0x00000         /**< no context data */
+#define	CTXT_PRIV_NSTD	0x00001		/**< standard library TLS data */
+#define	CTXT_PRIV_UBF   0x00002		/**< UBF TLS data */
+#define	CTXT_PRIV_ATMI	0x00004		/**< ATMI level private data */
+#define	CTXT_PRIV_TRAN	0x00008         /**< ATMI + Global transaction */
+#define	CTXT_PRIV_NOCHK	0x00010		/**< Do not check signatures */
+#define	CTXT_PRIV_IGN	0x00020		/**< Ignore existing context */
 
 /* Tuxedo compatiblity/emulation - no use currently: */
 
 /* Flags to tpscmt() - TP_COMMIT_CONTROL values */
-#define TP_CMT_LOGGED   0x01       /* RFU: return after commit decision is logged    */
-#define TP_CMT_COMPLETE 0x02       /* RFU: return after commit has completed     */
+#define TP_CMT_LOGGED   0x01       /**< RFU: return after commit decision is logged    */
+#define TP_CMT_COMPLETE 0x02       /**< RFU: return after commit has completed     */
 
 /* tpchkauth() return values */
-#define TPNOAUTH         0        /* RFU: no authentication          */
-#define TPSYSAUTH        1        /* RFU: system authentication          */
-#define TPAPPAUTH        2        /* RFU: system and application authentication  */
+#define TPNOAUTH         0        /**< RFU: no authentication          */
+#define TPSYSAUTH        1        /**< RFU: system authentication          */
+#define TPAPPAUTH        2        /**< RFU: system and application authentication  */
     
 
 #define TPUNSOLERR	ndrx_ndrx_tmunsolerr_handler
@@ -489,8 +489,8 @@ extern "C" {
 /**
  * Internal process identifier
  */
-#define TPMYIDTYP_CLIENT       1 /* Q identifier is client */
-#define TPMYIDTYP_SERVER       2 /* Q identifier is server */
+#define TPMYIDTYP_CLIENT       1 /**< Q identifier is client */
+#define TPMYIDTYP_SERVER       2 /**< Q identifier is server */
     
 
 /** flag for ndrx_main_integra: Do not use long jump   */
@@ -512,12 +512,12 @@ struct tp_tranid_t
 {
     /* NOTE ! Same fileds from ATMI_XA_TX_INFO_FIELDS some precompilers have issues with
     parsing macro */
-    short tmtxflags;                   /* See TMTXFLAGS_* */
-    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1]; /* tmxid, serialized */
-    short tmrmid; /* initial resource manager id */
-    short tmnodeid; /* initial node id */
-    short tmsrvid; /* initial TM server id */
-    char tmknownrms[NDRX_MAX_RMS+1]; /* valid values 1..32-1, 0 - reserved + EOS */
+    short tmtxflags;                   /**< See TMTXFLAGS_* */
+    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1]; /**< tmxid, serialized */
+    short tmrmid; /**< initial resource manager id */
+    short tmnodeid; /**< initial node id */
+    short tmsrvid; /**< initial TM server id */
+    char tmknownrms[NDRX_MAX_RMS+1]; /**< valid values 1..32-1, 0 - reserved + EOS */
     /* END OF ATMI_XA_TX_INFO_FIELDS */
     int is_tx_initiator;
 };
@@ -544,7 +544,7 @@ typedef struct
     int 	cd;
     long    appkey;
     CLIENTID cltid;
-    char	fname[XATMI_SERVICE_NAME_LENGTH+1]; /* function name */
+    char	fname[XATMI_SERVICE_NAME_LENGTH+1]; /**< function name */
 } TPSVCINFO;
 
 struct	tpinfo_t
@@ -564,21 +564,21 @@ typedef void* TPCONTEXT_T; /* Enduro/X full context switching handler */
 /* Queue support structure: */
 struct tpqctl_t 
 {
-    long flags;		/* indicates which of the values are set */		
-    long deq_time;		/* absolute/relative  time for dequeuing */		
-    long priority;		/* enqueue priority */		
-    long diagnostic;	/* indicates reason for failure */		
+    long flags;         /**< indicates which of the values are set */		
+    long deq_time;      /**< absolute/relative  time for dequeuing */		
+    long priority;      /**< enqueue priority */		
+    long diagnostic;    /**< indicates reason for failure */		
     char diagmsg[NDRX_QDIAG_MSG_SIZE]; /* diagnostic message */
-    char msgid[TMMSGIDLEN];	/* id of message before which to queue */		
-    char corrid[TMCORRIDLEN];/* correlation id used to identify message */		
-    char replyqueue[TMQNAMELEN+1];	/* queue name for reply message */		
-    char failurequeue[TMQNAMELEN+1];/* queue name for failure message */		
-    CLIENTID cltid;		/* client identifier for originating client */		
-    long urcode;		/* application user-return code */		
-    long appkey;		/* application authentication client key */		
-    long delivery_qos;      /* delivery quality of service  */		
-    long reply_qos;         /* reply message quality of service  */		
-    long exp_time;          /* expiration time  */		
+    char msgid[TMMSGIDLEN];	/**< id of message before which to queue */		
+    char corrid[TMCORRIDLEN];/**< correlation id used to identify message */		
+    char replyqueue[TMQNAMELEN+1];/**< queue name for reply message */		
+    char failurequeue[TMQNAMELEN+1];/**< queue name for failure message */		
+    CLIENTID cltid;     /**< client identifier for originating client */		
+    long urcode;        /**< application user-return code */		
+    long appkey;        /**< application authentication client key */		
+    long delivery_qos;  /**< delivery quality of service  */		
+    long reply_qos;     /**< reply message quality of service  */		
+    long exp_time;      /**< expiration time  */		
 };		
 typedef struct tpqctl_t TPQCTL;
 
@@ -592,7 +592,7 @@ struct tpmyid_t
     int srv_id;
     int tpmyidtyp;
     int isconv;
-    int cd; /* if we run in conversational mode */
+    int cd; /**< if we run in conversational mode */
 };
 
 typedef struct tpmyid_t TPMYID;
