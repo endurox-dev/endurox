@@ -1,5 +1,7 @@
 /**
  * @brief System V Queue polling
+ *  here we will work with assumption that there is only one poller sub-system
+ *  per process.
  *
  * @file sys_svqpoll.c
  */
@@ -53,20 +55,111 @@
 
 #include <sys_unix.h>
 #include <sys/epoll.h>
+#include <sys_mqueue.h>
+#include <sys_svq.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Hash of queues and their timeouts assigned and stamps...
+ */
+typedef struct
+{
+    char svnm[MAXTIDENT+1];     /**< Service name                       */
+    mqd_t mqd;                  /**< Queue handler hashed               */
+    EX_hash_handle hh;          /**< make hashable                      */
+} ndrx_svq_pollsvc_t;
+
 /*---------------------------Globals------------------------------------*/
+
+/**
+ * main polling queue. All the service requests are made to this queue.
+ */
+exprivate char M_mainqstr[NDRX_MAX_Q_SIZE+1] = "";
+
+/**
+ * Main queue object used for polling
+ */
+exprivate mqd_t M_mainq = NULL;
+
+/**
+ * Service mapping against the fake queue descriptors
+ */
+exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Set main polling queue. The queue is open once the
+ * @param qstr full queue string for the main polling interface
+ */
+expublic void ndrx_epoll_mainq_set(char *qstr)
+{
+    NDRX_STRCPY_SAFE(M_mainq, qstr);
+    NDRX_LOG(log_debug, "Setting System V main dispatching queue: [%s]", qstr);
+}
+
+/**
+ * Register service queue with poller interface
+ * @param svcnm service name
+ * @return "fake" queue descriptor
+ */
+expublic mqd_t ndrx_epoll_service_add(char *svcnm)
+{
+    int ret = EXSUCCEED;
+    mqd_t mq = NULL;
+    ndrx_svq_pollsvc_t *el = NULL;
+    int err;
+    
+    /* allocate pointer of 1 byte */
+    /* register the queue in the hash */
+    
+    if (NULL==(ret=NDRX_MALLOC(1)))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to malloc 1 byte: %s", strerror(err));
+        userlog("Failed to malloc 1 byte: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(el=NDRX_MALLOC(sizeof(*el))))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", 
+                sizeof(*el), strerror(err));
+        userlog("Failed to malloc %d bytes: %s", sizeof(*el),
+                strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    el->mqd = mq;
+    NDRX_STRCPY_SAFE(el->svnm, svnm);
+    
+    /* register service name into cache... */
+    EXHASH_ADD_STR( M_svcmap, svnm, el );
+    
+    NDRX_LOG(log_debug, "[%s] mapped to %p", el->svnm, el->mqd);
+    
+out:
+    if (EXSUCCEED!=ret && NULL!=mq)
+    {
+        NDRX_FREE((char *)mq);
+    }
+    return ret;
+}
 
 /**
  * Nothing to init for epoll()
  */
 expublic inline void ndrx_epoll_sys_init(void)
 {
+    
+    /* boot the Auxiliary thread */
+    
     return;
 }
 
@@ -84,34 +177,75 @@ expublic inline void ndrx_epoll_sys_uninit(void)
  */
 expublic inline char * ndrx_epoll_mode(void)
 {
-    static char *mode = "sysvpoll";
+    static char *mode = "svpoll";
     
     return mode;
 }
+
 /**
  * Wrapper for epoll_ctl, for standard file descriptors
- * @param epfd
- * @param op
+ * @param epfd do not care about epfd, we use only one poler
+ * @param op operation EX_EPOLL_CTL_ADD or EX_EPOLL_CTL_DEL
  * @param fd
  * @param event
  * @return 
  */
-expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event)
+expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd, 
+        struct ndrx_epoll_event *event)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    
+    /* Add or remove FD from the Aux thread */
+    
+    switch (op)
+    {
+        case EX_EPOLL_CTL_ADD:
+            break;
+        case EX_EPOLL_CTL_DEL:
+            break;    
+        default:
+            NDRX_LOG(log_warn, "Unsupported operation: %d", op);
+            errno=EINVAL;
+            EXFAIL_OUT(ret);
+            break;
+    }
+    
+    return ret;
 }
 
 /**
  * epoll_ctl for Posix queue descriptors
- * @param epfd
- * @param op
- * @param fd
- * @param event
- * @return 
+ * @param epfd not used
+ * @param op operation EX_EPOLL_CTL_DEL
+ * @param fd queue descriptor
+ * @param event not used...
+ * @return EXSUCCEED/EXFAIL
  */
-expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event)
+expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, 
+        struct ndrx_epoll_event *event)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    ndrx_svq_pollsvc_t *el, *elt;
+    
+    /* just remove service from dispatching... 
+     * for adding it is done by service queue open function
+     * ndrx_epoll_service_add()
+     */
+    
+    if (EX_EPOLL_CTL_DEL==op)
+    {
+        exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
+        EXHASH_ITER(hh, M_svcmap, el, elt)
+        {
+            if (el->mqd==fd)
+            {
+                EXHASH_DEL(M_svcmap, el);
+                NDRX_FREE(el);
+            }
+        }
+    }
+    
+    return ret;
 }
 
 /**
