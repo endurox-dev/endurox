@@ -201,8 +201,11 @@ void TPBRIDGE (TPSVCINFO *p_svc)
     /* Dummy service, calls will never reach this point. */
 }
 
-/*
+/**
  * Do initialization
+ * For bridge we could make a special rq address, for example "@TPBRIDGENNN"
+ * we will an API for ndrx_reqaddrset("...") which would configure the libnstd
+ * properly.
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
@@ -383,7 +386,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Set server flags  */
     tpext_configbrige(G_bridge_cfg.nodeid, flags, br_got_message_from_q);
     
-    snprintf(G_bridge_cfg.svc, sizeof(G_bridge_cfg.svc), NDRX_SVC_BRIDGE, G_bridge_cfg.nodeid);
+    snprintf(G_bridge_cfg.svc, sizeof(G_bridge_cfg.svc), NDRX_SVC_BRIDGE, 
+            G_bridge_cfg.nodeid);
     
     if (EXSUCCEED!=tpadvertise(G_bridge_cfg.svc, TPBRIDGE))
     {
@@ -460,4 +464,5 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     
 }
+
 /* vim: set ts=4 sw=4 et smartindent: */
