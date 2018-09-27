@@ -64,7 +64,7 @@ int main( int argc , char **argv )
     struct mq_attr attr;
     char buffer[TEST_REPLY_SIZE];
     int must_stop = 0;
-    struct   timespec tm;
+    int i;
     
     /* initialize the queue attributes */
     attr.mq_flags = 0;
@@ -87,20 +87,23 @@ int main( int argc , char **argv )
         /* receive the message 
          * Maybe have some timed receive
          */
-        clock_gettime(CLOCK_REALTIME, &tm);
-        tm.tv_sec += 5;  /* Set for 20 seconds */
-
         NDRX_LOG(log_debug, "About to RCV!");
         
-        if (EXFAIL==(bytes_read=ndrx_mq_timedreceive(mq, buffer, 
-                TEST_REPLY_SIZE, NULL, &tm)))
+        if (EXFAIL==(bytes_read=ndrx_mq_receive(mq, buffer, 
+                TEST_REPLY_SIZE, NULL)))
         {
             NDRX_LOG(log_error, "Failed to get message: %s", strerror(errno));
             EXFAIL_OUT(ret);
         }
         
         NDRX_LOG(log_debug, "Read bytes: %d", bytes_read);
+        NDRX_DUMP(log_debug, "Received data", buffer, TEST_REPLY_SIZE);
         
+        /* translate to reply format */
+        for (i=1;i<TEST_REPLY_SIZE; i++)
+        {
+            buffer[i] = buffer[i]+1;
+        }
         
         /* Sender reply */
         
@@ -111,6 +114,7 @@ int main( int argc , char **argv )
             EXFAIL_OUT(ret);
         }
         
+        NDRX_DUMP(log_debug, "Sending data", buffer, TEST_REPLY_SIZE);
         if (EXFAIL==ndrx_mq_send(mq_clt, buffer, 
                 TEST_REPLY_SIZE, 0))
         {
