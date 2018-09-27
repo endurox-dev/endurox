@@ -120,6 +120,10 @@ expublic int report_to_ndrxd(void)
     status->srvinfo.pid = ppid;
     status->srvinfo.svpid = getpid();
     
+    /* TODO: We need to add rqaddr / qid to the status message
+     * so that ndrxd can install the qid in service shared
+     * memory
+     */
     status->srvinfo.state = NDRXD_PM_RUNNING_OK;
     status->srvinfo.srvid = G_server_conf.srv_id;
     status->srvinfo.flags = G_server_conf.flags;

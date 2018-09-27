@@ -180,7 +180,8 @@ expublic int sv_open_queue(void)
                                             G_server_conf.max_events);
     if (NULL==G_server_conf.events)
     {
-        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", 
+                strerror(errno));
         ret=EXFAIL;
         goto out;
     }
@@ -202,7 +203,8 @@ expublic int sv_open_queue(void)
         if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
-            ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
+            ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
+                    ndrx_poll_strerror(ndrx_epoll_errno()));
             ret=EXFAIL;
             goto out;
         }
