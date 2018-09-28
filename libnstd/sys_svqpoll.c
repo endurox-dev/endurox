@@ -154,10 +154,11 @@ out:
  * Register service queue with poller interface
  * for admin we use fake service "@ADMINSVC".
  * @param svcnm service name
+ * @param mq_exists Existing queue defintion (for admin queues)
  * @param typ Service type, see ATMI_SRV_* constants
  * @return "fake" queue descriptor or NULL in case of error
  */
-expublic mqd_t ndrx_epoll_service_add(char *svcnm, int typ)
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, mqd_t mq_exits, int typ)
 {
     int ret = EXSUCCEED;
     mqd_t mq = NULL;
@@ -167,7 +168,11 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int typ)
     /* allocate pointer of 1 byte */
     /* register the queue in the hash */
     
-    if (NULL==(mq=NDRX_MALLOC(1)))
+    if (ATMI_SRV_ADMIN_Q!=el->typ)
+    {
+        mq = mq_exits;
+    }
+    else if (NULL==(mq=NDRX_MALLOC(1)))
     {
         err = errno;
         NDRX_LOG(log_error, "Failed to malloc 1 byte: %s", strerror(err));
@@ -186,6 +191,8 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int typ)
     }
     
     el->mqd = mq;
+    el->typ = typ;
+    
     NDRX_STRCPY_SAFE(el->svcnm, svcnm);
     
     /* register service name into cache... */
