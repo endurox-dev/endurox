@@ -59,7 +59,8 @@
 #include <sys_svq.h>
 #include <sys/fcntl.h>
 
-#include "atmi_int.h"
+#include <atmi.h>
+#include <atmi_int.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -365,14 +366,16 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     ssize_t rcvlen = *buf_len;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
+    ndrx_svq_pollsvc_t *svc;
+    tp_command_call_t *call;
+    tp_command_generic_t *gen_command;
+    struct timespec abs_timeout;
     
     /* set thread handler - for interrupts */
     M_mainq->thread = pthread_self();
     
-    /* TODO: Calculate the timeout? */
-    
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
-            (struct timespec *)__abs_timeout, &ev, EXFALSE))
+            &abs_timeout, &ev, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
@@ -409,8 +412,15 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     memcpy(buf, ev->data, *buf_len);
                     
                     /* Lookup admin Queue ID */
+                    if (NULL==(svc=ndrx_epoll_getsvc(NDRX_SVC_ADMIN)))
+                    {
+                        err=EFAULT;
+                        NDRX_LOG(log_error, "Missing admin [%s] queue def!",
+                                NDRX_SVC_ADMIN);
+                        EXFAIL_OUT(ret);
+                    }
                     
-                    events[0].data.mqd = EXFAIL;
+                    events[0].data.mqd = svc->mqd;
                     break;
                 case NDRX_SVQ_EV_FD:
                     NDRX_LOG(log_info, "File descriptor %d sends us something "
@@ -463,7 +473,8 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     else
     {
         
-        tp_command_generic_t *gen_command = (tp_command_generic_t *)buf;
+        gen_command = (tp_command_generic_t *)buf;
+        
         /* we got a message! */
         NDRX_LOG(log_debug, "Got message from main SysV queue %d "
                 "bytes gencommand: %hd", rcvlen, gen_command->command_id);
