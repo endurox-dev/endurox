@@ -127,25 +127,25 @@ extern "C" {
 #define TPRECOVERSVC        "TPRECOVER"     /* Recovery administrative service */
     
 /* Special flags for tpcallex */
-#define TPCALL_EVPOST           0x0001          /* Event posting    */
-#define TPCALL_BRCALL           0x0002          /* Bridge call      */
-#define TPCALL_BROADCAST        0x0004          /* Broadcast call   */
+#define TPCALL_EVPOST               0x0001 /**< Event posting                 */
+#define TPCALL_BRCALL               0x0002 /**< Bridge call                   */
+#define TPCALL_BROADCAST            0x0004 /**< Broadcast call                */
 
 /* XA TM reason codes */
 /* Lower reason includes XA error code. */    
-#define NDRX_XA_ERSN_BASE            2000
-#define NDRX_XA_ERSN_NONE            0      /* No reason specified for error */
-#define NDRX_XA_ERSN_LOGFAIL         2001   /* Log failed                    */
-#define NDRX_XA_ERSN_INVPARAM        2002   /* Invalid parameters sent to TMS*/
-#define NDRX_XA_ERSN_NOTX            2003   /* Transaction not logged        */
-#define NDRX_XA_ERSN_PREPFAIL        2004   /* One of the nodes failed to prepare */
-#define NDRX_XA_ERSN_RMLOGFAIL       2005   /* New RM logging failed         */
-#define NDRX_XA_ERSN_RMCOMMITFAIL    2006   /* Some resource manager failed to commit */
-#define NDRX_XA_ERSN_UBFERR          2007   /* UBF Error                     */
-#define NDRX_XA_ERSN_RMERR           2008   /* Resource Manager Failed       */
+#define NDRX_XA_ERSN_BASE           2000
+#define NDRX_XA_ERSN_NONE           0      /**< No reason specified for error */
+#define NDRX_XA_ERSN_LOGFAIL        2001   /**< Log failed                    */
+#define NDRX_XA_ERSN_INVPARAM       2002   /**< Invalid parameters sent to TMS*/
+#define NDRX_XA_ERSN_NOTX           2003   /**< Transaction not logged        */
+#define NDRX_XA_ERSN_PREPFAIL       2004   /**< One of the nodes failed to prepare */
+#define NDRX_XA_ERSN_RMLOGFAIL      2005   /**< New RM logging failed         */
+#define NDRX_XA_ERSN_RMCOMMITFAIL   2006   /**< Some resource manager failed to commit */
+#define NDRX_XA_ERSN_UBFERR         2007   /**< UBF Error                     */
+#define NDRX_XA_ERSN_RMERR          2008   /**< Resource Manager Failed       */
 
     
-#define NDRX_XID_FORMAT_ID  0x6194f7a1L         /* Enduro/X XID format id*/
+#define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
@@ -451,7 +451,7 @@ struct tp_command_call
     short buffer_type_id;
     char name[XATMI_SERVICE_NAME_LENGTH+1];
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    /* Zero terminated string... (might contain special symbols)*/
+    /** Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
@@ -463,7 +463,7 @@ struct tp_command_call
     int user3;  /* user field 3, request */
     long user4; /* user field 4, request */
     int clttout; /* client process timeout setting */
-    /* Extended size for storing cache updates in format
+    /** Extended size for storing cache updates in format
      * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * where @CA -> Cache Add, @CD -> Cache delete, 002 -> source node id
@@ -473,9 +473,9 @@ struct tp_command_call
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
-    /* message sequence for conversational over multithreaded bridges*/
+    /** message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
-    /* call timer so that we do not operate with timed-out calls. */
+    /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
     /* <XA section begin> */
@@ -503,38 +503,37 @@ struct tp_notif_call
     /* </standard comms header> */
     
     /* See clientid_t, same fields */
-    char destclient[NDRX_MAX_ID_SIZE+1];      /* Destination client ID */
+    char destclient[NDRX_MAX_ID_SIZE+1];      /**< Destination client ID */
     
     /* fields from boradcast */
-    char nodeid[MAXTIDENT*2]; /* In case of using regex */
-    int nodeid_isnull;        /* Is NULL */
-    char usrname[MAXTIDENT*2]; /* In case of using regex */
-    int usrname_isnull;        /* Is NULL */
-    char cltname[MAXTIDENT*2]; /* In case of using regex */
-    int cltname_isnull;        /* Is NULL */
+    char nodeid[MAXTIDENT*2];  /**< In case of using regex */
+    int nodeid_isnull;         /**< Is NULL */
+    char usrname[MAXTIDENT*2]; /**< In case of using regex */
+    int usrname_isnull;        /**< Is NULL */
+    char cltname[MAXTIDENT*2]; /**< In case of using regex */
+    int cltname_isnull;        /**< Is NULL */
     
     short buffer_type_id;
-    /* See clientid_t, same fields, end */
+    /** See clientid_t, same fields, end */
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    /* Zero terminated string... (might contain special symbols)*/
+    /** Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
-    long sysflags; /* internal flags of the call */
+    char my_id[NDRX_MAX_ID_SIZE+1]; /**< ID of caller */
+    long sysflags; /**< internal flags of the call */
     int cd;
-    int rval; /* on request -> userfield1 */
-    long rcode; /* should be preset on reply only, on request -> userfield2 */
+    int rval; /**< on request -> userfield1 */
+    long rcode; /**< should be preset on reply only, on request -> userfield2 */
     long flags; 
-    time_t timestamp; /* provide time stamp of the call */
+    time_t timestamp; /**< provide time stamp of the call */
     unsigned short callseq;
-    /* message sequence for conversational over multithreaded bridges*/
+    /** message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
-    /* call timer so that we do not operate with timed-out calls. */
+    /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
-    /* Have a ptr to auto-buffer: */
-    buffer_obj_t * autobuf;
+    buffer_obj_t * autobuf; /**< Have a ptr to auto-buffer: */
     
-    long destnodeid; /* Dest node to which we are sending the msg */
+    long destnodeid; /**< Dest node to which we are sending the msg */
     
     long data_len;
     char data[0];
@@ -552,9 +551,9 @@ struct tpconv_buffer
 {
     int msgseq;
     char *buf;
-    size_t size;        /* Allocated size.... */
+    size_t size;        /**< Allocated size....                 */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;  /**< makes this structure hashable      */
 };
 
 
@@ -577,7 +576,8 @@ struct tp_conversation_control
     time_t timestamp;
     unsigned short callseq; /* Call/conv sequence number */
     
-    /* message sequence number (from our side to their) 
+    /** 
+     * message sequence number (from our side to their) 
      * Basically this is message number we are sending them
      * The other side will follow the incremental order of the messages.
      */
