@@ -108,6 +108,27 @@ expublic void ndrx_epoll_mainq_set(char *qstr)
 }
 
 /**
+ * Get service definition from service name
+ * @param svcnm service name to lookup
+ * @return NULL - not found or ptr to service definition
+ */
+exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getsvc(char *svcnm)
+{
+    ndrx_svq_pollsvc_t *ret = NULL;
+    
+    
+    EXHASH_FIND_STR(M_svcmap, svcnm, ret);
+    
+    if (NULL!=ret)
+    {
+        NDRX_LOG(log_error, "Failed to find queue definition for [%s] service");
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Register service queue with poller interface
  * for admin we use fake service "@ADMINSVC".
  * @param svcnm service name
@@ -365,8 +386,31 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     break;
                 case NDRX_SVQ_EV_DATA:
                     
-                    /* TODO: Admin thread sends something to us... */
+                    /* Admin thread sends something to us... */
+                    NDRX_LOG(log_info, "Admin queue sends us something "
+                            "bytes %d", (int)ev->revents, 
+                            (int)ev->datalen);
                     
+                    events[0].is_mqd = EXTRUE;
+                    
+                    /* Copy off the data - todo think about zero copy...*/
+                    if (*buf_len < ev->datalen)
+                    {
+                        NDRX_LOG(log_error, "Receive from FD %d bytes, but max buffer %d",
+                                ev->datalen, *buf_len);
+                        userlog("Receive from FD %d bytes, but max buffer %d",
+                                ev->datalen, *buf_len);
+
+                        err=EBADFD;
+                        EXFAIL_OUT(ret);
+                    }
+
+                    *buf_len = ev->datalen;
+                    memcpy(buf, ev->data, *buf_len);
+                    
+                    /* Lookup admin Queue ID */
+                    
+                    events[0].data.mqd = EXFAIL;
                     break;
                 case NDRX_SVQ_EV_FD:
                     NDRX_LOG(log_info, "File descriptor %d sends us something "
@@ -403,13 +447,13 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
             /* translate the error codes */
             if (ENOMSG==err)
             {
-                NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", M_mainq->qid, 
                     strerror(err));
                 err = EAGAIN;
             }
             else
             {
-                NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", M_mainq->qid, 
                     strerror(err));
             }
         }
