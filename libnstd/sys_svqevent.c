@@ -1287,7 +1287,10 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     pthread_mutex_unlock(&(mqd->stamplock));
     
     /* register timeout: */
-    if (EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
+
+    /* if abs timeout is set to zero, then there is no timeout expected.. */
+    if ((0!=abs_timeout->tv_nsec || 0!=abs_timeout->tv_sec) &&
+            EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
             abs_timeout))
     {
         err = EFAULT;

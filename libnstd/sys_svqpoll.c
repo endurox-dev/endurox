@@ -122,11 +122,32 @@ exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getsvc(char *svcnm)
     
     if (NULL!=ret)
     {
-        NDRX_LOG(log_error, "Failed to find queue definition for [%s] service");
+        NDRX_LOG(log_error, "Failed to find queue definition for [%s] service",
+                svcnm);
     }
     
 out:
     return ret;
+}
+
+/**
+ * Get first non admin queue
+ * @return NULL - not found, or queue found
+ */
+exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getfirstna(void)
+{
+    ndrx_svq_pollsvc_t *el = NULL, *elt;
+    
+    EXHASH_ITER(hh, M_svcmap, el, elt)
+    {
+        if (ATMI_SRV_ADMIN_Q!=el->typ)
+        {
+            break;
+        }
+    }
+    
+out:
+    return el;
 }
 
 /**
@@ -369,20 +390,33 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     ndrx_svq_pollsvc_t *svc;
     tp_command_call_t *call;
     tp_command_generic_t *gen_command;
-    struct timespec abs_timeout;
+    struct timespec tm;
     
     /* set thread handler - for interrupts */
     M_mainq->thread = pthread_self();
     
+    /* as we do not have non timed receive available for  */
+    
+    if (-1==timeout)
+    {
+        /* no timeout required */
+        tm.tv_sec = 0;
+        tm.tv_nsec = 0;
+    }
+    else
+    {
+        clock_gettime(CLOCK_REALTIME, &tm);
+        tm.tv_sec += timeout;  /* Set timeout */
+    }
+    
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
-            &abs_timeout, &ev, EXFALSE))
+            &tm, &ev, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
         {
             switch (ev->ev)
             {
-                    
                 case NDRX_SVQ_EV_TOUT:
                     NDRX_LOG(log_debug, "Timed out");
                     err = EAGAIN;
@@ -472,37 +506,54 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     else
     {
-        
         gen_command = (tp_command_generic_t *)buf;
         
         /* we got a message! */
         NDRX_LOG(log_debug, "Got message from main SysV queue %d "
                 "bytes gencommand: %hd", rcvlen, gen_command->command_id);
         
-        
-        /* understand what type of message this is - to which queue we shall map?
-         
-         case ATMI_COMMAND_CONNECT:
+        switch (gen_command->command_id)
+        {
+            case ATMI_COMMAND_CONNECT:
             case ATMI_COMMAND_TPCALL:
             case ATMI_COMMAND_CONNRPLY:
             case ATMI_COMMAND_TPREPLY:
-
-            tp_command_call_t *call
-
-            use  tp_command_call_t to get service name
-            for other cases just use any service we have advertised, if not services available, drop the message
-         
-         
-         */
+                
+                call = (tp_command_call_t *)buf;
+                
+                if (NULL==(svc=ndrx_epoll_getsvc(call->name)))
+                {
+                    err=EFAULT;
+                    NDRX_LOG(log_error, "Missing queue def for [%s]",
+                            call->name);
+                    userlog("Missing queue def for [%s]",
+                            call->name);
+                    EXFAIL_OUT(ret);
+                }
+                events[0].data.mqd = svc->mqd;
+            default:
+                /* any non admin Q will be fine here!*/
+                if (NULL==(svc=ndrx_epoll_getfirstna()))
+                {
+                    err=EFAULT;
+                    NDRX_LOG(log_error, "Cannot find any non admin Q for event");
+                    userlog("Cannot find any non admin Q for event");
+                    EXFAIL_OUT(ret);
+                }
+                
+                events[0].data.mqd = svc->mqd;
+                
+                break;
+        }
         
+        NDRX_LOG(log_debug, "event mapped to %p (mqd subst)",
+                events[0].data.mqd);
     }
     
 out:
-    
             
     if (NULL!=ev)
     {
-        
         if (NULL!=ev->data)
         {
             NDRX_FREE(ev->data);
