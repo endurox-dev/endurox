@@ -57,6 +57,9 @@
 #include <sys/epoll.h>
 #include <sys_mqueue.h>
 #include <sys_svq.h>
+#include <sys/fcntl.h>
+
+#include "atmi_int.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -70,6 +73,7 @@ typedef struct
 {
     char svnm[MAXTIDENT+1];     /**< Service name                       */
     mqd_t mqd;                  /**< Queue handler hashed               */
+    int typ;                    /**< either fake service or admin Q     */
     EX_hash_handle hh;          /**< make hashable                      */
 } ndrx_svq_pollsvc_t;
 
@@ -105,10 +109,12 @@ expublic void ndrx_epoll_mainq_set(char *qstr)
 
 /**
  * Register service queue with poller interface
+ * for admin we use fake service "@ADMINSVC".
  * @param svcnm service name
- * @return "fake" queue descriptor
+ * @param typ Service type, see ATMI_SRV_* constants
+ * @return "fake" queue descriptor or NULL in case of error
  */
-expublic mqd_t ndrx_epoll_service_add(char *svcnm)
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int typ)
 {
     int ret = EXSUCCEED;
     mqd_t mq = NULL;
@@ -157,10 +163,15 @@ out:
  */
 expublic inline void ndrx_epoll_sys_init(void)
 {
-    
+    int ret = EXSUCCEED;
     /* boot the Auxiliary thread */
+    if (EXSUCCEED!=ndrx_svqshm_init(void))
+    {
+        NDRX_LOG(log_error, "Failed to init System V Aux thread/SHM");
+        EXFAIL_OUT(ret);
+    }
     
-    return;
+    return ret;
 }
 
 /**
@@ -186,22 +197,35 @@ expublic inline char * ndrx_epoll_mode(void)
  * Wrapper for epoll_ctl, for standard file descriptors
  * @param epfd do not care about epfd, we use only one poler
  * @param op operation EX_EPOLL_CTL_ADD or EX_EPOLL_CTL_DEL
- * @param fd
- * @param event
- * @return 
+ * @param fd file descriptor to monitor
+ * @param event not used
+ * @return EXSUCCEED/EXFAIL
  */
 expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd, 
         struct ndrx_epoll_event *event)
 {
     int ret = EXSUCCEED;
+    int err = 0;
     
     /* Add or remove FD from the Aux thread */
     
     switch (op)
     {
         case EX_EPOLL_CTL_ADD:
+            if (EXSUCCEED!=(ret = ndrx_svq_moncmd_addfd(M_mainq, fd)))
+            {
+                err = errno;
+                NDRX_LOG(log_error, "Failed to add fd %d to mqd %p for polling: %s",
+                        fd, M_mainq);
+            }
             break;
         case EX_EPOLL_CTL_DEL:
+            if (EXSUCCEED!=(ret = ndrx_svq_moncmd_rmfd(fd)))
+            {
+                err = errno;
+                NDRX_LOG(log_error, "Failed to remove fd %d to mqd %p for polling: %s",
+                        fd, M_mainq);
+            }
             break;    
         default:
             NDRX_LOG(log_warn, "Unsupported operation: %d", op);
@@ -209,7 +233,8 @@ expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd,
             EXFAIL_OUT(ret);
             break;
     }
-    
+out:
+    errno = err;
     return ret;
 }
 
@@ -251,11 +276,30 @@ expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
 /**
  * Wrapper for epoll_create
  * @param size
- * @return 
+ * @return Fake FD(1) or EXFAIL
  */
 expublic inline int ndrx_epoll_create(int size)
 {
-    return EXFAIL;
+    int ret = 1;
+    int err;
+    struct mq_attr attr;
+    
+    memset(&attr, 0, sizeof(attr));
+    
+    /* at this point we will open the M_mainq 
+     * by using th rq addr provided..
+     */
+    M_mainq = ndrx_mq_open(M_mainqstr, O_CREAT, 0660,  &attr);
+    
+    if ((mqd_t)EXFAIL==M_mainq)
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to open main System V poller queue!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
 }
 
 /**
@@ -263,22 +307,167 @@ expublic inline int ndrx_epoll_create(int size)
  */
 expublic inline int ndrx_epoll_close(int fd)
 {
+    ndrx_svq_pollsvc_t *el, *elt;
+    /* Close main poller Q erase mapping hashes */
+    ndrx_mq_close(M_mainq);
+    
+    EXHASH_ITER(hh, M_svcmap, el, elt)
+    {
+        EXHASH_DEL(M_svcmap, el);
+        NDRX_FREE(el);
+    }
+    
     return EXFAIL;
 }
 
 /**
  * Wrapper for epoll_wait
- * @param epfd
- * @param events
- * @param maxevents
- * @param timeout
- * @return 
+ * TODO: needs to provide back the identifier that we got msg for admin Q
+ * or for admin we could use special service name like @ADMIN so that
+ * we can find it in standard hash list? but the MQD needs to be kind of special
+ * one so that we do not remove it by our selves at the fake
+ * @param epfd not used, poll set
+ * @param events events return events struct 
+ * @param maxevents max number of events can be loaded
+ * @param timeout timeout in milliseconds
+ * @return 0 - timeout, -1 - FAIL, 1 - have one event
  */
 expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
         int maxevents, int timeout, char *buf, int *buf_len)
 {
-    *buf_len=EXFAIL;
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    ssize_t rcvlen = *buf_len;
+    ndrx_svq_ev_t *ev = NULL;
+    int err = 0;
+    
+    /* set thread handler - for interrupts */
+    M_mainq->thread = pthread_self();
+    
+    /* TODO: Calculate the timeout? */
+    
+    if (EXSUCCEED!=ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
+            (struct timespec *)__abs_timeout, &ev, EXFALSE))
+    {
+        err = errno;
+        if (NULL!=ev)
+        {
+            switch (ev->ev)
+            {
+                    
+                case NDRX_SVQ_EV_TOUT:
+                    NDRX_LOG(log_debug, "Timed out");
+                    err = EAGAIN;
+                    break;
+                case NDRX_SVQ_EV_DATA:
+                    
+                    /* TODO: Admin thread sends something to us... */
+                    
+                    break;
+                case NDRX_SVQ_EV_FD:
+                    NDRX_LOG(log_info, "File descriptor %d sends us something "
+                            "revents=%d bytes %d", ev->fd, (int)ev->revents, 
+                            (int)ev->datalen);
+                    events[0].is_mqd = EXFALSE;
+                    events[0].events = ev->revents;
+                    events[0].data.fd = ev->fd;
+
+                    /* Copy off the data - todo think about zero copy...*/
+                    if (*buf_len < ev->datalen)
+                    {
+                        NDRX_LOG(log_error, "Receive from FD %d bytes, but max buffer %d",
+                                ev->datalen, *buf_len);
+                        userlog("Receive from FD %d bytes, but max buffer %d",
+                                ev->datalen, *buf_len);
+
+                        err=EBADFD;
+                        EXFAIL_OUT(ret);
+                    }
+
+                    *buf_len = ev->datalen;
+                    memcpy(buf, ev->data, *buf_len);
+                    break;
+                    
+                default:
+                    NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
+                    err = EBADF;
+                    break;
+            }
+        }
+        else
+        {
+            /* translate the error codes */
+            if (ENOMSG==err)
+            {
+                NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    strerror(err));
+                err = EAGAIN;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    strerror(err));
+            }
+        }
+        
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        
+        tp_command_generic_t *gen_command = (tp_command_generic_t *)buf;
+        /* we got a message! */
+        NDRX_LOG(log_debug, "Got message from main SysV queue %d "
+                "bytes gencommand: %hd", rcvlen, gen_command->command_id);
+        
+        
+        /* understand what type of message this is - to which queue we shall map?
+         
+         case ATMI_COMMAND_CONNECT:
+            case ATMI_COMMAND_TPCALL:
+            case ATMI_COMMAND_CONNRPLY:
+            case ATMI_COMMAND_TPREPLY:
+
+            tp_command_call_t *call
+
+            use  tp_command_call_t to get service name
+            for other cases just use any service we have advertised, if not services available, drop the message
+         
+         
+         */
+        
+    }
+    
+out:
+    
+            
+    if (NULL!=ev)
+    {
+        
+        if (NULL!=ev->data)
+        {
+            NDRX_FREE(ev->data);
+        }
+        
+        NDRX_FREE(ev);
+    }
+    
+    errno = err;
+    
+    if (EXSUCCEED==ret)
+    {
+        if (0==err)
+        {
+            return 1; /* have one event */
+        }
+        else
+        {
+            return 0;   /* timeout */
+        }
+    }
+    else
+    {
+        return EXFAIL;
+    }
 }
 
 /**

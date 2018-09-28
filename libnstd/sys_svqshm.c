@@ -109,7 +109,7 @@ exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
  * max queues setting.
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_svqshm_init(void)
+expublic int ndrx_svqshm_init(void)
 {
     int ret = EXSUCCEED;
     char *tmp;

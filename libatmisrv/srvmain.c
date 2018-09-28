@@ -590,7 +590,12 @@ int ndrx_main(int argc, char** argv)
     /*
      * Initialize polling subsystem
      */
-    ndrx_epoll_sys_init();
+    if (EXSUCCEED!=ndrx_epoll_sys_init())
+    {
+        NDRX_LOG(log_error, "ndrx_epoll_sys_init() fail");
+        userlog("ndrx_epoll_sys_init() fail");
+        EXFAIL_OUT(ret);
+    }
     
     /*
      * Initialise services

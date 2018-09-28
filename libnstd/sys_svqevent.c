@@ -1103,7 +1103,7 @@ out:
 exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
 {
     int ret = EXSUCCEED;
-    int err;
+    int err = 0;
     
     if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
             sizeof(ndrx_svq_mon_cmd_t)))
@@ -1115,6 +1115,7 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     }
     
 out:
+    errno = err;
     return ret;
 }
 

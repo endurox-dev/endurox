@@ -46,6 +46,7 @@ extern NDRX_API "C" {
 #include <exhash.h>
 #include <sys_unix.h>
 #include <atmi.h>
+#include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -57,13 +58,9 @@ extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long j
 #define RETURN_TYPE_TPRETURN      0x00000002
 #define RETURN_TYPE_TPFORWARD     0x00000004
 #define RETURN_SVC_FAIL           0x00000008
-#define RETURN_TYPE_THREAD        0x00000010  /* processing sent to thread   */
+#define RETURN_TYPE_THREAD        0x00000010  /**< processing sent to thread   */
 
-/* Special queue logical numbers */
-#define ATMI_SRV_ADMIN_Q            0           /* This is admin queue */
-#define ATMI_SRV_REPLY_Q            1           /* This is reply queue */
-#define ATMI_SRV_Q_ADJUST           2           /* Adjustment for Q nr */
-    
+/* with linux 4.5 this is supported */ 
 #ifndef EPOLLEXCLUSIVE
 
 #define EPOLLEXCLUSIVE (1 << 28)
