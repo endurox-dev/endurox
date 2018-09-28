@@ -71,7 +71,7 @@
  */
 typedef struct
 {
-    char svnm[MAXTIDENT+1];     /**< Service name                       */
+    char svcnm[MAXTIDENT+1];     /**< Service name                       */
     mqd_t mqd;                  /**< Queue handler hashed               */
     int typ;                    /**< either fake service or admin Q     */
     EX_hash_handle hh;          /**< make hashable                      */
@@ -103,7 +103,7 @@ exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
  */
 expublic void ndrx_epoll_mainq_set(char *qstr)
 {
-    NDRX_STRCPY_SAFE(M_mainq, qstr);
+    NDRX_STRCPY_SAFE(M_mainqstr, qstr);
     NDRX_LOG(log_debug, "Setting System V main dispatching queue: [%s]", qstr);
 }
 
@@ -124,7 +124,7 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int typ)
     /* allocate pointer of 1 byte */
     /* register the queue in the hash */
     
-    if (NULL==(ret=NDRX_MALLOC(1)))
+    if (NULL==(mq=NDRX_MALLOC(1)))
     {
         err = errno;
         NDRX_LOG(log_error, "Failed to malloc 1 byte: %s", strerror(err));
@@ -143,34 +143,39 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int typ)
     }
     
     el->mqd = mq;
-    NDRX_STRCPY_SAFE(el->svnm, svnm);
+    NDRX_STRCPY_SAFE(el->svcnm, svcnm);
     
     /* register service name into cache... */
-    EXHASH_ADD_STR( M_svcmap, svnm, el );
+    EXHASH_ADD_STR( M_svcmap, svcnm, el );
     
-    NDRX_LOG(log_debug, "[%s] mapped to %p", el->svnm, el->mqd);
+    NDRX_LOG(log_debug, "[%s] mapped to %p", el->svcnm, el->mqd);
     
 out:
     if (EXSUCCEED!=ret && NULL!=mq)
     {
         NDRX_FREE((char *)mq);
+        mq=NULL;
     }
-    return ret;
+
+    errno=err;
+    return mq;
 }
 
 /**
- * Nothing to init for epoll()
+ * Ini System V polling thread
+ * @return EXSUCCEED/EXFAIL, errno set.
  */
-expublic inline void ndrx_epoll_sys_init(void)
+expublic inline int ndrx_epoll_sys_init(void)
 {
     int ret = EXSUCCEED;
     /* boot the Auxiliary thread */
-    if (EXSUCCEED!=ndrx_svqshm_init(void))
+    if (EXSUCCEED!=ndrx_svqshm_init())
     {
         NDRX_LOG(log_error, "Failed to init System V Aux thread/SHM");
         EXFAIL_OUT(ret);
     }
     
+out:
     return ret;
 }
 
