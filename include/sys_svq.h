@@ -208,6 +208,7 @@ extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
 extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */
+extern NDRX_API int ndrx_svqshm_init(void);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
 

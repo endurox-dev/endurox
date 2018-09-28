@@ -58,6 +58,13 @@ extern "C" {
  */
 #define GEN_QUEUE_ERR_NO_DATA   -2
 
+    
+/* Special queue logical numbers used by atmi server */
+#define ATMI_SRV_ADMIN_Q            0           /**< This is admin queue */
+#define ATMI_SRV_REPLY_Q            1           /**< This is reply queue */
+#define ATMI_SRV_Q_ADJUST           2           /**< Adjustment for Q nr */
+#define ATMI_SRV_SVC                3           /**< Normal service Q    */
+
 /*
  * List of ATMI internal protocol commands
  */

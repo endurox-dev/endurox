@@ -772,7 +772,7 @@ expublic int sv_server_request(char *buf, int len)
         case ATMI_COMMAND_CONNRPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-                NDRX_LOG(log_warn, "Dropping un-soliceded/event reply "
+                NDRX_LOG(log_warn, "Dropping unsolicited/event reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 /* Register as completed (if not cancelled) */
@@ -782,7 +782,7 @@ expublic int sv_server_request(char *buf, int len)
         case ATMI_COMMAND_TPREPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-                NDRX_LOG(log_warn, "Dropping un-soliceded reply "
+                NDRX_LOG(log_warn, "Dropping unsolicited reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 
