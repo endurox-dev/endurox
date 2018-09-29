@@ -211,7 +211,5 @@ extern NDRX_API int ndrx_svq_event_init(void);
 extern NDRX_API int ndrx_svqshm_init(void);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
-
-extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, mqd_t mq_exits, int typ);
         
 #endif

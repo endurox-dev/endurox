@@ -268,6 +268,8 @@ extern NDRX_API FILE * fmemopen(void *buffer, size_t len, const char *mode);
 
 /* poll ops */
 extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);
+extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
+extern NDRX_API int ndrx_epoll_shallopensvc(int idx);
 
 extern NDRX_API int ndrx_epoll_sys_init(void);
 extern NDRX_API void ndrx_epoll_sys_uninit(void);
