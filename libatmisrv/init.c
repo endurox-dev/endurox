@@ -217,11 +217,6 @@ exprivate int add_specific_queue(char *qname, int is_admin)
         entry->p_func=NULL;
         entry->is_admin = is_admin;
         NDRX_STRCPY_SAFE(entry->listen_q, qname);
-        /*
-        sprintf(entry->listen_q, NDRX_ADMIN_FMT, G_server_conf.q_prefix,
-                                G_server_conf.binary_name, G_server_conf.srv_id);
-        sprintf(entry->svc_nm, NDRX_ADMIN_SVC, G_server_conf.binary_name, G_server_conf.srv_id);
-        strcpy(entry->fn_nm, entry->svc_nm);*/
         /* register admin service */
         DL_APPEND(G_server_conf.service_list, entry);
         G_server_conf.adv_service_count++;

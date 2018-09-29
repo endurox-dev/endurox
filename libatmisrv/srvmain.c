@@ -513,7 +513,7 @@ expublic int ndrx_init(int argc, char** argv)
     {
         /* so name not set, lets build per binary request address... */
         snprintf(rqaddress, sizeof(rqaddress), NDRX_SVR_SVADDR_DFLT, 
-                G_server_conf.q_prefix, argv[0], G_srv_id);
+                G_server_conf.q_prefix, G_server_conf.binary_name, G_srv_id);
         
         ndrx_epoll_mainq_set(rqaddress);
     }

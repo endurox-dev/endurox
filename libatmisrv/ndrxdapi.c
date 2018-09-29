@@ -183,8 +183,6 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
     command_dynadvertise_t *unadv = (command_dynadvertise_t *)buf;
-    int i, offset=0;
-    svc_entry_fn_t *entry;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
     memset(buf, 0, sizeof(buf));
@@ -208,9 +206,9 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
-        if (!G_shm_srv)
+        if (!G_shm_srv || ENOENT==ret)
         {
-            NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
+            NDRX_LOG(log_error, "Not attached to ndrxd - ignore error");
             ret=EXSUCCEED;
         }    
         else
@@ -234,7 +232,6 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
     command_dynadvertise_t *adv = (command_dynadvertise_t *)buf;
-    int i, offset=0;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
     memset(buf, 0, sizeof(buf));
@@ -261,9 +258,9 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
-        if (!G_shm_srv)
+        if (!G_shm_srv || ENOENT==ret)
         {
-            NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
+            NDRX_LOG(log_error, "Not attached to ndrxd - ignore error");
             ret=EXSUCCEED;
         }    
         else

@@ -65,7 +65,7 @@
 #define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
 #define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
 #define NDRX_SVQ_MON_TERM         4 /**< Termination handler calls us         */
-#define NDRX_SVQ_MON_CLOSE          5 /**< Queue unlink request                 */
+#define NDRX_SVQ_MON_CLOSE        5 /**< Queue unlink request                 */
 
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -210,6 +210,7 @@ extern NDRX_API int ndrx_svq_event_init(void);
 /* internals... */
 extern NDRX_API int ndrx_svqshm_init(void);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
+extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
         
 #endif
