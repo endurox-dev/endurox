@@ -87,7 +87,7 @@ extern NDRX_API int ndrx_shm_birdge_getnodesconnected(char *outputbuf);
 /* Semaphore driving: */
 extern NDRX_API int ndrxd_sem_init(char *q_prefix);
 extern NDRX_API int ndrx_sem_attach(ndrx_sem_t *sem);
-extern NDRX_API int ndrxd_sem_open_all(void);
+extern NDRX_API int ndrx_sem_open_all(void);
 extern NDRX_API int ndrxd_sem_close_all(void);
 extern NDRX_API int ndrxd_sem_delete(void);
 extern NDRX_API void ndrxd_sem_delete_with_init(char *q_prefix);
