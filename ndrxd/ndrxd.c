@@ -348,7 +348,7 @@ int main_init(int argc, char** argv)
     if (G_sys_config.restarting)
     {
         
-        if (EXSUCCEED!=ndrx_sem_attach_all())
+        if (EXSUCCEED!=ndrx_sem_open_all())
         {
             ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to attach to Semaphores");
@@ -374,7 +374,7 @@ int main_init(int argc, char** argv)
     else 
     {
         /* Semaphores are first */
-        if (EXSUCCEED!=ndrxd_sem_open_all())
+        if (EXSUCCEED!=ndrx_sem_open_all())
         {
             ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to open semaphores!");

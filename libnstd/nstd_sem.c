@@ -237,9 +237,10 @@ expublic int ndrx_sem_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
  * @param attach_on_exists if not EXFALSE, attach to sem if exists
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrxd_sem_open(ndrx_sem_t *sem)
+expublic int ndrxd_sem_open(ndrx_sem_t *sem, int attach_on_exists)
 {
     int ret=EXSUCCEED;
+    int err;
     union semun 
     {
         int val;
@@ -250,12 +251,21 @@ expublic int ndrxd_sem_open(ndrx_sem_t *sem)
     /* creating the semaphore object --  sem_open() 
      * this will attach anyway?
      */
-    sem->semid = semget(sem->key, sem->nrsems, 0660|IPC_CREAT);
+    sem->semid = semget(sem->key, sem->nrsems, 0660|IPC_CREAT|IPC_EXCL);
 
     if (EXFAIL==sem->semid) 
     {
+        err = errno;
+        
+        if (EEXIST==err && attach_on_exists)
+        {
+            NDRX_LOG(log_error, "Semaphore exists [%x] - attaching",
+                    sem->key);
+            return ndrx_sem_attach(sem);
+        }
+        
         NDRX_LOG(log_error, "Failed to create sem, key[%x]: %s",
-                            sem->key, strerror(errno));
+                            sem->key, strerror(err));
         ret=EXFAIL;
         goto out;
     }

@@ -183,7 +183,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         }
         
         /* Now close the FD, only if was open */
-        if (ndrx_epoll_shallopensvc(pos+ATMI_SRV_Q_ADJUST) &&
+        if (ndrx_epoll_shallopensvc(pos) &&
                 EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
