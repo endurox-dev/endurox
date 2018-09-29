@@ -116,6 +116,7 @@ extern "C" {
     
 #define NDRX_SVC_CCONF    "@CCONF"              /**< Common-config server */
 #define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
+#define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
 
 #define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
