@@ -98,6 +98,7 @@ extern "C" {
 #define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
 
 #define NDRX_SYS_SVC_PFX          "@"                    /**< Prefix used for system services */
+#define NDRX_SYS_SVC_PFXC         '@'                    /**< Prefix used for system services */
 #define NDRX_SVC_BRIDGE_STATLEN   9                      /**< Static len of bridge name       */
 #define NDRX_SVC_BRIDGE           "@TPBRIDGE%03d"        /**< Bridge service format           */
 #define NDRX_SVC_QBRDIGE          "%s,svc,@TPBRIDGE%03d" /**< Bridge service Q format         */
@@ -124,6 +125,12 @@ extern "C" {
 #define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d" /**< qpfx, procname, serverid, pid */
 #define NDRX_SVR_QREPLY_PFX "%s,srv,reply," /**< Prefix for sanity check. */
 #define NDRX_QTYPE_SRVRPLY  4                   /**< Server Reply Q */
+    
+/* Used for System V interface */
+#define NDRX_SVR_SVADDR_DFLT "%s,srv,addr,%s,%d" /**< Server address        */
+#define NDRX_SVR_RQADDR_DFLT "%s,srv,rqaddr,%s" /**< Server request address */
+/** bridge request addr */
+#define NDRX_SVR_RQADDR_BRDG "%s,srv,rqaddr,@TPBRIDGE%03d"
 
 /* this may end up in "112233-" if client is not properly initialised */
 /* NOTE: Myid contains also node_id, the client Q does not contain it
@@ -147,11 +154,14 @@ extern "C" {
 #define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /**< Prefix for sanity check. */
 #define NDRX_QTYPE_CONVSRVQ 7                   /**< Conv server Q */
 
-#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d" /**< binary name, server id, pid, contextid, nodeid */
-#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d" /**< binary name, server id, pid, contextid, nodeid for parse */
+/** binary name, server id, pid, contextid, nodeid */
+#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d"
+/** binary name, server id, pid, contextid, nodeid for parse */
+#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d"
 #define NDRX_MY_ID_SRV_NRSEPS  5 /**< Number of separators in myid of server */
     
-#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d" /**< binary name, server id, pid, contextid, nodeid, cd for parse */
+/** binary name, server id, pid, contextid, nodeid, cd for parse */
+#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d"
 #define NDRX_MY_ID_SRV_CNV_NRSEPS  6 /**< Number of separators in myid of server */
     
 #define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d" /**< cltname, pid, contextid, nodeid */
