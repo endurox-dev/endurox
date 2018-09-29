@@ -90,6 +90,21 @@ expublic int sv_open_queue(void)
     svc_entry_fn_t *entry;
     struct ndrx_epoll_event ev;
     int use_sem = EXFALSE;
+    
+    
+    /* Register for (e-)polling 
+     * moved up here for system v resources have be known when installing to SHM
+     */
+    G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
+    if (EXFAIL==G_server_conf.epollfd)
+    {
+        ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
+                                G_server_conf.adv_service_count,
+                                ndrx_poll_strerror(ndrx_epoll_errno()));
+        ret=EXFAIL;
+        goto out;
+    }
+    
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
         entry = G_server_conf.service_array[i];
@@ -131,7 +146,7 @@ expublic int sv_open_queue(void)
 #endif
         /* open service Q, also give some svc name here!  */
         
-        if (ndrx_epoll_shallopensvc(i))
+        if (ndrx_epoll_shallopensvc(i+ATMI_SRV_Q_ADJUST))
         {       
             /* normal operations, each service have it's own queue... */
             entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
@@ -140,7 +155,8 @@ expublic int sv_open_queue(void)
         else
         {
             /* System V mode, where services does not require separate queue  */
-            entry->q_descr = ndrx_epoll_service_add(entry->svc_nm, i, (mqd_t)EXFAIL);
+            entry->q_descr = ndrx_epoll_service_add(entry->svc_nm, 
+                    i+ATMI_SRV_Q_ADJUST, (mqd_t)EXFAIL);
         }
         
         /*
@@ -177,7 +193,11 @@ expublic int sv_open_queue(void)
         /* Register stuff in shared memory! */
         if (use_sem)
         {
+#ifdef EX_USE_SYSVQ
+            ndrx_shm_install_svc(entry->svc_nm, 0, ndrx_epoll_resid_get());
+#else
             ndrx_shm_install_svc(entry->svc_nm, 0, G_server_conf.srv_id);
+#endif
         }
 
         /* Release semaphore! */
@@ -188,17 +208,6 @@ expublic int sv_open_queue(void)
         ndrx_stopwatch_reset(&entry->qopen_time);
 
         NDRX_LOG(log_debug, "Got file descriptor: %d", entry->q_descr);
-    }
-    
-    /* Register for (e-)polling */
-    G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
-    if (EXFAIL==G_server_conf.epollfd)
-    {
-        ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
-                                G_server_conf.adv_service_count,
-                                ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=EXFAIL;
-        goto out;
     }
 
     /* allocate events */

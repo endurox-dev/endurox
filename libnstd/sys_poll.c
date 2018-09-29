@@ -1239,4 +1239,23 @@ expublic char * ndrx_poll_strerror(int err)
     return G_nstd_tls->poll_strerr;
 }
 
+/**
+ * Translate the service name to queue
+ * @param[out] send_q output service queue
+ * @param[in] q_prefix queue prefix
+ * @param[in] svc service name
+ * @param[in] resid resource id (in this case it is 
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
+        char *svc, int resid)
+{
+    /* lookup service in SHM! from resid/qid -> queue */
+    sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_tls->G_atmi_conf.q_prefix, 
+                svc, resid);
+    
+    return EXSUCCEED;
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

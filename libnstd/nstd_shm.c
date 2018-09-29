@@ -97,6 +97,12 @@ expublic int ndrx_shm_is_attached(ndrx_shm_t *shm)
 
 /**
  * Open shared memory segment. The path and size must be filled in shm handler
+ * !!!! WARNING FOR NON NDRXD MODE !!!! 
+ * If there could be some race condition, if several binaries are started
+ * in the same time and they attempt to create a shared memory blocks.
+ * of course it is not normal mode of operations, we use that only for testing
+ * thus be aware, maybe some test cases needs to be tuned with some sleep periods.
+ * 
  * @param shm shm handler. path and size must be set.
  * @param attach_on_exists if shm exists, perform attach instead of failure
  * @return EXSUCCEED/EXFAIL

@@ -417,6 +417,7 @@ int main_uninit(void)
     
     /* Remove semaphores */
     ndrxd_sem_close_all();
+    
     /* Remove semaphores */
     ndrxd_sem_delete();
     
