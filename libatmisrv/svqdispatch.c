@@ -129,9 +129,19 @@ expublic int sv_open_queue(void)
                     ndrx_poll_strerror(ndrx_epoll_errno()))
         }
 #endif
-        /* TODO: open service Q, also give some svc name here!  */
-        entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
-                O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+        /* open service Q, also give some svc name here!  */
+        
+        if (ndrx_epoll_shallopensvc(i))
+        {       
+            /* normal operations, each service have it's own queue... */
+            entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
+                    O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+        }
+        else
+        {
+            /* System V mode, where services does not require separate queue  */
+            entry->q_descr = ndrx_epoll_service_add(entry->svc_nm, i, (mqd_t)EXFAIL);
+        }
         
         /*
          * Check are we ok or failed?
@@ -144,6 +154,22 @@ expublic int sv_open_queue(void)
             
             ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                         entry->listen_q, strerror(errno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        /* re-define service, used for particular systems... like system v */
+        entry->q_descr=ndrx_epoll_service_add(entry->svc_nm, i, entry->q_descr);
+        
+        if ((mqd_t)EXFAIL==entry->q_descr)
+        {
+            /* Release semaphore! */
+            if (use_sem) 
+                ndrx_unlock_svc_op(__func__);
+            
+            ndrx_TPset_error_fmt(TPEOS, "Failed to register poller "
+                                        "svc at idx %d: %s: %s",
+                                        i, entry->listen_q, strerror(errno));
             ret=EXFAIL;
             goto out;
         }

@@ -74,7 +74,7 @@ typedef struct
 {
     char svcnm[MAXTIDENT+1];     /**< Service name                       */
     mqd_t mqd;                  /**< Queue handler hashed               */
-    int typ;                    /**< either fake service or admin Q     */
+    int idx;                    /**< either fake service or admin Q     */
     EX_hash_handle hh;          /**< make hashable                      */
 } ndrx_svq_pollsvc_t;
 
@@ -109,6 +109,21 @@ expublic void ndrx_epoll_mainq_set(char *qstr)
 }
 
 /**
+ * This test whether we need to open service queue 
+ * @param idx advertise service index
+ * @return EXTRUE - open q, EXFALSE - do not open Q
+ */
+expublic int ndrx_epoll_shallopensvc(int idx)
+{
+    if (ATMI_SRV_ADMIN_Q==idx || ATMI_SRV_REPLY_Q==idx)
+    {
+        return EXTRUE;
+    }
+        
+    return EXFALSE;
+}
+
+/**
  * Get service definition from service name
  * @param svcnm service name to lookup
  * @return NULL - not found or ptr to service definition
@@ -140,7 +155,7 @@ exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getfirstna(void)
     
     EXHASH_ITER(hh, M_svcmap, el, elt)
     {
-        if (ATMI_SRV_ADMIN_Q!=el->typ)
+        if (ATMI_SRV_ADMIN_Q!=el->idx)
         {
             break;
         }
@@ -151,34 +166,22 @@ out:
 }
 
 /**
- * Register service queue with poller interface
- * for admin we use fake service "@ADMINSVC".
+ * Register service queue with poller interface.
+ * add logical names for admin and reply services
+ * returns the used queue id back.
  * @param svcnm service name
+ * @param idx queue index (admin 0 /reply 1/service > 1)
  * @param mq_exists Existing queue defintion (for admin queues)
- * @param typ Service type, see ATMI_SRV_* constants
- * @return "fake" queue descriptor or NULL in case of error
+ * @return logical/real queue descriptor or NULL in case of error
  */
-expublic mqd_t ndrx_epoll_service_add(char *svcnm, mqd_t mq_exits, int typ)
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
 {
     int ret = EXSUCCEED;
     mqd_t mq = NULL;
     ndrx_svq_pollsvc_t *el = NULL;
     int err;
-    
-    /* allocate pointer of 1 byte */
-    /* register the queue in the hash */
-    
-    if (ATMI_SRV_ADMIN_Q!=el->typ)
-    {
-        mq = mq_exits;
-    }
-    else if (NULL==(mq=NDRX_MALLOC(1)))
-    {
-        err = errno;
-        NDRX_LOG(log_error, "Failed to malloc 1 byte: %s", strerror(err));
-        userlog("Failed to malloc 1 byte: %s", strerror(err));
-        EXFAIL_OUT(ret);
-    }
+    char *adminsvc = NDRX_SVC_ADMIN;
+    char *replysvc = NDRX_SVC_REPLY;
     
     if (NULL==(el=NDRX_MALLOC(sizeof(*el))))
     {
@@ -190,21 +193,47 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, mqd_t mq_exits, int typ)
         EXFAIL_OUT(ret);
     }
     
+    /* allocate pointer of 1 byte */
+    /* register the queue in the hash */
+    if (ATMI_SRV_ADMIN_Q==idx)
+    {
+        svcnm = adminsvc;
+        mq = mq_exits;
+    }
+    else if (ATMI_SRV_REPLY_Q==idx)
+    {
+        svcnm = replysvc;
+        mq = mq_exits;
+    }
+    else if (NULL==(mq=NDRX_MALLOC(1)))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to malloc 1 byte: %s", strerror(err));
+        userlog("Failed to malloc 1 byte: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
     el->mqd = mq;
-    el->typ = typ;
+    el->idx = idx;
     
     NDRX_STRCPY_SAFE(el->svcnm, svcnm);
     
     /* register service name into cache... */
     EXHASH_ADD_STR( M_svcmap, svcnm, el );
     
-    NDRX_LOG(log_debug, "[%s] mapped to %p", el->svcnm, el->mqd);
+    NDRX_LOG(log_debug, "[%s] mapped to %p idx %d", el->svcnm, el->mqd, el->idx);
     
 out:
+    
     if (EXSUCCEED!=ret && NULL!=mq)
     {
         NDRX_FREE((char *)mq);
         mq=NULL;
+    }
+
+    if (EXSUCCEED!=ret && NULL!=el)
+    {
+        NDRX_FREE((char *)el);
     }
 
     errno=err;
@@ -377,7 +406,7 @@ expublic inline int ndrx_epoll_close(int fd)
 
 /**
  * Wrapper for epoll_wait
- * TODO: needs to provide back the identifier that we got msg for admin Q
+ * Needs to provide back the identifier that we got msg for admin Q
  * or for admin we could use special service name like @ADMIN so that
  * we can find it in standard hash list? but the MQD needs to be kind of special
  * one so that we do not remove it by our selves at the fake

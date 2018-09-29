@@ -182,8 +182,9 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
             goto out;
         }
         
-        /* Now close the FD */
-        if (EXSUCCEED!=ndrx_mq_close(ent->q_descr))
+        /* Now close the FD, only if was open */
+        if (ndrx_epoll_shallopensvc(pos) &&
+                EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
                     ent->q_descr, strerror(errno));
@@ -372,9 +373,19 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
 
     /* Open the queue */
     
-    /* TODO: open service Q, also give some svc name here!  */
-    entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
-                            O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+    /* open service Q, also give some svc name here!  */
+    if (ndrx_epoll_shallopensvc(G_server_conf.adv_service_count))
+    {
+        entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
+                                O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+    }
+    else
+    {
+        /* System V mode, where services does not require separate queue  */
+        entry_new->q_descr = ndrx_epoll_service_add(entry_new->svc_nm, 
+                G_server_conf.adv_service_count, (mqd_t)EXFAIL);
+    }
+    
     /*
      * Check are we ok or failed?
      */
@@ -385,8 +396,22 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
          
         ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
                                     entry_new->listen_q, strerror(errno));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
+    }
+    
+    /* re-define service, used for particular systems... like system v */
+    entry_new->q_descr=ndrx_epoll_service_add(entry_new->svc_nm, 
+            G_server_conf.adv_service_count, entry_new->q_descr);
+
+    if ((mqd_t)EXFAIL==entry_new->q_descr)
+    {
+        /* Release semaphore! */
+         if (G_shm_srv) ndrx_unlock_svc_op(__func__);
+         
+        ndrx_TPset_error_fmt(TPEOS, "Failed to register poller "
+                "svc at idx %d: %s: %s",
+                G_server_conf.adv_service_count, entry_new->listen_q, strerror(errno));
+        EXFAIL_OUT(ret);
     }
     
     /* Register stuff in shared memory! */
