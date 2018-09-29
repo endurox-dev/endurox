@@ -130,7 +130,7 @@ expublic int ndrx_svqshm_init(void)
     {
         M_readersmax = MAX_READERS;
         NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_MSGQUEUESMAX, M_readersmax);
+                CONF_NDRX_SVQREADERSMAX, M_readersmax);
     }
     else
     {
@@ -221,7 +221,7 @@ expublic int ndrx_svqshm_init(void)
             M_map_sem.key, M_readersmax);
     
     /* OK, either create or attach... */
-    if (EXSUCCEED!=ndrxd_sem_open(&M_map_sem))
+    if (EXSUCCEED!=ndrxd_sem_open(&M_map_sem, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open semaphore for System V queue "
                 "map shared mem");

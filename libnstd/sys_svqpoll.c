@@ -228,6 +228,10 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
         svcnm = replysvc;
         mq = mq_exits;
     }
+    else if ((mqd_t)EXFAIL!=mq_exits)
+    {
+        mq = mq_exits;
+    }
     else if (NULL==(mq=NDRX_MALLOC(1)))
     {
         err = errno;

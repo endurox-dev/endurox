@@ -790,7 +790,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
             
             /* Try to attach to semaphore array */
-            if (EXSUCCEED!=ndrx_sem_attach_all())
+            if (EXSUCCEED!=ndrx_sem_open_all())
             {
                 NDRX_LOG(log_error, "Failed to attache to semaphores!!");
                 sem_fail = EXTRUE;
