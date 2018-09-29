@@ -1159,7 +1159,7 @@ expublic int sv_wait_for_request(void)
             }
         }
         
-        /* some epoll backends can return already buffer recieved
+        /* some epoll backends can return already buffer received
          * for example System V Queues
          * for others it is just -1
          * 
@@ -1267,7 +1267,7 @@ expublic int sv_wait_for_request(void)
                 continue;
             }
             
-            if (EXFAIL!=len && EXFAIL==(len=ndrx_mq_receive (evmqd,
+            if (EXFAIL==len && EXFAIL==(len=ndrx_mq_receive (evmqd,
                 (char *)msg_buf, sizeof(msg_buf), &prio)))
             {
                 if (EAGAIN==errno)
