@@ -308,7 +308,7 @@ out:
  * @param argv
  * @return  SUCCEED/FAIL
  */
-int ndrx_init(int argc, char** argv)
+expublic int ndrx_init(int argc, char** argv)
 {
     int ret=EXSUCCEED;
     extern char *optarg;
@@ -317,6 +317,8 @@ int ndrx_init(int argc, char** argv)
     int dbglev;
     char *p;
     char key[NDRX_MAX_KEY_SIZE]={EXEOS};
+    char rqaddress[NDRX_MAX_Q_SIZE+1] = "";
+    char tmp[NDRX_MAX_Q_SIZE+1];
     
     /* Create ATMI context */
     ATMI_TLS_ENTRY;
@@ -336,13 +338,29 @@ int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:Nn:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:--")) != EXFAIL)
     {
         switch(c)
         {
             case 'k':
                 /* just ignore the key... */
                 NDRX_STRCPY_SAFE(key, optarg);
+                break;
+            case 'R':
+                /* just ignore the key... */
+                
+                if (NDRX_SYS_SVC_PFXC==optarg[0])
+                {
+                    NDRX_LOG(log_error, "-R request address cannot start with [%c]",
+                            NDRX_SYS_SVC_PFXC);
+                    userlog("-R request address cannot start with [%c]",
+                            NDRX_SYS_SVC_PFXC);
+                    ndrx_TPset_error_fmt(TPEINVAL, "-R request address cannot start with [%c]",
+                            NDRX_SYS_SVC_PFXC);
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_STRCPY_SAFE(rqaddress, optarg);
                 break;
             case 's':
                 ret=parse_svc_arg(optarg);
@@ -367,7 +385,6 @@ int ndrx_init(int argc, char** argv)
                 if (EXSUCCEED!=ndrx_skipsvc_add(optarg))
                 {
                     ndrx_TPset_error_msg(TPESYSTEM, "Malloc failed");
-                    
                     EXFAIL_OUT(ret);
                 }
                 break;
@@ -475,10 +492,9 @@ int ndrx_init(int argc, char** argv)
     /*
      * Read queue prefix (This is mandatory to have)
      */
-
-    if (NULL==(p=getenv("NDRX_QPREFIX")))
+    if (NULL==(p=getenv(CONF_NDRX_QPREFIX)))
     {
-        ndrx_TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
+        ndrx_TPset_error_fmt(TPEINVAL, "Env [%s] not set", CONF_NDRX_QPREFIX);
         ret=EXFAIL;
         goto out;
     }
@@ -491,6 +507,22 @@ int ndrx_init(int argc, char** argv)
     
     /* Defaut number of events supported by e-poll */
     G_server_conf.max_events = 1;
+    
+    /* format the request queue */
+    if (EXEOS==rqaddress[0])
+    {
+        /* so name not set, lets build per binary request address... */
+        snprintf(rqaddress, sizeof(rqaddress), NDRX_SVR_SVADDR_DFLT, 
+                G_server_conf.q_prefix, argv[0], G_srv_id);
+        
+        ndrx_epoll_mainq_set(rqaddress);
+    }
+    else
+    {
+        snprintf(tmp, sizeof(tmp), NDRX_SVR_RQADDR_DFLT, 
+                G_server_conf.q_prefix, rqaddress);
+        ndrx_epoll_mainq_set(rqaddress);
+    }
     
 out:
     return ret;

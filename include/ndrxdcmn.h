@@ -355,10 +355,10 @@ struct shm_svcinfo
     int totclustered;                   /* Total clustered nodes                */
     int cnodes_max_id;                  /* Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
-    short rrsrv;                        /* round robin server */
+    int resrr;                        /* round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    short srvids[0];                     /*  Servers id's offering this service */
+    int resids[0];                     /*  Servers id's offering this service */
 };
 
 /* Macros for shm service size */

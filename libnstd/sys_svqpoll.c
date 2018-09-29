@@ -99,6 +99,29 @@ exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Return main poller resource id, installed into SHM
+ * @return 
+ */
+expublic int ndrx_epoll_resid_get(void)
+{
+    return M_mainq->qid;
+}
+
+/**
+ * Translate the service name to queue
+ * @param[out] send_q output service queue
+ * @param[in] q_prefix queue prefix
+ * @param[in] svc service name
+ * @param[in] resid resource id (in this case it is 
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
+        char *svc, int resid)
+{
+    /* TODO: lookup service in SHM! from resid/qid -> queue */
+}
+
+/**
  * Set main polling queue. The queue is open once the
  * @param qstr full queue string for the main polling interface
  */
@@ -559,10 +582,13 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                 
                 if (NULL==(svc=ndrx_epoll_getsvc(call->name)))
                 {
-                    err=EFAULT;
-                    NDRX_LOG(log_error, "Missing queue def for [%s]",
+                    err=EAGAIN;
+                    NDRX_DUMP(log_error, "!!! Missing queue def - dumpg", buf, *buf_len);
+                    NDRX_LOG(log_error, "!!! Missing queue def for [%s] - dropping "
+                            "msg - is all servers on RQADDR serving all services?",
                             call->name);
-                    userlog("Missing queue def for [%s]",
+                    userlog("!!! Missing queue def for [%s] - dropping msg - is "
+                            "all servers on RQADDR serving all services?",
                             call->name);
                     EXFAIL_OUT(ret);
                 }

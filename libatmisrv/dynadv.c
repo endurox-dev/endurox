@@ -67,8 +67,8 @@
  * This should be used in case when ndrxd removed the queue, un in same time
  * we did advertise!
  * 
- * @param svcname
- * @return 
+ * @param svcname service name to readvertise 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int dynamic_readvertise(char *svcname)
 {
@@ -135,7 +135,7 @@ out:
 /**
  * Dynamic unadvertise
  * @param svcname
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy)
 {
@@ -183,7 +183,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         }
         
         /* Now close the FD, only if was open */
-        if (ndrx_epoll_shallopensvc(pos) &&
+        if (ndrx_epoll_shallopensvc(pos+ATMI_SRV_Q_ADJUST) &&
                 EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
@@ -296,7 +296,7 @@ out:
 /**
  * We are going to dynamically advertise the service
  * @param svcname
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int dynamic_advertise(svc_entry_fn_t *entry_new, 
                     char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
@@ -374,7 +374,7 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Open the queue */
     
     /* open service Q, also give some svc name here!  */
-    if (ndrx_epoll_shallopensvc(G_server_conf.adv_service_count))
+    if (ndrx_epoll_shallopensvc(ATMI_SRV_Q_ADJUST+G_server_conf.adv_service_count))
     {
         entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
                                 O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
@@ -466,7 +466,6 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     
     /* Set shared memory to available! */
     G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
-    
     
     /* Send to NDRXD that we have are OK! */
     if (EXSUCCEED!=advertse_to_ndrxd(entry_new))

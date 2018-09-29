@@ -90,7 +90,7 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     {
         i = CONF_NDRX_MAX_SRVIDS_XADMIN;
     }
-    memcpy(shm_psvc_info->srvids, p_shm->srvids, i*2);
+    memcpy(shm_psvc_info->srvids, p_shm->resids, i*2);
 #endif
     
     /*
