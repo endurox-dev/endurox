@@ -479,6 +479,52 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
 }
 
 /**
+ * Lookup qid
+ * @param in_qid System V queue id
+ * @param out_qstr output string
+ * @param out_qstr_len output string length 
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len)
+{
+    int ret = EXSUCCEED;
+    int found_2;
+    int have_value_2;
+    int pos_2;
+    ndrx_svq_map_t *svq2;
+    ndrx_svq_map_t *sm;      /* System V map        */
+
+    INIT_ENTRY;
+    
+    svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
+
+    /* ###################### CRITICAL SECTION ############################### */
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
+    {
+        goto out;
+    }
+
+    found_2 = position_get_qid(in_qid, 0, &pos_2, &have_value_2);
+    
+    if (have_value_2)
+    {
+        sm = NDRX_SVQ_INDEX(svq2, pos_2);
+        NDRX_STRNCPY_SAFE(out_qstr, sm->qstr, out_qstr_len);
+    }
+    else
+    {
+        ret=EXFAIL;
+    }
+    
+    ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
+    /* ###################### CRITICAL SECTION, END ########################## */
+    
+out:
+            
+    return ret;
+}
+
+/**
  * Get queue from shared memory.
  * In case of O_CREAT + O_EXCL return EEXIST error!
  * @param qstr queue path

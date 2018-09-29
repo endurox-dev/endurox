@@ -118,7 +118,7 @@ expublic int ndrx_epoll_resid_get(void)
 expublic int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
         char *svc, int resid)
 {
-    /* TODO: lookup service in SHM! from resid/qid -> queue */
+    return ndrx_svqshm_get_qid(resid, send_q, NDRX_MAX_Q_SIZE+1);
 }
 
 /**
@@ -158,7 +158,7 @@ exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getsvc(char *svcnm)
     
     EXHASH_FIND_STR(M_svcmap, svcnm, ret);
     
-    if (NULL!=ret)
+    if (NULL==ret)
     {
         NDRX_LOG(log_error, "Failed to find queue definition for [%s] service",
                 svcnm);
@@ -611,6 +611,8 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                 
                 break;
         }
+        
+        events[0].is_mqd = EXTRUE;
         
         NDRX_LOG(log_debug, "event mapped to %p (mqd subst)",
                 events[0].data.mqd);

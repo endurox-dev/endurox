@@ -428,6 +428,9 @@ typedef struct  atmi_lib_env atmi_lib_env_t;
 struct tp_command_generic
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -443,6 +446,9 @@ typedef struct tp_command_generic tp_command_generic_t;
 struct tp_command_call
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -497,6 +503,9 @@ typedef struct tp_command_call tp_command_call_t;
 struct tp_notif_call
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;

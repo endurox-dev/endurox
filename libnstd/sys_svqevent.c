@@ -425,7 +425,7 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     ndrx_svq_ev_t *elt, *tmp;
     /* Remove queue completely */
     
-    NDRX_LOG(log_debug, "Unlinking queue %p qstr:[%s] qid:%d", 
+    NDRX_LOG(log_debug, "Closing queue %p qstr:[%s] qid:%d", 
             mqd, mqd->qstr, mqd->qid);
     
     /* for service queues, the ndrxd will which are subject for removal
@@ -435,7 +435,9 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
      * thus here we just remove directly.
      */
             
+    /*
     NDRX_LOG(log_dump, "Unregistering %p as mqd_t from timeout mon", mqd);
+    */
     
     /* Remove any un-processed queued events... */
     DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
@@ -890,20 +892,18 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         case NDRX_SVQ_MON_CLOSE:
                             
                             /*
-                             * TODO: Only needs to think what will happen
-                             * if process performs exit when we have issued
-                             * delete by main thread and this is not yet
-                             * unlinked the q.
-                             * maybe we need a atexit() to allow 
-                             * poller thread to finish off.
-                             */
+                             * This is close, not unlink...
+                             
                             NDRX_LOG(log_info, "Unlink queue %p command",
                                     cmd.mqd);
+                            */
                             if (EXSUCCEED!=ndrx_svq_mqd_hash_delfull(cmd.mqd))
                             {
                                 ret = EXFAIL;
                             }
                             
+                            NDRX_FREE(cmd.mqd);
+#if 0
                             pthread_mutex_lock(cmd.del_lock);
                             
                             /* ??? signal back that we are done */
@@ -913,6 +913,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             
                             
                             NDRX_LOG(log_debug, "After cond_signal");
+#endif
                             if (EXSUCCEED!=ret)
                             {
                                 goto out;
@@ -1212,6 +1213,7 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
     cmd.cmd = NDRX_SVQ_MON_CLOSE;
     cmd.mqd = mqd;
     
+#if 0
     /* init condition */
     
     /* seems we cannot pass posix locks directly around... */
@@ -1223,10 +1225,12 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
     
     /* get lock */
     pthread_mutex_lock (cmd.del_lock);
+#endif
     
     /* perform sync off */
     ret = ndrx_svq_moncmd_send(&cmd);
     
+#if 0
     NDRX_LOG(log_debug, "Waiting for delete to complete...");
     /* the condition will make us to get a lock */
     pthread_cond_wait (cmd.del_cond, cmd.del_lock);
@@ -1237,6 +1241,7 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
     /* TODO: How about other mutexes? */
     pthread_cond_destroy(cmd.del_cond);
     pthread_mutex_destroy(cmd.del_lock);
+#endif
     
 }
 

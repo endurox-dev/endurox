@@ -250,7 +250,7 @@ expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
  * @param svc
  * @param data
  * @param len
- * @return
+ * @return Unix error code
  */
 expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
@@ -481,7 +481,7 @@ expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
  * @param argc
  * @param argv
  * @param p_have_next
- * @return SUCCEED/FAIL
+ * @return Unix error code, e.g. ENOENT if not found, etc..
  */
 expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
@@ -534,14 +534,14 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_error, "Sending data to [%s], fd=%d, call flags=0x%x", 
                                 admin_q_str, admin_queue, call->flags);
-            if (EXSUCCEED!=ndrx_generic_qfd_send(admin_queue, (char *)call, call_size, flags))
+            if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(admin_queue, 
+                    (char *)call, call_size, flags)))
             {
                 NDRX_LOG(log_error, "Failed to send msg to ndrxd!");
 
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
 
-                ret=EXFAIL;
                 goto out;
             }
         }
@@ -549,7 +549,8 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_info, "Sending data to [%s] call flags=0x%x", 
                                     admin_q_str, call->flags);
-            if (EXSUCCEED!=ndrx_generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
+            if (EXSUCCEED!=(ret=ndrx_generic_q_send(admin_q_str, 
+                    (char *)call, call_size, flags, 0)))
             {
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
@@ -702,6 +703,7 @@ out:
 /**
  * This is wrapper for cmd_generic_call_2,
  * Full request.
+ * @return Unix error code, e.g. ENOENT if not found, etc..
  */
 expublic int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,

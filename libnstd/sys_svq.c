@@ -87,7 +87,10 @@ expublic int ndrx_svq_close(mqd_t mqd)
             NDRX_LOG(log_error, "Failed to close queue %p", mqd);
             userlog("Failed to close queue %p", mqd);
         }
+        /*
+         * free will be done by backend thread..
         NDRX_FREE(mqd);
+         */
         return EXSUCCEED;
     }
     else
