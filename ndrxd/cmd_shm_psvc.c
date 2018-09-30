@@ -71,7 +71,7 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     *send_size += (sizeof(command_reply_shm_psvc_t) - sizeof(command_reply_t));
 
     /* Copy data to reply structure */
-    strcpy(shm_psvc_info->service, p_shm->service);
+    NDRX_STRCPY_SAFE(shm_psvc_info->service, p_shm->service);
     shm_psvc_info->flags = p_shm->flags;
     shm_psvc_info->slot = params->param2;
     shm_psvc_info->srvs = p_shm->srvs;
