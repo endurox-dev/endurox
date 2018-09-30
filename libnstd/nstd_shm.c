@@ -122,7 +122,7 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
         
         if (EEXIST==err && attach_on_exists)
         {
-            NDRX_LOG(log_error, "Shared memory created [%s] - attaching",
+            NDRX_LOG(log_error, "Shared memory exists [%s] - attaching",
                     shm->path);
             return ndrx_shm_attach(shm);
         }

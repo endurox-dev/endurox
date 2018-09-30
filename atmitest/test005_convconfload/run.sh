@@ -47,7 +47,7 @@ fi;
 
 . ../testenv.sh
 
-(./atmisv005 -i 12005 2>&1) > ./atmisv005.log &
+(./atmisv005 -i 999 2>&1) > ./atmisv005.log &
 sleep 1
 
 xadmin pqa -a
