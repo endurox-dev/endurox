@@ -196,25 +196,6 @@ struct ndrx_epoll_event {
     #endif
 };
 
-
-/**
- * List of posix queues
- */
-typedef struct string_list string_list_t;
-struct string_list
-{
-    char *qname;
-    string_list_t *next;
-};
-
-
-typedef struct string_hash string_hash_t;
-struct string_hash
-{
-    char *str;
-    EX_hash_handle hh;
-};
-
 /**
  * Memory infos...
  */
@@ -288,7 +269,6 @@ extern NDRX_API char * ndrx_poll_strerror(int err);
 
 /* string generics: */
 extern NDRX_API void ndrx_string_list_free(string_list_t* list);
-extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
 
 extern NDRX_API void ndrx_string_hash_free(string_hash_t *h);
 extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);
@@ -335,7 +315,11 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *r
  */
 extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
 
-#ifdef EX_USE_EMQ
+#ifdef EX_USE_SYSVQ
+
+#define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_svq
+
+#elif EX_USE_EMQ
 
 #define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_emq
 

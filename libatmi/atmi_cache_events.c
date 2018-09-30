@@ -187,7 +187,7 @@ expublic int ndrx_cache_events_get(string_list_t **list)
         {
             if (EXSUCCEED!=ndrx_string_list_add(list, el->subscr))
             {
-                NDRX_LOG(log_error, "%s: failed to add string to list [%s]", 
+                NDRX_LOG(log_error, "failed to add string to list [%s]", 
                         el->subscr);
                 EXFAIL_OUT(ret);
             }

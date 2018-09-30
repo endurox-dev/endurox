@@ -501,7 +501,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         psvcinfo->resrr++;
         
         if (psvcinfo->resrr < 0 || /* just in case... */
-                psvcinfo->resrr >= (psvcinfo->srvs - psvcinfo->csrvs))
+                psvcinfo->resrr >= psvcinfo->resnr)
         {
             psvcinfo->resrr = 0;
         }
@@ -599,8 +599,7 @@ expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
     psvcinfo = SHM_SVCINFO_INDEX(svcinfo, pos);
             
     
-    
-    local_count = psvcinfo->srvs - psvcinfo->csrvs;
+    local_count = psvcinfo->resnr;
     
     if (local_count<=0)
     {
@@ -763,22 +762,25 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
             
-            tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->srvs - 
-                    SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
+            tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
                     
             if (!is_bridge && (tot_local_srvs+1 > G_atmi_env.maxsvcsrvs))
             {
                 NDRX_LOG(log_error, "Shared mem for svc [%s] is full - "
-                        "max space for servers per service: %d! Currently: srvs: %d csrvs:%d",
+                        "max space for servers per service: %d! Currently: "
+                        "srvs: %d csrvs:%d resnr:%hd",
                         svc, G_atmi_env.maxsvcsrvs, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->srvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs,
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->resnr
                         );
                 userlog("Shared mem for svc [%s] is full - "
-                        "max space for servers per service: %d! Currently: srvs: %d csrvs:%d",
+                        "max space for servers per service: %d! Currently: "
+                        "srvs: %d csrvs:%d resnr:%hd",
                         svc, G_atmi_env.maxsvcsrvs, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->srvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs,
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->resnr);
                 EXFAIL_OUT(ret);
             }
             else if (!is_bridge)
@@ -789,6 +791,8 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                         resid, tot_local_srvs);
                 SHM_SVCINFO_INDEX(svcinfo, pos)->resids[tot_local_srvs] = resid;
             }
+            
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
 #endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
@@ -820,7 +824,9 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                         SHM_SVCINFO_INDEX(svcinfo, pos)->service, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->flags);
             
-            
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
+#endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
             if (is_bridge)
@@ -1025,6 +1031,8 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
                             tot_local_srvs - lpos -1);
                 }
             }
+            
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr--;
 #endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
         }
@@ -1045,6 +1053,11 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
             SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
             SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs = 0;
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs = 0;
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr = 0;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resrr = 0;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resrr = 0;
+#endif
             
             *last=EXTRUE;
         }
@@ -1052,57 +1065,6 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     else
     {
             NDRX_LOG(log_debug, "Service [%s] not present in shm", svc);
-            *last=EXTRUE;
-    }
-    
-#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
-    {
-        NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
-        return;
-    }
-#endif
-    
-}
-
-
-expublic void ndrxd_shm_shutdown_svc(char *svc, int *last)
-{
-    int pos = EXFAIL;
-    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
-
-#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
-    {
-        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
-        return;
-    }
-#endif
-    
-    *last=EXFALSE;
-    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
-    {
-        if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
-        {
-            NDRX_LOG(log_debug, "Decreasing count of servers for "
-                                "[%s] from %d to %d",
-                                svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
-                    SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "Removing service from shared mem "
-                                "[%s]",
-                                svc);
-            /* Clean up memory block. */
-            memset(SHM_SVCINFO_INDEX(svcinfo, pos), 0, SHM_SVCINFO_SIZEOF);
-            *last=EXTRUE;
-        }
-    }
-    else
-    {
-            NDRX_LOG(log_debug, "Service [%s] not present in shm");
             *last=EXTRUE;
     }
     
