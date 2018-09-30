@@ -243,7 +243,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
             if (NDRX_SVQ_EV_TOUT==ev->ev)
             {
                 NDRX_LOG(log_warn, "Timed out");
-                err = EAGAIN;
+                err = ETIMEDOUT;
             }
             else
             {
@@ -297,7 +297,9 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     ssize_t ret = len;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
+    long *l = (long *)ptr;
     
+    *l = 1; /* set default mtype.. */
     /* set thread handler - for interrupts */
     mqd->thread = pthread_self();
     
@@ -367,8 +369,8 @@ expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len,
     long *l;
     int msgflg;
     
-    NDRX_LOG(log_debug, "sending msg mqd=%p, ptr=%p, len=%d",
-                mqd, ptr, (int)len);
+    NDRX_LOG(log_debug, "sending msg mqd=%p, qid=%d, ptr=%p, len=%d",
+                mqd, mqd->qid, ptr, (int)len);
     
     VALIDATE_MQD;
     

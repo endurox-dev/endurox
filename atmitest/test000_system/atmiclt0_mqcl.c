@@ -277,9 +277,9 @@ int local_test_receive(char *pfx)
 
         err = errno;
 
-        if (EAGAIN!=err)
+        if (ETIMEDOUT!=err)
         {
-            NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", EAGAIN, err);
+            NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", ETIMEDOUT, err);
             EXFAIL_OUT(ret);
         }
 

@@ -584,6 +584,7 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                 
                 call = (tp_command_call_t *)buf;
                 
+                NDRX_LOG(log_debug, "Lookup service: [%s]", call->name);
                 if (NULL==(svc=ndrx_epoll_getsvc(call->name)))
                 {
                     err=EAGAIN;
@@ -597,6 +598,7 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     EXFAIL_OUT(ret);
                 }
                 events[0].data.mqd = svc->mqd;
+                break;
             default:
                 /* any non admin Q will be fine here!*/
                 if (NULL==(svc=ndrx_epoll_getfirstna()))
@@ -616,6 +618,7 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         
         NDRX_LOG(log_debug, "event mapped to %p (mqd subst)",
                 events[0].data.mqd);
+        *buf_len = rcvlen;
     }
     
 out:
