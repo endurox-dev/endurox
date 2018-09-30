@@ -348,17 +348,25 @@ struct cnodeinfo
 typedef struct shm_svcinfo shm_svcinfo_t;
 struct shm_svcinfo
 {
-    char service[MAXTIDENT+1];          /* name of the service                  */
-    int srvs;                           /* Count of servers advertising this service*/
-    int flags;                          /* service flags                        */
-    int csrvs;                          /* Number of advertises in cluster      */
-    int totclustered;                   /* Total clustered nodes                */
-    int cnodes_max_id;                  /* Max id of cluster nodes in list (for fast search) */
+    char service[MAXTIDENT+1];          /**< name of the service                  */
+    int srvs;                           /**< Count of servers advertising this service*/
+    int flags;                          /**< service flags                        */
+    int csrvs;                          /**< Number of advertises in cluster      */
+    int totclustered;                   /**< Total clustered nodes                */
+    int cnodes_max_id;                  /**< Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
-    int resrr;                        /* round robin server */
+    
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+    /**
+     * Number of resources, because there could be rqaddr servers, where
+     * srvs is large number, but there is only on queue.
+     */
+    short resnr;                          
+    int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    int resids[0];                     /*  Servers id's offering this service */
+    int resids[0];                      /**<  Servers id's offering this service */
+#endif
 };
 
 /* Macros for shm service size */

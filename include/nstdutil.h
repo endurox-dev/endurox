@@ -41,6 +41,7 @@ extern "C" {
 #include <ndrx_config.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -99,9 +100,30 @@ struct ndrx_growlist
     void *mem;
 };
 
+
+/**
+ * List of posix queues
+ */
+typedef struct string_list string_list_t;
+struct string_list
+{
+    char *qname;
+    string_list_t *next;
+};
+
+
+typedef struct string_hash string_hash_t;
+struct string_hash
+{
+    char *str;
+    EX_hash_handle hh;
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
 
 extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size);
 extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);

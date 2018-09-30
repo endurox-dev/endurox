@@ -79,8 +79,23 @@ if (!ndrx_G_svqshm_init) \
         }\
     }
 
-#define MAX_READERS             50      /**< Max readers for RW lock... */
-#define MAX_QUEUES              20000   /**< Max number of queues, dflt */
+#define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
+#define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
+/**
+ * Default time for queue to live after removal.
+ * After this time in seconds, ndrxd will zap the queue. This is needed
+ * for reason so that if any process in background re-opens the service on
+ * some request address and yet are not reported (in progress) the list
+ * of the services, the ctime is changed of the ipc q, and thus ndrxd will
+ * not attempt to remove it. After that ndrxd receives the message and
+ * now queue will not be removed, because of its presence in service lists
+ */
+#define RM_TTL_DLFT             10
+
+#define SHM_ENT_NONE            0       /**< Entry not used */
+#define SHM_ENT_MATCH           1       /**< Entry matched  */
+#define SHM_ENT_OLD             2       /**< Entry was used */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -128,7 +143,7 @@ expublic int ndrx_svqshm_init(void)
     tmp = getenv(CONF_NDRX_SVQREADERSMAX);
     if (NULL==tmp)
     {
-        M_readersmax = MAX_READERS;
+        M_readersmax = MAX_READERS_DFLT;
         NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
                 CONF_NDRX_SVQREADERSMAX, M_readersmax);
     }
@@ -141,7 +156,7 @@ expublic int ndrx_svqshm_init(void)
     tmp = getenv(CONF_NDRX_MSGQUEUESMAX);
     if (NULL==tmp)
     {
-        M_queuesmax = MAX_QUEUES;
+        M_queuesmax = MAX_QUEUES_DLFT;
         NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
                 CONF_NDRX_MSGQUEUESMAX, M_queuesmax);
     }
@@ -245,10 +260,6 @@ out:
     return ret;
 }
 
-
-#define SHM_ENT_NONE           0        /**< Entry not used */
-#define SHM_ENT_MATCH          1        /**< Entry matched  */
-#define SHM_ENT_OLD            2        /**< Entry was used */
 /**
  * Get position, hash the pathname and find free space if creating
  * or just empty position, if not found..
@@ -931,3 +942,57 @@ out:
     errno = err;
     return ret;
 }
+
+
+/**
+ * List queue open in the System V IPC.
+ * So what we do here basically is get read lock SystemV SHM tables
+ * and return the results.
+ * @param qpath queue path, not used actually
+ * @param[out] return_status EXSUCCEED/EXFAIL
+ * @return NULL no queues found (or error) or ptr to queues
+ */
+expublic string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status)
+{
+    string_list_t* ret = NULL;
+    int have_lock = EXFALSE;
+    int i=0;
+    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *pm;      /* Posix map           */
+    
+    *return_status = EXSUCCEED;
+            
+    /* ###################### CRITICAL SECTION ############################### */
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
+    {
+        goto out;
+    }
+    
+    have_lock = EXTRUE;
+    
+    
+    for (i=0;i<M_queuesmax;i++)
+    {
+        pm = NDRX_SVQ_INDEX(svq, i);
+        
+        if (pm->flags & NDRX_SVQ_MAP_ISUSED)
+        {
+            if (EXSUCCEED!=ndrx_string_list_add(ret, pm->qstr))
+            {
+                NDRX_LOG(log_error, "failed to add string to list [%s]", 
+                        pm->qstr);
+                *return_status = EXFAIL;
+                goto out;
+            }
+        }
+    }
+    
+out:
+    if (have_lock)
+    {
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
+        /* ###################### CRITICAL SECTION, END ########################## */
+    }
+    
+}
+
