@@ -189,6 +189,9 @@ expublic int pq_run_santiy(int run_hist)
         {
             for (i=0; i<len; i++)
             {
+
+/* TODO: For System V we could do a direct queue lookup by qid..! */
+
                 sprintf(q, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
                         cur->svc_nm, srvlist[i]);
                 
@@ -200,7 +203,7 @@ expublic int pq_run_santiy(int run_hist)
             
             NDRX_FREE(srvlist);
         }
-        
+
 #endif
         
         cur->pq_info[1] = curmsgs;
