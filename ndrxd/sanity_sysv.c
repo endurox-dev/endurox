@@ -77,7 +77,10 @@ expublic int do_sanity_check_sv5(void)
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq;
     int len;
-    
+    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
+    shm_svcinfo_t *el;
+    int i;
+    int j;
     /* TODO: */
     
     /* Get the list of queues */
@@ -85,12 +88,44 @@ expublic int do_sanity_check_sv5(void)
     
     if (NULL==svq)
     {
-        
+        NDRX_LOG(log_error, "Failed to get System V shared memory status!");
+        userlog("Failed to get System V shared memory status!");
+        EXFAIL_OUT(ret);
     }
+    
+    /* Now scan the used services shared memory and updated the 
+     * status copy accordingly
+     */
+    
+    /* We assume shm is OK! */
+    for (i=0; i<G_max_svcs; i++)
+    {
+        /* have some test on servs count so that we avoid any core dumps
+         *  for un-init memory access of service string due to race conditions
+         */
+        el = SHM_SVCINFO_INDEX(svcinfo, i);
+        if (el->srvs > 0)
+        {
+            /* mark the service as used 
+             * now check all registered request addresses
+             */
+            for (j=0; j<el->resnr; j++)
+            {
+                /* TODO: lookup the status def 
+                 * if have something, then mark queue as used.
+                 */
+            }
+        }
+    }
+    
+    /* TODO: Scan for queues which are not any more is service list, 
+     * the queue was service, and time have expired for TTL, thus such queues
+     * are subject for unlinking...
+     * perform that in sync way...
+     */
     
 out:
     return ret;
 }
-
 
 /* vim: set ts=4 sw=4 et smartindent: */
