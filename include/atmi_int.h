@@ -233,7 +233,7 @@ extern "C" {
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
     fprintf(stderr, "Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
-    fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
+    fprintf(stderr, "AGPLv3 or Mavimax license for commercial use.\n\n");
     
     
     
