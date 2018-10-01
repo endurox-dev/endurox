@@ -51,9 +51,13 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
                         ${ENDUROX_SOURCE_DIR}/libnstd
 			${LIBXML2_INCLUDE_DIR})
 # Make sure the linker can find the UBF library once it is built.
-link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
-# Exectuables
+if(DEFINED EX_USE_SYSVQ)
+    SET(ADDSANITY1 "sanity_sysv.c")
+endif()
+
+# Executables
 add_executable (ndrxd   ndrxd.c
                         appconfig.c
                         pmodel.c
@@ -81,7 +85,9 @@ add_executable (ndrxd   ndrxd.c
 			cmd_ping.c
 			cmd_pq.c
                         cmd_env.c
-                        reloadonchange.c)
+                        reloadonchange.c
+                        ${ADDSANITY1}
+            )
 
 # Link the executable to the UBF library & others...
 target_link_libraries (ndrxd atmiclt atmi ndrxconf ubf nstd m 

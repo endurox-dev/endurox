@@ -390,7 +390,6 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     return ret;
 }
 
-
 /**
  * Get position queue id record
  * @param qid queue id
@@ -499,6 +498,120 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
     
     *pos=try;
     NDRX_LOG(log_debug, "[%d] - result: %d, "
+                            "interations: %d, pos: %d, have_value: %d",
+                             qid, ret, interations, *pos, *have_value);
+    return ret;
+}
+
+
+/**
+ * Get position queue id record
+ * @param status status memory block
+ * @param qid queue id
+ * @param[out] pos position found suitable to succeed request
+ * @param[out] have_value valid value is found? EXTRUE/EXFALSE.
+ * @return EXTRUE -> found position/ EXFALSE - no position found
+ */
+expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
+        int qid, int oflag, int *pos, int *have_value)
+{
+    int ret=SHM_ENT_NONE;
+    int try = qid % M_queuesmax;
+    int start = try;
+    int overflow = EXFALSE;
+    int interations = 0;
+    ndrx_svq_status_t *el;
+
+    *pos=EXFAIL;
+    *have_value = EXFALSE;
+    
+    /*
+     * So we loop over filled entries until we found empty one or
+     * one which have been initialised by this service.
+     *
+     * So if there was overflow, then loop until the start item.
+     */
+    while ((NDRX_SVQ_STATIDX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
+            && (!overflow || (overflow && try < start)))
+    {
+        
+        el = NDRX_SVQ_STATIDX(svq, try);
+                
+        if (el->qid == qid)
+        {
+            *pos=try;
+            
+            if (el->flags & NDRX_SVQ_MAP_ISUSED)
+            {
+                ret=SHM_ENT_MATCH;
+            }
+            else
+            {
+                ret=SHM_ENT_OLD;
+            }
+            
+            ret=EXTRUE;
+            break;  /* <<< Break! */
+        }
+        
+	if (oflag & O_CREAT)
+	{
+            if (!(el->flags & NDRX_SVQ_MAP_ISUSED))
+            {
+                ret=SHM_ENT_OLD;
+                /* found used position */
+                break; /* <<< break! */
+            }
+	}
+
+        try++;
+        
+        /* we loop over... 
+         * Feature #139 mvitolin, 09/05/2017
+         * Fix potential overflow issues at the border... of SHM...
+         */
+        if (try>=M_queuesmax)
+        {
+            try = 0;
+            overflow=EXTRUE;
+            NDRX_LOG(log_debug, "Overflow reached for search of [%d]", qid);
+        }
+        interations++;
+        
+        NDRX_LOG(log_dump, "Trying %d for [%s]", try, qid);
+    }
+    switch (ret)
+    {
+        case SHM_ENT_OLD:
+            *have_value = EXFALSE;
+            ret = EXTRUE;   /* have position */
+            break;
+        case SHM_ENT_NONE:
+            
+            if (overflow)
+            {
+                *have_value = EXFALSE;
+                ret = EXFALSE;   /* no position */
+            }
+            else
+            {
+                *have_value = EXFALSE;
+                ret = EXTRUE;   /* have position */
+            }
+            
+            break;
+        case SHM_ENT_MATCH:
+            *have_value = EXTRUE;
+            ret = EXTRUE;   /* have position */
+            break;
+        default:
+            
+            NDRX_LOG(log_error, "!!! should not get here...");
+            break;
+    }
+    
+    *pos=try;
+    NDRX_LOG(log_dump, "[%d] - result: %d, "
                             "interations: %d, pos: %d, have_value: %d",
                              qid, ret, interations, *pos, *have_value);
     return ret;
