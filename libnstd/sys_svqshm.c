@@ -623,7 +623,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
             }
             else
             {
-                NDRX_LOG(log_error, "Queue [%s] mapped to qid %d", qstr, qid);
+                NDRX_LOG(log_debug, "Queue [%s] mapped to qid %d", qstr, qid);
             }
 
             /* finish with it */

@@ -504,11 +504,9 @@ exprivate int ndrx_svq_mqd_hash_findtout(void)
         
         if (tmp < 1)
         {
-            NDRX_LOG(log_error, "For mqd %p timeout less than 0 (%ld) "
+            /* so we get msgs with delay, ma */
+            NDRX_LOG(log_debug, "For mqd %p timeout less than 0 (%ld) "
                     "- default to 1 msec - slow system?",
-                    r->mqd, tmp);
-            userlog("For mqd %p timeout less than 0 (%ld) - default to 1 msec - "
-                    "slow system?",
                     r->mqd, tmp);
             tmp = 1;
         }
