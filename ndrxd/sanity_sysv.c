@@ -81,10 +81,11 @@ expublic int do_sanity_check_sv5(void)
     shm_svcinfo_t *el;
     int i;
     int j;
-    /* TODO: */
+    int have_value_3;
+    int pos_3;
     
     /* Get the list of queues */
-    svq = ndrx_svqshm_statusget(&len);
+    svq = ndrx_svqshm_statusget(&len, /* have a ttl..! */);
     
     if (NULL==svq)
     {
@@ -111,18 +112,37 @@ expublic int do_sanity_check_sv5(void)
              */
             for (j=0; j<el->resnr; j++)
             {
-                /* TODO: lookup the status def 
+                /* lookup the status def 
                  * if have something, then mark queue as used.
                  */
+                ndrx_svqshm_get_status(el->resids[j], &pos_3, &have_value_3);
+                
+                if (have_value_3)
+                {
+                    svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
+                }
             }
-        }
+        } /* local servs */
     }
     
-    /* TODO: Scan for queues which are not any more is service list, 
+    /* Scan for queues which are not any more is service list, 
      * the queue was service, and time have expired for TTL, thus such queues
      * are subject for unlinking...
      * perform that in sync way...
      */
+    for (i=0; i<len; i++)
+    {
+        if ((svq[pos_3].flags & NDRX_SVQ_MAP_RQADDR)
+                && !(svq[pos_3].flags & NDRX_SVQ_MAP_HAVESVC)
+                && (svq[pos_3].flags & NDRX_SVQ_MAP_SCHEDRM))
+        {
+            NDRX_LOG(log_info, "qid %d is subject for delete", svq[pos_3].qid);
+            /*
+            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, IPC_RMID, int arg1);
+            */
+            
+        }
+    }
     
 out:
     return ret;
