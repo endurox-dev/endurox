@@ -113,6 +113,7 @@ exprivate ndrx_sem_t M_map_sem;          /**< RW semaphore for SHM protection */
 exprivate char *M_qprefix = NULL;       /**< Queue prefix used by mappings  */
 exprivate long M_queuesmax = 0;         /**< Max number of queues           */
 exprivate int  M_readersmax = 0;        /**< Max number of concurrent lckrds*/
+exprivate int  M_rmttl = 0;             /**< removed service/rqaddr q ttl   */
 exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
 
 /*---------------------------Statics------------------------------------*/
@@ -163,7 +164,21 @@ expublic int ndrx_svqshm_init(void)
     else
     {
         M_queuesmax = atol(tmp);
-    }            
+    }
+    
+    
+    /* get removed record TTL time */
+    tmp = getenv(CONF_NDRX_SVQRMTTL);
+    if (NULL==tmp)
+    {
+        M_rmttl = RM_TTL_DLFT;
+        NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
+                CONF_NDRX_SVQRMTTL, M_queuesmax);
+    }
+    else
+    {
+        M_rmttl = atoi(tmp);
+    }
     
     /* Get SV5 IPC */
     tmp = getenv(CONF_NDRX_IPCKEY);
@@ -873,6 +888,15 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
         
     switch (cmd)
     {
+        /* set the flags for the queue */
+        case IPC_SET:
+            
+            NDRX_LOG(log_debug, "Adding flags %hd to qstr [%s]/qid %d",
+                    (short)arg1, pm->qstr, pm->qid);
+            pm->flags |= (short)arg1;
+            sm->flags |= (short)arg1;
+            
+            break;
         case IPC_RMID:
             
             if (!have_value)
@@ -970,14 +994,13 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_s
     
     have_lock = EXTRUE;
     
-    
     for (i=0;i<M_queuesmax;i++)
     {
         pm = NDRX_SVQ_INDEX(svq, i);
         
         if (pm->flags & NDRX_SVQ_MAP_ISUSED)
         {
-            if (EXSUCCEED!=ndrx_string_list_add(ret, pm->qstr))
+            if (EXSUCCEED!=ndrx_string_list_add(&ret, pm->qstr))
             {
                 NDRX_LOG(log_error, "failed to add string to list [%s]", 
                         pm->qstr);
@@ -994,5 +1017,65 @@ out:
         /* ###################### CRITICAL SECTION, END ########################## */
     }
     
+}
+
+/**
+ * Remove queue status in newly allocated memory block
+ * @param[out] len number elements in allocated block
+ * @return ptr to alloc block or NULL in case of error
+ */
+expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len)
+{
+    int ret = EXSUCCEED;
+    ndrx_svq_status_t* block = NULL;
+    int sz = sizeof(ndrx_svq_status_t) * M_queuesmax;
+    int err;
+    int have_lock = EXFALSE;
+    int i=0;
+    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *pm;      /* Posix map           */
+    
+    block = NDRX_MALLOC(sz);
+    
+    if (NULL==block)
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", sz, strerror(err));
+        userlog("Failed to malloc %d bytes: %s", sz, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    *len = M_queuesmax;
+    
+    /* ###################### CRITICAL SECTION ############################### */
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    have_lock = EXTRUE;
+    
+    for (i=0;i<M_queuesmax;i++)
+    {
+        pm = NDRX_SVQ_INDEX(svq, i);
+        block[i].flags = pm->flags;
+        block[i].qid = pm->qid;
+        
+        if (block[i].flags & NDRX_SVQ_MAP_ISUSED &&
+                ndrx_stopwatch_get_delta_sec( &(pm->ctime)) > M_rmttl)
+        {
+            block[i].flags |= NDRX_SVQ_MAP_SCHEDRM;
+        }
+    }
+    
+out:
+            
+    if (have_lock)
+    {
+        ndrx_sem_rwunlock(&M_map_sem, 0, NDRX_SEM_TYP_READ);
+        /* ###################### CRITICAL SECTION, END ########################## */
+    }
+
+    return block;
 }
 

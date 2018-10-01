@@ -409,6 +409,15 @@ expublic inline int ndrx_epoll_create(int size)
         EXFAIL_OUT(ret);
     }
     
+    /* Set RQADDR flag for the queue */    
+    if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, M_mainq->qid, IPC_SET, NDRX_SVQ_MAP_RQADDR))
+    {
+        NDRX_LOG(log_error, "Failed to mark qid %d as request address type", 
+                M_mainq->qid);
+        EXFAIL_OUT(ret);
+    }
+    
+    
 out:
     return ret;
 }
