@@ -225,7 +225,6 @@ extern "C" {
 #define CONF_NDRX_MSGSIZEMAX     "NDRX_MSGSIZEMAX" /**< Maximum size of message for posixq */
 #define CONF_NDRX_MSGQUEUESMAX   "NDRX_MSGQUEUESMAX"/**< Max number of Queues (for sysv)  */
 #define CONF_NDRX_SVQREADERSMAX  "NDRX_SVQREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
-#define CONF_NDRX_SVQRMTTL       "NDRX_SVQRMTTL"   /**< Time To live for removed queues, sec   */
 #define CONF_NDRX_SANITY         "NDRX_SANITY"     /**< Time in seconds after which do sanity check for dead processes */
 #define CONF_NDRX_QPATH          "NDRX_QPATH"      /**< Path to place on fs where queues lives */
 #define CONF_NDRX_IPCKEY         "NDRX_IPCKEY"     /**< IPC Key for shared memory */

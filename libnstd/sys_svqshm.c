@@ -113,7 +113,6 @@ exprivate ndrx_sem_t M_map_sem;          /**< RW semaphore for SHM protection */
 exprivate char *M_qprefix = NULL;       /**< Queue prefix used by mappings  */
 exprivate long M_queuesmax = 0;         /**< Max number of queues           */
 exprivate int  M_readersmax = 0;        /**< Max number of concurrent lckrds*/
-exprivate int  M_rmttl = 0;             /**< removed service/rqaddr q ttl   */
 exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
 
 /*---------------------------Statics------------------------------------*/
@@ -164,20 +163,6 @@ expublic int ndrx_svqshm_init(void)
     else
     {
         M_queuesmax = atol(tmp);
-    }
-    
-    
-    /* get removed record TTL time */
-    tmp = getenv(CONF_NDRX_SVQRMTTL);
-    if (NULL==tmp)
-    {
-        M_rmttl = RM_TTL_DLFT;
-        NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_SVQRMTTL, M_queuesmax);
-    }
-    else
-    {
-        M_rmttl = atoi(tmp);
     }
     
     /* Get SV5 IPC */
@@ -513,7 +498,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
  * @return EXTRUE -> found position/ EXFALSE - no position found
  */
 expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
-        int qid, int oflag, int *pos, int *have_value)
+        int qid, int *pos, int *have_value)
 {
     int ret=SHM_ENT_NONE;
     int try = qid % M_queuesmax;
@@ -531,11 +516,11 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
      *
      * So if there was overflow, then loop until the start item.
      */
-    while ((NDRX_SVQ_STATIDX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
+    while ((NDRX_SVQ_STATIDX(status, try)->flags & NDRX_SVQ_MAP_WASUSED)
             && (!overflow || (overflow && try < start)))
     {
         
-        el = NDRX_SVQ_STATIDX(svq, try);
+        el = NDRX_SVQ_STATIDX(status, try);
                 
         if (el->qid == qid)
         {
@@ -554,16 +539,6 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
             break;  /* <<< Break! */
         }
         
-	if (oflag & O_CREAT)
-	{
-            if (!(el->flags & NDRX_SVQ_MAP_ISUSED))
-            {
-                ret=SHM_ENT_OLD;
-                /* found used position */
-                break; /* <<< break! */
-            }
-	}
-
         try++;
         
         /* we loop over... 
@@ -1135,9 +1110,10 @@ out:
 /**
  * Remove queue status in newly allocated memory block
  * @param[out] len number elements in allocated block
+ * @param[in] number of seconds to leave record in map until removal
  * @return ptr to alloc block or NULL in case of error
  */
-expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len)
+expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
 {
     int ret = EXSUCCEED;
     ndrx_svq_status_t* block = NULL;
@@ -1175,7 +1151,7 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len)
         block[i].qid = pm->qid;
         
         if (block[i].flags & NDRX_SVQ_MAP_ISUSED &&
-                ndrx_stopwatch_get_delta_sec( &(pm->ctime)) > M_rmttl)
+                ndrx_stopwatch_get_delta_sec( &(pm->ctime)) > ttl)
         {
             block[i].flags |= NDRX_SVQ_MAP_SCHEDRM;
         }

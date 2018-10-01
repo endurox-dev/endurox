@@ -150,8 +150,8 @@ expublic int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int co
         /* have some test on servs count so that we avoid any core dumps
          *  for un-init memory access of service string due to race conditions
          */
-        if (SHM_SVCINFO_INDEX(svcinfo, i)->srvs>0 & 
-                && EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
+        if (SHM_SVCINFO_INDEX(svcinfo, i)->srvs>0 && 
+                EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
         {
             shm_psvc_progress(call, SHM_SVCINFO_INDEX(svcinfo, i), i);
         }
