@@ -58,7 +58,8 @@
 #define NDRX_SVQ_MAP_WASUSED      0x00000002  /**< Queue was used (or is used)*/
 #define NDRX_SVQ_MAP_EXPIRED      0x00000004  /**< Queue expired by ctime     */
 #define NDRX_SVQ_MAP_SCHEDRM      0x00000008  /**< Schedule queue removal     */
-#define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This queue is/was rqaddr   */
+#define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This is request address q  */
+#define NDRX_SVQ_MAP_HAVESVC      0x00000020  /**< Have service in shm        */
 
 /** For quick access to  */
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
@@ -226,10 +227,12 @@ extern NDRX_API int ndrx_svqshm_init(void);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
-extern NDRX_API ndrx_svq_status_t* ndrx_svqshm_statusget(int *len);
+
+extern NDRX_API ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl);
+
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status);
 extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
-        int qid, int oflag, int *pos, int *have_value);
+        int qid, int *pos, int *have_value);
 
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */
