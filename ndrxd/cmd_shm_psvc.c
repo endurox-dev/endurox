@@ -134,7 +134,7 @@ exprivate void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, in
 }
 
 /**
- * Call to psc command
+ * Call to psc command - print services
  * @param args
  * @return
  */
@@ -147,7 +147,11 @@ expublic int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int co
     /* We assume shm is OK! */
     for (i=0; i<G_max_svcs; i++)
     {
-        if (EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
+        /* have some test on servs count so that we avoid any core dumps
+         *  for un-init memory access of service string due to race conditions
+         */
+        if (SHM_SVCINFO_INDEX(svcinfo, i)->srvs>0 & 
+                && EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
         {
             shm_psvc_progress(call, SHM_SVCINFO_INDEX(svcinfo, i), i);
         }

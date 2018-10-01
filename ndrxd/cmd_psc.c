@@ -79,7 +79,7 @@ expublic void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     /* calculate new send size */
     *send_size += (sizeof(command_reply_psc_t) - sizeof(command_reply_t));
 
-    strcpy(psc_info->binary_name, p_pm->binary_name);
+    NDRX_STRCPY_SAFE(psc_info->binary_name, p_pm->binary_name);
     psc_info->srvid = p_pm->srvid;
     psc_info->state = p_pm->state;
     psc_info->nodeid = ndrx_get_G_atmi_env()->our_nodeid;
@@ -94,8 +94,8 @@ expublic void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
         psc_info->svcdet[svc].min=srv_shm->min_rsp_msec[svc];
         psc_info->svcdet[svc].last=srv_shm->last_rsp_msec[svc];
         psc_info->svcdet[svc].status=srv_shm->svc_status[svc];
-        strcpy(psc_info->svcdet[svc].svc_nm, elt->svc.svc_nm);
-        strcpy(psc_info->svcdet[svc].fn_nm, elt->svc.fn_nm);
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].svc_nm, elt->svc.svc_nm);
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].fn_nm, elt->svc.fn_nm);
         svc++;
     }
     psc_info->svc_count = svc;
@@ -126,7 +126,7 @@ expublic void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_pa
     /* calculate new send size */
     *send_size += (sizeof(command_reply_psc_t) - sizeof(command_reply_t));
 
-    strcpy(psc_info->binary_name, "N/A");
+    NDRX_STRCPY_SAFE(psc_info->binary_name, "N/A");
     psc_info->srvid = EXFAIL;
     psc_info->state = EXFAIL;
     psc_info->nodeid = br->nodeid;
@@ -143,8 +143,8 @@ expublic void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_pa
         psc_info->svcdet[svc].min=EXFAIL;
         psc_info->svcdet[svc].last=EXFAIL;
         psc_info->svcdet[svc].status=0;
-        strcpy(psc_info->svcdet[svc].svc_nm, rs->svc_nm);
-        strcpy(psc_info->svcdet[svc].fn_nm, "N/A");
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].svc_nm, rs->svc_nm);
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].fn_nm, "N/A");
         svc++;
     }
     psc_info->svc_count = svc;

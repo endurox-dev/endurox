@@ -62,7 +62,7 @@
 
 /** For quick access to  */
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
-
+#define NDRX_SVQ_STATIDX(MEM, IDX) ((ndrx_svq_status_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_status_t)*IDX)))
 
 #define NDRX_SVQ_MON_TOUT         1 /**< Request for timeout                  */
 #define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
@@ -228,5 +228,7 @@ extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
 extern NDRX_API ndrx_svq_status_t* ndrx_svqshm_statusget(int *len);
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status);
-        
+extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
+        int qid, int oflag, int *pos, int *have_value);
+
 #endif
