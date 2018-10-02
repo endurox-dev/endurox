@@ -666,10 +666,9 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
     if (NULL==p_pm)
         goto out;
 
-    
     if (NULL!=pm_pid && p_pm->pid!=pm_pid->pid)
     {
-        NDRX_LOG(log_warn, "Proces Model SRV/PID=%d/%d but given "
+        NDRX_LOG(log_warn, "Process Model SRV/PID=%d/%d but given "
                 "PID Hash SRV/PID=%d/%d - thus remove later from pidhash only!",
                 p_pm->srvid, p_pm->pid, pm_pid->p_pm->srvid, pm_pid->pid);
         
@@ -736,13 +735,23 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
             }
             
             ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->srvid);
-#ifdef EX_USE_POLL
+
+#if defined(EX_USE_SYSVQ)
+            
+            /* nothing todo here! As we do not have per service queues */
+            if (last)
+            {
+                NDRX_LOG(log_debug, "Service [%s] will be zapped by "
+                        "RQADDR sanity checks");
+            }
+            
+#elif defined(EX_USE_POLL)
             /* for poll() queues must be always removed. */
-            remove_service_q(elt->svc.svc_nm, p_pm->srvid);
+            remove_service_q(elt->svc.svc_nm, p_pm->srvid, (mqd_t)EXFAIL, NULL);
 #else
             if (last)
             {
-                remove_service_q(elt->svc.svc_nm, p_pm->srvid);
+                remove_service_q(elt->svc.svc_nm, p_pm->srvid, (mqd_t)EXFAIL, NULL);
             }
 #endif
             

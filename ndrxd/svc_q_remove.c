@@ -102,10 +102,14 @@ exprivate removed_svcs_t * find_removed_entry(char *svc)
  * Then reply with bad response to all msgs, then unlink it.
  * So firstly we try to get semaphore...
  * After we got it, we check do really Q needs to be removed!
- * @param svc
- * @return 
+ * @param[in] svc service name to unlink, conditional
+ * @param[in] srvid Server id providing the the service, conditional
+ * @param[in] in_qd Already open queue descriptor, used by System V zapping
+ * @param[in] in_qstr for debug purposes queue strnig, either svc+srv 
+ *  or in_qd +in_qstr
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int remove_service_q(char *svc, short srvid)
+expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr)
 {
     int ret=EXSUCCEED;
     char q_str[NDRX_MAX_Q_SIZE+1];
@@ -115,30 +119,52 @@ expublic int remove_service_q(char *svc, short srvid)
     unsigned prio;
     tp_command_generic_t *gen_command;
     char *fn = "remove_service_q";
-    NDRX_LOG(log_debug, "%s - Enter, svc = [%s], srvid = %hd", fn, svc, srvid);
-     
+    
+    NDRX_LOG(log_debug, "Enter, svc = [%s], srvid = %hd", svc, srvid);
+    if (NULL!=in_qstr)
+    {
+        NDRX_STRCPY_SAFE(q_str, in_qstr);
+    }
+    else
+    {
 #ifdef EX_USE_POLL
-    snprintf(q_str, sizeof(q_str), NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, svc, srvid);
+        snprintf(q_str, sizeof(q_str), NDRX_SVC_QFMT_SRVID, 
+                G_sys_config.qprefix, svc, srvid);
 #else
-    snprintf(q_str, sizeof(q_str), NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
+        snprintf(q_str, sizeof(q_str), NDRX_SVC_QFMT, G_sys_config.qprefix, svc);
 #endif
+    }
+    
+    NDRX_LOG(log_debug, "Flushing + unlink the queue [%s]", q_str);
     
     /* Run in non-blocked mode */
-    if ((mqd_t)EXFAIL==(qd = ndrx_mq_open_at(q_str, O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
+    if ((mqd_t)EXFAIL!=in_qd)
+    {
+        qd = in_qd;
+    }
+    else if ((mqd_t)EXFAIL==(qd = ndrx_mq_open_at(q_str, 
+            O_RDWR|O_NONBLOCK,S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
                                         q_str, strerror(errno));
         ret=EXFAIL;
         goto out;
+
     }
     
-    /* Unlink the queue, the actual queue will live out throught next session! 
+    /* for System V queue is unlinked as part of the sanity checks 
+     * also System V queues cannot be unlinked while other processes are connected
+     * in such scenario they will 
+     */
+#ifndef EX_USE_SYSVQ
+    /* Unlink the queue, the actual queue will live out through next session! 
      * i.e. all users should close it to dispose it! As by manpage! */
     if (EXSUCCEED!=ndrx_mq_unlink(q_str))
     {
         NDRX_LOG(log_error, "Failed to unlink q [%s]: %s", 
                 q_str, strerror(errno));
     }
+#endif
     
     /* Read all messages from Q & reply with dummy/FAIL stuff back! */
     while ((len=ndrx_mq_receive (qd,
@@ -162,7 +188,8 @@ expublic int remove_service_q(char *svc, short srvid)
     }
     
 out:
-    if ((mqd_t)EXFAIL!=qd)
+    /* close only if we did open the queue */
+    if ((mqd_t)EXFAIL!=in_qd && (mqd_t)EXFAIL!=qd)
     {
         if (EXSUCCEED!=ndrx_mq_close(qd))
         {
