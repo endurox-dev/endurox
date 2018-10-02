@@ -72,10 +72,10 @@
  *  so that we have a real sync). Check the service rqaddr by NDRX_SVQ_MAP_RQADDR
  * @return SUCCEED/FAIL
  */
-expublic int do_sanity_check_sv5(void)
+expublic int do_sanity_check_sysv(void)
 {
     int ret=EXSUCCEED;
-    ndrx_svq_status_t *svq;
+    ndrx_svq_status_t *svq = NULL;
     int len;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     shm_svcinfo_t *el;
@@ -85,7 +85,7 @@ expublic int do_sanity_check_sv5(void)
     int pos_3;
     
     /* Get the list of queues */
-    svq = ndrx_svqshm_statusget(&len, /* have a ttl..! */);
+    svq = ndrx_svqshm_statusget(&len, G_app_config->rqaddrttl);
     
     if (NULL==svq)
     {
@@ -105,8 +105,30 @@ expublic int do_sanity_check_sv5(void)
          *  for un-init memory access of service string due to race conditions
          */
         el = SHM_SVCINFO_INDEX(svcinfo, i);
+        
+        /* Get a write lock over the SHM */
+        
+        /* ###################### CRITICAL SECTION ############################### */
+	if (EXSUCCEED!=ndrx_lock_svc_op(__func__))
+        {
+            NDRX_LOG(log_error, "Failed to lock sempahore");
+            EXFAIL_OUT(ret);
+        }
+        
         if (el->srvs > 0)
         {
+            /* get a service lock */
+            if (EXSUCCEED!=ndrx_lock_svc_nm(el->service, __func__))
+            {
+                NDRX_LOG(log_error, "Failed to sem-lock service: %s", el->service);
+                
+                /* Unlock big write lock.. */
+                ndrx_unlock_svc_op(__func__);
+                /* ###################### CRITICAL SECTION, END ########################## */
+                EXFAIL_OUT(ret);
+            }
+            
+            /* Lock the service */
             /* mark the service as used 
              * now check all registered request addresses
              */
@@ -115,14 +137,29 @@ expublic int do_sanity_check_sv5(void)
                 /* lookup the status def 
                  * if have something, then mark queue as used.
                  */
-                ndrx_svqshm_get_status(el->resids[j], &pos_3, &have_value_3);
+                ndrx_svqshm_get_status(svq, el->resids[j], &pos_3, &have_value_3);
                 
                 if (have_value_3)
                 {
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
                 }
             }
+            
+            /* un-lock the service */
+            if (EXSUCCEED!=ndrx_unlock_svc_nm(el->service, __func__))
+            {
+                NDRX_LOG(log_error, "Failed to sem-unlock service: %s", el->service);
+                
+                /* Unlock big write lock.. */
+                ndrx_unlock_svc_op(__func__);
+                /* ###################### CRITICAL SECTION, END ########################## */
+                EXFAIL_OUT(ret);
+            }            
         } /* local servs */
+        
+        /* Unlock big lock */
+        ndrx_unlock_svc_op(__func__);
+        /* ###################### CRITICAL SECTION, END ########################## */
     }
     
     /* Scan for queues which are not any more is service list, 
@@ -136,15 +173,23 @@ expublic int do_sanity_check_sv5(void)
                 && !(svq[pos_3].flags & NDRX_SVQ_MAP_HAVESVC)
                 && (svq[pos_3].flags & NDRX_SVQ_MAP_SCHEDRM))
         {
-            NDRX_LOG(log_info, "qid %d is subject for delete", svq[pos_3].qid);
-            /*
-            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, IPC_RMID, int arg1);
-            */
+            NDRX_LOG(log_info, "qid %d is subject for delete ttl %d", 
+                    svq[pos_3].qid, G_app_config->rqaddrttl);
             
+            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, 
+                    IPC_RMID, G_app_config->rqaddrttl))
+            {
+                NDRX_LOG(log_error, "Failed to unlink qid %d", svq[pos_3].qid);
+                EXFAIL_OUT(ret);
+            }
         }
     }
     
 out:
+    if (NULL!=svq)
+    {
+        NDRX_FREE(svq);
+    }
     return ret;
 }
 
