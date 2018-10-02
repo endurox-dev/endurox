@@ -83,6 +83,8 @@ expublic int do_sanity_check_sysv(void)
     int j;
     int have_value_3;
     int pos_3;
+    bridgedef_svcs_t *cur, *tmp;
+    short *srvlist = NULL;
     
     NDRX_LOG(log_debug, "Into System V sanity checks");
     /* Get the list of queues */
@@ -97,70 +99,27 @@ expublic int do_sanity_check_sysv(void)
     
     /* Now scan the used services shared memory and updated the 
      * status copy accordingly
+     * WELL! We must loop over the local NDRXD list of the services
+     * and then update the status. Then we can avoid the locking of
+     * the shared memory.
      */
     
     /* We assume shm is OK! */
-    for (i=0; i<G_max_svcs; i++)
+    EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
-        /* have some test on servs count so that we avoid any core dumps
-         *  for un-init memory access of service string due to race conditions
-         */
-        el = SHM_SVCINFO_INDEX(svcinfo, i);
-        
-        /* Get a write lock over the SHM */
-        
-        /* ###################### CRITICAL SECTION ############################### */
-	if (EXSUCCEED!=ndrx_lock_svc_op(__func__))
+        if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
         {
-            NDRX_LOG(log_error, "Failed to lock sempahore");
-            EXFAIL_OUT(ret);
-        }
-        
-        if (el->srvs > 0)
-        {
-            /* get a service lock */
-            if (EXSUCCEED!=ndrx_lock_svc_nm(el->service, __func__))
+            for (i=0; i<len; i++)
             {
-                NDRX_LOG(log_error, "Failed to sem-lock service: %s", el->service);
-                
-                /* Unlock big write lock.. */
-                ndrx_unlock_svc_op(__func__);
-                /* ###################### CRITICAL SECTION, END ########################## */
-                EXFAIL_OUT(ret);
-            }
-            
-            /* Lock the service */
-            /* mark the service as used 
-             * now check all registered request addresses
-             */
-            for (j=0; j<el->resnr; j++)
-            {
-                /* lookup the status def 
-                 * if have something, then mark queue as used.
-                 */
                 ndrx_svqshm_get_status(svq, el->resids[j], &pos_3, &have_value_3);
                 
                 if (have_value_3)
                 {
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
                 }
-            }
-            
-            /* un-lock the service */
-            if (EXSUCCEED!=ndrx_unlock_svc_nm(el->service, __func__))
-            {
-                NDRX_LOG(log_error, "Failed to sem-unlock service: %s", el->service);
                 
-                /* Unlock big write lock.. */
-                ndrx_unlock_svc_op(__func__);
-                /* ###################### CRITICAL SECTION, END ########################## */
-                EXFAIL_OUT(ret);
-            }            
+            }         
         } /* local servs */
-        
-        /* Unlock big lock */
-        ndrx_unlock_svc_op(__func__);
-        /* ###################### CRITICAL SECTION, END ########################## */
     }
     
     /* Scan for queues which are not any more is service list, 
