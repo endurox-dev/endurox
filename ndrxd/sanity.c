@@ -212,6 +212,15 @@ expublic int do_sanity_check(void)
         {
             pq_run_santiy(EXTRUE);
         }
+        
+#ifdef EX_USE_SYSVQ
+        if (EXSUCCEED!=do_sanity_check_sysv())
+        {
+            NDRX_LOG(log_error, "System V sanity checks failed!");
+            userlog("System V sanity checks failed!");
+            EXFAIL_OUT(ret);
+        }
+#endif
     }
     
 out:

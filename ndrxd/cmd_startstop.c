@@ -146,12 +146,6 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
 
     NDRX_LOG(log_warn, "Got notification for pid:%d srvid:%d",
                 pm_status->srvinfo.pid, pm_status->srvinfo.srvid);
-    /*if (NDRXD_COM_START==context)
-    {
-        NDRX_LOG(log_warn, "In startup context, do nothing");
-    }
-    else
-    {*/
 
     /* Now check the pidhash... */
     pm_pid = pid_hash_get(G_process_model_pid_hash, pm_status->srvinfo.pid);
@@ -176,20 +170,21 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         }
         else
         {
-            pm_pid->p_pm->state=NDRXD_PM_EXIT; /* so that we do no try again to wake it up! */
+            /* so that we do no try again to wake it up! */
+            pm_pid->p_pm->state=NDRXD_PM_EXIT;
         }
-
-
+        
         NDRX_LOG(log_warn, "Removing resources allocated "
                             "for process [%s]", pm_pid->p_pm->binary_name);
-        /* Find .the pm_p & remove failed proces! */
+        
+        /* Find .the pm_p & remove failed process! */
 
-	/* TODO: If the PID if different one thant for srvid, then we remove this thing from
+	/* TODO: If the PID if different one than for srvid, then we remove 
+         * this thing from
          * pidhash only!!!! - Yeah right this must be fixed.
-     we had an incident in i2nc, when PID 9862 died, other was started, but we remove that other,
-     * not 9862, which died actually!!!
-     
-     */
+         * we had an incident in i2nc, when PID 9862 died, other was started, 
+         * but we remove that other, not 9862, which died actually!!!
+         */
         remove_startfail_process(get_pm_from_srvid(srvid), NULL, pm_pid);
 
         /* reset shared memory! */
@@ -201,9 +196,7 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         NDRX_LOG(log_warn, "PID %d unknown to system!",
                                 pm_status->srvinfo.pid);
     }
-        /*
-    }
-*/
+    
     NDRX_LOG(log_warn, "cmd_notify returns with status %d", ret);
 
 out:

@@ -652,7 +652,7 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
     int try = ndrx_hash_fn(svc) % G_max_svcs;
     int start = try;
     int overflow = EXFALSE;
-    int interations = 0;
+    int iterations = 0;
     
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
 
@@ -706,15 +706,15 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
             overflow=EXTRUE;
             NDRX_LOG(log_debug, "Overflow reached for search of [%s]", svc);
         }
-        interations++;
+        iterations++;
         
         NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
     }
     
     *pos=try;
     NDRX_LOG(log_debug, "ndrx_shm_get_svc [%s] - result: %d, "
-                            "interations: %d, pos: %d, install: %d",
-                             svc, ret, interations, *pos, 
+                            "iterations: %d, pos: %d, install: %d",
+                             svc, ret, iterations, *pos, 
                              (doing_install?*p_install_cmd:_NDRX_SVCINSTALL_NOT));
     return ret;
 }

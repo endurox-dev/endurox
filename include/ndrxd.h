@@ -319,7 +319,7 @@ extern int get_cmdq_attr(struct mq_attr *attr);
 /* pmodel */
 extern int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid);
 extern pm_node_t * get_pm_from_srvid(int srvid);
-extern int remove_service_q(char *svc, short srvid);
+extern int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr);
 extern char * get_srv_admin_q(pm_node_t * p_pm);
 
 /* Configuration */
@@ -385,6 +385,10 @@ extern int roc_is_reload_in_progress(unsigned sanity_cycle);
 extern int roc_check_binary(char *binary_path, unsigned sanity_cycle);
 extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
 extern int self_sreload(pm_node_t *p_pm);
+
+#ifdef EX_USE_SYSVQ
+extern int do_sanity_check_sysv(void);
+#endif
 
 #ifdef	__cplusplus
 }

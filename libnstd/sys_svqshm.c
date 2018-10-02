@@ -275,7 +275,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     int try = ndrx_hash_fn(pathname) % M_queuesmax;
     int start = try;
     int overflow = EXFALSE;
-    int interations = 0;
+    int iterations = 0;
     
     ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
 
@@ -330,7 +330,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
             overflow=EXTRUE;
             NDRX_LOG(log_debug, "Overflow reached for search of [%s]", pathname);
         }
-        interations++;
+        iterations++;
         
         NDRX_LOG(log_debug, "Trying %d for [%s]", try, pathname);
     }
@@ -368,9 +368,9 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     }
     
     NDRX_LOG(log_debug, "qstr_position_get [%s] - result: %d, "
-                            "interations: %d, pos: %d, have_value: %d flags: %hd [%s]",
-                            pathname, ret, interations, *pos, *have_value, 
-                            NDRX_SVQ_INDEX(svq, try)->flags, NDRX_SVQ_INDEX(svq, try)->qstr);
+                "iterations: %d, pos: %d, have_value: %d flags: %hd [%s]",
+                pathname, ret, iterations, *pos, *have_value, 
+                NDRX_SVQ_INDEX(svq, try)->flags, NDRX_SVQ_INDEX(svq, try)->qstr);
     
     return ret;
 }
@@ -389,7 +389,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
     int try = qid % M_queuesmax;
     int start = try;
     int overflow = EXFALSE;
-    int interations = 0;
+    int iterations = 0;
     
     ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_s2p.mem;
 
@@ -447,7 +447,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
             overflow=EXTRUE;
             NDRX_LOG(log_debug, "Overflow reached for search of [%d]", qid);
         }
-        interations++;
+        iterations++;
         
         NDRX_LOG(log_debug, "Trying %d for [%s]", try, qid);
     }
@@ -483,8 +483,8 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
     
     *pos=try;
     NDRX_LOG(log_debug, "[%d] - result: %d, "
-                            "interations: %d, pos: %d, have_value: %d",
-                             qid, ret, interations, *pos, *have_value);
+                        "iterations: %d, pos: %d, have_value: %d",
+                         qid, ret, iterations, *pos, *have_value);
     return ret;
 }
 
@@ -504,7 +504,7 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
     int try = qid % M_queuesmax;
     int start = try;
     int overflow = EXFALSE;
-    int interations = 0;
+    int iterations = 0;
     ndrx_svq_status_t *el;
 
     *pos=EXFAIL;
@@ -551,7 +551,7 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
             overflow=EXTRUE;
             NDRX_LOG(log_debug, "Overflow reached for search of [%d]", qid);
         }
-        interations++;
+        iterations++;
         
         NDRX_LOG(log_dump, "Trying %d for [%s]", try, qid);
     }
@@ -587,8 +587,8 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
     
     *pos=try;
     NDRX_LOG(log_dump, "[%d] - result: %d, "
-                            "interations: %d, pos: %d, have_value: %d",
-                             qid, ret, interations, *pos, *have_value);
+                        "iterations: %d, pos: %d, have_value: %d",
+                         qid, ret, iterations, *pos, *have_value);
     return ret;
 }
 
