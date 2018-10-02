@@ -76,6 +76,28 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Validate request address, also strip down any un-needed chars
+ * @param rqaddr request address from config
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int rqaddr_chk(char *rqaddr)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_str_strip(rqaddr, "\t ");
+    
+    if (NDRX_SYS_SVC_PFXC == rqaddr[0])
+    {
+        NDRX_LOG(log_error, "Request address cannot start with [%c]", 
+                NDRX_SYS_SVC_PFXC);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
 
 /**
  * Free up config memory
@@ -439,6 +461,22 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_debug, "respawn: %c", config->default_reloadonchange?'Y':'N');
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "rqaddr"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                NDRX_STRCPY_SAFE(config->default_rqaddr, p);
+                xmlFree(p);
+
+                /* validate the request address - it must not start with @ 
+                 * also we need to strip down any tabs & spaces
+                 */
+                if (EXSUCCEED!=rqaddr_chk(config->default_rqaddr))
+                {
+                    EXFAIL_OUT(ret);
+                }
+
+                NDRX_LOG(log_debug, "rqaddr: [%s]", config->default_rqaddr);
+            }
             
 #if 0
             else
@@ -584,6 +622,15 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   config->gather_pq_stats?'Y':'N');
                 xmlFree(p);
             }
+            /* this is used by system v only */
+            else if (0==strcmp((char*)cur->name, "rqaddrttl"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->rqaddrttl = atoi(p);
+                NDRX_LOG(log_debug, "rqaddrttl: [%s] - %d sec",
+                                                  p, config->rqaddrttl);
+                xmlFree(p);
+            }
             
             cur = cur->next;
         } while (cur);
@@ -634,6 +681,13 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         NDRX_LOG(log_debug, "appconfig: `checkpm' not set using "
                 "default %d sty!", config->checkpm);
     }
+    
+    if (0 >= config->rqaddrttl)
+    {
+        config->rqaddrttl = DEF_RQADDRTTL;
+        NDRX_LOG(log_debug, "appconfig: `rqaddrtt' not set using "
+                "default %d sty!", config->rqaddrttl);
+    }
 
 out:
     return ret;
@@ -657,13 +711,13 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char *p;
     /* first of all, we need to get server name from attribs */
     
-    p_srvnode = NDRX_MALLOC(sizeof(conf_server_node_t));
+    p_srvnode = NDRX_CALLOC(1, sizeof(conf_server_node_t));
     if (NULL==p_srvnode)
     {
         NDRX_LOG(log_error, "malloc failed for srvnode!");
         EXFAIL_OUT(ret);
     }
-    memset(p_srvnode, 0, sizeof(conf_server_node_t));
+    
     p_srvnode->srvid = EXFAIL;
     p_srvnode->min = EXFAIL;
     p_srvnode->max = EXFAIL;
@@ -678,7 +732,6 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->isprotected = EXFAIL;
     p_srvnode->reloadonchange = EXFAIL;
     p_srvnode->respawn = EXFAIL;
-
 
     for (attr=cur->properties; attr; attr = attr->next)
     {
@@ -935,9 +988,43 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 EXFAIL_OUT(ret);
             }
         }
+        else if (0==strcmp((char*)cur->name, "rqaddr"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            NDRX_STRCPY_SAFE(p_srvnode->rqaddr, p);
+            xmlFree(p);
+            
+            /* validate the request address - it must not start with @ 
+             * also we need to strip down any tabs & spaces
+             */
+            if (EXSUCCEED!=rqaddr_chk(p_srvnode->rqaddr))
+            {
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_LOG(log_debug, "rqaddr: [%s]", p_srvnode->rqaddr);
+        }
+        
     }
-    snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
-            "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
+    
+    /* get rqaddr defaults */
+    
+    if (EXEOS==p_srvnode->rqaddr[0])
+    {
+        NDRX_STRCPY_SAFE(p_srvnode->rqaddr, config->default_rqaddr);
+    }
+    
+    if (EXEOS!=p_srvnode->rqaddr[0])
+    {
+        snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
+                "%s -R %s -- %s", p_srvnode->SYSOPT, 
+                p_srvnode->rqaddr, p_srvnode->APPOPT);
+    }
+    else
+    {
+        snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
+                "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
+    }
     
     NDRX_STRCPY_SAFE(p_srvnode->binary_name, srvnm);
     
