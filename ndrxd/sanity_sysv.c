@@ -84,6 +84,7 @@ expublic int do_sanity_check_sysv(void)
     int have_value_3;
     int pos_3;
     
+    NDRX_LOG(log_debug, "Into System V sanity checks");
     /* Get the list of queues */
     svq = ndrx_svqshm_statusget(&len, G_app_config->rqaddrttl);
     
@@ -176,6 +177,21 @@ expublic int do_sanity_check_sysv(void)
             NDRX_LOG(log_info, "qid %d is subject for delete ttl %d", 
                     svq[pos_3].qid, G_app_config->rqaddrttl);
             
+            /* Well at this point we shall
+             * remove call expublic int remove_service_q(char *svc, short srvid, 
+             * mqd_t in_qd, char *in_qstr)!!!
+             * because we need to flush the queue of messages...
+             * only here we have a issue with lockings
+             * we will be in write mode to MAPs, but in mean time we want to
+             * perform read ops to the SHM...
+             * Thus probably we need some globals in svqshm that indicate
+             * that we have already exclusive lock!
+             * 
+             * But as remove_service_q is not using much of the systemv maps
+             * processing, then we could just simple callback from ndrx_svqshm_ctl
+             * with qid and queue string. then callback would build simple
+             * mqd_t and pass it to remove_service_q for message zapping.
+             */
             if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, 
                     IPC_RMID, G_app_config->rqaddrttl))
             {
