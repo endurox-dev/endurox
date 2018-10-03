@@ -199,6 +199,12 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     NDRX_STRCPY_SAFE(mq->qstr, pathname);
     mq->mode = mode;
     memcpy(&(mq->attr), attr, sizeof (*attr));
+
+    /* Init mutexes... */
+    pthread_mutex_init(&mq->rcvlock, NULL);
+    pthread_mutex_init(&mq->rcvlockb4, NULL);
+    pthread_mutex_init(&mq->border, NULL);
+    pthread_mutex_init(&mq->qlock, NULL);
     
 out:
     
