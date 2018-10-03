@@ -147,8 +147,6 @@ expublic int ndrx_svqshm_down(void)
     
     if (EXSUCCEED!=ndrx_shm_remove(&M_map_p2s))
     {
-        NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                        M_map_p2s, strerror(errno));
         ret = EXFAIL;
     }
     
@@ -159,8 +157,6 @@ expublic int ndrx_svqshm_down(void)
     
     if (EXSUCCEED!=ndrx_shm_remove(&M_map_s2p))
     {
-        NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                        M_map_s2p, strerror(errno));
         ret = EXFAIL;
     }
     

@@ -62,7 +62,7 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Slot   Service Name Nsrv Flags CSrvs TClst CMAX CNODES\n");
+    fprintf(stderr, "SLOT   SERVICE NAME NSRV FLAGS CSRVS TCLST CMAX CNODES\n");
     fprintf(stderr, "------ ------------ ---- ----- ----- ----- ---- --------------------------------\n");
 }
 
