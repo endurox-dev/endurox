@@ -104,7 +104,13 @@ extern "C" {
 
 #endif
     
-#if 1==USE_FS_REGISTRY
+#if 1==EX_USE_SYSVQ
+
+/* Feature #281 */
+#define  ndrx_mq_open         ndrx_svq_open
+#define  ndrx_mq_unlink       ndrx_svq_unlink
+
+#elif 1==USE_FS_REGISTRY
 
 extern mqd_t ndrx_mq_open_with_registry(char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern int ndrx_mq_unlink_with_registry (char *name);
@@ -114,13 +120,7 @@ extern int ndrx_mq_unlink_with_registry (char *name);
 
 #else
 
-#if 1==EX_USE_SYSVQ
-
-/* Feature #281 */
-#define  ndrx_mq_open         ndrx_svq_open
-#define  ndrx_mq_unlink       ndrx_svq_unlink
-
-#elif 1==EX_USE_EMQ
+#if 1==EX_USE_EMQ
 
 #define  ndrx_mq_open         emq_open
 #define  ndrx_mq_unlink       emq_unlink
