@@ -231,7 +231,7 @@ expublic int ndrx_shm_close(ndrx_shm_t *shm)
         if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "Failed to close shm [%s]: %d - %s",
-                        errno, strerror(errno));
+                        shm->path, errno, strerror(errno));
         }
     }
     else
