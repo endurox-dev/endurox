@@ -297,20 +297,25 @@ out:
 /**
  * Remove semaphores...
  * @param sem
+ * @return EXSUCCEED/EXFAIL
  */
-expublic void ndrx_sem_remove(ndrx_sem_t *sem, int force)
+expublic int ndrx_sem_remove(ndrx_sem_t *sem, int force)
 {
+    int ret = EXSUCCEED;
     /* Close that one... */
     if (sem->attached || force)
     {
         NDRX_LOG(log_error, "Removing semid: %d", sem->semid);
         if (EXSUCCEED!= semctl(sem->semid, 0, IPC_RMID))
         {
-                NDRX_LOG(log_warn, "semctl DEL failed err: %s", 
-                        strerror(errno));
+            NDRX_LOG(log_warn, "semctl DEL failed err: %s", 
+                    strerror(errno));
+            ret=EXFAIL;
         }
     }
     sem->attached=EXFALSE;
+    
+    return ret;
 }
 
 /**
@@ -367,6 +372,19 @@ out:
     return ret;
 }
 
-/* vim: set ts=4 sw=4 et smartindent: */
+/**
+ * Close opened semaphore segment.
+ * ??? Not sure shall we close it ?
+ * For System V not needed.
+ * @return EXSUCCEED
+ */
+expublic int ndrx_sem_close(ndrx_sem_t *sem)
+{
+    int ret=EXSUCCEED;
+
+out:
+    return ret;
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

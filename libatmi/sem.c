@@ -89,19 +89,6 @@ expublic int ndrxd_sem_init(char *q_prefix)
 }
 
 /**
- * Close opened semaphore segment.
- * ??? Not sure ca we close it ?
- * @return
- */
-exprivate int ndrxd_sem_close(ndrx_sem_t *sem)
-{
-    int ret=EXSUCCEED;
-
-out:
-    return ret;
-}
-
-/**
  * Open semaphore
  * @return
  */
@@ -127,7 +114,7 @@ expublic int ndrxd_sem_close_all(void)
 {
     int ret=EXSUCCEED;
 
-    ndrxd_sem_close(&G_sem_svcop);
+    ndrx_sem_close(&G_sem_svcop);
     
     return ret;
 }
