@@ -82,7 +82,7 @@ exprivate char *gen_clstr_map(command_reply_shm_psvc_t * reply)
     {
         if (reply->cnodes[i].srvs < 10)
         {
-            sprintf(tmp, "%d", reply->cnodes[i].srvs);
+            snprintf(tmp, sizeof(tmp), "%d", reply->cnodes[i].srvs);
         }
         else
         {
@@ -103,7 +103,6 @@ exprivate char *gen_clstr_map(command_reply_shm_psvc_t * reply)
 expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     int i;
-    char binary[9+1];
     char svc[12+1];
     
     if (NDRXD_CALL_TYPE_PM_SHM_PSVC==reply->msg_type)
@@ -125,7 +124,7 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
         /* This is poll mode, provide info about individual serves: */
         if (shm_psvc_info->srvids[0])
         {
-            fprintf(stdout, "\t\t\t\t\t\tSRVIDS: ");
+            fprintf(stdout, "\t\t\t\t\t\tRES: ");
             for (i=0; i<shm_psvc_info->srvs-shm_psvc_info->csrvs; i++)
             {
                 fprintf(stdout, "%hd ", shm_psvc_info->srvids[i]);

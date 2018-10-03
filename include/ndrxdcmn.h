@@ -381,6 +381,9 @@ struct shm_svcinfo
 typedef struct
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -449,6 +452,9 @@ typedef struct
 typedef struct
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
