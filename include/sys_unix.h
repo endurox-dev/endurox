@@ -267,6 +267,15 @@ extern NDRX_API int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
 extern NDRX_API int ndrx_epoll_errno(void);
 extern NDRX_API char * ndrx_poll_strerror(int err);
 
+/* used by System V, dummies for others pollers/queues: */
+extern NDRX_API int ndrx_epoll_resid_get(void);
+extern NDRX_API int ndrx_epoll_down(void);
+extern NDRX_API int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
+        char *svc, int resid);
+extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);
+extern NDRX_API int ndrx_epoll_shallopensvc(int idx);
+extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
+
 /* string generics: */
 extern NDRX_API void ndrx_string_list_free(string_list_t* list);
 

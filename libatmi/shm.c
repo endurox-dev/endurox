@@ -124,45 +124,6 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
 }
 
 /**
- * Close opened shared memory segment.
- * @return
- */
-exprivate int ndrxd_shm_close(ndrx_shm_t *shm)
-{
-    int ret=EXSUCCEED;
-
-    /**
-     * Library not initialized
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "ndrx shm library not initialized");
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (shm->fd > 2)
-    {
-        ret = close(shm->fd);
-        if (EXSUCCEED!=ret)
-        {
-            NDRX_LOG(log_error, "Failed to close shm [%s]: %d - %s",
-                        errno, strerror(errno));
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "cannot close shm [%s] as fd is %d",
-                    shm->path, shm->fd);
-        ret=EXFAIL;
-        goto out;
-    }
-
-out:
-    return ret;
-}
-
-/**
  * Open shared memory
  * @return
  */
@@ -212,14 +173,24 @@ expublic int ndrxd_shm_close_all(void)
 {
     int ret=EXSUCCEED;
 
-    ret=ndrxd_shm_close(&G_srvinfo);
-
-    if (EXFAIL==ndrxd_shm_close(&G_svcinfo))
+    /**
+     * Library not initialized
+     */
+    if (!M_init)
+    {
+        NDRX_LOG(log_error, "ndrx shm library not initialized");
         ret=EXFAIL;
-
-    if (EXFAIL==ndrxd_shm_close(&G_brinfo))
-        ret=EXFAIL;
+        goto out;
+    }
     
+    ret=ndrx_shm_close(&G_srvinfo);
+
+    if (EXFAIL==ndrx_shm_close(&G_svcinfo))
+        ret=EXFAIL;
+
+    if (EXFAIL==ndrx_shm_close(&G_brinfo))
+        ret=EXFAIL;
+out:
     return ret;
 }
 
@@ -230,21 +201,9 @@ expublic int ndrxd_shm_delete(void)
 {
     if (M_init)
     {
-        if (EXSUCCEED!=shm_unlink(G_srvinfo.path))
-        {
-            NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                                G_srvinfo.path, strerror(errno));
-        }
-        if (EXSUCCEED!=shm_unlink(G_svcinfo.path))
-        {
-            NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                                G_svcinfo.path, strerror(errno));
-        }
-        if (EXSUCCEED!=shm_unlink(G_brinfo.path))
-        {
-            NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                                G_brinfo.path, strerror(errno));
-        }
+        ndrx_shm_remove(&G_srvinfo);
+        ndrx_shm_remove(&G_svcinfo);
+        ndrx_shm_remove(&G_brinfo);
     }
     else
     {

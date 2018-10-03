@@ -81,13 +81,16 @@ typedef struct
 
 extern NDRX_API int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists);
 extern NDRX_API int ndrx_shm_attach(ndrx_shm_t *shm);
+extern NDRX_API int ndrx_shm_close(ndrx_shm_t *shm);
+extern NDRX_API int ndrx_shm_remove(ndrx_shm_t *shm);
 extern NDRX_API int ndrx_shm_is_attached(ndrx_shm_t *shm);
 
 extern NDRX_API int ndrx_sem_attach(ndrx_sem_t *sem);
+extern NDRX_API int ndrx_sem_close(ndrx_sem_t *sem);
 extern NDRX_API int ndrxd_sem_open(ndrx_sem_t *sem, int attach_on_exists);
 extern NDRX_API int ndrx_sem_lock(ndrx_sem_t *sem, const char *msg, int sem_num);
 extern NDRX_API int ndrx_sem_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num);
-extern NDRX_API void ndrx_sem_remove(ndrx_sem_t *sem, int force);
+extern NDRX_API int ndrx_sem_remove(ndrx_sem_t *sem, int force);
 extern NDRX_API int ndrx_sem_is_attached(ndrx_sem_t *sem);
 
 extern NDRX_API int ndrx_sem_rwlock(ndrx_sem_t *sem, int sem_num, int typ);

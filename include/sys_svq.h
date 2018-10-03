@@ -224,9 +224,11 @@ extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */
 extern NDRX_API int ndrx_svqshm_init(void);
+extern NDRX_API int ndrx_svqshm_down(void);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len);
-extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1);
+extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
+        int (*p_deletecb)(int qid, char *qstr));
 
 extern NDRX_API ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl);
 
