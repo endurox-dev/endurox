@@ -64,7 +64,7 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Msg queued Q name\n");
+    fprintf(stderr, "MSG QUEUED Q NAME\n");
     fprintf(stderr, "---------- ---------------------------------"
                     "------------------------------------\n");
 }

@@ -1,7 +1,7 @@
 /**
- * @brief `pq' print queues frontend.
+ * @brief `svmqps' print System V mapping tables
  *
- * @file cmd_pq.c
+ * @file cmd_svmaps.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -33,9 +33,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <memory.h>
-#include <sys/param.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 
@@ -44,7 +45,10 @@
 #include <atmi_int.h>
 #include <gencall.h>
 
-#include "nstopwatch.h"
+#include <nstopwatch.h>
+#include <nclopt.h>
+#include <sys_unix.h>
+#include <utlist.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -60,68 +64,66 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "SERVICE NAME QUEUE LAST AVERAGE HISTORICAL (10 SANITY CYCLES) \n");
-    fprintf(stderr, "------------ ---------- ------- -----------------"
-                    "-------------------------------\n");
+    fprintf(stderr, "SLOT   MSGID     FLAGS             CTIME (MONOTONIC)   Q NAME\n");
+    fprintf(stderr, "------ --------- ----------------- ------------------- -------------------------\n");
 }
 
 /**
- * Process response back.
- * @param reply
- * @param reply_len
- * @return
- */
-expublic int pq_rsp_process(command_reply_t *reply, size_t reply_len)
-{
-    int i;
-    char svc[12+1];
-    char q_hist[256] = {EXEOS};
-
-    if (NDRXD_CALL_TYPE_PQ==reply->msg_type)
-    {
-        command_reply_pq_t * pq_info = (command_reply_pq_t*)reply;
-        FIX_SVC_NM(pq_info->service, svc, (sizeof(svc)-1));
-        for (i=2; i<PQ_LEN; i++)
-        {
-            sprintf(q_hist+strlen(q_hist), "%d", pq_info->pq_info[i]);
-            if (i<PQ_LEN-1)
-                strcat(q_hist, " ");
-        }
-        
-        fprintf(stdout, "%-12.12s %-10d %-7d %s\n", 
-                svc, pq_info->pq_info[1], pq_info->pq_info[0],q_hist);
-    }
-    
-    return EXSUCCEED;
-}
-
-/**
- * Get service listings
+ * Print System V queue mapping tables
  * @param p_cmd_map
  * @param argc
  * @param argv
  * @return SUCCEED
  */
-expublic int cmd_pq(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    command_call_t call;
-    memset(&call, 0, sizeof(call));
-
+    int ret=EXSUCCEED;
+    int n;
+    short print_systemv = EXFALSE;
+    short print_posix =  EXFALSE;
+    short print_all =  EXFALSE;
+    short print_inuse =  EXFALSE;
+    short print_wasused =  EXFALSE;
+    struct mq_attr att;
+    string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
+    ncloptmap_t clopt[] =
+    {
+        {'p', BFLD_SHORT, (void *)&print_systemv, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, 
+                                "Posix -> System V mapping table (default)"},
+        {'s', BFLD_SHORT, (void *)&print_posix, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, 
+                                "Print System V -> Posix mapping table"},
+        {'a', BFLD_SHORT, (void *)&print_all, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, 
+                                "Print all entries"},
+        {'i', BFLD_SHORT, (void *)&print_inuse, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, 
+                                "Print entries in use"},
+        {'w', BFLD_SHORT, (void *)&print_wasused, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, 
+                                "Print entries which was used"},
+        {0}
+    };
+    
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* TODO: Print current monotonic clock */
+    
     /* Print header at first step! */
     print_hdr();
-    /* Then get listing... */
-    return cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
-                        NDRXD_CALL_TYPE_GENERIC,
-                        &call, sizeof(call),
-                        G_config.reply_queue_str,
-                        G_config.reply_queue,
-                        G_config.ndrxd_q,
-                        G_config.ndrxd_q_str,
-                        argc, argv,
-                        p_have_next,
-                        G_call_args,
-                        EXFALSE,
-                        G_config.listcall_flags);
-}
+    
+    /* select table & process that flags and print the entries... */
+   
 
+out:
+    
+    return ret;
+}
 /* vim: set ts=4 sw=4 et smartindent: */
