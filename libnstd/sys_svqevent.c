@@ -55,7 +55,6 @@
 #include <limits.h>
 
 #include <sys_unix.h>
-#include <sys/epoll.h>
 
 #include <utlist.h>
 #include <sys_svq.h>
@@ -733,6 +732,7 @@ out:
 exprivate void ndrx_svq_signal_action(int sig)
 {
     /* nothing todo, just ignore */
+    NDRX_LOG(log_debug, "Signal action");
     return;
 }
 

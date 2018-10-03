@@ -54,10 +54,9 @@
 #include <limits.h>
 
 #include <sys_unix.h>
-#include <sys/epoll.h>
 #include <sys_mqueue.h>
 #include <sys_svq.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 
 #include <atmi.h>
 #include <atmi_int.h>
@@ -288,7 +287,7 @@ out:
  * Ini System V polling thread
  * @return EXSUCCEED/EXFAIL, errno set.
  */
-expublic inline int ndrx_epoll_sys_init(void)
+expublic int ndrx_epoll_sys_init(void)
 {
     int ret = EXSUCCEED;
     /* boot the Auxiliary thread */
@@ -305,7 +304,7 @@ out:
 /**
  * Nothing to un-init for epoll()
  */
-expublic inline void ndrx_epoll_sys_uninit(void)
+expublic void ndrx_epoll_sys_uninit(void)
 {
     return;
 }
@@ -314,7 +313,7 @@ expublic inline void ndrx_epoll_sys_uninit(void)
  * Return the compiled poll mode
  * @return 
  */
-expublic inline char * ndrx_epoll_mode(void)
+expublic char * ndrx_epoll_mode(void)
 {
     static char *mode = "svpoll";
     
@@ -329,7 +328,7 @@ expublic inline char * ndrx_epoll_mode(void)
  * @param event not used
  * @return EXSUCCEED/EXFAIL
  */
-expublic inline int ndrx_epoll_ctl(int epfd, int op, int fd, 
+expublic int ndrx_epoll_ctl(int epfd, int op, int fd, 
         struct ndrx_epoll_event *event)
 {
     int ret = EXSUCCEED;
@@ -374,7 +373,7 @@ out:
  * @param event not used...
  * @return EXSUCCEED/EXFAIL
  */
-expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, 
+expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, 
         struct ndrx_epoll_event *event)
 {
     int ret = EXSUCCEED;
@@ -406,7 +405,7 @@ expublic inline int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
  * @param size
  * @return Fake FD(1) or EXFAIL
  */
-expublic inline int ndrx_epoll_create(int size)
+expublic int ndrx_epoll_create(int size)
 {
     int ret = 1;
     int err;
@@ -443,7 +442,7 @@ out:
 /**
  * Close Epoll set.
  */
-expublic inline int ndrx_epoll_close(int fd)
+expublic int ndrx_epoll_close(int fd)
 {
     ndrx_svq_pollsvc_t *el, *elt;
     /* Close main poller Q erase mapping hashes */
@@ -470,7 +469,7 @@ expublic inline int ndrx_epoll_close(int fd)
  * @param timeout timeout in milliseconds
  * @return 0 - timeout, -1 - FAIL, 1 - have one event
  */
-expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
+expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
         int maxevents, int timeout, char *buf, int *buf_len)
 {
     int ret = EXSUCCEED;
@@ -528,7 +527,7 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                         userlog("Receive from FD %d bytes, but max buffer %d",
                                 ev->datalen, *buf_len);
 
-                        err=EBADFD;
+                        err=EMSGSIZE;
                         EXFAIL_OUT(ret);
                     }
 
@@ -562,7 +561,7 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                         userlog("Receive from FD %d bytes, but max buffer %d",
                                 ev->datalen, *buf_len);
 
-                        err=EBADFD;
+                        err=EMSGSIZE;
                         EXFAIL_OUT(ret);
                     }
 
@@ -683,7 +682,7 @@ out:
  * Return errno for ndrx_poll() operation
  * @return 
  */
-expublic inline int ndrx_epoll_errno(void)
+expublic int ndrx_epoll_errno(void)
 {
     return errno;
 }
@@ -693,7 +692,7 @@ expublic inline int ndrx_epoll_errno(void)
  * @param err
  * @return 
  */
-expublic inline char * ndrx_poll_strerror(int err)
+expublic char * ndrx_poll_strerror(int err)
 {
     return strerror(err);
 }
