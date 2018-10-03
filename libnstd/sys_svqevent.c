@@ -899,19 +899,14 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             {
                                 ret = EXFAIL;
                             }
+
+                            pthread_mutex_destroy(&cmd.mqd->rcvlock);
+                            pthread_mutex_destroy(&cmd.mqd->rcvlockb4);
+                            pthread_mutex_destroy(&cmd.mqd->border);
+                            pthread_mutex_destroy(&cmd.mqd->qlock);
                             
                             NDRX_FREE(cmd.mqd);
-#if 0
-                            pthread_mutex_lock(cmd.del_lock);
-                            
-                            /* ??? signal back that we are done */
-                            pthread_cond_signal (cmd.del_cond);
-                            
-                            pthread_mutex_unlock(cmd.del_lock);
-                            
-                            
-                            NDRX_LOG(log_debug, "After cond_signal");
-#endif
+
                             if (EXSUCCEED!=ret)
                             {
                                 goto out;

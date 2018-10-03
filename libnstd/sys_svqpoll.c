@@ -235,6 +235,10 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
     {
         svcnm = adminsvc;
         mq = mq_exits;
+        
+        /* TODO: At this point we shall create a server command monitoring
+         * thread!!!
+         */
     }
     else if (ATMI_SRV_REPLY_Q==idx)
     {
