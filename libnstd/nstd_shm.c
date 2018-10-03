@@ -158,10 +158,7 @@ out:
      */
     if (EXSUCCEED!=ret && EXFAIL!=shm->fd)
     {
-        if (shm_unlink(shm->path) != 0) {
-            NDRX_LOG(log_error, "Failed to unlink [%s]: %s",
-                            shm->path, strerror(errno));
-        }
+        ndrx_shm_remove(shm);
     }
 
     NDRX_LOG(log_debug, "return %d", ret);
@@ -220,6 +217,51 @@ out:
     return ret;
 }
 
-/* vim: set ts=4 sw=4 et smartindent: */
+/**
+ * Close opened shared memory segment.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_shm_close(ndrx_shm_t *shm)
+{
+    int ret=EXSUCCEED;
+
+    if (shm->fd > 2)
+    {
+        ret = close(shm->fd);
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Failed to close shm [%s]: %d - %s",
+                        errno, strerror(errno));
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "cannot close shm [%s] as fd is %d",
+                    shm->path, shm->fd);
+        ret=EXFAIL;
+        goto out;
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Remove/unlink shared memory resource
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_shm_remove(ndrx_shm_t *shm)
+{
+    int ret=EXSUCCEED;
+    
+    if (EXSUCCEED!=shm_unlink(shm->path))
+    {
+        NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
+                        shm->path, strerror(errno));
+        ret = EXFAIL;
+    }
+    
+    return ret;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

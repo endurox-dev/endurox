@@ -68,7 +68,7 @@
  */
 expublic inline void ndrx_epoll_sys_init(void)
 {
-	return;
+    return;
 }
 
 /**
@@ -76,7 +76,7 @@ expublic inline void ndrx_epoll_sys_init(void)
  */
 expublic inline void ndrx_epoll_sys_uninit(void)
 {
-	return;
+    return;
 }
 
 /**

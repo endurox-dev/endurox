@@ -429,6 +429,9 @@ int main_uninit(void)
 
     /* close & unlink message queue */
     cmd_close_queue();
+    
+    /* terminate polling sub-system */
+    ndrx_epoll_down();
 
     /* Remove pid file */
     ndrxd_unlink_pid_file(EXTRUE);

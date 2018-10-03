@@ -52,6 +52,7 @@
 #include <atmi_shm.h>
 #include <userlog.h>
 #include <sys_unix.h>
+#include <sys_svq.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -60,6 +61,51 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Remove any pending calls to request address.
+ * Basically we construct here mqd_t and let common function to flush the calls.
+ * The common function doesn't do any lockings, thus this approach is fine.
+ * @param qid queue id
+ * @param qstr queue string
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int flush_rqaddr(int qid, char *qstr)
+{
+    int ret = EXSUCCEED;
+    mqd_t mqd = NULL;
+    int err;
+    
+    mqd = NDRX_CALLOC(1, sizeof(struct ndrx_svq_info));
+    
+    if (NULL==mqd)
+    {
+        err = errno;
+        
+        NDRX_LOG(log_error, "Failed to malloc %d bytes", 
+                (int)sizeof(struct ndrx_svq_info));
+        userlog("Failed to malloc %d bytes", 
+                (int)sizeof(struct ndrx_svq_info));
+        EXFAIL_OUT(ret);
+    }
+    
+    mqd->qid = qid;
+    NDRX_STRCPY_SAFE(mqd->qstr, qstr);
+    
+    /* lets flush the queue now. */
+    if (EXSUCCEED!=remove_service_q(NULL, EXFAIL, mqd, qstr))
+    {
+        NDRX_LOG(log_error, "Failed to flush [%s]/%d", qstr, qid);
+        EXFAIL_OUT(ret);
+    }
+out:
+    
+    if (NULL!=mqd)
+    {
+        NDRX_FREE(mqd);
+    }
+    return ret;
+}
 
 /**
  * System V sanity checks.
@@ -152,7 +198,7 @@ expublic int do_sanity_check_sysv(void)
              * mqd_t and pass it to remove_service_q for message zapping.
              */
             if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, 
-                    IPC_RMID, G_app_config->rqaddrttl))
+                    IPC_RMID, G_app_config->rqaddrttl, flush_rqaddr))
             {
                 NDRX_LOG(log_error, "Failed to unlink qid %d", svq[pos_3].qid);
                 EXFAIL_OUT(ret);

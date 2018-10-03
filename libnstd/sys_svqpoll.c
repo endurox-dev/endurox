@@ -99,6 +99,19 @@ exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Remove all resources used by polling sub-system or queuing
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_epoll_down(void)
+{
+    int ret = EXSUCCEED;
+    
+    ret=ndrx_svqshm_down();
+out:
+    return ret;
+}
+
+/**
  * Return main poller resource id, installed into SHM
  * @return 
  */
@@ -410,7 +423,8 @@ expublic inline int ndrx_epoll_create(int size)
     }
     
     /* Set RQADDR flag for the queue */    
-    if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, M_mainq->qid, IPC_SET, NDRX_SVQ_MAP_RQADDR))
+    if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, M_mainq->qid, IPC_SET, 
+            NDRX_SVQ_MAP_RQADDR, NULL))
     {
         NDRX_LOG(log_error, "Failed to mark qid %d as request address type", 
                 M_mainq->qid);

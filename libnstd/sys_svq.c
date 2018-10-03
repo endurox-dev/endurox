@@ -512,7 +512,7 @@ expublic int ndrx_svq_unlink(const char *pathname)
     /* TODO: we might need a condition variable to be sent in command
      * so that back thread can update it once delete is fine...! */
     
-    return ndrx_svqshm_ctl((char *)pathname, EXFAIL, IPC_RMID, EXFAIL);    
+    return ndrx_svqshm_ctl((char *)pathname, EXFAIL, IPC_RMID, EXFAIL, NULL);
     
 }
 

@@ -53,6 +53,9 @@
 
 #include "cmd_processor.h"
 #include <bridge_int.h>
+#ifdef EX_USE_SYSVQ
+#include <sys/msg.h>
+#endif
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -77,7 +80,7 @@ expublic void pq_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_
     *send_size += (sizeof(command_reply_pq_t) - sizeof(command_reply_t));
 
     /* Copy data to reply structure */
-    strcpy(pq_info->service, svc->svc_nm);
+    NDRX_STRCPY_SAFE(pq_info->service, svc->svc_nm);
     memcpy(pq_info->pq_info, svc->pq_info, sizeof(svc->pq_info));
     
     NDRX_LOG(log_debug, "magic: %ld", pq_info->rply.magic);
@@ -168,9 +171,47 @@ expublic int pq_run_santiy(int run_hist)
                 cur->pq_info[i]=cur->pq_info[i-1];
             }
         }
-#ifndef EX_USE_POLL
+        
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+        /* For poll mode, we need a list of servers, so that we can 
+         * request stats for all servers:
+         */
+        curmsgs = 0;
+        
+        if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
+        {
+            for (i=0; i<len; i++)
+            {
+                /* TODO: For System V we could do a direct queue lookup by qid..! */
+#if defined(EX_USE_POLL)
+                snprintf(q, sizeof(q), NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
+                        cur->svc_nm, srvlist[i]);
+                
+                if (EXSUCCEED==ndrx_get_q_attr(q, &att))
+                {
+                    curmsgs+= att.mq_curmsgs;
+                }
+#else
+                /* System V approach for queues... quick & easy */
+                struct msqid_ds buf;
+                
+                if (EXSUCCEED==msgctl(srvlist[i], IPC_STAT, &buf))
+                {
+                    curmsgs+= buf.msg_qnum;
+                }
+                else
+                {
+                    NDRX_LOG(log_warn, "Failed to get qid %d stats: %s",
+                            srvlist[i], strerror(errno));
+                }
+#endif
+            }
+            
+            NDRX_FREE(srvlist);
+        }
+#else
         /* now write at POS 0, latest reading of service */
-        sprintf(q, NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
+        snprintf(q, sizeof(q), NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
         
         if (EXSUCCEED!=ndrx_get_q_attr(q, &att))
         {
@@ -180,30 +221,6 @@ expublic int pq_run_santiy(int run_hist)
         {
             curmsgs = att.mq_curmsgs;
         }
-#else
-        /* For poll mode, we need a list of servers, so that we can 
-         * request stats for all servers:
-         */
-        curmsgs = 0;
-        if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
-        {
-            for (i=0; i<len; i++)
-            {
-
-/* TODO: For System V we could do a direct queue lookup by qid..! */
-
-                sprintf(q, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
-                        cur->svc_nm, srvlist[i]);
-                
-                if (EXSUCCEED==ndrx_get_q_attr(q, &att))
-                {
-                    curmsgs+= att.mq_curmsgs;
-                }
-            }
-            
-            NDRX_FREE(srvlist);
-        }
-
 #endif
         
         cur->pq_info[1] = curmsgs;

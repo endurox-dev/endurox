@@ -119,6 +119,56 @@ exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Remove shared mem resources
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_svqshm_down(void)
+{
+    int ret = EXSUCCEED;
+    /* have some init first, so that we attach existing resources
+     * before killing them
+     */
+    INIT_ENTRY;
+    
+    if (EXSUCCEED!=ndrx_sem_close(&M_map_sem))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXFALSE))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_shm_close(&M_map_p2s))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_shm_remove(&M_map_p2s))
+    {
+        NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
+                        M_map_p2s, strerror(errno));
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_shm_close(&M_map_s2p))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_shm_remove(&M_map_s2p))
+    {
+        NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
+                        M_map_s2p, strerror(errno));
+        ret = EXFAIL;
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Initialize the shared memory blocks.
  * This assumes that basic environment is loaded. Because we need access to
  * max queues setting.
@@ -876,10 +926,14 @@ out:
  *          for this scenario we will pass "arg1" which will give number of
  *          seconds to be exceeded for unlink.
  *          if unlink is needed immediately, then use -1.
+ * @param[in] p_deletecb callback to delete event function. I.e. if not null
+ *  it is called when attempt to delete the queue is performed, so that
+ *  it would be possible to flush some messages.
  * @return EXFAIL, or Op related value. For example for IPC_RMID it will
  *  return number of instances left for the queue servers.
  */
-expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
+expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
+        int (*p_deletecb)(int qid, char *qstr))
 {
     int ret = EXSUCCEED;
     
@@ -1002,10 +1056,17 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1)
             
             if ( EXFAIL==arg1 || delta > arg1)
             {
-                NDRX_LOG(log_warn, "Unlinking queue: [%s]/%d (delta: %d, limit: %d)",
+                NDRX_LOG(log_info, "Unlinking queue: [%s]/%d (delta: %d, limit: %d)",
                         pm->qstr, pm->qid, delta, arg1);
                 
                 /* unlink the q and remove entries from shm */
+                
+                if (NULL!=p_deletecb && EXSUCCEED!=p_deletecb(pm->qid, pm->qstr))
+                {
+                    NDRX_LOG(log_error, "Delete callback failed for [%s]/%d",
+                            pm->qstr, pm->qid);
+                    EXFAIL_OUT(ret);
+                }
                 
                 if (EXSUCCEED!=msgctl(pm->qid, IPC_RMID, NULL))
                 {

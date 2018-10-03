@@ -57,6 +57,7 @@
 
 /**
  * Print header
+ * TODO: Print resources for poll srvid/ for System V qids
  * @return
  */
 exprivate void print_hdr(void)
