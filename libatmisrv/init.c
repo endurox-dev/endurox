@@ -408,7 +408,12 @@ expublic void atmisrv_un_initialize(int fork_uninit)
             {
                 NDRX_LOG(log_debug, "Removing queue: %s",
                                     G_server_conf.service_array[i]->listen_q);
-
+                /* TODO: For admin Q we need a special callback to poller...
+                 * to terminate it... So that System V could kill the thread
+                 * and we do not get some un-expected core dumps when 
+                 * unlink removes the queue descriptor, but thread may still
+                 * doing something with the mqd.
+                 */
                 if (EXSUCCEED!=ndrx_mq_unlink(G_server_conf.service_array[i]->listen_q))
                 {
                     NDRX_LOG(log_error, "Failed to remove queue %s: %d/%s",
