@@ -1132,7 +1132,7 @@ expublic ssize_t ndrx_getline(char **lineptr, size_t *n, FILE *stream)
     return getline(lineptr, n, stream);
     
 #else
-    if (NULL==fgets(*lineptr, *n, f))
+    if (NULL==fgets(*lineptr, *n, stream))
     {
         return EXFAIL;
     }
