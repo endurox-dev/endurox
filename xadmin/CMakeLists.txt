@@ -89,7 +89,12 @@ add_custom_command(
   OUTPUT gen_test_local.c
   COMMAND exembedfile scripts/gen_test_local.pscript gen_test_local
   DEPENDS scripts/gen_test_local.pscript)
-  
+
+
+if(DEFINED EX_USE_SYSVQ)
+    SET(SOURCE1 "cmd_svmaps.c")
+endif()
+
   
 # Exectuables
 add_executable (xadmin xadmin.c exec.c config.c
@@ -102,7 +107,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
                 gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
                 gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c
-                cmd_pubfdb.c)
+                cmd_pubfdb.c ${SOURCE1})
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
