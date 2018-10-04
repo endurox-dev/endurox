@@ -468,6 +468,7 @@ exprivate int ndrx_svq_mqd_hash_delfull(mqd_t mqd)
     {
         EXFAIL_OUT(ret);
     }
+    
     ndrx_svq_mqd_hash_del(mqd);
     
 out:
@@ -722,8 +723,6 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
 out:
     return ret;        
 }
-
-
 
 /**
  * Wakup signal handling
@@ -1043,17 +1042,6 @@ expublic int ndrx_svq_event_init(void)
                 strerror(err));
         EXFAIL_OUT(ret);
     }
-#if 0
-    /* leave as blocked... */
-    if (EXFAIL==fcntl(M_mon.evpipe[WRITE], F_SETFL, 
-                fcntl(M_mon.evpipe[WRITE], F_GETFL) | O_NONBLOCK))
-    {
-        err = errno;
-        NDRX_LOG(log_error, "fcntl WRITE pipe set O_NONBLOCK failed: %s",
-                strerror(err));
-        EXFAIL_OUT(ret);
-    }
-#endif
 
     M_mon.nrfds = 1; /* initially only pipe wait */
     if (NULL==(M_mon.fdtab = NDRX_CALLOC(M_mon.nrfds, sizeof(struct pollfd))))

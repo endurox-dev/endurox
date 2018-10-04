@@ -240,5 +240,9 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *r
 extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
         int qid, int *pos, int *have_value);
 
+extern NDRX_API int ndrx_svqadmin_init(mqd_t adminq);
+extern NDRX_API int ndrx_svqadmin_deinit(void);
+
 #endif
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -235,9 +235,17 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
         svcnm = adminsvc;
         mq = mq_exits;
         
-        /* TODO: At this point we shall create a server command monitoring
+        /*
+         * At this point we shall create a server command monitoring
          * thread!!!
          */
+        if (EXSUCCEED!=ndrx_svqadmin_init(M_mainq))
+        {
+            NDRX_LOG(log_error, "Failed to init admin queue");
+            userlog("Failed to init admin queue");
+            EXFAIL_OUT(ret);
+        }
+        
     }
     else if (ATMI_SRV_REPLY_Q==idx)
     {
