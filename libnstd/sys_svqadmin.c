@@ -60,8 +60,50 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate mqd_t M_adminq = (mqd_t)EXFAIL;
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Perform init on Admin queue
+ * @param adminq admin queue already open
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_svqadmin_init(mqd_t *adminq)
+{
+    
+}
 
+/**
+ * Run the admin queue. How about messages, we shall allocate them
+ * as they will be free'd by the main thread, not?
+ * @param arg
+ * @return 
+ */
+exprivate void * ndrx_svqadmin_run(void* arg)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to disable thread cancel: %s", strerror(ret));
+        userlog("Failed to disable thread cancel: %s", strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* TODO: Wait for message to arrive
+     * and post to main thread if have any..
+     */
+out:
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "Admin thread failed! Abort as cannot "
+                "guarantee application stability!");
+        userlog("Admin thread failed! Abort as cannot "
+                "guarantee application stability!");
+        abort();
+    }
+    return NULL;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

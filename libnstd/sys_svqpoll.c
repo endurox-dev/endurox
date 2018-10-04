@@ -534,6 +534,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     *buf_len = ev->datalen;
                     memcpy(buf, ev->data, *buf_len);
                     
+                    /* free up the event block? already done at exit... */
+                    
                     /* Lookup admin Queue ID */
                     if (NULL==(svc=ndrx_epoll_getsvc(NDRX_SVC_ADMIN)))
                     {
