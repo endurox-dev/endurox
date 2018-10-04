@@ -43,7 +43,7 @@
 #include <time.h>
 #include <atmi.h>
 #include <nstopwatch.h>
-
+#include <nstd_shm.h>
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
@@ -223,8 +223,12 @@ extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
 extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */
-extern NDRX_API int ndrx_svqshm_init(void);
+extern NDRX_API int ndrx_svqshm_init(int attach_only);
+extern NDRX_API int ndrx_svqshm_attach(void);
 extern NDRX_API int ndrx_svqshm_down(void);
+extern NDRX_API void ndrx_svqshm_detach(void);
+extern NDRX_API int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p, 
+        ndrx_sem_t **map_sem, int *queuesmax);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,

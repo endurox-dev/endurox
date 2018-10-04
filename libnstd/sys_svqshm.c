@@ -67,7 +67,7 @@ if (!ndrx_G_svqshm_init) \
         \
         if (!ndrx_G_svqshm_init)\
         {\
-            ret = ndrx_svqshm_init();\
+            ret = ndrx_svqshm_init(EXFALSE);\
         }\
         \
         MUTEX_UNLOCK_V(ndrx_G_svqshm_init_lock);\
@@ -168,9 +168,11 @@ out:
  * Initialize the shared memory blocks.
  * This assumes that basic environment is loaded. Because we need access to
  * max queues setting.
+ * @param[in] attach_only attach only, do not output resources and do not start
+ *  AUX thread
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svqshm_init(void)
+expublic int ndrx_svqshm_init(int attach_only)
 {
     int ret = EXSUCCEED;
     char *tmp;
@@ -245,14 +247,32 @@ expublic int ndrx_svqshm_init(void)
     M_map_s2p.size = sizeof(ndrx_svq_map_t)*M_queuesmax;
     
     
-    if (EXSUCCEED!=ndrx_shm_open(&M_map_p2s, EXTRUE))
+    if (attach_only)
+    {
+        if (EXSUCCEED!=ndrx_shm_attach(&M_map_p2s))
+        {
+            NDRX_LOG(log_error, "Failed to oattach shm [%s] - System V Queues cannot work",
+                        M_map_p2s.path);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (EXSUCCEED!=ndrx_shm_open(&M_map_p2s, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open shm [%s] - System V Queues cannot work",
                     M_map_p2s.path);
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=ndrx_shm_open(&M_map_s2p, EXTRUE))
+    if (attach_only)
+    {
+        if (EXSUCCEED!=ndrx_shm_attach(&M_map_s2p))
+        {
+            NDRX_LOG(log_error, "Failed to attach shm [%s] - System V Queues cannot work",
+                        M_map_s2p.path);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (EXSUCCEED!=ndrx_shm_open(&M_map_s2p, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open shm [%s] - System V Queues cannot work",
                     M_map_s2p.path);
@@ -282,7 +302,16 @@ expublic int ndrx_svqshm_init(void)
             M_map_sem.key, M_readersmax);
     
     /* OK, either create or attach... */
-    if (EXSUCCEED!=ndrxd_sem_open(&M_map_sem, EXTRUE))
+    if (attach_only)
+    {
+        if (EXSUCCEED!=ndrx_sem_attach(&M_map_sem))
+        {
+            NDRX_LOG(log_error, "Failed to attach semaphore for System V queue "
+                    "map shared mem");
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (EXSUCCEED!=ndrx_sem_open(&M_map_sem, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open semaphore for System V queue "
                 "map shared mem");
@@ -291,10 +320,8 @@ expublic int ndrx_svqshm_init(void)
         EXFAIL_OUT(ret);
     }
     
-    
     /* init the support thread */
-    
-    if (EXSUCCEED!=ndrx_svq_event_init())
+    if (!attach_only && EXSUCCEED!=ndrx_svq_event_init())
     {
         NDRX_LOG(log_error, "Failed to init System V queue monitoring thread!");
         userlog("Failed to init System V queue monitoring thread!");
@@ -304,6 +331,68 @@ expublic int ndrx_svqshm_init(void)
     ndrx_G_svqshm_init = EXTRUE;
 out:
     return ret;
+}
+
+/**
+ * This attempts to attach to System V resources, does not spawn AUX threads.
+ * If you plan to run some other queue ops, then needs to close the shm
+ * and let standard init to step in
+ * @return EXFAIL - failed, EXSUCCEED - attached to already existing resources
+ *  EXTRUE - attached only.
+ */
+expublic int ndrx_svqshm_attach(void)
+{
+    int ret = EXSUCCEED;
+    
+    if (ndrx_G_svqshm_init)
+    {
+        NDRX_LOG(log_debug, "Already System V resources open");
+        goto out;
+    }
+    
+    if (EXSUCCEED!=ndrx_svqshm_init(EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to attach to System V resources");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Attached to shm/sem OK");
+    
+    ret = EXTRUE;
+    
+out:
+    return ret;
+}
+
+/**
+ * Detach (with attach only was done) from System V resources
+ */
+expublic void ndrx_svqshm_detach(void)
+{
+    ndrx_shm_close(&M_map_p2s);
+    ndrx_shm_close(&M_map_s2p);
+    ndrx_sem_close(&M_map_sem);
+    
+    ndrx_G_svqshm_init = EXFALSE;
+}
+
+/**
+ * Get System V shared resources
+ * @param map_p2s Posix to System V mapping table
+ * @param map_s2p System V to Posix mapping table
+ * @param map_sem Semaphore locks
+ * @return EXFALSE - not attached to SHM, EXTRUE - attached to shm
+ */
+expublic int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p, 
+        ndrx_sem_t **map_sem, int *queuesmax)
+{
+
+    *map_p2s = &M_map_p2s;
+    *map_s2p = &M_map_s2p;
+    *map_sem = &M_map_sem;
+    *queuesmax = M_queuesmax;
+    
+    return ndrx_G_svqshm_init;
 }
 
 /**

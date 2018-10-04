@@ -237,7 +237,7 @@ expublic int ndrx_sem_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
  * @param attach_on_exists if not EXFALSE, attach to sem if exists
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrxd_sem_open(ndrx_sem_t *sem, int attach_on_exists)
+expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
 {
     int ret=EXSUCCEED;
     int err;
@@ -337,7 +337,7 @@ expublic int ndrx_sem_is_attached(ndrx_sem_t *sem)
 
 /**
  * Attach to semaphore, semaphore must exist!
- * @return
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 {

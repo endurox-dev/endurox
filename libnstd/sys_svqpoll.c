@@ -291,7 +291,7 @@ expublic int ndrx_epoll_sys_init(void)
 {
     int ret = EXSUCCEED;
     /* boot the Auxiliary thread */
-    if (EXSUCCEED!=ndrx_svqshm_init())
+    if (EXSUCCEED!=ndrx_svqshm_init(EXFALSE))
     {
         NDRX_LOG(log_error, "Failed to init System V Aux thread/SHM");
         EXFAIL_OUT(ret);
@@ -315,7 +315,7 @@ expublic void ndrx_epoll_sys_uninit(void)
  */
 expublic char * ndrx_epoll_mode(void)
 {
-    static char *mode = "svpoll";
+    static char *mode = "SystemV";
     
     return mode;
 }

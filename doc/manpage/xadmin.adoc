@@ -2,16 +2,13 @@ XADMIN(8)
 ========
 :doctype: manpage
 
-
 NAME
 ----
 xadmin - Enduro/X Administration command line utility
 
-
 SYNOPSIS
 --------
 *xadmin* ['COMMAND'] ['OPTIONS']
-
 
 DESCRIPTION
 -----------
@@ -248,11 +245,22 @@ COMMANDS
     case if drop database is used, linked keygroup records are not processed. For
     other scenarios, linked records are processed according to the configuration.
 *cachedump*::
-	Alias for 'cd'.
+    Alias for 'cd'.
+*svmaps* [-p] [-s] [-a] [-i] [-w] ::
+    Command is available only for System V messaging sub-system. Command prints
+    the Queue ID (same ids from *ipcs* command) mappings to Posix queues used
+    by Enduro/X. *-p* parameter (which is enabled by default) prints the mapping
+    table from Posix Queue to System V. *-s* parameter uses reverse table by
+    printing System V mappings to Posix. *-a* enables to print all the entries
+    in the shared memory (there could be lots of lines printed. Totally set by
+    *NDRX_MSGQUEUESMAX* environment variable). *-i* (used by default) prints 
+    only the queues which currently are in use. *-w* prints mappings which
+    were in use, but currently are not in use. The *-i*, *-w* arguments can
+    be combined.
 
 CONFIGURATION
 -------------
-The following paramters from section *[@xadmin]* or *[@xadmin/<$NDRX_CCTAG>]*
+The following parameters from section *[@xadmin]* or *[@xadmin/<$NDRX_CCTAG>]*
 are used (if config file is present):
 
 *gen scripts*='PATH_TO_GENERATOR_SCRIPTS'::
