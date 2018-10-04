@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -146,12 +146,6 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
 
     NDRX_LOG(log_warn, "Got notification for pid:%d srvid:%d",
                 pm_status->srvinfo.pid, pm_status->srvinfo.srvid);
-    /*if (NDRXD_COM_START==context)
-    {
-        NDRX_LOG(log_warn, "In startup context, do nothing");
-    }
-    else
-    {*/
 
     /* Now check the pidhash... */
     pm_pid = pid_hash_get(G_process_model_pid_hash, pm_status->srvinfo.pid);
@@ -176,20 +170,21 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         }
         else
         {
-            pm_pid->p_pm->state=NDRXD_PM_EXIT; /* so that we do no try again to wake it up! */
+            /* so that we do no try again to wake it up! */
+            pm_pid->p_pm->state=NDRXD_PM_EXIT;
         }
-
-
+        
         NDRX_LOG(log_warn, "Removing resources allocated "
                             "for process [%s]", pm_pid->p_pm->binary_name);
-        /* Find .the pm_p & remove failed proces! */
+        
+        /* Find .the pm_p & remove failed process! */
 
-	/* TODO: If the PID if different one thant for srvid, then we remove this thing from
+	/* TODO: If the PID if different one than for srvid, then we remove 
+         * this thing from
          * pidhash only!!!! - Yeah right this must be fixed.
-     we had an incident in i2nc, when PID 9862 died, other was started, but we remove that other,
-     * not 9862, which died actually!!!
-     
-     */
+         * we had an incident in i2nc, when PID 9862 died, other was started, 
+         * but we remove that other, not 9862, which died actually!!!
+         */
         remove_startfail_process(get_pm_from_srvid(srvid), NULL, pm_pid);
 
         /* reset shared memory! */
@@ -201,9 +196,7 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
         NDRX_LOG(log_warn, "PID %d unknown to system!",
                                 pm_status->srvinfo.pid);
     }
-        /*
-    }
-*/
+    
     NDRX_LOG(log_warn, "cmd_notify returns with status %d", ret);
 
 out:

@@ -1,5 +1,5 @@
 /**
- * @brief Common shared memory routines for EnduroX.
+ * @brief Common shared memory routines for EnduroX. - ATMI level..
  *   Generally we do not use any global vars because this stuff should
  *   generic one.
  *   SHM Example see here:
@@ -15,22 +15,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -87,7 +87,7 @@ int M_init = EXFALSE;                 /* no init yet done */
  * @param ndrx_prefix
  * @return 
  */
-expublic int shm_init(char *q_prefix, int max_servers, int max_svcs)
+expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
 {
     memset(&G_srvinfo, 0, sizeof(G_srvinfo));
     memset(&G_svcinfo, 0, sizeof(G_svcinfo));
@@ -124,133 +124,38 @@ expublic int shm_init(char *q_prefix, int max_servers, int max_svcs)
 }
 
 /**
- * Close opened shared memory segment.
- * @return
- */
-exprivate int ndrxd_shm_close(ndrx_shm_t *shm)
-{
-    int ret=EXSUCCEED;
-
-    /**
-     * Library not initialized
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "ndrx shm library not initialized");
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (shm->fd > 2)
-    {
-        ret = close(shm->fd);
-        if (EXSUCCEED!=ret)
-        {
-            NDRX_LOG(log_error, "Failed to close shm [%s]: %d - %s",
-                        errno, strerror(errno));
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "cannot close shm [%s] as fd is %d",
-                    shm->path, shm->fd);
-        ret=EXFAIL;
-        goto out;
-    }
-
-out:
-    return ret;
-}
-
-/**
- * Open service info shared memory segment
- * @return
- */
-exprivate int ndrxd_shm_open(ndrx_shm_t *shm)
-{
-    int ret=EXSUCCEED;
-    char *fn = "ndrxd_shm_open";
-
-    NDRX_LOG(log_debug, "%s enter", fn);
-    /**
-     * Library not initialized
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "ndrx shm library not initialized");
-        ret=EXFAIL;
-        goto out;
-    }
-
-    /* creating the shared memory object --  shm_open() */
-    shm->fd = shm_open(shm->path, O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG);
-
-    if (shm->fd < 0) {
-        NDRX_LOG(log_error, "%s: Failed to create shm [%s]: %s",
-                            fn, shm->path, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (EXSUCCEED!=ftruncate(shm->fd, shm->size))
-    {
-        NDRX_LOG(log_error, "%s: Failed to set [%s] fd: %d to size %d bytes: %s",
-                            fn, shm->path, shm->fd, shm->size, strerror(errno));
-        ret=EXFAIL;
-        goto out;        
-    }
-
-    shm->mem = (char *)mmap(NULL, shm->size, 
-                        PROT_READ | PROT_WRITE, MAP_SHARED, shm->fd, 0);
-    if (MAP_FAILED==shm->mem)
-    {
-        NDRX_LOG(log_error, "%s: Failed to map memory for [%s] fd %d bytes %d: %s",
-                            fn, shm->path, shm->fd, shm->size, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-    /* Reset SHM */
-    memset(shm->mem, 0, shm->size);
-    NDRX_LOG(log_debug, "Shm: [%s] created", shm->path);
-    
-out:
-    /*
-     * Should close the SHM if failed to open.
-     */
-    if (EXSUCCEED!=ret && EXFAIL!=shm->fd)
-    {
-        if (shm_unlink(shm->path) != 0) {
-            NDRX_LOG(log_error, "%s: Failed to unlink [%s]: %s",
-                            fn, shm->path, strerror(errno));
-        }
-    }
-
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
-
-    return ret;
-}
-
-/**
  * Open shared memory
  * @return
  */
 expublic int ndrxd_shm_open_all(void)
 {
     int ret=EXSUCCEED;
+    
+    /**
+     * Library not initialized
+     */
+    if (!M_init)
+    {
+        NDRX_LOG(log_error, "ndrx shm library not initialized");
+        EXFAIL_OUT(ret);
+    }
 
-    if (EXSUCCEED!=ndrxd_shm_open(&G_srvinfo))
+    /* NOTE! shm might exist already, in that case attach
+     * it might be created by ndrxd
+     */
+    if (EXSUCCEED!=ndrx_shm_open(&G_srvinfo, EXTRUE))
     {
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=ndrxd_shm_open(&G_svcinfo))
+    if (EXSUCCEED!=ndrx_shm_open(&G_svcinfo, EXTRUE))
     {
         ret=EXFAIL;
         goto out;
     }
 
-    if (EXSUCCEED!=ndrxd_shm_open(&G_brinfo))
+    if (EXSUCCEED!=ndrx_shm_open(&G_brinfo, EXTRUE))
     {
         ret=EXFAIL;
         goto out;
@@ -268,14 +173,24 @@ expublic int ndrxd_shm_close_all(void)
 {
     int ret=EXSUCCEED;
 
-    ret=ndrxd_shm_close(&G_srvinfo);
-
-    if (EXFAIL==ndrxd_shm_close(&G_svcinfo))
+    /**
+     * Library not initialized
+     */
+    if (!M_init)
+    {
+        NDRX_LOG(log_error, "ndrx shm library not initialized");
         ret=EXFAIL;
-
-    if (EXFAIL==ndrxd_shm_close(&G_brinfo))
-        ret=EXFAIL;
+        goto out;
+    }
     
+    ret=ndrx_shm_close(&G_srvinfo);
+
+    if (EXFAIL==ndrx_shm_close(&G_svcinfo))
+        ret=EXFAIL;
+
+    if (EXFAIL==ndrx_shm_close(&G_brinfo))
+        ret=EXFAIL;
+out:
     return ret;
 }
 
@@ -286,106 +201,17 @@ expublic int ndrxd_shm_delete(void)
 {
     if (M_init)
     {
-        if (EXSUCCEED!=shm_unlink(G_srvinfo.path))
-        {
-            NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                                G_srvinfo.path, strerror(errno));
-        }
-        if (EXSUCCEED!=shm_unlink(G_svcinfo.path))
-        {
-            NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                                G_svcinfo.path, strerror(errno));
-        }
-        if (EXSUCCEED!=shm_unlink(G_brinfo.path))
-        {
-            NDRX_LOG(log_error, "Failed to remove: [%s]: %s",
-                                G_brinfo.path, strerror(errno));
-        }
+        ndrx_shm_remove(&G_srvinfo);
+        ndrx_shm_remove(&G_svcinfo);
+        ndrx_shm_remove(&G_brinfo);
     }
     else
     {
-            NDRX_LOG(log_error, "SHM library not initialized!");
-            return EXFAIL;
+        NDRX_LOG(log_error, "SHM library not initialized!");
+        return EXFAIL;
     }
 
     return EXSUCCEED;
-}
-
-/**
- * Returns true if currently attached to shm
- * WARNING: This assumes that fd 0 could never be used by shm!
- * @return TRUE/FALSE
- */
-expublic int ndrxd_shm_is_attached(ndrx_shm_t *shm)
-{
-    int ret=EXTRUE;
-    
-    if (shm->fd <=0 || shm->fd <=0)
-    {
-        ret=EXFALSE;
-    }
-
-    return ret;
-}
-
-/**
- * Attach to shared memory block
- * @return
- */
-expublic int ndrx_shm_attach(ndrx_shm_t *shm)
-{
-    int ret=EXSUCCEED;
-    char *fn = "ndrx_shm_attach";
-
-    NDRX_LOG(log_debug, "%s enter", fn);
-    /**
-     * Library not initialised
-     */
-    if (!M_init)
-    {
-        NDRX_LOG(log_error, "%s: ndrx shm library not initialised!", fn);
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (ndrxd_shm_is_attached(shm))
-    {
-        NDRX_LOG(log_debug, "%s: shm %s already attached", shm->path);
-        goto out;
-    }
-    
-    /* Attach to shared memory block */
-    shm->fd = shm_open(shm->path, O_RDWR, S_IRWXU | S_IRWXG);
-
-    if (shm->fd < 0) {
-        NDRX_LOG(log_error, "%s: Failed to attach shm [%s]: %s",
-                            fn, shm->path, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-    shm->mem = (char *)mmap(NULL, shm->size,
-                        PROT_READ | PROT_WRITE, MAP_SHARED, shm->fd, 0);
-    if (MAP_FAILED==shm->mem)
-    {
-        NDRX_LOG(log_error, "%s: Failed to map memory for [%s] fd %d bytes %d: %s",
-                            fn, shm->path, shm->fd, shm->size, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-    NDRX_LOG(log_debug, "Shm: [%s] attach", shm->path);
-
-out:
-    /*
-     * Should close the SHM if failed to open.
-     */
-    if (EXSUCCEED!=ret)
-    {
-        shm->fd=EXFAIL;
-    }
-
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
-    return ret;
 }
 
 /**
@@ -397,50 +223,39 @@ expublic int ndrx_shm_attach_all(int lev)
 {
    int ret=EXSUCCEED;
    
+   /**
+     * Library not initialised
+     */
+    if (!M_init)
+    {
+        NDRX_LOG(log_error, "ndrx shm library not initialised!");
+        EXFAIL_OUT(ret);
+    }
+   
    /* Attached to service shared mem */
-   if (lev & NDRX_SHM_LEV_SVC)
+   if (lev & NDRX_SHM_LEV_SVC &&
+           EXSUCCEED!=ndrx_shm_open(&G_svcinfo, EXTRUE))
    {
-       if (EXSUCCEED!=ndrx_shm_attach(&G_svcinfo))
-       {
-            ret=EXFAIL;
-            goto out;
-       }
+       EXFAIL_OUT(ret);
    }
    
    /* Attach to srv shared mem */
    if (lev & NDRX_SHM_LEV_SRV &&
-           EXSUCCEED!=ndrx_shm_attach(&G_srvinfo))
+           EXSUCCEED!=ndrx_shm_open(&G_srvinfo, EXTRUE))
    {
-       ret=EXFAIL;
-       goto out;
+       EXFAIL_OUT(ret);
    }
    
    
    /* Attach to srv shared mem */
    if (lev & NDRX_SHM_LEV_BR &&
-           EXSUCCEED!=ndrx_shm_attach(&G_brinfo))
+           EXSUCCEED!=ndrx_shm_open(&G_brinfo, EXTRUE))
    {
-       ret=EXFAIL;
-       goto out;
+       EXFAIL_OUT(ret);
    }
    
 out:
    return ret;
-}
-
-/**
- * Make key out of string. Gen
- */
-expublic unsigned int ndrx_hash_fn( void *k )
-{
-    unsigned int hash = 5381;
-    int c;
-    char *str = (char *)k;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-    return hash;
 }
 
 /**
@@ -462,13 +277,15 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     
     *is_bridge=EXFALSE;
     
-    /* Initially we stick to the local service */
+    /* Initialy we stick to the local service */
     sprintf(send_q, NDRX_SVC_QFMT, G_atmi_tls->G_atmi_conf.q_prefix, svc);
     
-    if (!ndrxd_shm_is_attached(&G_svcinfo))
+    if (!ndrx_shm_is_attached(&G_svcinfo))
     {
 #ifdef EX_USE_POLL
-        /* lookup first service in cache: */
+        /* lookup first service in cache: 
+         * probably not relevant any more as SHM is already open
+         */
         ret = ndrx_get_cached_svc_q(send_q);
 #endif
         goto out; /* do not fail, try locally */
@@ -608,7 +425,11 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         
         if (EXFAIL!=chosen_node)
         {
-#ifndef EX_USE_POLL /* only for epoll/fdpoll/kqueue(). For poll we do recursive call for service selection */
+/* 
+ * only for epoll/fdpoll/kqueue(). For poll we do recursive call for service selection 
+ * System V mode uses the same approach as for 
+ */
+#if defined(EX_USE_EPOLL) || defined(EX_USE_FDPOLL)
             sprintf(send_q, NDRX_SVC_QBRDIGE, 
                     G_atmi_tls->G_atmi_conf.q_prefix, chosen_node);
 #endif
@@ -621,11 +442,11 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
             ret=EXFAIL;
         }
     }
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     else
     {
-        short srvid;
-        short rrsrv;
+        int resid;
+        int resrr;
         
         /* ###################### CRITICAL SECTION ############################### */
         /* lock for round-robin... */
@@ -636,17 +457,17 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
             EXFAIL_OUT(ret);
         }
         
-        psvcinfo->rrsrv++;
+        psvcinfo->resrr++;
         
-        if (psvcinfo->rrsrv < 0 || /* just in case... */
-                psvcinfo->rrsrv >= (psvcinfo->srvs - psvcinfo->csrvs))
+        if (psvcinfo->resrr < 0 || /* just in case... */
+                psvcinfo->resrr >= psvcinfo->resnr)
         {
-            psvcinfo->rrsrv = 0;
+            psvcinfo->resrr = 0;
         }
         
-        rrsrv = psvcinfo->rrsrv;
+        resrr = psvcinfo->resrr;
         
-        srvid = psvcinfo->srvids[rrsrv];
+        resid = psvcinfo->resids[resrr];
         
         if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
         {
@@ -655,17 +476,34 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         }
         /* ###################### CRITICAL SECTION, END ########################## */
         
-        sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_tls->G_atmi_conf.q_prefix, svc, srvid);
+        /* OK we got an resource id, lets translate it to actual queue */
+        
+        /* lets have an actual callback to backend for providing the queue
+         * for service
+         */
+        
+        sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_tls->G_atmi_conf.q_prefix, 
+                svc, resid);
+        
+        if (EXSUCCEED!=ndrx_epoll_service_translate(send_q, 
+                G_atmi_tls->G_atmi_conf.q_prefix, svc, resid))
+        {
+            NDRX_LOG(log_error, "Failed to translate svc [%s] resid=%d to queue", 
+                    svc, resid);
+            userlog("Failed to translate svc [%s] resid=%d to queue", 
+                    svc, resid);
+            EXFAIL_OUT(ret);
+        }
         
         NDRX_LOG(log_debug, "Choosing local service by round-robin mode, "
-                "rr: %d, srvid: %d, q: [%s]", rrsrv, srvid, send_q);
+                "rr: %d, srvid: %d, q: [%s]", resrr, resid, send_q);
     }
     
     if (*is_bridge && 0!=strncmp(svc, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN))
     {
         char tmpsvc[MAXTIDENT+1];
         
-        sprintf(tmpsvc, NDRX_SVC_BRIDGE, chosen_node);
+        snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, chosen_node);
         
         NDRX_LOG(log_debug, "Recursive service lookup: [%s] ret %d", tmpsvc, ret);
         ret = ndrx_shm_get_svc(tmpsvc, send_q, is_bridge, NULL);
@@ -698,7 +536,7 @@ expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
     
     *len = 0;
     
-    if (!ndrxd_shm_is_attached(&G_svcinfo))
+    if (!ndrx_shm_is_attached(&G_svcinfo))
     {
         ret=EXFAIL;
         goto out; /* do not fail, try locally */
@@ -720,8 +558,7 @@ expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
     psvcinfo = SHM_SVCINFO_INDEX(svcinfo, pos);
             
     
-    
-    local_count = psvcinfo->srvs - psvcinfo->csrvs;
+    local_count = psvcinfo->resnr;
     
     if (local_count<=0)
     {
@@ -736,7 +573,7 @@ expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
         EXFAIL_OUT(ret);
     }
     
-    memcpy(*srvlist, psvcinfo->srvids, sizeof(short) *local_count);
+    memcpy(*srvlist, psvcinfo->resids, sizeof(short) *local_count);
     *len = local_count;
     
 out:
@@ -774,7 +611,7 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
     int try = ndrx_hash_fn(svc) % G_max_svcs;
     int start = try;
     int overflow = EXFALSE;
-    int interations = 0;
+    int iterations = 0;
     
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
 
@@ -828,15 +665,15 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
             overflow=EXTRUE;
             NDRX_LOG(log_debug, "Overflow reached for search of [%s]", svc);
         }
-        interations++;
+        iterations++;
         
         NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
     }
     
     *pos=try;
     NDRX_LOG(log_debug, "ndrx_shm_get_svc [%s] - result: %d, "
-                            "interations: %d, pos: %d, install: %d",
-                             svc, ret, interations, *pos, 
+                            "iterations: %d, pos: %d, install: %d",
+                             svc, ret, iterations, *pos, 
                              (doing_install?*p_install_cmd:_NDRX_SVCINSTALL_NOT));
     return ret;
 }
@@ -851,7 +688,7 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_shm_install_svc_br(char *svc, int flags, 
-                int is_bridge, int nodeid, int count, char mode, short srvid)
+                int is_bridge, int nodeid, int count, char mode, int resid)
 {
     int ret=EXSUCCEED;
     int pos = EXFAIL;
@@ -861,7 +698,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     int is_new;
     int shm_install_cmd = _NDRX_SVCINSTALL_NOT;
     
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
@@ -882,33 +719,39 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                 (0==SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs && count>0))
         {
 
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
             
-            tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->srvs - 
-                    SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
+            tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
                     
             if (!is_bridge && (tot_local_srvs+1 > G_atmi_env.maxsvcsrvs))
             {
                 NDRX_LOG(log_error, "Shared mem for svc [%s] is full - "
-                        "max space for servers per service: %d! Currently: srvs: %d csrvs:%d",
+                        "max space for servers per service: %d! Currently: "
+                        "srvs: %d csrvs:%d resnr:%hd",
                         svc, G_atmi_env.maxsvcsrvs, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->srvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs,
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->resnr
                         );
                 userlog("Shared mem for svc [%s] is full - "
-                        "max space for servers per service: %d! Currently: srvs: %d csrvs:%d",
+                        "max space for servers per service: %d! Currently: "
+                        "srvs: %d csrvs:%d resnr:%hd",
                         svc, G_atmi_env.maxsvcsrvs, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->srvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs,
+                        SHM_SVCINFO_INDEX(svcinfo, pos)->resnr);
                 EXFAIL_OUT(ret);
             }
             else if (!is_bridge)
             {
                 /* Add it to the array... */
                 /* so we use the next number */
-                NDRX_LOG(log_debug, "installed srvid %hd at %d", srvid, tot_local_srvs);
-                SHM_SVCINFO_INDEX(svcinfo, pos)->srvids[tot_local_srvs] = srvid;
+                NDRX_LOG(log_debug, "installed resid/srvid %d at %d", 
+                        resid, tot_local_srvs);
+                SHM_SVCINFO_INDEX(svcinfo, pos)->resids[tot_local_srvs] = resid;
             }
+            
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
 #endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
@@ -940,7 +783,9 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                         SHM_SVCINFO_INDEX(svcinfo, pos)->service, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->flags);
             
-            
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
+#endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
             if (is_bridge)
@@ -949,8 +794,8 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
             }
             else
             {
-                NDRX_LOG(log_debug, "installed srvid %hd at 0", srvid);
-                SHM_SVCINFO_INDEX(svcinfo, pos)->srvids[0] = srvid;
+                NDRX_LOG(log_debug, "installed resid/srvid %d at 0", resid);
+                SHM_SVCINFO_INDEX(svcinfo, pos)->resids[0] = resid;
             }
         }
     }
@@ -1044,7 +889,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     }
 out:
 
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
@@ -1059,13 +904,14 @@ lock_fail:
 /**
  * Wrapper for bridged version
  * !!! Must be run from semaphore locked area!
- * @param svc
- * @param flags
- * @return 
+ * @param svc service name to install to shared memory
+ * @param flags install flags
+ * @param resid fo POLL mode it is server id, for SYSV mode it is QID
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_shm_install_svc(char *svc, int flags, short srvid)
+expublic int ndrx_shm_install_svc(char *svc, int flags, int resid)
 {
-    return ndrx_shm_install_svc_br(svc, flags, EXFALSE, 0, 0, 0, srvid);
+    return ndrx_shm_install_svc_br(svc, flags, EXFALSE, 0, 0, 0, resid);
 }
 
 /**
@@ -1088,7 +934,7 @@ expublic int ndrx_shm_install_svc(char *svc, int flags, short srvid)
  * @param flags
  * @return SUCCEED/FAIL
  */
-expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
+expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
 {
     int pos = EXFAIL;
     int i;
@@ -1096,7 +942,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
     int tot_local_srvs;
     int lpos;
     
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
@@ -1114,7 +960,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
                                 svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
                                 SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
 
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
 
             tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->srvs - 
                     SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
@@ -1122,7 +968,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
             lpos = EXFAIL;
             for (i=0; i<tot_local_srvs; i++)
             {
-                if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvids[i]==srvid)
+                if (SHM_SVCINFO_INDEX(svcinfo, pos)->resids[i]==resid)
                 {
                     lpos = i;
                     break;
@@ -1139,11 +985,13 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
                 else
                 {
                     NDRX_LOG(log_debug, "Reducing the local server array...");
-                    memmove(&(SHM_SVCINFO_INDEX(svcinfo, pos)->srvids[lpos]),
-                            &(SHM_SVCINFO_INDEX(svcinfo, pos)->srvids[lpos+1]),
+                    memmove(&(SHM_SVCINFO_INDEX(svcinfo, pos)->resids[lpos]),
+                            &(SHM_SVCINFO_INDEX(svcinfo, pos)->resids[lpos+1]),
                             tot_local_srvs - lpos -1);
                 }
             }
+            
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr--;
 #endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
         }
@@ -1164,6 +1012,11 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
             SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
             SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs = 0;
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs = 0;
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr = 0;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resrr = 0;
+            SHM_SVCINFO_INDEX(svcinfo, pos)->resrr = 0;
+#endif
             
             *last=EXTRUE;
         }
@@ -1174,58 +1027,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, short srvid)
             *last=EXTRUE;
     }
     
-#ifdef EX_USE_POLL
-    if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
-    {
-        NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
-        return;
-    }
-#endif
-    
-}
-
-
-expublic void ndrxd_shm_shutdown_svc(char *svc, int *last)
-{
-    int pos = EXFAIL;
-    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
-
-#ifdef EX_USE_POLL
-    if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
-    {
-        NDRX_LOG(log_error, "Failed to sem-lock service: %s", svc);
-        return;
-    }
-#endif
-    
-    *last=EXFALSE;
-    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
-    {
-        if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
-        {
-            NDRX_LOG(log_debug, "Decreasing count of servers for "
-                                "[%s] from %d to %d",
-                                svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
-                    SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
-        }
-        else
-        {
-            NDRX_LOG(log_debug, "Removing service from shared mem "
-                                "[%s]",
-                                svc);
-            /* Clean up memory block. */
-            memset(SHM_SVCINFO_INDEX(svcinfo, pos), 0, SHM_SVCINFO_SIZEOF);
-            *last=EXTRUE;
-        }
-    }
-    else
-    {
-            NDRX_LOG(log_debug, "Service [%s] not present in shm");
-            *last=EXTRUE;
-    }
-    
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
     {
         NDRX_LOG(log_error, "Failed to sem-unlock service: %s", svc);
@@ -1248,6 +1050,8 @@ expublic void ndrxd_shm_resetsrv(int srvid)
 
 /**
  * Get handler for server
+ * Well event if we run with out ndrxd, we shall open the shared memory
+ * blocks. This will make streamline testing in different modes, Posix and System V
  * @param srvid
  * @return
  */
@@ -1257,7 +1061,7 @@ expublic shm_srvinfo_t* ndrxd_shm_getsrv(int srvid)
     int pos=EXFAIL;
     shm_srvinfo_t *srvinfo = (shm_srvinfo_t *) G_srvinfo.mem;
 
-    if (!ndrxd_shm_is_attached(&G_srvinfo))
+    if (!ndrx_shm_is_attached(&G_srvinfo))
     {
         ret=NULL;
         goto out;
@@ -1289,7 +1093,7 @@ expublic int ndrx_shm_birdge_getnodesconnected(char *outputbuf)
     int i;
     int pos=0;
     
-    if (!ndrxd_shm_is_attached(&G_brinfo))
+    if (!ndrx_shm_is_attached(&G_brinfo))
     {
         EXFAIL_OUT(ret);
     }
@@ -1317,7 +1121,7 @@ expublic int ndrx_shm_birdge_set_flags(int nodeid, int flags, int op_end)
     int ret=EXSUCCEED;
     int *brinfo = (int *) G_brinfo.mem;
 
-    if (!ndrxd_shm_is_attached(&G_brinfo))
+    if (!ndrx_shm_is_attached(&G_brinfo))
     {
         ret=EXFAIL;
         goto out;
@@ -1372,7 +1176,7 @@ expublic int ndrx_shm_bridge_is_connected(int nodeid)
     int *brinfo = (int *) G_brinfo.mem;
     int ret=EXFALSE;
     
-    if (!ndrxd_shm_is_attached(&G_brinfo))
+    if (!ndrx_shm_is_attached(&G_brinfo))
     {
         goto out;
     }

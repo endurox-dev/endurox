@@ -9,22 +9,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -41,6 +41,7 @@ extern "C" {
 #include <ndrx_config.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -99,9 +100,30 @@ struct ndrx_growlist
     void *mem;
 };
 
+
+/**
+ * List of posix queues
+ */
+typedef struct string_list string_list_t;
+struct string_list
+{
+    char *qname;
+    string_list_t *next;
+};
+
+
+typedef struct string_hash string_hash_t;
+struct string_hash
+{
+    char *str;
+    EX_hash_handle hh;
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
 
 extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size);
 extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);
@@ -109,6 +131,9 @@ extern NDRX_API int ndrx_growlist_append(ndrx_growlist_t *list, void *item);
 extern NDRX_API void ndrx_growlist_free(ndrx_growlist_t *list);
 
 extern NDRX_API void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec);
+extern NDRX_API long ndrx_timespec_get_delta(struct timespec *stop, struct timespec *start);
+
+extern NDRX_API long ndrx_ceil(long x, long y);
 extern NDRX_API unsigned long long ndrx_utc_tstamp(void);
 extern NDRX_API unsigned long long ndrx_utc_tstamp_micro(void);
 extern NDRX_API char * ndrx_get_strtstamp_from_sec(int slot, long ts);

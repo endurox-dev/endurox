@@ -9,22 +9,22 @@
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
 ## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## GPL or Mavimax's license for commercial use.
+## AGPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
-## GPL license:
+## AGPL license:
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
-## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 3 of the License, or (at your option) any later
-## version.
+## the terms of the GNU Affero General Public License, version 3 as published
+## by the Free Software Foundation;
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
 ## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+## for more details.
 ##
-## You should have received a copy of the GNU General Public License along with
-## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1307 USA
+## You should have received a copy of the GNU Affero General Public License along 
+## with this program; if not, write to the Free Software Foundation, Inc., 
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -57,14 +57,33 @@ xadmin down -y
 
 RET=$?
 
+# run queue tests...
+./atmiclt0_mqsv &
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start atmiclt0_mqsv"
+    RET=-3
+fi
+sleep 1
+
+# run off the client
+./atmiclt0_mqcl
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start atmiclt0_mqcl"
+    RET=-4
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
 	RET=-2
 fi
 
-killall atmisv0 2>/dev/null
-killall atmiclt0 2>/dev/null
+xadmin killall atmisv0 2>/dev/null
+xadmin killall atmiclt0 2>/dev/null
+# kill both client & server
+xadmin killall atmiclt0_ 2>/dev/null
 
 popd 2>/dev/null
 

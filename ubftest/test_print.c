@@ -7,22 +7,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -385,6 +385,69 @@ Ensure(test_bextread_fldnm)
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
+
+/**
+ * Return the buffer line
+ * @param buffer buffer to put in the result. Note that is should go line by line
+ * @param bufsz buffer size
+ * @param dataptr1 user data ptr
+ * @return number of bytes written to buffer
+ */
+exprivate long bextreadcb_readf(char *buffer, long bufsz, void *dataptr1)
+{
+    int *idx = (int *)dataptr1;
+    
+    char *data_buffers[]= {
+        "T_SHORT_FLD\t88\n",
+        "T_SHORT_FLD\t-1\n",
+        "T_SHORT_2_FLD\t0\n",
+        "T_SHORT_2_FLD\t212\n",
+        "T_LONG_FLD\t-1021\n",
+        "T_LONG_FLD\t-2\n",
+        "T_LONG_FLD\t0\n",
+        "T_LONG_FLD\t0\n", /* <<< error line */
+        NULL
+    };
+    
+    if (NULL!=data_buffers[*idx])
+    {
+        NDRX_STRNCPY_SAFE(buffer, data_buffers[*idx], bufsz);
+        
+        (*idx)++;
+        return strlen(buffer)+1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/**
+ * Test extread with callbacks
+ */
+Ensure(test_bextreadcb)
+{
+    char fb[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    int idx = 0;
+    char *tree;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Bextreadcb(p_ub, bextreadcb_readf, (void *)&idx), EXSUCCEED);
+    
+    /* test with boolean expression */
+    tree = Bboolco("T_SHORT_FLD == 88 && T_SHORT_FLD[1] == -1 && T_SHORT_2_FLD==0 "
+            "&& T_SHORT_2_FLD[1]==212 && T_LONG_FLD==-1021 && T_LONG_FLD[1]==-2 "
+            "&& T_LONG_FLD[2]==0 && T_LONG_FLD[3]==0");
+    
+    assert_not_equal(tree, NULL);
+    
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
+    
+    Btreefree(tree);
+
+}
+
 /**
  * Testing extread for errors
  */
@@ -869,7 +932,7 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_plus);
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
-    
+    add_test(suite, test_bextreadcb);
 
 
     return suite;

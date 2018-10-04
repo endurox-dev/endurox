@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -71,7 +71,7 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     *send_size += (sizeof(command_reply_shm_psvc_t) - sizeof(command_reply_t));
 
     /* Copy data to reply structure */
-    strcpy(shm_psvc_info->service, p_shm->service);
+    NDRX_STRCPY_SAFE(shm_psvc_info->service, p_shm->service);
     shm_psvc_info->flags = p_shm->flags;
     shm_psvc_info->slot = params->param2;
     shm_psvc_info->srvs = p_shm->srvs;
@@ -90,7 +90,7 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     {
         i = CONF_NDRX_MAX_SRVIDS_XADMIN;
     }
-    memcpy(shm_psvc_info->srvids, p_shm->srvids, i*2);
+    memcpy(shm_psvc_info->srvids, p_shm->resids, i*2);
 #endif
     
     /*
@@ -134,7 +134,7 @@ exprivate void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, in
 }
 
 /**
- * Call to psc command
+ * Call to psc command - print services
  * @param args
  * @return
  */
@@ -147,7 +147,11 @@ expublic int cmd_shm_psvc (command_call_t * call, char *data, size_t len, int co
     /* We assume shm is OK! */
     for (i=0; i<G_max_svcs; i++)
     {
-        if (EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
+        /* have some test on servs count so that we avoid any core dumps
+         *  for un-init memory access of service string due to race conditions
+         */
+        if (SHM_SVCINFO_INDEX(svcinfo, i)->srvs>0 && 
+                EXEOS!=SHM_SVCINFO_INDEX(svcinfo, i)->service[0])
         {
             shm_psvc_progress(call, SHM_SVCINFO_INDEX(svcinfo, i), i);
         }
