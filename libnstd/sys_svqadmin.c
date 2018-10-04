@@ -62,6 +62,7 @@
 /*---------------------------Statics------------------------------------*/
 
 exprivate mqd_t M_adminq = (mqd_t)EXFAIL;
+exprivate char *M_buf = NULL; /* Allocated event buffer */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -75,6 +76,18 @@ expublic int ndrx_svqadmin_init(mqd_t *adminq)
 }
 
 /**
+ * Free up resource
+ * @param arg
+ */
+exprivate void cleanup_handler(void *arg)
+{
+    if (NULL!=arg)
+    {
+        NDRX_FREE(arg);
+    }
+}
+
+/**
  * Run the admin queue. How about messages, we shall allocate them
  * as they will be free'd by the main thread, not?
  * @param arg
@@ -83,6 +96,8 @@ expublic int ndrx_svqadmin_init(mqd_t *adminq)
 exprivate void * ndrx_svqadmin_run(void* arg)
 {
     int ret = EXSUCCEED;
+    int qid;
+    char *buf = NULL;
     
     if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
     {
@@ -94,6 +109,36 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     /* TODO: Wait for message to arrive
      * and post to main thread if have any..
      */
+    
+    while (1)
+    {
+        qid = M_adminq->qid;
+     
+        /* Allocate the message size */
+        buf = NDRX_MALLOC(XXX);
+        
+        pthread_cleanup_push(cleanup_handler, buf);
+        
+        if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)))
+        {
+            NDRX_LOG(log_error, "Failed to enable thread cancel: %s", strerror(ret));
+            userlog("Failed to enable thread cancel: %s", strerror(ret));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* read the message, well we could read it directly from MQD 
+         * then we do not need any locks..
+         */
+        
+        if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
+        {
+            NDRX_LOG(log_error, "Failed to disable thread cancel: %s", strerror(ret));
+            userlog("Failed to disable thread cancel: %s", strerror(ret));
+            EXFAIL_OUT(ret);
+        } 
+        
+        pthread_cleanup_pop(1);
+    }
 out:
     if (EXSUCCEED!=ret)
     {
