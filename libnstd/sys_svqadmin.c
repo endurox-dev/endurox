@@ -54,6 +54,8 @@
 #include <ndebug.h>
 #include <sys_svq.h>
 
+#include "atmi_int.h"
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -98,6 +100,8 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int ret = EXSUCCEED;
     int qid;
     char *buf = NULL;
+    int sz, len;
+    int err;
     
     if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
     {
@@ -115,7 +119,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         qid = M_adminq->qid;
      
         /* Allocate the message size */
-        buf = NDRX_MALLOC(XXX);
+        NDRX_SYSBUF_MALLOC_WERR_OUT(buf, &sz, ret);
         
         pthread_cleanup_push(cleanup_handler, buf);
         
@@ -129,6 +133,8 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         /* read the message, well we could read it directly from MQD 
          * then we do not need any locks..
          */
+        len = msgrcv(qid, buf, sz, 0, 0);
+        err = errno;
         
         if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
         {
@@ -136,6 +142,30 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             userlog("Failed to disable thread cancel: %s", strerror(ret));
             EXFAIL_OUT(ret);
         } 
+        
+        if (EXFAIL==len)
+        {
+            /* check the error code, if queue removed, then no problem just
+             * terminate and that's it
+             */
+            if (EIDRM==err)
+            {
+                NDRX_LOG(log_debug, "Admin queue removed, terminating thread...");
+                goto out;
+            }
+            else
+            {
+                NDRX_LOG(log_debug, "Failed to recieve message on admin q: %s",
+                        strerror(err));
+                userlog("Failed to recieve message on admin q: %s",
+                        strerror(err));
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            /* TODO: push admin queue event... */
+        }
         
         pthread_cleanup_pop(1);
     }
@@ -148,6 +178,12 @@ out:
                 "guarantee application stability!");
         abort();
     }
+
+    if (NULL!=buf)
+    {
+        NDRX_FREE(buf);
+    }
+
     return NULL;
 }
 
