@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -57,11 +57,12 @@
 
 /**
  * Print header
+ * TODO: Print resources for poll srvid/ for System V qids
  * @return
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Slot   Service Name Nsrv Flags CSrvs TClst CMAX CNODES\n");
+    fprintf(stderr, "SLOT   SERVICE NAME NSRV FLAGS CSRVS TCLST CMAX CNODES\n");
     fprintf(stderr, "------ ------------ ---- ----- ----- ----- ---- --------------------------------\n");
 }
 
@@ -81,7 +82,7 @@ exprivate char *gen_clstr_map(command_reply_shm_psvc_t * reply)
     {
         if (reply->cnodes[i].srvs < 10)
         {
-            sprintf(tmp, "%d", reply->cnodes[i].srvs);
+            snprintf(tmp, sizeof(tmp), "%d", reply->cnodes[i].srvs);
         }
         else
         {
@@ -102,7 +103,6 @@ exprivate char *gen_clstr_map(command_reply_shm_psvc_t * reply)
 expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     int i;
-    char binary[9+1];
     char svc[12+1];
     
     if (NDRXD_CALL_TYPE_PM_SHM_PSVC==reply->msg_type)
@@ -124,7 +124,7 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
         /* This is poll mode, provide info about individual serves: */
         if (shm_psvc_info->srvids[0])
         {
-            fprintf(stdout, "\t\t\t\t\t\tSRVIDS: ");
+            fprintf(stdout, "\t\t\t\t\t\tRES: ");
             for (i=0; i<shm_psvc_info->srvs-shm_psvc_info->csrvs; i++)
             {
                 fprintf(stdout, "%hd ", shm_psvc_info->srvids[i]);

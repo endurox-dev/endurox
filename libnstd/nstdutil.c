@@ -9,22 +9,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -239,7 +239,6 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
     return ret;
 }
 
-
 /**
  * Return date/time local 
  * @param p_date - ptr to store long date, format YYYYMMDD
@@ -260,6 +259,34 @@ expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
     *p_usec = timeval.tv_usec;
 
     return;
+}
+
+/**
+ * Calculate delta milliseconds for two time specs.
+ * @param stop period stop
+ * @param start period start
+ * @return different in milliseconds between stop and start.
+ */
+expublic long ndrx_timespec_get_delta(struct timespec *stop, struct timespec *start)
+{
+    long ret;
+    
+    /* calculate delta */
+    ret = (stop->tv_sec - start->tv_sec)*1000 /* Convert to milliseconds */ +
+               (stop->tv_nsec - start->tv_nsec)/1000000; /* Convert to milliseconds */
+
+    return ret;
+}
+
+/**
+ * Provide ceil division x by y for positive numbers
+ * @param x number to divide
+ * @param y divider
+ * @return ceiling of division
+ */
+expublic long ndrx_ceil(long x, long y)
+{
+    return (x + y - 1) / y;
 }
 
 /**

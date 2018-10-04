@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -57,6 +57,13 @@ extern "C" {
  * List of internal queue errors
  */
 #define GEN_QUEUE_ERR_NO_DATA   -2
+
+    
+/* Special queue logical numbers used by atmi server */
+#define ATMI_SRV_ADMIN_Q            0           /**< This is admin queue */
+#define ATMI_SRV_REPLY_Q            1           /**< This is reply queue */
+#define ATMI_SRV_Q_ADJUST           2           /**< Adjustment for Q nr */
+#define ATMI_SRV_SVC                3           /**< Normal service Q    */
 
 /*
  * List of ATMI internal protocol commands
@@ -120,25 +127,25 @@ extern "C" {
 #define TPRECOVERSVC        "TPRECOVER"     /* Recovery administrative service */
     
 /* Special flags for tpcallex */
-#define TPCALL_EVPOST           0x0001          /* Event posting    */
-#define TPCALL_BRCALL           0x0002          /* Bridge call      */
-#define TPCALL_BROADCAST        0x0004          /* Broadcast call   */
+#define TPCALL_EVPOST               0x0001 /**< Event posting                 */
+#define TPCALL_BRCALL               0x0002 /**< Bridge call                   */
+#define TPCALL_BROADCAST            0x0004 /**< Broadcast call                */
 
 /* XA TM reason codes */
 /* Lower reason includes XA error code. */    
-#define NDRX_XA_ERSN_BASE            2000
-#define NDRX_XA_ERSN_NONE            0      /* No reason specified for error */
-#define NDRX_XA_ERSN_LOGFAIL         2001   /* Log failed                    */
-#define NDRX_XA_ERSN_INVPARAM        2002   /* Invalid parameters sent to TMS*/
-#define NDRX_XA_ERSN_NOTX            2003   /* Transaction not logged        */
-#define NDRX_XA_ERSN_PREPFAIL        2004   /* One of the nodes failed to prepare */
-#define NDRX_XA_ERSN_RMLOGFAIL       2005   /* New RM logging failed         */
-#define NDRX_XA_ERSN_RMCOMMITFAIL    2006   /* Some resource manager failed to commit */
-#define NDRX_XA_ERSN_UBFERR          2007   /* UBF Error                     */
-#define NDRX_XA_ERSN_RMERR           2008   /* Resource Manager Failed       */
+#define NDRX_XA_ERSN_BASE           2000
+#define NDRX_XA_ERSN_NONE           0      /**< No reason specified for error */
+#define NDRX_XA_ERSN_LOGFAIL        2001   /**< Log failed                    */
+#define NDRX_XA_ERSN_INVPARAM       2002   /**< Invalid parameters sent to TMS*/
+#define NDRX_XA_ERSN_NOTX           2003   /**< Transaction not logged        */
+#define NDRX_XA_ERSN_PREPFAIL       2004   /**< One of the nodes failed to prepare */
+#define NDRX_XA_ERSN_RMLOGFAIL      2005   /**< New RM logging failed         */
+#define NDRX_XA_ERSN_RMCOMMITFAIL   2006   /**< Some resource manager failed to commit */
+#define NDRX_XA_ERSN_UBFERR         2007   /**< UBF Error                     */
+#define NDRX_XA_ERSN_RMERR          2008   /**< Resource Manager Failed       */
 
     
-#define NDRX_XID_FORMAT_ID  0x6194f7a1L         /* Enduro/X XID format id*/
+#define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
@@ -226,7 +233,7 @@ extern "C" {
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
     fprintf(stderr, "Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
-    fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
+    fprintf(stderr, "AGPLv3 or Mavimax license for commercial use.\n\n");
     
     
     
@@ -421,6 +428,9 @@ typedef struct  atmi_lib_env atmi_lib_env_t;
 struct tp_command_generic
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -436,6 +446,9 @@ typedef struct tp_command_generic tp_command_generic_t;
 struct tp_command_call
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -444,7 +457,7 @@ struct tp_command_call
     short buffer_type_id;
     char name[XATMI_SERVICE_NAME_LENGTH+1];
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    /* Zero terminated string... (might contain special symbols)*/
+    /** Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
@@ -456,7 +469,7 @@ struct tp_command_call
     int user3;  /* user field 3, request */
     long user4; /* user field 4, request */
     int clttout; /* client process timeout setting */
-    /* Extended size for storing cache updates in format
+    /** Extended size for storing cache updates in format
      * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * where @CA -> Cache Add, @CD -> Cache delete, 002 -> source node id
@@ -466,9 +479,9 @@ struct tp_command_call
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
-    /* message sequence for conversational over multithreaded bridges*/
+    /** message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
-    /* call timer so that we do not operate with timed-out calls. */
+    /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
     /* <XA section begin> */
@@ -490,44 +503,46 @@ typedef struct tp_command_call tp_command_call_t;
 struct tp_notif_call
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
     /* </standard comms header> */
     
     /* See clientid_t, same fields */
-    char destclient[NDRX_MAX_ID_SIZE+1];      /* Destination client ID */
+    char destclient[NDRX_MAX_ID_SIZE+1];      /**< Destination client ID */
     
     /* fields from boradcast */
-    char nodeid[MAXTIDENT*2]; /* In case of using regex */
-    int nodeid_isnull;        /* Is NULL */
-    char usrname[MAXTIDENT*2]; /* In case of using regex */
-    int usrname_isnull;        /* Is NULL */
-    char cltname[MAXTIDENT*2]; /* In case of using regex */
-    int cltname_isnull;        /* Is NULL */
+    char nodeid[MAXTIDENT*2];  /**< In case of using regex */
+    int nodeid_isnull;         /**< Is NULL */
+    char usrname[MAXTIDENT*2]; /**< In case of using regex */
+    int usrname_isnull;        /**< Is NULL */
+    char cltname[MAXTIDENT*2]; /**< In case of using regex */
+    int cltname_isnull;        /**< Is NULL */
     
     short buffer_type_id;
-    /* See clientid_t, same fields, end */
+    /** See clientid_t, same fields, end */
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    /* Zero terminated string... (might contain special symbols)*/
+    /** Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
-    long sysflags; /* internal flags of the call */
+    char my_id[NDRX_MAX_ID_SIZE+1]; /**< ID of caller */
+    long sysflags; /**< internal flags of the call */
     int cd;
-    int rval; /* on request -> userfield1 */
-    long rcode; /* should be preset on reply only, on request -> userfield2 */
+    int rval; /**< on request -> userfield1 */
+    long rcode; /**< should be preset on reply only, on request -> userfield2 */
     long flags; 
-    time_t timestamp; /* provide time stamp of the call */
+    time_t timestamp; /**< provide time stamp of the call */
     unsigned short callseq;
-    /* message sequence for conversational over multithreaded bridges*/
+    /** message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
-    /* call timer so that we do not operate with timed-out calls. */
+    /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
-    /* Have a ptr to auto-buffer: */
-    buffer_obj_t * autobuf;
+    buffer_obj_t * autobuf; /**< Have a ptr to auto-buffer: */
     
-    long destnodeid; /* Dest node to which we are sending the msg */
+    long destnodeid; /**< Dest node to which we are sending the msg */
     
     long data_len;
     char data[0];
@@ -545,9 +560,9 @@ struct tpconv_buffer
 {
     int msgseq;
     char *buf;
-    size_t size;        /* Allocated size.... */
+    size_t size;        /**< Allocated size....                 */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;  /**< makes this structure hashable      */
 };
 
 
@@ -570,7 +585,8 @@ struct tp_conversation_control
     time_t timestamp;
     unsigned short callseq; /* Call/conv sequence number */
     
-    /* message sequence number (from our side to their) 
+    /** 
+     * message sequence number (from our side to their) 
      * Basically this is message number we are sending them
      * The other side will follow the incremental order of the messages.
      */

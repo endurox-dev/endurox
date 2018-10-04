@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -52,16 +52,17 @@ extern "C" {
 #define PARSE_SECTION_SERVERS     1
 
 
-#define COMMAND_WAIT_DEFAULT        2 /* seconds */
+#define COMMAND_WAIT_DEFAULT        2 /**< seconds */
 
-#define RESPAWN_CNTR_MAX           1000
-#define DEF_SRV_STARTWAIT          30 /* Default process startup time        */
-#define DEF_SRV_STOPWAIT           30 /* Default process shutdown time       */
+#define RESPAWN_CNTR_MAX         1000
+#define DEF_SRV_STARTWAIT          30 /**< Default process startup time        */
+#define DEF_SRV_STOPWAIT           30 /**< Default process shutdown time       */
+#define DEF_RQADDRTTL              10 /**< Dflt request address time to live   */
     
-#define SANITY_CNT_IDLE            -1 /* The PING is not issued, do not count*/
-#define SANITY_CNT_START           0  /* Reset value of cycle counter        */
+#define SANITY_CNT_IDLE            -1 /**< The PING is not issued, do not count*/
+#define SANITY_CNT_START           0  /**< Reset value of cycle counter        */
     
-#define MAX_SERVICE_LIST           1024    /* MAX list of exportsvcs */
+#define MAX_SERVICE_LIST         1024 /**< MAX list of exportsvcs */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -71,42 +72,43 @@ extern "C" {
 typedef struct conf_server_node conf_server_node_t;
 struct conf_server_node
 {
-    char binary_name[MAXTIDENT+1]; /* Name of the binary */
+    char binary_name[MAXTIDENT+1]; /**< Name of the binary */
     /** Real binary name */
     char binary_name_real[MAXTIDENT+1];
-    char fullpath[PATH_MAX+1]; /* full path to executable, optional */
+    char fullpath[PATH_MAX+1]; /**< full path to executable, optional */
     /** Command line format (optional) */
     char cmdline[PATH_MAX+1];
     int srvid;
     int min;
     int max;
     int autokill;
-    char env[PATH_MAX]; /* Environment override file */
+    char env[PATH_MAX]; /**< Environment override file */
     
-    int start_max;  /* Max process startup time, if no server info in time
+    int start_max;  /**< Max process startup time, if no server info in time
                      * process will be killed. */
-    int pingtime;   /* ping servers every X seconds (divided by sanity counter) */
-    int ping_max;   /* max time in which server must respond, otherwise it will be killed */
-    int end_max;    /* Max time in which process should exit */
-    int killtime;   /* periodical time for signal sending */
-    /* list of services to export (for bridge, special). comma seperated list */
+    int pingtime;   /**< ping servers every X seconds (divided by sanity counter) */
+    int ping_max;   /**< max time in which server must respond, otherwise it will be killed */
+    int end_max;    /**< Max time in which process should exit */
+    int killtime;   /**< periodical time for signal sending */
+    /** list of services to export (for bridge, special). comma separated list */
     char exportsvcs[MAX_SERVICE_LIST]; 
-    /* list of services that should not be exported over the bridge */
+    /** list of services that should not be exported over the bridge */
     char blacklistsvcs[MAX_SERVICE_LIST]; 
     int sleep_after;
-    char SYSOPT[PATH_MAX/2 - 8 ]; /* take off -i xxxxx PID */
+    char SYSOPT[PATH_MAX/2 - 8 ]; /**< take off -i xxxxx PID */
     char APPOPT[PATH_MAX/2];
     char clopt[PATH_MAX];
+    char rqaddr[MAXTIDENT+1];	/**< Request address */
     
-    int srvstartwait; /* Time to wait for server startup (after report in progress) */
-    int srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
+    int srvstartwait; /**< Time to wait for server startup (after report in progress) */
+    int srvstopwait; /**< Time to wait for server shutdown (after report in progress)*/
     
     /* common-config tag (loaded into NDRX_CCTAG before start) */
     char cctag[NDRX_CCTAG_MAX+1]; 
-    int isprotected; /* is binary protected... */
+    int isprotected; /**< is binary protected... */
     
-    int reloadonchange; /* Reload binary on change - this max the monitoring of the bin */
-    int respawn;	/* Should we ndrxd respawn process automatically when dead */
+    int reloadonchange; /**< Reload binary on change - this max the monitoring of the bin */
+    int respawn;	/**< Should we ndrxd respawn process automatically when dead */
     
     /* have entries for environment */
     
@@ -116,8 +118,9 @@ struct conf_server_node
     /** individual environment variables */
     ndrx_env_list_t *envlist;
     
-    /* Linked list */
+    /** Linked list, prev el*/
     conf_server_node_t *prev;
+    /** Linked list, next el*/
     conf_server_node_t *next;
 };
 
@@ -144,35 +147,35 @@ struct pm_node
     /** Real binary name (if cmdline is used for startup config) */
     char binary_name_real[MAXTIDENT+1];
     int srvid;
-    char clopt[PATH_MAX - 128]; /* take off -i xxxxx PID and some key       */
-    long state;             /* process state code (current)                 */
-    long reqstate;          /* Requested state                              */
-    short autostart;        /* Start automatically after "start" cmd        */
-    int exec_seq_try;       /* Sequental start try                          */
-    long rspstwatch;        /* Sanity cycle counter for (start/ping/stop)   */
-    long pingstwatch;       /* Ping stopwatch  (measures stanity cycles)    */
-    long pingtimer;    /* Timer which counts ping intervals                 */
-    ndrx_stopwatch_t pingroundtrip; /* Ping  roundtrip tipe                 */
-    int pingseq;            /* Last ping sequence sent                      */
+    char clopt[PATH_MAX - 128]; /**< take off -i xxxxx PID and some key       */
+    long state;             /**< process state code (current)                 */
+    long reqstate;          /**< Requested state                              */
+    short autostart;        /**< Start automatically after "start" cmd        */
+    int exec_seq_try;       /**< Sequental start try                          */
+    long rspstwatch;        /**< Sanity cycle counter for (start/ping/stop)   */
+    long pingstwatch;       /**< Ping stopwatch  (measures stanity cycles)    */
+    long pingtimer;    /**< Timer which counts ping intervals                 */
+    ndrx_stopwatch_t pingroundtrip; /* Ping  roundtrip tipe                   */
+    int pingseq;            /**< Last ping sequence sent                      */
             
-    int num_term_sigs;      /* Number of times to send term sig, before -9  */
-    long last_sig;          /* Time when signal was sent                    */
-    int autokill;           /* Kill the process if not started in time      */
+    int num_term_sigs;      /**< Number of times to send term sig, before -9  */
+    long last_sig;          /**< Time when signal was sent                    */
+    int autokill;           /**< Kill the process if not started in time      */
     /**
      * process kill is requested (long startup, 
      * no ping, long shutdown)                      
      */
-    int killreq;            
+    int killreq;     
     /** process PID parent/root */
     pid_t pid;
     /** server process pid */
     pid_t svpid;
-    long state_changed;     /* Timer for state changed                      */
-    pm_node_svc_t   *svcs;  /* list of services                             */
-    int flags;              /* Flags sent by server info                    */
-    short   nodeid;         /* other node id, if this is bridge             */
-    int reloadonchange_cksum; /* Checksum code of the binary                */
-    char binary_path[PATH_MAX+1]; /* Path were binary lives...              */
+    long state_changed;     /**< Timer for state changed                      */
+    pm_node_svc_t   *svcs;  /**< list of services                             */
+    int flags;              /**< Flags sent by server info                    */
+    short   nodeid;         /**< other node id, if this is bridge             */
+    int reloadonchange_cksum; /**< Checksum code of the binary                */
+    char binary_path[PATH_MAX+1]; /**< Path were binary lives...              */
     
     /* Linked list */
     pm_node_t *prev;
@@ -200,44 +203,58 @@ typedef struct
     conf_server_node_t *monitor_config;
     int default_min;
     int default_max;
-    int default_autokill; /* Kill process which have not started in time */
-    char default_env[PATH_MAX]; /* Default env file (might be empty!)*/
+    int default_autokill; /**< Kill process which have not started in time */
+    char default_env[PATH_MAX]; /**< Default env file (might be empty!)*/
     
     /* Reloadable system configuration */
-    int sanity; /* Sanity checking */
+    int sanity; /**< Sanity checking */
    
-    int restart_min; /* restart min wait sec */
-    int restart_step; /* restart stepping, sec */
-    int restart_max; /* restart max wait time, sec */
+    int restart_min; /**< restart min wait sec */
+    int restart_step; /**< restart stepping, sec */
+    int restart_max; /**< restart max wait time, sec */
     
-    int default_start_max;  /* Max process startup time, if no server info in time
+    int default_start_max;  /**< Max process startup time, if no server info in time
                              * process will be killed. */
-    int default_pingtime;   /* ping servers every X seconds (divided by sanity counter) */
-    int default_ping_max;   /* max time in which server must respond, otherwise it will be killed */
-    int default_end_max;    /* Max time in which process should exit */
-    int default_killtime;   /* periodical time for signal sending */
-    /* Special config param for bridge services - which services to export */
+    int default_pingtime;   /**< ping servers every X seconds (divided by sanity counter) */
+    int default_ping_max;   /**< max time in which server must respond, 
+                             * otherwise it will be killed */
+    int default_end_max;    /**< Max time in which process should exit */
+    int default_killtime;   /**< periodical time for signal sending */
+    /** Special config param for bridge services - which services to export */
     char default_exportsvcs[MAX_SERVICE_LIST];
-    /* List of services that should not be exported over the bridge */
+    /** List of services that should not be exported over the bridge */
     char default_blacklistsvcs[MAX_SERVICE_LIST];
-    /* common-config tag (loaded into NDRX_CCTAG before start) */
+    /** common-config tag (loaded into NDRX_CCTAG before start) */
     char default_cctag[NDRX_CCTAG_MAX+1]; 
     
-    int default_reloadonchange; /* Reload binary on change */
+    int default_reloadonchange; /**< Reload binary on change */
     
-    int qrmdelay;   /* queue remove delay (i.e. remove only after this time + check shm on removal!) */
+    int qrmdelay;   /**< queue remove delay (i.e. remove only after this time + check shm on removal!) */
     
-    int restart_to_check;    /* Seconds after re-attach sanity & spawn checks will be done */  
+    int restart_to_check;    /**< Seconds after re-attach sanity & spawn checks will be done */  
     
-    int checkpm;             /* Time for sending info to self about process exit. */
-    int brrefresh;           /* Bridge refresh timer */
+    int checkpm;             /**< Time for sending info to self about process exit. */
+    int brrefresh;           /**< Bridge refresh timer */
     
-    int default_srvstartwait; /* Time to wait for server startup (after report in progress) */
-    int default_srvstopwait; /* Time to wait for server shutdown (after report in progress)*/
+    int default_srvstartwait; /**< Time to wait for server startup (after report in progress) */
+    int default_srvstopwait; /**< Time to wait for server shutdown (after report in progress)*/
     
-    int gather_pq_stats;	/* if set to 1, then queue stats will be gathered */
-    int default_isprotected;	/* if set to 1, then xadmin stop will not shutdown the process (only with -c) */
-    int default_respawn;	/* Set to 1 if auto respawn is required for process */
+    int gather_pq_stats;	/**< if set to 1, then queue stats will be gathered */
+    int default_isprotected;	/**< if set to 1, then xadmin stop will not 
+                                     * shutdown the process (only with -c) */
+    int default_respawn;	/**< Set to 1 if auto respawn is required for process */
+    
+    /**
+     * Request address time to live in seconds, 
+     * used by System V to ulink queues for which no services
+     * are present. This is case when service attaches or opens RQADDR
+     * but process is not yet installed the information in service shared
+     * memory. Thus ndrxd might want to unlink this, thus to stop doing that
+     * we need a timer, for which ctime of system v queue goes older than 
+     * ttl (in which time the xatmi server must be installed it into shm).
+     */
+    int rqaddrttl;
+    char default_rqaddr[MAXTIDENT+1];	/**< Default request address */
     
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;
@@ -302,7 +319,7 @@ extern int get_cmdq_attr(struct mq_attr *attr);
 /* pmodel */
 extern int remove_startfail_process(pm_node_t *p_pm, char *svcnm, pm_pidhash_t *pm_pid);
 extern pm_node_t * get_pm_from_srvid(int srvid);
-extern int remove_service_q(char *svc, short srvid);
+extern int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr);
 extern char * get_srv_admin_q(pm_node_t * p_pm);
 
 /* Configuration */
@@ -368,6 +385,10 @@ extern int roc_is_reload_in_progress(unsigned sanity_cycle);
 extern int roc_check_binary(char *binary_path, unsigned sanity_cycle);
 extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
 extern int self_sreload(pm_node_t *p_pm);
+
+#ifdef EX_USE_SYSVQ
+extern int do_sanity_check_sysv(void);
+#endif
 
 #ifdef	__cplusplus
 }

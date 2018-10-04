@@ -22,6 +22,7 @@ SYNOPSIS
         <restart_max>MAX_RESTART_TIME</restart_max>
         <restart_to_check>NDRXD_RESTART_TO_CHECK</restart_to_check>
         <gather_pq_stats>NDRXD_GATHER_PQ_STATS</gather_pq_stats>
+        <rqaddrttl>RQADDRTTL</rqaddrttl>
     </appconfig>
     <defaults>
         <min>MIN_SERVERS_DEFAULT</min>
@@ -40,6 +41,7 @@ SYNOPSIS
         <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
         <protected>PROTECTED_SERVER_DEFAULT</protected>
         <reloadonchange>RELOAD_ON_CHANGE_DEFAULT</reloadonchange>
+        <rqaddr>RQADDR_DEFAULT</rqaddr>
         <envs group="SVGRP_ENV_GROUP_NAME">
             <env name="SVGRP_ENV_VARIABLE_NAME">SVGRP_ENV_VARIABLE_VALUE</env>
             <env name="SVGRP_ENV_VARIABLE_NAME_1" unset="SVGRP_ENV_UNSET" />
@@ -75,6 +77,7 @@ SYNOPSIS
             <protected>PROTECTED_SERVER</protected>
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
+            <rqaddr>RQADDR</rqaddr>
             <envs>
                 <usegroup>SVGRP_ENV_GROUP_NAME</usegroup>
                 ...
@@ -193,6 +196,23 @@ DEBUG CONFIGURATION FILE SYNTAX
     Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
     stats for service queues. In future this might be used for automatic service starting
     and stopping.
+*RQADDRTTL*::
+    Used only when operating System V queues mode. Due to common queue for
+    multiple services / basically all service queues are shared request addresses,
+    the only zapping approach when there are no servers on queues, is to check
+    that in service shared memory there are no linked request address queues,
+    and at time perform unlink of the request address queue. But here we have a
+    problem. The XATMI server might just started up, opened the RQADDR queue,
+    but did not yet managed to install record in service shared memory. Thus
+    'ndrxd' will unlink the RQADDR. To avoid this issue, with TTL slight delay
+    is introduced, after which queue is unlinked. Basically when queue is open
+    it's change time is updated. And if current time minus change time is
+    less than *RQADDRTTL*, then queue is not unlinked (in this time server will
+    be able to add record to service shared memory). Also with this comes a fact
+    that there must be no server processes with out any service. For those
+    request address queue will be unlinked.
+    The value is in seconds. Checks are performed with *SANITY_SECONDS* intervals.
+    Default value is *10* seconds.
 *MIN_SERVERS_DEFAULT*::
     Default minimum number of copies of the server which needs to be started automatically.
     This can be overridden by 'MIN_SERVERS_SRV' per server.
@@ -258,7 +278,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
 *PROTECTED_SERVER_DEFAULT*::
     Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    'xadmin stop -c' parameter (complete shutdown). Still you can run the 'sreload' and 
     stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
     won't work on these because '-c' is not supposed to be used by restart.
     The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
@@ -271,17 +291,33 @@ DEBUG CONFIGURATION FILE SYNTAX
     cycle. This is recommended to be used *only* for development purposes. And
     must not be used on production servers! 
     This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+*RQADDR_DEFAULT*::
+    Request address (common service queue) used in System V mode. For other
+    modes each service have it's own queue, but due to limitations of the System V
+    queues, for each XATMI server process have it's own queue (built as process
+    /exe name and service id) or processes can share the queue by having this
+    request address, thus getting a one queue multiple servers mechanism for
+    message dispatching. Also all servers attached on the same request address
+    must advertise all the services from all servers attached on the same
+    request address. If some server will miss a service, it might receive request
+    for particular service, the error will be logged and message will be dropped,
+    thus caller will get a timeout. If different request addresses are serving
+    the same service, then request will be load balanced in round-robin mode.
+
+    This can be overridden by 'RQADDR' on per server basis. Request address
+    cannot start with '@' symbol. The max length of the request address is *30*
+    chars.
 *SECONDS_TO_SLEEP_AFTER_SRV_START*::
     Number of seconds to wait for next item to start after the server is launched.
     This is useful in cases when for example we start bridge server, let it for some
     seconds to connect to other node, then continue with other service startup.
 *SERVER_BINARY_NAME*::
     ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
+    This name cannot contain special symbols like path separator '/'
     and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
+    queue separator combined with binary names.
 *RESPAWN_SRV*::
-    Do the automatica process respawning if process is died for some reason. The default
+    Do the automatic process re-spawning if process is died for some reason. The default
     value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
     then sanity checks will not automatically re-boot the process.
 *SERVER_ID*::
@@ -330,7 +366,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     Enduro/X server specific list of services that must not be exported. This list is only for 
     *tpbridge* servers. Blacklist have higher priority over the Export list.
 *ATMI_SERVER_FULL_PATH*::
-    This is full path of the XATMI server binary. At the porcess startup this overrides
+    This is full path of the XATMI server binary. At the process startup this overrides
     the server binary name at *SERVER_BINARY_NAME*. *ATMI_SERVER_FULL_PATH* is used only
     for process startup. This is intended for testing, if server wrapper scripts
     needs to be started. But as the *ndrxd* will do the sanity checks against the process
@@ -406,7 +442,7 @@ VARIABLE SUBSTITUTION
 
 Several parameters in the ndrxconfig.xml file are processed via substitution 
 engine. Engine processes puts the environment variables or special functions
-in the placeholders. Placeholder is defined as ${ENV_VARIABLE} for environment
+in the place-holders. Placeholder is defined as ${ENV_VARIABLE} for environment
 variables and ${FUNC=[PARAMETER]} for functions. The value can be escaped with 
 \${some_value}.
 
