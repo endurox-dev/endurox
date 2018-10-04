@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -164,7 +164,7 @@ extern "C" {
 #define NDRXD_CTX_STOP              2    /* Stop context/command is running  */
 
 /* Max number of services can be advertised by servers! */
-#define MAX_SVC_PER_SVR     50
+#define MAX_SVC_PER_SVR             50
 
 #define MAX_NDRXD_ERROR_LEN         2048
 /* NDRXD Error sesction */
@@ -310,7 +310,7 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-/*
+/**
  * Shared memory entry for server ID
  */
 typedef struct shm_srvinfo shm_srvinfo_t;
@@ -324,43 +324,50 @@ struct shm_srvinfo
     unsigned min_rsp_msec[MAX_SVC_PER_SVR];
     unsigned max_rsp_msec[MAX_SVC_PER_SVR];
     unsigned last_rsp_msec[MAX_SVC_PER_SVR];
-    short svc_status[MAX_SVC_PER_SVR];      /* The status of the service    */
+    short svc_status[MAX_SVC_PER_SVR];     /**< The status of the service    */
 
-    char last_reply_q[NDRX_MAX_Q_SIZE+1];    /* Last queue on it should reply */
-    unsigned last_call_flags;              /* Flags for last call           */
-    short status;                          /* Glboal status, avail or busy  */
-    short last_command_id;                 /* Last command ID received      */
+    char last_reply_q[NDRX_MAX_Q_SIZE+1];  /**< Last queue on it should reply */
+    unsigned last_call_flags;              /**< Flags for last call           */
+    short status;                          /**< Glboal status, avail or busy  */
+    short last_command_id;                 /**< Last command ID received      */
 };
 
-/*
+/**
  * Basic cluster node info
  */
 typedef struct cnodeinfo cnodeinfo_t;
 struct cnodeinfo
 {
-    int latency;        /* Latency in ms */
-    int srvs;           /* Number of serves on this cluster node */
+    int latency;        /**< Latency in ms */
+    int srvs;           /**< Number of serves on this cluster node */
 };
 
-/*
+/**
  * Shared memory entry for service
  */
 typedef struct shm_svcinfo shm_svcinfo_t;
 struct shm_svcinfo
 {
-    char service[MAXTIDENT+1];          /* name of the service                  */
-    int srvs;                           /* Count of servers advertising this service*/
-    int flags;                          /* service flags                        */
-    int csrvs;                          /* Number of advertises in cluster      */
-    int totclustered;                   /* Total clustered nodes                */
-    int cnodes_max_id;                  /* Max id of cluster nodes in list (for fast search) */
+    char service[MAXTIDENT+1];          /**< name of the service                  */
+    int srvs;                           /**< Count of servers advertising this service*/
+    int flags;                          /**< service flags                        */
+    int csrvs;                          /**< Number of advertises in cluster      */
+    int totclustered;                   /**< Total clustered nodes                */
+    int cnodes_max_id;                  /**< Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
-    short rrsrv;                        /* round robin server */
+    
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+    /**
+     * Number of resources, because there could be rqaddr servers, where
+     * srvs is large number, but there is only on queue.
+     */
+    short resnr;                          
+    int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    short srvids[0];                     /*  Servers id's offering this service */
+    int resids[0];                      /**<  Servers id's offering this service */
+#endif
 };
-
 
 /* Macros for shm service size */
 #define SHM_SVCINFO_SIZEOF  (sizeof(shm_svcinfo_t) + sizeof(short)*G_atmi_env.maxsvcsrvs)
@@ -374,6 +381,9 @@ struct shm_svcinfo
 typedef struct
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -442,6 +452,9 @@ typedef struct
 typedef struct
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;

@@ -15,22 +15,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -53,6 +53,9 @@
 
 #include "cmd_processor.h"
 #include <bridge_int.h>
+#ifdef EX_USE_SYSVQ
+#include <sys/msg.h>
+#endif
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -77,7 +80,7 @@ expublic void pq_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_
     *send_size += (sizeof(command_reply_pq_t) - sizeof(command_reply_t));
 
     /* Copy data to reply structure */
-    strcpy(pq_info->service, svc->svc_nm);
+    NDRX_STRCPY_SAFE(pq_info->service, svc->svc_nm);
     memcpy(pq_info->pq_info, svc->pq_info, sizeof(svc->pq_info));
     
     NDRX_LOG(log_debug, "magic: %ld", pq_info->rply.magic);
@@ -168,9 +171,47 @@ expublic int pq_run_santiy(int run_hist)
                 cur->pq_info[i]=cur->pq_info[i-1];
             }
         }
-#ifndef EX_USE_POLL
+        
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+        /* For poll mode, we need a list of servers, so that we can 
+         * request stats for all servers:
+         */
+        curmsgs = 0;
+        
+        if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
+        {
+            for (i=0; i<len; i++)
+            {
+                /* TODO: For System V we could do a direct queue lookup by qid..! */
+#if defined(EX_USE_POLL)
+                snprintf(q, sizeof(q), NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
+                        cur->svc_nm, srvlist[i]);
+                
+                if (EXSUCCEED==ndrx_get_q_attr(q, &att))
+                {
+                    curmsgs+= att.mq_curmsgs;
+                }
+#else
+                /* System V approach for queues... quick & easy */
+                struct msqid_ds buf;
+                
+                if (EXSUCCEED==msgctl(srvlist[i], IPC_STAT, &buf))
+                {
+                    curmsgs+= buf.msg_qnum;
+                }
+                else
+                {
+                    NDRX_LOG(log_warn, "Failed to get qid %d stats: %s",
+                            srvlist[i], strerror(errno));
+                }
+#endif
+            }
+            
+            NDRX_FREE(srvlist);
+        }
+#else
         /* now write at POS 0, latest reading of service */
-        sprintf(q, NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
+        snprintf(q, sizeof(q), NDRX_SVC_QFMT, G_sys_config.qprefix, cur->svc_nm);
         
         if (EXSUCCEED!=ndrx_get_q_attr(q, &att))
         {
@@ -180,27 +221,6 @@ expublic int pq_run_santiy(int run_hist)
         {
             curmsgs = att.mq_curmsgs;
         }
-#else
-        /* For poll mode, we need a list of servers, so that we can 
-         * request stats for all servers:
-         */
-        curmsgs = 0;
-        if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
-        {
-            for (i=0; i<len; i++)
-            {
-                sprintf(q, NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
-                        cur->svc_nm, srvlist[i]);
-                
-                if (EXSUCCEED==ndrx_get_q_attr(q, &att))
-                {
-                    curmsgs+= att.mq_curmsgs;
-                }
-            }
-            
-            NDRX_FREE(srvlist);
-        }
-        
 #endif
         
         cur->pq_info[1] = curmsgs;

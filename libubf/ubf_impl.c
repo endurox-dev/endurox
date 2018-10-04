@@ -13,22 +13,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -467,8 +467,10 @@ get_last:
  * @param bfldid
  * @param last_matched - last matched field (can be used together with last_occ),
  *                       It is optional (pas NULL if not needed).
- * @param lat_checked  - if not NULL, then function will try find the last occ of the type (even not matched).
- *              In case of EOF/not found, this might point to address outside the bytes_used scope!!!
+ * @param last_checked  - if not NULL, then function will try find the last occ 
+ *      of the type (even not matched).
+ *      In case of EOF/not found, this might point to address outside 
+ *      the bytes_used scope!!!
  * @param occ - occurrence to get. If less than -1, then get out the count
  * @param last_occ last check occurrence
  * @return - ptr to field.
@@ -1687,6 +1689,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             goto out;
         }
         dtype=&G_dtype_str_map[type];
+        
         /*
          * Return the pointer to start of the field.
          */
@@ -1701,11 +1704,13 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             *d_ptr=p+dlen;
 
             /* Now return the len if needed */
+#if 0
             if (NULL!=len)
             {
                /* *len = data_len;*/
                dtype->p_next(dtype, (char *)p, len);
             }
+#endif
         }
 
         if (NULL!=buf)
@@ -1724,6 +1729,11 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                                 buf, len);
             }
 #endif
+        }
+        else if (NULL!=len)
+        {
+            /* return length only... */
+            dtype->p_next(dtype, p, len);
         }
         else
         {

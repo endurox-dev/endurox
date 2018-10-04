@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -217,11 +217,6 @@ exprivate int add_specific_queue(char *qname, int is_admin)
         entry->p_func=NULL;
         entry->is_admin = is_admin;
         NDRX_STRCPY_SAFE(entry->listen_q, qname);
-        /*
-        sprintf(entry->listen_q, NDRX_ADMIN_FMT, G_server_conf.q_prefix,
-                                G_server_conf.binary_name, G_server_conf.srv_id);
-        sprintf(entry->svc_nm, NDRX_ADMIN_SVC, G_server_conf.binary_name, G_server_conf.srv_id);
-        strcpy(entry->fn_nm, entry->svc_nm);*/
         /* register admin service */
         DL_APPEND(G_server_conf.service_list, entry);
         G_server_conf.adv_service_count++;
@@ -341,6 +336,7 @@ expublic int atmisrv_initialise_atmi_library(void)
     int ret=EXSUCCEED;
     atmi_lib_conf_t conf;
     pid_t pid = getpid();
+    
     memset(&conf, 0, sizeof(conf));
 
     /* Generate my_id */
@@ -365,6 +361,7 @@ expublic int atmisrv_initialise_atmi_library(void)
     
     /* Try to open shm... */
     G_shm_srv = ndrxd_shm_getsrv(G_srv_id);
+    
     /* Mark stuff as used! */
     if (NULL!=G_shm_srv)
     {

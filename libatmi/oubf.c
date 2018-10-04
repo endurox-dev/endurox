@@ -9,22 +9,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -3885,6 +3885,82 @@ out:
 
 
 /**
+ * Object-API wrapper for Bfprintcb() - Auto generated.
+ */
+expublic int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1) 
+{
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
+
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: Bfprintcb() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_IGN );
+#endif
+
+ 
+
+    /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
+    {
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bfprintcb() failed to set context");
+            EXFAIL_OUT(ret);
+        }
+        did_set = EXTRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Bfprintcb() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+    
+    ret = Bfprintcb(p_ub, p_writef, dataptr1);
+
+    if (did_set)
+    {
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bfprintcb() failed to get context");
+            EXFAIL_OUT(ret);
+        }
+    }
+out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: Bfprintcb() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+ 
+    return ret; 
+}
+
+
+/**
  * Object-API wrapper for Btypcvt() - Auto generated.
  */
 expublic char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char *from_buf, int from_type, BFLDLEN from_len) 
@@ -4037,6 +4113,82 @@ out:
     return ret; 
 }
 
+
+/**
+ * Object-API wrapper for Bextreadcb() - Auto generated.
+ */
+expublic int OBextreadcb(TPCONTEXT_T *p_ctxt, UBFH * p_ub, long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1) 
+{
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
+
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: Bextreadcb() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_IGN );
+#endif
+
+ 
+
+    /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
+    {
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bextreadcb() failed to set context");
+            EXFAIL_OUT(ret);
+        }
+        did_set = EXTRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Bextreadcb() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+    
+    ret = Bextreadcb(p_ub, p_readf, dataptr1);
+
+    if (did_set)
+    {
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bextreadcb() failed to get context");
+            EXFAIL_OUT(ret);
+        }
+    }
+out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: Bextreadcb() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+ 
+    return ret; 
+}
+
 /**
  * Object-API wrapper for Bboolpr() - Auto generated.
  */
@@ -4103,6 +4255,79 @@ out:
 
 #ifdef NDRX_OAPI_DEBUG
     NDRX_LOG(log_debug, "RETURN: Bboolpr() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+
+    return;
+}
+
+/**
+ * Object-API wrapper for Bboolprcb() - Auto generated.
+ */
+expublic void OBboolprcb(TPCONTEXT_T *p_ctxt, char * tree, int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1) 
+{
+    int did_set = EXFALSE;
+
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: Bboolprcb() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_IGN );
+#endif
+
+ 
+
+ /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
+    {
+         /* set the context */
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bboolprcb() failed to set context");
+        }
+        did_set = EXTRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Bboolprcb() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+
+    Bboolprcb(tree, p_writef, dataptr1);
+
+    if (did_set)
+    {
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0,
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bboolprcb() failed to get context");
+        }
+    }
+out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: Bboolprcb() returns, context: %p, current: %p",
         *p_ctxt, G_atmi_tls);
 #endif
 
@@ -4255,6 +4480,82 @@ out:
 
 #ifdef NDRX_OAPI_DEBUG
     NDRX_LOG(log_debug, "RETURN: Bwrite() returns, context: %p, current: %p",
+        *p_ctxt, G_atmi_tls);
+#endif
+
+ 
+    return ret; 
+}
+
+
+/**
+ * Object-API wrapper for Bwritecb() - Auto generated.
+ */
+expublic int OBwritecb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1) 
+{
+    int ret = EXSUCCEED;
+    int did_set = EXFALSE;
+
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "ENTRY: Bwritecb() enter, context: %p, current: %p", *p_ctxt, G_atmi_tls);
+    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+        ((atmi_tls_t *)*p_ctxt)->is_associated_with_thread);
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NSTD );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_UBF = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_UBF );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_ATMI = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_ATMI );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_TRAN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_TRAN );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NOCHK = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_NOCHK );
+
+    NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_IGN = %d", 
+        (CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN) & CTXT_PRIV_IGN );
+#endif
+
+ 
+
+    /* set the context */
+    if (!((atmi_tls_t *)*p_ctxt)->is_associated_with_thread)
+    {
+        if (EXSUCCEED!=ndrx_tpsetctxt(*p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bwritecb() failed to set context");
+            EXFAIL_OUT(ret);
+        }
+        did_set = EXTRUE;
+    }
+    else if ((atmi_tls_t *)*p_ctxt != G_atmi_tls)
+    {
+        userlog("WARNING! Bwritecb() context %p thinks that it is assocated "
+                "with current thread, but thread is associated with %p context!",
+                p_ctxt, G_atmi_tls);
+    }
+    
+    ret = Bwritecb(p_ub, p_writef, dataptr1);
+
+    if (did_set)
+    {
+        if (TPMULTICONTEXTS!=ndrx_tpgetctxt(p_ctxt, 0, 
+            CTXT_PRIV_NSTD|CTXT_PRIV_UBF | CTXT_PRIV_IGN))
+        {
+            userlog("ERROR! Bwritecb() failed to get context");
+            EXFAIL_OUT(ret);
+        }
+    }
+out:
+
+#ifdef NDRX_OAPI_DEBUG
+    NDRX_LOG(log_debug, "RETURN: Bwritecb() returns, context: %p, current: %p",
         *p_ctxt, G_atmi_tls);
 #endif
 

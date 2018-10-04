@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -39,21 +39,31 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 
-#ifdef EX_USE_EMQ
-
+#if 1==EX_USE_SYSVQ
+#include <sys_svq.h>
+#elif 1==EX_USE_EMQ
 /* use queue emulation: */
 #include <sys_emqueue.h>
-
 #else
-
 #include <mqueue.h>
-
 #endif
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if 1==EX_USE_EMQ
+#if 1==EX_USE_SYSVQ
+    
+/* Feature #281 */
+#define  ndrx_mq_timedreceive ndrx_svq_timedreceive
+#define  ndrx_mq_timedsend    ndrx_svq_timedsend
+#define  ndrx_mq_close        ndrx_svq_close
+#define  ndrx_mq_getattr      ndrx_svq_getattr
+#define  ndrx_mq_notify       ndrx_svq_notify
+#define  ndrx_mq_receive      ndrx_svq_receive
+#define  ndrx_mq_send         ndrx_svq_send
+#define  ndrx_mq_setattr      ndrx_svq_setattr
+    
+#elif 1==EX_USE_EMQ
 
 #define  ndrx_mq_timedreceive emq_timedreceive
 #define  ndrx_mq_timedsend    emq_timedsend
@@ -94,7 +104,13 @@ extern "C" {
 
 #endif
     
-#if 1==USE_FS_REGISTRY
+#if 1==EX_USE_SYSVQ
+
+/* Feature #281 */
+#define  ndrx_mq_open         ndrx_svq_open
+#define  ndrx_mq_unlink       ndrx_svq_unlink
+
+#elif 1==USE_FS_REGISTRY
 
 extern mqd_t ndrx_mq_open_with_registry(char *name, int oflag, mode_t mode, struct mq_attr *attr);
 extern int ndrx_mq_unlink_with_registry (char *name);
@@ -103,7 +119,7 @@ extern int ndrx_mq_unlink_with_registry (char *name);
 #define  ndrx_mq_unlink       ndrx_mq_unlink_with_registry
 
 #else
-    
+
 #if 1==EX_USE_EMQ
 
 #define  ndrx_mq_open         emq_open
