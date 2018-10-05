@@ -399,12 +399,23 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
         {
             if (el->mqd==fd)
             {
+                /* if this is admin queue, then terminate admin thread! */
+                if (ATMI_SRV_ADMIN_Q==el->idx)
+                {
+                    if (EXSUCCEED!=ndrx_svqadmin_deinit())
+                    {
+                        NDRX_LOG(log_error, "Failed to terminate ADMIN thread!");
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                
                 EXHASH_DEL(M_svcmap, el);
                 NDRX_FREE(el);
             }
         }
     }
     
+out:
     return ret;
 }
 

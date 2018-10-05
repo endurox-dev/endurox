@@ -139,7 +139,7 @@ expublic int is_ndrxd_running(void)
     }
 
     /* Get pid value */
-    fprintf(stderr, "ndrxd PID (from PID file): %s\n", pidbuf);
+    fprintf(stderr, ">>> ndrxd PID (from PID file): %s\n", pidbuf);
 
     NDRX_FCLOSE(f);
     f = NULL;
@@ -171,7 +171,7 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, "Enduro/X back-end (ndrxd) is not running\n");
+        fprintf(stderr, ">>> Enduro/X back-end (ndrxd) is not running\n");
         if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);

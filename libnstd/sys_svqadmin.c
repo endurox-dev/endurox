@@ -179,7 +179,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         /* read the message, well we could read it directly from MQD 
          * then we do not need any locks..
          */
-        len = msgrcv(qid, buf, sz-sizeof(long), 0, 0);
+        len = msgrcv(qid, buf, NDRX_SVQ_INLEN(sz), 0, 0);
         err = errno;
         
         if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
@@ -224,7 +224,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             }
             
             ev->data = buf;
-            ev->datalen = len;
+            ev->datalen = NDRX_SVQ_OUTLEN(len);
             ev->ev = NDRX_SVQ_EV_DATA;
                     
             if (EXSUCCEED!=ndrx_svq_mqd_put_event(M_adminq, ev))

@@ -400,9 +400,15 @@ expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len,
         msgflg = 0;
     }
     
-    ret = msgsnd(mqd->qid, ptr, len-sizeof(long), msgflg);
+    ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
     
     /* no logging here, as we need to keep errno */
+    
+    if (ret>=0)
+    {
+        ret = NDRX_SVQ_OUTLEN(ret);
+    }
+    
 out:
     return ret;
 }
@@ -448,7 +454,7 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
         msgflg = 0;
     }
     
-    if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, maxlen-sizeof(long), 0, msgflg)))
+    if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, msgflg)))
     {
         int err = errno;
         
@@ -469,6 +475,11 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
     }
     
     /* no logging here, as we need to keep errno */
+    if (ret>=0)
+    {
+        ret=NDRX_SVQ_OUTLEN(ret);
+    }
+    
 out:
     return ret;
 }

@@ -71,6 +71,9 @@
 #define NDRX_SVQ_MON_TERM         4 /**< Termination handler calls us         */
 #define NDRX_SVQ_MON_CLOSE        5 /**< Queue unlink request                 */
 
+#define NDRX_SVQ_INLEN(X)       (X-sizeof(long))    /**< System V input len   */
+#define NDRX_SVQ_OUTLEN(X)       (X+sizeof(long))   /**< System V output len  */
+
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 

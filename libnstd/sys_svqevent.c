@@ -1328,9 +1328,9 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * send until both are unlocked or stamp is changed.
      */
     if (is_send)
-        ret=msgsnd (mqd->qid, ptr, len, msgflg);
+        ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
     else
-        ret=msgrcv (mqd->qid, ptr, len, 0, msgflg);
+        ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
     
     err=errno;
     pthread_mutex_unlock(&(mqd->rcvlock));
@@ -1346,7 +1346,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         pthread_mutex_unlock(&(mqd->qlock));
         
         /* OK, we got a message from queue */
-        *maxlen = ret  + sizeof(long);
+        *maxlen = NDRX_SVQ_OUTLEN(ret);
         ret=EXSUCCEED;
         goto out;
     }
