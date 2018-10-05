@@ -211,6 +211,7 @@ expublic int start_daemon_idle(void)
     {
         FILE *f;
 
+#ifndef EX_USE_SYSVQ
         /* TODO: For System V actually we do not need to close the queues
          * as these are not linked to system resources
          * then we need a poller extension to check q fork close, something like
@@ -219,6 +220,7 @@ expublic int start_daemon_idle(void)
          *     ... close the queues ...
          * }
          * As unnamed pipes still is going to live within the fork
+         * for just use ifdef...
          */
         /*Bug #176 close resources */
         NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)G_config.ndrxd_q);
@@ -231,7 +233,7 @@ expublic int start_daemon_idle(void)
         /* WELL!!! Seems parent gets this close!!! */
         if (G_config.reply_queue != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.reply_queue);
-
+#endif
         /* this is child - start EnduroX back-end*/
         snprintf(key, sizeof(key), NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
