@@ -1257,7 +1257,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     }
     
     *ev = NULL; /* no event... */
-    len = *maxlen - sizeof(long);
+    len = *maxlen;
     /* to avoid the deadlocks, we shall register the timeout here...
      * if we do it after the "rcvlockb4" then we might 
      * but then if we got any applied event, we shall change the
@@ -1347,7 +1347,11 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         pthread_mutex_unlock(&(mqd->qlock));
         
         /* OK, we got a message from queue */
-        *maxlen = NDRX_SVQ_OUTLEN(ret);
+        if (!is_send)
+        {
+            *maxlen = NDRX_SVQ_OUTLEN(ret);
+        }
+            
         ret=EXSUCCEED;
         goto out;
     }

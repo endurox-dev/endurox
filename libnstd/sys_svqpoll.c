@@ -167,7 +167,6 @@ exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getsvc(char *svcnm)
 {
     ndrx_svq_pollsvc_t *ret = NULL;
     
-    
     EXHASH_FIND_STR(M_svcmap, svcnm, ret);
     
     if (NULL==ret)

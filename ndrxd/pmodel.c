@@ -851,11 +851,13 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
+#ifndef EX_USE_SYSVQ
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
         {
             userlog("Failed to close: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
         }
+#endif
         
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);

@@ -404,11 +404,6 @@ expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len,
     
     /* no logging here, as we need to keep errno */
     
-    if (ret>=0)
-    {
-        ret = NDRX_SVQ_OUTLEN(ret);
-    }
-    
 out:
     return ret;
 }
