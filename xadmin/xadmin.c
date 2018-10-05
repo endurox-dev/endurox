@@ -590,13 +590,13 @@ exprivate int process_command_buffer(int *p_have_next)
                                 map->min_args, map->max_args, G_cmd_argc_logical);
             EXFAIL_OUT(ret);
         }
-        else if (NDRX_XADMIN_IDLEREQ==map->reqidle 
-                && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
+        else if ( (NDRX_XADMIN_RPLYQREQ==map->reqidle  || NDRX_XADMIN_IDLEREQ==map->reqidle)
+                && EXFAIL==ndrx_xadmin_open_rply_q())
         {
             EXFAIL_OUT(ret);
         }
-        else if (NDRX_XADMIN_RPLYQREQ==map->reqidle 
-                && EXFAIL==ndrx_xadmin_open_rply_q())
+        else if (NDRX_XADMIN_IDLEREQ==map->reqidle
+                && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
         {
             EXFAIL_OUT(ret);
         }
@@ -618,12 +618,23 @@ out:
  */
 expublic int un_init(void)
 {
+    NDRX_LOG(log_debug, "into un-init");
     if (G_config.ndrxd_q != (mqd_t)EXFAIL)
+    {
+        NDRX_LOG(log_debug, "Closing ndrxd_q: %p",
+            (void *)G_config.ndrxd_q);
         ndrx_mq_close(G_config.ndrxd_q);
+    }
 
     if (G_config.reply_queue != (mqd_t)EXFAIL)
     {
+        NDRX_LOG(log_debug, "Closing reply_queue: %p",
+            (void *)G_config.reply_queue);
+
         ndrx_mq_close(G_config.reply_queue);
+
+        NDRX_LOG(log_debug, "Unlinking [%s]",
+            G_config.reply_queue_str);
         ndrx_mq_unlink(G_config.reply_queue_str);
     }
     
