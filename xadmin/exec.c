@@ -98,7 +98,6 @@ void sign_chld_handler(int sig)
 expublic int is_ndrxd_running(void)
 {
     int ret = EXFALSE;
-    int queue_ok = EXFALSE;
     FILE *f = NULL;
     pid_t    pid;
     char    pidbuf[64] = {EXEOS};
@@ -212,10 +211,24 @@ expublic int start_daemon_idle(void)
     {
         FILE *f;
 
+        /* TODO: For System V actually we do not need to close the queues
+         * as these are not linked to system resources
+         * then we need a poller extension to check q fork close, something like
+         * if (ndrx_epoll_forkqclose())
+         * {
+         *     ... close the queues ...
+         * }
+         * As unnamed pipes still is going to live within the fork
+         */
         /*Bug #176 close resources */
+        NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)G_config.ndrxd_q);
         if (G_config.ndrxd_q != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.ndrxd_q);
 
+        NDRX_LOG(log_debug, "forked close reply_queue %p", 
+                (void *)G_config.reply_queue);
+        
+        /* WELL!!! Seems parent gets this close!!! */
         if (G_config.reply_queue != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.reply_queue);
 
@@ -271,15 +284,15 @@ expublic int start_daemon_idle(void)
 	/* give another 5 seconds... to start ndrxd */
 	if (!started)
 	{
-        	for (i=0; i<MAX_WSLEEP; i++)
-        	{
-			fprintf(stderr, ">>> still not started, waiting %d/%d\n",
-                                    i, MAX_WSLEEP);
-            		sleep(1);
-            		started=is_ndrxd_running();
-            		if (started)
-                		break;
-		}
+            for (i=0; i<MAX_WSLEEP; i++)
+            {
+                fprintf(stderr, ">>> still not started, waiting %d/%d\n",
+                            i, MAX_WSLEEP);
+                sleep(1);
+                started=is_ndrxd_running();
+                if (started)
+                        break;
+            }
         }
 
         if (started)

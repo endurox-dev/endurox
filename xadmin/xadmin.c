@@ -636,6 +636,7 @@ expublic int un_init(void)
         NDRX_LOG(log_debug, "Unlinking [%s]",
             G_config.reply_queue_str);
         ndrx_mq_unlink(G_config.reply_queue_str);
+
     }
     
     /* In any case if session was open... */

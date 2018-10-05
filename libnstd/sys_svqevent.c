@@ -843,7 +843,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         EXFAIL_OUT(ret);
                     }
                     
-                    NDRX_LOG(log_debug, "Got command: %d", cmd.cmd);
+                    NDRX_LOG(log_debug, "Got command: %d %p pid=%d", 
+                            cmd.cmd, cmd.mqd, (int)getpid());
                     
                     switch (cmd.cmd)
                     {
@@ -890,10 +891,10 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             
                             /*
                              * This is close, not unlink...
-                             
-                            NDRX_LOG(log_info, "Unlink queue %p command",
-                                    cmd.mqd);
-                            */
+                             */ 
+                            NDRX_LOG(log_info, "Close queue command mqd: %p qstr: [%s]/%d",
+                                    cmd.mqd, cmd.mqd->qstr, cmd.mqd->qid);
+                            
                             if (EXSUCCEED!=ndrx_svq_mqd_hash_delfull(cmd.mqd))
                             {
                                 ret = EXFAIL;
