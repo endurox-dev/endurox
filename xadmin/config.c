@@ -81,7 +81,7 @@ expublic int ndrx_xadmin_open_rply_q(void)
         NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
 #ifdef EX_USE_SYSVQ
         /* Just give some warning for System */
-        fprintf(stderr, ">>> System V resources opened...\n");
+        fprintf(stderr, "* System V resources opened...\n");
 #endif
         
         M_is_reply_q_open=EXTRUE;
