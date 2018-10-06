@@ -45,6 +45,7 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <pthread.h>
 
 #include <ndrstandard.h>
 
@@ -71,6 +72,32 @@ exprivate pthread_t M_evthread;
 exprivate void * ndrx_svqadmin_run(void* arg);
 
 /**
+ * Prepare for forking. this will stop the admin thread
+ */
+exprivate void admin_fork_prepare(void)
+{
+    NDRX_LOG(log_debug, "Terminating admin thread before forking...");
+    if (EXSUCCEED!=ndrx_svqadmin_deinit())
+    {
+        NDRX_LOG(log_error, "admin_fork_prepare() failed");
+    }
+}
+
+/**
+ * Restart admin thread for 
+ */
+exprivate void admin_fork_resume(void)
+{
+    int ret;
+    
+    if (EXSUCCEED!=(ret=pthread_create(&M_evthread, NULL, &ndrx_svqadmin_run, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
+        userlog("Failed to create admin thread: %s", strerror(ret));
+    }
+}
+
+/**
  * Perform init on Admin queue
  * @param adminq admin queue already open
  * @return EXSUCCEED/EXFAIL
@@ -85,6 +112,15 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     {
         NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
         userlog("Failed to create admin thread: %s", strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* register fork handlers... */
+    if (EXSUCCEED!=(ret=pthread_atfork(admin_fork_prepare, 
+            admin_fork_resume, admin_fork_resume)))
+    {
+        NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
+        userlog("Failed to register fork handlers: %s", strerror(ret));
         EXFAIL_OUT(ret);
     }
     
@@ -159,7 +195,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         /* Allocate the message size */
         sz = NDRX_MSGSIZEMAX;
         
-        if (NULL!=(buf = NDRX_MALLOC(sz)))
+        if (NULL==(buf = NDRX_MALLOC(sz)))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", sz, strerror(err));

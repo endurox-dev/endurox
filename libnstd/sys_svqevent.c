@@ -48,6 +48,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/msg.h>
+#include <pthread.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -991,6 +992,88 @@ exprivate void ndrx_svq_event_exit(void)
 }
 
 /**
+ * Prepare event thread for forking
+ * This will terminate the event thread
+ */
+exprivate void event_fork_prepare(void)
+{
+    NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
+    ndrx_svq_event_exit();
+    
+    /* Close pipes */
+    if (EXSUCCEED!=close(M_mon.evpipe[READ]))
+    {
+        NDRX_LOG(log_error, "Failed to close READ PIPE %d: %s",
+                M_mon.evpipe[READ], strerror(errno));
+    }
+    
+    if (EXSUCCEED!=close(M_mon.evpipe[WRITE]))
+    {
+        NDRX_LOG(log_error, "Failed to close WRITE PIPE %d: %s",
+                M_mon.evpipe[READ], strerror(errno));
+    }
+}
+
+/**
+ * Resume after fork 
+ */
+exprivate void event_fork_resume(void)
+{
+    int err;
+    int ret=EXSUCCEED;
+    
+    NDRX_LOG(log_debug, "Restoring System V Aux thread after fork");
+    
+    /* create pipes */
+    /* O_NONBLOCK */
+    if (EXFAIL==pipe(M_mon.evpipe))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "pipe failed: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXFAIL==fcntl(M_mon.evpipe[READ], F_SETFL, 
+                fcntl(M_mon.evpipe[READ], F_GETFL) | O_NONBLOCK))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "fcntl READ pipe set O_NONBLOCK failed: %s", 
+                strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* create thread */
+    
+    /* So wait for events here in the pip form Q thread */
+    M_mon.fdtab[PIPE_POLL_IDX].fd = M_mon.evpipe[READ];
+    M_mon.fdtab[PIPE_POLL_IDX].events = POLLIN;
+    
+    /* startup tup the thread */
+    NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write: %d",
+                            M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
+    
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
+            ndrx_svq_timeout_thread, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to create System V Auch thread: %s",
+                strerror(ret));
+        userlog("Failed to create System V Auch thread: %s",
+                strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+                            
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "System V AUX thread resume after fork failed - abort!");
+        userlog("System V AUX thread resume after fork failed - abort!");
+        abort();
+    }
+
+}
+
+/**
  * Setup basics for Event handling for System V queues
  * @return EXSUCCEED/EXFAIL
  */
@@ -1072,6 +1155,16 @@ expublic int ndrx_svq_event_init(void)
                 strerror(err));
         EXFAIL_OUT(ret);
     }
+    
+    /* register fork handlers */
+    if (EXSUCCEED!=(ret=pthread_atfork(event_fork_prepare, 
+            event_fork_resume, event_fork_resume)))
+    {
+        NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
+        userlog("Failed to register fork handlers: %s", strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+
     
 out:
     errno = err;

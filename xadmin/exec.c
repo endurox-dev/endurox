@@ -138,7 +138,7 @@ expublic int is_ndrxd_running(void)
     }
 
     /* Get pid value */
-    fprintf(stderr, ">>> ndrxd PID (from PID file): %s\n", pidbuf);
+    fprintf(stderr, "* ndrxd PID (from PID file): %s\n", pidbuf);
 
     NDRX_FCLOSE(f);
     f = NULL;
@@ -170,7 +170,7 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, ">>> Enduro/X back-end (ndrxd) is not running\n");
+        fprintf(stderr, "* Enduro/X back-end (ndrxd) is not running\n");
         if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);
@@ -288,7 +288,7 @@ expublic int start_daemon_idle(void)
 	{
             for (i=0; i<MAX_WSLEEP; i++)
             {
-                fprintf(stderr, ">>> still not started, waiting %d/%d\n",
+                fprintf(stderr, "* still not started, waiting %d/%d\n",
                             i, MAX_WSLEEP);
                 sleep(1);
                 started=is_ndrxd_running();
@@ -299,16 +299,16 @@ expublic int start_daemon_idle(void)
 
         if (started)
         {
-            fprintf(stderr, ">>> ndrxd idle instance started.\n");
+            fprintf(stderr, "* ndrxd idle instance started.\n");
             G_config.is_idle = EXTRUE;
         }
         else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
         {
-            fprintf(stderr, ">>> ndrxd idle instance not started (something failed?)!\n");
+            fprintf(stderr, "* ndrxd idle instance not started (something failed?)!\n");
         }
         else
         {
-            fprintf(stderr, ">>> ndrxd instance idle malfunction!\n");
+            fprintf(stderr, "* ndrxd instance idle malfunction!\n");
         }
     }
     
