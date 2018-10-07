@@ -764,7 +764,6 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
      */
     
     /* wait for event... */
-    M_alive=EXTRUE;
     while (!M_shutdown)
     {
         timeout = ndrx_svq_mqd_hash_findtout();
@@ -781,7 +780,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         
         retpoll = poll( M_mon.fdtab, M_mon.nrfds, timeout*1000);
         
-        NDRX_LOG(log_debug, "poll() ret = %d", retpoll);
+        NDRX_LOG(log_debug, "poll() ret = %d pid = %d", retpoll, (int)getpid());
         if (EXFAIL==retpoll)
         {
             err = errno;
@@ -968,10 +967,13 @@ out:
     {
         NDRX_FREE(M_mon.fdtab);
     }
+
     /* if we get "unknown" error here, then we have to shutdown the whole app
      * nothing todo, as we are totally corrupted
      */
     
+    M_alive = EXFALSE;
+
     if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "System V Queue monitoring thread faced "
@@ -979,8 +981,6 @@ out:
         userlog("System V Queue monitoring thread faced unhandled error - terminate!");
         exit(ret);
     }
-
-    M_alive = EXFALSE;
     
     return NULL;
 }
@@ -988,7 +988,7 @@ out:
 /**
  * Terminate the poller thread
  */
-exprivate void ndrx_svq_event_exit(void)
+expublic void ndrx_svq_event_exit(void)
 {
     NDRX_LOG(log_debug, "Terminating event thread...");
     if (M_alive)
@@ -996,7 +996,9 @@ exprivate void ndrx_svq_event_exit(void)
         ndrx_svq_moncmd_term();
         if (pthread_self()!=M_mon.evthread)
         {
+            NDRX_LOG(log_debug, "Join evthread...");
             pthread_join(M_mon.evthread, NULL);
+            NDRX_LOG(log_debug, "Join evthread... (done)");
         }
     }
 }
@@ -1008,6 +1010,7 @@ exprivate void ndrx_svq_event_exit(void)
 exprivate void event_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
+    
     ndrx_svq_event_exit();
     
     /* Close pipes */
@@ -1022,6 +1025,7 @@ exprivate void event_fork_prepare(void)
         NDRX_LOG(log_error, "Failed to close WRITE PIPE %d: %s",
                 M_mon.evpipe[READ], strerror(errno));
     }
+    
 }
 
 /**
@@ -1071,9 +1075,11 @@ exprivate void event_fork_resume(void)
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
+    M_alive=EXTRUE;
     if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
             ndrx_svq_timeout_thread, NULL)))
     {
+        M_alive=EXFALSE;
         NDRX_LOG(log_error, "Failed to create System V Auch thread: %s",
                 strerror(ret));
         userlog("Failed to create System V Auch thread: %s",
@@ -1179,9 +1185,11 @@ expublic int ndrx_svq_event_init(void)
         }
 
         /* register fork handlers */
+        M_alive=EXTRUE;
         if (EXSUCCEED!=(ret=pthread_atfork(event_fork_prepare, 
                 event_fork_resume, event_fork_resume)))
         {
+            M_alive=EXFALSE;
             NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
             userlog("Failed to register fork handlers: %s", strerror(ret));
             EXFAIL_OUT(ret);
@@ -1285,12 +1293,17 @@ expublic int ndrx_svq_moncmd_rmfd(int fd)
 expublic int ndrx_svq_moncmd_term(void)
 {
     ndrx_svq_mon_cmd_t cmd;
+    int ret;
     
     memset(&cmd, 0, sizeof(cmd));
     
     cmd.cmd = NDRX_SVQ_MON_TERM;
     
-    return ndrx_svq_moncmd_send(&cmd);
+    ret=ndrx_svq_moncmd_send(&cmd);
+    
+    /* wait for thread to kill up */
+    
+    return ret;
 }
 
 /**
