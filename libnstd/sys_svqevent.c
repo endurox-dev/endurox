@@ -170,6 +170,7 @@ exprivate int ndrx_svq_fd_hash_addpoll(int fd, uint32_t events)
 
     M_mon.fdtab[M_mon.nrfds-1].fd = fd;
     M_mon.fdtab[M_mon.nrfds-1].events = events;
+    M_mon.fdtab[M_mon.nrfds-1].revents = 0;
     
 out:
     return ret;
@@ -780,7 +781,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         NDRX_LOG(log_debug, "About to poll for: %d nrfds=%d",
                 timeout, M_mon.nrfds);
         
-        for (i=0;i<M_mon.nrfds;i++)
+        for (i=0; i<M_mon.nrfds; i++)
         {
             M_mon.fdtab[i].revents = 0;
         }
