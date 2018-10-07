@@ -64,9 +64,7 @@ expublic int ndrx_xadmin_shm_close(void)
     
     if (M_is_reply_q_open)
     {
-        /* unlink the other linked resources... */
         ndrx_epoll_shmdetach();
-        fprintf(stderr, "* Shared resources closed...\n");
     }
     
     M_is_reply_q_open = EXFALSE;
