@@ -645,7 +645,7 @@ expublic int un_init(void)
     tpterm();
     
     /* close any additional shared resources */
-    ndrx_xadmin_shm_close();
+    ndrx_svq_event_exit();
     
     return EXSUCCEED;
 }
