@@ -261,9 +261,6 @@ expublic void tpext_configbrige
     
 }
 
-
-
-
 /**
  * Read current call context data
  * NOTE: buffer must be freed by caller!

@@ -219,11 +219,11 @@ extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
 extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send);
-extern NDRX_API void ndrx_svq_event_exit(void);
+extern NDRX_API void ndrx_svq_event_exit(int detatch);
 
 extern NDRX_API int ndrx_svq_moncmd_term(void);
 extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
-extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd);
+extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fdm, uint32_t events);
 extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
 extern NDRX_API mqd_t ndrx_svq_mainq_get(void);
 
