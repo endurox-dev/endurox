@@ -118,10 +118,7 @@ out:
 expublic int ndrx_epoll_shmdetach(void)
 {
     /* terminate aux thread */
-    
-    ndrx_svq_moncmd_term();
-    
-    ndrx_svqshm_detach();
+    ndrx_svq_event_exit(EXTRUE);
     
     return EXSUCCEED;
 }
@@ -372,7 +369,7 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd,
     switch (op)
     {
         case EX_EPOLL_CTL_ADD:
-            if (EXSUCCEED!=(ret = ndrx_svq_moncmd_addfd(M_mainq, fd)))
+            if (EXSUCCEED!=(ret = ndrx_svq_moncmd_addfd(M_mainq, fd, event->events)))
             {
                 err = errno;
                 NDRX_LOG(log_error, "Failed to add fd %d to mqd %p for polling: %s",
@@ -542,10 +539,10 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     else
     {
         clock_gettime(CLOCK_REALTIME, &tm);
-        tm.tv_sec += timeout;  /* Set timeout */
+        tm.tv_sec += (timeout / 1000);  /* Set timeout, passed in msec, uses as sec */
     }
     
-    if (EXSUCCEED!=ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
+    if (EXFAIL==ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
             &tm, &ev, EXFALSE))
     {
         err = errno;
@@ -613,8 +610,11 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                         EXFAIL_OUT(ret);
                     }
 
-                    *buf_len = ev->datalen;
-                    memcpy(buf, ev->data, *buf_len);
+                    if (ev->datalen > 0)
+                    {
+                        *buf_len = ev->datalen;
+                        memcpy(buf, ev->data, *buf_len);
+                    }
                     break;
                     
                 default:
@@ -705,7 +705,6 @@ out:
         
         NDRX_FREE(ev);
     }
-    
     
     if (EXSUCCEED==ret)
     {

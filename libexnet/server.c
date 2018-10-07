@@ -153,7 +153,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
     if ( (client_fd = accept(srv->sock, (struct sockaddr *)&clt_address, &addr_len) ) < 0 )
     {
-        NDRX_LOG(log_error, "Error calling accept()");
+        NDRX_LOG(log_error, "Error calling accept(): %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
 

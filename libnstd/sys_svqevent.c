@@ -158,7 +158,8 @@ exprivate int ndrx_svq_fd_hash_addpoll(int fd, uint32_t events)
     /* resize/realloc events list, add fd */
     M_mon.nrfds++;
 
-    NDRX_LOG(log_info, "set nrfds incremented to %d", M_mon.nrfds);
+    NDRX_LOG(log_info, "set nrfds incremented to %d, events: %d", 
+        M_mon.nrfds, (int)events);
 
     if (NULL==(M_mon.fdtab=NDRX_REALLOC(M_mon.fdtab, sizeof(struct pollfd)*M_mon.nrfds)))
     {
@@ -235,7 +236,7 @@ exprivate ndrx_svq_fd_hash_t * ndrx_svq_fd_hash_find(int fd)
 {
     ndrx_svq_fd_hash_t *ret = NULL;
     
-    EXHASH_FIND_PTR( (M_mon.fdhash), ((void **)&fd), ret);
+    EXHASH_FIND_INT( (M_mon.fdhash), &fd, ret);
     
     NDRX_LOG(log_dump, "checking fd %d -> %p", fd, ret);
     
@@ -260,7 +261,7 @@ exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd, uint32_t events)
     {
         el = NDRX_CALLOC(1, sizeof(ndrx_svq_fd_hash_t));
 
-        NDRX_LOG(log_dump, "Registering %p as int", fd);
+        NDRX_LOG(log_dump, "Registering %d as int", fd);
 
         if (NULL==el)
         {
@@ -573,6 +574,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             }
 
             ev->ev = NDRX_SVQ_EV_TOUT;
+            ev->data = NULL;
             ev->stamp_seq = r->stamp_seq;
             ev->stamp_time = r->stamp_time;
 
@@ -778,6 +780,11 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         NDRX_LOG(log_debug, "About to poll for: %d nrfds=%d",
                 timeout, M_mon.nrfds);
         
+        for (i=0;i<M_mon.nrfds;i++)
+        {
+            M_mon.fdtab[i].revents = 0;
+        }
+        
         retpoll = poll( M_mon.fdtab, M_mon.nrfds, timeout*1000);
         
         NDRX_LOG(log_debug, "poll() ret = %d pid = %d", retpoll, (int)getpid());
@@ -825,7 +832,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         {
             if (M_mon.fdtab[i].revents)
             {
-                NDRX_LOG(log_debug, "%d revents=%d", i, M_mon.fdtab[i].revents);
+                NDRX_LOG(log_debug, "%d fd=%d revents=%d", i, 
+                        M_mon.fdtab[i].fd, (int)M_mon.fdtab[i].revents);
                 if (PIPE_POLL_IDX==i)
                 {
                     /* We got something from command pipe, thus 
@@ -943,6 +951,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                        EXFAIL_OUT(ret);
                    }
                    
+                   ev->data = NULL;
+                   ev->datalen = 0;
                    ev->ev = NDRX_SVQ_EV_FD;
                    ev->fd = M_mon.fdtab[i].fd;
                    ev->revents = M_mon.fdtab[i].revents;
@@ -988,7 +998,7 @@ out:
 /**
  * Terminate the poller thread
  */
-expublic void ndrx_svq_event_exit(void)
+expublic void ndrx_svq_event_exit(int detach)
 {
     NDRX_LOG(log_debug, "Terminating event thread...");
     if (M_alive)
@@ -1001,6 +1011,20 @@ expublic void ndrx_svq_event_exit(void)
             NDRX_LOG(log_debug, "Join evthread... (done)");
         }
     }
+    
+    if (detach)
+    {
+        /* detach resources */
+        ndrx_svqshm_detach();
+    }   
+}
+
+/**
+ * Terminate resources..
+ */
+expublic void ndrx_svq_event_atexit(void)
+{
+    ndrx_svq_event_exit(EXTRUE);
 }
 
 /**
@@ -1011,7 +1035,7 @@ exprivate void event_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
     
-    ndrx_svq_event_exit();
+    ndrx_svq_event_exit(EXFALSE);
     
     /* Close pipes */
     if (EXSUCCEED!=close(M_mon.evpipe[READ]))
@@ -1171,10 +1195,13 @@ expublic int ndrx_svq_event_init(void)
     
     pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL);
     
+    /* register fork handlers */
+    M_alive=EXTRUE;
+        
     if (first)
     {
         /* have exit handler */
-        if (EXSUCCEED!=atexit(ndrx_svq_event_exit))
+        if (EXSUCCEED!=atexit(ndrx_svq_event_atexit))
         {
             err = errno;
             NDRX_LOG(log_error, "Failed to register ndrx_svq_event_exit with atexit(): %s",
@@ -1183,9 +1210,7 @@ expublic int ndrx_svq_event_init(void)
                     strerror(err));
             EXFAIL_OUT(ret);
         }
-
-        /* register fork handlers */
-        M_alive=EXTRUE;
+    
         if (EXSUCCEED!=(ret=pthread_atfork(event_fork_prepare, 
                 event_fork_resume, event_fork_resume)))
         {
@@ -1256,9 +1281,10 @@ expublic int ndrx_svq_moncmd_tout(mqd_t mqd, ndrx_stopwatch_t *stamp_time,
  * Add file descriptor to event monitor
  * @param mqd message queue ptr
  * @param fd file descriptor
+ * @param[in] events to poll for
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd)
+expublic int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd, uint32_t events)
 {
     ndrx_svq_mon_cmd_t cmd;
     
@@ -1267,6 +1293,7 @@ expublic int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd)
     cmd.cmd = NDRX_SVQ_MON_ADDFD;
     cmd.mqd = mqd;
     cmd.fd = fd;
+    cmd.events = events;
     
     return ndrx_svq_moncmd_send(&cmd);
 }
@@ -1280,7 +1307,7 @@ expublic int ndrx_svq_moncmd_rmfd(int fd)
 {
     ndrx_svq_mon_cmd_t cmd;
     
-    cmd.cmd = NDRX_SVQ_MON_ADDFD;
+    cmd.cmd = NDRX_SVQ_MON_RMFD;
     cmd.fd = fd;
     
     return ndrx_svq_moncmd_send(&cmd);
@@ -1339,7 +1366,7 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
  * @param ev if event received, then pointer is set to dequeued event.
  * @param p_ptr allocate data buffer for NDRX_SVQ_EV_DATA event.
  * @param is_send do we send? if EXFALSE, we do receive
- * @return EXSUCCEED/EXFAIL
+ * @return EXSUCCEED (got message from q)/EXFAIL (some event received)
  */
 expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send)
@@ -1411,7 +1438,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         pthread_mutex_unlock(&(mqd->qlock));
         
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     /* Chain the lockings, so that Q lock would wait until both
