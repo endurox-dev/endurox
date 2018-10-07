@@ -1195,9 +1195,8 @@ expublic int sv_wait_for_request(void)
                 continue;
             }
             
-            ret=EXFAIL;
-            goto out;
-		}
+            EXFAIL_OUT(ret);
+        }
         /* We should use timer here because, if there are service requests at
          * constant time (less than poll time), then callback will be never called! */
         else if (EXFAIL!=tout && 

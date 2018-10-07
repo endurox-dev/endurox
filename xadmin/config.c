@@ -55,6 +55,25 @@ exprivate int M_is_reply_q_open = EXFALSE;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Close shared resources
+ */
+expublic int ndrx_xadmin_shm_close(void)
+{
+    int ret = EXSUCCEED;
+    
+    if (M_is_reply_q_open)
+    {
+        /* unlink the other linked resources... */
+        ndrx_epoll_shmdetach();
+        fprintf(stderr, "* Shared resources closed...\n");
+    }
+    
+    M_is_reply_q_open = EXFALSE;
+    
+out:
+    return ret;
+}
 
 /**
  * Open reply queue if needed
@@ -79,10 +98,8 @@ expublic int ndrx_xadmin_open_rply_q(void)
         }
 
         NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
-#ifdef EX_USE_SYSVQ
         /* Just give some warning for System */
-        fprintf(stderr, "* System V resources opened...\n");
-#endif
+        fprintf(stderr, "* Shared resources opened...\n");
         
         M_is_reply_q_open=EXTRUE;
         

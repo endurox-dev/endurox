@@ -979,12 +979,20 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             exit(1);
         }
         
+        /* free up the allocate resources */
+        
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-
-            fprintf(stderr, "Failed to start server, error: %d, %s\n",
-                                err, strerror(err));
+            int i;
+            fprintf(stderr, "Failed to start server [%s], error: %d, %s\n",
+                                cmd[0], err, strerror(err));
+            
+            /* free up the list, so that we do not report memory leak... 
+             * in case if binary not started.
+             */
+            NDRX_FREE(cmd);
+            
             if (ENOENT==err)
                 exit(TPEXIT_ENOENT);
             else
