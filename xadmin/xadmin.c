@@ -135,7 +135,7 @@ cmd_mapping_t M_command_map[] =
                                                          "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, "Alias for `sreload'", NULL},
     {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, "Print service queues", NULL},
-    {"pqa",cmd_pqa,  EXFAIL,            1,  2,  0, "Print all queues\n"
+    {"pqa",cmd_pqa,  EXFAIL,            1,  2,  2, "Print all queues\n"
                                                 "\t args: pqa [-a]\n"
                                                 "\t -a - print all queues "
                                                 "(incl. other local systems)", NULL},
@@ -590,7 +590,7 @@ exprivate int process_command_buffer(int *p_have_next)
                                 map->min_args, map->max_args, G_cmd_argc_logical);
             EXFAIL_OUT(ret);
         }
-        else if ( (NDRX_XADMIN_RPLYQREQ==map->reqidle  || NDRX_XADMIN_IDLEREQ==map->reqidle)
+        else if ( (NDRX_XADMIN_RPLYQREQ==map->reqidle || NDRX_XADMIN_IDLEREQ==map->reqidle)
                 && EXFAIL==ndrx_xadmin_open_rply_q())
         {
             EXFAIL_OUT(ret);
@@ -609,6 +609,7 @@ exprivate int process_command_buffer(int *p_have_next)
         }
     }
 out:
+    
     return ret;
 }
 
@@ -624,6 +625,7 @@ expublic int un_init(void)
         NDRX_LOG(log_debug, "Closing ndrxd_q: %p",
             (void *)G_config.ndrxd_q);
         ndrx_mq_close(G_config.ndrxd_q);
+        G_config.ndrxd_q = (mqd_t)EXFAIL;
     }
 
     if (G_config.reply_queue != (mqd_t)EXFAIL)
@@ -636,12 +638,15 @@ expublic int un_init(void)
         NDRX_LOG(log_debug, "Unlinking [%s]",
             G_config.reply_queue_str);
         ndrx_mq_unlink(G_config.reply_queue_str);
-
+        G_config.reply_queue = (mqd_t)EXFAIL;
     }
     
     /* In any case if session was open... */
     tpterm();
-
+    
+    /* close any additional shared resources */
+    ndrx_xadmin_shm_close();
+    
     return EXSUCCEED;
 }
 
