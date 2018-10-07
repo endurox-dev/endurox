@@ -145,6 +145,7 @@ extern char G_xadmin_config_file[PATH_MAX+1];
 extern int start_daemon_idle(void);
 extern int load_env_config(void);
 extern int ndrx_xadmin_open_rply_q(void);
+extern int ndrx_xadmin_shm_close(void);
 extern int is_ndrxd_running(void);
 extern void simple_output(char *buf);
 /* extern int get_arg(char *param, int argc, char **argv, char **out); */

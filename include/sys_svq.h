@@ -139,10 +139,12 @@ struct ndrx_svq_info
     char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string               */
     int qid;                    /**< System V Queue ID                      */
     /* Locks for synchronous or other event wakeup */
+    
+    /* TODO: These two might want to move to SPINLOCKS for better performance */
     pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
     pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
     ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q           */
-    pthread_mutex_t border;     /**< Border lock after msgrcv woken up      */
+    pthread_mutex_t barrier;     /**< Border lock after msgrcv woken up      */
     pthread_mutex_t qlock;      /**< Queue lock (event queue)               */
 
     /* Timeout matching.
@@ -222,6 +224,7 @@ extern NDRX_API int ndrx_svq_moncmd_term(void);
 extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
 extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd);
 extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
+extern NDRX_API mqd_t ndrx_svq_mainq_get(void);
 
 extern NDRX_API int ndrx_svq_event_init(void);
 
