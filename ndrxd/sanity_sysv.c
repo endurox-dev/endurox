@@ -123,10 +123,7 @@ expublic int do_sanity_check_sysv(void)
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq = NULL;
     int len;
-    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
-    shm_svcinfo_t *el;
     int i;
-    int j;
     int have_value_3;
     int pos_3;
     bridgedef_svcs_t *cur, *tmp;
@@ -157,13 +154,12 @@ expublic int do_sanity_check_sysv(void)
         {
             for (i=0; i<len; i++)
             {
-                ndrx_svqshm_get_status(svq, el->resids[j], &pos_3, &have_value_3);
+                ndrx_svqshm_get_status(svq, srvlist[i], &pos_3, &have_value_3);
                 
                 if (have_value_3)
                 {
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
                 }
-                
             }         
         } /* local servs */
     }
