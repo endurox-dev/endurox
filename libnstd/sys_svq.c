@@ -198,12 +198,15 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     /* mq->thread = pthread_self(); - set only in timed functions */
     NDRX_STRCPY_SAFE(mq->qstr, pathname);
     mq->mode = mode;
-    memcpy(&(mq->attr), attr, sizeof (*attr));
+    if (NULL!=attr)
+    {
+        memcpy(&(mq->attr), attr, sizeof (*attr));
+    }
 
     /* Init mutexes... */
     pthread_mutex_init(&mq->rcvlock, NULL);
     pthread_mutex_init(&mq->rcvlockb4, NULL);
-    pthread_mutex_init(&mq->border, NULL);
+    pthread_mutex_init(&mq->barrier, NULL);
     pthread_mutex_init(&mq->qlock, NULL);
     
 out:
@@ -241,7 +244,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
-            (struct timespec *)__abs_timeout, &ev, EXFALSE))
+            (struct timespec *)__abs_timeout, &ev, EXFALSE, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
@@ -310,7 +313,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
-            (struct timespec *)__abs_timeout, &ev, EXTRUE))
+            (struct timespec *)__abs_timeout, &ev, EXTRUE, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)

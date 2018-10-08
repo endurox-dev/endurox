@@ -106,8 +106,30 @@ expublic int ndrx_epoll_down(void)
     int ret = EXSUCCEED;
     
     ret=ndrx_svqshm_down();
+    
 out:
     return ret;
+}
+
+/**
+ * Detach from shared memory resources (used by both epoll & simple queues)
+ * @return EXUSCCEED
+ */
+expublic int ndrx_epoll_shmdetach(void)
+{
+    /* terminate aux thread */
+    ndrx_svq_event_exit(EXTRUE);
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Get Main queue / basically RQADDR!
+ * @return main queue of current service poller
+ */
+expublic mqd_t ndrx_svq_mainq_get(void)
+{
+    return M_mainq;
 }
 
 /**
@@ -238,7 +260,8 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
          * At this point we shall create a server command monitoring
          * thread!!!
          */
-        if (EXSUCCEED!=ndrx_svqadmin_init(M_mainq))
+        NDRX_LOG(log_debug, "About to init admin thread...");
+        if (EXSUCCEED!=ndrx_svqadmin_init(mq))
         {
             NDRX_LOG(log_error, "Failed to init admin queue");
             userlog("Failed to init admin queue");
@@ -346,7 +369,7 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd,
     switch (op)
     {
         case EX_EPOLL_CTL_ADD:
-            if (EXSUCCEED!=(ret = ndrx_svq_moncmd_addfd(M_mainq, fd)))
+            if (EXSUCCEED!=(ret = ndrx_svq_moncmd_addfd(M_mainq, fd, event->events)))
             {
                 err = errno;
                 NDRX_LOG(log_error, "Failed to add fd %d to mqd %p for polling: %s",
@@ -463,8 +486,10 @@ out:
 expublic int ndrx_epoll_close(int fd)
 {
     ndrx_svq_pollsvc_t *el, *elt;
-    /* Close main poller Q erase mapping hashes */
+    /* Close main poller Q erase mapping hashes 
     ndrx_mq_close(M_mainq);
+     * THIS WILL BE DONE BY atexit()...
+     * */
     
     EXHASH_ITER(hh, M_svcmap, el, elt)
     {
@@ -472,7 +497,7 @@ expublic int ndrx_epoll_close(int fd)
         NDRX_FREE(el);
     }
     
-    return EXFAIL;
+    return EXSUCCEED;
 }
 
 /**
@@ -494,6 +519,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     ssize_t rcvlen = *buf_len;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
+    int gottout = EXFALSE;
     ndrx_svq_pollsvc_t *svc;
     tp_command_call_t *call;
     tp_command_generic_t *gen_command;
@@ -513,11 +539,11 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     else
     {
         clock_gettime(CLOCK_REALTIME, &tm);
-        tm.tv_sec += timeout;  /* Set timeout */
+        tm.tv_sec += (timeout / 1000);  /* Set timeout, passed in msec, uses as sec */
     }
     
-    if (EXSUCCEED!=ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
-            &tm, &ev, EXFALSE))
+    if (EXFAIL==ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
+            &tm, &ev, EXFALSE, EXTRUE))
     {
         err = errno;
         if (NULL!=ev)
@@ -526,14 +552,13 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
             {
                 case NDRX_SVQ_EV_TOUT:
                     NDRX_LOG(log_debug, "Timed out");
-                    err = EAGAIN;
+                    gottout = EXTRUE;
                     break;
                 case NDRX_SVQ_EV_DATA:
                     
                     /* Admin thread sends something to us... */
                     NDRX_LOG(log_info, "Admin queue sends us something "
-                            "bytes %d", (int)ev->revents, 
-                            (int)ev->datalen);
+                            "bytes %d", (int)ev->datalen);
                     
                     events[0].is_mqd = EXTRUE;
                     
@@ -585,8 +610,11 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                         EXFAIL_OUT(ret);
                     }
 
-                    *buf_len = ev->datalen;
-                    memcpy(buf, ev->data, *buf_len);
+                    if (ev->datalen > 0)
+                    {
+                        *buf_len = ev->datalen;
+                        memcpy(buf, ev->data, *buf_len);
+                    }
                     break;
                     
                 default:
@@ -609,9 +637,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                 NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", M_mainq->qid, 
                     strerror(err));
             }
+            EXFAIL_OUT(ret);
         }
-        
-        EXFAIL_OUT(ret);
     }
     else
     {
@@ -679,21 +706,21 @@ out:
         NDRX_FREE(ev);
     }
     
-    errno = err;
-    
     if (EXSUCCEED==ret)
     {
-        if (0==err)
+        if (gottout)
         {
-            return 1; /* have one event */
+            errno = EAGAIN;
+            return 0; /* got timeout */
         }
         else
         {
-            return 0;   /* timeout */
+            return 1;   /* received something useful */
         }
     }
     else
     {
+        errno = err;
         return EXFAIL;
     }
 }

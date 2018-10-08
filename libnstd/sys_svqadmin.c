@@ -45,6 +45,7 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <pthread.h>
 
 #include <ndrstandard.h>
 
@@ -65,10 +66,37 @@
 
 exprivate mqd_t M_adminq = (mqd_t)EXFAIL;
 exprivate pthread_t M_evthread;
+exprivate char *M_buf = NULL;;
 
 /*---------------------------Prototypes---------------------------------*/
 
 exprivate void * ndrx_svqadmin_run(void* arg);
+
+/**
+ * Prepare for forking. this will stop the admin thread
+ */
+exprivate void admin_fork_prepare(void)
+{
+    NDRX_LOG(log_debug, "Terminating admin thread before forking...");
+    if (EXSUCCEED!=ndrx_svqadmin_deinit())
+    {
+        NDRX_LOG(log_error, "admin_fork_prepare() failed");
+    }
+}
+
+/**
+ * Restart admin thread for 
+ */
+exprivate void admin_fork_resume(void)
+{
+    int ret;
+    
+    if (EXSUCCEED!=(ret=pthread_create(&M_evthread, NULL, &ndrx_svqadmin_run, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
+        userlog("Failed to create admin thread: %s", strerror(ret));
+    }
+}
 
 /**
  * Perform init on Admin queue
@@ -85,6 +113,15 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     {
         NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
         userlog("Failed to create admin thread: %s", strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* register fork handlers... */
+    if (EXSUCCEED!=(ret=pthread_atfork(admin_fork_prepare, 
+            admin_fork_resume, admin_fork_resume)))
+    {
+        NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
+        userlog("Failed to register fork handlers: %s", strerror(ret));
         EXFAIL_OUT(ret);
     }
     
@@ -122,9 +159,9 @@ out:
  */
 exprivate void cleanup_handler(void *arg)
 {
-    if (NULL!=arg)
+    if (NULL!=M_buf)
     {
-        NDRX_FREE(arg);
+        NDRX_FREE(M_buf);
     }
 }
 
@@ -138,7 +175,6 @@ exprivate void * ndrx_svqadmin_run(void* arg)
 {
     int ret = EXSUCCEED;
     int qid;
-    char *buf = NULL;
     int sz, len;
     int err;
     
@@ -159,7 +195,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         /* Allocate the message size */
         sz = NDRX_MSGSIZEMAX;
         
-        if (NULL!=(buf = NDRX_MALLOC(sz)))
+        if (NULL==(M_buf = NDRX_MALLOC(sz)))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", sz, strerror(err));
@@ -167,7 +203,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             EXFAIL_OUT(ret);
         }
         
-        pthread_cleanup_push(cleanup_handler, buf);
+        pthread_cleanup_push(cleanup_handler, NULL);
         
         if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)))
         {
@@ -176,11 +212,16 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             EXFAIL_OUT(ret);
         }
         
+        
+        NDRX_LOG(log_debug, "About to wait for service admin message qid=%d", qid);
+        
         /* read the message, well we could read it directly from MQD 
          * then we do not need any locks..
          */
-        len = msgrcv(qid, buf, NDRX_SVQ_INLEN(sz), 0, 0);
+        len = msgrcv(qid, M_buf, NDRX_SVQ_INLEN(sz), 0, 0);
         err = errno;
+        
+        NDRX_LOG(log_debug, "Admin msgrcv: qid=%d len=%d", qid, len);
         
         if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
         {
@@ -223,16 +264,26 @@ exprivate void * ndrx_svqadmin_run(void* arg)
                 EXFAIL_OUT(ret);
             }
             
-            ev->data = buf;
+            ev->data = M_buf;
             ev->datalen = NDRX_SVQ_OUTLEN(len);
             ev->ev = NDRX_SVQ_EV_DATA;
                     
-            if (EXSUCCEED!=ndrx_svq_mqd_put_event(M_adminq, ev))
+            NDRX_LOG(log_debug, "Putting admin event...");
+            
+            if (EXSUCCEED!=ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), ev))
             {
                 NDRX_LOG(log_error, "Failed to put admin event");
                 userlog("Failed to put admin event");
                 EXFAIL_OUT(ret);
             }
+            
+            /* Release pointer, as it was delivered to poller.. 
+             * so that we do not memory leaks at shutdown...
+             */
+            M_buf = NULL;
+            
+            NDRX_LOG(log_debug, "After admin event...");
+            
         }
         
         pthread_cleanup_pop(1);
@@ -247,9 +298,9 @@ out:
         abort();
     }
 
-    if (NULL!=buf)
+    if (NULL!=M_buf)
     {
-        NDRX_FREE(buf);
+        NDRX_FREE(M_buf);
     }
 
     return NULL;
