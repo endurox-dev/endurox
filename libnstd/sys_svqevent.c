@@ -814,10 +814,12 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
              */
             if (syncfd || i<1)
             {
-                NDRX_LOG(log_error, "moc=%d %p %p", moc, M_mon.fdtabmo, M_mon.fdtab);
                 M_mon.fdtabmo[moc].revents = 0;
                 M_mon.fdtabmo[moc].fd = M_mon.fdtab[i].fd;
                 M_mon.fdtabmo[moc].events = M_mon.fdtab[i].events;
+                
+                NDRX_LOG(log_error, "moc=%d %p %p fd=%d", moc, 
+                        M_mon.fdtabmo, M_mon.fdtab, M_mon.fdtabmo[moc].fd);
                 moc++;
             }
             
