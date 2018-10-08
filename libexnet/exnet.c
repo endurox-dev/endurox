@@ -658,7 +658,7 @@ exprivate int close_socket(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
 
-    NDRX_LOG(log_warn, "Closing socket...");
+    NDRX_LOG(log_warn, "Closing socket %d...", net->sock);
     net->dl = 0; /* Reset buffered bytes */
     
     net->is_connected=EXFALSE; /* mark disconnected. */

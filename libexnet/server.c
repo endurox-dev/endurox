@@ -250,8 +250,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     }
     
     /* Install poller extension? */
-    if (EXSUCCEED!=tpext_addpollerfd(client->sock,
-        POLL_FLAGS,
+    if (EXSUCCEED!=tpext_addpollerfd(client->sock, POLL_FLAGS,
         client, exnet_poll_cb))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
@@ -290,7 +289,7 @@ out:
  */
 expublic int exnet_bind(exnetcon_t *net)
 {
-	int ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "exnet_bind";
     int enable = EXTRUE;
     
@@ -309,7 +308,7 @@ expublic int exnet_bind(exnetcon_t *net)
         EXFAIL_OUT(ret);
     }
     
-    /*  Bind our socket addresss to the 
+    /*  Bind our socket address to the 
 	   listening socket, and call listen()  */
     if ( bind(net->sock, (struct sockaddr *) &net->address, sizeof(net->address)) < 0 )
     {
@@ -327,8 +326,7 @@ expublic int exnet_bind(exnetcon_t *net)
     
     /* Install poller extension? */
     if (EXSUCCEED!=tpext_addpollerfd(net->sock,
-        POLL_FLAGS,
-        net, exnetsvpollevent))
+        POLL_FLAGS, net, exnetsvpollevent))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
         ret=EXFAIL;
