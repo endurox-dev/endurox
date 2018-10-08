@@ -108,6 +108,8 @@ typedef struct
 {
     int nrfds;              /**< number of FDs in poll                  */
     struct pollfd *fdtab;   /**< poll() structure, pre-allocated        */
+    struct pollfd *fdtabmo; /**< Real monitoirng table                  */
+    
     int evpipe[2];          /**< wakeup pipe from notification thread   */
     pthread_t evthread;     /**< Event thread                           */
     
@@ -167,6 +169,13 @@ exprivate int ndrx_svq_fd_hash_addpoll(int fd, uint32_t events)
                 M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds);
         EXFAIL_OUT(ret);
     }
+    
+    if (NULL==(M_mon.fdtabmo=NDRX_REALLOC(M_mon.fdtabmo, sizeof(struct pollfd)*M_mon.nrfds)))
+    {
+        NDRX_LOG(log_error, "Failed to realloc (mo) %d/%d", 
+                M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds);
+        EXFAIL_OUT(ret);
+    }
 
     M_mon.fdtab[M_mon.nrfds-1].fd = fd;
     M_mon.fdtab[M_mon.nrfds-1].events = events;
@@ -206,6 +215,7 @@ exprivate int ndrx_svq_fd_hash_delpoll(int fd)
             {
                 NDRX_LOG(log_warn, "set->nrfds == 0, => free");
                 NDRX_FREE((char *)M_mon.fdtab);
+                NDRX_FREE((char *)M_mon.fdtabmo);
             }
             else if (NULL==(M_mon.fdtab=NDRX_REALLOC(M_mon.fdtab, 
                     sizeof(struct pollfd)*M_mon.nrfds)))
@@ -216,6 +226,20 @@ exprivate int ndrx_svq_fd_hash_delpoll(int fd)
                         strerror(err));
 
                 NDRX_LOG(log_error, "Failed to realloc %d/%d: %s", 
+                        M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds, 
+                        strerror(err));
+
+                EXFAIL_OUT(ret);
+            }
+            else if (NULL==(M_mon.fdtabmo=NDRX_REALLOC(M_mon.fdtabmo, 
+                    sizeof(struct pollfd)*M_mon.nrfds)))
+            {
+                int err = errno;
+                userlog("Failed to realloc mo %d/%d: %s", 
+                        M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds, 
+                        strerror(err));
+
+                NDRX_LOG(log_error, "Failed to realloc mo %d/%d: %s", 
                         M_mon.nrfds, sizeof(struct pollfd)*M_mon.nrfds, 
                         strerror(err));
 
@@ -752,11 +776,11 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int retpoll;
     int ret = EXSUCCEED;
     int timeout;
-    int i;
+    int i, moc;
     int err;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
-    
+    int syncfd = EXFALSE;
     /* we shall receive unnamed pipe
      * in thread.
      * 
@@ -781,12 +805,27 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         NDRX_LOG(log_debug, "About to poll for: %d nrfds=%d",
                 timeout, M_mon.nrfds);
         
+        moc=0;
         for (i=0; i<M_mon.nrfds; i++)
         {
-            M_mon.fdtab[i].revents = 0;
+            /* M_mon.fdtab[i].revents = 0; 
+             
+             we know that first is command pipe the others are FDs
+             */
+            if (syncfd || i<1)
+            {
+                NDRX_LOG(log_error, "moc=%d %p %p", moc, M_mon.fdtabmo, M_mon.fdtab);
+                M_mon.fdtabmo[moc].revents = 0;
+                M_mon.fdtabmo[moc].fd = M_mon.fdtab[i].fd;
+                M_mon.fdtabmo[moc].events = M_mon.fdtab[i].events;
+                moc++;
+            }
+            
         }
         
-        retpoll = poll( M_mon.fdtab, M_mon.nrfds, timeout*1000);
+        retpoll = poll( M_mon.fdtabmo, moc, timeout*1000);
+        
+        syncfd = EXFALSE;
         
         NDRX_LOG(log_debug, "poll() ret = %d pid = %d", retpoll, (int)getpid());
         if (EXFAIL==retpoll)
@@ -829,12 +868,12 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             }
             
         }
-        else for (i=0; i<M_mon.nrfds; i++)
+        else for (i=0; i<moc; i++)
         {
-            if (M_mon.fdtab[i].revents)
+            if (M_mon.fdtabmo[i].revents)
             {
                 NDRX_LOG(log_debug, "%d fd=%d revents=%d", i, 
-                        M_mon.fdtab[i].fd, (int)M_mon.fdtab[i].revents);
+                        M_mon.fdtabmo[i].fd, (int)M_mon.fdtabmo[i].revents);
                 if (PIPE_POLL_IDX==i)
                 {
                     /* We got something from command pipe, thus 
@@ -853,8 +892,14 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         EXFAIL_OUT(ret);
                     }
                     
-                    NDRX_LOG(log_debug, "Got command: %d %p pid=%d", 
-                            cmd.cmd, cmd.mqd, (int)getpid());
+                    NDRX_LOG(log_debug, "Got command: %d %p pid=%d flags=%d", 
+                            cmd.cmd, cmd.mqd, (int)getpid(), cmd.flags);
+                    
+                    /* next time monitor file descriptors too */
+                    if (NDRX_SVQ_MONF_SYNCFD & cmd.flags)
+                    {
+                        syncfd = EXTRUE;
+                    }
                     
                     switch (cmd.cmd)
                     {
@@ -890,7 +935,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             break;
                             
                         case NDRX_SVQ_MON_RMFD:
-                            NDRX_LOG(log_info, "Deregister fd %d from polling");
+                            NDRX_LOG(log_info, "Deregister fd %d from polling", 
+                                    cmd.fd);
                             ndrx_svq_fd_hash_del(cmd.fd);
                             break;
                         case NDRX_SVQ_MON_TERM:
@@ -928,14 +974,14 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 }
                 else
                 {
-                    ndrx_svq_fd_hash_t *fdh =  ndrx_svq_fd_hash_find(M_mon.fdtab[i].fd);
+                    ndrx_svq_fd_hash_t *fdh =  ndrx_svq_fd_hash_find(M_mon.fdtabmo[i].fd);
                     
                     if (NULL==fdh)
                     {
                         NDRX_LOG(log_error, "File descriptor %d not registered"
-                                " int System V poller - FAIL", M_mon.fdtab[i].fd);
+                                " int System V poller - FAIL", M_mon.fdtabmo[i].fd);
                         userlog("File descriptor %d not registered"
-                                " int System V poller - FAIL", M_mon.fdtab[i].fd);
+                                " int System V poller - FAIL", M_mon.fdtabmo[i].fd);
                         EXFAIL_OUT(ret);
                     }
                             
@@ -955,8 +1001,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                    ev->data = NULL;
                    ev->datalen = 0;
                    ev->ev = NDRX_SVQ_EV_FD;
-                   ev->fd = M_mon.fdtab[i].fd;
-                   ev->revents = M_mon.fdtab[i].revents;
+                   ev->fd = M_mon.fdtabmo[i].fd;
+                   ev->revents = M_mon.fdtabmo[i].revents;
                    
                    /* get queue descriptor  
                     * the data is deallocated by target thread
@@ -977,6 +1023,11 @@ out:
     if (NULL!=M_mon.fdtab)
     {
         NDRX_FREE(M_mon.fdtab);
+    }
+
+    if (NULL!=M_mon.fdtabmo)
+    {
+        NDRX_FREE(M_mon.fdtabmo);
     }
 
     /* if we get "unknown" error here, then we have to shutdown the whole app
@@ -1088,6 +1139,13 @@ exprivate void event_fork_resume(void)
         EXFAIL_OUT(ret);
     }
     
+    if (NULL==(M_mon.fdtabmo = NDRX_CALLOC(M_mon.nrfds, sizeof(struct pollfd))))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "calloc for pollfd mo failed: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
     /* create thread */
     
     /* So wait for events here in the pip form Q thread */
@@ -1185,6 +1243,13 @@ expublic int ndrx_svq_event_init(void)
         NDRX_LOG(log_error, "calloc for pollfd failed: %s", strerror(err));
         EXFAIL_OUT(ret);
     }
+    
+    if (NULL==(M_mon.fdtabmo = NDRX_CALLOC(M_mon.nrfds, sizeof(struct pollfd))))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "calloc for pollfd mo failed: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
 
     /* So wait for events here in the pip form Q thread */
     M_mon.fdtab[PIPE_POLL_IDX].fd = M_mon.evpipe[READ];
@@ -1194,7 +1259,11 @@ expublic int ndrx_svq_event_init(void)
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write: %d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
-    pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL);
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to create monitoring thread: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
     
     /* register fork handlers */
     M_alive=EXTRUE;
@@ -1263,7 +1332,7 @@ out:
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_svq_moncmd_tout(mqd_t mqd, ndrx_stopwatch_t *stamp_time, 
-        unsigned long stamp_seq, struct timespec *abs_timeout)
+        unsigned long stamp_seq, struct timespec *abs_timeout, int syncfd)
 {
     ndrx_svq_mon_cmd_t cmd;
     
@@ -1274,6 +1343,11 @@ expublic int ndrx_svq_moncmd_tout(mqd_t mqd, ndrx_stopwatch_t *stamp_time,
     cmd.stamp_time = *stamp_time;
     cmd.stamp_seq = stamp_seq;
     cmd.abs_timeout = *abs_timeout;
+    
+    if (syncfd)
+    {
+        cmd.flags|=NDRX_SVQ_MONF_SYNCFD;
+    }
     
     return ndrx_svq_moncmd_send(&cmd);
 }
@@ -1367,10 +1441,13 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
  * @param ev if event received, then pointer is set to dequeued event.
  * @param p_ptr allocate data buffer for NDRX_SVQ_EV_DATA event.
  * @param is_send do we send? if EXFALSE, we do receive
+ * @param[in] syncfd Tell poller thread that we start to wait for FD events
+ *  otherwise sync thread won't monitor FDs, due to fact that while we are
+ *  not processed the FD, we will gate again FD wakups for the same events.
  * @return EXSUCCEED (got message from q)/EXFAIL (some event received)
  */
 expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
-        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send)
+        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd)
 {
     int ret = EXSUCCEED;
     int err;
@@ -1407,9 +1484,9 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     /* register timeout: */
 
     /* if abs timeout is set to zero, then there is no timeout expected.. */
-    if ((0!=abs_timeout->tv_nsec || 0!=abs_timeout->tv_sec) &&
+    if ((0!=abs_timeout->tv_nsec || 0!=abs_timeout->tv_sec || syncfd) &&
             EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
-            abs_timeout))
+            abs_timeout, syncfd))
     {
         err = EFAULT;
         NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_moncmd_tout()");

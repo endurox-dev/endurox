@@ -543,7 +543,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     
     if (EXFAIL==ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
-            &tm, &ev, EXFALSE))
+            &tm, &ev, EXFALSE, EXTRUE))
     {
         err = errno;
         if (NULL!=ev)

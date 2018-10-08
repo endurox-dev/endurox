@@ -244,7 +244,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
-            (struct timespec *)__abs_timeout, &ev, EXFALSE))
+            (struct timespec *)__abs_timeout, &ev, EXFALSE, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
@@ -313,7 +313,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
-            (struct timespec *)__abs_timeout, &ev, EXTRUE))
+            (struct timespec *)__abs_timeout, &ev, EXTRUE, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
