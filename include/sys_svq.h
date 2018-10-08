@@ -61,6 +61,9 @@
 #define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This is request address q  */
 #define NDRX_SVQ_MAP_HAVESVC      0x00000020  /**< Have service in shm        */
 
+
+#define NDRX_SVQ_MONF_SYNCFD      0x00000001  /**< Perform monitoring on FDs  */
+
 /** For quick access to  */
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
 #define NDRX_SVQ_STATIDX(MEM, IDX) ((ndrx_svq_status_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_status_t)*IDX)))
@@ -180,6 +183,7 @@ typedef struct
 {
     int cmd;                    /**< See NDRX_SVQ_MON_* commands            */
     struct timespec abs_timeout;/**< timeout value when the wait shell tout */
+    int flags;                  /**< See NDRX_SVQ_MONF*                     */
     
     /* Data for timeout request: */
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
@@ -218,7 +222,7 @@ extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxle
 extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
 extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
-        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send);
+        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd);
 extern NDRX_API void ndrx_svq_event_exit(int detatch);
 
 extern NDRX_API int ndrx_svq_moncmd_term(void);
