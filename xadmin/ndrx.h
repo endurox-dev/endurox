@@ -151,6 +151,8 @@ extern void simple_output(char *buf);
 extern int chk_confirm(char *message, short is_confirmed);
 extern int chk_confirm_clopt(char *message, int argc, char **argv);
 extern int ndrx_start_idle();
+extern int ndrx_xadmin_shm_close();
+extern int un_init(void);
 extern void sign_chld_handler(int sig);
 
 #ifndef NDRX_DISABLEPSCRIPT
