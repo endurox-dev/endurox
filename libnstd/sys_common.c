@@ -885,7 +885,7 @@ expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
         goto out;
     }
     
-    while (ndrx_getline(&buf, &n, fp))
+    while (EXFAIL!=ndrx_getline(&buf, &n, fp))
     {
         /* test the output... */
         if (EXSUCCEED==ndrx_regexec(p_re, buf))
