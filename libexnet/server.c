@@ -91,16 +91,17 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * About to remove incoming connefction.
+ * About to remove incoming connection.
  */
 expublic void exnet_remove_incoming(exnetcon_t *net)
 {
     /* close(net->sock); Bug #233 - socket was already closed, core dumps on freebsd next */
     net->my_server->incomming_cons--;
     NDRX_LOG(log_debug, "Open connections decreased to: %d", 
-            net->my_server->incomming_cons); 
-    NDRX_FREE(net->d); /* remove network buffer */
-    NDRX_FREE(net);
+            net->my_server->incomming_cons);
+    /*
+    NDRX_FREE(net->d);  remove network buffer 
+    NDRX_FREE(net); */
 }
 
 /**
