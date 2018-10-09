@@ -584,7 +584,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
         }
         iterations++;
         
-        NDRX_LOG(log_debug, "Trying %d for [%s]", try, qid);
+        NDRX_LOG(log_debug, "Trying %d for [%d]", try, qid);
     }
     switch (ret)
     {
