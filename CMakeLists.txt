@@ -499,6 +499,3 @@ add_custom_target(index glimpseindex -H ./glimpse_index ${PROJECT_SOURCE_DIR}
 #this also shall generate the glimp command in the current project
 
 # vim: set ts=4 sw=4 et smartindent:
-
-
-# vim: set ts=4 sw=4 et smartindent:
