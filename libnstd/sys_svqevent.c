@@ -907,16 +907,24 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                     {
                         case NDRX_SVQ_MON_TOUT:
                             
-                            NDRX_LOG(log_debug, "register timeout");
-                            
-                            if (EXSUCCEED!=ndrx_svq_mqd_hash_add(cmd.mqd, 
-                                    &(cmd.stamp_time), cmd.stamp_seq, &(cmd.abs_timeout)))
+                            if (cmd.abs_timeout.tv_sec > 0 || 
+                                    cmd.abs_timeout.tv_nsec > 0)
                             {
-                                NDRX_LOG(log_error, "Failed to register timeout for %p!",
-                                        cmd.mqd);
-                                userlog("Failed to register timeout for %p!",
-                                        cmd.mqd);
-                                EXFAIL_OUT(ret);
+                                NDRX_LOG(log_debug, "register timeout %p "
+                                        "stamp_seq=%ld sec %ld nsec %ld",
+                                        cmd.mqd, cmd.stamp_seq, 
+                                        (long)cmd.abs_timeout.tv_sec,
+                                        (long)cmd.abs_timeout.tv_nsec);
+
+                                if (EXSUCCEED!=ndrx_svq_mqd_hash_add(cmd.mqd, 
+                                        &(cmd.stamp_time), cmd.stamp_seq, &(cmd.abs_timeout)))
+                                {
+                                    NDRX_LOG(log_error, "Failed to register timeout for %p!",
+                                            cmd.mqd);
+                                    userlog("Failed to register timeout for %p!",
+                                            cmd.mqd);
+                                    EXFAIL_OUT(ret);
+                                }
                             }
                             
                             break;
@@ -1384,6 +1392,9 @@ expublic int ndrx_svq_moncmd_rmfd(int fd)
 {
     ndrx_svq_mon_cmd_t cmd;
     
+    memset(&cmd, 0, sizeof(cmd));
+    
+    
     cmd.cmd = NDRX_SVQ_MON_RMFD;
     cmd.fd = fd;
     
@@ -1486,14 +1497,23 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     /* register timeout: */
 
     /* if abs timeout is set to zero, then there is no timeout expected.. */
-    if ((0!=abs_timeout->tv_nsec || 0!=abs_timeout->tv_sec || syncfd) &&
-            EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
-            abs_timeout, syncfd))
+    NDRX_LOG(log_debug, "timeout tv_sec=%ld tv_nsec=%ld", 
+        (long)abs_timeout->tv_sec, (long)abs_timeout->tv_nsec);
+    
+    if (0!=abs_timeout->tv_nsec || 0!=abs_timeout->tv_sec || syncfd)
     {
-        err = EFAULT;
-        NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_moncmd_tout()");
-        userlog("Failed to request timeout to ndrx_svq_moncmd_tout()");
-        EXFAIL_OUT(ret);
+        if (EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
+            abs_timeout, syncfd))
+        {
+            err = EFAULT;
+            NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_moncmd_tout()");
+            userlog("Failed to request timeout to ndrx_svq_moncmd_tout()");
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "timeout not needed... mqd=%p", mqd);
     }
     
     /* Also we shall here check the queue? */

@@ -136,7 +136,6 @@ expublic int ndrx_chk_ndrxd(void)
         NDRX_LOG(log_debug, "process `ndrxd' not running...");
     }
     
-    
     ndrx_string_list_free(list);
     
     return ret;
@@ -237,10 +236,6 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
 out:
     return ret;
 }
-
-
-
-
 
 /**
  * Kill the system running (the xadmin dies last...)

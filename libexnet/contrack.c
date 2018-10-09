@@ -113,5 +113,6 @@ expublic exnetcon_t *exnet_find_free_conn(void)
     }
     
     return NULL;
-}/* vim: set ts=4 sw=4 et smartindent: */
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
