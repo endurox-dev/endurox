@@ -163,7 +163,7 @@ int local_test_unlink(char *pfx)
 
         if (EXSUCCEED!=ndrx_mq_unlink(qstr))
         {
-            NDRX_LOG(log_error, "Failed to unlink [%p]: %s", qstr, strerror(errno));
+            NDRX_LOG(log_error, "Failed to unlink [%s]: %s", qstr, strerror(errno));
             ret=EXFAIL;
         }
     }
@@ -770,7 +770,12 @@ out:
     {
         MUTEX_LOCK_V(M_ok_lock);
         M_ok++;
+        NDRX_LOG(log_debug, "Thread finished OK (%d)!", M_ok);
         MUTEX_UNLOCK_V(M_ok_lock);
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Thread failed!");
     }
 
     return NULL;
