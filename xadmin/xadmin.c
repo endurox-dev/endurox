@@ -493,7 +493,7 @@ exprivate int get_cmd(int *p_have_next)
 
         /* Welcome only if it is terminal */
         if (is_tty())
-            printf("NDRX> ");
+            printf("NDRX %ld> ", tpgetnodeid());
 
         /* We should get something! */
         while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
