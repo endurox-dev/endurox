@@ -727,7 +727,7 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
     cpm_process_t *ct = NULL;
     char output[256];
     char buffer [80];
-    struct tm * timeinfo;
+    struct tm timeinfo;
     
     NDRX_LOG(log_info, "cpm_pc: listing clients");
     /* Remove dead un-needed processes (killed & not in new config) */
@@ -736,8 +736,8 @@ exprivate int cpm_pc(UBFH *p_ub, int cd)
         
         NDRX_LOG(log_info, "cpm_pc: %s/%s", c->tag, c->subsect);
         
-        timeinfo = localtime (&c->dyn.stattime);
-        strftime (buffer,80,"%c",timeinfo);
+        localtime_r (&c->dyn.stattime, &timeinfo);
+        strftime (buffer, 80, "%c", (&timeinfo));
     
         if (CLT_STATE_STARTED == c->dyn.cur_state)
         {

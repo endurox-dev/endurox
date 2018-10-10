@@ -630,7 +630,8 @@ out:
  * What about admin msg thread? If we get admin message, then
  * we need to forward the message to main thread, not?
  * this down mixing we will do at poller level..
- * 
+ * Also... we might want to allow only single access to this function.
+ * as it might cause some unpredictable deadlocks...
  * @param mqd message queue descriptor
  * @param ev allocate event structure
  * @return EXSUCCEED/EXFAIL
@@ -640,23 +641,24 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
     int ret = EXSUCCEED;
     int l2, l1;
     int sigs = 0;
-
+    
+    /* now emit the wakeup call */
+    /* put barrier, this will also prevent other threads for sending
+     * the event to main thread during operations of this thread
+     */
+    pthread_mutex_lock(&(mqd->barrier));
+    
     /* Append messages to Q: */
     pthread_mutex_lock(&(mqd->qlock));
     DL_APPEND(mqd->eventq, ev);
     pthread_mutex_unlock(&(mqd->qlock));
     
-    /* now emit the wakeup call */
-    /* put borderlock */	
-    pthread_mutex_lock(&(mqd->barrier));
-
     l1=pthread_mutex_trylock(&(mqd->rcvlockb4));
     l2=pthread_mutex_trylock(&(mqd->rcvlock));
 
-
     if (0==l1)
     {
-        /* nothing todo, not locked... 
+        /* nothing todo, not locked by main thread
          * thus......
          * assume that it will pick the msg up in next loop
          */
@@ -667,16 +669,12 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
         {
             pthread_mutex_unlock(&(mqd->rcvlock));
         }
-
     }
     else
     {
-
-        /* both locked...
-         * so we will signal the thread
-         */
-
-        /* unlock our fired, so that it can step forward
+        
+        /* Seems that main thread is doing something within send/receive block
+         * unlock our friend, so that it can step forward
          */
         if (0==l1)
         {
@@ -688,7 +686,9 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
             pthread_mutex_unlock(&(mqd->rcvlock));
         }
 
-        /* reseync on Q lock so that main thread goes into both locked state*/
+        /* reseync on Q lock so that we know that main thread is close
+         * to send/receive blocked state
+         */
         pthread_mutex_lock(&(mqd->qlock));
         pthread_mutex_unlock(&(mqd->qlock));
 
@@ -750,6 +750,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
     pthread_mutex_unlock(&(mqd->barrier));
     
 out:
+    
     return ret;        
 }
 
@@ -1536,6 +1537,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, mqd->eventq);
         pthread_mutex_unlock(&(mqd->qlock));
+        pthread_mutex_unlock(&(mqd->rcvlockb4));
         
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
         EXFAIL_OUT(ret);
