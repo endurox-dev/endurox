@@ -184,8 +184,9 @@ exprivate int cmd_open_queue(void)
     NDRX_LOG(log_debug, "About to open deamon queue: [%s]",
                                         G_command_state.listenq_str);
     /* Open new queue (non blocked, so  that we do not get deadlock on batch deaths! */
-    if ((mqd_t)EXFAIL==(G_command_state.listenq = ndrx_mq_open_at(G_command_state.listenq_str, O_RDWR | O_CREAT,
-                                        S_IWUSR | S_IRUSR, NULL)))
+    if ((mqd_t)EXFAIL==(G_command_state.listenq = ndrx_mq_open_at(
+                                G_command_state.listenq_str, O_RDWR | O_CREAT,
+                                S_IWUSR | S_IRUSR, NULL)))
     {
         NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
                                         G_command_state.listenq_str, strerror(errno));
@@ -234,8 +235,9 @@ expublic int cmd_processor_init(void)
     int ret=EXSUCCEED;
 
     memset(&G_command_state, 0, sizeof(G_command_state));
-    sprintf(G_command_state.listenq_str, NDRX_NDRXD, G_sys_config.qprefix);
-    
+    snprintf(G_command_state.listenq_str, sizeof(G_command_state.listenq_str), 
+            NDRX_NDRXD, G_sys_config.qprefix);
+
     if (EXFAIL==cmd_open_queue())
     {
         ret=EXFAIL;

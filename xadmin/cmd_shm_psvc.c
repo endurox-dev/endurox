@@ -86,7 +86,7 @@ exprivate char *gen_clstr_map(command_reply_shm_psvc_t * reply)
         }
         else
         {
-            strcpy(tmp, "+");
+            NDRX_STRCPY_SAFE(tmp, "+");
         }
         strcat(map, tmp);
     }

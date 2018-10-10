@@ -342,13 +342,12 @@ expublic int ndrx_sem_is_attached(ndrx_sem_t *sem)
 expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 {
     int ret=EXSUCCEED;
-    char *fn = "ndrx_sem_attach";
 
-    NDRX_LOG(log_debug, "%s enter", fn);
+    NDRX_LOG(log_debug, "enter");
     
     if (sem->attached)
     {
-        NDRX_LOG(log_debug, "%s: sem, key %x, id: %d already attached", 
+        NDRX_LOG(log_debug, "sem, key %x, id: %d already attached", 
                 sem->key, sem->semid);
         goto out;
     }
@@ -358,8 +357,8 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 
     if (EXFAIL==sem->semid) 
     {
-        NDRX_LOG(log_error, "%s: Failed to attach sem, key [%d]: %s",
-                            fn, sem->key, strerror(errno));
+        NDRX_LOG(log_error, "Failed to attach sem, key [%d]: %s",
+                            sem->key, strerror(errno));
         ret=EXFAIL;
         goto out;
     }
@@ -368,7 +367,7 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 
 out:
 
-    NDRX_LOG(log_debug, "%s return %d", fn, ret);
+    NDRX_LOG(log_debug, "return %d", ret);
     return ret;
 }
 
