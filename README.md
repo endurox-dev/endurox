@@ -380,6 +380,8 @@ documentation and added unit tests.
 
 - Version 5.3.18 released on 27/06/2018 (stable) Bug #325
 
+- Version 5.3.20 released on 10/10/2018 (stable) Backport Bug #321 fix to 5.3
+
 # Build configurations
 
 ## Configure make with: 
