@@ -352,11 +352,11 @@ add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (enctools) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing
 
-IF(DEFINE_DISABLEDOC)
-        message("Documentation disabled - not building")
-ELSE (DEFINE_DISABLEDOC)
-        add_subdirectory (doc) #  Documentation project.
-ENDIF (DEFINE_DISABLEDOC)
+#IF(DEFINE_DISABLEDOC)
+#        message("Documentation disabled - not building")
+#ELSE (DEFINE_DISABLEDOC)
+#        add_subdirectory (doc) #  Documentation project.
+#ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
