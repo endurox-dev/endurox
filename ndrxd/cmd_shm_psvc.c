@@ -63,8 +63,7 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
 {
     command_reply_shm_psvc_t * shm_psvc_info = (command_reply_shm_psvc_t *)reply;
     shm_svcinfo_t *p_shm = (shm_svcinfo_t *)params->mod_param1;
-    pm_node_svc_t *elt;
-    int i;
+    int cnt;
     
     reply->msg_type = NDRXD_CALL_TYPE_PM_SHM_PSVC;
     /* calculate new send size */
@@ -81,16 +80,16 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     shm_psvc_info->cnodes_max_id = p_shm->cnodes_max_id;
     memcpy(shm_psvc_info->cnodes, p_shm->cnodes, sizeof(p_shm->cnodes));
     
-    shm_psvc_info->srvids[0] = 0;
+    shm_psvc_info->resids[0] = 0;
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     /* copy the number of elements */
-    i = shm_psvc_info->srvs - shm_psvc_info->csrvs;
-    if (i > CONF_NDRX_MAX_SRVIDS_XADMIN)
+    cnt = shm_psvc_info->srvs - shm_psvc_info->csrvs;
+    if (cnt > CONF_NDRX_MAX_SRVIDS_XADMIN)
     {
-        i = CONF_NDRX_MAX_SRVIDS_XADMIN;
+        cnt = CONF_NDRX_MAX_SRVIDS_XADMIN;
     }
-    memcpy(shm_psvc_info->srvids, p_shm->resids, i*2);
+    memcpy(shm_psvc_info->resids, p_shm->resids, cnt*sizeof(int));
 #endif
     
     /*
