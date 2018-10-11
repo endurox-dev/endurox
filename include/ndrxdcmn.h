@@ -285,23 +285,23 @@ extern "C" {
     
     
 /* Data types describing bellow data structures */
-#define EXF_MIN     0   /* Minimum suported type */
-#define EXF_SHORT	0	/* short int */
-#define EXF_LONG	1	/* long int */
-#define EXF_CHAR	2	/* character */
-#define EXF_FLOAT	3	/* single-precision float */
-#define EXF_DOUBLE	4	/* double-precision float */
-#define EXF_STRING	5	/* string - null terminated */
-#define EXF_CARRAY	6	/* character array */
-#define EXF_NONE    7   /* Data type - none */ 
+#define EXF_MIN         0       /**< Minimum suported type */
+#define EXF_SHORT	0	/**< short int */
+#define EXF_LONG	1	/**< long int */
+#define EXF_CHAR	2	/**< character */
+#define EXF_FLOAT	3	/**< single-precision float */
+#define EXF_DOUBLE	4	/**< double-precision float */
+#define EXF_STRING	5	/**< string - null terminated */
+#define EXF_CARRAY	6	/**< character array */
+#define EXF_NONE        7       /**< Data type - none */ 
     
-#define EXF_INT     8   /* Data type - int */ 
-#define EXF_ULONG   9   /* Data type - unsigned long */ 
-#define EXF_UINT    10  /* Data type - unsigned */ 
-#define EXF_NTIMER  11  /* Data type - n_timer_t */ 
-#define EXF_TIMET   12  /* Data type - time_t */ 
-#define EXF_USHORT  13  /* Data type - unsigned short */ 
-#define EXF_MAX     13   /* Maximum suported type */
+#define EXF_INT         8       /**< Data type - int */ 
+#define EXF_ULONG       9       /**< Data type - unsigned long */ 
+#define EXF_UINT        10      /**< Data type - unsigned */ 
+#define EXF_NTIMER      11      /**< Data type - n_timer_t */ 
+#define EXF_TIMET       12      /**< Data type - time_t */ 
+#define EXF_USHORT      13      /**< Data type - unsigned short */ 
+#define EXF_MAX         13      /**< Maximum suported type */
 
 
 #define PQ_LEN                  12        /* The len of last print queue data */
@@ -389,16 +389,16 @@ typedef struct
     int proto_magic;
     /* </standard comms header> */
     
-    unsigned long magic;              /* Packed magic                           */
-    int command;                      /* Request command                        */
-    short msg_type;                   /* Message type                           */
-    short msg_src;                    /* Message source                         */
-    char reply_queue[NDRX_MAX_Q_SIZE+1];/* Queue (str) on which to pass back reply*/
-    int flags;                        /* Flags for command call                 */
-    int caller_nodeid;              /* Node id of the caller */
+    unsigned long magic;                /**< Packed magic                     */
+    int command;                        /**< Request command                  */
+    short msg_type;                     /**< Message type                     */
+    short msg_src;                      /**< Message source                   */
+    char reply_queue[NDRX_MAX_Q_SIZE+1];/**< Queue (str) on which to pass back reply*/
+    int flags;                          /**< Flags for command call           */
+    int caller_nodeid;                  /**< Node id of the caller            */
 } command_call_t;
 
-/*
+/**
  * Special structure for stop command.
  */
 typedef struct
@@ -406,14 +406,14 @@ typedef struct
     command_call_t call;
 
     /* some additional attribs */
-    short complete_shutdown;            /* Id of the server */
+    short complete_shutdown;            /**< Id of the server */
     int srvid;
     char binary_name[MAXTIDENT+1];
 
 } command_startstop_t;
 
 
-/*
+/**
  * Set/unset call
  */
 typedef struct
@@ -422,7 +422,7 @@ typedef struct
     char env[EX_ENV_MAX+1];
 } command_setenv_t;
 
-/*
+/**
  * Dynamic un/advertise structure
  */
 typedef struct
@@ -430,45 +430,45 @@ typedef struct
     command_call_t call;
     
     int srvid;
-    char svc_nm[MAXTIDENT+1];       /* Service name */
-    char fn_nm[MAXTIDENT+1];        /* Function name */
-    ndrx_stopwatch_t   qopen_time;         /* Timer when q was open */
+    char svc_nm[MAXTIDENT+1];       /**< Service name                       */
+    char fn_nm[MAXTIDENT+1];        /**< Function name                      */
+    ndrx_stopwatch_t   qopen_time;  /**< Timer when q was open              */
 
 } command_dynadvertise_t;
 
-/*
+/**
  * Server ping structure
  */
 typedef struct
 {
     command_call_t call;
-    int srvid;                      /* server ID to be pinged  */
-    int seq;                        /* sequence number in ping */
+    int srvid;                      /**< server ID to be pinged             */
+    int seq;                        /**< sequence number in ping            */
 } command_srvping_t;
 
-/*
+/**
  * Generic command reply structure
  */
 typedef struct
 {
     /* <standard comms header:> */
 #ifdef EX_USE_SYSVQ
-    long mtype; /* mandatory for System V queues */
+    long mtype;             /**< mandatory for System V queues              */
 #endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
     /* </standard comms header> */
-    unsigned long magic;    /* Packed macking...                          */
-    int command;            /* replay command                             */
-    short msg_type;         /* Message source                             */
-    short msg_src;          /* Message source                             */
-    long flags;             /* Response flags                             */
-    int status;             /* Reply status                               */
-    int error_code;         /* Error code, if status if is faulty         */
-    long userfld1;          /* User field                                 */
-    char error_msg[RPLY_ERR_MSG_MAX];/* Error message in reply            */
-    char subtype[0];        /* Pointer to subtype                         */
+    unsigned long magic;    /**< Packed macking...                          */
+    int command;            /**< replay command                             */
+    short msg_type;         /**< Message source                             */
+    short msg_src;          /**< Message source                             */
+    long flags;             /**< Response flags                             */
+    int status;             /**< Reply status                               */
+    int error_code;         /**< Error code, if status if is faulty         */
+    long userfld1;          /**< User field                                 */
+    char error_msg[RPLY_ERR_MSG_MAX];/**< Error message in reply            */
+    char subtype[0];        /**< Pointer to subtype                         */
 } command_reply_t;
 
 /*
@@ -486,7 +486,7 @@ typedef struct
  */
 typedef struct
 {
-    char mode; /* This is diff (+X, -X) or full */
+    char mode; /**< This is diff (+X, -X) or full */
     char svc_nm[MAXTIDENT+1];
     int count;
 } bridge_refresh_svc_t;
@@ -498,9 +498,9 @@ typedef struct
 typedef struct
 {
     command_call_t call;
-    int mode;   /* Refresh mode, full or partial??? */
-    int count; /* count of bellow entries */
-    bridge_refresh_svc_t svcs[0]; /* The entries. */
+    int mode;   /**< Refresh mode, full or partial??? */
+    int count; /**< count of bellow entries */
+    bridge_refresh_svc_t svcs[0]; /**< The entries. */
 } bridge_refresh_t;
 
 
@@ -521,25 +521,26 @@ typedef struct
 typedef struct
 {
     long br_magic;
-    char msg_type; /* A - ATMI, X - NDRX */
-    int command_id; /* either ATMI or NDRX command_id/command */
+    char msg_type;  /**< A - ATMI, X - NDRX                                 */
+    int command_id; /**< either ATMI or NDRX command_id/command             */
     long len;
     char buf[0];
 } cmd_br_net_call_t;
 
 /***************** List of reply types/subtypes ***************************/
-/*
+
+/**
  * Reply for start/stop processing...
  */
 typedef struct
 {
     command_reply_t rply;
     /* list some process ifo */
-    char binary_name[MAXTIDENT+1]; /* Name of the binary */
+    char binary_name[MAXTIDENT+1];  /**< Name of the binary                 */
     int srvid;
     char clopt[PATH_MAX];
-    long state;             /* process state code */
-    pid_t pid;            /* PID of the process */
+    long state;                     /**< process state code                 */
+    pid_t pid;                      /**< PID of the process                 */
 } command_reply_pm_t;
 
 /**
@@ -547,129 +548,124 @@ typedef struct
  */
 typedef struct
 {
-    char svc_nm[MAXTIDENT+1];       /* Service name */
-    char fn_nm[MAXTIDENT+1];        /* Function name */
-    long done;                      /* how many requests are finished */
-    long fail;                      /* how many requests are finished */
-    long min;                      /* min response time */
-    long max;                      /* max response time */
-    long last;                     /* last response time */
-    short status;                   /* service status */
+    char svc_nm[MAXTIDENT+1];       /**< Service name                       */
+    char fn_nm[MAXTIDENT+1];        /**< Function name                      */
+    long done;                      /**< how many requests are finished     */
+    long fail;                      /**< how many requests are finished     */
+    long min;                       /**< min response time                  */
+    long max;                       /**< max response time                  */
+    long last;                      /**< last response time                 */
+    short status;                   /**< service status                     */
 } command_reply_psc_det_t;
 
-/*
+/**
  * Reply for psc (print services) command
  */
 typedef struct
 {
     command_reply_t rply;
-    /* list some process ifo */
-    char binary_name[MAXTIDENT+1]; /* Name of the binary */
-    int nodeid;           /* Other node id of the bridge                   */
+    /* list some process info */
+    char binary_name[MAXTIDENT+1]; /**< Name of the binary          */
+    int nodeid;           /**< Other node id of the bridge          */
     int srvid;
-    pid_t pid;            /* PID of the process */
-    long state;             /* process state code */
-    int svc_count;          /* count of services (for belloow array) */
+    pid_t pid;            /**< PID of the process                   */
+    long state;           /**< process state code                   */
+    int svc_count;        /**< count of services (for belloow array)*/
     command_reply_psc_det_t svcdet[0];
 } command_reply_psc_t;
 
 
 
-/*
+/**
  * Reply for ppm (print process model) command
  * Data fields really are taken from pm_node_t/ndrxd.h!!
  */
 typedef struct
 {
     command_reply_t rply;
-    /* list some process ifo */
-    char binary_name[MAXTIDENT+1]; /* Name of the binary*/
+    /** list some process ifo */
+    char binary_name[MAXTIDENT+1]; /**< Name of the binary*/
     
     /** Real binary name (reported by server it self */
     char binary_name_real[MAXTIDENT+1];
     int srvid;
-    long state;             /* process state code (current)  */
-    long reqstate;          /* Requested state               */
-    short autostart;        /* Start automatically after "start" cmd */
-    int exec_seq_try;       /* Sequental start try           */
-    long last_startup;       /* Cycle count for last start   */
+    long state;             /**< process state code (current)  */
+    long reqstate;          /**< Requested state               */
+    short autostart;        /**< Start automatically after "start" cmd */
+    int exec_seq_try;       /**< Sequental start try           */
+    long last_startup;       /**< Cycle count for last start   */
 
-    int num_term_sigs;      /* Number of times to send term sig, before -9 */
-    long last_sig;          /* Time when signal was sent     */
-    int autokill;           /* Kill the process if not started in time */
+    int num_term_sigs;      /**< Number of times to send term sig, before -9 */
+    long last_sig;          /**< Time when signal was sent     */
+    int autokill;           /**< Kill the process if not started in time */
     /** Parent process PID (or if server if only process then it is real PID */
     pid_t pid;
     /** Server process PID (if parent is script, then this is real one) */
     pid_t svpid;
-    long state_changed;     /* Timer for state changed       */
-    int flags;              /* Flags sent by server info     */
-    short   nodeid;         /* other node id, if this is bridge */
+    long state_changed;     /**< Timer for state changed       */
+    int flags;              /**< Flags sent by server info     */
+    short   nodeid;         /**< other node id, if this is bridge */
     
 } command_reply_ppm_t;
 
-
-
-
-/*
+/**
  * Packet for shm_psvc, fields from shm_svcinfo_t
  */
 typedef struct
 {
     command_reply_t rply;
-    int slot;                           /* Position in SHM                      */
-    char service[MAXTIDENT+1];          /* name of the service                  */
-    int srvs;                           /* Count of servers advertising this service*/
-    int flags;                          /* service flags                        */
+    int slot;                       /**< Position in SHM                      */
+    char service[MAXTIDENT+1];      /**< name of the service                  */
+    int srvs;                       /**< Count of servers advertising this service*/
+    int flags;                      /**< service flags                        */
     
-    int csrvs;                          /* Number of advertises in cluster      */
-    int totclustered;                   /* Total clustered nodes                */
-    int cnodes_max_id;                  /* Max id of cluster nodes in list (for fast search) */
-    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
-    short srvids[CONF_NDRX_MAX_SRVIDS_XADMIN];     /* Server ID (fixed number xadmin output) */
+    int csrvs;                      /**< Number of advertises in cluster      */
+    int totclustered;               /**< Total clustered nodes                */
+    int cnodes_max_id;              /**< Max id of cluster nodes in list (for fast search) */
+    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT]; /**< List of cluster nodes */
+    int resids[CONF_NDRX_MAX_SRVIDS_XADMIN];    /**< Server ID (fixed number xadmin output) */
     
 } command_reply_shm_psvc_t;
 
 
-/*
+/**
  * Packet for shm_psvc, fields from shm_svcinfo_t
  */
 typedef struct
 {
     command_reply_t rply;
-    char service[MAXTIDENT+1];          /* name of the service                  */
-    int pq_info[PQ_LEN];                  /* Print queues,  statistics */
+    char service[MAXTIDENT+1];  /**< name of the service                    */
+    int pq_info[PQ_LEN];        /**< Print queues,  statistics              */
 } command_reply_pq_t;
 
-/*
+/**
  * Packet for shm_psrv, fields from shm_srvinfo_t
  */
 typedef struct
 {
     command_reply_t rply;
-    int slot;                              /* Position in shm.              */
+    int slot;                              /**< Position in shm.              */
     int srvid;
-    unsigned last_call_flags;              /* Flags for last call           */
-    short status;                          /* Glboal status, avail or busy  */
-    short last_command_id;                 /* Last command ID received      */
-    char last_reply_q[NDRX_MAX_Q_SIZE+1];    /* Last queue on it should reply */
+    unsigned last_call_flags;              /**< Flags for last call           */
+    short status;                          /**< Glboal status, avail or busy  */
+    short last_command_id;                 /**< Last command ID received      */
+    char last_reply_q[NDRX_MAX_Q_SIZE+1];  /**< Last queue on it should reply */
     
 } command_reply_shm_psrv_t;
 
-
-
-/*
+/**
  * This reply contains aditional info about configuration loading process & errors
  */
 typedef struct
 {
     command_reply_t rply;
-    int srvid;                      /* Server ID with problem  */
-    char old_binary[MAXTIDENT+1];   /* Old binary in config    */
-    char new_binary[MAXTIDENT+1];   /* New binary in config    */
-    int error;                      /* Associated error code   */
+    int srvid;                      /**< Server ID with problem  */
+    char old_binary[MAXTIDENT+1];   /**< Old binary in config    */
+    char new_binary[MAXTIDENT+1];   /**< New binary in config    */
+    int error;                      /**< Associated error code   */
 } command_reply_reload_t;
 
-/*
+/**
  * Reply to command getbrs - GETBRIDGES
  */
 typedef struct
@@ -693,9 +689,9 @@ typedef struct
  */
 typedef struct
 {
-    char svc_nm[MAXTIDENT+1];       /* Service name */
-    char fn_nm[MAXTIDENT+1];        /* Function name */
-    ndrx_stopwatch_t   qopen_time;         /* Timer when q was open */
+    char svc_nm[MAXTIDENT+1];       /**< Service name                   */
+    char fn_nm[MAXTIDENT+1];        /**< Function name                  */
+    ndrx_stopwatch_t   qopen_time;  /**< Timer when q was open          */
 } svc_inf_t;
 
 /**
@@ -703,15 +699,15 @@ typedef struct
  */
 typedef struct
 {
-   int srvid;              /* server id sending this info                   */
-   pid_t  pid;             /* server's process id (for crosscheck alarming) */
+   int srvid;              /**< server id sending this info                   */
+   pid_t  pid;             /**< server's process id (for crosscheck alarming) */
    /** real server PID */
    pid_t svpid;
    /** Real name of server process */
    char binary_name_real[MAXTIDENT+1];
-   int state;              /* server's state (the same as for process       */
-   int flags;              /* servers flags                                 */
-   int nodeid;             /* Other node id of the bridge                   */
+   int state;              /**< server's state (the same as for process       */
+   int flags;              /**< servers flags                                 */
+   int nodeid;             /**< Other node id of the bridge                   */
 } srv_key_t;
 
 /**
@@ -720,10 +716,10 @@ typedef struct
  */
 typedef struct
 {
-   command_call_t call;    /* Generic call data           */
-   srv_key_t srvinfo;      /* Server key                  */
-   short svc_count;        /* Service count               */
-   svc_inf_t svcs[0];      /* Service names, should be in proper order! */
+   command_call_t call;    /**< Generic call data                           */
+   srv_key_t srvinfo;      /**< Server key                                  */
+   short svc_count;        /**< Service count                               */
+   svc_inf_t svcs[0];      /**< Service names, should be in proper order!   */
 } srv_status_t;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

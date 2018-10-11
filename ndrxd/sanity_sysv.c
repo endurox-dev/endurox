@@ -39,6 +39,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <utlist.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <ndrxd.h>
@@ -53,6 +54,7 @@
 #include <userlog.h>
 #include <sys_unix.h>
 #include <sys_svq.h>
+#include <bits/fcntl-linux.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -92,6 +94,9 @@ exprivate int flush_rqaddr(int qid, char *qstr)
     mqd->qid = qid;
     NDRX_STRCPY_SAFE(mqd->qstr, qstr);
     
+    /* set attr as non blocked */
+    mqd->attr.mq_flags |= O_NONBLOCK;
+    
     /* lets flush the queue now. */
     if (EXSUCCEED!=remove_service_q(NULL, EXFAIL, mqd, qstr))
     {
@@ -123,15 +128,16 @@ expublic int do_sanity_check_sysv(void)
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq = NULL;
     int len;
+    int reslen;
     int i;
     int have_value_3;
     int pos_3;
     bridgedef_svcs_t *cur, *tmp;
-    short *srvlist = NULL;
+    int *srvlist = NULL;
     
     NDRX_LOG(log_debug, "Into System V sanity checks");
     /* Get the list of queues */
-    svq = ndrx_svqshm_statusget(&len, G_app_config->rqaddrttl);
+    svq = ndrx_svqshm_statusget(&reslen, G_app_config->rqaddrttl);
     
     if (NULL==svq)
     {
@@ -148,17 +154,27 @@ expublic int do_sanity_check_sysv(void)
      */
     
     /* We assume shm is OK! */
+    
+    NDRX_LOG(log_debug, "Marking resources against services");
     EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
         {
+            NDRX_LOG(log_debug, "Checking service [%s]", cur->svc_nm);
             for (i=0; i<len; i++)
             {
                 ndrx_svqshm_get_status(svq, srvlist[i], &pos_3, &have_value_3);
                 
                 if (have_value_3)
                 {
+                    NDRX_LOG(log_debug, "Service [%s] have resource %d at idx %d", 
+                            cur->svc_nm, srvlist[i], i);
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "!!! Service [%s] have NO resource %d at idx %d", 
+                            cur->svc_nm, srvlist[i], i);
                 }
             }         
         } /* local servs */
@@ -169,14 +185,15 @@ expublic int do_sanity_check_sysv(void)
      * are subject for unlinking...
      * perform that in sync way...
      */
-    for (i=0; i<len; i++)
+    NDRX_LOG(log_debug, "Flush RQADDR queues with out services and TTL expired.");
+    for (i=0; i<reslen; i++)
     {
-        if ((svq[pos_3].flags & NDRX_SVQ_MAP_RQADDR)
-                && !(svq[pos_3].flags & NDRX_SVQ_MAP_HAVESVC)
-                && (svq[pos_3].flags & NDRX_SVQ_MAP_SCHEDRM))
+        if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
+                && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
+                && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
         {
             NDRX_LOG(log_info, "qid %d is subject for delete ttl %d", 
-                    svq[pos_3].qid, G_app_config->rqaddrttl);
+                    svq[i].qid, G_app_config->rqaddrttl);
             
             /* Well at this point we shall
              * remove call expublic int remove_service_q(char *svc, short srvid, 
@@ -193,10 +210,10 @@ expublic int do_sanity_check_sysv(void)
              * with qid and queue string. then callback would build simple
              * mqd_t and pass it to remove_service_q for message zapping.
              */
-            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, 
+            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[i].qid, 
                     IPC_RMID, G_app_config->rqaddrttl, flush_rqaddr))
             {
-                NDRX_LOG(log_error, "Failed to unlink qid %d", svq[pos_3].qid);
+                NDRX_LOG(log_error, "Failed to unlink qid %d", svq[i].qid);
                 EXFAIL_OUT(ret);
             }
         }

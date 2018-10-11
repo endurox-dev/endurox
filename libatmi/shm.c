@@ -523,10 +523,10 @@ out:
  * Returns list of servers providing the service (it does the malloc)
  * for poll() mode only.
  * @param svc
- * @param srvlist
+ * @param srvlist list of servers/resource id (mqd for system v)
  * @return 
  */
-expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
+expublic int ndrx_shm_get_srvs(char *svc, int **srvlist, int *len)
 {
     int ret=EXSUCCEED;
     int pos=EXFAIL;
@@ -567,13 +567,13 @@ expublic int ndrx_shm_get_srvs(char *svc, short **srvlist, int *len)
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(short) *local_count )))
+    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(int) *local_count )))
     {
         NDRX_LOG(log_error, "malloc fail: %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    memcpy(*srvlist, psvcinfo->resids, sizeof(short) *local_count);
+    memcpy(*srvlist, psvcinfo->resids, sizeof(int) *local_count);
     *len = local_count;
     
 out:
