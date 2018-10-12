@@ -121,6 +121,13 @@ out:
  * - remove any qid, that is not present in shm (the removal shall be done
  *  in sv5 library with the write lock present and checking the ctime again
  *  so that we have a real sync). Check the service rqaddr by NDRX_SVQ_MAP_RQADDR
+ * 
+ * Well if we are about to remove stale request addresses, we could report them
+ * from the server processes. And thus locate if none of available server processes
+ * belongs to request address, then queue is unlinked. This will protect us from
+ * unlinking queues to which working zero service servers are located, like
+ * tpbridge...
+ * 
  * @return SUCCEED/FAIL
  */
 expublic int do_sanity_check_sysv(void)
@@ -134,6 +141,7 @@ expublic int do_sanity_check_sysv(void)
     int pos_3;
     bridgedef_svcs_t *cur, *tmp;
     int *srvlist = NULL;
+    pm_node_t *p_pm;
     
     NDRX_LOG(log_debug, "Into System V sanity checks");
     /* Get the list of queues */
@@ -188,12 +196,28 @@ expublic int do_sanity_check_sysv(void)
     NDRX_LOG(log_debug, "Flush RQADDR queues with out services and TTL expired.");
     for (i=0; i<reslen; i++)
     {
+next:
         if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
                 && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
                 && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
         {
-            NDRX_LOG(log_info, "qid %d is subject for delete ttl %d", 
-                    svq[i].qid, G_app_config->rqaddrttl);
+            
+            /* Check process model, to see if any active server have this
+             * request address
+             */
+            DL_FOREACH(G_process_model, p_pm)
+            {
+                if (PM_RUNNING(p_pm->state)
+                        && 0==strcmp(p_pm->rqaddress, svq[i].qstr))
+                {
+                    NDRX_LOG(log_debug, "Server [%s]/%d is using rqddr [%s] - chk next",
+                        p_pm->binary_name, p_pm->srvid, svq[i].qstr);
+                    goto next;
+                }
+            }
+            
+            NDRX_LOG(log_info, "qid %d is subject for delete ttl %d qstr=[%s]", 
+                    svq[i].qid, G_app_config->rqaddrttl, svq[i].qstr);
             
             /* Well at this point we shall
              * remove call expublic int remove_service_q(char *svc, short srvid, 
@@ -210,7 +234,7 @@ expublic int do_sanity_check_sysv(void)
              * with qid and queue string. then callback would build simple
              * mqd_t and pass it to remove_service_q for message zapping.
              */
-            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[i].qid, 
+            if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, svq[i].qid, 
                     IPC_RMID, G_app_config->rqaddrttl, flush_rqaddr))
             {
                 NDRX_LOG(log_error, "Failed to unlink qid %d", svq[i].qid);

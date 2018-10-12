@@ -101,6 +101,7 @@ typedef struct
 {
     int qid;                            /**< System V Queue id          */
     short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
+    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string    */
 } ndrx_svq_status_t;
 
 /**
