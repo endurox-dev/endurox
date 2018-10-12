@@ -146,6 +146,8 @@ struct pm_node
     char binary_name[MAXTIDENT+1];
     /** Real binary name (if cmdline is used for startup config) */
     char binary_name_real[MAXTIDENT+1];
+    /** request address, used by system V */
+    char rqaddress[NDRX_MAX_Q_SIZE+1];
     int srvid;
     char clopt[PATH_MAX - 128]; /**< take off -i xxxxx PID and some key       */
     long state;             /**< process state code (current)                 */
