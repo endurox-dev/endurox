@@ -127,6 +127,7 @@ cmd_mapping_t M_command_map[] =
     {"-v",      cmd_ver,  EXFAIL,                1,  1,  0, "Print version info", NULL},
     {"ver",     cmd_ver,  EXFAIL,                1,  1,  0, "Print version info, same as -v", NULL},
     {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  1,  1, "Print process model", NULL},
+    {"ppm2",    cmd_ppm2, NDRXD_COM_XAPPM_RQ,    1,  1,  1, "Print process model, 2nd page", NULL},
     {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1,  1, "Shared mem, print services", NULL},
     {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, "Shared mem, print servers", NULL},
     {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  2,  1, "Abort app shutdown or startup.\n"

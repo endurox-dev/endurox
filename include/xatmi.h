@@ -127,8 +127,8 @@ extern "C" {
 #define NDRX_QTYPE_SRVRPLY  4                   /**< Server Reply Q */
     
 /* Used for System V interface */
-#define NDRX_SVR_SVADDR_DFLT "%s,srv,addr,%s,%d" /**< Server address        */
-#define NDRX_SVR_RQADDR_DFLT "%s,srv,rqaddr,%s" /**< Server request address */
+#define NDRX_SVR_SVADDR_FMT "%s,srv,addr,%s,%d" /**< Server address, per proc */
+#define NDRX_SVR_RQADDR_FMT "%s,srv,rqaddr,%s" /**< Server request address   */
 /** bridge request addr */
 #define NDRX_SVR_RQADDR_BRDG "%s,srv,rqaddr,@TPBRIDGE%03d"
 

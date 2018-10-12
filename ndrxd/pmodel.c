@@ -742,7 +742,7 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
             if (last)
             {
                 NDRX_LOG(log_debug, "Service [%s] will be zapped by "
-                        "RQADDR sanity checks");
+                        "RQADDR sanity checks", elt->svc.svc_nm);
             }
             
 #elif defined(EX_USE_POLL)
