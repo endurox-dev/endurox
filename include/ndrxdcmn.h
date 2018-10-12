@@ -588,6 +588,10 @@ typedef struct
     
     /** Real binary name (reported by server it self */
     char binary_name_real[MAXTIDENT+1];
+    
+    /** request address, used by system v */
+    char rqaddress[NDRX_MAX_Q_SIZE+1];
+    
     int srvid;
     long state;             /**< process state code (current)  */
     long reqstate;          /**< Requested state               */
@@ -708,6 +712,12 @@ typedef struct
    int state;              /**< server's state (the same as for process       */
    int flags;              /**< servers flags                                 */
    int nodeid;             /**< Other node id of the bridge                   */
+   /** 
+    * Have a request address of the server so that we do not zap them during
+    * housekeeping
+    */
+   char rqaddress[NDRX_MAX_Q_SIZE+1];
+   
 } srv_key_t;
 
 /**

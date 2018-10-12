@@ -189,6 +189,9 @@ extern int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 extern int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int ppm_rsp_process(command_reply_t *reply, size_t reply_len);
 
+/*ppm2:*/
+extern int cmd_ppm2(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int ppm_rsp_process2(command_reply_t *reply, size_t reply_len);
 
 /* shm: */
 extern int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len);

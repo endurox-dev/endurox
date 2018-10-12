@@ -79,10 +79,8 @@ exprivate void print_hdr(void)
 expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=EXSUCCEED;
-    int n;
     short print_all = EXFALSE;
     struct mq_attr att;
-    char q[512];
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
     ncloptmap_t clopt[] =

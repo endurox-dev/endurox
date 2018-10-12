@@ -132,7 +132,7 @@ struct basic_call_info
 };
 typedef struct basic_call_info call_basic_info_t;
 
-/*
+/**
  * Basic server configuration.
  */
 struct srv_conf
@@ -144,21 +144,21 @@ struct srv_conf
     int advertise_all;
     svc_entry_t *svc_list;
     char q_prefix[FILENAME_MAX+1];
-    /* Arguments passed after -- */
-    int app_argc;
+    
+    int app_argc;/**< Arguments passed after -- */
     char **app_argv;
     
     /*<THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>*/
-    svc_entry_fn_t *service_raw_list; /* As from initialization */
-    svc_entry_fn_t **service_array; /* Direct array of items */
+    svc_entry_fn_t *service_raw_list; /**< As from initialization */
+    svc_entry_fn_t **service_array; /**< Direct array of items */
     /*</THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>*/
     
-    svc_entry_fn_t *service_list; /* Final list used for processing */
+    svc_entry_fn_t *service_list; /**< Final list used for processing */
     
-    int adv_service_count; /* advertised service count. */
-    int flags; /* Special flags of the server (see: ndrxdcmn.h:SRV_KEY_FLAGS_BRIDGE) */
-    int nodeid; /* Other node id of the bridge */
-    int (*p_qmsg)(char *buf, int len, char msg_type); /* Q message processor for bridge */
+    int adv_service_count; /**< advertised service count. */
+    int flags; /**< Special flags of the server (see: ndrxdcmn.h:SRV_KEY_FLAGS_BRIDGE) */
+    int nodeid; /**< Other node id of the bridge */
+    int (*p_qmsg)(char *buf, int len, char msg_type); /**< Q message processor for bridge */
     /**************** POLLING *****************/
     struct ndrx_epoll_event *events;
     int epollfd;
@@ -166,15 +166,16 @@ struct srv_conf
     call_basic_info_t last_call;
     jmp_buf call_ret_env;
     int time_out;
-    int max_events; /* Max epoll events. */
+    int max_events; /**< Max epoll events. */
     
-    /* Periodic callback */
-    int (*p_periodcb)(void);
-    int periodcb_sec; /* Number of seconds for each cb call */
+    int (*p_periodcb)(void);/**< Periodic callback */
+    int periodcb_sec; /**< Number of seconds for each cb call */
     
-    /* Callback used before server goes in poll state */
+    /** Callback used before server goes in poll state */
     int (*p_b4pollcb)(void);
-    xbufcvt_entry_t *xbufcvt_tab; /* string hashlist for buffer convert funcs */
+    xbufcvt_entry_t *xbufcvt_tab; /**< string hashlist for buffer convert funcs */
+    
+    char rqaddress[NDRX_MAX_Q_SIZE+1]; /**< request address if used... (sysv) */
 };
 
 typedef struct srv_conf srv_conf_t;
