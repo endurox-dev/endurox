@@ -721,7 +721,7 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
     }
     
     *pos=try;
-    NDRX_LOG(log_dump, "[%d] - result: %d, "
+    NDRX_LOG(log_debug, "[%d] - result: %d, "
                         "iterations: %d, pos: %d, have_value: %d",
                          qid, ret, iterations, *pos, *have_value);
     return ret;
@@ -1268,7 +1268,7 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
     int err;
     int have_lock = EXFALSE;
     int i=0;
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_s2p.mem;
     ndrx_svq_map_t *pm;      /* Posix map           */
     
     block = NDRX_MALLOC(sz);
@@ -1302,6 +1302,8 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
         {
             block[i].flags |= NDRX_SVQ_MAP_SCHEDRM;
         }
+        
+        NDRX_STRCPY_SAFE(block[i].qstr, pm->qstr);
     }
     
 out:

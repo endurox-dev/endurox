@@ -129,6 +129,7 @@ expublic int report_to_ndrxd(void)
     status->srvinfo.flags = G_server_conf.flags;
     status->srvinfo.nodeid = G_server_conf.nodeid;
     NDRX_STRCPY_SAFE(status->srvinfo.binary_name_real, G_server_conf.binary_name);
+    NDRX_STRCPY_SAFE(status->srvinfo.rqaddress, G_server_conf.rqaddress);
 
     /* fill the service list */
     for (i=0; i<G_server_conf.adv_service_count; i++)
