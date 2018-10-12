@@ -53,28 +53,28 @@ extern "C" {
 
 /* Client/server commands */
 #define NDRXD_COM_MIN               0
-#define NDRXD_COM_LDCF_RQ           0    /* load config req        */
-#define NDRXD_COM_LDCF_RP           1    /* load config replay     */
-#define NDRXD_COM_START_RQ          2    /* start app domain req   */
-#define NDRXD_COM_START_RP          3    /* start app domain reply */
-#define NDRXD_COM_SVCINFO_RQ        4    /* service info from svc  */
-#define NDRXD_COM_SVCINFO_RP        5    /* not used               */
-#define NDRXD_COM_PMNTIFY_RQ        6    /* Process notification   */
-#define NDRXD_COM_PMNTIFY_RP        7    /* not used               */
-#define NDRXD_COM_PSC_RQ            8    /* Print services req     */
-#define NDRXD_COM_PSC_RP            9    /* Print services rsp     */
-#define NDRXD_COM_STOP_RQ           10   /* stop app domain req    */
-#define NDRXD_COM_STOP_RP           11   /* stop app domain reply  */
-#define NDRXD_COM_SRVSTOP_RQ        12   /* server stop req        */
-#define NDRXD_COM_SRVSTOP_RP        13   /* server stop reply      */
-#define NDRXD_COM_AT_RQ             14   /* attach to server req   */
-#define NDRXD_COM_AT_RP             15   /* attach to server reply */
-#define NDRXD_COM_RELOAD_RQ         16   /* reload config req      */
-#define NDRXD_COM_RELOAD_RP         17   /* reload config reply    */
-#define NDRXD_COM_TESTCFG_RQ        18   /* test config req        */
-#define NDRXD_COM_TESTCFG_RP        19   /* test config reply      */
-#define NDRXD_COM_SRVINFO_RQ        20   /* Server info request    */
-#define NDRXD_COM_SRVINFO_RP        21   /* Server info req/rsp    */
+#define NDRXD_COM_LDCF_RQ           0    /**< load config req        */
+#define NDRXD_COM_LDCF_RP           1    /**< load config replay     */
+#define NDRXD_COM_START_RQ          2    /**< start app domain req   */
+#define NDRXD_COM_START_RP          3    /**< start app domain reply */
+#define NDRXD_COM_SVCINFO_RQ        4    /**< service info from svc  */
+#define NDRXD_COM_SVCINFO_RP        5    /**< not used               */
+#define NDRXD_COM_PMNTIFY_RQ        6    /**< Process notification   */
+#define NDRXD_COM_PMNTIFY_RP        7    /**< not used               */
+#define NDRXD_COM_PSC_RQ            8    /**< Print services req     */
+#define NDRXD_COM_PSC_RP            9    /**< Print services rsp     */
+#define NDRXD_COM_STOP_RQ           10   /**< stop app domain req    */
+#define NDRXD_COM_STOP_RP           11   /**< stop app domain reply  */
+#define NDRXD_COM_SRVSTOP_RQ        12   /**< server stop req        */
+#define NDRXD_COM_SRVSTOP_RP        13   /**< server stop reply      */
+#define NDRXD_COM_AT_RQ             14   /**< attach to server req   */
+#define NDRXD_COM_AT_RP             15   /**< attach to server reply */
+#define NDRXD_COM_RELOAD_RQ         16   /**< reload config req      */
+#define NDRXD_COM_RELOAD_RP         17   /**< reload config reply    */
+#define NDRXD_COM_TESTCFG_RQ        18   /**< test config req        */
+#define NDRXD_COM_TESTCFG_RP        19   /**< test config reply      */
+#define NDRXD_COM_SRVINFO_RQ        20   /**< Server info request    */
+#define NDRXD_COM_SRVINFO_RP        21   /**< Server info req/rsp    */
     
 /*
  * Un Advertise from xadmin console:
@@ -573,9 +573,7 @@ typedef struct
     command_reply_psc_det_t svcdet[0];
 } command_reply_psc_t;
 
-
-
-/*
+/**
  * Reply for ppm (print process model) command
  * Data fields really are taken from pm_node_t/ndrxd.h!!
  */
@@ -583,34 +581,33 @@ typedef struct
 {
     command_reply_t rply;
     /* list some process ifo */
-    char binary_name[MAXTIDENT+1]; /* Name of the binary*/
+    char binary_name[MAXTIDENT+1]; /**< Name of the binary*/
     
     /** Real binary name (reported by server it self */
     char binary_name_real[MAXTIDENT+1];
     int srvid;
-    long state;             /* process state code (current)  */
-    long reqstate;          /* Requested state               */
-    short autostart;        /* Start automatically after "start" cmd */
-    int exec_seq_try;       /* Sequental start try           */
-    long last_startup;       /* Cycle count for last start   */
+    long state;             /**< process state code (current)  */
+    long reqstate;          /**< Requested state               */
+    short autostart;        /**< Start automatically after "start" cmd */
+    int exec_seq_try;       /**< Sequental start try           */
+    long last_startup;      /**< Cycle count for last start   */
 
-    int num_term_sigs;      /* Number of times to send term sig, before -9 */
-    long last_sig;          /* Time when signal was sent     */
-    int autokill;           /* Kill the process if not started in time */
+    int num_term_sigs;      /**< Number of times to send term sig, before -9 */
+    long last_sig;          /**< Time when signal was sent     */
+    int autokill;           /**< Kill the process if not started in time */
     /** Parent process PID (or if server if only process then it is real PID */
     pid_t pid;
     /** Server process PID (if parent is script, then this is real one) */
     pid_t svpid;
-    long state_changed;     /* Timer for state changed       */
-    int flags;              /* Flags sent by server info     */
-    short   nodeid;         /* other node id, if this is bridge */
+    long state_changed;     /**< Timer for state changed       */
+    int flags;              /**< Flags sent by server info     */
+    short   nodeid;         /**< other node id, if this is bridge */
+    int echoflags;          /**< flags sent back to xadmin */
     
 } command_reply_ppm_t;
 
 
-
-
-/*
+/**
  * Packet for shm_psvc, fields from shm_svcinfo_t
  */
 typedef struct
