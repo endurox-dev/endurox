@@ -1302,6 +1302,8 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
         {
             block[i].flags |= NDRX_SVQ_MAP_SCHEDRM;
         }
+        
+        NDRX_STRCPY_SAFE(block[i].qstr, pm->qstr);
     }
     
 out:
