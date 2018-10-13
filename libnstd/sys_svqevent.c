@@ -143,7 +143,6 @@ exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
  * - add/update
  * - delete mqd or fd (loop over...)
  */
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -714,10 +713,10 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
             }
             else if (0!=l1 && 0!=l2)
             {
-                /*Maybe try to send only 1 signal?*/
+                /*Maybe try to send only 1 signal? 
 
                 if (0==sigs)
-                {
+                {*/
                     if (0!=pthread_kill(mqd->thread, NDRX_SVQ_SIG))
                     {
                         int err = errno;
@@ -727,8 +726,11 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
                                 NDRX_SVQ_SIG, strerror(err));
                         EXFAIL_OUT(ret);
                     }
+                    break;
+                    /*
                     sigs++;
-                }
+                     * 
+                }*/
             }
 
             if (0==l1)
@@ -741,9 +743,9 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
                 pthread_mutex_unlock(&(mqd->rcvlock));
             }
 
-            /* TODO: Maybe do yeald... */
-            usleep(1);
-
+            /* Maybe do yeald... */
+            sched_yield();
+            /* usleep(1); */
         }
     }
 
@@ -760,8 +762,9 @@ out:
  */
 exprivate void ndrx_svq_signal_action(int sig)
 {
-    /* nothing todo, just ignore */
+    /* nothing todo, just ignore 
     NDRX_LOG(log_debug, "Signal action");
+     * */
     return;
 }
 
@@ -831,7 +834,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 M_mon.fdtabmo[moc].fd = M_mon.fdtab[i].fd;
                 M_mon.fdtabmo[moc].events = M_mon.fdtab[i].events;
                 
-                NDRX_LOG(log_error, "moc=%d %p %p fd=%d", moc, 
+                NDRX_LOG(log_debug, "moc=%d %p %p fd=%d", moc, 
                         M_mon.fdtabmo, M_mon.fdtab, M_mon.fdtabmo[moc].fd);
                 moc++;
             }
@@ -840,7 +843,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         
         retpoll = poll( M_mon.fdtabmo, moc, timeout*1000);
         
-        syncfd = EXFALSE;
+        /* syncfd = EXFALSE; */
         
         NDRX_LOG(log_debug, "poll() ret = %d pid = %d", retpoll, (int)getpid());
         if (EXFAIL==retpoll)
@@ -1036,6 +1039,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                                fdh->mqd);
                        EXFAIL_OUT(ret);
                    }
+                   
+                   /* At this point we reset the fd handler... */
+                   syncfd = EXFALSE;
                 }
             } /* if got revents */
         } /* for events... */
@@ -1480,7 +1486,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     int err;
     int msgflg;
     int len;
-    
+           
     /* set the flag value */
     if (mqd->attr.mq_flags & O_NONBLOCK)
     {
@@ -1555,13 +1561,13 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
         EXFAIL_OUT(ret);
     }
-
+    
     /* Chain the lockings, so that Q lock would wait until both
      *  are locked
      */
     /* set thread id.. */
     mqd->thread = pthread_self();
-    
+        
     /* here is no interrupt, as pthread locks are imune to signals */
     pthread_mutex_lock(&(mqd->rcvlock));    
     /* unlock queue  */
@@ -1574,15 +1580,20 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * send until both are unlocked or stamp is changed.
      */
     if (is_send)
+    {
         ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+    }
     else
+    {
         ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
-    
+    }
     err=errno;
+
+    /* TODO: Replace these two bellow with spin locks
+     * so that we are sure that we do not get any signals on them... */
     pthread_mutex_unlock(&(mqd->rcvlock));
     pthread_mutex_unlock(&(mqd->rcvlockb4));
-
-
+        
     pthread_mutex_lock(&(mqd->barrier));
     pthread_mutex_unlock(&(mqd->barrier));
 
@@ -1602,12 +1613,16 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     }
     else
     {
-        NDRX_LOG(log_error, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
-                mqd->qid, len, msgflg, strerror(err));
-        
         if (EINTR!=err)
         {
+            NDRX_LOG(log_error, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
+                mqd->qid, len, msgflg, strerror(err));
             EXFAIL_OUT(ret);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
+                mqd->qid, len, msgflg, strerror(err));
         }
     }
     
