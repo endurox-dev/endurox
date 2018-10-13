@@ -186,6 +186,12 @@ expublic int do_sanity_check_sysv(void)
                 }
             }         
         } /* local servs */
+        
+        if (NULL!=srvlist)
+        {
+            NDRX_FREE(srvlist);
+            srvlist = NULL;
+        }
     }
     
     /* Scan for queues which are not any more is service list, 
@@ -196,7 +202,8 @@ expublic int do_sanity_check_sysv(void)
     NDRX_LOG(log_debug, "Flush RQADDR queues with out services and TTL expired.");
     for (i=0; i<reslen; i++)
     {
-next:
+        int cont = EXFALSE;
+        
         if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
                 && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
                 && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
@@ -212,8 +219,14 @@ next:
                 {
                     NDRX_LOG(log_debug, "Server [%s]/%d is using rqddr [%s] - chk next",
                         p_pm->binary_name, p_pm->srvid, svq[i].qstr);
-                    goto next;
+                    cont = EXTRUE;
+                    break;
                 }
+            }
+            
+            if (cont)
+            {
+                continue;
             }
             
             NDRX_LOG(log_info, "qid %d is subject for delete ttl %d qstr=[%s]", 
@@ -244,10 +257,17 @@ next:
     }
     
 out:
+    
     if (NULL!=svq)
     {
         NDRX_FREE(svq);
     }
+
+    if (NULL!=srvlist)
+    {
+        NDRX_FREE(srvlist);
+    }
+
     return ret;
 }
 
