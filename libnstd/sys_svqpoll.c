@@ -94,6 +94,11 @@ exprivate mqd_t M_mainq = NULL;
  */
 exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
 
+/**
+ * This is used for special cases such as bridges
+ */
+exprivate int M_accept_any = EXFALSE;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -188,8 +193,23 @@ expublic int ndrx_epoll_shallopensvc(int idx)
 exprivate ndrx_svq_pollsvc_t * ndrx_epoll_getsvc(char *svcnm)
 {
     ndrx_svq_pollsvc_t *ret = NULL;
+    ndrx_svq_pollsvc_t *elt = NULL;
     
     EXHASH_FIND_STR(M_svcmap, svcnm, ret);
+    
+    if (NULL==ret && M_accept_any)
+    {
+        EXHASH_ITER(hh, M_svcmap, ret, elt)
+        {
+            if (ret->idx > ATMI_SRV_REPLY_Q)
+            {
+                NDRX_LOG(log_debug, "Accepting any msg svcnm [%s] mapped to [%s]",
+                        svcnm, ret->svcnm);
+                goto out;
+            }
+        }
+        ret = NULL;
+    }
     
     if (NULL==ret)
     {
@@ -284,6 +304,12 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
         NDRX_LOG(log_error, "Failed to malloc 1 byte: %s", strerror(err));
         userlog("Failed to malloc 1 byte: %s", strerror(err));
         EXFAIL_OUT(ret);
+    }
+    
+    if (0==strncmp(svcnm, NDRX_SVC_BRIDGE, NDRX_SVC_BRIDGE_STATLEN))
+    {
+        NDRX_LOG(log_info, "Accepting any msg");
+        M_accept_any = EXTRUE;
     }
     
     el->mqd = mq;
@@ -661,13 +687,15 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                 if (NULL==(svc=ndrx_epoll_getsvc(call->name)))
                 {
                     err=EAGAIN;
-                    NDRX_DUMP(log_error, "!!! Missing queue def - dumpg", buf, *buf_len);
-                    NDRX_LOG(log_error, "!!! Missing queue def for [%s] - dropping "
+                    NDRX_DUMP(log_error, "!!! Missing queue def - dumpg", buf, rcvlen);
+                    NDRX_LOG(log_error, "!!! Missing queue def for [%s] data "
+                            "len %d- dropping "
                             "msg - is all servers on RQADDR serving all services?",
-                            call->name);
-                    userlog("!!! Missing queue def for [%s] - dropping msg - is "
+                            call->name, rcvlen);
+                    userlog("!!! Missing queue def for [%s] "
+                            "data len %d - dropping msg - is "
                             "all servers on RQADDR serving all services?",
-                            call->name);
+                            call->name, rcvlen);
                     EXFAIL_OUT(ret);
                 }
                 events[0].data.mqd = svc->mqd;
