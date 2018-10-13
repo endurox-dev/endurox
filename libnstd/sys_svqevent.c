@@ -781,6 +781,18 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int err;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
+    /**
+     * Perform waiting for file descriptor events.
+     * while the main thread is busy, we do not expect any FD monitoring
+     * because then it will generate lots of async events as FDs will not be
+     * flushed and events will be triggered again and again. Thus
+     * when the XATMI server's main thread goes into wait for message mode, then
+     * we mark the syncfd as TRUE. Only at that particular time other XATMI
+     * client threads might doe some message sending too (set timeout for
+     * their operations), thus that might reloop and will make lost of syncfd.
+     * Thus we reset the syncfd flag only when we have sent event to main
+     * thread.
+     */
     int syncfd = EXFALSE;
     /* we shall receive unnamed pipe
      * in thread.
@@ -803,7 +815,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             EXFAIL_OUT(ret);
         }
         
-        NDRX_LOG(log_debug, "About to poll for: %d nrfds=%d",
+        NDRX_LOG(log_debug, "About to poll for: %d sec nrfds=%d",
                 timeout, M_mon.nrfds);
         
         moc=0;
@@ -1340,6 +1352,7 @@ out:
  * @param stamp_time timestamp
  * @param stamp_seq sequence number
  * @param abs_timeout absolute timestamp
+ * @param syncfd monitor the file descriptors
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_svq_moncmd_tout(mqd_t mqd, ndrx_stopwatch_t *stamp_time, 
