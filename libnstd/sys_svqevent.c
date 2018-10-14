@@ -131,6 +131,7 @@ typedef struct
 exprivate ndrx_svq_evmon_t M_mon;        /**< event monitor data          */
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
+exprivate int M_signalled = EXFALSE;     /**< Did we got a signal?        */
 
 /* we need two hash lists
  * - the one goes by mqd to list/update timeout registrations
@@ -758,6 +759,10 @@ out:
 
 /**
  * Wakup signal handling
+ * in worst case if spin locks will consume the wakup signals
+ * we could put in some queue the mqds waiting for signals,
+ * and then update the mqds in queue that we got a signal
+ * thus we shall not enter into msgrcv..
  * @param sig
  */
 exprivate void ndrx_svq_signal_action(int sig)
@@ -765,6 +770,7 @@ exprivate void ndrx_svq_signal_action(int sig)
     /* nothing todo, just ignore 
     NDRX_LOG(log_debug, "Signal action");
      * */
+    M_signalled = EXTRUE;
     return;
 }
 
@@ -1567,7 +1573,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      */
     /* set thread id.. */
     mqd->thread = pthread_self();
-        
+    M_signalled = EXFALSE;
     /* here is no interrupt, as pthread locks are imune to signals */
     pthread_spin_lock(&(mqd->rcvlock));    
     /* unlock queue  */
@@ -1579,15 +1585,22 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * to process...
      * send until both are unlocked or stamp is changed.
      */
-    if (is_send)
+    if (!M_signalled)
     {
-        ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+        if (is_send)
+        {
+            ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+        }
+        else
+        {
+            ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
+        }
+        err=errno;
     }
     else
     {
-        ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
+        err=EINTR;
     }
-    err=errno;
 
     /* TODO: Replace these two bellow with spin locks
      * so that we are sure that we do not get any signals on them... */
