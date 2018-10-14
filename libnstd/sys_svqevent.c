@@ -131,7 +131,7 @@ typedef struct
 exprivate ndrx_svq_evmon_t M_mon;        /**< event monitor data          */
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
-exprivate int M_signalled = EXFALSE;     /**< Did we got a signal?        */
+exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
 /* we need two hash lists
  * - the one goes by mqd to list/update timeout registrations
