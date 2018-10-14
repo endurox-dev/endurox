@@ -96,7 +96,7 @@ expublic int ndrx_sem_open_all(void)
 {
     int ret=EXSUCCEED;
 
-    if (EXSUCCEED!=ndrxd_sem_open(&G_sem_svcop, EXTRUE))
+    if (EXSUCCEED!=ndrx_sem_open(&G_sem_svcop, EXTRUE))
     {
         ret=EXFAIL;
         goto out;
@@ -147,7 +147,7 @@ expublic void ndrxd_sem_delete_with_init(char *q_prefix)
         ndrxd_sem_init(q_prefix);
     }
     
-    if (EXSUCCEED==ndrxd_sem_open(&G_sem_svcop, EXTRUE))
+    if (EXSUCCEED==ndrx_sem_open(&G_sem_svcop, EXTRUE))
     {
         ndrx_sem_remove(&G_sem_svcop, EXTRUE);
     }

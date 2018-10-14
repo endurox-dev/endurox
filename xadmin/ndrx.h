@@ -59,6 +59,9 @@ extern "C" {
 #define         MAX_ARG_LEN     500
 #define         ARG_DEILIM      " \t"
 #define         MAX_CMD_LEN     300
+    
+#define         NDRX_XADMIN_IDLEREQ         1   /**< Idle requested           */
+#define         NDRX_XADMIN_RPLYQREQ        2   /**< Reply queue requested    */
 
 extern int G_cmd_argc_logical;
 extern int G_cmd_argc_raw;
@@ -119,12 +122,18 @@ struct cmd_mapping
     char *cmd;          /* Command name */
     /* command callback */
     int (*p_exec_command) (cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
-    int ndrxd_cmd;                  /* EnduroX Daemon command code          */
-    int min_args;                   /* Minimum argument count for command   */
-    int max_args;                   /* Maximum argument count for command   */
-    int reqidle;                    /* This requires backend started        */
-    char *help;                     /* Short help descr of command          */
-    int (*p_add_help) (void);       /* additional help function             */
+    int ndrxd_cmd;             /**< EnduroX Daemon command code          */
+    int min_args;              /**< Minimum argument count for command   */
+    int max_args;              /**< Maximum argument count for command   */
+    /**
+     * Do we need ndrxd in idle?
+     * 0 = no idle needed, no reply queue needed
+     * 1 = need idle (also reply queue is open)
+     * 2 = no need for idle, but reply queue is needed)
+     */
+    int reqidle;               
+    char *help;                /**< Short help descr of command          */
+    int (*p_add_help) (void);   /**< additional help function             */
 };
 /*---------------------------Globals------------------------------------*/
 extern ndrx_config_t G_config;
@@ -135,12 +144,15 @@ extern char G_xadmin_config_file[PATH_MAX+1];
 /*---------------------------Prototypes---------------------------------*/
 extern int start_daemon_idle(void);
 extern int load_env_config(void);
+extern int ndrx_xadmin_open_rply_q(void);
 extern int is_ndrxd_running(void);
 extern void simple_output(char *buf);
 /* extern int get_arg(char *param, int argc, char **argv, char **out); */
 extern int chk_confirm(char *message, short is_confirmed);
 extern int chk_confirm_clopt(char *message, int argc, char **argv);
 extern int ndrx_start_idle();
+extern int ndrx_xadmin_shm_close();
+extern int un_init(void);
 extern void sign_chld_handler(int sig);
 
 #ifndef NDRX_DISABLEPSCRIPT
@@ -177,6 +189,9 @@ extern int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 extern int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int ppm_rsp_process(command_reply_t *reply, size_t reply_len);
 
+/*ppm2:*/
+extern int cmd_ppm2(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int ppm_rsp_process2(command_reply_t *reply, size_t reply_len);
 
 /* shm: */
 extern int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len);
@@ -241,6 +256,11 @@ extern int cmd_ci(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 
 /* UBF Field Database: */
 extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* System V specifics */
+#ifdef EX_USE_SYSVQ
+expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+#endif
 
 #ifdef	__cplusplus
 }

@@ -140,6 +140,7 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
     /* Run in non-blocked mode */
     if ((mqd_t)EXFAIL!=in_qd)
     {
+        NDRX_LOG(log_debug, "Re-use existing mqd=%p", in_qd);
         qd = in_qd;
     }
     else if ((mqd_t)EXFAIL==(qd = ndrx_mq_open_at(q_str, 
@@ -187,9 +188,11 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
         }
     }
     
+    NDRX_LOG(log_debug, "Done receive...");
+    
 out:
     /* close only if we did open the queue */
-    if ((mqd_t)EXFAIL!=in_qd && (mqd_t)EXFAIL!=qd)
+    if ((mqd_t)EXFAIL==in_qd && (mqd_t)EXFAIL!=qd)
     {
         if (EXSUCCEED!=ndrx_mq_close(qd))
         {

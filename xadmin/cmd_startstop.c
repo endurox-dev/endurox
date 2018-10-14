@@ -241,6 +241,8 @@ out:
 /**
  * Shutdown application server.
  * TODO: xadmin stop -i -1 makes stop to all domain!
+ * If there was full shutdown, then we should disconnect from shared memory
+ * resources too...
  * @param p_cmd_map
  * @param argc
  * @param argv
@@ -348,6 +350,12 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                     G_call_args,
                     EXFALSE,
                     G_config.listcall_flags);
+    
+    if (call.complete_shutdown)
+    {
+        /* TODO: Disconnect from SHM & SEM */
+        un_init();
+    }
 out:
     return ret;
 }

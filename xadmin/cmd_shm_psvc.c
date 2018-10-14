@@ -86,7 +86,7 @@ exprivate char *gen_clstr_map(command_reply_shm_psvc_t * reply)
         }
         else
         {
-            strcpy(tmp, "+");
+            NDRX_STRCPY_SAFE(tmp, "+");
         }
         strcat(map, tmp);
     }
@@ -122,12 +122,12 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
             CONF_NDRX_NODEID_COUNT, gen_clstr_map(shm_psvc_info));
         
         /* This is poll mode, provide info about individual serves: */
-        if (shm_psvc_info->srvids[0])
+        if (shm_psvc_info->resids[0])
         {
             fprintf(stdout, "\t\t\t\t\t\tRES: ");
             for (i=0; i<shm_psvc_info->srvs-shm_psvc_info->csrvs; i++)
             {
-                fprintf(stdout, "%hd ", shm_psvc_info->srvids[i]);
+                fprintf(stdout, "%d ", shm_psvc_info->resids[i]);
             }
             fprintf(stdout, "\n");
         }

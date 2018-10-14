@@ -247,15 +247,17 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
  */
 expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
-    struct tm       *p_tm;
+    struct tm       stm;
     long            lret;
     struct timeval  timeval;
     struct timezone timezone_val;
 
     gettimeofday (&timeval, &timezone_val);
-    p_tm = localtime(&timeval.tv_sec);
-    *p_time = 10000L*p_tm->tm_hour+100*p_tm->tm_min+1*p_tm->tm_sec;
-    *p_date = 10000L*(1900 + p_tm->tm_year)+100*(1+p_tm->tm_mon)+1*(p_tm->tm_mday);
+    
+    localtime_r(&timeval.tv_sec, &stm);
+    
+    *p_time = 10000L*stm.tm_hour+100*stm.tm_min+1*stm.tm_sec;
+    *p_date = 10000L*(1900 + stm.tm_year)+100*(1+stm.tm_mon)+1*(stm.tm_mday);
     *p_usec = timeval.tv_usec;
 
     return;

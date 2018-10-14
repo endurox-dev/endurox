@@ -1498,6 +1498,7 @@ expublic int test_config(int reload, command_call_t * call,
                 new->pid = old->pid;
                 new->svpid = old->svpid;
                 NDRX_STRCPY_SAFE(new->binary_name_real, old->binary_name_real);
+                NDRX_STRCPY_SAFE(new->rqaddress, old->rqaddress);
                 new->state = old->state;
                 /* Link existing service info to new PM! */
                 new->svcs = old->svcs;
