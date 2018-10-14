@@ -144,19 +144,19 @@ struct ndrx_svq_info
     int qid;                    /**< System V Queue ID                      */
     /* Locks for synchronous or other event wakeup */
     
-    /* TODO: These two might want to move to SPINLOCKS for better performance */
-    pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
-    pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
-    ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q           */
-    pthread_mutex_t barrier;     /**< Border lock after msgrcv woken up      */
-    pthread_mutex_t qlock;      /**< Queue lock (event queue)               */
+    /* Using spinlocks for better performance  */
+    pthread_spinlock_t rcvlock;    /**< Data receive lock, msgrcv              */
+    pthread_spinlock_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
+    ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q              */
+    pthread_mutex_t barrier;     /**< Border lock after msgrcv woken up        */
+    pthread_mutex_t qlock;      /**< Queue lock (event queue)                  */
 
     /* Timeout matching.
      * All the timeout events are enqueued to thread and thread is waken up
      * if needed. If not then event will be discarded because of stamps
      * does not match.
      */
-    pthread_mutex_t stamplock;  /**< Stamp change lock                      */
+    pthread_spinlock_t stamplock;/**< Stamp change lock                     */
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
     
