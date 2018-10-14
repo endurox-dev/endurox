@@ -742,7 +742,7 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
             if (last)
             {
                 NDRX_LOG(log_debug, "Service [%s] will be zapped by "
-                        "RQADDR sanity checks");
+                        "RQADDR sanity checks", elt->svc.svc_nm);
             }
             
 #elif defined(EX_USE_POLL)
@@ -851,6 +851,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
+
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
         {
             userlog("Failed to close: [%s] err: %s",
@@ -977,12 +978,20 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             exit(1);
         }
         
+        /* free up the allocate resources */
+        
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-
-            fprintf(stderr, "Failed to start server, error: %d, %s\n",
-                                err, strerror(err));
+            int i;
+            fprintf(stderr, "Failed to start server [%s], error: %d, %s\n",
+                                cmd[0], err, strerror(err));
+            
+            /* free up the list, so that we do not report memory leak... 
+             * in case if binary not started.
+             */
+            NDRX_FREE(cmd);
+            
             if (ENOENT==err)
                 exit(TPEXIT_ENOENT);
             else

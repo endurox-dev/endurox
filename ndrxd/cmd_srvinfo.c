@@ -79,8 +79,9 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
      */
 
     /* refresh the state */
-    NDRX_LOG(log_debug, "Call from server: %d, state: %d",
-                            srvinfo->srvinfo.srvid, srvinfo->srvinfo.state);
+    NDRX_LOG(log_debug, "Call from server: %d, state: %d rqaddr: [%s]",
+                            srvinfo->srvinfo.srvid, srvinfo->srvinfo.state,
+                            srvinfo->srvinfo.rqaddress);
     
     srvid=srvinfo->srvinfo.srvid;
     if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers
@@ -135,6 +136,9 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             
             NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
                     srvinfo->srvinfo.binary_name_real);
+            
+            NDRX_STRCPY_SAFE(p_pm->rqaddress, srvinfo->srvinfo.rqaddress);
+            
             p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
             
             p_pm->state = srvinfo->srvinfo.state;
@@ -157,6 +161,10 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             
             NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
                     srvinfo->srvinfo.binary_name_real);
+            
+            NDRX_STRCPY_SAFE(p_pm->rqaddress, 
+                    srvinfo->srvinfo.rqaddress);
+            
             p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
             
             p_pm->state = srvinfo->srvinfo.state;
@@ -198,6 +206,10 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         
         NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
                     srvinfo->srvinfo.binary_name_real);
+        
+        NDRX_STRCPY_SAFE(p_pm->rqaddress, 
+                    srvinfo->srvinfo.rqaddress);
+        
         p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
         
         p_pm->pid = srvinfo->srvinfo.pid;

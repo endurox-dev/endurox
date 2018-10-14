@@ -198,12 +198,16 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     /* mq->thread = pthread_self(); - set only in timed functions */
     NDRX_STRCPY_SAFE(mq->qstr, pathname);
     mq->mode = mode;
-    memcpy(&(mq->attr), attr, sizeof (*attr));
+    if (NULL!=attr)
+    {
+        memcpy(&(mq->attr), attr, sizeof (*attr));
+    }
 
     /* Init mutexes... */
-    pthread_mutex_init(&mq->rcvlock, NULL);
-    pthread_mutex_init(&mq->rcvlockb4, NULL);
-    pthread_mutex_init(&mq->border, NULL);
+    pthread_spin_init(&mq->rcvlock, PTHREAD_PROCESS_PRIVATE);
+    pthread_spin_init(&mq->rcvlockb4, PTHREAD_PROCESS_PRIVATE);
+    pthread_spin_init(&mq->stamplock, PTHREAD_PROCESS_PRIVATE);
+    pthread_mutex_init(&mq->barrier, NULL);
     pthread_mutex_init(&mq->qlock, NULL);
     
 out:
@@ -241,7 +245,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
-            (struct timespec *)__abs_timeout, &ev, EXFALSE))
+            (struct timespec *)__abs_timeout, &ev, EXFALSE, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
@@ -310,7 +314,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
-            (struct timespec *)__abs_timeout, &ev, EXTRUE))
+            (struct timespec *)__abs_timeout, &ev, EXTRUE, EXFALSE))
     {
         err = errno;
         if (NULL!=ev)
@@ -400,9 +404,10 @@ expublic int ndrx_svq_send(mqd_t mqd, const char *ptr, size_t len,
         msgflg = 0;
     }
     
-    ret = msgsnd(mqd->qid, ptr, len-sizeof(long), msgflg);
+    ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
     
     /* no logging here, as we need to keep errno */
+    
 out:
     return ret;
 }
@@ -448,7 +453,7 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
         msgflg = 0;
     }
     
-    if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, maxlen-sizeof(long), 0, msgflg)))
+    if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, msgflg)))
     {
         int err = errno;
         
@@ -469,6 +474,11 @@ expublic ssize_t ndrx_svq_receive(mqd_t mqd, char *ptr, size_t maxlen,
     }
     
     /* no logging here, as we need to keep errno */
+    if (ret>=0)
+    {
+        ret=NDRX_SVQ_OUTLEN(ret);
+    }
+    
 out:
     return ret;
 }

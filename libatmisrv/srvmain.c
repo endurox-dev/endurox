@@ -512,16 +512,18 @@ expublic int ndrx_init(int argc, char** argv)
     if (EXEOS==rqaddress[0])
     {
         /* so name not set, lets build per binary request address... */
-        snprintf(rqaddress, sizeof(rqaddress), NDRX_SVR_SVADDR_DFLT, 
+        snprintf(rqaddress, sizeof(rqaddress), NDRX_SVR_SVADDR_FMT, 
                 G_server_conf.q_prefix, G_server_conf.binary_name, G_srv_id);
         
         ndrx_epoll_mainq_set(rqaddress);
+        NDRX_STRCPY_SAFE(G_server_conf.rqaddress, rqaddress);
     }
     else
     {
-        snprintf(tmp, sizeof(tmp), NDRX_SVR_RQADDR_DFLT, 
+        snprintf(tmp, sizeof(tmp), NDRX_SVR_RQADDR_FMT, 
                 G_server_conf.q_prefix, rqaddress);
-        ndrx_epoll_mainq_set(rqaddress);
+        ndrx_epoll_mainq_set(tmp);
+        NDRX_STRCPY_SAFE(G_server_conf.rqaddress, tmp);
     }
     
 out:

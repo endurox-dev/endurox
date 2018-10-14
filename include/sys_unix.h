@@ -270,6 +270,7 @@ extern NDRX_API char * ndrx_poll_strerror(int err);
 /* used by System V, dummies for others pollers/queues: */
 extern NDRX_API int ndrx_epoll_resid_get(void);
 extern NDRX_API int ndrx_epoll_down(void);
+extern NDRX_API int ndrx_epoll_shmdetach(void);
 extern NDRX_API int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
         char *svc, int resid);
 extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);

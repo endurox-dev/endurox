@@ -43,7 +43,7 @@
 #include <time.h>
 #include <atmi.h>
 #include <nstopwatch.h>
-
+#include <nstd_shm.h>
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
@@ -61,6 +61,9 @@
 #define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This is request address q  */
 #define NDRX_SVQ_MAP_HAVESVC      0x00000020  /**< Have service in shm        */
 
+
+#define NDRX_SVQ_MONF_SYNCFD      0x00000001  /**< Perform monitoring on FDs  */
+
 /** For quick access to  */
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
 #define NDRX_SVQ_STATIDX(MEM, IDX) ((ndrx_svq_status_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_status_t)*IDX)))
@@ -70,6 +73,9 @@
 #define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
 #define NDRX_SVQ_MON_TERM         4 /**< Termination handler calls us         */
 #define NDRX_SVQ_MON_CLOSE        5 /**< Queue unlink request                 */
+
+#define NDRX_SVQ_INLEN(X)       (X-sizeof(long))    /**< System V input len   */
+#define NDRX_SVQ_OUTLEN(X)       (X+sizeof(long))   /**< System V output len  */
 
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
@@ -95,6 +101,7 @@ typedef struct
 {
     int qid;                            /**< System V Queue id          */
     short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
+    char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string    */
 } ndrx_svq_status_t;
 
 /**
@@ -136,18 +143,20 @@ struct ndrx_svq_info
     char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string               */
     int qid;                    /**< System V Queue ID                      */
     /* Locks for synchronous or other event wakeup */
-    pthread_mutex_t rcvlock;    /**< Data receive lock, msgrcv              */
-    pthread_mutex_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
-    ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q           */
-    pthread_mutex_t border;     /**< Border lock after msgrcv woken up      */
-    pthread_mutex_t qlock;      /**< Queue lock (event queue)               */
+    
+    /* Using spinlocks for better performance  */
+    pthread_spinlock_t rcvlock;    /**< Data receive lock, msgrcv              */
+    pthread_spinlock_t rcvlockb4;  /**< Data receive lock, before going msgrcv */
+    ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q              */
+    pthread_mutex_t barrier;     /**< Border lock after msgrcv woken up        */
+    pthread_mutex_t qlock;      /**< Queue lock (event queue)                  */
 
     /* Timeout matching.
      * All the timeout events are enqueued to thread and thread is waken up
      * if needed. If not then event will be discarded because of stamps
      * does not match.
      */
-    pthread_mutex_t stamplock;  /**< Stamp change lock                      */
+    pthread_spinlock_t stamplock;/**< Stamp change lock                     */
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
     
@@ -175,6 +184,7 @@ typedef struct
 {
     int cmd;                    /**< See NDRX_SVQ_MON_* commands            */
     struct timespec abs_timeout;/**< timeout value when the wait shell tout */
+    int flags;                  /**< See NDRX_SVQ_MONF*                     */
     
     /* Data for timeout request: */
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
@@ -213,18 +223,24 @@ extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxle
 extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
 extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
-        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send);
+        struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd);
+extern NDRX_API void ndrx_svq_event_exit(int detatch);
 
 extern NDRX_API int ndrx_svq_moncmd_term(void);
 extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
-extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fd);
+extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fdm, uint32_t events);
 extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
+extern NDRX_API mqd_t ndrx_svq_mainq_get(void);
 
 extern NDRX_API int ndrx_svq_event_init(void);
 
 /* internals... */
-extern NDRX_API int ndrx_svqshm_init(void);
+extern NDRX_API int ndrx_svqshm_init(int attach_only);
+extern NDRX_API int ndrx_svqshm_attach(void);
 extern NDRX_API int ndrx_svqshm_down(void);
+extern NDRX_API void ndrx_svqshm_detach(void);
+extern NDRX_API int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p, 
+        ndrx_sem_t **map_sem, int *queuesmax);
 extern NDRX_API int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag);
 extern NDRX_API int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len);
 extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
@@ -236,5 +252,9 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *r
 extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
         int qid, int *pos, int *have_value);
 
+extern NDRX_API int ndrx_svqadmin_init(mqd_t adminq);
+extern NDRX_API int ndrx_svqadmin_deinit(void);
+
 #endif
+
 /* vim: set ts=4 sw=4 et smartindent: */

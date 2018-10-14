@@ -112,7 +112,7 @@ expublic int fill_reply_queue(char *nodestack,
             if (ndrx_shm_bridge_is_connected(nodeid))
             {
                 /* get the bridge service first... */
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
                 int is_bridge;
                 char tmpsvc[MAXTIDENT+1];
                 

@@ -106,12 +106,13 @@ expublic exnetcon_t *exnet_find_free_conn(void)
     
     DL_FOREACH(M_netlist, net)
     {
-        if (!net->is_connected)
+        if (!net->is_connected && !net->is_server)
         {
             return net;
         }
     }
     
     return NULL;
-}/* vim: set ts=4 sw=4 et smartindent: */
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -658,7 +658,7 @@ exprivate int close_socket(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
 
-    NDRX_LOG(log_warn, "Closing socket...");
+    NDRX_LOG(log_warn, "Closing socket %d...", net->sock);
     net->dl = 0; /* Reset buffered bytes */
     
     net->is_connected=EXFALSE; /* mark disconnected. */
@@ -707,6 +707,11 @@ out:
         exnet_remove_incoming(net);
     }
 #endif
+    
+    if (net->is_incoming)
+    {
+        exnet_remove_incoming(net);
+    }
     
     return ret;
 }
@@ -823,7 +828,7 @@ out:
 /**
  * Close connection
  * @param net network object
- * @return EXTRUE -> Connection removed, EXFALSE -> connetion not removed
+ * @return EXTRUE -> Connection removed, EXFALSE -> connection not removed
  */
 exprivate int exnet_schedule_run(exnetcon_t *net)
 {
@@ -831,8 +836,9 @@ exprivate int exnet_schedule_run(exnetcon_t *net)
     
     if (net->schedule_close)
     {
-        NDRX_LOG(log_warn, "Connection close is scheduled - closing fd %d", 
-                net->sock);
+        NDRX_LOG(log_warn, "Connection close is scheduled - "
+                "closing fd %d is_incoming %d", 
+                net->sock, net->is_incoming);
         is_incoming=net->is_incoming;
         
         exnet_rwlock_mainth_write(net);
@@ -842,6 +848,9 @@ exprivate int exnet_schedule_run(exnetcon_t *net)
         /* if incoming, continue.. */
         if (is_incoming)
         {
+            /* remove connection 
+            DL_DELETE(M_netlist, net);
+            NDRX_FREE(net);*/
             return EXTRUE;
         }
     }
@@ -876,10 +885,10 @@ expublic int exnet_periodic(void)
                 /* Server should bind at this point */
                 ret = exnet_bind(net);               
             }
-            else
+            else if (!net->is_incoming)
             {
                 /* Client should open socket at this point. */
-                ret=open_socket(net);
+                ret = open_socket(net);
             }
         }
         else if (!net->is_server)

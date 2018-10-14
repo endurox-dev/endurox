@@ -98,7 +98,6 @@ void sign_chld_handler(int sig)
 expublic int is_ndrxd_running(void)
 {
     int ret = EXFALSE;
-    int queue_ok = EXFALSE;
     FILE *f = NULL;
     pid_t    pid;
     char    pidbuf[64] = {EXEOS};
@@ -139,7 +138,7 @@ expublic int is_ndrxd_running(void)
     }
 
     /* Get pid value */
-    fprintf(stderr, "ndrxd PID (from PID file): %s\n", pidbuf);
+    fprintf(stderr, "* ndrxd PID (from PID file): %s\n", pidbuf);
 
     NDRX_FCLOSE(f);
     f = NULL;
@@ -171,7 +170,7 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, "Enduro/X back-end (ndrxd) is not running\n");
+        fprintf(stderr, "* Enduro/X back-end (ndrxd) is not running\n");
         if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);
@@ -212,13 +211,31 @@ expublic int start_daemon_idle(void)
     {
         FILE *f;
 
+        /* TODO: For System V actually we do not need to close the queues
+         * as these are not linked to system resources
+         * then we need a poller extension to check q fork close, something like
+         * if (ndrx_epoll_forkqclose())
+         * {
+         *     ... close the queues ...
+         * }
+         * As unnamed pipes still is going to live within the fork
+         * for just use ifdef...
+         * The proper way would be to use pthread_atfork() so that
+         * we can re-init the admin thread. For particular case
+         * we shall remove any resources allocated by admin thread
+         * and re-init it again for child.
+         */
         /*Bug #176 close resources */
+        NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)G_config.ndrxd_q);
         if (G_config.ndrxd_q != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.ndrxd_q);
 
+        NDRX_LOG(log_debug, "forked close reply_queue %p", 
+                (void *)G_config.reply_queue);
+        
+        /* WELL!!! Seems parent gets this close!!! */
         if (G_config.reply_queue != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.reply_queue);
-
         /* this is child - start EnduroX back-end*/
         snprintf(key, sizeof(key), NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
@@ -271,29 +288,29 @@ expublic int start_daemon_idle(void)
 	/* give another 5 seconds... to start ndrxd */
 	if (!started)
 	{
-        	for (i=0; i<MAX_WSLEEP; i++)
-        	{
-			fprintf(stderr, ">>> still not started, waiting %d/%d\n",
-                                    i, MAX_WSLEEP);
-            		sleep(1);
-            		started=is_ndrxd_running();
-            		if (started)
-                		break;
-		}
+            for (i=0; i<MAX_WSLEEP; i++)
+            {
+                fprintf(stderr, "* still not started, waiting %d/%d\n",
+                            i, MAX_WSLEEP);
+                sleep(1);
+                started=is_ndrxd_running();
+                if (started)
+                        break;
+            }
         }
 
         if (started)
         {
-            fprintf(stderr, ">>> ndrxd idle instance started.\n");
+            fprintf(stderr, "* ndrxd idle instance started.\n");
             G_config.is_idle = EXTRUE;
         }
         else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
         {
-            fprintf(stderr, ">>> ndrxd idle instance not started (something failed?)!\n");
+            fprintf(stderr, "* ndrxd idle instance not started (something failed?)!\n");
         }
         else
         {
-            fprintf(stderr, ">>> ndrxd instance idle malfunction!\n");
+            fprintf(stderr, "* ndrxd instance idle malfunction!\n");
         }
     }
     

@@ -39,6 +39,7 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <nstdutil.h>
+#include <nclopt.h>
 
 #include <ndrx.h>
 #include <ndrxdcmn.h>
@@ -78,17 +79,24 @@ M_descr [] =
 };
 /*---------------------------Prototypes---------------------------------*/
 
-
 /**
  * Print header
- * @return
  */
 exprivate void print_hdr(void)
 {
-    /* TODO: we shall print the `real' process name too */
     fprintf(stderr, "BINARY   SVBIN SRVID PID   SVPID STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
     fprintf(stderr, "-------- ----- ----- ----- ----- ----- ----- -- ---- ---- ---- ---- - ---- -----\n");
 }
+
+/**
+ * Print header, 2
+ */
+exprivate void print_hdr2(void)
+{
+    fprintf(stderr, "BINARY   SVBIN    SRVID PID   SVPID RQADDR\n");
+    fprintf(stderr, "-------- -------- ----- ----- ----- -----------------------\n");
+}
+
 
 /**
  * Get 
@@ -181,7 +189,34 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
 }
 
 /**
- * Get service listings
+ * Process response back, 2
+ * @param reply
+ * @param reply_len
+ * @return
+ */
+expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
+{
+    char binary[9+1];
+
+    if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
+    {
+        command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
+        FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
+        fprintf(stdout, "%-8.8s %-8.8s %-5d %-5d %-5d %s\n", 
+                ppm_info->binary_name,
+                ppm_info->binary_name_real,
+                ppm_info->srvid,
+                ppm_info->pid, 
+                ppm_info->svpid,
+                ppm_info->rqaddress
+                );
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Get server listings
  * @param p_cmd_map
  * @param argc
  * @param argv
@@ -190,10 +225,43 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
 expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     command_call_t call;
+    
     memset(&call, 0, sizeof(call));
 
     /* Print header at first step! */
     print_hdr();
+    
+    /* Then get listing... */
+    return cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
+                        NDRXD_CALL_TYPE_GENERIC,
+                        &call, sizeof(call),
+                        G_config.reply_queue_str,
+                        G_config.reply_queue,
+                        G_config.ndrxd_q,
+                        G_config.ndrxd_q_str,
+                        argc, argv,
+                        p_have_next,
+                        G_call_args,
+                        EXFALSE,
+                        G_config.listcall_flags);
+}
+
+/**
+ * Show page 2 of process model
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+expublic int cmd_ppm2(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    command_call_t call;
+    
+    memset(&call, 0, sizeof(call));
+
+    /* Print header at first step! */
+    print_hdr2();
+    
     /* Then get listing... */
     return cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,

@@ -97,10 +97,11 @@ static PSInteger _system_date(HPSCRIPTVM v)
         time(&t);
     }
     tm *date;
+    tm date_stor;
     if(format == 'u')
-        date = gmtime(&t);
+        date = gmtime_r(&t, &date_stor);
     else
-        date = localtime(&t);
+        date = localtime_r(&t, &date_stor);
     if(!date)
         return ps_throwerror(v,_SC("crt api failure"));
     ps_newtable(v);
