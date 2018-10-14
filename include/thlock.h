@@ -108,8 +108,7 @@ extern "C" {
 #define EX_SPIN_LOCK        MUTEX_LOCK
 #define EX_SPIN_UNLOCK      MUTEX_UNLOCK
     
-#endif
-
+#endif    
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
