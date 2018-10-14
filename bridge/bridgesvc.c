@@ -180,6 +180,7 @@ expublic int br_report_to_ndrxd_cb(void)
  */
 expublic int poll_timer(void)
 {
+    NDRX_LOG(log_debug, "FD=%d", G_bridge_cfg.net.sock);
     return exnet_periodic();
 }
 
@@ -220,7 +221,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
     int periodic_zero = 0; /* send zero length messages periodically */
-    char rqaddress[NDRX_MAX_Q_SIZE+1] = "";
     
     NDRX_LOG(log_debug, "tpsvrinit called");
     

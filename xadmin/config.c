@@ -51,8 +51,61 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 ndrx_config_t G_config;
+exprivate int M_is_reply_q_open = EXFALSE;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Close shared resources
+ */
+expublic int ndrx_xadmin_shm_close(void)
+{
+    int ret = EXSUCCEED;
+    
+    if (M_is_reply_q_open)
+    {
+        ndrx_epoll_shmdetach();
+    }
+    
+    M_is_reply_q_open = EXFALSE;
+    
+out:
+    return ret;
+}
+
+/**
+ * Open reply queue if needed
+ * @return EXFAIL/EXSUCCEED
+ */
+expublic int ndrx_xadmin_open_rply_q(void)
+{
+    int ret = EXSUCCEED;
+    /* Open new queue... */
+    if (!M_is_reply_q_open)
+    {
+        if ((mqd_t)EXFAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
+                                            O_RDWR | O_CREAT,
+                                            S_IWUSR | S_IRUSR, NULL)))
+        {
+            NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
+                                            G_config.reply_queue_str, strerror(errno));
+            userlog("Failed to open queue: [%s] err: %s",
+                                            G_config.reply_queue_str, strerror(errno));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
+        /* Just give some warning for System */
+        fprintf(stderr, "* Shared resources opened...\n");
+        
+        M_is_reply_q_open=EXTRUE;
+        
+    }
+    
+out:
+    return ret;
+}
 
 /**
  * Load environment configuration
@@ -128,24 +181,10 @@ expublic int load_env_config(void)
     snprintf(G_config.reply_queue_str, sizeof(G_config.reply_queue_str),
             NDRX_NDRXCLT, G_config.qprefix, getpid());
 
-    /* Unlink previous admin queue (if have such) - ignore any error */
-    ndrx_mq_unlink(G_config.reply_queue_str);
-    NDRX_LOG(log_debug, "About to open reply queue: [%s]",
+    /* Unlink previous admin queue (if have such) - ignore any error 
+    ndrx_mq_unlink(G_config.reply_queue_str);*/
+    NDRX_LOG(log_debug, "Reply queue: [%s]",
                                         G_config.reply_queue_str);
-    /* Open new queue... */
-    if ((mqd_t)EXFAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
-                                        O_RDWR | O_CREAT,
-                                        S_IWUSR | S_IRUSR, NULL)))
-    {
-        NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
-                                        G_config.reply_queue_str, strerror(errno));
-        userlog("Failed to open queue: [%s] err: %s",
-                                        G_config.reply_queue_str, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
 
     /* Get config key */
     G_config.ndrxd_logfile = getenv(CONF_NDRX_DMNLOG);

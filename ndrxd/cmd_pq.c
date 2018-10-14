@@ -155,7 +155,7 @@ expublic int pq_run_santiy(int run_hist)
     struct mq_attr att;
     int avg;
     int curmsgs;
-    short *srvlist = NULL;
+    int *srvlist = NULL;
     int len;
     /* the services are here: G_bridge_svc_hash - we must loop around 
      * and get every local queue stats, if queue fails to open, then assume 0

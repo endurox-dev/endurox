@@ -130,8 +130,8 @@ int start_daemon_recover(void)
     if( pid == 0)
     {
         FILE *f;
-        /* this is child - start EnduroX back-end*/
-        sprintf(key, NDRX_KEY_FMT, G_atmi_env.rnd_key);
+        /* this is child - start EnduroX back-end */
+        snprintf(key, sizeof(key), NDRX_KEY_FMT, G_atmi_env.rnd_key);
         char *cmd[] = { "ndrxd", key, "-r", (char *)0 };
 
         /* Open log file */

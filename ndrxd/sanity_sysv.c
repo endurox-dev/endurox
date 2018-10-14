@@ -39,6 +39,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <utlist.h>
+#include <fcntl.h>
 
 #include <ndrstandard.h>
 #include <ndrxd.h>
@@ -53,6 +54,7 @@
 #include <userlog.h>
 #include <sys_unix.h>
 #include <sys_svq.h>
+#include <bits/fcntl-linux.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -92,6 +94,9 @@ exprivate int flush_rqaddr(int qid, char *qstr)
     mqd->qid = qid;
     NDRX_STRCPY_SAFE(mqd->qstr, qstr);
     
+    /* set attr as non blocked */
+    mqd->attr.mq_flags |= O_NONBLOCK;
+    
     /* lets flush the queue now. */
     if (EXSUCCEED!=remove_service_q(NULL, EXFAIL, mqd, qstr))
     {
@@ -116,6 +121,13 @@ out:
  * - remove any qid, that is not present in shm (the removal shall be done
  *  in sv5 library with the write lock present and checking the ctime again
  *  so that we have a real sync). Check the service rqaddr by NDRX_SVQ_MAP_RQADDR
+ * 
+ * Well if we are about to remove stale request addresses, we could report them
+ * from the server processes. And thus locate if none of available server processes
+ * belongs to request address, then queue is unlinked. This will protect us from
+ * unlinking queues to which working zero service servers are located, like
+ * tpbridge...
+ * 
  * @return SUCCEED/FAIL
  */
 expublic int do_sanity_check_sysv(void)
@@ -123,18 +135,17 @@ expublic int do_sanity_check_sysv(void)
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq = NULL;
     int len;
-    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
-    shm_svcinfo_t *el;
+    int reslen;
     int i;
-    int j;
     int have_value_3;
     int pos_3;
     bridgedef_svcs_t *cur, *tmp;
-    short *srvlist = NULL;
+    int *srvlist = NULL;
+    pm_node_t *p_pm;
     
     NDRX_LOG(log_debug, "Into System V sanity checks");
     /* Get the list of queues */
-    svq = ndrx_svqshm_statusget(&len, G_app_config->rqaddrttl);
+    svq = ndrx_svqshm_statusget(&reslen, G_app_config->rqaddrttl);
     
     if (NULL==svq)
     {
@@ -151,21 +162,36 @@ expublic int do_sanity_check_sysv(void)
      */
     
     /* We assume shm is OK! */
+    
+    NDRX_LOG(log_debug, "Marking resources against services");
     EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
         {
+            NDRX_LOG(log_debug, "Checking service [%s]", cur->svc_nm);
             for (i=0; i<len; i++)
             {
-                ndrx_svqshm_get_status(svq, el->resids[j], &pos_3, &have_value_3);
+                ndrx_svqshm_get_status(svq, srvlist[i], &pos_3, &have_value_3);
                 
                 if (have_value_3)
                 {
+                    NDRX_LOG(log_debug, "Service [%s] have resource %d at idx %d", 
+                            cur->svc_nm, srvlist[i], i);
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
                 }
-                
+                else
+                {
+                    NDRX_LOG(log_error, "!!! Service [%s] have NO resource %d at idx %d", 
+                            cur->svc_nm, srvlist[i], i);
+                }
             }         
         } /* local servs */
+        
+        if (NULL!=srvlist)
+        {
+            NDRX_FREE(srvlist);
+            srvlist = NULL;
+        }
     }
     
     /* Scan for queues which are not any more is service list, 
@@ -173,14 +199,38 @@ expublic int do_sanity_check_sysv(void)
      * are subject for unlinking...
      * perform that in sync way...
      */
-    for (i=0; i<len; i++)
+    NDRX_LOG(log_debug, "Flush RQADDR queues with out services and TTL expired.");
+    for (i=0; i<reslen; i++)
     {
-        if ((svq[pos_3].flags & NDRX_SVQ_MAP_RQADDR)
-                && !(svq[pos_3].flags & NDRX_SVQ_MAP_HAVESVC)
-                && (svq[pos_3].flags & NDRX_SVQ_MAP_SCHEDRM))
+        int cont = EXFALSE;
+        
+        if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
+                && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
+                && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
         {
-            NDRX_LOG(log_info, "qid %d is subject for delete ttl %d", 
-                    svq[pos_3].qid, G_app_config->rqaddrttl);
+            
+            /* Check process model, to see if any active server have this
+             * request address
+             */
+            DL_FOREACH(G_process_model, p_pm)
+            {
+                if (PM_RUNNING(p_pm->state)
+                        && 0==strcmp(p_pm->rqaddress, svq[i].qstr))
+                {
+                    NDRX_LOG(log_debug, "Server [%s]/%d is using rqddr [%s] - chk next",
+                        p_pm->binary_name, p_pm->srvid, svq[i].qstr);
+                    cont = EXTRUE;
+                    break;
+                }
+            }
+            
+            if (cont)
+            {
+                continue;
+            }
+            
+            NDRX_LOG(log_info, "qid %d is subject for delete ttl %d qstr=[%s]", 
+                    svq[i].qid, G_app_config->rqaddrttl, svq[i].qstr);
             
             /* Well at this point we shall
              * remove call expublic int remove_service_q(char *svc, short srvid, 
@@ -197,20 +247,27 @@ expublic int do_sanity_check_sysv(void)
              * with qid and queue string. then callback would build simple
              * mqd_t and pass it to remove_service_q for message zapping.
              */
-            if (EXSUCCEED==ndrx_svqshm_ctl(NULL, svq[pos_3].qid, 
+            if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, svq[i].qid, 
                     IPC_RMID, G_app_config->rqaddrttl, flush_rqaddr))
             {
-                NDRX_LOG(log_error, "Failed to unlink qid %d", svq[pos_3].qid);
+                NDRX_LOG(log_error, "Failed to unlink qid %d", svq[i].qid);
                 EXFAIL_OUT(ret);
             }
         }
     }
     
 out:
+    
     if (NULL!=svq)
     {
         NDRX_FREE(svq);
     }
+
+    if (NULL!=srvlist)
+    {
+        NDRX_FREE(srvlist);
+    }
+
     return ret;
 }
 
