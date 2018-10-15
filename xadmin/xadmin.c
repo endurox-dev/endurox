@@ -491,12 +491,11 @@ exprivate int get_cmd(int *p_have_next)
     else /* Operate with stdin. */
     {
         char *p;
-
         memset(M_buffer, 0, sizeof(M_buffer));
 
         /* Welcome only if it is terminal */
         if (is_tty())
-            printf("NDRX %ld> ", tpgetnodeid());
+            printf("NDRX %s> ", ndrx_xadmin_nodeid());
 
         /* We should get something! */
         while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
@@ -542,12 +541,10 @@ exprivate int get_cmd(int *p_have_next)
             
             p = strtok (NULL, ARG_DEILIM);
         }
-
         /* We have next from stdin, if not quit command executed last */
         if (!M_quit_requested)
             *p_have_next = EXTRUE;        
     }
-
 out:
     return ret;
 }
@@ -564,6 +561,7 @@ exprivate int process_command_buffer(int *p_have_next)
     int i;
     cmd_mapping_t *map=NULL;
 
+    
     for (i=0; i< N_DIM(M_command_map); i++)
     {
         if (0==strcmp(G_cmd_argv[0], M_command_map[i].cmd))
@@ -663,11 +661,7 @@ expublic int ndrx_start_idle(void)
     int ret=EXSUCCEED;
 
     /* Start idle instance, if background process is not running. */
-    if (EXSUCCEED!=ndrx_xadmin_open_rply_q())
-    {
-        EXFAIL_OUT(ret);
-    }
-    else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
+    if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
     {
         ret = start_daemon_idle();
     }
@@ -868,7 +862,6 @@ int main(int argc, char** argv) {
             ret=EXFAIL;
             goto out;
         }
-
         /* Now process command buffer */
         if (G_cmd_argc_logical > 0 &&
             EXSUCCEED!=process_command_buffer(&have_next) &&
