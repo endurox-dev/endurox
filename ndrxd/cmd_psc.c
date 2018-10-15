@@ -172,7 +172,7 @@ exprivate void psc_progress(command_call_t * call, pm_node_t *pm)
     /* pass to reply process model node */
     params.mod_param1 = (void *)pm;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, psc_reply_mod, 0L, 0, NULL))
     {
@@ -199,7 +199,7 @@ exprivate void psc_progress_br(command_call_t * call, bridgedef_t *br, bridgedef
     params.mod_param1 = br;
     params.mod_param3 = brs;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, psc_reply_mod_br, 0L, 0, NULL))
     {

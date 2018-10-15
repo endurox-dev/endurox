@@ -103,7 +103,7 @@ exprivate void pq_progress(command_call_t * call, bridgedef_svcs_t *q_info)
     /* pass to reply process model node */
     params.mod_param1 = (void *)q_info;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, pq_reply_mod, 0L, 0, NULL))
     {

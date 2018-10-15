@@ -694,7 +694,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             goto out;
         }
         /* do above while we are waiting for stuff back... */
-    } while((reply->flags & NDRXD_REPLY_HAVE_MORE));
+    } while((reply->flags & NDRXD_CALL_FLAGS_RSPHAVE_MORE));
 
 out:
     return ret;

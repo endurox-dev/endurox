@@ -94,7 +94,7 @@ expublic void startup_progress(command_startstop_t * call, pm_node_t *pm, int ca
     params.mod_param1 = (void *)pm;
     params.param2 = calltype;
 
-    if (EXSUCCEED!=simple_command_reply((command_call_t *)call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply((command_call_t *)call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, reply_mod, 0L, 0, NULL))
     {
@@ -221,7 +221,7 @@ expublic void shutdown_progress(command_call_t * call, pm_node_t *pm, int callty
     params.mod_param1 = (void *)pm;
     params.param2 = calltype;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, reply_mod, 0L, 0, NULL))
     {
