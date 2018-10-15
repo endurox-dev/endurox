@@ -53,6 +53,7 @@
 #include <nstd_tls.h>
 #include <exhash.h>
 #include <ndebug.h>
+#include <sys_unix.h>
 #include <sys_svq.h>
 
 #include "atmi_int.h"
@@ -117,7 +118,7 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     }
     
     /* register fork handlers... */
-    if (EXSUCCEED!=(ret=pthread_atfork(admin_fork_prepare, 
+    if (EXSUCCEED!=(ret=ndrx_atfork(admin_fork_prepare, 
             admin_fork_resume, admin_fork_resume)))
     {
         NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));

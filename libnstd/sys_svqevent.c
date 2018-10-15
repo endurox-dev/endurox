@@ -1316,7 +1316,7 @@ expublic int ndrx_svq_event_init(void)
             EXFAIL_OUT(ret);
         }
     
-        if (EXSUCCEED!=(ret=pthread_atfork(event_fork_prepare, 
+        if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
                 event_fork_resume, event_fork_resume)))
         {
             M_alive=EXFALSE;

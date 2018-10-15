@@ -732,6 +732,11 @@ extern NDRX_API void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int aut
 /* Error code - function for unsol: */
 extern NDRX_API void ndrx_ndrx_tmunsolerr_handler(char *data, long len, long flags);
 
+extern NDRX_API pid_t ndrx_fork(void);
+extern NDRX_API void ndrx_atfork_child(void);
+extern NDRX_API void ndrx_atfork_parent(void);
+extern NDRX_API void ndrx_atfork_prepare(void);
+
 #if defined(__cplusplus)
 }
 #endif
