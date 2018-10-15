@@ -94,7 +94,7 @@ exprivate void pe_progress(command_call_t * call, char *env)
     /* pass to reply process model node */
     params.mod_param1 = (void *)env;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, pe_reply_mod, 0L, 0, NULL))
     {

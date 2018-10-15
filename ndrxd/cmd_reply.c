@@ -82,7 +82,9 @@ expublic int simple_command_reply(command_call_t * call,
     reply->status = status;
     reply->msg_type = NDRXD_CALL_TYPE_GENERIC;
     reply->msg_src = NDRXD_SRC_NDRXD; /* from NDRXD */
-    reply->flags = flags;             /* Response flags */
+    
+    /* Response flags, echo back request flags too... */
+    reply->flags = call->flags | flags;
     reply->userfld1 = userfld1;       /* pass back user field... */
     reply->error_code = error_code;
     

@@ -63,10 +63,10 @@ expublic int cmd_at (command_call_t * call, char *data, size_t len, int context)
 
     if (NULL!=G_last_interactive_call)
     {
-        /* make attachemnt */
+        /* make attachment */
         NDRX_LOG(log_debug, "Attaching ndrxd, from: [%s] to: [%s]",
                 G_last_interactive_call->reply_queue, call->reply_queue);
-        strcpy(G_last_interactive_call->reply_queue, call->reply_queue);
+        NDRX_STRCPY_SAFE(G_last_interactive_call->reply_queue, call->reply_queue);
 
         cmd_in_progress=G_last_interactive_call->command;
         /* Remove deadly flag from calst call...! */
