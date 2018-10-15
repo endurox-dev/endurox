@@ -150,6 +150,7 @@ extern void simple_output(char *buf);
 /* extern int get_arg(char *param, int argc, char **argv, char **out); */
 extern int chk_confirm(char *message, short is_confirmed);
 extern int chk_confirm_clopt(char *message, int argc, char **argv);
+extern char * ndrx_xadmin_nodeid(void);
 extern int ndrx_start_idle();
 extern int ndrx_xadmin_shm_close();
 extern int un_init(void);

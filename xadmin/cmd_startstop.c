@@ -353,8 +353,14 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     
     if (call.complete_shutdown)
     {
-        /* TODO: Disconnect from SHM & SEM */
+        NDRX_LOG(log_debug, "About to un-init after shutdown");
         un_init();
+        NDRX_LOG(log_debug, "Un-init completed (after shutdown)");
+        /* TODO: 
+         * how about some sleep here to allow the ndrxd to kill shared resources
+         * before user might want to move forward with next commands which open
+         * shm resources. Thus we can get some race conditions here
+         */
     }
 out:
     return ret;
