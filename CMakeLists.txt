@@ -88,7 +88,7 @@ ELSE ()
 ENDIF ()
 
 # -pthread needed for System V pthread_atfork()
-SET(RT_LIB rt dl -pthread)
+SET(RT_LIB rt dl)
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
     set(EX_OS_LINUX "1")
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
