@@ -80,6 +80,8 @@ out:
 expublic int ndrx_xadmin_open_rply_q(void)
 {
     int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_debug, "About to open xadmin's reply queue");
     /* Open new queue... */
     if (!M_is_reply_q_open)
     {

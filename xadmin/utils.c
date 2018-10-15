@@ -58,6 +58,31 @@ extern const char ndrx_G_resource_Exfields[];
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Return node id (custom init, not ATMI pull in)
+ * @return node id string or "?" in case of misconfig
+ */
+expublic char * ndrx_xadmin_nodeid(void)
+{
+    static char nodeid[64];
+    static int first = EXTRUE;
+    char *p;
+    
+    if (first)
+    {
+        if (NULL==(p = getenv(CONF_NDRX_NODEID)))
+        {
+            NDRX_STRCPY_SAFE(nodeid, "?");
+        }
+        else
+        {
+            NDRX_STRCPY_SAFE(nodeid, p);
+        }
+    }
+    
+    return nodeid;
+}
+
+/**
  * If confirmation is required for command, then check it.
  * @param message
  * @param argc
