@@ -299,6 +299,8 @@ extern NDRX_API int ndrx_proc_children_get_recursive(string_list_t **list, pid_t
 extern NDRX_API int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos);
 extern NDRX_API int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re);
 extern NDRX_API void ndrx_sys_banner(void);
+extern NDRX_API int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
+       void (*child)(void));
 
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);
