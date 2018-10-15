@@ -70,11 +70,19 @@
     
 /*#define SYSCOMMON_ENABLE_DEBUG - causes locks in case of invalid config,
  *      due to recursive debug init */
-
+#define MAX_ATFORKS         2
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/** Function to run before fork */
+exprivate void (*M_prepare[MAX_ATFORKS])(void) = {NULL, NULL}; 
+/** Function to run after fork, by parent */
+exprivate void (*M_parent[MAX_ATFORKS])(void) = {NULL, NULL};
+/** Function to run after fork, by child */
+exprivate void (*M_child[MAX_ATFORKS])(void) = {NULL, NULL};
+
 /*---------------------------Prototypes---------------------------------*/
 
 
@@ -918,6 +926,118 @@ expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
 expublic void ndrx_sys_banner(void)
 {
     NDRX_BANNER;
+}
+
+/**
+ * Prepare for forking
+ */
+expublic void ndrx_atfork_prepare(void)
+{
+    int i;
+    
+    for (i=MAX_ATFORKS-1; i>=0; i--)
+    {
+        if (NULL!=M_prepare[i])
+        {
+            M_prepare[i]();
+        }
+    }
+}
+
+/**
+ * After fork, run parent runs
+ */
+expublic void ndrx_atfork_parent(void)
+{
+    int i;
+    for (i=0; i<MAX_ATFORKS; i++)
+    {
+        if (NULL!=M_parent[i])
+        {
+            M_parent[i]();
+        }
+    }
+}
+
+/**
+ * After fork, child runs
+ */
+expublic void ndrx_atfork_child(void)
+{
+    int i;
+    for (i=0; i<MAX_ATFORKS; i++)
+    {
+        if (NULL!=M_child[i])
+        {
+            M_child[i]();
+        }
+    }
+}
+
+/**
+ * If expecting to continue to use initialized Enduro/X after forking,
+ * then fork shall be done with this function.
+ * @return for parent process child process pid is returned, for child 0 is
+ *  returned.
+ */
+expublic pid_t ndrx_fork(void)
+{
+    pid_t ret;
+    int err;
+    
+    ndrx_atfork_prepare();
+    
+    ret = fork();
+    err = errno;
+    
+    if (0==ret)
+    {
+        ndrx_atfork_child();
+    }
+    else
+    {
+        ndrx_atfork_parent();
+    }
+    
+    errno = err;
+    
+    return ret;
+}
+
+/**
+ * If expecting to continue to use initialized Enduro/X after forking,
+ * then fork shall be done with this function.
+ * @param prepare callback to paren 
+ * @param parent parent after fork callback
+ * @param child child after fork callack
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
+       void (*child)(void))
+{
+    int i=0;
+    int ret = EXSUCCEED;
+    
+    for (i=0;i<MAX_ATFORKS;i++)
+    {
+        if (NULL==M_prepare[i])
+        {
+            break;
+        }
+    }
+    
+    if (i==MAX_ATFORKS)
+    {
+        errno=ENOMEM;
+        EXFAIL_OUT(ret);
+    }
+    
+    M_prepare[i] = prepare;
+    M_parent[i] = parent;
+    M_child[i] = child;
+    
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
