@@ -44,6 +44,7 @@ extern "C" {
 #include <atmi.h>
 #include <sys_mqueue.h>
 #include <exhash.h>
+#include <nstdutil.h>
     
 #ifdef EX_OS_DARWIN
 #include <sys/types.h>
