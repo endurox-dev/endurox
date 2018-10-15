@@ -99,7 +99,7 @@ exprivate void shm_psrv_progress(command_call_t * call, shm_srvinfo_t *p_shm, in
     params.mod_param1 = (void *)p_shm;
     params.param2 = slot;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, shm_psrv_reply_mod, 0L, 0, NULL))
     {
