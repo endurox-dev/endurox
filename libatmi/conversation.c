@@ -333,7 +333,7 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
         NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
                                          conv->my_listen_q_str, strerror(errno));
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_close [%s]: %s",
-                                         __func__, conv->my_listen_q_str, strerror(errno));
+                            __func__, conv->my_listen_q_str, strerror(errno));
        /* ret=FAIL;
         goto out; */
     }
@@ -344,7 +344,7 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
         NDRX_LOG(log_warn, "Failed to ndrx_mq_unlink [%s]: %s",
                                          conv->my_listen_q_str, strerror(errno));
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_unlink [%s]: %s",
-                                         __func__, conv->my_listen_q_str, strerror(errno));
+                            __func__, conv->my_listen_q_str, strerror(errno));
         /* ret=FAIL;
         goto out; */
     }
@@ -464,15 +464,17 @@ exprivate mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
 
     if ((mqd_t)EXFAIL==ret)
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s",  __func__, q, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s",  
+                __func__, q, strerror(errno));
         goto out;
     }
 
         /* read queue attributes */
     if (EXFAIL==ndrx_mq_getattr(ret, q_attr))
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
-                                 __func__, q, ret, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes "
+                "for queue [%s] fd %d: %s",
+                __func__, q, ret, strerror(errno));
         /* close queue */
         ndrx_mq_close(ret);
         /* unlink the queue */
@@ -704,7 +706,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
         descr = &G_buf_descr[buffer_info->type_id];
 
         /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
+                &data_len, flags))
         {
             /* not good - error should be already set */
             ret=EXFAIL;
@@ -726,7 +729,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
             G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd);
     
     NDRX_LOG(log_debug, "%s/%s/%d reply_qstr: [%s]",
-		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd, reply_qstr);
+		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, 
+                cd, reply_qstr);
     NDRX_STRCPY_SAFE(call->reply_to, reply_qstr);
 
     /* TODO: Firstly we should open the queue on which to listen right? */

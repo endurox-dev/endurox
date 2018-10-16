@@ -338,16 +338,30 @@ expublic int atmisrv_initialise_atmi_library(void)
     pid_t pid = getpid();
     
     memset(&conf, 0, sizeof(conf));
-
+    
+    /* if thread id is not set, then do it here, as if
+     * tpsrvinit() did not do tpinit(), then ctxid could be left here as un-init 
+     */
+    
+    
+    conf.contextid = G_atmi_tls->G_atmi_conf.contextid;
+    
+    if (!conf.contextid)
+    {
+        conf.contextid = ndrx_ctxid_op(EXFALSE, EXFAIL);
+        NDRX_DBG_SETTHREAD(conf.contextid);
+    }
+    
     /* Generate my_id */
     snprintf(conf.my_id, sizeof(conf.my_id), NDRX_MY_ID_SRV, 
             G_server_conf.binary_name, 
             G_server_conf.srv_id, pid, 
-            G_atmi_tls->G_atmi_conf.contextid, 
+            conf.contextid, 
             G_atmi_env.our_nodeid);
     
     conf.is_client = 0;
     
+    NDRX_LOG(log_debug, "Server my_id=[%s]", conf.my_id);
     /*
     conf.reply_q = G_server_conf.service_array[1]->q_descr;
     strcpy(conf.reply_q_str, G_server_conf.service_array[1]->listen_q);

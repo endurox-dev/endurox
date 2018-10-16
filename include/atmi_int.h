@@ -690,6 +690,7 @@ extern NDRX_API int G_srv_id;
 
 /* Utilities */
 extern NDRX_API int ndrx_load_common_env(void);
+extern NDRX_API long ndrx_ctxid_op(int make_free, long ctxid);
 extern NDRX_API int ndrx_load_new_env(char *file);
 extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
 extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);

@@ -294,6 +294,7 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     /* xa.c */
     tls->M_is_curtx_init = EXFALSE;
     tls->global_tx_suspended = EXFALSE;
+    memset(&tls->G_atmi_conf, 0, sizeof(tls->G_atmi_conf));
     memset(&tls->G_atmi_xa_curtx, 0, sizeof(tls->G_atmi_xa_curtx));
     
     /* unsol msgs */
