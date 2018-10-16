@@ -85,6 +85,7 @@ exprivate int cmd_ver(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 exprivate int cmd_idle(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 /**
  * Initialize command mapping table
@@ -210,7 +211,8 @@ cmd_mapping_t M_command_map[] =
                                     "\t\t -w\tPrint entries which were used but now free",
                                     NULL},
 #endif
-    {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL}
+    {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL},
+    {"poller",    cmd_poller,EXFAIL,   1,  1,  0, "Print active poller sub-system", NULL}
 };
 
 /*
@@ -434,6 +436,19 @@ exprivate int cmd_echo(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     
     printf("\n");
 
+    return EXSUCCEED;
+}
+
+/**
+ * Print current poller sub-system
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    printf("%s\n", ndrx_epoll_mode());
     return EXSUCCEED;
 }
 
