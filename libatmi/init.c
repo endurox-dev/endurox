@@ -101,7 +101,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
         if (make_free)
         {
             NDRX_LOG(log_debug, "Marking context %ld as free", ctxid);
-            M_contexts[ctxid] = EXFAIL;
+            M_contexts[ctxid-1] = EXFAIL;
         }
         else
         {
@@ -109,7 +109,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
             {
                 if (EXFAIL==M_contexts[i])
                 {
-                    NDRX_LOG(log_debug, "Got free context id=%ld", i);
+                    NDRX_LOG(log_debug, "Got free context id=%ld (0 base)", i);
                     M_contexts[i] = i;
                     ret = i;
                     break;
@@ -117,6 +117,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
             }
         }
         
+        ret+=1;
 out:     
         NDRX_LOG(log_debug, "Returning context id=%ld", ret);
         MUTEX_UNLOCK;
