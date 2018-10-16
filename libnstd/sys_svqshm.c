@@ -60,22 +60,23 @@
 /**
  * Perform init of the shared resources
  */
-#define INIT_ENTRY \
+#define INIT_ENTRY(X) \
 if (!ndrx_G_svqshm_init) \
     {\
         MUTEX_LOCK_V(ndrx_G_svqshm_init_lock);\
         \
         if (!ndrx_G_svqshm_init)\
         {\
-            ret = ndrx_svqshm_init(EXFALSE);\
+            X = ndrx_svqshm_init(EXFALSE);\
         }\
         \
         MUTEX_UNLOCK_V(ndrx_G_svqshm_init_lock);\
         \
-        if (EXFAIL==ret)\
+        if (EXFAIL==X)\
         {\
             NDRX_LOG(log_error, "Failed to create/attach System V Queues "\
                     "mapping shared memory blocks!");\
+            EXFAIL_OUT(X);\
         }\
     }
 
@@ -128,7 +129,7 @@ expublic int ndrx_svqshm_down(void)
     /* have some init first, so that we attach existing resources
      * before killing them
      */
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
     if (EXSUCCEED!=ndrx_sem_close(&M_map_sem))
     {
@@ -743,7 +744,7 @@ expublic int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len)
     ndrx_svq_map_t *svq2;
     ndrx_svq_map_t *sm;      /* System V map        */
 
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
     svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
 
@@ -802,7 +803,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     ndrx_svq_map_t *pm;      /* Posix map           */
     ndrx_svq_map_t *sm;      /* System V map        */
     
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
     svq = (ndrx_svq_map_t *) M_map_p2s.mem;
     svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
@@ -1041,7 +1042,7 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
     ndrx_svq_map_t *pm;      /* Posix map           */
     ndrx_svq_map_t *sm;      /* System V map        */
     
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
     /* ###################### CRITICAL SECTION ############################### */
     if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE))
@@ -1212,11 +1213,16 @@ out:
  */
 expublic string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status)
 {
+    int retstat = EXSUCCEED;
     string_list_t* ret = NULL;
     int have_lock = EXFALSE;
     int i=0;
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *svq;
     ndrx_svq_map_t *pm;      /* Posix map           */
+    
+    INIT_ENTRY(retstat);
+    
+    svq = (ndrx_svq_map_t *) M_map_p2s.mem;
     
     *return_status = EXSUCCEED;
             
