@@ -145,8 +145,9 @@ fi
 sleep 5 
 
 xadmin pqa
+xadmin psvc
 # Now SVC OK must be advertized
-if [[ "X`xadmin pqa | grep SVCOK`" == "X" ]]; then
+if [[ "X`xadmin psvc | grep SVCOK`" == "X" ]]; then
     echo "SVC Must be advertised!"
     go_out 1
 fi
