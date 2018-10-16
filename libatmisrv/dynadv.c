@@ -417,7 +417,11 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Register stuff in shared memory! */
     if (G_shm_srv)
     {
+#ifdef EX_USE_SYSVQ
+        ndrx_shm_install_svc(entry_new->svc_nm, 0, ndrx_epoll_resid_get());
+#else
         ndrx_shm_install_svc(entry_new->svc_nm, 0, G_server_conf.srv_id);
+#endif
     }
     
     /* Release semaphore! */
