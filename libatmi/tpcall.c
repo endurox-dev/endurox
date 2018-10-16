@@ -427,7 +427,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     if (ex_flags & TPCALL_BRCALL)
     {
         /* If this is a bridge call, then format the bridge Q */
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSV)
         {
             int tmp_is_bridge;
             char tmpsvc[MAXTIDENT+1];
