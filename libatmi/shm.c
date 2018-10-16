@@ -488,10 +488,11 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         if (EXSUCCEED!=ndrx_epoll_service_translate(send_q, 
                 G_atmi_tls->G_atmi_conf.q_prefix, svc, resid))
         {
-            NDRX_LOG(log_error, "Failed to translate svc [%s] resid=%d to queue", 
-                    svc, resid);
-            userlog("Failed to translate svc [%s] resid=%d to queue", 
-                    svc, resid);
+            NDRX_LOG(log_error, "Failed to translate svc [%s] resid=%d to "
+                    "queue resrr=%d", 
+                    svc, resid, resrr);
+            userlog("Failed to translate svc [%s] resid=%d resrr=%d to queue", 
+                    svc, resid, resrr);
             EXFAIL_OUT(ret);
         }
         
