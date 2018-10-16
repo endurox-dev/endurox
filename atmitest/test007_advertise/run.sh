@@ -81,6 +81,8 @@ if [ "X`xadmin psc | grep TESTSVFN`" != "X" ]; then
 fi
 
 echo "Sending DOADV to sv"
+xadmin psc
+xadmin psvc
 atmiclt_007 DOADV || go_out 4
 
 if [ "X`xadmin psc | grep TESTSVFN`" == "X" ]; then
@@ -89,10 +91,14 @@ if [ "X`xadmin psc | grep TESTSVFN`" == "X" ]; then
 fi
 
 echo "Sending TEST to sv"
+xadmin psc
+xadmin psvc
 atmiclt_007 TEST || go_out 5
 
 
 echo "Sending UNADV to sv"
+xadmin psc
+xadmin psvc
 atmiclt_007 UNADV || go_out 6
 
 if [ "X`xadmin psc | grep TESTSVFN`" != "X" ]; then
