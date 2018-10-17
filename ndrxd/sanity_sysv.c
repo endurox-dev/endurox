@@ -169,6 +169,10 @@ expublic int do_sanity_check_sysv(void)
         if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
         {
             NDRX_LOG(log_debug, "Checking service [%s]", cur->svc_nm);
+            
+            /* Check the cluster nodes too, so if it is in network
+             * then no need to unlink...
+             */
             for (i=0; i<len; i++)
             {
                 ndrx_svqshm_get_status(svq, srvlist[i], &pos_3, &have_value_3);

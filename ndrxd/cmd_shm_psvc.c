@@ -76,6 +76,7 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     shm_psvc_info->srvs = p_shm->srvs;
     /* cluster fields: */
     shm_psvc_info->csrvs = p_shm->csrvs;
+    shm_psvc_info->resnr = p_shm->resnr;
     shm_psvc_info->totclustered = p_shm->totclustered;
     shm_psvc_info->cnodes_max_id = p_shm->cnodes_max_id;
     memcpy(shm_psvc_info->cnodes, p_shm->cnodes, sizeof(p_shm->cnodes));

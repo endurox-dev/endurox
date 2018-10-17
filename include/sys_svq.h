@@ -68,6 +68,11 @@
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
 #define NDRX_SVQ_STATIDX(MEM, IDX) ((ndrx_svq_status_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_status_t)*IDX)))
 
+/** Match timeout event */
+#define NDRX_SVQ_TOUT_MATCH(X, Y) (X->stamp_seq == Y->stamp_seq && \
+                        0==memcmp( &(X->stamp_time), &(Y->stamp_time), \
+                        sizeof(X->stamp_time)))
+
 #define NDRX_SVQ_MON_TOUT         1 /**< Request for timeout                  */
 #define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
 #define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
