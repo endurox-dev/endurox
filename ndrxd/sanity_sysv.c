@@ -232,6 +232,18 @@ expublic int do_sanity_check_sysv(void)
             NDRX_LOG(log_info, "qid %d is subject for delete ttl %d qstr=[%s]", 
                     svq[i].qid, G_app_config->rqaddrttl, svq[i].qstr);
             
+            /* well time checking & flushing we shall do here
+             * due to locking issues... not the way as bellow described...
+             * There shall be no new message in RQADDR due to stale servers
+             */
+            if (EXSUCCEED!=flush_rqaddr(svq[i].qid, svq[i].qstr))
+            {
+                NDRX_LOG(log_error, "Failed to flush RQADDR [%s]/%d", 
+                        svq[i].qstr, svq[i].qid);
+                userlog("Failed to flush RQADDR [%s]/%d", 
+                        svq[i].qstr, svq[i].qid);
+            }
+            
             /* Well at this point we shall
              * remove call expublic int remove_service_q(char *svc, short srvid, 
              * mqd_t in_qd, char *in_qstr)!!!
@@ -248,7 +260,7 @@ expublic int do_sanity_check_sysv(void)
              * mqd_t and pass it to remove_service_q for message zapping.
              */
             if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, svq[i].qid, 
-                    IPC_RMID, G_app_config->rqaddrttl, flush_rqaddr))
+                    IPC_RMID, EXFAIL, NULL))
             {
                 NDRX_LOG(log_error, "Failed to unlink qid %d", svq[i].qid);
                 EXFAIL_OUT(ret);
