@@ -39,6 +39,12 @@ extern "C" {
 
 #define VALUE_EXPECTED "Hello EnduroX"
 
+extern NDRX_API int test_impexp_string();
+extern NDRX_API int test_impexp_ubf();
+extern NDRX_API int test_impexp_view();
+extern NDRX_API int test_impexp_json();
+extern NDRX_API int test_impexp_carray();
+
 #ifdef  __cplusplus
 }
 #endif

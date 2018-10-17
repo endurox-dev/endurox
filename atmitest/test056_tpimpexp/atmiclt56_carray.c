@@ -36,19 +36,20 @@
 #include <math.h>
 
 #include <atmi.h>
-#include <ubf.h>
+#include <atmi_int.h>
 #include <ndebug.h>
-#include <test.fd.h>
 #include <ndrstandard.h>
 #include <nstopwatch.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
 #include <ubfutil.h>
+#include <exbase64.h>
 #include "test56.h"
 #include "t56.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -56,41 +57,72 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do the test call to the server
+ * test case to import/export STRING
+ * @return EXSUCCEED/EXFAIL
  */
-int main(int argc, char** argv)
+int test_impexp_carray()
 {
-
     int ret = EXSUCCEED;
+    int i;
+    long rsplen,olen,ilen;
+    char *obuf;
+    char buf_bin[CARR_BUFFSIZE+1];
+    size_t st_len;
+    char *json_carray_in = 
+        "{"
+            "\"buftype\":\"CARRAY\","
+            "\"version\":1,"
+//            "\"data\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\""
+            "\"data\":\"SEVMTE8gV09STEQgQ0FSUkFZ\""
+        "}";
+    char json_carray_out[1024];
 
-    if ( EXSUCCEED!=test_impexp_string() )
+    NDRX_LOG(log_info, "JSON CARRAY IN: [%s]", json_carray_in);
+
+    if (NULL==(obuf = tpalloc("CARRAY", NULL, 128)))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export STRING!!!!");
+        NDRX_LOG(log_error, "TESTERROR: failed to alloc CARRAY buffer!");
         EXFAIL_OUT(ret);
     }
 
-    if ( EXSUCCEED!=test_impexp_ubf() )
+    for (i=0; i<10000; i++)
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export UBF!!!!");
-        EXFAIL_OUT(ret);
-    }
+        rsplen=0L;
+        if ( EXFAIL == tpimport(json_carray_in, 
+                                (long)strlen(json_carray_in), 
+                                (char **)&obuf, 
+                                &rsplen, 
+                                0L) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to import JSON CARRAY!!!!");
+            EXFAIL_OUT(ret);
+        }
 
-    if ( EXSUCCEED!=test_impexp_view() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export VIEW!!!!");
-        EXFAIL_OUT(ret);
-    }
+        NDRX_DUMP(log_error, "Imported CARRAY", obuf, rsplen);
 
-    if ( EXSUCCEED!=test_impexp_carray() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export CARRAY!!!!");
-        EXFAIL_OUT(ret);
-    }
+        memset(json_carray_out, 0, sizeof(json_carray_out));
+        olen = sizeof(json_carray_out);
+        ilen = rsplen;
+        if ( EXFAIL == tpexport(obuf, 
+                                ilen, 
+                                json_carray_out, 
+                                &olen, 
+                                0L) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to export JSON CARRAY!!!!");
+            EXFAIL_OUT(ret);
+        }
 
-    if ( EXSUCCEED!=test_impexp_json() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export JSON !!!!");
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_error, 
+                 "CARRAY exported. Return json_carray_out=[%s] olen=[%ld]", 
+                 json_carray_out, olen);
+
+        if (0!=strcmp(json_carray_in, json_carray_out))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: Exported JSON not equal to incoming carray");
+            EXFAIL_OUT(ret);
+        }
     }
 
 out:

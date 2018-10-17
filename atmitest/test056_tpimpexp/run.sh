@@ -1,6 +1,6 @@
 #!/bin/bash
 ## 
-## @(#) tpimport/tpexport function tests - test launcher
+## @(#) tpimport()/tpexport() function tests - test launcher
 ##
 ## @file run.sh
 ## 
@@ -48,8 +48,14 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
-xadmin killall atmi.sv056 2>/dev/null
-xadmin killall atmiclt056 2>/dev/null
+#
+# Set view tables
+#
+export VIEWDIR=.
+
+export VIEWFILES=t56.V
+
+xadmin killall atmiclt56 2>/dev/null
 
 # client timeout
 export NDRX_TOUT=10
@@ -57,8 +63,7 @@ export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 function go_out {
     echo "Test exiting with: $1"
-    xadmin killall atmi.sv056 2>/dev/null
-    xadmin killall atmiclt056 2>/dev/null
+    xadmin killall atmiclt56 2>/dev/null
     
     popd 2>/dev/null
     exit $1
@@ -67,9 +72,7 @@ function go_out {
 
 rm *.log
 
-(./atmi.sv056 -i123 2>&1) > ./atmisv056.log &
-sleep 1
-(./atmiclt056 2>&1) > ./atmiclt056.log
+(./atmiclt56 2>&1) > ./atmiclt56.log
 
 RET=$?
 
