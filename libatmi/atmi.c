@@ -915,7 +915,7 @@ expublic int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
     int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    ret=ndrx_tpubftojson(p_ub, buffer, bufsize);
+    ret=ndrx_tpubftojson(p_ub, buffer, bufsize, NULL);
     
 out:
     return ret;
@@ -1468,7 +1468,7 @@ expublic int tpviewtojson(char *cstruct, char *view, char *buffer,
     }
     
     
-    ret = ndrx_tpviewtojson(cstruct, view, buffer,  bufsize, flags);
+    ret = ndrx_tpviewtojson(cstruct, view, buffer,  bufsize, flags, NULL);
     
 out:
     return ret;
@@ -1501,7 +1501,7 @@ expublic char* tpjsontoview(char *view, char *buffer)
         EXFAIL_OUT(ret);
     }
     
-    ret_ptr=ndrx_tpjsontoview(view, buffer);
+    ret_ptr=ndrx_tpjsontoview(view, buffer, NULL);
     
 out:
     if (EXSUCCEED==ret)
@@ -1552,12 +1552,12 @@ out:
 }
 
 /**
- * 
- * @param idata input data
- * @param ilen 
- * @param odata
- * @param olen
- * @param flags
+ * Convert an JSON representation of a message into a typed message buffer 
+ * @param istr JSON representation of a message 
+ * @param ilen contains the length of the binary data contained in istr
+ * @param obuf typed message buffer
+ * @param olen amount of valid data contained in the output buffer
+ * @param flags 
  * @return 
  */
 expublic int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags)
@@ -1568,24 +1568,21 @@ expublic int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags
 
     if (EXSUCCEED!=entry_status)
     {
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     /* Check some other parameters */
     if (istr==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "istr cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     /* Check some other parameters */
     if (obuf==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "obuf cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     ret=ndrx_tpimportex(NULL, istr, ilen, obuf, olen, flags);
@@ -1595,12 +1592,12 @@ out:
 }
 
 /**
- * 
+ * Convert an JSON representation of a message into a typed message buffer 
  * @param bufctl
- * @param idata
- * @param ilen
- * @param odata
- * @param olen
+ * @param istr JSON representation of a message 
+ * @param ilen contains the length of the binary data contained in istr
+ * @param obuf typed message buffer
+ * @param olen amount of valid data contained in the output buffer
  * @param flags
  * @return 
  */
@@ -1612,24 +1609,21 @@ expublic int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **
 
     if (EXSUCCEED!=entry_status)
     {
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     /* Check some other parameters */
     if (istr==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "istr cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     /* Check some other parameters */
     if (obuf==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "obuf cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     ret=ndrx_tpimportex(bufctl, istr, ilen, obuf, olen, flags);
@@ -1639,12 +1633,12 @@ out:
 }
 
 /**
- * 
- * @param ibuf
- * @param ilen
- * @param ostr
- * @param olen
- * @param flags
+ * Converts a typed message buffer into an externalized JSON representation
+ * @param ibuf typed message buffer
+ * @param ilen specifies how much of ibuf to export
+ * @param ostr pointer to the output JSON
+ * @param olen input maximum available size, actual number of bytes written to ostr
+ * @param flags 
  * @return 
  */
 extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
@@ -1655,23 +1649,21 @@ extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long
 
     if (EXSUCCEED!=entry_status)
     {
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
-   /* Check some other parameters */
+
+    /* Check some other parameters */
     if (ibuf==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "ibuf cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     /* Check some other parameters */
     if (ostr==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags);
@@ -1681,12 +1673,12 @@ out:
 }
 
 /**
- * 
- * @param bufctl
- * @param ibuf
- * @param ilen
- * @param ostr
- * @param olen
+ * Converts a typed message buffer into an externalized JSON representation
+ * @param bufctl 
+ * @param ibuf typed message buffer
+ * @param ilen specifies how much of ibuf to export
+ * @param ostr pointer to the output JSON
+ * @param olen input maximum available size, actual number of bytes written to ostr
  * @param flags
  * @return 
  */
@@ -1699,24 +1691,26 @@ extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl,
 
     if (EXSUCCEED!=entry_status)
     {
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
    /* Check some other parameters */
     if (ibuf==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "ibuf cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
-    /* Check some other parameters */
     if (ostr==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
+    }
+
+    if (olen<=0)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "olen cannot be 0");
+        EXFAIL_OUT(ret);
     }
 
     ret=ndrx_tpexportex(bufctl, ibuf, ilen, ostr, olen, flags);

@@ -36,6 +36,7 @@
 #include <math.h>
 
 #include <atmi.h>
+#include <atmi_int.h>
 #include <ubf.h>
 #include <ndebug.h>
 #include <test.fd.h>
@@ -56,41 +57,78 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do the test call to the server
+ * 
+ * @return 
  */
-int main(int argc, char** argv)
+expublic int test_impexp_ubf()
 {
-
     int ret = EXSUCCEED;
+    int i;
+    long rsplen,olen;
+    char *obuf;
+    char *json_ubf_in = 
+        "{"
+            "\"buftype\":\"UBF\","
+            "\"version\":1,"
+            "\"data\":"
+            "{"
+                "\"T_SHORT_FLD\":1765,"
+                "\"T_LONG_FLD\":[3333111,2],"
+                "\"T_CHAR_FLD\":\"A\","
+                "\"T_FLOAT_FLD\":1,"
+                "\"T_DOUBLE_FLD\":[1111.220000,333,444],"
+                "\"T_STRING_FLD\":\"HELLO WORLD\","
+                "\"T_CARRAY_FLD\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\""
+            "}"
+        "}";
+    char json_ubf_out[1024];
 
-    if ( EXSUCCEED!=test_impexp_string() )
+    NDRX_LOG(log_info, "JSON UBF IN: [%s]", json_ubf_in);
+
+    if (NULL == (obuf = tpalloc("UBF", NULL, NDRX_MSGSIZEMAX)))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export STRING!!!!");
+        NDRX_LOG(log_error, "Failed to allocate UBFH %ld bytes: %s",
+                 NDRX_MSGSIZEMAX, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
-    if ( EXSUCCEED!=test_impexp_ubf() )
+    for (i=0; i<10000; i++)
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export UBF!!!!");
-        EXFAIL_OUT(ret);
-    }
+        rsplen=0L;
+        if ( EXFAIL == tpimport(json_ubf_in, 
+                                (long)strlen(json_ubf_in), 
+                                (char **)&obuf, 
+                                &rsplen, 
+                                0L) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to import JSON UBF!!!!");
+            EXFAIL_OUT(ret);
+        }
+        ndrx_debug_dump_UBF(log_debug, "JSON UBF imported. Return obuf", (UBFH *)obuf);
 
-    if ( EXSUCCEED!=test_impexp_view() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export VIEW!!!!");
-        EXFAIL_OUT(ret);
-    }
+        /* TODO Check imported field values */
 
-    if ( EXSUCCEED!=test_impexp_carray() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export CARRAY!!!!");
-        EXFAIL_OUT(ret);
-    }
+        memset(json_ubf_out, 0, sizeof(json_ubf_out));
+        olen = sizeof(json_ubf_out);
+        if ( EXFAIL == tpexport(obuf, 
+                                (long)strlen(obuf), 
+                                json_ubf_out, 
+                                &olen, 
+                                0L) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to export JSON UBF!!!!");
+            EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_error, 
+                 "JSON UBF exported. Return json_ubf_out=[%s] olen=[%ld]", 
+                 json_ubf_out, olen);
 
-    if ( EXSUCCEED!=test_impexp_json() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export JSON !!!!");
-        EXFAIL_OUT(ret);
+        if (0!=strcmp(json_ubf_in, json_ubf_out))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: Exported UBF not equal to incoming string ");
+            EXFAIL_OUT(ret);
+        }
     }
 
 out:

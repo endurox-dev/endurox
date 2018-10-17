@@ -36,17 +36,14 @@
 #include <math.h>
 
 #include <atmi.h>
-#include <ubf.h>
+#include <atmi_int.h>
 #include <ndebug.h>
-#include <test.fd.h>
 #include <ndrstandard.h>
 #include <nstopwatch.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
-#include <ubfutil.h>
 #include "test56.h"
-#include "t56.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -56,41 +53,77 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do the test call to the server
+ * test case to import/export STRING
+ * @return EXSUCCEED/EXFAIL
  */
-int main(int argc, char** argv)
+expublic int test_impexp_string()
 {
-
     int ret = EXSUCCEED;
+    int i;
+    long rsplen,olen;
+    char *obuf;
+    char *json_string_in = 
+        "{"
+            "\"buftype\":\"STRING\","
+            "\"version\":1,"
+            "\"data\":\"HELLO WORLD\""
+        "}";
+    char json_string_out[1024];
 
-    if ( EXSUCCEED!=test_impexp_string() )
+    NDRX_LOG(log_info, "JSON STRING IN: [%s]", json_string_in);
+
+    if (NULL==(obuf = tpalloc("STRING", NULL, 256)))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export STRING!!!!");
+        NDRX_LOG(log_error, "TESTERROR: failed to alloc STRING buffer!");
         EXFAIL_OUT(ret);
     }
 
-    if ( EXSUCCEED!=test_impexp_ubf() )
+    for (i=0; i<10000; i++)
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export UBF!!!!");
-        EXFAIL_OUT(ret);
-    }
+        rsplen=0L;
+        if ( EXFAIL == tpimport(json_string_in, 
+                                (long)strlen(json_string_in), 
+                                (char **)&obuf, 
+                                &rsplen, 
+                                0L) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to import JSON STRING!!!!");
+            EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_error, 
+                 "JSON STRING imported. Return obuf=[%s] rsplen=[%ld]", 
+                 obuf, rsplen);
 
-    if ( EXSUCCEED!=test_impexp_view() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export VIEW!!!!");
-        EXFAIL_OUT(ret);
-    }
+        /* Check if imported sting match with original string */
+        if ( 0!=strcmp("HELLO WORLD", obuf) )
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: imported string not equal to obuf string ");
+            EXFAIL_OUT(ret);
+        }
 
-    if ( EXSUCCEED!=test_impexp_carray() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export CARRAY!!!!");
-        EXFAIL_OUT(ret);
-    }
+        memset(json_string_out, 0, sizeof(json_string_out));
+        olen = sizeof(json_string_out);
+        if ( EXFAIL == tpexport(obuf, 
+                                (long)strlen(obuf), 
+                                json_string_out, 
+                                &olen, 
+                                0L) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to export JSON STRING!!!!");
+            EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_error, 
+                 "JSON STRING exported. Return json_string_out=[%s] olen=[%ld]", 
+                 json_string_out, olen);
 
-    if ( EXSUCCEED!=test_impexp_json() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export JSON !!!!");
-        EXFAIL_OUT(ret);
+        if (0!=strcmp(json_string_in, json_string_out))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: Exported JSON not equal to incoming string ");
+            EXFAIL_OUT(ret);
+        }
+
     }
 
 out:

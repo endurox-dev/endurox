@@ -677,7 +677,7 @@ struct ndrx_expbufctl
     char subtype[XATMI_SUBTYPE_LEN+1];
     short subtype_ind;
 
-    char version[MAXTIDENT+1];
+    double version;
     short version_ind;
 
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
@@ -806,7 +806,7 @@ extern NDRX_API void	tpext_configbrige
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
-extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object);
 extern NDRX_API int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
@@ -852,22 +852,15 @@ extern NDRX_API atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
 extern NDRX_API atmi_lib_env_t *ndrx_get_G_atmi_env(void);
 extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
 
-/* */
+/* tpimort() functions */
 extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
+extern NDRX_API int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
+extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
 
-extern NDRX_API int tpimportex(ndrx_expbufctl_t *bufctl,
-        char *istr, long ilen, char **obuf, long *olen, long flags);
-
-extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
-        char *istr, long ilen, char **obuf, long *olen, long flags);
-
+/* tpexport() functions */
 extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
-
-extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, 
-        char *ibuf, long ilen, char *ostr, long *olen, long flags);
-
-extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, 
-        char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 
 #ifdef	__cplusplus
 }
