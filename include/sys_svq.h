@@ -102,6 +102,7 @@ typedef struct
     int qid;                            /**< System V Queue id          */
     short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
     char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string    */
+    ndrx_stopwatch_t ctime;             /**< change time                */
 } ndrx_svq_status_t;
 
 /**
@@ -249,6 +250,7 @@ extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
 extern NDRX_API ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl);
 
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status);
+
 extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
         int qid, int *pos, int *have_value);
 
