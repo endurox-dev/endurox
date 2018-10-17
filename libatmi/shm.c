@@ -747,12 +747,12 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
             {
                 /* Add it to the array... */
                 /* so we use the next number */
-                NDRX_LOG(log_debug, "installed resid/srvid %d at %d", 
-                        resid, tot_local_srvs);
+                int idx = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
                 SHM_SVCINFO_INDEX(svcinfo, pos)->resids[tot_local_srvs] = resid;
+                NDRX_LOG(log_debug, "installed resid/srvid %d at %d", 
+                        resid, idx);
+                SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
             }
-            
-            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
 #endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
@@ -784,9 +784,6 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                         SHM_SVCINFO_INDEX(svcinfo, pos)->service, 
                         SHM_SVCINFO_INDEX(svcinfo, pos)->flags);
             
-#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
-#endif
             SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
             
             if (is_bridge)
@@ -795,8 +792,13 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
             }
             else
             {
-                NDRX_LOG(log_debug, "installed resid/srvid %d at 0", resid);
-                SHM_SVCINFO_INDEX(svcinfo, pos)->resids[0] = resid;
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+                int idx = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
+                SHM_SVCINFO_INDEX(svcinfo, pos)->resids[idx] = resid;
+                NDRX_LOG(log_debug, "installed resid/srvid %d at idx %d", 
+                        resid, idx);
+                SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
+#endif
             }
         }
     }

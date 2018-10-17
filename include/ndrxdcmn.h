@@ -621,6 +621,7 @@ typedef struct
     int cnodes_max_id;              /**< Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT]; /**< List of cluster nodes */
     int resids[CONF_NDRX_MAX_SRVIDS_XADMIN];    /**< Server ID (fixed number xadmin output) */
+    int resnr;                                  /**< Number of local resources              */
     
 } command_reply_shm_psvc_t;
 

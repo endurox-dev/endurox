@@ -124,7 +124,7 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
         /* This is poll mode, provide info about individual serves: */
         if (shm_psvc_info->resids[0])
         {
-            fprintf(stdout, "\t\t\t\t\t\tRES: ");
+            fprintf(stdout, "\t\t\t\t\t\tRES(%d): ", shm_psvc_info->resnr);
             for (i=0; i<shm_psvc_info->srvs-shm_psvc_info->csrvs; i++)
             {
                 fprintf(stdout, "%d ", shm_psvc_info->resids[i]);

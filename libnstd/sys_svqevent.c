@@ -582,8 +582,22 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
         
         if (delta <= 0)
         {
-            NDRX_LOG(log_warn, "Timeout condition: mqd %p time spent: %ld", 
-                        r->mqd, delta);
+            int wait_matched;
+            pthread_spin_lock(&( ((mqd_t)r->mqd)->stamplock));
+            
+            if (NDRX_SVQ_TOUT_MATCH((r), ((mqd_t)r->mqd)))
+            {
+                wait_matched = EXTRUE;
+            }
+            else
+            {
+                wait_matched = EXFAIL;
+            }
+            pthread_spin_unlock(&(((mqd_t)r->mqd)->stamplock));
+            
+            NDRX_LOG(log_warn, "Timeout condition: mqd %p time spent: %ld "
+                    "matched: %d seq: %lu", 
+                        r->mqd, delta, wait_matched, r->stamp_seq);
             
             /* lets put the event to the message queue... 
              * firstly we need to allocate the event.
@@ -1492,7 +1506,8 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     int err;
     int msgflg;
     int len;
-           
+    ndrx_svq_ev_t cur_stamp;
+    
     /* set the flag value */
     if (mqd->attr.mq_flags & O_NONBLOCK)
     {
@@ -1516,8 +1531,13 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     /* update time stamps */
     pthread_spin_lock(&(mqd->stamplock));
+    
     mqd->stamp_seq++;
+    cur_stamp.stamp_seq = mqd->stamp_seq;
+    
     ndrx_stopwatch_reset(&(mqd->stamp_time));
+    memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
+    
     pthread_spin_unlock(&(mqd->stamplock));
     
     /* register timeout: */
@@ -1557,8 +1577,24 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * if have any event, interrupt the waiting and return back to caller
      * Also check that event is relevant for us -> i.e timestamps matches...
      */
-    if (NULL!=mqd->eventq)
+    
+    /* Check the events matching the current time stamp, ignore
+     * events sent not four our stamp
+     */
+
+    while (NULL!=mqd->eventq &&
+            NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
+            !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
     {
+        /* Remove any pending event, not relevant to our position */
+        *ev = mqd->eventq;
+        DL_DELETE(mqd->eventq, mqd->eventq);
+        NDRX_FREE(*ev);
+        *ev = NULL;
+    }
+    
+    if (NULL!=mqd->eventq)
+    {    
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, mqd->eventq);
         pthread_mutex_unlock(&(mqd->qlock));
@@ -1567,6 +1603,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
         EXFAIL_OUT(ret);
     }
+    
     
     /* Chain the lockings, so that Q lock would wait until both
      *  are locked
@@ -1642,19 +1679,30 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     ret=EXSUCCEED;
     
-    
     /* lock queue  */
     pthread_mutex_lock(&(mqd->qlock));	
-    
+
+    /* Zap any expired timeouts... */
+    while (NULL!=mqd->eventq &&
+                NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
+                !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
+    {
+        /* Remove any pending event, not relevant to our position */
+        *ev = mqd->eventq;
+        DL_DELETE(mqd->eventq, mqd->eventq);
+        NDRX_FREE(*ev);
+        *ev = NULL;
+    }
+
     /* if have event queued, return it second */
     if (NULL!=mqd->eventq)
     {
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, mqd->eventq);
         pthread_mutex_unlock(&(mqd->qlock));
-        
+
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
-        
+
         /* failed to receive, got event! */
         EXFAIL_OUT(ret);
     }
