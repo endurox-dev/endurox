@@ -1,0 +1,12 @@
+VIEW MYVIEW56
+#type    cname      fbname              count   flag    size    null
+
+short    tshort1    -                   1       -       -       -
+long     tlong1     -                   1       -       -       -
+char     tchar1     -                   1       -       -       -
+float    tfloat1    -                   1       -       -       -
+double   tdouble1   -                   1       -       -       -
+string   tstring1   -                   1       -       15      -
+carray   tcarray1   -                   1       -       10      -
+
+END

@@ -61,7 +61,12 @@ extern "C" {
 #define TPEVTRAN        0x00000004 /* RFU */
 #define TPEVPERSIST	0x00000008
 
-#define TPEX_STRING     0x00000001
+#define TPEX_NOCHANGE       0x00000004  /**< Reject tpimport with error if 
+                                                types does not match*/
+#define TPEX_STRING         0x00000008  /**< Export buffer in base64 format */
+#define TPIMPEXP_VERSION_MIN    1 /** < import min version */
+#define TPIMPEXP_VERSION_MAX    1 /** < import / export max version */
+
 
 #define NDRX_XID_SERIAL_BUFSIZE     48 /* Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /* Number of resource managers supported */
