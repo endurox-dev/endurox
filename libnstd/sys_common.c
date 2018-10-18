@@ -1144,6 +1144,8 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         linematch_comp = EXTRUE;
     }
     
+    NDRX_LOG(log_debug, "Listing resources by: [%s]", cmd);
+    
     fp = popen(cmd, "r");
     
     if (fp == NULL)
@@ -1160,7 +1162,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
             NDRX_LOG(log_debug, "Line matched: [%s]", path);
             
             /* extract second column... valid for Linux and Unix */
-            if (EXSUCCEED!=ndrx_tokens_extract(path, "%d", &id, sizeof(id), 1, 1, 1))
+            if (1!=ndrx_tokens_extract(path, "%d", &id, sizeof(id), 1, 1, 1))
             {
                 NDRX_LOG(log_error, "Failed to extract resource id from [%s]!",
                         path);

@@ -61,25 +61,76 @@
  */
 expublic int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
-    int ret = EXSUCCEED;
-    ndrx_growlist_t list;
+    int ret=EXSUCCEED;
+    short confirm = EXFALSE;
+    short user_res = EXFALSE;
     
-    if (!chk_confirm_clopt("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
-                    "THE APP SESSION?", argc, argv))
+    ncloptmap_t clopt[] =
     {
-        return EXFAIL;
+        {'y', BFLD_SHORT, (void *)&confirm, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+        {'r', BFLD_SHORT, (void *)&user_res, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Delete user resources "
+                    "(System V queues and semaphores matched by current username)"},
+        {0}
+    };
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
     }
-    else
+    
+    if (!chk_confirm("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
+                    "THE APP SESSION?", confirm))
     {
-        /* quit automatically, as all resources are being removed! */
-        *p_have_next = EXFALSE;
+        EXFAIL_OUT(ret);
+    }
         
-        ndrx_down_sys(G_config.qprefix, G_config.qpath, EXFALSE);
-        ndrx_down_sys(G_config.qprefix, G_config.qpath, EXTRUE); /* second loop with TRUE... */
-    }
+    ndrx_down_sys(G_config.qprefix, G_config.qpath, EXFALSE, user_res);
+    /* second loop with TRUE... */
+    ndrx_down_sys(G_config.qprefix, G_config.qpath, EXTRUE, user_res);
     
     
 out:
     return ret;
 }
+
+/**
+ * Down all user resources
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+expublic int cmd_udown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    int ret=EXSUCCEED;
+    short confirm = EXFALSE;
+    
+    ncloptmap_t clopt[] =
+    {
+        {'y', BFLD_SHORT, (void *)&confirm, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
+        {0}
+    };
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!chk_confirm("ARE YOU SURE YOU WANT TO FORCIBLY SHUTDOWN (KILL) "
+                    "THE APP SESSION?", confirm))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    ndrx_down_userres();
+    
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
