@@ -1041,7 +1041,6 @@ out:
 
 /**
  * Return user queues or semaphores
- * TODO: Adjust for each of the unixes...
  * @param[out] list to init & grow
  * @param[in] Return user queues, otherwise return semaphores
  */
@@ -1061,7 +1060,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
     if (queues)
     {
         NDRX_STRCPY_SAFE(cmd, "ipcs -q");
-        /* output example:
+        /* output example (LINUX):
 
         $ ipcs -q
         ------ Message Queues --------
@@ -1070,7 +1069,46 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         0x00000000 1159593985 user1      700        0            0           
         0x00000000 15368194   user1      760        0            0  
         ...
-         */
+        
+        (AIX):
+        $ ipcs -s
+        IPC status from /dev/mem as of Thu Oct 18 12:56:29 WET 2018
+        T        ID     KEY        MODE       OWNER    GROUP
+        Semaphores:
+        s   2097152 0x58002281 --ra-ra-ra-     root   system
+        s         1 0x44002281 --ra-ra-ra-     root   system
+        s   1048578 0x7a0c584a --ra-------   zabbix   zabbix
+        s         3 0x620000a3 --ra-r--r--     root   system
+        
+        (FREEBSD):
+        Semaphores:
+        T           ID          KEY MODE        OWNER    GROUP   
+        s     24969217   1297266887 --rw-rw-r-- user1    user1   
+        s     21430274   1297266911 --rw-rw-r-- user1    user1   
+        s     21168131   1297266936 --rw-rw-r-- user1    user1   
+        s     21168132   1297266983 --rw-rw-r-- user1    user1   
+        s     21168133   1297266993 --rw-rw-r-- user1    user1   
+
+
+        (HPUX):
+        $ ipcs
+        IPC status from /dev/kmem as of Thu Oct 18 12:59:33 2018
+        T         ID     KEY        MODE        OWNER     GROUP
+        Message Queues:
+        q          0 0x3c1c080d -Rrw--w--w-      root      root
+        q          1 0x3e1c080d --rw-r--r--      root      root
+        q 1070596098 0x00000000 -Rrw-rw----      toor      toor
+        
+        (MACOS)
+        Shared Memory: 
+        T ID     KEY        MODE        OWNER GROUP 
+        m 131071 1095910432 --rw-rw-rw- root kpl 
+        m 131071 1627522010 --rw-rw---- kpl kpl 
+        m 131071 1644299226 --rw-rw---- kpl kpl 
+        m 262143 1661076442 --rw-rw---- kpl kpl 
+        
+        So from above we can say that MACOS/AIX/FREEBSD/HPUX have the same layout
+        */
     }
     else
     {
@@ -1087,9 +1125,13 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         ...
          */
     }
-    
-    snprintf(linematchstr, sizeof(linematchstr), "\\s*0x[0-9]+\\s[0-9]+\\s%s\\s.*",
+#ifdef EX_OS_LINUX
+    snprintf(linematchstr, sizeof(linematchstr), "^0x[0-9a-fA-F]+\\s*[0-9]+\\s*%s\\s",
             ndrx_sys_get_cur_username());
+#else
+    snprintf(linematchstr, sizeof(linematchstr), "^.\\s+[0-9]+\\s+0x[0-9a-fA-F]+\\s+.{11}\\s+%s\\s'",
+            ndrx_sys_get_cur_username());
+#endif
     
     if (EXSUCCEED!=ndrx_regcomp(&linematch, linematchstr))
     {
@@ -1117,7 +1159,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
             int id;
             NDRX_LOG(log_debug, "Line matched: [%s]", path);
             
-            /* extract second column... */
+            /* extract second column... valid for Linux and Unix */
             if (EXSUCCEED!=ndrx_tokens_extract(path, "%d", &id, sizeof(id), 1, 1, 1))
             {
                 NDRX_LOG(log_error, "Failed to extract resource id from [%s]!",

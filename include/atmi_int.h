@@ -825,7 +825,7 @@ extern NDRX_API void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub);
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);
 extern NDRX_API int ndrx_chk_ndrxd(void);
-extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force);
+extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res);
 extern NDRX_API int ndrx_killall(char *mask);
 extern NDRX_API int ndrx_q_exists(char *qpath);
 extern NDRX_API int ndrx_get_cached_svc_q(char *q);
