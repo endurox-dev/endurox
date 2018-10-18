@@ -174,6 +174,7 @@ extern int ss_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int psc_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_udown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int at_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
