@@ -69,7 +69,7 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Checks weither process is running or not...
+ * Checks whether process is running or not...
  * @param pid
  * @param proc_name
  * @return

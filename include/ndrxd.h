@@ -389,7 +389,8 @@ extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
 extern int self_sreload(pm_node_t *p_pm);
 
 #ifdef EX_USE_SYSVQ
-extern int do_sanity_check_sysv(void);
+extern int do_sanity_check_sysv(int nottl);
+extern int ndrxd_sysv_finally(void);
 #endif
 
 #ifdef	__cplusplus
