@@ -239,8 +239,11 @@ out:
 
 /**
  * Kill the system running (the xadmin dies last...)
+ * @param[in] user_res remove user specific resources (this might kill other apps
+ *  resources too if running under the same user). Currently performs System V
+ *  resource removal.
  */
-expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
+expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res)
 {
     int ret = EXSUCCEED;
 #define DOWN_KILL_SIG   1
