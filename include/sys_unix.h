@@ -165,7 +165,6 @@ extern NDRX_API const char * __progname;
 #endif
  
 /******************************************************************************/
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -302,6 +301,7 @@ extern NDRX_API int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re);
 extern NDRX_API void ndrx_sys_banner(void);
 extern NDRX_API int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
        void (*child)(void));
+extern NDRX_API int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues);
 
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);

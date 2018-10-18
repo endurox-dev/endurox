@@ -1299,16 +1299,19 @@ expublic double ndrx_atof(char *str)
  * @param tokens
  * @param tokens_elmsz
  * @param len
+ * @param start_tok 0 based index of token to start to extract
+ * @param stop_tok 0 based indrex of token to stop to extracts
  * @return 0 - no tokens extracted
  */
 expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
-        int tokens_elmsz, int len)
+        int tokens_elmsz, int len, int start_tok, int stop_tok)
 {
     int ret = 0;
     char *str = NDRX_STRDUP(str1);
     char *ptr;
     char *token;
     char *str_first = str;
+    int toks=0;
     
     if (NULL==str)
     {
@@ -1325,17 +1328,25 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
             str_first = NULL; /* now loop over the string */
         }
         
-        if (ret<len)
+        if (toks>=start_tok)
         {
-            sscanf(token, fmt, tokens);
-            tokens+=tokens_elmsz;
+            if (ret<len)
+            {
+                sscanf(token, fmt, tokens);
+                tokens+=tokens_elmsz;
+            }
+            else
+            {
+                break;
+            }
+            ret++;
         }
-        else
+        
+        if (toks>=stop_tok)
         {
             break;
         }
-        
-        ret++;
+        toks++;
     }
     
 out:

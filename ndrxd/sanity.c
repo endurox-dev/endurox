@@ -214,7 +214,7 @@ expublic int do_sanity_check(void)
         }
         
 #ifdef EX_USE_SYSVQ
-        if (EXSUCCEED!=do_sanity_check_sysv())
+        if (EXSUCCEED!=do_sanity_check_sysv(EXFALSE))
         {
             NDRX_LOG(log_error, "System V sanity checks failed!");
             userlog("System V sanity checks failed!");
@@ -812,6 +812,27 @@ exprivate int check_cnvsrv(char *qname)
         }
     }
    
+out:
+    return ret;
+}
+
+/**
+ * Perform final sanity checks - ndrxd is exiting
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrxd_sanity_finally(void)
+{
+    int ret = EXSUCCEED;
+    
+#ifdef EX_USE_SYSVQ
+    
+    if (EXSUCCEED!=ndrxd_sysv_finally())
+    {
+        ret = EXFAIL;
+    }
+    
+#endif
+    
 out:
     return ret;
 }

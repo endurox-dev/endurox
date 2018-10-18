@@ -227,7 +227,6 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
      */
     char cmd[128];
     FILE *fp=NULL;
-    string_list_t* tmp;
     string_list_t* ret = NULL;
     pid_t pid;
     char path[PATH_MAX];
@@ -795,7 +794,7 @@ $ ps -o vsz -p 1
     NDRX_LOG(log_debug, "Parsing output: [%s]", line);
     
     toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
-            sizeof(long), N_DIM(meminfo));
+            sizeof(long), N_DIM(meminfo), 0, 15);
     
     if (toks<7)
     {
@@ -816,7 +815,7 @@ $ ps -o vsz -p 1
     NDRX_LOG(log_debug, "Parsing output: [%s]", line);
     
     toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
-            sizeof(long), N_DIM(meminfo));
+            sizeof(long), N_DIM(meminfo), 0, 15);
     
     if (toks!=1)
     {
@@ -839,11 +838,11 @@ $ ps -o vsz -p 1
     NDRX_LOG(log_debug, "Parsing output: [%s]", line);
     
     toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
-            sizeof(long), N_DIM(meminfo));
+            sizeof(long), N_DIM(meminfo), 0, 15);
     
     if (2!=toks)
     {
-        NDRX_LOG(log_error, "Invalid tokens, expected 2, got %d", toks);
+       NDRX_LOG(log_error, "Invalid tokens, expected 2, got %d", toks);
        EXFAIL_OUT(ret);
     }
     
@@ -1037,6 +1036,126 @@ expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
     M_child[i] = child;
     
 out:
+    return ret;
+}
+
+/**
+ * Return user queues or semaphores
+ * TODO: Adjust for each of the unixes...
+ * @param[out] list to init & grow
+ * @param[in] Return user queues, otherwise return semaphores
+ */
+expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
+{
+    char cmd[128];
+    FILE *fp=NULL;
+    char path[PATH_MAX];
+    char linematchstr[PATH_MAX];
+    int ret = EXSUCCEED;
+    regex_t linematch;
+    int linematch_comp = EXFALSE;
+    
+    /* init growlist */
+    ndrx_growlist_init(list, 256, sizeof(int));
+    
+    if (queues)
+    {
+        NDRX_STRCPY_SAFE(cmd, "ipcs -q");
+        /* output example:
+
+        $ ipcs -q
+        ------ Message Queues --------
+        key        msqid      owner      perms      used-bytes   messages    
+        0x00000000 1190428672 user1      700        0            0           
+        0x00000000 1159593985 user1      700        0            0           
+        0x00000000 15368194   user1      760        0            0  
+        ...
+         */
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(cmd, "ipcs -s");
+        /* output example:
+        $ ipcs -s
+
+        ------ Semaphore Arrays --------
+        key        semid      owner      perms      nsems     
+        0x0052e2c1 0          user1      600        17        
+        0x0052e2c2 32769      user1      600        17        
+        0x0052e2c3 65538      user1      600        17        
+        0x0052e2c4 98307      user1      600        17          
+        ...
+         */
+    }
+    
+    snprintf(linematchstr, sizeof(linematchstr), "\\s*0x[0-9]+\\s[0-9]+\\s%s\\s.*",
+            ndrx_sys_get_cur_username());
+    
+    if (EXSUCCEED!=ndrx_regcomp(&linematch, linematchstr))
+    {
+        userlog("Failed to compile regexp: %s", linematch);
+        NDRX_LOG(log_error, "Failed to compile regexp: %s", linematch);
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        linematch_comp = EXTRUE;
+    }
+    
+    fp = popen(cmd, "r");
+    
+    if (fp == NULL)
+    {
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
+    }
+    
+    while (fgets(path, sizeof(path)-1, fp) != NULL)
+    {        
+        if (EXSUCCEED==ndrx_regexec(&linematch, path))
+        {
+            int id;
+            NDRX_LOG(log_debug, "Line matched: [%s]", path);
+            
+            /* extract second column... */
+            if (EXSUCCEED!=ndrx_tokens_extract(path, "%d", &id, sizeof(id), 1, 1, 1))
+            {
+                NDRX_LOG(log_error, "Failed to extract resource id from [%s]!",
+                        path);
+                userlog("Failed to extract resource id from [%s]!",
+                        path);
+                EXFAIL_OUT(ret);
+            }
+         
+            NDRX_LOG(log_debug, "Extract id %d", id);
+            
+            /* Add resource to growlist */
+            if (EXSUCCEED!=ndrx_growlist_append(list, (void *)&id))
+            {
+                NDRX_LOG(log_error, "Failed to add %d to growlist!", id);
+                userlog("Failed to add %d to growlist!", id);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
+ out:
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+ 
+    if (EXSUCCEED!=ret)
+    {
+        ndrx_growlist_free(list);
+    }
+ 
+    if (linematch_comp)
+    {
+        ndrx_regfree(&linematch);
+    }
+
     return ret;
 }
 
