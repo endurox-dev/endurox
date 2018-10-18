@@ -110,11 +110,22 @@ cmd_mapping_t M_command_map[] =
                                                             "\t args: psc [-s]\n"
                                                             "\t -s : print full service name"
                                                          , NULL},
-    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  2, "Stop application domain\n"
-                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]", NULL},
-    {"down",    cmd_fdown, EXFAIL,              1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
-                                                         "\t args: fdown [-y]\n"
-                                                         "\t RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!", NULL},
+    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  2, 
+                                    "Stop application domain\n"
+                                    "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]", NULL},
+    {"down",    cmd_fdown, EXFAIL,              1,  3,  0, 
+                                    "Force App Server shutdown & resources cleanup\n"
+                                    "\tUsage: down [OPTION]...\n"
+                                    "\tOptional arguments: \n"
+                                    "\t\t -y\tDo not ask for confirmation\n"
+                                    "\t\t -u\tRemove user resources by username\n", 
+                                    NULL},
+    {"udown",    cmd_udown, EXFAIL,              1,  2,  0, 
+                                    "Remove resources by username\n"
+                                    "\tUsage: udown [OPTION]...\n"
+                                    "\tOptional arguments: \n"
+                                    "\t\t -y\tDo not ask for confirmation\n",
+                                    NULL},
     {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,    1,  1,  1, "Attached to ndrxd user session in progress", NULL},
     {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ, 1,  1,  1, "Load new configuration", NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, "Test new configuration", NULL},
@@ -135,14 +146,17 @@ cmd_mapping_t M_command_map[] =
     {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, "Shared mem, print servers", NULL},
     {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  2,  1, "Abort app shutdown or startup.\n"
                                                            "\t args: abort [-y]", NULL},
-    {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Restarts server instance by instance\n"
-                                                         "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
+    {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, 
+                                    "Restarts server instance by instance\n"
+                                    "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, "Alias for `sreload'", NULL},
-    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, "Print service queues", NULL},
-    {"pqa",cmd_pqa,  EXFAIL,            1,  2,  2, "Print all queues\n"
-                                                "\t args: pqa [-a]\n"
-                                                "\t -a - print all queues "
-                                                "(incl. other local systems)", NULL},
+    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, 
+                                    "Print service queues", NULL},
+    {"pqa",cmd_pqa,  EXFAIL,            1,  2,  2, 
+                                    "Print all queues\n"
+                                    "\t args: pqa [-a]\n"
+                                    "\t -a - print all queues "
+                                    "(incl. other local systems)", NULL},
     /* New XA commands: printtrans (pt), abort, commit, exsting abort move to: sabort (start/stop) 
      * abort + install ctrl+c handler 
      */
@@ -203,7 +217,8 @@ cmd_mapping_t M_command_map[] =
     {"cacheinval",cmd_ci,EXFAIL,   2,  4,  1, "Alias for `ci' ", NULL},
 #ifdef EX_USE_SYSVQ
     {"svmaps",    cmd_svmaps,EXFAIL,   1,  6,  0, "Print System V Queue mapping tables\n"
-                                    "\tUsage svmaps [OPTION]...\n"
+                                    "\tUsage: svmaps [OPTION]...\n"
+                                    "\tOptional arguments: \n"
                                     "\t\t -p\tPrint Posix to System V table (default)\n"
                                     "\t\t -s\tPrint System V to Posix table\n"
                                     "\t\t -a\tPrint all entries (lots of records...)\n"

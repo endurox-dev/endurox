@@ -55,7 +55,8 @@
 #include <utlist.h>
 #include <atmi_shm.h>
 #include <exregex.h>
-
+#include <sys/msg.h>
+#include <sys/sem.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -236,6 +237,54 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
 out:
     return ret;
 }
+
+/**
+ * Delete user resources (by username)
+ */
+expublic void ndrx_down_userres(void)
+{
+    int i;
+    int *sysvres;
+    ndrx_growlist_t g;
+
+    NDRX_LOG(log_warn, "Remove user specific resources - System V queues");
+    memset(&g, 0, sizeof(g));
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXTRUE))
+    {
+        sysvres = (int *)g.mem;
+        for (i=0; i<=g.maxindexused; i++)
+        {
+            NDRX_LOG(log_warn, "Removing QID=%d", sysvres[i]);
+            if (EXSUCCEED!=msgctl(sysvres[i], IPC_RMID, NULL))
+            {
+                NDRX_LOG(log_error, "Failed to remove qid %d: %s",
+                        sysvres[i], strerror(errno));
+            }
+        }
+
+        ndrx_growlist_free(&g);
+    }
+
+    NDRX_LOG(log_warn, "Remove user specific resources - System V semaphores");
+    memset(&g, 0, sizeof(g));
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXFALSE))
+    {
+        sysvres = (int *)g.mem;
+        for (i=0; i<g.items; i++)
+        {
+            NDRX_LOG(log_warn, "Removing SEM ID=%d", sysvres[i]);
+            if (EXSUCCEED!=semctl(sysvres[i], 0, IPC_RMID))
+            {
+                NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
+                        sysvres[i], strerror(errno));
+            }
+        }
+        ndrx_growlist_free(&g);
+    }
+    
+    return;
+}
+
 
 /**
  * Kill the system running (the xadmin dies last...)
@@ -690,6 +739,11 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
     if (EXSUCCEED!=ndrx_epoll_down())
     {
         NDRX_LOG(log_error, "Failed to terminate poller");
+    }
+    
+    if (user_res)
+    {
+        ndrx_down_userres();
     }
     
     NDRX_LOG(log_warn, "****** Done ******");
