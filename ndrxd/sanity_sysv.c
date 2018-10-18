@@ -127,10 +127,11 @@ out:
  * belongs to request address, then queue is unlinked. This will protect us from
  * unlinking queues to which working zero service servers are located, like
  * tpbridge...
+ * @param nottl do not use TTL for non service linked request address removal
  * 
  * @return SUCCEED/FAIL
  */
-expublic int do_sanity_check_sysv(void)
+expublic int do_sanity_check_sysv(int nottl)
 {
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq = NULL;
@@ -143,9 +144,13 @@ expublic int do_sanity_check_sysv(void)
     int *srvlist = NULL;
     pm_node_t *p_pm;
     
-    NDRX_LOG(log_debug, "Into System V sanity checks");
-    /* Get the list of queues */
-    svq = ndrx_svqshm_statusget(&reslen, G_app_config->rqaddrttl);
+    NDRX_LOG(log_debug, "Into System V sanity checks, nottl: %d", nottl);
+    
+    /* Get the list of queues 
+     * if no ttl, then give a -1 which will make all queues scheduled for
+     * removal
+     */
+    svq = ndrx_svqshm_statusget(&reslen, (nottl?-1:G_app_config->rqaddrttl));
     
     if (NULL==svq)
     {
@@ -284,6 +289,19 @@ out:
         NDRX_FREE(srvlist);
     }
 
+    return ret;
+}
+
+/**
+ * Perform final checks on exit - remove all service queues...
+ * @return 
+ */
+expublic int ndrxd_sysv_finally(void)
+{
+    int ret = EXSUCCEED;
+    
+    ret = do_sanity_check_sysv(EXTRUE);
+    
     return ret;
 }
 
