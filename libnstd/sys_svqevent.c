@@ -1305,7 +1305,7 @@ expublic int ndrx_svq_event_init(void)
     M_mon.fdtab[PIPE_POLL_IDX].events = POLLIN;
     
     /* startup tup the thread */
-    NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write: %d",
+    NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
     if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL)))

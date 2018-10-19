@@ -63,6 +63,7 @@ int main(int argc, char** argv) {
     int cd_got;
     int cd[3];
     int got_send_block;
+    char bigmsg[8000];
     
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
@@ -157,8 +158,15 @@ int main(int argc, char** argv) {
     
     /* Test for full service queue, we shall get TPEBLOCK back */
     
+    if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, bigmsg, sizeof(bigmsg)))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to add bigmsg: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
     got_send_block = EXFALSE;
-    for (i=0; i<10000; i++)
+    while (1)
     {
         if (EXFAIL==tpacall("BLOCKY", (char *)p_ub, 0L, TPNOBLOCK))
         {

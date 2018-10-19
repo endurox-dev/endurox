@@ -75,6 +75,9 @@ xadmin killall atmi.sv18 2>/dev/null
 
 xadmin killall atmiclt18
 
+# remove process leftovers...
+xadmin down -y
+
 popd 2>/dev/null
 
 exit $RET

@@ -1414,7 +1414,7 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
 expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
 {
     list->maxindexused = EXFAIL;
-    list->items = 0;
+    list->itemsalloc = 0;
     list->step = step;
     list->size = size;
     list->mem = NULL;
@@ -1445,14 +1445,14 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
             EXFAIL_OUT(ret);
         }
         
-        list->items+=list->step;
+        list->itemsalloc+=list->step;
     }
     
-    while (index+1 > list->items)
+    while (index+1 > list->itemsalloc)
     {
-        list->items+=list->step;
+        list->itemsalloc+=list->step;
         
-        next_blocks = list->items / list->step;
+        next_blocks = list->itemsalloc / list->step;
         
         new_size = next_blocks * list->step * list->size;
         /*

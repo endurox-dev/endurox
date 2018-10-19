@@ -136,7 +136,7 @@ expublic int ndrx_svqshm_down(void)
         ret = EXFAIL;
     }
     
-    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXFALSE))
+    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXTRUE))
     {
         ret = EXFAIL;
     }
