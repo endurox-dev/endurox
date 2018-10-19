@@ -1165,6 +1165,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
             {
                 path[len-1]=EXEOS;
             }
+            
             NDRX_LOG(log_debug, "Line matched: [%s]", path);
             
             /* extract second column... valid for Linux and Unix */
