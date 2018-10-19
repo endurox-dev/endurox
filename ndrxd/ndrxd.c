@@ -415,6 +415,9 @@ int main_uninit(void)
     /* Remove signal handling thread */
     ndrxd_sigchld_uninit();
     
+    /* final sanity check... */
+    ndrxd_sanity_finally();
+    
     /* TODO: For System V we want to flush the
      * any timed queues. Thus 
      * we might want to call ndrxd_sanity_finish()
