@@ -135,7 +135,7 @@ Mandatory Env. Variables
     'poll()' and 'SystemV' mode.
     The number affects the size of shared memory used for services. Bigger number causes
     more memory to be used for service registry. If the number of servers goes over this number
-    for one service, the service entry will be ignored.
+    for one service, the service entry will be ignored. Default is *30*.
 *PATH='PATH'*::
     This is not Enduro/X specific env variable. But Enduro/X distribution bin 
     directory should be included in system PATH env. variable.

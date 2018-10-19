@@ -1159,6 +1159,12 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         if (EXSUCCEED==ndrx_regexec(&linematch, path))
         {
             int id;
+            int len = strlen(path);
+            
+            if (len > 0 && '\n' == path[len-1])
+            {
+                path[len-1]=EXEOS;
+            }
             NDRX_LOG(log_debug, "Line matched: [%s]", path);
             
             /* extract second column... valid for Linux and Unix */

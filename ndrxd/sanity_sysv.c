@@ -131,7 +131,7 @@ out:
  * 
  * @return SUCCEED/FAIL
  */
-expublic int do_sanity_check_sysv(int nottl)
+expublic int do_sanity_check_sysv(int finalchk)
 {
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq = NULL;
@@ -144,13 +144,13 @@ expublic int do_sanity_check_sysv(int nottl)
     int *srvlist = NULL;
     pm_node_t *p_pm;
     
-    NDRX_LOG(log_debug, "Into System V sanity checks, nottl: %d", nottl);
+    NDRX_LOG(log_debug, "Into System V sanity checks, finalchk: %d", finalchk);
     
     /* Get the list of queues 
      * if no ttl, then give a -1 which will make all queues scheduled for
      * removal
      */
-    svq = ndrx_svqshm_statusget(&reslen, (nottl?-1:G_app_config->rqaddrttl));
+    svq = ndrx_svqshm_statusget(&reslen, (finalchk?-1:G_app_config->rqaddrttl));
     
     if (NULL==svq)
     {
@@ -168,7 +168,8 @@ expublic int do_sanity_check_sysv(int nottl)
     
     /* We assume shm is OK! */
     
-    NDRX_LOG(log_debug, "Marking resources against services");
+    NDRX_LOG(log_debug, "Marking resources against services, reslen: %d", 
+            reslen);
     EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
@@ -213,6 +214,8 @@ expublic int do_sanity_check_sysv(int nottl)
     {
         int cont = EXFALSE;
         
+        NDRX_LOG(log_debug, "YOPT! %d = flags %d [%s]/%d", i, svq[i].flags, 
+                svq[i].qstr, svq[i].qid);
         if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
                 && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
                 && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
