@@ -85,8 +85,8 @@ typedef struct ndrx_growlist ndrx_growlist_t;
 /** Linear array growing support structure */
 struct ndrx_growlist
 {
-    /** number of items used */
-    int items;
+    /** number of items allocated */
+    int itemsalloc;
     /** allocate increment step */
     int step;
     
