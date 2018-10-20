@@ -52,7 +52,7 @@
 			<srvid>1000</srvid>
                 	<min>${TEST_PROCS}</min>
                 	<max>${TEST_PROCS}</max>
-			<sysopt>-e ${TESTDIR}/atmisv1.log -r</sysopt>
+			<sysopt>-e ${TESTDIR}/atmisv1_${NDRX_SVSRVID}.log -r</sysopt>
 		</server>
 	</servers>
 </endurox>

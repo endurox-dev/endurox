@@ -408,13 +408,54 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
         int *have_value)
 {
     int ret=SHM_ENT_NONE;
-    int try = ndrx_hash_fn(pathname) % M_queuesmax;
+    int try = EXFAIL;
     int start = try;
     int overflow = EXFALSE;
     int iterations = 0;
-    
     ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
-
+    
+    /*
+     * 20/10/2018 Got to loop twice!!!! 
+     * Some definitions:
+     * A - our Q
+     * B - other Q
+     * 
+     * The problem:
+     * 1) B gets installed in our cell / direct hash number
+     * 2) A gets installed in cell+1 index
+     * 3) B gets uninstalled / cell becomes as stale
+     * 4) A tries installed Q again, and it hits the cell and not the cell+1
+     * 
+     * ----
+     * Thus to solve this, we got to firstly perform "read only" lookup on the
+     * queue tables to see, is queue already present there or not. And if not,
+     * only then perform write to maps..
+     * 
+     * !!!! Needs to check with the _ndrx_shm_get_svc() wouldn't be there the
+     * same problem !!!!
+     * 
+     */
+    if (oflag & O_CREAT)
+    {
+        int try_read;
+        int read_have_value;
+        
+        if (position_get_qstr(pathname, 0, &try_read, &read_have_value)
+                && read_have_value)
+        {
+            try = try_read;
+        }
+    }
+    
+    if (EXFAIL==try)
+    {
+        try = ndrx_hash_fn(pathname) % M_queuesmax;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Got existing record at %d", try);
+    }
+    
     *pos=EXFAIL;
     
     NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p oflag: %d", 
@@ -428,16 +469,21 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     while ((NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
             && (!overflow || (overflow && try < start)))
     {
+        NDRX_LOG(log_error, "YOPT!!! mem [%s] match [%s]",
+                NDRX_SVQ_INDEX(svq, try)->qstr, pathname);
+        
         if (0==strcmp(NDRX_SVQ_INDEX(svq, try)->qstr, pathname))
         {
-            *pos=try;    
+            *pos=try;
             
             if (NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED)
             {
+                NDRX_LOG(log_error, "YOPT!!! SHM_ENT_MATCH");
                 ret=SHM_ENT_MATCH;
             }
             else
             {
+                NDRX_LOG(log_error, "YOPT!!! SHM_ENT_OLD");
                 ret=SHM_ENT_OLD;
             }
             
@@ -449,6 +495,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
             if (!(NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED))
             {
                 /* found used position */
+                NDRX_LOG(log_error, "YOPT!!! SHM_ENT_OLD");
                 ret=SHM_ENT_OLD;
                 break; /* <<< break! */
             }
@@ -522,12 +569,53 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
         int *have_value)
 {
     int ret=SHM_ENT_NONE;
-    int try = qid % M_queuesmax;
+    int try = EXFAIL;
     int start = try;
     int overflow = EXFALSE;
     int iterations = 0;
-    
     ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_s2p.mem;
+    
+    /*
+     * 20/10/2018 Got to loop twice!!!! 
+     * Some definitions:
+     * A - our Q
+     * B - other Q
+     * 
+     * The problem:
+     * 1) B gets installed in our cell / direct hash number
+     * 2) A gets installed in cell+1 index
+     * 3) B gets uninstalled / cell becomes as stale
+     * 4) A tries installed Q again, and it hits the cell and not the cell+1
+     * 
+     * ----
+     * Thus to solve this, we got to firstly perform "read only" lookup on the
+     * queue tables to see, is queue already present there or not. And if not,
+     * only then perform write to maps..
+     * 
+     * !!!! Needs to check with the _ndrx_shm_get_svc() wouldn't be there the
+     * same problem !!!!
+     * 
+     */
+    if (oflag & O_CREAT)
+    {
+        int try_read;
+        int read_have_value;
+        
+        if (position_get_qid(qid, 0, &try_read, &read_have_value)
+                && read_have_value)
+        {
+            try = try_read;
+        }
+    }
+    
+    if (EXFAIL==try)
+    {
+        try = qid % M_queuesmax;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Got existing record at %d", try);
+    }
 
     *pos=EXFAIL;
     *have_value = EXFALSE;

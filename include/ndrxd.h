@@ -67,14 +67,15 @@ extern "C" {
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * Type defintion for *SERVER section entry
+ * Type definition for *SERVER section entry
  */
 typedef struct conf_server_node conf_server_node_t;
 struct conf_server_node
 {
     char binary_name[MAXTIDENT+1]; /**< Name of the binary */
-    /** Real binary name */
+    /** Real binary name 
     char binary_name_real[MAXTIDENT+1];
+     * */
     char fullpath[PATH_MAX+1]; /**< full path to executable, optional */
     /** Command line format (optional) */
     char cmdline[PATH_MAX+1];
