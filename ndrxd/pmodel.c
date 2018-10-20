@@ -41,6 +41,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <signal.h>
+#include <libgen.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -74,6 +75,14 @@
                 (long)sizeof(char *)*alloc_args, strerror(err));\
             userlog("%s: failed to realloc %ld bytes: %s\n", __func__, \
                 (long)sizeof(char *)*alloc_args, strerror(err));\
+            exit(1);\
+        }
+
+#define NDRX_PM_SET_ENV(ENV__, VAL__) if (EXSUCCEED!=setenv(ENV__, VAL__, EXTRUE))\
+        {\
+           int err = errno;\
+            userlog("%s: failed to set %s=[%s]: %s", __func__, \
+                ENV__, VAL__, strerror(err));\
             exit(1);\
         }
 
@@ -424,10 +433,9 @@ expublic int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
     /* check error */
     if (NULL==pm_pid)
     {
-        ret=EXFAIL;
         NDRXD_set_error_fmt(NDRXD_EOS, "failed to allocate pm_pidhash_t (%d bytes): %s",
                             sizeof(pm_pidhash_t), strerror(errno));
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     pm_pid->p_pm = p_pm;
@@ -518,8 +526,9 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
     int ret=EXSUCCEED;
     conf_server_node_t *p_conf;
     pm_node_t   *p_pm;
-
+    char tmp[PATH_MAX+1];
     int cnt;
+    char *p;
     NDRX_LOG(log_debug, "build_process_model enter");
 
     DL_FOREACH(p_server_conf, p_conf)
@@ -541,8 +550,9 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
 
             /* format the process model entry */
             NDRX_STRCPY_SAFE(p_pm->binary_name, p_conf->binary_name);
+            /*
             NDRX_STRCPY_SAFE(p_pm->binary_name_real, p_conf->binary_name_real);
-            
+            */
             /* get the path of the binary... */
             if (p_conf->reloadonchange)
             {
@@ -579,6 +589,68 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             
             snprintf(p_pm->clopt, sizeof(p_pm->clopt), "-k %s -i %d %s", 
                     ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
+            
+            /* substitute env... - Feature #331 */
+            
+            snprintf(tmp, sizeof(tmp), "%d", (int)p_pm->srvid);
+            NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, tmp);
+            
+            ndrx_str_env_subs_len(p_pm->clopt, sizeof(p_pm->clopt));
+            
+            /* build process real name  */
+            if (EXEOS!=p_pm->conf->cmdline[0])
+            {
+                NDRX_STRCPY_SAFE(tmp, p_pm->conf->cmdline);
+
+                /* substitute env */
+
+                if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_pm->conf->binary_name, EXTRUE))
+                {
+                    NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
+                        CONF_NDRX_SVPROCNAME, p_pm->conf->binary_name, strerror(errno));
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT, p_pm->conf->clopt, EXTRUE))
+                {
+                    NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
+                        CONF_NDRX_SVCLOPT, p_pm->conf->clopt, strerror(errno));
+
+                    EXFAIL_OUT(ret);
+                }
+
+                /* format the cmdline */
+                ndrx_str_env_subs_len(tmp, sizeof(tmp));
+
+                /* extract binary name for the path... */
+                p = strtok(tmp, " \t");
+
+                if (NULL==p)
+                {
+                    NDRX_LOG(log_error, "Missing process name in server's <cmdline> tag for [%s]",
+                            p_pm->conf->binary_name);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* get the base name */
+                p = basename(tmp);
+                NDRX_STRCPY_SAFE(p_pm->binary_name_real, p);
+
+                NDRX_LOG(log_debug, "Extracted real binary name [%s] from [%s]", 
+                        p_pm->binary_name_real, p);
+
+                /* unset variables */
+                unsetenv(CONF_NDRX_SVPROCNAME);
+                unsetenv(CONF_NDRX_SVCLOPT);
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE(p_pm->binary_name_real, p_pm->binary_name);
+            }
+
+            unsetenv(CONF_NDRX_SVSRVID);
+            
+            /* substitute env... - Feature #331, END */
 
             /* now check the hash table for server instance entry */
             if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
@@ -868,13 +940,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
          * CONF_NDRX_SVPROCNAME -> binary_name
          * CONF_NDRX_SVCLOPT-> dynamic clopt built
          */
-#define NDRX_PM_SET_ENV(ENV__, VAL__) if (EXSUCCEED!=setenv(ENV__, VAL__, EXTRUE))\
-        {\
-           int err = errno;\
-            userlog("%s: failed to set %s=[%s]: %s", __func__, \
-                ENV__, VAL__, strerror(err));\
-            exit(1);\
-        }
         
         NDRX_PM_SET_ENV(CONF_NDRX_SVPROCNAME, p_pm->binary_name);
         NDRX_PM_SET_ENV(CONF_NDRX_SVCLOPT, p_pm->clopt);        

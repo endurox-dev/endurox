@@ -609,17 +609,44 @@ not_locked:
 expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_install_cmd)
 {
     int ret=EXFALSE;
-    int try = ndrx_hash_fn(svc) % G_max_svcs;
+    int try = EXFAIL;
     int start = try;
     int overflow = EXFALSE;
     int iterations = 0;
     
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
+    
+    /* Bug #349 20/10/2018
+     * If doing write, we have to ensure that some stale service
+     * does not block the our existing service at next position
+     * thus firstly for writes we need to perform recursive read only lookup
+     * and maybe we could re-use that existing index!
+     */
+    if (_NDRX_SVCINSTALL_DO==doing_install)
+    {
+        int try_read = EXFAIL;
+        
+        if (_ndrx_shm_get_svc(svc, &try_read, EXFALSE, NULL))
+        {
+            try = try_read;
+        }
+    }
+    
+    if (EXFAIL==try)
+    {
+        try = ndrx_hash_fn(svc) % G_max_svcs;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Read only existing service [%s] found at [%d]", 
+                svc, try);
+    }
 
     *pos=EXFAIL;
     
     NDRX_LOG(log_debug, "Key for [%s] is %d, shm is: %p", 
                                         svc, try, svcinfo);
+    
     /*
      * So we loop over filled entries until we found empty one or
      * one which have been initialised by this service.
@@ -635,7 +662,7 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
             *pos=try;
             break;  /* <<< Break! */
         }
-	
+        
         /* Feature #139 mvitolin, 09/05/2017 
          * Allow to reuse services... As we know we do not remove them from SHM
          * so that if we have some service with the same hash number, but different

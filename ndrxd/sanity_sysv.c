@@ -214,8 +214,16 @@ expublic int do_sanity_check_sysv(int finalchk)
     {
         int cont = EXFALSE;
         
-        NDRX_LOG(log_debug, "YOPT! %d = flags %d [%s]/%d", i, svq[i].flags, 
+        NDRX_LOG(log_debug, "YOPT! %d = ISUSED= %d WASUSED=%d  EXPIRED=%d SCHEDRM=%d RQADDR=%d HAVESVC=%d [%s]/%d", 
+                i, 
+                svq[i].flags & NDRX_SVQ_MAP_ISUSED, 
+                svq[i].flags & NDRX_SVQ_MAP_WASUSED, 
+                svq[i].flags & NDRX_SVQ_MAP_EXPIRED, 
+                svq[i].flags & NDRX_SVQ_MAP_SCHEDRM, 
+                svq[i].flags & NDRX_SVQ_MAP_RQADDR, 
+                svq[i].flags & NDRX_SVQ_MAP_HAVESVC, 
                 svq[i].qstr, svq[i].qid);
+        
         if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
                 && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
                 && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
