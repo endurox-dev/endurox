@@ -371,24 +371,18 @@ expublic int br_got_message_from_q(char *buf, int len, char msg_type)
         EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker YOPT1", fn);
-    
     thread_data->buf = ndrx_memdup(buf, len);
     thread_data->threaded=EXTRUE;
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker YOPT2", fn);
-    
     if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
             (void*)br_got_message_from_q_th, 
             (void *)thread_data))
     {
-        NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker YOPT3", fn);
         EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker YOPT4", fn);
 out:
             
     if (EXSUCCEED!=ret)
@@ -402,7 +396,6 @@ out:
             NDRX_FREE(thread_data);
         }
     }
-NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker YOPT5", fn);
     return ret;
 }
 
