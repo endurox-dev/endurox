@@ -131,6 +131,8 @@ xadmin start -y
 #####
 
 # ALARM: THIS SHOULD NOT HANG!
+ps -ef | grep atmisv_012 | grep -v grep
+xadmin ppm
 xadmin psc
 CNT=`xadmin psc | wc | awk '{print $1}'`
 echo "Process count: $CNT"
@@ -151,11 +153,14 @@ date
 xadmin psc
 
 # Wait for respawn, now it should be respawned...
-sleep 300
+sleep 100
 
 echo "After sleeping of kill -9"
 date
 xadmin psc
+xadmin ppm
+xadmin svmaps
+xadmin svmaps -s
 
 # This should raise the fail!
 # sleep 30

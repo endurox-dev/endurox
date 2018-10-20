@@ -270,7 +270,7 @@ expublic void ndrx_down_userres(void)
     if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXFALSE))
     {
         sysvres = (int *)g.mem;
-        for (i=0; i<g.maxindexused; i++)
+        for (i=0; i<=g.maxindexused; i++)
         {
             NDRX_LOG(log_warn, "Removing SEM ID=%d", sysvres[i]);
             if (EXSUCCEED!=semctl(sysvres[i], 0, IPC_RMID))
