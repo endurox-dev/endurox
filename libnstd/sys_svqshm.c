@@ -469,21 +469,16 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     while ((NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
             && (!overflow || (overflow && try < start)))
     {
-        NDRX_LOG(log_error, "YOPT!!! mem [%s] match [%s]",
-                NDRX_SVQ_INDEX(svq, try)->qstr, pathname);
-        
         if (0==strcmp(NDRX_SVQ_INDEX(svq, try)->qstr, pathname))
         {
             *pos=try;
             
             if (NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED)
             {
-                NDRX_LOG(log_error, "YOPT!!! SHM_ENT_MATCH");
                 ret=SHM_ENT_MATCH;
             }
             else
             {
-                NDRX_LOG(log_error, "YOPT!!! SHM_ENT_OLD");
                 ret=SHM_ENT_OLD;
             }
             
@@ -495,7 +490,6 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
             if (!(NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED))
             {
                 /* found used position */
-                NDRX_LOG(log_error, "YOPT!!! SHM_ENT_OLD");
                 ret=SHM_ENT_OLD;
                 break; /* <<< break! */
             }
