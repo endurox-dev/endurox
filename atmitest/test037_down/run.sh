@@ -320,9 +320,18 @@ if [ "$(uname)" == "Linux" ]; then
 
     echo "DOM1 Shared memories: $SHMS"
 
-    if [[ "$SHMS" -ne "0" ]]; then 
-        echo "TESTERROR! There must be no shared memory for dom1 after kill!"
-        go_out 18
+    if [[ `xadmin poller` == "SystemV" ]]; then
+
+        if [[ "$SHMS" -ne "2" ]]; then 
+            echo "TESTERROR! There must be 2 shared memory objs for dom1 after kill!"
+            go_out 18
+        fi
+    else
+
+        if [[ "$SHMS" -ne "0" ]]; then 
+            echo "TESTERROR! There must be no shared memory for dom1 after kill!"
+            go_out 18
+        fi
     fi
 fi
 
