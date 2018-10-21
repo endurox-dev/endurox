@@ -41,4 +41,9 @@ export PATH=$PATH:../../xadmin
 
 # Clean up q Space (remove all queues matching the symbol)
 xadmin qrmall ,
+
+if [[ `xadmin poller` == "SystemV" ]]; then
+    xadmin udown -y
+fi
+
 # vim: set ts=4 sw=4 et smartindent:
