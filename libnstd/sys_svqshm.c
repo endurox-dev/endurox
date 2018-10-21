@@ -1118,13 +1118,17 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
     int err = 0;
     int is_locked = EXFALSE;
     
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
-    ndrx_svq_map_t *svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
+    ndrx_svq_map_t *svq;
+    ndrx_svq_map_t *svq2;
+  
     
     ndrx_svq_map_t *pm;      /* Posix map           */
     ndrx_svq_map_t *sm;      /* System V map        */
     
     INIT_ENTRY(ret);
+  
+    svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
     
     /* ###################### CRITICAL SECTION ############################### */
     if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE))
