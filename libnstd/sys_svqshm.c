@@ -131,15 +131,11 @@ expublic int ndrx_svqshm_down(void)
      */
     INIT_ENTRY(ret);
     
-    if (EXSUCCEED!=ndrx_sem_close(&M_map_sem))
-    {
-        ret = EXFAIL;
-    }
+    /* Terminate polling threads... if any... */
+    ndrx_atfork_prepare();
     
-    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXTRUE))
-    {
-        ret = EXFAIL;
-    }
+    
+    /* TODO: Remove all still active queue blocks! */
     
     if (EXSUCCEED!=ndrx_shm_close(&M_map_p2s))
     {
@@ -157,6 +153,16 @@ expublic int ndrx_svqshm_down(void)
     }
     
     if (EXSUCCEED!=ndrx_shm_remove(&M_map_s2p))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_close(&M_map_sem))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXTRUE))
     {
         ret = EXFAIL;
     }

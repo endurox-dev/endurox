@@ -226,6 +226,7 @@ fi
 ################################################################################
 
 echo "About to down dom1"
+xadmin pqa
 xadmin down -y
 
 echo "After dom1 down"
