@@ -92,11 +92,21 @@ exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
  */
 cmd_mapping_t M_command_map[] = 
 {
-    {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, "Quit from command line utility", NULL},
-    {"q",       cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
-    {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
-    {"echo",    cmd_echo,  EXFAIL,              1,  999,0, "Echo text back to terminal", NULL},
-    {"idle",    cmd_idle,  EXFAIL,              1,  1,  2, "Enter daemon process in idle state (if not started)", NULL},
+    {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, 
+                                    "Quit from command line utility", 
+                                    NULL},
+    {"q",       cmd_quit,  EXFAIL,              1,  1,  0, 
+                                    "Alias for `quit'", 
+                                    NULL},
+    {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, 
+                                    "Alias for `quit'", 
+                                    NULL},
+    {"echo",    cmd_echo,  EXFAIL,              1,  999,0, 
+                                    "Echo text back to terminal", 
+                                    NULL},
+    {"idle",    cmd_idle,  EXFAIL,              1,  1,  2, 
+                                    "Enter daemon process in idle state (if not started)", 
+                                    NULL},
     {"help",    cmd_help,  EXFAIL,              1,  2,  0, "Print help (this output)\n"
                                                 "\t args: help [command]", NULL},
     {"h",       cmd_help,  EXFAIL,              1,  2,  0, "Alias for `help'", NULL},
@@ -126,8 +136,8 @@ cmd_mapping_t M_command_map[] =
                                     "\tOptional arguments: \n"
                                     "\t\t -y\tDo not ask for confirmation\n",
                                     NULL},
-    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,    1,  1,  1, "Attached to ndrxd user session in progress", NULL},
-    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ, 1,  1,  1, "Load new configuration", NULL},
+    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,     1,  1,  1, "Attached to ndrxd user session in progress", NULL},
+    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, "Load new configuration", NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, "Test new configuration", NULL},
     {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 5,  5,  1,"Un-advertise service.\n"
                                                          "\t args: unadv -i server_id -s service_name", NULL},
@@ -150,9 +160,9 @@ cmd_mapping_t M_command_map[] =
                                     "Restarts server instance by instance\n"
                                     "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, "Alias for `sreload'", NULL},
-    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, 
+    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,              1,  1,  1, 
                                     "Print service queues", NULL},
-    {"pqa",cmd_pqa,  EXFAIL,            1,  2,  2, 
+    {"pqa",cmd_pqa,  EXFAIL,                     1,  2,  2, 
                                     "Print all queues\n"
                                     "\t args: pqa [-a]\n"
                                     "\t -a - print all queues "
@@ -160,13 +170,21 @@ cmd_mapping_t M_command_map[] =
     /* New XA commands: printtrans (pt), abort, commit, exsting abort move to: sabort (start/stop) 
      * abort + install ctrl+c handler 
      */
-    {"pt",        cmd_pt,EXFAIL,   1,  1,  1, "Print transactions", NULL},
-    {"printtrans",cmd_pt,EXFAIL,   1,  1,  1, "Alias for `pt'", NULL},
-    {"abort",     cmd_abort,EXFAIL,   3,  5,  1, "Abort transaction\n"
-                                            "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]", NULL},
-    {"aborttrans",cmd_abort,EXFAIL,   3,  5,  1, "Alias for `abort'", NULL},
-    {"commit",     cmd_commit,EXFAIL,   3,  4,  1, "Commit transaction\n"
-                                            "\t args: commit -t <RM Ref> -x <XID> [-y]", NULL},
+    {"pt",        cmd_pt,EXFAIL,                 1,  1,  1, 
+                                    "Print transactions", NULL},
+    {"printtrans",cmd_pt,EXFAIL,                 1,  1,  1, 
+                                    "Alias for `pt'", NULL},
+    {"abort",     cmd_abort,EXFAIL,              3,  5,  1, 
+                                    "Abort transaction\n"
+                                    "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]", 
+                                    NULL},
+    {"aborttrans",cmd_abort,EXFAIL,              3,  5,  1, 
+                                    "Alias for `abort'", 
+                                    NULL},
+    {"commit",     cmd_commit,EXFAIL,            3,  4,  1, 
+                                    "Commit transaction\n"
+                                    "\t args: commit -t <RM Ref> -x <XID> [-y]", 
+                                    NULL},
     {"committrans",cmd_commit,EXFAIL,   3,  4,  1, "Alias for `commit'", NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,   1,  1,  1, "Print env (from ndrxd)", NULL},
     {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,   2,  2,  1, "Alias for `pe'", NULL},
