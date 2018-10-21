@@ -82,7 +82,7 @@ expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     short print_all = EXFALSE;
     struct mq_attr att;
     string_list_t* qlist = NULL;
-    string_list_t* elt = NULL;
+    string_list_t* elt = NULL;  
     ncloptmap_t clopt[] =
     {
         {'a', BFLD_SHORT, (void *)&print_all, 0, 
@@ -96,7 +96,7 @@ expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         EXFAIL_OUT(ret);
     }
-    
+
     /* Print header at first step! */
     print_hdr();
     
