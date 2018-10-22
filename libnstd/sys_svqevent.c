@@ -245,6 +245,7 @@ exprivate int ndrx_svq_fd_hash_delpoll(int fd)
 
                 EXFAIL_OUT(ret);
             }
+            break;
         }
     }
     
@@ -1136,6 +1137,12 @@ exprivate void event_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
     
+    if (0==M_mon.evpipe[READ] && 0==M_mon.evpipe[WRITE])
+    {
+        NDRX_LOG(log_debug, "evpipe not open -> nothing to close");
+        goto out;
+    }
+    
     ndrx_svq_event_exit(EXFALSE);
     
     /* Close pipes */
@@ -1144,13 +1151,23 @@ exprivate void event_fork_prepare(void)
         NDRX_LOG(log_error, "Failed to close READ PIPE %d: %s",
                 M_mon.evpipe[READ], strerror(errno));
     }
+    else
+    {
+        M_mon.evpipe[READ] = 0;
+    }
     
     if (EXSUCCEED!=close(M_mon.evpipe[WRITE]))
     {
         NDRX_LOG(log_error, "Failed to close WRITE PIPE %d: %s",
-                M_mon.evpipe[READ], strerror(errno));
+                M_mon.evpipe[WRITE], strerror(errno));
+    }
+    else
+    {
+        M_mon.evpipe[WRITE] = 0;
     }
     
+out:
+    return;
 }
 
 /**

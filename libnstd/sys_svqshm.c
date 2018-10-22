@@ -105,9 +105,9 @@ expublic volatile int ndrx_G_svqshm_init = EXFALSE;
 /* have some lock for this argument */
 MUTEX_LOCKDECL(ndrx_G_svqshm_init_lock);
 
-exprivate ndrx_shm_t M_map_p2s;          /**< Posix to System V mapping       */
-exprivate ndrx_shm_t M_map_s2p;          /**< System V to Posix mapping       */
-exprivate ndrx_sem_t M_map_sem;          /**< RW semaphore for SHM protection */
+exprivate ndrx_shm_t M_map_p2s = {.fd=0, .path=""};   /**< Posix to System V mapping       */
+exprivate ndrx_shm_t M_map_s2p = {.fd=0, .path=""};   /**< System V to Posix mapping       */
+exprivate ndrx_sem_t M_map_sem = {.semid=0};/**< RW semaphore for SHM protection */
 
 /* Also we need some array of semaphores for RW locking */
 
@@ -193,6 +193,8 @@ expublic int ndrx_svqshm_down(int force)
     {
         ret = EXFAIL;
     }
+    
+    ndrx_G_svqshm_init = EXFALSE;
     
 out:
     return ret;
