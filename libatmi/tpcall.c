@@ -1009,7 +1009,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                         * because we do want answer back! */
     
     /* event posting might be done with out reply... */
-    if (!(flags&TPNOREPLY))
+    if (!(flags & TPNOREPLY))
     {
         if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
                 p_tranid)))
