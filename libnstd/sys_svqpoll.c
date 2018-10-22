@@ -106,11 +106,11 @@ exprivate int M_accept_any = EXFALSE;
  * Remove all resources used by polling sub-system or queuing
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_epoll_down(void)
+expublic int ndrx_epoll_down(int force)
 {
     int ret = EXSUCCEED;
     
-    ret=ndrx_svqshm_down();
+    ret=ndrx_svqshm_down(force);
     
 out:
     return ret;

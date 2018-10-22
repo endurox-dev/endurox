@@ -123,9 +123,11 @@ exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
  * Remove shared mem resources
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svqshm_down(void)
+expublic int ndrx_svqshm_down(int force)
 {
     int ret = EXSUCCEED;
+    int i;
+    ndrx_svq_map_t *svq, *el;
     /* have some init first, so that we attach existing resources
      * before killing them
      */
@@ -134,9 +136,34 @@ expublic int ndrx_svqshm_down(void)
     /* Terminate polling threads... if any... */
     ndrx_atfork_prepare();
     
-    
-    /* TODO: Remove all still active queue blocks! */
-    
+    if (force)
+    {
+        /* get write locks... */
+        svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+
+        /* remove any queues left open...! */
+        for (i=0; i<M_queuesmax; i++)
+        {
+            el = NDRX_SVQ_INDEX(svq, i);
+
+            if (el->flags & NDRX_SVQ_MAP_ISUSED)
+            {
+                NDRX_LOG(log_error, "DOWN: Removing QID %d (%s) - should not be present!", 
+                        el->qid, el->qstr);
+                userlog("DOWN: Removing QID %d (%s) - should not be present!", 
+                        el->qid, el->qstr);
+                if (EXSUCCEED!=msgctl(el->qid, IPC_RMID, NULL))
+                {
+                    int err = errno;
+                    NDRX_LOG(log_error, "got error when removing %d: %s - ignore", 
+                         el->qid, strerror(err));
+                    userlog("got error when removing %d: %s - ignore", 
+                         el->qid, strerror(err));
+                }
+            }
+        } /* for */
+    } /* force */
+     
     if (EXSUCCEED!=ndrx_shm_close(&M_map_p2s))
     {
         ret = EXFAIL;

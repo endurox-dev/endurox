@@ -736,7 +736,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
     
     NDRX_LOG(log_warn, "Terminating polling sub-system");
     
-    if (EXSUCCEED!=ndrx_epoll_down())
+    if (EXSUCCEED!=ndrx_epoll_down(EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to terminate poller");
     }

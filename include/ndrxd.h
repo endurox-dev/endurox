@@ -344,7 +344,7 @@ extern void sign_chld_handler(int sig);
 extern int cmd_close_queue(void);
 
 /* Sanity & restart */
-extern int do_sanity_check(void);
+extern int do_sanity_check(int isfinal);
 extern int self_notify(srv_status_t *status, int block);
 extern int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq);
 
