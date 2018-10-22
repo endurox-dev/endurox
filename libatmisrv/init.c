@@ -410,7 +410,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 
             /* just close it, no error check */
             if(((mqd_t)EXFAIL)!=G_server_conf.service_array[i]->q_descr &&
-                        ndrx_epoll_shallopensvc(i) &&
+                        ndrx_epoll_shallopenq(i) &&
 			EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
             {
 

@@ -183,7 +183,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         }
         
         /* Now close the FD, only if was open */
-        if (ndrx_epoll_shallopensvc(pos) &&
+        if (ndrx_epoll_shallopenq(pos) &&
                 EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
@@ -374,7 +374,7 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Open the queue */
     
     /* open service Q, also give some svc name here!  */
-    if (ndrx_epoll_shallopensvc(ATMI_SRV_Q_ADJUST+G_server_conf.adv_service_count))
+    if (ndrx_epoll_shallopenq(ATMI_SRV_Q_ADJUST+G_server_conf.adv_service_count))
     {
         entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
                                 O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
