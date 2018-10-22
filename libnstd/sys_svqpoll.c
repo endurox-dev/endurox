@@ -568,7 +568,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         tm.tv_sec += (timeout / 1000);  /* Set timeout, passed in msec, uses as sec */
     }
     
-    if (EXFAIL==ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
+    if (EXFAIL==ndrx_svq_event_sndrcv( M_mainq, buf, &rcvlen, 
             &tm, &ev, EXFALSE, EXTRUE))
     {
         err = errno;

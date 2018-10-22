@@ -1499,7 +1499,7 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
  *  not processed the FD, we will gate again FD wakups for the same events.
  * @return EXSUCCEED (got message from q)/EXFAIL (some event received)
  */
-expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
+expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd)
 {
     int ret = EXSUCCEED;
@@ -1511,6 +1511,7 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     /* set the flag value */
     if (mqd->attr.mq_flags & O_NONBLOCK)
     {
+        NDRX_LOG(log_debug, "O_NONBLOCK set");
         msgflg = IPC_NOWAIT;
     }
     else

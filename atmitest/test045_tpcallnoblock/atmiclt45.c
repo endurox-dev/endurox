@@ -64,15 +64,17 @@ int main(int argc, char** argv)
     long rsplen;
     int i;
     int ret=EXSUCCEED;
+    char carr[8000];
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    if (EXFAIL==Bchg(p_ub, T_CARRAY_FLD, 0, carr, sizeof(carr)))
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        NDRX_LOG(log_debug, "Failed to set T_CARRAY_FLD[0]: %s", Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }    
     
     /* firstly we will do tpacall to fill the queue */
+    NDRX_LOG(log_debug, "Step 1 - tpacall()");
     while (EXFAIL!=tpacall("TESTSV", (char *)p_ub, 0L, TPNOBLOCK))
     {
         
@@ -86,6 +88,7 @@ int main(int argc, char** argv)
         goto out;
     }
     
+    NDRX_LOG(log_debug, "Step 2 - tpcall()");
     /* then then these must give TPEBLOCK */
     for (i=0; i<1000; i++)
     {

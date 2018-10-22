@@ -228,7 +228,7 @@ extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxle
 
 extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
-extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
+extern NDRX_API int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd);
 extern NDRX_API void ndrx_svq_event_exit(int detatch);
 

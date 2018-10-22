@@ -201,6 +201,13 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     if (NULL!=attr)
     {
         memcpy(&(mq->attr), attr, sizeof (*attr));
+        
+        /* initial attribs does not include flags */
+        if (oflag & O_NONBLOCK)
+        {
+            mq->attr.mq_flags|=O_NONBLOCK;
+            NDRX_LOG(log_debug, "Opening in non blocked mode");
+        }
     }
 
     /* Init mutexes... */
@@ -244,7 +251,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     /* set thread handler - for interrupts */
     mqd->thread = pthread_self();
     
-    if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
+    if (EXSUCCEED!=ndrx_svq_event_sndrcv( mqd, ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXFALSE, EXFALSE))
     {
         err = errno;
@@ -313,7 +320,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     /* set thread handler - for interrupts */
     mqd->thread = pthread_self();
     
-    if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
+    if (EXSUCCEED!=ndrx_svq_event_sndrcv( mqd, (char *)ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXTRUE, EXFALSE))
     {
         err = errno;
