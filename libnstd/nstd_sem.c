@@ -303,7 +303,7 @@ expublic int ndrx_sem_remove(ndrx_sem_t *sem, int force)
 {
     int ret = EXSUCCEED;
     /* Close that one... */
-    if (sem->attached || force)
+    if ((sem->attached || force) && sem->semid)
     {
         NDRX_LOG(log_error, "Removing semid: %d", sem->semid);
         if (EXSUCCEED!= semctl(sem->semid, 0, IPC_RMID))
@@ -311,6 +311,10 @@ expublic int ndrx_sem_remove(ndrx_sem_t *sem, int force)
             NDRX_LOG(log_warn, "semctl DEL failed err: %s", 
                     strerror(errno));
             ret=EXFAIL;
+        }
+        else
+        {
+            sem->semid=0;
         }
     }
     sem->attached=EXFALSE;

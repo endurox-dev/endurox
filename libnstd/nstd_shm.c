@@ -77,7 +77,6 @@ expublic unsigned int ndrx_hash_fn( void *k )
     return hash;
 }
 
-
 /**
  * Returns true if currently attached to shm
  * WARNING: This assumes that fd 0 could never be used by shm!
@@ -225,13 +224,21 @@ expublic int ndrx_shm_close(ndrx_shm_t *shm)
 {
     int ret=EXSUCCEED;
 
-    if (shm->fd > 2)
+    if (0==shm->fd)
+    {
+        NDRX_LOG(log_debug, "[%s] already closed", shm->path);
+    }
+    else if (shm->fd > 2)
     {
         ret = close(shm->fd);
         if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_error, "Failed to close shm [%s]: %d - %s",
                         shm->path, errno, strerror(errno));
+        }
+        else
+        {
+            shm->fd = 0;
         }
     }
     else

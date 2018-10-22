@@ -665,9 +665,10 @@ out:
 
 /**
  * Un-initialize the process
+ * @param [in] leave_shm Leave shared memory open
  * @return 
  */
-expublic int un_init(void)
+expublic int un_init(int closeshm)
 {
     NDRX_LOG(log_debug, "into un-init");
     if (G_config.ndrxd_q != (mqd_t)EXFAIL)
@@ -694,8 +695,11 @@ expublic int un_init(void)
     /* In any case if session was open... */
     tpterm();
     
-    /* close any additional shared resources */
-    ndrx_xadmin_shm_close();
+    if (closeshm)
+    {
+        /* close any additional shared resources */
+        ndrx_xadmin_shm_close();
+    }
     
     return EXSUCCEED;
 }
@@ -926,7 +930,7 @@ out:
 
     if (need_init)
     {
-        un_init();
+        un_init(EXTRUE);
     }
 /*
     fprintf(stderr, "xadmin normal shutdown (%d)\n", ret);
