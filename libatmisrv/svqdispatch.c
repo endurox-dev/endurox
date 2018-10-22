@@ -135,7 +135,12 @@ expublic int sv_open_queue(void)
         }
         
         /* Open the queue */
-#ifdef EX_USE_POLL
+        /* open service Q, also give some svc name here!  */
+        
+        if (ndrx_epoll_shallopenq(i))
+        {
+            
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
         /* for poll mode, we must ensure that queue does not exists before start
          */
         if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
@@ -144,10 +149,6 @@ expublic int sv_open_queue(void)
                     ndrx_poll_strerror(ndrx_epoll_errno()))
         }
 #endif
-        /* open service Q, also give some svc name here!  */
-        
-        if (ndrx_epoll_shallopensvc(i))
-        {       
             /* normal operations, each service have it's own queue... */
             entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
                     O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);

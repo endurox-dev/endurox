@@ -175,7 +175,7 @@ expublic void ndrx_epoll_mainq_set(char *qstr)
  * @param idx advertise service index
  * @return EXTRUE - open q, EXFALSE - do not open Q
  */
-expublic int ndrx_epoll_shallopensvc(int idx)
+expublic int ndrx_epoll_shallopenq(int idx)
 {
     if (ATMI_SRV_ADMIN_Q==idx || ATMI_SRV_REPLY_Q==idx)
     {
