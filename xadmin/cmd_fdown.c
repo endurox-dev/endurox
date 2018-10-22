@@ -86,11 +86,16 @@ expublic int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     {
         EXFAIL_OUT(ret);
     }
+    
+    /* close xadmin's resources... (reply queue)... */
+    un_init(EXFALSE);
         
     ndrx_down_sys(G_config.qprefix, G_config.qpath, EXFALSE, user_res);
     /* second loop with TRUE... */
     ndrx_down_sys(G_config.qprefix, G_config.qpath, EXTRUE, user_res);
     
+    /* finish off here.. */
+    exit(0);
     
 out:
     return ret;
