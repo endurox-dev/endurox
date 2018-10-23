@@ -467,7 +467,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
         
         resrr = psvcinfo->resrr;
         
-        resid = psvcinfo->resids[resrr];
+        resid = psvcinfo->resids[resrr].resid;
         
         if (EXSUCCEED!=ndrx_unlock_svc_nm(svc, __func__))
         {
@@ -725,6 +725,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     int tot_local_srvs;
     int is_new;
     int shm_install_cmd = _NDRX_SVCINSTALL_NOT;
+    shm_svcinfo_t* el;
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
@@ -739,17 +740,18 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     {
         NDRX_LOG(log_debug, "Updating flags for [%s] from %d to %d",
                 svc, SHM_SVCINFO_INDEX(svcinfo, pos)->flags, flags);
+        el = SHM_SVCINFO_INDEX(svcinfo, pos);
         /* service have been found at position, update flags */
-        SHM_SVCINFO_INDEX(svcinfo, pos)->flags = flags | NDRXD_SVCINFO_INIT;
+        el->flags = flags | NDRXD_SVCINFO_INIT;
         
         /* If this is cluster & entry exits or count<=0, then do not increment. */
         if (!is_bridge || 
-                (0==SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs && count>0))
+                (0==el->cnodes[nodeid-1].srvs && count>0))
         {
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
             
-            tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
+            tot_local_srvs = el->resnr;
                     
             if (!is_bridge && (tot_local_srvs+1 > G_atmi_env.maxsvcsrvs))
             {
@@ -757,35 +759,53 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                         "max space for servers per service: %d! Currently: "
                         "srvs: %d csrvs:%d resnr:%hd",
                         svc, G_atmi_env.maxsvcsrvs, 
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->srvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->resnr
+                        el->srvs,
+                        el->csrvs,
+                        el->resnr
                         );
                 userlog("Shared mem for svc [%s] is full - "
                         "max space for servers per service: %d! Currently: "
                         "srvs: %d csrvs:%d resnr:%hd",
                         svc, G_atmi_env.maxsvcsrvs, 
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->srvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs,
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->resnr);
+                        el->srvs,
+                        el->csrvs,
+                        el->resnr);
                 EXFAIL_OUT(ret);
             }
             else if (!is_bridge)
             {
                 /* Add it to the array... */
                 /* so we use the next number */
-                int idx = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
-                SHM_SVCINFO_INDEX(svcinfo, pos)->resids[tot_local_srvs] = resid;
-                NDRX_LOG(log_debug, "installed resid/srvid %d at %d", 
-                        resid, idx);
-                SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
+                int idx = EXFAIL;
+                
+                for (i=0; i < el->resnr; i++)
+                {
+                    if (el->resids[i].resid==resid)
+                    {
+                        idx = i;
+                        el->resids[i].cnt++;
+                        NDRX_LOG(log_debug, "installed resid/srvid %d at %d "
+                                "increased to %hd", 
+                                resid, idx, el->resids[i].cnt);
+                    }
+                }
+                
+                if (EXFAIL==idx)
+                {
+                    idx = el->resnr;
+                    el->resids[tot_local_srvs].resid = resid;
+                    el->resids[tot_local_srvs].cnt = 1;
+                    NDRX_LOG(log_debug, "installed resid/srvid %d at %d", 
+                            resid, idx);
+                    el->resnr++;
+                }
             }
 #endif
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
+            el->srvs++;
             
             if (is_bridge)
             {
-                SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs++;
+                el->csrvs++;
             }
             
         }
@@ -794,6 +814,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     else if (!(SHM_SVCINFO_INDEX(svcinfo, pos)->flags & NDRXD_SVCINFO_INIT) ||
 	    _NDRX_SVCINSTALL_OVERWRITE==shm_install_cmd)
     {
+        el = SHM_SVCINFO_INDEX(svcinfo, pos);
         is_new=EXTRUE;
         if (is_bridge && 0==count)
         {
@@ -803,28 +824,29 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
         }
         else
         {
-            NDRX_STRCPY_SAFE(SHM_SVCINFO_INDEX(svcinfo, pos)->service, svc);
+            NDRX_STRCPY_SAFE(el->service, svc);
             /* Basically just override the init flag */
-            SHM_SVCINFO_INDEX(svcinfo, pos)->flags = flags | NDRXD_SVCINFO_INIT;
+            el->flags = flags | NDRXD_SVCINFO_INIT;
             NDRX_LOG(log_debug, "Svc [%s] not found in shm, "
                         "installed with flags %d",
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->service, 
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->flags);
+                        el->service, 
+                        el->flags);
             
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs++;
+            el->srvs++;
             
             if (is_bridge)
             {
-                SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs++;
+                el->csrvs++;
             }
             else
             {
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-                int idx = SHM_SVCINFO_INDEX(svcinfo, pos)->resnr;
-                SHM_SVCINFO_INDEX(svcinfo, pos)->resids[idx] = resid;
+                int idx = 0;
+                el->resids[idx].resid = resid;
+                el->resids[idx].cnt = 1;
                 NDRX_LOG(log_debug, "installed resid/srvid %d at idx %d", 
                         resid, idx);
-                SHM_SVCINFO_INDEX(svcinfo, pos)->resnr++;
+                el->resnr++;
 #endif
             }
         }
@@ -841,12 +863,14 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     /* we are ok & extra bridge processing */
     if (is_bridge)
     {
-        int was_installed = (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs > 0);
+        int was_installed;
+        el = SHM_SVCINFO_INDEX(svcinfo, pos);
+        was_installed = (el->cnodes[nodeid-1].srvs > 0);
         /* our index starts with 0 */
         if (BRIDGE_REFRESH_MODE_FULL==mode)
         {
             /* Install fresh stuff */
-            SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs = count;
+            el->cnodes[nodeid-1].srvs = count;
             /* Add real count */
             NDRX_LOG(log_debug, "SHM Service refresh: [%s] Bridge: [%d]"
                     " Count: [%d]",
@@ -854,30 +878,30 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
         }
         else
         {
-            SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs+=count;
+            el->cnodes[nodeid-1].srvs+=count;
             
             /* If there was dropped update..! */
-            if (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs<0)
+            if (el->cnodes[nodeid-1].srvs<0)
             {
-                SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs=0;
+                el->cnodes[nodeid-1].srvs=0;
             }
             NDRX_LOG(log_debug, "SHM Service update: [%s] Bridge: "
                     "[%d] Diff: %d final count: [%d], cluster nodes: [%d]",
-                    svc, nodeid, count, SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs, 
-                    SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs);
+                    svc, nodeid, count, el->cnodes[nodeid-1].srvs, 
+                    el->csrvs);
         }
         
         /* Note is being removed. */
-        if (SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[nodeid-1].srvs<=0 && was_installed)
+        if (el->cnodes[nodeid-1].srvs<=0 && was_installed)
         {
             /* Reduce cluster nodes */
-            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs--;
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
+            el->csrvs--;
+            el->srvs--;
         }
         
         /* Might want to install due to bridge updates */
-        if (0==SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs && 
-                0==SHM_SVCINFO_INDEX(svcinfo, pos)->srvs)
+        if (0==el->csrvs && 
+                0==el->srvs)
         {
             NDRX_LOG(log_debug, 
                     "Bridge %d caused to remove svc [%s] from shm",
@@ -891,9 +915,9 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
              * So we will just reset key fields, but flags & svc stays the same.  
              */
             
-            memset(&SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes, 0, 
-                    sizeof(SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes));
-            SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
+            memset(&el->cnodes, 0, 
+                    sizeof(el->cnodes));
+            el->totclustered = 0;
             
             goto out;
         }
@@ -902,17 +926,17 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
          * If service is removed, we might want to re-scan the list
          * and rebuild cnodes_max_id for better hint to clients.
          */
-        if (nodeid > SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id)
+        if (nodeid > el->cnodes_max_id)
         {
-            SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id = nodeid;
+            el->cnodes_max_id = nodeid;
         }
         
         /* Rebuild totals of cluster... */
-        SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
-        for (i=0; i<SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes_max_id; i++)
+        el->totclustered = 0;
+        for (i=0; i<el->cnodes_max_id; i++)
         {
-            SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered+=
-                        SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes[i].srvs;
+            el->totclustered+=
+                        el->cnodes[i].srvs;
         }
         NDRX_LOG(log_debug, "Total clustered services: %d", 
                 SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered);
@@ -971,6 +995,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     int tot_local_srvs;
     int lpos;
+    shm_svcinfo_t* el;
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     if (EXSUCCEED!=ndrx_lock_svc_nm(svc, __func__))
@@ -983,22 +1008,23 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     *last=EXFALSE;
     if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
     {
-        if (SHM_SVCINFO_INDEX(svcinfo, pos)->srvs>1)
+        el = SHM_SVCINFO_INDEX(svcinfo, pos);
+        if (el->srvs>1)
         {
             NDRX_LOG(log_debug, "Decreasing count of servers for "
                                 "[%s] from %d to %d",
-                                svc, SHM_SVCINFO_INDEX(svcinfo, pos)->srvs, 
-                                SHM_SVCINFO_INDEX(svcinfo, pos)->srvs-1);
+                                svc, el->srvs, 
+                                el->srvs-1);
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
 
-            tot_local_srvs = SHM_SVCINFO_INDEX(svcinfo, pos)->srvs - 
-                    SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs;
+            tot_local_srvs = el->srvs - 
+                    el->csrvs;
                         
             lpos = EXFAIL;
             for (i=0; i<tot_local_srvs; i++)
             {
-                if (SHM_SVCINFO_INDEX(svcinfo, pos)->resids[i]==resid)
+                if (el->resids[i].resid==resid)
                 {
                     lpos = i;
                     break;
@@ -1007,7 +1033,13 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
             
             if (EXFAIL!=lpos)
             {
-                if (lpos==tot_local_srvs-1)
+                if (el->resids[lpos].cnt>1)
+                {
+                    el->resids[lpos].cnt--;
+                    NDRX_LOG(log_debug, "Resource %d decrement to %hd",
+                            el->resids[lpos].resid, el->resids[lpos].cnt);
+                }
+                else if (lpos==tot_local_srvs-1)
                 {
                     NDRX_LOG(log_debug, "Server was at last position, "
                             "just shrink the numbers...");
@@ -1015,18 +1047,20 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
                 else
                 {
                     NDRX_LOG(log_debug, "Reducing the local server array...");
-                    memmove(&(SHM_SVCINFO_INDEX(svcinfo, pos)->resids[lpos]),
-                            &(SHM_SVCINFO_INDEX(svcinfo, pos)->resids[lpos+1]),
+                    memmove(&(el->resids[lpos]),
+                            &(el->resids[lpos+1]),
                             tot_local_srvs - lpos -1);
                 }
             }
             
-            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr--;
+            el->resnr--;
 #endif
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs--;
+            el->srvs--;
         }
         else
         {
+            el = SHM_SVCINFO_INDEX(svcinfo, pos);
+        
             NDRX_LOG(log_debug, "Removing service from shared mem "
                                 "[%s]",
                                 svc);
@@ -1037,15 +1071,15 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
             /* Once service was added to system, we do not remove it
              * automatically, unless we resolve problems with linear hash. 
              */
-            memset(&SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes, 0, 
-                    sizeof(SHM_SVCINFO_INDEX(svcinfo, pos)->cnodes));
-            SHM_SVCINFO_INDEX(svcinfo, pos)->totclustered = 0;
-            SHM_SVCINFO_INDEX(svcinfo, pos)->csrvs = 0;
-            SHM_SVCINFO_INDEX(svcinfo, pos)->srvs = 0;
+            memset(&el->cnodes, 0, 
+                    sizeof(el->cnodes));
+            el->totclustered = 0;
+            el->csrvs = 0;
+            el->srvs = 0;
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-            SHM_SVCINFO_INDEX(svcinfo, pos)->resnr = 0;
-            SHM_SVCINFO_INDEX(svcinfo, pos)->resrr = 0;
-            SHM_SVCINFO_INDEX(svcinfo, pos)->resrr = 0;
+            el->resnr = 0;
+            el->resrr = 0;
+            el->resrr = 0;
 #endif
             
             *last=EXTRUE;

@@ -337,6 +337,17 @@ struct cnodeinfo
     int srvs;           /**< Number of serves on this cluster node */
 };
 
+
+/**
+ * Shared memory resource id
+ */
+typedef struct ndrx_shm_resid ndrx_shm_resid_t;
+struct ndrx_shm_resid
+{
+    short cnt;                          /**< number of instances installed  */
+    int resid;                          /**< Resource id                    */
+};
+
 /**
  * Shared memory entry for service
  */
@@ -360,7 +371,7 @@ struct shm_svcinfo
     int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    int resids[0];                      /**<  Servers id's offering this service */
+    ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */
 #endif
 };
 
@@ -620,7 +631,8 @@ typedef struct
     int totclustered;               /**< Total clustered nodes                */
     int cnodes_max_id;              /**< Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT]; /**< List of cluster nodes */
-    int resids[CONF_NDRX_MAX_SRVIDS_XADMIN];    /**< Server ID (fixed number xadmin output) */
+    /**< Server ID (fixed number xadmin output) */
+    ndrx_shm_resid_t resids[CONF_NDRX_MAX_SRVIDS_XADMIN];
     int resnr;                                  /**< Number of local resources              */
     
 } command_reply_shm_psvc_t;
