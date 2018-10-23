@@ -801,7 +801,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int retpoll;
     int ret = EXSUCCEED;
     int timeout;
-    int i, moc;
+    int i, moc, donext;
     int err;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
@@ -843,6 +843,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 timeout, M_mon.nrfds);
         
         moc=0;
+        donext=EXTRUE;
         for (i=0; i<M_mon.nrfds; i++)
         {
             /* M_mon.fdtab[i].revents = 0; 
@@ -907,7 +908,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             }
             
         }
-        else for (i=0; i<moc; i++)
+        else for (i=0; i<moc && donext; i++)
         {
             if (M_mon.fdtabmo[i].revents)
             {
@@ -985,6 +986,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             NDRX_LOG(log_info, "Deregister fd %d from polling", 
                                     cmd.fd);
                             ndrx_svq_fd_hash_del(cmd.fd);
+                            /* if we get some more events, we shall break this loop and try next poll... */
+                            donext=EXFALSE;
                             break;
                         case NDRX_SVQ_MON_TERM:
                             NDRX_LOG(log_info, "Terminate request...");

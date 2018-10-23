@@ -70,8 +70,28 @@ int main(int argc, char** argv) {
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
     
     cd[0] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[0] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR first tpacall got %d: %s",
+            cd[0], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     cd[1] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[1] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR second tpacall got %d: %s",
+            cd[1], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     cd[2] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[2] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR third tpacall got %d: %s",
+            cd[2], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
     /* wait for tout */
     sleep(10);
