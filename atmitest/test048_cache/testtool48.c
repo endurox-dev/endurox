@@ -263,6 +263,8 @@ out:
         M_failed=EXTRUE;
     }
 
+    tpterm();
+
     return ret;
 }
 
