@@ -81,8 +81,9 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     shm_psvc_info->cnodes_max_id = p_shm->cnodes_max_id;
     memcpy(shm_psvc_info->cnodes, p_shm->cnodes, sizeof(p_shm->cnodes));
     
-    shm_psvc_info->resids[0] = 0;
-
+    shm_psvc_info->resids[0].resid = 0;
+    shm_psvc_info->resids[0].cnt = 0;
+    
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     /* copy the number of elements */
     cnt = shm_psvc_info->srvs - shm_psvc_info->csrvs;
