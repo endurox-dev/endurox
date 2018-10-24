@@ -806,7 +806,8 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
                 goto out;
             }
             
-            ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->srvid);
+            /* TODO: We need to uninstall by RQADDR! */
+            ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->resid);
 
 #if defined(EX_USE_SYSVQ)
             

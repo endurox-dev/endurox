@@ -179,7 +179,7 @@ struct pm_node
     short   nodeid;         /**< other node id, if this is bridge             */
     int reloadonchange_cksum; /**< Checksum code of the binary                */
     char binary_path[PATH_MAX+1]; /**< Path were binary lives...              */
-    
+    int resid;              /**< Res id to be installed in shm for poll & sysv*/
     /* Linked list */
     pm_node_t *prev;
     pm_node_t *next;

@@ -86,12 +86,12 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     /* copy the number of elements */
-    cnt = shm_psvc_info->srvs - shm_psvc_info->csrvs;
+    cnt = p_shm->resnr;
     if (cnt > CONF_NDRX_MAX_SRVIDS_XADMIN)
     {
         cnt = CONF_NDRX_MAX_SRVIDS_XADMIN;
     }
-    memcpy(shm_psvc_info->resids, p_shm->resids, cnt*sizeof(int));
+    memcpy(shm_psvc_info->resids, p_shm->resids, cnt*sizeof(p_shm->resids[0]));
 #endif
     
     /*
