@@ -387,6 +387,7 @@ out:
 
 /**
  * Un-initialize all stuff
+ * TODO: Think about client close in case if we fail.
  * @return void
  */
 expublic void atmisrv_un_initialize(int fork_uninit)
@@ -471,7 +472,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 /* =========================API FUNCTIONS=====================================*/
 /* ===========================================================================*/
 /**
- * Advertize service
+ * Advertise service
  * OK, logic will be following:
  * -A advertise all services + additional (aliases) by -s
  * if -A missing, then advertise all
