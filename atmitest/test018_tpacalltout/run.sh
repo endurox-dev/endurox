@@ -53,6 +53,10 @@ ulimit -c unlimited
 
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 echo "Debug config set to: [$NDRX_DEBUG_CONF]"
+xadmin killall atmi.sv18 2>/dev/null
+xadmin killall atmiclt18
+# remove process leftovers...
+xadmin down -y
 rm *.log
 
 # We need nr of copies as nr of tpacalltout, 
@@ -72,9 +76,7 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 fi
 
 xadmin killall atmi.sv18 2>/dev/null
-
 xadmin killall atmiclt18
-
 # remove process leftovers...
 xadmin down -y
 
