@@ -722,7 +722,6 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     int pos = EXFAIL;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     int i;
-    int tot_local_srvs;
     int is_new;
     int shm_install_cmd = _NDRX_SVCINSTALL_NOT;
     shm_svcinfo_t* el;
@@ -750,10 +749,8 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
         {
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-            
-            tot_local_srvs = el->resnr;
                     
-            if (!is_bridge && (tot_local_srvs+1 > G_atmi_env.maxsvcsrvs))
+            if (!is_bridge && (el->resnr+1 > G_atmi_env.maxsvcsrvs))
             {
                 NDRX_LOG(log_error, "Shared mem for svc [%s] is full - "
                         "max space for servers per service: %d! Currently: "
@@ -792,11 +789,10 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
                 
                 if (EXFAIL==idx)
                 {
-                    idx = el->resnr;
-                    el->resids[tot_local_srvs].resid = resid;
-                    el->resids[tot_local_srvs].cnt = 1;
+                    el->resids[el->resnr].resid = resid;
+                    el->resids[el->resnr].cnt = 1;
                     NDRX_LOG(log_debug, "installed resid/srvid %d at %d", 
-                            resid, idx);
+                            resid, el->resnr);
                     el->resnr++;
                 }
             }
