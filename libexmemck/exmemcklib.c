@@ -690,6 +690,11 @@ expublic int ndrx_memck_tick(void)
     }
     
 out:    
+    if (NULL!=sprocs)
+    {
+        ndrx_string_list_free(sprocs);
+    }
+        
     return ret;
 }
 
