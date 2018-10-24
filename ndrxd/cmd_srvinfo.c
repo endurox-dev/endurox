@@ -138,6 +138,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
                     srvinfo->srvinfo.binary_name_real);
             
             NDRX_STRCPY_SAFE(p_pm->rqaddress, srvinfo->srvinfo.rqaddress);
+            p_pm->resid = srvinfo->srvinfo.resid;
             
             p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
             
@@ -164,7 +165,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             
             NDRX_STRCPY_SAFE(p_pm->rqaddress, 
                     srvinfo->srvinfo.rqaddress);
-            
+            p_pm->resid = srvinfo->srvinfo.resid;
             p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
             
             p_pm->state = srvinfo->srvinfo.state;
@@ -209,7 +210,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         
         NDRX_STRCPY_SAFE(p_pm->rqaddress, 
                     srvinfo->srvinfo.rqaddress);
-        
+        p_pm->resid = srvinfo->srvinfo.resid;
         p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
         
         p_pm->pid = srvinfo->srvinfo.pid;

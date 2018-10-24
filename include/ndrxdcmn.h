@@ -724,6 +724,8 @@ typedef struct
     */
    char rqaddress[NDRX_MAX_Q_SIZE+1];
    
+   int resid;             /**< Resource id server id for poll, qid for sysv   */
+   
 } srv_key_t;
 
 /**
