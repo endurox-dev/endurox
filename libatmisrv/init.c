@@ -394,6 +394,15 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 {
     int i;
     atmi_tls_t *tls;
+    
+    
+    /* check are we servers or clients? */
+    if (G_atmi_tls->G_atmi_conf.is_client)
+    {
+        tpterm();
+        return;
+    }
+    
     /* We should close the queues and detach shared memory!
      * Also we will not remove service queues, because we do not
      * what other instances do. This is up to ndrxd!
