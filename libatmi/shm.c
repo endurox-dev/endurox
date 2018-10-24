@@ -993,7 +993,6 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     int pos = EXFAIL;
     int i;
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
-    int tot_local_srvs;
     int lpos;
     shm_svcinfo_t* el;
     
@@ -1012,18 +1011,20 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
         if (el->srvs>1)
         {
             NDRX_LOG(log_debug, "Decreasing count of servers for "
-                                "[%s] from %d to %d",
+                                "[%s] from %d to %d (resnr=%d)",
                                 svc, el->srvs, 
-                                el->srvs-1);
+                                el->srvs-1, el->resnr);
 
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
 
+            /*
             tot_local_srvs = el->srvs - 
                     el->csrvs;
-                        
+              */          
             lpos = EXFAIL;
-            for (i=0; i<tot_local_srvs; i++)
+            for (i=0; i<el->resnr; i++)
             {
+                NDRX_LOG(log_error, "YOPT! %d vs %d", el->resids[i].resid, resid);
                 if (el->resids[i].resid==resid)
                 {
                     lpos = i;
@@ -1033,14 +1034,17 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
             
             if (EXFAIL!=lpos)
             {
+                NDRX_LOG(log_debug, "Local count: %hd", el->resids[lpos].cnt);
+                
                 if (el->resids[lpos].cnt>1)
                 {
                     el->resids[lpos].cnt--;
                     NDRX_LOG(log_debug, "Resource %d decrement to %hd",
                             el->resids[lpos].resid, el->resids[lpos].cnt);
                 }
-                else if (lpos==tot_local_srvs-1)
+                else if (lpos==el->resnr-1)
                 {
+                    el->resnr--;
                     NDRX_LOG(log_debug, "Server was at last position, "
                             "just shrink the numbers...");
                 }
@@ -1049,11 +1053,11 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
                     NDRX_LOG(log_debug, "Reducing the local server array...");
                     memmove(&(el->resids[lpos]),
                             &(el->resids[lpos+1]),
-                            tot_local_srvs - lpos -1);
+                            el->resnr - lpos -1);
+                    el->resnr--;
                 }
             }
             
-            el->resnr--;
 #endif
             el->srvs--;
         }
