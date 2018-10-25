@@ -257,6 +257,7 @@ exprivate int cache_dump(UBFH **pp_ub)
     char tmp[256];
     EDB_txn *txn = NULL;
     EDB_cursor *cursor;
+    int cursor_open = EXFALSE;
     EDB_val val;
     int tran_started = EXFALSE;
     ndrx_tpcache_data_t *cdata;
@@ -304,6 +305,8 @@ exprivate int cache_dump(UBFH **pp_ub)
         NDRX_LOG(log_error, "Failed to open cursor");
         EXFAIL_OUT(ret);
     }
+
+    cursor_open = EXTRUE;
     
     if (NULL==(key = Bgetalloc(*pp_ub, EX_CACHE_OPEXPR, 0, NULL)))
     {
@@ -351,6 +354,11 @@ exprivate int cache_dump(UBFH **pp_ub)
     
 
 out:
+
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
 
     if (tran_started)
     {
