@@ -378,25 +378,27 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     {
         entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
                                 O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+        
+        /*
+         * Check are we ok or failed?
+         */
+        if ((mqd_t)EXFAIL==entry_new->q_descr)
+        {
+           /* Release semaphore! */
+            if (G_shm_srv) ndrx_unlock_svc_op(__func__);
+
+           ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
+                                       entry_new->listen_q, strerror(errno));
+           EXFAIL_OUT(ret);
+        }
     }
     else
     {
-        /* System V mode, where services does not require separate queue  */
+        /* System V mode, where services does not require separate queue  
         entry_new->q_descr = ndrx_epoll_service_add(entry_new->svc_nm, 
                 G_server_conf.adv_service_count, (mqd_t)EXFAIL);
-    }
-    
-    /*
-     * Check are we ok or failed?
-     */
-    if ((mqd_t)EXFAIL==entry_new->q_descr)
-    {
-        /* Release semaphore! */
-         if (G_shm_srv) ndrx_unlock_svc_op(__func__);
-         
-        ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
-                                    entry_new->listen_q, strerror(errno));
-        EXFAIL_OUT(ret);
+         * */
+        entry_new->q_descr = (mqd_t)EXFAIL;
     }
     
     /* re-define service, used for particular systems... like system v */
