@@ -439,10 +439,9 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
      * for adding it is done by service queue open function
      * ndrx_epoll_service_add()
      */
-    
+    NDRX_LOG(log_debug, "Op %d on mqd=%p from poller", op, fd);
     if (EX_EPOLL_CTL_DEL==op)
     {
-        exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
         EXHASH_ITER(hh, M_svcmap, el, elt)
         {
             if (el->mqd==fd)
@@ -458,6 +457,12 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
                 }
                 
                 EXHASH_DEL(M_svcmap, el);
+                /* if this this is service Q (it is virtual svc q) */
+                if (!ndrx_epoll_shallopenq(el->idx))
+                {
+                    NDRX_LOG(log_info, "Free up virtual mqd %p", el->mqd);
+                    NDRX_FREE((char *)el->mqd);
+                }
                 NDRX_FREE(el);
             }
         }
