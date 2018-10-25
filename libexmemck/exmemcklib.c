@@ -278,6 +278,13 @@ expublic int ndrx_memck_rm(char *mask)
         NDRX_LOG(log_debug, "Entry found - removing...");
         EXHASH_DEL(M_config, cfg);
         
+        ndrx_regfree(&cfg->mask_regex);
+        
+        if (cfg->neg_mask_used)
+        {
+            ndrx_regfree(&cfg->neg_mask_regex);
+        }
+        
         /* Loop over the processes and kill with this config */
         
         /* Iterate over the hash! */
