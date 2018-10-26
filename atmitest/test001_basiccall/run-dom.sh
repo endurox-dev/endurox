@@ -133,7 +133,7 @@ xadmin start -y || go_out 2
 echo "Have some wait for ndrxd goes in service - wait for connection establishment."
 echo "Test Connection recovery... (bug #250)"
 ###############################################################################
-sleep 60
+sleep 20
 print_domains;
 
 # Go to domain 1
@@ -149,7 +149,7 @@ set_dom1;
 xadmin start -s tpbridge
 
 
-sleep 60
+sleep 20
 echo ">>> After DOM1 network shutdown..."
 print_domains;
 
@@ -166,7 +166,7 @@ xadmin start -s tpbridge
 ###############################################################################
 echo "Now continue with standard tests.."
 ###############################################################################
-sleep 60
+sleep 20
 print_domains;
 set_dom1;
 
