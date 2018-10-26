@@ -62,8 +62,6 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-EX_SPIN_LOCKDECL(M_cd_lock);
-EX_SPIN_LOCKDECL(M_callseq_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate void unlock_call_descriptor(int cd, short status);
@@ -253,10 +251,11 @@ out:
 expublic unsigned short ndrx_get_next_callseq_shared(void)
 {
     static volatile unsigned short shared_callseq=0;
-    
-    EX_SPIN_LOCK_V(M_callseq_lock);
+    EX_SPIN_LOCKDECL(callseq_lock);
+            
+    EX_SPIN_LOCK_V(callseq_lock);
     shared_callseq++;
-    EX_SPIN_UNLOCK_V(M_callseq_lock);
+    EX_SPIN_UNLOCK_V(callseq_lock);
     
     return shared_callseq;
 }

@@ -63,52 +63,30 @@ extern "C" {
 
 /* *** EX_SPIN LOCKS *** */
 
-/* data type used for external controlled locking. */
-#if HAVE_SYNC
-#define EX_SPIN_LOCKDECL(X) static volatile int X = 0;
+#define EX_SPIN_VAR(X)        pthread_spin_t X
+#define EX_SPIN_VAR_INIT(X)   pthread_spin_init(&X, NULL)
+    
+#define EX_SPIN_LOCKDECL(X) static pthread_spinlock_t X;\
+    static int first_##X = EXTRUE;\
+    if (first_##X)\
+    { \
+        if ( EXSUCCEED!=pthread_spin_init ( &X, 0 ) ) \
+        {\
+            userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
+            exit ( 1 );\
+        }\
+        first_##X=EXFALSE;\
+    }
 
-/**
- * Create spinlock
- * @param X - volatile int, locking variable
- * Must be first thing of the block!
- */
-#define EX_SPIN_LOCK_V(X) \
-	int __count = 0;\
-	while(!__sync_bool_compare_and_swap(&X, 0, 1))\
-	{\
-		__count++;\
-		if (0 == __count % 2)\
-		{\
-			sched_yield();\
-		}\
-	}\
-	
-/**
- * Unlock spin.
- * @param X - volatile int, locking variable
- * Must be defined at the end of the locking block.
- */
-#define EX_SPIN_UNLOCK_V(X)\
-	__sync_synchronize();\
-	X = 0;\
+#define EX_SPIN_LOCK_V(X) pthread_spin_lock(&X);
 
-/* Use default __spinlock variable */
+#define EX_SPIN_UNLOCK_V(X) pthread_spin_unlock(&X);
+
 #define EX_SPIN_LOCK \
-		static volatile int __spinlock = 0;\
+		EX_SPIN_LOCKDECL(__spinlock);\
 		EX_SPIN_LOCK_V(__spinlock);
 
-/* Use default __spinlock variable */
 #define EX_SPIN_UNLOCK EX_SPIN_UNLOCK_V(__spinlock);
-    
-#else
-    
-#define EX_SPIN_LOCKDECL    MUTEX_LOCKDECL
-#define EX_SPIN_LOCK_V      MUTEX_LOCK_V
-#define EX_SPIN_UNLOCK_V    MUTEX_UNLOCK_V
-#define EX_SPIN_LOCK        MUTEX_LOCK
-#define EX_SPIN_UNLOCK      MUTEX_UNLOCK
-    
-#endif    
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
