@@ -62,23 +62,29 @@ extern "C" {
 #define MUTEX_UNLOCK MUTEX_UNLOCK_V(__mutexlock);
 
 /* *** EX_SPIN LOCKS *** */
-
-#define EX_SPIN_VAR(X)        pthread_spin_t X
-#define EX_SPIN_VAR_INIT(X)   pthread_spin_init(&X, NULL)
+#define EX_SPIN_VAR(X)        pthread_spinlock_t X
+#define EX_SPIN_VAR_INIT(X)   if ( EXSUCCEED!=pthread_spin_init ( &X, 0 ) ) \
+                    {\
+                        userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
+                        exit ( 1 );\
+                    }
     
 #define EX_SPIN_LOCKDECL(X) static pthread_spinlock_t X;\
-    static int first_##X = EXTRUE;\
-    if (first_##X)\
-    { \
-        if ( EXSUCCEED!=pthread_spin_init ( &X, 0 ) ) \
-        {\
-            userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
-            exit ( 1 );\
-        }\
-        first_##X=EXFALSE;\
-    }
+        MUTEX_LOCKDECL(X##__initlock__);\
+        static int X##__first__ = EXTRUE;
 
-#define EX_SPIN_LOCK_V(X) pthread_spin_lock(&X);
+#define EX_SPIN_LOCK_V(X)\
+    if (X##__first__)\
+    {\
+        MUTEX_LOCK_V(X##__initlock__);\
+        if (X##__first__)\
+        {\
+            EX_SPIN_VAR_INIT(X);\
+            X##__first__=EXFALSE;\
+        }\
+        MUTEX_UNLOCK_V(X##__initlock__);\
+    }\
+    pthread_spin_lock(&X);
 
 #define EX_SPIN_UNLOCK_V(X) pthread_spin_unlock(&X);
 
