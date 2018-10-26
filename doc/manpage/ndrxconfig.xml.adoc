@@ -303,7 +303,6 @@ DEBUG CONFIGURATION FILE SYNTAX
     for particular service, the error will be logged and message will be dropped,
     thus caller will get a timeout. If different request addresses are serving
     the same service, then request will be load balanced in round-robin mode.
-
     This can be overridden by 'RQADDR' on per server basis. Request address
     cannot start with '@' symbol. The max length of the request address is *30*
     chars.
