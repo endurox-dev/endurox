@@ -137,6 +137,7 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
         NDRX_LOG(log_error, "Failed to open cursor");
         EXFAIL_OUT(ret);
     }
+    cursor_open = EXTRUE;
     
     /* loop over the db and match records  */
     
