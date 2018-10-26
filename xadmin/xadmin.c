@@ -244,6 +244,12 @@ cmd_mapping_t M_command_map[] =
                                     "\t\t -w\tPrint entries which were used but now free",
                                     NULL},
 #endif
+    {"svqids",    cmd_svqids,EXFAIL,   1,  1,  0, "Print System V user queue ids\n"
+                                    "\tUsage: svqids\n",
+                                    NULL},
+    {"svqsemids", cmd_svsemids,EXFAIL, 1,  1,  0, "Print System V user semaphore ids\n"
+                                    "\tUsage: svsemids\n",
+                                    NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL},
     {"poller",    cmd_poller,EXFAIL,   1,  1,  0, "Print active poller sub-system", NULL}
 };

@@ -1043,6 +1043,7 @@ out:
  * Return user queues or semaphores
  * @param[out] list to init & grow
  * @param[in] Return user queues, otherwise return semaphores
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
 {

@@ -56,6 +56,7 @@ export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
 
 set | grep NDRX_
 set | grep TEST
+xadmin down -y
 
 rm *.log
 
@@ -73,7 +74,6 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 fi
 
 xadmin killall atmi.sv1 2>/dev/null
-
 xadmin killall atmiclt1 2>/dev/null
 
 popd 2>/dev/null

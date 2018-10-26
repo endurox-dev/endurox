@@ -257,8 +257,11 @@ extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 
 /* System V specifics */
 #ifdef EX_USE_SYSVQ
-expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 #endif
+
+extern int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

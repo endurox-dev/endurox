@@ -786,7 +786,6 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                 NDRX_LOG(log_warn, "%s not set, not loading views", CONF_VIEWDIR);
             }
 #endif
-            
             /* Init semaphores first. */
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
             
