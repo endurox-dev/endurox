@@ -1657,6 +1657,10 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     }
     else
     {
+        /* OK, we are signaled, lets fail here! can cause zero length msgs
+         * to be received, thus needs to have status!
+         */
+        ret=EXFAIL;
         err=EINTR;
     }
 
