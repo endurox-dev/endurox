@@ -40,6 +40,10 @@
 #include <sys_mqueue.h>
 #include "test000.h"
 #include "sys_unix.h"
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <errno.h>
+#include <nstopwatch.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -521,7 +525,7 @@ int local_test_send(char *pfx)
         
         NDRX_LOG(log_debug, ">>> Test queue attributes...");
         memset(&attrold, 0, sizeof(attrold));
-        if (EXSUCCEED!=ndrx_svq_getattr(mq, &attrold))
+        if (EXSUCCEED!=ndrx_mq_getattr(mq, &attrold))
         {
             NDRX_LOG(log_error, "Failed to get queue attribs: %s", strerror(errno));
             EXFAIL_OUT(ret);
