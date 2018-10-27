@@ -361,7 +361,6 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
          * before user might want to move forward with next commands which open
          * shm resources. Thus we can get some race conditions here
          */
-        sleep(1);
     }
 out:
     return ret;
@@ -421,6 +420,7 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
     {
         if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
         {
+            sleep(2);
             NDRX_LOG(log_debug, "Starting up...");
             strcpy(argv[0], "start"); 
             ret=process_command_buffer(EXFALSE);
