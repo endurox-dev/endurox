@@ -141,13 +141,13 @@ expublic int sv_open_queue(void)
         {
             
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
-        /* for poll mode, we must ensure that queue does not exists before start
-         */
-        if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
-        {
-            NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
-                    ndrx_poll_strerror(ndrx_epoll_errno()))
-        }
+            /* for poll mode, we must ensure that queue does not exists before start
+             */
+            if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
+            {
+                NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
+                        ndrx_poll_strerror(ndrx_epoll_errno()))
+            }
 #endif
             /* normal operations, each service have it's own queue... */
             entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
