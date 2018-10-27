@@ -610,7 +610,7 @@ out:
  * The command by itself should be found in first argument
  * @return SUCCEED/FAIL
  */
-exprivate int process_command_buffer(int *p_have_next)
+expublic int process_command_buffer(int *p_have_next)
 {
     int ret=EXSUCCEED;
     int i;
