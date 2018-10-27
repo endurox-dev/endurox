@@ -128,6 +128,17 @@ xadmin down -y
 xadmin start -y || go_out 2
 
 #exit 0
+###############################################################################
+echo "Test retart command (shall not stall...)"
+###############################################################################
+
+xadmin r -y
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Restart fails!"
+    go_out -100
+fi
 
 ###############################################################################
 echo "Have some wait for ndrxd goes in service - wait for connection establishment."
@@ -187,10 +198,9 @@ fi
 # Run the client test...
 echo "Will issue calls to clients:"
 (./atmiclt1 2>&1) > ./atmiclt-dom1.log
+RET=$?
 
 grep "Performance" atmiclt-dom1.log
-
-RET=$?
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
