@@ -80,17 +80,27 @@ expublic int ndrx_svq_close(mqd_t mqd)
     NDRX_LOG(log_debug, "close %p mqd", mqd);
     
     if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
-    {
-        /* close the queue */
+    {   
+        /* close the queue 
+         * we will put the Q in hash locally so while it is in pipe
+         * (in kernel space), the address sanitizer might see it as leaked
+         * ptr. Thus hash will keep the local pointer.
+         * This is really needed for sanitizer only...
+         */
+        mqd->self = (char *)mqd;
+        ndrx_svq_delref_add(mqd);
+        
         if (EXSUCCEED!=ndrx_svq_moncmd_close(mqd))
         {
             NDRX_LOG(log_error, "Failed to close queue %p", mqd);
             userlog("Failed to close queue %p", mqd);
         }
+        
         /*
          * free will be done by backend thread..
         NDRX_FREE(mqd);
          */
+        
         return EXSUCCEED;
     }
     else

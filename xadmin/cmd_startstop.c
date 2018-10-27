@@ -421,10 +421,10 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
         {
             sleep(2);
-            NDRX_LOG(log_debug, "Starting up...");
-            strcpy(argv[0], "start"); 
-            ret=process_command_buffer(EXFALSE);
         }
+        NDRX_LOG(log_debug, "Starting up...");
+        strcpy(argv[0], "start"); 
+        ret=process_command_buffer(EXFALSE);
     }
     
 #if 0

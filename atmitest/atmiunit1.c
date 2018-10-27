@@ -551,7 +551,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test055_envs);
     add_test(suite,test057_invlcmd);
     
-#ifndef EX_USE_SYSVQ
+#ifdef EX_USE_SYSVQ
     add_test(suite, test058_systemv);
 #endif
     

@@ -249,14 +249,14 @@ typedef struct buffer_obj buffer_obj_t;
 struct buffer_obj
 {
     int type_id;
-    /* int sub_type_id; */
+    /** int sub_type_id; */
     char subtype[XATMI_SUBTYPE_LEN+1];
-    short autoalloc;  /* Is buffer automatically allocated by tpcall? */
+    short autoalloc;  /**< Is buffer automatically allocated by tpcall? */
     char *buf;
-    long size;        /* Allocated size.... */
+    long size;        /**< Allocated size.... */
     /* Move to hash by buf */
     /* buffer_obj_t *prev, *next; */
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /**< makes this structure hashable */
 };
 
 /**
