@@ -64,11 +64,59 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Nothing to init for epoll()
+ * not used by Linux epoll()
+ * @param idx
+ * @return 
  */
-expublic inline void ndrx_epoll_sys_init(void)
+expublic int ndrx_epoll_shallopenq(int idx)
+{
+    return EXTRUE;
+}
+/**
+ * Not used by Linux epoll()
+ * @param qstr
+ */
+expublic void ndrx_epoll_mainq_set(char *qstr)
 {
     return;
+}
+/**
+ * Nothing to init for epoll()
+ */
+expublic int ndrx_epoll_sys_init(void)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by Linux epoll
+ * @param svcnm
+ * @param idx
+ * @param mq_exits
+ * @return 
+ */
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
+{
+    return mq_exits;
+}
+
+/**
+ * Not used by linux epoll
+ * @return 
+ */
+expublic int ndrx_epoll_shmdetach(void)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by Linux epoll
+ * @param force
+ * @return 
+ */
+expublic int ndrx_epoll_down(int force)
+{
+    return EXSUCCEED;
 }
 
 /**

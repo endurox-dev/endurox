@@ -360,9 +360,7 @@ struct shm_svcinfo
     int csrvs;                          /**< Number of advertises in cluster      */
     int totclustered;                   /**< Total clustered nodes                */
     int cnodes_max_id;                  /**< Max id of cluster nodes in list (for fast search) */
-    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
-    
-#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /**< List of cluster nodes */
     /**
      * Number of resources, because there could be rqaddr servers, where
      * srvs is large number, but there is only on queue.
@@ -372,7 +370,6 @@ struct shm_svcinfo
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
     ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */
-#endif
 };
 
 /* Macros for shm service size */
