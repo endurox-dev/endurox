@@ -156,6 +156,8 @@ extern int ndrx_xadmin_shm_close();
 extern int un_init(int closeshm);
 extern void sign_chld_handler(int sig);
 
+extern int process_command_buffer(int *p_have_next);
+
 #ifndef NDRX_DISABLEPSCRIPT
 extern void printfunc(HPSCRIPTVM v,const PSChar *s,...);
 extern void errorfunc(HPSCRIPTVM v,const PSChar *s,...);
