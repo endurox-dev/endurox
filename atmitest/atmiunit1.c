@@ -455,6 +455,13 @@ Ensure(test057_invlcmd)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test058_systemv)
+{
+    int ret;
+    ret=system_dbg("test058_systemv/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -543,7 +550,11 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test054_svwrap);
     add_test(suite,test055_envs);
     add_test(suite,test057_invlcmd);
-            
+    
+#ifndef EX_USE_SYSVQ
+    add_test(suite, test058_systemv);
+#endif
+    
     return suite;
 }
 
