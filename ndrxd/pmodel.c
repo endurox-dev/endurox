@@ -146,7 +146,7 @@ expublic int self_notify(srv_status_t *status, int block)
     NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
                         send_size, status->svc_count);
     /* we want new q/open + close here,
-     * so that we do not interference with our maint queue blocked/non blocked flags.
+     * so that we do not interference with our main queue blocked/non blocked flags.
      */
     ret=cmd_generic_callfl(NDRXD_COM_PMNTIFY_RQ, NDRXD_SRC_NDRXD,
                         NDRXD_CALL_TYPE_PM_INFO,
