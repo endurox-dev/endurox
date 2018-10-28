@@ -222,12 +222,10 @@ out:
  */
 exprivate int mqfilter_qspace(char *svcnm)
 {
-    int i, len;
-    int cnt = 0;
     char tmp[XATMI_SERVICE_NAME_LENGTH+1];
     
     
-    sprintf(tmp, NDRX_SVC_QSPACE, M_qspace);
+    snprintf(tmp, sizeof(tmp), NDRX_SVC_QSPACE, M_qspace);
     
     
     if (0==strcmp(svcnm, tmp))

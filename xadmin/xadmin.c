@@ -680,7 +680,7 @@ expublic int un_init(int closeshm)
     if (G_config.ndrxd_q != (mqd_t)EXFAIL)
     {
         NDRX_LOG(log_debug, "Closing ndrxd_q: %p",
-            (void *)G_config.ndrxd_q);
+            (void *)((long)G_config.ndrxd_q));
         ndrx_mq_close(G_config.ndrxd_q);
         G_config.ndrxd_q = (mqd_t)EXFAIL;
     }
@@ -688,7 +688,7 @@ expublic int un_init(int closeshm)
     if (G_config.reply_queue != (mqd_t)EXFAIL)
     {
         NDRX_LOG(log_debug, "Closing reply_queue: %p",
-            (void *)G_config.reply_queue);
+            ((void *)(long)G_config.reply_queue));
 
         ndrx_mq_close(G_config.reply_queue);
 
