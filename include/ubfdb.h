@@ -77,12 +77,12 @@ extern "C" {
  * Dump the UBF database configuration
  */
 #define NDRX_UBFDB_DUMPCFG(LEV, UBFDB)\
-    UBF_LOG(LEV, "============== UBF FIELD TABLE DB ===============");\
+    UBF_LOG(LEV, "-------------- UBF FIELD TABLE DB ---------------");\
     UBF_LOG(LEV, "%s=[%s]", NDRX_UBFDB_KWD_RESOURCE, UBFDB->resource);\
     UBF_LOG(LEV, "%s=[%ld]", NDRX_UBFDB_KWD_MAX_READERS, UBFDB->max_readers);\
     UBF_LOG(LEV, "%s=[%ld]", NDRX_UBFDB_KWD_MAP_SIZE, UBFDB->map_size);\
     UBF_LOG(LEV, "%s=[%o]", NDRX_UBFDB_KWD_PERMS, UBFDB->perms);\
-    UBF_LOG(LEV, "=================================================");
+    UBF_LOG(LEV, "-------------------------------------------------");
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
