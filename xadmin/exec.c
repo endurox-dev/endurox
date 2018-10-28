@@ -226,12 +226,12 @@ expublic int start_daemon_idle(void)
          * and re-init it again for child.
          */
         /*Bug #176 close resources */
-        NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)G_config.ndrxd_q);
+        NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)(long)G_config.ndrxd_q);
         if (G_config.ndrxd_q != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.ndrxd_q);
 
         NDRX_LOG(log_debug, "forked close reply_queue %p", 
-                (void *)G_config.reply_queue);
+                (void *)(long)G_config.reply_queue);
         
         /* WELL!!! Seems parent gets this close!!! */
         if (G_config.reply_queue != (mqd_t)EXFAIL)

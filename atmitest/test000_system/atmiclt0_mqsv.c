@@ -109,7 +109,7 @@ int main( int argc , char **argv )
         
         /* Sender reply */
         
-        if ((mqd_t)EXFAIL==(mq_clt = ndrx_mq_open(CL_QUEUE_NAME, 0, 0644, &attr)))
+        if ((mqd_t)EXFAIL==(mq_clt = ndrx_mq_open(CL_QUEUE_NAME, O_RDWR, 0644, &attr)))
         {
             NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
                     SV_QUEUE_NAME, strerror(errno));

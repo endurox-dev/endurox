@@ -339,7 +339,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
             if (NDRX_SVQ_EV_TOUT==ev->ev)
             {
                 NDRX_LOG(log_warn, "Timed out");
-                err = EAGAIN;
+                err = ETIMEDOUT;
             }
             else
             {

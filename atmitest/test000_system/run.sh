@@ -51,6 +51,7 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 
 # clean up the env for processing...
 xadmin down -y
+rm *.log 2>/dev/null
 
 # Post the event
 (./atmiclt0 2>&1) > ./atmiclt0.log

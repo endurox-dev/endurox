@@ -47,6 +47,8 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define ATTRCMP(X, Y) X.mq_curmsgs == Y.mq_curmsgs && X.mq_flags == Y.mq_flags && \
+        X.mq_maxmsg == Y.mq_maxmsg && X.mq_msgsize==Y.mq_msgsize
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -144,7 +146,7 @@ int local_test_unlink(char *pfx)
     
     for (i=0; i<1000; i++)
     {
-        if ((mqd_t)EXFAIL==(mq1 = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
+        if ((mqd_t)EXFAIL==(mq1 = ndrx_mq_open(qstr, O_CREAT | O_RDWR, 0644, &attr)))
         {
             NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
                     qstr, strerror(errno));
@@ -311,7 +313,13 @@ int local_test_receive(char *pfx)
 
         /* compare the attribs with initial, must match */
 
-        if (0!=memcmp((char *)&attr, &attrold, sizeof(attrold)))
+        NDRX_LOG(log_debug, "oattr: mq_curmsgs=%ld mq_flags=%ld mq_maxmsg=%ld, mq_msgsize=%ld", 
+                attrold.mq_curmsgs, attrold.mq_flags, attrold.mq_maxmsg, attrold.mq_msgsize);
+        
+        NDRX_LOG(log_debug, "nattr: mq_curmsgs=%ld mq_flags=%ld mq_maxmsg=%ld, mq_msgsize=%ld", 
+                attr.mq_curmsgs, attr.mq_flags, attr.mq_maxmsg, attr.mq_msgsize);
+
+        if (!(ATTRCMP(attr, attrold)))
         {
             NDRX_LOG(log_error, "Org attrs does not match!");
             EXFAIL_OUT(ret);
@@ -423,7 +431,7 @@ int local_test_send(char *pfx)
         attr.mq_curmsgs = 0;
 
         /* create the message queue */
-        if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
+        if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT | O_RDWR, 0644, &attr)))
         {
             NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
                     SV_QUEUE_NAME, strerror(errno));
@@ -454,7 +462,7 @@ int local_test_send(char *pfx)
             NDRX_LOG(log_error, "Expected send time 0, but got: %d", tim);
             EXFAIL_OUT(ret);
         }
-
+        
         NDRX_LOG(log_debug, ">>> send: timed + non blocked - ok (second msg)");
 
         /* we should get EAGAIN and time shall be less than second */
@@ -604,7 +612,7 @@ int local_test_qfull(char *pfx)
         attr.mq_curmsgs = 0;
 
         /* create the message queue */
-        if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT, 0644, &attr)))
+        if ((mqd_t)EXFAIL==(mq = ndrx_mq_open(qstr, O_CREAT | O_RDWR | O_NONBLOCK, 0644, &attr)))
         {
             NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
                     SV_QUEUE_NAME, strerror(errno));
@@ -657,12 +665,12 @@ int local_test_qfull(char *pfx)
             EXFAIL_OUT(ret);
         }
         err = errno;
-        
+        NDRX_LOG(log_error, "got err: %s", strerror(errno));
         /* now it test the error code */
-        if (EAGAIN!=err)
+        if (ETIMEDOUT!=err)
         {
             NDRX_LOG(log_error, "Expected error %d (EAGAIN) but got %d",
-                    EAGAIN, err);
+                    ETIMEDOUT, err);
             EXFAIL_OUT(ret);
         }
         
@@ -857,7 +865,7 @@ int main( int argc , char **argv )
         NDRX_LOG(log_debug, "About to SND!");
         
         /* open server queue */
-        if ((mqd_t)EXFAIL==(mq_srv = ndrx_mq_open(SV_QUEUE_NAME, 0, 0644, &attr)))
+        if ((mqd_t)EXFAIL==(mq_srv = ndrx_mq_open(SV_QUEUE_NAME, O_RDWR, 0644, &attr)))
         {
             NDRX_LOG(log_error, "Failed to open queue: [%s]: %s", 
                     SV_QUEUE_NAME, strerror(errno));
