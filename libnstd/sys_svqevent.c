@@ -481,12 +481,14 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     NDRX_LOG(log_dump, "Unregistering %p as mqd_t from timeout mon", mqd);
     */
     
+    pthread_mutex_lock(&(mqd->qlock));
     /* Remove any un-processed queued events... */
     DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
     {
         DL_DELETE(mqd->eventq, elt);
         NDRX_FREE(elt);
     }
+    pthread_mutex_unlock(&(mqd->qlock));
     
     /* remove from timeout hash */
     EXHASH_FIND_PTR( (M_mon.mqdhash), ((void **)&mqd), ret);
@@ -669,7 +671,6 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
 {
     int ret = EXSUCCEED;
     int l2, l1;
-    int sigs = 0;
     
     /* now emit the wakeup call */
     /* put barrier, this will also prevent other threads for sending
