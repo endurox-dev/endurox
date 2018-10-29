@@ -82,7 +82,8 @@ int main(int argc, char** argv) {
         /* two servers process this */
         if (ret!=num1)
         {
-            NDRX_LOG(log_error, "Applied event count is not 2 (which is %d)", ret);
+            NDRX_LOG(log_error, "Applied event count is not %d (which is %d)", 
+                    num1, ret);
             ret=EXFAIL;
             goto out;
         }

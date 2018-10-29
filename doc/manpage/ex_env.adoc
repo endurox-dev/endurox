@@ -131,10 +131,11 @@ Mandatory Env. Variables
     by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
     protection. Default value is 30.
 *NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
-    Max number of servers can advertise same service. This is used only in 'poll()' mode.
+    Max number of servers can advertise same service. This is used only in 
+    'poll()' and 'SystemV' mode.
     The number affects the size of shared memory used for services. Bigger number causes
     more memory to be used for service registry. If the number of servers goes over this number
-    for one service, the service entry will be ignored.
+    for one service, the service entry will be ignored. Default is *30*.
 *PATH='PATH'*::
     This is not Enduro/X specific env variable. But Enduro/X distribution bin 
     directory should be included in system PATH env. variable.

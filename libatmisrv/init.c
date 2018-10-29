@@ -338,16 +338,30 @@ expublic int atmisrv_initialise_atmi_library(void)
     pid_t pid = getpid();
     
     memset(&conf, 0, sizeof(conf));
-
+    
+    /* if thread id is not set, then do it here, as if
+     * tpsrvinit() did not do tpinit(), then ctxid could be left here as un-init 
+     */
+    
+    
+    conf.contextid = G_atmi_tls->G_atmi_conf.contextid;
+    
+    if (!conf.contextid)
+    {
+        conf.contextid = ndrx_ctxid_op(EXFALSE, EXFAIL);
+        NDRX_DBG_SETTHREAD(conf.contextid);
+    }
+    
     /* Generate my_id */
     snprintf(conf.my_id, sizeof(conf.my_id), NDRX_MY_ID_SRV, 
             G_server_conf.binary_name, 
             G_server_conf.srv_id, pid, 
-            G_atmi_tls->G_atmi_conf.contextid, 
+            conf.contextid, 
             G_atmi_env.our_nodeid);
     
     conf.is_client = 0;
     
+    NDRX_LOG(log_debug, "Server my_id=[%s]", conf.my_id);
     /*
     conf.reply_q = G_server_conf.service_array[1]->q_descr;
     strcpy(conf.reply_q_str, G_server_conf.service_array[1]->listen_q);
@@ -373,12 +387,22 @@ out:
 
 /**
  * Un-initialize all stuff
+ * TODO: Think about client close in case if we fail.
  * @return void
  */
 expublic void atmisrv_un_initialize(int fork_uninit)
 {
     int i;
     atmi_tls_t *tls;
+    
+    
+    /* check are we servers or clients? */
+    if (G_atmi_tls->G_atmi_conf.is_client)
+    {
+        tpterm();
+        return;
+    }
+    
     /* We should close the queues and detach shared memory!
      * Also we will not remove service queues, because we do not
      * what other instances do. This is up to ndrxd!
@@ -396,7 +420,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 
             /* just close it, no error check */
             if(((mqd_t)EXFAIL)!=G_server_conf.service_array[i]->q_descr &&
-                        ndrx_epoll_shallopensvc(i) &&
+                        ndrx_epoll_shallopenq(i) &&
 			EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
             {
 
@@ -457,7 +481,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 /* =========================API FUNCTIONS=====================================*/
 /* ===========================================================================*/
 /**
- * Advertize service
+ * Advertise service
  * OK, logic will be following:
  * -A advertise all services + additional (aliases) by -s
  * if -A missing, then advertise all

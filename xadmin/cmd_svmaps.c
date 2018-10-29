@@ -126,7 +126,7 @@ expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     
     if (EXFAIL==(attach_status = ndrx_svqshm_attach()))
     {
-        fprintf(stderr, "System V shared resources does not exists\n");
+        fprintf(stderr, "* System V shared resources does not exists\n");
         NDRX_LOG(log_error, "System V shared resources does not exists");
         EXFAIL_OUT(ret);
     }
@@ -216,6 +216,9 @@ expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
 
 out:
     
+    /*
+     * WARNING ! Do not detach if doing any background ops...  
+     */
     if (EXTRUE==attach_status)
     {
         ndrx_svqshm_detach();

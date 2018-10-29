@@ -63,14 +63,35 @@ int main(int argc, char** argv) {
     int cd_got;
     int cd[3];
     int got_send_block;
+    char bigmsg[8000];
     
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
     
     cd[0] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[0] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR first tpacall got %d: %s",
+            cd[0], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     cd[1] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[1] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR second tpacall got %d: %s",
+            cd[1], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     cd[2] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[2] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR third tpacall got %d: %s",
+            cd[2], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
     /* wait for tout */
     sleep(10);
@@ -157,8 +178,15 @@ int main(int argc, char** argv) {
     
     /* Test for full service queue, we shall get TPEBLOCK back */
     
+    if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, bigmsg, sizeof(bigmsg)))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to add bigmsg: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
     got_send_block = EXFALSE;
-    for (i=0; i<10000; i++)
+    while (1)
     {
         if (EXFAIL==tpacall("BLOCKY", (char *)p_ub, 0L, TPNOBLOCK))
         {

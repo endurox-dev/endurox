@@ -353,13 +353,18 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     
     if (call.complete_shutdown)
     {
-        /* TODO: Disconnect from SHM & SEM */
-        un_init();
+        NDRX_LOG(log_debug, "About to un-init after shutdown");
+        un_init(EXTRUE);
+        NDRX_LOG(log_debug, "Un-init completed (after shutdown)");
+        /* TODO: 
+         * how about some sleep here to allow the ndrxd to kill shared resources
+         * before user might want to move forward with next commands which open
+         * shm resources. Thus we can get some race conditions here
+         */
     }
 out:
     return ret;
 }
-
 
 /**
  * restart app or server.
@@ -373,7 +378,6 @@ out:
 expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=EXSUCCEED;
-    cmd_mapping_t cmd;
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
@@ -410,13 +414,29 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         }
     }
     
+    NDRX_LOG(log_info, "Shutting down...");
+    strcpy(argv[0], "stop");
+    if (EXSUCCEED==(ret=process_command_buffer(EXFALSE)))
+    {
+        if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
+        {
+            sleep(2);
+        }
+        NDRX_LOG(log_debug, "Starting up...");
+        strcpy(argv[0], "start"); 
+        ret=process_command_buffer(EXFALSE);
+    }
     
+#if 0
     if (EXFAIL!=srvid || EXEOS!=srvnm[0])
     {
         keep_running_ndrxd = EXTRUE;
     }
+#endif
     
+    /* run stop command first... via procesor */
     
+#if 0   
     memset(&cmd, 0, sizeof(cmd));
     
     cmd.ndrxd_cmd = NDRXD_COM_STOP_RQ;
@@ -426,16 +446,24 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         {
             /* let daemon to finish the exit process (unlink pid file/queues) */
             sleep(2); /* this will be interrupted when we got sig child */
+            
+            /* well we shall emit the start command via command processor
+             * so that it opens the proper env...
+             *
+             */
+
             if (!is_ndrxd_running() && EXFAIL==ndrx_start_idle())
             {
                 fprintf(stderr, "Failed to start idle instance of ndrxd!");
                 EXFAIL_OUT(ret);
             }
+
         }
         
         cmd.ndrxd_cmd = NDRXD_COM_START_RQ;
         ret = cmd_start(&cmd, argc, argv, p_have_next);
     }
+#endif
     
 out:
     return ret;

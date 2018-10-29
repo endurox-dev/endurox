@@ -110,7 +110,7 @@ xadmin down -y
 xadmin start -y || go_out 2
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 90
+sleep 20
 
 # Go to domain 1
 set_dom1;

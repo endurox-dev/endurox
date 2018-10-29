@@ -3,7 +3,7 @@
 	<appconfig>
 		<!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
 		<!-- Sanity check time, sec -->
-		<sanity>15</sanity>
+		<sanity>1</sanity>
 		<!-- If process have been state changed to other than dead, exit or not running
 		but PID of program does not exists in system, then send internel message, then 
 		program have been stopped.
@@ -25,6 +25,8 @@
 		<!-- Time after attach when program will start do sanity & respawn checks,
 		starts counting after configuration load -->
 		<restart_to_check>20</restart_to_check>
+		<!-- Zap Request address queues in this time -->
+		<rqaddrttl>1</rqaddrttl>
 	</appconfig>
 	<defaults>
 		<min>1</min>

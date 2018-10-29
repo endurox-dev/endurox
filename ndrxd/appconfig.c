@@ -309,7 +309,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 config->default_env[sizeof(config->default_env)-1] = EXEOS;
                 
                 /* process env */
-                ndrx_str_env_subs(config->default_env);
+                ndrx_str_env_subs_len(config->default_env, sizeof(config->default_env));
                 
                 xmlFree(p);
             }
@@ -859,8 +859,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             NDRX_STRNCPY(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT)-1);
-            /* process env */
-            ndrx_str_env_subs(p_srvnode->SYSOPT);
+            /* process env 
+            ndrx_str_env_subs_len(p_srvnode->SYSOPT, sizeof(p_srvnode->SYSOPT));
+             * */
             /* Ensure that we terminate... */
             p_srvnode->SYSOPT[sizeof(p_srvnode->SYSOPT)-1] = EXEOS;
             xmlFree(p);
@@ -869,8 +870,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             NDRX_STRNCPY(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT)-1);
-            /* process env */
+            /* Feature #331
+             * process env - do later when building model..
             ndrx_str_env_subs_len(p_srvnode->APPOPT, sizeof(p_srvnode->APPOPT));
+             * */
             /* Ensure that we terminate... */
             p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EXEOS;
             xmlFree(p);
@@ -884,7 +887,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->env[sizeof(p_srvnode->env)-1] = EXEOS;
 
             /* process env */
-            ndrx_str_env_subs(p_srvnode->env);
+            ndrx_str_env_subs_len(p_srvnode->env, sizeof(p_srvnode->env));
 
             xmlFree(p);
         }
@@ -1027,57 +1030,6 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     }
     
     NDRX_STRCPY_SAFE(p_srvnode->binary_name, srvnm);
-    
-    /* build process real name  */
-    if (EXEOS!=p_srvnode->cmdline[0])
-    {
-        NDRX_STRCPY_SAFE(tmppath, p_srvnode->cmdline);
-        
-        /* substitute env */
-        
-        if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_srvnode->binary_name, EXTRUE))
-        {
-            NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
-                CONF_NDRX_SVPROCNAME, p_srvnode->binary_name, strerror(errno));
-            EXFAIL_OUT(ret);
-        }
-
-        if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT, p_srvnode->clopt, EXTRUE))
-        {
-            NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
-                CONF_NDRX_SVCLOPT, p_srvnode->clopt, strerror(errno));
-
-            EXFAIL_OUT(ret);
-        }
-        
-        /* format the cmdline */
-        ndrx_str_env_subs_len(tmppath, sizeof(tmppath));
-        
-        /* extract binary name for the path... */
-        p = strtok(tmppath, " \t");
-        
-        if (NULL==p)
-        {
-            NDRX_LOG(log_error, "Missing process name in server's <cmdline> tag for [%s]",
-                    p_srvnode->binary_name);
-            EXFAIL_OUT(ret);
-        }
-        
-        /* get the base name */
-        p = basename(tmppath);
-        NDRX_STRCPY_SAFE(p_srvnode->binary_name_real, p);
-        
-        NDRX_LOG(log_debug, "Extracted real binary name [%s] from [%s]", 
-                p_srvnode->binary_name_real, p);
-
-        /* unset variables */
-        unsetenv(CONF_NDRX_SVPROCNAME);
-        unsetenv(CONF_NDRX_SVCLOPT);
-    }
-    else
-    {
-        NDRX_STRCPY_SAFE(p_srvnode->binary_name_real, srvnm);
-    }
     
     if (EXFAIL==p_srvnode->max)
         p_srvnode->max=config->default_max;

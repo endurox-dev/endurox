@@ -221,27 +221,21 @@ extern "C" {
 #define NDRXD_STATE_DOMSTARTED  0x00000008	/* Domain started             */
 #define NDRXD_STATE_SHUTDOWNED	0x00000010	/* Domain shutdowned          */
     
-    
-/**
- * Reply flags
- */
-#define NDRXD_REPLY_HAVE_MORE       0x00000001	/* Have more stuff to wait for */
-
 /**
  * Process state flags
  */
-#define NDRXD_PM_MIN_EXIT           0           /* Minimum dead process         */
-#define NDRXD_PM_NOT_STARTED        0           /* process not started (used for req state too)*/
-#define NDRXD_PM_DIED               1           /* process died for some reason */
-#define NDRXD_PM_EXIT               2           /* normal exit, shutdown        */
-#define NDRXD_PM_ENOENT             3           /* Binary not found             */
-#define NDRXD_PM_MAX_EXIT           19           /* Maximum dead process         */
+#define NDRXD_PM_MIN_EXIT           0       /**< Minimum dead process       */
+#define NDRXD_PM_NOT_STARTED        0       /**< process not started (used for req state too)*/
+#define NDRXD_PM_DIED               1       /**< process died for some reason */
+#define NDRXD_PM_EXIT               2       /**< normal exit, shutdown      */
+#define NDRXD_PM_ENOENT             3       /**< Binary not found           */
+#define NDRXD_PM_MAX_EXIT           19      /**< Maximum dead process       */
     
-#define NDRXD_PM_MIN_RUNNING        20           /* Minimum running process         */
-#define NDRXD_PM_STARTING           20           /* startup in progres...        */
-#define NDRXD_PM_RUNNING_OK         21           /* process running OK (used for req state too!)*/
-#define NDRXD_PM_STOPPING           22          /* About to shutdown            */
-#define NDRXD_PM_MAX_RUNNING        39           /* Max running process         */
+#define NDRXD_PM_MIN_RUNNING        20      /**< Minimum running process    */
+#define NDRXD_PM_STARTING           20      /**< startup in progres...      */
+#define NDRXD_PM_RUNNING_OK         21      /**< process running OK (used for req state too!)*/
+#define NDRXD_PM_STOPPING           22      /**< About to shutdown          */
+#define NDRXD_PM_MAX_RUNNING        39      /**< Max running process        */
     
 /* Macro for testing not-running process */
 #define PM_NOT_RUNNING(X)       (NDRXD_PM_MIN_EXIT <= ( X ) && ( X ) <= NDRXD_PM_MAX_EXIT)
@@ -251,18 +245,19 @@ extern "C" {
  * Flags for shm_svcinfo_t.flags
  * Indicates service info entry state.
  */
-#define NDRXD_SVCINFO_INIT              0x00000001  /* initialized             */
+#define NDRXD_SVCINFO_INIT              0x00000001  /**< initialized          */
 
 
-#define NDRXD_SVC_STATUS_AVAIL          0       /* Service is available   */
-#define NDRXD_SVC_STATUS_BUSY           1       /* Service is busy        */
+#define NDRXD_SVC_STATUS_AVAIL          0       /**< Service is available     */
+#define NDRXD_SVC_STATUS_BUSY           1       /**< Service is busy          */
     
-#define NDRXD_CALL_FLAGS_DEADQ          0x0001  /* Reply queue is dead....!     */
-    
-    
-#define SRV_KEY_FLAGS_BRIDGE            0x0001  /* This server is bridge server                 */
-#define SRV_KEY_FLAGS_SENDREFERSH       0x0002  /* Bridge requires that we send refersh to them */
-#define SRV_KEY_FLAGS_CONNECTED         0x0004  /* Is bridge connected?                         */
+#define NDRXD_CALL_FLAGS_DEADQ          0x0001  /**< Reply queue is dead....! */
+#define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call    */
+#define NDRXD_CALL_FLAGS_RSPHAVE_MORE   0x0004	/**< Have more stuff to wait for */
+
+#define SRV_KEY_FLAGS_BRIDGE            0x0001  /**< This server is bridge server                 */
+#define SRV_KEY_FLAGS_SENDREFERSH       0x0002  /**< Bridge requires that we send refersh to them */
+#define SRV_KEY_FLAGS_CONNECTED         0x0004  /**< Is bridge connected?                         */
     
     
 /*
@@ -342,6 +337,17 @@ struct cnodeinfo
     int srvs;           /**< Number of serves on this cluster node */
 };
 
+
+/**
+ * Shared memory resource id
+ */
+typedef struct ndrx_shm_resid ndrx_shm_resid_t;
+struct ndrx_shm_resid
+{
+    short cnt;                          /**< number of instances installed  */
+    int resid;                          /**< Resource id                    */
+};
+
 /**
  * Shared memory entry for service
  */
@@ -354,9 +360,7 @@ struct shm_svcinfo
     int csrvs;                          /**< Number of advertises in cluster      */
     int totclustered;                   /**< Total clustered nodes                */
     int cnodes_max_id;                  /**< Max id of cluster nodes in list (for fast search) */
-    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /* List of cluster nodes */
-    
-#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+    cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT];    /**< List of cluster nodes */
     /**
      * Number of resources, because there could be rqaddr servers, where
      * srvs is large number, but there is only on queue.
@@ -365,8 +369,7 @@ struct shm_svcinfo
     int resrr;                          /**< round robin server */
     
     /* THIST MUST BE LAST IN STRUCT (AS IT WILL SCALE DEPENDING ON SERVERS): */
-    int resids[0];                      /**<  Servers id's offering this service */
-#endif
+    ndrx_shm_resid_t resids[0];         /**<  Servers id's offering this service */
 };
 
 /* Macros for shm service size */
@@ -607,7 +610,6 @@ typedef struct
     long state_changed;     /**< Timer for state changed       */
     int flags;              /**< Flags sent by server info     */
     short   nodeid;         /**< other node id, if this is bridge */
-    int echoflags;          /**< flags sent back to xadmin */
     
 } command_reply_ppm_t;
 
@@ -626,7 +628,9 @@ typedef struct
     int totclustered;               /**< Total clustered nodes                */
     int cnodes_max_id;              /**< Max id of cluster nodes in list (for fast search) */
     cnodeinfo_t cnodes[CONF_NDRX_NODEID_COUNT]; /**< List of cluster nodes */
-    int resids[CONF_NDRX_MAX_SRVIDS_XADMIN];    /**< Server ID (fixed number xadmin output) */
+    /**< Server ID (fixed number xadmin output) */
+    ndrx_shm_resid_t resids[CONF_NDRX_MAX_SRVIDS_XADMIN];
+    int resnr;                                  /**< Number of local resources              */
     
 } command_reply_shm_psvc_t;
 
@@ -716,6 +720,8 @@ typedef struct
     * housekeeping
     */
    char rqaddress[NDRX_MAX_Q_SIZE+1];
+   
+   int resid;             /**< Resource id server id for poll, qid for sysv   */
    
 } srv_key_t;
 

@@ -1,7 +1,7 @@
-#!/bin/bash
 ##
+## @brief System V polling tests - server
 ##
-## @file testenv.sh
+## @file atmisv58.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,20 +30,38 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-export NDRX_QPREFIX=/mccp
 
-# Load UBF, we assume that we are inside of test dir!
-. ../../sampleconfig/setndrx
-. ../../ubftest/setenv
-unset NDRX_DEBUG_CONF
-export FLDTBLDIR=../../ubftest/ubftab
-export PATH=$PATH:../../xadmin
+cmake_minimum_required(VERSION 2.8)
 
-# Clean up q Space (remove all queues matching the symbol)
-xadmin qrmall ,
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
-if [[ `xadmin poller` == "SystemV" ]]; then
-    xadmin udown -y
-fi
+
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
+
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+
+############################# Test - executables ###############################
+add_executable (atmi.sv58 atmisv58.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt58 atmiclt58.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv58 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt58 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+
+set_target_properties(atmi.sv58 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt58 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################
 
 # vim: set ts=4 sw=4 et smartindent:

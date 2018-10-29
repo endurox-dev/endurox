@@ -83,6 +83,7 @@ function set_dom2 {
 #
 function go_out {
     echo "Test exiting with: $1"
+    xadmin killall atmiclt
     
     set_dom1;
     xadmin stop -y

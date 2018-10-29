@@ -162,7 +162,6 @@ expublic int accept_connection(void)
 {
     int ret=EXSUCCEED;
     tp_conversation_control_t *conv;
-    char fn[] = "accept_connection";
     long revent;
     int q_opened=EXFALSE;
     char their_qstr[NDRX_MAX_Q_SIZE+1];
@@ -211,17 +210,14 @@ expublic int accept_connection(void)
         br_dump_nodestack(G_atmi_tls->G_last_call.callstack, 
                 "Incoming conversation from bridge,"
                 "using first node from node stack");
-#ifndef EX_USE_POLL
-        snprintf(their_qstr, sizeof(their_qstr),NDRX_SVC_QBRDIGE, 
-                G_atmi_tls->G_atmi_conf.q_prefix, 
-                (int)G_atmi_tls->G_last_call.callstack[0]);
-#else
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
         /* poll() mode: */
         {
             int is_bridge;
             char tmpsvc[MAXTIDENT+1];
 
-            sprintf(tmpsvc, NDRX_SVC_BRIDGE, (int)G_atmi_tls->G_last_call.callstack[0]);
+            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, 
+                    (int)G_atmi_tls->G_last_call.callstack[0]);
 
             if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge,
                     NULL))
@@ -231,6 +227,10 @@ expublic int accept_connection(void)
                 EXFAIL_OUT(ret);
             }
         }
+#else
+        snprintf(their_qstr, sizeof(their_qstr),NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, 
+                (int)G_atmi_tls->G_last_call.callstack[0]);
 #endif
         
     }
@@ -244,9 +244,9 @@ expublic int accept_connection(void)
     
     if ((mqd_t)EXFAIL==(conv->reply_q=open_reply_q(their_qstr, &conv->reply_q_attr)))
     {
-        NDRX_LOG(log_error, "%s: Cannot connect to reply queue [%s] - "
+        NDRX_LOG(log_error, "Cannot connect to reply queue [%s] - "
                                         "cannot accept connection!", 
-                                         __func__, their_qstr);
+                                        their_qstr);
         ret=EXFAIL;
         goto out;
     }
@@ -256,7 +256,7 @@ expublic int accept_connection(void)
     if (EXSUCCEED!=ndrx_tpsend(G_atmi_tls->G_last_call.cd, NULL, 0, 0, &revent,
                             ATMI_COMMAND_CONNRPLY))
     {
-        NDRX_LOG(log_error, "%s: Failed to reply for acceptance!");
+        NDRX_LOG(log_error, "Failed to reply for acceptance!");
         ret=EXFAIL;
 
     }
@@ -278,7 +278,7 @@ out:
         conv->handshaked=EXTRUE;
     }
 
-    NDRX_LOG(log_debug, "%s: returns %d",  __func__, ret);
+    NDRX_LOG(log_debug, "returns %d",  ret);
     return ret;
 }
 
@@ -302,13 +302,13 @@ expublic tp_conversation_control_t*  get_current_connection(int cd)
     }
     else
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d",  __func__, cd);
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid connection descriptor %d", cd);
     }
 
     if (NULL!=ret && CONV_IN_CONVERSATION!=ret->status)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d - "
-                                        "connection closed",  __func__, cd);
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid connection descriptor %d - "
+                                        "connection closed",  cd);
         ret=NULL;
     }
 
@@ -330,10 +330,10 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     /* close down the queue */
     if (EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_close [%s]: %s",
-                                         __func__, conv->my_listen_q_str, strerror(errno));
+        NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
+                                         conv->my_listen_q_str, strerror(errno));
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_close [%s]: %s",
-                                         __func__, conv->my_listen_q_str, strerror(errno));
+                            __func__, conv->my_listen_q_str, strerror(errno));
        /* ret=FAIL;
         goto out; */
     }
@@ -341,23 +341,23 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     /* Remove the queue */
     if (killq && EXSUCCEED!=ndrx_mq_unlink(conv->my_listen_q_str))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_unlink [%s]: %s",
-                                         __func__, conv->my_listen_q_str, strerror(errno));
+        NDRX_LOG(log_warn, "Failed to ndrx_mq_unlink [%s]: %s",
+                                         conv->my_listen_q_str, strerror(errno));
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_unlink [%s]: %s",
-                                         __func__, conv->my_listen_q_str, strerror(errno));
+                            __func__, conv->my_listen_q_str, strerror(errno));
         /* ret=FAIL;
         goto out; */
     }
     
     /* Kill the reply queue too? */
     
-    NDRX_LOG(log_debug, "%s: Closing [%s]",  __func__, conv->reply_q_str);
+    NDRX_LOG(log_debug, "Closing [%s]",  conv->reply_q_str);
 
     /* close down the queue */
     if (EXSUCCEED!=ndrx_mq_close(conv->reply_q))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_close [%s]: %s",
-                                         __func__, conv->reply_q_str, strerror(errno));
+        NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
+                                        conv->reply_q_str, strerror(errno));
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_close [%s]: %s",
                                          __func__, conv->reply_q_str, strerror(errno));
        /* ret=FAIL;
@@ -368,8 +368,8 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     NDRX_LOG(log_warn, "UNLINKING: %s %d", conv->reply_q_str, killq);
     if (killq && EXSUCCEED!=ndrx_mq_unlink(conv->reply_q_str))
     {
-        NDRX_LOG(log_warn, "%s: Failed to ndrx_mq_unlink [%s]: %s",
-                                         __func__, conv->reply_q_str, strerror(errno));
+        NDRX_LOG(log_warn, "Failed to ndrx_mq_unlink [%s]: %s",
+                                         conv->reply_q_str, strerror(errno));
         ndrx_TPset_error_fmt(TPEOS, "%s: Failed to ndrx_mq_unlink [%s]: %s",
                                          __func__, conv->reply_q_str, strerror(errno));
         /* ret=FAIL;
@@ -464,15 +464,17 @@ exprivate mqd_t open_conv_q(char *q,  struct mq_attr *q_attr)
 
     if ((mqd_t)EXFAIL==ret)
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s",  __func__, q, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s",  
+                __func__, q, strerror(errno));
         goto out;
     }
 
         /* read queue attributes */
     if (EXFAIL==ndrx_mq_getattr(ret, q_attr))
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
-                                 __func__, q, ret, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes "
+                "for queue [%s] fd %d: %s",
+                __func__, q, ret, strerror(errno));
         /* close queue */
         ndrx_mq_close(ret);
         /* unlink the queue */
@@ -501,15 +503,16 @@ exprivate mqd_t open_reply_q(char *q, struct mq_attr *q_attr)
 
     if ((mqd_t)EXFAIL==ret)
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s:Failed to open queue [%s]: %s",  __func__, q, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to open queue [%s]: %s",  
+                q, strerror(errno));
         goto out;
     }
 
     /* read queue attributes */
     if (EXFAIL==ndrx_mq_getattr(ret, q_attr))
     {
-        ndrx_TPset_error_fmt(TPEOS, "%s: Failed to read attributes for queue [%s] fd %d: %s",
-                                 __func__, q, ret, strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to read attributes for queue [%s] fd %d: %s",
+                                 q, ret, strerror(errno));
 #if 0
         /* We cannot remove their Q!!! */
         /* close queue */
@@ -703,7 +706,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
         descr = &G_buf_descr[buffer_info->type_id];
 
         /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
+                &data_len, flags))
         {
             /* not good - error should be already set */
             ret=EXFAIL;
@@ -725,7 +729,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
             G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd);
     
     NDRX_LOG(log_debug, "%s/%s/%d reply_qstr: [%s]",
-		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, cd, reply_qstr);
+		G_atmi_tls->G_atmi_conf.q_prefix,  G_atmi_tls->G_atmi_conf.my_id, 
+                cd, reply_qstr);
     NDRX_STRCPY_SAFE(call->reply_to, reply_qstr);
 
     /* TODO: Firstly we should open the queue on which to listen right? */
@@ -768,9 +773,14 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     /* Reset call timer...! */
     ndrx_stopwatch_reset(&call->timer);
 
+    /*
     NDRX_LOG(log_debug, "Sending request to: %s, callseq: %hu", 
-            send_qstr, call->callseq);
-
+      
+     *       send_qstr, call->callseq, );
+*/
+    NDRX_LOG(log_debug, "Sending request to: [%s]: "
+                        "cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
+                        send_qstr, call->cd, call->timestamp, call->callseq, call->reply_to);
     /* And then we call out the service. */
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
     {
@@ -1065,7 +1075,7 @@ expublic int ndrx_tprecv (int cd, char * *data,
             {
 
                 NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
-                        "expected cd: %d, cd: %d, timestamp :%d, callseq: %hu, reply from %s",
+                        "expected cd: %d, cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
                         conv->cd, rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
                 /* clear the attributes we got... 
                 memset(rply_buf, 0, sizeof(*rply_buf));

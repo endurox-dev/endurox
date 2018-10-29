@@ -123,6 +123,7 @@ function install()
  * A commercial use license is available from Mavimax, Ltd
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
+ */
 #ifndef TEST"+::prov.testid+@"_H
 #define TEST"+::prov.testid+@"_H
 

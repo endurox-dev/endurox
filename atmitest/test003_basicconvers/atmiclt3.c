@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
 
     /* Wait for return from server */
     ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
-    NDRX_LOG(log_error, "tprecv failed with revent=%ld", revent);
+    NDRX_LOG(log_error, "tprecv failed with revent=%ld tperrno=%d", revent, tperrno);
 
     if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
     {

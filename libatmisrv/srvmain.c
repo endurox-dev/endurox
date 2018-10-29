@@ -632,7 +632,7 @@ int ndrx_main(int argc, char** argv)
     }
     
     /*
-     * Initialise services
+     * Initialize services
      */
     if (EXSUCCEED!=tpsvrinit(argc, argv))
     {

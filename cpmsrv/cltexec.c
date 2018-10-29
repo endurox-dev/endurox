@@ -538,7 +538,7 @@ expublic int cpm_exec(cpm_process_t *c)
     c->dyn.was_started = EXTRUE; /* We tried to start... */
     
     /* clone our self */
-    pid = fork();
+    pid = ndrx_fork();
 
     if( pid == 0)
     {

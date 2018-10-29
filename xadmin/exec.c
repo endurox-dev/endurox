@@ -205,7 +205,7 @@ expublic int start_daemon_idle(void)
     pid_t pid;
     char    key[NDRX_MAX_KEY_SIZE+3+1];
     /* clone our self */
-    pid = fork();
+    pid = ndrx_fork();
     
     if( pid == 0)
     {
