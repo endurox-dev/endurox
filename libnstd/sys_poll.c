@@ -995,6 +995,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     
     EX_EPOLL_API_ENTRY;
     
+    /* not returning... */
+    *buf_len = EXFAIL;
     /*  !!!! LOCKED AREA !!!! */
     MUTEX_LOCK_V(M_psets_lock);
     
