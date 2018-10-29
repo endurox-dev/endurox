@@ -332,7 +332,7 @@ out:
  * not thread safe.
  * @return
  */
-expublic void ndrx_epoll_sys_init(void)
+expublic int ndrx_epoll_sys_init(void)
 {
     sigset_t blockMask;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
@@ -344,7 +344,7 @@ expublic void ndrx_epoll_sys_init(void)
     if (!M_signal_first)
     {
 	NDRX_LOG(log_warn, "Already init done for poll()");
-	return;
+	return EXSUCCEED;
     }
 
     sa.sa_handler = slipSigHandler;
@@ -373,6 +373,8 @@ expublic void ndrx_epoll_sys_init(void)
             signal_process, NULL);
     M_signal_first = EXFALSE;
     
+    
+    return EXSUCCEED;
 }
 
 /**
@@ -980,7 +982,7 @@ out:
  * @return 
  */
 expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
-        int maxevents, int timeout)
+        int maxevents, int timeout, char *buf, int *buf_len)
 {
     int ret = EXSUCCEED;
     int numevents = 0;
@@ -1251,9 +1253,58 @@ expublic int ndrx_epoll_service_translate(char *send_q, char *q_prefix,
         char *svc, int resid)
 {
     /* lookup service in SHM! from resid/qid -> queue */
-    sprintf(send_q, NDRX_SVC_QFMT_SRVID, G_atmi_tls->G_atmi_conf.q_prefix, 
+    sprintf(send_q, NDRX_SVC_QFMT_SRVID, q_prefix, 
                 svc, resid);
     
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by poll
+ * @param svcnm
+ * @param idx
+ * @param mq_exits
+ * @return 
+ */
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
+{
+    return mq_exits;
+}
+
+/**
+ * Not used by poll
+ * @return 
+ */
+expublic int ndrx_epoll_shmdetach(void)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * not used by poll
+ * @param idx
+ * @return 
+ */
+expublic int ndrx_epoll_shallopenq(int idx)
+{
+    return EXTRUE;
+}
+/**
+ * Not used by poll
+ * @param qstr
+ */
+expublic void ndrx_epoll_mainq_set(char *qstr)
+{
+    return;
+}
+
+/**
+ * Not used by poll
+ * @param force
+ * @return 
+ */
+expublic int ndrx_epoll_down(int force)
+{
     return EXSUCCEED;
 }
 
