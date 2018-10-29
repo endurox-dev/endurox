@@ -268,7 +268,8 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             ev->data = M_buf;
             ev->datalen = NDRX_SVQ_OUTLEN(len);
             ev->ev = NDRX_SVQ_EV_DATA;
-                    
+            ev->next = NULL;       
+            ev->prev = NULL;
             NDRX_LOG(log_debug, "Putting admin event...");
             
             if (EXSUCCEED!=ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), ev))

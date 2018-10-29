@@ -633,7 +633,8 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             ev->data = NULL;
             ev->stamp_seq = r->stamp_seq;
             ev->stamp_time = r->stamp_time;
-
+            ev->prev = NULL;
+            ev->next = NULL;
             if (EXSUCCEED!=ndrx_svq_mqd_put_event(r->mqd, ev))
             {
                 NDRX_LOG(log_error, "Failed to put event for %p typ %d",
@@ -1085,7 +1086,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                    ev->ev = NDRX_SVQ_EV_FD;
                    ev->fd = M_mon.fdtabmo[i].fd;
                    ev->revents = M_mon.fdtabmo[i].revents;
-                   
+                   ev->prev = NULL;
+                   ev->next = NULL;
                    /* get queue descriptor  
                     * the data is deallocated by target thread
                     */
@@ -1707,7 +1709,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     /* if have message return it first..  */
     if (EXFAIL!=ret)
     {
-        pthread_mutex_unlock(&(mqd->qlock));
+        /* pthread_mutex_unlock(&(mqd->qlock)); */
         
         /* OK, we got a message from queue */
         if (!is_send)
