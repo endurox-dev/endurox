@@ -137,6 +137,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
     set(NDRX_LD_LIBRARY_PATH "SHLIB_PATH")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
     set(EX_OS_SUNOS "1")
+    set(EX_USE_SYSVQ "1")
     set(EX_USE_POLL "1")
 
     IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
@@ -326,8 +327,8 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
 ENDIF()
 
 add_subdirectory (tpevsrv)
-add_subdirectory (tpcachesv)
-add_subdirectory (tpcached)
+#add_subdirectory (tpcachesv)
+#add_subdirectory (tpcached)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
