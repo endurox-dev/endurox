@@ -316,7 +316,7 @@ expublic int command_wait_and_run(int *finished, int *abort)
     else
     {
         /* We will ignore return code, because sanity is not deadly requirement! */
-        do_sanity_check();
+        do_sanity_check(EXFALSE);
     }
     
     

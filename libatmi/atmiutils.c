@@ -380,9 +380,11 @@ restart_send:
                                         queue, ret, strerror(ret));
     }
 
+out:
+    
 restart_close:
-    /* Generally we ingore close */
-    if (EXFAIL==ndrx_mq_close(q_descr))
+    /* Generally we ignore close */
+    if ((mqd_t)EXFAIL!=q_descr && EXFAIL==ndrx_mq_close(q_descr))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -391,13 +393,12 @@ restart_close:
         }
     }
 
-out:
     return ret;
 }
 
 /**
  * Generic queue receiver
- * @param q_descr - queue descriptro
+ * @param q_descr - queue descriptor
  * @param q_str - string queue, can be NULL, then attribs not set
  * @param reply_q_attr - current queue attributes, can be null, then attribs not set
  * @param buf - where to put received data
@@ -694,7 +695,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             goto out;
         }
         /* do above while we are waiting for stuff back... */
-    } while((reply->flags & NDRXD_REPLY_HAVE_MORE));
+    } while((reply->flags & NDRXD_CALL_FLAGS_RSPHAVE_MORE));
 
 out:
     return ret;

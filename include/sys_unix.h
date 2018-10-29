@@ -44,6 +44,7 @@ extern "C" {
 #include <atmi.h>
 #include <sys_mqueue.h>
 #include <exhash.h>
+#include <nstdutil.h>
     
 #ifdef EX_OS_DARWIN
 #include <sys/types.h>
@@ -164,7 +165,6 @@ extern NDRX_API const char * __progname;
 #endif
  
 /******************************************************************************/
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -252,7 +252,7 @@ extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);
 extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
 extern NDRX_API int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
         char *svc, int resid);
-extern NDRX_API int ndrx_epoll_shallopensvc(int idx);
+extern NDRX_API int ndrx_epoll_shallopenq(int idx);
 extern NDRX_API int ndrx_epoll_resid_get(void);
 
 extern NDRX_API int ndrx_epoll_sys_init(void);
@@ -269,12 +269,12 @@ extern NDRX_API char * ndrx_poll_strerror(int err);
 
 /* used by System V, dummies for others pollers/queues: */
 extern NDRX_API int ndrx_epoll_resid_get(void);
-extern NDRX_API int ndrx_epoll_down(void);
+extern NDRX_API int ndrx_epoll_down(int force);
 extern NDRX_API int ndrx_epoll_shmdetach(void);
 extern NDRX_API int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
         char *svc, int resid);
 extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);
-extern NDRX_API int ndrx_epoll_shallopensvc(int idx);
+extern NDRX_API int ndrx_epoll_shallopenq(int idx);
 extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
 
 /* string generics: */
@@ -299,6 +299,9 @@ extern NDRX_API int ndrx_proc_children_get_recursive(string_list_t **list, pid_t
 extern NDRX_API int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos);
 extern NDRX_API int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re);
 extern NDRX_API void ndrx_sys_banner(void);
+extern NDRX_API int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
+       void (*child)(void));
+extern NDRX_API int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues);
 
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);

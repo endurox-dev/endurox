@@ -415,6 +415,16 @@ int main_uninit(void)
     /* Remove signal handling thread */
     ndrxd_sigchld_uninit();
     
+    /* final sanity check... */
+    ndrxd_sanity_finally();
+    
+    /* TODO: For System V we want to flush the
+     * any timed queues. Thus 
+     * we might want to call ndrxd_sanity_finish()
+     * which for System V would call remove all
+     * request addresses with out the servers
+     * and with out TTL check.
+     */
     /* Remove semaphores */
     ndrxd_sem_close_all();
     
@@ -431,7 +441,7 @@ int main_uninit(void)
     cmd_close_queue();
     
     /* terminate polling sub-system */
-    ndrx_epoll_down();
+    ndrx_epoll_down(EXFALSE);
 
     /* Remove pid file */
     ndrxd_unlink_pid_file(EXTRUE);

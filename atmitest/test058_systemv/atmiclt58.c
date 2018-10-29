@@ -1,7 +1,7 @@
 /**
- * @brief Test tpcall noblock operation - client
+ * @brief System V polling tests - client
  *
- * @file atmiclt45.c
+ * @file atmiclt58.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -45,7 +45,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
-#include "test45.h"
+#include "test58.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -61,49 +61,21 @@ int main(int argc, char** argv)
 {
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
     int i;
     int ret=EXSUCCEED;
-    char carr[8000];
     
-    if (EXFAIL==Bchg(p_ub, T_CARRAY_FLD, 0, carr, sizeof(carr)))
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
     {
-        NDRX_LOG(log_debug, "Failed to set T_CARRAY_FLD[0]: %s", Bstrerror(Berror));
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }    
-    
-    /* firstly we will do tpacall to fill the queue */
-    NDRX_LOG(log_debug, "Step 1 - tpacall()");
-    while (EXFAIL!=tpacall("TESTSV", (char *)p_ub, 0L, TPNOBLOCK))
+
+    for (i=0; i<4; i++)
     {
-        
-    }
-    
-    if (tperrno!=TPEBLOCK)
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpacall other failure: %s - must be TPEBLOCK!",
-                tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    NDRX_LOG(log_debug, "Step 2 - tpcall()");
-    /* then then these must give TPEBLOCK */
-    for (i=0; i<1000; i++)
-    {
-        if (EXFAIL != tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, 
-                &rsplen,TPNOBLOCK))
+        if (EXFAIL == tpacall("TESTSV", (char *)p_ub, 0L, 0))
         {
-            NDRX_LOG(log_error, "TESTERROR: tpcall must fail!");
-            ret=EXFAIL;
-            goto out;
-        }
-        
-        if (tperrno!=TPEBLOCK)
-        {
-            NDRX_LOG(log_error, "TESTERROR: tpcall other failure: %s - must be TPEBLOCK!",
-                    tpstrerror(tperrno));
+            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
             ret=EXFAIL;
             goto out;
         }
@@ -115,4 +87,6 @@ out:
 
     return ret;
 }
+
 /* vim: set ts=4 sw=4 et smartindent: */
+

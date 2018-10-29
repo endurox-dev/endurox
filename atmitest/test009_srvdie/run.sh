@@ -6,7 +6,7 @@
 ##   MESSAGES ARE LEFT IN QUEUE, THEY WILL GOT SVCERR. BUT IN VERY CLEAN IMPLEMENTATION
 ##   WE MIGHT SET THE FLAG IN SHARED MEMORY THAT SERVICE IS NOT AVAILABLE, AND LEAVE ENQUEUED
 ##   ONES FOR PROCESSING.
-##   But for current implementation SVCERR will be OK too, at last is is not timeout!
+##   But for current implementation SVCERR will be OK too, at last it is not a timeout!
 ##
 ## @file run.sh
 ##

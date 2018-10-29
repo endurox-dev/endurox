@@ -211,7 +211,7 @@ expublic int * _exget_tperrno_addr (void)
 }
 
 /**
- * Internetal function for setting
+ * Internal function for setting (FORCED)
  * @param error_code
  * @param msg
  * @return
@@ -219,14 +219,12 @@ expublic int * _exget_tperrno_addr (void)
 expublic void ndrx_TPset_error(int error_code)
 {
     ATMI_TLS_ENTRY;
-    if (!G_atmi_tls->M_atmi_error)
-    {
-        NDRX_LOG(log_warn, "%s: %d (%s)",
-                __func__, error_code, ATMI_ERROR_DESCRIPTION(error_code));
-        
-        G_atmi_tls->M_atmi_error_msg_buf[0] = EXEOS;
-        G_atmi_tls->M_atmi_error = error_code;
-    }
+    
+    NDRX_LOG(log_warn, "%s: %d (%s)",
+            __func__, error_code, ATMI_ERROR_DESCRIPTION(error_code));
+
+    G_atmi_tls->M_atmi_error_msg_buf[0] = EXEOS;
+    G_atmi_tls->M_atmi_error = error_code;
 }
 
 /**

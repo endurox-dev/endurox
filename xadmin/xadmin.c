@@ -85,17 +85,28 @@ exprivate int cmd_ver(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 exprivate int cmd_idle(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 /**
  * Initialize command mapping table
  */
 cmd_mapping_t M_command_map[] = 
 {
-    {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, "Quit from command line utility", NULL},
-    {"q",       cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
-    {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, "Alias for `quit'", NULL},
-    {"echo",    cmd_echo,  EXFAIL,              1,  999,0, "Echo text back to terminal", NULL},
-    {"idle",    cmd_idle,  EXFAIL,              1,  1,  2, "Enter daemon process in idle state (if not started)", NULL},
+    {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, 
+                                    "Quit from command line utility", 
+                                    NULL},
+    {"q",       cmd_quit,  EXFAIL,              1,  1,  0, 
+                                    "Alias for `quit'", 
+                                    NULL},
+    {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, 
+                                    "Alias for `quit'", 
+                                    NULL},
+    {"echo",    cmd_echo,  EXFAIL,              1,  999,0, 
+                                    "Echo text back to terminal", 
+                                    NULL},
+    {"idle",    cmd_idle,  EXFAIL,              1,  1,  2, 
+                                    "Enter daemon process in idle state (if not started)", 
+                                    NULL},
     {"help",    cmd_help,  EXFAIL,              1,  2,  0, "Print help (this output)\n"
                                                 "\t args: help [command]", NULL},
     {"h",       cmd_help,  EXFAIL,              1,  2,  0, "Alias for `help'", NULL},
@@ -109,13 +120,24 @@ cmd_mapping_t M_command_map[] =
                                                             "\t args: psc [-s]\n"
                                                             "\t -s : print full service name"
                                                          , NULL},
-    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  2, "Stop application domain\n"
-                                                         "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]", NULL},
-    {"down",    cmd_fdown, EXFAIL,              1,  2,  0, "Force appserver shuttdown & resurce cleanup\n"
-                                                         "\t args: fdown [-y]\n"
-                                                         "\t RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!", NULL},
-    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,    1,  1,  1, "Attached to ndrxd user session in progress", NULL},
-    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ, 1,  1,  1, "Load new configuration", NULL},
+    {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  2, 
+                                    "Stop application domain\n"
+                                    "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]", NULL},
+    {"down",    cmd_fdown, EXFAIL,              1,  3,  0, 
+                                    "Force App Server shutdown & resources cleanup\n"
+                                    "\tUsage: down [OPTION]...\n"
+                                    "\tOptional arguments: \n"
+                                    "\t\t -y\tDo not ask for confirmation\n"
+                                    "\t\t -u\tRemove user resources by username\n", 
+                                    NULL},
+    {"udown",    cmd_udown, EXFAIL,              1,  2,  0, 
+                                    "Remove resources by username\n"
+                                    "\tUsage: udown [OPTION]...\n"
+                                    "\tOptional arguments: \n"
+                                    "\t\t -y\tDo not ask for confirmation\n",
+                                    NULL},
+    {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,     1,  1,  1, "Attached to ndrxd user session in progress", NULL},
+    {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, "Load new configuration", NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, "Test new configuration", NULL},
     {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 5,  5,  1,"Un-advertise service.\n"
                                                          "\t args: unadv -i server_id -s service_name", NULL},
@@ -126,30 +148,43 @@ cmd_mapping_t M_command_map[] =
     {"r",       cmd_r,    EXFAIL,                1,  5,  2, "Alias for `restart'", NULL},
     {"-v",      cmd_ver,  EXFAIL,                1,  1,  0, "Print version info", NULL},
     {"ver",     cmd_ver,  EXFAIL,                1,  1,  0, "Print version info, same as -v", NULL},
-    {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  1,  1, "Print process model", NULL},
-    {"ppm2",    cmd_ppm2, NDRXD_COM_XAPPM_RQ,    1,  1,  1, "Print process model, 2nd page", NULL},
+    {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  2,  2, "Print process model"
+                                    "\tUsage ppm [OPTION]...\n"
+                                    "\t\t -2\tPrint Page 2\n"
+                                    ,NULL},
     {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1,  1, "Shared mem, print services", NULL},
     {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, "Shared mem, print servers", NULL},
     {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  2,  1, "Abort app shutdown or startup.\n"
                                                            "\t args: abort [-y]", NULL},
-    {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, "Restarts server instance by instance\n"
-                                                         "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
+    {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, 
+                                    "Restarts server instance by instance\n"
+                                    "\t Args: sreload [-y] [-s <server>] [-i <srvid>]", NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, "Alias for `sreload'", NULL},
-    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,   1,  1,  1, "Print service queues", NULL},
-    {"pqa",cmd_pqa,  EXFAIL,            1,  2,  2, "Print all queues\n"
-                                                "\t args: pqa [-a]\n"
-                                                "\t -a - print all queues "
-                                                "(incl. other local systems)", NULL},
+    {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,              1,  1,  1, 
+                                    "Print service queues", NULL},
+    {"pqa",cmd_pqa,  EXFAIL,                     1,  2,  2, 
+                                    "Print all queues\n"
+                                    "\t args: pqa [-a]\n"
+                                    "\t -a - print all queues "
+                                    "(incl. other local systems)", NULL},
     /* New XA commands: printtrans (pt), abort, commit, exsting abort move to: sabort (start/stop) 
      * abort + install ctrl+c handler 
      */
-    {"pt",        cmd_pt,EXFAIL,   1,  1,  1, "Print transactions", NULL},
-    {"printtrans",cmd_pt,EXFAIL,   1,  1,  1, "Alias for `pt'", NULL},
-    {"abort",     cmd_abort,EXFAIL,   3,  5,  1, "Abort transaction\n"
-                                            "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]", NULL},
-    {"aborttrans",cmd_abort,EXFAIL,   3,  5,  1, "Alias for `abort'", NULL},
-    {"commit",     cmd_commit,EXFAIL,   3,  4,  1, "Commit transaction\n"
-                                            "\t args: commit -t <RM Ref> -x <XID> [-y]", NULL},
+    {"pt",        cmd_pt,EXFAIL,                 1,  1,  1, 
+                                    "Print transactions", NULL},
+    {"printtrans",cmd_pt,EXFAIL,                 1,  1,  1, 
+                                    "Alias for `pt'", NULL},
+    {"abort",     cmd_abort,EXFAIL,              3,  5,  1, 
+                                    "Abort transaction\n"
+                                    "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]", 
+                                    NULL},
+    {"aborttrans",cmd_abort,EXFAIL,              3,  5,  1, 
+                                    "Alias for `abort'", 
+                                    NULL},
+    {"commit",     cmd_commit,EXFAIL,            3,  4,  1, 
+                                    "Commit transaction\n"
+                                    "\t args: commit -t <RM Ref> -x <XID> [-y]", 
+                                    NULL},
     {"committrans",cmd_commit,EXFAIL,   3,  4,  1, "Alias for `commit'", NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,   1,  1,  1, "Print env (from ndrxd)", NULL},
     {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,   2,  2,  1, "Alias for `pe'", NULL},
@@ -200,7 +235,8 @@ cmd_mapping_t M_command_map[] =
     {"cacheinval",cmd_ci,EXFAIL,   2,  4,  1, "Alias for `ci' ", NULL},
 #ifdef EX_USE_SYSVQ
     {"svmaps",    cmd_svmaps,EXFAIL,   1,  6,  0, "Print System V Queue mapping tables\n"
-                                    "\tUsage svmaps [OPTION]...\n"
+                                    "\tUsage: svmaps [OPTION]...\n"
+                                    "\tOptional arguments: \n"
                                     "\t\t -p\tPrint Posix to System V table (default)\n"
                                     "\t\t -s\tPrint System V to Posix table\n"
                                     "\t\t -a\tPrint all entries (lots of records...)\n"
@@ -208,7 +244,14 @@ cmd_mapping_t M_command_map[] =
                                     "\t\t -w\tPrint entries which were used but now free",
                                     NULL},
 #endif
-    {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL}
+    {"svqids",    cmd_svqids,EXFAIL,   1,  1,  0, "Print System V user queue ids\n"
+                                    "\tUsage: svqids\n",
+                                    NULL},
+    {"svsemids",  cmd_svsemids,EXFAIL, 1,  1,  0, "Print System V user semaphore ids\n"
+                                    "\tUsage: svsemids\n",
+                                    NULL},
+    {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL},
+    {"poller",    cmd_poller,EXFAIL,   1,  1,  0, "Print active poller sub-system", NULL}
 };
 
 /*
@@ -219,6 +262,7 @@ char *M_noinit[] = {
     ,"help"
     ,"h"
     ,"killall"
+    ,"udown"
     ,"gen"
 };
 
@@ -436,6 +480,19 @@ exprivate int cmd_echo(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 }
 
 /**
+ * Print current poller sub-system
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    printf("%s\n", ndrx_epoll_mode());
+    return EXSUCCEED;
+}
+
+/**
  * Simple output
  * @param buf
  */
@@ -489,12 +546,11 @@ exprivate int get_cmd(int *p_have_next)
     else /* Operate with stdin. */
     {
         char *p;
-
         memset(M_buffer, 0, sizeof(M_buffer));
 
         /* Welcome only if it is terminal */
         if (is_tty())
-            printf("NDRX %ld> ", tpgetnodeid());
+            printf("NDRX %s> ", ndrx_xadmin_nodeid());
 
         /* We should get something! */
         while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
@@ -540,12 +596,10 @@ exprivate int get_cmd(int *p_have_next)
             
             p = strtok (NULL, ARG_DEILIM);
         }
-
         /* We have next from stdin, if not quit command executed last */
         if (!M_quit_requested)
             *p_have_next = EXTRUE;        
     }
-
 out:
     return ret;
 }
@@ -556,12 +610,13 @@ out:
  * The command by itself should be found in first argument
  * @return SUCCEED/FAIL
  */
-exprivate int process_command_buffer(int *p_have_next)
+expublic int process_command_buffer(int *p_have_next)
 {
     int ret=EXSUCCEED;
     int i;
     cmd_mapping_t *map=NULL;
 
+    
     for (i=0; i< N_DIM(M_command_map); i++)
     {
         if (0==strcmp(G_cmd_argv[0], M_command_map[i].cmd))
@@ -616,9 +671,10 @@ out:
 
 /**
  * Un-initialize the process
+ * @param [in] leave_shm Leave shared memory open
  * @return 
  */
-expublic int un_init(void)
+expublic int un_init(int closeshm)
 {
     NDRX_LOG(log_debug, "into un-init");
     if (G_config.ndrxd_q != (mqd_t)EXFAIL)
@@ -645,8 +701,11 @@ expublic int un_init(void)
     /* In any case if session was open... */
     tpterm();
     
-    /* close any additional shared resources */
-    ndrx_xadmin_shm_close();
+    if (closeshm)
+    {
+        /* close any additional shared resources */
+        ndrx_xadmin_shm_close();
+    }
     
     return EXSUCCEED;
 }
@@ -661,11 +720,7 @@ expublic int ndrx_start_idle(void)
     int ret=EXSUCCEED;
 
     /* Start idle instance, if background process is not running. */
-    if (EXSUCCEED!=ndrx_xadmin_open_rply_q())
-    {
-        EXFAIL_OUT(ret);
-    }
-    else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
+    if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
     {
         ret = start_daemon_idle();
     }
@@ -866,7 +921,6 @@ int main(int argc, char** argv) {
             ret=EXFAIL;
             goto out;
         }
-
         /* Now process command buffer */
         if (G_cmd_argc_logical > 0 &&
             EXSUCCEED!=process_command_buffer(&have_next) &&
@@ -882,7 +936,7 @@ out:
 
     if (need_init)
     {
-        un_init();
+        un_init(EXTRUE);
     }
 /*
     fprintf(stderr, "xadmin normal shutdown (%d)\n", ret);

@@ -103,6 +103,10 @@ add_subdirectory (test054_svwrap)
 add_subdirectory (test055_envs)
 add_subdirectory (test057_invlcmd)
 
+IF (DEFINED EX_USE_SYSVQ)
+	add_subdirectory (test058_systemv)
+ENDIF()
+
 ################################################################################
 # Master test case driver
 add_executable (atmiunit1 atmiunit1.c)

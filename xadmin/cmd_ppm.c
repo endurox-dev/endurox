@@ -152,6 +152,33 @@ exprivate char *decode_flags(int flags)
 }
 
 /**
+ * Process response back, 2
+ * @param reply
+ * @param reply_len
+ * @return
+ */
+expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
+{
+    char binary[9+1];
+
+    if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
+    {
+        command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
+        FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
+        fprintf(stdout, "%-8.8s %-8.8s %-5d %-5d %-5d %s\n", 
+                ppm_info->binary_name,
+                ppm_info->binary_name_real,
+                ppm_info->srvid,
+                ppm_info->pid, 
+                ppm_info->svpid,
+                ppm_info->rqaddress
+                );
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
  * Process response back.
  * @param reply
  * @param reply_len
@@ -160,6 +187,11 @@ exprivate char *decode_flags(int flags)
 expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
 {
     char binary[9+1];
+    
+    if (reply->flags & NDRXD_CALL_FLAGS_PAGE2)
+    {
+        return ppm_rsp_process2(reply, reply_len);
+    }
 
     if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
     {
@@ -189,33 +221,6 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
 }
 
 /**
- * Process response back, 2
- * @param reply
- * @param reply_len
- * @return
- */
-expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
-{
-    char binary[9+1];
-
-    if (NDRXD_CALL_TYPE_PM_PPM==reply->msg_type)
-    {
-        command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
-        FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
-        fprintf(stdout, "%-8.8s %-8.8s %-5d %-5d %-5d %s\n", 
-                ppm_info->binary_name,
-                ppm_info->binary_name_real,
-                ppm_info->srvid,
-                ppm_info->pid, 
-                ppm_info->svpid,
-                ppm_info->rqaddress
-                );
-    }
-    
-    return EXSUCCEED;
-}
-
-/**
  * Get server listings
  * @param p_cmd_map
  * @param argc
@@ -224,15 +229,40 @@ expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
  */
 expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
+    int ret = EXSUCCEED;
     command_call_t call;
+    short print_2nd = EXFALSE;
+    
+    ncloptmap_t clopt[] =
+    {
+        {'2', BFLD_SHORT, (void *)&print_2nd, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Print page 2"},
+        {0}
+    };
     
     memset(&call, 0, sizeof(call));
 
-    /* Print header at first step! */
-    print_hdr();
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (print_2nd)
+    {
+        /* Print header at first step! */
+        print_hdr2();
+        
+        call.flags|=NDRXD_CALL_FLAGS_PAGE2;
+    }
+    else
+    {
+        /* Print header at first step! */
+        print_hdr();
+    }
     
     /* Then get listing... */
-    return cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
+    ret = cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
                         &call, sizeof(call),
                         G_config.reply_queue_str,
@@ -244,37 +274,8 @@ expublic int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
                         G_call_args,
                         EXFALSE,
                         G_config.listcall_flags);
-}
-
-/**
- * Show page 2 of process model
- * @param p_cmd_map
- * @param argc
- * @param argv
- * @return SUCCEED
- */
-expublic int cmd_ppm2(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
-{
-    command_call_t call;
-    
-    memset(&call, 0, sizeof(call));
-
-    /* Print header at first step! */
-    print_hdr2();
-    
-    /* Then get listing... */
-    return cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
-                        NDRXD_CALL_TYPE_GENERIC,
-                        &call, sizeof(call),
-                        G_config.reply_queue_str,
-                        G_config.reply_queue,
-                        G_config.ndrxd_q,
-                        G_config.ndrxd_q_str,
-                        argc, argv,
-                        p_have_next,
-                        G_call_args,
-                        EXFALSE,
-                        G_config.listcall_flags);
+out:    
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

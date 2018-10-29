@@ -3,7 +3,7 @@
     <appconfig>
         <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
         <!-- Sanity check time, sec -->
-        <sanity>15</sanity>
+        <sanity>1</sanity>
         <!-- If process have been state changed to other than dead, exit or not running
         but PID of program does not exists in system, then send internel message, then 
         program have been stopped.
@@ -11,7 +11,6 @@
         -->
         <checkpm>5</checkpm>
         <!--  <sanity> timer, end -->
-
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
         <!-- Do dead process restart every X seconds -->
         <respawncheck>10</respawncheck>
@@ -26,21 +25,24 @@
         <!-- Time after attach when program will start do sanity & respawn checks,
         starts counting after configuration load -->
         <restart_to_check>20</restart_to_check>
+        <!-- Send full service table every 5 seconds -->
+        <brrefresh>5</brrefresh>
     </appconfig>
     <defaults>
         <min>1</min>
         <max>1</max>
         <autokill>1</autokill>
+        <!-- Do not need respawning! -->
         <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
-        have not completed initialization, sec -->
+        have not completed initialisation, sec -->
         <start_max>20</start_max>
         <!--
-        Ping server in every X seconds (minimum step is <sanity>).
+        Ping server in every X sanity units
         -->
         <pingtime>9</pingtime>
         <!--
-        Max time in seconds in which server must respond.
+        Max number of sanity units in which server must respond.
         The granularity is sanity time.
         -->
         <ping_max>40</ping_max>
@@ -51,22 +53,25 @@
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
         <killtime>20</killtime>
-        <exportsvcs>TESTSV,TIMEOUTSV,NULLSV,RETSOMEDATA,ECHO,UNIXINFO,UNIX2,SOFTTOUT</exportsvcs>
     </defaults>
     <servers>
-        <server name="atmi.sv1">
+        
+        <server name="atmi.sv58">
+            <min>2</min>
+            <max>2</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
-            <!--
-            <cmdline>valgrind -=-leak-check=full ${NDRX_SVPROCNAME}</cmdline>
-            -->
+            <rqaddr>ADDR1</rqaddr>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1-ADDR1.log -r</sysopt>
         </server>
-        <server name="tpbridge">
-            <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-n1 -r -i 0.0.0.0 -p 44001 -tP -z30</appopt>
-            <blacklistsvcs>UNIXINFO,UNIX2</blacklistsvcs>
+        
+        <server name="atmi.sv58">
+            <min>2</min>
+            <max>2</max>
+            <srvid>100</srvid>
+            <rqaddr>ADDR2</rqaddr>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1-ADDR2.log -r</sysopt>
         </server>
+        
     </servers>
 </endurox>
+

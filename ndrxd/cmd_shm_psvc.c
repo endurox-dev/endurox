@@ -76,20 +76,22 @@ expublic void shm_psvc_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     shm_psvc_info->srvs = p_shm->srvs;
     /* cluster fields: */
     shm_psvc_info->csrvs = p_shm->csrvs;
+    shm_psvc_info->resnr = p_shm->resnr;
     shm_psvc_info->totclustered = p_shm->totclustered;
     shm_psvc_info->cnodes_max_id = p_shm->cnodes_max_id;
     memcpy(shm_psvc_info->cnodes, p_shm->cnodes, sizeof(p_shm->cnodes));
     
-    shm_psvc_info->resids[0] = 0;
-
+    shm_psvc_info->resids[0].resid = 0;
+    shm_psvc_info->resids[0].cnt = 0;
+    
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
     /* copy the number of elements */
-    cnt = shm_psvc_info->srvs - shm_psvc_info->csrvs;
+    cnt = p_shm->resnr;
     if (cnt > CONF_NDRX_MAX_SRVIDS_XADMIN)
     {
         cnt = CONF_NDRX_MAX_SRVIDS_XADMIN;
     }
-    memcpy(shm_psvc_info->resids, p_shm->resids, cnt*sizeof(int));
+    memcpy(shm_psvc_info->resids, p_shm->resids, cnt*sizeof(p_shm->resids[0]));
 #endif
     
     /*
@@ -121,7 +123,7 @@ exprivate void shm_psvc_progress(command_call_t * call, shm_svcinfo_t *p_shm, in
     params.mod_param1 = (void *)p_shm;
     params.param2 = slot;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, shm_psvc_reply_mod, 0L, 0, NULL))
     {
