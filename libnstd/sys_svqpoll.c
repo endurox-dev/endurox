@@ -106,11 +106,11 @@ exprivate int M_accept_any = EXFALSE;
  * Remove all resources used by polling sub-system or queuing
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_epoll_down(void)
+expublic int ndrx_epoll_down(int force)
 {
     int ret = EXSUCCEED;
     
-    ret=ndrx_svqshm_down();
+    ret=ndrx_svqshm_down(force);
     
 out:
     return ret;
@@ -175,7 +175,7 @@ expublic void ndrx_epoll_mainq_set(char *qstr)
  * @param idx advertise service index
  * @return EXTRUE - open q, EXFALSE - do not open Q
  */
-expublic int ndrx_epoll_shallopensvc(int idx)
+expublic int ndrx_epoll_shallopenq(int idx)
 {
     if (ATMI_SRV_ADMIN_Q==idx || ATMI_SRV_REPLY_Q==idx)
     {
@@ -439,10 +439,9 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
      * for adding it is done by service queue open function
      * ndrx_epoll_service_add()
      */
-    
+    NDRX_LOG(log_debug, "Op %d on mqd=%p from poller", op, fd);
     if (EX_EPOLL_CTL_DEL==op)
     {
-        exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
         EXHASH_ITER(hh, M_svcmap, el, elt)
         {
             if (el->mqd==fd)
@@ -458,6 +457,12 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd,
                 }
                 
                 EXHASH_DEL(M_svcmap, el);
+                /* if this this is service Q (it is virtual svc q) */
+                if (!ndrx_epoll_shallopenq(el->idx))
+                {
+                    NDRX_LOG(log_info, "Free up virtual mqd %p", el->mqd);
+                    NDRX_FREE((char *)el->mqd);
+                }
                 NDRX_FREE(el);
             }
         }
@@ -568,7 +573,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         tm.tv_sec += (timeout / 1000);  /* Set timeout, passed in msec, uses as sec */
     }
     
-    if (EXFAIL==ndrx_svq_event_msgrcv( M_mainq, buf, &rcvlen, 
+    if (EXFAIL==ndrx_svq_event_sndrcv( M_mainq, buf, &rcvlen, 
             &tm, &ev, EXFALSE, EXTRUE))
     {
         err = errno;

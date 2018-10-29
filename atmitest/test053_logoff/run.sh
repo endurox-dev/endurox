@@ -51,6 +51,7 @@ export PATH=$PATH:$TESTDIR
 
 xadmin killall atmi.sv53 2>/dev/null
 xadmin killall atmiclt53 2>/dev/null
+xadmin down -y
 
 # client timeout
 export NDRX_TOUT=10
@@ -60,6 +61,7 @@ function go_out {
     echo "Test exiting with: $1"
     xadmin killall atmi.sv53 2>/dev/null
     xadmin killall atmiclt53 2>/dev/null
+    xadmin down -y
     
     popd 2>/dev/null
     exit $1

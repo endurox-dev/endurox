@@ -74,9 +74,10 @@ exprivate int check_long_startup(void);
 exprivate int check_dead_processes(void);
 /**
  * Master process for sanity checking.
+ * @param[in] finalchk perform final checks? Remove dread resources...
  * @return SUCCEED/FAIL
  */
-expublic int do_sanity_check(void)
+expublic int do_sanity_check(int finalchk)
 {
     int ret=EXSUCCEED;
     static ndrx_stopwatch_t timer;
@@ -145,7 +146,7 @@ expublic int do_sanity_check(void)
         first=EXFALSE;
     }
      
-    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity)
+    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity || finalchk)
     {
         wasrun = EXTRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
@@ -196,7 +197,11 @@ expublic int do_sanity_check(void)
         check_long_startup();
         /* Send bridge refresh (if required) */
         
-        brd_send_periodrefresh();
+        if (!finalchk)
+        {
+            brd_send_periodrefresh();
+        }
+        
         /* Time for PM checking! */
         if (EXSUCCEED!=check_dead_processes())
         {
@@ -205,16 +210,23 @@ expublic int do_sanity_check(void)
         }
         
         /* Respawn any dead processes */
-        do_respawn_check();
+        if (!finalchk)
+        {
+            do_respawn_check();
+        }
         
         /* update queue statistics (if enabled) */
-        if (G_app_config->gather_pq_stats)
+        
+        if (!finalchk)
         {
-            pq_run_santiy(EXTRUE);
+            if (G_app_config->gather_pq_stats)
+            {
+                pq_run_santiy(EXTRUE);
+            }
         }
         
 #ifdef EX_USE_SYSVQ
-        if (EXSUCCEED!=do_sanity_check_sysv())
+        if (EXSUCCEED!=do_sanity_check_sysv(finalchk))
         {
             NDRX_LOG(log_error, "System V sanity checks failed!");
             userlog("System V sanity checks failed!");
@@ -812,6 +824,31 @@ exprivate int check_cnvsrv(char *qname)
         }
     }
    
+out:
+    return ret;
+}
+
+/**
+ * Perform final sanity checks - ndrxd is exiting
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrxd_sanity_finally(void)
+{
+    int ret = EXSUCCEED;
+    
+    /*
+#ifdef EX_USE_SYSVQ
+    
+    if (EXSUCCEED!=ndrxd_sysv_finally())
+    {
+        ret = EXFAIL;
+    }
+    
+#endif
+     */
+    
+    ret = do_sanity_check(EXTRUE);
+    
 out:
     return ret;
 }

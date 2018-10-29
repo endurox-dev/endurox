@@ -77,6 +77,7 @@ SYNOPSIS
             <protected>PROTECTED_SERVER</protected>
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
+            <cmdline>ATMI_SERVER_COMMAND_LINE</cmdline>
             <rqaddr>RQADDR</rqaddr>
             <envs>
                 <usegroup>SVGRP_ENV_GROUP_NAME</usegroup>
@@ -303,7 +304,6 @@ DEBUG CONFIGURATION FILE SYNTAX
     for particular service, the error will be logged and message will be dropped,
     thus caller will get a timeout. If different request addresses are serving
     the same service, then request will be load balanced in round-robin mode.
-
     This can be overridden by 'RQADDR' on per server basis. Request address
     cannot start with '@' symbol. The max length of the request address is *30*
     chars.
@@ -374,6 +374,19 @@ DEBUG CONFIGURATION FILE SYNTAX
     full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
     of process model checks, the ndrxd will find out that wrapped binary name does not
     contain the *SERVER_BINARY_NAME*, thus will reboot the process.
+*ATMI_SERVER_COMMAND_LINE*::
+    This is alternative command line build by user. From this command line the
+    real process name is extracted as first executable (basename). When  building
+    custom command line, the env substitution is available at the stage with
+    following processes based envs (not counting the globals): *NDRX_SVSRVID* -
+    Enduro/X server id, *NDRX_SVPROCNAME* - server process name (defined in XML
+    config as *SERVER_BINARY_NAME* variable, *NDRX_SVCLOPT* - standard command
+    line options used by Enduro/X. These options are used at stage with ATMI
+    server library gets initialized, it will use in case *ndrx_main()* receives
+    less than expected standard argument count. Basically this command line tag
+    is suitable for interpreted languages, like Java, where interpreter needs to
+    be started as stand alone binary, and the Enduro/X is initialized as a library
+    within stand alone process.
 *SVGRP_ENV_GROUP_NAME*::
     Environment variable group name for the servers section. Identifier max length
     is 30 chars. Same group can be used for different server processes. One server

@@ -80,17 +80,27 @@ expublic int ndrx_svq_close(mqd_t mqd)
     NDRX_LOG(log_debug, "close %p mqd", mqd);
     
     if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
-    {
-        /* close the queue */
+    {   
+        /* close the queue 
+         * we will put the Q in hash locally so while it is in pipe
+         * (in kernel space), the address sanitizer might see it as leaked
+         * ptr. Thus hash will keep the local pointer.
+         * This is really needed for sanitizer only...
+         */
+        mqd->self = (char *)mqd;
+        ndrx_svq_delref_add(mqd);
+        
         if (EXSUCCEED!=ndrx_svq_moncmd_close(mqd))
         {
             NDRX_LOG(log_error, "Failed to close queue %p", mqd);
             userlog("Failed to close queue %p", mqd);
         }
+        
         /*
          * free will be done by backend thread..
         NDRX_FREE(mqd);
          */
+        
         return EXSUCCEED;
     }
     else
@@ -201,6 +211,13 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     if (NULL!=attr)
     {
         memcpy(&(mq->attr), attr, sizeof (*attr));
+        
+        /* initial attribs does not include flags */
+        if (oflag & O_NONBLOCK)
+        {
+            mq->attr.mq_flags|=O_NONBLOCK;
+            NDRX_LOG(log_debug, "Opening in non blocked mode");
+        }
     }
 
     /* Init mutexes... */
@@ -244,7 +261,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     /* set thread handler - for interrupts */
     mqd->thread = pthread_self();
     
-    if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, ptr, &ret, 
+    if (EXSUCCEED!=ndrx_svq_event_sndrcv( mqd, ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXFALSE, EXFALSE))
     {
         err = errno;
@@ -313,7 +330,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     /* set thread handler - for interrupts */
     mqd->thread = pthread_self();
     
-    if (EXSUCCEED!=ndrx_svq_event_msgrcv( mqd, (char *)ptr, &ret, 
+    if (EXSUCCEED!=ndrx_svq_event_sndrcv( mqd, (char *)ptr, &ret, 
             (struct timespec *)__abs_timeout, &ev, EXTRUE, EXFALSE))
     {
         err = errno;

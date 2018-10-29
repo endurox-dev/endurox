@@ -183,7 +183,7 @@ expublic int dynamic_unadvertise(char *svcname, int *found, svc_entry_fn_t *copy
         }
         
         /* Now close the FD, only if was open */
-        if (ndrx_epoll_shallopensvc(pos) &&
+        if (ndrx_epoll_shallopenq(pos) &&
                 EXSUCCEED!=ndrx_mq_close(ent->q_descr))
         {
             ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_close failed to close fd %d: %s", 
@@ -374,29 +374,31 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Open the queue */
     
     /* open service Q, also give some svc name here!  */
-    if (ndrx_epoll_shallopensvc(ATMI_SRV_Q_ADJUST+G_server_conf.adv_service_count))
+    if (ndrx_epoll_shallopenq(ATMI_SRV_Q_ADJUST+G_server_conf.adv_service_count))
     {
         entry_new->q_descr = ndrx_mq_open_at (entry_new->listen_q, 
                                 O_RDWR | O_CREAT | O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+        
+        /*
+         * Check are we ok or failed?
+         */
+        if ((mqd_t)EXFAIL==entry_new->q_descr)
+        {
+           /* Release semaphore! */
+            if (G_shm_srv) ndrx_unlock_svc_op(__func__);
+
+           ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
+                                       entry_new->listen_q, strerror(errno));
+           EXFAIL_OUT(ret);
+        }
     }
     else
     {
-        /* System V mode, where services does not require separate queue  */
+        /* System V mode, where services does not require separate queue  
         entry_new->q_descr = ndrx_epoll_service_add(entry_new->svc_nm, 
                 G_server_conf.adv_service_count, (mqd_t)EXFAIL);
-    }
-    
-    /*
-     * Check are we ok or failed?
-     */
-    if ((mqd_t)EXFAIL==entry_new->q_descr)
-    {
-        /* Release semaphore! */
-         if (G_shm_srv) ndrx_unlock_svc_op(__func__);
-         
-        ndrx_TPset_error_fmt(TPEOS, "Failed to open queue: %s: %s",
-                                    entry_new->listen_q, strerror(errno));
-        EXFAIL_OUT(ret);
+         * */
+        entry_new->q_descr = (mqd_t)EXFAIL;
     }
     
     /* re-define service, used for particular systems... like system v */
@@ -417,7 +419,11 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Register stuff in shared memory! */
     if (G_shm_srv)
     {
+#ifdef EX_USE_SYSVQ
+        ndrx_shm_install_svc(entry_new->svc_nm, 0, ndrx_epoll_resid_get());
+#else
         ndrx_shm_install_svc(entry_new->svc_nm, 0, G_server_conf.srv_id);
+#endif
     }
     
     /* Release semaphore! */

@@ -68,6 +68,11 @@
 #define NDRX_SVQ_INDEX(MEM, IDX) ((ndrx_svq_map_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_map_t)*IDX)))
 #define NDRX_SVQ_STATIDX(MEM, IDX) ((ndrx_svq_status_t*)(((char*)MEM)+(int)(sizeof(ndrx_svq_status_t)*IDX)))
 
+/** Match timeout event */
+#define NDRX_SVQ_TOUT_MATCH(X, Y) (X->stamp_seq == Y->stamp_seq && \
+                        0==memcmp( &(X->stamp_time), &(Y->stamp_time), \
+                        sizeof(X->stamp_time)))
+
 #define NDRX_SVQ_MON_TOUT         1 /**< Request for timeout                  */
 #define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
 #define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
@@ -102,6 +107,7 @@ typedef struct
     int qid;                            /**< System V Queue id          */
     short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
     char qstr[NDRX_MAX_Q_SIZE+1];       /**< Posix queue name string    */
+    ndrx_stopwatch_t ctime;             /**< change time                */
 } ndrx_svq_status_t;
 
 /**
@@ -172,6 +178,9 @@ struct ndrx_svq_info
      * in high level, Object API modes.
      */
     pthread_t thread;
+    
+    char *self;                /**< ptr to self for hash                    */
+    EX_hash_handle hh;         /**< delete hash                             */
 
 };
 typedef struct ndrx_svq_info * mqd_t;
@@ -222,7 +231,8 @@ extern NDRX_API ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxle
 
 extern NDRX_API void ndrx_svq_set_lock_timeout(int secs);
 extern NDRX_API int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev);
-extern NDRX_API int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
+extern NDRX_API void ndrx_svq_delref_add(mqd_t qd);
+extern NDRX_API int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd);
 extern NDRX_API void ndrx_svq_event_exit(int detatch);
 
@@ -237,7 +247,7 @@ extern NDRX_API int ndrx_svq_event_init(void);
 /* internals... */
 extern NDRX_API int ndrx_svqshm_init(int attach_only);
 extern NDRX_API int ndrx_svqshm_attach(void);
-extern NDRX_API int ndrx_svqshm_down(void);
+extern NDRX_API int ndrx_svqshm_down(int force);
 extern NDRX_API void ndrx_svqshm_detach(void);
 extern NDRX_API int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p, 
         ndrx_sem_t **map_sem, int *queuesmax);
@@ -249,6 +259,7 @@ extern NDRX_API int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
 extern NDRX_API ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl);
 
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status);
+
 extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status, 
         int qid, int *pos, int *have_value);
 

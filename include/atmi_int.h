@@ -249,14 +249,14 @@ typedef struct buffer_obj buffer_obj_t;
 struct buffer_obj
 {
     int type_id;
-    /* int sub_type_id; */
+    /** int sub_type_id; */
     char subtype[XATMI_SUBTYPE_LEN+1];
-    short autoalloc;  /* Is buffer automatically allocated by tpcall? */
+    short autoalloc;  /**< Is buffer automatically allocated by tpcall? */
     char *buf;
-    long size;        /* Allocated size.... */
+    long size;        /**< Allocated size.... */
     /* Move to hash by buf */
     /* buffer_obj_t *prev, *next; */
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /**< makes this structure hashable */
 };
 
 /**
@@ -690,6 +690,7 @@ extern NDRX_API int G_srv_id;
 
 /* Utilities */
 extern NDRX_API int ndrx_load_common_env(void);
+extern NDRX_API long ndrx_ctxid_op(int make_free, long ctxid);
 extern NDRX_API int ndrx_load_new_env(char *file);
 extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
 extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
@@ -824,7 +825,8 @@ extern NDRX_API void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub);
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);
 extern NDRX_API int ndrx_chk_ndrxd(void);
-extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force);
+extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res);
+extern NDRX_API void ndrx_down_userres(void);
 extern NDRX_API int ndrx_killall(char *mask);
 extern NDRX_API int ndrx_q_exists(char *qpath);
 extern NDRX_API int ndrx_get_cached_svc_q(char *q);

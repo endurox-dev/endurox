@@ -60,22 +60,23 @@
 /**
  * Perform init of the shared resources
  */
-#define INIT_ENTRY \
+#define INIT_ENTRY(X) \
 if (!ndrx_G_svqshm_init) \
     {\
         MUTEX_LOCK_V(ndrx_G_svqshm_init_lock);\
         \
         if (!ndrx_G_svqshm_init)\
         {\
-            ret = ndrx_svqshm_init(EXFALSE);\
+            X = ndrx_svqshm_init(EXFALSE);\
         }\
         \
         MUTEX_UNLOCK_V(ndrx_G_svqshm_init_lock);\
         \
-        if (EXFAIL==ret)\
+        if (EXFAIL==X)\
         {\
             NDRX_LOG(log_error, "Failed to create/attach System V Queues "\
                     "mapping shared memory blocks!");\
+            EXFAIL_OUT(X);\
         }\
     }
 
@@ -104,9 +105,9 @@ expublic volatile int ndrx_G_svqshm_init = EXFALSE;
 /* have some lock for this argument */
 MUTEX_LOCKDECL(ndrx_G_svqshm_init_lock);
 
-exprivate ndrx_shm_t M_map_p2s;          /**< Posix to System V mapping       */
-exprivate ndrx_shm_t M_map_s2p;          /**< System V to Posix mapping       */
-exprivate ndrx_sem_t M_map_sem;          /**< RW semaphore for SHM protection */
+exprivate ndrx_shm_t M_map_p2s = {.fd=0, .path=""};   /**< Posix to System V mapping       */
+exprivate ndrx_shm_t M_map_s2p = {.fd=0, .path=""};   /**< System V to Posix mapping       */
+exprivate ndrx_sem_t M_map_sem = {.semid=0};/**< RW semaphore for SHM protection */
 
 /* Also we need some array of semaphores for RW locking */
 
@@ -122,24 +123,47 @@ exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
  * Remove shared mem resources
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svqshm_down(void)
+expublic int ndrx_svqshm_down(int force)
 {
     int ret = EXSUCCEED;
+    int i;
+    ndrx_svq_map_t *svq, *el;
     /* have some init first, so that we attach existing resources
      * before killing them
      */
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
-    if (EXSUCCEED!=ndrx_sem_close(&M_map_sem))
+    /* Terminate polling threads... if any... */
+    ndrx_atfork_prepare();
+    
+    if (force)
     {
-        ret = EXFAIL;
-    }
-    
-    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXFALSE))
-    {
-        ret = EXFAIL;
-    }
-    
+        /* get write locks... */
+        svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+
+        /* remove any queues left open...! */
+        for (i=0; i<M_queuesmax; i++)
+        {
+            el = NDRX_SVQ_INDEX(svq, i);
+
+            if (el->flags & NDRX_SVQ_MAP_ISUSED)
+            {
+                NDRX_LOG(log_error, "DOWN: Removing QID %d (%s) - should not be present!", 
+                        el->qid, el->qstr);
+                userlog("DOWN: Removing QID %d (%s) - should not be present!", 
+                        el->qid, el->qstr);
+                if (EXSUCCEED!=msgctl(el->qid, IPC_RMID, NULL))
+                {
+                    int err = errno;
+                    NDRX_LOG(log_error, "got error when removing %d: %s - ignore", 
+                         el->qid, strerror(err));
+                    userlog("got error when removing %d: %s - ignore", 
+                         el->qid, strerror(err));
+                }
+            }
+        } /* for */
+    } /* force */
+     
     if (EXSUCCEED!=ndrx_shm_close(&M_map_p2s))
     {
         ret = EXFAIL;
@@ -159,6 +183,18 @@ expublic int ndrx_svqshm_down(void)
     {
         ret = EXFAIL;
     }
+    
+    if (EXSUCCEED!=ndrx_sem_close(&M_map_sem))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_remove(&M_map_sem, EXTRUE))
+    {
+        ret = EXFAIL;
+    }
+    
+    ndrx_G_svqshm_init = EXFALSE;
     
 out:
     return ret;
@@ -407,13 +443,54 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
         int *have_value)
 {
     int ret=SHM_ENT_NONE;
-    int try = ndrx_hash_fn(pathname) % M_queuesmax;
+    int try = EXFAIL;
     int start = try;
     int overflow = EXFALSE;
     int iterations = 0;
-    
     ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
-
+    
+    /*
+     * 20/10/2018 Got to loop twice!!!! 
+     * Some definitions:
+     * A - our Q
+     * B - other Q
+     * 
+     * The problem:
+     * 1) B gets installed in our cell / direct hash number
+     * 2) A gets installed in cell+1 index
+     * 3) B gets uninstalled / cell becomes as stale
+     * 4) A tries installed Q again, and it hits the cell and not the cell+1
+     * 
+     * ----
+     * Thus to solve this, we got to firstly perform "read only" lookup on the
+     * queue tables to see, is queue already present there or not. And if not,
+     * only then perform write to maps..
+     * 
+     * !!!! Needs to check with the _ndrx_shm_get_svc() wouldn't be there the
+     * same problem !!!!
+     * 
+     */
+    if (oflag & O_CREAT)
+    {
+        int try_read;
+        int read_have_value;
+        
+        if (position_get_qstr(pathname, 0, &try_read, &read_have_value)
+                && read_have_value)
+        {
+            try = try_read;
+        }
+    }
+    
+    if (EXFAIL==try)
+    {
+        try = ndrx_hash_fn(pathname) % M_queuesmax;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Got existing record at %d", try);
+    }
+    
     *pos=EXFAIL;
     
     NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p oflag: %d", 
@@ -429,7 +506,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     {
         if (0==strcmp(NDRX_SVQ_INDEX(svq, try)->qstr, pathname))
         {
-            *pos=try;    
+            *pos=try;
             
             if (NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED)
             {
@@ -521,12 +598,53 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
         int *have_value)
 {
     int ret=SHM_ENT_NONE;
-    int try = qid % M_queuesmax;
+    int try = EXFAIL;
     int start = try;
     int overflow = EXFALSE;
     int iterations = 0;
-    
     ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_s2p.mem;
+    
+    /*
+     * 20/10/2018 Got to loop twice!!!! 
+     * Some definitions:
+     * A - our Q
+     * B - other Q
+     * 
+     * The problem:
+     * 1) B gets installed in our cell / direct hash number
+     * 2) A gets installed in cell+1 index
+     * 3) B gets uninstalled / cell becomes as stale
+     * 4) A tries installed Q again, and it hits the cell and not the cell+1
+     * 
+     * ----
+     * Thus to solve this, we got to firstly perform "read only" lookup on the
+     * queue tables to see, is queue already present there or not. And if not,
+     * only then perform write to maps..
+     * 
+     * !!!! Needs to check with the _ndrx_shm_get_svc() wouldn't be there the
+     * same problem !!!!
+     * 
+     */
+    if (oflag & O_CREAT)
+    {
+        int try_read;
+        int read_have_value;
+        
+        if (position_get_qid(qid, 0, &try_read, &read_have_value)
+                && read_have_value)
+        {
+            try = try_read;
+        }
+    }
+    
+    if (EXFAIL==try)
+    {
+        try = qid % M_queuesmax;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Got existing record at %d", try);
+    }
 
     *pos=EXFAIL;
     *have_value = EXFALSE;
@@ -743,7 +861,7 @@ expublic int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len)
     ndrx_svq_map_t *svq2;
     ndrx_svq_map_t *sm;      /* System V map        */
 
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
     svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
 
@@ -802,7 +920,7 @@ expublic int ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
     ndrx_svq_map_t *pm;      /* Posix map           */
     ndrx_svq_map_t *sm;      /* System V map        */
     
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
     
     svq = (ndrx_svq_map_t *) M_map_p2s.mem;
     svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
@@ -1035,13 +1153,17 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
     int err = 0;
     int is_locked = EXFALSE;
     
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
-    ndrx_svq_map_t *svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
+    ndrx_svq_map_t *svq;
+    ndrx_svq_map_t *svq2;
+  
     
     ndrx_svq_map_t *pm;      /* Posix map           */
     ndrx_svq_map_t *sm;      /* System V map        */
     
-    INIT_ENTRY;
+    INIT_ENTRY(ret);
+  
+    svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    svq2 = (ndrx_svq_map_t *) M_map_s2p.mem;
     
     /* ###################### CRITICAL SECTION ############################### */
     if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_WRITE))
@@ -1212,11 +1334,16 @@ out:
  */
 expublic string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_status)
 {
+    int retstat = EXSUCCEED;
     string_list_t* ret = NULL;
     int have_lock = EXFALSE;
     int i=0;
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
+    ndrx_svq_map_t *svq;
     ndrx_svq_map_t *pm;      /* Posix map           */
+    
+    INIT_ENTRY(retstat);
+    
+    svq = (ndrx_svq_map_t *) M_map_p2s.mem;
     
     *return_status = EXSUCCEED;
             

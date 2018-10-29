@@ -150,10 +150,13 @@ extern void simple_output(char *buf);
 /* extern int get_arg(char *param, int argc, char **argv, char **out); */
 extern int chk_confirm(char *message, short is_confirmed);
 extern int chk_confirm_clopt(char *message, int argc, char **argv);
+extern char * ndrx_xadmin_nodeid(void);
 extern int ndrx_start_idle();
 extern int ndrx_xadmin_shm_close();
-extern int un_init(void);
+extern int un_init(int closeshm);
 extern void sign_chld_handler(int sig);
+
+extern int process_command_buffer(int *p_have_next);
 
 #ifndef NDRX_DISABLEPSCRIPT
 extern void printfunc(HPSCRIPTVM v,const PSChar *s,...);
@@ -173,6 +176,7 @@ extern int ss_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int psc_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_udown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int at_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
@@ -188,10 +192,6 @@ extern int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 /*ppm:*/
 extern int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int ppm_rsp_process(command_reply_t *reply, size_t reply_len);
-
-/*ppm2:*/
-extern int cmd_ppm2(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
-extern int ppm_rsp_process2(command_reply_t *reply, size_t reply_len);
 
 /* shm: */
 extern int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len);
@@ -259,8 +259,11 @@ extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 
 /* System V specifics */
 #ifdef EX_USE_SYSVQ
-expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 #endif
+
+extern int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

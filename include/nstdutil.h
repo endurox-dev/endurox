@@ -85,8 +85,8 @@ typedef struct ndrx_growlist ndrx_growlist_t;
 /** Linear array growing support structure */
 struct ndrx_growlist
 {
-    /** number of items used */
-    int items;
+    /** number of items allocated */
+    int itemsalloc;
     /** allocate increment step */
     int step;
     
@@ -170,7 +170,7 @@ extern NDRX_API int ndrx_get_cksum(char *file);
 extern NDRX_API ssize_t ndrx_getline(char **lineptr, size_t *n, FILE *stream);
 extern NDRX_API char * ndrx_memdup(char *org, size_t len);
 extern NDRX_API int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
-        int tokens_elmsz, int len);
+        int tokens_elmsz, int len, int start_tok, int stop_tok);
 extern NDRX_API void ndrx_chomp(char *str);
 extern NDRX_API uint32_t ndrx_rotl32b (uint32_t x, uint32_t n);
 extern NDRX_API int ndrx_proc_get_line(int line_no, char *cmd, char *buf, int bufsz);

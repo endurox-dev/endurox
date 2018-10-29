@@ -67,14 +67,15 @@ extern "C" {
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * Type defintion for *SERVER section entry
+ * Type definition for *SERVER section entry
  */
 typedef struct conf_server_node conf_server_node_t;
 struct conf_server_node
 {
     char binary_name[MAXTIDENT+1]; /**< Name of the binary */
-    /** Real binary name */
+    /** Real binary name 
     char binary_name_real[MAXTIDENT+1];
+     * */
     char fullpath[PATH_MAX+1]; /**< full path to executable, optional */
     /** Command line format (optional) */
     char cmdline[PATH_MAX+1];
@@ -178,7 +179,7 @@ struct pm_node
     short   nodeid;         /**< other node id, if this is bridge             */
     int reloadonchange_cksum; /**< Checksum code of the binary                */
     char binary_path[PATH_MAX+1]; /**< Path were binary lives...              */
-    
+    int resid;              /**< Res id to be installed in shm for poll & sysv*/
     /* Linked list */
     pm_node_t *prev;
     pm_node_t *next;
@@ -343,7 +344,7 @@ extern void sign_chld_handler(int sig);
 extern int cmd_close_queue(void);
 
 /* Sanity & restart */
-extern int do_sanity_check(void);
+extern int do_sanity_check(int isfinal);
 extern int self_notify(srv_status_t *status, int block);
 extern int remove_server_queues(char *process, pid_t pid, int srv_id, char *rplyq);
 
@@ -388,8 +389,11 @@ extern int roc_check_binary(char *binary_path, unsigned sanity_cycle);
 extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
 extern int self_sreload(pm_node_t *p_pm);
 
+extern int ndrxd_sanity_finally(void);
+
 #ifdef EX_USE_SYSVQ
-extern int do_sanity_check_sysv(void);
+extern int do_sanity_check_sysv(int finalchk);
+extern int ndrxd_sysv_finally(void);
 #endif
 
 #ifdef	__cplusplus

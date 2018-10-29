@@ -128,12 +128,23 @@ xadmin down -y
 xadmin start -y || go_out 2
 
 #exit 0
+###############################################################################
+echo "Test retart command (shall not stall...)"
+###############################################################################
+
+xadmin r -y
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Restart fails!"
+    go_out -100
+fi
 
 ###############################################################################
 echo "Have some wait for ndrxd goes in service - wait for connection establishment."
 echo "Test Connection recovery... (bug #250)"
 ###############################################################################
-sleep 60
+sleep 20
 print_domains;
 
 # Go to domain 1
@@ -149,7 +160,7 @@ set_dom1;
 xadmin start -s tpbridge
 
 
-sleep 60
+sleep 20
 echo ">>> After DOM1 network shutdown..."
 print_domains;
 
@@ -166,7 +177,7 @@ xadmin start -s tpbridge
 ###############################################################################
 echo "Now continue with standard tests.."
 ###############################################################################
-sleep 60
+sleep 20
 print_domains;
 set_dom1;
 
@@ -187,10 +198,9 @@ fi
 # Run the client test...
 echo "Will issue calls to clients:"
 (./atmiclt1 2>&1) > ./atmiclt-dom1.log
+RET=$?
 
 grep "Performance" atmiclt-dom1.log
-
-RET=$?
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

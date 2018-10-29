@@ -62,8 +62,6 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-EX_SPIN_LOCKDECL(M_cd_lock);
-EX_SPIN_LOCKDECL(M_callseq_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate void unlock_call_descriptor(int cd, short status);
@@ -253,10 +251,11 @@ out:
 expublic unsigned short ndrx_get_next_callseq_shared(void)
 {
     static volatile unsigned short shared_callseq=0;
-    
-    EX_SPIN_LOCK_V(M_callseq_lock);
+    EX_SPIN_LOCKDECL(callseq_lock);
+            
+    EX_SPIN_LOCK_V(callseq_lock);
     shared_callseq++;
-    EX_SPIN_UNLOCK_V(M_callseq_lock);
+    EX_SPIN_UNLOCK_V(callseq_lock);
     
     return shared_callseq;
 }
@@ -427,7 +426,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     if (ex_flags & TPCALL_BRCALL)
     {
         /* If this is a bridge call, then format the bridge Q */
-#ifdef EX_USE_POLL
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
         {
             int tmp_is_bridge;
             char tmpsvc[MAXTIDENT+1];
@@ -1009,7 +1008,7 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
                         * because we do want answer back! */
     
     /* event posting might be done with out reply... */
-    if (!(flags&TPNOREPLY))
+    if (!(flags & TPNOREPLY))
     {
         if (EXSUCCEED!=(ret=ndrx_tpgetrply(&cd_rply, cd_req, odata, olen, flags, 
                 p_tranid)))

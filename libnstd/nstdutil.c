@@ -1299,16 +1299,19 @@ expublic double ndrx_atof(char *str)
  * @param tokens
  * @param tokens_elmsz
  * @param len
+ * @param start_tok 0 based index of token to start to extract
+ * @param stop_tok 0 based indrex of token to stop to extracts
  * @return 0 - no tokens extracted
  */
 expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
-        int tokens_elmsz, int len)
+        int tokens_elmsz, int len, int start_tok, int stop_tok)
 {
     int ret = 0;
     char *str = NDRX_STRDUP(str1);
     char *ptr;
     char *token;
     char *str_first = str;
+    int toks=0;
     
     if (NULL==str)
     {
@@ -1325,17 +1328,25 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
             str_first = NULL; /* now loop over the string */
         }
         
-        if (ret<len)
+        if (toks>=start_tok)
         {
-            sscanf(token, fmt, tokens);
-            tokens+=tokens_elmsz;
+            if (ret<len)
+            {
+                sscanf(token, fmt, tokens);
+                tokens+=tokens_elmsz;
+            }
+            else
+            {
+                break;
+            }
+            ret++;
         }
-        else
+        
+        if (toks>=stop_tok)
         {
             break;
         }
-        
-        ret++;
+        toks++;
     }
     
 out:
@@ -1403,7 +1414,7 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
 expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
 {
     list->maxindexused = EXFAIL;
-    list->items = 0;
+    list->itemsalloc = 0;
     list->step = step;
     list->size = size;
     list->mem = NULL;
@@ -1434,14 +1445,14 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
             EXFAIL_OUT(ret);
         }
         
-        list->items+=list->step;
+        list->itemsalloc+=list->step;
     }
     
-    while (index+1 > list->items)
+    while (index+1 > list->itemsalloc)
     {
-        list->items+=list->step;
+        list->itemsalloc+=list->step;
         
-        next_blocks = list->items / list->step;
+        next_blocks = list->itemsalloc / list->step;
         
         new_size = next_blocks * list->step * list->size;
         /*

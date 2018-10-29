@@ -131,6 +131,10 @@ typedef struct
 exprivate ndrx_svq_evmon_t M_mon;        /**< event monitor data          */
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
+exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
+
+exprivate mqd_t M_delref = NULL;         /**< this is delete reference    */
+EX_SPIN_LOCKDECL(M_delreflock);          /**< delete reference lock       */
 
 /* we need two hash lists
  * - the one goes by mqd to list/update timeout registrations
@@ -146,6 +150,17 @@ exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Register QD for delete - local ptr copy so that sanitizer does not see the
+ * leak...
+ * @param qd queue descriptor to register
+ */
+expublic void ndrx_svq_delref_add(mqd_t qd)
+{
+    EX_SPIN_LOCK_V(M_delreflock);
+    EXHASH_ADD_PTR(M_delref, self, qd);
+    EX_SPIN_UNLOCK_V(M_delreflock);
+}
 
 /**
  * Add FD to polling structure
@@ -244,6 +259,7 @@ exprivate int ndrx_svq_fd_hash_delpoll(int fd)
 
                 EXFAIL_OUT(ret);
             }
+            break;
         }
     }
     
@@ -581,8 +597,22 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
         
         if (delta <= 0)
         {
-            NDRX_LOG(log_warn, "Timeout condition: mqd %p time spent: %ld", 
-                        r->mqd, delta);
+            int wait_matched;
+            pthread_spin_lock(&( ((mqd_t)r->mqd)->stamplock));
+            
+            if (NDRX_SVQ_TOUT_MATCH((r), ((mqd_t)r->mqd)))
+            {
+                wait_matched = EXTRUE;
+            }
+            else
+            {
+                wait_matched = EXFAIL;
+            }
+            pthread_spin_unlock(&(((mqd_t)r->mqd)->stamplock));
+            
+            NDRX_LOG(log_warn, "Timeout condition: mqd %p time spent: %ld "
+                    "matched: %d seq: %lu", 
+                        r->mqd, delta, wait_matched, r->stamp_seq);
             
             /* lets put the event to the message queue... 
              * firstly we need to allocate the event.
@@ -758,6 +788,10 @@ out:
 
 /**
  * Wakup signal handling
+ * in worst case if spin locks will consume the wakup signals
+ * we could put in some queue the mqds waiting for signals,
+ * and then update the mqds in queue that we got a signal
+ * thus we shall not enter into msgrcv..
  * @param sig
  */
 exprivate void ndrx_svq_signal_action(int sig)
@@ -765,6 +799,7 @@ exprivate void ndrx_svq_signal_action(int sig)
     /* nothing todo, just ignore 
     NDRX_LOG(log_debug, "Signal action");
      * */
+    M_signalled = EXTRUE;
     return;
 }
 
@@ -780,8 +815,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int retpoll;
     int ret = EXSUCCEED;
     int timeout;
-    int i, moc;
+    int i, moc, donext;
     int err;
+    mqd_t tmpq;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
     /**
@@ -822,6 +858,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 timeout, M_mon.nrfds);
         
         moc=0;
+        donext=EXTRUE;
         for (i=0; i<M_mon.nrfds; i++)
         {
             /* M_mon.fdtab[i].revents = 0; 
@@ -886,7 +923,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             }
             
         }
-        else for (i=0; i<moc; i++)
+        else for (i=0; i<moc && donext; i++)
         {
             if (M_mon.fdtabmo[i].revents)
             {
@@ -964,6 +1001,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             NDRX_LOG(log_info, "Deregister fd %d from polling", 
                                     cmd.fd);
                             ndrx_svq_fd_hash_del(cmd.fd);
+                            /* if we get some more events, we shall break this loop and try next poll... */
+                            donext=EXFALSE;
                             break;
                         case NDRX_SVQ_MON_TERM:
                             NDRX_LOG(log_info, "Terminate request...");
@@ -987,8 +1026,24 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             pthread_mutex_destroy(&cmd.mqd->barrier);
                             pthread_mutex_destroy(&cmd.mqd->qlock);
                             
+                            EX_SPIN_LOCK_V(M_delreflock);
+                            EXHASH_FIND_PTR(M_delref, (void **)&(cmd.mqd), tmpq);
+                            
+                            if (NULL==tmpq)
+                            {
+                                NDRX_LOG(log_error, "mqd %p not found del hash!", 
+                                        cmd.mqd->self);
+                                userlog("mqd %p not found del hash!", 
+                                        cmd.mqd->self);
+                                EX_SPIN_UNLOCK_V(M_delreflock);
+                                EXFAIL_OUT(ret);
+                            }
+                            
+                            EXHASH_DEL(M_delref, tmpq);
+                            EX_SPIN_UNLOCK_V(M_delreflock);
+                            
                             NDRX_FREE(cmd.mqd);
-
+                            
                             if (EXSUCCEED!=ret)
                             {
                                 goto out;
@@ -1116,6 +1171,12 @@ exprivate void event_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
     
+    if (0==M_mon.evpipe[READ] && 0==M_mon.evpipe[WRITE])
+    {
+        NDRX_LOG(log_debug, "evpipe not open -> nothing to close");
+        goto out;
+    }
+    
     ndrx_svq_event_exit(EXFALSE);
     
     /* Close pipes */
@@ -1124,13 +1185,23 @@ exprivate void event_fork_prepare(void)
         NDRX_LOG(log_error, "Failed to close READ PIPE %d: %s",
                 M_mon.evpipe[READ], strerror(errno));
     }
+    else
+    {
+        M_mon.evpipe[READ] = 0;
+    }
     
     if (EXSUCCEED!=close(M_mon.evpipe[WRITE]))
     {
         NDRX_LOG(log_error, "Failed to close WRITE PIPE %d: %s",
-                M_mon.evpipe[READ], strerror(errno));
+                M_mon.evpipe[WRITE], strerror(errno));
+    }
+    else
+    {
+        M_mon.evpipe[WRITE] = 0;
     }
     
+out:
+    return;
 }
 
 /**
@@ -1285,7 +1356,7 @@ expublic int ndrx_svq_event_init(void)
     M_mon.fdtab[PIPE_POLL_IDX].events = POLLIN;
     
     /* startup tup the thread */
-    NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write: %d",
+    NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
     if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL)))
@@ -1310,7 +1381,7 @@ expublic int ndrx_svq_event_init(void)
             EXFAIL_OUT(ret);
         }
     
-        if (EXSUCCEED!=(ret=pthread_atfork(event_fork_prepare, 
+        if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
                 event_fork_resume, event_fork_resume)))
         {
             M_alive=EXFALSE;
@@ -1479,17 +1550,19 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
  *  not processed the FD, we will gate again FD wakups for the same events.
  * @return EXSUCCEED (got message from q)/EXFAIL (some event received)
  */
-expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
+expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd)
 {
     int ret = EXSUCCEED;
     int err;
     int msgflg;
     int len;
-           
+    ndrx_svq_ev_t cur_stamp;
+    
     /* set the flag value */
     if (mqd->attr.mq_flags & O_NONBLOCK)
     {
+        NDRX_LOG(log_debug, "O_NONBLOCK set");
         msgflg = IPC_NOWAIT;
     }
     else
@@ -1510,8 +1583,13 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     /* update time stamps */
     pthread_spin_lock(&(mqd->stamplock));
+    
     mqd->stamp_seq++;
+    cur_stamp.stamp_seq = mqd->stamp_seq;
+    
     ndrx_stopwatch_reset(&(mqd->stamp_time));
+    memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
+    
     pthread_spin_unlock(&(mqd->stamplock));
     
     /* register timeout: */
@@ -1551,8 +1629,24 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * if have any event, interrupt the waiting and return back to caller
      * Also check that event is relevant for us -> i.e timestamps matches...
      */
-    if (NULL!=mqd->eventq)
+    
+    /* Check the events matching the current time stamp, ignore
+     * events sent not four our stamp
+     */
+
+    while (NULL!=mqd->eventq &&
+            NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
+            !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
     {
+        /* Remove any pending event, not relevant to our position */
+        *ev = mqd->eventq;
+        DL_DELETE(mqd->eventq, mqd->eventq);
+        NDRX_FREE(*ev);
+        *ev = NULL;
+    }
+    
+    if (NULL!=mqd->eventq)
+    {    
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, mqd->eventq);
         pthread_mutex_unlock(&(mqd->qlock));
@@ -1562,12 +1656,13 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         EXFAIL_OUT(ret);
     }
     
+    
     /* Chain the lockings, so that Q lock would wait until both
      *  are locked
      */
     /* set thread id.. */
     mqd->thread = pthread_self();
-        
+    M_signalled = EXFALSE;
     /* here is no interrupt, as pthread locks are imune to signals */
     pthread_spin_lock(&(mqd->rcvlock));    
     /* unlock queue  */
@@ -1579,15 +1674,26 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
      * to process...
      * send until both are unlocked or stamp is changed.
      */
-    if (is_send)
+    if (!M_signalled)
     {
-        ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+        if (is_send)
+        {
+            ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
+        }
+        else
+        {
+            ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
+        }
+        err=errno;
     }
     else
     {
-        ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
+        /* OK, we are signaled, lets fail here! can cause zero length msgs
+         * to be received, thus needs to have status!
+         */
+        ret=EXFAIL;
+        err=EINTR;
     }
-    err=errno;
 
     /* TODO: Replace these two bellow with spin locks
      * so that we are sure that we do not get any signals on them... */
@@ -1629,19 +1735,30 @@ expublic int ndrx_svq_event_msgrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     ret=EXSUCCEED;
     
-    
     /* lock queue  */
     pthread_mutex_lock(&(mqd->qlock));	
-    
+
+    /* Zap any expired timeouts... */
+    while (NULL!=mqd->eventq &&
+                NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
+                !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
+    {
+        /* Remove any pending event, not relevant to our position */
+        *ev = mqd->eventq;
+        DL_DELETE(mqd->eventq, mqd->eventq);
+        NDRX_FREE(*ev);
+        *ev = NULL;
+    }
+
     /* if have event queued, return it second */
     if (NULL!=mqd->eventq)
     {
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, mqd->eventq);
         pthread_mutex_unlock(&(mqd->qlock));
-        
+
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
-        
+
         /* failed to receive, got event! */
         EXFAIL_OUT(ret);
     }

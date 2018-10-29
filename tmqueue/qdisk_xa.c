@@ -217,8 +217,10 @@ exprivate void set_filenames(void)
     
     for (i=1;;i++)
     {
-        sprintf(M_filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i);
-        sprintf(M_filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
+        snprintf(M_filename_active, sizeof(M_filename_active), 
+                "%s/%s-%03d", M_folder_active, M_filename_base, i);
+        snprintf(M_filename_prepared, sizeof(M_filename_prepared), 
+                "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
         
         if (!ndrx_file_exists(M_filename_active) && 
                 !ndrx_file_exists(M_filename_prepared))
@@ -242,9 +244,12 @@ exprivate int get_filenames_max(void)
     
     while(1)
     {
-        sprintf(filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i+1);
-        sprintf(filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i+1);
-        NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, filename_prepared);
+        snprintf(filename_active, sizeof(filename_active), "%s/%s-%03d", 
+                M_folder_active, M_filename_base, i+1);
+        snprintf(filename_prepared, sizeof(filename_prepared), "%s/%s-%03d", 
+                M_folder_prepared, M_filename_base, i+1);
+        NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, 
+                filename_prepared);
         if (ndrx_file_exists(filename_active) || 
                 ndrx_file_exists(filename_prepared))
         {
@@ -270,7 +275,8 @@ exprivate char *get_filename_i(int i, char *folder, int slot)
 {
     static __thread char filename[2][PATH_MAX+1];
     
-    sprintf(filename[slot], "%s/%s-%03d", folder, M_filename_base, i);
+    snprintf(filename[slot], sizeof(filename[0]), "%s/%s-%03d", folder, 
+        M_filename_base, i);
     
     return filename[slot];
 }

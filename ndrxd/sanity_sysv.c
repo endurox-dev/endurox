@@ -127,10 +127,11 @@ out:
  * belongs to request address, then queue is unlinked. This will protect us from
  * unlinking queues to which working zero service servers are located, like
  * tpbridge...
+ * @param nottl do not use TTL for non service linked request address removal
  * 
  * @return SUCCEED/FAIL
  */
-expublic int do_sanity_check_sysv(void)
+expublic int do_sanity_check_sysv(int finalchk)
 {
     int ret=EXSUCCEED;
     ndrx_svq_status_t *svq = NULL;
@@ -143,9 +144,13 @@ expublic int do_sanity_check_sysv(void)
     int *srvlist = NULL;
     pm_node_t *p_pm;
     
-    NDRX_LOG(log_debug, "Into System V sanity checks");
-    /* Get the list of queues */
-    svq = ndrx_svqshm_statusget(&reslen, G_app_config->rqaddrttl);
+    NDRX_LOG(log_debug, "Into System V sanity checks, finalchk: %d", finalchk);
+    
+    /* Get the list of queues 
+     * if no ttl, then give a -1 which will make all queues scheduled for
+     * removal
+     */
+    svq = ndrx_svqshm_statusget(&reslen, (finalchk?-1:G_app_config->rqaddrttl));
     
     if (NULL==svq)
     {
@@ -163,12 +168,17 @@ expublic int do_sanity_check_sysv(void)
     
     /* We assume shm is OK! */
     
-    NDRX_LOG(log_debug, "Marking resources against services");
+    NDRX_LOG(log_debug, "Marking resources against services, reslen: %d", 
+            reslen);
     EXHASH_ITER(hh, G_bridge_svc_hash, cur, tmp)
     {
         if (EXSUCCEED==ndrx_shm_get_srvs(cur->svc_nm, &srvlist, &len))
         {
             NDRX_LOG(log_debug, "Checking service [%s]", cur->svc_nm);
+            
+            /* Check the cluster nodes too, so if it is in network
+             * then no need to unlink...
+             */
             for (i=0; i<len; i++)
             {
                 ndrx_svqshm_get_status(svq, srvlist[i], &pos_3, &have_value_3);
@@ -204,6 +214,18 @@ expublic int do_sanity_check_sysv(void)
     {
         int cont = EXFALSE;
         
+        /*
+        NDRX_LOG(log_debug, "DEBUG! %d = ISUSED= %d WASUSED=%d  EXPIRED=%d SCHEDRM=%d RQADDR=%d HAVESVC=%d [%s]/%d", 
+                i, 
+                svq[i].flags & NDRX_SVQ_MAP_ISUSED, 
+                svq[i].flags & NDRX_SVQ_MAP_WASUSED, 
+                svq[i].flags & NDRX_SVQ_MAP_EXPIRED, 
+                svq[i].flags & NDRX_SVQ_MAP_SCHEDRM, 
+                svq[i].flags & NDRX_SVQ_MAP_RQADDR, 
+                svq[i].flags & NDRX_SVQ_MAP_HAVESVC, 
+                svq[i].qstr, svq[i].qid);
+        */
+        
         if ((svq[i].flags & NDRX_SVQ_MAP_RQADDR)
                 && !(svq[i].flags & NDRX_SVQ_MAP_HAVESVC)
                 && (svq[i].flags & NDRX_SVQ_MAP_SCHEDRM))
@@ -232,6 +254,18 @@ expublic int do_sanity_check_sysv(void)
             NDRX_LOG(log_info, "qid %d is subject for delete ttl %d qstr=[%s]", 
                     svq[i].qid, G_app_config->rqaddrttl, svq[i].qstr);
             
+            /* well time checking & flushing we shall do here
+             * due to locking issues... not the way as bellow described...
+             * There shall be no new message in RQADDR due to stale servers
+             */
+            if (EXSUCCEED!=flush_rqaddr(svq[i].qid, svq[i].qstr))
+            {
+                NDRX_LOG(log_error, "Failed to flush RQADDR [%s]/%d", 
+                        svq[i].qstr, svq[i].qid);
+                userlog("Failed to flush RQADDR [%s]/%d", 
+                        svq[i].qstr, svq[i].qid);
+            }
+            
             /* Well at this point we shall
              * remove call expublic int remove_service_q(char *svc, short srvid, 
              * mqd_t in_qd, char *in_qstr)!!!
@@ -248,7 +282,7 @@ expublic int do_sanity_check_sysv(void)
              * mqd_t and pass it to remove_service_q for message zapping.
              */
             if (EXSUCCEED!=ndrx_svqshm_ctl(NULL, svq[i].qid, 
-                    IPC_RMID, G_app_config->rqaddrttl, flush_rqaddr))
+                    IPC_RMID, EXFAIL, NULL))
             {
                 NDRX_LOG(log_error, "Failed to unlink qid %d", svq[i].qid);
                 EXFAIL_OUT(ret);
@@ -268,6 +302,19 @@ out:
         NDRX_FREE(srvlist);
     }
 
+    return ret;
+}
+
+/**
+ * Perform final checks on exit - remove all service queues...
+ * @return 
+ */
+expublic int ndrxd_sysv_finally(void)
+{
+    int ret = EXSUCCEED;
+    
+    ret = do_sanity_check_sysv(EXTRUE);
+    
     return ret;
 }
 

@@ -38,109 +38,122 @@ a directory. The common-config routines will load all configs (.ini .cfg,
 COMMANDS
 -------
 *quit*::
-	Quit from command line utility
+    Quit from command line utility
 *q*::
-	Alias for quit
+    Alias for quit
 *exit*::
-	Alias for quit
+    Alias for quit
 *echo*::
-	Echo text back to terminal
+    Echo text back to terminal
 *idle*::
-	Enter daemon process in idle state (if not started)
+    Enter daemon process in idle state (if not started)
 *help*::
-	Print help (this output)
+    Print help (this output)
 *stat*::
-	Prints general status information
+    Prints general status information
+*poller*::
+    Print polling sub-system name i.e. *epoll* - when build is using Linux e-poll 
+    sub-system, this allows true one queue multiple server approach to be used.
+    *kqueue* - the same benefits as for Linux *epoll* only on BSD platform, 
+    *SystemV* - for this build System V queues are used (instead for others Posix
+    queues are used). In case of System V still one queue multiple servers are
+    available with configuration of request address. *poll* - this is worst mode
+    for Enduro/X as only Round Robin message distribution is available for
+    dispatching messages to servers. This uses only standard features of Posix
+    queues.
+    The poller is built in the distribution and cannot be changed via configuration,
+    only possible changing is with reinstalling other Enduro/X build.
 *ldcf*::
-	Load configuration
+    Load configuration
 *start* [-y] [-s <server>] [-i <srvid>]::
-	Start application domain. If config not loaded, it loads
-	configuration automatically. '-y' means do not ask for confirmation. '-s' means
-	ATMI servers binary name to be started, instead of whole application domain.
-	'-i' means start specific server instance.
+    Start application domain. If config not loaded, it loads
+    configuration automatically. '-y' means do not ask for confirmation. '-s' means
+    ATMI servers binary name to be started, instead of whole application domain.
+    '-i' means start specific server instance.
 *psc*::
-	Print services
+    Print services
 *stop* [-y] [-s <server>] [-i <srvid>] [-k]::
-	Stop application domain. '-y' means do not ask for confirmation. '-s' means
-	ATMI servers binary name to be stopped, instead of whole application domain.
-	'-i' means stop specific server instance. '-k' flag will keep 'ndrxd' running,
-	and protected servers will not be shutdown.
+    Stop application domain. '-y' means do not ask for confirmation. '-s' means
+    ATMI servers binary name to be stopped, instead of whole application domain.
+    '-i' means stop specific server instance. '-k' flag will keep 'ndrxd' running,
+    and protected servers will not be shutdown.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
-	Reload application domain - restart server instance by instance.
-	Configuration be loaded prior.
-	'-y' means do not ask for confirmation. '-s' means ATMI servers binary name 
-	to be reloaded, instead of whole application domain.
-	'-i' means restart specific server instance.
+    Reload application domain - restart server instance by instance.
+    Configuration be loaded prior.
+    '-y' means do not ask for confirmation. '-s' means ATMI servers binary name 
+    to be reloaded, instead of whole application domain.
+    '-i' means restart specific server instance.
 *sr*::
-	Alias for 'sreload'
+    Alias for 'sreload'
 *psc*::
-	
+    Print available services.
 *down* [-y]::
-	Force appserver shuttdown & resurce cleanup. RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!
-	Basically this kills all ATMI servers and Enduro/X daemon. This does NOT remove client
-	processes.
+    Force appserver shutdown & resources cleanup. RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!
+    Basically this kills all ATMI servers and Enduro/X daemon. This does NOT remove client
+    processes.
 *cat*::
-	Attached console to ndrxd user session in progress
+    Attached console to ndrxd user session in progress
 *reload*::
-	Load new configuration
+    Load new configuration
 *testcfg*::
-	Test new configuration
+    Test new configuration
 *unadv* -i server_id -s service_name::
-	Un-advertise service. '-i' is server id, '-s' is service name to be
-	unadvertised.
+    Un-advertise service. '-i' is server id, '-s' is service name to be
+    unadvertised.
 *readv* -i server_id -s service_name::
-	Re-advertise service. Might be usable if service Q was unlinked.
-	'-i'  is server id, '-s' is service name to be re-advertised.
+    Re-advertise service. Might be usable if service Q was unlinked.
+    '-i'  is server id, '-s' is service name to be re-advertised.
 *restart* [-y] [-s <server>] [-i <srvid>]::
-	Restart app or service (invokes start & stop with same args!). '-y'
-	makes to not to ask for confirmation. '-s' is server/binary name. '-i' is server ID.
+    Restart app or service (invokes start & stop with same args!). '-y'
+    makes to not to ask for confirmation. '-s' is server/binary name. '-i' is server ID.
 *r*::
-	Alias for 'restart'
+    Alias for 'restart'
 *-v*::
-	Print version info
+    Print version info
 *ver*::
-	Alias for '-v'
-*ppm*::
-	Print process model
+    Alias for '-v'
+*ppm* [-2]::
+    Print process model. The argument -2 show second page of process model
+    attributes.
 *psvc*::
-	Shared mem, print services
+    Shared mem, print services
 *psrv*::
-	Shared mem, print servers
+    Shared mem, print servers
 *cabort* [-y]::
-	Abort shutdown or startup operation in progress. '-y' do not ask for confirmation.
+    Abort shutdown or startup operation in progress. '-y' do not ask for confirmation.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
-	Restart servers instance by instance
+    Restart servers instance by instance
 *pq*::
-	Print Queue stats from ndrxd.
+    Print Queue statistics from ndrxd.
 *pqa* [-a]::
-	Print all queues including client and admin Q. '-a' includes other prefix queues.
+    Print all queues including client and admin Q. '-a' includes other prefix queues.
 *pt*::
-	Print global transactions in progress.
+    Print global transactions in progress.
 *printtrans*::
-	Alias for 'pt'.
+    Alias for 'pt'.
 *abort* -t <transaction_manager_reference> -x <XID> [-g <resource_manager_id>] [-y]::
-	Abort transaction. '-g' does abort single resource manager's transaction.
-	'-y' is for auto confirmation.
+    Abort transaction. '-g' does abort single resource manager's transaction.
+    '-y' is for auto confirmation.
 *aborttrans*::
-	Alias for 'abort'.
+    Alias for 'abort'.
 *commit* -t <transaction_manager_reference> -x <XID> [-y]::
-	Commit transaction. '-y' is for auto confirmation.
+    Commit transaction. '-y' is for auto confirmation.
 *committrans*::
-	Alias for 'commit'.
+    Alias for 'commit'.
 *pe*::
-	Print Environment variables of 'ndrxd' process.
+    Print Environment variables of 'ndrxd' process.
 *printenv*::
-	Alias for 'pe'.
+    Alias for 'pe'.
 *set* ENV_NAME=ENV VALUE::
-	Set environment value. The value of env variable is parsed as command line arguments.
+    Set environment value. The value of env variable is parsed as command line arguments.
     Prior sending to 'ndrxd' they are concatenated with spaces in between.
 *unset* ENV_NAME::
     Unset environment variable
 *pc*::
-	Print client processes. This sends command to Client Process Monitor server ('cpmsrv').
+    Print client processes. This sends command to Client Process Monitor server ('cpmsrv').
 *bc* -t <process_tag> [-s <sub_section>] [-w <wait_time>]::
-	Boot client process. This sends command to Client Process Monitor server ('cpmsrv').
-	Processes are registered in 'ndrxconfig.xml' '<clients>' section. If sub section
+    Boot client process. This sends command to Client Process Monitor server ('cpmsrv').
+    Processes are registered in 'ndrxconfig.xml' '<clients>' section. If sub section
     is not specified, then default value is minus sign ('-'). The 'process_tag'
     and 'sub_section' can contain wildcards percent ('%') sign. Then boot process will
     be executed in batch mode and progress will be returned to the xadmin's output.
@@ -149,7 +162,7 @@ COMMANDS
     than global timeout specified in 'NDRX_TOUT' env variable (or cconfig '[@global]'
     section).
 *sc* -t <process_tag> [-s <sub_section>] [-w <wait time in milliseconds>]::
-	Stop client process. This sends command to Client Process Monitor server ('cpmsrv').
+    Stop client process. This sends command to Client Process Monitor server ('cpmsrv').
     The process is stopped by 'process_tag' and optional 'sub_section'. If sub section
     is not specified, then default value is minus sign ('-'). The 'process_tag'
     and 'sub_section' can contain wild-card percent sign ('%'), then stopping is executed
@@ -160,7 +173,7 @@ COMMANDS
     section). Also time needed for stopping shall be counted in. If the timeout
     occurs, cpmsrv will complete the operation anyway.
 *rc* -t <process_tag> [-s <sub_section>] [-w <wait time in milliseconds>]::
-	Reload client process. This sends command to Client Process Monitor server ('cpmsrv').
+    Reload client process. This sends command to Client Process Monitor server ('cpmsrv').
     The process is reloaded (stopped/marked for start) by 'process_tag' and 
     optional 'sub_section'. If sub section is not specified, 
     then default value is minus sign ('-'). The 'process_tag' and 'sub_section' 
@@ -177,69 +190,69 @@ COMMANDS
     boot and not the booted. Basically this executes sc/bc for each of the 
     matched processes.
 *mqlc*::
-	List queue configuration. This broadcasts the requests of config listing to all 
-	'tmqueue' servers. If flags column contains 'D' flag, then it means that queue
-	was dynamically defined and QDEF string contains values from default queue.
+    List queue configuration. This broadcasts the requests of config listing to all 
+    'tmqueue' servers. If flags column contains 'D' flag, then it means that queue
+    was dynamically defined and QDEF string contains values from default queue.
 *mqlq*::
-	List actual queues allocated on system. Similarly as for 'mqlc' this requests
-	the information from all 'tmqueue' servers. '#LOCK' column contains the number
-	of active non committed messages in Q. '#SUCC' and '#FAIL' column contains number
-	of processed messages for automatic queues (messages are sent to destination services
-	automatically by 'tmqueue' server.
+    List actual queues allocated on system. Similarly as for 'mqlc' this requests
+    the information from all 'tmqueue' servers. '#LOCK' column contains the number
+    of active non committed messages in Q. '#SUCC' and '#FAIL' column contains number
+    of processed messages for automatic queues (messages are sent to destination services
+    automatically by 'tmqueue' server.
 *mqrc*::
-	This command requests all queue servers to reload the configuration file.
+    This command requests all queue servers to reload the configuration file.
 *mqlm* -s <QSpace> -q <QName>::
-	List messages in queue. '-s' is queue space name (set by 'tmqueue' '-m' paramemter).
-	The output lists the message ID in modified base64 version ('/' changed to '_').
+    List messages in queue. '-s' is queue space name (set by 'tmqueue' '-m' paramemter).
+    The output lists the message ID in modified base64 version ('/' changed to '_').
 *mqdm* -n <Cluster node id> -i <Server ID> -m <Message ID>::
-	Dump/peek message to stdout. The values from '-n' (node id), '-i' (srvid), '-m'(message id)
-	can be taken from 'mqlm' command. This command prints to stdout, the 'TQCTL' structure in form
-	of UBF buffer and the message it self. If message is UBF, then UBF dump is made, otherwise
-	hexdump of message is printed.
+    Dump/peek message to stdout. The values from '-n' (node id), '-i' (srvid), '-m'(message id)
+    can be taken from 'mqlm' command. This command prints to stdout, the 'TQCTL' structure in form
+    of UBF buffer and the message it self. If message is UBF, then UBF dump is made, otherwise
+    hexdump of message is printed.
 *mqch* -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>::
-	Change/add queue defnition to particular 'tmqueue' server. The format of the queue definition
-	is the same as used 'q.conf(5)' (see the man page). You may miss out some of the bits 
-	(except the queue name). Those other bits will be take from default q.
+    Change/add queue defnition to particular 'tmqueue' server. The format of the queue definition
+    is the same as used 'q.conf(5)' (see the man page). You may miss out some of the bits 
+    (except the queue name). Those other bits will be take from default q.
 *mqrm* -n <Cluster node id> -i <Server ID> -m <Message ID>::
-	Remove message from queue. You have to identify exact queue space server here by
-	Enduro/X cluster id and server id.
+    Remove message from queue. You have to identify exact queue space server here by
+    Enduro/X cluster id and server id.
 *mqmv* -n <Source cluster node id> -i <Source server ID> -m <Source Message ID> -s <Dest qspace> -q <Dest qname>::
-	Move the message from specific qspace server to destination qspace and qname. The bits 
-	from 'TPQCTL' which are returned by 'tpdequeue()' call are preserved in new 'tpenqueue()' call.
-	Note that for this call 'xadmin' must be in invalid XA environment, so that
-	distributed transaction can be performed.
+    Move the message from specific qspace server to destination qspace and qname. The bits 
+    from 'TPQCTL' which are returned by 'tpdequeue()' call are preserved in new 'tpenqueue()' call.
+    Note that for this call 'xadmin' must be in invalid XA environment, so that
+    distributed transaction can be performed.
 *killall* <name1> [<name2> ... <nameN>]::
-	Kill all processes given by 'ps -ef'. The command does match the name in 
+    Kill all processes given by 'ps -ef'. The command does match the name in 
     the line. If substring is found, then process is killed.
 *qrm*	<qname1> [<qname2> ... <qnameN>]::
-	Remove specific Posix queue.
+    Remove specific Posix queue.
 *qrmall* <substr1> [<substr2> ... <substrN>]::
-	Remove queue matching the substring.
+    Remove queue matching the substring.
 *provision* [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]::
-	Prepare initial Enduro/X instance environment, create folder structure,
-	generate configuration files with ability to register all available services.
+    Prepare initial Enduro/X instance environment, create folder structure,
+    generate configuration files with ability to register all available services.
 *gen* [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]::
-	Generate application sources. See the xadmin's help for more details.
+    Generate application sources. See the xadmin's help for more details.
     Currently it is possible to generate C and Go sources and the UBF buffer
     headers for both languages. By running the command, wizards will be offered
     asking for different details. Which later can be reconfigured by
     *-d* - allowing to default the wizard, while *-v* allows to set
     wizard values from command line.
 *pubfdb*::
-	Print UBF custom fields database contents to the terminal.
+    Print UBF custom fields database contents to the terminal.
 *cs* <cache_db_name>|-d <cache_db_name>::
-	Print cache contents (headers) to the terminal. The database name is
+    Print cache contents (headers) to the terminal. The database name is
     specified in 'cache_db_name' parameter.
 *cacheshow*::
-	Alias for 'cs'.
+    Alias for 'cs'.
 *cd* -d <dbname> -k <key> [-i interpret_result]::
-	Dump specified message to the terminal. With specified '-i' flag, the attempt
+    Dump specified message to the terminal. With specified '-i' flag, the attempt
     for data interpretation will be made. For UBF buffers the output will be
     formatted with command *Bprint()*.
 *cachedump*::
-	Alias for 'cd'.
+    Alias for 'cd'.
 *ci* -d <dbname> [-k <key>][-r use_regexp]::
-	Invalidate cache. In case if only '-d' is specified, whole database will
+    Invalidate cache. In case if only '-d' is specified, whole database will
     be dropped. Exact record may be dropped with '-k' flag. In case if '-r' is
     used, then key will be matched as regular expression over the data keys. In
     case if drop database is used, linked keygroup records are not processed. For

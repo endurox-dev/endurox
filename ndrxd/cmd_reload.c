@@ -94,7 +94,7 @@ expublic void reload_error(command_call_t * call, int srvid, char *old_bin, char
     params.mod_param3 = new_bin;
     params.param4 = srvid;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, reload_reply_mod, 0L, 0, NULL))
     {

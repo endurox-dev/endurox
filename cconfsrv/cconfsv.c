@@ -631,7 +631,10 @@ exprivate int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
         }
     }
     
-    
+    if (NULL!=sections)
+    {
+        ndrx_inicfg_sections_free(sections);
+    }
     
 out:
     return ret;
@@ -722,7 +725,7 @@ void CCONF (TPSVCINFO *p_svc)
             break;
         default:
             NDRX_LOG(log_error, "Unsupported config command: %c", req.cmd);
-            sprintf(tmp, "Unsupported config command: %c", req.cmd);
+            snprintf(tmp, sizeof(tmp), "Unsupported config command: %c", req.cmd);
             set_error(p_ub, NEINVAL, tmp);
             break;
     }

@@ -71,6 +71,7 @@ expublic void ppm_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     /* Copy data to reply structure */
     NDRX_STRCPY_SAFE(ppm_info->binary_name, p_pm->binary_name);
     NDRX_STRCPY_SAFE(ppm_info->binary_name_real, p_pm->binary_name_real);
+    NDRX_STRCPY_SAFE(ppm_info->rqaddress, p_pm->rqaddress);
     ppm_info->srvid = p_pm->srvid;
     ppm_info->state = p_pm->state;
     ppm_info->reqstate = p_pm->reqstate;
@@ -106,7 +107,7 @@ exprivate void ppm_progress(command_call_t * call, pm_node_t *pm)
     /* pass to reply process model node */
     params.mod_param1 = (void *)pm;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, ppm_reply_mod, 0L, 0, NULL))
     {
