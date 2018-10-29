@@ -1641,7 +1641,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     {
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         NDRX_FREE(*ev);
         *ev = NULL;
     }
@@ -1649,7 +1649,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     if (NULL!=mqd->eventq)
     {    
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         pthread_mutex_unlock(&(mqd->qlock));
         pthread_spin_unlock(&(mqd->rcvlockb4));
         
@@ -1746,7 +1746,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     {
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         NDRX_FREE(*ev);
         *ev = NULL;
     }
@@ -1755,7 +1755,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     if (NULL!=mqd->eventq)
     {
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         pthread_mutex_unlock(&(mqd->qlock));
 
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
@@ -1764,7 +1764,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         EXFAIL_OUT(ret);
     }
 
-    /* unlock queue  */
+    /* unlock queue   */
     pthread_mutex_unlock(&(mqd->qlock));
     
 out:
