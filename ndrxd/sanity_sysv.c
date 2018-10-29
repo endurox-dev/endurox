@@ -54,7 +54,7 @@
 #include <userlog.h>
 #include <sys_unix.h>
 #include <sys_svq.h>
-#include <bits/fcntl-linux.h>
+#include <fcntl.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
