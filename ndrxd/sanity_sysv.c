@@ -141,7 +141,7 @@ expublic int do_sanity_check_sysv(int finalchk)
     int have_value_3;
     int pos_3;
     bridgedef_svcs_t *cur, *tmp;
-    int *srvlist = NULL;
+    ndrx_shm_resid_t *srvlist = NULL;
     pm_node_t *p_pm;
     
     NDRX_LOG(log_debug, "Into System V sanity checks, finalchk: %d", finalchk);
@@ -181,18 +181,18 @@ expublic int do_sanity_check_sysv(int finalchk)
              */
             for (i=0; i<len; i++)
             {
-                ndrx_svqshm_get_status(svq, srvlist[i], &pos_3, &have_value_3);
+                ndrx_svqshm_get_status(svq, srvlist[i].resid, &pos_3, &have_value_3);
                 
                 if (have_value_3)
                 {
                     NDRX_LOG(log_debug, "Service [%s] have resource %d at idx %d", 
-                            cur->svc_nm, srvlist[i], i);
+                            cur->svc_nm, srvlist[i].resid, i);
                     svq[pos_3].flags |= NDRX_SVQ_MAP_HAVESVC;
                 }
                 else
                 {
                     NDRX_LOG(log_error, "!!! Service [%s] have NO resource %d at idx %d", 
-                            cur->svc_nm, srvlist[i], i);
+                            cur->svc_nm, srvlist[i].resid, i);
                 }
             }         
         } /* local servs */

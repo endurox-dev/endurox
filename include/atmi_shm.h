@@ -68,7 +68,7 @@ extern NDRX_API int ndrxd_shm_delete(void);
 extern NDRX_API int ndrx_shm_attach_all(int lev);
 extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge,
                         int *have_shm);
-extern NDRX_API int ndrx_shm_get_srvs(char *svc, int **srvlist, int *len); /* poll() only */
+extern NDRX_API int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len); /* poll() only */
 extern NDRX_API int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, 
 				      int *p_install_cmd);
 extern NDRX_API int ndrx_shm_install_svc(char *svc, int flags, int resid);

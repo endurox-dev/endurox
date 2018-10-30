@@ -104,24 +104,39 @@ rm *dom*.log
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
+echo "PSVC DOM 1"
+xadmin psvc
 
 set_dom2;
 xadmin down -y
 xadmin start -y || go_out 2
+echo "PSVC DOM 2"
+xadmin psvc
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 20
+sleep 60
 
 # Go to domain 1
 set_dom1;
 
-# Run the client test...
-echo "Soon will issue client calls:"
-xadmin psc
+echo "PSVC DOM 1"
 xadmin psvc
+echo "PPM DOM 1"
 xadmin ppm
+echo "PSC DOM 1"
+xadmin psc
+
+# Run the client test...
+echo "Will issue client calls:"
 (./atmiclt3 2>&1) > ./atmiclt-dom1.log
 RET=$?
+
+echo "PSVC DOM 1 (AFTER RUN)"
+xadmin psvc
+
+set_dom2;
+echo "PSVC DOM 2 (AFTER RUN)"
+xadmin psvc
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
