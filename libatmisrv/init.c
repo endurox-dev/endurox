@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -217,11 +217,6 @@ exprivate int add_specific_queue(char *qname, int is_admin)
         entry->p_func=NULL;
         entry->is_admin = is_admin;
         NDRX_STRCPY_SAFE(entry->listen_q, qname);
-        /*
-        sprintf(entry->listen_q, NDRX_ADMIN_FMT, G_server_conf.q_prefix,
-                                G_server_conf.binary_name, G_server_conf.srv_id);
-        sprintf(entry->svc_nm, NDRX_ADMIN_SVC, G_server_conf.binary_name, G_server_conf.srv_id);
-        strcpy(entry->fn_nm, entry->svc_nm);*/
         /* register admin service */
         DL_APPEND(G_server_conf.service_list, entry);
         G_server_conf.adv_service_count++;
@@ -341,17 +336,32 @@ expublic int atmisrv_initialise_atmi_library(void)
     int ret=EXSUCCEED;
     atmi_lib_conf_t conf;
     pid_t pid = getpid();
+    
     memset(&conf, 0, sizeof(conf));
-
+    
+    /* if thread id is not set, then do it here, as if
+     * tpsrvinit() did not do tpinit(), then ctxid could be left here as un-init 
+     */
+    
+    
+    conf.contextid = G_atmi_tls->G_atmi_conf.contextid;
+    
+    if (!conf.contextid)
+    {
+        conf.contextid = ndrx_ctxid_op(EXFALSE, EXFAIL);
+        NDRX_DBG_SETTHREAD(conf.contextid);
+    }
+    
     /* Generate my_id */
     snprintf(conf.my_id, sizeof(conf.my_id), NDRX_MY_ID_SRV, 
             G_server_conf.binary_name, 
             G_server_conf.srv_id, pid, 
-            G_atmi_tls->G_atmi_conf.contextid, 
+            conf.contextid, 
             G_atmi_env.our_nodeid);
     
     conf.is_client = 0;
     
+    NDRX_LOG(log_debug, "Server my_id=[%s]", conf.my_id);
     /*
     conf.reply_q = G_server_conf.service_array[1]->q_descr;
     strcpy(conf.reply_q_str, G_server_conf.service_array[1]->listen_q);
@@ -365,6 +375,7 @@ expublic int atmisrv_initialise_atmi_library(void)
     
     /* Try to open shm... */
     G_shm_srv = ndrxd_shm_getsrv(G_srv_id);
+    
     /* Mark stuff as used! */
     if (NULL!=G_shm_srv)
     {
@@ -376,12 +387,22 @@ out:
 
 /**
  * Un-initialize all stuff
+ * TODO: Think about client close in case if we fail.
  * @return void
  */
 expublic void atmisrv_un_initialize(int fork_uninit)
 {
     int i;
     atmi_tls_t *tls;
+    
+    
+    /* check are we servers or clients? */
+    if (G_atmi_tls->G_atmi_conf.is_client)
+    {
+        tpterm();
+        return;
+    }
+    
     /* We should close the queues and detach shared memory!
      * Also we will not remove service queues, because we do not
      * what other instances do. This is up to ndrxd!
@@ -399,6 +420,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 
             /* just close it, no error check */
             if(((mqd_t)EXFAIL)!=G_server_conf.service_array[i]->q_descr &&
+                        ndrx_epoll_shallopenq(i) &&
 			EXSUCCEED!=ndrx_mq_close(G_server_conf.service_array[i]->q_descr))
             {
 
@@ -411,7 +433,12 @@ expublic void atmisrv_un_initialize(int fork_uninit)
             {
                 NDRX_LOG(log_debug, "Removing queue: %s",
                                     G_server_conf.service_array[i]->listen_q);
-
+                /* TODO: For admin Q we need a special callback to poller...
+                 * to terminate it... So that System V could kill the thread
+                 * and we do not get some un-expected core dumps when 
+                 * unlink removes the queue descriptor, but thread may still
+                 * doing something with the mqd.
+                 */
                 if (EXSUCCEED!=ndrx_mq_unlink(G_server_conf.service_array[i]->listen_q))
                 {
                     NDRX_LOG(log_error, "Failed to remove queue %s: %d/%s",
@@ -454,7 +481,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
 /* =========================API FUNCTIONS=====================================*/
 /* ===========================================================================*/
 /**
- * Advertize service
+ * Advertise service
  * OK, logic will be following:
  * -A advertise all services + additional (aliases) by -s
  * if -A missing, then advertise all

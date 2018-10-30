@@ -7,22 +7,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -108,12 +108,13 @@ void load_field_table(void)
 }
 
 /**
- * Fill up buffer with soemthing so that we have more interesting stuff there
+ * Fill up buffer with something so that we have more interesting stuff there
  * bigger buffer, etc...
  * @param p_ub
  */
 void set_up_dummy_data(UBFH *p_ub)
 {
+#if 0
     assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBadd(p_ub, T_STRING_9_FLD, "20", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBadd(p_ub, T_STRING_9_FLD, "31", 0, BFLD_STRING), EXSUCCEED);
@@ -130,6 +131,87 @@ void set_up_dummy_data(UBFH *p_ub)
     assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD6", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBadd(p_ub, T_STRING_3_FLD, "HELLO WORLD7", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub, T_CARRAY_2_FLD, 1, "TEST CARRAY", 0, BFLD_STRING), EXSUCCEED);
+#endif
+    
+    
+    char buf[128];
+    int len;
+    
+    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_9_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "01");
+    
+    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "20", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_9_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "20");
+    
+    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "31", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_9_FLD, 2, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "31");
+    
+
+    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "1.11", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_DOUBLE_3_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(strncmp(buf, "1.11", 4), 0);
+    
+    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "2.41231", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_DOUBLE_3_FLD, 1,buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(strncmp(buf, "2.41231", 4), 0);
+    
+
+    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_4_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD");
+    
+    
+    assert_equal(CBadd(p_ub, T_STRING_8_FLD, "HELLO WORLD1", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_8_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD1");
+    
+    assert_equal(CBadd(p_ub, T_STRING_5_FLD, "HELLO WORLD2", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_string_equal(buf, "HELLO WORLD1");
+    assert_equal(CBget(p_ub, T_STRING_5_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBadd(p_ub, T_STRING_7_FLD, "HELLO WORLD3", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_7_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD3");
+    
+    assert_equal(CBadd(p_ub, T_STRING_6_FLD, "HELLO WORLD4", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_6_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD4");
+    
+    assert_equal(CBadd(p_ub, T_STRING_10_FLD, "HELLO WORLD5", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBget(p_ub, T_STRING_10_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD5");
+    
+    
+    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD6", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_4_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD6");
+    
+    assert_equal(CBadd(p_ub, T_STRING_3_FLD, "HELLO WORLD7", 0, BFLD_STRING), EXSUCCEED);
+    
+    assert_equal(CBget(p_ub, T_STRING_3_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD7");
+    
+    assert_equal(CBchg(p_ub, T_CARRAY_2_FLD, 1, "TEST CARRAY", 0, BFLD_STRING), EXSUCCEED);
+    
+    /* Another carray test */
+    len = sizeof(buf);
+    assert_equal(CBget(p_ub, T_CARRAY_2_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
+    assert_string_equal(buf, "TEST CARRAY");
+    
 
 }
 
@@ -313,13 +395,20 @@ Ensure(test_Bunused)
 
     /* Check basic Binit */
     assert_equal(Binit(p_ub, sizeof(tmpbuf)), EXSUCCEED);
+#if EX_ALIGNMENT_BYTES == 8
+    assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID)*2);
+#else
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t) + sizeof(BFLDID));
+#endif
+    
+#if EX_ALIGNMENT_BYTES != 8
     /* Add some field and then see what happens */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bunused(p_ub), sizeof(tmpbuf) - sizeof(UBF_header_t)-sizeof(s)-2/* align of short */);
     /* fill up to zero */
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, "abc", 0), EXSUCCEED);
-    assert_equal(Bunused(p_ub), sizeof(BFLDID));
+    assert_equal(Bunused(p_ub), 0);
+#endif
 }
 
 

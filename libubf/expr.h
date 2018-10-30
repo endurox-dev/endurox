@@ -9,22 +9,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -122,85 +122,85 @@ typedef long (*functionPtr_t)(UBFH *p_ub, char *funcname);
  * Field info
  */
 typedef struct {
-	char fldnm[BF_LENGTH+1];
-	BFLDID bfldid;
-	BFLDOCC occ;
+    char fldnm[BF_LENGTH+1];
+    BFLDID bfldid;
+    BFLDOCC occ;
 } bfldid_t;
 
 /* symbol table */
 struct symbol {		/* a variable name */
-  char *name;
-  double value;
-  struct ast *func;	/* stmt for the function */
-  struct symlist *syms; /* list of dummy args */
-  char strval[MAX_TEXT+1];
-  bfldid_t fld;
-  char  funcname[MAX_FUNC_NAME+1]; /* Function name */
+    char *name;
+    double value;
+    struct ast *func;	/* stmt for the function */
+    struct symlist *syms; /* list of dummy args */
+    char strval[MAX_TEXT+1];
+    bfldid_t fld;
+    char  funcname[MAX_FUNC_NAME+1]; /* Function name */
 };
 
 /* nodes in the Abstract Syntax Tree */
 /* all have common initial nodetype */
 
 typedef struct {
-	int compiled;
-	regex_t re;
+    int compiled;
+    regex_t re;
 } regex_compl_t;
 
 struct ast {
-  int nodetype;
-  int sub_type;
-  int nodeid;
-  struct ast *l;
-  struct ast *r;
+    int nodetype;
+    int sub_type;
+    int nodeid;
+    struct ast *l;
+    struct ast *r;
 };
 
 struct ast_fld {
-	int nodetype;
-	int sub_type;
+    int nodetype;
+    int sub_type;
     int nodeid;
-	bfldid_t fld;
+    bfldid_t fld;
 };
 
 /* Pointer to function */
 struct ast_func {
     int nodetype;
-	int sub_type;
+    int sub_type;
     int nodeid;
     functionPtr_t f;
     char  funcname[MAX_FUNC_NAME]; /* Function name */
 };
 
 struct ast_string {
-	int nodetype;
-	int sub_type;
+    int nodetype;
+    int sub_type;
     int nodeid;
-	/*char str[MAX_TEXT+1]; */
+    /*char str[MAX_TEXT+1]; */
     char *str;
-	regex_compl_t regex;
+    regex_compl_t regex;
 };
 
 struct ast_long {
-	int nodetype;
-	int sub_type;
+    int nodetype;
+    int sub_type;
     int nodeid;
-	long l;
+    long l;
 };
 
 struct ast_float {
-	int nodetype;
-	int sub_type;
+    int nodetype;
+    int sub_type;
     int nodeid;
-	double d;
+    double d;
 };
 
 typedef struct {
     short dyn_alloc;
-	short value_type;
-	int is_null;
-	short boolval;
-	long longval;
-	double floatval;
-	/* char strval[MAX_TEXT+1]; */
+    short value_type;
+    int is_null;
+    short boolval;
+    long longval;
+    double floatval;
+    /* char strval[MAX_TEXT+1]; */
     char *strval;
 } value_block_t;
 

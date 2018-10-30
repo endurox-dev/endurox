@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -46,6 +46,7 @@ extern NDRX_API "C" {
 #include <exhash.h>
 #include <sys_unix.h>
 #include <atmi.h>
+#include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -57,13 +58,9 @@ extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long j
 #define RETURN_TYPE_TPRETURN      0x00000002
 #define RETURN_TYPE_TPFORWARD     0x00000004
 #define RETURN_SVC_FAIL           0x00000008
-#define RETURN_TYPE_THREAD        0x00000010  /* processing sent to thread   */
+#define RETURN_TYPE_THREAD        0x00000010  /**< processing sent to thread   */
 
-/* Special queue logical numbers */
-#define ATMI_SRV_ADMIN_Q            0           /* This is admin queue */
-#define ATMI_SRV_REPLY_Q            1           /* This is reply queue */
-#define ATMI_SRV_Q_ADJUST           2           /* Adjustment for Q nr */
-    
+/* with linux 4.5 this is supported */ 
 #ifndef EPOLLEXCLUSIVE
 
 #define EPOLLEXCLUSIVE (1 << 28)
@@ -135,7 +132,7 @@ struct basic_call_info
 };
 typedef struct basic_call_info call_basic_info_t;
 
-/*
+/**
  * Basic server configuration.
  */
 struct srv_conf
@@ -147,21 +144,21 @@ struct srv_conf
     int advertise_all;
     svc_entry_t *svc_list;
     char q_prefix[FILENAME_MAX+1];
-    /* Arguments passed after -- */
-    int app_argc;
+    
+    int app_argc;/**< Arguments passed after -- */
     char **app_argv;
     
     /*<THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>*/
-    svc_entry_fn_t *service_raw_list; /* As from initialization */
-    svc_entry_fn_t **service_array; /* Direct array of items */
+    svc_entry_fn_t *service_raw_list; /**< As from initialization */
+    svc_entry_fn_t **service_array; /**< Direct array of items */
     /*</THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>*/
     
-    svc_entry_fn_t *service_list; /* Final list used for processing */
+    svc_entry_fn_t *service_list; /**< Final list used for processing */
     
-    int adv_service_count; /* advertised service count. */
-    int flags; /* Special flags of the server (see: ndrxdcmn.h:SRV_KEY_FLAGS_BRIDGE) */
-    int nodeid; /* Other node id of the bridge */
-    int (*p_qmsg)(char *buf, int len, char msg_type); /* Q message processor for bridge */
+    int adv_service_count; /**< advertised service count. */
+    int flags; /**< Special flags of the server (see: ndrxdcmn.h:SRV_KEY_FLAGS_BRIDGE) */
+    int nodeid; /**< Other node id of the bridge */
+    int (*p_qmsg)(char *buf, int len, char msg_type); /**< Q message processor for bridge */
     /**************** POLLING *****************/
     struct ndrx_epoll_event *events;
     int epollfd;
@@ -169,15 +166,16 @@ struct srv_conf
     call_basic_info_t last_call;
     jmp_buf call_ret_env;
     int time_out;
-    int max_events; /* Max epoll events. */
+    int max_events; /**< Max epoll events. */
     
-    /* Periodic callback */
-    int (*p_periodcb)(void);
-    int periodcb_sec; /* Number of seconds for each cb call */
+    int (*p_periodcb)(void);/**< Periodic callback */
+    int periodcb_sec; /**< Number of seconds for each cb call */
     
-    /* Callback used before server goes in poll state */
+    /** Callback used before server goes in poll state */
     int (*p_b4pollcb)(void);
-    xbufcvt_entry_t *xbufcvt_tab; /* string hashlist for buffer convert funcs */
+    xbufcvt_entry_t *xbufcvt_tab; /**< string hashlist for buffer convert funcs */
+    
+    char rqaddress[NDRX_MAX_Q_SIZE+1]; /**< request address if used... (sysv) */
 };
 
 typedef struct srv_conf srv_conf_t;

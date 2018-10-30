@@ -9,22 +9,22 @@
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
 ## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## GPL or Mavimax's license for commercial use.
+## AGPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
-## GPL license:
+## AGPL license:
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
-## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 3 of the License, or (at your option) any later
-## version.
+## the terms of the GNU Affero General Public License, version 3 as published
+## by the Free Software Foundation;
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
 ## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+## for more details.
 ##
-## You should have received a copy of the GNU General Public License along with
-## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1307 USA
+## You should have received a copy of the GNU Affero General Public License along 
+## with this program; if not, write to the Free Software Foundation, Inc., 
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -40,7 +40,13 @@ include_directories (. ../include)
 
 SET(NSTD_POLLER "invalid_poller.c")
 
-if (DEFINED EX_USE_KQUEUE)
+if(DEFINED EX_USE_SYSVQ)
+    SET(NSTD_POLLER "sys_svqpoll.c")
+    SET(NSTD_SYS_3 "sys_svq.c")
+    SET(NSTD_SYS_4 "sys_svqshm.c")
+    SET(NSTD_SYS_5 "sys_svqevent.c")
+    SET(NSTD_SYS_6 "sys_svqadmin.c")
+elseif (DEFINED EX_USE_KQUEUE)
     SET(NSTD_POLLER "sys_kqueue.c")
 elseif(DEFINED EX_USE_POLL)
     SET(NSTD_POLLER "sys_poll.c")
@@ -80,14 +86,14 @@ elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
 endif ()
 
-
 add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         ini.c inicfg.c cconfig.c nerror.c nstd_tls.c ulog.c
                         sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
                         sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
                         exregex.c platform.c msgsizemax.c exaes.c exsha1.c
                         exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/edb.c
-                        edbutil.c crc32.c
+                        edbutil.c crc32.c nstd_shm.c ${NSTD_SYS_4} ${NSTD_SYS_5}
+                        nstd_sem.c ${NSTD_SYS_6}
                         )
 
 if(${CMAKE_OS_NAME} STREQUAL "AIX")

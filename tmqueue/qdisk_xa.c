@@ -35,22 +35,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -217,8 +217,10 @@ exprivate void set_filenames(void)
     
     for (i=1;;i++)
     {
-        sprintf(M_filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i);
-        sprintf(M_filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
+        snprintf(M_filename_active, sizeof(M_filename_active), 
+                "%s/%s-%03d", M_folder_active, M_filename_base, i);
+        snprintf(M_filename_prepared, sizeof(M_filename_prepared), 
+                "%s/%s-%03d", M_folder_prepared, M_filename_base, i);
         
         if (!ndrx_file_exists(M_filename_active) && 
                 !ndrx_file_exists(M_filename_prepared))
@@ -242,9 +244,12 @@ exprivate int get_filenames_max(void)
     
     while(1)
     {
-        sprintf(filename_active, "%s/%s-%03d", M_folder_active, M_filename_base, i+1);
-        sprintf(filename_prepared, "%s/%s-%03d", M_folder_prepared, M_filename_base, i+1);
-        NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, filename_prepared);
+        snprintf(filename_active, sizeof(filename_active), "%s/%s-%03d", 
+                M_folder_active, M_filename_base, i+1);
+        snprintf(filename_prepared, sizeof(filename_prepared), "%s/%s-%03d", 
+                M_folder_prepared, M_filename_base, i+1);
+        NDRX_LOG(log_debug, "Testing act: [%s] prep: [%s]", filename_active, 
+                filename_prepared);
         if (ndrx_file_exists(filename_active) || 
                 ndrx_file_exists(filename_prepared))
         {
@@ -270,7 +275,8 @@ exprivate char *get_filename_i(int i, char *folder, int slot)
 {
     static __thread char filename[2][PATH_MAX+1];
     
-    sprintf(filename[slot], "%s/%s-%03d", folder, M_filename_base, i);
+    snprintf(filename[slot], sizeof(filename[0]), "%s/%s-%03d", folder, 
+        M_filename_base, i);
     
     return filename[slot];
 }

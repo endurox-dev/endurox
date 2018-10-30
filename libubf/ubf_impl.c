@@ -13,22 +13,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -53,7 +53,6 @@
 #include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-/* #define BIN_SEARCH_DEBUG        1 */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct ubf_type_cache
@@ -334,7 +333,7 @@ exprivate inline int get_fld_occ_from_idx(char *start, BFLDID f, int i, int step
 }
 
 /**
- * Get the ptr to field (or NULL) if given occurence is not found
+ * Get the ptr to field (or NULL) if given occurrence is not found
  * @param start
  * @param stop
  * @param i
@@ -468,8 +467,10 @@ get_last:
  * @param bfldid
  * @param last_matched - last matched field (can be used together with last_occ),
  *                       It is optional (pas NULL if not needed).
- * @param lat_checked  - if not NULL, then function will try find the last occ of the type (even not matched).
- *              In case of EOF/not found, this might point to address outside the bytes_used scope!!!
+ * @param last_checked  - if not NULL, then function will try find the last occ 
+ *      of the type (even not matched).
+ *      In case of EOF/not found, this might point to address outside 
+ *      the bytes_used scope!!!
  * @param occ - occurrence to get. If less than -1, then get out the count
  * @param last_occ last check occurrence
  * @return - ptr to field.
@@ -936,14 +937,14 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
     /* Get the end of the buffer */
     p = (char *)p_ub;
     p+=hdr->bytes_used;
-    p-= sizeof(BFLDID);
+    p-= FF_USED_BYTES;
 
     last=(BFLDID *)(p);
     if (*last!=BBADFLDID)
     {
         ndrx_Bset_error_fmt(BALIGNERR, "last %d bytes of buffer not equal to "
                                     "%p (got %p)",
-                                    sizeof(BFLDID), BBADFLDID, *last);
+                                    FF_USED_BYTES, BBADFLDID, *last);
         EXFAIL_OUT(ret);
     }
 #endif
@@ -973,6 +974,9 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
     int actual_data_size;
     int type = (bfldid>>EFFECTIVE_BITS);
     char fn[] = "_Badd";
+    int ntype;
+    dtype_str_t *ndtype;
+    int new_dat_size;
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
     /* Real debug stuff!! */
@@ -1013,10 +1017,10 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
 
     UBF_LOG(log_debug, "Badd: bfldid: %d", bfldid);
     
-    int ntype = (bfldid>>EFFECTIVE_BITS);
-    dtype_str_t *ndtype = &G_dtype_str_map[ntype];
+    ntype = (bfldid>>EFFECTIVE_BITS);
+    ndtype = &G_dtype_str_map[ntype];
     /* Move memory around (i.e. prepare free space to put data in) */
-    int new_dat_size=ndtype->p_get_data_size(ndtype, buf, len, &actual_data_size);
+    new_dat_size=ndtype->p_get_data_size(ndtype, buf, len, &actual_data_size);
 
     /* Check required buffer size */
     if (!have_buffer_size(p_ub, new_dat_size, EXTRUE))
@@ -1144,10 +1148,10 @@ out:
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -1164,12 +1168,12 @@ out:
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "Badd: last %d bytes of data\n org=%p new %p",
-                          sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After Badd", __p_ub_copy, p_ub, hdr->buf_len);
     __dump_size=hdr->bytes_used;
     UBF_DUMP(log_always, "Used buffer dump after: ",p_ub, __dump_size);
@@ -1456,10 +1460,10 @@ out:
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -1476,12 +1480,12 @@ out:
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "Bchg: last %d bytes of data\n org=%p new %p",
-                          sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After Bchg diff: ", __p_ub_copy, p_ub, hdr->buf_len);
 
     __dump_size=hdr->bytes_used;
@@ -1685,6 +1689,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             goto out;
         }
         dtype=&G_dtype_str_map[type];
+        
         /*
          * Return the pointer to start of the field.
          */
@@ -1699,11 +1704,13 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             *d_ptr=p+dlen;
 
             /* Now return the len if needed */
+#if 0
             if (NULL!=len)
             {
                /* *len = data_len;*/
                dtype->p_next(dtype, (char *)p, len);
             }
+#endif
         }
 
         if (NULL!=buf)
@@ -1722,6 +1729,11 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                                 buf, len);
             }
 #endif
+        }
+        else if (NULL!=len)
+        {
+            /* return length only... */
+            dtype->p_next(dtype, p, len);
         }
         else
         {
@@ -1826,7 +1838,7 @@ expublic int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 
     UBF_LOG(log_debug, "_Blen: bfldid: %d, occ: %d", bfldid, occ);
 
-    /* using -2 for looping throught te all occurrances! */
+    /* using -2 for looping through all occurrences! */
     
     
     if (UBF_BINARY_SEARCH_OK(bfldid))

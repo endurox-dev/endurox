@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -64,11 +64,59 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * not used by Linux epoll()
+ * @param idx
+ * @return 
+ */
+expublic int ndrx_epoll_shallopenq(int idx)
+{
+    return EXTRUE;
+}
+/**
+ * Not used by Linux epoll()
+ * @param qstr
+ */
+expublic void ndrx_epoll_mainq_set(char *qstr)
+{
+    return;
+}
+/**
  * Nothing to init for epoll()
  */
-expublic inline void ndrx_epoll_sys_init(void)
+expublic int ndrx_epoll_sys_init(void)
 {
-	return;
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by Linux epoll
+ * @param svcnm
+ * @param idx
+ * @param mq_exits
+ * @return 
+ */
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
+{
+    return mq_exits;
+}
+
+/**
+ * Not used by linux epoll
+ * @return 
+ */
+expublic int ndrx_epoll_shmdetach(void)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by Linux epoll
+ * @param force
+ * @return 
+ */
+expublic int ndrx_epoll_down(int force)
+{
+    return EXSUCCEED;
 }
 
 /**
@@ -76,7 +124,7 @@ expublic inline void ndrx_epoll_sys_init(void)
  */
 expublic inline void ndrx_epoll_sys_uninit(void)
 {
-	return;
+    return;
 }
 
 /**
@@ -141,8 +189,10 @@ expublic inline int ndrx_epoll_close(int fd)
  * @param timeout
  * @return 
  */
-expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
+        int maxevents, int timeout, char *buf, int *buf_len)
 {
+    *buf_len = EXFAIL;
     return epoll_wait(epfd, (struct epoll_event *) events, maxevents, timeout);
 }
 
