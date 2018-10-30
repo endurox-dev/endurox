@@ -448,6 +448,14 @@ Ensure(test055_envs)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test056_envs)
+{
+    int ret;
+    ret=system_dbg("test056_impexp/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 Ensure(test057_invlcmd)
 {
     int ret;
@@ -549,6 +557,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test053_logoff);
     add_test(suite,test054_svwrap);
     add_test(suite,test055_envs);
+    add_test(suite,test056_tpimpexp);
     add_test(suite,test057_invlcmd);
     
 #ifdef EX_USE_SYSVQ
