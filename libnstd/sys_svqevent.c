@@ -486,7 +486,6 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
     {
         DL_DELETE(mqd->eventq, elt);
-        NDRX_LOG(log_error, "DEL HDR YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
         NDRX_FREE(elt);
     }
     pthread_mutex_unlock(&(mqd->qlock));
@@ -682,9 +681,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
     
     /* Append messages to Q: */
     pthread_mutex_lock(&(mqd->qlock));
-    NDRX_LOG(log_error, "ADD YOPT!!!! add %p  before mqd=%p eventq=%p", ev, mqd, mqd->eventq);
     DL_APPEND(mqd->eventq, ev);
-    NDRX_LOG(log_error, "ADD YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
     pthread_mutex_unlock(&(mqd->qlock));
     
     l1=pthread_spin_trylock(&(mqd->rcvlockb4));
@@ -1639,14 +1636,6 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     /* Check the events matching the current time stamp, ignore
      * events sent not four our stamp
      */
-    NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
-    ndrx_YOPT(__func__, __FILE__, __LINE__);
-    if (NULL!=mqd->eventq)
-	{
-    	NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p next=%p prev=%p", mqd, mqd->eventq, mqd->eventq->next,  mqd->eventq->prev);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
-}
-
     while (NULL!=mqd->eventq &&
             NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
             !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
@@ -1654,28 +1643,14 @@ ndrx_YOPT(__func__, __FILE__, __LINE__);
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, *ev);
-        NDRX_LOG(log_error, "DEL HDR YOPT!!!! eventq=%p", mqd->eventq);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         NDRX_FREE(*ev);
         *ev = NULL;
-    NDRX_LOG(log_error, "YOPT!!!! eventq=%p", mqd->eventq);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
-    if (NULL!=mqd->eventq)
-    	NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p next=%p prev=%p", mqd, mqd->eventq, mqd->eventq->next,  mqd->eventq->prev);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
     }
     
     if (NULL!=mqd->eventq)
     {    
-        NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         *ev = mqd->eventq;
-        NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p delete %p", mqd, mqd->eventq, *ev);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
-        NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p delete %p next=%p prev=%p", mqd, mqd->eventq, *ev,  mqd->eventq->next,  mqd->eventq->prev);
         DL_DELETE(mqd->eventq, *ev);
-        NDRX_LOG(log_error, "DEL HDR YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         pthread_mutex_unlock(&(mqd->qlock));
         pthread_spin_unlock(&(mqd->rcvlockb4));
         
@@ -1771,13 +1746,8 @@ ndrx_YOPT(__func__, __FILE__, __LINE__);
                 !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
     {
         /* Remove any pending event, not relevant to our position */
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         *ev = mqd->eventq;
-        NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p delete %p next=%p prev=%p", mqd, mqd->eventq, *ev,  mqd->eventq->next,  mqd->eventq->prev);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         DL_DELETE(mqd->eventq, *ev);
-        NDRX_LOG(log_error, "DEL HDR YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         NDRX_FREE(*ev);
         *ev = NULL;
     }
@@ -1786,11 +1756,7 @@ ndrx_YOPT(__func__, __FILE__, __LINE__);
     if (NULL!=mqd->eventq)
     {
         *ev = mqd->eventq;
-        NDRX_LOG(log_error, "YOPT!!!! mqd=%p eventq=%p delete %p next=%p prev=%p", mqd, mqd->eventq, *ev,  mqd->eventq->next,  mqd->eventq->prev);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         DL_DELETE(mqd->eventq, *ev);
-        NDRX_LOG(log_error, "DEL HDR YOPT!!!! mqd=%p eventq=%p", mqd, mqd->eventq);
-ndrx_YOPT(__func__, __FILE__, __LINE__);
         pthread_mutex_unlock(&(mqd->qlock));
 
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);

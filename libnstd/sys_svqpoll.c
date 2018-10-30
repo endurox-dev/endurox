@@ -128,25 +128,6 @@ expublic int ndrx_epoll_shmdetach(void)
     return EXSUCCEED;
 }
 
-expublic void ndrx_YOPT(char *func, char *file, long line)
-{
-	static int first = TRUE;
-	static struct ndrx_svq_info sv;
-	
-	if (first)
-	{
-		first = FALSE;
-	}
-	else 
-	{
-		NDRX_DUMP_DIFF(log_error,"YOPT DIFF",&sv,M_mainq,sizeof(struct ndrx_svq_info));
-		
-	}
-	NDRX_LOG(log_error, "%s:%s:%ld M_mainq=%p eventq=%p", func,
-		file, line, M_mainq, M_mainq->eventq);
-	memcpy(&sv, (struct ndrx_svq_info *)M_mainq, sizeof(struct ndrx_svq_info));
-}
-
 /**
  * Get Main queue / basically RQADDR!
  * @return main queue of current service poller
