@@ -10,22 +10,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -48,102 +48,127 @@
 #include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#if EX_ALIGNMENT_BYTES == 8
+
+#define ALIGNED_SIZE(DSIZE) \
+    (sizeof(BFLDID)*2 + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID)*2 + DSIZE) % DEFAULT_ALIGN;
+
+#else
+
+#define ALIGNED_SIZE(DSIZE) \
+    (sizeof(BFLDID) + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID) + DSIZE) % DEFAULT_ALIGN;
+
+#endif
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /* Get field sizes */
-int get_fb_dftl_size(dtype_str_t *t, char *fb, int *payload_size);
-int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size);
-int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size);
+exprivate int get_fb_dftl_size(dtype_str_t *t, char *fb, int *payload_size);
+exprivate int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size);
+exprivate int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size);
 
 /* Function for putting data into buffer */
-int put_data_dflt(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len);
-int put_data_string(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len);
-int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len);
+exprivate int put_data_dflt(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len);
+exprivate int put_data_string(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len);
+exprivate int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len);
 
-int get_d_size_dftl (struct dtype_str *t, char *data, int len, int *payload_size);
-int get_d_size_string (struct dtype_str *t, char *data, int len, int *payload_size);
-int get_d_size_carray (struct dtype_str *t, char *data, int len, int *payload_size);
+exprivate int get_d_size_dftl (struct dtype_str *t, char *data, int len, int *payload_size);
+exprivate int get_d_size_string (struct dtype_str *t, char *data, int len, int *payload_size);
+exprivate int get_d_size_carray (struct dtype_str *t, char *data, int len, int *payload_size);
 
-int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len);
-int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len);
-int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len);
+exprivate int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len);
+exprivate int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len);
+exprivate int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len);
 
-int g_dflt_empty(struct dtype_ext1* t);
-int g_str_empty(struct dtype_ext1* t);
-int g_carr_empty(struct dtype_ext1* t);
+exprivate int g_dflt_empty(struct dtype_ext1* t);
+exprivate int g_str_empty(struct dtype_ext1* t);
+exprivate int g_carr_empty(struct dtype_ext1* t);
 
-int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid);
-int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid);
-int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid);
+exprivate int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid);
+exprivate int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid);
+exprivate int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid);
 
-void dump_short (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_long (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_char (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_float (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_double (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_string (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len);
-void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_short (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_long (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_char (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_float (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_double (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_string (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len);
+exprivate void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len);
 
-char *tbuf_short (struct dtype_ext1 *t, int len);
-char *tbuf_long (struct dtype_ext1 *t, int len);
-char *tbuf_char (struct dtype_ext1 *t, int len);
-char *tbuf_float (struct dtype_ext1 *t, int len);
-char *tbuf_double (struct dtype_ext1 *t, int len);
-char *tbuf_string (struct dtype_ext1 *t, int len);
-char *tbuf_carray (struct dtype_ext1 *t, int len);
-char *tbuf_int (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_short (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_long (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_char (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_float (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_double (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_string (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_carray (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_int (struct dtype_ext1 *t, int len);
 
-char *tallocdlft (struct dtype_ext1 *t, int *len);
+exprivate char *tallocdlft (struct dtype_ext1 *t, int *len);
 
 /**
  * Functions to compare field values.
  */
-int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
-int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+exprivate int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
 
-#define DEFAULT_ALIGN       4
+/* for sparc we set to 8 */
+#define DEFAULT_ALIGN       EX_ALIGNMENT_BYTES
 /**
  * We operate with 32 bit align.
  */
 expublic dtype_str_t G_dtype_str_map[] =
 {
-    /* str type   typeid       default size align elm fb size       put data in fb   get data size   get data from fb */
-	{"short",	BFLD_SHORT,  BFLD_SHORT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 0 */
-	{"long",	BFLD_LONG,   BFLD_LONG_SIZE,   8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 1 */
-	{"char",	BFLD_CHAR,   BFLD_CHAR_SIZE,   4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 2 */
-	{"float",	BFLD_FLOAT,  BFLD_FLOAT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 3 */
-	{"double",	BFLD_DOUBLE, BFLD_DOUBLE_SIZE, 8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 4 */
-	{"string",	BFLD_STRING, BFLD_STRING_SIZE, 4, get_fb_string_size, put_data_string,  get_d_size_string, get_data_str}, /* 5 */
-	{"carray",	BFLD_CARRAY, BFLD_CARRAY_SIZE, 4, get_fb_carray_size, put_data_carray, get_d_size_carray, get_data_carr}, /* 6 */
-	{"int",		BFLD_INT,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 7 */
-    {""}
+/* str type   typeid       default size align elm fb size       put data in fb   get data size   get data from fb */
+{"short",	BFLD_SHORT,  BFLD_SHORT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 0 */
+{"long",	BFLD_LONG,   BFLD_LONG_SIZE,   8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 1 */
+{"char",	BFLD_CHAR,   BFLD_CHAR_SIZE,   4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 2 */
+{"float",	BFLD_FLOAT,  BFLD_FLOAT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 3 */
+{"double",	BFLD_DOUBLE, BFLD_DOUBLE_SIZE, 8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 4 */
+{"string",	BFLD_STRING, BFLD_STRING_SIZE, 4, get_fb_string_size, put_data_string,  get_d_size_string, get_data_str}, /* 5 */
+{"carray",	BFLD_CARRAY, BFLD_CARRAY_SIZE, 4, get_fb_carray_size, put_data_carray, get_d_size_carray, get_data_carr}, /* 6 */
+{"int",		BFLD_INT,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 7 */
+{""}
 };
+
+
+#define DAO EX_ALIGNMENT_BYTES
+#define DAC EX_ALIGNMENT_BYTES+4 /* for carray having some extra... */
 
 /**
  * We operate with 32 bit align.
  */
 expublic dtype_ext1_t G_dtype_ext1_map[] =
 {
-    /* type,    get default,  put empty deflt, dump,    datoff, tmpbuf fn, alloc buf */
-    {BFLD_SHORT, g_dflt_empty, put_empty_dftl, dump_short, 4, tbuf_short, tallocdlft, cmp_short},     /* 0 */
-    {BFLD_LONG,  g_dflt_empty, put_empty_dftl, dump_long,  4, tbuf_long,  tallocdlft, cmp_long},      /* 1 */
-    {BFLD_CHAR,  g_dflt_empty, put_empty_dftl, dump_char,  4, tbuf_char,  tallocdlft, cmp_char},      /* 2 */
-    {BFLD_FLOAT, g_dflt_empty, put_empty_dftl, dump_float, 4, tbuf_float, tallocdlft, cmp_float},     /* 3 */
-    {BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,4, tbuf_double,tallocdlft, cmp_double},    /* 4 */
-    {BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,4, tbuf_string,tallocdlft, cmp_string},    /* 5 */
-    {BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,8, tbuf_carray,tallocdlft, cmp_carray},    /* 6 */
-    {BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   4, tbuf_int,   tallocdlft, cmp_int},      /* 1 */
-    {-1}
+/* type,    get default,  put empty deflt, dump,    datoff, tmpbuf fn, alloc buf */
+{BFLD_SHORT, g_dflt_empty, put_empty_dftl, dump_short, DAO, tbuf_short, tallocdlft, cmp_short},     /* 0 */
+{BFLD_LONG,  g_dflt_empty, put_empty_dftl, dump_long,  DAO, tbuf_long,  tallocdlft, cmp_long},      /* 1 */
+{BFLD_CHAR,  g_dflt_empty, put_empty_dftl, dump_char,  DAO, tbuf_char,  tallocdlft, cmp_char},      /* 2 */
+{BFLD_FLOAT, g_dflt_empty, put_empty_dftl, dump_float, DAO, tbuf_float, tallocdlft, cmp_float},     /* 3 */
+{BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,DAO, tbuf_double,tallocdlft, cmp_double},    /* 4 */
+{BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,DAO, tbuf_string,tallocdlft, cmp_string},    /* 5 */
+{BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,DAC, tbuf_carray,tallocdlft, cmp_carray},      /* 6 */
+{BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 1 */
+{-1}
 };
 /*********************** Basic data type operations ***************************/
 
@@ -158,12 +183,15 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
  * @param data
  * @return
  */
-int get_fb_dftl_size(dtype_str_t *t, char *fb, int *payload_size)
+exprivate int get_fb_dftl_size(dtype_str_t *t, char *fb, int *payload_size)
 {
     if (NULL!=payload_size)
         *payload_size = t->size;
 
-    return t->aligned_size+sizeof(BFLDID);
+    /* e.g. sizeof(BFLDID) + 1 (char) + 4 - ( 4 + 1) % 4 =
+     * 5 + 4- 5 % 4 = 5 + 4 - 1 = 8*/
+/*    return (sizeof(BFLDID) + t->size) + DEFAULT_ALIGN - (sizeof(BFLDID) + t->size) % DEFAULT_ALIGN; */
+    return ALIGNED_SIZE(t->size);
 }
 
 /**
@@ -172,21 +200,26 @@ int get_fb_dftl_size(dtype_str_t *t, char *fb, int *payload_size)
  * @param data - FB
  * @return length in bytes
  */
-int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size)
+exprivate int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size)
 {
     UBF_string_t *str = (UBF_string_t *)fb;
     int data_size = strlen(str->str) + 1;
-    int aligned;
-    int tmp;
+    /* int aligned; 
+    int tmp;*/
     if (NULL!=payload_size)
         *payload_size = data_size;
 
+    /*
     aligned = sizeof(BFLDID) + data_size;
     tmp=aligned%DEFAULT_ALIGN;
     aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-
+    */
+    
+    
+    
     /* Including EOS (+1) */
-    return aligned;
+    /* return aligned; */
+    return ALIGNED_SIZE(data_size);
 }
 /**
  * Get data size which are placed into bisubf buffer.
@@ -194,19 +227,21 @@ int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size)
  * @param data
  * @return
  */
-int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size)
+exprivate int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size)
 {
     UBF_carray_t *carr = (UBF_carray_t *)fb;
-    int aligned;
-    int tmp;
+    /* int aligned;
+    int tmp; */
     if (NULL!=payload_size)
         *payload_size = carr->dlen;
 
+    /*
     aligned = (sizeof (BFLDID) + sizeof (BFLDLEN) + carr->dlen);
     tmp=aligned%DEFAULT_ALIGN;
     aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-
-    return aligned;
+    */
+    
+    return ALIGNED_SIZE((sizeof (BFLDLEN) + carr->dlen));
 }
 
 /******************************************************************************/
@@ -223,18 +258,21 @@ int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size)
  * @param len buffer size???
  * @return
  */
-int put_data_dflt(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len)
+exprivate int put_data_dflt(dtype_str_t *t, char *fb, BFLDID bfldid, 
+        char *data, int len)
 {
     UBF_generic_t *dflt = (void *)fb;
-    int align;
+    /* int align; */
     dflt->bfldid = bfldid;
     memcpy(dflt->d, data, t->size);
-    align=t->aligned_size-t->size;
+    /* align=t->aligned_size-t->size; */
 
-    /* Reset to 0 aligned memory */
+    /* Reset to 0 aligned memory 
+     * TODO, do we need this reset?
+
     if (align > 0)
         memset(dflt->d+t->size, 0, align);
-
+     */
     return EXSUCCEED;
 }
 
@@ -243,40 +281,45 @@ int put_data_dflt(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len)
  * Return last pointer!?!?
  * As from spec, we are not interested in length!
  */
-int put_data_string(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len)
+exprivate int put_data_string(dtype_str_t *t, char *fb, BFLDID bfldid, 
+        char *data, int len)
 {
     UBF_string_t *str = (void *)fb;
-    int tlen = strlen(data)+1;
-    int align = tlen % DEFAULT_ALIGN; /* This assumes that fieldid is aligned already */
+    /* int tlen = strlen(data)+1; */
+    /*int align = tlen % DEFAULT_ALIGN;  This assumes that fieldid is aligned already */
     
     strcpy(str->str, data);
     str->bfldid=bfldid;
 
+    /*
     if (align>0)
     {
         align=DEFAULT_ALIGN-align;
         memset(str->str + tlen, 0, align);
     }
-
+    */
     return EXSUCCEED;
 }
 
-int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len)
+exprivate int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, 
+        char *data, int len)
 {
     UBF_carray_t *carr = (UBF_carray_t *)fb;
-    int align;
+    /* int align; */
     carr->bfldid = bfldid;
     carr->dlen = len;
 
     if (len>0) /* Do not play with memory if length is 0 */
     {
-        align = len % DEFAULT_ALIGN; /* This assumes that fieldid & dlen is aligned already */
+        /*align = len % DEFAULT_ALIGN;  This assumes that fieldid & dlen is aligned already */
         memcpy(carr->carr, data, len);
+        /*
         if (align>0)
         {
             align=DEFAULT_ALIGN-align;
             memset(carr->carr + len, 0, align);
         }
+         * */
     }
     
     return EXSUCCEED;
@@ -295,11 +338,12 @@ int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid, char *data, int len
  * @param len
  * @return
  */
-int get_d_size_dftl (struct dtype_str *t, char *data, int len, int *payload_size)
+exprivate int get_d_size_dftl (struct dtype_str *t, char *data, 
+        int len, int *payload_size)
 {
     if (NULL!=payload_size)
         *payload_size = t->size;
-    return t->aligned_size + sizeof(BFLDID);
+    return /* t->aligned_size + sizeof(BFLDID); */ ALIGNED_SIZE(t->size);
 }
 
 /**
@@ -309,20 +353,23 @@ int get_d_size_dftl (struct dtype_str *t, char *data, int len, int *payload_size
  * @param len
  * @return
  */
-int get_d_size_string (struct dtype_str *t, char *data, int len, int *payload_size)
+exprivate int get_d_size_string (struct dtype_str *t, char *data, 
+        int len, int *payload_size)
 {
     int str_data_len = strlen(data)+1;
-    int aligned;
-    int tmp;
+/*    int aligned;
+    int tmp; */
     /* Counting: BFLDID, STRLEN + EOS */
     if (NULL!=payload_size)
         *payload_size = str_data_len;
 
+    /*
     aligned = (sizeof(BFLDID)+str_data_len);
     tmp=aligned%DEFAULT_ALIGN;
     aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-
-    return aligned;
+    */
+    
+    return ALIGNED_SIZE(str_data_len);
 }
 
 /**
@@ -332,19 +379,23 @@ int get_d_size_string (struct dtype_str *t, char *data, int len, int *payload_si
  * @param len
  * @return
  */
-int get_d_size_carray (struct dtype_str *t, char *data, int len, int *payload_size)
+exprivate int get_d_size_carray (struct dtype_str *t, char *data, 
+        int len, int *payload_size)
 {
     /* Counting: BFLDID, DLEN + data len*/
+    /*
     int aligned;
-    int tmp;
+    int tmp;*/
     if (NULL!=payload_size)
         *payload_size=len;
 
+    /*
     aligned = (sizeof(BFLDID)+sizeof(BFLDLEN)+len);
     tmp=aligned%DEFAULT_ALIGN;
     aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-
-    return aligned;
+    */
+    
+    return ALIGNED_SIZE((sizeof(BFLDLEN)+len));
 }
 
 /******************************************************************************/
@@ -361,7 +412,7 @@ int get_d_size_carray (struct dtype_str *t, char *data, int len, int *payload_si
  * @param len field length
  * @return
  */
-int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
+exprivate int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_generic_t *dflt = (void *)fb;
     int ret=EXSUCCEED;
@@ -371,17 +422,18 @@ int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
         /* Set error, that string buffer too short */
         ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
                                 "output: %d", t->size, *len);
-        ret=EXFAIL;
+        EXFAIL_OUT(ret);
     }
 
     memcpy(buf, dflt->d, t->size);
 
     /* Return the size to caller */
-    if (EXSUCCEED==ret && NULL!=len)
+    if (NULL!=len)
     {
         *len = t->size;
     }
-
+    
+out:
     return ret;
 }
 
@@ -393,7 +445,7 @@ int get_data_dflt (struct dtype_str *t, char *fb, char *buf, int *len)
  * @param len
  * @return
  */
-int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
+exprivate int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_string_t *str = (UBF_string_t *)fb;
     int data_len = strlen(str->str)+1;
@@ -404,7 +456,7 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
         /* Set error, that string buffer too short */
         ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
                                 "output: %d", data_len, *len);
-        ret=EXFAIL;
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -413,11 +465,12 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
     }
     
     /* Return the size to caller */
-    if (EXSUCCEED==ret && NULL!=len)
+    if (NULL!=len)
     {
         *len = data_len;
     }
-
+    
+out:
     return ret;
 }
 
@@ -429,7 +482,7 @@ int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
  * @param len
  * @return
  */
-int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
+exprivate int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_carray_t *carr = (UBF_carray_t *)fb;
     int ret=EXSUCCEED;
@@ -439,7 +492,7 @@ int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
         /* Set error, that string buffer too short */
         ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
                                 "output: %d", carr->dlen, *len);
-        ret=EXFAIL;
+        EXFAIL_OUT(ret);
     }
     else
     {
@@ -447,7 +500,7 @@ int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
         memcpy(buf, carr->carr, carr->dlen);
         *len=carr->dlen;
     }
-    
+out:
     return ret;
 }
 /*********************** Extended 1 data type operations **********************/
@@ -461,10 +514,13 @@ int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
  * @param t
  * @return
  */
-int g_dflt_empty(struct dtype_ext1* t)
+exprivate int g_dflt_empty(struct dtype_ext1* t)
 {
+    /*
     int len = G_dtype_str_map[t->fld_type].aligned_size + sizeof(BFLDID);
     return len;
+    */
+    return ALIGNED_SIZE(G_dtype_str_map[t->fld_type].size);
 }
 
 /**
@@ -472,22 +528,28 @@ int g_dflt_empty(struct dtype_ext1* t)
  * @param t
  * @return
  */
-int g_str_empty(struct dtype_ext1* t)
+exprivate int g_str_empty(struct dtype_ext1* t)
 {
+    /*
     int len;
-    len = sizeof(BFLDID)+4; /* actually we need +1, but +3 for align */
+    len = sizeof(BFLDID)+4; /* actually we need +1, but +3 for align
     return len;
+    */
+    return ALIGNED_SIZE(1); /* empty string eos */
 }
 /**
- * Return empty carracter array size
+ * Return empty character array size
  * @param t
  * @return
  */
-int g_carr_empty(struct dtype_ext1* t)
+exprivate int g_carr_empty(struct dtype_ext1* t)
 {
+    /*
     int len;
-    len = sizeof(BFLDID)+sizeof(BFLDLEN); /* This is already aligned */
+    len = sizeof(BFLDID)+sizeof(BFLDLEN);  This is already aligned 
     return len;
+     * */
+    return ALIGNED_SIZE(sizeof(BFLDLEN)); /* empty string eos */
 }
 
 /******************************************************************************/
@@ -503,10 +565,10 @@ int g_carr_empty(struct dtype_ext1* t)
  * @param fb
  * @return
  */
-int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid)
+exprivate int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
     int ret=EXSUCCEED;
-    int elem_size = G_dtype_str_map[t->fld_type].aligned_size;
+    int elem_size = G_dtype_str_map[t->fld_type].size;
     
     UBF_generic_t *fld = (UBF_generic_t *)fb;
     fld->bfldid = bfldid;
@@ -521,15 +583,17 @@ int put_empty_dftl(struct dtype_ext1* t, char *fb, BFLDID bfldid)
  * @param fb
  * @return
  */
-int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid)
+exprivate int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
     int ret=EXSUCCEED;
 
     UBF_string_t *fld = (UBF_string_t *)fb;
     fld->bfldid = bfldid;
     /* Uses alignmnet */
+    fld->str[0] = EXEOS;
+    /*
     memset(fld->str, 0, DEFAULT_ALIGN);
-    
+    */
     return ret;
 }
 
@@ -540,7 +604,7 @@ int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid)
  * @param fb
  * @return
  */
-int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid)
+exprivate int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
     int ret=EXSUCCEED;
 
@@ -557,7 +621,7 @@ int put_empty_carr(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 /* this is part of dtype_ext1->p_dump_data                                    */
 /******************************************************************************/
 
-void dump_short (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_short (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -570,7 +634,7 @@ void dump_short (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_long (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_long (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -583,7 +647,7 @@ void dump_long (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_char (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_char (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -596,7 +660,7 @@ void dump_char (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_float (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_float (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -609,7 +673,7 @@ void dump_float (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_double (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_double (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -622,7 +686,7 @@ void dump_double (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_string (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_string (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -634,7 +698,7 @@ void dump_string (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data && NULL!=len)
     {
@@ -646,7 +710,7 @@ void dump_carray (struct dtype_ext1 *t, char *text, char *data, int *len)
     }
 }
 
-void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len)
+exprivate void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
@@ -665,31 +729,31 @@ void dump_int (struct dtype_ext1 *t, char *text, char *data, int *len)
 /* this is part of dtype_ext1->p_tbuf                                         */
 /******************************************************************************/
 
-char *tbuf_short (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_short (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
     return (char *)&G_ubf_tls->tbuf_s;
 }
 
-char *tbuf_long (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_long (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
     return (char *)&G_ubf_tls->tbuf_l;
 }
 
-char *tbuf_char (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_char (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
     return (char *)&G_ubf_tls->tbuf_c;
 }
 
-char *tbuf_float (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_float (struct dtype_ext1 *t, int len)
 {
    UBF_TLS_ENTRY;
    return (char *)&G_ubf_tls->tbuf_f;
 }
 
-char *tbuf_double (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_double (struct dtype_ext1 *t, int len)
 {
    UBF_TLS_ENTRY;
    return (char *)&G_ubf_tls->tbuf_d;
@@ -701,7 +765,7 @@ char *tbuf_double (struct dtype_ext1 *t, int len)
  * @param len - potential data size
  * @return
  */
-char *tbuf_string (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_string (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
 
@@ -718,7 +782,8 @@ char *tbuf_string (struct dtype_ext1 *t, int len)
         if (NULL==G_ubf_tls->str_buf_ptr)
         {
             /* set error */
-            ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate string tmp space for %d bytes", len);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate string tmp "
+                    "space for %d bytes", len);
         }
         else
         {
@@ -739,7 +804,7 @@ char *tbuf_string (struct dtype_ext1 *t, int len)
  * @param len - potential data size
  * @return
  */
-char *tbuf_carray (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_carray (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
 
@@ -756,7 +821,8 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
         if (NULL==G_ubf_tls->carray_buf_ptr)
         {
             /* set error */
-            ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate carray tmp space for %d bytes", len);
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate carray tmp space "
+                    "for %d bytes", len);
         }
         else
         {
@@ -771,7 +837,7 @@ char *tbuf_carray (struct dtype_ext1 *t, int len)
     return G_ubf_tls->carray_buf_ptr;
 }
 
-char *tbuf_int (struct dtype_ext1 *t, int len)
+exprivate char *tbuf_int (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
     return (char *)&G_ubf_tls->tbuf_i;
@@ -791,7 +857,7 @@ char *tbuf_int (struct dtype_ext1 *t, int len)
  * @param len - buffer lenght to allocate.
  * @return NULL/ptr to allocated mem
  */
-char *tallocdlft (struct dtype_ext1 *t, int *len)
+exprivate char *tallocdlft (struct dtype_ext1 *t, int *len)
 {
     char *ret=NULL;
     int alloc_size = *len;
@@ -814,7 +880,8 @@ char *tallocdlft (struct dtype_ext1 *t, int *len)
 /* part of dtype_ext1->p_cmp                                                  */
 /******************************************************************************/
 
-int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+exprivate int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2,
     long mode)
 {
     short *s1 = (short *)val1;
@@ -830,7 +897,8 @@ int cmp_short (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDL
     }
 }
 
-int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+exprivate int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2,
     long mode)
 {
     long *l1 = (long *)val1;
@@ -853,7 +921,8 @@ int cmp_long (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLE
     }
 }
 
-int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
+exprivate int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2,
     long mode)
 {
     int *i1 = (int *)val1;
@@ -869,8 +938,8 @@ int cmp_int (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN
     }
 }
 
-int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
-    long mode)
+exprivate int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode)
 {
     unsigned char *c1 = (unsigned char *)val1;
     unsigned char *c2 = (unsigned char *)val2;
@@ -885,8 +954,8 @@ int cmp_char (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLE
     }
 }
 
-int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
-    long mode)
+exprivate int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode)
 {
     float *f1 = (float *)val1;
     float *f2 = (float *)val2;
@@ -916,8 +985,8 @@ int cmp_float (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDL
     
 }
 
-int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
-    long mode)
+exprivate int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode)
 {
     double *f1 = (double *)val1;
     double *f2 = (double *)val2;
@@ -956,8 +1025,8 @@ int cmp_double (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
  * @param len2 - if !=0, then using regexp
  * @return
  */
-int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
-    long mode)
+exprivate int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode)
 {
     int ret=EXSUCCEED;
     char *fn = "cmp_string";
@@ -1017,7 +1086,8 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
                 UBF_LOG(log_debug, "%s:Compiling regex [%s]", fn, tmp_regex);
             }
 
-            if (EXSUCCEED==ret && EXSUCCEED!=(err=regcomp(&re, tmp_regex, REG_EXTENDED | REG_NOSUB)))
+            if (EXSUCCEED==ret && EXSUCCEED!=(err=regcomp(&re, tmp_regex, 
+                    REG_EXTENDED | REG_NOSUB)))
             {
                 ndrx_report_regexp_error("regcomp", err, &re);
                 ret=EXFAIL;
@@ -1059,8 +1129,8 @@ int cmp_string (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLD
     return ret;
 }
 
-int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, BFLDLEN len2,
-    long mode)
+exprivate int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode)
 {
     
     if (mode & UBF_CMP_MODE_STD)

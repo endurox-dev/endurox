@@ -15,22 +15,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -123,7 +123,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
-        ubf_h->bytes_used = sizeof(UBF_header_t) - sizeof(BFLDID); /* so this is not used.. */
+        ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES; /* so this is not used.. */
     }
     
     return ret;
@@ -307,10 +307,10 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -327,12 +327,12 @@ expublic int Bdel (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ)
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "Bdel: last %d bytes of data\n org=%p new %p",
-                          sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After Badd", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after: ",p_ub, hdr->bytes_used);
     NDRX_FREE(__p_ub_copy);
@@ -863,9 +863,28 @@ expublic char * Bboolco (char * expr)
     }
 }
 
+/**
+ * Evaluate boolean expression
+ * @param[in] p_ub UBF buffer
+ * @param[in] tree compiled expression tree
+ * @return 0 - false, 1 - true
+ */
 expublic int Bboolev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    
+    if (NULL==tree)
+    {
+         ndrx_Bset_error_fmt(BEINVAL, "tree is NULL");
+         return EXFAIL;
+    }
+    
     return ndrx_Bboolev (p_ub, tree);
 }
 
@@ -878,6 +897,19 @@ expublic int Bboolev (UBFH * p_ub, char *tree)
 expublic double Bfloatev (UBFH * p_ub, char *tree)
 {
     API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    
+    if (NULL==tree)
+    {
+         ndrx_Bset_error_fmt(BEINVAL, "tree is NULL");
+         return EXFAIL;
+    }
+    
     return ndrx_Bfloatev (p_ub, tree);
 }
 
@@ -1260,7 +1292,7 @@ expublic int Bfree (UBFH *p_ub)
 expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 {
     UBFH *p_ub=NULL;
-    long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
+    long alloc_size = f*(FF_USED_BYTES) + f*v + sizeof(UBF_header_t);
     API_ENTRY;
     
     if ( alloc_size > MAXUBFLEN)
@@ -1303,7 +1335,7 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
-    long alloc_size = f*(sizeof(BFLDID)) + f*v + sizeof(UBF_header_t);
+    long alloc_size = f*(FF_USED_BYTES) + f*v + sizeof(UBF_header_t);
     API_ENTRY;
 
     UBF_LOG(log_debug, "Brealloc: enter p_ub=%p!", p_ub);
@@ -1784,8 +1816,40 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
         ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
+    return ndrx_Bextread (p_ub, inf, NULL, NULL);
+}
+
+/**
+ * Read UBF buffer from printed/text format UBF.
+ * @param p_ub ptr to UBF buffer
+ * @param p_readf callback to read function. Function shall provide back data
+ *  to ndrx_Bextread(). The reading must be feed line by line. The input line
+ *  must be terminated with EOS. The buffer size which accepts the input line
+ *  is set by `bufsz'. The function receives forwarded \p dataptr1 argument.
+ *  Once EOF is reached, the callback shall return read of 0 bytes. Otherwise
+ *  it must return number of bytes read, including EOS.
+ * @param dataptr1 option user pointer forwarded to \p p_readf.
+ * @return SUCCEED/FAIL
+ */
+expublic int Bextreadcb (UBFH * p_ub, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_readf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Callback function cannot be NULL!");
+        return EXFAIL;
+    }
     
-    return ndrx_Bextread (p_ub, inf);
+    return ndrx_Bextread (p_ub, NULL, p_readf, dataptr1);
 }
 
 /**
@@ -1795,7 +1859,6 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
  */
 expublic void Bboolpr (char * tree, FILE *outf)
 {
-    char *fn = "Bboolpr";
     API_ENTRY;
 
     /* Do standard validation */
@@ -1811,9 +1874,40 @@ expublic void Bboolpr (char * tree, FILE *outf)
         return;
     }
 
-    ndrx_Bboolpr (tree, outf);
+    ndrx_Bboolpr (tree, outf, NULL, NULL);
     /* put newline at the end. */
     fprintf(outf, "\n");
+}
+
+/**
+ * API entry for Bboolpr. Print boolean expression to callback function.
+ * @param[in] tree compiled boolean expression tree to print
+ * @param[in] p_writef callback function to which print the buffer. The datalen
+ *  includes the EOS symbol.
+ * @param[in] dataptr1 user pointer to forward to \p p_writef function
+ */
+expublic void Bboolprcb (char * tree, 
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (NULL==tree)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Evaluation tree cannot be NULL!");
+        return;
+    }
+    /* check output file */
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Input callback function p_writef "
+                "cannot be NULL!");
+        return;
+    }
+
+    ndrx_Bboolpr (tree, NULL, p_writef, dataptr1);
+    /* put newline at the end. */
+    p_writef("\n", 2, dataptr1);
 }
 
 /**
@@ -1880,10 +1974,10 @@ expublic char * Bfinds (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 }
 
 /**
- * API entry for Bread
- * @param p_ub
- * @param inf
- * @return
+ * API entry for Bread. Read binary UBF buffer form input stream
+ * @param p_ub UBF buffer
+ * @param inf input file stream
+ * @return EXSUCCEED(0)/EXFAIL(-1)
  */
 expublic int Bread (UBFH * p_ub, FILE * inf)
 {
@@ -1903,14 +1997,14 @@ expublic int Bread (UBFH * p_ub, FILE * inf)
         return EXFAIL;
     }
 
-    return ndrx_Bread (p_ub, inf);
+    return ndrx_Bread (p_ub, inf, NULL, NULL);
 }
 
 /**
- * API entry for Bwrite
- * @param p_ub
- * @param outf
- * @return
+ * API entry for Bwrite. Write binary buffer to output stream.
+ * @param p_ub UBF buffer to read from
+ * @param outf output stream to write to
+ * @return EXSUCCEED/EXFAIL, Berror set in case of problems.
  */
 expublic int Bwrite (UBFH *p_ub, FILE * outf)
 {
@@ -1925,13 +2019,80 @@ expublic int Bwrite (UBFH *p_ub, FILE * outf)
     /* check output file */
     if (NULL==outf)
     {
-        ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
+        ndrx_Bset_error_msg(BEINVAL, "Output file cannot be NULL!");
         return EXFAIL;
     }
 
-    return ndrx_Bwrite (p_ub, outf);
+    return ndrx_Bwrite (p_ub, outf, NULL, NULL);
 }
 
+/**
+ * Read UBF buffer from callback function. The format is binary, platform specific.
+ * @param p_ub UBF buffer to write to
+ * @param[in] p_readf is a callback function which is used to read data from.
+ *  The special requirement of this callback is that, The number of bytes which
+ *  must be read are specified in `bufsz', otherwise error will occur. In case of
+ *  callback function error by it self, -1 can be returned in that case. `buffer'
+ *  is buffer where read data must be put in. `dataptr1` is forwarded from \p
+ *  dataptr1 argument.
+ * @param[in] dataptr1 is value which is forwarded to \p p_writef. This is optional
+ *  and may contain NULL.
+ * @return EXSUCCEED/EXFAIL, Berror set in case of problems.
+ */
+expublic int Breadcb (UBFH * p_ub, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_readf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Read callback function must not be NULL!");
+        return EXFAIL;
+    }
+
+    return ndrx_Bread (p_ub, NULL, p_readf, dataptr1);
+}
+
+/**
+ * Write UBF buffer to callback function
+ * @param p_ub UBF buffer to read from
+ * @param[in] p_writef is a callback function which receives portions of UBF buffer.
+ *  once function is called, all `bufsz' bytes must be accepted. And function
+ *  at success must return the number of bytes written (i.e. the same `bufsz')
+ *  other cases are considered as errro. The `buffer' is pointer where buffer
+ *  bytes are stored. The `dataptr1' is a value forwarded from the Bwritecb()
+ *  arguments.
+ * @param[in] dataptr1 is value which is forwarded to \p p_writef. This is optional
+ *  and may contain NULL.
+ * @return EXSUCCEED/EXFAIL, Berror set in case of problems.
+ */
+expublic int Bwritecb (UBFH *p_ub, 
+        long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        return EXFAIL;
+    }
+    /* check output file */
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Output callback function must not be NULL!");
+        return EXFAIL;
+    }
+
+    return ndrx_Bwrite (p_ub, NULL, p_writef, dataptr1);
+}
 
 /**
  * Get the length of the field
@@ -2959,3 +3120,4 @@ expublic BFLDID Bflddbid (char *fldname)
 }
 
 expublic /* vim: set ts=4 sw=4 et smartindent: */
+/* vim: set ts=4 sw=4 et smartindent: */

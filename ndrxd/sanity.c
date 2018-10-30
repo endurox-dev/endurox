@@ -12,22 +12,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -74,9 +74,10 @@ exprivate int check_long_startup(void);
 exprivate int check_dead_processes(void);
 /**
  * Master process for sanity checking.
+ * @param[in] finalchk perform final checks? Remove dread resources...
  * @return SUCCEED/FAIL
  */
-expublic int do_sanity_check(void)
+expublic int do_sanity_check(int finalchk)
 {
     int ret=EXSUCCEED;
     static ndrx_stopwatch_t timer;
@@ -145,7 +146,7 @@ expublic int do_sanity_check(void)
         first=EXFALSE;
     }
      
-    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity)
+    if (ndrx_stopwatch_get_delta_sec(&timer)>=G_app_config->sanity || finalchk)
     {
         wasrun = EXTRUE;
         NDRX_LOG(log_debug, "Time for sanity checking...");
@@ -196,7 +197,11 @@ expublic int do_sanity_check(void)
         check_long_startup();
         /* Send bridge refresh (if required) */
         
-        brd_send_periodrefresh();
+        if (!finalchk)
+        {
+            brd_send_periodrefresh();
+        }
+        
         /* Time for PM checking! */
         if (EXSUCCEED!=check_dead_processes())
         {
@@ -205,13 +210,29 @@ expublic int do_sanity_check(void)
         }
         
         /* Respawn any dead processes */
-        do_respawn_check();
+        if (!finalchk)
+        {
+            do_respawn_check();
+        }
         
         /* update queue statistics (if enabled) */
-        if (G_app_config->gather_pq_stats)
+        
+        if (!finalchk)
         {
-            pq_run_santiy(EXTRUE);
+            if (G_app_config->gather_pq_stats)
+            {
+                pq_run_santiy(EXTRUE);
+            }
         }
+        
+#ifdef EX_USE_SYSVQ
+        if (EXSUCCEED!=do_sanity_check_sysv(finalchk))
+        {
+            NDRX_LOG(log_error, "System V sanity checks failed!");
+            userlog("System V sanity checks failed!");
+            EXFAIL_OUT(ret);
+        }
+#endif
     }
     
 out:
@@ -803,6 +824,31 @@ exprivate int check_cnvsrv(char *qname)
         }
     }
    
+out:
+    return ret;
+}
+
+/**
+ * Perform final sanity checks - ndrxd is exiting
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrxd_sanity_finally(void)
+{
+    int ret = EXSUCCEED;
+    
+    /*
+#ifdef EX_USE_SYSVQ
+    
+    if (EXSUCCEED!=ndrxd_sysv_finally())
+    {
+        ret = EXFAIL;
+    }
+    
+#endif
+     */
+    
+    ret = do_sanity_check(EXTRUE);
+    
 out:
     return ret;
 }

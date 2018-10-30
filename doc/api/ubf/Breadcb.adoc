@@ -1,0 +1,69 @@
+BREADCB(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Breadcb - Read the UBF buffer from Bwritecb(3) serialized format
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Breadcb (UBFH * p_ub, long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+*Breadcb()* is a function which reads UBF/'p_ub' buffer from the callback function.
+specified in 'p_readf' argument. The arguments to callback are 'buffer' which
+is data buffer into which data must be read. The number of bytes required by
+particular request are specified in 'bufsz'. This is precise number of bytes
+that are required to be read from the data source. Basically two read requests
+are performed by the function. The first reads the header and the scond extracts
+from the header buffer length and remaining bytes are read. The 'dataptr1' argument
+to callback are forwarded from main function arguments. This is usable for cases
+when some other control objects must be passed to callback. The callback must
+return number of bytes read from the source. For success case parameter
+'bufsz' must be return from the callback (i.e. read bytes matches),
+otherwise *Breadcb()* will fail.
+In case of failure inside the callback, return value *-1*.
+
+RETURN VALUE
+------------
+On success, *Breadcb()* return zero; on error, -1 is returned, 
+with *Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BEINVAL* 'readf' is NULL.
+
+*BEUNIX* Failed to read from stream.
+
+EXAMPLE
+-------
+See *ubftest/test_readwrite.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bfprint(3)* *Bprint(3)* *Bwrite(3)* *Bwritecb(3)* *ud(8)* *Bextread(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -51,8 +51,63 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 ndrx_config_t G_config;
+exprivate int M_is_reply_q_open = EXFALSE;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Close shared resources
+ */
+expublic int ndrx_xadmin_shm_close(void)
+{
+    int ret = EXSUCCEED;
+    
+    if (M_is_reply_q_open)
+    {
+        ndrx_epoll_shmdetach();
+    }
+    
+    M_is_reply_q_open = EXFALSE;
+    
+out:
+    return ret;
+}
+
+/**
+ * Open reply queue if needed
+ * @return EXFAIL/EXSUCCEED
+ */
+expublic int ndrx_xadmin_open_rply_q(void)
+{
+    int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_debug, "About to open xadmin's reply queue");
+    /* Open new queue... */
+    if (!M_is_reply_q_open)
+    {
+        if ((mqd_t)EXFAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
+                                            O_RDWR | O_CREAT,
+                                            S_IWUSR | S_IRUSR, NULL)))
+        {
+            NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
+                                            G_config.reply_queue_str, strerror(errno));
+            userlog("Failed to open queue: [%s] err: %s",
+                                            G_config.reply_queue_str, strerror(errno));
+            ret=EXFAIL;
+            goto out;
+        }
+
+        NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
+        /* Just give some warning for System */
+        fprintf(stderr, "* Shared resources opened...\n");
+        
+        M_is_reply_q_open=EXTRUE;
+        
+    }
+    
+out:
+    return ret;
+}
 
 /**
  * Load environment configuration
@@ -128,24 +183,10 @@ expublic int load_env_config(void)
     snprintf(G_config.reply_queue_str, sizeof(G_config.reply_queue_str),
             NDRX_NDRXCLT, G_config.qprefix, getpid());
 
-    /* Unlink previous admin queue (if have such) - ignore any error */
-    ndrx_mq_unlink(G_config.reply_queue_str);
-    NDRX_LOG(log_debug, "About to open reply queue: [%s]",
+    /* Unlink previous admin queue (if have such) - ignore any error 
+    ndrx_mq_unlink(G_config.reply_queue_str);*/
+    NDRX_LOG(log_debug, "Reply queue: [%s]",
                                         G_config.reply_queue_str);
-    /* Open new queue... */
-    if ((mqd_t)EXFAIL==(G_config.reply_queue = ndrx_mq_open_at(G_config.reply_queue_str,
-                                        O_RDWR | O_CREAT,
-                                        S_IWUSR | S_IRUSR, NULL)))
-    {
-        NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
-                                        G_config.reply_queue_str, strerror(errno));
-        userlog("Failed to open queue: [%s] err: %s",
-                                        G_config.reply_queue_str, strerror(errno));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
 
     /* Get config key */
     G_config.ndrxd_logfile = getenv(CONF_NDRX_DMNLOG);

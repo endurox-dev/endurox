@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -55,7 +55,8 @@
 #include <utlist.h>
 #include <atmi_shm.h>
 #include <exregex.h>
-
+#include <sys/msg.h>
+#include <sys/sem.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -135,7 +136,6 @@ expublic int ndrx_chk_ndrxd(void)
     {
         NDRX_LOG(log_debug, "process `ndrxd' not running...");
     }
-    
     
     ndrx_string_list_free(list);
     
@@ -238,14 +238,61 @@ out:
     return ret;
 }
 
+/**
+ * Delete user resources (by username)
+ */
+expublic void ndrx_down_userres(void)
+{
+    int i;
+    int *sysvres;
+    ndrx_growlist_t g;
 
+    NDRX_LOG(log_warn, "Remove user specific resources - System V queues");
+    memset(&g, 0, sizeof(g));
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXTRUE))
+    {
+        sysvres = (int *)g.mem;
+        for (i=0; i<=g.maxindexused; i++)
+        {
+            NDRX_LOG(log_warn, "Removing QID=%d", sysvres[i]);
+            if (EXSUCCEED!=msgctl(sysvres[i], IPC_RMID, NULL))
+            {
+                NDRX_LOG(log_error, "Failed to remove qid %d: %s",
+                        sysvres[i], strerror(errno));
+            }
+        }
 
+        ndrx_growlist_free(&g);
+    }
+
+    NDRX_LOG(log_warn, "Remove user specific resources - System V semaphores");
+    memset(&g, 0, sizeof(g));
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXFALSE))
+    {
+        sysvres = (int *)g.mem;
+        for (i=0; i<=g.maxindexused; i++)
+        {
+            NDRX_LOG(log_warn, "Removing SEM ID=%d", sysvres[i]);
+            if (EXSUCCEED!=semctl(sysvres[i], 0, IPC_RMID))
+            {
+                NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
+                        sysvres[i], strerror(errno));
+            }
+        }
+        ndrx_growlist_free(&g);
+    }
+    
+    return;
+}
 
 
 /**
  * Kill the system running (the xadmin dies last...)
+ * @param[in] user_res remove user specific resources (this might kill other apps
+ *  resources too if running under the same user). Currently performs System V
+ *  resource removal.
  */
-expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
+expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res)
 {
     int ret = EXSUCCEED;
 #define DOWN_KILL_SIG   1
@@ -266,9 +313,9 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     pid_t pid, ppid;
     long th;
     char test_string2[NDRX_MAX_KEY_SIZE+4];
-    char srvinfo[NDRX_MAX_SHM_SIZE];
-    char svcinfo[NDRX_MAX_SHM_SIZE];
-    char brinfo[NDRX_MAX_SHM_SIZE];
+    char srvinfo[NDRX_SHM_PATH_MAX];
+    char svcinfo[NDRX_SHM_PATH_MAX];
+    char brinfo[NDRX_SHM_PATH_MAX];
     char *shm[] = {srvinfo, svcinfo, brinfo};
     char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
     int max_signals = 2;
@@ -685,6 +732,18 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force)
     else
     {
         NDRX_LOG(log_error, "Missing ndrxd PID file...");
+    }
+    
+    NDRX_LOG(log_warn, "Terminating polling sub-system");
+    
+    if (EXSUCCEED!=ndrx_epoll_down(EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to terminate poller");
+    }
+    
+    if (user_res)
+    {
+        ndrx_down_userres();
     }
     
     NDRX_LOG(log_warn, "****** Done ******");

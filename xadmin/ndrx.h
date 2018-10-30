@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -59,6 +59,9 @@ extern "C" {
 #define         MAX_ARG_LEN     500
 #define         ARG_DEILIM      " \t"
 #define         MAX_CMD_LEN     300
+    
+#define         NDRX_XADMIN_IDLEREQ         1   /**< Idle requested           */
+#define         NDRX_XADMIN_RPLYQREQ        2   /**< Reply queue requested    */
 
 extern int G_cmd_argc_logical;
 extern int G_cmd_argc_raw;
@@ -119,12 +122,18 @@ struct cmd_mapping
     char *cmd;          /* Command name */
     /* command callback */
     int (*p_exec_command) (cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
-    int ndrxd_cmd;                  /* EnduroX Daemon command code          */
-    int min_args;                   /* Minimum argument count for command   */
-    int max_args;                   /* Maximum argument count for command   */
-    int reqidle;                    /* This requires backend started        */
-    char *help;                     /* Short help descr of command          */
-    int (*p_add_help) (void);       /* additional help function             */
+    int ndrxd_cmd;             /**< EnduroX Daemon command code          */
+    int min_args;              /**< Minimum argument count for command   */
+    int max_args;              /**< Maximum argument count for command   */
+    /**
+     * Do we need ndrxd in idle?
+     * 0 = no idle needed, no reply queue needed
+     * 1 = need idle (also reply queue is open)
+     * 2 = no need for idle, but reply queue is needed)
+     */
+    int reqidle;               
+    char *help;                /**< Short help descr of command          */
+    int (*p_add_help) (void);   /**< additional help function             */
 };
 /*---------------------------Globals------------------------------------*/
 extern ndrx_config_t G_config;
@@ -135,13 +144,19 @@ extern char G_xadmin_config_file[PATH_MAX+1];
 /*---------------------------Prototypes---------------------------------*/
 extern int start_daemon_idle(void);
 extern int load_env_config(void);
+extern int ndrx_xadmin_open_rply_q(void);
 extern int is_ndrxd_running(void);
 extern void simple_output(char *buf);
 /* extern int get_arg(char *param, int argc, char **argv, char **out); */
 extern int chk_confirm(char *message, short is_confirmed);
 extern int chk_confirm_clopt(char *message, int argc, char **argv);
+extern char * ndrx_xadmin_nodeid(void);
 extern int ndrx_start_idle();
+extern int ndrx_xadmin_shm_close();
+extern int un_init(int closeshm);
 extern void sign_chld_handler(int sig);
+
+extern int process_command_buffer(int *p_have_next);
 
 #ifndef NDRX_DISABLEPSCRIPT
 extern void printfunc(HPSCRIPTVM v,const PSChar *s,...);
@@ -161,6 +176,7 @@ extern int ss_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_psc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int psc_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_udown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_cat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int at_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_reload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
@@ -176,7 +192,6 @@ extern int cmd_readv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 /*ppm:*/
 extern int cmd_ppm(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int ppm_rsp_process(command_reply_t *reply, size_t reply_len);
-
 
 /* shm: */
 extern int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len);
@@ -241,6 +256,14 @@ extern int cmd_ci(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 
 /* UBF Field Database: */
 extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* System V specifics */
+#ifdef EX_USE_SYSVQ
+extern int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+#endif
+
+extern int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

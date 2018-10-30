@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -64,7 +64,7 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Msg queued Q name\n");
+    fprintf(stderr, "MSG QUEUED Q NAME\n");
     fprintf(stderr, "---------- ---------------------------------"
                     "------------------------------------\n");
 }
@@ -79,12 +79,10 @@ exprivate void print_hdr(void)
 expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=EXSUCCEED;
-    int n;
     short print_all = EXFALSE;
     struct mq_attr att;
-    char q[512];
     string_list_t* qlist = NULL;
-    string_list_t* elt = NULL;
+    string_list_t* elt = NULL;  
     ncloptmap_t clopt[] =
     {
         {'a', BFLD_SHORT, (void *)&print_all, 0, 
@@ -98,7 +96,7 @@ expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
         EXFAIL_OUT(ret);
     }
-    
+
     /* Print header at first step! */
     print_hdr();
     

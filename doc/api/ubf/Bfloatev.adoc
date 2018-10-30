@@ -5,7 +5,7 @@ BFLOATEV(3)
 
 NAME
 ----
-Bfloatev - Evaulate compiled expression tree against UBF buffer
+Bfloatev - Evaluate compiled expression tree against UBF buffer
 
 
 SYNOPSIS
@@ -19,15 +19,20 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Evaluate compiled expresion in 'tree' against UBF buffer in 'p_ub'. Returned value is floating point result of the operation.
+Evaluate compiled expression in 'tree' against UBF buffer in 'p_ub'. 
+Returned value is floating point result of the operation.
 
 RETURN VALUE
 ------------
-Floating point result value is returned. In case of error it is *-1*, but to detect error, check the *Berror*.
+Floating point result value is returned. In case of error it is *-1*, 
+but to detect error, check the *Berror*.
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BNOTFLD* 'p_ub' is not fielded buffer or argument NULL.
 
 *BEINVAL* 'tree' param is NULL.
 

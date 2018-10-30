@@ -7,22 +7,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include "ndebug.h"
 
 /**
  * Reference output that should be printed to log file.
@@ -168,7 +169,7 @@ void load_print_test_data(UBFH *p_ub)
  */
 Ensure(test_bfprint)
 {
-    char fb[1024];
+    char fb[2024];
     UBFH *p_ub = (UBFH *)fb;
     BFLDLEN len=0;
     FILE *f=NULL;
@@ -211,15 +212,77 @@ Ensure(test_bfprint)
 }
 
 /**
+ * Test data holder for bfprintcb_data
+ */
+typedef struct bfprintcb_data bfprintcb_data_t;
+struct bfprintcb_data
+{
+    int nrlines;
+    char lines[1024][100];
+};
+
+/**
+ * Write callback, this will fill in passed array
+ * @param buffer
+ * @param datalen
+ * @param dataptr1
+ * @return 
+ */
+exprivate int test_bfprintcb_writef(char *buffer, long datalen, void *dataptr1)
+{
+    bfprintcb_data_t *data = (bfprintcb_data_t *)dataptr1;
+    
+    assert_equal(strlen(buffer)+1, datalen);
+    
+    NDRX_STRCPY_SAFE(data->lines[data->nrlines], buffer);
+    data->nrlines++;
+    return EXSUCCEED;
+}
+
+/**
+ * Bfprintcb testing (i.e. callback testing...)
+ * @return
+ */
+Ensure(test_bfprintcb)
+{
+    char fb[2024];
+    UBFH *p_ub = (UBFH *)fb;
+    bfprintcb_data_t data;
+    int line_counter=0;
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+
+    memset(&data, 0, sizeof(data));
+    load_print_test_data(p_ub);
+    load_field_table();
+    
+    assert_equal(Bfprintcb(p_ub, test_bfprintcb_writef, (void *)&data), EXSUCCEED);
+    UBF_LOG(log_error, "Bfprintcb: %s", Bstrerror(Berror));
+    
+    /* compare the buffers */
+    for (line_counter=0; line_counter<N_DIM(ref_print)-1; line_counter++)
+    {
+        assert_string_equal(data.lines[line_counter], ref_print[line_counter]);
+        line_counter++;
+    }
+    
+    assert_equal(data.nrlines, N_DIM(ref_print)-1);
+    
+    /* cannot print on null file */
+    assert_equal(Bfprintcb(p_ub, NULL, NULL), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+}
+
+/**
  * Test bprint
  * There is special note for this!
  * If running in single test mode, then STDOUT will be lost!
  */
 Ensure(test_bprint)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
-    char fb2[1024];
+    char fb2[2048];
     UBFH *p_ub2 = (UBFH *)fb2;
     BFLDLEN len=0;
     FILE *f;
@@ -234,15 +297,16 @@ Ensure(test_bprint)
     /* nothing much to test here... */
     close(1); /* close stdout */
     assert_not_equal((f=fopen(filename, "w")), NULL);
-    fstdout = dup(fileno(f)); /* make file appear as stdout */
+    fstdout = dup2(fileno(f), 1); /* make file appear as stdout */
     assert_equal(Bprint(p_ub), NULL);
     fclose(f);
 
     /* OK, if we have that output, try to extread it! */
     assert_not_equal((f=fopen(filename, "r")), NULL);
+
     assert_equal(Bextread(p_ub2, f), EXSUCCEED);
-    /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    /* compare read buffer */
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
@@ -280,7 +344,7 @@ Ensure(test_bextread_bfldid)
     fclose(f);
     
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
@@ -317,10 +381,73 @@ Ensure(test_bextread_fldnm)
     fclose(f);
 
     /* compare readed buffer */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), 0);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);
 }
+
+/**
+ * Return the buffer line
+ * @param buffer buffer to put in the result. Note that is should go line by line
+ * @param bufsz buffer size
+ * @param dataptr1 user data ptr
+ * @return number of bytes written to buffer
+ */
+exprivate long bextreadcb_readf(char *buffer, long bufsz, void *dataptr1)
+{
+    int *idx = (int *)dataptr1;
+    
+    char *data_buffers[]= {
+        "T_SHORT_FLD\t88\n",
+        "T_SHORT_FLD\t-1\n",
+        "T_SHORT_2_FLD\t0\n",
+        "T_SHORT_2_FLD\t212\n",
+        "T_LONG_FLD\t-1021\n",
+        "T_LONG_FLD\t-2\n",
+        "T_LONG_FLD\t0\n",
+        "T_LONG_FLD\t0\n", /* <<< error line */
+        NULL
+    };
+    
+    if (NULL!=data_buffers[*idx])
+    {
+        NDRX_STRNCPY_SAFE(buffer, data_buffers[*idx], bufsz);
+        
+        (*idx)++;
+        return strlen(buffer)+1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/**
+ * Test extread with callbacks
+ */
+Ensure(test_bextreadcb)
+{
+    char fb[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    int idx = 0;
+    char *tree;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Bextreadcb(p_ub, bextreadcb_readf, (void *)&idx), EXSUCCEED);
+    
+    /* test with boolean expression */
+    tree = Bboolco("T_SHORT_FLD == 88 && T_SHORT_FLD[1] == -1 && T_SHORT_2_FLD==0 "
+            "&& T_SHORT_2_FLD[1]==212 && T_LONG_FLD==-1021 && T_LONG_FLD[1]==-2 "
+            "&& T_LONG_FLD[2]==0 && T_LONG_FLD[3]==0");
+    
+    assert_not_equal(tree, NULL);
+    
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);
+    
+    Btreefree(tree);
+
+}
+
 /**
  * Testing extread for errors
  */
@@ -623,7 +750,7 @@ Ensure(test_bextread_minus)
     assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "1", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), NULL);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
 }
 
 /**
@@ -672,7 +799,7 @@ Ensure(test_bextread_plus)
     assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "CDE", 0, BFLD_STRING), EXSUCCEED);
 
     /* Compare buffers now should be equal */
-    assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), NULL);
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
 }
 
 
@@ -791,8 +918,12 @@ TestSuite *ubf_print_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
-    add_test(suite, test_bfprint);
+    
+    add_test(suite, test_bfprintcb);
+     
     add_test(suite, test_bprint);
+    add_test(suite, test_bfprint);
+    
     add_test(suite, test_bextread_bfldid);
     add_test(suite, test_bextread_fldnm);
     add_test(suite, test_bextread_chk_errors);
@@ -801,6 +932,7 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_plus);
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
+    add_test(suite, test_bextreadcb);
 
 
     return suite;

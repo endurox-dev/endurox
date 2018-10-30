@@ -11,22 +11,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -101,7 +101,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
         if (make_free)
         {
             NDRX_LOG(log_debug, "Marking context %ld as free", ctxid);
-            M_contexts[ctxid] = EXFAIL;
+            M_contexts[ctxid-1] = EXFAIL;
         }
         else
         {
@@ -109,7 +109,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
             {
                 if (EXFAIL==M_contexts[i])
                 {
-                    NDRX_LOG(log_debug, "Got free context id=%ld", i);
+                    NDRX_LOG(log_debug, "Got free context id=%ld (0 base)", i);
                     M_contexts[i] = i;
                     ret = i;
                     break;
@@ -117,6 +117,7 @@ expublic long ndrx_ctxid_op(int make_free, long ctxid)
             }
         }
         
+        ret+=1;
 out:     
         NDRX_LOG(log_debug, "Returning context id=%ld", ret);
         MUTEX_UNLOCK;
@@ -785,12 +786,11 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                 NDRX_LOG(log_warn, "%s not set, not loading views", CONF_VIEWDIR);
             }
 #endif
-            
             /* Init semaphores first. */
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
             
             /* Try to attach to semaphore array */
-            if (EXSUCCEED!=ndrx_sem_attach_all())
+            if (EXSUCCEED!=ndrx_sem_open_all())
             {
                 NDRX_LOG(log_error, "Failed to attache to semaphores!!");
                 sem_fail = EXTRUE;
@@ -799,7 +799,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             }
             
             /* Attach to client shared memory? */
-            if (EXSUCCEED==shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
+            if (EXSUCCEED==ndrx_shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
                         G_atmi_env.max_servers, G_atmi_env.max_svcs))
             {
                 if (init_data->is_client)

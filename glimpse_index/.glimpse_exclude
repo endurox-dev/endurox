@@ -13,3 +13,5 @@ README.md
 html
 ULOG.
 cmake_install.cmake
+*.log
+*.out
