@@ -266,6 +266,9 @@ extern NDRX_API int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
 extern NDRX_API int ndrx_svqadmin_init(mqd_t adminq);
 extern NDRX_API int ndrx_svqadmin_deinit(void);
 
+
+extern NDRX_API void ndrx_YOPT(char *func, char *file, long line);
+
 #endif
 
 /* vim: set ts=4 sw=4 et smartindent: */

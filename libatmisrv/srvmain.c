@@ -688,10 +688,13 @@ int ndrx_main(int argc, char** argv)
         userlog("sv_wait_for_request() fail %d", ret);
         goto out;
     }
+    ndrx_YOPT(__func__, __FILE__, __LINE__);
     
 out:
     /* finish up. */
     tpsvrdone();
+
+    ndrx_YOPT(__func__, __FILE__, __LINE__);
 
     /*
      * un-initalize polling sub-system
