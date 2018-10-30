@@ -9,22 +9,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -33,6 +33,8 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
+/* needed for asprintf */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -47,6 +49,7 @@
 #include <regex.h>
 #include <expr.tab.h>
 #include <exhash.h>
+#include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /* make llvm silent.. */
 extern void yy_scan_string (char *yy_str  );
@@ -192,7 +195,8 @@ void yyerror(char *s, ...)
         va_start(ap, s);
         char errbuf[2048];
 
-        sprintf(errbuf, ". Near of %d-%d: ", yylloc.first_column, yylloc.last_column);
+        snprintf(errbuf, sizeof(errbuf), ". Near of %d-%d: ", 
+                yylloc.first_column, yylloc.last_column);
         vsprintf(errbuf+strlen(errbuf), s, ap);
 
         if (ndrx_Bis_error())
@@ -456,7 +460,7 @@ int set_func(char *funcname, functionPtr_t functionPtr)
             goto out;
         }
 
-        strcpy(tmp->name, funcname);
+        NDRX_STRCPY_SAFE(tmp->name, funcname);
         tmp->fptr = functionPtr;
         EXHASH_ADD_STR( M_func_hash, name, tmp );
     }
@@ -569,7 +573,7 @@ struct ast * newfloat(double d)
 {
     struct ast_float *a = NDRX_MALLOC(sizeof(struct ast_float));
     memset(a, 0, sizeof(struct ast_float));
-
+    
     if(!a) {
         yyerror("out of space");
         ndrx_Bset_error_msg(BMALLOC, "out of memory for new newfloat");
@@ -592,7 +596,7 @@ struct ast * newfloat(double d)
     G_node_count++;
     
     UBF_LOG(log_debug, "adding newflt: id: %02d, type: %s, sub-type:%s "
-            "value: [%0.13f]",
+            "value: [%0.13lf]",
             a->nodeid,
             M_nodetypes[a->nodetype],
             M_subtypes[a->sub_type],
@@ -1086,7 +1090,7 @@ int op_equal(UBFH *p_ub, int type, int sub_type, struct ast *l, struct ast *r, v
             {
                 ret=op_equal_long_cmp(type, sub_type, &lval, &rval, v);
             }
-            else /* Nothing to do:- downgrate to float comparsation */
+            else /* Nothing to do:- downgrade to float compare */
             {
                 ret=op_equal_float_cmp(type, sub_type, &lval, &rval, v);
             } /* else */
@@ -1976,21 +1980,45 @@ expublic void ndrx_Btreefree (char *tree)
  * Print expression tree to file
  * @param tree - evaluation tree
  * @param outf - file to print to 
+ * @param[in] p_writef callback to data writer function. Either outf must be
+ *  present or this parameter
+ * @param[in] dataptr1 optional data parameter forwarded to p_wirtef if invoked.
  */
-expublic void ndrx_Bboolpr (char * tree, FILE *outf)
+expublic void ndrx_Bboolpr (char * tree, FILE *outf, 
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
 {
-    int ret=EXSUCCEED;
-
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
+    char *tmp;
+    long tmp_len;
 
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
 
-
-    if (ferror(outf))
+    if (NULL!=outf && ferror(outf))
     {
         return;
+    }
+    
+#define NDRX_BBOOLPR_FMT(...) \
+    if (NULL!=p_writef)\
+    {\
+        NDRX_ASPRINTF(&tmp, &tmp_len, ##__VA_ARGS__);\
+        if (NULL==tmp)\
+        {\
+            int err = errno;\
+            UBF_LOG(log_error, "Failed to asprintf: %s", strerror(err));\
+            userlog("Failed to asprintf: %s", strerror(err));\
+        }\
+        tmp_len++;\
+        if (EXSUCCEED!=p_writef(tmp, tmp_len, dataptr1))\
+        {\
+            return;\
+        }\
+    }\
+    else\
+    {\
+        fprintf(outf, ##__VA_ARGS__);\
     }
 
     switch (a->nodetype)
@@ -1999,23 +2027,29 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf)
             {
                 /* print func */
                 struct ast_func *a_func = (struct ast_func *)tree;
-                fprintf(outf, "%s()", a_func->funcname);
+                
+                NDRX_BBOOLPR_FMT("%s()", a_func->funcname);
+                
             }
             break;
         case NODE_TYPE_FLD:
             {
                 /* print field */
                 struct ast_fld *a_fld = (struct ast_fld *)tree;
-                fprintf(outf, "%s", a_fld->fld.fldnm);
+                NDRX_BBOOLPR_FMT("%s", a_fld->fld.fldnm);
             }
             break;
         case NODE_TYPE_STR:
             
             /* print string value */
             if (NULL!=a_string->str)
-                fprintf(outf, "'%s'", a_string->str);
+            {
+                NDRX_BBOOLPR_FMT("'%s'", a_string->str);
+            }
             else
-                fprintf(outf, "<null>");
+            {
+                NDRX_BBOOLPR_FMT("<null>");
+            }
             
             break;
         case NODE_TYPE_FLOAT:
@@ -2023,28 +2057,28 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf)
                 /* Print float value */
                 struct ast_float *a_float = (struct ast_float *)tree;
                 /* print field */
-                fprintf(outf, "%.*lf", DOUBLE_RESOLUTION, a_float->d);
+                NDRX_BBOOLPR_FMT("%.*lf", DOUBLE_RESOLUTION, a_float->d);
             }
             break;
         case NODE_TYPE_LONG:
             {
                 /* Print long value */
                 struct ast_long *a_long = (struct ast_long *)tree;
-                fprintf(outf, "%ld", a_long->l);
+                NDRX_BBOOLPR_FMT("%ld", a_long->l);
             }
             break;
         default:
-            fprintf(outf, "(");
+            NDRX_BBOOLPR_FMT("(");
             if (a->l)
             {
-                ndrx_Bboolpr ((char *)a->l, outf);
+                ndrx_Bboolpr ((char *)a->l, outf, p_writef, dataptr1);
             }
-            fprintf(outf, "%s", M_subtypes_sign_only[a->sub_type]);
+            NDRX_BBOOLPR_FMT("%s", M_subtypes_sign_only[a->sub_type]);
             if (a->r)
             {
-                ndrx_Bboolpr ((char *)a->r, outf);
+                ndrx_Bboolpr ((char *)a->r, outf, p_writef, dataptr1);
             }
-            fprintf(outf, ")");
+            NDRX_BBOOLPR_FMT(")");
             break;
     }
 }

@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -335,7 +335,7 @@ int main_init(int argc, char** argv)
         goto out;
     }
     /* and then shm: initialise shared memory */
-    if (EXSUCCEED!=shm_init(G_sys_config.qprefix,
+    if (EXSUCCEED!=ndrx_shm_init(G_sys_config.qprefix,
                             ndrx_get_G_atmi_env()->max_servers,
                             ndrx_get_G_atmi_env()->max_svcs))
     {
@@ -348,7 +348,7 @@ int main_init(int argc, char** argv)
     if (G_sys_config.restarting)
     {
         
-        if (EXSUCCEED!=ndrx_sem_attach_all())
+        if (EXSUCCEED!=ndrx_sem_open_all())
         {
             ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to attach to Semaphores");
@@ -374,7 +374,7 @@ int main_init(int argc, char** argv)
     else 
     {
         /* Semaphores are first */
-        if (EXSUCCEED!=ndrxd_sem_open_all())
+        if (EXSUCCEED!=ndrx_sem_open_all())
         {
             ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to open semaphores!");
@@ -415,8 +415,19 @@ int main_uninit(void)
     /* Remove signal handling thread */
     ndrxd_sigchld_uninit();
     
+    /* final sanity check... */
+    ndrxd_sanity_finally();
+    
+    /* TODO: For System V we want to flush the
+     * any timed queues. Thus 
+     * we might want to call ndrxd_sanity_finish()
+     * which for System V would call remove all
+     * request addresses with out the servers
+     * and with out TTL check.
+     */
     /* Remove semaphores */
     ndrxd_sem_close_all();
+    
     /* Remove semaphores */
     ndrxd_sem_delete();
     
@@ -428,6 +439,9 @@ int main_uninit(void)
 
     /* close & unlink message queue */
     cmd_close_queue();
+    
+    /* terminate polling sub-system */
+    ndrx_epoll_down(EXFALSE);
 
     /* Remove pid file */
     ndrxd_unlink_pid_file(EXTRUE);

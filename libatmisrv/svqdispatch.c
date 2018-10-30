@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -90,6 +90,21 @@ expublic int sv_open_queue(void)
     svc_entry_fn_t *entry;
     struct ndrx_epoll_event ev;
     int use_sem = EXFALSE;
+    
+    
+    /* Register for (e-)polling 
+     * moved up here for system v resources have be known when installing to SHM
+     */
+    G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
+    if (EXFAIL==G_server_conf.epollfd)
+    {
+        ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
+                                G_server_conf.adv_service_count,
+                                ndrx_poll_strerror(ndrx_epoll_errno()));
+        ret=EXFAIL;
+        goto out;
+    }
+    
     for (i=0; i<G_server_conf.adv_service_count; i++)
     {
         entry = G_server_conf.service_array[i];
@@ -120,18 +135,36 @@ expublic int sv_open_queue(void)
         }
         
         /* Open the queue */
-#ifdef EX_USE_POLL
-        /* for poll mode, we must ensure that queue does not exists before start
-         */
-        if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
-        {
-            NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
-                    ndrx_poll_strerror(ndrx_epoll_errno()))
-        }
-#endif
+        /* open service Q, also give some svc name here!  */
         
-        entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
-                O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+        if (ndrx_epoll_shallopenq(i))
+        {
+            
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+            /* for poll mode, we must ensure that queue does not exists before start
+             */
+            if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
+            {
+                NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
+                        ndrx_poll_strerror(ndrx_epoll_errno()))
+            }
+#endif
+            /* normal operations, each service have it's own queue... */
+            entry->q_descr = ndrx_mq_open_at (entry->listen_q, O_RDWR | O_CREAT |
+                    O_NONBLOCK, S_IWUSR | S_IRUSR, NULL);
+            
+            if ((mqd_t)EXFAIL!=entry->q_descr)
+            {
+                /* re-define service, used for particular systems... like system v */
+                entry->q_descr=ndrx_epoll_service_add(entry->svc_nm, i, entry->q_descr);
+            }
+        }
+        else
+        {
+            /* System V mode, where services does not require separate queue  */
+            entry->q_descr = ndrx_epoll_service_add(entry->svc_nm, 
+                    i, (mqd_t)EXFAIL);
+        }
         
         /*
          * Check are we ok or failed?
@@ -151,7 +184,11 @@ expublic int sv_open_queue(void)
         /* Register stuff in shared memory! */
         if (use_sem)
         {
+#ifdef EX_USE_SYSVQ
+            ndrx_shm_install_svc(entry->svc_nm, 0, ndrx_epoll_resid_get());
+#else
             ndrx_shm_install_svc(entry->svc_nm, 0, G_server_conf.srv_id);
+#endif
         }
 
         /* Release semaphore! */
@@ -163,24 +200,14 @@ expublic int sv_open_queue(void)
 
         NDRX_LOG(log_debug, "Got file descriptor: %d", entry->q_descr);
     }
-    
-    /* Register for (e-)polling */
-    G_server_conf.epollfd = ndrx_epoll_create(G_server_conf.max_events);
-    if (EXFAIL==G_server_conf.epollfd)
-    {
-        ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_create(%d) fail: %s",
-                                G_server_conf.adv_service_count,
-                                ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=EXFAIL;
-        goto out;
-    }
 
     /* allocate events */
     G_server_conf.events = (struct ndrx_epoll_event *)NDRX_CALLOC(sizeof(struct ndrx_epoll_event),
                                             G_server_conf.max_events);
     if (NULL==G_server_conf.events)
     {
-        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", strerror(errno));
+        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate epoll events: %s", 
+                strerror(errno));
         ret=EXFAIL;
         goto out;
     }
@@ -202,7 +229,8 @@ expublic int sv_open_queue(void)
         if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                                 G_server_conf.service_array[i]->q_descr, &ev))
         {
-            ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", ndrx_poll_strerror(ndrx_epoll_errno()));
+            ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
+                    ndrx_poll_strerror(ndrx_epoll_errno()));
             ret=EXFAIL;
             goto out;
         }
@@ -540,7 +568,8 @@ expublic int sv_serve_connect(int *service, int *status)
 
     /* Now we should call the service by it self, also we should check was reply back or not */
 
-    if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP || 0==(reply_type=setjmp(G_server_conf.call_ret_env)))
+    if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP || 
+            0==(reply_type=setjmp(G_server_conf.call_ret_env)))
     {
         int no = G_server_conf.last_call.no;
         TPSVCINFO svcinfo;
@@ -770,7 +799,7 @@ expublic int sv_server_request(char *buf, int len)
         case ATMI_COMMAND_CONNRPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-                NDRX_LOG(log_warn, "Dropping un-soliceded/event reply "
+                NDRX_LOG(log_warn, "Dropping unsolicited/event reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 /* Register as completed (if not cancelled) */
@@ -780,7 +809,7 @@ expublic int sv_server_request(char *buf, int len)
         case ATMI_COMMAND_TPREPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-                NDRX_LOG(log_warn, "Dropping un-soliceded reply "
+                NDRX_LOG(log_warn, "Dropping unsolicited reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 
@@ -1089,8 +1118,6 @@ expublic int sv_wait_for_request(void)
     mqd_t evmqd;
     ndrx_stopwatch_t   dbg_time;   /* Generally this is used for debug. */
     ndrx_stopwatch_t   periodic_cb;
-    command_call_t *p_adm_cmd = (command_call_t *)msg_buf;
-    tp_command_call_t *call =  (tp_command_call_t*)msg_buf;
     
     if (G_server_conf.periodcb_sec)
     {
@@ -1133,14 +1160,28 @@ expublic int sv_wait_for_request(void)
             }
         }
         
+        /* some epoll backends can return already buffer received
+         * for example System V Queues
+         * for others it is just -1
+         * 
+         * So the plan is following for SystemV:
+         * - first service Q is open as real queue and main dispatcher
+         * - the other queues are just open as some dummy pointers with
+         *  service name recorded inside and we return it as mqd_t
+         *  so that pointers can be compared
+         * - when epoll_wait gets the message, we trace down the pointer
+         *  by the service name in the message and then we return then
+         *  we will events correspondingly.
+         */
+        len = sizeof(msg_buf);
         nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
-                G_server_conf.max_events, tout);
+                G_server_conf.max_events, tout, msg_buf, &len);
         
         /* Print stuff if there is no timeout set or there is some value out there */
         
         if (nfds || EXFAIL==tout)
         {
-            NDRX_LOG(log_debug, "Poll says: %d", nfds);
+            NDRX_LOG(log_debug, "Poll says: %d len: %d", nfds, len);
         }
         
         /* If there are zero FDs &  */
@@ -1155,9 +1196,8 @@ expublic int sv_wait_for_request(void)
                 continue;
             }
             
-            ret=EXFAIL;
-            goto out;
-		}
+            EXFAIL_OUT(ret);
+        }
         /* We should use timer here because, if there are service requests at
          * constant time (less than poll time), then callback will be never called! */
         else if (EXFAIL!=tout && 
@@ -1175,7 +1215,7 @@ expublic int sv_wait_for_request(void)
         }
         
         /*
-         * TODO: We should have algorythm which checks request in round robin way.
+         * TODO: We should have algorithm which checks request in round robin way.
          * So that if there is big load for first service, and there is outstanding calls to second,
          * then we should process also the second.
          * Maybe not? Maybe kernel already does that?
@@ -1193,8 +1233,10 @@ expublic int sv_wait_for_request(void)
             is_mq_only = G_server_conf.events[n].is_mqd;
 #endif
 
-            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, is_mq_only: %d, G_pollext=%p",
-                        n, G_server_conf.events[n].data.u32, evfd, evmqd, is_mq_only, G_pollext);
+            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, "
+                    "is_mq_only: %d, G_pollext=%p",
+                    n, G_server_conf.events[n].data.u32, evfd, evmqd, 
+                    is_mq_only, G_pollext);
             
             /* Check poller extension */
             if (NULL!=G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
@@ -1225,7 +1267,7 @@ expublic int sv_wait_for_request(void)
                 continue;
             }
             
-            if (EXFAIL==(len=ndrx_mq_receive (evmqd,
+            if (EXFAIL==len && EXFAIL==(len=ndrx_mq_receive (evmqd,
                 (char *)msg_buf, sizeof(msg_buf), &prio)))
             {
                 if (EAGAIN==errno)
@@ -1240,7 +1282,8 @@ expublic int sv_wait_for_request(void)
                 else
                 {
                     ret=EXFAIL;
-                    ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", strerror(errno));
+                    ndrx_TPset_error_fmt(TPEOS, "ndrx_mq_receive failed: %s", 
+                            strerror(errno));
                 }
             }
             else

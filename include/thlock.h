@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -62,54 +62,37 @@ extern "C" {
 #define MUTEX_UNLOCK MUTEX_UNLOCK_V(__mutexlock);
 
 /* *** EX_SPIN LOCKS *** */
+#define EX_SPIN_VAR(X)        pthread_spinlock_t X
+#define EX_SPIN_VAR_INIT(X)   if ( EXSUCCEED!=pthread_spin_init ( &X, 0 ) ) \
+                    {\
+                        userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
+                        exit ( 1 );\
+                    }
+    
+#define EX_SPIN_LOCKDECL(X) static pthread_spinlock_t X;\
+        MUTEX_LOCKDECL(X##__initlock__);\
+        static int X##__first__ = EXTRUE;
 
-/* data type used for external controlled locking. */
-#if HAVE_SYNC
-#define EX_SPIN_LOCKDECL(X) static volatile int X = 0;
+#define EX_SPIN_LOCK_V(X)\
+    if (X##__first__)\
+    {\
+        MUTEX_LOCK_V(X##__initlock__);\
+        if (X##__first__)\
+        {\
+            EX_SPIN_VAR_INIT(X);\
+            X##__first__=EXFALSE;\
+        }\
+        MUTEX_UNLOCK_V(X##__initlock__);\
+    }\
+    pthread_spin_lock(&X);
 
-/**
- * Create spinlock
- * @param X - volatile int, locking variable
- * Must be first thing of the block!
- */
-#define EX_SPIN_LOCK_V(X) \
-	int __count = 0;\
-	while(!__sync_bool_compare_and_swap(&X, 0, 1))\
-	{\
-		__count++;\
-		if (0 == __count % 2)\
-		{\
-			sched_yield();\
-		}\
-	}\
-	
-/**
- * Unlock spin.
- * @param X - volatile int, locking variable
- * Must be defined at the end of the locking block.
- */
-#define EX_SPIN_UNLOCK_V(X)\
-	__sync_synchronize();\
-	X = 0;\
+#define EX_SPIN_UNLOCK_V(X) pthread_spin_unlock(&X);
 
-/* Use default __spinlock variable */
 #define EX_SPIN_LOCK \
-		static volatile int __spinlock = 0;\
+		EX_SPIN_LOCKDECL(__spinlock);\
 		EX_SPIN_LOCK_V(__spinlock);
 
-/* Use default __spinlock variable */
 #define EX_SPIN_UNLOCK EX_SPIN_UNLOCK_V(__spinlock);
-    
-#else
-    
-#define EX_SPIN_LOCKDECL    MUTEX_LOCKDECL
-#define EX_SPIN_LOCK_V      MUTEX_LOCK_V
-#define EX_SPIN_UNLOCK_V    MUTEX_UNLOCK_V
-#define EX_SPIN_LOCK        MUTEX_LOCK
-#define EX_SPIN_UNLOCK      MUTEX_UNLOCK
-    
-#endif
-
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

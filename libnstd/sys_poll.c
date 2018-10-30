@@ -3,7 +3,7 @@
  *   NOTE: Thread shall not modify the ndrx_epoll sets. That must be managed from
  *   one thread only
  *   NOTE: Only one POLL set actually is supported. This is due to
- *   Notificatio thread locking while we are not polling (to void mqds in pipe)
+ *   Notification thread locking while we are not polling (to void mqds in pipe)
  *   which we have already processed.
  *
  * @file sys_poll.c
@@ -13,22 +13,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -106,7 +106,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
-/*
+/**
  * Hash list of File descriptors we monitor..
  */
 struct ndrx_epoll_fds
@@ -116,7 +116,7 @@ struct ndrx_epoll_fds
 };
 typedef struct ndrx_epoll_fds ndrx_epoll_fds_t;
 
-/*
+/**
  * Hash list of File descriptors we monitor..
  */
 struct ndrx_epoll_mqds
@@ -127,7 +127,7 @@ struct ndrx_epoll_mqds
 };
 typedef struct ndrx_epoll_mqds ndrx_epoll_mqds_t;
 
-/*
+/**
  * Our internal 'epoll' set
  */
 struct ndrx_epoll_set
@@ -248,7 +248,6 @@ exprivate int signal_handle_event(void)
                 {
                     NDRX_LOG(log_error, "Error ! write fail: %s", strerror(errno));
                 }
-
             }
         }
 
@@ -333,7 +332,7 @@ out:
  * not thread safe.
  * @return
  */
-expublic void ndrx_epoll_sys_init(void)
+expublic int ndrx_epoll_sys_init(void)
 {
     sigset_t blockMask;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
@@ -345,7 +344,7 @@ expublic void ndrx_epoll_sys_init(void)
     if (!M_signal_first)
     {
 	NDRX_LOG(log_warn, "Already init done for poll()");
-	return;
+	return EXSUCCEED;
     }
 
     sa.sa_handler = slipSigHandler;
@@ -374,6 +373,8 @@ expublic void ndrx_epoll_sys_init(void)
             signal_process, NULL);
     M_signal_first = EXFALSE;
     
+    
+    return EXSUCCEED;
 }
 
 /**
@@ -753,9 +754,6 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         }
         
 #endif
-        
-        
-        
     }
     else if (EX_EPOLL_CTL_DEL == op)
     {
@@ -983,7 +981,8 @@ out:
  * @param timeout
  * @return 
  */
-expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
+        int maxevents, int timeout, char *buf, int *buf_len)
 {
     int ret = EXSUCCEED;
     int numevents = 0;
@@ -996,6 +995,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxe
     
     EX_EPOLL_API_ENTRY;
     
+    /* not returning... */
+    *buf_len = EXFAIL;
     /*  !!!! LOCKED AREA !!!! */
     MUTEX_LOCK_V(M_psets_lock);
     
@@ -1241,5 +1242,73 @@ expublic char * ndrx_poll_strerror(int err)
     
     return G_nstd_tls->poll_strerr;
 }
+
+/**
+ * Translate the service name to queue
+ * @param[out] send_q output service queue
+ * @param[in] q_prefix queue prefix
+ * @param[in] svc service name
+ * @param[in] resid resource id (in this case it is 
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
+        char *svc, int resid)
+{
+    /* lookup service in SHM! from resid/qid -> queue */
+    sprintf(send_q, NDRX_SVC_QFMT_SRVID, q_prefix, 
+                svc, resid);
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by poll
+ * @param svcnm
+ * @param idx
+ * @param mq_exits
+ * @return 
+ */
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
+{
+    return mq_exits;
+}
+
+/**
+ * Not used by poll
+ * @return 
+ */
+expublic int ndrx_epoll_shmdetach(void)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * not used by poll
+ * @param idx
+ * @return 
+ */
+expublic int ndrx_epoll_shallopenq(int idx)
+{
+    return EXTRUE;
+}
+/**
+ * Not used by poll
+ * @param qstr
+ */
+expublic void ndrx_epoll_mainq_set(char *qstr)
+{
+    return;
+}
+
+/**
+ * Not used by poll
+ * @param force
+ * @return 
+ */
+expublic int ndrx_epoll_down(int force)
+{
+    return EXSUCCEED;
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

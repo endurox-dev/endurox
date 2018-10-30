@@ -1,4 +1,4 @@
 #!/bin/bash
 
-glimpse -H @CMAKE_CURRENT_SOURCE_DIR@/glimpse_index $@
+glimpse -H @CMAKE_CURRENT_SOURCE_DIR@/glimpse_index "$@"
 

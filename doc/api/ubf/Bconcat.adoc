@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Concatinate source buffer in 'p_ub_src' to destination buffer in 'p_ub_dst'. 
+Concatenate source buffer in 'p_ub_src' to destination buffer in 'p_ub_dst'. 
 Function will add any field from source buffer to destination buffer by using 
 *Badd(3)* function call.
 

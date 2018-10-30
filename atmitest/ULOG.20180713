@@ -1,0 +1,837 @@
+27182:20180713:13020724:xadmin      :Generate local unit test
+797776608:20180713:13020724:xadmin      : 1: testid       :test number []: 
+797776608:20180713:13021093:xadmin      : 2: testcode     :test code name []: 
+797776608:20180713:13023181:xadmin      : 3: descr        :Unit test description []: 
+797776608:20180713:13025445:xadmin      : 4: dom1         :Domain 1 [n]: 
+797776608:20180713:13033390:xadmin      : 1: Edit testid       :test number [056]: 
+797776608:20180713:13033390:xadmin      : 2: Edit testcode     :test code name [tpimpexp]: 
+797776608:20180713:13033390:xadmin      : 3: Edit descr        :Unit test description [tpimport/tpexport function tests]: 
+797776608:20180713:13033390:xadmin      : 4: Edit dom1         :Domain 1 [n]: 
+797776608:20180713:13033729:xadmin      :User entered: w
+797776608:20180713:13033729:xadmin      :Accepted
+797776608:20180713:13033729:xadmin      :Writting off [test056_tpimpexp/test56.h] with [/* 
+** tpimport/tpexport function tests - common header
+**
+** @file testtest056_tpimpexp.h
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#ifndef TEST056_H
+#define TEST056_H
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+
+#define VALUE_EXPECTED "Hello EnduroX"
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif  /* TEST056_H */
+
+]
+797776608:20180713:13033729:xadmin      :Writting off [test056_tpimpexp/atmiclt56.c] with [/* 
+** tpimport/tpexport function tests - client
+**
+** @file atmiclt056.c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test056.h"
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Do the test call to the server
+ */
+int main(int argc, char** argv)
+{
+
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
+    
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpterm();
+    fprintf(stderr, "Exit with %d\n", ret);
+
+    return ret;
+}
+]
+797776608:20180713:13033729:xadmin      :Writting off [test056_tpimpexp/atmisv56.c] with [/* 
+** tpimport/tpexport function tests - server
+**
+** @file atmisv056.c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include "test056.h"
+
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Standard service entry
+ */
+void TESTSV (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialisation
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Do de-initialisation
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+
+]
+797776608:20180713:13033729:xadmin      :Writting off [test056_tpimpexp/CMakeLists.txt] with [## 
+## tpimport/tpexport function tests - makefile
+##
+## @file CMakeLists.txt
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+cmake_minimum_required(VERSION 2.8)
+
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
+
+
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
+
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+
+############################# Test - executables ###############################
+add_executable (atmi.sv056 atmisv056.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt056 atmiclt056.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv056 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt056 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+
+set_target_properties(atmi.sv056 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt056 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################
+
+
+]
+797776608:20180713:13033729:xadmin      :Writting off [test056_tpimpexp/debug.conf] with [* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx.log
+atmiclt056 file=${TESTDIR}/atmiclt056.log
+atmi.sv056 file=${TESTDIR}/atmisv056.log
+
+]
+797776608:20180713:13033729:xadmin      :Writting off [test056_tpimpexp/run.sh] with [#!/bin/bash
+## 
+## @(#) tpimport/tpexport function tests - test launcher
+##
+## @file run.sh
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware PlatfoRm for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+TESTNAME="test056_tpimpexp"
+
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+	# Do nothing 
+	echo > /dev/null
+else
+	# started from parent folder
+	pushd .
+	echo "Doing cd"
+	cd test056_tpimpexp
+fi;
+
+. ../testenv.sh
+
+export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
+export PATH=$PATH:$TESTDIR
+
+xadmin killall atmi.sv056 2>/dev/null
+xadmin killall atmiclt056 2>/dev/null
+
+# client timeout
+export NDRX_TOUT=10
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
+
+function go_out {
+    echo "Test exiting with: $1"
+    xadmin killall atmi.sv056 2>/dev/null
+    xadmin killall atmiclt056 2>/dev/null
+    
+    popd 2>/dev/null
+    exit $1
+}
+
+
+rm *.log
+
+(./atmi.sv056 -i123 2>&1) > ./atmisv056.log &
+sleep 1
+(./atmiclt056 2>&1) > ./atmiclt056.log
+
+RET=$?
+
+# Catch is there is test error!!!
+if [ "X`grep TESTERROR *.log`" != "X" ]; then
+	echo "Test error detected!"
+	go_out -2
+fi
+
+go_out $RET
+
+]
+797776608:20180713:13033729:xadmin      :Setting 755 to [test056_tpimpexp/run.sh]
+30575:20180713:13233538:xadmin      :Generate local unit test
+-198351280:20180713:13233539:xadmin      : 1: testid       :test number []: 
+-198351280:20180713:13233728:xadmin      : 2: testcode     :test code name []: 
+-198351280:20180713:13234269:xadmin      : 3: descr        :Unit test description []: 
+-198351280:20180713:13235049:xadmin      : 4: dom1         :Domain 1 [n]: 
+-198351280:20180713:13235149:xadmin      : 1: Edit testid       :test number [56]: 
+-198351280:20180713:13235149:xadmin      : 2: Edit testcode     :test code name [tpimpexp]: 
+-198351280:20180713:13235149:xadmin      : 3: Edit descr        :Unit test description [tpimport()/tpexport() function tests]: 
+-198351280:20180713:13235150:xadmin      : 4: Edit dom1         :Domain 1 [n]: 
+-198351280:20180713:13235227:xadmin      :User entered: 
+-198351280:20180713:13235227:xadmin      : 1: Edit testid       :test number [56]: 
+-198351280:20180713:13235227:xadmin      : 2: Edit testcode     :test code name [tpimpexp]: 
+-198351280:20180713:13235227:xadmin      : 3: Edit descr        :Unit test description [tpimport()/tpexport() function tests]: 
+-198351280:20180713:13235227:xadmin      : 4: Edit dom1         :Domain 1 [n]: 
+-198351280:20180713:13235298:xadmin      :User entered: w
+-198351280:20180713:13235298:xadmin      :Accepted
+-198351280:20180713:13235298:xadmin      :Writting off [test056_tpimpexp/test56.h] with [/* 
+** tpimport()/tpexport() function tests - common header
+**
+** @file testtest056_tpimpexp.h
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#ifndef TEST56_H
+#define TEST56_H
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+
+#define VALUE_EXPECTED "Hello EnduroX"
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif  /* TEST56_H */
+
+]
+-198351280:20180713:13235298:xadmin      :Writting off [test056_tpimpexp/atmiclt56.c] with [/* 
+** tpimport()/tpexport() function tests - client
+**
+** @file atmiclt56.c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test56.h"
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Do the test call to the server
+ */
+int main(int argc, char** argv)
+{
+
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
+    
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpterm();
+    fprintf(stderr, "Exit with %d\n", ret);
+
+    return ret;
+}
+]
+-198351280:20180713:13235298:xadmin      :Writting off [test056_tpimpexp/atmisv56.c] with [/* 
+** tpimport()/tpexport() function tests - server
+**
+** @file atmisv56.c
+** 
+** -----------------------------------------------------------------------------
+** Enduro/X Middleware Platform for Distributed Transaction Processing
+** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+** This software is released under one of the following licenses:
+** GPL or Mavimax's license for commercial use.
+** -----------------------------------------------------------------------------
+** GPL license:
+** 
+** This program is free software; you can redistribute it and/or modify it under
+** the terms of the GNU General Public License as published by the Free Software
+** Foundation; either version 2 of the License, or (at your option) any later
+** version.
+**
+** This program is distributed in the hope that it will be useful, but WITHOUT ANY
+** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+** PARTICULAR PURPOSE. See the GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along with
+** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+** Place, Suite 330, Boston, MA 02111-1307 USA
+**
+** -----------------------------------------------------------------------------
+** A commercial use license is available from Mavimax, Ltd
+** contact@mavimax.com
+** -----------------------------------------------------------------------------
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include "test56.h"
+
+/*---------------------------Externs------------------------------------*/
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Standard service entry
+ */
+void TESTSV (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialisation
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Do de-initialisation
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+
+]
+-198351280:20180713:13235298:xadmin      :Writting off [test056_tpimpexp/CMakeLists.txt] with [## 
+## tpimport()/tpexport() function tests - makefile
+##
+## @file CMakeLists.txt
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware Platform for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+cmake_minimum_required(VERSION 2.8)
+
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
+
+
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
+
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+
+############################# Test - executables ###############################
+add_executable (atmi.sv56 atmisv56.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt56 atmiclt56.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv56 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt56 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+
+set_target_properties(atmi.sv56 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt56 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################
+
+
+]
+-198351280:20180713:13235298:xadmin      :Writting off [test056_tpimpexp/debug.conf] with [* ndrx=5 ubf=1 lines=1 bufsz=1000 file=${TESTDIR}/ndrx.log
+atmiclt56 file=${TESTDIR}/atmiclt56.log
+atmi.sv56 file=${TESTDIR}/atmisv56.log
+
+]
+-198351280:20180713:13235298:xadmin      :Writting off [test056_tpimpexp/run.sh] with [#!/bin/bash
+## 
+## @(#) tpimport()/tpexport() function tests - test launcher
+##
+## @file run.sh
+## 
+## -----------------------------------------------------------------------------
+## Enduro/X Middleware PlatfoRm for Distributed Transaction Processing
+## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## This software is released under one of the following licenses:
+## GPL or Mavimax's license for commercial use.
+## -----------------------------------------------------------------------------
+## GPL license:
+## 
+## This program is free software; you can redistribute it and/or modify it under
+## the terms of the GNU General Public License as published by the Free Software
+## Foundation; either version 2 of the License, or (at your option) any later
+## version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License along with
+## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+## Place, Suite 330, Boston, MA 02111-1307 USA
+##
+## -----------------------------------------------------------------------------
+## A commercial use license is available from Mavimax, Ltd
+## contact@mavimax.com
+## -----------------------------------------------------------------------------
+##
+TESTNAME="test056_tpimpexp"
+
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+	# Do nothing 
+	echo > /dev/null
+else
+	# started from parent folder
+	pushd .
+	echo "Doing cd"
+	cd test056_tpimpexp
+fi;
+
+. ../testenv.sh
+
+export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
+export PATH=$PATH:$TESTDIR
+
+xadmin killall atmi.sv56 2>/dev/null
+xadmin killall atmiclt56 2>/dev/null
+
+# client timeout
+export NDRX_TOUT=10
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
+
+function go_out {
+    echo "Test exiting with: $1"
+    xadmin killall atmi.sv56 2>/dev/null
+    xadmin killall atmiclt56 2>/dev/null
+    
+    popd 2>/dev/null
+    exit $1
+}
+
+
+rm *.log
+
+(./atmi.sv56 -i123 2>&1) > ./atmisv56.log &
+sleep 1
+(./atmiclt56 2>&1) > ./atmiclt56.log
+
+RET=$?
+
+# Catch is there is test error!!!
+if [ "X`grep TESTERROR *.log`" != "X" ]; then
+	echo "Test error detected!"
+	go_out -2
+fi
+
+go_out $RET
+
+]
+-198351280:20180713:13235298:xadmin      :Setting 755 to [test056_tpimpexp/run.sh]

@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -136,7 +136,7 @@ Ensure(test_expr_basic)
     /* Test OK */
     tree=Bboolco ("2+2*4==10 && 'abc' %% '.bc'");
     assert_not_equal(tree, NULL);
-    assert_equal(Bboolev(NULL, tree), EXTRUE);
+    assert_equal(Bboolev(NULL, tree), EXFAIL);
     Btreefree(tree);
     /*----------------------------------------------------------*/
     /* We have failure somehere! */
@@ -191,7 +191,7 @@ Ensure(test_expr_basic)
  */
 Ensure(test_expr_basic_logic)
 {
-    char buf[128];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     double f;
@@ -334,7 +334,7 @@ Ensure(test_expr_basic_logic)
  */
 Ensure(test_expr_basic_equality)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -455,7 +455,7 @@ Ensure(test_expr_basic_equality)
  */
 Ensure(test_expr_basic_unary)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -517,7 +517,7 @@ Ensure(test_expr_basic_unary)
  */
 Ensure(test_expr_basic_additive)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -617,7 +617,7 @@ Ensure(test_expr_basic_additive)
  */
 Ensure(test_expr_basic_multiplicative)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -788,7 +788,7 @@ Ensure(test_expr_basic_multiplicative)
  */
 Ensure(test_expr_basic_floatev)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -880,7 +880,7 @@ Ensure(test_expr_basic_floatev)
  */
 Ensure(test_expr_basic_relational)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -1248,7 +1248,7 @@ Ensure(test_expr_basic_relational)
 
 Ensure(test_expr_basic_scopes)
 {
-    char buf[224];
+    char buf[1024];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -1375,6 +1375,60 @@ Ensure(test_bboolpr)
     close_test_temp();
     remove_test_temp();
     assert_string_equal(testbuf, "(((((1 < 1) && (2 > 1)) && (2 >= 1)) && (1 <= (~2))) && (2 ^ 1))");
+    Btreefree(tree);
+}
+
+/**
+ * Just add the data/concat data buffer to dataptr...
+ * @param buffer token to print
+ * @param datalen token len including EOS byte
+ * @param dataptr1 output byte
+ */
+exprivate int bboolprcb_callback(char *buffer, long datalen, void *dataptr1)
+{
+    assert_equal(datalen, strlen(buffer)+1);
+    strcat((char *)dataptr1, buffer);
+    return EXSUCCEED;
+}
+
+/**
+ * Test tree printing routine, with callback
+ */
+Ensure(test_bboolprcb)
+{
+    char *tree;
+    char buf[640];
+    UBFH *p_ub = (UBFH *)buf;
+    char testbuf[640];
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    assert_not_equal((tree=Bboolco ("2 * ( 4 + 5 ) || 5 && 'abc' %% '..b' && 2/2*4==5")), NULL);
+    testbuf[0] = EXEOS;
+    Bboolprcb(tree, bboolprcb_callback, testbuf);
+    
+    /* clear off newlines from the testbuf */
+    
+    
+    ndrx_str_strip(testbuf, " \n");
+    assert_string_equal(testbuf,"((2*(4+5))||((5&&('abc'%%'..b'))&&(((2/2)*4)==5)))");
+    
+    Btreefree(tree);
+
+    /* test negation */
+    assert_not_equal((tree=Bboolco ("!( 'a'!='b' ) || !( 'c'&&'b' )")), NULL);
+    testbuf[0] = EXEOS;
+    Bboolprcb(tree, bboolprcb_callback, testbuf);
+    ndrx_str_strip(testbuf, " \n");
+    assert_string_equal(testbuf, "((!('a'!='b'))||(!('c'&&'b')))");
+    Btreefree(tree);
+
+    /* Some other tests... */
+    assert_not_equal((tree=Bboolco ("1<1&&2>1&&2>=1&&1<=~2&&2^1")), NULL);
+    testbuf[0] = EXEOS;
+    Bboolprcb(tree, bboolprcb_callback, testbuf);
+    ndrx_str_strip(testbuf, " \n");
+    assert_string_equal(testbuf, "(((((1<1)&&(2>1))&&(2>=1))&&(1<=(~2)))&&(2^1))");
     Btreefree(tree);
 }
 
@@ -1534,6 +1588,40 @@ Ensure(test_cbfunc)
 }
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Test invalid arguments to eval functions
+ */
+Ensure(test_expr_argsval)
+{
+    char buf[640];
+    UBFH *p_ub = (UBFH *)buf;
+    char *tree = NULL;
+    
+    memset(buf, 0, sizeof(buf));
+
+    /* This should be true */
+    tree=Bboolco ("1==1");
+    assert_not_equal(tree, NULL);
+    
+    assert_equal(Bboolev(p_ub, tree), EXFAIL);
+    assert_equal(Berror, BNOTFLD);
+    
+    assert_double_equal(Bfloatev(p_ub, tree), -1);
+    assert_equal(Berror, BNOTFLD);
+    
+    Btreefree(tree);
+    tree = NULL;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    assert_equal(Bboolev(p_ub, tree), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_double_equal(Bfloatev(p_ub, tree), -1);
+    assert_equal(Berror, BEINVAL);
+    
+}
+
 TestSuite *ubf_expr_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -1547,7 +1635,8 @@ TestSuite *ubf_expr_tests(void)
     add_test(suite, test_expr_basic_relational);
     add_test(suite, test_expr_basic_scopes);
     add_test(suite, test_bboolpr);
-
+    add_test(suite, test_bboolprcb);
+    
     /* Test float ev */
     add_test(suite, test_expr_basic_floatev);
 
@@ -1556,6 +1645,10 @@ TestSuite *ubf_expr_tests(void)
     
     /* Function callback tests... */
     add_test(suite, test_cbfunc);
+    
+    /* #338 */
+    add_test(suite, test_expr_argsval);
+    
 
     return suite;
 }

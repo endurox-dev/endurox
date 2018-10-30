@@ -9,22 +9,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -239,7 +239,6 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
     return ret;
 }
 
-
 /**
  * Return date/time local 
  * @param p_date - ptr to store long date, format YYYYMMDD
@@ -248,18 +247,48 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
  */
 expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
-    struct tm       *p_tm;
+    struct tm       stm;
     long            lret;
     struct timeval  timeval;
     struct timezone timezone_val;
 
     gettimeofday (&timeval, &timezone_val);
-    p_tm = localtime(&timeval.tv_sec);
-    *p_time = 10000L*p_tm->tm_hour+100*p_tm->tm_min+1*p_tm->tm_sec;
-    *p_date = 10000L*(1900 + p_tm->tm_year)+100*(1+p_tm->tm_mon)+1*(p_tm->tm_mday);
+    
+    localtime_r(&timeval.tv_sec, &stm);
+    
+    *p_time = 10000L*stm.tm_hour+100*stm.tm_min+1*stm.tm_sec;
+    *p_date = 10000L*(1900 + stm.tm_year)+100*(1+stm.tm_mon)+1*(stm.tm_mday);
     *p_usec = timeval.tv_usec;
 
     return;
+}
+
+/**
+ * Calculate delta milliseconds for two time specs.
+ * @param stop period stop
+ * @param start period start
+ * @return different in milliseconds between stop and start.
+ */
+expublic long ndrx_timespec_get_delta(struct timespec *stop, struct timespec *start)
+{
+    long ret;
+    
+    /* calculate delta */
+    ret = (stop->tv_sec - start->tv_sec)*1000 /* Convert to milliseconds */ +
+               (stop->tv_nsec - start->tv_nsec)/1000000; /* Convert to milliseconds */
+
+    return ret;
+}
+
+/**
+ * Provide ceil division x by y for positive numbers
+ * @param x number to divide
+ * @param y divider
+ * @return ceiling of division
+ */
+expublic long ndrx_ceil(long x, long y)
+{
+    return (x + y - 1) / y;
 }
 
 /**
@@ -1105,7 +1134,7 @@ expublic ssize_t ndrx_getline(char **lineptr, size_t *n, FILE *stream)
     return getline(lineptr, n, stream);
     
 #else
-    if (NULL==fgets(*lineptr, *n, f))
+    if (NULL==fgets(*lineptr, *n, stream))
     {
         return EXFAIL;
     }
@@ -1224,22 +1253,65 @@ expublic char * ndrx_memdup(char *org, size_t len)
 }
 
 /**
+ * Locale independent atof
+ * Basically this assumes that home decimal separator is '.'. I.e. \r str must
+ * contain only '.'.
+ * @param str string to convert to float, decimal separator is '.'.
+ * @return converted decimal value
+ */
+expublic double ndrx_atof(char *str)
+{
+    char test[5];
+    char buf[128];
+    char *p;
+    int len, i;
+    
+    /* extract the decimal separator... */
+    snprintf(test, sizeof(test), "%.1f", 0.0f);
+    
+    if (NDRX_LOCALE_STOCK_DECSEP!=test[1])
+    {
+        NDRX_STRCPY_SAFE(buf, str);
+        len = strlen(buf);
+        
+        for (i=0; i<len; i++)
+        {
+            if (NDRX_LOCALE_STOCK_DECSEP==buf[i])
+            {
+                buf[i] = test[1];
+            }
+        }
+        
+        p = buf;
+    }
+    else
+    {
+        p = str;
+    }
+    
+    return atof(p);
+}
+
+/**
  * Extract tokens from string
  * @param str
  * @param fmt   Format string for scanf
  * @param tokens
  * @param tokens_elmsz
  * @param len
+ * @param start_tok 0 based index of token to start to extract
+ * @param stop_tok 0 based indrex of token to stop to extracts
  * @return 0 - no tokens extracted
  */
 expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
-        int tokens_elmsz, int len)
+        int tokens_elmsz, int len, int start_tok, int stop_tok)
 {
     int ret = 0;
     char *str = NDRX_STRDUP(str1);
     char *ptr;
     char *token;
     char *str_first = str;
+    int toks=0;
     
     if (NULL==str)
     {
@@ -1256,17 +1328,25 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
             str_first = NULL; /* now loop over the string */
         }
         
-        if (ret<len)
+        if (toks>=start_tok)
         {
-            sscanf(token, fmt, tokens);
-            tokens+=tokens_elmsz;
+            if (ret<len)
+            {
+                sscanf(token, fmt, tokens);
+                tokens+=tokens_elmsz;
+            }
+            else
+            {
+                break;
+            }
+            ret++;
         }
-        else
+        
+        if (toks>=stop_tok)
         {
             break;
         }
-        
-        ret++;
+        toks++;
     }
     
 out:
@@ -1334,7 +1414,7 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
 expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
 {
     list->maxindexused = EXFAIL;
-    list->items = 0;
+    list->itemsalloc = 0;
     list->step = step;
     list->size = size;
     list->mem = NULL;
@@ -1365,14 +1445,14 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
             EXFAIL_OUT(ret);
         }
         
-        list->items+=list->step;
+        list->itemsalloc+=list->step;
     }
     
-    while (index+1 > list->items)
+    while (index+1 > list->itemsalloc)
     {
-        list->items+=list->step;
+        list->itemsalloc+=list->step;
         
-        next_blocks = list->items / list->step;
+        next_blocks = list->itemsalloc / list->step;
         
         new_size = next_blocks * list->step * list->size;
         /*

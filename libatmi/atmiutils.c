@@ -11,22 +11,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -250,7 +250,7 @@ expublic mqd_t ndrx_mq_open_at_wrp(char *name, int oflag)
  * @param svc
  * @param data
  * @param len
- * @return
+ * @return Unix error code
  */
 expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long flags)
 {
@@ -380,9 +380,11 @@ restart_send:
                                         queue, ret, strerror(ret));
     }
 
+out:
+    
 restart_close:
-    /* Generally we ingore close */
-    if (EXFAIL==ndrx_mq_close(q_descr))
+    /* Generally we ignore close */
+    if ((mqd_t)EXFAIL!=q_descr && EXFAIL==ndrx_mq_close(q_descr))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -391,13 +393,12 @@ restart_close:
         }
     }
 
-out:
     return ret;
 }
 
 /**
  * Generic queue receiver
- * @param q_descr - queue descriptro
+ * @param q_descr - queue descriptor
  * @param q_str - string queue, can be NULL, then attribs not set
  * @param reply_q_attr - current queue attributes, can be null, then attribs not set
  * @param buf - where to put received data
@@ -481,7 +482,7 @@ expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
  * @param argc
  * @param argv
  * @param p_have_next
- * @return SUCCEED/FAIL
+ * @return Unix error code, e.g. ENOENT if not found, etc..
  */
 expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,
@@ -534,14 +535,14 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_error, "Sending data to [%s], fd=%d, call flags=0x%x", 
                                 admin_q_str, admin_queue, call->flags);
-            if (EXSUCCEED!=ndrx_generic_qfd_send(admin_queue, (char *)call, call_size, flags))
+            if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(admin_queue, 
+                    (char *)call, call_size, flags)))
             {
                 NDRX_LOG(log_error, "Failed to send msg to ndrxd!");
 
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
 
-                ret=EXFAIL;
                 goto out;
             }
         }
@@ -549,7 +550,8 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         {
             NDRX_LOG(log_info, "Sending data to [%s] call flags=0x%x", 
                                     admin_q_str, call->flags);
-            if (EXSUCCEED!=ndrx_generic_q_send(admin_q_str, (char *)call, call_size, flags, 0))
+            if (EXSUCCEED!=(ret=ndrx_generic_q_send(admin_q_str, 
+                    (char *)call, call_size, flags, 0)))
             {
                 if (NULL!=p_put_output)
                     p_put_output("Failed to send msg to ndrxd!");
@@ -693,7 +695,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
             goto out;
         }
         /* do above while we are waiting for stuff back... */
-    } while((reply->flags & NDRXD_REPLY_HAVE_MORE));
+    } while((reply->flags & NDRXD_CALL_FLAGS_RSPHAVE_MORE));
 
 out:
     return ret;
@@ -702,6 +704,7 @@ out:
 /**
  * This is wrapper for cmd_generic_call_2,
  * Full request.
+ * @return Unix error code, e.g. ENOENT if not found, etc..
  */
 expublic int cmd_generic_call(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,

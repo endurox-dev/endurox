@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -91,16 +91,17 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * About to remove incoming connefction.
+ * About to remove incoming connection.
  */
 expublic void exnet_remove_incoming(exnetcon_t *net)
 {
     /* close(net->sock); Bug #233 - socket was already closed, core dumps on freebsd next */
     net->my_server->incomming_cons--;
     NDRX_LOG(log_debug, "Open connections decreased to: %d", 
-            net->my_server->incomming_cons); 
-    NDRX_FREE(net->d); /* remove network buffer */
-    NDRX_FREE(net);
+            net->my_server->incomming_cons);
+    /*
+    NDRX_FREE(net->d);  remove network buffer 
+    NDRX_FREE(net); */
 }
 
 /**
@@ -153,7 +154,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
     if ( (client_fd = accept(srv->sock, (struct sockaddr *)&clt_address, &addr_len) ) < 0 )
     {
-        NDRX_LOG(log_error, "Error calling accept()");
+        NDRX_LOG(log_error, "Error calling accept(): %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
 
@@ -250,8 +251,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     }
     
     /* Install poller extension? */
-    if (EXSUCCEED!=tpext_addpollerfd(client->sock,
-        POLL_FLAGS,
+    if (EXSUCCEED!=tpext_addpollerfd(client->sock, POLL_FLAGS,
         client, exnet_poll_cb))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
@@ -290,7 +290,7 @@ out:
  */
 expublic int exnet_bind(exnetcon_t *net)
 {
-	int ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     char *fn = "exnet_bind";
     int enable = EXTRUE;
     
@@ -309,7 +309,7 @@ expublic int exnet_bind(exnetcon_t *net)
         EXFAIL_OUT(ret);
     }
     
-    /*  Bind our socket addresss to the 
+    /*  Bind our socket address to the 
 	   listening socket, and call listen()  */
     if ( bind(net->sock, (struct sockaddr *) &net->address, sizeof(net->address)) < 0 )
     {
@@ -327,8 +327,7 @@ expublic int exnet_bind(exnetcon_t *net)
     
     /* Install poller extension? */
     if (EXSUCCEED!=tpext_addpollerfd(net->sock,
-        POLL_FLAGS,
-        net, exnetsvpollevent))
+        POLL_FLAGS, net, exnetsvpollevent))
     {
         NDRX_LOG(log_error, "tpext_addpollerfd failed!");
         ret=EXFAIL;

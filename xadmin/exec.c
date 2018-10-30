@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -98,7 +98,6 @@ void sign_chld_handler(int sig)
 expublic int is_ndrxd_running(void)
 {
     int ret = EXFALSE;
-    int queue_ok = EXFALSE;
     FILE *f = NULL;
     pid_t    pid;
     char    pidbuf[64] = {EXEOS};
@@ -139,7 +138,7 @@ expublic int is_ndrxd_running(void)
     }
 
     /* Get pid value */
-    fprintf(stderr, "ndrxd PID (from PID file): %s\n", pidbuf);
+    fprintf(stderr, "* ndrxd PID (from PID file): %s\n", pidbuf);
 
     NDRX_FCLOSE(f);
     f = NULL;
@@ -171,7 +170,7 @@ out:
 
     if (!ret)
     {
-        fprintf(stderr, "Enduro/X back-end (ndrxd) is not running\n");
+        fprintf(stderr, "* Enduro/X back-end (ndrxd) is not running\n");
         if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
         {
             ndrx_mq_close(G_config.ndrxd_q);
@@ -206,19 +205,37 @@ expublic int start_daemon_idle(void)
     pid_t pid;
     char    key[NDRX_MAX_KEY_SIZE+3+1];
     /* clone our self */
-    pid = fork();
+    pid = ndrx_fork();
     
     if( pid == 0)
     {
         FILE *f;
 
+        /* TODO: For System V actually we do not need to close the queues
+         * as these are not linked to system resources
+         * then we need a poller extension to check q fork close, something like
+         * if (ndrx_epoll_forkqclose())
+         * {
+         *     ... close the queues ...
+         * }
+         * As unnamed pipes still is going to live within the fork
+         * for just use ifdef...
+         * The proper way would be to use pthread_atfork() so that
+         * we can re-init the admin thread. For particular case
+         * we shall remove any resources allocated by admin thread
+         * and re-init it again for child.
+         */
         /*Bug #176 close resources */
+        NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)(long)G_config.ndrxd_q);
         if (G_config.ndrxd_q != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.ndrxd_q);
 
+        NDRX_LOG(log_debug, "forked close reply_queue %p", 
+                (void *)(long)G_config.reply_queue);
+        
+        /* WELL!!! Seems parent gets this close!!! */
         if (G_config.reply_queue != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.reply_queue);
-
         /* this is child - start EnduroX back-end*/
         snprintf(key, sizeof(key), NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
@@ -271,29 +288,29 @@ expublic int start_daemon_idle(void)
 	/* give another 5 seconds... to start ndrxd */
 	if (!started)
 	{
-        	for (i=0; i<MAX_WSLEEP; i++)
-        	{
-			fprintf(stderr, ">>> still not started, waiting %d/%d\n",
-                                    i, MAX_WSLEEP);
-            		sleep(1);
-            		started=is_ndrxd_running();
-            		if (started)
-                		break;
-		}
+            for (i=0; i<MAX_WSLEEP; i++)
+            {
+                fprintf(stderr, "* still not started, waiting %d/%d\n",
+                            i, MAX_WSLEEP);
+                sleep(1);
+                started=is_ndrxd_running();
+                if (started)
+                        break;
+            }
         }
 
         if (started)
         {
-            fprintf(stderr, ">>> ndrxd idle instance started.\n");
+            fprintf(stderr, "* ndrxd idle instance started.\n");
             G_config.is_idle = EXTRUE;
         }
         else if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
         {
-            fprintf(stderr, ">>> ndrxd idle instance not started (something failed?)!\n");
+            fprintf(stderr, "* ndrxd idle instance not started (something failed?)!\n");
         }
         else
         {
-            fprintf(stderr, ">>> ndrxd instance idle malfunction!\n");
+            fprintf(stderr, "* ndrxd instance idle malfunction!\n");
         }
     }
     

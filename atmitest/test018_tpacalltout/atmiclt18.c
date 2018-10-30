@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -63,14 +63,35 @@ int main(int argc, char** argv) {
     int cd_got;
     int cd[3];
     int got_send_block;
+    char bigmsg[8000];
     
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
     
     cd[0] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[0] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR first tpacall got %d: %s",
+            cd[0], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     cd[1] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[1] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR second tpacall got %d: %s",
+            cd[1], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
     cd[2] = tpacall("TESTSV", (char *)p_ub, 0L, 0L);
+    if (cd[2] <= 0)
+    {
+        NDRX_LOG(log_error, "TESTERROR third tpacall got %d: %s",
+            cd[2], tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
     /* wait for tout */
     sleep(10);
@@ -157,8 +178,15 @@ int main(int argc, char** argv) {
     
     /* Test for full service queue, we shall get TPEBLOCK back */
     
+    if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, bigmsg, sizeof(bigmsg)))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to add bigmsg: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
     got_send_block = EXFALSE;
-    for (i=0; i<10000; i++)
+    while (1)
     {
         if (EXFAIL==tpacall("BLOCKY", (char *)p_ub, 0L, TPNOBLOCK))
         {

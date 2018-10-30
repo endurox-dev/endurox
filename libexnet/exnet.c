@@ -15,22 +15,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -658,7 +658,7 @@ exprivate int close_socket(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
 
-    NDRX_LOG(log_warn, "Closing socket...");
+    NDRX_LOG(log_warn, "Closing socket %d...", net->sock);
     net->dl = 0; /* Reset buffered bytes */
     
     net->is_connected=EXFALSE; /* mark disconnected. */
@@ -707,6 +707,11 @@ out:
         exnet_remove_incoming(net);
     }
 #endif
+    
+    if (net->is_incoming)
+    {
+        exnet_remove_incoming(net);
+    }
     
     return ret;
 }
@@ -823,7 +828,7 @@ out:
 /**
  * Close connection
  * @param net network object
- * @return EXTRUE -> Connection removed, EXFALSE -> connetion not removed
+ * @return EXTRUE -> Connection removed, EXFALSE -> connection not removed
  */
 exprivate int exnet_schedule_run(exnetcon_t *net)
 {
@@ -831,8 +836,9 @@ exprivate int exnet_schedule_run(exnetcon_t *net)
     
     if (net->schedule_close)
     {
-        NDRX_LOG(log_warn, "Connection close is scheduled - closing fd %d", 
-                net->sock);
+        NDRX_LOG(log_warn, "Connection close is scheduled - "
+                "closing fd %d is_incoming %d", 
+                net->sock, net->is_incoming);
         is_incoming=net->is_incoming;
         
         exnet_rwlock_mainth_write(net);
@@ -842,6 +848,9 @@ exprivate int exnet_schedule_run(exnetcon_t *net)
         /* if incoming, continue.. */
         if (is_incoming)
         {
+            /* remove connection 
+            DL_DELETE(M_netlist, net);
+            NDRX_FREE(net);*/
             return EXTRUE;
         }
     }
@@ -876,10 +885,10 @@ expublic int exnet_periodic(void)
                 /* Server should bind at this point */
                 ret = exnet_bind(net);               
             }
-            else
+            else if (!net->is_incoming)
             {
                 /* Client should open socket at this point. */
-                ret=open_socket(net);
+                ret = open_socket(net);
             }
         }
         else if (!net->is_server)

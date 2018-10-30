@@ -8,22 +8,22 @@
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
  * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * GPL or Mavimax's license for commercial use.
+ * AGPL or Mavimax's license for commercial use.
  * -----------------------------------------------------------------------------
- * GPL license:
+ * AGPL license:
  * 
  * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 3 of the License, or (at your option) any later
- * version.
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
@@ -60,7 +60,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr);
  */
 expublic buffer_obj_t *G_buffers=NULL;
 
-MUTEX_LOCKDECL(M_lock); /* This will allow multiple reads */
+EX_SPIN_LOCKDECL(M_lock); /* This will allow multiple reads */
 
 /*
  * Buffer descriptors
@@ -111,19 +111,18 @@ exprivate int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
  */
 expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
-    MUTEX_LOCK_V(M_lock);
-    {
-        buffer_obj_t *ret;
+    buffer_obj_t *ret;
+    
+    EX_SPIN_LOCK_V(M_lock);
+    /*
+    ret = find_buffer_int(ptr);
+    */
+    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
 
-        /*
-        ret = find_buffer_int(ptr);
-        */
-        EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
 
-
-        MUTEX_UNLOCK_V(M_lock);
-        return ret;
-    }
+    EX_SPIN_UNLOCK_V(M_lock);
+    return ret;
+    
 }
 
 /**
@@ -183,8 +182,6 @@ expublic typed_buffer_descr_t * ndrx_get_buffer_descr(char *type, char *subtype)
 expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len)
 {
-    MUTEX_LOCK_V(M_lock);
-    {
     char *ret=NULL;
     int i=0;
     typed_buffer_descr_t *usr_type = NULL;
@@ -193,6 +190,8 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     NDRX_LOG(log_debug, "%s: type=%s, subtype=%s len=%d",  
             __func__, (NULL==type?"NULL":type),
             (NULL==subtype?"NULL":subtype), len);
+    
+    EX_SPIN_LOCK_V(M_lock);
     
     if (NULL==known_type)
     {
@@ -253,9 +252,8 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
     EXHASH_ADD_PTR(G_buffers, buf, node);
 
 out:
-    MUTEX_UNLOCK_V(M_lock);
+    EX_SPIN_UNLOCK_V(M_lock);
     return ret;
-    }
 }
 
 /**
@@ -266,13 +264,14 @@ out:
  */
 expublic char * ndrx_tprealloc (char *buf, long len)
 {
-    MUTEX_LOCK_V(M_lock);
-    {
     char *ret=NULL;
     buffer_obj_t * node;
     typed_buffer_descr_t *buf_type = NULL;
 
     NDRX_LOG(log_debug, "%s buf=%p, len=%ld",  __func__, buf, len);
+    
+    EX_SPIN_LOCK_V(M_lock);
+    
     if (NULL==(node=find_buffer_int(buf)))
     {
          ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p is not know to system",  
@@ -303,9 +302,9 @@ expublic char * ndrx_tprealloc (char *buf, long len)
     node->size = len;
 
 out:
-    MUTEX_UNLOCK_V(M_lock);
+    EX_SPIN_UNLOCK_V(M_lock);
     return ret;
-    }
+    
 }
 
 #if 0
@@ -314,7 +313,7 @@ out:
  */
 expublic void free_up_buffers(void)
 {
-    MUTEX_LOCK_V(M_lock);
+    EX_SPIN_LOCK_V(M_lock);
     {
         
     buffer_obj_t *elt, *tmp;
@@ -329,7 +328,7 @@ expublic void free_up_buffers(void)
         NDRX_FREE(elt);
     }
     
-    MUTEX_UNLOCK_V(M_lock);
+    EX_SPIN_UNLOCK_V(M_lock);
     }
 }
 #endif
@@ -340,12 +339,13 @@ expublic void free_up_buffers(void)
  */
 expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
 {
-    MUTEX_LOCK_V(M_lock);
-    {
     buffer_obj_t *elt;
     typed_buffer_descr_t *buf_type = NULL;
 
     NDRX_LOG(log_debug, "_tpfree buf=%p", buf);
+    
+    EX_SPIN_LOCK_V(M_lock);
+    
     /* Work out the buffer */
     if (NULL!=known_buffer)
         elt=known_buffer;
@@ -365,8 +365,7 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
         /* delete elt by it self */
         NDRX_FREE(elt);
     }
-    MUTEX_UNLOCK_V(M_lock);
-    }
+    EX_SPIN_UNLOCK_V(M_lock);
 }
 
 /**
@@ -377,28 +376,27 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
 expublic int ndrx_tpisautobuf(char *buf)
 {
     int ret;
+    buffer_obj_t *elt;
+
+    EX_SPIN_LOCK_V(M_lock);
     
-    MUTEX_LOCK_V(M_lock);
+    
+    elt=find_buffer_int(buf);
+
+    if (NULL!=elt)
     {
-        buffer_obj_t *elt;
-
-        elt=find_buffer_int(buf);
-
-        if (NULL!=elt)
-        {
-            ret = elt->autoalloc;
-            NDRX_LOG(log_debug, "_tpisautobuf buf=%p, autoalloc=%d", buf, ret);
-        }
-        else
-        {
-            ndrx_TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
-                "not allocated by tpalloc()!");
-            ret=EXFAIL;
-        }
-        
-    MUTEX_UNLOCK_V(M_lock);
+        ret = elt->autoalloc;
+        NDRX_LOG(log_debug, "_tpisautobuf buf=%p, autoalloc=%d", buf, ret);
     }
-    
+    else
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ptr points to unknown buffer, "
+            "not allocated by tpalloc()!");
+        ret=EXFAIL;
+    }
+
+    EX_SPIN_UNLOCK_V(M_lock);
+        
     return ret;
 }
 
@@ -408,7 +406,7 @@ expublic int ndrx_tpisautobuf(char *buf)
  */
 expublic void free_auto_buffers(void)
 {
-    MUTEX_LOCK_V(M_lock);
+    EX_SPIN_LOCK_V(M_lock);
     {
         
     buffer_obj_t *elt, *tmp;
@@ -432,7 +430,7 @@ expublic void free_auto_buffers(void)
         }
     }
     
-    MUTEX_UNLOCK_V(M_lock);
+    EX_SPIN_UNLOCK_V(M_lock);
     }
 }
 #endif
@@ -446,13 +444,15 @@ expublic void free_auto_buffers(void)
  */
 expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
 {
-    MUTEX_LOCK_V(M_lock);
-    {
     long ret=EXSUCCEED;
     
     typed_buffer_descr_t *buf_type = NULL;
+    buffer_obj_t *buf;
 
-    buffer_obj_t *buf =  find_buffer_int(ptr);
+    EX_SPIN_LOCK_V(M_lock);
+    
+    buf =  find_buffer_int(ptr);
+    
     
     if (NULL==buf)
     {
@@ -480,8 +480,8 @@ expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
     }
     
 out:
-    MUTEX_UNLOCK_V(M_lock);
+    EX_SPIN_UNLOCK_V(M_lock);
     return ret;
-    }
+    
 }
 /* vim: set ts=4 sw=4 et smartindent: */
