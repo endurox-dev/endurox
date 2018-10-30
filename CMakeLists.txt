@@ -52,6 +52,7 @@ string(TOUPPER ${_TMP_CMAKE_OS_NAME_EXTR} CMAKE_OS_NAME)
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
 message("CMake CMAKE_C_COMPILER_ID  = ${CMAKE_C_COMPILER_ID}")
 message("CMake CMAKE_CXX_COMPILER_ID  = ${CMAKE_CXX_COMPILER_ID}")
+F
 
 OPTION(DEFINE_FORCEPOLL "Force POLL (even on linux)" OFF)
 OPTION(DEFINE_FORCEFDPOLL "Force FDPOLL" OFF)
@@ -189,6 +190,8 @@ IF(DEFINE_SYSVQ)
     message("Using System V message queue")
     set(EX_USE_SYSVQ "1")
     unset(EX_USE_EPOLL)
+    # otherwise we will try to flush the virtual queues at shutdown...
+    unset(EX_USE_POLL)
 ENDIF()
 
 # Use emulated message queue
