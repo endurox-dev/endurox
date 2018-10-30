@@ -448,10 +448,10 @@ Ensure(test055_envs)
     assert_equal(ret, EXSUCCEED);
 }
 
-Ensure(test056_envs)
+Ensure(test056_tpimpexp)
 {
     int ret;
-    ret=system_dbg("test056_impexp/run.sh");
+    ret=system_dbg("test056_tpimpexp/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
