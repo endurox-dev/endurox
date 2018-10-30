@@ -791,6 +791,7 @@ expublic int sv_server_request(char *buf, int len)
             
             G_shutdown_nr_got++;
             
+		ndrx_YOPT(__func__, __FILE__, __LINE__);
             NDRX_LOG(log_warn, "Got shutdown req %d of %d", 
                     G_shutdown_nr_got, G_shutdown_nr_wait);
             goto out;
@@ -1039,6 +1040,7 @@ expublic int process_admin_req(char *buf, long len, int *shutdown_req)
         NDRX_LOG(log_warn, "Send %d self notifications to "
                 "service queues for shutdown...", G_shutdown_nr_wait);
 #endif
+ndrx_YOPT(__func__, __FILE__, __LINE__);
         
     }
     else if (NDRXD_COM_SRVINFO_RQ==call->command)
@@ -1098,6 +1100,7 @@ expublic int process_admin_req(char *buf, long len, int *shutdown_req)
     }
     
 out:
+ndrx_YOPT(__func__, __FILE__, __LINE__);
     return ret;
 }
 
@@ -1138,6 +1141,8 @@ expublic int sv_wait_for_request(void)
     {
         /* Support for periodical invocation of custom function! */
         
+	NDRX_LOG(log_error, "YOPT WHILE!!!!");
+	ndrx_YOPT(__func__, __FILE__, __LINE__);
         /* Invoke before poll function */
         if (G_server_conf.p_b4pollcb
                 && EXSUCCEED!=G_server_conf.p_b4pollcb())
@@ -1173,9 +1178,11 @@ expublic int sv_wait_for_request(void)
          *  by the service name in the message and then we return then
          *  we will events correspondingly.
          */
+ndrx_YOPT(__func__, __FILE__, __LINE__);
         len = sizeof(msg_buf);
         nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout, msg_buf, &len);
+ndrx_YOPT(__func__, __FILE__, __LINE__);
         
         /* Print stuff if there is no timeout set or there is some value out there */
         
@@ -1213,6 +1220,7 @@ expublic int sv_wait_for_request(void)
             
             ndrx_stopwatch_reset(&periodic_cb);
         }
+ndrx_YOPT(__func__, __FILE__, __LINE__);
         
         /*
          * TODO: We should have algorithm which checks request in round robin way.
@@ -1266,6 +1274,7 @@ expublic int sv_wait_for_request(void)
             {
                 continue;
             }
+ndrx_YOPT(__func__, __FILE__, __LINE__);
             
             if (EXFAIL==len && EXFAIL==(len=ndrx_mq_receive (evmqd,
                 (char *)msg_buf, sizeof(msg_buf), &prio)))
@@ -1288,6 +1297,7 @@ expublic int sv_wait_for_request(void)
             }
             else
             {   
+ndrx_YOPT(__func__, __FILE__, __LINE__);
                 /* OK, we got the message and now we can call the service */
                 /*G_server_conf.service_array[n]->p_func((TPSVCINFO *)msg_buf);*/
 
@@ -1306,11 +1316,14 @@ expublic int sv_wait_for_request(void)
                 }
                 NDRX_LOG(log_debug, "Got request on logical channel %d, fd: %d",
                             G_server_conf.last_call.no, evmqd);
+
+		ndrx_YOPT(__func__, __FILE__, __LINE__);
                 
                 if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no)
                 {
                     NDRX_LOG(log_debug, "Got admin request");
                     ret=process_admin_req(msg_buf, len, &G_shutdown_req);
+			ndrx_YOPT(__func__, __FILE__, __LINE__);
                 }
                 else
                 {   
@@ -1333,6 +1346,7 @@ expublic int sv_wait_for_request(void)
         } /* for */
     }
 out:
+	ndrx_YOPT(__func__, __FILE__, __LINE__);
     return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -262,7 +262,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 /* Have some extra debug here */
 #define NDRX_ASPRINTF(strp, lenp, fmt, ...) \
     NDRX_ASPRINTF_INT(strp, lenp, fmt, ##__VA_ARGS__)\
-    userlog("[%p] <= asprintf(%s):%s %s:%ld", *strp, fmt, func, file, line);
+    userlog("[%p] <= asprintf(%s):%s %s:%ld", *strp, fmt, __func__, __FILE__, __LINE__);
 #else
 
 #define NDRX_MALLOC(size) malloc(size)
