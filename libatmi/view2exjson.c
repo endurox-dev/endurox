@@ -155,8 +155,6 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
         EXFAIL_OUT(ret);
     }
 
-NDRX_LOG(log_error, "YOPT!!! cstruct=[%p]", cstruct);
-
     strcpy(view, name);
     
     view_object = exjson_object_get_object(root_object, name);
