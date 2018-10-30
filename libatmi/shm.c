@@ -527,7 +527,7 @@ out:
  * @param srvlist list of servers/resource id (mqd for system v)
  * @return 
  */
-expublic int ndrx_shm_get_srvs(char *svc, int **srvlist, int *len)
+expublic int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len)
 {
     int ret=EXSUCCEED;
     int pos=EXFAIL;
@@ -568,13 +568,14 @@ expublic int ndrx_shm_get_srvs(char *svc, int **srvlist, int *len)
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(int) *local_count )))
+    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(ndrx_shm_resid_t) *local_count )))
     {
         NDRX_LOG(log_error, "malloc fail: %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    memcpy(*srvlist, psvcinfo->resids, sizeof(int) *local_count);
+    memcpy(*srvlist, &(psvcinfo->resids[0]), sizeof(ndrx_shm_resid_t) *local_count);
+
     *len = local_count;
     
 out:
