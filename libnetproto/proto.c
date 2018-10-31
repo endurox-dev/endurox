@@ -294,6 +294,9 @@ struct proto_ufb_fld
 {
     int bfldid;
     int bfldlen;
+#if EX_ALIGNMENT_BYTES == 8
+    long         padding1;
+#endif
     char buf[0];
 };
 
