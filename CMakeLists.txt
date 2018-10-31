@@ -126,7 +126,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
             endif()
 	endif()
 
-    set(EX_USE_POLL "1")
+    set(EX_USE_SYSVQ "1")
     set(EX_OS_AIX "1")
     # For AIX we do not have other options that use file system
     # base queue registry.
@@ -138,7 +138,6 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
     set(EX_OS_SUNOS "1")
     set(EX_USE_SYSVQ "1")
-    set(EX_USE_POLL "1")
 
     IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
         set(EX_ALIGNMENT_BYTES "8")
