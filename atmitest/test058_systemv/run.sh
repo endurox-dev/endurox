@@ -175,28 +175,28 @@ sleep 6
 
 xadmin psc
 
-RES=`xadmin psc | grep -E "atmi\.sv58\s+10\s+1\s+0"`
+RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+10[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (5)!"
     go_out -14
 fi
 
-RES=`xadmin psc | grep -E "atmi\.sv58\s+11\s+1\s+0"`
+RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+11[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (6)!"
     go_out -14
 fi
 
-RES=`xadmin psc | grep -E "atmi\.sv58\s+100\s+1\s+0"`
+RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+100[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (7)!"
     go_out -15
 fi
 
-RES=`xadmin psc | grep -E "atmi\.sv58\s+101\s+1\s+0"`
+RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+101[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (8)!"
