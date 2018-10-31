@@ -120,7 +120,7 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
     tp_command_generic_t *gen_command;
     char *fn = "remove_service_q";
     
-    NDRX_LOG(log_debug, "Enter, svc = [%s], srvid = %hd", svc, srvid);
+    NDRX_LOG(log_debug, "Enter, svc = [%s], srvid = %hd", svc?svc:"(null)", srvid);
     if (NULL!=in_qstr)
     {
         NDRX_STRCPY_SAFE(q_str, in_qstr);
