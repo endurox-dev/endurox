@@ -972,7 +972,7 @@ exprivate void rcv_hash_delall(tp_conversation_control_t *conv)
  * @param revent
  * @return
  */
-expublic int ndrx_tprecv (int cd, char * *data, 
+expublic int ndrx_tprecv (int cd, char **data, 
                         long *len, long flags, long *revent,
                         short *command_id)
 {
@@ -999,7 +999,8 @@ expublic int ndrx_tprecv (int cd, char * *data,
     /* choose the connection */
     if (NULL==(conv=get_current_connection(cd)))
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d",  __func__, cd);
+        ndrx_TPset_error_fmt(TPEINVAL, "%s: Invalid connection descriptor %d",  
+                __func__, cd);
         EXFAIL_OUT(ret);
     }
 
@@ -1040,7 +1041,8 @@ expublic int ndrx_tprecv (int cd, char * *data,
     while (!answ_ok)
     {
         long spent;
-        if (!(flags & TPNOTIME) && (spent=ndrx_stopwatch_get_delta_sec(&t)) > G_atmi_env.time_out)
+        if (!(flags & TPNOTIME) && 
+                (spent=ndrx_stopwatch_get_delta_sec(&t)) > G_atmi_env.time_out)
         {
             NDRX_LOG(log_error, "%s: call expired (spent: %ld sec, tout: %ld sec)", 
                     __func__, spent, G_atmi_env.time_out);
@@ -1231,7 +1233,7 @@ inject_message:
                     conv->flags&=~TPRECVONLY;
                 }
             } /* else - normal reply/data from send! */
-        } /* reply recieved ok */
+        } /* reply received ok */
     }
 out:
     NDRX_LOG(log_debug, "%s return %d",  __func__, ret);
