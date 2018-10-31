@@ -172,7 +172,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = __buf_size__;\
+        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
     }\
 }
     
@@ -194,7 +194,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = __buf_size__;\
+        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
     }\
 }
     
@@ -215,7 +215,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = __buf_size__;\
+        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
     }\
 }
     
