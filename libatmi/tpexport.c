@@ -1,7 +1,5 @@
 /* 
 ** ATMI tpexport function implementation (Common version)
-** TODO
-** TODO
 **
 ** @file tpexport.c
 ** 
