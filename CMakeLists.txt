@@ -243,7 +243,8 @@ CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
 	
 
 # To check the size of a primitive type:
-CHECK_TYPE_SIZE("int"   SIZEOF_INT)
+CHECK_TYPE_SIZE("int"   EX_SIZEOF_INT)
+CHECK_TYPE_SIZE("long"  EX_SIZEOF_LONG)
 
 IF (DEFINE_DISABLEPSCRIPT)
     set(NDRX_DISABLEPSCRIPT "1")
