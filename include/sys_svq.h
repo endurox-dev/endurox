@@ -44,6 +44,11 @@
 #include <atmi.h>
 #include <nstopwatch.h>
 #include <nstd_shm.h>
+
+#ifdef EX_OS_DARWIN
+#include <sys_darwin.h>
+#endif
+
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 

@@ -42,7 +42,6 @@ extern "C" {
 #include <regex.h>
 #include <ubf.h>
 #include <atmi.h>
-#include <sys_mqueue.h>
 #include <exhash.h>
 #include <nstdutil.h>
     
@@ -51,8 +50,11 @@ extern "C" {
 #include <sys/_types/_timespec.h>
 #include <mach/mach.h>
 #include <mach/clock.h>
+#include <sys_darwin.h>
 #endif
-
+    
+#include <sys_mqueue.h>
+    
 #if defined(EX_USE_SYSVQ) 
 /* Feature #281 */
 #include <sys_svq.h>
@@ -206,8 +208,6 @@ struct ndrx_proc_info
     long vsz;
 };
 
-
-
 #ifdef EX_OS_DARWIN
 typedef int clockid_t;
 #endif
@@ -245,6 +245,19 @@ extern NDRX_API int sol_mq_close(mqd_t mqdes);
 
 #if defined(EX_OS_DARWIN) || defined(EX_OS_FREEBSD)
 extern NDRX_API FILE * fmemopen(void *buffer, size_t len, const char *mode);
+#endif
+
+#if defined(EX_OS_DARWIN)
+
+/* Darwin does not have spinlock... */
+typedef int pthread_spinlock_t;
+
+extern NDRX_API int pthread_spin_init(pthread_spinlock_t *lock, int pshared);
+extern NDRX_API int pthread_spin_destroy(pthread_spinlock_t *lock);
+extern NDRX_API int pthread_spin_lock(pthread_spinlock_t *lock);
+extern NDRX_API int pthread_spin_trylock(pthread_spinlock_t *lock);
+extern NDRX_API int pthread_spin_unlock(pthread_spinlock_t *lock);
+
 #endif
 
 /* poll ops */
