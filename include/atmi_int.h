@@ -492,6 +492,11 @@ struct tp_command_call
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;
     
+#if EX_SIZEOF_LONG == 4
+    /* we need data to aligned to 8 */
+    long padding1;
+#endif
+
     /* Payload: */
     long data_len;
     char data[0];
@@ -545,6 +550,11 @@ struct tp_notif_call
     
     long destnodeid; /**< Dest node to which we are sending the msg */
     
+#if EX_SIZEOF_LONG == 4
+    /* we need data to aligned to 8 */
+    long padding1;
+#endif
+
     long data_len;
     char data[0];
     
