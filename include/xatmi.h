@@ -101,7 +101,7 @@ extern "C" {
 #define NDRX_SVC_QFMT     "%s,svc,%s"            /**< Q format in epoll mode (one q multiple servers) */
 #define NDRX_SVC_QFMT_PFX "%s,svc,"              /**< Service Q prefix */
 #define NDRX_QTYPE_SVC      2                    /**< Service Q */
-#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%hd"      /**< Q format in poll mode (use server id) */
+#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%d"       /**< Q format in poll mode (use server id) */
 #define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
 
 #define NDRX_SYS_SVC_PFX          "@"                    /**< Prefix used for system services */

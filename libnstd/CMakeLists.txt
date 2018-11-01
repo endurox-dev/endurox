@@ -42,10 +42,10 @@ SET(NSTD_POLLER "invalid_poller.c")
 
 if(DEFINED EX_USE_SYSVQ)
     SET(NSTD_POLLER "sys_svqpoll.c")
-    SET(NSTD_SYS_3 "sys_svq.c")
-    SET(NSTD_SYS_4 "sys_svqshm.c")
-    SET(NSTD_SYS_5 "sys_svqevent.c")
-    SET(NSTD_SYS_6 "sys_svqadmin.c")
+    SET(NSTD_POLLER_2 "sys_svq.c")
+    SET(NSTD_POLLER_3 "sys_svqshm.c")
+    SET(NSTD_POLLER_4 "sys_svqevent.c")
+    SET(NSTD_POLLER_5 "sys_svqadmin.c")
 elseif (DEFINED EX_USE_KQUEUE)
     SET(NSTD_POLLER "sys_kqueue.c")
 elseif(DEFINED EX_USE_POLL)
@@ -88,7 +88,13 @@ endif ()
 
 add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         ini.c inicfg.c cconfig.c nerror.c nstd_tls.c ulog.c
-                        sys_genunix.c ${NSTD_POLLER} ${NSTD_SYS}
+                        sys_genunix.c 
+			${NSTD_POLLER}
+			${NSTD_POLLER_2}
+			${NSTD_POLLER_3}
+			${NSTD_POLLER_4}
+			${NSTD_POLLER_5}
+			${NSTD_SYS}
                         sys_common.c ${NSTD_SYS_2} ${NSTD_SYS_3} tplog.c
                         exregex.c platform.c msgsizemax.c exaes.c exsha1.c
                         exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/edb.c
