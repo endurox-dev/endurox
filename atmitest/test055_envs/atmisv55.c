@@ -100,15 +100,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
       
     /* test environment variables... */
     
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO1", getenv("HELLO1"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO2", getenv("HELLO2"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO3", getenv("HELLO3"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO4", getenv("HELLO4"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO5", getenv("HELLO5"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO6", getenv("HELLO6"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO7", getenv("HELLO7"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO10", getenv("HELLO10"));
-    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO11", getenv("HELLO11"));
+    /* solaris does not print NULLs... */
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO1", getenv("HELLO1")?getenv("HELLO1"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO2", getenv("HELLO2")?getenv("HELLO2"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO3", getenv("HELLO3")?getenv("HELLO3"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO4", getenv("HELLO4")?getenv("HELLO4"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO5", getenv("HELLO5")?getenv("HELLO5"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO6", getenv("HELLO6")?getenv("HELLO6"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO7", getenv("HELLO7")?getenv("HELLO7"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO10", getenv("HELLO10")?getenv("HELLO10"):"(null)");
+    NDRX_LOG(log_debug, "[%s] = [%s]", "HELLO11", getenv("HELLO11")?getenv("HELLO11"):"(null)");
     
     if (10==tpgetsrvid())
     {
