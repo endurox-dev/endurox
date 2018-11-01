@@ -84,8 +84,11 @@
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 
+/* The size of `int', as computed by sizeof. */
+#define EX_SIZEOF_INT @EX_SIZEOF_INT@
+
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_INT @SIZEOF_INT@
+#define EX_SIZEOF_LONG @EX_SIZEOF_LONG@
 
 #define NDRX_VERSION   "@NDRX_VERSION_STR@"
 #define NDRX_BUILD_OS_NAME "@CMAKE_OS_NAME@"
