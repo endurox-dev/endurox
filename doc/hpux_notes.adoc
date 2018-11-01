@@ -33,6 +33,10 @@ packages are needed:
 http://hpux.connect.org.uk/hppd/hpux/Gnu/libgcc-4.2.3/) 
 
 . aCC (if running with HP-UX native compiler)
+
+. libexpat (or use /opt/gtk2.6/lib/libexpat.so and synmlink to /opt/gtk2.6/lib/libexpat.so /usr/lib/hpux32/libexpat.so )
+
+. libidn
  
 
 === Installing aCC
@@ -144,12 +148,29 @@ Then you may try to fix the code in editor and change those empty arrays to decl
 -------------------------------------------------------------------------------
 
 
-
-
-
 === Getting the Enduro/X source code
-...
 
+-------------------------------------------------------------------------------
+
+# useradd -m user1
+# su - user1
+
+$ bash
+$ chmod +w .profile
+$ cat << EOF >> .profile
+
+export SHLIB_PATH=$SHLIB_PATH:/usr/local/lib/hpux64:/opt/hpsmh/lib
+PATH=$PATH:/usr/local/bin
+EOF
+
+$ chmod +x .profile
+$ source .profile
+$ cd /home/user1
+$ GIT_SSL_NO_VERIFY=true git clone https://github.com/endurox-dev/endurox
+$ cd endurox
+$ git config http.sslVerify "false"
+
+-------------------------------------------------------------------------------
 
 
 === Enduro/X basic Environment configuration for HOME directory

@@ -5,8 +5,7 @@ v1.0, 2012-12:
 	Initial draft
 :doctype: book
 
-How to configure Enduro/X
--------------------------
+== How to configure Enduro/X
 To configure Enduro/X you have to finish several steps.
 
 - Have a seperate system user for each Enduro/X instance.
@@ -17,10 +16,26 @@ To configure Enduro/X you have to finish several steps.
 - Startup the application
 
 
-Setup System Environment
-------------------------
-In this chapter will be descirbed typical GNU/Linux system configuration required
-for Enduro/X. Server Posix queue paramters must be set-up:
+== Setup System Environment
+
+System environments setup includes the configurations of user and resource limits.
+This includes number of open files for user and queue attributes. For Linux systems
+Enduro/X offer two official message transport mechanisms:
+
+1. Posix queues
+
+2. SystemV queues.
+
+For FreeBSD Posix queues with kqueue dispatching are used. For other OSes SystemV
+queues are used.
+
+== MAC setup
+
+
+== Linux setup
+
+In this chapter will be described typical GNU/Linux system configuration required
+for Enduro/X. Server Posix queue parameters must be set-up:
 
 Typical configuration would look like (normally you can put this in /etc/rc.local):
 
