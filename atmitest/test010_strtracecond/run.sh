@@ -99,7 +99,10 @@ sleep 5
 xadmin start -i 2411 & 
 sleep 1
 
+
+echo "*** PQA ***"
 xadmin pqa
+
 # Now we should not have queue with "SVCOK", as server is locked on bad server
 if [[ "X`xadmin pqa | grep SVCOK`" != "X" ]]; then
     echo "SVCOK must not be advertised!!!"
