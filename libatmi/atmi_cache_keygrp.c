@@ -497,7 +497,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         }
     }
     
-    if (cachekey_found && deleteop || !cachekey_found && !deleteop)
+    if ((cachekey_found && deleteop) || (!cachekey_found && !deleteop))
     {
         if (deleteop)
         {

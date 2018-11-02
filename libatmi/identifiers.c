@@ -737,7 +737,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         else if (flags & TPCONVXID)
         {
             /* Deserialize xid. */
-            atmi_xa_deserialize_xid(str, (XID *)bin);
+            atmi_xa_deserialize_xid((unsigned char *)str, (XID *)bin);
         }
         else
         {

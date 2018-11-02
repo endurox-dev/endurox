@@ -749,6 +749,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
 
                 if (0==sigs)
                 {*/
+                       NDRX_LOG(log_error, "YOPT KILL");
                     if (0!=pthread_kill(mqd->thread, NDRX_SVQ_SIG))
                     {
                         int err = errno;
@@ -798,9 +799,8 @@ out:
  */
 exprivate void ndrx_svq_signal_action(int sig)
 {
-    /* nothing todo, just ignore 
+    /* nothing todo, just ignore  */
     NDRX_LOG(log_debug, "Signal action");
-     * */
     M_signalled = EXTRUE;
     return;
 }
@@ -1536,7 +1536,8 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
     
     /* perform sync off */
     ret = ndrx_svq_moncmd_send(&cmd);
-    
+
+    return ret;
 }
 
 /**
