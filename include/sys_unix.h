@@ -40,6 +40,7 @@ extern "C" {
 #include <ndrx_config.h>
 #include <stdint.h>
 #include <regex.h>
+#include <sys_primitives.h>
 #include <ubf.h>
 #include <atmi.h>
 #include <exhash.h>
@@ -50,7 +51,6 @@ extern "C" {
 #include <sys/_types/_timespec.h>
 #include <mach/mach.h>
 #include <mach/clock.h>
-#include <sys_darwin.h>
 #endif
     
 #include <sys_mqueue.h>

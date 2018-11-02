@@ -98,7 +98,7 @@ expublic int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
  */
 expublic int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2)
 {
-    if (*t1 < *t2 || *t1 == *t2 && *tusec1 < *tusec2)
+    if ((*t1 < *t2) || (*t1 == *t2 && *tusec1 < *tusec2))
     {
         return -1;
     }
