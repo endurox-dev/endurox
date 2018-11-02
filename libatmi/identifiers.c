@@ -84,7 +84,7 @@ typedef struct prefixmap prefixmap_t;
  */
 expublic prefixmap_t M_prefixmap[] =
 {  
-    /* Qprefix format string, match off, len, q type classifier */
+    /* prefix format string, match off, len, q type classifier */
     {NDRX_NDRXD,                NULL, 0, NDRX_QTYPE_NDRXD,      "ndrxd Q"},
     {NDRX_SVC_QFMT_PFX,         NULL, 0, NDRX_QTYPE_SVC,        "service Q"},
     {NDRX_ADMIN_FMT_PFX,        NULL, 0, NDRX_QTYPE_SRVADM,     "svc admin Q"},
@@ -660,7 +660,7 @@ expublic int ndrx_q_type_get(char *q)
         p++;
     }
     
-    if (NULL!=p)
+    if (NULL!=p->prefix)
     {
         ret = p->type;
         NDRX_LOG(log_debug, "[%s] matched type [%d/%s]", q, ret, p->descr);
