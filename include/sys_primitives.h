@@ -1,7 +1,7 @@
 /**
- * @brief Darwin specifics
+ * @brief Basic OS elements
  *
- * @file sys_darwin.h
+ * @file sys_primitives.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,8 +30,8 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef SYS_DARWIN_H
-#define	SYS_DARWIN_H
+#ifndef SYS_PRIMITIVES_H
+#define	SYS_PRIMITIVES_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -42,17 +42,21 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+#ifdef EX_OS_DARWIN
 /* Darwin does not have spinlock... */
 typedef int pthread_spinlock_t;
+#endif
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+#ifdef EX_OS_DARWIN
 extern NDRX_API int pthread_spin_init(pthread_spinlock_t *lock, int pshared);
 extern NDRX_API int pthread_spin_destroy(pthread_spinlock_t *lock);
 extern NDRX_API int pthread_spin_lock(pthread_spinlock_t *lock);
 extern NDRX_API int pthread_spin_trylock(pthread_spinlock_t *lock);
 extern NDRX_API int pthread_spin_unlock(pthread_spinlock_t *lock);
+#endif
 
 #ifdef	__cplusplus
 }
