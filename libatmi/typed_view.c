@@ -118,9 +118,9 @@ expublic char * VIEW_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *
     }
     else if (v->ssize < *len)
     {
-        *len = v->ssize;
         NDRX_LOG(log_warn, "VIEW [%s] structure size is %ld, requested %ld -> "
-		    "upgrading to view size!", *len, subtype, v->ssize);   
+		    "upgrading to view size!", subtype, *len, v->ssize);   
+        *len = v->ssize;
     }
     
     /* Allocate VIEW buffer */
