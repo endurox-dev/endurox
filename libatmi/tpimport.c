@@ -155,7 +155,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
         NDRX_STRCPY_SAFE(bufctl->buftype, buftype);
         bufctl->buftype_ind = EXTRUE;
 
-        bufctl->version, version;
+        bufctl->version = version;
         bufctl->version_ind = EXTRUE;
     }
 
