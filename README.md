@@ -388,26 +388,26 @@ $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 
 ### Flags:
 
-- To enable System V message queue, pass '-DDEFINE_SYSVQ=ON' to cmake
+- To enable System V message queue, pass '-DDEFINE_SYSVQ=ON' to cmake (applies
+to Linux only). Default on AIX and Solaris.
+
+- To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
+(applies to Linux only).
+
+- To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON' (applies to 
+Linux only). Default on Macos.
 
 - To disable GPG_ME, pass additional flag to cmake '-DDEFINE_DISABLEGPGME=ON'
 
 - To disable documentation building add '-DDEFINE_DISABLEDOC=ON'
 
-- To enable poll() use instead of epoll() in Linux use '-DDEFINE_FORCEPOLL=ON'
-
 - To disable platform script building use '-DDEFINE_DISABLEPSCRIPT=ON'
 
 - To do release build, use '-DDEFINE_RELEASEBUILD=ON'
 
-- To force use emulated message queue, add '-DDEFINE_FORCEEMQ=ON'
-
 - To log the memory allocation to user log add '-DNDRX_MEMORY_DEBUG=1' 
 
 - To trace of the Object-API use '-DNDRX_OAPI_DEBUG=1' 
-
-- To enable file descriptor based treating of the queues 
-'-DDEFINE_FORCEFDPOLL=ON'
 
 - To trace of the Semaphore handling use '-DNDRX_SEM_DEBUG=1' 
 

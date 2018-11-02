@@ -92,14 +92,20 @@ SET(RT_LIB rt dl)
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
     set(EX_OS_LINUX "1")
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
-    # Enable poll only
-    IF(DEFINE_FORCEPOLL)
+    # Configure backend transport
+    IF(DEFINE_SYSVQ)
+        message("Linux - forced poll()")
+        set(EX_USE_SYSVQ "1")
+    ELSEIF(DEFINE_FORCEPOLL)
         message("Linux - forced poll()")
         set(EX_USE_POLL "1")
     ELSEIF(DEFINE_FORCEFDPOLL)
         message("Linux - forced fdpoll()")
+        set(EX_USE_FDPOLL "1")
     ELSEIF(DEFINE_FORCEEMQ)
         message("Linux - forced emulated message q")
+        set(EX_USE_EMQ "1")
+        set(EX_USE_POLL "1")
     ELSE()
         message("Linux - forced epoll()")
         set(EX_USE_EPOLL "1")
@@ -107,9 +113,9 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 # Configure the compiler, we support XLC too..
 
-	message("No threads mode for CPM - bit slower child process exit status check...")
-	# Seems aix 7.1 does not like threads mixed with fork...
-   	set(EX_CPM_NO_THREADS "1")
+        message("No threads mode for CPM - bit slower child process exit status check...")
+        # Seems aix 7.1 does not like threads mixed with fork...
+        set(EX_CPM_NO_THREADS "1")
         set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
@@ -130,12 +136,9 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 
     set(EX_USE_SYSVQ "1")
     set(EX_OS_AIX "1")
-    # For AIX we do not have other options that use file system
-    # base queue registry.
-    set(USE_FS_REGISTRY "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
     set(EX_USE_POLL "1")
-	set(EX_OS_HPUX "1")
+    set(EX_OS_HPUX "1")
     set(NDRX_LD_LIBRARY_PATH "SHLIB_PATH")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
     set(EX_OS_SUNOS "1")
@@ -178,49 +181,28 @@ elseif(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     set(RT_LIB dl)
     set(EX_OS_DARWIN "1")
-    set(EX_USE_SYSVQ "1")
+    set(EX_USE_EMQ "1")
+    set(EX_USE_POLL "1")
     set(NDRX_LD_LIBRARY_PATH "DYLD_FALLBACK_LIBRARY_PATH")
 # Unknown OS:
 else()
 	message( FATAL_ERROR "Unsupported OS" )
 endif()
 
-IF(DEFINE_SYSVQ)
-    message("Using System V message queue")
-    set(EX_USE_SYSVQ "1")
+
+IF(EX_USE_SYSVQ)
     set(EX_POLLER_STR   "SystemV")
-    unset(EX_USE_EPOLL)
-    # otherwise we will try to flush the virtual queues at shutdown...
-    unset(EX_USE_POLL)
-ENDIF()
-
-# Use emulated message queue
-IF(DEFINE_FORCEEMQ)
-    message("Using emulated message queue")
-    set(EX_USE_EMQ "1")
-    set(EX_USE_POLL "1")
-    set(EX_POLLER_STR   "emq")
-ENDIF()
-
-# Use emulated message queue
-IF(DEFINE_FORCEFDPOLL)
-    message("Using poll on MQ mqd_t as file descriptor")
-    set(EX_USE_FDPOLL "1")
+ELSEIF(EX_USE_POLL)
+    set(EX_POLLER_STR   "poll")
+ELSEIF(EX_USE_FDPOLL)
     set(EX_POLLER_STR   "fdpoll")
-ENDIF()
-
-IF(DEFINE_FORCEKQUEUE)
-    message("Using Kqueue event mechanism")
-    set(EX_USE_KQUEUE "1")
-    set(EX_POLLER_STR   "kqueue")
-ENDIF()
-
-IF(EX_USE_EPOLL)
-    message("Using linux epoll")
-    set(EX_USE_KQUEUE "1")
+ELSEIF(EX_USE_EMQ)
+    set(EX_POLLER_STR   "emq")
+ELSEIF(EX_USE_EPOLL)
     set(EX_POLLER_STR   "epoll")
+ELSE()
+    message( FATAL_ERROR "ERROR! Inavlid queue transport backend!" )
 ENDIF()
-
 
 message("CMake EX_ALIGNMENT_BYTES  = ${EX_ALIGNMENT_BYTES}")
 message("Poller  = ${EX_POLLER_STR}")
