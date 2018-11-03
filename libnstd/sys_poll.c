@@ -958,10 +958,15 @@ expublic int ndrx_epoll_close(int epfd)
     }
     
     MUTEX_LOCK_V(M_psets_lock);
-    NDRX_FREE(set);
-    EXHASH_DEL(M_psets, set);
-    MUTEX_UNLOCK_V(M_psets_lock);
     
+    if (NULL!=set->fdtab)
+    {
+        NDRX_FREE(set->fdtab);
+    }
+    
+    EXHASH_DEL(M_psets, set);
+    NDRX_FREE(set);
+    MUTEX_UNLOCK_V(M_psets_lock);
     
 out:
     return EXFAIL;
