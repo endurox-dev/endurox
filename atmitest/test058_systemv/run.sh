@@ -99,7 +99,7 @@ xadmin psvc
 #
 # Check psvc that there is two queues according to regexp map
 #
-RES=`xadmin psvc | grep -E 'RES\(2\): [0-9]+\(2\) [0-9]+\(2\)'`
+RES=`xadmin psvc | egrep 'RES\(2\): [0-9]+\(2\) [0-9]+\(2\)'`
 
 if [ "X$RES" == "X" ]; then
     echo "Invalid service count (1)!"
@@ -111,7 +111,7 @@ fi
 #
 xadmin stop -i 10
 
-RES=`xadmin psvc | grep -E 'RES\(2\): [0-9]+\(1\) [0-9]+\(2\)'`
+RES=`xadmin psvc | egrep 'RES\(2\): [0-9]+\(1\) [0-9]+\(2\)'`
 
 if [ "X$RES" == "X" ]; then
     echo "Invalid service count (2)!"
@@ -125,7 +125,7 @@ fi
 
 xadmin stop -i 11
 
-RES=`xadmin psvc | grep -E 'RES\(1\): [0-9]+\(2\) '`
+RES=`xadmin psvc | egrep 'RES\(1\): [0-9]+\(2\) '`
 
 if [ "X$RES" == "X" ]; then
     echo "Invalid service count (3)!"
@@ -139,7 +139,7 @@ fi
 
 xadmin start -y
 
-RES=`xadmin psvc | grep -E 'RES\(2\): [0-9]+\(2\) [0-9]+\(2\)'`
+RES=`xadmin psvc | egrep 'RES\(2\): [0-9]+\(2\) [0-9]+\(2\)'`
 
 if [ "X$RES" == "X" ]; then
     echo "Invalid service count (4)!"
@@ -175,28 +175,28 @@ sleep 6
 
 xadmin psc
 
-RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+10[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
+RES=`xadmin psc | egrep "atmi\.sv58[ \\t\\r\\n\\v\\f]+10[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (5)!"
     go_out -14
 fi
 
-RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+11[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
+RES=`xadmin psc | egrep "atmi\.sv58[ \\t\\r\\n\\v\\f]+11[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (6)!"
     go_out -14
 fi
 
-RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+100[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
+RES=`xadmin psc | egrep "atmi\.sv58[ \\t\\r\\n\\v\\f]+100[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (7)!"
     go_out -15
 fi
 
-RES=`xadmin psc | grep -E "atmi\.sv58[ \\t\\r\\n\\v\\f]+101[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
+RES=`xadmin psc | egrep "atmi\.sv58[ \\t\\r\\n\\v\\f]+101[ \\t\\r\\n\\v\\f]+1[ \\t\\r\\n\\v\\f]+0"`
 
 if [ "X$RES" == "X" ]; then
     echo "Processed entries missing (8)!"
