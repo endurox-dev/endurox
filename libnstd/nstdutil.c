@@ -1513,4 +1513,29 @@ expublic void ndrx_growlist_free(ndrx_growlist_t *list)
     NDRX_FREE(list->mem);
 }
 
+/**
+ * Return chunks of split string
+ * @param s1 last string ptr to on which strsep was executed
+ * @param s2 chars by which to split
+ * @return NULL if not found, or ptr to first split string
+ */
+expublic char *ndrx_strsep(char **s1, char *s2)
+{
+    char *p1 = *s1;
+
+    if (p1 != NULL) 
+    {
+        *s1 = strpbrk(p1, s2);
+        if (*s1 != NULL)
+        {
+            *(*s1) = '\0';
+            
+            /* move to next position */
+            *(*s1)++;
+        }
+    }
+    
+    return p1;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
