@@ -300,7 +300,7 @@ extern "C" {
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGROUPMAX,\
                     TPCALLCACHE->keygroupmax);\
     NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_KEYGROUPMREJ,\
-                    TPCALLCACHE->keygroupmrej);\
+                    TPCALLCACHE->keygroupmrej?TPCALLCACHE->keygroupmrej:"");\
     NDRX_LOG(LEV, "keygroupmrej_abuf=[%p]", TPCALLCACHE->keygroupmrej_abuf);\
     NDRX_LOG(LEV, "%s=[%d]", NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO,\
                     TPCALLCACHE->keygroupmtperrno);\
@@ -527,26 +527,26 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
  */
 struct ndrx_tpcache_data
 {
-    int magic;          /* Magic bytes                      */
+    int magic;          /**< Magic bytes                      */
     char svcnm[MAXTIDENT+1]; /* Service name of data        */
-    int cache_idx;      /* this is cache index of adder     */
+    int cache_idx;      /**< this is cache index of adder     */
     int saved_tperrno;
     long saved_tpurcode;
-    long t;             /* UTC timestamp of message         */
-    long tusec;         /* UTC microseconds                 */
+    long t;             /**< UTC timestamp of message         */
+    long tusec;         /**< UTC microseconds                 */
     
-    /* time when we picked up the record */
-    long hit_t;         /* UTC timestamp of message         */
-    long hit_tusec;     /* UTC microseconds                 */
-    long hits;          /* Number of cache hits             */
-    long flags;         /* cache flags                      */
+    /** time when we picked up the record */
+    long hit_t;         /**< UTC timestamp of message         */
+    long hit_tusec;     /**< UTC microseconds                 */
+    long hits;          /**< Number of cache hits             */
+    long flags;         /**< cache flags                      */
     
-    short nodeid;       /* Node id who put the msg          */
-    short atmi_type_id; /* ATMI type id                     */
+    short nodeid;       /**< Node id who put the msg          */
+    short atmi_type_id; /**< ATMI type id                     */
     
     /* Payload data */
-    long atmi_buf_len;  /* saved buffer len                 */
-    char atmi_buf[0];   /* the data follows                 */
+    long atmi_buf_len;  /**< saved buffer len                 */
+    char atmi_buf[0];   /**< the data follows                 */
 };
 typedef struct ndrx_tpcache_data ndrx_tpcache_data_t;
 
