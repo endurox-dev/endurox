@@ -415,3 +415,7 @@ Linux only). Default on Macos.
 Note that *proc* must be in path and ORACLE_HOME must be set. Also Oracle DB 
 libraries must be present in LD_LIBRARY_PATH (or equivalent environment for 
 target OS).
+
+- To force memory alignment usage, use '-DDEFINE_ALIGNMENT_FORCE=1', by default
+on for SPARC cpus.
+
