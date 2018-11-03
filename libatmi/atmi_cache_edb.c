@@ -50,6 +50,32 @@
 #include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#define DATA_ALIGN_DEF\
+    ndrx_tpcache_data_t *aligndata;\
+    int alignmiss;\
+    char *tmp__;\
+    int err__;\
+
+#define DATA_ALIGN_DO\
+    aligndata = (ndrx_tpcache_data_t *)data_out->mv_data;\
+    alignmiss = (&(aligndata->magic) - (int *)NULL) % EX_ALIGNMENT_BYTES;\
+    *align = alignmiss;\
+    /* shift bytes: */\
+    if (alignmiss > 0)\
+    {\
+        if (NULL==(tmp__ = NDRX_MALLOC(data_out->mv_size)))\
+        {\
+            *align=0;\
+            NDRX_LOG(log_error, "Failed malloc %d bytes: %s", data_out->mv_size, strerror(err__));\
+            userlog("Failed malloc %d bytes: %s", data_out->mv_size, strerror(err__));\
+            ret=err__;\
+            goto out;\
+        }\
+        memcpy(tmp__, data_out->mv_data, data_out->mv_size);\
+        data_out->mv_data = tmp__;\
+    }\
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -185,10 +211,11 @@ out:
  * @return EXSUCCEED/edb error
  */
 expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data_out, int seterror_not_found)
+        char *key, EDB_val *data_out, int seterror_not_found, int *align)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
+    DATA_ALIGN_DEF;
     
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
@@ -214,7 +241,11 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
                     db->cachedb, key, edb_strerror(ret));
             }
         }
+        goto out;
     }
+    
+    /* prepare the data with aligned option... */
+    DATA_ALIGN_DO;
     
 out:
     return ret;
@@ -227,14 +258,17 @@ out:
  * @param key
  * @param data_out
  * @param op
- * @return 
+ * @param align data offset in structure
+ * @return
  */
 expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
-        char *key, EDB_val *data_out, EDB_cursor_op op)
+        char *key, EDB_val *data_out, EDB_cursor_op op, int *align)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
     
+    DATA_ALIGN_DEF;
+            
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
             
@@ -251,7 +285,11 @@ expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * curso
             NDRX_LOG(log_debug, "EOF [%s] for key [%s]: %s", 
                 db->cachedb, key, edb_strerror(ret));
         }
+        goto out;
     }
+    
+    /* prepare the data with aligned option... */
+    DATA_ALIGN_DO;
     
 out:
     return ret;
@@ -264,13 +302,16 @@ out:
  * @param key get by real key
  * @param data_out
  * @param op
+ * @param align number of bytes to offset from start positions to the left
+ *  so that data start on algined address
  * @return 
  */
 expublic int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
-        EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op)
+        EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op, int *align)
 {
     int ret = EXSUCCEED;
-            
+    DATA_ALIGN_DEF;
+    
     if (EXSUCCEED!=(ret=edb_cursor_get(cursor, keydb, data_out, op)))
     {
         if (ret!=EDB_NOTFOUND)
@@ -284,8 +325,10 @@ expublic int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, EDB_cursor 
             NDRX_LOG(log_debug, "%s: EOF [%s]: %s", 
                 __func__, db->cachedb, edb_strerror(ret));
         }
+        goto out;
     }
-    
+    /* prepare the data with aligned option... */
+    DATA_ALIGN_DO;
 out:
     return ret;
 }

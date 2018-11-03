@@ -761,8 +761,12 @@ expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
     
     entry = (ndrx_ubfdb_entry_t *)data.mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    /* for sparc aligned access we might want to use memcpy... */
+    memcpy(&ret, &(entry->bfldid), sizeof(ret));
+#else
     ret = entry->bfldid;
-    
+#endif
     
     UBF_LOG(log_debug, "%s: name [%s] resolved to field id %d", __func__, 
             fldname, ret);
