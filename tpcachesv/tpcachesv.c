@@ -113,7 +113,7 @@ void CACHEEV (TPSVCINFO *p_svc)
     
     NDRX_LOG(log_info, "Received event op: [%s]", extradata);
     
-    if (NULL==(op = strsep(&extradata, "/")))
+    if (NULL==(op = ndrx_strsep(&extradata, "/")))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'operation'", 
                 last_call->extradata);
@@ -158,14 +158,14 @@ void CACHEEV (TPSVCINFO *p_svc)
     
     /* strtok cannot handle empty fields! it goes to next and we get here 
      * service name as flags... thus use strsep() */
-    if (NULL==(flags = strsep(&extradata, "/")))
+    if (NULL==(flags = ndrx_strsep(&extradata, "/")))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get 'flags'",
                 last_call->extradata);
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(svcnm = strsep(&extradata, "/")))
+    if (NULL==(svcnm = ndrx_strsep(&extradata, "/")))
     {
         NDRX_LOG(log_error, "Invalid event [%s] received - failed to get "
                 "'service name' for cache op", last_call->extradata);
