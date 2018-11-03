@@ -51,6 +51,8 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
+#ifdef EX_ALIGNMENT_FORCE
+
 #define DATA_ALIGN_DEF\
     ndrx_tpcache_data_t *aligndata;\
     int alignmiss;\
@@ -75,6 +77,13 @@
         memcpy(tmp__, data_out->mv_data, data_out->mv_size);\
         data_out->mv_data = tmp__;\
     }
+#else
+
+#define DATA_ALIGN_DEF
+
+#define DATA_ALIGN_DO *align = 0;
+
+#endif
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -217,6 +226,9 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
     EDB_val keydb;
     DATA_ALIGN_DEF;
     
+    /* TODO: Might want to think about aligned key sizes.... in some future
+     * for making less data copies for aligned cpus only...
+     */
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
             

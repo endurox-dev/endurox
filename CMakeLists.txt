@@ -60,9 +60,9 @@ OPTION(DEFINE_FORCEKQUEUE "Force Kqueue (BSD poll framework)" OFF)
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
 OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 OPTION(DEFINE_SYSVQ "Force System V Message Queue" OFF)
+OPTION(DEFINE_ALIGNMENT_FORCE "Force alignment" OFF)
 
-
-SET (EX_ALIGNMENT_BYTES "8")
+SET (EX_ALIGNMENT_BYTES "4")
 
 SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
 
@@ -144,11 +144,6 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
     set(EX_OS_SUNOS "1")
     set(EX_USE_SYSVQ "1")
 
-    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
-        set(EX_ALIGNMENT_BYTES "8")
-        set(EX_ALIGNMENT_FORCE "1")
-    ENDIF ()
-
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 	# Bug #219 !!! _REENTRANT makes errno thread safe
 	SET(CMAKE_C_FLAGS "-D_REENTRANT")
@@ -190,6 +185,14 @@ else()
 	message( FATAL_ERROR "Unsupported OS" )
 endif()
 
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
+    set(EX_ALIGNMENT_BYTES "8")
+    set(EX_ALIGNMENT_FORCE "1")
+ENDIF ()
+
+IF (DEFINE_ALIGNMENT_FORCE)
+    set(EX_ALIGNMENT_FORCE "1")
+ENDIF()
 
 IF(EX_USE_SYSVQ)
     set(EX_POLLER_STR   "SystemV")
@@ -207,6 +210,7 @@ ENDIF()
 
 message("CMake EX_ALIGNMENT_BYTES  = ${EX_ALIGNMENT_BYTES}")
 message("Poller  = ${EX_POLLER_STR}")
+message("ALIGNMENT_FORCE  = ${EX_ALIGNMENT_FORCE}")
 
 ################################################################################
 # "Configure"
