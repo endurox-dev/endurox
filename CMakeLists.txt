@@ -141,9 +141,9 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
     set(EX_OS_HPUX "1")
     set(NDRX_LD_LIBRARY_PATH "SHLIB_PATH")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
+    set(EX_CPM_NO_THREADS "1")
     set(EX_OS_SUNOS "1")
     set(EX_USE_SYSVQ "1")
-    set(EX_CPM_NO_THREADS "1")
 
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 	# Bug #219 !!! _REENTRANT makes errno thread safe
