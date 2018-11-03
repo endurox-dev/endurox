@@ -55,11 +55,11 @@
     ndrx_tpcache_data_t *aligndata;\
     int alignmiss;\
     char *tmp__;\
-    int err__;\
+    int err__;
 
 #define DATA_ALIGN_DO\
     aligndata = (ndrx_tpcache_data_t *)data_out->mv_data;\
-    alignmiss = (&(aligndata->magic) - (int *)NULL) % EX_ALIGNMENT_BYTES;\
+    alignmiss = ((unsigned long)((char *)&(aligndata->magic))) % EX_ALIGNMENT_BYTES;\
     *align = alignmiss;\
     /* shift bytes: */\
     if (alignmiss > 0)\
@@ -74,7 +74,7 @@
         }\
         memcpy(tmp__, data_out->mv_data, data_out->mv_size);\
         data_out->mv_data = tmp__;\
-    }\
+    }
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
