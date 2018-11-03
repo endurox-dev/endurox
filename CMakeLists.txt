@@ -143,6 +143,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
     set(EX_OS_SUNOS "1")
     set(EX_USE_SYSVQ "1")
+    set(EX_CPM_NO_THREADS "1")
 
     IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
         set(EX_ALIGNMENT_BYTES "8")
