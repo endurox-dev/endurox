@@ -203,7 +203,7 @@ extern "C" {
  * Dump the cache database configuration
  */
 #define NDRX_TPCACHEDB_DUMPCFG(LEV, CACHEDB)\
-    NDRX_LOG(LEV, "============ CACHE DB CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "------------ CACHE DB CONFIG DUMP ---------------");\
     NDRX_LOG(LEV, "%s full name=[%s]", NDRX_TPCACHE_KWD_CACHEDB, CACHEDB->cachedb);\
     NDRX_LOG(LEV, "cachedbnam logical name=[%s]", CACHEDB->cachedbnam);\
     NDRX_LOG(LEV, "cachedbphy physical name=[%s]", CACHEDB->cachedbphy);\
@@ -244,14 +244,14 @@ extern "C" {
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_MAP_SIZE, CACHEDB->map_size);\
     NDRX_LOG(LEV, "%s=[%o]", NDRX_TPCACHE_KWD_PERMS, CACHEDB->perms);\
     NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWD_SUBSCR, CACHEDB->subscr);\
-    NDRX_LOG(LEV, "=================================================");
+    NDRX_LOG(LEV, "-------------------------------------------------");
 
     
 /**
  * Dump tpcall configuration
  */
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
-    NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "------------ TPCALL CACHE CONFIG DUMP ---------------");\
     NDRX_LOG(LEV, "cache ptr=[%p]", TPCALLCACHE);\
     NDRX_LOG(LEV, "%s name full =[%s]", NDRX_TPCACHE_KWC_CACHEDB,\
                 TPCALLCACHE->cachedb);\
@@ -306,16 +306,16 @@ extern "C" {
                     TPCALLCACHE->keygroupmtperrno);\
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE,\
                     TPCALLCACHE->keygroupmtpurcode);\
-    NDRX_LOG(LEV, "=================================================");
+    NDRX_LOG(LEV, "-------------------------------------------------");
 
 
 #define NDRX_TPCACHETPCALL_DBDATA(LEV, DBDATA)\
-    NDRX_LOG(LEV, "================== DB DATA DUMP =================");\
+    NDRX_LOG(LEV, "------------------ DB DATA DUMP -----------------");\
     NDRX_LOG(LEV, "saved_tperrno = [%d]", DBDATA->saved_tperrno);\
     NDRX_LOG(LEV, "saved_tpurcode = [%ld]", DBDATA->saved_tpurcode);\
     NDRX_LOG(LEV, "atmi_buf_len = [%ld]", DBDATA->saved_tpurcode);\
     NDRX_DUMP(LEV, "BLOB data", DBDATA->atmi_buf, DBDATA->atmi_buf_len);\
-    NDRX_LOG(LEV, "=================================================");
+    NDRX_LOG(LEV, "-------------------------------------------------");
     
 
 #define NDRX_CACHE_TPERROR(atmierr, fmt, ...)\
@@ -386,6 +386,13 @@ if (cachedata_->mv_size < sizeof(ndrx_tpcache_data_t))\
             }\
             EXFAIL_OUT(ret);\
         }
+    
+/**
+ * Number of bytes to move around in c struct
+ */
+#define NDRX_TPCACHE_ALISZ (EXOFFSET(ndrx_tpcache_data_t,atmi_buf) - \
+        EXOFFSET(ndrx_tpcache_data_t,magic))
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -527,6 +534,7 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
  */
 struct ndrx_tpcache_data
 {
+    /* ...align from magic (including) */
     int magic;          /**< Magic bytes                      */
     char svcnm[MAXTIDENT+1]; /* Service name of data        */
     int cache_idx;      /**< this is cache index of adder     */
@@ -534,7 +542,7 @@ struct ndrx_tpcache_data
     long saved_tpurcode;
     long t;             /**< UTC timestamp of message         */
     long tusec;         /**< UTC microseconds                 */
-    
+    int nrshift;        /**< number of byte shifted for alignment */
     /** time when we picked up the record */
     long hit_t;         /**< UTC timestamp of message         */
     long hit_tusec;     /**< UTC microseconds                 */
@@ -544,12 +552,11 @@ struct ndrx_tpcache_data
     short nodeid;       /**< Node id who put the msg          */
     short atmi_type_id; /**< ATMI type id                     */
     
-    /* Payload data */
+    /* ...till Payload data (including) */
     long atmi_buf_len;  /**< saved buffer len                 */
     char atmi_buf[0];   /**< the data follows                 */
 };
 typedef struct ndrx_tpcache_data ndrx_tpcache_data_t;
-
 
 struct ndrx_tpcache_datasort
 {
@@ -650,7 +657,7 @@ extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall_byidx(char *svcnm, int
 extern NDRX_API int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b);
 
 extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data_out, int seterror_not_found);
+        char *key, EDB_val *data_out, int seterror_not_found, int *align);
 extern NDRX_API int ndrx_cache_edb_abort(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn,
@@ -671,10 +678,11 @@ extern NDRX_API int ndrx_cache_edb_stat (ndrx_tpcache_db_t *db, EDB_txn *txn,
 extern NDRX_API  int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *txn, 
             EDB_cursor ** cursor);
 extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
-        char *key, EDB_val *data_out, EDB_cursor_op op);
+        char *key, EDB_val *data_out, EDB_cursor_op op, int *align);
 
 extern NDRX_API int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, 
-        EDB_cursor * cursor, EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op);
+        EDB_cursor * cursor, EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op,
+        int *align);
 
 extern NDRX_API int ndrx_cache_edb_delfullkey (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         EDB_val *keydb, EDB_val *data);
