@@ -419,3 +419,5 @@ target OS).
 - To force memory alignment usage, use '-DDEFINE_ALIGNMENT_FORCE=1', by default
 on for SPARC cpus.
 
+- To enable address sanitizer for GCC/Clang on supported hardware platforms,
+use '-DDEFINE_SANITIZE=1'
