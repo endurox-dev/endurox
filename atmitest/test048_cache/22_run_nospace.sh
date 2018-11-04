@@ -124,6 +124,7 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
+echo "Ensure that there is one rec in db..."
 ensure_keys db22 1
 
 echo "The one gots saved..."
