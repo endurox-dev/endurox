@@ -1130,7 +1130,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
     snprintf(linematchstr, sizeof(linematchstr), "^0x[0-9a-fA-F]+\\s*[0-9]+\\s*%s\\s",
             ndrx_sys_get_cur_username());
 #else
-    snprintf(linematchstr, sizeof(linematchstr), "^.[ \\t\\r\\n\\v\\f]+[0-9]+[ \\t\\r\\n\\v\\f]+0x[0-9a-fA-F]+[ \\t\\r\\n\\v\\f]+.{11}[ \\t\\r\\n\\v\\f]+%s[ \\t\\r\\n\\v\\f]",
+    snprintf(linematchstr, sizeof(linematchstr), "^.[ \\t\\r\\n\\v\\f]+[0-9]+[ \\t\\r\\n\\v\\f]+0[x0-9a-fA-F]*[ \\t\\r\\n\\v\\f]+.{11}[ \\t\\r\\n\\v\\f]+%s[ \\t\\r\\n\\v\\f]",
             ndrx_sys_get_cur_username());
 #endif
     
