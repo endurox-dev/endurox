@@ -742,7 +742,10 @@ exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn,
     }
     
     /* Check the record validity */
-    defer_free = cachedata.mv_data;
+    if (align)
+    {
+        defer_free = cachedata.mv_data;
+    }
     exdata = (ndrx_tpcache_data_t *)((char *)cachedata.mv_data);
     NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPESYSTEM);
     
