@@ -399,7 +399,10 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     else
     {
         /* Check the record validity */
-        defer_free = cachedata.mv_data;
+        if (align)
+        {
+            defer_free = cachedata.mv_data;
+        }
         exdata = (ndrx_tpcache_data_t *)((char *)cachedata.mv_data);
         NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, kg_ptr, TPESYSTEM);
 
