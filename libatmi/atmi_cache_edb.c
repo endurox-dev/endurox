@@ -109,6 +109,7 @@
         }\
         strcpy(keyalign, key);\
         keydb.mv_data = keyalign;\
+        keydb.mv_size = keyallocsz;\
     }
 
 #define KEY_ALIGN_FREE\
