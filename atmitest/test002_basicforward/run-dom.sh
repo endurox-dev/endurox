@@ -163,6 +163,8 @@ set_dom1;
 
 # Run the client test...
 echo "Starting to issue requests..."
+xadmin psc
+xadmin psvc
 
 #time (valgrind --leak-check=full ./atmiclt2 $@ 2>&1) > ./atmiclt-dom1.log
 time (./atmiclt2 $@ 2>&1) > ./atmiclt-dom1.log
