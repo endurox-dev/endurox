@@ -1,5 +1,9 @@
 /**
  * @brief ATMI level cache, EDB access
+ *  NOTE! To have aligned data access LMDB key and data must be aligned size.
+ *  For some very long keys (how long?), the rule could change. In case of
+ *  UBF buffers, data is also aligned. If adding new buffer types, probably
+ *  we will need to align the data size too (for strings, carrays..)
  *
  * @file atmi_cache_edb.c
  */
