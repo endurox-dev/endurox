@@ -1531,7 +1531,7 @@ expublic char *ndrx_strsep(char **s1, char *s2)
             *(*s1) = '\0';
             
             /* move to next position */
-            *(*s1)++;
+            (*s1)++;
         }
     }
     
