@@ -429,7 +429,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
  * only for epoll/fdpoll/kqueue(). For poll we do recursive call for service selection 
  * System V mode uses the same approach as for 
  */
-#if defined(EX_USE_EPOLL) || defined(EX_USE_FDPOLL)
+#if defined(EX_USE_EPOLL) || defined(EX_USE_FDPOLL) || defined(EX_USE_KQUEUE)
             sprintf(send_q, NDRX_SVC_QBRDIGE, 
                     G_atmi_tls->G_atmi_conf.q_prefix, chosen_node);
 #endif
