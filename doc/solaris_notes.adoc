@@ -15,13 +15,7 @@ on Solaris 11 on x86 machine. Compiler used to Enduro/X is GCC.
 This manual includes basic installation of Enduro/X which does not include building of
 documentation and does not use GPG-ME encryption for bridges.
 
-For Solaris Posix queues actually are virtual files in /tmp directory with '.MQD' prefix.
-Enduro/X for queue management uses these files.
-
-
-For production releases emulated message queue is selected (-DDEFINE_FORCEEMQ=ON). This is
-due to fact that Posix queues build in Solaris are unstable on provides weird behaviour
-(like getting queue attributes causes program to freeze (wait some lock on q?), etc.).
+Enduro/X on Solaris platform is Using System V message queues.
 
 == Installation process
 
@@ -175,7 +169,7 @@ export PATH=$PATH:$HOME/projects/endurox/dist/bin
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
 export PATH=$PATH:/opt/csw/bin:$HOME/endurox/dist/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib64:/opt/csw/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib64:/opt/csw/lib/64
 # Solaris message queues live in tmp:
 export NDRX_QPATH=/tmp
 
@@ -190,20 +184,25 @@ It is assumed that gcc is default compiler on the system (i.e. Oracle Studio not
 thus following cmake will pick up gcc by default:
 
 === Solaris 11
+
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc\
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_FORCEEMQ=ON .
+-DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
 
 === Solaris 10
 
+Also note that CC variable needs to be exported as it is used by 
+buildclient script for view test cases.
+
 ---------------------------------------------------------------------
+$ export CC=gcc
 $ cd /export/home/user1/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc \
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_FORCEEMQ=ON .
+-DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -217,17 +216,34 @@ The compilation will be done in 64bit mode
 
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
-$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON .
 ---------------------------------------------------------------------
 
-=== Solaris 10
+=== Solaris 10 (NOT SUPPORTED)
 This assumes that GCC is installed, and "ar" from gcc will be used.
 
 ---------------------------------------------------------------------
 $ cd /export/home/user1/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar \
--DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON  -DDEFINE_FORCEEMQ=ON .
+-DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON .
 ---------------------------------------------------------------------
+
+The support is not available for Solaris Studio on Solaris 10 due
+to Thread Local Storage errors like during the linking:
+
+---------------------------------------------------------------------
+ld: fatal: relocation error: R_SPARC_TLS_LDO_LOX10: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.first: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_ADD: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.first: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_HIX22: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.ostid: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_LOX10: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.ostid: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_ADD: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.ostid: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_HIX22: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.ostid: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_LOX10: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.ostid: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+ld: fatal: relocation error: R_SPARC_TLS_LDO_ADD: file CMakeFiles/nstd.dir/ndebug.c.o: symbol $XBaBAqASPv3bHaz.__ndrx_debug__.ostid: bound to: CMakeFiles/nstd.dir/ndebug.c.o: relocation illegal when not bound to object being created
+---------------------------------------------------------------------
+
+Thus at this time only GCC is supported for Solaris 10.
+
 
 == Building the code
 
