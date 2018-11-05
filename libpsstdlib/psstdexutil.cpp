@@ -45,7 +45,7 @@
 #include <errno.h>
 
 
-extern const char ndrx_G_resource_WizardBase[];
+extern "C" const char ndrx_G_resource_WizardBase[];
 
 //Read the line from terminal
 //@return line read string
