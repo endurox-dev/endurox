@@ -883,7 +883,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         
         /* syncfd = EXFALSE; */
         
-        NDRX_LOG(log_debug, "poll() ret = %d pid = %d", retpoll, (int)getpid());
+        NDRX_LOG(log_debug, "poll() ret = %d", retpoll);
         if (EXFAIL==retpoll)
         {
             err = errno;
@@ -948,8 +948,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         EXFAIL_OUT(ret);
                     }
                     
-                    NDRX_LOG(log_debug, "Got command: %d %p pid=%d flags=%d", 
-                            cmd.cmd, cmd.mqd, (int)getpid(), cmd.flags);
+                    NDRX_LOG(log_debug, "Got command: %d %p flags=%d", 
+                            cmd.cmd, cmd.mqd, cmd.flags);
                     
                     /* next time monitor file descriptors too */
                     if (NDRX_SVQ_MONF_SYNCFD & cmd.flags)
