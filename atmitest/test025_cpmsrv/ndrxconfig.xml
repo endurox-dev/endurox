@@ -51,6 +51,8 @@
 		<!-- Interval, in seconds, by which signal sequence -2, -15, -25, -25.... will be sent
 		to process until it have been terminated. -->
 		<killtime>20</killtime>
+                <!-- num of seconds to wait for server stop feedback -->
+                <srvstopwait>100</srvstopwait>
 	</defaults>
 	<servers>
             <server name="cpmsrv">
