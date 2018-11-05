@@ -52,7 +52,7 @@
 		to process until it have been terminated. -->
 		<killtime>20</killtime>
                 <!-- num of seconds to wait for server stop feedback -->
-                <srvstopwait>100</srvstopwait>
+                <srvstopwait>200</srvstopwait>
 	</defaults>
 	<servers>
             <server name="cpmsrv">
