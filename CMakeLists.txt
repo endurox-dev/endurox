@@ -163,7 +163,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
 
         # Bug #219 !!! _REENTRANT makes errno thread safe
         # For GNU I guess 
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default -xthreadvar=dynamic -mt -Kpic -errtags -fast -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -errtags -fast -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_MBR_DECLARATION -erroff=E_NO_IMPLICIT_DECL_ALLOWED")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
