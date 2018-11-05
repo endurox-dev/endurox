@@ -155,6 +155,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     MUTEX_LOCK_V(net->sendlock);
     do
     {
+        err = 0;
         NDRX_LOG(log_debug, "Sending, len: %d, total msg: %d", 
                 size_to_send-sent, size_to_send);
         
