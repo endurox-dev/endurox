@@ -828,8 +828,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     if (EXSUCCEED!=sigfillset(&set))
     {
         err = errno;
-        NDRX_LOG(log_error, "Failed to fill signal array: %s", tpstrerror(err));
-        userlog("Failed to fill signal array: %s", tpstrerror(err));
+        NDRX_LOG(log_error, "Failed to fill signal array: %s", strerror(err));
+        userlog("Failed to fill signal array: %s", strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -837,9 +837,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     {
         err = errno;
         NDRX_LOG(log_error, "Failed to delete signal %d: %s", 
-                NDRX_SVQ_SIG, tpstrerror(err));
+                NDRX_SVQ_SIG, strerror(err));
         userlog("Failed to delete signal %d: %s", 
-                NDRX_SVQ_SIG, tpstrerror(err));
+                NDRX_SVQ_SIG, strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -847,9 +847,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     {
         err = errno;
         NDRX_LOG(log_error, "Failed to block all signals but %d for even thread: %s", 
-                NDRX_SVQ_SIG, tpstrerror(err));
+                NDRX_SVQ_SIG, strerror(err));
         userlog("Failed to block all signals but %d for even thread: %s", 
-                NDRX_SVQ_SIG, tpstrerror(err));
+                NDRX_SVQ_SIG, strerror(err));
         EXFAIL_OUT(ret);
     }
     
