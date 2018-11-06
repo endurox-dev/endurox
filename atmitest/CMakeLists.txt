@@ -108,6 +108,8 @@ IF (DEFINED EX_USE_SYSVQ)
 	add_subdirectory (test058_systemv)
 ENDIF()
 
+add_subdirectory (test059_pq)
+
 ################################################################################
 # Master test case driver
 add_executable (atmiunit1 atmiunit1.c)
