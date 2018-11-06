@@ -227,6 +227,7 @@ expublic int start_daemon_idle(void)
          */
         /*Bug #176 close resources */
         NDRX_LOG(log_debug, "forked close ndrxd_q %p", (void *)(long)G_config.ndrxd_q);
+
         if (G_config.ndrxd_q != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.ndrxd_q);
 
@@ -236,6 +237,7 @@ expublic int start_daemon_idle(void)
         /* WELL!!! Seems parent gets this close!!! */
         if (G_config.reply_queue != (mqd_t)EXFAIL)
             ndrx_mq_close(G_config.reply_queue);
+
         /* this is child - start EnduroX back-end*/
         snprintf(key, sizeof(key), NDRX_KEY_FMT, ndrx_get_G_atmi_env()->rnd_key);
         char *cmd[] = { "ndrxd", key, (char *)0 };
@@ -269,6 +271,10 @@ expublic int start_daemon_idle(void)
             }
         }
 
+        /* Set new file permissions */
+        umask(0);
+        /* Deatch from terminal */
+        setsid();
 
         if (EXSUCCEED != execvp ("ndrxd", cmd))
         {
