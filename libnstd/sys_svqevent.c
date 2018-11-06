@@ -1416,7 +1416,8 @@ expublic int ndrx_svq_event_init(void)
         }
     
         if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
-                event_fork_resume, event_fork_resume)))
+                /* no need for child resume! */
+                event_fork_resume, NULL)))
         {
             M_alive=EXFALSE;
             NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
@@ -1424,7 +1425,7 @@ expublic int ndrx_svq_event_init(void)
             EXFAIL_OUT(ret);
         }
         /* after xadmin un-inits we might get some extra threads...
-         * due to mulitple calls... */
+         * due to multiple calls... */
         first = EXFALSE;
     }
 

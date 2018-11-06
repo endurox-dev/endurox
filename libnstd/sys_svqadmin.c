@@ -119,7 +119,7 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     
     /* register fork handlers... */
     if (EXSUCCEED!=(ret=ndrx_atfork(admin_fork_prepare, 
-            admin_fork_resume, admin_fork_resume)))
+            admin_fork_resume, NULL)))
     {
         NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
         userlog("Failed to register fork handlers: %s", strerror(ret));
