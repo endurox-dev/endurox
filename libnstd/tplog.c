@@ -115,11 +115,9 @@ exprivate void logfile_close(FILE *p)
  */
 expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
 {
-    
-    ndrx_debug_t *logger[] = {&tls->threadlog_ndrx, &tls->threadlog_ubf, 
+    ndrx_debug_t *logger[8] = {&tls->threadlog_ndrx, &tls->threadlog_ubf, 
         &tls->threadlog_tp, &tls->requestlog_ndrx, &tls->requestlog_ubf, 
         &tls->requestlog_tp, NULL};
-    
     int i=0;
     
     while (NULL!=logger[i])
