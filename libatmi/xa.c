@@ -152,11 +152,12 @@ expublic int atmi_xa_init(void)
         handle = dlopen (G_atmi_env.xa_driverlib, RTLD_NOW);
         if (!handle)
         {
+            error = dlerror();
             NDRX_LOG(log_error, "Failed to load XA lib [%s]: %s", 
-                    G_atmi_env.xa_driverlib, dlerror());
+                    G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
             
             ndrx_TPset_error_fmt(TPEOS, "Failed to load XA lib [%s]: %s", 
-                    G_atmi_env.xa_driverlib, dlerror());
+                    G_atmi_env, error?error:"no dlerror provided");
             EXFAIL_OUT(ret);
         }
 
@@ -165,10 +166,10 @@ expublic int atmi_xa_init(void)
         if ((error = dlerror()) != NULL) 
         {
             NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch': %s", 
-                G_atmi_env.xa_driverlib, dlerror());
+                G_atmi_env.xa_driverlib, error);
 
             ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch': %s", 
-                G_atmi_env.xa_driverlib, dlerror());
+                G_atmi_env.xa_driverlib, error);
             EXFAIL_OUT(ret);
         }
 
