@@ -373,7 +373,7 @@ add_subdirectory (atmitest) #  ATMI testing
 IF(DEFINE_DISABLEDOC)
         message("Documentation disabled - not building")
 ELSE (DEFINE_DISABLEDOC)
-        add_subdirectory (doc) #  Documentation project.
+#        add_subdirectory (doc) #  Documentation project.
 ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
