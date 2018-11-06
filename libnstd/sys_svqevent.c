@@ -1667,6 +1667,8 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     /* Check the events matching the current time stamp, ignore
      * events sent not four our stamp
+     * TODO: Test slow shutdown...! I.e. server process is busy doing something
+     * and we enqueue a shutdown, will it actually shutdown?
      */
     while (NULL!=mqd->eventq &&
             NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
