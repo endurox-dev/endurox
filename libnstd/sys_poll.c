@@ -207,7 +207,11 @@ exprivate void slipSigHandler (int sig)
  */
 expublic char * ndrx_epoll_mode(void)
 {
+#ifdef EX_USE_EMQ
+    static char *mode = "emq";
+#else
     static char *mode = "poll";
+#endif
     
     return mode;
 }
