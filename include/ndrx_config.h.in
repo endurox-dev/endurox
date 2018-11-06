@@ -102,7 +102,9 @@
 #define NDRX_LD_LIBRARY_PATH "@NDRX_LD_LIBRARY_PATH@"
 
 /* PThread mode for Solaris */
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS
+#endif
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 
