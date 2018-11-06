@@ -68,6 +68,14 @@ static PSInteger _exutil_getosname(HPSCRIPTVM v)
     return 1;
 }
 
+//Return the compiled operating system name
+static PSInteger _exutil_getpoller(HPSCRIPTVM v)
+{
+    ps_pushstring(v,EX_POLLER_STR,-1);
+    
+    return 1;
+}
+
 //Return wizard base script
 static PSInteger _exutil_getwizardbase(HPSCRIPTVM v)
 {
@@ -187,6 +195,7 @@ static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
         _DECL_FUNC(getcwd,1,_SC(".s")),
         _DECL_FUNC(getosname,1,_SC(".s")),
+        _DECL_FUNC(getpoller,1,_SC(".s")),
         _DECL_FUNC(getwizardbase,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),
