@@ -8,29 +8,76 @@ v1.0, 2012-12:
 == How to configure Enduro/X
 To configure Enduro/X you have to finish several steps.
 
-- Have a seperate system user for each Enduro/X instance.
+- Have a separate system user for each Enduro/X instance.
+
 - Setup System Environment (mount mq file system, configure mq params)
+
 - Setup environment configuration
+
 - Setup 'ndrxdconfig.xml'
+
 - Setup 'ndrxdebug.conf'
+
 - Startup the application
 
 
 == Setup System Environment
 
-System environments setup includes the configurations of user and resource limits.
-This includes number of open files for user and queue attributes. For Linux systems
-Enduro/X offer two official message transport mechanisms:
+Enduro/X supports different back-end message transports. Following mechanisms
+are available:
 
-1. Posix queues
+- EPOLL (for FreeBSD it is Kqueue) over the Posix queues. This is fastest and
+most preferred transport mechanism when available. True on queue multiple
+servers mechanism is supported for different services across different XATMI
+server binaries (transport code "epoll" for GNU/Linux and "kqueue" for FreeBSD).
 
-2. SystemV queues.
+-  System V message queues, this is generally second best transport available
+on Linux and Unix operating systems. One queue multiple servers mechanism is
+available via Request Address option (rqaddr) for XATMI server. The limitation is that
+each server running on same request address *MUST* provide all services provided
+by other servers in same Request Address. This mechanism uses at-least one 
+additional thread per XATMI participant for handling message send/receive time-outs.
+In case if XATMI server, additional more thread is used for administrative message
+handling and dispatching to main server thread. Thus compiler must support
+the multi-threaded operations for user applications (transport code "SystemV").
 
-For FreeBSD Posix queues with kqueue dispatching are used. For other OSes SystemV
-queues are used.
+- The third option if POLL over the Posix queues. This uses round-robin approach
+for message delivery to load balanced servers. One additional thread is used
+for server process to monitor queues (transport code "poll").
 
-== MAC setup
+- The forth option is emulated message queue which uses shared memory and process
+shared Posix locks to emulate the mssage queue (transport code "emq").
 
+.Enduro/X IPC transport sub-systems
+[width="80%",cols="^2,^2,^2,^2,^2,^2",options="header"]
+|=========================================================
+|Operating System/IPC Transport|epoll |kqueue |systemv |poll |emq 
+|GNU/Linux|R |X |R |S |S 
+|FreeBSD|X |R |S |S |S 
+|IBM AIX|X |X |R |S |S 
+|Oracle Solaris|X |X |R |S |S
+|MacOS|X |X |X |X |R 
+|=========================================================
+
+Legend:
+
+'S' - supported.
+
+'R' - supported and release provided.
+
+'X' - not supported.
+
+Each of these IPC transports for particular operating system requires specific
+approach for configuring the limits and other attributes for runtime.
+
+Note that transport version is built into Enduro/X distribution. Thus to change
+the IPC transport, different Enduro/X version must be installed (i.e. cannot
+be changed by parameters). As the ABI for user apps stays the same, the user
+application is not required to be rebuilt.
+
+=== Release file format
+
+The release file for Enduro/X encodes different information
 
 == Linux setup
 
