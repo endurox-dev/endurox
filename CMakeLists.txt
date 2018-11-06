@@ -70,7 +70,7 @@ SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flag
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
 #    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
-    SET(CMAKE_C_FLAGS "-Wformat-overflow=0 ${CMAKE_C_FLAGS}")
+    SET(CMAKE_C_FLAGS "-Wno-stringop-overflow -Wno-format-truncation -Wformat-overflow=0 ${CMAKE_C_FLAGS}")
 endif()
 
 # Enable release only if specified.
@@ -370,11 +370,11 @@ add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (enctools) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing
 
-#IF(DEFINE_DISABLEDOC)
-#        message("Documentation disabled - not building")
-#ELSE (DEFINE_DISABLEDOC)
-#        add_subdirectory (doc) #  Documentation project.
-#ENDIF (DEFINE_DISABLEDOC)
+IF(DEFINE_DISABLEDOC)
+        message("Documentation disabled - not building")
+ELSE (DEFINE_DISABLEDOC)
+        add_subdirectory (doc) #  Documentation project.
+ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
