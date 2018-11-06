@@ -1,7 +1,7 @@
 /**
- * @brief Request for unadvertise
+ * @brief Test print queue ops - server
  *
- * @file cmd_unadv.c
+ * @file atmisv59.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,21 +30,17 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <sys/param.h>
-
-#include <ndrstandard.h>
 #include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include "test59.h"
 
-#include <ndrx.h>
-#include <ndrxdcmn.h>
-#include <atmi_int.h>
-#include <gencall.h>
-
-#include "nclopt.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -54,53 +50,75 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Request for service un-advertise
- * @param p_cmd_map
- * @param argc
- * @param argv
- * @return SUCCEED
+ * Standard service entry
  */
-expublic int cmd_unadv(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+void TESTSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
-    command_dynadvertise_t call;
-    short srvid=EXFAIL;
-    char svcnm[MAXTIDENT+1]={EXEOS};
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
     
-    ncloptmap_t clopt[] =
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
     {
-        {'i', BFLD_SHORT, (void *)&srvid, 0, 
-                                NCLOPT_MAND | NCLOPT_HAVE_VALUE, "Server ID"},
-        {'s', BFLD_STRING, (void *)svcnm, sizeof(svcnm), 
-                                NCLOPT_MAND|NCLOPT_HAVE_VALUE, "Service name"},
-        {0}
-    };
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
     
-    /* parse command line */
-    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
     {
-        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    sleep(60);
+
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialization
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret = EXSUCCEED;
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV1", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TESTSV1!");
+        EXFAIL_OUT(ret);
+    }
+    else if (EXSUCCEED!=tpadvertise("TESTSV2", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TESTSV2!");
         EXFAIL_OUT(ret);
     }
     
-    memset(&call, 0, sizeof(call));
-    
-    call.srvid = srvid;
-    NDRX_STRNCPY(call.svc_nm, svcnm, sizeof(call.svc_nm)-1);
-    
-    ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
-                        NDRXD_CALL_TYPE_GENERIC,
-                        (command_call_t *)&call, sizeof(call),
-                        G_config.reply_queue_str,
-                        G_config.reply_queue,
-                        G_config.ndrxd_q,
-                        G_config.ndrxd_q_str,
-                        argc, argv,
-                        p_have_next,
-                        G_call_args,
-                        EXFALSE,
-                        G_config.listcall_flags);
 out:
-        return ret;
+    return ret;
 }
+
+/**
+ * Do de-initialisation
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
+
