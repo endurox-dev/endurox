@@ -178,7 +178,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int qid;
     int sz, len;
     int err;
-    
+    sigset_t set;
     
     if (EXSUCCEED!=sigfillset(&set))
     {
