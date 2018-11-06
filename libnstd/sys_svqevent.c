@@ -821,6 +821,38 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     mqd_t tmpq;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
+    sigset_t set;
+    
+    /* mask all signals except user signal */
+    
+    if (EXSUCCEED!=sigfillset(&set))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to fill signal array: %s", tpstrerror(err));
+        userlog("Failed to fill signal array: %s", tpstrerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=sigdelset(&set, NDRX_SVQ_SIG))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        userlog("Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=pthread_sigmask(SIG_BLOCK, &set, NULL))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        userlog("Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
     /**
      * Perform waiting for file descriptor events.
      * while the main thread is busy, we do not expect any FD monitoring

@@ -179,6 +179,35 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int sz, len;
     int err;
     
+    
+    if (EXSUCCEED!=sigfillset(&set))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to fill signal array: %s", tpstrerror(err));
+        userlog("Failed to fill signal array: %s", tpstrerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=sigdelset(&set, NDRX_SVQ_SIG))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        userlog("Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=pthread_sigmask(SIG_BLOCK, &set, NULL))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to block all signals but %d for admin thread: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        userlog("Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, tpstrerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
     {
         NDRX_LOG(log_error, "Failed to disable thread cancel: %s", strerror(ret));
