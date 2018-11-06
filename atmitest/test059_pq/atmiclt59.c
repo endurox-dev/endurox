@@ -100,6 +100,7 @@ int main(int argc, char** argv)
         /* create some arbitrary queue and enqueue some data to it */
         struct mq_attr attr;
         char qstr[PATH_MAX];
+	char buf[128];
         /* initialize the queue attributes */
         attr.mq_flags = 0;
         attr.mq_maxmsg = 10;
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
         
         for (i=0; i<num;i++)
         {
-            if (EXSUCCEED!=ndrx_mq_send(mq, "HELLO", 5, 0))
+            if (EXSUCCEED!=ndrx_mq_send(mq, buf, sizeof(buf), 0))
             {
                 NDRX_LOG(log_error, "Failed to send msg to [%s]: %s",
                         qstr, strerror(errno));

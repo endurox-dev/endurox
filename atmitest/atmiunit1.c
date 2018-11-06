@@ -473,7 +473,7 @@ Ensure(test058_systemv)
 Ensure(test059_pq)
 {
     int ret;
-    ret=system_dbg("test058_pq/run.sh");
+    ret=system_dbg("test059_pq/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
