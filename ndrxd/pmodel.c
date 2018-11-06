@@ -103,7 +103,6 @@ expublic int self_sreload(pm_node_t *p_pm)
 {
     int ret=EXSUCCEED;
     command_startstop_t call;
-
     
     memset(&call, 0, sizeof(call));
     
@@ -242,6 +241,10 @@ exprivate void * check_child_exit(void *arg)
 
         }        
 #endif
+        if (M_shutdown)
+        {
+            break;
+        }
         
         NDRX_LOG(log_debug, "about to wait()");
         while ((chldpid = wait(&stat_loc)) >= 0)
