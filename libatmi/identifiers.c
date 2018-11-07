@@ -437,7 +437,7 @@ expublic int ndrx_myid_is_alive(TPMYID *p_myid)
 expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
 {
     
-    NDRX_LOG(lev, "=== %s ===", msg);
+    NDRX_LOG(lev, "--- %s ---", msg);
     
     NDRX_LOG(lev, "binary_name:[%s]", p_myid->binary_name);
     NDRX_LOG(lev, "pid        :%d", p_myid->pid);
@@ -457,7 +457,7 @@ expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
     {
         NDRX_LOG(lev, "cd         :%d", p_myid->cd);
     }
-    NDRX_LOG(lev, "=================");
+    NDRX_LOG(lev, "-----------------");
             
 }
 
@@ -505,14 +505,14 @@ out:
 expublic void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
 {
     
-    NDRX_LOG(lev, "=== %s ===", msg);
+    NDRX_LOG(lev, "--- %s ---", msg);
     /* I */
     NDRX_LOG(lev, "binary_name:[%s]", qdet->binary_name);
     NDRX_LOG(lev, "pid        :%d", qdet->pid);
     NDRX_LOG(lev, "contextid  :%ld", qdet->contextid);
     NDRX_LOG(lev, "typ        :%d",  qdet->qtype);
     
-    NDRX_LOG(lev, "=================");
+    NDRX_LOG(lev, "-----------------");
             
 }
 
