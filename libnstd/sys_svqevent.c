@@ -128,7 +128,8 @@ typedef struct
 
 /* have a thread handler for tout monitoring thread! */
 
-exprivate ndrx_svq_evmon_t M_mon;        /**< event monitor data          */
+exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=0, 
+                                    .evpipe[1]=0};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
@@ -1444,13 +1445,20 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     int ret = EXSUCCEED;
     int err = 0;
     
-    if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
-            sizeof(ndrx_svq_mon_cmd_t)))
+    if (M_mon.evpipe[WRITE] > 0)
     {
-        err = errno;
-        NDRX_LOG(log_error, "Error ! write fail: %s", strerror(err));
-        userlog("Error ! write fail: %s", strerror(errno));
-        EXFAIL_OUT(ret);
+        if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
+                sizeof(ndrx_svq_mon_cmd_t)))
+        {
+            err = errno;
+            NDRX_LOG(log_error, "Error ! write fail: %s", strerror(err));
+            userlog("Error ! write fail: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_info, "No even thread -> pipe closed.");
     }
     
 out:
