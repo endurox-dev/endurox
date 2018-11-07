@@ -976,10 +976,15 @@ expublic void ndrx_atfork_child(void)
 /**
  * If expecting to continue to use initialized Enduro/X after forking,
  * then fork shall be done with this function.
+ * @param chldresume if 0 - no child resume (i.e. no resume of SystemV aux threads,
+ *  which is not recommended for XATMI servers as admin thread of child 
+ *  might consume parent's messages.) if set != 0 then resume aux threads,
+ *  this is can be suitable for initialized clients which are doing forks
+ *  for some job/connection handling.
  * @return for parent process child process pid is returned, for child 0 is
  *  returned.
  */
-expublic pid_t ndrx_fork(void)
+expublic pid_t ndrx_fork(int chldresume)
 {
     pid_t ret;
     int err;
@@ -991,7 +996,10 @@ expublic pid_t ndrx_fork(void)
     
     if (0==ret)
     {
-        ndrx_atfork_child();
+        if (chldresume)
+        {
+            ndrx_atfork_child();
+        }
     }
     else
     {
