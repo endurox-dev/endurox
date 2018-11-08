@@ -418,8 +418,16 @@ expublic void atmisrv_un_initialize(int fork_uninit)
                 continue;
             }
             
-            /* TODO: Remove from poller...! */
-
+            /* remove queues from poller */
+            if (!fork_uninit && 0!=G_server_conf.epollfd &&
+                    EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
+                    G_server_conf.service_array[i]->q_descr, NULL))
+            {
+                NDRX_LOG(log_warn, "ndrx_epoll_ctl failed to remove fd %p from epollfd: %s", 
+                        ((void *)G_server_conf.service_array[i]->q_descr),
+                        ndrx_poll_strerror(ndrx_epoll_errno()));
+            }
+            
             /* just close it, no error check */
             if(((mqd_t)EXFAIL)!=G_server_conf.service_array[i]->q_descr &&
                         ndrx_epoll_shallopenq(i) &&
