@@ -131,7 +131,7 @@ typedef struct
 exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=0, 
                                     .evpipe[1]=0};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
-exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
+exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
 exprivate mqd_t M_delref = NULL;         /**< this is delete reference    */
