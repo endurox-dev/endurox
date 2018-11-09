@@ -89,9 +89,9 @@ encodes following information:
 .Enduro/X IPC transport sub-systems
 [width="80%",cols="^2,^2,^2,^2,^2,^2,^2,^2",options="header"]
 |=========================================================
-|Product name/Version |Release |OS Name |C Compiler ID |OS Version |IPC Transport |CPU Arch |Target 
-|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode |
-|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode |
+|Product name| Version |Release |OS Name |C Compiler ID |OS Version |IPC Transport |CPU Arch |Target 
+|endurox |5.4.1 |1 |Ubuntu |18.04 |GNU GCC|EPOLL |x86_64 |64 bit mode 
+|endurox |5.4.1 |1 |SUNOS - Solaris |5.10 (10)|GNU GCC |System V queues |SPARC |64 bit mode 
 |=========================================================
 
 == Linux setup
