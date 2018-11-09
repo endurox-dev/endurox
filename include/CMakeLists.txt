@@ -56,6 +56,7 @@ install (FILES
     xa.h
     ndrx_config.h
     sys_unix.h
+    sys_primitives.h
     sys_mqueue.h 
     sys_emqueue.h
     oubf.h
