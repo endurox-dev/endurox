@@ -558,7 +558,7 @@ FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
 		if (installQ=="y")
 		{
 			appiniVal=appiniVal+@"
-; Environment for Tranactional Queue
+; Environment for Transactional Queue
 [@global/RM1TMQ]
 NDRX_XA_RES_ID=1
 NDRX_XA_OPEN_STR=${NDRX_APPHOME}/"+qdata+@"
@@ -585,7 +585,7 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 		{
 	
 			appiniVal=appiniVal+@"
-; Queue defintions goes here, see man q.conf(5) for syntax
+; Queue definitions goes here, see man q.conf(5) for syntax
 [@queue]
 ; Default manual queue (reserved name '@'), unknown queues are created based on this template:
 @=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
