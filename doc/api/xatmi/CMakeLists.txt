@@ -114,8 +114,8 @@ set(MAN3_NAMES
         tpconvert
         tpurcode
         tptoutset
-        tpimport
-        tpexport
+        #tpimport
+        #tpexport
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
