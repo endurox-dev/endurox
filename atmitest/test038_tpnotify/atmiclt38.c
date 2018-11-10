@@ -80,24 +80,24 @@ int handle_replies(UBFH **pp_ub, int num)
     /* Process notifs... */
     if (0==num)
     {
-    while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
-            && 0!=cd)
-    {
-        ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
-        M_replies_got++;
-    }
+        while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
+                && 0!=cd)
+        {
+            ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
+            M_replies_got++;
+        }
     }
     else
     {
 	for (i=0; i<num; i++)
 	{
-		if (EXSUCCEED!=tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY))
-		{
-			NDRX_LOG(log_error, "TESTERROR! Failed to get rply!");
-			EXFAIL_OUT(ret);
-		}
-		ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
-                M_replies_got++;
+            if (EXSUCCEED!=tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY))
+            {
+                    NDRX_LOG(log_error, "TESTERROR! Failed to get rply!");
+                    EXFAIL_OUT(ret);
+            }
+            ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
+            M_replies_got++;
 	}
     }
     
@@ -179,11 +179,11 @@ int main(int argc, char** argv)
         M_calls_made++;
 	if (0==i%25)
 	{	
-        	if (EXSUCCEED!=handle_replies(&p_ub, 50))
-        	{
-            		NDRX_LOG(log_error, "handle_replies() failed");
-            		EXFAIL_OUT(ret);
-        	}
+            if (EXSUCCEED!=handle_replies(&p_ub, 50))
+            {
+                    NDRX_LOG(log_error, "handle_replies() failed");
+                    EXFAIL_OUT(ret);
+            }
 	}
     }
     

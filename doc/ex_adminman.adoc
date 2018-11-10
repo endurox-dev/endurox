@@ -1,25 +1,23 @@
 Enduro/X Administration Manual
 ==============================
 Madars Vitolins
-v1.0, 2012-12:
+v1.1, 2018-11:
 	Initial draft
 :doctype: book
 
 == How to configure Enduro/X
+
 To configure Enduro/X you have to finish several steps.
 
-- Have a separate system user for each Enduro/X instance.
+. Have a separate system user for each Enduro/X instance.
 
-- Setup System Environment (mount mq file system, configure mq params)
+. Setup System Environment (mount mq file system, configure mq params)
 
-- Setup environment configuration
+. Setup environment configuration
 
-- Setup 'ndrxdconfig.xml'
+. Setup basic environment (demo)
 
-- Setup 'ndrxdebug.conf'
-
-- Startup the application
-
+. Startup the application
 
 == Setup System Environment
 
@@ -94,7 +92,7 @@ encodes following information:
 |endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode |
 |=========================================================
 
-== Linux setup
+=== Linux setup
 
 In this chapter will be described typical GNU/Linux system configuration required
 for Enduro/X. Two sets of configurations are available for Linux OS. One is for
@@ -103,7 +101,7 @@ Posix queues with epoll and another configuration is System V configuration.
 Kernel parameter configuration is needed for Enduro/X runtime. But as we plan here
 to build the system and run unit-tests, then we need a configuration for runtime.
 
-=== Increase OS limits
+==== Increase OS limits
 
 ---------------------------------------------------------------------
 $ sudo -s
@@ -127,11 +125,11 @@ EOF
 $
 ---------------------------------------------------------------------
 
-=== Linux system setup for running in EPOLL mode
+==== Linux system setup for running in EPOLL/Posix queue mode
 
 This step request mounting of Posix queues and change Posix queue limits
 
-==== Mounting Posix queues
+===== Mounting Posix queues
 
 This step does not apply to following Operating Systems - for these continue with
 next chapter:
@@ -173,7 +171,7 @@ Load the configuration by doing:
 # /etc/rc.local
 ---------------------------------------------------------------------
 
-==== Setting Posix queue limits
+===== Setting Posix queue limits
 
 Next step is to configure queue limits, this is done by changing Linux kernel
 parameters, in persistent way, so that new settings are applied at the OS boot.
@@ -192,25 +190,118 @@ $ sudo sysctl -w fs.mqueue.queues_max=10000
 $ sudo sysctl --system
 ---------------------------------------------------------------------
 
-== FreeBSD setup
-TODO:
+==== Setting System V queue limits
 
-== AIX setup
-TODO:
+To pass the Enduro/X unit tests, certain queue configuration is required. Use
+following kernel settings:
 
-== Solaris setup
-TODO:
+---------------------------------------------------------------------
+# max queues system wide, 40K should be fine
+$ sudo sysctl -w kernel.msgmni=40000
+
+# max size of message (bytes), ~1M should be fine
+$ sudo sysctl -w kernel.msgmax=1049600
+
+# default max size of queue (bytes), ~10M should be fine
+$ sudo sysctl -w kernel.msgmnb=104960000
+
+# Apply kernel parameters now
+$ sudo sysctl --system
+---------------------------------------------------------------------
+
+=== FreeBSD setup
+
+For FreeBSD only officially supported version if Posix queues, thus this operating
+system requires some settings for these IPC resources to pass the unit testing and
+also settings are generally fine for average application.
+
+==== Configuring the system
+Queue file system must be mounted when OS starts. Firstly we need a folder 
+'/mnt/mqueue' where the queues are mount. And secondly we will add the automatic 
+mount at system startup in '/etc/fstab'.
+
+---------------------------------------------------------------------
+# mkdir /mnt/mqueue
+# cat << EOF >> /etc/fstab
+null    /mnt/mqueue     mqueuefs	     rw	     0	     0
+EOF
+# mount /mnt/mqueue
+---------------------------------------------------------------------
+
+You also need to change the queue parameters: 
+
+---------------------------------------------------------------------
+# cat << EOF >> /etc/sysctl.conf
+
+# kernel tunables for Enduro/X:
+kern.mqueue.curmq=1
+kern.mqueue.maxmq=30000
+kern.mqueue.maxmsgsize=64000
+kern.mqueue.maxmsg=1000
+
+EOF
+
+# sysctl -f /etc/sysctl.conf
+---------------------------------------------------------------------
+
+For LMDB testing more semaphores shall be allowed
+
+---------------------------------------------------------------------
+# cat << EOF >> /boot/loader.conf
+
+# kernel tunables for Enduro/X:
+kern.ipc.semmns=2048
+kern.ipc.semmni=500
+
+EOF
+
+---------------------------------------------------------------------
+
+After changing /boot/loader.conf, reboot of system is required.
+
+Enduro/X testing framework uses '/bin/bash' in scripting, thus we must
+get it working. Also perl is assumed to to be '/usr/bin/perl'. Thus:
+---------------------------------------------------------------------
+# ln -s /usr/local/bin/bash /bin/bash
+# ln -s /usr/local/bin/perl /usr/bin/perl
+---------------------------------------------------------------------
+
+*reboot* to apply new settings (limits & mqueue mount)
+
+=== AIX setup
+On the other hand AIX do not require any fine tuning for System V queues, because
+it is doing automatic adjustments to queue limitations.
+
+=== Solaris setup
+
+To pass the Enduro/X unit tests on Solaris, System V queue settings must be applied.
+
+---------------------------------------------------------------------
+# cat << EOF >> /etc/system
+set msgsys:msginfo_msgmni = 10000
+set msgsys:msginfo_msgmnb = 10496000
+
+EOF
+---------------------------------------------------------------------
+
+So here 'msgmni' is maximum number of queues that can be created and 'msgmnb'
+is single queue maximum size which here is 10MB.
+
+After changing the settings, reboot the server.
 
 
-== MacOS setup
-TODO:
+=== MacOS setup
+
+OSX does not use require any kernel parameter changes, as emulated message queue
+is used here. Only it required that sufficient disk space is available to '/tmp'
+directory, as the memory mapped queue files will be stored there.
 
 == Setup environment configuration
 
 Enduro/X depends lot of Environment variables. See manpage of 'ex_env' (<<EX_ENV>>)
 to see all parameters that must be setup. There is also sample configuration
-provided. Normally it is expected that seperate shell script file is setup containing
-all paramters. Then to load the environment, login with Enduro/X user in, and run
+provided. Normally it is expected that separate shell script file is setup containing
+all parameters. Then to load the environment, login with Enduro/X user in, and run
 following command in your app dir, for example:
 
 --------------------------------------------------------------------------------
@@ -218,19 +309,111 @@ $ cd /endurox/app/conf
 $ . setapp
 --------------------------------------------------------------------------------
 
-Setup 'ndrxdconfig.xml'
------------------------
+== Setting up Enduro/X demon environment
+
+This section describes how to create a basic Enduro/X environment. Document will
+also explain the resources used by Enduro/X from the system setup and
+administrative perspective. Section will also explain the contents for each of
+the generated file, so that runtime can be manually reconstructed, which is
+usable for AIX operating system, as there "xadmin provision" command is not 
+available.
+
+=== Creating default runtime and starting it up
+
+To create generic runtime with Enduro/X "stock" servers processes, use following
+command:
+
+--------------------------------------------------------------------------------
+$ xadmin provision  -d
+To control debug output, set debugconfig file path in $NDRX_DEBUG_CONF
+N:NDRX:4:00000000:    0:7fc81a75c900:000:20181110:113655631:plugins_load:inbase.c:0180:No plugins defined by NDRX_PLUGINS env variable
+N:NDRX:5:00000000:    0:7fc81a75c900:000:20181110:113655631:cconfig_load:config.c:0429:CC tag set to: []
+N:NDRX:5:00000000:    0:7fc81a75c900:000:20181110:113655631:x_inicfg_new:inicfg.c:0114:_ndrx_inicfg_new: load_global_env: 1
+N:NDRX:5:00000000:    0:7fc81a75c900:000:20181110:113655631:ig_load_pass:config.c:0396:_ndrx_cconfig_load_pass: ret: 0 is_internal: 1 G_tried_to_load: 1
+N:NDRX:5:d5d3db3a: 8685:7fc81a75c900:000:20181110:113655632:x_inicfg_new:inicfg.c:0114:_ndrx_inicfg_new: load_global_env: 0
+Enduro/X 5.4.1, build Nov  7 2018 08:48:27, using SystemV for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 or Mavimax license for commercial use.
+
+Logging to ./ULOG.20181110
+
+    ______          __                    ___  __
+   / ____/___  ____/ /_  ___________    _/_/ |/ /
+  / __/ / __ \/ __  / / / / ___/ __ \ _/_/ |   / 
+ / /___/ / / / /_/ / /_/ / /  / /_/ //_/  /   |  
+/_____/_/ /_/\__,_/\__,_/_/   \____/_/   /_/|_|  
+
+                     Provision
+
+Compiled system type....: LINUX
+
+
+*** Review & edit configuration ***
+
+ 0: Edit qpath        :Queue device path [/dev/mqueue]: 
+ 1: Edit nodeid       :Cluster node id [2]: 
+ 2: Edit qprefix      :System code (prefix/setfile name, etc) [test1]: 
+ 3: Edit timeout      :System wide tpcall() timeout, seconds [90]: 
+ 4: Edit appHome      :Application home [/tmp/demo]: 
+ 6: Edit binDir       :Executables/binaries sub-folder of Apphome [bin]: 
+ 8: Edit confDir      :Configuration sub-folder of Apphome [conf]: 
+ 9: Edit logDir       :Log sub-folder of Apphome [log]: 
+10: Edit ubfDir       :Unified Buffer Format (UBF) field defs sub-folder of Apphome [ubftab]: 
+11: Edit tempDir      :Temp sub-dir (used for pid file) [tmp]: 
+12: Edit installQ     :Configure persistent queue [y]: 
+13: Edit tmDir        :Transaction Manager Logs sub-folder of Apphome [tmlogs]: 
+14: Edit qdata        :Queue data sub-folder of Apphone [qdata]: 
+15: Edit qSpace       :Persistent queue space namme [SAMPLESPACE]: 
+16: Edit qName        :Sample persistent queue name [TESTQ1]: 
+17: Edit qSvc         :Target service for automatic queue for sample Q [TESTSVC1]: 
+18: Edit eventSv      :Install event server [y]: 
+19: Edit cpmSv        :Configure Client Process Monitor Server [y]: 
+20: Edit configSv     :Install Configuration server [y]: 
+21: Edit bridge       :Install bridge connection [y]: 
+22: Edit bridgeRole   :Bridge -> Role: Active(a) or passive(p)? [a]: 
+24: Edit ipc          :Bridge -> IP: Connect to [172.0.0.1]: 
+25: Edit port         :Bridge -> IP: Port number [21003]: 
+26: Edit otherNodeId  :Other cluster node id [2]: 
+27: Edit ipckey       :IPC Key used for System V semaphores [44000]: 
+28: Edit ldbal        :Load balance over cluster [0]: 
+29: Edit ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+30: Edit ubflev       :Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off) [1]: 
+31: Edit tplev        :Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+32: Edit usv1         :Configure User server #1 [n]: 
+50: Edit ucl1         :Configure User client #1 [n]: 
+55: Edit addubf       :Additional UBFTAB files (comma seperated), can be empty []: 
+56: Edit msgsizemax   :Max IPC message size [56000]: 
+57: Edit msgmax       :Max IPC messages in queue [100]: 
+ndrxconfig: [/tmp/demo/conf/ndrxconfig.xml]
+appini: [/tmp/demo/conf/app.ini]
+setfile: [/tmp/demo/conf/settest1]
+
+
+To start your system, run following commands:
+$ cd /tmp/demo/conf
+$ source settest1
+$ xadmin start -y
+
+
+Provision succeed!
+
+--------------------------------------------------------------------------------
+
+
+
+
+
 Vital part of Enduro/X is 'ndrxdconfig.xml' config. Full path to it is configured
 in 'NDRX_CONFIG' environment variable.
 To see how to setup see manpage of it <<NDRXCONFIG>>.
 
-Setup 'ndrxdebug.conf'
-----------------------
-Environment variable 'NDRX_DEBUG_CONF' contains full path to debug file. 
-See <<DEBUGCONF>> for more details about 'debug.conf' setup.
+=== Start Enduro/X application
 
-Start Enduro/X application
--------------------------
 To start the Enduro/X application, login with Enduro/X instance user, and issue
 following command 'xadmin start', for example:
 
@@ -248,8 +431,8 @@ Startup finished. 3 processes started.
 
 To see all commands available by 'xadmin' (xa) see manpage of it <<XADMIN>>.
 
-Recovery from crashed local ATMI monitor
-----------------------------------------
+=== Recovery from crashed local ATMI monitor
+
 Enduro/X is capable to continue with out restart in case if 'ndrxd' local ATMI
 monitor is crashed or contains invalid data structures for some reason. In this
 case administrator can do following:
@@ -258,8 +441,8 @@ case administrator can do following:
 - remove ndrxd queue, for example: $ rm /dev/mq/n00b,sys,bg,ndrxd
 - restart 'ndrxd' in learning mode, by: $ nohup ndrxd -k $NDRX_RNDK -r 
 
-Cluster configuration
----------------------
+=== Cluster configuration
+
 To setup cluster see you have to setup bridge ATMI processes on each of the machines.
 See <<TPBRIDGE>> documentation to have understanding of clustering. Sample setup of
 cluster node which activetly connects to Node 2 and waits call from Node 12 could
@@ -306,8 +489,7 @@ look like:
 </endurox>
 --------------------------------------------------------------------------------
 
-Max message size and internal buffer sizes
-------------------------------------------
+=== Max message size and internal buffer sizes
 
 Starting from Enduro/X version 5.1+, the max message size what can be transported
 over the XATMI sub-system is limited to the operating system's queue settings.
