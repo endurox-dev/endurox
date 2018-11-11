@@ -446,7 +446,7 @@ T_SHORT_2_FLD	1
 EOF
 
 echo "Sleeping 3 to broadcast delete... (2)"
-sleep 1
+sleep 5
 
 echo "Testing DOM 1"
 ensure_field g@db15 SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 1
