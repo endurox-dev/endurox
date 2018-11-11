@@ -5,29 +5,42 @@ v1.0, 2016-06:
 	Initial draft
 :doctype: book
 
-About manual
-------------
-This manual describes how to build 'Enduro/X' Oracle Solaris platform. Document is based
-on Solaris 11 on x86 machine. Compiler used to Enduro/X is GCC.
+== About manual
+
+This manual describes how to build 'Enduro/X' Oracle Solaris platform. 
+Document is based on Solaris 11 on x86 machine. Compiler used to Enduro/X is GCC.
 
 == Overview
 
-This manual includes basic installation of Enduro/X which does not include building of
-documentation and does not use GPG-ME encryption for bridges.
+This manual includes basic installation of Enduro/X which does not 
+include building of documentation and does not use GPG-ME encryption for bridges.
 
 Enduro/X on Solaris platform is Using System V message queues.
 
+
+== Operating System Configuration
+
+For OS configuration settings 
+see ex_adminman(guides)(Enduro/X Administration Manual, Setup System chapter).
+This step is mandatory be executed, before continuing.
+
 == Installation process
 
-The installation process will install required pen source packages from 'http://www.opencsw.org'.
-you may install packages with different approach. This is just a sample process for getting
-build system working on under Solaris. For getting Enduro/X to work basically we need following packages:
+The installation process will install required pen source packages from 
+'http://www.opencsw.org'. You may install packages with different approach. 
+This is just a sample process for getting build system working on under Solaris.
+For getting Enduro/X to work basically we need following packages:
 
 . git
+
 . cmake
+
 . flex
+
 . bison
+
 . libxml2
+
 . gcc/g++
 
 === Packages to be installed
