@@ -19,7 +19,7 @@ To configure Enduro/X you have to finish several steps.
 
 . Startup the application
 
-== Setup System Environment
+== Setup System
 
 Enduro/X supports different back-end message transports. Following mechanisms
 are available:
@@ -669,15 +669,20 @@ insight on how to configure the system.
 
 --------------------------------------------------------------------------------
 
-TODO: Write some text...
-
+The above configuration includes the maximum settings which are by default on
+from the provision script. This includes configuration servers (*cconfsrv(8)*) -
+which allows to download the configuration from ini files by standard *tpcall(3)*
+command. Then it also includes event server, persistent queue and transaction
+manager for persistent queue. Bridge connection, configured as active (client)
+side is added and client process monitor (*cpmsrv(8)*) is started with server id 9999. 
+Thus once *cpmsrv* is booted, it will start the processes from "<clients/>" tag.
 
 
 == Cluster configuration
 
 To setup cluster see you have to setup bridge ATMI processes on each of the machines.
 See <<TPBRIDGE>> documentation to have understanding of clustering. Sample setup of
-cluster node which activetly connects to Node 2 and waits call from Node 12 could
+cluster node which actively connects to Node 2 and waits call from Node 12 could
 look like:
 
 --------------------------------------------------------------------------------
@@ -721,7 +726,54 @@ look like:
 </endurox>
 --------------------------------------------------------------------------------
 
-=== Max message size and internal buffer sizes
+=== Starting the demo application server instance
+
+The startup is straight forward. The environment variables needs to be loaded
+either by *source* command or by dot (.) notation.
+
+--------------------------------------------------------------------------------
+$ cd /tmp/demo/conf
+$ source settest1 
+$ xadmin start -y
+Enduro/X 5.4.1, build Nov  7 2018 08:48:27, using SystemV for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 or Mavimax license for commercial use.
+
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 18037
+* ndrxd idle instance started.
+exec cconfsrv -k 0myWI5nu -i 1 -e /tmp/demo/log/cconfsrv.log -r --  :
+	process id=18041 ... Started.
+exec cconfsrv -k 0myWI5nu -i 2 -e /tmp/demo/log/cconfsrv.log -r --  :
+	process id=18045 ... Started.
+exec tpevsrv -k 0myWI5nu -i 20 -e /tmp/demo/log/tpevsrv.log -r --  :
+	process id=18049 ... Started.
+exec tpevsrv -k 0myWI5nu -i 21 -e /tmp/demo/log/tpevsrv.log -r --  :
+	process id=18053 ... Started.
+exec tmsrv -k 0myWI5nu -i 40 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18057 ... Started.
+exec tmsrv -k 0myWI5nu -i 41 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18072 ... Started.
+exec tmsrv -k 0myWI5nu -i 42 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18087 ... Started.
+exec tmqueue -k 0myWI5nu -i 60 -e /tmp/demo/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1 --  :
+	process id=18102 ... Started.
+exec tpbridge -k 0myWI5nu -i 150 -e /tmp/demo/log/tpbridge_2.log -r -- -f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30 :
+	process id=18137 ... Started.
+exec cpmsrv -k 0myWI5nu -i 9999 -e /tmp/demo/log/cpmsrv.log -r -- -k3 -i1 --  :
+	process id=18146 ... Started.
+Startup finished. 10 processes started.
+--------------------------------------------------------------------------------
+
+The application instance is started!
+
+== Max message size and internal buffer sizes
 
 Starting from Enduro/X version 5.1+, the max message size what can be transported
 over the XATMI sub-system is limited to the operating system's queue settings.
@@ -755,7 +807,7 @@ environment before app boot. Also system settings must be checked in
 '/etc/security/limits.conf' either the limit is enough - "stack" parameter.
 
 2. Set the user/system limit directly in '/etc/security/limits.conf'.
-For other operating systems, please consult with corresponding manual for chaning
+For other operating systems, please consult with corresponding manual for changing
 the message size and stack size.
 
 
@@ -843,13 +895,13 @@ This section lists additional related documents.
 .Internet resources
 - [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
 - [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
-- [[[EX_OVERVIEW]]] ex_overview.pdf
+- [[[EX_OVERVIEW]]] ex_overview(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
-- [[[EX_ENV]]] 'man 5 ex_env' or 'ex_env.pdf'
-- [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
-- [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
-- [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
-- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
+- [[[EX_ENV]]] ex_env(5)
+- [[[NDRXCONFIG]]] ndrxconfig.xml(5)
+- [[[DEBUGCONF]]] ndrxdebug.conf(5)
+- [[[XADMIN]]] xadmin(8)
+- [[[TPBRIDGE]]] tpbridge(8)
 
 [glossary]
 Glossary
