@@ -366,6 +366,10 @@ expublic int command_wait_and_run(int *finished, int *abort)
         NDRX_LOG(log_error, "Error occurred when listening on :%s - %d/%s,"
                                 "issuing re-init",
                                 G_command_state.listenq_str, error, strerror(error));
+        
+        /* wait some time, so that we do not overfill logs in the system */
+        
+        sleep(5);
 
 /*
         ndrx_mq_close(G_command_state.listenq);
