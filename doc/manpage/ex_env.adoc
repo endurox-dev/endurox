@@ -212,6 +212,20 @@ Mandatory Env. Variables
     For example if booting something like Tomcat app server, the admin TCP ports
     can be adjusted by this environment variable in order to avoid conflicts for
     booting multiple instances.
+*NDRX_SVQREADERSMAX*='MAX_SIMULTANEOUS_READERS'::
+    This configuration parameter set the maximum parallel readers for System V
+    to Posix queues mapping tables. The number is used for read-write locks,
+    thus the number sets the simultaneous readers, but during that time the
+    write thread needs to wait for all readers to finish up the mapping when
+    the writer will step in and all readers will wait. If the number is bigger
+    read will be performed better when many processes are used, but that could
+    lead to write starvation, and writes (opening queues) may become slow.
+    The default value for this parameter is *50*.
+    TODO - mention sempahore..
+
+'NDRX_MSGQUEUESMAX'='MAX_SYSTEMV_QUEUES'::
+    Max number of queues that can be mapped to System V sub-system.
+    TODO
 
 EXAMPLE
 -------
