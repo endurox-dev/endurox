@@ -72,6 +72,24 @@ myserver	file=${NDRX_APPHOME}/tmp/MYSERVER threaded=y
 ud		file=${NDRX_APPHOME}/tmp/NDRX
 ---------------------------------------------------------------------
 
+COMMON CONFIGURATION INI SECTION
+--------------------------------
+Similar syntax is used to describe the debug configuration when common configuration
+is used (i.e. configuration in ini files). The difference is that there is one
+extra equation mark between the binary and debug string, see example:
+
+---------------------------------------------------------------------
+[@debug]
+# Global config:
+*=ndrx=5 ubf=1 lines=1 bufsz=1000 tp=5 file=
+# Per binary config:
+xadmin=file=${NDRX_APPHOME}/tmp/XADMIN
+ndrxd=file=${NDRX_APPHOME}/tmp/NDRXD
+myclient=file=${NDRX_APPHOME}/tmp/MYCLIENT
+myserver=file=${NDRX_APPHOME}/tmp/MYSERVER threaded=y
+ud=file=${NDRX_APPHOME}/tmp/NDRX
+---------------------------------------------------------------------
+
 BUGS
 ----
 Report bugs to support@mavimax.com

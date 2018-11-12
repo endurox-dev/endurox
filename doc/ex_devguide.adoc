@@ -136,9 +136,9 @@ out:
 
 ==== Code with
 
-The code line lenght should be more or less 80 symbols. If function arguments
+The code line length should be more or less 80 symbols. If function arguments
 are going wider, then moved some to next line. If string goes over the 80 chars
-then string shall be splitted with standard compiler concatenation done by C.
+then string shall be spitted with standard compiler concatenation done by C.
 
 
 Typical word wrap should look like:
@@ -841,18 +841,51 @@ request logger, 'u' - UBF thread logger, 'v' - UBF request logger.
 
 == Queuing mechanisms
 
+This chapter describes different Enduro/X message transport mechanisms which are
+supported by Enduro/X. Enduro/X provides support for different transaction backends
+and there is no real difference for developer on which transport is used, except
+the performance and system resource administration aspects
+
+=== Linux epoll and FreeBSD kqueue
+
 Enduro/X originally was developed for GNU/Linux kernels where resource polling sub-system
 i.e. epoll() can handle Posix queue handlers. This is linux non-standard feature which 
-greatly supports system development. This allows to build one queue - multiple servers
+greatly supports system development. FreeBSD operating system also supports polling
+and Posix queues. This allows to build one queue - multiple servers
 architecture (even for ATMI server processes waiting on different queues). However, this
-this feature limits platform to be working on Linux only.
+this feature limits platform to be working on Linux and FreeBSD only.
 
 [dia, epoll_message_dispatch_mode.dia, epoll_message_dispatch_mode.png, x300]
 -------------------------------
 -------------------------------
 
+=== System V mode
+
+Starting from Enduro/X version 6, there are added sub-system for System V IPC
+queues. With this supports, good performance (about 70-80% from the epoll/kqueue)
+is reached for Unix platforms, i.e. Oracle Solaris and IBM AIX. The mechanisms
+as for epoll can give true single-queue multiple servers approach for perfect load
+balancing between local processes. By default each XATMI server process opens it's
+own job request queue, but this can be configured, so that "request address" is
+used, i.e. it defines one queue name on which all XATMI servers must advertise
+the same services.
+
+The implementation for System V is quite complicated, because these queues (
+see msgrcv(), msgsnd() system calls) does not offer any timeout control and
+secondly no form of polling on multiple queues are allowed. Thus these additional
+work semantics must be emulated.
+
+Common approaches for XATMI clients and servers are following:
+
+. System V message queue IDs are mapped to string for queue names, which are
+used internally by Enduro/X. The mapping is done in two new shared memory segments
+whose size is controlled by 
+
+
+=== Poll mode
+
 Starting from Enduro/X version 3, there is support for other Posix compatible Operating
-Systems. Where possible Posix queues are used. If no Queueu support built in, for example
+Systems. Where possible Posix queues are used. If no Queue support built in, for example
 Apple OSX, then emulated Posix queues are used. For these platforms, the caller processes
 does choose the queue where to send the message in round-robin mode. For each service
 shared memory contains list of server IDs providing the service. In round robin mode

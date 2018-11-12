@@ -1,239 +1,107 @@
 Getting Started Tutorial
 ========================
 Madars Vitolins
-v1.0, 2015-11:
-	Initial draft
+v1.1, 2018-11:
+	Updates for release 6.0 - move to provision script
 :doctype: book
 
-About the guide
----------------
+== About the guide
+
 Getting started tutorial covers Enduro/X installation from binary package,
 environment setup, creating a sample Enduro/X server and creating sample client.
 This include creating a necessary configuration files. Finally the application is booted,
 and client process calls the sample server process.
 
-== Configuring Linux Kernel parameters
+== Operating System configuration
 
-Kernel parameter configuration is needed for Enduro/X runtime. It includes changing
-the security and Posix queue settings.
-
-=== Security Configuration
----------------------------------------------------------------------
-$ su - root
-# cat << EOF >> /etc/security/limits.conf
-
-# Do not limit message Q Count.
-# Some Linux 3.x series kernels have a bug, that limits 1024 
-# queues for one system user.
-# In 2.6.x and 4.x this is fixed, to have 
-# unlimited count of queues (memory limit).
-# ealrier and later Linuxes have fixed this issue.
-*               soft    msgqueue        -1
-*               hard    msgqueue        -1
-
-# Increase the number of open files 
-*               soft    nofile  1024
-*               hard    nofile  65536
-
-EOF
----------------------------------------------------------------------
-
-=== Message Queue Configuration
-At the startup of the system needs to mount a Posix Queues folder, and needs to 
-set a appropriate limits. To do this automatically at system startup, 
-Linuxes which supports '/etc/rc.local', must add following lines before "exit 0":
-
----------------------------------------------------------------------
-# Mount the /dev/mqueue
-mkdir /dev/mqueue
-mount -t mqueue none /dev/mqueue
-
-# Max Messages in Queue
-echo 10000 > /proc/sys/fs/mqueue/msg_max
-
-# Max message size (Currently Enduro/X supports only 32K as max)
-echo 32000 > /proc/sys/fs/mqueue/msgsize_max
-
-# Max number of queues for user
-echo 10000 > /proc/sys/fs/mqueue/queues_max
----------------------------------------------------------------------
+Certain operating system configuration is required in order to Enduro/X running,
+see ex_adminman(guides)(Enduro/X Administration Manual, Setup System) section,
+the steps are crucial to be executed for chosen operating system before
+continuing.
 
 == Installing binary package (RPM for Centos 6.x)
+
 We will also need a gcc compiler to build our bankapp
 ---------------------------------------------------------------------
-# wget http://www.endurox.org/attachments/download/6/endurox-2.3.2-1.centos6.x86_64.rpm
-# rpm -i endurox-2.3.2-1.centos6.x86_64.rpm
+# wget https://www.endurox.org/attachments/download/243/endurox-5.3.6-1.centos6_9_GNU.x86_64.rpm
+# rpm -i endurox-5.3.6-1.centos6_9_GNU.x86_64.rpm
 # yum install gcc
 ---------------------------------------------------------------------
 
-== Configuring the application environment 
+== Configuring the application environment
+
 We will run our app "app1" from new user "user1". Application domain will be 
-located in /opt/app1 folder. With follwing direcotry structure:
+located in /opt/app1 folder.
+
+To create creating base environment, Enduro/X "provision" tool is used. 
+This generates base layout of application. Additional folder will be created later.
+
+
+---------------------------------------------------------------------
+# useradd -m user1
+# mkdir -p /opt/app1
+# chown user1 /opt/app1
+# su - user1
+$ cd /opt/app1
+$ xadmin provision -d \
+    -v qprefix=app1 \
+    -v installQ=n  \
+    -v eventSv=n \
+    -v cpmSv=n \
+    -v configSv=n 
+    -v bridge=n \
+    -v addubf=bank.fd
+....
+Provision succeed!
+---------------------------------------------------------------------
+
+Above script uses defaults, and for some parameters values are specified:
+
+.Parameters applied to provision script above
+[width="40%",options="header"]
+|=========================================================
+|Parameter|Value applied|Description
+|qprefix|app1|Application prefix
+|installQ|n|Do not configure persistent queue as not used in example
+|eventSv|n|Do not configure event server as not used in example
+|cpmSv|n|Do not configure client process monitor server as not used in example
+|configSv|n|Do not configure Common Configuration interface server as not used here
+|bridge|n|Do not install network bridge as not used in example
+|addubf|bank.fd|Additional Key-value field table/UBF field to be configured, 
+used by sample later
+|=========================================================
+
+After provision completed, add directories for source code
+---------------------------------------------------------------------
+$ mkdir /opt/app1/test
+$ mkdir -p /opt/app1/src/bankcl
+$ mkdir -p /opt/app1/src/banksv
+---------------------------------------------------------------------
+
+Thus the final directory structure built for the application is
 
 [options="compact"]
 - /opt/app1/conf - will contain configuration files.
 - /opt/app1/src/bankcl - Enduro/X sample client process source
 - /opt/app1/src/banksv - Enduro/X sample server process sources.
 - /opt/app1/bin - for executables.
-- /opt/app1/ubftab - for tables for field defintions.
+- /opt/app1/ubftab - for tables for field definitions.
 - /opt/app1/tmp - temp dir
 - /opt/app1/log - for logging
 - /opt/app1/test - test data
 
-Create the user & directories:
----------------------------------------------------------------------
-# useradd -m user1
-# mkdir -p /opt/app1/conf
-# mkdir -p /opt/app1/src/bankcl
-# mkdir -p /opt/app1/src/banksv
-# mkdir -p /opt/app1/bin
-# mkdir -p /opt/app1/ubftab
-# mkdir -p /opt/app1/tmp
-# mkdir -p /opt/app1/log
-# mkdir -p /opt/app1/test
-# chown -R user1 /opt/app1 
----------------------------------------------------------------------
-Next we will configure environment files, file /opt/app1/conf/setndrx - this will contain neccessary configuration for Enduro/X.
 
-Copy following text to /opt/app1/conf/setndrx
----------------------------------------------------------------------
-#!/bin/bash
-export NDRX_NODEID=1
-# If 1 - then yes, if 0 - then not clusterised.
-export NDRX_CLUSTERISED=0
-# Load balance, 0 = process all locally, 100 = process all on remote servers
-export NDRX_LDBAL=0
-# tpcall() timeout:
-export NDRX_TOUT=60
-# where to write ulog
-export NDRX_ULOG=/opt/app1/log
-export NDRX_QPREFIX=/app1
-export NDRX_SVCMAX=20000
-export NDRX_SRVMAX=10000
-export NDRX_QPATH=/dev/mqueue
-export NDRX_SHMPATH=/dev/shm
-# Milli seconds to wait for command
-export NDRX_CMDWAIT=1
-export NDRX_DPID=/opt/app1/tmp/ndrxd.pid
-# Random key to indentify the processes beloning to this session (i.e. used in ps ef)
-export NDRX_RNDK="0myWI5nu"
-# System V Semaphores...
-export NDRX_IPCKEY=44000
-# Posix queue config (attribs..)
-# Max number of messages that can be put in one queue
-export NDRX_MSGMAX=1000
-# Daemon Q size...
-export NDRX_DQMAX=100
-# Max message size (in bytes), max about ~10 MB on Linux
-# Stack size must be at least NDRX_MSGSIZEMAX*30
-export NDRX_MSGSIZEMAX=10000
-# Where app domain lives
-export NDRX_APPHOME=/opt/app1
-# Where NDRX runtime lives
-export NDRX_HOME=/usr
-# Debug config too
-export NDRX_DEBUG_CONF=/opt/app1/conf/debug.conf
-# NDRX config too.
-export NDRX_CONFIG=/opt/app1/conf/ndrxconfig.xml
-export PATH=$PATH:/opt/app1/bin
-export FLDTBLDIR=/opt/app1/ubftab
-# Max fields for hashing UBF
-export NDRX_UBFMAXFLDS=16000
-
-# Log & levels (basic for scripting..)
-export NDRX_DMNLOG=/opt/app1/log/ndrxd.log
-export NDRX_DMNLEV=5
-
-export NDRX_LOG=/opt/app1/log/xadmin.log
-export NDRX_LEV=5
-
-# Correct the path so that ndrx can find ndrxd
-export PATH=$PATH:$NDRX_HOME/bin
-
-# UBFTAB Exfields - Enduro/X specifc, bank.fd - our apps' UBF fields 
-export FIELDTBLS=Exfields,bank.fd
----------------------------------------------------------------------
-
-Basic application server configuration (/opt/app1/conf/ndrxconfig.xml)
+For demo purposes the provision script have made more or less empty XATMI
+server configuration file found in */opt/app1/conf/ndrxconfig.xml*. 
+Lets register firstly our XATMI server named *banksv* here first. Do this in
+*<servers/>* section add following *<server />* block in the file:
 
 ---------------------------------------------------------------------
 <?xml version="1.0" ?>
 <endurox>
-    <appconfig>
-         <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
-         <!-- Sanity check time, sec -->
-         <sanity>5</sanity>
-         <!--
-             Seconds in which we should send service refresh to other node.
-         -->
-         <brrefresh>6</brrefresh>
-         
-         <!--  <sanity> timer, end -->
-         
-         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-         <!-- Do dead process restart every X seconds 
-         NOT USED ANYMORE, REPLACED WITH SANITY!
-         <respawncheck>10</respawncheck>
-         -->
-         <!-- Do process reset after 1 sec -->
-         <restart_min>1</restart_min>
-         <!-- If restart fails, then boot after +5 sec of previous wait time -->
-         <restart_step>1</restart_step>
-         <!-- If still not started, then max boot time is a 30 sec. -->
-         <restart_max>5</restart_max>
-         <!--  <sanity> timer, end -->
-         
-         <!-- Time after attach when program will start do sanity & respawn checks,
-              starts counting after configuration load -->
-         <restart_to_check>20</restart_to_check>
-         
-         <!-- Setting for pq command, should ndrxd collect service 
-              queue stats automatically
-         If set to Y or y, then queue stats are on.
-         Default is off.
-         -->
-         <gather_pq_stats>Y</gather_pq_stats>
-         
-	</appconfig>
-    <defaults>
-        <min>1</min>
-        <max>2</max>
-        <!-- Kill the process which have not started in <start_max> time -->
-        <autokill>1</autokill>
-        <!--
-        <respawn>1<respawn>
-        -->
-        <!--
-            <env></env> works here too!
-        -->
-         <!-- The maximum time while process can hang in 'starting' state i.e.
-            have not completed initialization, sec
-            X <= 0 = disabled 
-        -->
-         <start_max>2</start_max>
-         <!--
-            Ping server in every X seconds (step is <sanity>).
-         -->
-         <pingtime>1</pingtime>
-         <!--
-            Max time in seconds in which server must respond.
-            The granularity is sanity time.
-            X <= 0 = disabled 
-         -->
-         <ping_max>4</ping_max>
-         <!--
-            Max time to wait until process should exit on shutdown
-            X <= 0 = disabled 
-         -->
-         <end_max>5</end_max>
-         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
-         to process until it have been terminated. -->
-         <killtime>1</killtime>
-         <!-- List of services (comma separated) for ndrxd to export services over bridges -->
-    <!--     <exportsvcs>FOREX</exportsvcs> -->
+...
 	</defaults>
 	<servers>
-		<!-- This is binary we are about to build -->
 		<server name="banksv">
 			<srvid>1</srvid>
 			<min>2</min>
@@ -244,45 +112,51 @@ Basic application server configuration (/opt/app1/conf/ndrxconfig.xml)
 </endurox>
 ---------------------------------------------------------------------
 
-
-Setup debug config (/opt/app1/conf/debug.conf):
-
----------------------------------------------------------------------
-* ndrx=1 ubf=0 lines=1 bufsz=1000 file=
-xadmin file=${NDRX_APPHOME}/log/xadmin.log
-ndrxd file=${NDRX_APPHOME}/log/ndrxd.log
-banksv file=${NDRX_APPHOME}/log/BANKSV
-bankcl file=${NDRX_APPHOME}/log/BANKCL
----------------------------------------------------------------------
-
-We will get the default Exfields version and will 
-try to start the app server, should start, except `banksv' will not be found:
+Also we are about to add some logging settings for our binaries we are about
+to build, thus add following lines int the *[@debug]* section in application
+ini file (/opt/app1/conf/app.ini):
 
 ---------------------------------------------------------------------
-$ cp /usr/share/endurox/ubftab/Exfields /opt/app1/ubftab
+[@debug]
+..
+banksv= ndrx=5 ubf=0 tp=5 file=${NDRX_APPHOME}/log/BANKSV
+bankcl= ndrx=5 ubf=0 tp=5 file=${NDRX_APPHOME}/log/BANKCL
+ud= ndrx=5 ubf=0 file=${NDRX_APPHOME}/log/UD
+---------------------------------------------------------------------
+
+To learn more about debug configuration, see ndrxdebug.conf(5) manpage, note that
+document describes both formats legacy, where separate file was used and current
+one with Common-Configuration (i.e. using ini file section).
+
+
+If at this step we try to boot an application server, it should start fine,
+except that *banksv* binary won't be found:
+
+---------------------------------------------------------------------
 $ cd /opt/app1/conf
-$ chmod +x setndrx
-$ . setndrx
+$ source setapp1
 $ xadmin start -y
-
-Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+Enduro/X 5.4.1, build Nov  7 2018 08:48:27, using SystemV for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or Mavimax's license for commercial use.
+AGPLv3 or Mavimax license for commercial use.
 
-EnduroX back-end (ndrxd) is not running!
-ndrxd PID (from PID file): 1695
-ndrxd idle instance started!
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 4716
+* ndrxd idle instance started.
 exec banksv -k 0myWI5nu -i 1 -e /opt/app1/log/BANKSV -r --  :
-	process id=1696 ... No such file or directory.
+	process id=4720 ... Died.
 exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
-	process id=1698 ... No such file or directory.
+	process id=4723 ... Died.
 Startup finished. 0 processes started.
 ---------------------------------------------------------------------
-This is ok, we have configured two copies of eserver Enduro/X servers, 
+
+This is ok, we have configured two copies of *banksv* Enduro/X servers, 
 which we are not yet built, thus we get the error.
 
 If you run `xadmin' and get following error:
@@ -292,10 +166,12 @@ $ xadmin
 Failed to initialize!
 ---------------------------------------------------------------------
 
-Then this typically means, that you do not have run /etc/rc.local (either by 
-root or by reboot). More info is logged to /opt/app1/log/xadmin.log
+Then this typically means, that you do not have configure operating system properly
+see *Operating System configuration* section. 
+More info is logged to /opt/app1/log/xadmin.log
 
 == Creating the server process
+
 Firstly to create a "bank" server, we will have to define the fields in 
 which we will transfer the data. We will need following fields:
 [options="compact"]
@@ -307,11 +183,12 @@ So we will create a service "BALANCE" to which we will T_ACCNUM and T_ACCCUR.
 The process will return balance in T_AMTAVL.
 
 === Defining the UBF fields
-Requried fields will be define into /opt/app1/ubftab/bank.fd with follwing contents:
+
+Required fields will be define into /opt/app1/ubftab/bank.fd with following contents:
 
 ---------------------------------------------------------------------
 $/* -----------------------------------------------------------------------------
-$** Bank app field defintions for UBF buffer
+$** Bank app field definitions for UBF buffer
 $** -----------------------------------------------------------------------------
 $*/
 
@@ -330,17 +207,14 @@ T_AMTAVL	3	double	-	Account balance
 $#endif
 ---------------------------------------------------------------------
 
-To generate C header fields for UBF buffer, run `mkfldhdr' command in /opt/app1/ubftab folder:
+To generate C header fields for UBF buffer, run `mkfldhdr' command in 
+/opt/app1/ubftab folder:
 
 ---------------------------------------------------------------------
 $ mkfldhdr 
-NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0265:Output directory is [.]
-NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0277:Use environment variables
-NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0337:enter generate_files()
-NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0395:/opt/app1/ubftab/Exfields processed OK, output: ./Exfields.h
-NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0395:/opt/app1/ubftab/bank.fd processed OK, output: ./bank.fd.h
+...
 NDRX:5: 2038:000:20151116:033733008:fldhdr.c:0290:Finished with : SUCCESS
-ls -l
+$ ls -l
 total 16
 -rw-r--r--. 1 user1 user1  459 Nov 16 03:36 bank.fd
 -rw-rw-r--. 1 user1 user1  525 Nov 16 03:37 bank.fd.h
@@ -349,6 +223,7 @@ total 16
 ---------------------------------------------------------------------
 
 === Server source code
+
 We will have sample server process which will just print in trace file account, 
 currency. In return it will set "random" balance in field "T_AMTAVL". 
 The source code of /opt/app1/src/banksv/banksv.c looks as follows:
@@ -484,6 +359,7 @@ total 20
 So binary is built next we will try to start it.
 
 === Booting the server process
+
 To start the binary, first we need to copy it to binary directory:
 ---------------------------------------------------------------------
 $ cp /opt/app1/src/banksv/banksv /opt/app1/bin/banksv
@@ -494,21 +370,25 @@ processes to start (which previosly did not start because we didn't have
 `banksv' executable in bin directory.
 
 ---------------------------------------------------------------------
-$ xadmin start
-Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+
+$ xadmin tart -y
+Enduro/X 5.4.1, build Nov 12 2018 08:11:50, using SystemV for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or Mavimax's license for commercial use.
+AGPLv3 or Mavimax license for commercial use.
 
-ndrxd PID (from PID file): 2608
-Are you sure you want to start application? [Y/N]: y
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 22128
+* ndrxd idle instance started.
 exec banksv -k 0myWI5nu -i 1 -e /opt/app1/log/BANKSV -r --  :
-	process id=2617 ... Started.
+	process id=22132 ... Started.
 exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
-	process id=2618 ... Started.
+	process id=22136 ... Started.
 Startup finished. 2 processes started.
 ---------------------------------------------------------------------
 
@@ -517,25 +397,28 @@ To check that our BALANCE service is advertised, we can execute command
 
 ---------------------------------------------------------------------
 $ xadmin psc
-Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+Enduro/X 5.4.1, build Nov 12 2018 08:11:50, using SystemV for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or Mavimax's license for commercial use.
+AGPLv3 or Mavimax license for commercial use.
 
-ndrxd PID (from PID file): 2608
+* Shared resources opened...
+* ndrxd PID (from PID file): 22128
 Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 -- ------------ ------------ --------- ----- ----- ----- -------- -------- -----
 1  BALANCE      BALANCE      banksv    1     0     0     0ms      0ms      AVAIL
 1  BALANCE      BALANCE      banksv    2     0     0     0ms      0ms      AVAIL
 ---------------------------------------------------------------------
 
-We see here two copies for banksv binaries running (Server ID 1 & 2). 
+We see here two copies for *banksv* binaries running (Server ID 1 & 2). 
 Both advertises "BALANCE" service.
 
 === Testing the service with "ud" command
+
 It is possible to call the service with out a client process. This is useful 
 for testing. Service can be called with `ud' utility. In which we define the 
 target service name and any additional UBF buffer fields. In our case these 
@@ -676,7 +559,6 @@ $ /opt/app1/src/bankcl/bankcl
 Account balance is: 883078058.68 USD
 ---------------------------------------------------------------------
 
-
 == Deploy "banksv" in Docker container
 
 To deploy the example files in Docker container, follow the instructions found
@@ -684,6 +566,7 @@ in endurox-docker repository: https://github.com/endurox-dev/endurox-docker
 
 
 == Conclusions
+
 From the above sample it could be seen that creating a ATMI application is 
 pretty easy and straight forward. This application was very basic, 
 just doing the call to Enduro/X service. However the same application 
@@ -704,13 +587,13 @@ This section lists additional related documents.
 .Internet resources
 - [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
 - [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
-- [[[EX_OVERVIEW]]] ex_overview.pdf
+- [[[EX_ADMINGUIDE]]] ex_adminman(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
-- [[[EX_ENV]]] 'man 5 ex_env' or 'ex_env.pdf'
-- [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
-- [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
-- [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
-- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
+- [[[EX_ENV]]] ex_env(5)
+- [[[NDRXCONFIG]]] ndrxconfig.xml(5)
+- [[[DEBUGCONF]]] ndrxdebug.conf(5)
+- [[[XADMIN]]] xadmin(8)
+- [[[TPBRIDGE]]] tpbridge(8)
 
 [glossary]
 Glossary
