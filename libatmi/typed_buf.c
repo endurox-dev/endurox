@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys_primitives.h>
 #include <utlist.h>
 
 #include <atmi.h>

@@ -128,9 +128,10 @@ typedef struct
 
 /* have a thread handler for tout monitoring thread! */
 
-exprivate ndrx_svq_evmon_t M_mon;        /**< event monitor data          */
+exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=0, 
+                                    .evpipe[1]=0};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
-exprivate int M_alive = EXFALSE;         /**< is monitoring thread alive? */
+exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
 exprivate mqd_t M_delref = NULL;         /**< this is delete reference    */
@@ -633,7 +634,8 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             ev->data = NULL;
             ev->stamp_seq = r->stamp_seq;
             ev->stamp_time = r->stamp_time;
-
+            ev->prev = NULL;
+            ev->next = NULL;
             if (EXSUCCEED!=ndrx_svq_mqd_put_event(r->mqd, ev))
             {
                 NDRX_LOG(log_error, "Failed to put event for %p typ %d",
@@ -797,9 +799,8 @@ out:
  */
 exprivate void ndrx_svq_signal_action(int sig)
 {
-    /* nothing todo, just ignore 
+    /* nothing todo, just ignore  */
     NDRX_LOG(log_debug, "Signal action");
-     * */
     M_signalled = EXTRUE;
     return;
 }
@@ -821,6 +822,38 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     mqd_t tmpq;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
+    sigset_t set;
+    
+    /* mask all signals except user signal */
+    
+    if (EXSUCCEED!=sigfillset(&set))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to fill signal array: %s", strerror(err));
+        userlog("Failed to fill signal array: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=sigdelset(&set, NDRX_SVQ_SIG))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        userlog("Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=pthread_sigmask(SIG_BLOCK, &set, NULL))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        userlog("Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
     /**
      * Perform waiting for file descriptor events.
      * while the main thread is busy, we do not expect any FD monitoring
@@ -883,7 +916,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         
         /* syncfd = EXFALSE; */
         
-        NDRX_LOG(log_debug, "poll() ret = %d pid = %d", retpoll, (int)getpid());
+        NDRX_LOG(log_debug, "poll() ret = %d", retpoll);
         if (EXFAIL==retpoll)
         {
             err = errno;
@@ -948,8 +981,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         EXFAIL_OUT(ret);
                     }
                     
-                    NDRX_LOG(log_debug, "Got command: %d %p pid=%d flags=%d", 
-                            cmd.cmd, cmd.mqd, (int)getpid(), cmd.flags);
+                    NDRX_LOG(log_debug, "Got command: %d %p flags=%d", 
+                            cmd.cmd, cmd.mqd, cmd.flags);
                     
                     /* next time monitor file descriptors too */
                     if (NDRX_SVQ_MONF_SYNCFD & cmd.flags)
@@ -1085,7 +1118,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                    ev->ev = NDRX_SVQ_EV_FD;
                    ev->fd = M_mon.fdtabmo[i].fd;
                    ev->revents = M_mon.fdtabmo[i].revents;
-                   
+                   ev->prev = NULL;
+                   ev->next = NULL;
                    /* get queue descriptor  
                     * the data is deallocated by target thread
                     */
@@ -1383,7 +1417,8 @@ expublic int ndrx_svq_event_init(void)
         }
     
         if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
-                event_fork_resume, event_fork_resume)))
+                /* no need for child resume! */
+                event_fork_resume, NULL)))
         {
             M_alive=EXFALSE;
             NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
@@ -1391,7 +1426,7 @@ expublic int ndrx_svq_event_init(void)
             EXFAIL_OUT(ret);
         }
         /* after xadmin un-inits we might get some extra threads...
-         * due to mulitple calls... */
+         * due to multiple calls... */
         first = EXFALSE;
     }
 
@@ -1410,13 +1445,20 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     int ret = EXSUCCEED;
     int err = 0;
     
-    if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
-            sizeof(ndrx_svq_mon_cmd_t)))
+    if (M_mon.evpipe[WRITE] > 0)
     {
-        err = errno;
-        NDRX_LOG(log_error, "Error ! write fail: %s", strerror(err));
-        userlog("Error ! write fail: %s", strerror(errno));
-        EXFAIL_OUT(ret);
+        if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
+                sizeof(ndrx_svq_mon_cmd_t)))
+        {
+            err = errno;
+            NDRX_LOG(log_error, "Error ! write fail: %s", strerror(err));
+            userlog("Error ! write fail: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_info, "No even thread -> pipe closed.");
     }
     
 out:
@@ -1534,7 +1576,8 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
     
     /* perform sync off */
     ret = ndrx_svq_moncmd_send(&cmd);
-    
+
+    return ret;
 }
 
 /**
@@ -1633,15 +1676,16 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     /* Check the events matching the current time stamp, ignore
      * events sent not four our stamp
+     * TODO: Test slow shutdown...! I.e. server process is busy doing something
+     * and we enqueue a shutdown, will it actually shutdown?
      */
-
     while (NULL!=mqd->eventq &&
             NDRX_SVQ_EV_TOUT==mqd->eventq->ev && 
             !(NDRX_SVQ_TOUT_MATCH((mqd->eventq), (&cur_stamp))))
     {
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         NDRX_FREE(*ev);
         *ev = NULL;
     }
@@ -1649,7 +1693,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     if (NULL!=mqd->eventq)
     {    
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         pthread_mutex_unlock(&(mqd->qlock));
         pthread_spin_unlock(&(mqd->rcvlockb4));
         
@@ -1707,7 +1751,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     /* if have message return it first..  */
     if (EXFAIL!=ret)
     {
-        pthread_mutex_unlock(&(mqd->qlock));
+        /* pthread_mutex_unlock(&(mqd->qlock)); */
         
         /* OK, we got a message from queue */
         if (!is_send)
@@ -1746,7 +1790,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     {
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         NDRX_FREE(*ev);
         *ev = NULL;
     }
@@ -1755,7 +1799,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     if (NULL!=mqd->eventq)
     {
         *ev = mqd->eventq;
-        DL_DELETE(mqd->eventq, mqd->eventq);
+        DL_DELETE(mqd->eventq, *ev);
         pthread_mutex_unlock(&(mqd->qlock));
 
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
@@ -1764,7 +1808,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         EXFAIL_OUT(ret);
     }
 
-    /* unlock queue  */
+    /* unlock queue   */
     pthread_mutex_unlock(&(mqd->qlock));
     
 out:

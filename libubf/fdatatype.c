@@ -530,11 +530,6 @@ exprivate int g_dflt_empty(struct dtype_ext1* t)
  */
 exprivate int g_str_empty(struct dtype_ext1* t)
 {
-    /*
-    int len;
-    len = sizeof(BFLDID)+4; /* actually we need +1, but +3 for align
-    return len;
-    */
     return ALIGNED_SIZE(1); /* empty string eos */
 }
 /**

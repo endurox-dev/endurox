@@ -66,9 +66,9 @@
 /**
  * Nothing to init for epoll()
  */
-expublic inline void ndrx_epoll_sys_init(void)
+expublic int ndrx_epoll_sys_init(void)
 {
-    return;
+    return EXSUCCEED;
 }
 
 /**
@@ -209,9 +209,12 @@ expublic inline int ndrx_epoll_close(int epfd)
  * @param events
  * @param maxevents
  * @param timeout
+ * @param buf not used
+ * @param buf_len not used
  * @return 
  */
-expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
+        int maxevents, int timeout, char *buf, int *buf_len)
 {
     int ret = EXSUCCEED;
     int err_saved;
@@ -222,6 +225,8 @@ expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, i
     struct kevent tevent;	 /* Event triggered */
     struct timespec tout;
     
+    *buf_len = EXFAIL;
+
     if (timeout>0)
     {
     	NDRX_LOG(log_debug, "about to kevent wait %d, timeout %d", epfd, timeout);
@@ -302,6 +307,55 @@ expublic inline int ndrx_epoll_errno(void)
 expublic inline char * ndrx_poll_strerror(int err)
 {
     return strerror(err);
+}
+
+/**
+ * not used by Kqueue epoll()
+ * @param idx
+ * @return 
+ */
+expublic int ndrx_epoll_shallopenq(int idx)
+{
+    return EXTRUE;
+}
+/**
+ * Not used by Kqueue epoll()
+ * @param qstr
+ */
+expublic void ndrx_epoll_mainq_set(char *qstr)
+{
+    return;
+}
+
+/**
+ * Not used by Kqueue epoll
+ * @param svcnm
+ * @param idx
+ * @param mq_exits
+ * @return 
+ */
+expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
+{
+    return mq_exits;
+}
+
+/**
+ * Not used by linux epoll
+ * @return 
+ */
+expublic int ndrx_epoll_shmdetach(void)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * Not used by Kqueue epoll
+ * @param force
+ * @return 
+ */
+expublic int ndrx_epoll_down(int force)
+{
+    return EXSUCCEED;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

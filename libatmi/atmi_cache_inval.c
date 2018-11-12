@@ -462,6 +462,8 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
     UBFH *p_ub = NULL;
     ndrx_tpcallcache_t* cache;
     ndrx_tpcache_data_t *exdata;
+    int align;
+    char *defer_free = NULL;
     
     NDRX_LOG(log_info, "delete cachedb [%s] by expression [%s] from node %d", 
             cachedbnm, keyexpr, nodeid);
@@ -504,8 +506,14 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
     op = EDB_FIRST;
     do
     {
+        if (NULL!=defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -518,6 +526,11 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
                 NDRX_LOG(log_error, "Failed to loop over the [%s] db", cachedbnm);
                 break;
             }
+        }
+        
+        if (align)
+        {
+            defer_free = val.mv_data;
         }
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
@@ -684,6 +697,11 @@ out:
         tpfree((char *)p_ub);
     }
 
+    if (defer_free!=NULL)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     NDRX_LOG(log_debug, "%s returns %d (deleted: %d)", __func__, ret, deleted);
     
     if (EXSUCCEED==ret)
@@ -720,6 +738,8 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
     int deleted = 0;
     char cmd;
     char keygrp[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
+    int align;
+    char *defer_free = NULL;
     
     EDB_val keydb, val;
     ndrx_tpcallcache_t* cache;
@@ -760,12 +780,15 @@ expublic int ndrx_cache_inval_by_key(char *cachedbnm, ndrx_tpcache_db_t* db_reso
      * needed
      */
     
-    if (EXSUCCEED==(ret=ndrx_cache_edb_get(db, txn, key, &val, EXFALSE)))
+    if (EXSUCCEED==(ret=ndrx_cache_edb_get(db, txn, key, &val, EXFALSE, &align)))
     {
         /* validate db rec... */
-        exdata = (ndrx_tpcache_data_t *)val.mv_data;
+        if (align)
+        {
+            defer_free = val.mv_data;
+        }
+        exdata = (ndrx_tpcache_data_t *) (char *)val.mv_data;
         NDRX_CACHE_CHECK_DBDATA((&val), exdata, keydb.mv_data, TPESYSTEM);
-        
         
         /* get key group key */
         if (exdata->flags & NDRX_TPCACHE_TPCF_KEYITEMS)
@@ -911,6 +934,10 @@ out:
         tpfree((char *)p_ub);
     }
 
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
     
     return ret;
 }

@@ -595,9 +595,14 @@ expublic int ndrx_ubfdb_Bflddbget(EDB_val *data,
     
     entry = (ndrx_ubfdb_entry_t *)data->mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    memcpy(p_bfldid, &(entry->bfldid), sizeof(BFLDID));
+#else
     *p_bfldid = entry->bfldid;
-    *p_bfldno = entry->bfldid & EFFECTIVE_BITS_MASK;
-    *p_fldtype = entry->bfldid >> EFFECTIVE_BITS;
+#endif
+
+    *p_bfldno = (*p_bfldid) & EFFECTIVE_BITS_MASK;
+    *p_fldtype = (*p_bfldid) >> EFFECTIVE_BITS;
     
     NDRX_STRNCPY_SAFE(fldname, entry->fldname, fldname_bufsz);
     
@@ -761,8 +766,12 @@ expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
     
     entry = (ndrx_ubfdb_entry_t *)data.mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    /* for sparc aligned access we might want to use memcpy... */
+    memcpy(&ret, &(entry->bfldid), sizeof(ret));
+#else
     ret = entry->bfldid;
-    
+#endif
     
     UBF_LOG(log_debug, "%s: name [%s] resolved to field id %d", __func__, 
             fldname, ret);

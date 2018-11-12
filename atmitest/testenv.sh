@@ -41,6 +41,8 @@ export PATH=$PATH:../../xadmin
 
 # Clean up q Space (remove all queues matching the symbol)
 xadmin qrmall ,
+# any left overs from previous tests...
+xadmin killall ndrxd
 
 if [[ `xadmin poller` == "SystemV" ]]; then
     xadmin udown -y

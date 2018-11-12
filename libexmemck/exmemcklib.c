@@ -120,7 +120,7 @@ out:
  */
 exprivate void dump_config(exmemck_config_t * cfg)
 {
-    NDRX_LOG(log_debug, "=== Config entry, mask: [%s] ======", cfg->mask);
+    NDRX_LOG(log_debug, "--- Config entry, mask: [%s] ------", cfg->mask);
     NDRX_LOG(log_debug, "inherited defaults from mask: [%s]", cfg->dlft_mask);
     NDRX_LOG(log_debug, "mem_limit                    : [%ld]", cfg->settings.mem_limit);
     NDRX_LOG(log_debug, "percent_diff_allow           : [%ld]", cfg->settings.percent_diff_allow);
@@ -130,7 +130,7 @@ exprivate void dump_config(exmemck_config_t * cfg)
     NDRX_LOG(log_debug, "interval_mon                 : [%d]", cfg->settings.interval_mon);
     NDRX_LOG(log_debug, "pf_proc_exit                 : [%p]", cfg->settings.pf_proc_exit);
     NDRX_LOG(log_debug, "pf_proc_leaky                : [%p]", cfg->settings.pf_proc_leaky);
-    NDRX_LOG(log_debug, "===================================="); 
+    NDRX_LOG(log_debug, "------------------------------------");
 }
 
 /**

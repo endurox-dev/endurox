@@ -698,7 +698,7 @@ out:
      */
     ndrx_epoll_sys_uninit();
     
-    atmisrv_un_initialize(EXTRUE);
+    atmisrv_un_initialize(EXFALSE);
     /*
      * Print error message on exit. 
      */

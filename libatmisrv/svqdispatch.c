@@ -1306,7 +1306,7 @@ expublic int sv_wait_for_request(void)
                 }
                 NDRX_LOG(log_debug, "Got request on logical channel %d, fd: %d",
                             G_server_conf.last_call.no, evmqd);
-                
+
                 if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no)
                 {
                     NDRX_LOG(log_debug, "Got admin request");

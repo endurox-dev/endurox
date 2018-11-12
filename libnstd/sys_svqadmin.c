@@ -119,7 +119,7 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     
     /* register fork handlers... */
     if (EXSUCCEED!=(ret=ndrx_atfork(admin_fork_prepare, 
-            admin_fork_resume, admin_fork_resume)))
+            admin_fork_resume, NULL)))
     {
         NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
         userlog("Failed to register fork handlers: %s", strerror(ret));
@@ -178,6 +178,35 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int qid;
     int sz, len;
     int err;
+    sigset_t set;
+    
+    if (EXSUCCEED!=sigfillset(&set))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to fill signal array: %s", strerror(err));
+        userlog("Failed to fill signal array: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=sigdelset(&set, NDRX_SVQ_SIG))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        userlog("Failed to delete signal %d: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=pthread_sigmask(SIG_BLOCK, &set, NULL))
+    {
+        err = errno;
+        NDRX_LOG(log_error, "Failed to block all signals but %d for admin thread: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        userlog("Failed to block all signals but %d for even thread: %s", 
+                NDRX_SVQ_SIG, strerror(err));
+        EXFAIL_OUT(ret);
+    }
     
     if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
     {
@@ -268,7 +297,8 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             ev->data = M_buf;
             ev->datalen = NDRX_SVQ_OUTLEN(len);
             ev->ev = NDRX_SVQ_EV_DATA;
-                    
+            ev->next = NULL;       
+            ev->prev = NULL;
             NDRX_LOG(log_debug, "Putting admin event...");
             
             if (EXSUCCEED!=ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), ev))

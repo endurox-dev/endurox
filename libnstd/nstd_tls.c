@@ -61,7 +61,7 @@ exprivate void nstd_buffer_key_destruct( void *value );
  */
 exprivate void nstd_buffer_key_destruct( void *value )
 {
-    /* TODO: Close any open log descriptors... */
+    /* Close any open log descriptors... */
     ndrx_nstd_tls_free((void *)value);
 }
 

@@ -207,7 +207,11 @@ exprivate void slipSigHandler (int sig)
  */
 expublic char * ndrx_epoll_mode(void)
 {
+#ifdef EX_USE_EMQ
+    static char *mode = "emq";
+#else
     static char *mode = "poll";
+#endif
     
     return mode;
 }
@@ -958,10 +962,15 @@ expublic int ndrx_epoll_close(int epfd)
     }
     
     MUTEX_LOCK_V(M_psets_lock);
-    NDRX_FREE(set);
-    EXHASH_DEL(M_psets, set);
-    MUTEX_UNLOCK_V(M_psets_lock);
     
+    if (NULL!=set->fdtab)
+    {
+        NDRX_FREE(set->fdtab);
+    }
+    
+    EXHASH_DEL(M_psets, set);
+    NDRX_FREE(set);
+    MUTEX_UNLOCK_V(M_psets_lock);
     
 out:
     return EXFAIL;
@@ -995,6 +1004,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     
     EX_EPOLL_API_ENTRY;
     
+    /* not returning... */
+    *buf_len = EXFAIL;
     /*  !!!! LOCKED AREA !!!! */
     MUTEX_LOCK_V(M_psets_lock);
     

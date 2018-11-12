@@ -203,6 +203,8 @@ extern NDRX_API unsigned long ndrx_Crc32_ComputeBuf( unsigned long inCrc32, cons
                                        size_t bufLen );
 
 
+extern NDRX_API char *ndrx_strsep(char **s1, char *s2);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -429,7 +429,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
  * only for epoll/fdpoll/kqueue(). For poll we do recursive call for service selection 
  * System V mode uses the same approach as for 
  */
-#if defined(EX_USE_EPOLL) || defined(EX_USE_FDPOLL)
+#if defined(EX_USE_EPOLL) || defined(EX_USE_FDPOLL) || defined(EX_USE_KQUEUE)
             sprintf(send_q, NDRX_SVC_QBRDIGE, 
                     G_atmi_tls->G_atmi_conf.q_prefix, chosen_node);
 #endif
@@ -527,7 +527,7 @@ out:
  * @param srvlist list of servers/resource id (mqd for system v)
  * @return 
  */
-expublic int ndrx_shm_get_srvs(char *svc, int **srvlist, int *len)
+expublic int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len)
 {
     int ret=EXSUCCEED;
     int pos=EXFAIL;
@@ -568,13 +568,14 @@ expublic int ndrx_shm_get_srvs(char *svc, int **srvlist, int *len)
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(int) *local_count )))
+    if (NULL==(*srvlist = NDRX_MALLOC(sizeof(ndrx_shm_resid_t) *local_count )))
     {
         NDRX_LOG(log_error, "malloc fail: %s", strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    memcpy(*srvlist, psvcinfo->resids, sizeof(int) *local_count);
+    memcpy(*srvlist, &(psvcinfo->resids[0]), sizeof(ndrx_shm_resid_t) *local_count);
+
     *len = local_count;
     
 out:

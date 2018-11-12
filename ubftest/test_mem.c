@@ -49,7 +49,7 @@ Ensure(test_Balloc_Bfree)
     int i;
     /* will check with valgrind - do we have memory leaks or not */
     
-    for (i=0; i<20; i++)
+    for (i=0; i<10; i++)
     {
         p_ub=Balloc(20, 30);
         assert_not_equal(p_ub, NULL);

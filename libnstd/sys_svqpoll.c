@@ -541,6 +541,8 @@ expublic int ndrx_epoll_close(int fd)
  * @param events events return events struct 
  * @param maxevents max number of events can be loaded
  * @param timeout timeout in milliseconds
+ * @param buf preloaded message
+ * @param buf_len preloaded buffer size on input max size, on output actual msgs sz
  * @return 0 - timeout, -1 - FAIL, 1 - have one event
  */
 expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 

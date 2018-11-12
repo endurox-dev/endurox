@@ -122,7 +122,7 @@ expublic int ndrx_epoll_down(int force)
 /**
  * Nothing to un-init for epoll()
  */
-expublic inline void ndrx_epoll_sys_uninit(void)
+expublic void ndrx_epoll_sys_uninit(void)
 {
     return;
 }
@@ -131,12 +131,13 @@ expublic inline void ndrx_epoll_sys_uninit(void)
  * Return the compiled poll mode
  * @return 
  */
-expublic inline char * ndrx_epoll_mode(void)
+expublic char * ndrx_epoll_mode(void)
 {
     static char *mode = "epoll";
     
     return mode;
 }
+
 /**
  * Wrapper for epoll_ctl, for standard file descriptors
  * @param epfd

@@ -480,6 +480,8 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
+    int align;
+    char *defer_free = NULL;
     unsigned int flagsdb;
     int force_abort = EXFALSE;
     /* Key size - assume 16K should be fine */
@@ -734,7 +736,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         /* first: EDB_FIRST_DUP - this we accept and process */
         
         if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_SET_KEY)))
+                    key, &cachedata, EDB_SET_KEY, &align)))
         {
             if (EDB_NOTFOUND!=ret)
             {
@@ -753,7 +755,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         NDRX_LOG(log_debug, "Performing simple lookup");
 #endif
         if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata,
-                seterror_not_found)))
+                seterror_not_found, &align)))
         {
             /* error already provided by wrapper */
             NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
@@ -761,7 +763,12 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         }
     }
     
-    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    if (align)
+    {
+        defer_free = cachedata.mv_data;
+    }
+    
+    exdata = (ndrx_tpcache_data_t *) cachedata.mv_data;
     
     /* validate record */
         
@@ -882,8 +889,9 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     {
         /* fetch next for dups and remove them.. if any.. */
         /* next: MDB_NEXT_DUP  - we kill this! */
+        align = 0;
         while (EXSUCCEED==(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata_delete, EDB_NEXT_DUP)))
+                    key, &cachedata_delete, EDB_NEXT_DUP, &align)))
         {
             /* delete the record, not needed, some old cache rec */
             NDRX_DUMP(log_debug, "Deleting duplicate record...", 
@@ -898,6 +906,17 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
                     break;
                 }
             }
+            
+            if (align)
+            {
+                NDRX_FREE(cachedata_delete.mv_data);
+                cachedata_delete.mv_data = NULL;
+            }
+        }
+        
+        if (align && NULL!=cachedata_delete.mv_data)
+        {
+            NDRX_FREE(cachedata_delete.mv_data);
         }
         
         if (ret!=EDB_NOTFOUND)
@@ -932,6 +951,11 @@ out:
         {
             ndrx_cache_edb_abort(cache->cachedb, txn);
         }
+    }
+
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
     }
 
     return ret;

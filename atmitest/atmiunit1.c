@@ -448,6 +448,14 @@ Ensure(test055_envs)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test056_tpimpexp)
+{
+    int ret;
+    ret=system_dbg("test056_tpimpexp/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 Ensure(test057_invlcmd)
 {
     int ret;
@@ -459,6 +467,13 @@ Ensure(test058_systemv)
 {
     int ret;
     ret=system_dbg("test058_systemv/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test059_pq)
+{
+    int ret;
+    ret=system_dbg("test059_pq/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
@@ -549,11 +564,14 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test053_logoff);
     add_test(suite,test054_svwrap);
     add_test(suite,test055_envs);
+    add_test(suite,test056_tpimpexp);
     add_test(suite,test057_invlcmd);
     
 #ifdef EX_USE_SYSVQ
     add_test(suite, test058_systemv);
 #endif
+    
+    add_test(suite, test059_pq);
     
     return suite;
 }
