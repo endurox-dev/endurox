@@ -186,8 +186,14 @@ $ sudo sysctl -w fs.mqueue.msgsize_max=1049600
 # Max number of queues for user
 $ sudo sysctl -w fs.mqueue.queues_max=10000
 
+# persist the values
+$ sysctl -p
+
 # Apply kernel parameters now
 $ sudo sysctl --system
+
+# to check the values, use (print all) and use grep to find:
+$ sudo sysctl -a | grep msgsize_max
 ---------------------------------------------------------------------
 
 ==== Setting System V queue limits
@@ -204,6 +210,9 @@ $ sudo sysctl -w kernel.msgmax=1049600
 
 # default max size of queue (bytes), ~10M should be fine
 $ sudo sysctl -w kernel.msgmnb=104960000
+
+# persist the values
+$ sudo sysctl -p
 
 # Apply kernel parameters now
 $ sudo sysctl --system
