@@ -296,7 +296,6 @@ expublic char *ndrx_some_func(int arg1, char *arg2)
 
 --------------------------------------------------------------------------------
 
-
 === Reserved identifier prefixes
 
 As the C language do not have prefixes like for high level languages (Java, C#, etc),
@@ -875,12 +874,45 @@ see msgrcv(), msgsnd() system calls) does not offer any timeout control and
 secondly no form of polling on multiple queues are allowed. Thus these additional
 work semantics must be emulated.
 
-Common approaches for XATMI clients and servers are following:
+Common approaches for *XATMI clients and servers* are following:
 
 . System V message queue IDs are mapped to string for queue names, which are
 used internally by Enduro/X. The mapping is done in two new shared memory segments
-whose size is controlled by 
+whose size is controlled by *NDRX_MSGQUEUESMAX* environment variable, see ex_env(5).
 
+. The timeouts are controlled by one new additional thread - event thread, 
+to which via unnamed pipe particular queue descriptor pointer 
+is submitted together with timeout. The thread then goes to
+sleep till the timeout. If the (main) thread which did queue
+operation is still in the queue call, it is interrupted by pthread_kill() system
+call. There are timestamp and sequence markers for each blocked System V IPC
+queue calls, so that timeout knows that man thread is in particular state, and
+have not reached the next call. If main thread has been woken up, then timeout
+is discarded once reached. Event thread performs timed poll on unnamed pipe, so
+that it is blocked till calculated next wake-up/timeout.
+
+. TODO: !!! To perform process fork
+
+For *XATMI servers* the approach is further extended, so that:
+
+. There is one more additional thread listening for admin messages (i.e. pings
+and shutdowns). Once the message is received, it is placed in internal queue for
+the main server poller queue. If main thread is in blocked state of System V queue,
+it is waken up by pthread_kill(). If main thread was doing something else, then
+before doing next System V message receive, it checks the internal message queue
+and picks up the admin message from there.
+
+. As Enduro/X provides extensions for file descriptor polling, System V interfaces
+provides this API too. The user file extensions are put in the even thread's 
+poll() structure. If event is noticed on user file descriptor, the event is sent
+to corresponding main thread and during that time, the file descriptor is removed
+from event thread, because otherwise it will signal again that there is something
+on the user FD (as main and even threads are async, and even thread might run
+faster than main thread). Thus user FD is enabled for polling only when main thread
+returns after the processing back to waiting for message.
+
+
+TODO: DIAGRAM!!!!
 
 === Poll mode
 
