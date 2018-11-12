@@ -12,8 +12,8 @@ DESCRIPTION
 Enduro/X use set of environment variables which is initial environment
 for application domain. There is set of parameters related to system,
 prefixes, Posix Queue mount points, various system limits. Next step
-to the configuration is appdomain config it self, in 'ndrxconfig.xml'
-and 'debug.conf'.
+to the configuration is application domain configuration by it self, 
+in 'ndrxconfig.xml' and 'debug.conf' (or Common-Configuration respectively).
 
 Mandatory Env. Variables
 ------------------------
@@ -39,13 +39,13 @@ Mandatory Env. Variables
     This determines the maximum number of services supported by instance.
     The less is number, then less shared memory is used. However for
     performance reason, number should be much bigger (3-4 times) than
-    actual estimated service count. Biggern number might speed up linear
+    actual estimated service count. Bigger number might speed up linear
     hashing, i.e. it will be less likely that hash will collide.
 *NDRX_SRVMAX*='MAX_SERVERS'::
     Maximum number of servers that will be supported. This affects the
     '-i' flag. Server ID. The max server id will be MAX_SERVERS-1.
 *NDRX_CONFIG*='FULL_PATH_TO_CONFIG_FILE'::
-    This shows the full path to useual ndrxconfig.xml.
+    This shows the full path to usual ndrxconfig.xml.
 *NDRX_QPATH*='QUEUE_MOUNT_POINT'::
     Full path to directory where POSIX Queue is mounted.
 *NDRX_SHMPATH*='SHARED_MEM_MOUNT_POINT'::
@@ -111,7 +111,8 @@ Mandatory Env. Variables
     Must be set if using distributed transactions.
 *NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
     Set to '1' if XA sub-system should be initialized on first transactions. 
-    If not set, then defaulted to '0', meaning initialize XA sub-system on executable startup.
+    If not set, then defaulted to '0', meaning initialize XA sub-system on 
+    executable startup.
 *NDRX_XA_FLAGS*='XADMIN_XA_FLAGS'::
     Special for XA sub-system. It is semicolon separated tags with values.
     currently tag 'RECON' is defined.
@@ -124,12 +125,13 @@ Mandatory Env. Variables
     example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
     3x attempts, sleep 100 milliseconds between attempts.
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
-    Number of semaphores used for protecting shared memory, when Enduro/X running in 'poll()' mode.
-    The minimum is recommended something about 7. Every service name in shared memory is hashed 
-    and semaphore protecting the service is calculated by modulus of NRSEMS. This affects 
-    'NDRX_IPCKEY' semaphore, by giving the more occurrences in array. The first array entry is used
-    by normal Enduro/X operations, and the others 2..1+NRSEMS is used by 'poll()' mode service
-    protection. Default value is 30.
+    Number of semaphores used for protecting shared memory, when Enduro/X 
+    running in 'poll()' mode. The minimum is recommended something about 7. 
+    Every service name in shared memory is hashed and semaphore protecting 
+    the service is calculated by modulus of NRSEMS. This affects 'NDRX_IPCKEY' 
+    semaphore, by giving the more occurrences in array. The first array entry 
+    is used by normal Enduro/X operations, and the others 2..1+NRSEMS is 
+    used by 'poll()' mode service protection. Default value is 30.
 *NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
     Max number of servers can advertise same service. This is used only in 
     'poll()' and 'SystemV' mode.
@@ -212,6 +214,27 @@ Mandatory Env. Variables
     For example if booting something like Tomcat app server, the admin TCP ports
     can be adjusted by this environment variable in order to avoid conflicts for
     booting multiple instances.
+*NDRX_SVQREADERSMAX*='MAX_SIMULTANEOUS_READERS'::
+    This configuration parameter set the maximum parallel readers for System V
+    to Posix queues mapping tables. The number is used for read-write locks,
+    thus the number sets the simultaneous readers, but during that time the
+    write thread needs to wait for all readers to finish up the mapping when
+    the writer will step in and all readers will wait. If the number is bigger
+    read will be performed better when many processes are used, but that could
+    lead to write starvation, and writes (opening queues) may become slow.
+    System V queues acquires one more semaphore resource from the *NDRX_IPCKEY*+1.
+    Thus this semaphore is used read/write mode to protect the SystemV-to-Posix
+    and Posix-to-SystemV mapping tables.
+    The default value for this parameter is *50*.
+'NDRX_MSGQUEUESMAX'='MAX_IPC_QUEUES'::
+    Max number of queues that can be mapped to System V sub-system. This parameter
+    defines size for two shared memory chunks which names are '<NDRX_QPREFIX>,shm,p2s'
+    and '<NDRX_QPREFIX>,shm,s2p'. The number defines number of queue entries in
+    the table. The bigger the number, the better hashing is got and lookup is
+    quicker, but more memory is used. The minimum number shall be equal to the
+    number of queues that will be used on the system, but recommended number is
+    something as twice it. Each queue entry requires about 168 bytes.
+    The default value for this parameter is *20000*.
 
 EXAMPLE
 -------

@@ -15,16 +15,28 @@ on FreeBSD 10.3 on amd64 machine. Default FreeBSD C/C++ compiler is used.
 This manual includes basic installation of Enduro/X which does not include building of
 documentation and does not use GPG-ME encryption for bridges.
 
+== Operating System Configuration
+
+For OS configuration settings 
+see ex_adminman(guides)(Enduro/X Administration Manual, Setup System chapter).
+This step is mandatory be executed, before continuing.
+
 == Installation process
 
 For getting Enduro/X to work basically we need following packages:
 
 . git
+
 . cmake
+
 . flex
+
 . bison
+
 . libxml2
+
 . gcc/g++
+
 . bash
 
 === Packages to be installed
@@ -35,58 +47,6 @@ and install open source packages to local machine:
 ---------------------------------------------------------------------
 # pkg install cmake flex bison libxml2 git bash
 ---------------------------------------------------------------------
-
-=== Configuring the system
-Queue file system must be mounted when OS starts. Firstly we need a folder '/mnt/mqueue' where
-the queues are mount. And secondly we will add the automatic mount at system startup in '/etc/fstab'.
-
----------------------------------------------------------------------
-# mkdir /mnt/mqueue
-# cat << EOF >> /etc/fstab
-null    /mnt/mqueue     mqueuefs	     rw	     0	     0
-EOF
-# mount /mnt/mqueue
----------------------------------------------------------------------
-
-You also need to change the queue paramters: 
-
----------------------------------------------------------------------
-# cat << EOF >> /etc/sysctl.conf
-
-# kernel tunables for Enduro/X:
-kern.mqueue.curmq=1
-kern.mqueue.maxmq=30000
-kern.mqueue.maxmsgsize=64000
-kern.mqueue.maxmsg=1000
-
-EOF
-
-# sysctl -f /etc/sysctl.conf
----------------------------------------------------------------------
-
-For LMDB testing more semaphores shall be allowed
-
----------------------------------------------------------------------
-# cat << EOF >> /boot/loader.conf
-
-# kernel tunables for Enduro/X:
-kern.ipc.semmns=2048
-kern.ipc.semmni=500
-
-EOF
-
----------------------------------------------------------------------
-
-After chaning /boot/loader.conf, reboot of system is required.
-
-Enduor/X testing framework uses '/bin/bash' in scripting, thus we must
-get it working. Also perl is assumed to to be '/usr/bin/perl'. Thus:
----------------------------------------------------------------------
-# ln -s /usr/local/bin/bash /bin/bash
-# ln -s /usr/local/bin/perl /usr/bin/perl
----------------------------------------------------------------------
-
-*reboot* to apply new settigns (limits & mqueue mount)
 
 === Getting the source code
 For test purposes we will parepare new user for which Enduro/X will built.

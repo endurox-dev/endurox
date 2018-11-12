@@ -19,7 +19,7 @@ To configure Enduro/X you have to finish several steps.
 
 . Startup the application
 
-== Setup System Environment
+== Setup System
 
 Enduro/X supports different back-end message transports. Following mechanisms
 are available:
@@ -84,12 +84,12 @@ file names
 
 encodes following information:
 
-.Enduro/X IPC transport sub-systems
-[width="80%",cols="^2,^2,^2,^2,^2,^2,^2,^2",options="header"]
+.Enduro/X distribution file name naming conventions
+[width="80%", options="header"]
 |=========================================================
-|Product name/Version |Release |OS Name |C Compiler ID |OS Version |IPC Transport |CPU Arch |Target 
-|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode |
-|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode |
+|Product name|Version|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch|Target 
+|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode
+|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode
 |=========================================================
 
 === Linux setup
@@ -401,51 +401,288 @@ $ xadmin start -y
 
 
 Provision succeed!
+--------------------------------------------------------------------------------
+
+During the provision following directory structure was created at project root
+which is "/tmp/demo", where following data is intended to be stored:
+
+.Enduro/X distribution file name naming conventions
+[width="40%",options="header"]
+|=========================================================
+|Directory|File stored
+|ubftab|UBF field tables
+|tmlogs/rm1|transaction manager logs, sub-folder for resource manager 1
+|conf|configuration files
+|bin|program binaries (executables)
+|qdata|persistent queue data
+|tmp|temporary files like pid file, etc.
+|log|Enduro/X and user log files
+|=========================================================
+
+If demo needs to be started on AIX os, then these folders needs to be created by
+hand.
+
+Most interesting thing at the given step is configuration files. The provision
+generates following list of files in "conf" folder:
+
+.Enduro/X typical application configuration files
+[width="40%", options="header"]
+|=========================================================
+|Directory|File stored
+|app.ini|Application configuration
+|ndrxconfig.xml|Application server process configuration
+|settest1|Bash script for setting the Enduro/X environment
+|=========================================================
+
+Next chapters describe contents for each of the configuration files
+
+==== Configuration file: "app.ini" for Common-Configuration (CC) mode 
+
+This file contains global settings (which alternatively can be set as environment
+variables, see ex_env(5)) in section *[@global]*. *app.ini* also contains debug 
+configuration in section *[@debug]* (which alternatively can be configured in
+separated file, see ndrxdebug.conf(5)). The ini file is also used by other 
+Enduro/X services like persistent queues, defined in *[@queue]*. The ini files
+allows sections to inherit settings from parents sections. The sub-sections
+can be configuration at process level with *NDRX_CCTAG* env variable, or this
+can be done in *ndrxconfig.xml* at *<cctag />* XML tag for XATMI servers and
+*cctag* attribute for CPMSRV clients.
+
+The demo *app.ini* section looks like:
+
+--------------------------------------------------------------------------------
+[@global]
+NDRX_CLUSTERISED=1
+NDRX_CMDWAIT=1
+NDRX_CONFIG=${NDRX_APPHOME}/conf/ndrxconfig.xml
+NDRX_DMNLOG=${NDRX_APPHOME}/log/ndrxd.log
+NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd.pid
+NDRX_DQMAX=100
+NDRX_IPCKEY=44000
+NDRX_LDBAL=0
+NDRX_LEV=5
+NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
+NDRX_MSGMAX=100
+NDRX_MSGSIZEMAX=56000
+NDRX_NODEID=2
+NDRX_QPATH=/dev/mqueue
+NDRX_QPREFIX=/test1
+NDRX_RNDK=0myWI5nu
+NDRX_SRVMAX=10000
+NDRX_SVCMAX=20000
+NDRX_TOUT=90
+NDRX_UBFMAXFLDS=16000
+NDRX_ULOG=${NDRX_APPHOME}/log
+FIELDTBLS=Exfields
+FLDTBLDIR=${NDRX_APPHOME}/ubftab
+
+; Environment for Transactional Queue
+[@global/RM1TMQ]
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=${NDRX_APPHOME}/qdata
+NDRX_XA_CLOSE_STR=${NDRX_APPHOME}/qdata
+NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+; dylib needed for osx
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_LAZY_INIT=0
+
+[@debug]
+; * - goes for all binaries not listed bellow
+*= ndrx=5 ubf=1 tp=5 file=
+xadmin= ndrx=5 ubf=1 tp=5 file=${NDRX_APPHOME}/log/xadmin.log
+ndrxd= ndrx=5 ubf=1 tp=5 file=${NDRX_APPHOME}/log/ndrxd.log
+
+; Queue definitions goes here, see man q.conf(5) for syntax
+[@queue]
+; Default manual queue (reserved name '@'), unknown queues are created based on this template:
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+
+[@queue/RM1TMQ]
+; Sample queue (this one is automatic, sends messages to target service)
+TESTQ1=svcnm=TESTSVC1,autoq=y,tries=3,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=5,memonly=n,mode=fifo
+--------------------------------------------------------------------------------
+
+The above also describes the configuration for Resource Manager 1 - which is used
+by persistent message queue. The Resource manager settings applies at global
+level and one process may only work with one RM, thus processes operating with
+particular Resource Manager, shall use CCTAG "RM1TMQ".
+
+==== Configuration file: "ndrxconfig.xml" for demo process descriptions
+
+The demo system does not include any user processes, but almost all Enduro/X
+distributed special services are configuration. The configuration of system
+processes looks almost the same as for user processes, thus this gives some 
+insight on how to configure the system.
+
+--------------------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+	<!--
+		*** For more info see ndrxconfig.xml(5) man page. ***
+	-->
+	<appconfig>
+		<!-- 
+			ALL BELLOW ONES USES <sanity> periodical timer
+			Sanity check time, sec
+		-->
+		<sanity>1</sanity>
+		
+		<!--
+			Seconds in which we should send service refresh to other node.
+		-->
+		<brrefresh>5</brrefresh>
+		
+		<!-- 
+			Do process reset after 1 sec 
+		-->
+		<restart_min>1</restart_min>
+		
+		<!-- 
+			If restart fails, then boot after +5 sec of previous wait time
+		-->
+		<restart_step>1</restart_step>
+		
+		<!-- 
+			If still not started, then max boot time is a 30 sec. 
+		-->
+		<restart_max>5</restart_max>
+		
+		<!--  
+			<sanity> timer, usage end
+		-->
+		
+		<!-- 
+		Time (seconds) after attach when program will start do sanity & respawn checks,
+		starts counting after configuration load 
+		-->
+		<restart_to_check>20</restart_to_check>
+		
+		
+		<!-- 
+			Setting for pq command, should ndrxd collect service 
+			queue stats automatically If set to Y or y, 
+			then queue stats are on. Default is off.
+		-->
+		<gather_pq_stats>Y</gather_pq_stats>
+
+	</appconfig>
+	<defaults>
+
+		<min>1</min>
+		<max>2</max>
+		<!-- 
+			Kill the process which have not started in <start_max> time
+		-->
+		<autokill>1</autokill>
+		
+		<!-- 
+			The maximum time while process can hang in 'starting' state i.e.
+			have not completed initialization, sec X <= 0 = disabled  
+		-->
+		<start_max>10</start_max>
+		
+		<!--
+			Ping server in every X seconds (step is <sanity>).
+		-->
+		<pingtime>100</pingtime>
+		
+		<!--
+			Max time in seconds in which server must respond.
+			The granularity is sanity time.
+			X <= 0 = disabled 
+		-->
+		<ping_max>800</ping_max>
+		
+		<!--
+			Max time to wait until process should exit on shutdown
+			X <= 0 = disabled 
+		-->
+		<end_max>10</end_max>
+		
+		<!-- 
+			Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+			to process until it have been terminated.
+		-->
+		<killtime>1</killtime>
+		
+	</defaults>
+	<servers>
+		<server name="cconfsrv">
+			<min>2</min>
+			<max>2</max>
+			<srvid>1</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/cconfsrv.log -r</sysopt>
+		</server>
+		<server name="tpevsrv">
+			<min>2</min>
+			<max>2</max>
+			<srvid>20</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/tpevsrv.log -r</sysopt>
+		</server>
+		<server name="tmsrv">
+			<min>3</min>
+			<max>3</max>
+			<srvid>40</srvid>
+			<cctag>RM1TMQ</cctag>
+			<sysopt>-e ${NDRX_APPHOME}/log/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/tmlogs/rm1</sysopt>
+		</server>
+		<server name="tmqueue">
+			<min>1</min>
+			<max>1</max>
+			<srvid>60</srvid>
+			<cctag>RM1TMQ</cctag>
+			<sysopt>-e ${NDRX_APPHOME}/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1</sysopt>
+		</server>
+		<server name="tpbridge">
+			<min>1</min>
+			<max>1</max>
+			<srvid>150</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/tpbridge_2.log -r</sysopt>
+			<appopt>-f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30</appopt>
+		</server>
+		<server name="cpmsrv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>9999</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/cpmsrv.log -r -- -k3 -i1</sysopt>
+		</server>
+	</servers>
+	<!-- 
+		Client section 
+	-->
+	<clients>
+		<!--
+			Test parameter passing to process 
+			- To list clients:$ xadmin pc
+			- To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
+			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
+		-->
+		<client cmdline="your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
+			<exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_APPHOME}/log/testbin-1.log"/>
+			<exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_APPHOME}/log/testbin-3.log"/>
+		</client>
+		<client cmdline="your_test_binary2.sh -t ${NDRX_CLTTAG}">
+			<exec tag="TAG3" autostart="Y" log="${NDRX_APPHOME}/log/testbin2-1.log"/>
+		</client>
+	</clients>
+</endurox>
 
 --------------------------------------------------------------------------------
 
+The above configuration includes the maximum settings which are by default on
+from the provision script. This includes configuration servers (*cconfsrv(8)*) -
+which allows to download the configuration from ini files by standard *tpcall(3)*
+command. Then it also includes event server, persistent queue and transaction
+manager for persistent queue. Bridge connection, configured as active (client)
+side is added and client process monitor (*cpmsrv(8)*) is started with server id 9999. 
+Thus once *cpmsrv* is booted, it will start the processes from "<clients/>" tag.
 
 
-
-
-Vital part of Enduro/X is 'ndrxdconfig.xml' config. Full path to it is configured
-in 'NDRX_CONFIG' environment variable.
-To see how to setup see manpage of it <<NDRXCONFIG>>.
-
-=== Start Enduro/X application
-
-To start the Enduro/X application, login with Enduro/X instance user, and issue
-following command 'xadmin start', for example:
-
---------------------------------------------------------------------------------
-$ xadmin start -y
-ndrxd PID (from PID file): 25037
-exec tpevsrv -k 0myWI5nu -i 14 -e /tmp/TPEVSRV -r --  :
-	process id=26793 ... Started.
-exec tpbridge -k 0myWI5nu -i 101 -e /tmp/BRIDGE002 -r -- -n2 -r -i 0.0.0.0 -p 4433 -tP -z30 :
-	process id=26794 ... Started.
-exec tpbridge -k 0myWI5nu -i 102 -e /tmp/BRIDGE012 -r -- -n12 -r -i 10.10.10.2 -p 14433 -tA -z30 :
-	process id=26795 ... Started.
-Startup finished. 3 processes started.
---------------------------------------------------------------------------------
-
-To see all commands available by 'xadmin' (xa) see manpage of it <<XADMIN>>.
-
-=== Recovery from crashed local ATMI monitor
-
-Enduro/X is capable to continue with out restart in case if 'ndrxd' local ATMI
-monitor is crashed or contains invalid data structures for some reason. In this
-case administrator can do following:
-
-- $ kill -9 <ndrxd PID>
-- remove ndrxd queue, for example: $ rm /dev/mq/n00b,sys,bg,ndrxd
-- restart 'ndrxd' in learning mode, by: $ nohup ndrxd -k $NDRX_RNDK -r 
-
-=== Cluster configuration
+== Cluster configuration
 
 To setup cluster see you have to setup bridge ATMI processes on each of the machines.
 See <<TPBRIDGE>> documentation to have understanding of clustering. Sample setup of
-cluster node which activetly connects to Node 2 and waits call from Node 12 could
+cluster node which actively connects to Node 2 and waits call from Node 12 could
 look like:
 
 --------------------------------------------------------------------------------
@@ -489,7 +726,54 @@ look like:
 </endurox>
 --------------------------------------------------------------------------------
 
-=== Max message size and internal buffer sizes
+=== Starting the demo application server instance
+
+The startup is straight forward. The environment variables needs to be loaded
+either by *source* command or by dot (.) notation.
+
+--------------------------------------------------------------------------------
+$ cd /tmp/demo/conf
+$ source settest1 
+$ xadmin start -y
+Enduro/X 5.4.1, build Nov  7 2018 08:48:27, using SystemV for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 or Mavimax license for commercial use.
+
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 18037
+* ndrxd idle instance started.
+exec cconfsrv -k 0myWI5nu -i 1 -e /tmp/demo/log/cconfsrv.log -r --  :
+	process id=18041 ... Started.
+exec cconfsrv -k 0myWI5nu -i 2 -e /tmp/demo/log/cconfsrv.log -r --  :
+	process id=18045 ... Started.
+exec tpevsrv -k 0myWI5nu -i 20 -e /tmp/demo/log/tpevsrv.log -r --  :
+	process id=18049 ... Started.
+exec tpevsrv -k 0myWI5nu -i 21 -e /tmp/demo/log/tpevsrv.log -r --  :
+	process id=18053 ... Started.
+exec tmsrv -k 0myWI5nu -i 40 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18057 ... Started.
+exec tmsrv -k 0myWI5nu -i 41 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18072 ... Started.
+exec tmsrv -k 0myWI5nu -i 42 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18087 ... Started.
+exec tmqueue -k 0myWI5nu -i 60 -e /tmp/demo/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1 --  :
+	process id=18102 ... Started.
+exec tpbridge -k 0myWI5nu -i 150 -e /tmp/demo/log/tpbridge_2.log -r -- -f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30 :
+	process id=18137 ... Started.
+exec cpmsrv -k 0myWI5nu -i 9999 -e /tmp/demo/log/cpmsrv.log -r -- -k3 -i1 --  :
+	process id=18146 ... Started.
+Startup finished. 10 processes started.
+--------------------------------------------------------------------------------
+
+The application instance is started!
+
+== Max message size and internal buffer sizes
 
 Starting from Enduro/X version 5.1+, the max message size what can be transported
 over the XATMI sub-system is limited to the operating system's queue settings.
@@ -523,7 +807,7 @@ environment before app boot. Also system settings must be checked in
 '/etc/security/limits.conf' either the limit is enough - "stack" parameter.
 
 2. Set the user/system limit directly in '/etc/security/limits.conf'.
-For other operating systems, please consult with corresponding manual for chaning
+For other operating systems, please consult with corresponding manual for changing
 the message size and stack size.
 
 
@@ -611,13 +895,13 @@ This section lists additional related documents.
 .Internet resources
 - [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
 - [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
-- [[[EX_OVERVIEW]]] ex_overview.pdf
+- [[[EX_OVERVIEW]]] ex_overview(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
-- [[[EX_ENV]]] 'man 5 ex_env' or 'ex_env.pdf'
-- [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
-- [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
-- [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
-- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
+- [[[EX_ENV]]] ex_env(5)
+- [[[NDRXCONFIG]]] ndrxconfig.xml(5)
+- [[[DEBUGCONF]]] ndrxdebug.conf(5)
+- [[[XADMIN]]] xadmin(8)
+- [[[TPBRIDGE]]] tpbridge(8)
 
 [glossary]
 Glossary
