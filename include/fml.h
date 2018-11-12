@@ -171,6 +171,7 @@ extern "C" {
 #define Fielded Bisubf
 #define Fcmp Bcmp
 #define Fsubset Bsubset
+#define Fnum Bnum 
     
 /* VIEW related */
 #define Fvnull Bvnull
