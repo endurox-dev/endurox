@@ -60,7 +60,8 @@ OPTION(DEFINE_FORCEKQUEUE "Force Kqueue (BSD poll framework)" OFF)
 OPTION(DEFINE_RELEASEBUILD "Do relesae build" OFF)
 OPTION(DEFINE_FORCEEMQ "Force Emulated Message Queue" OFF)
 OPTION(DEFINE_SYSVQ "Force System V Message Queue" OFF)
-
+OPTION(DEFINE_ALIGNMENT_FORCE "Force alignment" OFF)
+OPTION(DEFINE_SANITIZE "Enable GCC/Clang Address Sanitizer (for debug)" OFF)
 
 SET (EX_ALIGNMENT_BYTES "4")
 
@@ -68,8 +69,8 @@ SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flag
 
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
-    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
-#    SET(CMAKE_C_FLAGS "-Wformat-overflow=0 ${CMAKE_C_FLAGS}")
+#    SET(CMAKE_C_FLAGS "-Wno-format-truncation -Wstringop-overflow=0 -D_DEFAULT_SOURCE=1 ${CMAKE_C_FLAGS}")
+    SET(CMAKE_C_FLAGS "-Wno-stringop-overflow -Wno-format-truncation -Wformat-overflow=0 ${CMAKE_C_FLAGS}")
 endif()
 
 # Enable release only if specified.
@@ -83,8 +84,12 @@ ELSE ()
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
 #       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-      SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
-#        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
+
+    IF (DEFINE_SANITIZE)
+        SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+    ELSE ()
+        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
+    ENDIF()
 ENDIF ()
 
 # -pthread needed for System V pthread_atfork()
@@ -92,22 +97,30 @@ SET(RT_LIB rt dl)
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
     set(EX_OS_LINUX "1")
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
-    # Enable poll only
-    IF(DEFINE_FORCEPOLL)
-        message("Linux - Using poll()")
+    # Configure backend transport
+    IF(DEFINE_SYSVQ)
+        message("Linux - forced poll()")
+        set(EX_USE_SYSVQ "1")
+    ELSEIF(DEFINE_FORCEPOLL)
+        message("Linux - forced poll()")
         set(EX_USE_POLL "1")
     ELSEIF(DEFINE_FORCEFDPOLL)
-        message("Linux - Using fdpoll()")
+        message("Linux - forced fdpoll()")
+        set(EX_USE_FDPOLL "1")
+    ELSEIF(DEFINE_FORCEEMQ)
+        message("Linux - forced emulated message q")
+        set(EX_USE_EMQ "1")
+        set(EX_USE_POLL "1")
     ELSE()
-        message("Linux - Using epoll()")
+        message("Linux - forced epoll()")
         set(EX_USE_EPOLL "1")
     ENDIF()
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 # Configure the compiler, we support XLC too..
 
-	message("No threads mode for CPM - bit slower child process exit status check...")
-	# Seems aix 7.1 does not like threads mixed with fork...
-   	set(EX_CPM_NO_THREADS "1")
+        message("No threads mode for CPM - bit slower child process exit status check...")
+        # Seems aix 7.1 does not like threads mixed with fork...
+        set(EX_CPM_NO_THREADS "1")
         set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
@@ -126,42 +139,40 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
             endif()
 	endif()
 
-    set(EX_USE_POLL "1")
+    set(EX_USE_SYSVQ "1")
     set(EX_OS_AIX "1")
-    # For AIX we do not have other options that use file system
-    # base queue registry.
-    set(USE_FS_REGISTRY "1")
 elseif(${CMAKE_OS_NAME} STREQUAL "HP-UX")
     set(EX_USE_POLL "1")
-	set(EX_OS_HPUX "1")
+    set(EX_OS_HPUX "1")
     set(NDRX_LD_LIBRARY_PATH "SHLIB_PATH")
 elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
+    set(EX_CPM_NO_THREADS "1")
     set(EX_OS_SUNOS "1")
     set(EX_USE_SYSVQ "1")
-    set(EX_USE_POLL "1")
-
-    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
-        set(EX_ALIGNMENT_BYTES "8")
-    ENDIF ()
+    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -m64")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m64")
 
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
-	# Bug #219 !!! _REENTRANT makes errno thread safe
-	SET(CMAKE_C_FLAGS "-D_REENTRANT")
-	if ("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
-            message("SUN Studio compiler (building for 64bit) ")
+    # Bug #219 !!! _REENTRANT makes errno thread safe
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_REENTRANT")
 
-            # Bug #219 !!! _REENTRANT makes errno thread safe
-            # For GNU I guess 
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -errtags -fast -m64 -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_MBR_DECLARATION -erroff=E_NO_IMPLICIT_DECL_ALLOWED")
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_BAD_PTR_INT_COMBINATION")
+    if ("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
+        # set new config for SunPro
+	SET(CMAKE_C_FLAGS "-D_REENTRANT -m64")
+        message("SUN Studio compiler (building for 64bit) ")
 
-            SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -m64")
-            # Add Sun Studio C runtime
-            SET(RT_LIB ${RT_LIB} Crun)
-	endif()
+        # Bug #219 !!! _REENTRANT makes errno thread safe
+        # For GNU I guess 
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -errtags -fast -xc99=all -erroff=E_PTR_TO_VOID_IN_ARITHMETIC ")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_MBR_DECLARATION -erroff=E_NO_IMPLICIT_DECL_ALLOWED")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_BAD_PTR_INT_COMBINATION")
+
+        # Add Sun Studio C runtime
+        SET(RT_LIB ${RT_LIB} Crun)
+    endif()
+
 elseif(${CMAKE_OS_NAME} STREQUAL "FREEBSD")
     set(RT_LIB rt)
     # seem that threading model also does not work here...
@@ -185,32 +196,34 @@ else()
 	message( FATAL_ERROR "Unsupported OS" )
 endif()
 
-IF(DEFINE_SYSVQ)
-    message("Using System V message queue")
-    set(EX_USE_SYSVQ "1")
-    unset(EX_USE_EPOLL)
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
+    set(EX_ALIGNMENT_BYTES "8")
+    set(EX_ALIGNMENT_FORCE "1")
+ENDIF ()
+
+IF (DEFINE_ALIGNMENT_FORCE)
+    set(EX_ALIGNMENT_FORCE "1")
 ENDIF()
 
-# Use emulated message queue
-IF(DEFINE_FORCEEMQ)
-    message("Using emulated message queue")
-    set(EX_USE_EMQ "1")
-    set(EX_USE_POLL "1")
+IF(EX_USE_SYSVQ)
+    set(EX_POLLER_STR   "SystemV")
+ELSEIF(EX_USE_FDPOLL)
+    set(EX_POLLER_STR   "fdpoll")
+ELSEIF(EX_USE_EMQ)
+    set(EX_POLLER_STR   "emq")
+ELSEIF(EX_USE_POLL)
+    set(EX_POLLER_STR   "poll")
+ELSEIF(EX_USE_EPOLL)
+    set(EX_POLLER_STR   "epoll")
+ELSEIF(EX_USE_KQUEUE)
+    set(EX_POLLER_STR   "kqueue")
+ELSE()
+    message( FATAL_ERROR "ERROR! Invalid queue transport backend!" )
 ENDIF()
-
-# Use emulated message queue
-IF(DEFINE_FORCEFDPOLL)
-    message("Using poll on MQ mqd_t as file descriptor")
-    set(EX_USE_FDPOLL "1")
-ENDIF()
-
-IF(DEFINE_FORCEKQUEUE)
-    message("Using Kqueue event mechanism")
-    set(EX_USE_KQUEUE "1")
-ENDIF()
-
 
 message("CMake EX_ALIGNMENT_BYTES  = ${EX_ALIGNMENT_BYTES}")
+message("Poller  = ${EX_POLLER_STR}")
+message("ALIGNMENT_FORCE  = ${EX_ALIGNMENT_FORCE}")
 
 ################################################################################
 # "Configure"
@@ -242,7 +255,11 @@ CHECK_INCLUDE_FILE("getopt.h"       HAVE_GETOPT_H)
 	
 
 # To check the size of a primitive type:
-CHECK_TYPE_SIZE("int"   SIZEOF_INT)
+CHECK_TYPE_SIZE("int"   EX_SIZEOF_INT)
+CHECK_TYPE_SIZE("long"  EX_SIZEOF_LONG)
+CHECK_TYPE_SIZE("void*"  EX_SIZEOF_VOIDPTR)
+
+MATH (EXPR EX_PLATFORM_BITS "${EX_SIZEOF_VOIDPTR} * 8")
 
 IF (DEFINE_DISABLEPSCRIPT)
     set(NDRX_DISABLEPSCRIPT "1")
@@ -327,8 +344,8 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
 ENDIF()
 
 add_subdirectory (tpevsrv)
-#add_subdirectory (tpcachesv)
-#add_subdirectory (tpcached)
+add_subdirectory (tpcachesv)
+add_subdirectory (tpcached)
 add_subdirectory (tprecover) # Special recovery server
 add_subdirectory (tpbrdcstsv) # tpbroadcast remote machine dispatcher
 add_subdirectory (ud)
@@ -353,11 +370,11 @@ add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (enctools) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing
 
-#IF(DEFINE_DISABLEDOC)
-#        message("Documentation disabled - not building")
-#ELSE (DEFINE_DISABLEDOC)
-#        add_subdirectory (doc) #  Documentation project.
-#ENDIF (DEFINE_DISABLEDOC)
+IF(DEFINE_DISABLEDOC)
+        message("Documentation disabled - not building")
+ELSE (DEFINE_DISABLEDOC)
+        add_subdirectory (doc) #  Documentation project.
+ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
@@ -480,7 +497,7 @@ set(CPACK_PACKAGE_VERSION ${VERSION})
 #set(CPACK_RPM_PACKAGE_REQUIRES "libxml2,openssl,libssl,libgpgme11")
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LO)
 message("CPack:Debug: PROJECT NAME = ${PROJECT_NAME_LO}")
-set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME_LO}-${VERSION}-${RELEASE}.${LSB_RELEASE_OUTPUT_OS}${LSB_RELEASE_OUTPUT_VER}_${CMAKE_C_COMPILER_ID}.${CMAKE_SYSTEM_PROCESSOR})
+set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME_LO}-${VERSION}-${RELEASE}.${LSB_RELEASE_OUTPUT_OS}${LSB_RELEASE_OUTPUT_VER}_${CMAKE_C_COMPILER_ID}_${EX_POLLER_STR}.${CMAKE_SYSTEM_PROCESSOR}_${EX_PLATFORM_BITS})
 message("CPack:Debug: CPACK_PACKAGE_FILE_NAME = ${CPACK_PACKAGE_FILE_NAME}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Enduro/X Middleware Platform")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION  ${CPACK_PACKAGE_DESCRIPTION})

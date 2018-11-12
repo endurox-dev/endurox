@@ -5,8 +5,8 @@ v1.0, 2015-11:
 	Initial draft
 :doctype: book
 
-About manual
-------------
+== About manual
+
 This manual describes how to build 'Enduro/X' on fresh installed Ubuntu 14.04 and Centos 6.x.
 Process includes description of kernel configuration, required package installation 
 and finally finishing all with unit test completion.
@@ -14,85 +14,20 @@ and finally finishing all with unit test completion.
 This installation manual assumes that OS user for  installation is 'user1', 
 located at '/home/user1'. The Enduro/X system will build at path '/home/user1/endurox'.
 
-== Configuring Linux Kernel parameters
+== Operating System configuration
 
-Kernel parameter configuration is needed for Enduro/X runtime. But as we plan here
-to build the system and run unit-tests, then we need a configuration for runtime.
-
-=== Security Configuration
----------------------------------------------------------------------
-$ sudo -s
-# cat << EOF >> /etc/security/limits.conf
-
-# Do not limit message Q Count.
-# Some Linux 3.x series kernels have a bug, that limits 1024 
-# queues for one system user.
-# In 2.6.x and 4.x this is fixed, to have 
-# unlimited count of queues (memory limit).
-# ealrier and later Linuxes have fixed this issue.
-*               soft    msgqueue        -1
-*               hard    msgqueue        -1
-
-# Increase the number of open files 
-*               soft    nofile  1024
-*               hard    nofile  65536
-
-EOF
-# exit
-$
----------------------------------------------------------------------
-
-=== Message Queue Configuration
-At the startup of the system needs to mount a Posix Queues folder, and needs to 
-set a appropriate limits. To do this automatically at system startup, 
-Linuxes which supports '/etc/rc.local', must add following lines before "exit 0".
-For Ubuntu 18.x+ create file from scratch (also add "exit 0" there at the end):
-
----------------------------------------------------------------------
-#!/bin/bash
-
-# Mount the /dev/mqueue
-# Not for Debian 8.x: queue is readly mounted, thus test:
-
-if [ ! -d /dev/mqueue ]; then
-	mkdir /dev/mqueue
-	mount -t mqueue none /dev/mqueue
-fi
-
-# Max Messages in Queue
-echo 10000 > /proc/sys/fs/mqueue/msg_max
-
-# Max message size, to pass unit tests, use 1M+1K
-echo 1049600 > /proc/sys/fs/mqueue/msgsize_max
-
-# Max number of queues for user
-echo 10000 > /proc/sys/fs/mqueue/queues_max
----------------------------------------------------------------------
-
-Note for Centos/RHEL/Oracle Linux 7+/Ubuntu 18 you need to give execute 
-permissions for rc.local:
-
----------------------------------------------------------------------
-# chmod +x /etc/rc.local
----------------------------------------------------------------------
-
-Load the configuartion by doing:
-
----------------------------------------------------------------------
-# /etc/rc.local
----------------------------------------------------------------------
-
-For Ubuntu 18 you may do following:
-
----------------------------------------------------------------------
-$ sudo systemctl start rc-local
-$ sudo systemctl status rc-local
-$ sudo systemctl enable rc-local
----------------------------------------------------------------------
+To get Enduro/X unit tested and running, environmental configuration is required
+see ex_adminman(guides)(Enduro/X Administration Manual, Setup System) section.
 
 == Getting the source & building
 
+This chapter describes how to install dependencies on different GNU/Linux
+flavors and later does get the source code and builds it.
+
 === OS dependency installation
+
+This chapter describes package installation commands on different Linux
+distributions.
 
 ==== System level dependencies - for Gentoo Linux
 ---------------------------------------------------------------------
@@ -165,7 +100,6 @@ Now install system depenencies
 # exit
 $
 ---------------------------------------------------------------------
-
 
 ==== System level dependencies - for Centos/RHEL/Oracle Linux 7.x
 

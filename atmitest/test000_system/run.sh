@@ -51,6 +51,7 @@ export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 
 # clean up the env for processing...
 xadmin down -y
+xadmin qrmall test000
 rm *.log 2>/dev/null
 
 # Post the event

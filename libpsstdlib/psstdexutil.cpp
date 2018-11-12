@@ -45,7 +45,7 @@
 #include <errno.h>
 
 
-extern const char ndrx_G_resource_WizardBase[];
+extern "C" const char ndrx_G_resource_WizardBase[];
 
 //Read the line from terminal
 //@return line read string
@@ -64,6 +64,14 @@ static PSInteger _exutil_getline(HPSCRIPTVM v)
 static PSInteger _exutil_getosname(HPSCRIPTVM v)
 {
     ps_pushstring(v,NDRX_BUILD_OS_NAME,-1);
+    
+    return 1;
+}
+
+//Return the compiled operating system name
+static PSInteger _exutil_getpoller(HPSCRIPTVM v)
+{
+    ps_pushstring(v,EX_POLLER_STR,-1);
     
     return 1;
 }
@@ -187,6 +195,7 @@ static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
         _DECL_FUNC(getcwd,1,_SC(".s")),
         _DECL_FUNC(getosname,1,_SC(".s")),
+        _DECL_FUNC(getpoller,1,_SC(".s")),
         _DECL_FUNC(getwizardbase,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),

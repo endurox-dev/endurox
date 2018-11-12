@@ -776,7 +776,7 @@ expublic int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
         /* parse it. JSON2UBF */
         UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, strlen(cache->keygroupmrej)*3+1024);
         
-        if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub, cache->keygroupmrej))
+        if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub, cache->keygroupmrej, NULL))
         {
             snprintf(errdet, errdetbufsz, "%s: Failed to parse json: [%s]", 
                     __func__, cache->keygroupmrej);

@@ -90,6 +90,8 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
     ndrx_tpcache_data_t *cdata;
     long revent;
     int cursor_open = EXFALSE;
+    int align;
+    char *defer_free = NULL;
     
     /* ok get db name */
     
@@ -144,8 +146,14 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
     op = EDB_FIRST;
     do
     {
+        if (defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -159,6 +167,11 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
                 NDRX_LOG(log_error, "Failed to loop over the [%s] db", cachedb);
                 break;
             }
+        }
+        
+        if (align)
+        {
+            defer_free = val.mv_data;
         }
         
         /* Validate DB rec */
@@ -242,6 +255,12 @@ out:
     {
         ndrx_cache_edb_abort(db, txn);
     }
+
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     return ret;
 }
 
@@ -263,6 +282,8 @@ exprivate int cache_dump(UBFH **pp_ub)
     int tran_started = EXFALSE;
     ndrx_tpcache_data_t *cdata;
     char *key = NULL;
+    int align;
+    char *defer_free = NULL;
     
     /* ok get db name */
     
@@ -316,12 +337,17 @@ exprivate int cache_dump(UBFH **pp_ub)
     }
     
     /* read db record */
-    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val, EXTRUE))
+    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val, EXTRUE, &align))
     {
         REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
+    if (align)
+    {
+        defer_free = val.mv_data;
+    }
+            
     /* Validate DB rec */
 
     if (val.mv_size < sizeof(ndrx_tpcache_data_t))
@@ -369,6 +395,11 @@ out:
     if (NULL!=key)
     {
         NDRX_FREE(key);
+    }
+
+    if (NULL!=defer_free)
+    {
+        NDRX_FREE(defer_free);
     }
 
     return ret;

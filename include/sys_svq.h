@@ -41,9 +41,11 @@
 #include <unistd.h>
 #include <sys/signal.h>
 #include <time.h>
+#include <sys_primitives.h>
 #include <atmi.h>
 #include <nstopwatch.h>
 #include <nstd_shm.h>
+
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
@@ -96,6 +98,9 @@ struct ndrx_svq_map
     short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
     /* put stopwatch for last create time */
     ndrx_stopwatch_t ctime;             /**< change time                */
+#ifdef EX_ALIGNMENT_FORCE
+    long padding1;                      /**< ensure that struct is padded*/
+#endif
 };
 
 /**

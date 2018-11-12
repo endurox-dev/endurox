@@ -91,6 +91,7 @@
 /*---------------------------Globals------------------------------------*/
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
+exprivate volatile int M_shutdown = EXFALSE; /**< Doing shutdown    */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -102,7 +103,6 @@ expublic int self_sreload(pm_node_t *p_pm)
 {
     int ret=EXSUCCEED;
     command_startstop_t call;
-
     
     memset(&call, 0, sizeof(call));
     
@@ -219,13 +219,12 @@ exprivate void * check_child_exit(void *arg)
     int stat_loc;
     sigset_t blockMask;
     int sig;
-    
         
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
     NDRX_LOG(log_debug, "check_child_exit - enter...");
-    for (;;)
+    while (!M_shutdown)
     {
 	int got_something = 0;
 
@@ -234,12 +233,18 @@ exprivate void * check_child_exit(void *arg)
  */
 #ifndef EX_OS_DARWIN
         NDRX_LOG(log_debug, "about to sigwait()");
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        
+        /* Wait for notification signal */
+        if (EXSUCCEED!=sigwait(&blockMask, &sig))
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
 #endif
+        if (M_shutdown)
+        {
+            break;
+        }
         
         NDRX_LOG(log_debug, "about to wait()");
         while ((chldpid = wait(&stat_loc)) >= 0)
@@ -256,11 +261,9 @@ exprivate void * check_child_exit(void *arg)
 #endif
     }
    
-/*
-    - not reached
-    NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
+    NDRX_LOG(log_debug, "check_child_exit terminated");
+    
     return NULL;
-*/
 }
 
 
@@ -371,7 +374,7 @@ expublic void ndrxd_sigchld_init(void)
 expublic void ndrxd_sigchld_uninit(void)
 {
     char *fn = "ndrxd_sigchld_uninit";
-
+    int err;
     NDRX_LOG(log_debug, "%s - enter", fn);
     
     if (!M_signal_thread_set)
@@ -386,27 +389,19 @@ expublic void ndrxd_sigchld_uninit(void)
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
-    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
+    M_shutdown = EXTRUE;
+    
+    if (EXSUCCEED!=(err=pthread_kill(M_signal_thread, SIGCHLD)))
     {
-        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(err));
     }
     else
     {
-        void * res = EXSUCCEED;
-        if (EXSUCCEED!=pthread_join(M_signal_thread, &res))
+
+        if (EXSUCCEED!=pthread_join(M_signal_thread, NULL))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
                     strerror(errno));
-        }
-
-        if (res == PTHREAD_CANCELED)
-        {
-            NDRX_LOG(log_info, "Signal thread canceled ok!")
-        }
-        else
-        {
-            NDRX_LOG(log_info, "Signal thread failed to cancel "
-                    "(should not happen!!)");
         }
     }
     
@@ -900,7 +895,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     
     /* clone our self */
-    pid = ndrx_fork();
+    pid = ndrx_fork(EXFALSE);
 
     if( pid == 0)
     {

@@ -125,7 +125,7 @@ int start_daemon_recover(void)
     /* Log filename for ndrxd */
     char *ndrxd_logfile = getenv(CONF_NDRX_DMNLOG);
     /* clone our self */
-    pid = ndrx_fork();
+    pid = ndrx_fork(EXFALSE);
     
     if( pid == 0)
     {

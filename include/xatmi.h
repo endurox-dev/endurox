@@ -61,6 +61,13 @@ extern "C" {
 #define TPEVTRAN        0x00000004 /* RFU */
 #define TPEVPERSIST	0x00000008
 
+#define TPEX_NOCHANGE       0x00000004  /**< Reject tpimport with error if 
+                                                types does not match*/
+#define TPEX_STRING         0x00000008  /**< Export buffer in base64 format */
+#define TPIMPEXP_VERSION_MIN    1 /** < import min version */
+#define TPIMPEXP_VERSION_MAX    1 /** < import / export max version */
+
+
 #define NDRX_XID_SERIAL_BUFSIZE     48 /**< Serialized size (base64) xid */
 #define NDRX_MAX_RMS                32  /**< Number of resource managers supported */
 #define TMTXFLAGS_IS_ABORT_ONLY     0x0001 /**< transaction is marked as abort only */
@@ -94,7 +101,7 @@ extern "C" {
 #define NDRX_SVC_QFMT     "%s,svc,%s"            /**< Q format in epoll mode (one q multiple servers) */
 #define NDRX_SVC_QFMT_PFX "%s,svc,"              /**< Service Q prefix */
 #define NDRX_QTYPE_SVC      2                    /**< Service Q */
-#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%hd"      /**< Q format in poll mode (use server id) */
+#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%d"       /**< Q format in poll mode (use server id) */
 #define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
 
 #define NDRX_SYS_SVC_PFX          "@"                    /**< Prefix used for system services */
@@ -732,7 +739,7 @@ extern NDRX_API void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int aut
 /* Error code - function for unsol: */
 extern NDRX_API void ndrx_ndrx_tmunsolerr_handler(char *data, long len, long flags);
 
-extern NDRX_API pid_t ndrx_fork(void);
+extern NDRX_API pid_t ndrx_fork(int chldresume);
 extern NDRX_API void ndrx_atfork_child(void);
 extern NDRX_API void ndrx_atfork_parent(void);
 extern NDRX_API void ndrx_atfork_prepare(void);

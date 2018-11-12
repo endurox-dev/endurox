@@ -155,6 +155,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     MUTEX_LOCK_V(net->sendlock);
     do
     {
+        err = 0;
         NDRX_LOG(log_debug, "Sending, len: %d, total msg: %d", 
                 size_to_send-sent, size_to_send);
         
@@ -189,6 +190,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             }
             else
             {
+                /* WARNING ! THIS MIGHT GENERATE SIGPIPE */
                 tmp_s = send(net->sock, buf+sent-net->len_pfx, 
                         size_to_send-sent, flags);
             }
@@ -1094,6 +1096,7 @@ expublic void exnet_reset_struct(exnetcon_t *net)
 expublic int exnet_net_init(exnetcon_t *net)
 {
     int ret = EXSUCCEED;
+    int err;
     
     net->d = NDRX_MALLOC(DATA_BUF_MAX);
     
@@ -1110,9 +1113,12 @@ expublic int exnet_net_init(exnetcon_t *net)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=pthread_rwlock_init(&(net->rwlock), NULL))
+    memset(&(net->rwlock), 0, sizeof(net->rwlock));
+
+    if (EXSUCCEED!=(err=pthread_rwlock_init(&(net->rwlock), NULL)))
     {
-        NDRX_LOG(log_error, "Failed to init rwlock: %s", strerror(errno));
+        NDRX_LOG(log_error, "Failed to init rwlock: %s", strerror(err));
+        userlog("Failed to init rwlock: %s", strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -1120,10 +1126,11 @@ expublic int exnet_net_init(exnetcon_t *net)
     MUTEX_VAR_INIT(net->rcvlock);
     
     /* acquire read lock */
-    if (EXSUCCEED!=pthread_rwlock_rdlock(&(net->rwlock)))
+    if (EXSUCCEED!=(err=pthread_rwlock_rdlock(&(net->rwlock))))
     {
-        userlog("Failed to acquire read lock!");
-        NDRX_LOG(log_error, "Failed to acquire read lock - exiting... !");
+        userlog("Failed to acquire read lock: %s", strerror(err));
+        NDRX_LOG(log_error, "Failed to acquire read lock - exiting...: %s",
+                                                   strerror(err));
         exit(EXFAIL);
     }
             

@@ -352,7 +352,7 @@ expublic inline  ssize_t sol_mq_timedreceive(mqd_t mqdes, char *msg_ptr,
  */
 expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
 {
-    return ndrx_sys_cmdout_test("pargs -ae %d", pid, p_re);
+    return ndrx_sys_cmdout_test("pargs -ae %d 2>/dev/null", pid, p_re);
 }
 
 /* vim: set ts=4 sw=4 et cindent: */

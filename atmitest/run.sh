@@ -67,9 +67,9 @@ popd
 kill -9 $MEMCK_PID
 
 # grep the stats, >>> LEAK found, return error
-echo "==== Leak info ====" >> test.out
+echo "---- Leak info ----" >> test.out
 cat memck.out >> test.out
-echo "===================" >> test.out
+echo "-------------------" >> test.out
 
 # Catch memory leaks...
 if [ "X`grep '>>> LEAK' memck.out`" != "X" ]; then

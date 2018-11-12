@@ -42,8 +42,8 @@
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
 
-extern int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
-extern int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+extern int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
+extern int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object);
 
 
 #endif /* UBF2EXJSON_H_ */

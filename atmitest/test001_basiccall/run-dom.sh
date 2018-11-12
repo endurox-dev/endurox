@@ -129,7 +129,7 @@ xadmin start -y || go_out 2
 
 #exit 0
 ###############################################################################
-echo "Test retart command (shall not stall...)"
+echo "Test restart command (shall not stall...)"
 ###############################################################################
 
 xadmin r -y
