@@ -1,8 +1,8 @@
 Getting Started Tutorial
 ========================
 Madars Vitolins
-v1.0, 2015-11:
-	Initial draft
+v1.1, 2018-11:
+	Updates for release 6.0 - move to provision script
 :doctype: book
 
 == About the guide
@@ -31,18 +31,7 @@ We will also need a gcc compiler to build our bankapp
 == Configuring the application environment
 
 We will run our app "app1" from new user "user1". Application domain will be 
-located in /opt/app1 folder. With following directory structure:
-
-[options="compact"]
-- /opt/app1/conf - will contain configuration files.
-- /opt/app1/src/bankcl - Enduro/X sample client process source
-- /opt/app1/src/banksv - Enduro/X sample server process sources.
-- /opt/app1/bin - for executables.
-- /opt/app1/ubftab - for tables for field defintions.
-- /opt/app1/tmp - temp dir
-- /opt/app1/log - for logging
-- /opt/app1/test - test data
-
+located in /opt/app1 folder.
 
 To create creating base environment, Enduro/X "provision" tool is used. 
 This generates base layout of application. Additional folder will be created later.
@@ -84,9 +73,23 @@ used by sample later
 
 After provision completed, add directories for source code
 ---------------------------------------------------------------------
+$ mkdir /opt/app1/test
 $ mkdir -p /opt/app1/src/bankcl
 $ mkdir -p /opt/app1/src/banksv
 ---------------------------------------------------------------------
+
+Thus the final directory structure built for the application is
+
+[options="compact"]
+- /opt/app1/conf - will contain configuration files.
+- /opt/app1/src/bankcl - Enduro/X sample client process source
+- /opt/app1/src/banksv - Enduro/X sample server process sources.
+- /opt/app1/bin - for executables.
+- /opt/app1/ubftab - for tables for field definitions.
+- /opt/app1/tmp - temp dir
+- /opt/app1/log - for logging
+- /opt/app1/test - test data
+
 
 For demo purposes the provision script have made more or less empty XATMI
 server configuration file found in */opt/app1/conf/ndrxconfig.xml*. 
@@ -118,7 +121,13 @@ ini file (/opt/app1/conf/app.ini):
 ..
 banksv= ndrx=5 ubf=0 tp=5 file=${NDRX_APPHOME}/log/BANKSV
 bankcl= ndrx=5 ubf=0 tp=5 file=${NDRX_APPHOME}/log/BANKCL
+ud= ndrx=5 ubf=0 file=${NDRX_APPHOME}/log/UD
 ---------------------------------------------------------------------
+
+To learn more about debug configuration, see ndrxdebug.conf(5) manpage, note that
+document describes both formats legacy, where separate file was used and current
+one with Common-Configuration (i.e. using ini file section).
+
 
 If at this step we try to boot an application server, it should start fine,
 except that *banksv* binary won't be found:
@@ -179,7 +188,7 @@ Required fields will be define into /opt/app1/ubftab/bank.fd with following cont
 
 ---------------------------------------------------------------------
 $/* -----------------------------------------------------------------------------
-$** Bank app field defintions for UBF buffer
+$** Bank app field definitions for UBF buffer
 $** -----------------------------------------------------------------------------
 $*/
 
@@ -361,21 +370,25 @@ processes to start (which previosly did not start because we didn't have
 `banksv' executable in bin directory.
 
 ---------------------------------------------------------------------
-$ xadmin start
-Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+
+$ xadmin tart -y
+Enduro/X 5.4.1, build Nov 12 2018 08:11:50, using SystemV for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or Mavimax's license for commercial use.
+AGPLv3 or Mavimax license for commercial use.
 
-ndrxd PID (from PID file): 2608
-Are you sure you want to start application? [Y/N]: y
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 22128
+* ndrxd idle instance started.
 exec banksv -k 0myWI5nu -i 1 -e /opt/app1/log/BANKSV -r --  :
-	process id=2617 ... Started.
+	process id=22132 ... Started.
 exec banksv -k 0myWI5nu -i 2 -e /opt/app1/log/BANKSV -r --  :
-	process id=2618 ... Started.
+	process id=22136 ... Started.
 Startup finished. 2 processes started.
 ---------------------------------------------------------------------
 
@@ -384,25 +397,28 @@ To check that our BALANCE service is advertised, we can execute command
 
 ---------------------------------------------------------------------
 $ xadmin psc
-Enduro/X v2.3.2, build Nov 16 2015 08:22:23
+Enduro/X 5.4.1, build Nov 12 2018 08:11:50, using SystemV for LINUX (64 bits)
 
 Enduro/X Middleware Platform for Distributed Transaction Processing
-Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
 
 This software is released under one of the following licenses:
-GPLv2 (or later) or Mavimax's license for commercial use.
+AGPLv3 or Mavimax license for commercial use.
 
-ndrxd PID (from PID file): 2608
+* Shared resources opened...
+* ndrxd PID (from PID file): 22128
 Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT
 -- ------------ ------------ --------- ----- ----- ----- -------- -------- -----
 1  BALANCE      BALANCE      banksv    1     0     0     0ms      0ms      AVAIL
 1  BALANCE      BALANCE      banksv    2     0     0     0ms      0ms      AVAIL
 ---------------------------------------------------------------------
 
-We see here two copies for banksv binaries running (Server ID 1 & 2). 
+We see here two copies for *banksv* binaries running (Server ID 1 & 2). 
 Both advertises "BALANCE" service.
 
 === Testing the service with "ud" command
+
 It is possible to call the service with out a client process. This is useful 
 for testing. Service can be called with `ud' utility. In which we define the 
 target service name and any additional UBF buffer fields. In our case these 
@@ -543,7 +559,6 @@ $ /opt/app1/src/bankcl/bankcl
 Account balance is: 883078058.68 USD
 ---------------------------------------------------------------------
 
-
 == Deploy "banksv" in Docker container
 
 To deploy the example files in Docker container, follow the instructions found
@@ -551,6 +566,7 @@ in endurox-docker repository: https://github.com/endurox-dev/endurox-docker
 
 
 == Conclusions
+
 From the above sample it could be seen that creating a ATMI application is 
 pretty easy and straight forward. This application was very basic, 
 just doing the call to Enduro/X service. However the same application 
@@ -571,13 +587,13 @@ This section lists additional related documents.
 .Internet resources
 - [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
 - [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
-- [[[EX_OVERVIEW]]] ex_overview.pdf
+- [[[EX_ADMINGUIDE]]] ex_adminman(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
-- [[[EX_ENV]]] 'man 5 ex_env' or 'ex_env.pdf'
-- [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
-- [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
-- [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
-- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
+- [[[EX_ENV]]] ex_env(5)
+- [[[NDRXCONFIG]]] ndrxconfig.xml(5)
+- [[[DEBUGCONF]]] ndrxdebug.conf(5)
+- [[[XADMIN]]] xadmin(8)
+- [[[TPBRIDGE]]] tpbridge(8)
 
 [glossary]
 Glossary
