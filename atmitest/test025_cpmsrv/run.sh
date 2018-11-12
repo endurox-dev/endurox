@@ -337,8 +337,11 @@ fi
 xadmin bc -t IGNORE
 sleep 10
 
+echo ">>> BEFORE STOP"
+date
 # Stop the cpmsrv (will do automatic process shutdown)...
 xadmin stop -s cpmsrv
+echo ">>> AFTER STOP"
 
 # We should have 0 now
 CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`

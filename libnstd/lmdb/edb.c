@@ -147,7 +147,9 @@ typedef SSIZE_T	ssize_t;
 #include <malloc.h>
 /* On Solaris, we need the POSIX sigwait function */
 #if defined (__sun)
+#ifndef _POSIX_PTHREAD_SEMANTICS
 # define _POSIX_PTHREAD_SEMANTICS	1
+#endif
 #endif
 #endif
 

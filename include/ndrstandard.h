@@ -171,13 +171,13 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  */	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
-	int ndrx_XgCmDEk_bufzs = N-1;\
+	int ndrx_XgCmDEk_bufzs = (N)-1;\
 	if (ndrx_I5SmWDM_len > ndrx_XgCmDEk_bufzs)\
 	{\
 		ndrx_I5SmWDM_len = ndrx_XgCmDEk_bufzs;\
 	}\
-	memcpy(X, Y, ndrx_I5SmWDM_len);\
-	X[ndrx_I5SmWDM_len]=0;\
+	memcpy((X), (Y), ndrx_I5SmWDM_len);\
+	(X)[ndrx_I5SmWDM_len]=0;\
 	}
 #endif
 
@@ -187,11 +187,11 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  */
 #define NDRX_STRNCPY(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y)+1;\
-	if (ndrx_I5SmWDM_len > N)\
+	if (ndrx_I5SmWDM_len > (N))\
 	{\
-		ndrx_I5SmWDM_len = N;\
+		ndrx_I5SmWDM_len = (N);\
 	}\
-	memcpy(X, Y, ndrx_I5SmWDM_len);\
+	memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	}
 
 /**
@@ -200,8 +200,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * The dest buffer is assumed to be large enough.
  */
 #define NDRX_STRNCPY_SRC(X, Y, N) {\
-            int ndrx_I5SmWDM_len = NDRX_STRNLEN(Y, N);\
-            memcpy(X, Y, ndrx_I5SmWDM_len);\
+        int ndrx_I5SmWDM_len = NDRX_STRNLEN((Y), (N));\
+        memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	}
 
 /**
@@ -212,12 +212,12 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * @param NRLAST_ number of bytes to copy from string to dest
  */
 #define NDRX_STRCPY_LAST_SAFE(DEST_, SRC_, NRLAST_) {\
-            int ndrx_KFWnP6Q_len = strlen(SRC_);\
-            if (ndrx_KFWnP6Q_len > NRLAST_) {\
-                NDRX_STRCPY_SAFE(DEST_, (SRC_+ (ndrx_KFWnP6Q_len - NRLAST_)) );\
-            } else {\
-                NDRX_STRCPY_SAFE(DEST_, SRC_);\
-            }\
+        int ndrx_KFWnP6Q_len = strlen(SRC_);\
+        if (ndrx_KFWnP6Q_len > (NRLAST_)) {\
+            NDRX_STRCPY_SAFE((DEST_), ((SRC_)+ (ndrx_KFWnP6Q_len - (NRLAST_))) );\
+        } else {\
+            NDRX_STRCPY_SAFE((DEST_), (SRC_));\
+        }\
 	}
 
 #ifdef EX_HAVE_STRCAT_S

@@ -1,124 +1,688 @@
 Enduro/X Administration Manual
 ==============================
 Madars Vitolins
-v1.0, 2012-12:
+v1.1, 2018-11:
 	Initial draft
 :doctype: book
 
-How to configure Enduro/X
--------------------------
+== How to configure Enduro/X
+
 To configure Enduro/X you have to finish several steps.
 
-- Have a seperate system user for each Enduro/X instance.
-- Setup System Environment (mount mq file system, configure mq params)
-- Setup environment configuration
-- Setup 'ndrxdconfig.xml'
-- Setup 'ndrxdebug.conf'
-- Startup the application
+. Have a separate system user for each Enduro/X instance.
 
+. Setup System Environment (mount mq file system, configure mq params)
 
-Setup System Environment
-------------------------
-In this chapter will be descirbed typical GNU/Linux system configuration required
-for Enduro/X. Server Posix queue paramters must be set-up:
+. Setup environment configuration
 
-Typical configuration would look like (normally you can put this in /etc/rc.local):
+. Setup basic environment (demo)
 
---------------------------------------------------------------------------------
-# Mount the /dev/mqueue
-mkdir /dev/mqueue
-mount -t mqueue none /dev/mqueue
-echo 32000 > /proc/sys/fs/mqueue/msg_max
-echo 10000 > /proc/sys/fs/mqueue/msgsize_max
-echo 10000 > /proc/sys/fs/mqueue/queues_max
---------------------------------------------------------------------------------
+. Startup the application
 
-Which means:
+== Setup System
 
-- 'msg_max' - Maximum number of messages in queue (32K)
+Enduro/X supports different back-end message transports. Following mechanisms
+are available:
 
-- 'msgsize_max' - Maximum message size, ~10KB (System limited, for example for linux 
-kernel 3.13 and later this can reach up to 10MB)
+- EPOLL (for FreeBSD it is Kqueue) over the Posix queues. This is fastest and
+most preferred transport mechanism when available. True on queue multiple
+servers mechanism is supported for different services across different XATMI
+server binaries (transport code "epoll" for GNU/Linux and "kqueue" for FreeBSD).
 
-- 'queues_max' - Maximum number of queues (10K)
+-  System V message queues, this is generally second best transport available
+on Linux and Unix operating systems. One queue multiple servers mechanism is
+available via Request Address option (rqaddr) for XATMI server. The limitation is that
+each server running on same request address *MUST* provide all services provided
+by other servers in same Request Address. This mechanism uses at-least one 
+additional thread per XATMI participant for handling message send/receive time-outs.
+In case if XATMI server, additional more thread is used for administrative message
+handling and dispatching to main server thread. Thus compiler must support
+the multi-threaded operations for user applications (transport code "SystemV").
 
-See <<MQ_OVERVIEW>> for more details about Posix queues on GNU/Linux.
+- The third option if POLL over the Posix queues. This uses round-robin approach
+for message delivery to load balanced servers. One additional thread is used
+for server process to monitor queues (transport code "poll").
 
-Also do not remember to update Enduro/X environment variables to reflect these
-settings. Variables like:
+- The forth option is emulated message queue which uses shared memory and process
+shared Posix locks to emulate the mssage queue (transport code "emq").
 
-- 'NDRX_MSGMAX'
+.Enduro/X IPC transport sub-systems
+[width="80%",cols="^2,^2,^2,^2,^2,^2",options="header"]
+|=========================================================
+|Operating System/IPC Transport|epoll |kqueue |systemv |poll |emq 
+|GNU/Linux|R |X |R |S |S 
+|FreeBSD|X |R |S |S |S 
+|IBM AIX|X |X |R |S |S 
+|Oracle Solaris|X |X |R |S |S
+|MacOS|X |X |X |X |R 
+|=========================================================
 
-- 'NDRX_MSGSIZEMAX'
+Legend:
 
-See <<EX_ENV>> for more configuration flags.
+'S' - supported.
 
-Update also should be done to system security configuration. I.e. update to
-'/etc/security/limits.conf' is required, following lines must be added:
+'R' - supported and release provided.
 
---------------------------------------------------------------------------------
+'X' - not supported.
+
+Each of these IPC transports for particular operating system requires specific
+approach for configuring the limits and other attributes for runtime.
+
+Note that transport version is built into Enduro/X distribution. Thus to change
+the IPC transport, different Enduro/X version must be installed (i.e. cannot
+be changed by parameters). As the ABI for user apps stays the same, the user
+application is not required to be rebuilt.
+
+=== Release file format
+
+The release file for Enduro/X encodes different information. For example
+file names 
+
+. endurox-5.4.1-1.ubuntu18_04_GNU_epoll.x86_64_64.deb 
+
+. endurox-5.4.1-1.SUNOS5_10_GNU_SystemV.sparc_64
+
+encodes following information:
+
+.Enduro/X distribution file name naming conventions
+[width="80%", options="header"]
+|=========================================================
+|Product name|Version|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch|Target 
+|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode
+|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode
+|=========================================================
+
+=== Linux setup
+
+In this chapter will be described typical GNU/Linux system configuration required
+for Enduro/X. Two sets of configurations are available for Linux OS. One is for
+Posix queues with epoll and another configuration is System V configuration.
+
+Kernel parameter configuration is needed for Enduro/X runtime. But as we plan here
+to build the system and run unit-tests, then we need a configuration for runtime.
+
+==== Increase OS limits
+
+---------------------------------------------------------------------
+$ sudo -s
+# cat << EOF >> /etc/security/limits.conf
+
+# Do not limit message Q Count.
+# Some Linux 3.x series kernels have a bug, that limits 1024 
+# queues for one system user.
+# In 2.6.x and 4.x this is fixed, to have 
+# unlimited count of queues (memory limit).
+# ealrier and later Linuxes have fixed this issue.
 *               soft    msgqueue        -1
 *               hard    msgqueue        -1
---------------------------------------------------------------------------------
+
+# Increase the number of open files 
+*               soft    nofile  1024
+*               hard    nofile  65536
+
+EOF
+# exit
+$
+---------------------------------------------------------------------
+
+==== Linux system setup for running in EPOLL/Posix queue mode
+
+This step request mounting of Posix queues and change Posix queue limits
+
+===== Mounting Posix queues
+
+This step does not apply to following Operating Systems - for these continue with
+next chapter:
+
+. Ubuntu 16.04 and above
+
+. Debian 8.x and above
+
+When running in e-poll mode Enduro/X needs access to virtual file system which
+provides Posix queue management. One way would be to mount it via "/etc/fstab",
+but for older system compatibility, we provide instructions that would work for
+all OSes. To do this automatically at system startup, Linuxes which supports 
+'/etc/rc.local', must add following lines before "exit 0".
+
+---------------------------------------------------------------------
+#!/bin/bash
+
+# Mount the /dev/mqueue
+# Not for Debian 8.x: queue is already mounted, thus test:
+
+if [ ! -d /dev/mqueue ]; then
+	mkdir /dev/mqueue
+	mount -t mqueue none /dev/mqueue
+fi
+
+exit 0
+---------------------------------------------------------------------
+
+Note for Centos/RHEL/Oracle Linux 7+ you need to give execute 
+permissions for rc.local:
+
+---------------------------------------------------------------------
+# chmod +x /etc/rc.local
+---------------------------------------------------------------------
+
+Load the configuration by doing:
+
+---------------------------------------------------------------------
+# /etc/rc.local
+---------------------------------------------------------------------
+
+===== Setting Posix queue limits
+
+Next step is to configure queue limits, this is done by changing Linux kernel
+parameters, in persistent way, so that new settings are applied at the OS boot.
+
+---------------------------------------------------------------------
+# Max Messages in Queue
+$ sudo sysctl -w fs.mqueue.msg_max=10000
+
+# Max message size, to pass unit tests, use 1M+1K
+$ sudo sysctl -w fs.mqueue.msgsize_max=1049600
+
+# Max number of queues for user
+$ sudo sysctl -w fs.mqueue.queues_max=10000
+
+# Apply kernel parameters now
+$ sudo sysctl --system
+---------------------------------------------------------------------
+
+==== Setting System V queue limits
+
+To pass the Enduro/X unit tests, certain queue configuration is required. Use
+following kernel settings:
+
+---------------------------------------------------------------------
+# max queues system wide, 40K should be fine
+$ sudo sysctl -w kernel.msgmni=40000
+
+# max size of message (bytes), ~1M should be fine
+$ sudo sysctl -w kernel.msgmax=1049600
+
+# default max size of queue (bytes), ~10M should be fine
+$ sudo sysctl -w kernel.msgmnb=104960000
+
+# Apply kernel parameters now
+$ sudo sysctl --system
+---------------------------------------------------------------------
+
+=== FreeBSD setup
+
+For FreeBSD only officially supported version if Posix queues, thus this operating
+system requires some settings for these IPC resources to pass the unit testing and
+also settings are generally fine for average application.
+
+==== Configuring the system
+Queue file system must be mounted when OS starts. Firstly we need a folder 
+'/mnt/mqueue' where the queues are mount. And secondly we will add the automatic 
+mount at system startup in '/etc/fstab'.
+
+---------------------------------------------------------------------
+# mkdir /mnt/mqueue
+# cat << EOF >> /etc/fstab
+null    /mnt/mqueue     mqueuefs	     rw	     0	     0
+EOF
+# mount /mnt/mqueue
+---------------------------------------------------------------------
+
+You also need to change the queue parameters: 
+
+---------------------------------------------------------------------
+# cat << EOF >> /etc/sysctl.conf
+
+# kernel tunables for Enduro/X:
+kern.mqueue.curmq=1
+kern.mqueue.maxmq=30000
+kern.mqueue.maxmsgsize=64000
+kern.mqueue.maxmsg=1000
+
+EOF
+
+# sysctl -f /etc/sysctl.conf
+---------------------------------------------------------------------
+
+For LMDB testing more semaphores shall be allowed
+
+---------------------------------------------------------------------
+# cat << EOF >> /boot/loader.conf
+
+# kernel tunables for Enduro/X:
+kern.ipc.semmns=2048
+kern.ipc.semmni=500
+
+EOF
+
+---------------------------------------------------------------------
+
+After changing /boot/loader.conf, reboot of system is required.
+
+Enduro/X testing framework uses '/bin/bash' in scripting, thus we must
+get it working. Also perl is assumed to to be '/usr/bin/perl'. Thus:
+---------------------------------------------------------------------
+# ln -s /usr/local/bin/bash /bin/bash
+# ln -s /usr/local/bin/perl /usr/bin/perl
+---------------------------------------------------------------------
+
+*reboot* to apply new settings (limits & mqueue mount)
+
+=== AIX setup
+On the other hand AIX do not require any fine tuning for System V queues, because
+it is doing automatic adjustments to queue limitations.
+
+=== Solaris setup
+
+To pass the Enduro/X unit tests on Solaris, System V queue settings must be applied.
+
+---------------------------------------------------------------------
+# cat << EOF >> /etc/system
+set msgsys:msginfo_msgmni = 10000
+set msgsys:msginfo_msgmnb = 10496000
+
+EOF
+---------------------------------------------------------------------
+
+So here 'msgmni' is maximum number of queues that can be created and 'msgmnb'
+is single queue maximum size which here is 10MB.
+
+After changing the settings, reboot the server.
 
 
-Setup environment configuration
--------------------------------
+=== MacOS setup
+
+OSX does not use require any kernel parameter changes, as emulated message queue
+is used here. Only it required that sufficient disk space is available to '/tmp'
+directory, as the memory mapped queue files will be stored there.
+
+== Setup environment configuration
+
 Enduro/X depends lot of Environment variables. See manpage of 'ex_env' (<<EX_ENV>>)
-to see all paramters that must be setup. There is also sample configuration
-provided. Normally it is expected that seperate shell script file is setup containing
-all paramters. Then to load the environment, login with Enduro/X user in, and run
+to see all parameters that must be setup. There is also sample configuration
+provided. Normally it is expected that separate shell script file is setup containing
+all parameters. Then to load the environment, login with Enduro/X user in, and run
 following command in your app dir, for example:
+
 --------------------------------------------------------------------------------
 $ cd /endurox/app/conf
 $ . setapp
 --------------------------------------------------------------------------------
 
-Setup 'ndrxdconfig.xml'
------------------------
-Vital part of Enduro/X is 'ndrxdconfig.xml' config. Full path to it is configured
-in 'NDRX_CONFIG' environment variable.
-To see how to setup see manpage of it <<NDRXCONFIG>>.
+== Setting up Enduro/X demon environment
 
-Setup 'ndrxdebug.conf'
-----------------------
-Environment variable 'NDRX_DEBUG_CONF' contains full path to debug file. 
-See <<DEBUGCONF>> for more details about 'debug.conf' setup.
+This section describes how to create a basic Enduro/X environment. Document will
+also explain the resources used by Enduro/X from the system setup and
+administrative perspective. Section will also explain the contents for each of
+the generated file, so that runtime can be manually reconstructed, which is
+usable for AIX operating system, as there "xadmin provision" command is not 
+available.
 
-Start Enduro/X application
--------------------------
-To start the Enduro/X application, login with Enduro/X instance user, and issue
-following command 'xadmin start', for example:
+=== Creating default runtime and starting it up
+
+To create generic runtime with Enduro/X "stock" servers processes, use following
+command:
 
 --------------------------------------------------------------------------------
+$ xadmin provision  -d
+To control debug output, set debugconfig file path in $NDRX_DEBUG_CONF
+N:NDRX:4:00000000:    0:7fc81a75c900:000:20181110:113655631:plugins_load:inbase.c:0180:No plugins defined by NDRX_PLUGINS env variable
+N:NDRX:5:00000000:    0:7fc81a75c900:000:20181110:113655631:cconfig_load:config.c:0429:CC tag set to: []
+N:NDRX:5:00000000:    0:7fc81a75c900:000:20181110:113655631:x_inicfg_new:inicfg.c:0114:_ndrx_inicfg_new: load_global_env: 1
+N:NDRX:5:00000000:    0:7fc81a75c900:000:20181110:113655631:ig_load_pass:config.c:0396:_ndrx_cconfig_load_pass: ret: 0 is_internal: 1 G_tried_to_load: 1
+N:NDRX:5:d5d3db3a: 8685:7fc81a75c900:000:20181110:113655632:x_inicfg_new:inicfg.c:0114:_ndrx_inicfg_new: load_global_env: 0
+Enduro/X 5.4.1, build Nov  7 2018 08:48:27, using SystemV for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 or Mavimax license for commercial use.
+
+Logging to ./ULOG.20181110
+
+    ______          __                    ___  __
+   / ____/___  ____/ /_  ___________    _/_/ |/ /
+  / __/ / __ \/ __  / / / / ___/ __ \ _/_/ |   / 
+ / /___/ / / / /_/ / /_/ / /  / /_/ //_/  /   |  
+/_____/_/ /_/\__,_/\__,_/_/   \____/_/   /_/|_|  
+
+                     Provision
+
+Compiled system type....: LINUX
+
+
+*** Review & edit configuration ***
+
+ 0: Edit qpath        :Queue device path [/dev/mqueue]: 
+ 1: Edit nodeid       :Cluster node id [2]: 
+ 2: Edit qprefix      :System code (prefix/setfile name, etc) [test1]: 
+ 3: Edit timeout      :System wide tpcall() timeout, seconds [90]: 
+ 4: Edit appHome      :Application home [/tmp/demo]: 
+ 6: Edit binDir       :Executables/binaries sub-folder of Apphome [bin]: 
+ 8: Edit confDir      :Configuration sub-folder of Apphome [conf]: 
+ 9: Edit logDir       :Log sub-folder of Apphome [log]: 
+10: Edit ubfDir       :Unified Buffer Format (UBF) field defs sub-folder of Apphome [ubftab]: 
+11: Edit tempDir      :Temp sub-dir (used for pid file) [tmp]: 
+12: Edit installQ     :Configure persistent queue [y]: 
+13: Edit tmDir        :Transaction Manager Logs sub-folder of Apphome [tmlogs]: 
+14: Edit qdata        :Queue data sub-folder of Apphone [qdata]: 
+15: Edit qSpace       :Persistent queue space namme [SAMPLESPACE]: 
+16: Edit qName        :Sample persistent queue name [TESTQ1]: 
+17: Edit qSvc         :Target service for automatic queue for sample Q [TESTSVC1]: 
+18: Edit eventSv      :Install event server [y]: 
+19: Edit cpmSv        :Configure Client Process Monitor Server [y]: 
+20: Edit configSv     :Install Configuration server [y]: 
+21: Edit bridge       :Install bridge connection [y]: 
+22: Edit bridgeRole   :Bridge -> Role: Active(a) or passive(p)? [a]: 
+24: Edit ipc          :Bridge -> IP: Connect to [172.0.0.1]: 
+25: Edit port         :Bridge -> IP: Port number [21003]: 
+26: Edit otherNodeId  :Other cluster node id [2]: 
+27: Edit ipckey       :IPC Key used for System V semaphores [44000]: 
+28: Edit ldbal        :Load balance over cluster [0]: 
+29: Edit ndrxlev      :Logging: ATMI sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+30: Edit ubflev       :Logging: UBF sub-system log level 5 - highest (debug), 0 - minimum (off) [1]: 
+31: Edit tplev        :Logging: /user sub-system log level 5 - highest (debug), 0 - minimum (off) [5]: 
+32: Edit usv1         :Configure User server #1 [n]: 
+50: Edit ucl1         :Configure User client #1 [n]: 
+55: Edit addubf       :Additional UBFTAB files (comma seperated), can be empty []: 
+56: Edit msgsizemax   :Max IPC message size [56000]: 
+57: Edit msgmax       :Max IPC messages in queue [100]: 
+ndrxconfig: [/tmp/demo/conf/ndrxconfig.xml]
+appini: [/tmp/demo/conf/app.ini]
+setfile: [/tmp/demo/conf/settest1]
+
+
+To start your system, run following commands:
+$ cd /tmp/demo/conf
+$ source settest1
 $ xadmin start -y
-ndrxd PID (from PID file): 25037
-exec tpevsrv -k 0myWI5nu -i 14 -e /tmp/TPEVSRV -r --  :
-	process id=26793 ... Started.
-exec tpbridge -k 0myWI5nu -i 101 -e /tmp/BRIDGE002 -r -- -n2 -r -i 0.0.0.0 -p 4433 -tP -z30 :
-	process id=26794 ... Started.
-exec tpbridge -k 0myWI5nu -i 102 -e /tmp/BRIDGE012 -r -- -n12 -r -i 10.10.10.2 -p 14433 -tA -z30 :
-	process id=26795 ... Started.
-Startup finished. 3 processes started.
+
+
+Provision succeed!
 --------------------------------------------------------------------------------
 
-To see all commands available by 'xadmin' (xa) see manpage of it <<XADMIN>>.
+During the provision following directory structure was created at project root
+which is "/tmp/demo", where following data is intended to be stored:
 
-Recovery from crashed local ATMI monitor
-----------------------------------------
-Enduro/X is capable to continue with out restart in case if 'ndrxd' local ATMI
-monitor is crashed or contains invalid data structures for some reason. In this
-case administrator can do following:
+.Enduro/X distribution file name naming conventions
+[width="40%",options="header"]
+|=========================================================
+|Directory|File stored
+|ubftab|UBF field tables
+|tmlogs/rm1|transaction manager logs, sub-folder for resource manager 1
+|conf|configuration files
+|bin|program binaries (executables)
+|qdata|persistent queue data
+|tmp|temporary files like pid file, etc.
+|log|Enduro/X and user log files
+|=========================================================
 
-- $ kill -9 <ndrxd PID>
-- remove ndrxd queue, for example: $ rm /dev/mq/n00b,sys,bg,ndrxd
-- restart 'ndrxd' in learning mode, by: $ nohup ndrxd -k $NDRX_RNDK -r 
+If demo needs to be started on AIX os, then these folders needs to be created by
+hand.
 
-Cluster configuration
----------------------
+Most interesting thing at the given step is configuration files. The provision
+generates following list of files in "conf" folder:
+
+.Enduro/X typical application configuration files
+[width="40%", options="header"]
+|=========================================================
+|Directory|File stored
+|app.ini|Application configuration
+|ndrxconfig.xml|Application server process configuration
+|settest1|Bash script for setting the Enduro/X environment
+|=========================================================
+
+Next chapters describe contents for each of the configuration files
+
+==== Configuration file: "app.ini" for Common-Configuration (CC) mode 
+
+This file contains global settings (which alternatively can be set as environment
+variables, see ex_env(5)) in section *[@global]*. *app.ini* also contains debug 
+configuration in section *[@debug]* (which alternatively can be configured in
+separated file, see ndrxdebug.conf(5)). The ini file is also used by other 
+Enduro/X services like persistent queues, defined in *[@queue]*. The ini files
+allows sections to inherit settings from parents sections. The sub-sections
+can be configuration at process level with *NDRX_CCTAG* env variable, or this
+can be done in *ndrxconfig.xml* at *<cctag />* XML tag for XATMI servers and
+*cctag* attribute for CPMSRV clients.
+
+The demo *app.ini* section looks like:
+
+--------------------------------------------------------------------------------
+[@global]
+NDRX_CLUSTERISED=1
+NDRX_CMDWAIT=1
+NDRX_CONFIG=${NDRX_APPHOME}/conf/ndrxconfig.xml
+NDRX_DMNLOG=${NDRX_APPHOME}/log/ndrxd.log
+NDRX_DPID=${NDRX_APPHOME}/tmp/ndrxd.pid
+NDRX_DQMAX=100
+NDRX_IPCKEY=44000
+NDRX_LDBAL=0
+NDRX_LEV=5
+NDRX_LOG=${NDRX_APPHOME}/log/xadmin.log
+NDRX_MSGMAX=100
+NDRX_MSGSIZEMAX=56000
+NDRX_NODEID=2
+NDRX_QPATH=/dev/mqueue
+NDRX_QPREFIX=/test1
+NDRX_RNDK=0myWI5nu
+NDRX_SRVMAX=10000
+NDRX_SVCMAX=20000
+NDRX_TOUT=90
+NDRX_UBFMAXFLDS=16000
+NDRX_ULOG=${NDRX_APPHOME}/log
+FIELDTBLS=Exfields
+FLDTBLDIR=${NDRX_APPHOME}/ubftab
+
+; Environment for Transactional Queue
+[@global/RM1TMQ]
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=${NDRX_APPHOME}/qdata
+NDRX_XA_CLOSE_STR=${NDRX_APPHOME}/qdata
+NDRX_XA_DRIVERLIB=libndrxxaqdisks.so
+; dylib needed for osx
+NDRX_XA_RMLIB=libndrxxaqdisk.so
+NDRX_XA_LAZY_INIT=0
+
+[@debug]
+; * - goes for all binaries not listed bellow
+*= ndrx=5 ubf=1 tp=5 file=
+xadmin= ndrx=5 ubf=1 tp=5 file=${NDRX_APPHOME}/log/xadmin.log
+ndrxd= ndrx=5 ubf=1 tp=5 file=${NDRX_APPHOME}/log/ndrxd.log
+
+; Queue definitions goes here, see man q.conf(5) for syntax
+[@queue]
+; Default manual queue (reserved name '@'), unknown queues are created based on this template:
+@=svcnm=-,autoq=n,waitinit=0,waitretry=0,waitretryinc=0,waitretrymax=0,memonly=n,mode=fifo
+
+[@queue/RM1TMQ]
+; Sample queue (this one is automatic, sends messages to target service)
+TESTQ1=svcnm=TESTSVC1,autoq=y,tries=3,waitinit=1,waitretry=1,waitretryinc=2,waitretrymax=5,memonly=n,mode=fifo
+--------------------------------------------------------------------------------
+
+The above also describes the configuration for Resource Manager 1 - which is used
+by persistent message queue. The Resource manager settings applies at global
+level and one process may only work with one RM, thus processes operating with
+particular Resource Manager, shall use CCTAG "RM1TMQ".
+
+==== Configuration file: "ndrxconfig.xml" for demo process descriptions
+
+The demo system does not include any user processes, but almost all Enduro/X
+distributed special services are configuration. The configuration of system
+processes looks almost the same as for user processes, thus this gives some 
+insight on how to configure the system.
+
+--------------------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+	<!--
+		*** For more info see ndrxconfig.xml(5) man page. ***
+	-->
+	<appconfig>
+		<!-- 
+			ALL BELLOW ONES USES <sanity> periodical timer
+			Sanity check time, sec
+		-->
+		<sanity>1</sanity>
+		
+		<!--
+			Seconds in which we should send service refresh to other node.
+		-->
+		<brrefresh>5</brrefresh>
+		
+		<!-- 
+			Do process reset after 1 sec 
+		-->
+		<restart_min>1</restart_min>
+		
+		<!-- 
+			If restart fails, then boot after +5 sec of previous wait time
+		-->
+		<restart_step>1</restart_step>
+		
+		<!-- 
+			If still not started, then max boot time is a 30 sec. 
+		-->
+		<restart_max>5</restart_max>
+		
+		<!--  
+			<sanity> timer, usage end
+		-->
+		
+		<!-- 
+		Time (seconds) after attach when program will start do sanity & respawn checks,
+		starts counting after configuration load 
+		-->
+		<restart_to_check>20</restart_to_check>
+		
+		
+		<!-- 
+			Setting for pq command, should ndrxd collect service 
+			queue stats automatically If set to Y or y, 
+			then queue stats are on. Default is off.
+		-->
+		<gather_pq_stats>Y</gather_pq_stats>
+
+	</appconfig>
+	<defaults>
+
+		<min>1</min>
+		<max>2</max>
+		<!-- 
+			Kill the process which have not started in <start_max> time
+		-->
+		<autokill>1</autokill>
+		
+		<!-- 
+			The maximum time while process can hang in 'starting' state i.e.
+			have not completed initialization, sec X <= 0 = disabled  
+		-->
+		<start_max>10</start_max>
+		
+		<!--
+			Ping server in every X seconds (step is <sanity>).
+		-->
+		<pingtime>100</pingtime>
+		
+		<!--
+			Max time in seconds in which server must respond.
+			The granularity is sanity time.
+			X <= 0 = disabled 
+		-->
+		<ping_max>800</ping_max>
+		
+		<!--
+			Max time to wait until process should exit on shutdown
+			X <= 0 = disabled 
+		-->
+		<end_max>10</end_max>
+		
+		<!-- 
+			Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
+			to process until it have been terminated.
+		-->
+		<killtime>1</killtime>
+		
+	</defaults>
+	<servers>
+		<server name="cconfsrv">
+			<min>2</min>
+			<max>2</max>
+			<srvid>1</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/cconfsrv.log -r</sysopt>
+		</server>
+		<server name="tpevsrv">
+			<min>2</min>
+			<max>2</max>
+			<srvid>20</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/tpevsrv.log -r</sysopt>
+		</server>
+		<server name="tmsrv">
+			<min>3</min>
+			<max>3</max>
+			<srvid>40</srvid>
+			<cctag>RM1TMQ</cctag>
+			<sysopt>-e ${NDRX_APPHOME}/log/tmsrv-rm1.log -r -- -t1 -l${NDRX_APPHOME}/tmlogs/rm1</sysopt>
+		</server>
+		<server name="tmqueue">
+			<min>1</min>
+			<max>1</max>
+			<srvid>60</srvid>
+			<cctag>RM1TMQ</cctag>
+			<sysopt>-e ${NDRX_APPHOME}/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1</sysopt>
+		</server>
+		<server name="tpbridge">
+			<min>1</min>
+			<max>1</max>
+			<srvid>150</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/tpbridge_2.log -r</sysopt>
+			<appopt>-f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30</appopt>
+		</server>
+		<server name="cpmsrv">
+			<min>1</min>
+			<max>1</max>
+			<srvid>9999</srvid>
+			<sysopt>-e ${NDRX_APPHOME}/log/cpmsrv.log -r -- -k3 -i1</sysopt>
+		</server>
+	</servers>
+	<!-- 
+		Client section 
+	-->
+	<clients>
+		<!--
+			Test parameter passing to process 
+			- To list clients:$ xadmin pc
+			- To stop client: $ xadmin sc -t TAG1 -s SUBSECTION1
+			- To boot client: $ xadmin bc -t TAG1 -s SUBSECTION1
+		-->
+		<client cmdline="your_test_binary.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
+			<exec tag="TAG1" subsect="SUBSECTION1" autostart="Y" log="${NDRX_APPHOME}/log/testbin-1.log"/>
+			<exec tag="TAG2" subsect="SUBSECTION2" autostart="Y" log="${NDRX_APPHOME}/log/testbin-3.log"/>
+		</client>
+		<client cmdline="your_test_binary2.sh -t ${NDRX_CLTTAG}">
+			<exec tag="TAG3" autostart="Y" log="${NDRX_APPHOME}/log/testbin2-1.log"/>
+		</client>
+	</clients>
+</endurox>
+
+--------------------------------------------------------------------------------
+
+The above configuration includes the maximum settings which are by default on
+from the provision script. This includes configuration servers (*cconfsrv(8)*) -
+which allows to download the configuration from ini files by standard *tpcall(3)*
+command. Then it also includes event server, persistent queue and transaction
+manager for persistent queue. Bridge connection, configured as active (client)
+side is added and client process monitor (*cpmsrv(8)*) is started with server id 9999. 
+Thus once *cpmsrv* is booted, it will start the processes from "<clients/>" tag.
+
+
+== Cluster configuration
+
 To setup cluster see you have to setup bridge ATMI processes on each of the machines.
 See <<TPBRIDGE>> documentation to have understanding of clustering. Sample setup of
-cluster node which activetly connects to Node 2 and waits call from Node 12 could
+cluster node which actively connects to Node 2 and waits call from Node 12 could
 look like:
 
 --------------------------------------------------------------------------------
@@ -162,8 +726,54 @@ look like:
 </endurox>
 --------------------------------------------------------------------------------
 
-Max message size and internal buffer sizes
-------------------------------------------
+=== Starting the demo application server instance
+
+The startup is straight forward. The environment variables needs to be loaded
+either by *source* command or by dot (.) notation.
+
+--------------------------------------------------------------------------------
+$ cd /tmp/demo/conf
+$ source settest1 
+$ xadmin start -y
+Enduro/X 5.4.1, build Nov  7 2018 08:48:27, using SystemV for LINUX (64 bits)
+
+Enduro/X Middleware Platform for Distributed Transaction Processing
+Copyright (C) 2009-2016 ATR Baltic Ltd.
+Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.
+
+This software is released under one of the following licenses:
+AGPLv3 or Mavimax license for commercial use.
+
+* Shared resources opened...
+* Enduro/X back-end (ndrxd) is not running
+* ndrxd PID (from PID file): 18037
+* ndrxd idle instance started.
+exec cconfsrv -k 0myWI5nu -i 1 -e /tmp/demo/log/cconfsrv.log -r --  :
+	process id=18041 ... Started.
+exec cconfsrv -k 0myWI5nu -i 2 -e /tmp/demo/log/cconfsrv.log -r --  :
+	process id=18045 ... Started.
+exec tpevsrv -k 0myWI5nu -i 20 -e /tmp/demo/log/tpevsrv.log -r --  :
+	process id=18049 ... Started.
+exec tpevsrv -k 0myWI5nu -i 21 -e /tmp/demo/log/tpevsrv.log -r --  :
+	process id=18053 ... Started.
+exec tmsrv -k 0myWI5nu -i 40 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18057 ... Started.
+exec tmsrv -k 0myWI5nu -i 41 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18072 ... Started.
+exec tmsrv -k 0myWI5nu -i 42 -e /tmp/demo/log/tmsrv-rm1.log -r -- -t1 -l/tmp/demo/tmlogs/rm1 --  :
+	process id=18087 ... Started.
+exec tmqueue -k 0myWI5nu -i 60 -e /tmp/demo/log/tmqueue-rm1.log -r -- -m SAMPLESPACE -s1 --  :
+	process id=18102 ... Started.
+exec tpbridge -k 0myWI5nu -i 150 -e /tmp/demo/log/tpbridge_2.log -r -- -f -n2 -r -i 172.0.0.1 -p 21003 -tA -z30 :
+	process id=18137 ... Started.
+exec cpmsrv -k 0myWI5nu -i 9999 -e /tmp/demo/log/cpmsrv.log -r -- -k3 -i1 --  :
+	process id=18146 ... Started.
+Startup finished. 10 processes started.
+--------------------------------------------------------------------------------
+
+The application instance is started!
+
+== Max message size and internal buffer sizes
 
 Starting from Enduro/X version 5.1+, the max message size what can be transported
 over the XATMI sub-system is limited to the operating system's queue settings.
@@ -197,7 +807,7 @@ environment before app boot. Also system settings must be checked in
 '/etc/security/limits.conf' either the limit is enough - "stack" parameter.
 
 2. Set the user/system limit directly in '/etc/security/limits.conf'.
-For other operating systems, please consult with corresponding manual for chaning
+For other operating systems, please consult with corresponding manual for changing
 the message size and stack size.
 
 
@@ -285,13 +895,13 @@ This section lists additional related documents.
 .Internet resources
 - [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
 - [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
-- [[[EX_OVERVIEW]]] ex_overview.pdf
+- [[[EX_OVERVIEW]]] ex_overview(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
-- [[[EX_ENV]]] 'man 5 ex_env' or 'ex_env.pdf'
-- [[[NDRXCONFIG]]] 'man 5 ndrxconfig.xml'  or 'ndrxconfig.xml.pdf'
-- [[[DEBUGCONF]]] 'man 5 ndrxdebug.conf'  or 'ndrxdebug.conf.pdf'
-- [[[XADMIN]]] 'man 8 xadmin' or 'xadmin.pdf'
-- [[[TPBRIDGE]]] 'man 8 tpbridge' or 'tpbridge.pdf'
+- [[[EX_ENV]]] ex_env(5)
+- [[[NDRXCONFIG]]] ndrxconfig.xml(5)
+- [[[DEBUGCONF]]] ndrxdebug.conf(5)
+- [[[XADMIN]]] xadmin(8)
+- [[[TPBRIDGE]]] tpbridge(8)
 
 [glossary]
 Glossary

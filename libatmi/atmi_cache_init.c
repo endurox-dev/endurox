@@ -317,8 +317,26 @@ exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
     ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
     ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    long a_t;
+    long a_tusec;
+    long b_t;
+    long b_tusec;
+    
+    memcpy(&a_t, &ad->t, sizeof(a_t));
+    memcpy(&a_tusec, &ad->tusec, sizeof(a_tusec));
+    
+    memcpy(&b_t, &bd->t, sizeof(b_t));
+    memcpy(&b_tusec, &bd->tusec, sizeof(b_tusec));
+    
+    /* to get newer rec first, we change the compare order */
+    return ndrx_utc_cmp(&b_t, &b_tusec, &a_t, &a_tusec);
+    
+#else
     /* to get newer rec first, we change the compare order */
     return ndrx_utc_cmp(&bd->t, &bd->tusec, &ad->t, &ad->tusec);
+#endif
+    
 }
 
 /**

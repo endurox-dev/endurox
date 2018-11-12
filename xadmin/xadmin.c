@@ -139,9 +139,9 @@ cmd_mapping_t M_command_map[] =
     {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,     1,  1,  1, "Attached to ndrxd user session in progress", NULL},
     {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, "Load new configuration", NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, "Test new configuration", NULL},
-    {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 5,  5,  1,"Un-advertise service.\n"
+    {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 3,  3,  1,"Un-advertise service.\n"
                                                          "\t args: unadv -i server_id -s service_name", NULL},
-    {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 5,  5,  1,"Re-advertise service.\n"
+    {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 3,  3,  1,"Re-advertise service.\n"
                                                          "\t args: readv -i server_id -s service_name\n"
                                                          "\t might be usable if service Q was unlinked", NULL},
     {"restart", cmd_r,    EXFAIL,                1,  4,  2, "Restart app or service (invokes start & stop with same args!)", NULL},

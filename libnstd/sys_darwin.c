@@ -124,4 +124,75 @@ expublic int ndrx_sys_env_test(pid_t pid, regex_t *p_re)
     return ndrx_sys_cmdout_test("ps -p %d -wwwe", pid, p_re);
 }
 
+/**
+ * Pthreads spinlock emulation, init
+ * @param lock spinlock
+ * @param pshared (not used)
+ * @return EXSUCCEED
+ */
+expublic int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
+{
+    __asm__ __volatile__ ("" ::: "memory");
+    *lock = 0;
+    return EXSUCCEED;
+}
+
+/**
+ * Destroy spinlock (does nothing)
+ * @param lock spinlock var
+ * @return EXSUCCEED
+ */
+expublic int pthread_spin_destroy(pthread_spinlock_t *lock)
+{
+    return EXSUCCEED;
+}
+
+/**
+ * Acquire spin lock
+ * @param lock lock variable
+ * @return EXSUCCEED
+ */
+expublic int pthread_spin_lock(pthread_spinlock_t *lock)
+{
+    while (1) 
+    {
+        int i;
+        for (i=0; i < 10000; i++) 
+        {
+            if (__sync_bool_compare_and_swap(lock, 0, 1)) 
+            {
+                return EXSUCCEED;
+            }
+        }
+        sched_yield();
+    }
+    
+}
+
+/**
+ * Try lock to acquire lock
+ * @param lock lock variable
+ * @return EXSUCCEED/EBUSY
+ */
+expublic int pthread_spin_trylock(pthread_spinlock_t *lock) 
+{
+    if (__sync_bool_compare_and_swap(lock, 0, 1)) 
+    {
+        return EXSUCCEED;
+    }
+    return EBUSY;
+}
+
+/**
+ * Unlock variable
+ * @param lock spin lock variable
+ * @return EXSUCCEED
+ */
+expublic int pthread_spin_unlock(pthread_spinlock_t *lock) 
+{
+    __asm__ __volatile__ ("" ::: "memory");
+    *lock = 0;
+    return EXSUCCEED;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -140,7 +140,8 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     char cur_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
     
     ndrx_tpcached_msglist_t * exp_list = NULL;
-            
+    int align;        
+    char *defer_free = NULL;
             
     ndrx_tpcache_data_t *pdata;
     
@@ -174,8 +175,14 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     op = EDB_FIRST;
     do
     {
+        if (defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -188,6 +195,11 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                 NDRX_LOG(log_error, "Failed to loop over the [%s] db", db->cachedb);
                 break;
             }
+        }
+        
+        if (align)
+        {
+            defer_free = val.mv_data;
         }
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
@@ -284,6 +296,11 @@ out:
         ndrx_tpcached_free_list(&exp_list);
     }
 
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     return ret;
 }
 
@@ -374,6 +391,8 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     long nodeid = tpgetnodeid();
     long deleted=0, dupsdel=0;
     ndrx_tpcached_msglist_t * dup_list = NULL;
+    int align;
+    char *defer_free = NULL;
     
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
@@ -431,10 +450,17 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     i = 0;
     do
     {
+        if (NULL!=defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         NDRX_LOG(log_debug, "%s: [%s] db loop %ld, entries: %ld",  
                         __func__, db->cachedb, i, (long) stat.ms_entries);
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -449,6 +475,10 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
             }
         }
         
+        if (align)
+        {
+            defer_free = val.mv_data;
+        }
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
         NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
@@ -651,6 +681,12 @@ out:
         dsort = NULL;
     }
 
+    if (NULL!=defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
+
     return ret;
 }
 
@@ -675,7 +711,9 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     ndrx_tpcache_data_t *pdata;
     char *prvkey = NULL;
     ndrx_tpcached_msglist_t * dup_list = NULL;
-
+    int align;
+    char *defer_free = NULL;
+    
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
     
@@ -702,8 +740,14 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     i = 0;
     do
     {
+        if (defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -718,6 +762,10 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
             }
         }
         
+        if (align)
+        {
+            defer_free = val.mv_data;
+        }
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
         NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
@@ -806,6 +854,11 @@ out:
     if (tran_started)
     {
         ndrx_cache_edb_abort(db, txn);
+    }
+
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
     }
 
     return ret;

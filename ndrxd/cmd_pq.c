@@ -155,7 +155,7 @@ expublic int pq_run_santiy(int run_hist)
     struct mq_attr att;
     int avg;
     int curmsgs;
-    int *srvlist = NULL;
+    ndrx_shm_resid_t *srvlist = NULL;
     int len;
     /* the services are here: G_bridge_svc_hash - we must loop around 
      * and get every local queue stats, if queue fails to open, then assume 0
@@ -185,7 +185,7 @@ expublic int pq_run_santiy(int run_hist)
                 /* TODO: For System V we could do a direct queue lookup by qid..! */
 #if defined(EX_USE_POLL)
                 snprintf(q, sizeof(q), NDRX_SVC_QFMT_SRVID, G_sys_config.qprefix, 
-                        cur->svc_nm, srvlist[i]);
+                        cur->svc_nm, srvlist[i].resid);
                 
                 if (EXSUCCEED==ndrx_get_q_attr(q, &att))
                 {
@@ -195,14 +195,14 @@ expublic int pq_run_santiy(int run_hist)
                 /* System V approach for queues... quick & easy */
                 struct msqid_ds buf;
                 
-                if (EXSUCCEED==msgctl(srvlist[i], IPC_STAT, &buf))
+                if (EXSUCCEED==msgctl(srvlist[i].resid, IPC_STAT, &buf))
                 {
                     curmsgs+= buf.msg_qnum;
                 }
                 else
                 {
                     NDRX_LOG(log_warn, "Failed to get qid %d stats: %s",
-                            srvlist[i], strerror(errno));
+                            srvlist[i].resid, strerror(errno));
                 }
 #endif
             }

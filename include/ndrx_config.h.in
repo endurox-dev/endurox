@@ -27,6 +27,8 @@
 
 #cmakedefine EX_ALIGNMENT_BYTES @EX_ALIGNMENT_BYTES@
 
+#cmakedefine EX_ALIGNMENT_FORCE @EX_ALIGNMENT_FORCE@
+
 #cmakedefine EX_HAVE_ASPRINTF @EX_HAVE_ASPRINTF@
 
 #cmakedefine EX_HAVE_STRCAT_S @EX_HAVE_STRCAT_S@
@@ -56,6 +58,7 @@
 #cmakedefine EX_LSB_RELEASE_VER @EX_LSB_RELEASE_VER@
 
 #cmakedefine EX_LSB_RELEASE_VER_MAJOR @EX_LSB_RELEASE_VER_MAJOR@
+
 #cmakedefine EX_LSB_RELEASE_VER_MINOR @EX_LSB_RELEASE_VER_MINOR@
 
 /* Use emulated message queue: */
@@ -84,18 +87,24 @@
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 
+/* The size of `int', as computed by sizeof. */
+#define EX_SIZEOF_INT @EX_SIZEOF_INT@
+
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_INT @SIZEOF_INT@
+#define EX_SIZEOF_LONG @EX_SIZEOF_LONG@
 
 #define NDRX_VERSION   "@NDRX_VERSION_STR@"
 #define NDRX_BUILD_OS_NAME "@CMAKE_OS_NAME@"
+#define EX_POLLER_STR "@EX_POLLER_STR@"
 #define NDRX_COMPILER  "@CMAKE_C_COMPILER_ID@"
 #define NDRX_CPUARCH  "@CMAKE_SYSTEM_PROCESSOR@"
 
 #define NDRX_LD_LIBRARY_PATH "@NDRX_LD_LIBRARY_PATH@"
 
 /* PThread mode for Solaris */
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS
+#endif
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 

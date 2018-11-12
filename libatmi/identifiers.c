@@ -84,7 +84,7 @@ typedef struct prefixmap prefixmap_t;
  */
 expublic prefixmap_t M_prefixmap[] =
 {  
-    /* Qprefix format string, match off, len, q type classifier */
+    /* prefix format string, match off, len, q type classifier */
     {NDRX_NDRXD,                NULL, 0, NDRX_QTYPE_NDRXD,      "ndrxd Q"},
     {NDRX_SVC_QFMT_PFX,         NULL, 0, NDRX_QTYPE_SVC,        "service Q"},
     {NDRX_ADMIN_FMT_PFX,        NULL, 0, NDRX_QTYPE_SRVADM,     "svc admin Q"},
@@ -437,7 +437,7 @@ expublic int ndrx_myid_is_alive(TPMYID *p_myid)
 expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
 {
     
-    NDRX_LOG(lev, "=== %s ===", msg);
+    NDRX_LOG(lev, "--- %s ---", msg);
     
     NDRX_LOG(lev, "binary_name:[%s]", p_myid->binary_name);
     NDRX_LOG(lev, "pid        :%d", p_myid->pid);
@@ -457,7 +457,7 @@ expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
     {
         NDRX_LOG(lev, "cd         :%d", p_myid->cd);
     }
-    NDRX_LOG(lev, "=================");
+    NDRX_LOG(lev, "-----------------");
             
 }
 
@@ -505,14 +505,14 @@ out:
 expublic void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
 {
     
-    NDRX_LOG(lev, "=== %s ===", msg);
+    NDRX_LOG(lev, "--- %s ---", msg);
     /* I */
     NDRX_LOG(lev, "binary_name:[%s]", qdet->binary_name);
     NDRX_LOG(lev, "pid        :%d", qdet->pid);
     NDRX_LOG(lev, "contextid  :%ld", qdet->contextid);
     NDRX_LOG(lev, "typ        :%d",  qdet->qtype);
     
-    NDRX_LOG(lev, "=================");
+    NDRX_LOG(lev, "-----------------");
             
 }
 
@@ -660,7 +660,7 @@ expublic int ndrx_q_type_get(char *q)
         p++;
     }
     
-    if (NULL!=p)
+    if (NULL!=p->prefix)
     {
         ret = p->type;
         NDRX_LOG(log_debug, "[%s] matched type [%d/%s]", q, ret, p->descr);
@@ -737,7 +737,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         else if (flags & TPCONVXID)
         {
             /* Deserialize xid. */
-            atmi_xa_deserialize_xid(str, (XID *)bin);
+            atmi_xa_deserialize_xid((unsigned char *)str, (XID *)bin);
         }
         else
         {
