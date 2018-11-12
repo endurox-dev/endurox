@@ -86,6 +86,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     long size_existing=EXFAIL;
     long new_size=EXFAIL;
     char *obuftemp=NULL;
+    char *istrtemp=NULL;
 
     int type;
     char *str_val;
@@ -96,13 +97,25 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
 
-    /* TODO Check flag if base64 then decode from base64 */
-
-    NDRX_LOG(log_debug, "Parsing buffer: [%s]", istr);
-
-    if ( NULL == (root_value = exjson_parse_string_with_comments(istr)))
+    /* Check flag if base64 then decode from base64 */
+    if ( TPEX_NOCHANGE == flags )
     {
-        NDRX_LOG(log_error, "Failed to parse istr");
+        if (NULL==ndrx_base64_decode(istr, strlen(istr), (size_t*)&ilen, istrtemp))
+        {
+            NDRX_LOG(log_error, "Failed to decode CARRAY");
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        istrtemp = istr;
+    }
+
+    NDRX_LOG(log_debug, "Parsing buffer: [%s]", istrtemp);
+
+    if ( NULL == (root_value = exjson_parse_string_with_comments(istrtemp)))
+    {
+        NDRX_LOG(log_error, "Failed to parse istrtemp");
         EXFAIL_OUT(ret);
     }
     type = exjson_value_get_type(root_value);
