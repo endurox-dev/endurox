@@ -59,8 +59,7 @@ export NDRX_MSGMAX=1000
 export NDRX_DQMAX=100
 # Max message size (in bytes)
 export NDRX_MSGSIZEMAX=62000
-# Load dynamically....!
-. ~/ndrx_home
+
 # Max fields for hashing UBF
 export NDRX_UBFMAXFLDS=16000
 
@@ -74,6 +73,9 @@ export NDRX_LEV=5
 # UBFTAB
 #export FLDTBLDIR=$NDRX_APPHOME/ubftest/ubftab
 export FIELDTBLS=Exfields,test.fd
+
+# Load dynamically....!
+. ~/ndrx_home
 
 # XA SECTION
 #export ORACLE_SID=ROCKY
