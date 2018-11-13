@@ -177,20 +177,23 @@ Next step is to configure queue limits, this is done by changing Linux kernel
 parameters, in persistent way, so that new settings are applied at the OS boot.
 
 ---------------------------------------------------------------------
+$ sudo -s
+
+# cat << EOF >> /etc/sysctl.conf
+
 # Max Messages in Queue
-$ sudo sysctl -w fs.mqueue.msg_max=10000
+fs.mqueue.msg_max=10000
 
 # Max message size, to pass unit tests, use 1M+1K
-$ sudo sysctl -w fs.mqueue.msgsize_max=1049600
+fs.mqueue.msgsize_max=1049600
 
 # Max number of queues for user
-$ sudo sysctl -w fs.mqueue.queues_max=10000
+fs.mqueue.queues_max=10000
 
-# persist the values
-$ sysctl -p
+EOF
 
 # Apply kernel parameters now
-$ sudo sysctl --system
+$ sudo sysctl -f /etc/sysctl.conf
 
 # to check the values, use (print all) and use grep to find:
 $ sudo sysctl -a | grep msgsize_max
@@ -202,20 +205,27 @@ To pass the Enduro/X unit tests, certain queue configuration is required. Use
 following kernel settings:
 
 ---------------------------------------------------------------------
+
+$ sudo -s
+
+# cat << EOF >> /etc/sysctl.conf
+
 # max queues system wide, 40K should be fine
-$ sudo sysctl -w kernel.msgmni=40000
+kernel.msgmni=40000
 
 # max size of message (bytes), ~1M should be fine
-$ sudo sysctl -w kernel.msgmax=1049600
+kernel.msgmax=1049600
 
 # default max size of queue (bytes), ~10M should be fine
-$ sudo sysctl -w kernel.msgmnb=104960000
+kernel.msgmnb=104960000
+
+EOF
 
 # persist the values
-$ sudo sysctl -p
+$ sudo sysctl -f /etc/sysctl.conf
 
-# Apply kernel parameters now
-$ sudo sysctl --system
+# Check status...
+$ sudo sysctl -a | grep msgmnb
 ---------------------------------------------------------------------
 
 === FreeBSD setup
