@@ -120,7 +120,7 @@ fi
     -cN -n1 -fN 2>&1) >> ./22_testtool48.log
 
 if [ $? -ne 0 ]; then
-    echo "testtool48 failed (1)"
+    echo "testtool48 failed (2)"
     go_out 1
 fi
 
