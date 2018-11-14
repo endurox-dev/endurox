@@ -912,7 +912,9 @@ faster than main thread). Thus user FD is enabled for polling only when main thr
 returns after the processing back to waiting for message.
 
 
-TODO: DIAGRAM!!!!
+[dia, systemv_message_dispatch_mode.dia, systemv_message_dispatch_mode.png, x500]
+-------------------------------
+-------------------------------
 
 === Poll mode
 
@@ -2147,6 +2149,11 @@ command.
 
 This could be solved by doing peek into other process environment. If we find
 the unique string there - then server process is subject for killing.
+
+
+== Process forking
+
+There are special moments to take care of when operating
 
 
 == Source code management
