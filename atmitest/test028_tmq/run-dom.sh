@@ -135,6 +135,8 @@ cp q.conf.tpl q.conf
 
 set_dom1;
 xadmin stop -y
+# clean up anything left from prevoius tests...
+xadmin down -y
 # let ndrxd to finish
 sleep 2
 xadmin start -y || go_out 1
