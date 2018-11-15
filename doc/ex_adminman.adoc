@@ -328,7 +328,7 @@ $ cd /endurox/app/conf
 $ . setapp
 --------------------------------------------------------------------------------
 
-== Setting up Enduro/X demon environment
+== Setting up Enduro/X demonstration environment
 
 This section describes how to create a basic Enduro/X environment. Document will
 also explain the resources used by Enduro/X from the system setup and
