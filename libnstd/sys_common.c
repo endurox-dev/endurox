@@ -70,18 +70,18 @@
     
 /*#define SYSCOMMON_ENABLE_DEBUG - causes locks in case of invalid config,
  *      due to recursive debug init */
-#define MAX_ATFORKS         2
+#define MAX_ATFORKS         3
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
 /** Function to run before fork */
-exprivate void (*M_prepare[MAX_ATFORKS])(void) = {NULL, NULL}; 
+exprivate void (*M_prepare[MAX_ATFORKS])(void) = {NULL, NULL, NULL}; 
 /** Function to run after fork, by parent */
-exprivate void (*M_parent[MAX_ATFORKS])(void) = {NULL, NULL};
+exprivate void (*M_parent[MAX_ATFORKS])(void) = {NULL, NULL, NULL};
 /** Function to run after fork, by child */
-exprivate void (*M_child[MAX_ATFORKS])(void) = {NULL, NULL};
+exprivate void (*M_child[MAX_ATFORKS])(void) = {NULL, NULL, NULL};
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -984,7 +984,7 @@ expublic void ndrx_atfork_child(void)
  * @return for parent process child process pid is returned, for child 0 is
  *  returned.
  */
-expublic pid_t ndrx_fork(int chldresume)
+expublic pid_t ndrx_fork(void)
 {
     pid_t ret;
     int err;
@@ -996,10 +996,7 @@ expublic pid_t ndrx_fork(int chldresume)
     
     if (0==ret)
     {
-        if (chldresume)
-        {
-            ndrx_atfork_child();
-        }
+        ndrx_atfork_child();
     }
     else
     {
@@ -1014,7 +1011,7 @@ expublic pid_t ndrx_fork(int chldresume)
 /**
  * If expecting to continue to use initialized Enduro/X after forking,
  * then fork shall be done with this function.
- * @param prepare callback to paren 
+ * @param prepare callback to parent
  * @param parent parent after fork callback
  * @param child child after fork callack
  * @return EXSUCCEED/EXFAIL
@@ -1027,7 +1024,10 @@ expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
     
     for (i=0;i<MAX_ATFORKS;i++)
     {
-        if (NULL==M_prepare[i])
+        if (NULL==M_prepare[i] && 
+                NULL==M_parent[i] &&
+                NULL==M_child[i]
+            )
         {
             break;
         }

@@ -895,7 +895,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     
     /* clone our self */
-    pid = ndrx_fork(EXFALSE);
+    pid = ndrx_fork();
 
     if( pid == 0)
     {
