@@ -531,6 +531,16 @@ out:
 }
 
 /**
+ * terminate server session after fork in child process
+ * as it is not valid there.
+ */
+exprivate void childsrvuninit(void)
+{
+    NDRX_LOG(log_debug, "Server un-init in forked child thread...");
+    atmisrv_un_initialize(EXTRUE);
+}
+
+/**
  * Real processing starts here.
  * @param argc
  * @param argv
@@ -680,6 +690,13 @@ int ndrx_main(int argc, char** argv)
     
     /* As we can run even without ndrxd, then we ignore the result of send op */
     report_to_ndrxd();
+    
+    if (EXSUCCEED!=ndrx_atfork(NULL, NULL, childsrvuninit))
+    {
+        NDRX_LOG(log_error, "Failed to add atfork hanlder!");
+        userlog("Failed to add atfork hanlder!");
+        EXFAIL_OUT(ret);
+    }
 
     /* run process here! */
     if (EXSUCCEED!=(ret=sv_wait_for_request()))
