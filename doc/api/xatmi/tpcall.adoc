@@ -78,11 +78,14 @@ or flags does not allow to change the value.
 
 *TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
 
-*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+*TPESVCERR* System level service failure. Server died during the message 
+presence in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
 *TPEBLOCK* Service request queue was full and *TPNOBLOCK* flag was specified.
 

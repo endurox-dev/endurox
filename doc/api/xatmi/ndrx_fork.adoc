@@ -1,0 +1,81 @@
+NDRX_FORK(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+ndrx_fork - Fork the Enduro/X client or server
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+pid_t ndrx_fork(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+When doing forking with the XATMI binaries (either clients or servers), the special
+care shall be taken when process is about to copy it self. In case if XATMI
+server process want's to copy it self, the child copy shall close any queues and
+other resources used by parent's XATMI server. Thus one of the tasks of 
+*ndrx_fork()* is to close server resources after the forking the XATMI servers.
+
+In standard situation when client process is about to fork, it should perform 
+*tpterm(3)* then perform *ndrx_fork(3)* and do *tpinit(3)* back on either in
+parent or child or both. In this scenario standard *fork(3)* can be used too,
+if System V queues are not used.
+
+In case if for IPC transport System V queues are used, *ndrx_fork()* is mandatory
+to be used by both XATMI clients and servers, because System V uses auxiliary
+threads to support real time operations, thus before forking threads must be
+terminated, and the restored properly back for the parent process (child performs
+fresh init back on if XATMI IPC operations are used).
+
+If developer cannot replace designed *fork()* with *ndrx_fork()* (i.e. it is used
+in library), then developer may use:
+
+. *ndrx_atfork_prepare(3)* - parent calls before forking
+
+. *ndrx_atfork_parent(3)* - called by parent after forking
+
+. *ndrx_atfork_child(3)* - called by child after forking
+
+functions and either call them manually after the fork or register them with
+*pthread_atfork()* function which automatically invokes them in proper order
+when fork() call is performed.
+
+
+
+RETURN VALUE
+------------ 
+On success, *ndrx_fork()* returns 0 for child process, and pid (>0) for the parent
+process. In case of failure -1 is returned.
+
+
+ERRORS
+------
+See *fork()* system calls errors.
+
+EXAMPLE
+-------
+See *cpmsrv/cltexec.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrx_atfork_prepare(3)* *ndrx_atfork_parent(3)* *ndrx_atfork_child(3)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
