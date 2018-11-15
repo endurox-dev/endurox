@@ -891,7 +891,11 @@ have not reached the next call. If main thread has been woken up, then timeout
 is discarded once reached. Event thread performs timed poll on unnamed pipe, so
 that it is blocked till calculated next wake-up/timeout.
 
-. TODO: !!! To perform process fork
+. Special care shall be taken when process forking is required. As event thread
+is common for XATMI servers and clients, the fork by main thread will terminate
+those threads at un-determined point. Thus if new process wishes to continue
+to operate with XATMI session special approaches shall be done when forking
+Enduro/X processes. See sections in text regarding process forking.
 
 For *XATMI servers* the approach is further extended, so that:
 
@@ -918,34 +922,37 @@ returns after the processing back to waiting for message.
 
 === Poll mode
 
-Starting from Enduro/X version 3, there is support for other Posix compatible Operating
-Systems. Where possible Posix queues are used. If no Queue support built in, for example
-Apple OSX, then emulated Posix queues are used. For these platforms, the caller processes
-does choose the queue where to send the message in round-robin mode. For each service
-shared memory contains list of server IDs providing the service. In round robin mode
-the server id is selected, and caller sends the service to queue (e.g. 'dom1,svc,TESTSVC,102'
-where '102' is server id.).
+Starting from Enduro/X version 3, there is support for other Posix compatible 
+Operating Systems. Where possible Posix queues are used. If no Queue support 
+built in, for example Apple OSX, then emulated Posix queues are used. 
+For these platforms, the caller processes does choose the queue where to 
+send the message in round-robin mode. For each service shared memory 
+contains list of server IDs providing the service. In round robin mode the 
+server id is selected, and caller sends the service to
+queue (e.g. 'dom1,svc,TESTSVC,102' where '102' is server id.).
 
 [dia, poll_message_dispatch_mode.dia, poll_message_dispatch_mode.png, x450]
 -------------------------------
 -------------------------------
 
-For other unix support, mq_notify() call for each open queue is installed, by employing
-SIGUSR2. Signal handling is done in seperate thread. The main ATMI server thread is doing
-'poll()' in unnamed pipe. When event from mq_ sub-system is received, it writes the queue
-descriptor id to unnamed pipe and that makes main thread to wake up for queue processing.
-The 'poll()' for main thread supports Enduro/X extensions to add some other resource for
+For other unix support, mq_notify() call for each open queue is installed, 
+by employing SIGUSR2. Signal handling is done in separate thread. The main 
+ATMI server thread is doing 'poll()' in unnamed pipe. When event from mq_ 
+sub-system is received, it writes the queue descriptor id to unnamed pipe 
+and that makes main thread to wake up for queue processing. The 'poll()' for 
+main thread supports Enduro/X extensions to add some other resource for
 polling (e.g. socket fd.)
 
 
 == Object-API
 
-Enduro/X provides Object API functions. This is meant to be used with integration into
-programming languages and frameworks, where cooperative multi-threading is used.
-This API also is suitable for systems like Node.JS where system call, e.g. C lang call
-can result in different operating system thread. This fact can cause lot of issues, 
-for example, in cooperative multi-threading two concurrent 'tpacall()' requests can
-return results for different cooperative threads, which will cause them to drop the
+Enduro/X provides Object API functions. This is meant to be used with integration 
+into programming languages and frameworks, where cooperative multi-threading 
+is used. This API also is suitable for systems like Node.JS where system call, 
+e.g. C lang call can result in different operating system thread. This fact 
+can cause lot of issues, for example, in cooperative multi-threading two 
+concurrent 'tpacall()' requests can return results for different cooperative 
+threads, which will cause them to drop the
 response and both calls with might finish with time-out.
 
 
@@ -2153,8 +2160,35 @@ the unique string there - then server process is subject for killing.
 
 == Process forking
 
-There are special moments to take care of when operating
+There are special moments to take care of when Enduro/X process either XATMI
+client or XATMI server want's to perform forking (i.e. duplicate process).
 
+Enduro/X offers following APIs to support better forking flow:
+
+. *ndrx_fork(3)* which is wrapper for *fork()* call which includes any
+resource deallocations/allocations necessary.
+
+. Another way if stock *fork()* needs to be used, then Enduro/X supports 
+following APIs: *ndrx_atfork_prepare()* - parent calls before fork, 
+*ndrx_atfork_parent()* - parent calls after fork, *ndrx_atfork_child()* -
+child calls after fork. 
+ 
+There are three kind of issues that needs to be solved when forking. 
+
+1. In case of XATMI server process, when child process is forked, 
+any server queues must be closed to avoid memory leaks. This can be solved by
+either using *ndrx_fork(3)* or by calling *ndrx_atfork_child()*.
+
+2. If client process (or server process with threaded clients) is forked,
+then clients must be freed by *tpterm(3)* manually by developer.
+
+3. In case if System V queues are used, auxiliary threads must be terminated,
+resources released and auxiliary threads must be resumed for parent process. This
+can be solved either by using *ndrx_fork(3)*, or 
+*ndrx_atfork_prepare()*/*ndrx_atfork_parent()*/*ndrx_atfork_child()*.
+
+Functions *ndrx_atfork_prepare()*/*ndrx_atfork_parent()*/*ndrx_atfork_child()*
+can be registered with *pthread_fork()* so that library fork calls are supported.
 
 == Source code management
 This section lists notes for Git usage for Enduro/X development. Usually we
