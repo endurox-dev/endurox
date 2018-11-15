@@ -381,6 +381,7 @@ expublic int atmisrv_initialise_atmi_library(void)
     {
         G_shm_srv->srvid = G_srv_id;  
     }
+    
 out:
     return ret;
 }
@@ -424,7 +425,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
                     G_server_conf.service_array[i]->q_descr, NULL))
             {
                 NDRX_LOG(log_warn, "ndrx_epoll_ctl failed to remove fd %p from epollfd: %s", 
-                        ((void *)G_server_conf.service_array[i]->q_descr),
+                        ((void *)(long)G_server_conf.service_array[i]->q_descr),
                         ndrx_poll_strerror(ndrx_epoll_errno()));
             }
             
