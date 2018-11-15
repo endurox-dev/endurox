@@ -538,12 +538,13 @@ expublic int cpm_exec(cpm_process_t *c)
     c->dyn.was_started = EXTRUE; /* We tried to start... */
     
     /* clone our self */
-    pid = ndrx_fork(EXFALSE);
+    pid = ndrx_fork();
 
     if( pid == 0)
     {
-        /* close parent resources... Bug #176 */
-	atmisrv_un_initialize(EXTRUE);
+        /* close parent resources... Bug #176 
+         * this will be closed by ndrx_atfork handler
+	atmisrv_un_initialize(EXTRUE);*/
         
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
