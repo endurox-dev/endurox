@@ -27,11 +27,11 @@ terminated and contexts released. Thus if doing manual *fork()*, then before thi
 call, parent shall call *ndrx_atfork_prepare()* procedure. Procedure can 
 be registered with *pthread_atfork()*, passing it to 'prepare' argument.
 
-At given time if System V IPC is not used, then function does nothing once called,
-but this fact is subject of change, and in future some other tasks might be 
-required to be one by Enduro/X before process forking, thus it is recommended
-to use *ndrx_fork()*, call manually *ndrx_atfork_prepare()* or register it with
-*pthread_atfork()*
+At given time function does some logic by System V IPC, for other IPC
+no logic is executed. But this fact is subject of change, and in future releases 
+some other tasks might be required to be one by Enduro/X before process forking, 
+thus it is recommended to use *ndrx_fork()*, call manually 
+*ndrx_atfork_prepare()* or register it with *pthread_atfork()*
 
 RETURN VALUE
 ------------ 
