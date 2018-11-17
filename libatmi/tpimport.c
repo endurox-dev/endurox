@@ -98,7 +98,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     NDRX_LOG(log_debug, "%s: enter", __func__);
 
     /* Check flag if base64 then decode from base64 */
-    if ( TPEX_NOCHANGE == flags )
+    if ( TPEX_STRING == flags )
     {
         if (NULL==ndrx_base64_decode(istr, strlen(istr), (size_t*)&ilen, istrtemp))
         {
@@ -185,7 +185,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
         size_existing = EXFAIL;
     }
 
-    /* 1. check the import buffer type match with passed obuf
+    /* check the import buffer type match with passed obuf
      if types changed and no change passed, then reject import */
     if ( (NULL!=*obuf) && TPEX_NOCHANGE == flags && 0!=(strcmp(buftype,buftype_obuf)) )
     {
