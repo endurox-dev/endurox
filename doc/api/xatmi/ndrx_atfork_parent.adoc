@@ -27,7 +27,7 @@ sub-systems for parent process returns to normal operations after
 the parent's *ndrx_atfork_prepare()* and *fork()* calls.
 
 At given time function does some logic only if System V IPC is used, for others
-IPC transports it does not any logic,but this fact is subject of change, 
+IPC transports it does not any logic, but this fact is subject of change, 
 and in future releases some other tasks might be required to be done by 
 Enduro/X after process forking, thus it is recommended to use *ndrx_fork()*, 
 call manually *ndrx_atfork_parent()* or register it with *pthread_atfork()*

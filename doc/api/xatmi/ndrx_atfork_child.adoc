@@ -1,11 +1,11 @@
-NDRX_ATFORK_PARENT(3)
-=====================
+NDRX_ATFORK_CHILD(3)
+====================
 :doctype: manpage
 
 
 NAME
 ----
-ndrx_atfork_parent - Function to be executed by parent process after the fork
+ndrx_atfork_child - Function to be executed by child process after the fork
 if ndrx_fork() not used
 
 
@@ -13,7 +13,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-void ndrx_atfork_parent(void);
+void ndrx_atfork_child(void);
 
 For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
 
@@ -21,16 +21,17 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-When process is copied by *fork()* system call, *ndrx_atfork_parent()* shall be
-executed by parent process after the fork call. This ensures that Enduro/X 
-sub-systems for parent process returns to normal operations after 
-the parent's *ndrx_atfork_prepare()* and *fork()* calls.
+When process is copied by *fork()* system call, *ndrx_atfork_child()* shall be
+executed by child process after the fork call. This ensures that Enduro/X 
+sub-systems for child process cleans up any open resources. Particularly fork is 
+done by XATMI server then function deallocates any server resources
+open. *NOTE* that if any thread is doing XATMI client tasks, then *tpterm(3)*
+shall be called period fork is done.
 
-At given time function does some logic only if System V IPC is used, for others
-IPC transports it does not any logic,but this fact is subject of change, 
-and in future releases some other tasks might be required to be done by 
-Enduro/X after process forking, thus it is recommended to use *ndrx_fork()*, 
-call manually *ndrx_atfork_parent()* or register it with *pthread_atfork()*
+The logic of function is subject of change and in future releases some other 
+tasks might be required to be done by Enduro/X after process forking, 
+thus it is recommended to use *ndrx_fork()*, call manually *ndrx_atfork_chikld()* 
+or register it with *pthread_atfork()*
 
 RETURN VALUE
 ------------ 
@@ -46,7 +47,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrx_fork(3)* *ndrx_atfork_prepare(3)* *ndrx_atfork_child(3)*
+*ndrx_fork(3)* *ndrx_atfork_prepare(3)* *ndrx_atfork_parent(3)*
 
 
 COPYING
