@@ -180,7 +180,11 @@ expublic int br_report_to_ndrxd_cb(void)
  */
 expublic int poll_timer(void)
 {
+    /* run any queue left overs... */
+    br_run_q();
+    
     NDRX_LOG(log_debug, "FD=%d", G_bridge_cfg.net.sock);
+    
     return exnet_periodic();
 }
 
@@ -227,8 +231,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.nodeid = EXFAIL;
     G_bridge_cfg.timediff = 0;
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
+    G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
@@ -287,6 +292,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
             case 'P': 
                 G_bridge_cfg.threadpoolsize = atol(optarg);
+                break;
+            case 'R': 
+                G_bridge_cfg.qretries = atoi(optarg);
                 break;
             case 't': 
                 
@@ -404,6 +412,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
+    
+    NDRX_LOG(log_info, "Queue re-submit retries set to: %d", G_bridge_cfg.qretries);
     
     M_init_ok = EXTRUE;
     
