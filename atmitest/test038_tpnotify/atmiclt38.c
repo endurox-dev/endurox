@@ -177,9 +177,9 @@ int main(int argc, char** argv)
             EXFAIL_OUT(ret);
         }
         M_calls_made++;
-	if (0==i%25)
+	if (0==i%10)
 	{	
-            if (EXSUCCEED!=handle_replies(&p_ub, 50))
+            if (EXSUCCEED!=handle_replies(&p_ub, 10))
             {
                     NDRX_LOG(log_error, "handle_replies() failed");
                     EXFAIL_OUT(ret);
