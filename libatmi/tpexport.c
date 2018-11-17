@@ -68,7 +68,7 @@
  * @return 
  */
 extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, 
-        char *ibuf, long ilen, char *ostr, long *olen, long flags)
+            char *ibuf, long ilen, char *ostr, long *olen, long flags)
 {
     int ret=EXSUCCEED;
     char buftype[16+1]={EXEOS};
@@ -217,8 +217,20 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     if (strlen(serialized_string) <= *olen)
     {
         NDRX_LOG(log_debug, "Return JSON: [%s]", serialized_string);
-        NDRX_STRNCPY_SAFE(ostr, serialized_string, (*olen-1));
-        *olen = strlen(serialized_string);
+        if ( TPEX_STRING == flags )
+        {
+            NDRX_LOG(log_debug, "convert to b64");
+            if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, strlen(serialized_string), olen, ostr))
+            {
+                    NDRX_LOG(log_error, "Failed to convert to b64!");
+                    EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            NDRX_STRNCPY_SAFE(ostr, serialized_string, (*olen-1));
+            *olen = strlen(serialized_string);
+        }
     }
     else
     {
@@ -226,7 +238,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
                 strlen(serialized_string), *olen);
         EXFAIL_OUT(ret);
     }
-    
+
 out:
 
     NDRX_LOG(log_debug, "%s: return %d", __func__, ret);
