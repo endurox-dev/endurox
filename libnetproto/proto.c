@@ -282,7 +282,7 @@ static cproto_t M_bridge_refresh_x[] =
     {TBR, 0x10E1,  "mode",       OFSZ(bridge_refresh_t,mode),        EXF_INT,    XFLD, 1, 6},
     {TBR, 0x10EB,  "count",      OFSZ(bridge_refresh_t,count),       EXF_INT,    XFLD, 1, 6},
     /* We will provide integer as counter for array:  */
-    {TBR, 0x10F5,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 1, PMSGMAX, Mbridge_refresh_svc_x, 
+    {TBR, 0x10F5,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 0, PMSGMAX, Mbridge_refresh_svc_x, 
                             EXOFFSET(bridge_refresh_t,count), sizeof(bridge_refresh_svc_t)},
     {TBR, EXFAIL}
 };
