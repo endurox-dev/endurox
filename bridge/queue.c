@@ -100,7 +100,7 @@ expublic void br_run_q(void)
                     el->len, TPNOBLOCK, 0)))
             {
                 NDRX_LOG(log_error, "Failed to send message to [%s]: %s",
-                        el->destqstr);
+                        el->destqstr, tpstrerror(ret));
             }
             else
             {
