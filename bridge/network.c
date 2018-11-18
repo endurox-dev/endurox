@@ -446,7 +446,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                 /* Call service */
                 NDRX_LOG(log_debug, "About to call service...");
                 ret=br_submit_to_service((tp_command_call_t *)gen_command, 
-                        p_netmsg->call->len, NULL);
+                        p_netmsg->call->len);
                 break;
              
             /* tpreply & conversation goes via reply Q */
@@ -464,7 +464,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                  */
                 NDRX_LOG(log_debug, "Reply back to caller/bridge");
                 ret = br_submit_reply_to_q((tp_command_call_t *)gen_command, 
-                        p_netmsg->call->len, NULL);
+                        p_netmsg->call->len);
                 break;
             case ATMI_COMMAND_TPFORWARD:
                 br_dump_tp_command_call(p_netmsg->call->buf);
@@ -488,7 +488,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                         p_netmsg->call->len, NULL);
   */            
                 ret = br_submit_to_service_notif((tp_notif_call_t *)gen_command, 
-                        p_netmsg->call->len, NULL);
+                        p_netmsg->call->len);
                 
             }   
                 break;
@@ -508,7 +508,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                 ret = br_calc_clock_diff(icall);
                 break;
             case NDRXD_COM_BRREFERSH_RQ:
-                ret = br_submit_to_ndrxd(icall, call_len, NULL);
+                ret = br_submit_to_ndrxd(icall, call_len);
                 break;
             default:
                 NDRX_LOG(log_debug, "Unsupported bridge command: %d",

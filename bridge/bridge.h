@@ -43,7 +43,8 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define BR_DEFAULT_THPOOL_SIZE          5 /* Default threadpool size */
+#define BR_QRETRIES_DEFAULT             3 /**< Default number of retries    */
+#define BR_DEFAULT_THPOOL_SIZE          5 /**< Default threadpool size      */
 #define BR_THREAD_ENTRY if (!G_thread_init) \
          { \
                 if (EXSUCCEED==tpinit(NULL))\
@@ -62,26 +63,28 @@ extern "C" {
  */
 typedef struct
 {
-    int nodeid;                   /* External node id */
-    exnetcon_t net;               /* Network handler, might be client or server...  */
-    exnetcon_t *con;              /* Real working connection  */
-    char svc[XATMI_SERVICE_NAME_LENGTH+1];  /* Service name used by this bridge */
-    long long timediff;           /* Bridge time correction       */
-    int common_format;            /* Common platform format. */
-    char gpg_recipient[33];       /* PGP Encryption recipient */
-    char gpg_signer[33];          /* PGP Encryption signer */
-    int threadpoolsize;           /* Thread pool size */
-    threadpool thpool;            /* Thread pool by it self */
+    int nodeid;                   /**< External node id */
+    exnetcon_t net;               /**< Network handler, might be client or server...  */
+    exnetcon_t *con;              /**< Real working connection  */
+    char svc[XATMI_SERVICE_NAME_LENGTH+1];  /**< Service name used by this bridge */
+    long long timediff;           /**< Bridge time correction       */
+    int common_format;            /**< Common platform format. */
+    char gpg_recipient[33];       /**< PGP Encryption recipient */
+    char gpg_signer[33];          /**< PGP Encryption signer */
+    int qretries;                 /**< Queue Resubmit retries */
+    int threadpoolsize;           /**< Thread pool size */
+    threadpool thpool;            /**< Thread pool by it self */
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;
 struct in_msg
 {
     int pack_type;
-    /* char buffer[ATMI_MSG_MAX_SIZE]; */
+    char destqstr[NDRX_MAX_Q_SIZE+1];  /**< Destination queue to which sent msg */
     char *buffer;
     int len;
-    ndrx_stopwatch_t trytime;  /* Time in Q */
+    int tries;                  /**< number of attempts for sending msg to Q */
+    ndrx_stopwatch_t trytime;   /**< Time in Q                               */
     in_msg_t *prev, *next;
 };
 
@@ -116,11 +119,11 @@ extern bridge_cfg_t G_bridge_cfg;
 extern __thread int G_thread_init;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern int br_submit_to_ndrxd(command_call_t *call, int len, in_msg_t* from_q);
-extern int br_submit_to_service(tp_command_call_t *call, int len, in_msg_t* from_q);
-extern int br_submit_to_service_notif(tp_notif_call_t *call, int len, in_msg_t* from_q);
+extern int br_submit_to_ndrxd(command_call_t *call, int len);
+extern int br_submit_to_service(tp_command_call_t *call, int len);
+extern int br_submit_to_service_notif(tp_notif_call_t *call, int len);
 extern int br_got_message_from_q(char *buf, int len, char msg_type);
-extern int br_submit_reply_to_q(tp_command_call_t *call, int len, in_msg_t* from_q);
+extern int br_submit_reply_to_q(tp_command_call_t *call, int len);
     
 extern int br_process_msg(exnetcon_t *net, char *buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
@@ -131,6 +134,7 @@ extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
 extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
+extern void br_run_q(void);
 
 #ifdef	__cplusplus
 }
