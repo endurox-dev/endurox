@@ -58,7 +58,7 @@ process needs to know sender (for signing) and recipient (for encryption) refere
 OPTIONS
 -------
 *-n* 'NODE_ID'::
-Other EnduroX instance's Node ID. Numerical 1..32.
+Other Enduro/X instance's Node ID. Numerical 1..32.
 
 [*-r*]::
 Send Refresh messages to other node. If not set, other node will
@@ -112,6 +112,11 @@ Signer reference for GNU PGP scheme. Signer works if '-g' is enabled.
 [*-P* 'THREAD_POOL_SIZE']::
 This is number of worker threads for sending and receiving messages
 for/to network. The default size is 5.
+
+[*-R* 'QUEUE_RETRIES']::
+Number of attempts to send message to local queue, if on pervious attempt queue
+was full. The first attempt is done in real time, any further (if this flag allows)
+are performed with 'CONNECTION_CHECK_SEC' interval. Default value is *3*.
 
 EXIT STATUS
 -----------

@@ -116,6 +116,10 @@ set(MAN3_NAMES
         tptoutset
         #tpimport
         #tpexport
+        ndrx_fork
+        ndrx_atfork_prepare
+        ndrx_atfork_parent
+        ndrx_atfork_child
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
