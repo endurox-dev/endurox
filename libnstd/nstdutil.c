@@ -1,35 +1,36 @@
-/* 
-** NDR 'standard' common utilites
-** Enduro Execution system platform library
-**
-** @file nstdutil.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief NDR 'standard' common utilites
+ *   Enduro Execution system platform library
+ *
+ * @file nstdutil.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
@@ -97,7 +98,7 @@ expublic int ndrx_compare3(long a1, long a2, long a3, long b1, long b2, long b3)
  */
 expublic int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2)
 {
-    if (*t1 < *t2 || *t1 == *t2 && *tusec1 < *tusec2)
+    if ((*t1 < *t2) || (*t1 == *t2 && *tusec1 < *tusec2))
     {
         return -1;
     }
@@ -238,7 +239,6 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
     return ret;
 }
 
-
 /**
  * Return date/time local 
  * @param p_date - ptr to store long date, format YYYYMMDD
@@ -247,18 +247,48 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
  */
 expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
-    struct tm       *p_tm;
+    struct tm       stm;
     long            lret;
     struct timeval  timeval;
     struct timezone timezone_val;
 
     gettimeofday (&timeval, &timezone_val);
-    p_tm = localtime(&timeval.tv_sec);
-    *p_time = 10000L*p_tm->tm_hour+100*p_tm->tm_min+1*p_tm->tm_sec;
-    *p_date = 10000L*(1900 + p_tm->tm_year)+100*(1+p_tm->tm_mon)+1*(p_tm->tm_mday);
+    
+    localtime_r(&timeval.tv_sec, &stm);
+    
+    *p_time = 10000L*stm.tm_hour+100*stm.tm_min+1*stm.tm_sec;
+    *p_date = 10000L*(1900 + stm.tm_year)+100*(1+stm.tm_mon)+1*(stm.tm_mday);
     *p_usec = timeval.tv_usec;
 
     return;
+}
+
+/**
+ * Calculate delta milliseconds for two time specs.
+ * @param stop period stop
+ * @param start period start
+ * @return different in milliseconds between stop and start.
+ */
+expublic long ndrx_timespec_get_delta(struct timespec *stop, struct timespec *start)
+{
+    long ret;
+    
+    /* calculate delta */
+    ret = (stop->tv_sec - start->tv_sec)*1000 /* Convert to milliseconds */ +
+               (stop->tv_nsec - start->tv_nsec)/1000000; /* Convert to milliseconds */
+
+    return ret;
+}
+
+/**
+ * Provide ceil division x by y for positive numbers
+ * @param x number to divide
+ * @param y divider
+ * @return ceiling of division
+ */
+expublic long ndrx_ceil(long x, long y)
+{
+    return (x + y - 1) / y;
 }
 
 /**
@@ -1053,16 +1083,17 @@ expublic int ndrx_file_regular(char *path)
 }
 
 /**
- * Read the line
+ * read from stdin with stripping of trailing \r or \n
  * @return NULL or allocated stdin string read
  */
-expublic char * ndrx_getline(char *buf, int bufsz)
+expublic char * ndrx_fgets_stdin_strip(char *buf, int bufsz)
 {
     int len;
 
     if (NULL==fgets(buf, bufsz, stdin))
     {
         userlog("%s: fgets fail: %s", __func__, strerror(errno));
+        return NULL;
     }
     
     len = strlen(buf);
@@ -1086,6 +1117,32 @@ expublic char * ndrx_getline(char *buf, int bufsz)
     }
         
     return buf;
+}
+
+
+/**
+ * Enduro/X Cross platform getline version (system version, more close to GNU)
+ * @param lineptr must be pre-allocated (for Macos will use fgets on this buffer)
+ * @param n buffer size (ptr to)
+ * @param stream file to read from
+ * @return number bytes read for Macos will return just 1 or -1
+ */
+expublic ssize_t ndrx_getline(char **lineptr, size_t *n, FILE *stream)
+{
+#ifdef HAVE_GETLINE
+    
+    return getline(lineptr, n, stream);
+    
+#else
+    if (NULL==fgets(*lineptr, *n, stream))
+    {
+        return EXFAIL;
+    }
+    else
+    {
+        return EXTRUE;
+    }
+#endif
 }
 
 /**
@@ -1196,22 +1253,65 @@ expublic char * ndrx_memdup(char *org, size_t len)
 }
 
 /**
+ * Locale independent atof
+ * Basically this assumes that home decimal separator is '.'. I.e. \r str must
+ * contain only '.'.
+ * @param str string to convert to float, decimal separator is '.'.
+ * @return converted decimal value
+ */
+expublic double ndrx_atof(char *str)
+{
+    char test[5];
+    char buf[128];
+    char *p;
+    int len, i;
+    
+    /* extract the decimal separator... */
+    snprintf(test, sizeof(test), "%.1f", 0.0f);
+    
+    if (NDRX_LOCALE_STOCK_DECSEP!=test[1])
+    {
+        NDRX_STRCPY_SAFE(buf, str);
+        len = strlen(buf);
+        
+        for (i=0; i<len; i++)
+        {
+            if (NDRX_LOCALE_STOCK_DECSEP==buf[i])
+            {
+                buf[i] = test[1];
+            }
+        }
+        
+        p = buf;
+    }
+    else
+    {
+        p = str;
+    }
+    
+    return atof(p);
+}
+
+/**
  * Extract tokens from string
  * @param str
  * @param fmt   Format string for scanf
  * @param tokens
  * @param tokens_elmsz
  * @param len
+ * @param start_tok 0 based index of token to start to extract
+ * @param stop_tok 0 based indrex of token to stop to extracts
  * @return 0 - no tokens extracted
  */
 expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens, 
-        int tokens_elmsz, int len)
+        int tokens_elmsz, int len, int start_tok, int stop_tok)
 {
     int ret = 0;
     char *str = NDRX_STRDUP(str1);
     char *ptr;
     char *token;
     char *str_first = str;
+    int toks=0;
     
     if (NULL==str)
     {
@@ -1228,17 +1328,25 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
             str_first = NULL; /* now loop over the string */
         }
         
-        if (ret<len)
+        if (toks>=start_tok)
         {
-            sscanf(token, fmt, tokens);
-            tokens+=tokens_elmsz;
+            if (ret<len)
+            {
+                sscanf(token, fmt, tokens);
+                tokens+=tokens_elmsz;
+            }
+            else
+            {
+                break;
+            }
+            ret++;
         }
-        else
+        
+        if (toks>=stop_tok)
         {
             break;
         }
-        
-        ret++;
+        toks++;
     }
     
 out:
@@ -1296,3 +1404,138 @@ expublic size_t ndrx_strnlen(char *str, size_t max)
     
     return(p - str);
 }
+
+/**
+ * Initialize the grow list
+ * @param list ptr to list (can be un-initialized memory)
+ * @param step number of elements by which to reallocate ahead
+ * @param size number of element
+ */
+expublic void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size)
+{
+    list->maxindexused = EXFAIL;
+    list->itemsalloc = 0;
+    list->step = step;
+    list->size = size;
+    list->mem = NULL;
+}
+
+/**
+ * Add element to the list. Allocate/reallocate linear array as needed.
+ * @param list list struct pointer
+ * @param item ptr to item
+ * @param index zero based item index in the memory
+ * @return EXSUCCEED (all OK), EXFAIL (failed to allocate)
+ */
+expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
+{
+    int ret = EXSUCCEED;
+    int next_blocks;
+    size_t new_size;
+    char *p;
+
+    if (NULL==list->mem)
+    {
+        new_size = list->step * list->size;
+        if (NULL==(list->mem = NDRX_MALLOC(list->step * list->size)))
+        {
+            userlog("Failed to alloc %d bytes: %s", new_size,
+                        strerror(errno));
+            
+            EXFAIL_OUT(ret);
+        }
+        
+        list->itemsalloc+=list->step;
+    }
+    
+    while (index+1 > list->itemsalloc)
+    {
+        list->itemsalloc+=list->step;
+        
+        next_blocks = list->itemsalloc / list->step;
+        
+        new_size = next_blocks * list->step * list->size;
+        /*
+        NDRX_LOG(log_debug, "realloc: new_size: %d (index: %d items: %d)", 
+                new_size, index, list->items);
+        */
+        if (NULL==(list->mem = NDRX_REALLOC(list->mem, new_size)))
+        {
+            userlog("Failed to realloc %d bytes (%d blocks): %s", new_size,
+                        next_blocks, strerror(errno));
+            
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* finally we are ready for data */
+    p = list->mem;
+    p+=(index * list->size);
+    
+    /*
+    NDRX_LOG(log_debug, "Ptr: %p, write ptr %p, from %p (size: %d, index: %d)",
+            list->mem, p, item, (int)list->size, index);
+    
+    NDRX_DUMP(log_debug, "data for writting", item, list->size);
+    */
+    memcpy( p, item, list->size);
+    
+    
+    if (index > list->maxindexused)
+    {
+        list->maxindexused = index;
+    }
+    
+out:
+
+    return ret;
+    
+}
+
+/**
+ * Append entry (at the end of the array)
+ * @param list list to be appended
+ * @param item item to be added to the end of the array
+ * @return EXSUCCEED/EXFAIL (out of the mem)
+ */
+expublic int ndrx_growlist_append(ndrx_growlist_t *list, void *item)
+{
+    return ndrx_growlist_add(list, item, list->maxindexused+1);
+}
+
+/**
+ * Free up the grow list. User is completely responsible for any data to be freed
+ * from the mem block
+ * @param list ptr to list
+ */
+expublic void ndrx_growlist_free(ndrx_growlist_t *list)
+{
+    NDRX_FREE(list->mem);
+}
+
+/**
+ * Return chunks of split string
+ * @param s1 last string ptr to on which strsep was executed
+ * @param s2 chars by which to split
+ * @return NULL if not found, or ptr to first split string
+ */
+expublic char *ndrx_strsep(char **s1, char *s2)
+{
+    char *p1 = *s1;
+
+    if (p1 != NULL) 
+    {
+        *s1 = strpbrk(p1, s2);
+        if (*s1 != NULL)
+        {
+            *(*s1) = '\0';
+            
+            /* move to next position */
+            (*s1)++;
+        }
+    }
+    
+    return p1;
+}
+
+/* vim: set ts=4 sw=4 et smartindent: */

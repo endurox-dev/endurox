@@ -69,7 +69,12 @@
         </server>
         <server name="atmisv37">
             <srvid>200</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv37-dom3.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv37-dom2.log -r</sysopt>
+        </server>
+        <server name="atmisv_2_37">
+            <srvid>220</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv_2_37-dom2.log -r</sysopt>
+            <cmdline>${NDRX_SVPROCNAME} ${NDRX_SVCLOPT}</cmdline>
         </server>
         <server name="cpmsrv">
             <srvid>9999</srvid>

@@ -1,34 +1,35 @@
-/* 
-** Configuration handling.
-**
-** @file appconfig.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Configuration handling.
+ *
+ * @file appconfig.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,8 @@
 
 #include <ndrstandard.h>
 #include <ndrxd.h>
+#include <exenv.h>
+#include <exenvapi.h>
 
 #include "ndebug.h"
 #include "utlist.h"
@@ -51,31 +54,55 @@
 
 /*---------------------------Globals------------------------------------*/
 
-/*
+/**
  * Active monitor configuration
  */
 config_t *G_app_config=NULL;
 
-/*
+/**
  * Active process model handler - linked list
  */
 pm_node_t *G_process_model = NULL;
 
-/*
+/**
  * Active Hash list by service IDs
  */
 pm_node_t **G_process_model_hash = NULL;
 
-/*
+/**
  * PID Hash table
  */
 pm_pidhash_t **G_process_model_pid_hash = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Validate request address, also strip down any un-needed chars
+ * @param rqaddr request address from config
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int rqaddr_chk(char *rqaddr)
+{
+    int ret = EXSUCCEED;
+    
+    ndrx_str_strip(rqaddr, "\t ");
+    
+    if (NDRX_SYS_SVC_PFXC == rqaddr[0])
+    {
+        NDRX_LOG(log_error, "Request address cannot start with [%c]", 
+                NDRX_SYS_SVC_PFXC);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
 
 /**
  * Free up config memory
+ * Free up the list of environments in defaults section and in process
+ * sections.
  * @param app_config
  * @param process_model
  * @param process_model_hash
@@ -93,10 +120,19 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
         {
             DL_FOREACH_SAFE((*app_config)->monitor_config,elt,tmp)
             {
+                
+                /* free up envs, if any */
+                ndrx_ndrxconf_envs_envs_free(&elt->envlist);
+                ndrx_ndrxconf_envs_grouplists_free(&elt->envgrouplist);
+                
                 DL_DELETE((*app_config)->monitor_config,elt);
                 NDRX_FREE(elt);
             }
         }
+        
+        /* kill any env groups */
+        ndrx_ndrxconf_envs_groups_free(&(*app_config)->envgrouphash);
+        
         NDRX_FREE(*app_config);
 
         *app_config = NULL;
@@ -225,7 +261,6 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char *p;
     char tmp[PATH_MAX];
     
-    
     config->default_respawn = 1; /* we want respawn by default! */
     
     if (NULL!=cur)
@@ -274,9 +309,18 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 config->default_env[sizeof(config->default_env)-1] = EXEOS;
                 
                 /* process env */
-                ndrx_str_env_subs(config->default_env);
+                ndrx_str_env_subs_len(config->default_env, sizeof(config->default_env));
                 
                 xmlFree(p);
+            }
+            else if (0==strcmp("envs", (char *)cur->name))
+            {
+                if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, 
+                    &config->envgrouphash))
+                {
+                    NDRX_LOG(log_error, "Failed to parse <envs> tag!");
+                    EXFAIL_OUT(ret);
+                }
             }
             /* Startup control moved here...: */
             else if (0==strcmp((char*)cur->name, "start_max"))
@@ -416,6 +460,22 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
                 NDRX_LOG(log_debug, "respawn: %c", config->default_reloadonchange?'Y':'N');
                 xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "rqaddr"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                NDRX_STRCPY_SAFE(config->default_rqaddr, p);
+                xmlFree(p);
+
+                /* validate the request address - it must not start with @ 
+                 * also we need to strip down any tabs & spaces
+                 */
+                if (EXSUCCEED!=rqaddr_chk(config->default_rqaddr))
+                {
+                    EXFAIL_OUT(ret);
+                }
+
+                NDRX_LOG(log_debug, "rqaddr: [%s]", config->default_rqaddr);
             }
             
 #if 0
@@ -562,6 +622,15 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   config->gather_pq_stats?'Y':'N');
                 xmlFree(p);
             }
+            /* this is used by system v only */
+            else if (0==strcmp((char*)cur->name, "rqaddrttl"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->rqaddrttl = atoi(p);
+                NDRX_LOG(log_debug, "rqaddrttl: [%s] - %d sec",
+                                                  p, config->rqaddrttl);
+                xmlFree(p);
+            }
             
             cur = cur->next;
         } while (cur);
@@ -612,6 +681,13 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         NDRX_LOG(log_debug, "appconfig: `checkpm' not set using "
                 "default %d sty!", config->checkpm);
     }
+    
+    if (0 >= config->rqaddrttl)
+    {
+        config->rqaddrttl = DEF_RQADDRTTL;
+        NDRX_LOG(log_debug, "appconfig: `rqaddrtt' not set using "
+                "default %d sty!", config->rqaddrttl);
+    }
 
 out:
     return ret;
@@ -631,22 +707,17 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char srvnm[MAXTIDENT+1]={EXEOS};
     char tmp[128];
     char tmppath[PATH_MAX+1];
-#if 0
-    
-    int srvid = EXFAIL;
-#endif
     conf_server_node_t *p_srvnode=NULL;
     char *p;
     /* first of all, we need to get server name from attribs */
     
-    p_srvnode = NDRX_MALLOC(sizeof(conf_server_node_t));
+    p_srvnode = NDRX_CALLOC(1, sizeof(conf_server_node_t));
     if (NULL==p_srvnode)
     {
         NDRX_LOG(log_error, "malloc failed for srvnode!");
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
-    memset(p_srvnode, 0, sizeof(conf_server_node_t));
+    
     p_srvnode->srvid = EXFAIL;
     p_srvnode->min = EXFAIL;
     p_srvnode->max = EXFAIL;
@@ -662,7 +733,6 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->reloadonchange = EXFAIL;
     p_srvnode->respawn = EXFAIL;
 
-
     for (attr=cur->properties; attr; attr = attr->next)
     {
         if (0==strcmp((char *)attr->name, "name"))
@@ -673,7 +743,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             xmlFree(p);
         }
     }
-    /**/
+
     if (EXEOS==srvnm[0])
     {
         NDRX_LOG(log_error, "No server name at line %hd", cur->line);
@@ -789,8 +859,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             NDRX_STRNCPY(p_srvnode->SYSOPT, p, sizeof(p_srvnode->SYSOPT)-1);
-            /* process env */
-            ndrx_str_env_subs(p_srvnode->SYSOPT);
+            /* process env 
+            ndrx_str_env_subs_len(p_srvnode->SYSOPT, sizeof(p_srvnode->SYSOPT));
+             * */
             /* Ensure that we terminate... */
             p_srvnode->SYSOPT[sizeof(p_srvnode->SYSOPT)-1] = EXEOS;
             xmlFree(p);
@@ -799,8 +870,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             p = (char *)xmlNodeGetContent(cur);
             NDRX_STRNCPY(p_srvnode->APPOPT, p, sizeof(p_srvnode->APPOPT)-1);
-            /* process env */
+            /* Feature #331
+             * process env - do later when building model..
             ndrx_str_env_subs_len(p_srvnode->APPOPT, sizeof(p_srvnode->APPOPT));
+             * */
             /* Ensure that we terminate... */
             p_srvnode->APPOPT[sizeof(p_srvnode->APPOPT)-1] = EXEOS;
             xmlFree(p);
@@ -814,7 +887,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             p_srvnode->env[sizeof(p_srvnode->env)-1] = EXEOS;
 
             /* process env */
-            ndrx_str_env_subs(p_srvnode->env);
+            ndrx_str_env_subs_len(p_srvnode->env, sizeof(p_srvnode->env));
 
             xmlFree(p);
         }
@@ -904,62 +977,59 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             xmlFree(p);
             NDRX_LOG(log_debug, "cmdline: [%s]", p_srvnode->cmdline);
         }
+        else if (0==strcmp((char*)cur->name, "envs"))
+        {
+            
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_parse(doc, cur, 
+                &p_srvnode->envlist, config->envgrouphash, 
+                        &p_srvnode->envgrouplist))
+            {
+                NDRX_LOG(log_error, "Failed to load environment variables for server [%d]", 
+                        p_srvnode->srvid);
+                userlog("Failed to load environment variables for server [%d]", 
+                        p_srvnode->srvid);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (0==strcmp((char*)cur->name, "rqaddr"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            NDRX_STRCPY_SAFE(p_srvnode->rqaddr, p);
+            xmlFree(p);
+            
+            /* validate the request address - it must not start with @ 
+             * also we need to strip down any tabs & spaces
+             */
+            if (EXSUCCEED!=rqaddr_chk(p_srvnode->rqaddr))
+            {
+                EXFAIL_OUT(ret);
+            }
+            
+            NDRX_LOG(log_debug, "rqaddr: [%s]", p_srvnode->rqaddr);
+        }
+        
     }
-    snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
-            "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     
-    NDRX_STRCPY_SAFE(p_srvnode->binary_name, srvnm);
+    /* get rqaddr defaults */
     
-    /* build process real name  */
-    if (EXEOS!=p_srvnode->cmdline[0])
+    if (EXEOS==p_srvnode->rqaddr[0])
     {
-        NDRX_STRCPY_SAFE(tmppath, p_srvnode->cmdline);
-        
-        /* substitute env */
-        
-        if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_srvnode->binary_name, EXTRUE))
-        {
-            NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
-                CONF_NDRX_SVPROCNAME, p_srvnode->binary_name, strerror(errno));
-            EXFAIL_OUT(ret);
-        }
-
-        if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT, p_srvnode->clopt, EXTRUE))
-        {
-            NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
-                CONF_NDRX_SVCLOPT, p_srvnode->clopt, strerror(errno));
-
-            EXFAIL_OUT(ret);
-        }
-        
-        /* format the cmdline */
-        ndrx_str_env_subs_len(tmppath, sizeof(tmppath));
-        
-        /* extract binary name for the path... */
-        p = strtok(tmppath, " \t");
-        
-        if (NULL==p)
-        {
-            NDRX_LOG(log_error, "Missing process name in server's <cmdline> tag for [%s]",
-                    p_srvnode->binary_name);
-            EXFAIL_OUT(ret);
-        }
-        
-        /* get the base name */
-        p = basename(tmppath);
-        NDRX_STRCPY_SAFE(p_srvnode->binary_name_real, p);
-        
-        NDRX_LOG(log_debug, "Extracted real binary name [%s] from [%s]", 
-                p_srvnode->binary_name_real, p);
-
-        /* unset variables */
-        unsetenv(CONF_NDRX_SVPROCNAME);
-        unsetenv(CONF_NDRX_SVCLOPT);
+        NDRX_STRCPY_SAFE(p_srvnode->rqaddr, config->default_rqaddr);
+    }
+    
+    if (EXEOS!=p_srvnode->rqaddr[0])
+    {
+        snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
+                "%s -R %s -- %s", p_srvnode->SYSOPT, 
+                p_srvnode->rqaddr, p_srvnode->APPOPT);
     }
     else
     {
-        NDRX_STRCPY_SAFE(p_srvnode->binary_name_real, srvnm);
+        snprintf(p_srvnode->clopt, sizeof(p_srvnode->clopt),
+                "%s -- %s", p_srvnode->SYSOPT, p_srvnode->APPOPT);
     }
+    
+    NDRX_STRCPY_SAFE(p_srvnode->binary_name, srvnm);
     
     if (EXFAIL==p_srvnode->max)
         p_srvnode->max=config->default_max;
@@ -1272,7 +1342,7 @@ expublic int test_config(int reload, command_call_t * call,
      * 2. loop
      * We go over the old PM, and check new hash.
      * If server names & id not the same, then current must be shutdown
-     * If server id not presnet in hash, then this must be shutdown
+     * If server id not present in hash, then this must be shutdown
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      * We will loop over all details, so that in log we could lookup for full
      * error details.
@@ -1378,6 +1448,9 @@ expublic int test_config(int reload, command_call_t * call,
             {
                 NDRX_LOG(log_debug, "Saving pid %d in new config", old->pid);
                 new->pid = old->pid;
+                new->svpid = old->svpid;
+                NDRX_STRCPY_SAFE(new->binary_name_real, old->binary_name_real);
+                NDRX_STRCPY_SAFE(new->rqaddress, old->rqaddress);
                 new->state = old->state;
                 /* Link existing service info to new PM! */
                 new->svcs = old->svcs;
@@ -1445,3 +1518,5 @@ out:
 
     return ret;
 }
+
+/* vim: set ts=4 sw=4 et smartindent: */

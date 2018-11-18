@@ -1,34 +1,35 @@
-/* 
-** ubf<->json conversion lib
-**
-** @file ubf2exjson.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ubf<->json conversion lib
+ *
+ * @file ubf2exjson.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,13 +76,14 @@ exprivate long round_long( double r ) {
  * Convert JSON text buffer to UBF
  * @param p_ub - UBF buffer to fill data in
  * @param buffer - json text to parse
+ * @data_object - already parsed json in object
  * @return SUCCEED/FAIL
  */
-expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
+expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object)
 {
     int ret = EXSUCCEED;
-    EXJSON_Value *root_value;
-    EXJSON_Object *root_object;
+    EXJSON_Value *root_value=NULL;
+    EXJSON_Object *root_object=data_object;
     EXJSON_Array *array;
     size_t i, cnt, j, arr_cnt;
     int type;
@@ -94,19 +96,26 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
     char bin_buf[CARR_BUFFSIZE+1];
     char	*s_ptr;
 
-    NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
-
-    root_value = exjson_parse_string_with_comments(buffer);
-    type = exjson_value_get_type(root_value);
-    NDRX_LOG(log_error, "Type is %d", type);
-
-    if (exjson_value_get_type(root_value) != EXJSONObject)
+    if ( NULL != buffer )
     {
-        NDRX_LOG(log_error, "Failed to parse root element");
-        ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
-        return EXFAIL;
+        NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
+
+        root_value = exjson_parse_string_with_comments(buffer);
+        type = exjson_value_get_type(root_value);
+        NDRX_LOG(log_error, "Type is %d", type);
+
+        if (exjson_value_get_type(root_value) != EXJSONObject)
+        {
+            NDRX_LOG(log_error, "Failed to parse root element");
+            ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
+            return EXFAIL;
+        }
+        root_object = exjson_value_get_object(root_value);
     }
-    root_object = exjson_value_get_object(root_value);
+    else
+    {
+        NDRX_LOG(log_debug, "Parsing from data_object");
+    }
 
     cnt = exjson_object_get_count(root_object);
     NDRX_LOG(log_debug, "cnt = %d", cnt);
@@ -357,7 +366,10 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer)
 	
 out:
     /* cleanup code */
-    exjson_value_free(root_value);
+    if (NULL != root_value)
+    {
+        exjson_value_free(root_value);
+    }
     return ret;
 }
 
@@ -369,7 +381,7 @@ out:
  * @param bufsize       output buffer size
  * @return SUCCEED/FAIL 
  */
-expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
+expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object)
 {
     int ret = EXSUCCEED;
     BFLDID fldid;
@@ -382,10 +394,15 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
     char *s_ptr;
     BFLDLEN flen;
     EXJSON_Value *root_value = exjson_value_init_object();
-    EXJSON_Object *root_object = exjson_value_get_object(root_value);
+    EXJSON_Object *root_object=data_object;
     char *serialized_string = NULL;
     BFLDOCC oc;
     BFLDLEN fldlen;
+
+    if ( NULL == data_object )
+    {
+        root_object = exjson_value_get_object(root_value);
+    }
 
     char *nm;
     EXJSON_Value *jarr_value=NULL;
@@ -554,23 +571,26 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
         }
     }
 
-    serialized_string = exjson_serialize_to_string(root_value);
+    if (NULL != buffer)
+    {
+        serialized_string = exjson_serialize_to_string(root_value);
 
-    if (strlen(serialized_string) <= bufsize )
-    {
-        NDRX_STRNCPY_SAFE(buffer, serialized_string, bufsize-1);
-        
-        NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Buffer too short: Got json size: [%d] buffer size: [%d]", 
-                strlen(serialized_string), bufsize);
-        
-        ndrx_TPset_error_fmt(TPEOS, "Buffer too short: Got json size: "
-                "[%d] buffer size: [%d]",  strlen(serialized_string), bufsize);
-        
-        EXFAIL_OUT(ret);
+        if (strlen(serialized_string) <= bufsize )
+        {
+            NDRX_STRNCPY_SAFE(buffer, serialized_string, bufsize-1);
+
+            NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Buffer too short: Got json size: [%d] buffer size: [%d]", 
+                    strlen(serialized_string), bufsize);
+
+            ndrx_TPset_error_fmt(TPEOS, "Buffer too short: Got json size: "
+                    "[%d] buffer size: [%d]",  strlen(serialized_string), bufsize);
+
+            EXFAIL_OUT(ret);
+        }
     }
 
 out:
@@ -613,7 +633,7 @@ expublic int typed_xcvt_json2ubf(buffer_obj_t **buffer)
 
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpjsontoubf(tmp, (*buffer)->buf))
+    if (EXSUCCEED!=ndrx_tpjsontoubf(tmp, (*buffer)->buf, NULL))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert JSON->UBF: %s", tpstrerror(tperrno));
@@ -678,7 +698,7 @@ expublic int typed_xcvt_ubf2json(buffer_obj_t **buffer)
 
     /* Do the convert */
     ndrx_TPunset_error();
-    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, NDRX_MSGSIZEMAX))
+    if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)(*buffer)->buf, tmp, NDRX_MSGSIZEMAX, NULL))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert UBF->JSON: %s", 
@@ -714,3 +734,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

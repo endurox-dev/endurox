@@ -1,34 +1,35 @@
-/* 
-** ATMI cache structures
-**
-** @file atmi_cache.h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI cache structures
+ *
+ * @file atmi_cache.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 #ifndef ATMI_CACHE_H
 #define	ATMI_CACHE_H
@@ -202,7 +203,7 @@ extern "C" {
  * Dump the cache database configuration
  */
 #define NDRX_TPCACHEDB_DUMPCFG(LEV, CACHEDB)\
-    NDRX_LOG(LEV, "============ CACHE DB CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "------------ CACHE DB CONFIG DUMP ---------------");\
     NDRX_LOG(LEV, "%s full name=[%s]", NDRX_TPCACHE_KWD_CACHEDB, CACHEDB->cachedb);\
     NDRX_LOG(LEV, "cachedbnam logical name=[%s]", CACHEDB->cachedbnam);\
     NDRX_LOG(LEV, "cachedbphy physical name=[%s]", CACHEDB->cachedbphy);\
@@ -243,14 +244,14 @@ extern "C" {
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWD_MAP_SIZE, CACHEDB->map_size);\
     NDRX_LOG(LEV, "%s=[%o]", NDRX_TPCACHE_KWD_PERMS, CACHEDB->perms);\
     NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWD_SUBSCR, CACHEDB->subscr);\
-    NDRX_LOG(LEV, "=================================================");
+    NDRX_LOG(LEV, "-------------------------------------------------");
 
     
 /**
  * Dump tpcall configuration
  */
 #define NDRX_TPCACHETPCALL_DUMPCFG(LEV, TPCALLCACHE)\
-    NDRX_LOG(LEV, "============ TPCALL CACHE CONFIG DUMP ===============");\
+    NDRX_LOG(LEV, "------------ TPCALL CACHE CONFIG DUMP ---------------");\
     NDRX_LOG(LEV, "cache ptr=[%p]", TPCALLCACHE);\
     NDRX_LOG(LEV, "%s name full =[%s]", NDRX_TPCACHE_KWC_CACHEDB,\
                 TPCALLCACHE->cachedb);\
@@ -299,22 +300,22 @@ extern "C" {
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGROUPMAX,\
                     TPCALLCACHE->keygroupmax);\
     NDRX_LOG(LEV, "%s=[%s]", NDRX_TPCACHE_KWC_KEYGROUPMREJ,\
-                    TPCALLCACHE->keygroupmrej);\
+                    TPCALLCACHE->keygroupmrej?TPCALLCACHE->keygroupmrej:"");\
     NDRX_LOG(LEV, "keygroupmrej_abuf=[%p]", TPCALLCACHE->keygroupmrej_abuf);\
     NDRX_LOG(LEV, "%s=[%d]", NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO,\
                     TPCALLCACHE->keygroupmtperrno);\
     NDRX_LOG(LEV, "%s=[%ld]", NDRX_TPCACHE_KWC_KEYGRPMAXTPURCODE,\
                     TPCALLCACHE->keygroupmtpurcode);\
-    NDRX_LOG(LEV, "=================================================");
+    NDRX_LOG(LEV, "-------------------------------------------------");
 
 
 #define NDRX_TPCACHETPCALL_DBDATA(LEV, DBDATA)\
-    NDRX_LOG(LEV, "================== DB DATA DUMP =================");\
+    NDRX_LOG(LEV, "------------------ DB DATA DUMP -----------------");\
     NDRX_LOG(LEV, "saved_tperrno = [%d]", DBDATA->saved_tperrno);\
     NDRX_LOG(LEV, "saved_tpurcode = [%ld]", DBDATA->saved_tpurcode);\
     NDRX_LOG(LEV, "atmi_buf_len = [%ld]", DBDATA->saved_tpurcode);\
     NDRX_DUMP(LEV, "BLOB data", DBDATA->atmi_buf, DBDATA->atmi_buf_len);\
-    NDRX_LOG(LEV, "=================================================");
+    NDRX_LOG(LEV, "-------------------------------------------------");
     
 
 #define NDRX_CACHE_TPERROR(atmierr, fmt, ...)\
@@ -385,6 +386,13 @@ if (cachedata_->mv_size < sizeof(ndrx_tpcache_data_t))\
             }\
             EXFAIL_OUT(ret);\
         }
+    
+/**
+ * Number of bytes to move around in c struct
+ */
+#define NDRX_TPCACHE_ALISZ (EXOFFSET(ndrx_tpcache_data_t,atmi_buf) - \
+        EXOFFSET(ndrx_tpcache_data_t,magic))
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -526,29 +534,29 @@ typedef struct ndrx_tpcache_svc ndrx_tpcache_svc_t;
  */
 struct ndrx_tpcache_data
 {
-    int magic;          /* Magic bytes                      */
+    /* ...align from magic (including) */
+    int magic;          /**< Magic bytes                      */
     char svcnm[MAXTIDENT+1]; /* Service name of data        */
-    int cache_idx;      /* this is cache index of adder     */
+    int cache_idx;      /**< this is cache index of adder     */
     int saved_tperrno;
     long saved_tpurcode;
-    long t;             /* UTC timestamp of message         */
-    long tusec;         /* UTC microseconds                 */
+    long t;             /**< UTC timestamp of message         */
+    long tusec;         /**< UTC microseconds                 */
+    int nrshift;        /**< number of byte shifted for alignment */
+    /** time when we picked up the record */
+    long hit_t;         /**< UTC timestamp of message         */
+    long hit_tusec;     /**< UTC microseconds                 */
+    long hits;          /**< Number of cache hits             */
+    long flags;         /**< cache flags                      */
     
-    /* time when we picked up the record */
-    long hit_t;         /* UTC timestamp of message         */
-    long hit_tusec;     /* UTC microseconds                 */
-    long hits;          /* Number of cache hits             */
-    long flags;         /* cache flags                      */
+    short nodeid;       /**< Node id who put the msg          */
+    short atmi_type_id; /**< ATMI type id                     */
     
-    short nodeid;       /* Node id who put the msg          */
-    short atmi_type_id; /* ATMI type id                     */
-    
-    /* Payload data */
-    long atmi_buf_len;  /* saved buffer len                 */
-    char atmi_buf[0];   /* the data follows                 */
+    /* ...till Payload data (including) */
+    long atmi_buf_len;  /**< saved buffer len                 */
+    char atmi_buf[0];   /**< the data follows                 */
 };
 typedef struct ndrx_tpcache_data ndrx_tpcache_data_t;
-
 
 struct ndrx_tpcache_datasort
 {
@@ -649,7 +657,7 @@ extern NDRX_API ndrx_tpcallcache_t* ndrx_cache_findtpcall_byidx(char *svcnm, int
 extern NDRX_API int ndrx_cache_cmp_fun(const EDB_val *a, const EDB_val *b);
 
 extern NDRX_API int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data_out, int seterror_not_found);
+        char *key, EDB_val *data_out, int seterror_not_found, int *align);
 extern NDRX_API int ndrx_cache_edb_abort(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_commit(ndrx_tpcache_db_t *db, EDB_txn *txn);
 extern NDRX_API int ndrx_cache_edb_begin(ndrx_tpcache_db_t *db, EDB_txn **txn,
@@ -670,10 +678,11 @@ extern NDRX_API int ndrx_cache_edb_stat (ndrx_tpcache_db_t *db, EDB_txn *txn,
 extern NDRX_API  int ndrx_cache_edb_cursor_open(ndrx_tpcache_db_t *db, EDB_txn *txn, 
             EDB_cursor ** cursor);
 extern NDRX_API int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
-        char *key, EDB_val *data_out, EDB_cursor_op op);
+        char *key, EDB_val *data_out, EDB_cursor_op op, int *align);
 
 extern NDRX_API int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, 
-        EDB_cursor * cursor, EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op);
+        EDB_cursor * cursor, EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op,
+        int *align);
 
 extern NDRX_API int ndrx_cache_edb_delfullkey (ndrx_tpcache_db_t *db, EDB_txn *txn, 
         EDB_val *keydb, EDB_val *data);
@@ -747,3 +756,4 @@ extern NDRX_API int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache
 
 #endif	/* ATMI_CACHE_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

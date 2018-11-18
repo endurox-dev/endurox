@@ -1,34 +1,35 @@
-/* 
-** Unix Abstraction Layer
-**
-** @file sys_unix.h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Unix Abstraction Layer
+ *
+ * @file sys_unix.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #ifndef SYS_UNIX_H
 #define	SYS_UNIX_H
 
@@ -38,10 +39,12 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 #include <stdint.h>
+#include <regex.h>
+#include <sys_primitives.h>
 #include <ubf.h>
 #include <atmi.h>
-#include <sys_mqueue.h>
 #include <exhash.h>
+#include <nstdutil.h>
     
 #ifdef EX_OS_DARWIN
 #include <sys/types.h>
@@ -49,8 +52,14 @@ extern "C" {
 #include <mach/mach.h>
 #include <mach/clock.h>
 #endif
-
-#if defined(EX_USE_EPOLL)
+    
+#include <sys_mqueue.h>
+    
+#if defined(EX_USE_SYSVQ) 
+/* Feature #281 */
+#include <sys_svq.h>
+#include <poll.h>
+#elif defined(EX_USE_EPOLL)
 #include <sys/epoll.h>
 #elif defined(EX_USE_KQUEUE)
 #include <sys/event.h>
@@ -58,11 +67,17 @@ extern "C" {
 #include <poll.h>
 #endif
 
-
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if defined(EX_USE_EPOLL)
+#if defined(EX_USE_SYSVQ)
+    
+#define EX_EPOLL_CTL_ADD        1
+#define EX_EPOLL_CTL_DEL        2
+    
+#define EX_EPOLL_FLAGS          POLLIN
+    
+#elif defined(EX_USE_EPOLL)
 
 #define EX_EPOLL_CTL_ADD        EPOLL_CTL_ADD
 #define EX_EPOLL_CTL_DEL        EPOLL_CTL_DEL
@@ -152,7 +167,6 @@ extern NDRX_API const char * __progname;
 #endif
  
 /******************************************************************************/
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -160,11 +174,11 @@ extern NDRX_API const char * __progname;
  * (E)poll data
  */
 typedef union ndrx_epoll_data {
-        void    *ptr;
-        int      fd;
-        uint32_t u32;
-        uint64_t u64;
-        mqd_t    mqd;
+    void    *ptr;
+    int      fd;
+    uint32_t u32;
+    uint64_t u64;
+    mqd_t    mqd;
 } ndrx_epoll_data_t;
 
 /**
@@ -172,35 +186,16 @@ typedef union ndrx_epoll_data {
  */
 struct ndrx_epoll_event {
 
-        uint32_t     events;    /* Epoll events */
+    uint32_t     events;    /* Epoll events */
 
-        ndrx_epoll_data_t data;      /* User data variable */
-        
-        /* The structure generally is the same as for linux epoll_wait
-         * This bellow is extension for non linux version.
-         */
-        #ifndef EX_USE_EPOLL
-        int         is_mqd;      /* Set to TRUE, if call is for message q */
-        #endif
-};
+    ndrx_epoll_data_t data;      /* User data variable */
 
-
-/**
- * List of posix queues
- */
-typedef struct string_list string_list_t;
-struct string_list
-{
-    char *qname;
-    string_list_t *next;
-};
-
-
-typedef struct string_hash string_hash_t;
-struct string_hash
-{
-    char *str;
-    EX_hash_handle hh;
+    /* The structure generally is the same as for linux epoll_wait
+     * This bellow is extension for non linux version.
+     */
+    #ifndef EX_USE_EPOLL
+    int         is_mqd;      /* Set to TRUE, if call is for message q */
+    #endif
 };
 
 /**
@@ -212,8 +207,6 @@ struct ndrx_proc_info
     long rss;
     long vsz;
 };
-
-
 
 #ifdef EX_OS_DARWIN
 typedef int clockid_t;
@@ -254,21 +247,51 @@ extern NDRX_API int sol_mq_close(mqd_t mqdes);
 extern NDRX_API FILE * fmemopen(void *buffer, size_t len, const char *mode);
 #endif
 
+#if defined(EX_OS_DARWIN)
+
+/* Darwin does not have spinlock... */
+typedef int pthread_spinlock_t;
+
+extern NDRX_API int pthread_spin_init(pthread_spinlock_t *lock, int pshared);
+extern NDRX_API int pthread_spin_destroy(pthread_spinlock_t *lock);
+extern NDRX_API int pthread_spin_lock(pthread_spinlock_t *lock);
+extern NDRX_API int pthread_spin_trylock(pthread_spinlock_t *lock);
+extern NDRX_API int pthread_spin_unlock(pthread_spinlock_t *lock);
+
+#endif
+
 /* poll ops */
-extern NDRX_API void ndrx_epoll_sys_init(void);
+extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);
+extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
+extern NDRX_API int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
+        char *svc, int resid);
+extern NDRX_API int ndrx_epoll_shallopenq(int idx);
+extern NDRX_API int ndrx_epoll_resid_get(void);
+
+extern NDRX_API int ndrx_epoll_sys_init(void);
 extern NDRX_API void ndrx_epoll_sys_uninit(void);
 extern NDRX_API char * ndrx_epoll_mode(void);
 extern NDRX_API int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *event);
 extern NDRX_API int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_epoll_event *event);
 extern NDRX_API int ndrx_epoll_create(int size);
 extern NDRX_API int ndrx_epoll_close(int fd);
-extern NDRX_API int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout);
+extern NDRX_API int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
+        int maxevents, int timeout, char *buf, int *buf_len);
 extern NDRX_API int ndrx_epoll_errno(void);
 extern NDRX_API char * ndrx_poll_strerror(int err);
 
+/* used by System V, dummies for others pollers/queues: */
+extern NDRX_API int ndrx_epoll_resid_get(void);
+extern NDRX_API int ndrx_epoll_down(int force);
+extern NDRX_API int ndrx_epoll_shmdetach(void);
+extern NDRX_API int ndrx_epoll_service_translate(char *send_q, char *q_prefix, 
+        char *svc, int resid);
+extern NDRX_API void ndrx_epoll_mainq_set(char *qstr);
+extern NDRX_API int ndrx_epoll_shallopenq(int idx);
+extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
+
 /* string generics: */
 extern NDRX_API void ndrx_string_list_free(string_list_t* list);
-extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
 
 extern NDRX_API void ndrx_string_hash_free(string_hash_t *h);
 extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);
@@ -287,11 +310,18 @@ extern NDRX_API int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid);
 extern NDRX_API void ndrx_proc_kill_list(string_list_t *list);
 extern NDRX_API int ndrx_proc_children_get_recursive(string_list_t **list, pid_t pid);
 extern NDRX_API int ndrx_proc_get_infos(pid_t pid, ndrx_proc_info_t *p_infos);
-    
+extern NDRX_API int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re);
+extern NDRX_API void ndrx_sys_banner(void);
+extern NDRX_API int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
+       void (*child)(void));
+extern NDRX_API int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues);
+
 /* gen unix: */
 extern NDRX_API char * ndrx_sys_get_proc_name_by_ps(void);
 extern NDRX_API int ndrx_sys_is_process_running_by_kill(pid_t pid, char *proc_name);
 extern NDRX_API int ndrx_sys_is_process_running_by_ps(pid_t pid, char *proc_name);
+extern NDRX_API int ndrx_sys_is_process_running_by_pid(pid_t pid);
+
 
 /* sys_linux.c: */
 extern NDRX_API int ndrx_sys_is_process_running_procfs(pid_t pid, char *proc_name);
@@ -304,7 +334,18 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_pl(char *qpath, int *re
 /* emulated message queue: */
 extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *return_status);
 
-#ifdef EX_USE_EMQ
+
+
+/** Test environmental variables of the PID 
+ Sample regex: NDRX_SVCLOPT.{0,2}-k 0myWI5nu.*-i [0-9]+ --
+ */
+extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
+
+#ifdef EX_USE_SYSVQ
+
+#define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_svq
+
+#elif EX_USE_EMQ
 
 #define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_emq
 
@@ -321,3 +362,4 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *r
 
 #endif	/* SYS_UNIX_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

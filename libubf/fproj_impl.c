@@ -1,37 +1,38 @@
-/* 
-** UBF library
-** The emulator of UBF library
-** Enduro Execution Library
-** Implementation of projection functions.
-**
-** @file fproj_impl.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief UBF library
+ *   The emulator of UBF library
+ *   Enduro Execution Library
+ *   Implementation of projection functions.
+ *
+ * @file fproj_impl.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <string.h>
@@ -184,10 +185,10 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -204,12 +205,12 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after delete_buffer_data: ",
                                 p_ub, hdr->bytes_used);
@@ -403,10 +404,10 @@ out:
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr;
-    __dbg_p_new+= (hdr->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -424,12 +425,12 @@ out:
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub, hdr->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after _Bproj: ",p_ub, hdr->bytes_used);
     NDRX_FREE(__p_ub_copy);
@@ -516,10 +517,10 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr_dst;
-    __dbg_p_new+= (hdr_dst->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr_dst->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -536,12 +537,12 @@ exprivate int copy_buffer_data(UBFH *p_ub_dst,
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub_dst, hdr_dst->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after delete_buffer_data: ",
                                 p_ub_dst, hdr_dst->bytes_used);
@@ -719,10 +720,10 @@ out:
 
     /* Do bellow to print out end element (last) of the array - should be bbadfldid */
     __dbg_p_org = (char *)__p_ub_copy;
-    __dbg_p_org+= (__p_ub_copy->bytes_used - sizeof(BFLDID));
+    __dbg_p_org+= (__p_ub_copy->bytes_used - FF_USED_BYTES);
 
     __dbg_p_new = (char *)hdr_dst;
-    __dbg_p_new+= (hdr_dst->bytes_used - sizeof(BFLDID));
+    __dbg_p_new+= (hdr_dst->bytes_used - FF_USED_BYTES);
 
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
@@ -740,12 +741,12 @@ out:
                                 *__dbg_fldptr_org, *__dbg_fldptr_org,
                                 *__dbg_fldptr_new, *__dbg_fldptr_new);
     /* Check the last four bytes before the end */
-    __dbg_p_org-= sizeof(BFLDID);
-    __dbg_p_new-= sizeof(BFLDID);
+    __dbg_p_org-= FF_USED_BYTES;
+    __dbg_p_new-= FF_USED_BYTES;
     __dbg_fldptr_org = (int *)__dbg_p_org;
     __dbg_fldptr_new = (int *)__dbg_p_new;
     UBF_LOG(log_debug, "%s: last %d bytes of dst data\n org=%p new %p",
-                          fn, sizeof(BFLDID), *__dbg_fldptr_org, *__dbg_fldptr_new);
+                          fn, FF_USED_BYTES, *__dbg_fldptr_org, *__dbg_fldptr_new);
     UBF_DUMP_DIFF(log_always, "After _Bproj", __p_ub_copy, p_ub_dst, hdr_dst->buf_len);
     UBF_DUMP(log_always, "Used buffer dump after _Bprojcpy: ",p_ub_dst,
                                                         hdr_dst->bytes_used);
@@ -756,3 +757,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

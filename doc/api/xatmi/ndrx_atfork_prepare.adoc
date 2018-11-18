@@ -1,0 +1,56 @@
+NDRX_ATFORK_PREPARE(3)
+======================
+:doctype: manpage
+
+
+NAME
+----
+ndrx_atfork_prepare - Function to be called before fork, if not using ndrx_fork(3)
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void ndrx_atfork_prepare(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+When process is about to copy it self (i.e. perform forking in UNIX terms),
+Enduro/X requires certain tasks to be performed before this action. Particularly,
+if System V IPC transport is used by Enduro/X, then auxiliary threads shall be
+terminated and contexts released. Thus if doing manual *fork()*, then before this
+call, parent shall call *ndrx_atfork_prepare()* procedure. Procedure can 
+be registered with *pthread_atfork()*, passing it to 'prepare' argument.
+
+At given time function does some logic by System V IPC, for other IPC
+no logic is executed. But this fact is subject of change, and in future releases 
+some other tasks might be required to be one by Enduro/X before process forking, 
+thus it is recommended to use *ndrx_fork()*, call manually 
+*ndrx_atfork_prepare()* or register it with *pthread_atfork()*
+
+RETURN VALUE
+------------ 
+*N/A*
+
+ERRORS
+------
+*N/A*
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrx_fork(3)* *ndrx_atfork_parent(3)* *ndrx_atfork_child(3)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

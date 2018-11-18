@@ -1,34 +1,35 @@
-/* 
-** Contains network processing part of the bridge.
-**
-** @file network.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Contains network processing part of the bridge.
+ *
+ * @file network.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -445,7 +446,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                 /* Call service */
                 NDRX_LOG(log_debug, "About to call service...");
                 ret=br_submit_to_service((tp_command_call_t *)gen_command, 
-                        p_netmsg->call->len, NULL);
+                        p_netmsg->call->len);
                 break;
              
             /* tpreply & conversation goes via reply Q */
@@ -463,7 +464,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                  */
                 NDRX_LOG(log_debug, "Reply back to caller/bridge");
                 ret = br_submit_reply_to_q((tp_command_call_t *)gen_command, 
-                        p_netmsg->call->len, NULL);
+                        p_netmsg->call->len);
                 break;
             case ATMI_COMMAND_TPFORWARD:
                 br_dump_tp_command_call(p_netmsg->call->buf);
@@ -487,7 +488,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                         p_netmsg->call->len, NULL);
   */            
                 ret = br_submit_to_service_notif((tp_notif_call_t *)gen_command, 
-                        p_netmsg->call->len, NULL);
+                        p_netmsg->call->len);
                 
             }   
                 break;
@@ -507,7 +508,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
                 ret = br_calc_clock_diff(icall);
                 break;
             case NDRXD_COM_BRREFERSH_RQ:
-                ret = br_submit_to_ndrxd(icall, call_len, NULL);
+                ret = br_submit_to_ndrxd(icall, call_len);
                 break;
             default:
                 NDRX_LOG(log_debug, "Unsupported bridge command: %d",
@@ -686,3 +687,4 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

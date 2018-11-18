@@ -31,7 +31,7 @@ Function does not return errors. In case of invalid field (first bits bad higher
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

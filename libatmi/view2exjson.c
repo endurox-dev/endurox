@@ -1,34 +1,35 @@
-/* 
-** view<->json conversion lib
-**
-** @file view2exjson.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/#include <stdio.h>
+/**
+ * @brief view<->json conversion lib
+ *
+ * @file view2exjson.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
@@ -76,13 +77,12 @@ exprivate long round_long( double r ) {
  * @param buffer - json text to parse
  * @return SUCCEED/FAIL
  */
-expublic char* ndrx_tpjsontoview(char *view, char *buffer)
+expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_object)
 {
     int ret = EXSUCCEED;
-    EXJSON_Value *root_value;
-    EXJSON_Object *root_object;
+    EXJSON_Value *root_value=NULL;
+    EXJSON_Object *root_object=data_object;
     
-    EXJSON_Value *view_value;
     EXJSON_Object *view_object;
     
     EXJSON_Array *array;
@@ -99,19 +99,26 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
     int cnametyp;
     char *cstruct = NULL;
 
-    NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
-
-    root_value = exjson_parse_string_with_comments(buffer);
-    type = exjson_value_get_type(root_value);
-    NDRX_LOG(log_debug, "Type is %d", type);
-
-    if (exjson_value_get_type(root_value) != EXJSONObject)
+    if ( NULL != buffer )
     {
-        NDRX_LOG(log_debug, "Failed to parse root element");
-        ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
-        return NULL;
+        NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
+
+        root_value = exjson_parse_string_with_comments(buffer);
+        type = exjson_value_get_type(root_value);
+        NDRX_LOG(log_debug, "Type is %d", type);
+
+        if (exjson_value_get_type(root_value) != EXJSONObject)
+        {
+            NDRX_LOG(log_debug, "Failed to parse root element");
+            ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
+            return NULL;
+        }
+        root_object = exjson_value_get_object(root_value);
     }
-    root_object = exjson_value_get_object(root_value);
+    else
+    {
+        NDRX_LOG(log_debug, "Parsing from data_object");
+    }
 
     cnt = exjson_object_get_count(root_object);
     NDRX_LOG(log_debug, "cnt = %d", cnt);
@@ -147,7 +154,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
         /* error must be set already! */
         EXFAIL_OUT(ret);
     }
-    
+
     strcpy(view, name);
     
     view_object = exjson_object_get_object(root_object, name);
@@ -426,14 +433,17 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer)
     
 out:
     /* cleanup code */
-    exjson_value_free(root_value);
+    if (NULL != root_value)
+    {
+        exjson_value_free(root_value);
+    }
 
     if (EXSUCCEED!=ret && NULL!=cstruct)
     {
         tpfree(cstruct);
         cstruct = NULL;
     }
-
+    
     
     return cstruct;
 }
@@ -449,7 +459,7 @@ out:
  * @return SUCCEED/FAIL 
  */
 expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer, 
-        int bufsize, long flags)
+        int bufsize, long flags, EXJSON_Object *data_object)
 {
     int ret = EXSUCCEED;
     int occs;
@@ -467,8 +477,14 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     BFLDOCC maxocc;
     long dim_size;
     
-    EXJSON_Value *root_value = exjson_value_init_object();
-    EXJSON_Object *root_object = exjson_value_get_object(root_value);
+    EXJSON_Value *root_value = NULL;
+    EXJSON_Object *root_object = data_object;
+    
+    if (NULL == data_object)
+    {
+        root_value = exjson_value_init_object();
+        root_object = exjson_value_get_object(root_value);
+    }
     
     EXJSON_Value *view_value = exjson_value_init_object();
     EXJSON_Object *view_object = exjson_value_get_object(view_value);
@@ -691,25 +707,27 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
 
     } /* while ret */ 
 
-    serialized_string = exjson_serialize_to_string(root_value);
-
-    if (strlen(serialized_string) <= bufsize )
+    if (NULL != buffer)
     {
-	    
-	NDRX_STRNCPY_SAFE(buffer, serialized_string, bufsize-1);
-        NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Buffer too short: Got json size: [%d] buffer size: [%d]", 
-                strlen(serialized_string), bufsize);
-        
-        ndrx_TPset_error_fmt(TPEOS, "Buffer too short: Got json size: "
-                "[%d] buffer size: [%d]",  strlen(serialized_string), bufsize);
-        
-        EXFAIL_OUT(ret);
-    }
+        serialized_string = exjson_serialize_to_string(root_value);
 
+        if (strlen(serialized_string) <= bufsize )
+        {
+
+        NDRX_STRNCPY_SAFE(buffer, serialized_string, bufsize-1);
+            NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Buffer too short: Got json size: [%d] buffer size: [%d]", 
+                    strlen(serialized_string), bufsize);
+
+            ndrx_TPset_error_fmt(TPEOS, "Buffer too short: Got json size: "
+                    "[%d] buffer size: [%d]",  strlen(serialized_string), bufsize);
+
+            EXFAIL_OUT(ret);
+        }
+    }
 out:
 
     if (NULL!=serialized_string)
@@ -746,7 +764,7 @@ expublic int typed_xcvt_json2view(buffer_obj_t **buffer)
     
     /* Do the convert */
     ndrx_TPunset_error();
-    if (NULL==(tmp=ndrx_tpjsontoview(view, (*buffer)->buf)))
+    if (NULL==(tmp=ndrx_tpjsontoview(view, (*buffer)->buf, NULL)))
     {
         NDRX_LOG(log_error, "Failed to convert JSON->VIEW: %s", 
                 tpstrerror(tperrno));
@@ -802,7 +820,7 @@ expublic int typed_xcvt_view2json(buffer_obj_t **buffer, long flags)
     /* Do the convert */
     ndrx_TPunset_error();
     if (EXSUCCEED!=ndrx_tpviewtojson((*buffer)->buf, 
-            subtype, tmp, NDRX_MSGSIZEMAX, flags))
+            subtype, tmp, NDRX_MSGSIZEMAX, flags, NULL))
     {
         tpfree((char *)tmp);
         NDRX_LOG(log_error, "Failed to convert VIEW->JSON: %s", 
@@ -839,3 +857,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

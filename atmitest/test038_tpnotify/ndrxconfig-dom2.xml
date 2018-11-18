@@ -46,7 +46,7 @@
         Max time in seconds in which server must respond.
         The granularity is sanity time.
         -->
-        <ping_max>40</ping_max>
+        <ping_max>440</ping_max>
         <!--
         Max time to wait until process should exit on shutdown
         -->

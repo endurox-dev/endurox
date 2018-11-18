@@ -1,28 +1,29 @@
-## 
-## `ndrx' EnduroX Administration utility.
+##
+## @brief `ndrx' EnduroX Administration utility.
 ##
 ## @file CMakeLists.txt
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## GPL or Mavimax's license for commercial use.
+## AGPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
-## GPL license:
+## AGPL license:
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
-## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
-## version.
+## the terms of the GNU Affero General Public License, version 3 as published
+## by the Free Software Foundation;
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
 ## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+## for more details.
 ##
-## You should have received a copy of the GNU General Public License along with
-## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1307 USA
+## You should have received a copy of the GNU Affero General Public License along 
+## with this program; if not, write to the Free Software Foundation, Inc., 
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -51,44 +52,49 @@ include_directories (${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
 
 add_custom_command(
   OUTPUT provision.c
-  COMMAND embedfile scripts/provision.pscript provision
+  COMMAND exembedfile scripts/provision.pscript provision
   DEPENDS scripts/provision.pscript)
 
 add_custom_command(
   OUTPUT gen_go_server.c
-  COMMAND embedfile scripts/gen_go_server.pscript gen_go_server
+  COMMAND exembedfile scripts/gen_go_server.pscript gen_go_server
   DEPENDS scripts/gen_go_server.pscript)
 
 add_custom_command(
   OUTPUT gen_go_client.c
-  COMMAND embedfile scripts/gen_go_client.pscript gen_go_client
+  COMMAND exembedfile scripts/gen_go_client.pscript gen_go_client
   DEPENDS scripts/gen_go_client.pscript)
   
 add_custom_command(
   OUTPUT gen_ubf_tab.c
-  COMMAND embedfile scripts/gen_ubf_tab.pscript gen_ubf_tab
+  COMMAND exembedfile scripts/gen_ubf_tab.pscript gen_ubf_tab
   DEPENDS scripts/gen_ubf_tab.pscript)
 
 add_custom_command(
   OUTPUT Exfields.c
-  COMMAND embedfile ../include/Exfields Exfields
+  COMMAND exembedfile ../include/Exfields Exfields
   DEPENDS ../include/Exfields)
   
 add_custom_command(
   OUTPUT gen_c_client.c
-  COMMAND embedfile scripts/gen_c_client.pscript gen_c_client
+  COMMAND exembedfile scripts/gen_c_client.pscript gen_c_client
   DEPENDS scripts/gen_c_client.pscript)
 
 add_custom_command(
   OUTPUT gen_c_server.c
-  COMMAND embedfile scripts/gen_c_server.pscript gen_c_server
+  COMMAND exembedfile scripts/gen_c_server.pscript gen_c_server
   DEPENDS scripts/gen_c_server.pscript)
 
 add_custom_command(
   OUTPUT gen_test_local.c
-  COMMAND embedfile scripts/gen_test_local.pscript gen_test_local
+  COMMAND exembedfile scripts/gen_test_local.pscript gen_test_local
   DEPENDS scripts/gen_test_local.pscript)
-  
+
+
+if(DEFINED EX_USE_SYSVQ)
+    SET(SOURCE1 "cmd_svmaps.c")
+endif()
+
   
 # Exectuables
 add_executable (xadmin xadmin.c exec.c config.c
@@ -101,7 +107,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
                 gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
                 gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c
-                cmd_pubfdb.c)
+                cmd_pubfdb.c ${SOURCE1} cmd_svids.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
@@ -125,3 +131,4 @@ install (PROGRAMS
     tmboot
     tmshutdown
     DESTINATION bin)
+# vim: set ts=4 sw=4 et smartindent:

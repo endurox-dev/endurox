@@ -51,3 +51,4 @@ xadmin/gen_go_client.c
 xadmin/gen_go_server.c
 xadmin/gen_ubf_tab.c
 xadmin/provision.c
+/dist/

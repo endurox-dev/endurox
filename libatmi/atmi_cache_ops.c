@@ -1,38 +1,39 @@
-/* 
-** ATMI level cache - operations.
-** Inval - their change only at point when we are going to save the results
-** in DB. And hopefully we get hopefully we get the newest result?
-** In case of keygroup if keyitem is deleted, then all items shall be deleted,
-** and keygroup shall be removed.
-**
-** @file atmi_cache_ops.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI level cache - operations.
+ *   Inval - their change only at point when we are going to save the results
+ *   in DB. And hopefully we get hopefully we get the newest result?
+ *   In case of keygroup if keyitem is deleted, then all items shall be deleted,
+ *   and keygroup shall be removed.
+ *
+ * @file atmi_cache_ops.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
@@ -479,6 +480,8 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     ndrx_tpcache_data_t *exdata;
     ndrx_tpcache_data_t *exdata_update;
     int is_matched;
+    int align;
+    char *defer_free = NULL;
     unsigned int flagsdb;
     int force_abort = EXFALSE;
     /* Key size - assume 16K should be fine */
@@ -733,7 +736,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         /* first: EDB_FIRST_DUP - this we accept and process */
         
         if (EXSUCCEED!=(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata, EDB_SET_KEY)))
+                    key, &cachedata, EDB_SET_KEY, &align)))
         {
             if (EDB_NOTFOUND!=ret)
             {
@@ -752,7 +755,7 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         NDRX_LOG(log_debug, "Performing simple lookup");
 #endif
         if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->cachedb, txn, key, &cachedata,
-                seterror_not_found)))
+                seterror_not_found, &align)))
         {
             /* error already provided by wrapper */
             NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
@@ -760,7 +763,12 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
         }
     }
     
-    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    if (align)
+    {
+        defer_free = cachedata.mv_data;
+    }
+    
+    exdata = (ndrx_tpcache_data_t *) cachedata.mv_data;
     
     /* validate record */
         
@@ -881,8 +889,9 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
     {
         /* fetch next for dups and remove them.. if any.. */
         /* next: MDB_NEXT_DUP  - we kill this! */
+        align = 0;
         while (EXSUCCEED==(ret=ndrx_cache_edb_cursor_get(cache->cachedb, cursor,
-                    key, &cachedata_delete, EDB_NEXT_DUP)))
+                    key, &cachedata_delete, EDB_NEXT_DUP, &align)))
         {
             /* delete the record, not needed, some old cache rec */
             NDRX_DUMP(log_debug, "Deleting duplicate record...", 
@@ -897,6 +906,17 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
                     break;
                 }
             }
+            
+            if (align)
+            {
+                NDRX_FREE(cachedata_delete.mv_data);
+                cachedata_delete.mv_data = NULL;
+            }
+        }
+        
+        if (align && NULL!=cachedata_delete.mv_data)
+        {
+            NDRX_FREE(cachedata_delete.mv_data);
         }
         
         if (ret!=EDB_NOTFOUND)
@@ -933,6 +953,12 @@ out:
         }
     }
 
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

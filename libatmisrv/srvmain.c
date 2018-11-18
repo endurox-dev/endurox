@@ -1,34 +1,35 @@
-/* 
-** Enduro/X server main entry point
-**
-** @file srvmain.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X server main entry point
+ *
+ * @file srvmain.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
@@ -51,6 +52,25 @@
 #include <atmi_tls.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+    
+/** Alloc the CLOPTS */
+#define REALLOC_CLOPT_STEP    10
+#define REALLOC_CLOPT alloc_args+=REALLOC_CLOPT_STEP; \
+    if (NULL==argv) \
+        argv = NDRX_MALLOC(sizeof(char *)*alloc_args); \
+    else \
+        argv = NDRX_REALLOC(argv, sizeof(char *)*alloc_args); \
+    if (NULL==argv) \
+    {\
+        int err = errno;\
+        fprintf(stderr, "%s: failed to realloc %ld bytes: %s\n", __func__, \
+            (long)sizeof(char *)*alloc_args, strerror(err));\
+        userlog("%s: failed to realloc %ld bytes: %s\n", __func__, \
+            (long)sizeof(char *)*alloc_args, strerror(err));\
+        exit(1);\
+    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -288,7 +308,7 @@ out:
  * @param argv
  * @return  SUCCEED/FAIL
  */
-int ndrx_init(int argc, char** argv)
+expublic int ndrx_init(int argc, char** argv)
 {
     int ret=EXSUCCEED;
     extern char *optarg;
@@ -297,6 +317,8 @@ int ndrx_init(int argc, char** argv)
     int dbglev;
     char *p;
     char key[NDRX_MAX_KEY_SIZE]={EXEOS};
+    char rqaddress[NDRX_MAX_Q_SIZE+1] = "";
+    char tmp[NDRX_MAX_Q_SIZE+1];
     
     /* Create ATMI context */
     ATMI_TLS_ENTRY;
@@ -316,13 +338,29 @@ int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:rs:t:x:Nn:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:--")) != EXFAIL)
     {
         switch(c)
         {
             case 'k':
                 /* just ignore the key... */
                 NDRX_STRCPY_SAFE(key, optarg);
+                break;
+            case 'R':
+                /* just ignore the key... */
+                
+                if (NDRX_SYS_SVC_PFXC==optarg[0])
+                {
+                    NDRX_LOG(log_error, "-R request address cannot start with [%c]",
+                            NDRX_SYS_SVC_PFXC);
+                    userlog("-R request address cannot start with [%c]",
+                            NDRX_SYS_SVC_PFXC);
+                    ndrx_TPset_error_fmt(TPEINVAL, "-R request address cannot start with [%c]",
+                            NDRX_SYS_SVC_PFXC);
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_STRCPY_SAFE(rqaddress, optarg);
                 break;
             case 's':
                 ret=parse_svc_arg(optarg);
@@ -347,7 +385,6 @@ int ndrx_init(int argc, char** argv)
                 if (EXSUCCEED!=ndrx_skipsvc_add(optarg))
                 {
                     ndrx_TPset_error_msg(TPESYSTEM, "Malloc failed");
-                    
                     EXFAIL_OUT(ret);
                 }
                 break;
@@ -455,10 +492,9 @@ int ndrx_init(int argc, char** argv)
     /*
      * Read queue prefix (This is mandatory to have)
      */
-
-    if (NULL==(p=getenv("NDRX_QPREFIX")))
+    if (NULL==(p=getenv(CONF_NDRX_QPREFIX)))
     {
-        ndrx_TPset_error_msg(TPEINVAL, "Env NDRX_QPREFIX not set");
+        ndrx_TPset_error_fmt(TPEINVAL, "Env [%s] not set", CONF_NDRX_QPREFIX);
         ret=EXFAIL;
         goto out;
     }
@@ -472,8 +508,36 @@ int ndrx_init(int argc, char** argv)
     /* Defaut number of events supported by e-poll */
     G_server_conf.max_events = 1;
     
+    /* format the request queue */
+    if (EXEOS==rqaddress[0])
+    {
+        /* so name not set, lets build per binary request address... */
+        snprintf(rqaddress, sizeof(rqaddress), NDRX_SVR_SVADDR_FMT, 
+                G_server_conf.q_prefix, G_server_conf.binary_name, G_srv_id);
+        
+        ndrx_epoll_mainq_set(rqaddress);
+        NDRX_STRCPY_SAFE(G_server_conf.rqaddress, rqaddress);
+    }
+    else
+    {
+        snprintf(tmp, sizeof(tmp), NDRX_SVR_RQADDR_FMT, 
+                G_server_conf.q_prefix, rqaddress);
+        ndrx_epoll_mainq_set(tmp);
+        NDRX_STRCPY_SAFE(G_server_conf.rqaddress, tmp);
+    }
+    
 out:
     return ret;
+}
+
+/**
+ * terminate server session after fork in child process
+ * as it is not valid there.
+ */
+exprivate void childsrvuninit(void)
+{
+    NDRX_LOG(log_debug, "Server un-init in forked child thread...");
+    atmisrv_un_initialize(EXTRUE);
 }
 
 /**
@@ -485,7 +549,80 @@ out:
 int ndrx_main(int argc, char** argv)
 {
     int ret=EXSUCCEED;
-
+    char *env_procname;
+    char *env_clopt = NULL;
+    int i;
+    
+    /* in case of argc/argv are empty, we shall attempt  */
+    
+    if (argc<=1 || NULL==argv)
+    {
+        char *p;
+        char *saveptr1;
+        char *tok;
+        int alloc_args = 0;
+        /* try to lookup env variables */
+        
+        /* well, for server process we need a real binary name
+         * the env is just logical server process name
+         * thus we have to use our macros here
+         */
+        env_procname = (char *)EX_PROGNAME;/* getenv(CONF_NDRX_SVPROCNAME); */
+        
+        p = getenv(CONF_NDRX_SVCLOPT);
+        
+        if (NULL==p)
+        {
+            NDRX_LOG(log_error, "%s: argc/argv are empty an %s/%s env vars not "
+                    "present - missing server params", __func__, 
+                    CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
+            userlog("%s: argc/argv are empty an %s/%s env vars not "
+                    "present - missing server params", __func__, 
+                    CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: argc/argv are empty an %s/%s env vars not "
+                    "present - missing server params", __func__, 
+                    CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL==(env_clopt=NDRX_STRDUP(p)))
+        {
+            int err;
+            
+            NDRX_LOG(log_error, "%s: Failed to strdup: %s", __func__, 
+                    strerror(err));
+            userlog("%s: Failed to strdup: %s", __func__, 
+                    strerror(err));
+            ndrx_TPset_error_fmt(TPEOS, "%s: Failed to strdup: %s", __func__, 
+                    strerror(err));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* realloc some space */
+        argv = NULL;
+        REALLOC_CLOPT;
+        
+        argc=1;
+        argv[0] = env_procname;
+        
+        tok = strtok_r(env_clopt, " \t", &saveptr1);
+        while (NULL!=tok)
+        {
+            argc++;
+            
+            if (argc > alloc_args)
+            {
+                REALLOC_CLOPT;
+            }
+            
+            argv[argc-1] = tok;
+            
+            /* Get next */
+            tok = strtok_r(NULL, " \t", &saveptr1);
+        }
+        
+    }
+    
     /* do internal initialization, get configuration, request for admin q */
     if (EXSUCCEED!=ndrx_init(argc, argv))
     {
@@ -497,10 +634,15 @@ int ndrx_main(int argc, char** argv)
     /*
      * Initialize polling subsystem
      */
-    ndrx_epoll_sys_init();
+    if (EXSUCCEED!=ndrx_epoll_sys_init())
+    {
+        NDRX_LOG(log_error, "ndrx_epoll_sys_init() fail");
+        userlog("ndrx_epoll_sys_init() fail");
+        EXFAIL_OUT(ret);
+    }
     
     /*
-     * Initialise services
+     * Initialize services
      */
     if (EXSUCCEED!=tpsvrinit(argc, argv))
     {
@@ -548,6 +690,13 @@ int ndrx_main(int argc, char** argv)
     
     /* As we can run even without ndrxd, then we ignore the result of send op */
     report_to_ndrxd();
+    
+    if (EXSUCCEED!=ndrx_atfork(NULL, NULL, childsrvuninit))
+    {
+        NDRX_LOG(log_error, "Failed to add atfork hanlder!");
+        userlog("Failed to add atfork hanlder!");
+        EXFAIL_OUT(ret);
+    }
 
     /* run process here! */
     if (EXSUCCEED!=(ret=sv_wait_for_request()))
@@ -566,7 +715,7 @@ out:
      */
     ndrx_epoll_sys_uninit();
     
-    atmisrv_un_initialize(EXTRUE);
+    atmisrv_un_initialize(EXFALSE);
     /*
      * Print error message on exit. 
      */
@@ -576,8 +725,19 @@ out:
     }
     
     fprintf(stderr, "Server exit: %d, id: %d\n", ret, G_srv_id);
+    
+    if (NULL!=env_clopt)
+    {
+        NDRX_FREE(env_clopt);
+        
+        /* all pointers comes from other variables */
+        if (NULL!=argv)
+        {
+            NDRX_FREE(argv);
+        }
+    }
 
     return ret;
 }
 
-
+/* vim: set ts=4 sw=4 et smartindent: */

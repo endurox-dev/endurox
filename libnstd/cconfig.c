@@ -1,34 +1,35 @@
-/* 
-** Enduro/X Common-Config
-**
-** @file inicfg.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X Common-Config
+ *
+ * @file cconfig.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
@@ -42,6 +43,8 @@
 #include <ini.h>
 #include <inicfg.h>
 #include <nerror.h>
+#include <ndebug.h>
+#include <nstd_int.h>
 #include <sys_unix.h>
 #include <errno.h>
 #include <inicfg.h>
@@ -92,9 +95,22 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
     int len;
     char *tmp1 = NULL; /* lookup section  */
     char *tmp2 = NULL; /* token cctag */
-    char fn[] = "ndrx_cconfig_get";
     char *saveptr1;
     char *token_cctag;
+    
+    _Nunset_error();
+    
+    if (NULL==cfg)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: `cfg' cannot be NULL!", __func__);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==section)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: `section' cannot be NULL!", __func__);
+        EXFAIL_OUT(ret);
+    }
     
     /*  if we have CC tag, with sample value "RM1/DBG2"
      * Then lookup will take in this order:
@@ -111,14 +127,14 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
 
         if (NULL==(tmp1 = NDRX_MALLOC(len+2))) /* 1 for eos, another for seperator */
         {
-            userlog("%s: tmp1 malloc failed: %s", fn, strerror(errno));
+            userlog("%s: tmp1 malloc failed: %s", __func__, strerror(errno));
             EXFAIL_OUT(ret);
         }
 
 
         if (NULL==(tmp2 = NDRX_MALLOC(strlen(G_cctag)+1)))
         {
-            userlog("%s: tmp2 malloc failed: %s", fn, strerror(errno));
+            userlog("%s: tmp2 malloc failed: %s", __func__, strerror(errno));
             EXFAIL_OUT(ret);
         }
 
@@ -133,12 +149,12 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
             strcat(tmp1, NDRX_INICFG_SUBSECT_SPERATOR_STR);
             strcat(tmp1, token_cctag);
 
-            if (EXSUCCEED!=ndrx_inicfg_get_subsect(cfg, 
+            if (EXSUCCEED!=ndrx_inicfg_get_subsect_int(cfg, 
                                 NULL,  /* all config files */
                                 tmp1,  /* global section */
                                 out))
             {
-                userlog("%s: %s", fn, Nstrerror(Nerror));
+                userlog("%s: %s", __func__, Nstrerror(Nerror));
                 EXFAIL_OUT(ret);
             }
             
@@ -150,7 +166,7 @@ expublic int ndrx_cconfig_get_cf(ndrx_inicfg_t *cfg, char *section,
                                 section,  /* global section */
                                 out))
     {
-        userlog("%s: %s", fn, Nstrerror(Nerror));
+        userlog("%s: %s", __func__, Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
     
@@ -165,7 +181,6 @@ out:
     {
         NDRX_FREE(tmp2);
     }
-
 
     return ret;
 }
@@ -478,3 +493,4 @@ expublic ndrx_inicfg_t *ndrx_get_G_cconfig(void)
     }
     return G_cconfig;
 }
+/* vim: set ts=4 sw=4 et smartindent: */
