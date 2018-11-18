@@ -1,39 +1,40 @@
-/* 
-** EnduroX cluster protocol.
-** TLV will be simple structure:
-** Tag: 2 bytes
-** Length: 2 bytes
-** Data...
-** All data will be generated as ASCII chars.
-**
-** @file proto.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief EnduroX cluster protocol.
+ *   TLV will be simple structure:
+ *   Tag: 2 bytes
+ *   Length: 2 bytes
+ *   Data...
+ *   All data will be generated as ASCII chars.
+ *
+ * @file proto.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <sys/socket.h>
@@ -244,7 +245,7 @@ static cproto_t M_stdhdr_x[] =
 static cproto_t M_command_call_x[] = 
 {
     {TCC, 0x1055,  "stdhdr",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_stdhdr_x},
-    {TCC, 0x105F,  "magic",        OFSZ(command_call_t,magic),         EXF_ULONG,  XFLD, 6, 6},
+    {TCC, 0x105F,  "magic",        OFSZ(command_call_t,magic),         EXF_ULONG,  XFLD, 5, 5},
     {TCC, 0x1069,  "command",      OFSZ(command_call_t,command),       EXF_INT,    XFLD, 2, 2},
     {TCC, 0x1073,  "msg_type",     OFSZ(command_call_t,msg_type),      EXF_SHORT,  XFLD, 1, 2},
     {TCC, 0x107D,  "msg_src",      OFSZ(command_call_t,msg_src),       EXF_SHORT,  XFLD, 1, 1},
@@ -281,7 +282,7 @@ static cproto_t M_bridge_refresh_x[] =
     {TBR, 0x10E1,  "mode",       OFSZ(bridge_refresh_t,mode),        EXF_INT,    XFLD, 1, 6},
     {TBR, 0x10EB,  "count",      OFSZ(bridge_refresh_t,count),       EXF_INT,    XFLD, 1, 6},
     /* We will provide integer as counter for array:  */
-    {TBR, 0x10F5,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 1, PMSGMAX, Mbridge_refresh_svc_x, 
+    {TBR, 0x10F5,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 0, PMSGMAX, Mbridge_refresh_svc_x, 
                             EXOFFSET(bridge_refresh_t,count), sizeof(bridge_refresh_svc_t)},
     {TBR, EXFAIL}
 };
@@ -293,6 +294,9 @@ struct proto_ufb_fld
 {
     int bfldid;
     int bfldlen;
+#if EX_ALIGNMENT_BYTES == 8
+    long         padding1;
+#endif
     char buf[0];
 };
 
@@ -2103,3 +2107,4 @@ exprivate xmsg_t * classify_netcall (char *ex_buf, long ex_len)
     
     return NULL;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

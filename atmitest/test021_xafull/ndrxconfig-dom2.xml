@@ -62,7 +62,7 @@
             </server>
             <server name="atmi.sv21">
                 <srvid>30</srvid>
-                <sysopt>-e ${TESTDIR}/atmisv21-2.log -r</sysopt>
+                <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
             </server>
             <server name="convsv21">
                 <srvid>50</srvid>

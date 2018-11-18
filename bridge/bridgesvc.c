@@ -1,48 +1,49 @@
-/* 
-** Bridge server
-** This is special kind of EnduroX Server.
-** It does configures the library to work in bridged mode.
-** It parses command line by looking of following config:
-** In client mode (-tA = type [A]ctive, connect to server)
-** -n <Node id of server> -i <IP of the server> -p <Port of the server> -tA
-** In server mode (-tP = type [P]asive, wait for call)
-** -n <node id of server> -i <Bind address usually 0.0.0.0> -p <Port to bind on> -tP
-** Notes for multi thread:
-** - Outgoing message fully received by xatmi main thread, 
-** and is submitted to thread pool. The treads perform async send to network.
-** - Incoming message from network also are fully received from main thread.
-** Once read fully, submitted to thread pool for further processing.
-** In case if thread count is set to 0, then do not use threading model, just
-** just do direct calls if send & receive.
-**
-** @file bridgesvc.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Bridge server
+ *   This is special kind of EnduroX Server.
+ *   It does configures the library to work in bridged mode.
+ *   It parses command line by looking of following config:
+ *   In client mode (-tA = type [A]ctive, connect to server)
+ *   -n <Node id of server> -i <IP of the server> -p <Port of the server> -tA
+ *   In server mode (-tP = type [P]asive, wait for call)
+ *   -n <node id of server> -i <Bind address usually 0.0.0.0> -p <Port to bind on> -tP
+ *   Notes for multi thread:
+ *   - Outgoing message fully received by xatmi main thread,
+ *   and is submitted to thread pool. The treads perform async send to network.
+ *   - Incoming message from network also are fully received from main thread.
+ *   Once read fully, submitted to thread pool for further processing.
+ *   In case if thread count is set to 0, then do not use threading model, just
+ *   just do direct calls if send & receive.
+ *
+ * @file bridgesvc.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrx_config.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -179,6 +180,11 @@ expublic int br_report_to_ndrxd_cb(void)
  */
 expublic int poll_timer(void)
 {
+    /* run any queue left overs... */
+    br_run_q();
+    
+    NDRX_LOG(log_debug, "FD=%d", G_bridge_cfg.net.sock);
+    
     return exnet_periodic();
 }
 
@@ -200,8 +206,11 @@ void TPBRIDGE (TPSVCINFO *p_svc)
     /* Dummy service, calls will never reach this point. */
 }
 
-/*
+/**
  * Do initialization
+ * For bridge we could make a special rq address, for example "@TPBRIDGENNN"
+ * we will an API for ndrx_reqaddrset("...") which would configure the libnstd
+ * properly.
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
@@ -215,14 +224,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int backlog = 100;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
-    int periodic_zero = 0; /* send zero lenght messages periodically */
+    int periodic_zero = 0; /* send zero length messages periodically */
+    
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     G_bridge_cfg.nodeid = EXFAIL;
     G_bridge_cfg.timediff = 0;
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
+    G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
@@ -281,6 +292,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 break;
             case 'P': 
                 G_bridge_cfg.threadpoolsize = atol(optarg);
+                break;
+            case 'R': 
+                G_bridge_cfg.qretries = atoi(optarg);
                 break;
             case 't': 
                 
@@ -382,7 +396,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Set server flags  */
     tpext_configbrige(G_bridge_cfg.nodeid, flags, br_got_message_from_q);
     
-    snprintf(G_bridge_cfg.svc, sizeof(G_bridge_cfg.svc), NDRX_SVC_BRIDGE, G_bridge_cfg.nodeid);
+    snprintf(G_bridge_cfg.svc, sizeof(G_bridge_cfg.svc), NDRX_SVC_BRIDGE, 
+            G_bridge_cfg.nodeid);
     
     if (EXSUCCEED!=tpadvertise(G_bridge_cfg.svc, TPBRIDGE))
     {
@@ -397,6 +412,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
+    
+    NDRX_LOG(log_info, "Queue re-submit retries set to: %d", G_bridge_cfg.qretries);
     
     M_init_ok = EXTRUE;
     
@@ -459,3 +476,5 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     
 }
+
+/* vim: set ts=4 sw=4 et smartindent: */

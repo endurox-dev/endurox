@@ -1,36 +1,37 @@
-/* 
-** API to NDRXD admin server
-** TODO: Might think to convert all ndrxd API operations to adminQ!
-** Due to possible collisions with async replies in Q....
-**
-** @file ndrxdapi.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief API to NDRXD admin server
+ *   TODO: Might think to convert all ndrxd API operations to adminQ!
+ *   Due to possible collisions with async replies in Q....
+ *
+ * @file ndrxdapi.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,7 @@
 #include <atmi_int.h>
 #include <ndrxdcmn.h>
 #include <unistd.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -84,16 +86,55 @@ expublic int report_to_ndrxd(void)
     int i, offset=0;
     svc_entry_fn_t *entry;
     size_t  send_size;
-
+    static int first = EXTRUE;
+    static int ppid = EXFAIL;
+    char *p;
     /* shall we do full memset? */
     memset(buf, 0, sizeof(srv_status_t));
     
     /* format out the status report */
-    status->srvinfo.pid = getpid();
+    
+    /* Feature #76, provide parent (script?) pid from env variables if available
+     * if not available, then assume that current pid is a server process pid
+     * and there are no wrappers used.
+     * it is expected that multi-threaded calls will not be made here.
+     * and evne if multi-thread is done, the worst thing that might happen
+     * is reading env twice and writting ppid twice - no problem at all.
+     */
+    if (first)
+    {
+        p = getenv(CONF_NDRX_SVPPID);
+        
+        if (NULL!=p)
+        {
+            ppid = atoi(p);
+        }
+        
+        if (ppid <= 0)
+        {
+            ppid = getpid();
+        }
+        first = EXFALSE;
+    }
+    
+    status->srvinfo.pid = ppid;
+    status->srvinfo.svpid = getpid();
+    
+    /* TODO: We need to add rqaddr / qid to the status message
+     * so that ndrxd can install the qid in service shared
+     * memory
+     */
     status->srvinfo.state = NDRXD_PM_RUNNING_OK;
     status->srvinfo.srvid = G_server_conf.srv_id;
     status->srvinfo.flags = G_server_conf.flags;
     status->srvinfo.nodeid = G_server_conf.nodeid;
+    NDRX_STRCPY_SAFE(status->srvinfo.binary_name_real, G_server_conf.binary_name);
+    NDRX_STRCPY_SAFE(status->srvinfo.rqaddress, G_server_conf.rqaddress);
+#ifdef EX_USE_SYSVQ
+    status->srvinfo.resid = ndrx_epoll_resid_get();
+#else
+    status->srvinfo.resid = G_server_conf.srv_id;
+#endif
 
     /* fill the service list */
     for (i=0; i<G_server_conf.adv_service_count; i++)
@@ -148,8 +189,6 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
     command_dynadvertise_t *unadv = (command_dynadvertise_t *)buf;
-    int i, offset=0;
-    svc_entry_fn_t *entry;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
     memset(buf, 0, sizeof(buf));
@@ -173,9 +212,9 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
-        if (!G_shm_srv)
+        if (!G_shm_srv || ENOENT==ret)
         {
-            NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
+            NDRX_LOG(log_error, "Not attached to ndrxd - ignore error");
             ret=EXSUCCEED;
         }    
         else
@@ -199,7 +238,6 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     int ret=EXSUCCEED;
     char buf[NDRX_MSGSIZEMAX];
     command_dynadvertise_t *adv = (command_dynadvertise_t *)buf;
-    int i, offset=0;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
     memset(buf, 0, sizeof(buf));
@@ -226,9 +264,9 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     if (EXSUCCEED!=ret)
     {
         /*Just ignore the error*/
-        if (!G_shm_srv)
+        if (!G_shm_srv || ENOENT==ret)
         {
-            NDRX_LOG(log_error, "Not attached to shm/ndrxd - ingore error");
+            NDRX_LOG(log_error, "Not attached to ndrxd - ignore error");
             ret=EXSUCCEED;
         }    
         else
@@ -276,6 +314,7 @@ exprivate int get_bridges_rply_request(char *buf, long len)
  * this causes corruption of response.
  * !!!NOTE: Might want to store connected nodes in shared mem!!!!!!
  * ndrxd could update shared mem for bridges, for full refresh and for delete updates...
+ * !!! looks like not used any more...!!!
  * @return
  */
 expublic int ndrxd_get_bridges(char *nodes_out)
@@ -391,3 +430,5 @@ expublic int pingrsp_to_ndrxd(command_srvping_t *ping)
 out:
     return ret;
 }
+
+/* vim: set ts=4 sw=4 et smartindent: */

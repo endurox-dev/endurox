@@ -1,37 +1,38 @@
-/* 
-** Cache sanity daemon - this will remove expired records from db
-** We shall move all scanning to RO mode. Build the list for removal
-** and process the writes in separate run (if requied). Also duplicate processing
-** shall be left only for scandup flag - this will simplify the code.
-**
-** @file tpcached.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Cache sanity daemon - this will remove expired records from db
+ *   We shall move all scanning to RO mode. Build the list for removal
+ *   and process the writes in separate run (if requied). Also duplicate processing
+ *   shall be left only for scandup flag - this will simplify the code.
+ *
+ * @file tpcached.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -139,7 +140,8 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     char cur_key[NDRX_CACHE_KEY_MAX+1] = {EXEOS};
     
     ndrx_tpcached_msglist_t * exp_list = NULL;
-            
+    int align;        
+    char *defer_free = NULL;
             
     ndrx_tpcache_data_t *pdata;
     
@@ -173,8 +175,14 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
     op = EDB_FIRST;
     do
     {
+        if (defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -187,6 +195,11 @@ exprivate int proc_db_expiry_nosvc(ndrx_tpcache_db_t *db)
                 NDRX_LOG(log_error, "Failed to loop over the [%s] db", db->cachedb);
                 break;
             }
+        }
+        
+        if (align)
+        {
+            defer_free = val.mv_data;
         }
         
         /* test is last symbols EOS of data, if not this might cause core dump! */
@@ -283,6 +296,11 @@ out:
         ndrx_tpcached_free_list(&exp_list);
     }
 
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     return ret;
 }
 
@@ -373,6 +391,8 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     long nodeid = tpgetnodeid();
     long deleted=0, dupsdel=0;
     ndrx_tpcached_msglist_t * dup_list = NULL;
+    int align;
+    char *defer_free = NULL;
     
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
@@ -430,10 +450,17 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
     i = 0;
     do
     {
+        if (NULL!=defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         NDRX_LOG(log_debug, "%s: [%s] db loop %ld, entries: %ld",  
                         __func__, db->cachedb, i, (long) stat.ms_entries);
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -448,6 +475,10 @@ exprivate int proc_db_limit(ndrx_tpcache_db_t *db)
             }
         }
         
+        if (align)
+        {
+            defer_free = val.mv_data;
+        }
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
         NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
@@ -650,6 +681,12 @@ out:
         dsort = NULL;
     }
 
+    if (NULL!=defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
+
     return ret;
 }
 
@@ -674,7 +711,9 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     ndrx_tpcache_data_t *pdata;
     char *prvkey = NULL;
     ndrx_tpcached_msglist_t * dup_list = NULL;
-
+    int align;
+    char *defer_free = NULL;
+    
     NDRX_LOG(log_debug, "%s enter dbname=[%s]", __func__, db->cachedb);
     /* Get size of db */
     
@@ -701,8 +740,14 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
     i = 0;
     do
     {
+        if (defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -717,6 +762,10 @@ exprivate int proc_db_dups(ndrx_tpcache_db_t *db)
             }
         }
         
+        if (align)
+        {
+            defer_free = val.mv_data;
+        }
         /* test is last symbols EOS of data, if not this might cause core dump! */
         
         NDRX_CACHE_CHECK_DBKEY((&keydb), TPMINVAL);
@@ -805,6 +854,11 @@ out:
     if (tran_started)
     {
         ndrx_cache_edb_abort(db, txn);
+    }
+
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
     }
 
     return ret;
@@ -974,3 +1028,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

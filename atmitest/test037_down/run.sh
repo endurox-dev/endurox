@@ -1,30 +1,31 @@
 #!/bin/bash
-## 
-## @(#) Test037 - Test "xadmin down" - wipe out all Enduro/X runtime resources.
-## NOTE: We also test removal of client processes childs for cpm and standalone..
+##
+## @brief @(#) Test037 - Test "xadmin down" - wipe out all Enduro/X runtime resources.
+##   NOTE: We also test removal of client processes childs for cpm and standalone..
 ##
 ## @file run.sh
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## GPL or Mavimax's license for commercial use.
+## AGPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
-## GPL license:
+## AGPL license:
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
-## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
-## version.
+## the terms of the GNU Affero General Public License, version 3 as published
+## by the Free Software Foundation;
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
 ## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+## for more details.
 ##
-## You should have received a copy of the GNU General Public License along with
-## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1307 USA
+## You should have received a copy of the GNU Affero General Public License along 
+## with this program; if not, write to the Free Software Foundation, Inc., 
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -225,6 +226,7 @@ fi
 ################################################################################
 
 echo "About to down dom1"
+xadmin pqa
 xadmin down -y
 
 echo "After dom1 down"
@@ -289,11 +291,18 @@ if [[ "$CNT" -ne "1" ]]; then
     go_out 16
 fi
 
+CNT=`$PSCMD | grep atmisv_2_37 | grep -v grep |wc | awk '{print $1}'`
+echo "atmisv_2_37 $CNT"
+if [[ "$CNT" -ne "1" ]]; then 
+    echo "TESTERROR! Only one copy of atmisv_2_37 must be left!"
+    go_out 17
+fi
+
 CNT=`$PSCMD | grep tprecover | grep -v grep | wc | awk '{print $1}'`
 echo "tprecover: $CNT"
 if [[ "$CNT" -ne "1" ]]; then 
     echo "TESTERROR! Only one copy of tprecover must be left!"
-    go_out 17
+    go_out 18
 fi
 
 #
@@ -312,9 +321,18 @@ if [ "$(uname)" == "Linux" ]; then
 
     echo "DOM1 Shared memories: $SHMS"
 
-    if [[ "$SHMS" -ne "0" ]]; then 
-        echo "TESTERROR! There must be no shared memory for dom1 after kill!"
-        go_out 18
+    if [[ `xadmin poller` == "SystemV" ]]; then
+
+        if [[ "$SHMS" -ne "2" ]]; then 
+            echo "TESTERROR! There must be 2 shared memory objs for dom1 after kill!"
+            go_out 18
+        fi
+    else
+
+        if [[ "$SHMS" -ne "0" ]]; then 
+            echo "TESTERROR! There must be no shared memory for dom1 after kill!"
+            go_out 18
+        fi
     fi
 fi
 
@@ -343,14 +361,21 @@ CNT=`xadmin pqa -a | wc | awk '{print $1}'`
 echo "DOM1 Queues: $CNT"
 if [[ "$CNT" -ne "1" ]]; then 
     echo "TESTERROR! Dom1 & 2 all queues must be removed except 1 for xadmin!"
-    go_out 20
+    go_out 30
 fi
 
 CNT=`$PSCMD | grep atmisv37 | grep -v grep | wc | awk '{print $1}'`
 echo "Finally atmisv37: $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
     echo "TESTERROR! All atmisv37 must be killed!"
-    go_out 21
+    go_out 31
+fi
+
+CNT=`$PSCMD | grep atmisv_2_37 | grep -v grep | wc | awk '{print $1}'`
+echo "Finally atmisv_2_37 $CNT"
+if [[ "$CNT" -ne "0" ]]; then 
+    echo "TESTERROR! All atmisv_2_37 must be killed!"
+    go_out 32
 fi
 
 # Catch is there is test error!!!
@@ -361,3 +386,4 @@ fi
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

@@ -22,6 +22,7 @@ SYNOPSIS
         <restart_max>MAX_RESTART_TIME</restart_max>
         <restart_to_check>NDRXD_RESTART_TO_CHECK</restart_to_check>
         <gather_pq_stats>NDRXD_GATHER_PQ_STATS</gather_pq_stats>
+        <rqaddrttl>RQADDRTTL</rqaddrttl>
     </appconfig>
     <defaults>
         <min>MIN_SERVERS_DEFAULT</min>
@@ -40,6 +41,17 @@ SYNOPSIS
         <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
         <protected>PROTECTED_SERVER_DEFAULT</protected>
         <reloadonchange>RELOAD_ON_CHANGE_DEFAULT</reloadonchange>
+        <rqaddr>RQADDR_DEFAULT</rqaddr>
+        <envs group="SVGRP_ENV_GROUP_NAME">
+            <env name="SVGRP_ENV_VARIABLE_NAME">SVGRP_ENV_VARIABLE_VALUE</env>
+            <env name="SVGRP_ENV_VARIABLE_NAME_1" unset="SVGRP_ENV_UNSET" />
+            ...
+            <env name="SVGRP_ENV_VARIABLE_NAME_N">SVGRP_ENV_VARIABLE_VALUE_N</env>
+        </envs>
+        ...
+        <envs group="SVGRP_ENV_GROUP_NAME_N">
+            ...
+        </envs>
     </defaults>
     <servers>
         <server name="SERVER_BINARY_NAME">
@@ -65,6 +77,17 @@ SYNOPSIS
             <protected>PROTECTED_SERVER</protected>
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
+            <cmdline>ATMI_SERVER_COMMAND_LINE</cmdline>
+            <rqaddr>RQADDR</rqaddr>
+            <envs>
+                <usegroup>SVGRP_ENV_GROUP_NAME</usegroup>
+                ...
+                <usegroup>SVGRP_ENV_GROUP_NAME_N</usegroup>
+                <env name="SVPROC_ENV_VARIABLE_NAME">SVPROC_ENV_VARIABLE_VALUE</env>
+                <env name="SVPROC_ENV_VARIABLE_NAME_UNSET" unset="SVPROC_ENV_UNSET" />
+                ...
+                <env name="SVPROC_ENV_VARIABLE_NAME_N">SVPROC_ENV_VARIABLE_VALUE_N</env>
+            </envs>
         </server>
         ...
         <server name="SERVER_BINARY_NAME_N">
@@ -72,22 +95,42 @@ SYNOPSIS
         </server>
     </servers>
     <clients>
+        <envs group="CLTGRP_ENV_GROUP_NAME">
+            <env name="CLTGRP_ENV_VARIABLE_NAME">CLTGRP_ENV_VARIABLE_VALUE</env>
+            <env name="CLTGRP_ENV_VARIABLE_NAME_UNSET" unset="CLTGRP_ENV_UNSET" />
+            ...
+            <env name="CLTGRP_ENV_VARIABLE_NAME_N">CLTGRP_ENV_VARIABLE_VALUE_N</env>
+        </envs>
+        ...
+        <envs group="CLTGRP_ENV_GROUP_NAME_N">
+            ...
+        </envs>
         <client cmdline="CLT_COMMAND_LINE [${NDRX_CLTTAG} ${NDRX_CLTSUBSECT}]" 
             log="CLT_LOG" 
             stdout="CLT_STDOUT"
             stderr="CLT_STDERR"
-            env="CLT_ENV"
+            env="CLTGRP_ENV"
             CCTAG="CLT_CCTAG"
             wd="CLT_WD"
             klevel="CLT_KLEVEL"
             autostart="CLT_AUTOSTART">
+
+            <envs>
+                <usegroup>CLTGRP_ENV_GROUP_NAME</usegroup>
+                ...
+                <usegroup>CLTGRP_ENV_GROUP_NAME_N</usegroup>
+                <env name="CLTPROC_ENV_VARIABLE_NAME">CLTPROC_ENV_VARIABLE_VALUE</env>
+                <env name="CLTPROC_ENV_VARIABLE_NAME_UNSET" unset="CLTPROC_ENV_UNSET" />
+                ...
+                <env name="CLPROC_ENV_VARIABLE_NAME_N">CLTPROC_ENV_VARIABLE_VALUE_N</env>
+            </envs>
 
             <exec tag="CLT_TAG_EXEC" 
                 subsect="CLT_SUBSECT_EXEC" 
                 log="CLT_LOG_EXEC" 
                 stdout="CLT_STDOUT_EXEC" 
                 stderr="CLT_STDERR_EXEC" 
-                env="CLT_ENV_EXEC" 
+                env="CLTGRP_ENV_EXEC" 
                 cctag="CLT_CCTAG_EXEC" 
                 wd="CLT_WD_EXEC" 
                 autostart="CLT_AUTOSTART_EXEC"
@@ -154,6 +197,23 @@ DEBUG CONFIGURATION FILE SYNTAX
     Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
     stats for service queues. In future this might be used for automatic service starting
     and stopping.
+*RQADDRTTL*::
+    Used only when operating System V queues mode. Due to common queue for
+    multiple services / basically all service queues are shared request addresses,
+    the only zapping approach when there are no servers on queues, is to check
+    that in service shared memory there are no linked request address queues,
+    and at time perform unlink of the request address queue. But here we have a
+    problem. The XATMI server might just started up, opened the RQADDR queue,
+    but did not yet managed to install record in service shared memory. Thus
+    'ndrxd' will unlink the RQADDR. To avoid this issue, with TTL slight delay
+    is introduced, after which queue is unlinked. Basically when queue is open
+    it's change time is updated. And if current time minus change time is
+    less than *RQADDRTTL*, then queue is not unlinked (in this time server will
+    be able to add record to service shared memory). Also with this comes a fact
+    that there must be no server processes with out any service. For those
+    request address queue will be unlinked.
+    The value is in seconds. Checks are performed with *SANITY_SECONDS* intervals.
+    Default value is *10* seconds.
 *MIN_SERVERS_DEFAULT*::
     Default minimum number of copies of the server which needs to be started automatically.
     This can be overridden by 'MIN_SERVERS_SRV' per server.
@@ -219,7 +279,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
 *PROTECTED_SERVER_DEFAULT*::
     Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' paramter (complete shutdown). Still you can run the 'sreload' and 
+    'xadmin stop -c' parameter (complete shutdown). Still you can run the 'sreload' and 
     stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
     won't work on these because '-c' is not supposed to be used by restart.
     The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
@@ -232,17 +292,32 @@ DEBUG CONFIGURATION FILE SYNTAX
     cycle. This is recommended to be used *only* for development purposes. And
     must not be used on production servers! 
     This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+*RQADDR_DEFAULT*::
+    Request address (common service queue) used in System V mode. For other
+    modes each service have it's own queue, but due to limitations of the System V
+    queues, for each XATMI server process have it's own queue (built as process
+    /exe name and service id) or processes can share the queue by having this
+    request address, thus getting a one queue multiple servers mechanism for
+    message dispatching. Also all servers attached on the same request address
+    must advertise all the services from all servers attached on the same
+    request address. If some server will miss a service, it might receive request
+    for particular service, the error will be logged and message will be dropped,
+    thus caller will get a timeout. If different request addresses are serving
+    the same service, then request will be load balanced in round-robin mode.
+    This can be overridden by 'RQADDR' on per server basis. Request address
+    cannot start with '@' symbol. The max length of the request address is *30*
+    chars.
 *SECONDS_TO_SLEEP_AFTER_SRV_START*::
     Number of seconds to wait for next item to start after the server is launched.
     This is useful in cases when for example we start bridge server, let it for some
     seconds to connect to other node, then continue with other service startup.
 *SERVER_BINARY_NAME*::
     ATMI server executable's name. The executable must be in $PATH.
-    This name cannot contain special symbols like path seperator '/'
+    This name cannot contain special symbols like path separator '/'
     and it cannot contains commas ','! Commas are used as internal
-    queue seperator combined with binary names.
+    queue separator combined with binary names.
 *RESPAWN_SRV*::
-    Do the automatica process respawning if process is died for some reason. The default
+    Do the automatic process re-spawning if process is died for some reason. The default
     value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
     then sanity checks will not automatically re-boot the process.
 *SERVER_ID*::
@@ -291,7 +366,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     Enduro/X server specific list of services that must not be exported. This list is only for 
     *tpbridge* servers. Blacklist have higher priority over the Export list.
 *ATMI_SERVER_FULL_PATH*::
-    This is full path of the XATMI server binary. At the porcess startup this overrides
+    This is full path of the XATMI server binary. At the process startup this overrides
     the server binary name at *SERVER_BINARY_NAME*. *ATMI_SERVER_FULL_PATH* is used only
     for process startup. This is intended for testing, if server wrapper scripts
     needs to be started. But as the *ndrxd* will do the sanity checks against the process
@@ -299,6 +374,47 @@ DEBUG CONFIGURATION FILE SYNTAX
     full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
     of process model checks, the ndrxd will find out that wrapped binary name does not
     contain the *SERVER_BINARY_NAME*, thus will reboot the process.
+*ATMI_SERVER_COMMAND_LINE*::
+    This is alternative command line build by user. From this command line the
+    real process name is extracted as first executable (basename). When  building
+    custom command line, the env substitution is available at the stage with
+    following processes based envs (not counting the globals): *NDRX_SVSRVID* -
+    Enduro/X server id, *NDRX_SVPROCNAME* - server process name (defined in XML
+    config as *SERVER_BINARY_NAME* variable, *NDRX_SVCLOPT* - standard command
+    line options used by Enduro/X. These options are used at stage with ATMI
+    server library gets initialized, it will use in case *ndrx_main()* receives
+    less than expected standard argument count. Basically this command line tag
+    is suitable for interpreted languages, like Java, where interpreter needs to
+    be started as stand alone binary, and the Enduro/X is initialized as a library
+    within stand alone process.
+*SVGRP_ENV_GROUP_NAME*::
+    Environment variable group name for the servers section. Identifier max length
+    is 30 chars. Same group can be used for different server processes. One server
+    may import multiple groups. For client processes groups are defined 
+    *CLTGRP_ENV_GROUP_NAME* name at '<clients>' section. At process level groups
+    can be imported by using tag '<usegroup>' and specifying the group name. At
+    that moment all variables defined in group are import for process. 
+*SVGRP_ENV_VARIABLE_NAME*::
+    This server server's group environment variable name, that shall be set for
+    process which uses this group. For client processes *CLTGRP_ENV_VARIABLE_NAME*
+    set the variable name at group definition. Individual environment variables
+    can be set at process level. For server processes that is set by
+    *SVPROC_ENV_VARIABLE_NAME* and for client processes by *CLTPROC_ENV_VARIABLE_NAME*.
+*SVGRP_ENV_VARIABLE_VALUE*::
+    This is environment variable value to be set. For client process groups this
+    is defined by *CLTGRP_ENV_VARIABLE_VALUE*. For individual processes value is
+    defined by *SVPROC_ENV_VARIABLE_NAME* and *CLTPROC_ENV_VARIABLE_NAME*
+    accordingly. The value is interpreted by variable substitution algorithm (see 
+    bellow). The value is interpreted at time when process is spawned (not defined),
+    meaning that it have access to full process variables at startup moment.
+*SVGRP_ENV_UNSET*::
+    If set to 'y' or 'Y' then environment's environment variable is unset (removed)
+    from environment. This can be used if some specific variable for process is
+    not needed. At client environment group level this can be set by *CLTGRP_ENV_UNSET*,
+    at process levels this can be set by *SVPROC_ENV_UNSET* and *CLTPROC_ENV_UNSET*
+    accordingly. If any value is present for this variable, it is ignored, as the
+    main action of this tag is unset the value and only what matters here is the
+    variable name.
 *CLT_COMMAND_LINE*::
     Executable name and arguments for client program. Command line basically is a format
     string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
@@ -312,9 +428,9 @@ DEBUG CONFIGURATION FILE SYNTAX
 *CLT_STDERR*::
     File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
     for each individual process. Optional attribute.
-*CLT_ENV*::
-    Environment override file. See *ex_envover(5)* for syntax. Can be overridden by 'CLT_ENV_EXEC'
-    for each individual process. Optional attribute.
+*CLTGRP_ENV*::
+    Environment override file. See *ex_envover(5)* for syntax. Can be overridden 
+    by 'CLTGRP_ENV_EXEC' for each individual process. Optional attribute.
 *CLT_CCTAG*::
     ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
     for each individual process. Optional attribute.
@@ -333,13 +449,13 @@ DEBUG CONFIGURATION FILE SYNTAX
     of the client, *1* - do kill child processes only when performing 
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
     The default is *0*.
-	
+
 VARIABLE SUBSTITUTION
 ---------------------
 
 Several parameters in the ndrxconfig.xml file are processed via substitution 
 engine. Engine processes puts the environment variables or special functions
-in the placeholders. Placeholder is defined as ${ENV_VARIABLE} for environment
+in the place-holders. Placeholder is defined as ${ENV_VARIABLE} for environment
 variables and ${FUNC=[PARAMETER]} for functions. The value can be escaped with 
 \${some_value}.
 
@@ -378,6 +494,9 @@ Sample configuration:
         <ping_max>4</ping_max>
         <end_max>3</end_max>
         <killtime>1</killtime>
+        <envs group="JAVAENV">
+            <env name="_JAVA_OPTIONS">-Xmx1g</env>
+        </envs>
     </defaults>
     <servers>
         <server name="tpevsrv">
@@ -394,6 +513,17 @@ Sample configuration:
             <sysopt>-e /tmp/BRIDGE -r</sysopt>
             <appopt>-n2 -r -i 0.0.0.0 -p 4433 -tA</appopt>
         </server>
+        <server name="jserver2">
+            <max>1</max>
+            <srvid>200</srvid>
+            <sysopt>-e /tmp/BRIDGE -r</sysopt>
+            <envs>
+                <usegroup>JAVAENV</usegroup>
+                <env name="CLASSPATH">${NDRX_APPHOME}/libs/somelib.jar</env>
+                <env name="CLASSPATH">${CLASSPATH}:${NDRX_APPHOME}/libs/${NDRX_SVPROCNAME}.jar</env>
+            </envs>
+            <cmdline>java</cmdline>
+        </server>
         <server name="cpmsrv">
             <cctag>RM2</cctag>
             <srvid>9999</srvid>
@@ -402,7 +532,7 @@ Sample configuration:
     </servers>
     <clients>
         <client cmdline="testbinary -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}" autostart="Y" cctag="RM4">
-            <exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log"cctag="RM5"/>
+            <exec tag="TAG1" subsect="SUBSECTION1" log="${APP_LOG}/testbin1-1.log" cctag="RM5"/>
             <exec tag="TAG2" subsect="SUBSECTION2" log="${APP_LOG}/testbin1-2.log"/>
         </client>
         <client cmdline="testenv.sh" env="environment.override1" log="env1.log">

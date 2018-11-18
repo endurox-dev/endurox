@@ -1,34 +1,35 @@
-/* 
-** Commons for system abstractions
-**
-** @file sys_common.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Commons for system abstractions
+ *
+ * @file sys_common.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
@@ -60,6 +61,7 @@
 #include "userlog.h"
 #include "exregex.h"
 #include "exparson.h"
+#include "atmi_int.h"
 
 
 
@@ -68,11 +70,19 @@
     
 /*#define SYSCOMMON_ENABLE_DEBUG - causes locks in case of invalid config,
  *      due to recursive debug init */
-
+#define MAX_ATFORKS         3
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/** Function to run before fork */
+exprivate void (*M_prepare[MAX_ATFORKS])(void) = {NULL, NULL, NULL}; 
+/** Function to run after fork, by parent */
+exprivate void (*M_parent[MAX_ATFORKS])(void) = {NULL, NULL, NULL};
+/** Function to run after fork, by child */
+exprivate void (*M_child[MAX_ATFORKS])(void) = {NULL, NULL, NULL};
+
 /*---------------------------Prototypes---------------------------------*/
 
 
@@ -217,7 +227,6 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
      */
     char cmd[128];
     FILE *fp=NULL;
-    string_list_t* tmp;
     string_list_t* ret = NULL;
     pid_t pid;
     char path[PATH_MAX];
@@ -263,7 +272,7 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
         ret = NULL;
     }
 
-    return ret;   
+    return ret;
 }
     
 
@@ -785,7 +794,7 @@ $ ps -o vsz -p 1
     NDRX_LOG(log_debug, "Parsing output: [%s]", line);
     
     toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
-            sizeof(long), N_DIM(meminfo));
+            sizeof(long), N_DIM(meminfo), 0, 15);
     
     if (toks<7)
     {
@@ -806,7 +815,7 @@ $ ps -o vsz -p 1
     NDRX_LOG(log_debug, "Parsing output: [%s]", line);
     
     toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
-            sizeof(long), N_DIM(meminfo));
+            sizeof(long), N_DIM(meminfo), 0, 15);
     
     if (toks!=1)
     {
@@ -829,11 +838,11 @@ $ ps -o vsz -p 1
     NDRX_LOG(log_debug, "Parsing output: [%s]", line);
     
     toks = ndrx_tokens_extract(line, "%ld", (void *)meminfo, 
-            sizeof(long), N_DIM(meminfo));
+            sizeof(long), N_DIM(meminfo), 0, 15);
     
     if (2!=toks)
     {
-        NDRX_LOG(log_error, "Invalid tokens, expected 2, got %d", toks);
+       NDRX_LOG(log_error, "Invalid tokens, expected 2, got %d", toks);
        EXFAIL_OUT(ret);
     }
     
@@ -852,4 +861,362 @@ out:
     return ret;
 }
 
+/**
+ * Test the regexp against the command output strings.
+ * This will be used for aix/freebsd/macos/solaris
+ * NOTE: This generate sign child due to fork.
+ * @param fmt format string for command, must contain %d for pid
+ * @param pid process id to test
+ * @param p_re regular expression to match the output
+ * @return EXFAIL (failed) / EXSUCCEED (0) - not matched, EXTRUE (1) - matched
+ */
+expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
+{
+    char cmd[PATH_MAX];
+    FILE *fp=NULL;
+    char *buf = NULL;
+    size_t n = PATH_MAX;
+    int ret = EXSUCCEED;
+    
+    /* allocate buffer first */
+    
+    NDRX_MALLOC_OUT(buf, n, char);
+    
+    snprintf(cmd, sizeof(cmd), fmt, pid);
+    
+    fp = popen(cmd, "r");
+    
+    if (fp == NULL)
+    {
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
+    }
+    
+    while (EXFAIL!=ndrx_getline(&buf, &n, fp))
+    {
+        /* test the output... */
+        if (EXSUCCEED==ndrx_regexec(p_re, buf))
+        {
+            NDRX_LOG(log_debug, "Matched env [%s] for pid %d", buf, (int)pid);
+            ret=EXTRUE;
+            goto out;
+        }
+    }
+    
+ out:
+                
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+ 
+    if (NULL!=buf)
+    {
+        NDRX_FREE(buf);
+    }
+ 
+    return ret;
+}
 
+/**
+ * Print Enduro/X Banner
+ */
+expublic void ndrx_sys_banner(void)
+{
+    NDRX_BANNER;
+}
+
+/**
+ * Prepare for forking
+ */
+expublic void ndrx_atfork_prepare(void)
+{
+    int i;
+    
+    for (i=MAX_ATFORKS-1; i>=0; i--)
+    {
+        if (NULL!=M_prepare[i])
+        {
+            M_prepare[i]();
+        }
+    }
+}
+
+/**
+ * After fork, run parent runs
+ */
+expublic void ndrx_atfork_parent(void)
+{
+    int i;
+    for (i=0; i<MAX_ATFORKS; i++)
+    {
+        if (NULL!=M_parent[i])
+        {
+            M_parent[i]();
+        }
+    }
+}
+
+/**
+ * After fork, child runs
+ */
+expublic void ndrx_atfork_child(void)
+{
+    int i;
+    for (i=0; i<MAX_ATFORKS; i++)
+    {
+        if (NULL!=M_child[i])
+        {
+            M_child[i]();
+        }
+    }
+}
+
+/**
+ * If expecting to continue to use initialized Enduro/X after forking,
+ * then fork shall be done with this function.
+ * @param chldresume if 0 - no child resume (i.e. no resume of SystemV aux threads,
+ *  which is not recommended for XATMI servers as admin thread of child 
+ *  might consume parent's messages.) if set != 0 then resume aux threads,
+ *  this is can be suitable for initialized clients which are doing forks
+ *  for some job/connection handling.
+ * @return for parent process child process pid is returned, for child 0 is
+ *  returned.
+ */
+expublic pid_t ndrx_fork(void)
+{
+    pid_t ret;
+    int err;
+    
+    ndrx_atfork_prepare();
+    
+    ret = fork();
+    err = errno;
+    
+    if (0==ret)
+    {
+        ndrx_atfork_child();
+    }
+    else
+    {
+        ndrx_atfork_parent();
+    }
+    
+    errno = err;
+    
+    return ret;
+}
+
+/**
+ * If expecting to continue to use initialized Enduro/X after forking,
+ * then fork shall be done with this function.
+ * @param prepare callback to parent
+ * @param parent parent after fork callback
+ * @param child child after fork callack
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_atfork(void (*prepare)(void), void (*parent)(void),
+       void (*child)(void))
+{
+    int i=0;
+    int ret = EXSUCCEED;
+    
+    for (i=0;i<MAX_ATFORKS;i++)
+    {
+        if (NULL==M_prepare[i] && 
+                NULL==M_parent[i] &&
+                NULL==M_child[i]
+            )
+        {
+            break;
+        }
+    }
+    
+    if (i==MAX_ATFORKS)
+    {
+        errno=ENOMEM;
+        EXFAIL_OUT(ret);
+    }
+    
+    M_prepare[i] = prepare;
+    M_parent[i] = parent;
+    M_child[i] = child;
+    
+out:
+    return ret;
+}
+
+/**
+ * Return user queues or semaphores
+ * @param[out] list to init & grow
+ * @param[in] Return user queues, otherwise return semaphores
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
+{
+    char cmd[128];
+    FILE *fp=NULL;
+    char path[PATH_MAX];
+    char linematchstr[PATH_MAX];
+    int ret = EXSUCCEED;
+    regex_t linematch;
+    int linematch_comp = EXFALSE;
+    
+    /* init growlist */
+    ndrx_growlist_init(list, 256, sizeof(int));
+    
+    if (queues)
+    {
+        NDRX_STRCPY_SAFE(cmd, "ipcs -q");
+        /* output example (LINUX):
+
+        $ ipcs -q
+        ------ Message Queues --------
+        key        msqid      owner      perms      used-bytes   messages    
+        0x00000000 1190428672 user1      700        0            0           
+        0x00000000 1159593985 user1      700        0            0           
+        0x00000000 15368194   user1      760        0            0  
+        ...
+        
+        (AIX):
+        $ ipcs -s
+        IPC status from /dev/mem as of Thu Oct 18 12:56:29 WET 2018
+        T        ID     KEY        MODE       OWNER    GROUP
+        Semaphores:
+        s   2097152 0x58002281 --ra-ra-ra-     root   system
+        s         1 0x44002281 --ra-ra-ra-     root   system
+        s   1048578 0x7a0c584a --ra-------   zabbix   zabbix
+        s         3 0x620000a3 --ra-r--r--     root   system
+        
+        (FREEBSD):
+        Semaphores:
+        T           ID          KEY MODE        OWNER    GROUP   
+        s     24969217   1297266887 --rw-rw-r-- user1    user1   
+        s     21430274   1297266911 --rw-rw-r-- user1    user1   
+        s     21168131   1297266936 --rw-rw-r-- user1    user1   
+        s     21168132   1297266983 --rw-rw-r-- user1    user1   
+        s     21168133   1297266993 --rw-rw-r-- user1    user1   
+
+
+        (HPUX):
+        $ ipcs
+        IPC status from /dev/kmem as of Thu Oct 18 12:59:33 2018
+        T         ID     KEY        MODE        OWNER     GROUP
+        Message Queues:
+        q          0 0x3c1c080d -Rrw--w--w-      root      root
+        q          1 0x3e1c080d --rw-r--r--      root      root
+        q 1070596098 0x00000000 -Rrw-rw----      toor      toor
+        
+        (MACOS)
+        Shared Memory: 
+        T ID     KEY        MODE        OWNER GROUP 
+        m 131071 1095910432 --rw-rw-rw- root kpl 
+        m 131071 1627522010 --rw-rw---- kpl kpl 
+        m 131071 1644299226 --rw-rw---- kpl kpl 
+        m 262143 1661076442 --rw-rw---- kpl kpl 
+        
+        So from above we can say that MACOS/AIX/FREEBSD/HPUX have the same layout
+        */
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(cmd, "ipcs -s");
+        /* output example:
+        $ ipcs -s
+
+        ------ Semaphore Arrays --------
+        key        semid      owner      perms      nsems     
+        0x0052e2c1 0          user1      600        17        
+        0x0052e2c2 32769      user1      600        17        
+        0x0052e2c3 65538      user1      600        17        
+        0x0052e2c4 98307      user1      600        17          
+        ...
+         */
+    }
+#ifdef EX_OS_LINUX
+    snprintf(linematchstr, sizeof(linematchstr), "^0x[0-9a-fA-F]+\\s*[0-9]+\\s*%s\\s",
+            ndrx_sys_get_cur_username());
+#else
+    snprintf(linematchstr, sizeof(linematchstr), "^.[ \\t\\r\\n\\v\\f]+[0-9]+[ \\t\\r\\n\\v\\f]+0[x0-9a-fA-F]*[ \\t\\r\\n\\v\\f]+.{11}[ \\t\\r\\n\\v\\f]+%s[ \\t\\r\\n\\v\\f]",
+            ndrx_sys_get_cur_username());
+#endif
+    
+    if (EXSUCCEED!=ndrx_regcomp(&linematch, linematchstr))
+    {
+        userlog("Failed to compile regexp: %s", linematch);
+        NDRX_LOG(log_error, "Failed to compile regexp: %s", linematch);
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        linematch_comp = EXTRUE;
+    }
+    
+    NDRX_LOG(log_debug, "Listing resources by: [%s]", cmd);
+    
+    fp = popen(cmd, "r");
+    
+    if (fp == NULL)
+    {
+        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
+        goto out;
+    }
+    
+    while (fgets(path, sizeof(path)-1, fp) != NULL)
+    {        
+        if (EXSUCCEED==ndrx_regexec(&linematch, path))
+        {
+            int id;
+            int len = strlen(path);
+            
+            if (len > 0 && '\n' == path[len-1])
+            {
+                path[len-1]=EXEOS;
+            }
+            
+            NDRX_LOG(log_debug, "Line matched: [%s]", path);
+            
+            /* extract second column... valid for Linux and Unix */
+            if (1!=ndrx_tokens_extract(path, "%d", &id, sizeof(id), 1, 1, 1))
+            {
+                NDRX_LOG(log_error, "Failed to extract resource id from [%s]!",
+                        path);
+                userlog("Failed to extract resource id from [%s]!",
+                        path);
+                EXFAIL_OUT(ret);
+            }
+         
+            NDRX_LOG(log_debug, "Extract id %d", id);
+            
+            /* Add resource to growlist */
+            if (EXSUCCEED!=ndrx_growlist_append(list, (void *)&id))
+            {
+                NDRX_LOG(log_error, "Failed to add %d to growlist!", id);
+                userlog("Failed to add %d to growlist!", id);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    
+ out:
+    /* close */
+    if (fp!=NULL)
+    {
+        pclose(fp);
+    }
+ 
+    if (EXSUCCEED!=ret)
+    {
+        ndrx_growlist_free(list);
+    }
+ 
+    if (linematch_comp)
+    {
+        ndrx_regfree(&linematch);
+    }
+
+    return ret;
+}
+
+/* vim: set ts=4 sw=4 et smartindent: */

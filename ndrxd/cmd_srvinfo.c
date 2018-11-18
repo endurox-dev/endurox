@@ -1,34 +1,35 @@
-/* 
-** Servers SRVINFO command from EnduroX server (which reports it's status, etc...)
-**
-** @file cmd_srvinfo.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Servers SRVINFO command from EnduroX server (which reports it's status, etc...)
+ *
+ * @file cmd_srvinfo.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,8 +79,9 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
      */
 
     /* refresh the state */
-    NDRX_LOG(log_debug, "Call from server: %d, state: %d",
-                            srvinfo->srvinfo.srvid, srvinfo->srvinfo.state);
+    NDRX_LOG(log_debug, "Call from server: %d, state: %d rqaddr: [%s]",
+                            srvinfo->srvinfo.srvid, srvinfo->srvinfo.state,
+                            srvinfo->srvinfo.rqaddress);
     
     srvid=srvinfo->srvinfo.srvid;
     if (srvid>=0 && srvid<ndrx_get_G_atmi_env()->max_servers
@@ -109,8 +111,10 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
     /* TODO: If server was shutdown, but we got call, then update PID! */
     
     /* crosscheck PID?  - if we start process in manual mode, then this does not matter!
-     better update PID!*/
-    
+     * better update PID!
+     * In case if booted from script too, then PID shall be used the one the
+     * server reports and not the actual one with which server was booted.
+     */
     pm_pid =pid_hash_get(G_process_model_pid_hash, srvinfo->srvinfo.pid);
 
     if (NULL!=pm_pid)
@@ -129,6 +133,15 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         if (NDRXD_PM_STARTING == p_pm_chk->state)
         {
             NDRX_LOG(log_warn, "Binary was starting up, updating status");
+            
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+            
+            NDRX_STRCPY_SAFE(p_pm->rqaddress, srvinfo->srvinfo.rqaddress);
+            p_pm->resid = srvinfo->srvinfo.resid;
+            
+            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+            
             p_pm->state = srvinfo->srvinfo.state;
             p_pm->state_changed = SANITY_CNT_START;
             /* Assume we inter in running state, thus reset ping timer */
@@ -140,11 +153,21 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             p_pm->exec_seq_try = 0; /* Reset counter as we are good */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
+            
         }
         else if (p_pm_chk->state != NDRXD_PM_RUNNING_OK)
         {
             NDRX_LOG(log_warn, "We assume that this PID is good "
                     "one & will remove old one!");
+            
+            NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+            
+            NDRX_STRCPY_SAFE(p_pm->rqaddress, 
+                    srvinfo->srvinfo.rqaddress);
+            p_pm->resid = srvinfo->srvinfo.resid;
+            p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+            
             p_pm->state = srvinfo->srvinfo.state;
             p_pm->state_changed = SANITY_CNT_START;
             /* Assume we inter in running state, thus reset ping timer */
@@ -164,6 +187,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             /* Bridge stuff: */
             p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
             p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
+            
         }
         else
         {
@@ -179,6 +203,16 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
          * so we register it in PID list */
         NDRX_LOG(log_warn, "Seems like server is not started by ndrxd! "
                 "The pid %d was not found in PID hash", srvinfo->srvinfo.pid);
+        
+        
+        NDRX_STRCPY_SAFE(p_pm->binary_name_real, 
+                    srvinfo->srvinfo.binary_name_real);
+        
+        NDRX_STRCPY_SAFE(p_pm->rqaddress, 
+                    srvinfo->srvinfo.rqaddress);
+        p_pm->resid = srvinfo->srvinfo.resid;
+        p_pm->svpid = srvinfo->srvinfo.svpid; /* save real pid */
+        
         p_pm->pid = srvinfo->srvinfo.pid;
         p_pm->state = srvinfo->srvinfo.state;
         p_pm->reqstate = NDRXD_PM_RUNNING_OK;/* If process is now running, 
@@ -193,7 +227,7 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         /* Bridge stuff: */
         p_pm->flags = srvinfo->srvinfo.flags; /* save flags */
         p_pm->nodeid = srvinfo->srvinfo.nodeid; /* Save node id */
-            
+        
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
     }
     
@@ -214,10 +248,11 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
             goto out;
         }
 
-        /* initialise service info sent from server. */
+        /* initialize service info sent from server. */
         svc_info->svc = srvinfo->svcs[i];
-        NDRX_LOG(log_debug, "Server [%s] advertizes: svc: [%s] func: [%s]",
-                                p_pm->binary_name, svc_info->svc.svc_nm, svc_info->svc.fn_nm);
+        NDRX_LOG(log_debug, "Server [%s] advertises: svc: [%s] func: [%s]",
+                                p_pm->binary_name, svc_info->svc.svc_nm, 
+                svc_info->svc.fn_nm);
         /* Add this to the list */
         DL_APPEND(p_pm->svcs, svc_info);
         /* add stuff to bridge service hash */
@@ -246,3 +281,4 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -1,38 +1,39 @@
-/* 
-** ATMI level cache - keygroup routines
-** Invalidate their cache shall be done by buffer. And not by key. Thus for
-** invalidate their, our key is irrelevant.
-** Delete shall be performed last on keygrp
-** The insert first shall be done in keygrp and then keyitems.
-**
-** @file atmi_cache_keygrp.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI level cache - keygroup routines
+ *   Invalidate their cache shall be done by buffer. And not by key. Thus for
+ *   invalidate their, our key is irrelevant.
+ *   Delete shall be performed last on keygrp
+ *   The insert first shall be done in keygrp and then keyitems.
+ *
+ * @file atmi_cache_keygrp.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
@@ -99,6 +100,8 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     BFLDLEN dlen;
     int cachekey_found = EXFALSE;
     int got_dbname = EXFALSE;
+    int align;
+    char *defer_free = NULL;
     
     NDRX_LOG(log_debug, "%s enter", __func__);
     
@@ -133,7 +136,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->keygrpdb, txn, key, &cachedata,
-            EXFALSE)))
+            EXFALSE, &align)))
     {
         /* error already provided by wrapper */
         NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
@@ -141,7 +144,12 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
     }
     
     /* Check the record validity */
-    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    if (align)
+    {
+        defer_free = cachedata.mv_data;
+    }
+    
+    exdata = (ndrx_tpcache_data_t *)((char *)cachedata.mv_data);
     NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPESYSTEM);
     
     
@@ -281,6 +289,11 @@ out:
         ndrx_cache_edb_abort(cache->keygrpdb, txn);
     }
 
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     return ret;
 }
 
@@ -316,7 +329,8 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     int cachekey_found = EXFALSE;
     char buf[NDRX_MSGSIZEMAX];
     char *kg_ptr;
-    
+    int align;
+    char *defer_free = NULL;
     
     if (NULL!=have_keygrp)
     {
@@ -352,7 +366,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     }
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_get(cache->keygrpdb, txn, kg_ptr, &cachedata,
-            EXFALSE)))
+            EXFALSE, &align)))
     {
         /* error already provided by wrapper */
         if (EDB_NOTFOUND==ret)
@@ -385,7 +399,11 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     else
     {
         /* Check the record validity */
-        exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+        if (align)
+        {
+            defer_free = cachedata.mv_data;
+        }
+        exdata = (ndrx_tpcache_data_t *)((char *)cachedata.mv_data);
         NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, kg_ptr, TPESYSTEM);
 
 
@@ -496,7 +514,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         }
     }
     
-    if (cachekey_found && deleteop || !cachekey_found && !deleteop)
+    if ((cachekey_found && deleteop) || (!cachekey_found && !deleteop))
     {
         if (deleteop)
         {
@@ -579,6 +597,11 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     }
     
 out:
+                    
+    if (NULL!=defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
 
     return ret;
 }
@@ -706,11 +729,12 @@ exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn,
     ndrx_tpcache_data_t *exdata;
     typed_buffer_descr_t *buf_type = &G_buf_descr[BUF_TYPE_UBF];
     long rsplen;
-    
+    int align;
+    char *defer_free = NULL;
     NDRX_LOG(log_debug, "%s: Key group key [%s]", __func__, key);
     
     if (EXSUCCEED!=(ret=ndrx_cache_edb_get(db, txn, key, &cachedata,
-            EXFALSE)))
+            EXFALSE, &align)))
     {
         /* error already provided by wrapper */
         NDRX_LOG(log_debug, "%s: failed to get cache by [%s]", __func__, key);
@@ -718,7 +742,11 @@ exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn,
     }
     
     /* Check the record validity */
-    exdata = (ndrx_tpcache_data_t *)cachedata.mv_data;
+    if (align)
+    {
+        defer_free = cachedata.mv_data;
+    }
+    exdata = (ndrx_tpcache_data_t *)((char *)cachedata.mv_data);
     NDRX_CACHE_CHECK_DBDATA((&cachedata), exdata, key, TPESYSTEM);
     
     
@@ -735,6 +763,11 @@ exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn,
     
 out:
                     
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     NDRX_LOG(log_debug, "%s returns %d", __func__, ret);
 
     return ret;
@@ -923,3 +956,4 @@ out:
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

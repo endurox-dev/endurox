@@ -83,3 +83,17 @@
 "Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 45 45047
 "Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 49 41658
 "Enduro/X 5.3.1 linux 4.10.0, i5-4300U" 53 39675
+"JOPT" 1 0
+"JOPT" 5 0
+"JOPT" 9 0
+"JOPT" 13 0
+"JOPT" 17 0
+"JOPT" 21 0
+"JOPT" 25 0
+"JOPT" 29 0
+"JOPT" 33 0
+"JOPT" 37 0
+"JOPT" 41 0
+"JOPT" 45 0
+"JOPT" 49 0
+"JOPT" 53 0

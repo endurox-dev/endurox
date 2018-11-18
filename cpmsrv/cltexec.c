@@ -1,54 +1,55 @@
-/* 
-** Execute client processes (start, stop and signal handling...)
-**
-** @file cltexec.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Execute client processes (start, stop and signal handling...)
+ *
+ * @file cltexec.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <libxml/xmlreader.h>
-#include <errno.h>
-#include <unistd.h>
-#include <ndrstandard.h>
-#include <userlog.h>
-#include <atmi.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <signal.h>
-
 #include <sys/param.h>
 #include <sys_mqueue.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <libxml/xmlreader.h>
+#include <errno.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
+#include <ndrstandard.h>
+#include <userlog.h>
+#include <atmi.h>
+#include <exenvapi.h>
 
 #include "cpmsrv.h"
 #include "../libatmisrv/srv_int.h"
@@ -537,12 +538,13 @@ expublic int cpm_exec(cpm_process_t *c)
     c->dyn.was_started = EXTRUE; /* We tried to start... */
     
     /* clone our self */
-    pid = fork();
+    pid = ndrx_fork();
 
     if( pid == 0)
     {
-        /* close parent resources... Bug #176 */
-	atmisrv_un_initialize(EXTRUE);
+        /* close parent resources... Bug #176 
+         * this will be closed by ndrx_atfork handler
+	atmisrv_un_initialize(EXTRUE);*/
         
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
@@ -576,6 +578,14 @@ expublic int cpm_exec(cpm_process_t *c)
                         NDRX_CCTAG, c->stat.cctag, strerror(errno));
                 exit(1);
             }
+        }
+        
+        /* load envs from xml config */
+        if (EXSUCCEED!=ndrx_ndrxconf_envs_apply(c->stat.envs))
+        {
+            userlog("Cannot load XML env for %s/%s: %s", 
+                    NDRX_CCTAG, c->tag,c->subsect, strerror(errno));
+            exit(1);
         }
         
         /* Change working dir */
@@ -636,3 +646,4 @@ expublic int cpm_exec(cpm_process_t *c)
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

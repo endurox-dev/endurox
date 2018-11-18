@@ -1,34 +1,35 @@
-/* 
-** Build process model structure
-**
-** @file pmodel.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Build process model structure
+ *
+ * @file pmodel.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrx_config.h>
 #include <string.h>
 #include <stdio.h>
@@ -40,6 +41,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <signal.h>
+#include <libgen.h>
 
 #include <ndrstandard.h>
 #include <ndebug.h>
@@ -54,6 +56,7 @@
 #include <bridge_int.h>
 #include <atmi_shm.h>
 #include <sys_unix.h>
+#include <exenvapi.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -75,11 +78,20 @@
             exit(1);\
         }
 
+#define NDRX_PM_SET_ENV(ENV__, VAL__) if (EXSUCCEED!=setenv(ENV__, VAL__, EXTRUE))\
+        {\
+           int err = errno;\
+            userlog("%s: failed to set %s=[%s]: %s", __func__, \
+                ENV__, VAL__, strerror(err));\
+            exit(1);\
+        }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
+exprivate volatile int M_shutdown = EXFALSE; /**< Doing shutdown    */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -91,7 +103,6 @@ expublic int self_sreload(pm_node_t *p_pm)
 {
     int ret=EXSUCCEED;
     command_startstop_t call;
-
     
     memset(&call, 0, sizeof(call));
     
@@ -135,7 +146,7 @@ expublic int self_notify(srv_status_t *status, int block)
     NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
                         send_size, status->svc_count);
     /* we want new q/open + close here,
-     * so that we do not interference with our maint queue blocked/non blocked flags.
+     * so that we do not interference with our main queue blocked/non blocked flags.
      */
     ret=cmd_generic_callfl(NDRXD_COM_PMNTIFY_RQ, NDRXD_SRC_NDRXD,
                         NDRXD_CALL_TYPE_PM_INFO,
@@ -208,13 +219,12 @@ exprivate void * check_child_exit(void *arg)
     int stat_loc;
     sigset_t blockMask;
     int sig;
-    
         
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
     NDRX_LOG(log_debug, "check_child_exit - enter...");
-    for (;;)
+    while (!M_shutdown)
     {
 	int got_something = 0;
 
@@ -223,12 +233,18 @@ exprivate void * check_child_exit(void *arg)
  */
 #ifndef EX_OS_DARWIN
         NDRX_LOG(log_debug, "about to sigwait()");
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        
+        /* Wait for notification signal */
+        if (EXSUCCEED!=sigwait(&blockMask, &sig))
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
 #endif
+        if (M_shutdown)
+        {
+            break;
+        }
         
         NDRX_LOG(log_debug, "about to wait()");
         while ((chldpid = wait(&stat_loc)) >= 0)
@@ -245,11 +261,9 @@ exprivate void * check_child_exit(void *arg)
 #endif
     }
    
-/*
-    - not reached
-    NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
+    NDRX_LOG(log_debug, "check_child_exit terminated");
+    
     return NULL;
-*/
 }
 
 
@@ -360,7 +374,7 @@ expublic void ndrxd_sigchld_init(void)
 expublic void ndrxd_sigchld_uninit(void)
 {
     char *fn = "ndrxd_sigchld_uninit";
-
+    int err;
     NDRX_LOG(log_debug, "%s - enter", fn);
     
     if (!M_signal_thread_set)
@@ -375,27 +389,19 @@ expublic void ndrxd_sigchld_uninit(void)
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
-    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
+    M_shutdown = EXTRUE;
+    
+    if (EXSUCCEED!=(err=pthread_kill(M_signal_thread, SIGCHLD)))
     {
-        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(err));
     }
     else
     {
-        void * res = EXSUCCEED;
-        if (EXSUCCEED!=pthread_join(M_signal_thread, &res))
+
+        if (EXSUCCEED!=pthread_join(M_signal_thread, NULL))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
                     strerror(errno));
-        }
-
-        if (res == PTHREAD_CANCELED)
-        {
-            NDRX_LOG(log_info, "Signal thread canceled ok!")
-        }
-        else
-        {
-            NDRX_LOG(log_info, "Signal thread failed to cancel "
-                    "(should not happen!!)");
         }
     }
     
@@ -422,10 +428,9 @@ expublic int add_to_pid_hash(pm_pidhash_t **pid_hash, pm_node_t *p_pm)
     /* check error */
     if (NULL==pm_pid)
     {
-        ret=EXFAIL;
         NDRXD_set_error_fmt(NDRXD_EOS, "failed to allocate pm_pidhash_t (%d bytes): %s",
                             sizeof(pm_pidhash_t), strerror(errno));
-        goto out;
+        EXFAIL_OUT(ret);
     }
 
     pm_pid->p_pm = p_pm;
@@ -516,8 +521,9 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
     int ret=EXSUCCEED;
     conf_server_node_t *p_conf;
     pm_node_t   *p_pm;
-
+    char tmp[PATH_MAX+1];
     int cnt;
+    char *p;
     NDRX_LOG(log_debug, "build_process_model enter");
 
     DL_FOREACH(p_server_conf, p_conf)
@@ -539,8 +545,9 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
 
             /* format the process model entry */
             NDRX_STRCPY_SAFE(p_pm->binary_name, p_conf->binary_name);
+            /*
             NDRX_STRCPY_SAFE(p_pm->binary_name_real, p_conf->binary_name_real);
-            
+            */
             /* get the path of the binary... */
             if (p_conf->reloadonchange)
             {
@@ -577,6 +584,68 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             
             snprintf(p_pm->clopt, sizeof(p_pm->clopt), "-k %s -i %d %s", 
                     ndrx_get_G_atmi_env()->rnd_key, p_pm->srvid, p_conf->clopt);
+            
+            /* substitute env... - Feature #331 */
+            
+            snprintf(tmp, sizeof(tmp), "%d", (int)p_pm->srvid);
+            NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, tmp);
+            
+            ndrx_str_env_subs_len(p_pm->clopt, sizeof(p_pm->clopt));
+            
+            /* build process real name  */
+            if (EXEOS!=p_pm->conf->cmdline[0])
+            {
+                NDRX_STRCPY_SAFE(tmp, p_pm->conf->cmdline);
+
+                /* substitute env */
+
+                if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_pm->conf->binary_name, EXTRUE))
+                {
+                    NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
+                        CONF_NDRX_SVPROCNAME, p_pm->conf->binary_name, strerror(errno));
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT, p_pm->conf->clopt, EXTRUE))
+                {
+                    NDRX_LOG(log_error, "%s: failed to set %s=[%s]: %s", __func__, 
+                        CONF_NDRX_SVCLOPT, p_pm->conf->clopt, strerror(errno));
+
+                    EXFAIL_OUT(ret);
+                }
+
+                /* format the cmdline */
+                ndrx_str_env_subs_len(tmp, sizeof(tmp));
+
+                /* extract binary name for the path... */
+                p = strtok(tmp, " \t");
+
+                if (NULL==p)
+                {
+                    NDRX_LOG(log_error, "Missing process name in server's <cmdline> tag for [%s]",
+                            p_pm->conf->binary_name);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* get the base name */
+                p = basename(tmp);
+                NDRX_STRCPY_SAFE(p_pm->binary_name_real, p);
+
+                NDRX_LOG(log_debug, "Extracted real binary name [%s] from [%s]", 
+                        p_pm->binary_name_real, p);
+
+                /* unset variables */
+                unsetenv(CONF_NDRX_SVPROCNAME);
+                unsetenv(CONF_NDRX_SVCLOPT);
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE(p_pm->binary_name_real, p_pm->binary_name);
+            }
+
+            unsetenv(CONF_NDRX_SVSRVID);
+            
+            /* substitute env... - Feature #331, END */
 
             /* now check the hash table for server instance entry */
             if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
@@ -640,7 +709,7 @@ expublic char * get_srv_admin_q(pm_node_t * p_pm)
     static char ret[NDRX_MAX_Q_SIZE+1];
     
     snprintf(ret, sizeof(ret), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
-            p_pm->binary_name_real, p_pm->srvid, p_pm->pid);
+            p_pm->binary_name_real, p_pm->srvid, p_pm->svpid);
     
     return ret;
 }
@@ -664,10 +733,9 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
     if (NULL==p_pm)
         goto out;
 
-    
     if (NULL!=pm_pid && p_pm->pid!=pm_pid->pid)
     {
-        NDRX_LOG(log_warn, "Proces Model SRV/PID=%d/%d but given "
+        NDRX_LOG(log_warn, "Process Model SRV/PID=%d/%d but given "
                 "PID Hash SRV/PID=%d/%d - thus remove later from pidhash only!",
                 p_pm->srvid, p_pm->pid, pm_pid->p_pm->srvid, pm_pid->pid);
         
@@ -700,7 +768,7 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
         p_pm->killreq = EXFALSE;
         
         /* Remove any queues used... */
-        remove_server_queues(p_pm->binary_name, p_pm->pid, p_pm->srvid, NULL);
+        remove_server_queues(p_pm->binary_name_real, p_pm->pid, p_pm->srvid, NULL);
         
     }
     
@@ -733,14 +801,25 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
                 goto out;
             }
             
-            ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->srvid);
-#ifdef EX_USE_POLL
+            /* TODO: We need to uninstall by RQADDR! */
+            ndrxd_shm_uninstall_svc(elt->svc.svc_nm, &last, p_pm->resid);
+
+#if defined(EX_USE_SYSVQ)
+            
+            /* nothing todo here! As we do not have per service queues */
+            if (last)
+            {
+                NDRX_LOG(log_debug, "Service [%s] will be zapped by "
+                        "RQADDR sanity checks", elt->svc.svc_nm);
+            }
+            
+#elif defined(EX_USE_POLL)
             /* for poll() queues must be always removed. */
-            remove_service_q(elt->svc.svc_nm, p_pm->srvid);
+            remove_service_q(elt->svc.svc_nm, p_pm->srvid, (mqd_t)EXFAIL, NULL);
 #else
             if (last)
             {
-                remove_service_q(elt->svc.svc_nm, p_pm->srvid);
+                remove_service_q(elt->svc.svc_nm, p_pm->srvid, (mqd_t)EXFAIL, NULL);
             }
 #endif
             
@@ -788,6 +867,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     char *token;
     int numargs;
     int alloc_args;
+    char tmp[256];
 
     NDRX_LOG(log_warn, "*********processing for startup %s/%d*********",
                                     p_pm->binary_name, p_pm->srvid);
@@ -795,7 +875,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     if (NDRXD_PM_RUNNING_OK==p_pm->state)
     {
 
-        NDRX_LOG(log_warn, "Not starting %s/%d, laready in "
+        NDRX_LOG(log_warn, "Not starting %s/%d, already in "
                                       "running state!",
                                       p_pm->binary_name, p_pm->srvid);
         goto out;
@@ -815,7 +895,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     
     /* clone our self */
-    pid = fork();
+    pid = ndrx_fork();
 
     if( pid == 0)
     {
@@ -833,60 +913,52 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         
         if (EXSUCCEED!=setenv(CONF_NDRX_SYSFLAGS, sysflags_str, EXTRUE))
         {
-            NDRX_LOG(log_error, "Failed to set env: %s", strerror(errno));
-            EXFAIL_OUT(ret);
+            userlog("Failed to set env: %s", strerror(errno));
+            exit(1);
         }
         
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
+
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
         {
-            NDRX_LOG(log_error, "Failed to close: [%s] err: %s",
+            userlog("Failed to close: [%s] err: %s",
                                      G_command_state.listenq_str, strerror(errno));
         }
         
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
+        
         /* this is child - start EnduroX back-end*/
         /*fprintf(stderr, "starting with: [%s]", p_pm->clopt);*/
         
+        /* export intermediate variables 
+         * CONF_NDRX_SVPROCNAME -> binary_name
+         * CONF_NDRX_SVCLOPT-> dynamic clopt built
+         */
+        
+        NDRX_PM_SET_ENV(CONF_NDRX_SVPROCNAME, p_pm->binary_name);
+        NDRX_PM_SET_ENV(CONF_NDRX_SVCLOPT, p_pm->clopt);        
+        /* export server id... */
+        snprintf(tmp, sizeof(tmp), "%d", (int)p_pm->srvid);
+        NDRX_PM_SET_ENV(CONF_NDRX_SVSRVID, tmp);
+        
+        /* ... and export PID 
+         * This might be a parent process of the script
+         * thus we need to pass it down to th client process.
+         */
+        snprintf(tmp, sizeof(tmp), "%d", (int)getpid());
+        NDRX_PM_SET_ENV(CONF_NDRX_SVPPID, tmp);
+
         alloc_args = 0;
         REALLOC_CMD;
+        
         if (EXEOS!=p_pm->conf->cmdline[0])
         {
             NDRX_STRCPY_SAFE(cmd_str, p_pm->conf->cmdline);
             
-            /* export intermediate variables 
-             * CONF_NDRX_SVPROCNAME -> binary_name
-             * CONF_NDRX_SVCLOPT-> dynamic clopt built
-             */
-            if (EXSUCCEED!=setenv(CONF_NDRX_SVPROCNAME, p_pm->binary_name, EXTRUE))
-            {
-                int err = errno;
-                
-                fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, 
-                    CONF_NDRX_SVPROCNAME, p_pm->binary_name, strerror(err));
-                userlog("%s: failed to set %s=[%s]: %s", __func__, 
-                    CONF_NDRX_SVPROCNAME, p_pm->binary_name, strerror(err));
-                
-                exit(1);
-            }
-            
-            if (EXSUCCEED!=setenv(CONF_NDRX_SVCLOPT,  p_pm->clopt, EXTRUE))
-            {
-                int err = errno;
-                
-                fprintf(stderr, "%s: failed to set %s=[%s]: %s\n", __func__, 
-                    CONF_NDRX_SVCLOPT, p_pm->clopt, strerror(err));
-                userlog("%s: failed to set %s=[%s]: %s", __func__, 
-                    CONF_NDRX_SVCLOPT, p_pm->clopt, strerror(err));
-                
-                exit(1);
-            }
-            
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
-            NDRX_LOG(log_debug, "Got process command line: [%s]", cmd_str);
             
             numargs=0;    
             token = strtok(cmd_str, separators);
@@ -942,7 +1014,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         {
             if (EXSUCCEED!=ndrx_load_new_env(p_pm->conf->env))
             {
-                fprintf(stderr, "Failed to load custom env from: %s!\n", 
+                userlog("Failed to load custom env from: %s!", 
                         p_pm->conf->env);
                 exit(1);
             }
@@ -952,18 +1024,35 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         {
             if (EXSUCCEED!=setenv(NDRX_CCTAG, p_pm->conf->cctag, EXTRUE))
             {
-                fprintf(stderr, "Cannot set [%s] to [%s]: %s\n", 
+                userlog("Cannot set [%s] to [%s]: %s", 
                         NDRX_CCTAG, p_pm->conf->cctag, strerror(errno));
                 exit(1);
             }
         }
         
+        /* process env variables defined in ndrxconfig.xml */
+        
+        if (EXSUCCEED!=ndrx_ndrxconf_envs_applyall(p_pm->conf->envgrouplist,
+                p_pm->conf->envlist))
+        {
+            userlog("Failed to load config from ndrxconfig.xml!");
+            exit(1);
+        }
+        
+        /* free up the allocate resources */
+        
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-
-            fprintf(stderr, "Failed to start server, error: %d, %s\n",
-                                err, strerror(err));
+            int i;
+            fprintf(stderr, "Failed to start server [%s], error: %d, %s\n",
+                                cmd[0], err, strerror(err));
+            
+            /* free up the list, so that we do not report memory leak... 
+             * in case if binary not started.
+             */
+            NDRX_FREE(cmd);
+            
             if (ENOENT==err)
                 exit(TPEXIT_ENOENT);
             else
@@ -976,6 +1065,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         int finished = EXFALSE;
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
+        /* currently assume they are the same */
+        p_pm->svpid = pid;
         add_to_pid_hash(G_process_model_pid_hash, p_pm);
         
         /* Reset PM timer */
@@ -1021,11 +1112,12 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
             
             /* Check for process name & pid */
-            if (ndrx_sys_is_process_running(pid, p_pm->binary_name))
+            if (ndrx_sys_is_process_running(p_pm->svpid, p_pm->binary_name_real))
             {
                 /*Should be set at info: p_pm->state = NDRXD_PM_RUNNING;*/
-                NDRX_LOG(log_debug, "binary %s, srvid %d started with pid %d",
-                            p_pm->binary_name, p_pm->srvid, pid);
+                NDRX_LOG(log_debug, "binary %s/%s, srvid %d started with pid %d/%d",
+                            p_pm->binary_name,p_pm->binary_name_real, p_pm->srvid, 
+                        pid, p_pm->svpid);
                 (*p_processes_started)++;
             }
             else if (NDRXD_PM_NOT_STARTED==p_pm->state)
@@ -1456,3 +1548,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

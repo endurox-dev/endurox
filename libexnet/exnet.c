@@ -1,41 +1,42 @@
-/* 
-** Enduro/X server net/socket client lib
-** Network object needs to be synchronize otherwise unexpected core dumps might
-** Locking:
-** - main thread always have read lock
-** - sender thread read lock only when doing send
-** - when main thread wants some changes in net object, it waits for write lock
-** - the connection object once created will always live in DL list even with
-** with disconnected status. Once new conn arrives, it will re-use the conn obj.
-**
-** @file exnet.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X server net/socket client lib
+ *   Network object needs to be synchronize otherwise unexpected core dumps might
+ *   Locking:
+ *   - main thread always have read lock
+ *   - sender thread read lock only when doing send
+ *   - when main thread wants some changes in net object, it waits for write lock
+ *   - the connection object once created will always live in DL list even with
+ *   with disconnected status. Once new conn arrives, it will re-use the conn obj.
+ *
+ * @file exnet.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrx_config.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -154,6 +155,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     MUTEX_LOCK_V(net->sendlock);
     do
     {
+        err = 0;
         NDRX_LOG(log_debug, "Sending, len: %d, total msg: %d", 
                 size_to_send-sent, size_to_send);
         
@@ -188,6 +190,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             }
             else
             {
+                /* WARNING ! THIS MIGHT GENERATE SIGPIPE */
                 tmp_s = send(net->sock, buf+sent-net->len_pfx, 
                         size_to_send-sent, flags);
             }
@@ -657,7 +660,7 @@ exprivate int close_socket(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
 
-    NDRX_LOG(log_warn, "Closing socket...");
+    NDRX_LOG(log_warn, "Closing socket %d...", net->sock);
     net->dl = 0; /* Reset buffered bytes */
     
     net->is_connected=EXFALSE; /* mark disconnected. */
@@ -706,6 +709,11 @@ out:
         exnet_remove_incoming(net);
     }
 #endif
+    
+    if (net->is_incoming)
+    {
+        exnet_remove_incoming(net);
+    }
     
     return ret;
 }
@@ -822,7 +830,7 @@ out:
 /**
  * Close connection
  * @param net network object
- * @return EXTRUE -> Connection removed, EXFALSE -> connetion not removed
+ * @return EXTRUE -> Connection removed, EXFALSE -> connection not removed
  */
 exprivate int exnet_schedule_run(exnetcon_t *net)
 {
@@ -830,8 +838,9 @@ exprivate int exnet_schedule_run(exnetcon_t *net)
     
     if (net->schedule_close)
     {
-        NDRX_LOG(log_warn, "Connection close is scheduled - closing fd %d", 
-                net->sock);
+        NDRX_LOG(log_warn, "Connection close is scheduled - "
+                "closing fd %d is_incoming %d", 
+                net->sock, net->is_incoming);
         is_incoming=net->is_incoming;
         
         exnet_rwlock_mainth_write(net);
@@ -841,6 +850,9 @@ exprivate int exnet_schedule_run(exnetcon_t *net)
         /* if incoming, continue.. */
         if (is_incoming)
         {
+            /* remove connection 
+            DL_DELETE(M_netlist, net);
+            NDRX_FREE(net);*/
             return EXTRUE;
         }
     }
@@ -875,10 +887,10 @@ expublic int exnet_periodic(void)
                 /* Server should bind at this point */
                 ret = exnet_bind(net);               
             }
-            else
+            else if (!net->is_incoming)
             {
                 /* Client should open socket at this point. */
-                ret=open_socket(net);
+                ret = open_socket(net);
             }
         }
         else if (!net->is_server)
@@ -1084,6 +1096,7 @@ expublic void exnet_reset_struct(exnetcon_t *net)
 expublic int exnet_net_init(exnetcon_t *net)
 {
     int ret = EXSUCCEED;
+    int err;
     
     net->d = NDRX_MALLOC(DATA_BUF_MAX);
     
@@ -1100,9 +1113,12 @@ expublic int exnet_net_init(exnetcon_t *net)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=pthread_rwlock_init(&(net->rwlock), NULL))
+    memset(&(net->rwlock), 0, sizeof(net->rwlock));
+
+    if (EXSUCCEED!=(err=pthread_rwlock_init(&(net->rwlock), NULL)))
     {
-        NDRX_LOG(log_error, "Failed to init rwlock: %s", strerror(errno));
+        NDRX_LOG(log_error, "Failed to init rwlock: %s", strerror(err));
+        userlog("Failed to init rwlock: %s", strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -1110,13 +1126,15 @@ expublic int exnet_net_init(exnetcon_t *net)
     MUTEX_VAR_INIT(net->rcvlock);
     
     /* acquire read lock */
-    if (EXSUCCEED!=pthread_rwlock_rdlock(&(net->rwlock)))
+    if (EXSUCCEED!=(err=pthread_rwlock_rdlock(&(net->rwlock))))
     {
-        userlog("Failed to acquire read lock!");
-        NDRX_LOG(log_error, "Failed to acquire read lock - exiting... !");
+        userlog("Failed to acquire read lock: %s", strerror(err));
+        NDRX_LOG(log_error, "Failed to acquire read lock - exiting...: %s",
+                                                   strerror(err));
         exit(EXFAIL);
     }
             
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

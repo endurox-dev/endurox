@@ -1,44 +1,45 @@
-/* 
-** ATMI level cache
-** No using named databases. Each environment is associated with single db
-** To resolve conflicts in cluster mode we shall compare time with a microseconds
-** for this we will extend tppost so that we can send rval as userfield1 and
-** rcode as userfield2. When cache server receives request we add the records
-** even if it is duplicate (for this timesync flag must be present). Then when
-** we read all records, if two or more records found, then we will use the youngest
-** one by UTC. If times stamps equals, then we use record as priority from the cluster
-** node with a highest node id number.Z
-** TODO: If want in feature stream latent commands (LCS tech), 
-** then we need locking! if config is changed.
-**
-** @file atmi_cache_init.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI level cache
+ *   No using named databases. Each environment is associated with single db
+ *   To resolve conflicts in cluster mode we shall compare time with a microseconds
+ *   for this we will extend tppost so that we can send rval as userfield1 and
+ *   rcode as userfield2. When cache server receives request we add the records
+ *   even if it is duplicate (for this timesync flag must be present). Then when
+ *   we read all records, if two or more records found, then we will use the youngest
+ *   one by UTC. If times stamps equals, then we use record as priority from the cluster
+ *   node with a highest node id number.Z
+ *   TODO: If want in feature stream latent commands (LCS tech),
+ *   then we need locking! if config is changed.
+ *
+ * @file atmi_cache_init.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
@@ -316,8 +317,26 @@ exprivate int sort_data_bydate(const EDB_val *a, const EDB_val *b)
     ndrx_tpcache_data_t *ad = (ndrx_tpcache_data_t *)a->mv_data;
     ndrx_tpcache_data_t *bd = (ndrx_tpcache_data_t *)b->mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    long a_t;
+    long a_tusec;
+    long b_t;
+    long b_tusec;
+    
+    memcpy(&a_t, &ad->t, sizeof(a_t));
+    memcpy(&a_tusec, &ad->tusec, sizeof(a_tusec));
+    
+    memcpy(&b_t, &bd->t, sizeof(b_t));
+    memcpy(&b_tusec, &bd->tusec, sizeof(b_tusec));
+    
+    /* to get newer rec first, we change the compare order */
+    return ndrx_utc_cmp(&b_t, &b_tusec, &a_t, &a_tusec);
+    
+#else
     /* to get newer rec first, we change the compare order */
     return ndrx_utc_cmp(&bd->t, &bd->tusec, &ad->t, &ad->tusec);
+#endif
+    
 }
 
 /**
@@ -446,8 +465,8 @@ expublic ndrx_tpcache_db_t* ndrx_cache_dbresolve(char *cachedb, int mode)
     {
 #ifdef NDRX_TPCACHE_DEBUG
         NDRX_LOG(log_debug, "Cache db [%s] already loaded", cachedb);
-        goto out;
 #endif        
+        goto out;
     }
 
     NDRX_CALLOC_OUT(db, 1, sizeof(ndrx_tpcache_db_t), ndrx_tpcache_db_t);
@@ -1700,3 +1719,4 @@ out:
 
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

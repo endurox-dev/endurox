@@ -1,0 +1,122 @@
+BEXTREADCB(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+Bextreadcb - Restore the buffer from printed text received from callback function
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bextreadcb (UBFH * 'p_ub', 
+        long (*'p_readf')(char *'buffer', long 'bufsz', void *'dataptr1'), void *'dataptr1');
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Restore the buffer from text populated by *Bprint(3)*, *Bprintf(3)* 
+or *Bprintfcb(3)*.
+
+The read format is "[COMMAND]<FIELD><TAB><VALUE><NEW_LINE>". Input also support 
+fields by id, then format for <FIELD> is "((BFLDID32)<FIELD_ID>)".
+
+Sample buffer:
+
+--------------------------------------------------------------------------------
+T_SHORT_FLD     1765
+T_LONG_FLD      3333111
+T_LONG_FLD      2
+T_CHAR_FLD      A
+T_FLOAT_FLD     1.33000
+T_DOUBLE_FLD    1111.220000
+T_DOUBLE_FLD    333.000000
+T_DOUBLE_FLD    444.000000
+T_STRING_FLD    HELLO WORLD
+T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00\\
+((BFLDID32)167772261)   HELLOSVC
+--------------------------------------------------------------------------------
+
+'p_ub' is buffer to write the data to, 'p_readf' is function from which to read
+the line by line data. Each call to callback shall return zero terminated 
+line with exactly one field, value and newline in the end. 
+The 'bufsz' denotes the buffer size of 'buffer', where data shall be put. 
+In case if success, the 'p_readf' must return number bytes written to 'buffer'.
+At the end of the buffer, the 'p_readf' must return *0*. In case of error, callback
+function shall return *-1*. The *dataptr1* passed to *Bextreadcb()* is forwarded
+to callback function and is meant to be used by user specific purposes. Field
+is optional and may be set to NULL, if not used by callback.
+
+Input format supports also macro commands. This is optional *COMMAND* block, 
+that can have following values:
+
+*+* set the field value at occurrence 0.
+
+*-* delete field from buffer.
+
+*=* copy the field value from field name which is stored at <VALUE>.
+
+*#* comment, line ignored
+
+For example:
+
+--------------------------------------------------------------------------------
+# Set the field value
+T_SHORT_FLD     123
+# Copy the value from T_SHORT_FLD to T_LONG_FLD
+=T_LONG_FLD     T_SHORT_FLD
+# Change the occurrence 0 to 444
++T_SHORT_FLD    444
+--------------------------------------------------------------------------------
+
+The final buffer will be:
+
+--------------------------------------------------------------------------------
+T_SHORT_FLD     444
+T_LONG_FLD      123
+--------------------------------------------------------------------------------
+
+This format is used by *ud(8)* command line utility which allows to send 
+arbitrary buffer to specified service.
+
+RETURN VALUE
+------------
+On success, *Bextreadcb()* return zero; on error, -1 is returned, with *Berror* 
+set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
+
+*BNOTFLD* Buffer not fielded, not correctly allocated or corrupted.
+
+*BEINVAL* 'p_readf' is NULL.
+
+*BSYNTAX* Missing tab between field id or missing newline.
+
+*BBADNAME* Field not found in field table.
+
+EXAMPLE
+-------
+See *ubftest/test_print.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bextread(3)* *Bfprint(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)* *ud(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

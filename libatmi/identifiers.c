@@ -1,34 +1,35 @@
-/* 
-** Enduro/X identifiers routines (queue names, client ids, etc...)
-**
-** @file identifiers.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X identifiers routines (queue names, client ids, etc...)
+ *
+ * @file identifiers.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrx_config.h>
 #include <string.h>
 #include <sys/time.h>
@@ -83,7 +84,7 @@ typedef struct prefixmap prefixmap_t;
  */
 expublic prefixmap_t M_prefixmap[] =
 {  
-    /* Qprefix format string, match off, len, q type classifier */
+    /* prefix format string, match off, len, q type classifier */
     {NDRX_NDRXD,                NULL, 0, NDRX_QTYPE_NDRXD,      "ndrxd Q"},
     {NDRX_SVC_QFMT_PFX,         NULL, 0, NDRX_QTYPE_SVC,        "service Q"},
     {NDRX_ADMIN_FMT_PFX,        NULL, 0, NDRX_QTYPE_SRVADM,     "svc admin Q"},
@@ -436,7 +437,7 @@ expublic int ndrx_myid_is_alive(TPMYID *p_myid)
 expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
 {
     
-    NDRX_LOG(lev, "=== %s ===", msg);
+    NDRX_LOG(lev, "--- %s ---", msg);
     
     NDRX_LOG(lev, "binary_name:[%s]", p_myid->binary_name);
     NDRX_LOG(lev, "pid        :%d", p_myid->pid);
@@ -456,7 +457,7 @@ expublic void ndrx_myid_dump(int lev, TPMYID *p_myid, char *msg)
     {
         NDRX_LOG(lev, "cd         :%d", p_myid->cd);
     }
-    NDRX_LOG(lev, "=================");
+    NDRX_LOG(lev, "-----------------");
             
 }
 
@@ -504,14 +505,14 @@ out:
 expublic void ndrx_qdet_dump(int lev, ndrx_qdet_t *qdet, char *msg)
 {
     
-    NDRX_LOG(lev, "=== %s ===", msg);
+    NDRX_LOG(lev, "--- %s ---", msg);
     /* I */
     NDRX_LOG(lev, "binary_name:[%s]", qdet->binary_name);
     NDRX_LOG(lev, "pid        :%d", qdet->pid);
     NDRX_LOG(lev, "contextid  :%ld", qdet->contextid);
     NDRX_LOG(lev, "typ        :%d",  qdet->qtype);
     
-    NDRX_LOG(lev, "=================");
+    NDRX_LOG(lev, "-----------------");
             
 }
 
@@ -659,7 +660,7 @@ expublic int ndrx_q_type_get(char *q)
         p++;
     }
     
-    if (NULL!=p)
+    if (NULL!=p->prefix)
     {
         ret = p->type;
         NDRX_LOG(log_debug, "[%s] matched type [%d/%s]", q, ret, p->descr);
@@ -736,7 +737,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         else if (flags & TPCONVXID)
         {
             /* Deserialize xid. */
-            atmi_xa_deserialize_xid(str, (XID *)bin);
+            atmi_xa_deserialize_xid((unsigned char *)str, (XID *)bin);
         }
         else
         {
@@ -751,3 +752,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

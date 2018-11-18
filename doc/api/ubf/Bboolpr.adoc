@@ -19,7 +19,8 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Print the compiled UBF buffer boolean expression evaluation Abstract Syntax Tree (AST) at 'tree' hander to 'outf' stream. The sample output for AST is following:
+Print the compiled UBF buffer boolean expression evaluation Abstract Syntax Tree
+ (AST) at 'tree' hander to 'outf' stream. The sample output for AST is following:
 
 --------------------------------------------------------------------------------
 
@@ -48,7 +49,7 @@ See *ubftest/test_expr.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

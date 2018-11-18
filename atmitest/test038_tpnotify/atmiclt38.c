@@ -1,34 +1,35 @@
-/* 
-** xadmin down tests
-**
-** @file atmiclt37.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief xadmin down tests
+ *
+ * @file atmiclt38.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,24 +80,24 @@ int handle_replies(UBFH **pp_ub, int num)
     /* Process notifs... */
     if (0==num)
     {
-    while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
-            && 0!=cd)
-    {
-        ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
-        M_replies_got++;
-    }
+        while (EXSUCCEED==tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY | TPNOBLOCK) 
+                && 0!=cd)
+        {
+            ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
+            M_replies_got++;
+        }
     }
     else
     {
 	for (i=0; i<num; i++)
 	{
-		if (EXSUCCEED!=tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY))
-		{
-			NDRX_LOG(log_error, "TESTERROR! Failed to get rply!");
-			EXFAIL_OUT(ret);
-		}
-		ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
-                M_replies_got++;
+            if (EXSUCCEED!=tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY))
+            {
+                    NDRX_LOG(log_error, "TESTERROR! Failed to get rply!");
+                    EXFAIL_OUT(ret);
+            }
+            ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
+            M_replies_got++;
 	}
     }
     
@@ -176,13 +177,13 @@ int main(int argc, char** argv)
             EXFAIL_OUT(ret);
         }
         M_calls_made++;
-	if (0==i%25)
+	if (0==i%10)
 	{	
-        	if (EXSUCCEED!=handle_replies(&p_ub, 50))
-        	{
-            		NDRX_LOG(log_error, "handle_replies() failed");
-            		EXFAIL_OUT(ret);
-        	}
+            if (EXSUCCEED!=handle_replies(&p_ub, 0))
+            {
+                    NDRX_LOG(log_error, "handle_replies() failed");
+                    EXFAIL_OUT(ret);
+            }
 	}
     }
     
@@ -229,3 +230,4 @@ out:
 }
 
 
+/* vim: set ts=4 sw=4 et smartindent: */

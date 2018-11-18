@@ -1,34 +1,35 @@
-/* 
-** Enduro/X standard utilities 
-**
-** @file psstdexutil.cpp
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X standard utilities
+ *
+ * @file psstdexutil.cpp
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrstandard.h>
 #include <pscript.h>
 #include <time.h>
@@ -44,7 +45,7 @@
 #include <errno.h>
 
 
-extern const char G_resource_WizardBase[];
+extern "C" const char ndrx_G_resource_WizardBase[];
 
 //Read the line from terminal
 //@return line read string
@@ -52,7 +53,7 @@ static PSInteger _exutil_getline(HPSCRIPTVM v)
 {
     char ln[PATH_MAX+1];
     
-    ndrx_getline(ln, sizeof(ln));
+    ndrx_fgets_stdin_strip(ln, sizeof(ln));
     
     ps_pushstring(v,ln,-1);
 
@@ -67,10 +68,18 @@ static PSInteger _exutil_getosname(HPSCRIPTVM v)
     return 1;
 }
 
+//Return the compiled operating system name
+static PSInteger _exutil_getpoller(HPSCRIPTVM v)
+{
+    ps_pushstring(v,EX_POLLER_STR,-1);
+    
+    return 1;
+}
+
 //Return wizard base script
 static PSInteger _exutil_getwizardbase(HPSCRIPTVM v)
 {
-    ps_pushstring(v,G_resource_WizardBase,-1);
+    ps_pushstring(v,ndrx_G_resource_WizardBase,-1);
     
     return 1;
 }
@@ -186,6 +195,7 @@ static PSRegFunction exutillib_funcs[]={
 	_DECL_FUNC(getline,1,_SC(".s")),
         _DECL_FUNC(getcwd,1,_SC(".s")),
         _DECL_FUNC(getosname,1,_SC(".s")),
+        _DECL_FUNC(getpoller,1,_SC(".s")),
         _DECL_FUNC(getwizardbase,1,_SC(".s")),
         _DECL_FUNC(userlog,2,_SC(".s")),
         _DECL_FUNC(mkdir,2,_SC(".s")),
@@ -209,3 +219,4 @@ PSInteger psstd_register_exutillib(HPSCRIPTVM v)
     }
     return 1;
 }
+/* vim: set ts=4 sw=4 et smartindent: */
