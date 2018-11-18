@@ -45,11 +45,11 @@
 #include <nstdutil.h>
 #include <ubfutil.h>
 #include <exbase64.h>
-#include "test56.h"
-#include "t56.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
+#define CARR_BUFFSIZE_B64   (4 * (CARR_BUFFSIZE) / 3)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -67,12 +67,13 @@ int test_impexp_carray()
     long rsplen,olen,ilen;
     char *obuf;
     char buf_bin[CARR_BUFFSIZE+1];
-    size_t st_len;
+    char json_carray_in_b64[CARR_BUFFSIZE_B64+1];
+    char json_carray_out_b64[CARR_BUFFSIZE_B64+1];
+    size_t st_len, len_b64;
     char *json_carray_in = 
         "{"
             "\"buftype\":\"CARRAY\","
             "\"version\":1,"
-//            "\"data\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\""
             "\"data\":\"SEVMTE8gV09STEQgQ0FSUkFZ\""
         "}";
     char json_carray_out[1024];
@@ -118,6 +119,53 @@ int test_impexp_carray()
                  json_carray_out, olen);
 
         if (0!=strcmp(json_carray_in, json_carray_out))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: Exported JSON not equal to incoming carray");
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    /* testing with base64 flag*/
+    NDRX_LOG(log_debug, "convert to b64");
+    if (NULL==ndrx_base64_encode((unsigned char *)json_carray_in, strlen(json_carray_in), &len_b64, json_carray_in_b64))
+    {
+            NDRX_LOG(log_error, "Failed to convert to b64!");
+            EXFAIL_OUT(ret);
+    }
+    for (i=0; i<10000; i++)
+    {
+        rsplen=0L;
+        if ( EXFAIL == tpimport(json_carray_in_b64, 
+                                (long)len_b64, 
+                                (char **)&obuf, 
+                                &rsplen, 
+                                TPEX_STRING) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to import JSON CARRAY!!!!");
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_DUMP(log_error, "Imported CARRAY", obuf, rsplen);
+
+        memset(json_carray_out_b64, 0, sizeof(json_carray_out_b64));
+        olen = sizeof(json_carray_out_b64);
+        ilen = rsplen;
+        if ( EXFAIL == tpexport(obuf, 
+                                ilen, 
+                                json_carray_out_b64, 
+                                &olen, 
+                                TPEX_STRING) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to export JSON CARRAY!!!!");
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_error, 
+                 "CARRAY exported. Return json_carray_out=[%s] olen=[%ld]", 
+                 json_carray_out_b64, olen);
+
+        if (0!=strcmp(json_carray_in_b64, json_carray_out_b64))
         {
             NDRX_LOG(log_error, 
                  "TESTERROR: Exported JSON not equal to incoming carray");
