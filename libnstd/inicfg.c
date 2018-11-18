@@ -1,37 +1,38 @@
-/* 
-** Enduro/X advanced configuration driver
-** We have a problem with logging here - chicken-egg issue.
-** We cannot start to log unless debug is initialised. But debug init depends
-** on ini config. Thus we print here debugs to stderr, if needed.
-**
-** @file inicfg.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X advanced configuration driver
+ *   We have a problem with logging here - chicken-egg issue.
+ *   We cannot start to log unless debug is initialised. But debug init depends
+ *   on ini config. Thus we print here debugs to stderr, if needed.
+ *
+ * @file inicfg.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
@@ -49,6 +50,7 @@
 #include <sys_unix.h>
 #include <errno.h>
 #include <ndebug.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -81,8 +83,6 @@ exprivate ndrx_inicfg_section_keyval_t * _ndrx_keyval_hash_get(
 exprivate void _ndrx_keyval_hash_free(ndrx_inicfg_section_keyval_t *h);
 exprivate int _ndrx_inicfg_resolve(ndrx_inicfg_t *cfg, char **resources, char *section, 
         ndrx_inicfg_section_keyval_t **out);
-exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
-        char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
 exprivate int _ndrx_inicfg_iterate(ndrx_inicfg_t *cfg, 
         char **resources,
         char **section_start_with, 
@@ -865,17 +865,22 @@ out:
  * @param subsect
  * @return 
  */
-exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg, 
+expublic int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg, 
         char **resources, char *section, ndrx_inicfg_section_keyval_t **out)
 {
     int ret = EXSUCCEED;
-    char fn[] = "_ndrx_inicfg_section_keyval_t";
     char *tmp = NULL;
     char *p;
     
+    if (NULL==cfg)
+    {
+        _Nset_error_fmt(NEINVAL, "%s: `cfg' cannot be NULL!", __func__);
+        EXFAIL_OUT(ret);
+    }
+    
     if (NULL==section)
     {
-        _Nset_error_fmt(NEINVAL, "%s: section cannot be NULL!", fn);
+        _Nset_error_fmt(NEINVAL, "%s: `section' cannot be NULL!", __func__);
         EXFAIL_OUT(ret);
     }
 
@@ -883,7 +888,7 @@ exprivate int _ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
 
     if (NULL==tmp)
     {
-        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", fn);
+        _Nset_error_fmt(NEMALLOC, "%s: malloc failed", __func__);
         EXFAIL_OUT(ret);
     }
     
@@ -1257,7 +1262,7 @@ expublic int ndrx_inicfg_get_subsect(ndrx_inicfg_t *cfg,
 {
     API_ENTRY;
     
-    return _ndrx_inicfg_get_subsect(cfg, resources, section, out);
+    return ndrx_inicfg_get_subsect_int(cfg, resources, section, out);
 }
 
 /**
@@ -1313,3 +1318,4 @@ expublic void ndrx_inicfg_free(ndrx_inicfg_t *cfg)
     _ndrx_inicfg_free(cfg);
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

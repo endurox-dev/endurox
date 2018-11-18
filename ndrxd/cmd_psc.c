@@ -1,34 +1,35 @@
-/* 
-** Command's `psc' backend
-**
-** @file cmd_psc.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Command's `psc' backend
+ *
+ * @file cmd_psc.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,7 +79,7 @@ expublic void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
     /* calculate new send size */
     *send_size += (sizeof(command_reply_psc_t) - sizeof(command_reply_t));
 
-    strcpy(psc_info->binary_name, p_pm->binary_name);
+    NDRX_STRCPY_SAFE(psc_info->binary_name, p_pm->binary_name);
     psc_info->srvid = p_pm->srvid;
     psc_info->state = p_pm->state;
     psc_info->nodeid = ndrx_get_G_atmi_env()->our_nodeid;
@@ -93,8 +94,8 @@ expublic void psc_reply_mod(command_reply_t *reply, size_t *send_size, mod_param
         psc_info->svcdet[svc].min=srv_shm->min_rsp_msec[svc];
         psc_info->svcdet[svc].last=srv_shm->last_rsp_msec[svc];
         psc_info->svcdet[svc].status=srv_shm->svc_status[svc];
-        strcpy(psc_info->svcdet[svc].svc_nm, elt->svc.svc_nm);
-        strcpy(psc_info->svcdet[svc].fn_nm, elt->svc.fn_nm);
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].svc_nm, elt->svc.svc_nm);
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].fn_nm, elt->svc.fn_nm);
         svc++;
     }
     psc_info->svc_count = svc;
@@ -125,7 +126,7 @@ expublic void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_pa
     /* calculate new send size */
     *send_size += (sizeof(command_reply_psc_t) - sizeof(command_reply_t));
 
-    strcpy(psc_info->binary_name, "N/A");
+    NDRX_STRCPY_SAFE(psc_info->binary_name, "N/A");
     psc_info->srvid = EXFAIL;
     psc_info->state = EXFAIL;
     psc_info->nodeid = br->nodeid;
@@ -142,8 +143,8 @@ expublic void psc_reply_mod_br(command_reply_t *reply, size_t *send_size, mod_pa
         psc_info->svcdet[svc].min=EXFAIL;
         psc_info->svcdet[svc].last=EXFAIL;
         psc_info->svcdet[svc].status=0;
-        strcpy(psc_info->svcdet[svc].svc_nm, rs->svc_nm);
-        strcpy(psc_info->svcdet[svc].fn_nm, "N/A");
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].svc_nm, rs->svc_nm);
+        NDRX_STRCPY_SAFE(psc_info->svcdet[svc].fn_nm, "N/A");
         svc++;
     }
     psc_info->svc_count = svc;
@@ -171,7 +172,7 @@ exprivate void psc_progress(command_call_t * call, pm_node_t *pm)
     /* pass to reply process model node */
     params.mod_param1 = (void *)pm;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, psc_reply_mod, 0L, 0, NULL))
     {
@@ -198,7 +199,7 @@ exprivate void psc_progress_br(command_call_t * call, bridgedef_t *br, bridgedef
     params.mod_param1 = br;
     params.mod_param3 = brs;
 
-    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_REPLY_HAVE_MORE,
+    if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
                             &params, psc_reply_mod_br, 0L, 0, NULL))
     {
@@ -250,3 +251,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

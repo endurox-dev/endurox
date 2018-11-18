@@ -6,7 +6,9 @@
 #ifndef _NDRX_CONFIG_H_
 #define _NDRX_CONFIG_H_
 
-/* Define to 1 if you have the <stdint.h> header file. */
+/* Define to 1 if you have the <stdint.h> header file. 
+ * NOTE: the cmake variable name must match the define !!!
+ */
 #cmakedefine HAVE_STDINT_H @HAVE_STDINT_H@
 
 #cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@
@@ -22,6 +24,14 @@
 #cmakedefine HAVE_GETLINE @HAVE_GETLINE@
 
 #cmakedefine HAVE_STRLCPY @HAVE_STRLCPY@
+
+#cmakedefine EX_ALIGNMENT_BYTES @EX_ALIGNMENT_BYTES@
+
+#cmakedefine EX_ALIGNMENT_FORCE @EX_ALIGNMENT_FORCE@
+
+#cmakedefine EX_HAVE_ASPRINTF @EX_HAVE_ASPRINTF@
+
+#cmakedefine EX_HAVE_STRCAT_S @EX_HAVE_STRCAT_S@
 
 #cmakedefine EX_USE_EPOLL @EX_USE_EPOLL@
 
@@ -48,10 +58,14 @@
 #cmakedefine EX_LSB_RELEASE_VER @EX_LSB_RELEASE_VER@
 
 #cmakedefine EX_LSB_RELEASE_VER_MAJOR @EX_LSB_RELEASE_VER_MAJOR@
+
 #cmakedefine EX_LSB_RELEASE_VER_MINOR @EX_LSB_RELEASE_VER_MINOR@
 
 /* Use emulated message queue: */
 #cmakedefine EX_USE_EMQ @EX_USE_EMQ@
+
+/* Use System V message queue */
+#cmakedefine EX_USE_SYSVQ @EX_USE_SYSVQ@
 
 /* Do not use threading model in client proces monitor
  * for example on AIX 7.2 it causes core dumps...
@@ -73,18 +87,24 @@
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 
+/* The size of `int', as computed by sizeof. */
+#define EX_SIZEOF_INT @EX_SIZEOF_INT@
+
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_INT @SIZEOF_INT@
+#define EX_SIZEOF_LONG @EX_SIZEOF_LONG@
 
 #define NDRX_VERSION   "@NDRX_VERSION_STR@"
 #define NDRX_BUILD_OS_NAME "@CMAKE_OS_NAME@"
+#define EX_POLLER_STR "@EX_POLLER_STR@"
 #define NDRX_COMPILER  "@CMAKE_C_COMPILER_ID@"
 #define NDRX_CPUARCH  "@CMAKE_SYSTEM_PROCESSOR@"
 
 #define NDRX_LD_LIBRARY_PATH "@NDRX_LD_LIBRARY_PATH@"
 
 /* PThread mode for Solaris */
+#ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS
+#endif
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
 

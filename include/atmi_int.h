@@ -1,34 +1,35 @@
-/* 
-** ATMI internals
-**
-** @file atmi_int.h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI internals
+ *
+ * @file atmi_int.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 #ifndef ATMI_INT_H
 #define	ATMI_INT_H
@@ -49,6 +50,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <userlog.h>
 #include <tperror.h>
+#include <exparson.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -56,6 +58,13 @@ extern "C" {
  * List of internal queue errors
  */
 #define GEN_QUEUE_ERR_NO_DATA   -2
+
+    
+/* Special queue logical numbers used by atmi server */
+#define ATMI_SRV_ADMIN_Q            0           /**< This is admin queue */
+#define ATMI_SRV_REPLY_Q            1           /**< This is reply queue */
+#define ATMI_SRV_Q_ADJUST           2           /**< Adjustment for Q nr */
+#define ATMI_SRV_SVC                3           /**< Normal service Q    */
 
 /*
  * List of ATMI internal protocol commands
@@ -119,25 +128,25 @@ extern "C" {
 #define TPRECOVERSVC        "TPRECOVER"     /* Recovery administrative service */
     
 /* Special flags for tpcallex */
-#define TPCALL_EVPOST           0x0001          /* Event posting    */
-#define TPCALL_BRCALL           0x0002          /* Bridge call      */
-#define TPCALL_BROADCAST        0x0004          /* Broadcast call   */
+#define TPCALL_EVPOST               0x0001 /**< Event posting                 */
+#define TPCALL_BRCALL               0x0002 /**< Bridge call                   */
+#define TPCALL_BROADCAST            0x0004 /**< Broadcast call                */
 
 /* XA TM reason codes */
 /* Lower reason includes XA error code. */    
-#define NDRX_XA_ERSN_BASE            2000
-#define NDRX_XA_ERSN_NONE            0      /* No reason specified for error */
-#define NDRX_XA_ERSN_LOGFAIL         2001   /* Log failed                    */
-#define NDRX_XA_ERSN_INVPARAM        2002   /* Invalid parameters sent to TMS*/
-#define NDRX_XA_ERSN_NOTX            2003   /* Transaction not logged        */
-#define NDRX_XA_ERSN_PREPFAIL        2004   /* One of the nodes failed to prepare */
-#define NDRX_XA_ERSN_RMLOGFAIL       2005   /* New RM logging failed         */
-#define NDRX_XA_ERSN_RMCOMMITFAIL    2006   /* Some resource manager failed to commit */
-#define NDRX_XA_ERSN_UBFERR          2007   /* UBF Error                     */
-#define NDRX_XA_ERSN_RMERR           2008   /* Resource Manager Failed       */
+#define NDRX_XA_ERSN_BASE           2000
+#define NDRX_XA_ERSN_NONE           0      /**< No reason specified for error */
+#define NDRX_XA_ERSN_LOGFAIL        2001   /**< Log failed                    */
+#define NDRX_XA_ERSN_INVPARAM       2002   /**< Invalid parameters sent to TMS*/
+#define NDRX_XA_ERSN_NOTX           2003   /**< Transaction not logged        */
+#define NDRX_XA_ERSN_PREPFAIL       2004   /**< One of the nodes failed to prepare */
+#define NDRX_XA_ERSN_RMLOGFAIL      2005   /**< New RM logging failed         */
+#define NDRX_XA_ERSN_RMCOMMITFAIL   2006   /**< Some resource manager failed to commit */
+#define NDRX_XA_ERSN_UBFERR         2007   /**< UBF Error                     */
+#define NDRX_XA_ERSN_RMERR          2008   /**< Resource Manager Failed       */
 
     
-#define NDRX_XID_FORMAT_ID  0x6194f7a1L         /* Enduro/X XID format id*/
+#define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
@@ -163,7 +172,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = __buf_size__;\
+        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
     }\
 }
     
@@ -185,7 +194,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = __buf_size__;\
+        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
     }\
 }
     
@@ -206,7 +215,7 @@ extern "C" {
     }\
     if (NULL!=__p_bufsz)\
     {\
-        *((int *)__p_bufsz) = __buf_size__;\
+        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
     }\
 }
     
@@ -225,7 +234,7 @@ extern "C" {
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
     fprintf(stderr, "Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
-    fprintf(stderr, "GPLv2 (or later) or Mavimax license for commercial use.\n\n");
+    fprintf(stderr, "AGPLv3 or Mavimax license for commercial use.\n\n");
     
     
     
@@ -241,20 +250,24 @@ typedef struct buffer_obj buffer_obj_t;
 struct buffer_obj
 {
     int type_id;
-    /* int sub_type_id; */
+    /** int sub_type_id; */
     char subtype[XATMI_SUBTYPE_LEN+1];
-    short autoalloc;  /* Is buffer automatically allocated by tpcall? */
+    short autoalloc;  /**< Is buffer automatically allocated by tpcall? */
     char *buf;
-    long size;        /* Allocated size.... */
+    long size;        /**< Allocated size.... */
     /* Move to hash by buf */
     /* buffer_obj_t *prev, *next; */
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /**< makes this structure hashable */
 };
 
-/*
- * Typed buffer descriptor table
+/**
+ * Typed buffer descriptor table. Type of \ref typed_buffer_descr
  */
 typedef struct typed_buffer_descr typed_buffer_descr_t;
+
+/**
+ * Buffer type descriptor structure
+ */
 struct typed_buffer_descr
 {
     int type_id;
@@ -323,7 +336,7 @@ struct call_descriptor_state
 };
 typedef struct call_descriptor_state call_descriptor_state_t;
 
-/*
+/**
  * Structure for holding atmi library configuration and other global
  * variables.
  * 
@@ -332,27 +345,33 @@ typedef struct call_descriptor_state call_descriptor_state_t;
  */
 struct atmi_lib_conf
 {
-    int is_client; /* Is this client? */
-    char reply_q_str[NDRX_MAX_Q_SIZE+1]; /* Provide reply q better debug */
-    mqd_t reply_q; /* Reply queue */
-    /* queue attributes */
-    struct mq_attr reply_q_attr; /* Queue attributes of replyq */
-    /*
+    /** Is this client? */
+    int is_client;
+    /** Provide reply q better debug */
+    char reply_q_str[NDRX_MAX_Q_SIZE+1];
+    /** Reply queue */
+    mqd_t reply_q;
+    /** queue attributes - of replyq*/
+    struct mq_attr reply_q_attr;
+    /**
      * ID string. For example:
      * srv.testsrv-1
      * or
      * clt.testclt-1265
      */
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* Id of the resource */
+    char my_id[NDRX_MAX_ID_SIZE+1];
 
-    /* Queue prefix (from environment) */
+    /** Queue prefix (from environment) */
     char q_prefix[NDRX_MAX_Q_SIZE+1];
 
+    /** Queue name for ndrxd connection */
     char ndrxd_q_str[NDRX_MAX_Q_SIZE+1]; /* Queue name for ndrxd connection */
     
-    long contextid;         /* In which context lib is initialized? */
+    /** In which context lib is initialized? */
+    long contextid;
     
 };
+/** typedef for atmi_lib_conf structure */
 typedef struct atmi_lib_conf atmi_lib_conf_t;
 
 /**
@@ -361,54 +380,58 @@ typedef struct atmi_lib_conf atmi_lib_conf_t;
 struct atmi_lib_env
 {   
     /* Other global settings */
-    int     max_servers; /* Max server instance count - CONF_NDRX_SRVMAX*/
-    int     max_svcs;   /* Max services per server - CONF_NDRX_SVCMAX*/
-    char    rnd_key[NDRX_MAX_KEY_SIZE];   /* random key to be passed to all EnduroX servers in session */
-    int     msg_max;    /* maximum number of messages in a posix queue */
-    int     msgsize_max;    /* maximum message size for a posix queue */
-    key_t   ipckey;            /* IPC Key */
-    int     time_out; /* Timeout in seconds to be applied for calls */
-    /* Cluster node id */
-    int     our_nodeid;
-    int     ldbal;  /* Load balance settings */
-    int     is_clustered; /* Will we run in cluster mode or not? */
-    int     testmode; /* Do we run in test mode? */
+    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX*/
+    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX*/
+    char    rnd_key[NDRX_MAX_KEY_SIZE];   /**< random key to be passed to all EnduroX servers in session */
+    int     msg_max;     /**< maximum number of messages in a posix queue */
+    int     msgsize_max; /**< maximum message size for a posix queue */
+    key_t   ipckey;      /**< IPC Key */
+    int     time_out;    /**< Timeout in seconds to be applied for calls */
+    int     our_nodeid;  /**< Cluster node id */
+    int     ldbal;       /**< Load balance settings */
+    int     is_clustered;/**< Will we run in cluster mode or not? */
+    int     testmode; 	 /**< Do we run in test mode? */
     
-    /* <XA Protocol configuration> */
-    short xa_rmid;    /* XA Resource ID 1..255 range */
-    char xa_open_str[PATH_MAX]; /* XA Open string           */
-    char xa_close_str[PATH_MAX];/* XA Close string          */
-    char xa_driverlib[PATH_MAX];/* Enduro RM Library/driver */
-    char xa_rmlib[PATH_MAX];    /* RM library               */
-    int  xa_lazy_init;          /* Should we  init lately?  */
-    char xa_flags[PATH_MAX];    /* Specific flags for XA    */
-    struct xa_switch_t * xa_sw; /* handler to XA switch     */
-    
+    /**
+     * @defgroup xa_params XA configuration parameters
+     * @{
+     */
+    short xa_rmid;    /**< XA Resource ID 1..255 range */
+    char xa_open_str[PATH_MAX]; /**< XA Open string           */
+    char xa_close_str[PATH_MAX];/**< XA Close string          */
+    char xa_driverlib[PATH_MAX];/**< Enduro RM Library/driver */
+    char xa_rmlib[PATH_MAX];    /**< RM library               */
+    int  xa_lazy_init;          /**< Should we  init lately?  */
+    char xa_flags[PATH_MAX];    /**< Specific flags for XA    */
+    struct xa_switch_t * xa_sw; /**< handler to XA switch     */
     
     char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
-    int xa_recon_times;         /* Number of times to retry the recon    */
-    long xa_recon_usleep;       /* Microseconds to sleep between retries */
+    int xa_recon_times;         /**< Number of times to retry the recon    */
+    long xa_recon_usleep;       /**< Microseconds to sleep between retries */
     
-    /* </XA Protocol configuration> */
+    /**@}*/
     
-    int     nrsems; /* number of sempahores for poll() mode of service mem */
+    int     nrsems; /**< number of sempahores for poll() mode of service mem */
     
-    int     maxsvcsrvs; /* Max servers per service (only for poll() mode) */
+    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode) */
     
-    char    qprefix[NDRX_MAX_Q_SIZE+1]; /* Queue prefix (common, finally!) */
-    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /* Includes separator at the end */
-    int     qprefix_match_len;              /* Includes number bytes to match */
-    char    qpath[PATH_MAX+1]; /* Queue path (common, finally!) */
+    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!) */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
+    int     qprefix_match_len;              /**< Includes number bytes to match */
+    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
-/*
+/**
  * Generic command handler, tp commands.
  */
 struct tp_command_generic
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -416,7 +439,7 @@ struct tp_command_generic
 };
 typedef struct tp_command_generic tp_command_generic_t;
 
-/*
+/**
  * Call handler.
  * For storing the tppost associated timestamp, we could allow data to be installed
  * in the rval/rcode for requests...
@@ -424,6 +447,9 @@ typedef struct tp_command_generic tp_command_generic_t;
 struct tp_command_call
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
@@ -432,7 +458,7 @@ struct tp_command_call
     short buffer_type_id;
     char name[XATMI_SERVICE_NAME_LENGTH+1];
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    /* Zero terminated string... (might contain special symbols)*/
+    /** Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
     char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
     long sysflags; /* internal flags of the call */
@@ -444,7 +470,7 @@ struct tp_command_call
     int user3;  /* user field 3, request */
     long user4; /* user field 4, request */
     int clttout; /* client process timeout setting */
-    /* Extended size for storing cache updates in format
+    /** Extended size for storing cache updates in format
      * @CD002/Flgs/SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * @CA002//SERVICENAMEXXXXXXXXXXXXXXXXXXX
      * where @CA -> Cache Add, @CD -> Cache delete, 002 -> source node id
@@ -454,9 +480,9 @@ struct tp_command_call
     long flags; /* should be preset on reply only */
     time_t timestamp; /* provide time stamp of the call */
     unsigned short callseq;
-    /* message sequence for conversational over multithreaded bridges*/
+    /** message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
-    /* call timer so that we do not operate with timed-out calls. */
+    /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
     /* <XA section begin> */
@@ -466,6 +492,11 @@ struct tp_command_call
     /* Have a ptr to auto-buffer: */
     buffer_obj_t * autobuf;
     
+#if EX_SIZEOF_LONG == 4
+    /* we need data to aligned to 8 */
+    long padding1;
+#endif
+
     /* Payload: */
     long data_len;
     char data[0];
@@ -478,45 +509,52 @@ typedef struct tp_command_call tp_command_call_t;
 struct tp_notif_call
 {
     /* <standard comms header:> */
+#ifdef EX_USE_SYSVQ
+    long mtype; /* mandatory for System V queues */
+#endif
     short command_id;
     char proto_ver[4];
     int proto_magic;
     /* </standard comms header> */
     
     /* See clientid_t, same fields */
-    char destclient[NDRX_MAX_ID_SIZE+1];      /* Destination client ID */
+    char destclient[NDRX_MAX_ID_SIZE+1];      /**< Destination client ID */
     
     /* fields from boradcast */
-    char nodeid[MAXTIDENT*2]; /* In case of using regex */
-    int nodeid_isnull;        /* Is NULL */
-    char usrname[MAXTIDENT*2]; /* In case of using regex */
-    int usrname_isnull;        /* Is NULL */
-    char cltname[MAXTIDENT*2]; /* In case of using regex */
-    int cltname_isnull;        /* Is NULL */
+    char nodeid[MAXTIDENT*2];  /**< In case of using regex */
+    int nodeid_isnull;         /**< Is NULL */
+    char usrname[MAXTIDENT*2]; /**< In case of using regex */
+    int usrname_isnull;        /**< Is NULL */
+    char cltname[MAXTIDENT*2]; /**< In case of using regex */
+    int cltname_isnull;        /**< Is NULL */
     
     short buffer_type_id;
-    /* See clientid_t, same fields, end */
+    /** See clientid_t, same fields, end */
     char reply_to[NDRX_MAX_Q_SIZE+1];
-    /* Zero terminated string... (might contain special symbols)*/
+    /** Zero terminated string... (might contain special symbols)*/
     char callstack[CONF_NDRX_NODEID_COUNT+1];
-    char my_id[NDRX_MAX_ID_SIZE+1]; /* ID of caller */
-    long sysflags; /* internal flags of the call */
+    char my_id[NDRX_MAX_ID_SIZE+1]; /**< ID of caller */
+    long sysflags; /**< internal flags of the call */
     int cd;
-    int rval; /* on request -> userfield1 */
-    long rcode; /* should be preset on reply only, on request -> userfield2 */
+    int rval; /**< on request -> userfield1 */
+    long rcode; /**< should be preset on reply only, on request -> userfield2 */
     long flags; 
-    time_t timestamp; /* provide time stamp of the call */
+    time_t timestamp; /**< provide time stamp of the call */
     unsigned short callseq;
-    /* message sequence for conversational over multithreaded bridges*/
+    /** message sequence for conversational over multithreaded bridges*/
     unsigned short msgseq;
-    /* call timer so that we do not operate with timed-out calls. */
+    /** call timer so that we do not operate with timed-out calls. */
     ndrx_stopwatch_t timer;    
     
-    /* Have a ptr to auto-buffer: */
-    buffer_obj_t * autobuf;
+    buffer_obj_t * autobuf; /**< Have a ptr to auto-buffer: */
     
-    long destnodeid; /* Dest node to which we are sending the msg */
+    long destnodeid; /**< Dest node to which we are sending the msg */
     
+#if EX_SIZEOF_LONG == 4
+    /* we need data to aligned to 8 */
+    long padding1;
+#endif
+
     long data_len;
     char data[0];
     
@@ -533,9 +571,9 @@ struct tpconv_buffer
 {
     int msgseq;
     char *buf;
-    size_t size;        /* Allocated size.... */
+    size_t size;        /**< Allocated size....                 */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;  /**< makes this structure hashable      */
 };
 
 
@@ -558,7 +596,8 @@ struct tp_conversation_control
     time_t timestamp;
     unsigned short callseq; /* Call/conv sequence number */
     
-    /* message sequence number (from our side to their) 
+    /** 
+     * message sequence number (from our side to their) 
      * Basically this is message number we are sending them
      * The other side will follow the incremental order of the messages.
      */
@@ -654,6 +693,37 @@ typedef struct ndrx_tpcall_cache_ctl ndrx_tpcall_cache_ctl_t;
  * actual size smaller than 1 char */
 #define MAX_CALL_DATA_SIZE (NDRX_MSGSIZEMAX-sizeof(tp_command_call_t))
 
+
+/* Indicators for  tpexportex() and tpimportex() */
+struct ndrx_expbufctl
+{
+    char buftype[XATMI_TYPE_LEN+1];
+    short buftype_ind;
+
+    char subtype[XATMI_SUBTYPE_LEN+1];
+    short subtype_ind;
+
+    double version;
+    short version_ind;
+
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+    short svcnm_ind;
+
+    int rval;
+    short rval_ind;
+
+    long rcode;
+    short rcode_ind;
+
+    int tperror;
+    short tperror_ind;
+
+    char tpstrerror[MAX_TP_ERROR_LEN+1];
+    short tpstrerror_ind;
+};
+
+typedef struct ndrx_expbufctl ndrx_expbufctl_t;
+
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
 extern NDRX_API int G_srv_id;
@@ -662,6 +732,7 @@ extern NDRX_API int G_srv_id;
 
 /* Utilities */
 extern NDRX_API int ndrx_load_common_env(void);
+extern NDRX_API long ndrx_ctxid_op(int make_free, long ctxid);
 extern NDRX_API int ndrx_load_new_env(char *file);
 extern NDRX_API int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio);
 extern NDRX_API int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, long tout, unsigned int msg_prio);
@@ -761,8 +832,8 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
 extern NDRX_API void	tpext_configbrige 
     (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
 
-extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer);
-extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
+extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
+extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object);
 extern NDRX_API int ndrx_tpcall (char *svc, char *idata, long ilen,
                 char * *odata, long *olen, long flags,
                 char *extradata, int dest_node, int ex_flags,
@@ -796,7 +867,8 @@ extern NDRX_API void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub);
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);
 extern NDRX_API int ndrx_chk_ndrxd(void);
-extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force);
+extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res);
+extern NDRX_API void ndrx_down_userres(void);
 extern NDRX_API int ndrx_killall(char *mask);
 extern NDRX_API int ndrx_q_exists(char *qpath);
 extern NDRX_API int ndrx_get_cached_svc_q(char *q);
@@ -808,9 +880,20 @@ extern NDRX_API atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
 extern NDRX_API atmi_lib_env_t *ndrx_get_G_atmi_env(void);
 extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
 
+/* tpimort() functions */
+extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
+extern NDRX_API int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
+extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
+
+/* tpexport() functions */
+extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
+
 #ifdef	__cplusplus
 }
 #endif
 
 #endif	/* ATMI_INT_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

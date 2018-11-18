@@ -1,34 +1,35 @@
-/* 
-** Client configuration
-**
-** @file cltconfig.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Client configuration
+ *
+ * @file cltconfig.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <ndrx_config.h>
 #include <string.h>
 #include <stdio.h>
@@ -43,6 +44,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <nstdutil.h>
+#include <exenv.h>
+#include <exenvapi.h>
 
 #include "cpmsrv.h"
 /*---------------------------Externs------------------------------------*/
@@ -52,10 +55,15 @@
 
 /*---------------------------Globals------------------------------------*/
 
-/*
+/**
  * Active monitor configuration
  */
 expublic cpm_process_t *G_clt_config=NULL;
+
+/**
+ * Global environment groups
+ */
+exprivate ndrx_env_group_t * M_envgrouphash = NULL;
 
 MUTEX_LOCKDECL(M_config_lock) 
 /*---------------------------Statics------------------------------------*/
@@ -297,8 +305,18 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
     for (; cur; cur=cur->next)
     {
-        if (0==strcmp("exec", (char *)cur->name))
-         {
+        if (0==strcmp("envs", (char *)cur->name))
+        {
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_parse(doc, cur, &cltproc.stat.envs,
+                    M_envgrouphash, NULL))
+            {
+                NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
+                userlog("Failed to parse environment groups for clients!");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (0==strcmp("exec", (char *)cur->name))
+        {
            /* Copy stuff from root elem to heap */
             
             p_cltproc = NDRX_MALLOC(sizeof(cpm_process_t));
@@ -310,7 +328,18 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             }
             
             memcpy(p_cltproc, &cltproc, sizeof(cltproc));
-
+            p_cltproc->stat.envs = NULL;
+            
+            if (EXSUCCEED!=ndrx_ndrxconf_envs_append(&p_cltproc->stat.envs, 
+                    cltproc.stat.envs))
+            {
+                NDRX_LOG(log_error, "Failed to join envs %p %p", p_cltproc->stat.envs, 
+                        cltproc.stat.envs);
+                userlog("Failed to join envs %p %p", p_cltproc->stat.envs, 
+                        cltproc.stat.envs);
+                EXFAIL_OUT(ret);
+            }
+            
             /* Now override the config: */
             for (attr=cur->properties; attr; attr = attr->next)
             {
@@ -429,7 +458,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             /* Default the subsect */
             if (EXEOS==p_cltproc->subsect[0])
             {
-                strcpy(p_cltproc->subsect, "-");
+                NDRX_STRCPY_SAFE(p_cltproc->subsect, "-");
             }
             
             /* Render the final command line */
@@ -480,10 +509,30 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
             else
             {
                 NDRX_LOG(log_info, "Refreshing %s/%s [%s] ...", 
-                        p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
+                        p_cltproc->tag, p_cltproc->subsect, 
+                        p_cltproc->stat.command_line);
                 p_cl->is_cfg_refresh = EXTRUE;
                 
+                
+                /* this will make use of newly allocated env */
                 memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
+                
+                p_cl->stat.envs = NULL;
+            
+                if (EXSUCCEED!=ndrx_ndrxconf_envs_append(&p_cl->stat.envs, 
+                        p_cltproc->stat.envs))
+                {
+                    NDRX_LOG(log_error, "Failed to join envs %p %p", &p_cl->stat.envs, 
+                            p_cltproc->stat.envs);
+                    userlog("Failed to join envs %p %p", "Failed to join envs %p %p", 
+                            &p_cl->stat.envs, 
+                            p_cltproc->stat.envs);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* free up current env... */
+                ndrx_ndrxconf_envs_envs_free(&p_cltproc->stat.envs);
+                
                 NDRX_FREE(p_cltproc);
             }
         }
@@ -496,8 +545,36 @@ out:
         NDRX_FREE(p_cltproc);
     }
 
+    /* free up envs of the temp process */
+    if (NULL!=cltproc.stat.envs)
+    {
+        ndrx_ndrxconf_envs_envs_free(&cltproc.stat.envs);
+    }
+
     return ret;
 }
+
+/**
+ * parse client entries
+ * @param doc XML document
+ * @param cur current cursor pointing to <envs> tag
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int parse_envs(xmlDocPtr doc, xmlNodePtr cur)
+{
+    int ret=EXSUCCEED;
+
+    if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, &M_envgrouphash))
+    {
+        NDRX_LOG(log_error, "Failed to parse environment groups for clients!");
+        userlog("Failed to parse environment groups for clients!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:    
+    return ret;
+}
+
 /**
  * parse client entries
  * @param doc
@@ -507,21 +584,32 @@ out:
 exprivate int parse_clients(xmlDocPtr doc, xmlNodePtr cur)
 {
     int ret=EXSUCCEED;
-    char *p;
-    
+
     for (; cur ; cur=cur->next)
     {
-            if (0==strcmp((char*)cur->name, "client"))
+        if (0==strcmp((char*)cur->name, "client"))
+        {
+            /* Get the client name */
+            if (EXSUCCEED!=parse_client(doc, cur))
             {
-                /* Get the client name */
-                if (EXSUCCEED!=parse_client(doc, cur))
-                {
-                    ret=EXFAIL;
-                    goto out;
-                }
+                ret=EXFAIL;
+                goto out;
             }
+        }
+        else if (0==strcmp((char*)cur->name, "envs")
+                && EXSUCCEED!=parse_envs(doc, cur))
+        {
+            EXFAIL_OUT(ret);
+        }
     }
 out:
+
+    if (NULL!=M_envgrouphash)
+    {
+       ndrx_ndrxconf_envs_groups_free(&M_envgrouphash);
+    }
+
+    
     return ret;
 }
 
@@ -548,14 +636,14 @@ exprivate int parse_config(xmlDocPtr doc, xmlNodePtr cur)
         if (0==strcmp((char*)cur->name, "clients")
                 && EXSUCCEED!=parse_clients(doc, cur->children))
         {
-            ret=EXFAIL;
-            goto out;
+            EXFAIL_OUT(ret);
         }
         
         cur=cur->next;
     } while (cur);
     
 out:
+    
     return ret;
 }
 
@@ -609,7 +697,7 @@ out:
 
 /**
  * Load the active configuration.
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int load_config(void)
 {
@@ -681,6 +769,13 @@ expublic int load_config(void)
         if (!c->is_cfg_refresh && CLT_STATE_NOTRUN==c->dyn.cur_state)
         {
             NDRX_LOG(log_error, "Removing process: [%s]", c->stat.command_line);
+            
+            /* clean up environments... */
+            if (NULL!=c->stat.envs)
+            {
+                ndrx_ndrxconf_envs_envs_free(&c->stat.envs);
+            }
+            
             EXHASH_DEL(G_clt_config, c);
             NDRX_FREE(c);
         }
@@ -695,4 +790,4 @@ out:
     return ret;    
 }
 
-
+/* vim: set ts=4 sw=4 et smartindent: */

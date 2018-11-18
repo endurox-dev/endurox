@@ -1,34 +1,35 @@
-/* 
-** Management routines of cache server
-**
-** @file mgt.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2018 Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Management routines of cache server
+ *
+ * @file mgt.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,6 +90,8 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
     ndrx_tpcache_data_t *cdata;
     long revent;
     int cursor_open = EXFALSE;
+    int align;
+    char *defer_free = NULL;
     
     /* ok get db name */
     
@@ -136,14 +139,21 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
         NDRX_LOG(log_error, "Failed to open cursor");
         EXFAIL_OUT(ret);
     }
+    cursor_open = EXTRUE;
     
     /* loop over the db and match records  */
     
     op = EDB_FIRST;
     do
     {
+        if (defer_free)
+        {
+            NDRX_FREE(defer_free);
+            defer_free = NULL;
+        }
+        
         if (EXSUCCEED!=(ret = ndrx_cache_edb_cursor_getfullkey(db, cursor, 
-                &keydb, &val, op)))
+                &keydb, &val, op, &align)))
         {
             if (EDB_NOTFOUND==ret)
             {
@@ -157,6 +167,11 @@ exprivate int cache_show(int cd, UBFH **pp_ub)
                 NDRX_LOG(log_error, "Failed to loop over the [%s] db", cachedb);
                 break;
             }
+        }
+        
+        if (align)
+        {
+            defer_free = val.mv_data;
         }
         
         /* Validate DB rec */
@@ -240,6 +255,12 @@ out:
     {
         ndrx_cache_edb_abort(db, txn);
     }
+
+    if (defer_free)
+    {
+        NDRX_FREE(defer_free);
+    }
+
     return ret;
 }
 
@@ -256,10 +277,13 @@ exprivate int cache_dump(UBFH **pp_ub)
     char tmp[256];
     EDB_txn *txn = NULL;
     EDB_cursor *cursor;
+    int cursor_open = EXFALSE;
     EDB_val val;
     int tran_started = EXFALSE;
     ndrx_tpcache_data_t *cdata;
     char *key = NULL;
+    int align;
+    char *defer_free = NULL;
     
     /* ok get db name */
     
@@ -303,6 +327,8 @@ exprivate int cache_dump(UBFH **pp_ub)
         NDRX_LOG(log_error, "Failed to open cursor");
         EXFAIL_OUT(ret);
     }
+
+    cursor_open = EXTRUE;
     
     if (NULL==(key = Bgetalloc(*pp_ub, EX_CACHE_OPEXPR, 0, NULL)))
     {
@@ -311,12 +337,17 @@ exprivate int cache_dump(UBFH **pp_ub)
     }
     
     /* read db record */
-    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val, EXTRUE))
+    if (EXSUCCEED!=ndrx_cache_edb_get(db, txn, key, &val, EXTRUE, &align))
     {
         REJECT(*pp_ub, tperrno, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
+    if (align)
+    {
+        defer_free = val.mv_data;
+    }
+            
     /* Validate DB rec */
 
     if (val.mv_size < sizeof(ndrx_tpcache_data_t))
@@ -351,6 +382,11 @@ exprivate int cache_dump(UBFH **pp_ub)
 
 out:
 
+    if (cursor_open)
+    {
+        edb_cursor_close(cursor);
+    }
+
     if (tran_started)
     {
         ndrx_cache_edb_abort(db, txn);
@@ -359,6 +395,11 @@ out:
     if (NULL!=key)
     {
         NDRX_FREE(key);
+    }
+
+    if (NULL!=defer_free)
+    {
+        NDRX_FREE(defer_free);
     }
 
     return ret;
@@ -555,3 +596,4 @@ out:
         0L);
 
 }
+/* vim: set ts=4 sw=4 et smartindent: */

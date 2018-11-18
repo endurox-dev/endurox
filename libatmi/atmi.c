@@ -1,34 +1,35 @@
-/* 
-** ATMI API functions
-**
-** @file atmi.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI API functions
+ *
+ * @file atmi.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -895,7 +896,7 @@ expublic int tpjsontoubf(UBFH *p_ub, char *buffer)
     int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    ret = ndrx_tpjsontoubf(p_ub, buffer);
+    ret = ndrx_tpjsontoubf(p_ub, buffer, NULL);
     
 out:
     return ret;
@@ -914,7 +915,7 @@ expublic int tpubftojson(UBFH *p_ub, char *buffer, int bufsize)
     int entry_status=EXSUCCEED;
     API_ENTRY;
     
-    ret=ndrx_tpubftojson(p_ub, buffer, bufsize);
+    ret=ndrx_tpubftojson(p_ub, buffer, bufsize, NULL);
     
 out:
     return ret;
@@ -1467,7 +1468,7 @@ expublic int tpviewtojson(char *cstruct, char *view, char *buffer,
     }
     
     
-    ret = ndrx_tpviewtojson(cstruct, view, buffer,  bufsize, flags);
+    ret = ndrx_tpviewtojson(cstruct, view, buffer,  bufsize, flags, NULL);
     
 out:
     return ret;
@@ -1500,7 +1501,7 @@ expublic char* tpjsontoview(char *view, char *buffer)
         EXFAIL_OUT(ret);
     }
     
-    ret_ptr=ndrx_tpjsontoview(view, buffer);
+    ret_ptr=ndrx_tpjsontoview(view, buffer, NULL);
     
 out:
     if (EXSUCCEED==ret)
@@ -1550,3 +1551,171 @@ out:
     return ret;
 }
 
+/**
+ * Convert an JSON representation of a message into a typed message buffer 
+ * @param istr JSON representation of a message 
+ * @param ilen contains the length of the binary data contained in istr
+ * @param obuf typed message buffer
+ * @param olen amount of valid data contained in the output buffer
+ * @param flags 
+ * @return 
+ */
+expublic int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check some other parameters */
+    if (istr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "istr cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check some other parameters */
+    if (obuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "obuf cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    ret=ndrx_tpimportex(NULL, istr, ilen, obuf, olen, flags);
+
+out:
+    return ret;
+}
+
+/**
+ * Convert an JSON representation of a message into a typed message buffer 
+ * @param bufctl
+ * @param istr JSON representation of a message 
+ * @param ilen contains the length of the binary data contained in istr
+ * @param obuf typed message buffer
+ * @param olen amount of valid data contained in the output buffer
+ * @param flags
+ * @return 
+ */
+expublic int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check some other parameters */
+    if (istr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "istr cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check some other parameters */
+    if (obuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "obuf cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    ret=ndrx_tpimportex(bufctl, istr, ilen, obuf, olen, flags);
+
+out:
+    return ret;
+}
+
+/**
+ * Converts a typed message buffer into an externalized JSON representation
+ * @param ibuf typed message buffer
+ * @param ilen specifies how much of ibuf to export
+ * @param ostr pointer to the output JSON
+ * @param olen input maximum available size, actual number of bytes written to ostr
+ * @param flags 
+ * @return 
+ */
+extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check some other parameters */
+    if (ibuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ibuf cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check some other parameters */
+    if (ostr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags);
+
+out:
+    return ret;
+}
+
+/**
+ * Converts a typed message buffer into an externalized JSON representation
+ * @param bufctl 
+ * @param ibuf typed message buffer
+ * @param ilen specifies how much of ibuf to export
+ * @param ostr pointer to the output JSON
+ * @param olen input maximum available size, actual number of bytes written to ostr
+ * @param flags
+ * @return 
+ */
+extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, 
+        char *ibuf, long ilen, char *ostr, long *olen, long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        EXFAIL_OUT(ret);
+    }
+
+   /* Check some other parameters */
+    if (ibuf==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ibuf cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    if (ostr==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
+        EXFAIL_OUT(ret);
+    }
+
+    if (olen<=0)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "olen cannot be 0");
+        EXFAIL_OUT(ret);
+    }
+
+    ret=ndrx_tpexportex(bufctl, ibuf, ilen, ostr, olen, flags);
+
+out:
+    return ret;
+}
+/* vim: set ts=4 sw=4 et smartindent: */

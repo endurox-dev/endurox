@@ -1,29 +1,30 @@
 #!/bin/bash
-## 
-## @(#) Test003 - clusterised version
+##
+## @brief @(#) Test003 - clusterised version
 ##
 ## @file run-dom.sh
-## 
+##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
-## Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## GPL or Mavimax's license for commercial use.
+## AGPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
-## GPL license:
+## AGPL license:
 ## 
 ## This program is free software; you can redistribute it and/or modify it under
-## the terms of the GNU General Public License as published by the Free Software
-## Foundation; either version 2 of the License, or (at your option) any later
-## version.
+## the terms of the GNU Affero General Public License, version 3 as published
+## by the Free Software Foundation;
 ##
 ## This program is distributed in the hope that it will be useful, but WITHOUT ANY
 ## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-## PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+## for more details.
 ##
-## You should have received a copy of the GNU General Public License along with
-## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-## Place, Suite 330, Boston, MA 02111-1307 USA
+## You should have received a copy of the GNU Affero General Public License along 
+## with this program; if not, write to the Free Software Foundation, Inc., 
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
 ## A commercial use license is available from Mavimax, Ltd
@@ -103,24 +104,39 @@ rm *dom*.log
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
+echo "PSVC DOM 1"
+xadmin psvc
 
 set_dom2;
 xadmin down -y
 xadmin start -y || go_out 2
+echo "PSVC DOM 2"
+xadmin psvc
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 90
+sleep 60
 
 # Go to domain 1
 set_dom1;
 
-# Run the client test...
-echo "Soon will issue client calls:"
-xadmin psc
+echo "PSVC DOM 1"
 xadmin psvc
+echo "PPM DOM 1"
 xadmin ppm
+echo "PSC DOM 1"
+xadmin psc
+
+# Run the client test...
+echo "Will issue client calls:"
 (./atmiclt3 2>&1) > ./atmiclt-dom1.log
 RET=$?
+
+echo "PSVC DOM 1 (AFTER RUN)"
+xadmin psvc
+
+set_dom2;
+echo "PSVC DOM 2 (AFTER RUN)"
+xadmin psvc
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
@@ -130,3 +146,4 @@ fi
 
 go_out $RET
 
+# vim: set ts=4 sw=4 et smartindent:

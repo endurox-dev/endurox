@@ -1,34 +1,35 @@
-/* 
-** Generate application sources
-**
-** @file cmd_gen.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Generate application sources
+ *
+ * @file cmd_gen.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,12 +65,12 @@
 #ifndef NDRX_DISABLEPSCRIPT
 /*---------------------------Externs------------------------------------*/
 
-extern const char G_resource_gen_go_server[];
-extern const char G_resource_gen_go_client[];
-extern const char G_resource_gen_c_client[];
-extern const char G_resource_gen_c_server[];
-extern const char G_resource_gen_ubf_tab[];
-extern const char G_resource_gen_test_local[];
+extern const char ndrx_G_resource_gen_go_server[];
+extern const char ndrx_G_resource_gen_go_client[];
+extern const char ndrx_G_resource_gen_c_client[];
+extern const char ndrx_G_resource_gen_c_server[];
+extern const char ndrx_G_resource_gen_ubf_tab[];
+extern const char ndrx_G_resource_gen_test_local[];
 
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
@@ -203,12 +204,12 @@ expublic int cmd_gen_load_scripts(void)
     
     
     /* 1. List strings in memory, start with "gen_001" */
-    if (EXSUCCEED!=reg_cmd("go server", G_resource_gen_go_server, NULL)
-        || EXSUCCEED!=reg_cmd("go client", G_resource_gen_go_client, NULL)
-        || EXSUCCEED!=reg_cmd("c server", G_resource_gen_c_server, NULL)
-        || EXSUCCEED!=reg_cmd("c client", G_resource_gen_c_client, NULL)
-        || EXSUCCEED!=reg_cmd("ubf tab", G_resource_gen_ubf_tab, NULL)
-        || EXSUCCEED!=reg_cmd("test local", G_resource_gen_test_local, NULL)
+    if (EXSUCCEED!=reg_cmd("go server", ndrx_G_resource_gen_go_server, NULL)
+        || EXSUCCEED!=reg_cmd("go client", ndrx_G_resource_gen_go_client, NULL)
+        || EXSUCCEED!=reg_cmd("c server", ndrx_G_resource_gen_c_server, NULL)
+        || EXSUCCEED!=reg_cmd("c client", ndrx_G_resource_gen_c_client, NULL)
+        || EXSUCCEED!=reg_cmd("ubf tab", ndrx_G_resource_gen_ubf_tab, NULL)
+        || EXSUCCEED!=reg_cmd("test local", ndrx_G_resource_gen_test_local, NULL)
        )
     {
         EXFAIL_OUT(ret);
@@ -582,3 +583,4 @@ expublic int cmd_gen_load_scripts(void)
 }
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

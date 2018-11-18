@@ -1,34 +1,35 @@
-/* 
-** NDRX helper functions.
-**
-** @file utils.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief NDRX helper functions.
+ *
+ * @file utils.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,13 +49,38 @@
 #include <userlog.h>
 
 /*---------------------------Externs------------------------------------*/
-extern const char G_resource_Exfields[];
+extern const char ndrx_G_resource_Exfields[];
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Return node id (custom init, not ATMI pull in)
+ * @return node id string or "?" in case of misconfig
+ */
+expublic char * ndrx_xadmin_nodeid(void)
+{
+    static char nodeid[64];
+    static int first = EXTRUE;
+    char *p;
+    
+    if (first)
+    {
+        if (NULL==(p = getenv(CONF_NDRX_NODEID)))
+        {
+            NDRX_STRCPY_SAFE(nodeid, "?");
+        }
+        else
+        {
+            NDRX_STRCPY_SAFE(nodeid, p);
+        }
+    }
+    
+    return nodeid;
+}
 
 /**
  * If confirmation is required for command, then check it.
@@ -326,7 +352,7 @@ out:
 static PSInteger _xadmin_getExfields(HPSCRIPTVM v)
 {
     
-    ps_pushstring(v,G_resource_Exfields,-1);
+    ps_pushstring(v,ndrx_G_resource_Exfields,-1);
 
     return 1;
 }
@@ -347,3 +373,4 @@ expublic int register_getExfields(HPSCRIPTVM v)
 }
 
 #endif
+/* vim: set ts=4 sw=4 et smartindent: */

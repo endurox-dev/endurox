@@ -1,34 +1,35 @@
-/* 
-** Implementation for start & stop commands.
-**
-** @file cmd_startstop.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Implementation for start & stop commands.
+ *
+ * @file cmd_startstop.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -240,6 +241,8 @@ out:
 /**
  * Shutdown application server.
  * TODO: xadmin stop -i -1 makes stop to all domain!
+ * If there was full shutdown, then we should disconnect from shared memory
+ * resources too...
  * @param p_cmd_map
  * @param argc
  * @param argv
@@ -347,10 +350,21 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                     G_call_args,
                     EXFALSE,
                     G_config.listcall_flags);
+    
+    if (call.complete_shutdown)
+    {
+        NDRX_LOG(log_debug, "About to un-init after shutdown");
+        un_init(EXTRUE);
+        NDRX_LOG(log_debug, "Un-init completed (after shutdown)");
+        /* TODO: 
+         * how about some sleep here to allow the ndrxd to kill shared resources
+         * before user might want to move forward with next commands which open
+         * shm resources. Thus we can get some race conditions here
+         */
+    }
 out:
     return ret;
 }
-
 
 /**
  * restart app or server.
@@ -364,7 +378,6 @@ out:
 expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret=EXSUCCEED;
-    cmd_mapping_t cmd;
     short srvid=EXFAIL;
     char srvnm[MAXTIDENT+1]={EXEOS};
     short confirm = EXFALSE;
@@ -401,13 +414,29 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         }
     }
     
+    NDRX_LOG(log_info, "Shutting down...");
+    strcpy(argv[0], "stop");
+    if (EXSUCCEED==(ret=process_command_buffer(EXFALSE)))
+    {
+        if (!keep_running_ndrxd && EXEOS==srvnm[0] && EXFAIL==srvid)
+        {
+            sleep(2);
+        }
+        NDRX_LOG(log_debug, "Starting up...");
+        strcpy(argv[0], "start"); 
+        ret=process_command_buffer(EXFALSE);
+    }
     
+#if 0
     if (EXFAIL!=srvid || EXEOS!=srvnm[0])
     {
         keep_running_ndrxd = EXTRUE;
     }
+#endif
     
+    /* run stop command first... via procesor */
     
+#if 0   
     memset(&cmd, 0, sizeof(cmd));
     
     cmd.ndrxd_cmd = NDRXD_COM_STOP_RQ;
@@ -417,16 +446,24 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         {
             /* let daemon to finish the exit process (unlink pid file/queues) */
             sleep(2); /* this will be interrupted when we got sig child */
+            
+            /* well we shall emit the start command via command processor
+             * so that it opens the proper env...
+             *
+             */
+
             if (!is_ndrxd_running() && EXFAIL==ndrx_start_idle())
             {
                 fprintf(stderr, "Failed to start idle instance of ndrxd!");
                 EXFAIL_OUT(ret);
             }
+
         }
         
         cmd.ndrxd_cmd = NDRXD_COM_START_RQ;
         ret = cmd_start(&cmd, argc, argv, p_have_next);
     }
+#endif
     
 out:
     return ret;
@@ -544,3 +581,4 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
 out:
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

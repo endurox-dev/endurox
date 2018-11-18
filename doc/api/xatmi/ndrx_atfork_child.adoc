@@ -1,0 +1,56 @@
+NDRX_ATFORK_CHILD(3)
+====================
+:doctype: manpage
+
+
+NAME
+----
+ndrx_atfork_child - Function to be executed by child process after the fork
+if ndrx_fork() not used
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void ndrx_atfork_child(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+When process is copied by *fork()* system call, *ndrx_atfork_child()* shall be
+executed by child process after the fork call. This ensures that Enduro/X 
+sub-systems for child process cleans up any open resources. Particularly fork is 
+done by XATMI server then function deallocates any server resources
+open. *NOTE* that if any thread is doing XATMI client tasks, then *tpterm(3)*
+shall be called period fork is done.
+
+The logic of function is subject of change and in future releases some other 
+tasks might be required to be done by Enduro/X after process forking, 
+thus it is recommended to use *ndrx_fork()*, call manually *ndrx_atfork_chikld()* 
+or register it with *pthread_atfork()*
+
+RETURN VALUE
+------------ 
+*N/A*
+
+ERRORS
+------
+*N/A*
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrx_fork(3)* *ndrx_atfork_prepare(3)* *ndrx_atfork_parent(3)*
+
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

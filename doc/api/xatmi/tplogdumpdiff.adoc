@@ -96,7 +96,7 @@ t:USER:5:10865:000:20160928:095506583:mpdiff.c:0017:Compare two arrays (TP_DUMP 
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------

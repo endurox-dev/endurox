@@ -1,34 +1,35 @@
-/*
-** Field database support routines
-**
-** @file fielddb.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2018, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Field database support routines
+ *
+ * @file fielddb.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <string.h>
@@ -36,6 +37,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <tperror.h>
 #include <fieldtable.h>
 #include <fdatatype.h>
 #include <ferror.h>
@@ -593,9 +595,14 @@ expublic int ndrx_ubfdb_Bflddbget(EDB_val *data,
     
     entry = (ndrx_ubfdb_entry_t *)data->mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    memcpy(p_bfldid, &(entry->bfldid), sizeof(BFLDID));
+#else
     *p_bfldid = entry->bfldid;
-    *p_bfldno = entry->bfldid & EFFECTIVE_BITS_MASK;
-    *p_fldtype = entry->bfldid >> EFFECTIVE_BITS;
+#endif
+
+    *p_bfldno = (*p_bfldid) & EFFECTIVE_BITS_MASK;
+    *p_fldtype = (*p_bfldid) >> EFFECTIVE_BITS;
     
     NDRX_STRNCPY_SAFE(fldname, entry->fldname, fldname_bufsz);
     
@@ -759,8 +766,12 @@ expublic BFLDID ndrx_ubfdb_Bflddbid (char *fldname)
     
     entry = (ndrx_ubfdb_entry_t *)data.mv_data;
     
+#ifdef EX_ALIGNMENT_FORCE
+    /* for sparc aligned access we might want to use memcpy... */
+    memcpy(&ret, &(entry->bfldid), sizeof(ret));
+#else
     ret = entry->bfldid;
-    
+#endif
     
     UBF_LOG(log_debug, "%s: name [%s] resolved to field id %d", __func__, 
             fldname, ret);
@@ -802,3 +813,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

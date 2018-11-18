@@ -43,7 +43,12 @@ class WizardBase {
 		elemOrder = this.getSortedParamArray();
 		
 		//Set shared lib path...
-		if (osType=="DARWIN")
+                if (getpoller()=="emq")
+		{
+			qpath="/tmp/mq";
+			mk_mq_dev = true;
+		}
+		else if (osType=="DARWIN")
 		{
 			shared_lib_pfx="dylib";
 			qpath="/tmp/mq";
@@ -307,6 +312,13 @@ class WizardBase {
 	//@return	element name, empty if not found
 	function getMemberByOrder(order)
 	{
+		local ex = regexp(@"[0-9]+");
+		
+		if (!ex.match(order))
+		{
+			return ""; /* invalid number... */
+		}
+	
 		foreach(member,val in this.getclass())
 		{
 			local attr = this.getclass().getattributes(member);

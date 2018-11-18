@@ -1,34 +1,39 @@
-/* 
-** ATMI level cache, EDB access
-**
-** @file atmi_cache_edb.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief ATMI level cache, EDB access
+ *  NOTE! To have aligned data access LMDB key and data must be aligned size.
+ *  For some very long keys (how long?), the rule could change. In case of
+ *  UBF buffers, data is also aligned. If adding new buffer types, probably
+ *  we will need to align the data size too (for strings, carrays..)
+ *
+ * @file atmi_cache_edb.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdlib.h>
@@ -49,6 +54,74 @@
 #include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#ifdef EX_ALIGNMENT_FORCE
+
+#define DATA_ALIGN_DEF\
+    ndrx_tpcache_data_t *aligndata;\
+    int alignmiss;\
+    char *tmp__;\
+    int err__;
+
+#define DATA_ALIGN_DO\
+    aligndata = (ndrx_tpcache_data_t *)data_out->mv_data;\
+    alignmiss = ((unsigned long)((char *)&(aligndata->magic))) % EX_ALIGNMENT_BYTES;\
+    *align = alignmiss;\
+    /* shift bytes: */\
+    if (alignmiss > 0)\
+    {\
+        if (NULL==(tmp__ = NDRX_MALLOC(data_out->mv_size)))\
+        {\
+            *align=0;\
+            NDRX_LOG(log_error, "Failed malloc %d bytes: %s", data_out->mv_size, strerror(err__));\
+            userlog("Failed malloc %d bytes: %s", data_out->mv_size, strerror(err__));\
+            ret=err__;\
+            goto out;\
+        }\
+        memcpy(tmp__, data_out->mv_data, data_out->mv_size);\
+        data_out->mv_data = tmp__;\
+    }
+#else
+
+#define DATA_ALIGN_DEF
+
+#define DATA_ALIGN_DO *align = 0;
+
+#endif
+
+
+#define KEY_ALIGN_DEF \
+    char *keyalign = NULL;\
+    int keyalignmod;\
+    int keyallocsz;
+
+
+#define KEY_DO_ALIGN\
+    /* Align the key */\
+    keyalignmod = keydb.mv_size % EX_ALIGNMENT_BYTES;\
+    if (keyalignmod > 0 )\
+    {\
+        int err;\
+        keyallocsz = keydb.mv_size+ EX_ALIGNMENT_BYTES - keyalignmod;\
+        keyalign = NDRX_CALLOC(1, keyallocsz);\
+        err = errno;\
+        if (NULL==keyalign)\
+        {\
+            NDRX_LOG(log_error, "Failed calloc %d bytes: %s", keyallocsz, strerror(err));\
+            userlog("Failed calloc %d bytes: %s", keyallocsz, strerror(err));\
+            EXFAIL_OUT(ret);\
+        }\
+        strcpy(keyalign, key);\
+        keydb.mv_data = keyalign;\
+        keydb.mv_size = keyallocsz;\
+    }
+
+#define KEY_ALIGN_FREE\
+    if (NULL!=keyalign)\
+    {\
+        NDRX_FREE(keyalign);\
+    }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -184,14 +257,22 @@ out:
  * @return EXSUCCEED/edb error
  */
 expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn, 
-        char *key, EDB_val *data_out, int seterror_not_found)
+        char *key, EDB_val *data_out, int seterror_not_found, int *align)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
+    KEY_ALIGN_DEF;
+    DATA_ALIGN_DEF;
     
+    /* TODO: Might want to think about aligned key sizes.... in some future
+     * for making less data copies for aligned cpus only...
+     */
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
-            
+    
+    /* Align the key */
+    KEY_DO_ALIGN;
+    
     if (EXSUCCEED!=(ret=edb_get(txn, db->dbi, &keydb, data_out)))
     {
         if (ret!=EDB_NOTFOUND)
@@ -213,9 +294,16 @@ expublic int ndrx_cache_edb_get(ndrx_tpcache_db_t *db, EDB_txn *txn,
                     db->cachedb, key, edb_strerror(ret));
             }
         }
+        goto out;
     }
     
+    /* prepare the data with aligned option... */
+    DATA_ALIGN_DO;
+    
 out:
+    
+    KEY_ALIGN_FREE;
+
     return ret;
 }
 
@@ -226,17 +314,23 @@ out:
  * @param key
  * @param data_out
  * @param op
- * @return 
+ * @param align data offset in structure
+ * @return
  */
 expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
-        char *key, EDB_val *data_out, EDB_cursor_op op)
+        char *key, EDB_val *data_out, EDB_cursor_op op, int *align)
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
     
+    KEY_ALIGN_DEF;
+    DATA_ALIGN_DEF;
+            
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
-            
+    
+    KEY_DO_ALIGN;
+    
     if (EXSUCCEED!=(ret=edb_cursor_get(cursor, &keydb, data_out, op)))
     {
         if (ret!=EDB_NOTFOUND)
@@ -250,9 +344,15 @@ expublic int ndrx_cache_edb_cursor_get(ndrx_tpcache_db_t *db, EDB_cursor * curso
             NDRX_LOG(log_debug, "EOF [%s] for key [%s]: %s", 
                 db->cachedb, key, edb_strerror(ret));
         }
+        goto out;
     }
     
+    /* prepare the data with aligned option... */
+    DATA_ALIGN_DO;
+    
 out:
+    
+    KEY_ALIGN_FREE;
     return ret;
 }
 
@@ -263,13 +363,16 @@ out:
  * @param key get by real key
  * @param data_out
  * @param op
+ * @param align number of bytes to offset from start positions to the left
+ *  so that data start on algined address
  * @return 
  */
 expublic int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, EDB_cursor * cursor,
-        EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op)
+        EDB_val *keydb, EDB_val *data_out, EDB_cursor_op op, int *align)
 {
     int ret = EXSUCCEED;
-            
+    DATA_ALIGN_DEF;
+    
     if (EXSUCCEED!=(ret=edb_cursor_get(cursor, keydb, data_out, op)))
     {
         if (ret!=EDB_NOTFOUND)
@@ -283,8 +386,10 @@ expublic int ndrx_cache_edb_cursor_getfullkey(ndrx_tpcache_db_t *db, EDB_cursor 
             NDRX_LOG(log_debug, "%s: EOF [%s]: %s", 
                 __func__, db->cachedb, edb_strerror(ret));
         }
+        goto out;
     }
-    
+    /* prepare the data with aligned option... */
+    DATA_ALIGN_DO;
 out:
     return ret;
 }
@@ -348,9 +453,13 @@ expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
+    KEY_ALIGN_DEF;
     
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
+    
+    KEY_DO_ALIGN;
+    
             
     if (EXSUCCEED!=(ret=edb_del(txn, db->dbi, &keydb, data)))
     {
@@ -367,6 +476,8 @@ expublic int ndrx_cache_edb_del (ndrx_tpcache_db_t *db, EDB_txn *txn,
         }
     }
 out:
+    
+    KEY_ALIGN_FREE;
     return ret;
 }
 
@@ -416,10 +527,13 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
 {
     int ret = EXSUCCEED;
     EDB_val keydb;
+    KEY_ALIGN_DEF;
     
     keydb.mv_data = key;
     keydb.mv_size = strlen(key)+1;
-            
+    
+    KEY_DO_ALIGN;
+    
     if (EXSUCCEED!=(ret=edb_put(txn, db->dbi, &keydb, data, flags)))
     {
         if (ignore_err)
@@ -435,6 +549,9 @@ expublic int ndrx_cache_edb_put (ndrx_tpcache_db_t *db, EDB_txn *txn,
         }
     }
 out:
+    
+    KEY_ALIGN_FREE;
+
     return ret;
 }
 
@@ -460,3 +577,4 @@ out:
     return ret;
 }
 
+/* vim: set ts=4 sw=4 et smartindent: */

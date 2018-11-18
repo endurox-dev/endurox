@@ -1,34 +1,35 @@
-/* 
-** Enduro/X Standard library
-**
-** @file ndrstandard.h
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+/**
+ * @brief Enduro/X Standard library
+ *
+ * @file ndrstandard.h
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #ifndef NDRSTANDARD_H
 #define	NDRSTANDARD_H
 
@@ -160,18 +161,23 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	X[ndrx_I5SmWDM_len]=0;\
 	}
     
-/* N - buffer size of X 
+/**
+ * Safe copy to target buffer (not overflowing it...)
+ * N - buffer size of X 
  * This always copies EOS
+ * @param X dest buffer
+ * @param Y source buffer
+ * @param N dest buffer size
  */	
 #define NDRX_STRNCPY_SAFE(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
-	int ndrx_XgCmDEk_bufzs = N-1;\
+	int ndrx_XgCmDEk_bufzs = (N)-1;\
 	if (ndrx_I5SmWDM_len > ndrx_XgCmDEk_bufzs)\
 	{\
 		ndrx_I5SmWDM_len = ndrx_XgCmDEk_bufzs;\
 	}\
-	memcpy(X, Y, ndrx_I5SmWDM_len);\
-	X[ndrx_I5SmWDM_len]=0;\
+	memcpy((X), (Y), ndrx_I5SmWDM_len);\
+	(X)[ndrx_I5SmWDM_len]=0;\
 	}
 #endif
 
@@ -181,11 +187,11 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  */
 #define NDRX_STRNCPY(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y)+1;\
-	if (ndrx_I5SmWDM_len > N)\
+	if (ndrx_I5SmWDM_len > (N))\
 	{\
-		ndrx_I5SmWDM_len = N;\
+		ndrx_I5SmWDM_len = (N);\
 	}\
-	memcpy(X, Y, ndrx_I5SmWDM_len);\
+	memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	}
 
 /**
@@ -194,8 +200,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * The dest buffer is assumed to be large enough.
  */
 #define NDRX_STRNCPY_SRC(X, Y, N) {\
-            int ndrx_I5SmWDM_len = NDRX_STRNLEN(Y, N);\
-            memcpy(X, Y, ndrx_I5SmWDM_len);\
+        int ndrx_I5SmWDM_len = NDRX_STRNLEN((Y), (N));\
+        memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	}
 
 /**
@@ -206,13 +212,30 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * @param NRLAST_ number of bytes to copy from string to dest
  */
 #define NDRX_STRCPY_LAST_SAFE(DEST_, SRC_, NRLAST_) {\
-            int ndrx_KFWnP6Q_len = strlen(SRC_);\
-            if (ndrx_KFWnP6Q_len > NRLAST_) {\
-                NDRX_STRCPY_SAFE(DEST_, (SRC_+ (ndrx_KFWnP6Q_len - NRLAST_)) );\
-            } else {\
-                NDRX_STRCPY_SAFE(DEST_, SRC_);\
-            }\
+        int ndrx_KFWnP6Q_len = strlen(SRC_);\
+        if (ndrx_KFWnP6Q_len > (NRLAST_)) {\
+            NDRX_STRCPY_SAFE((DEST_), ((SRC_)+ (ndrx_KFWnP6Q_len - (NRLAST_))) );\
+        } else {\
+            NDRX_STRCPY_SAFE((DEST_), (SRC_));\
+        }\
 	}
+
+#ifdef EX_HAVE_STRCAT_S
+
+#define NDRX_STRCAT_S(DEST_, DEST_SIZE_, SRC_) strcat_s(DEST_, DEST_SIZE_, SRC_)
+
+#else
+/**
+ * Cat string at the end. Dest size of the string is given
+ * @param DEST_ dest buffer
+ * @param DEST_SIZE_ dest buffer size
+ * @param SRC_ source buffer to copy
+ */
+#define NDRX_STRCAT_S(DEST_, DEST_SIZE_, SRC_) {\
+        int ndrx_VeIlgbK9tx_len = strlen(DEST_);\
+        NDRX_STRNCPY_SAFE( (DEST_+ndrx_VeIlgbK9tx_len), SRC_, (DEST_SIZE_ - ndrx_VeIlgbK9tx_len));\
+}
+#endif
 
 /*
  * So we use these two macros where we need know that more times they will be
@@ -244,3 +267,4 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #endif	/* NDRSTANDARD_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */

@@ -61,7 +61,7 @@ See *atmitest/test004_basicevent/atmiclt4.c* for sample code.
 
 BUGS
 ----
-Report bugs to madars.vitolins@gmail.com
+Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
