@@ -382,6 +382,12 @@ documentation and added unit tests.
 
 - Version 5.3.20 released on 10/10/2018 (stable) Backport Bug #321 fix to 5.3
 
+- Version 6.0.0 releeased on 18/11/2018 (development) Latvia's 100th anniversary. 
+Major work on System V queue support, works for Java support, lots of bugs fixed.
+Support #252, Feature #281, Feature #307, Support #310, Support #326, 
+Bug #330, Feature #331, Feature #333, Feature #334, Bug #338, 
+Bug #339, Bug #341, Bug #347, Support #350, Bug #351, Support #352, Bug #353
+
 # Build configurations
 
 ## Configure make with: 
