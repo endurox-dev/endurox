@@ -443,7 +443,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
             if (EXSUCCEED!=kill(ppid, signals[0]))
             {
                 NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
-                        signals[i], ppid, strerror(errno));
+                        signals[0], ppid, strerror(errno));
             }
 
             sleep(EX_KILL_SLEEP_SECS);
@@ -451,7 +451,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
             if (EXSUCCEED!=kill(ppid, signals[1]))
             {
                 NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
-                        signals[i], ppid, strerror(errno));
+                        signals[1], ppid, strerror(errno));
             }
             
             NDRX_LOG(log_warn, "Now kill the child processes one by one");

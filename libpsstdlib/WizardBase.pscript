@@ -312,6 +312,13 @@ class WizardBase {
 	//@return	element name, empty if not found
 	function getMemberByOrder(order)
 	{
+		local ex = regexp(@"[0-9]+");
+		
+		if (!ex.match(order))
+		{
+			return ""; /* invalid number... */
+		}
+	
 		foreach(member,val in this.getclass())
 		{
 			local attr = this.getclass().getattributes(member);
