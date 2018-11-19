@@ -93,6 +93,8 @@ expublic int test_impexp_view()
         "}";
     char json_view_out[1024];
     struct MYVIEW56 *v;
+    char *istrtemp=NULL;
+    size_t bufsz = 0;
 
     NDRX_LOG(log_info, "JSON VIEW IN: [%s]", json_view_in);
     v = (struct MYVIEW56 *)tpalloc("VIEW", "MYVIEW56", sizeof(struct MYVIEW56));
@@ -244,14 +246,23 @@ expublic int test_impexp_view()
                 NDRX_LOG(log_error, "TESTERROR: Failed to export JSON VIEW!!!!");
                 EXFAIL_OUT(ret);
         }
-        NDRX_LOG(log_debug, 
-                "VIEW exported. Return json_view_out_b64=[%s] olen=[%ld]", 
-                json_view_out_b64, olen);
-        NDRX_LOG(log_debug, 
-                "                       json_view_in_b64=[%s]", 
-                json_view_in_b64);
 
-        if (0!=strcmp(json_view_in_b64, json_view_out_b64))
+        /* decode from b64 to check returned data */
+        bufsz = strlen(json_view_out_b64);
+        if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
+        {
+            NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(json_view_out_b64));
+            EXFAIL_OUT(ret);
+        }
+
+        if (NULL==ndrx_base64_decode(json_view_out_b64, strlen(json_view_out_b64), &bufsz, istrtemp))
+        {
+            NDRX_LOG(log_error, "Failed to decode CARRAY");
+            EXFAIL_OUT(ret);
+        }
+        istrtemp[bufsz]=0;
+
+        if (0!=strcmp(json_view_in, istrtemp))
         {
             NDRX_LOG(log_error, 
                  "TESTERROR: Exported VIEW not equal to incoming VIEW ");
@@ -261,5 +272,10 @@ expublic int test_impexp_view()
 
 out:
 
-    return ret;
+    if (NULL!=istrtemp)
+    {
+        NDRX_FREE(istrtemp);
+    }
+
+return ret;
 }

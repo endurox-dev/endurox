@@ -76,6 +76,8 @@ int test_impexp_carray()
             "\"data\":\"SEVMTE8gV09STEQgQ0FSUkFZ\""
         "}";
     char json_carray_out[1024];
+    char *istrtemp=NULL;
+    size_t bufsz = 0;
 
     NDRX_LOG(log_debug, "JSON CARRAY IN: [%s]", json_carray_in);
 
@@ -119,6 +121,7 @@ int test_impexp_carray()
 
         if (0!=strcmp(json_carray_in, json_carray_out))
         {
+            
             NDRX_LOG(log_error, 
                  "TESTERROR: Exported JSON not equal to incoming carray");
             EXFAIL_OUT(ret);
@@ -145,7 +148,7 @@ int test_impexp_carray()
             EXFAIL_OUT(ret);
         }
 
-        NDRX_DUMP(log_debug, "Imported CARRAY", obuf, rsplen);
+        NDRX_DUMP(log_debug, "Imported CARRAY [%s][%ld]", obuf, rsplen);
 
         memset(json_carray_out_b64, 0, sizeof(json_carray_out_b64));
         olen = sizeof(json_carray_out_b64);
@@ -164,8 +167,28 @@ int test_impexp_carray()
                  "CARRAY exported. Return json_carray_out_b64=[%s] olen=[%ld]", 
                  json_carray_out_b64, olen);
 
-        if (0!=strcmp(json_carray_in_b64, json_carray_out_b64))
+        /* decode from b64 to check returned data */
+        bufsz = strlen(json_carray_out_b64);
+        if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
         {
+            NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(json_carray_out_b64));
+            EXFAIL_OUT(ret);
+        }
+
+        if (NULL==ndrx_base64_decode(json_carray_out_b64, strlen(json_carray_out_b64), &bufsz, istrtemp))
+        {
+            NDRX_LOG(log_error, "Failed to decode CARRAY");
+            EXFAIL_OUT(ret);
+        }
+        istrtemp[bufsz]=0;
+
+        if (0!=strcmp(json_carray_in, istrtemp))
+        {
+            NDRX_LOG(log_error, 
+                "TESTERROR: \n"
+                "json_carray_in=[%s]\n"
+                "      istrtemp=[%s]", 
+                json_carray_in, istrtemp);
             NDRX_LOG(log_error, 
                  "TESTERROR: Exported JSON not equal to incoming carray");
             EXFAIL_OUT(ret);
@@ -173,6 +196,11 @@ int test_impexp_carray()
     }
 
 out:
+
+    if (NULL!=istrtemp)
+    {
+        NDRX_FREE(istrtemp);
+    }
 
     return ret;
 }
