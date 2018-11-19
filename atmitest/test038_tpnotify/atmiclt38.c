@@ -89,8 +89,8 @@ int handle_replies(UBFH **pp_ub, int num)
     }
     else
     {
-	for (i=0; i<num; i++)
-	{
+        for (i=0; i<num; i++)
+	    {
             if (EXSUCCEED!=tpgetrply(&cd, (char **)pp_ub, &len, TPGETANY))
             {
                     NDRX_LOG(log_error, "TESTERROR! Failed to get rply!");
@@ -98,7 +98,7 @@ int handle_replies(UBFH **pp_ub, int num)
             }
             ndrx_debug_dump_UBF(log_error, "Got reply", *pp_ub);
             M_replies_got++;
-	}
+        }
     }
     
 out:
@@ -152,6 +152,7 @@ int main(int argc, char** argv)
         
         snprintf(tmp, sizeof(tmp), "AA%02ld%08d", tpgetnodeid(), i);
         
+restart:
         if (EXSUCCEED!=Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
@@ -162,12 +163,31 @@ int main(int argc, char** argv)
         /* Do Some A calls... */
         
         /* Remote service & local services */
-        if (tpacall("SVC38_01", (char *)p_ub, 0L, 0L)<=0)
+        /* maybe async call, with retry? 
+         * as we get deadlock here: atmisv38 does tpnotify -> tpbrdcstsv does send to us
+         * but we try to send to atmisv38. Our Q gets full and we are stuck..
+         */
+
+        if (tpacall("SVC38_01", (char *)p_ub, 0L, TPNOBLOCK)<=0)
         {
-            NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_01]: %s",
+            if (TPEBLOCK==tperrno)
+            {
+                if (EXSUCCEED!=handle_replies(&p_ub, 0))
+                {
+                    NDRX_LOG(log_error, "handle_replies() failed");
+                    EXFAIL_OUT(ret);
+                }
+                /* also restart the value */
+                goto restart;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_01]: %s",
                     tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
+                EXFAIL_OUT(ret);
+            }
         }
+
         M_calls_made++;
 
         if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
@@ -177,18 +197,18 @@ int main(int argc, char** argv)
             EXFAIL_OUT(ret);
         }
         M_calls_made++;
-	if (0==i%10)
-	{	
+        if (0==i%10)
+        {	
             if (EXSUCCEED!=handle_replies(&p_ub, 0))
             {
-                    NDRX_LOG(log_error, "handle_replies() failed");
-                    EXFAIL_OUT(ret);
+                NDRX_LOG(log_error, "handle_replies() failed");
+                EXFAIL_OUT(ret);
             }
-	}
+        }
     }
     
     i=0; /* try for 30 sec... */
-    while (i<100000 && (M_replies_got < M_calls_made || M_notifs_got < M_calls_made))
+    while (i<1000000 && (M_replies_got < M_calls_made || M_notifs_got < M_calls_made))
     {
         /* Let all replies come in... */
         NDRX_LOG(log_info, "Waiting for replies...");
@@ -199,7 +219,7 @@ int main(int argc, char** argv)
              EXFAIL_OUT(ret);
         }
 	
-	i++;
+        i++;
     }
     
     /* Reply from both domains */
