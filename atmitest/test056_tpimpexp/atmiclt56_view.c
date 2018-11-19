@@ -1,34 +1,35 @@
 /* 
-** tpimport()/tpexport() function tests - client
-**
-** @file atmiclt56.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+ * tpimport()/tpexport() function tests - client
+ *
+ * @file atmiclt56_view.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +49,7 @@
 #include <atmi_int.h>
 #include "test56.h"
 #include "t56.h"
+#include <exbase64.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -65,6 +67,9 @@ expublic int test_impexp_view()
     char type[16+1]={EXEOS};
     char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     long rsplen, olen;
+    char json_view_in_b64[CARR_BUFFSIZE_B64+1];
+    char json_view_out_b64[CARR_BUFFSIZE_B64+1];
+    size_t len_b64;
     int i;
     char *obuf=NULL;
     char *json_view_in = 
@@ -158,7 +163,7 @@ expublic int test_impexp_view()
                 NDRX_LOG(log_error, "TESTERROR: Failed to export JSON VIEW!!!!");
                 EXFAIL_OUT(ret);
         }
-        NDRX_LOG(log_error, 
+        NDRX_LOG(log_debug, 
                 "VIEW exported. Return json_view_out=[%s] olen=[%ld]", 
                 json_view_out, olen);
 
@@ -169,6 +174,91 @@ expublic int test_impexp_view()
             EXFAIL_OUT(ret);
         }
     }
+
+    /* testing with base64 flag*/
+    NDRX_LOG(log_debug, "convert to b64");
+    if (NULL==ndrx_base64_encode((unsigned char *)json_view_in, strlen(json_view_in), &len_b64, json_view_in_b64))
+    {
+            NDRX_LOG(log_error, "Failed to convert to b64!");
+            EXFAIL_OUT(ret);
+    }
+
+    for (i=0; i<10000; i++)
+    {
+        rsplen=0L;
+        if ( EXFAIL == tpimport(json_view_in_b64, 
+                                (long)strlen(json_view_in_b64), 
+                                (char **)&v, 
+                                &rsplen, 
+                                TPEX_STRING) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to import VIEW!!!!");
+            EXFAIL_OUT(ret);
+        }
+        if (1 != v->tshort1)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tshort1 got %ld expected 5555", 
+                 v->tshort1);
+            EXFAIL_OUT(ret);
+        }
+        if (2!=v->tlong1)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tlong1 got %hd expected 2", 
+                     v->tlong1);
+            EXFAIL_OUT(ret);
+        }
+        if ('A'!=v->tchar1)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tchar1 got %c expected A", 
+                     v->tchar1);
+            EXFAIL_OUT(ret);
+        }
+        if (fabs(v->tfloat1 - 1.0f) > 0.1)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tfloat1 got %f expected 1", 
+                     v->tfloat1);
+            EXFAIL_OUT(ret);
+        }
+        if ((v->tdouble1 - 21.0f) > 0.1)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tdouble1 got %lf expected 21", 
+                     v->tdouble1);
+            EXFAIL_OUT(ret);
+        }
+        if (0!=strcmp(v->tstring1, "ABC"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tstring1 got [%s] expected ABC", 
+                     v->tdouble1);
+            EXFAIL_OUT(ret);
+        }
+
+        memset(json_view_out_b64, 0, sizeof(json_view_out_b64));
+        olen = sizeof(json_view_out_b64);
+
+        if ( EXFAIL == tpexport((char*)v, 
+                                0L, 
+                                json_view_out_b64, 
+                                &olen, 
+                                TPEX_STRING) )
+        {
+                NDRX_LOG(log_error, "TESTERROR: Failed to export JSON VIEW!!!!");
+                EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_debug, 
+                "VIEW exported. Return json_view_out_b64=[%s] olen=[%ld]", 
+                json_view_out_b64, olen);
+        NDRX_LOG(log_debug, 
+                "                       json_view_in_b64=[%s]", 
+                json_view_in_b64);
+
+        if (0!=strcmp(json_view_in_b64, json_view_out_b64))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: Exported VIEW not equal to incoming VIEW ");
+            EXFAIL_OUT(ret);
+        }
+    }
+
 out:
 
     return ret;

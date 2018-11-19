@@ -1,34 +1,35 @@
 /* 
-** tpimport()/tpexport() function tests - client
-**
-** @file atmiclt56.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+ * tpimport()/tpexport() function tests - client
+ *
+ * @file atmiclt56_carray.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,11 +46,9 @@
 #include <nstdutil.h>
 #include <ubfutil.h>
 #include <exbase64.h>
+#include "test56.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
-#define CARR_BUFFSIZE_B64   (4 * (CARR_BUFFSIZE) / 3)
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -78,7 +77,7 @@ int test_impexp_carray()
         "}";
     char json_carray_out[1024];
 
-    NDRX_LOG(log_info, "JSON CARRAY IN: [%s]", json_carray_in);
+    NDRX_LOG(log_debug, "JSON CARRAY IN: [%s]", json_carray_in);
 
     if (NULL==(obuf = tpalloc("CARRAY", NULL, 128)))
     {
@@ -99,7 +98,7 @@ int test_impexp_carray()
             EXFAIL_OUT(ret);
         }
 
-        NDRX_DUMP(log_error, "Imported CARRAY", obuf, rsplen);
+        NDRX_DUMP(log_debug, "Imported CARRAY", obuf, rsplen);
 
         memset(json_carray_out, 0, sizeof(json_carray_out));
         olen = sizeof(json_carray_out);
@@ -114,7 +113,7 @@ int test_impexp_carray()
             EXFAIL_OUT(ret);
         }
 
-        NDRX_LOG(log_error, 
+        NDRX_LOG(log_debug, 
                  "CARRAY exported. Return json_carray_out=[%s] olen=[%ld]", 
                  json_carray_out, olen);
 
@@ -146,7 +145,7 @@ int test_impexp_carray()
             EXFAIL_OUT(ret);
         }
 
-        NDRX_DUMP(log_error, "Imported CARRAY", obuf, rsplen);
+        NDRX_DUMP(log_debug, "Imported CARRAY", obuf, rsplen);
 
         memset(json_carray_out_b64, 0, sizeof(json_carray_out_b64));
         olen = sizeof(json_carray_out_b64);
@@ -161,8 +160,8 @@ int test_impexp_carray()
             EXFAIL_OUT(ret);
         }
 
-        NDRX_LOG(log_error, 
-                 "CARRAY exported. Return json_carray_out=[%s] olen=[%ld]", 
+        NDRX_LOG(log_debug, 
+                 "CARRAY exported. Return json_carray_out_b64=[%s] olen=[%ld]", 
                  json_carray_out_b64, olen);
 
         if (0!=strcmp(json_carray_in_b64, json_carray_out_b64))
