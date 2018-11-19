@@ -1,34 +1,35 @@
 /* 
-** ATMI tpimport function implementation (Common version)
-**
-** @file tpimport.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+ * ATMI tpimport function implementation (Common version)
+ *
+ * @file tpimport.c
+ */ 
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 
 /*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
@@ -50,6 +51,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
+#define CARR_BUFFSIZE_B64   (4 * (CARR_BUFFSIZE) / 3)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -87,7 +89,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     long new_size=EXFAIL;
     char *obuftemp=NULL;
     char *istrtemp=NULL;
-
+    size_t bufsz = strlen(istr);
     int type;
     char *str_val;
     EXJSON_Value *root_value=NULL;
@@ -100,18 +102,25 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     /* Check flag if base64 then decode from base64 */
     if ( TPEX_STRING == flags )
     {
-        if (NULL==ndrx_base64_decode(istr, strlen(istr), (size_t*)&ilen, istrtemp))
+        if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
+        {
+            NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(istr));
+            EXFAIL_OUT(ret);
+        }
+
+        if (NULL==ndrx_base64_decode(istr, strlen(istr), &bufsz, istrtemp))
         {
             NDRX_LOG(log_error, "Failed to decode CARRAY");
             EXFAIL_OUT(ret);
         }
+        istrtemp[bufsz]=0;
     }
     else
     {
         istrtemp = istr;
     }
 
-    NDRX_LOG(log_debug, "Parsing buffer: [%s]", istrtemp);
+    NDRX_LOG(log_debug, "Parsing buffer: [%s] len =[%ld]", istrtemp, bufsz);
 
     if ( NULL == (root_value = exjson_parse_string_with_comments(istrtemp)))
     {
@@ -336,6 +345,13 @@ out:
     if (NULL != serialized_data)
     {
         exjson_free_serialized_string(serialized_data);
+    }
+    if ( TPEX_STRING == flags )
+    {
+        if (NULL!=istrtemp)
+        {
+            NDRX_FREE(istrtemp);
+        }
     }
     NDRX_LOG(log_debug, "%s: return %d", __func__, ret);
 

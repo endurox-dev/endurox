@@ -1,34 +1,35 @@
 /* 
-** tpimport()/tpexport() function tests - client
-**
-** @file atmiclt56.c
-** 
-** -----------------------------------------------------------------------------
-** Enduro/X Middleware Platform for Distributed Transaction Processing
-** Copyright (C) 2015, Mavimax, Ltd. All Rights Reserved.
-** This software is released under one of the following licenses:
-** GPL or Mavimax's license for commercial use.
-** -----------------------------------------------------------------------------
-** GPL license:
-** 
-** This program is free software; you can redistribute it and/or modify it under
-** the terms of the GNU General Public License as published by the Free Software
-** Foundation; either version 2 of the License, or (at your option) any later
-** version.
-**
-** This program is distributed in the hope that it will be useful, but WITHOUT ANY
-** WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-** PARTICULAR PURPOSE. See the GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License along with
-** this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-** Place, Suite 330, Boston, MA 02111-1307 USA
-**
-** -----------------------------------------------------------------------------
-** A commercial use license is available from Mavimax, Ltd
-** contact@mavimax.com
-** -----------------------------------------------------------------------------
-*/
+ * tpimport()/tpexport() function tests - client
+ *
+ * @file atmiclt56_json.c
+ */ 
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,8 +47,8 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include <ubfutil.h>
+#include <exbase64.h>
 #include "test56.h"
-#include "t56.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -62,6 +63,9 @@ expublic int test_impexp_json()
     char type[16+1]={EXEOS};
     char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     long rsplen, olen;
+    char json_json_in_b64[CARR_BUFFSIZE_B64+1];
+    char json_json_out_b64[CARR_BUFFSIZE_B64+1];
+    size_t len_b64;
     int i;
     char *obuf=NULL;
     char *data_test = 
@@ -103,7 +107,7 @@ expublic int test_impexp_json()
             NDRX_LOG(log_error, "TESTERROR: Failed to import JSON!!!!");
             EXFAIL_OUT(ret);
         }
-        NDRX_LOG(log_error, "JSON imported. Return obuf=[%s] rsplen=[%ld]", 
+        NDRX_LOG(log_debug, "JSON imported. Return obuf=[%s] rsplen=[%ld]", 
                                                     obuf, rsplen);
 
         if (0!=strcmp(data_test, obuf))
@@ -125,7 +129,7 @@ expublic int test_impexp_json()
                 NDRX_LOG(log_error, "TESTERROR: Failed to export JSON!!!!");
                 EXFAIL_OUT(ret);
         }
-        NDRX_LOG(log_error, 
+        NDRX_LOG(log_debug, 
                 "JSON exported. Return json_json_out=[%s] olen=[%ld]", 
                 json_json_out, olen);
 
@@ -135,7 +139,60 @@ expublic int test_impexp_json()
                  "TESTERROR: Exported JSON not equal to incoming string ");
             EXFAIL_OUT(ret);
         }
+    }
 
+    /* testing with base64 flag*/
+    NDRX_LOG(log_debug, "convert to b64");
+    if (NULL==ndrx_base64_encode((unsigned char *)json_json_in, strlen(json_json_in), &len_b64, json_json_in_b64))
+    {
+            NDRX_LOG(log_error, "Failed to convert to b64!");
+            EXFAIL_OUT(ret);
+    }
+    for (i=0; i<10000; i++)
+    {
+        rsplen=0L;
+        if ( EXFAIL == tpimport(json_json_in_b64, 
+                                (long)strlen(json_json_in_b64), 
+                                (char **)&obuf, 
+                                &rsplen, 
+                                TPEX_STRING) )
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to import JSON CARRAY!!!!");
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "JSON imported. Return obuf=[%s] rsplen=[%ld]", 
+                                                    obuf, rsplen);
+
+        if (0!=strcmp(data_test, obuf))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: imported JSON not equal to obuf string ");
+            EXFAIL_OUT(ret);
+        }
+
+        memset(json_json_out, 0, sizeof(json_json_out_b64));
+        olen = sizeof(json_json_out_b64);
+
+        if ( EXFAIL == tpexport(obuf, 
+                                (long)strlen(obuf),
+                                json_json_out_b64, 
+                                &olen, 
+                                TPEX_STRING) )
+        {
+                NDRX_LOG(log_error, "TESTERROR: Failed to export JSON!!!!");
+                EXFAIL_OUT(ret);
+        }
+        NDRX_LOG(log_debug, 
+                "JSON exported. Return json_json_out_b64=[%s] olen=[%ld]", 
+                json_json_out_b64, olen);
+
+        if (0!=strcmp(json_json_in_b64, json_json_out_b64))
+        {
+            NDRX_LOG(log_error, 
+                 "TESTERROR: Exported JSON not equal to incoming JSON");
+            EXFAIL_OUT(ret);
+        }
     }
 
     out:
