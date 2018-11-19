@@ -74,6 +74,8 @@ expublic int test_impexp_string()
             "\"data\":\"HELLO WORLD\""
         "}";
     char json_string_out[1024];
+    char *istrtemp=NULL;
+    size_t bufsz=0;
 
     NDRX_LOG(log_info, "JSON STRING IN: [%s]", json_string_in);
 
@@ -177,8 +179,37 @@ expublic int test_impexp_string()
                  "JSON STRING exported. Return json_string_out=[%s] olen=[%ld]", 
                  json_string_out_b64, olen);
 
-        if (0!=strcmp(json_string_in_b64, json_string_out_b64))
+        /* decode from b64 to check returned data */
+         bufsz = strlen(json_string_out_b64);
+        if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
         {
+            NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(json_string_out_b64));
+            EXFAIL_OUT(ret);
+        }
+
+        if (NULL==ndrx_base64_decode(json_string_out_b64, strlen(json_string_out_b64), &bufsz, istrtemp))
+        {
+            NDRX_LOG(log_error, "Failed to decode CARRAY");
+            EXFAIL_OUT(ret);
+        }
+        istrtemp[bufsz]=0;
+
+
+        
+        if (0!=strcmp(json_string_in, istrtemp))
+        {
+            NDRX_LOG(log_error, "TESTERROR: \n"
+                " in = [%s]\n"
+                "out = [%s]",
+                json_string_in_b64,
+                json_string_out_b64);
+
+            NDRX_LOG(log_error, "TESTERROR: \n"
+                " in = [%s]\n"
+                "out = [%s]",
+                json_string_in,
+                istrtemp);
+            
             NDRX_LOG(log_error, 
                  "TESTERROR: Exported JSON not equal to incoming string ");
             EXFAIL_OUT(ret);
@@ -186,6 +217,11 @@ expublic int test_impexp_string()
     }
 
 out:
+
+    if (NULL!=istrtemp)
+    {
+        NDRX_FREE(istrtemp);
+    }
 
     return ret;
 }
