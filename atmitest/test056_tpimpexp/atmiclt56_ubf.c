@@ -86,6 +86,8 @@ expublic int test_impexp_ubf()
             "}"
         "}";
     char json_ubf_out[1024];
+    char *istrtemp=NULL;
+    size_t bufsz;
 
     NDRX_LOG(log_info, "JSON UBF IN: [%s]", json_ubf_in);
 
@@ -174,7 +176,22 @@ expublic int test_impexp_ubf()
                  "JSON UBF exported. Return json_ubf_out=[%s] olen=[%ld]", 
                  json_ubf_out_b64, olen);
 
-        if (0!=strcmp(json_ubf_in_b64, json_ubf_out_b64))
+        /* decode from b64 to check returned data */
+        bufsz = strlen(json_ubf_out_b64);
+        if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
+        {
+            NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(json_ubf_out_b64));
+            EXFAIL_OUT(ret);
+        }
+
+        if (NULL==ndrx_base64_decode(json_ubf_out_b64, strlen(json_ubf_out_b64), &bufsz, istrtemp))
+        {
+            NDRX_LOG(log_error, "Failed to decode CARRAY");
+            EXFAIL_OUT(ret);
+        }
+        istrtemp[bufsz]=0;
+
+        if (0!=strcmp(json_ubf_in, istrtemp))
         {
             NDRX_LOG(log_error, 
                  "TESTERROR: Exported UBF not equal to incoming string ");
@@ -183,6 +200,11 @@ expublic int test_impexp_ubf()
     }
 
 out:
+
+    if (NULL!=istrtemp)
+    {
+        NDRX_FREE(istrtemp);
+    }
 
     return ret;
 }
