@@ -1,5 +1,5 @@
 TPIMPORT(3)
-==============
+===========
 :doctype: manpage
 
 
