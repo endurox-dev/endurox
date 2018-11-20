@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpimport(char \*'istr', long 'ilen', char \*\*'obuf', long \*'olen', long 'flags')
+int tpimport(char \*'istr', long 'ilen', char **'obuf', long *'olen', long 'flags')
 
 For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
 
