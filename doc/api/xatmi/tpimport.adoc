@@ -199,6 +199,7 @@ EXAMPLE
 -------
 
 Sample code see under:
+
 - *atmitest/test056_tpimpexp/atmiclt56_ubf.c* - import UBF buffer
 
 - *atmitest/test056_tpimpexp/atmiclt56_view.c* - import VIEW buffer
