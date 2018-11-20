@@ -1872,4 +1872,32 @@ expublic int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 
     return ret;
 }
+
+/**
+ * Count all occurrences of the fields in the buffer
+ * @param p_ub - UBF buffer
+ * @return Number of all occurrences of the fields in buffer, -1 FAIL
+ */
+expublic BFLDOCC ndrx_Bnum(UBFH *p_ub)
+{
+    BFLDOCC fldcount = 0;
+    char fn[] = "_Bnum";
+    #ifdef UBF_API_DEBUG
+    dtype_ext1_t *__dbg_dtype_ext1;
+    #endif
+    /* Seems this caused tricks for multi threading.*/
+    static __thread Bnext_state_t state;
+    BFLDID bfldid;
+    BFLDOCC occ;
+
+    memset(&state, 0, sizeof(state));
+    bfldid= BFIRSTFLDID;
+
+    while(1==ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, NULL))
+    {
+        fldcount++;
+    }
+
+    return fldcount;
+}
 /* vim: set ts=4 sw=4 et smartindent: */
