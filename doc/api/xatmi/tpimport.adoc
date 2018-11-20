@@ -5,7 +5,7 @@ TPIMPORT(3)
 
 NAME
 ----
-tpimport - Import.a JSON formated text buffer to UBF|VIEW|STRING|CARRAY|JSON type buffer 
+tpimport - Import.a JSON formatted text buffer to UBF|VIEW|STRING|CARRAY|JSON type buffer 
 
 
 SYNOPSIS
@@ -22,7 +22,7 @@ DESCRIPTION
 -----------
 Function converts JSON formatted text buffer into typed message buffer. 
 
-'istr' is JSON formated buffer to import. If 'ilen' is 0, 'istr' is assumed 
+'istr' is JSON formatted buffer to import. If 'ilen' is 0, 'istr' is assumed 
 to point to a null-terminated string. 'obuf' is output buffer should be allocated 
 with *tpalloc()* call. If the allocated buffer size is shorter then received one, 
 then Enduro/X will automatically realloc 
@@ -30,7 +30,7 @@ the buffer to new size. If 'olen' not NULL there will be stored imported buffer 
 
 *Valid flags*
 
-If *TPEX_STRING* flag is set then imput JSON formated buffer is in base64. 
+If *TPEX_STRING* flag is set then input JSON formatted buffer is in base64. 
 
 If *TPEX_NOCHANGE* then do not allow to change the reply buffer type. If flag 
 is set and different buffer type is received than original, 
@@ -81,7 +81,7 @@ T_STRING_FLD    HELLO WORLD
 T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
 --------------------------------------------------------------------------------
 
-For example following JSON formated text 
+For example following JSON formatted text 
 
 --------------------------------------------------------------------------------
 {
@@ -137,7 +137,7 @@ HELLO WORLD
 --------------------------------------------------------------------------------
 
 
-For example following JSON formated text 
+For example following JSON formatted text 
 
 --------------------------------------------------------------------------------
 {
@@ -154,7 +154,7 @@ Will be imported into following CARRAY buffer
   0010  41 59                                            AY
 --------------------------------------------------------------------------------
 
-For example following JSON formated text 
+For example following JSON formatted text 
 
 --------------------------------------------------------------------------------
 {
@@ -200,6 +200,17 @@ debug info from last function call.
 or flags does not allow to change the value.
 
 *TPEINVAL* Invalid JSON or invalid base64 encoding, 'istr' is NULL or 'obuf' is NULL.
+
+*TPEOTYPE* Invalid type specified to function. VIEW sub-type not found or 
+environment is not configured.
+
+*TPESYSTEM* System failure occurred during serving. See logs i.e. 
+user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving. See logs i.e. 
+user log, or debugs for more info. In case of insufficient memory 
+this error will be generated too.
+
 
 
 EXAMPLE
