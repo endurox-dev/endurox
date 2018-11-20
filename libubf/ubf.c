@@ -3119,5 +3119,28 @@ expublic BFLDID Bflddbid (char *fldname)
     return ret;
 }
 
-expublic /* vim: set ts=4 sw=4 et smartindent: */
+/**
+ * Count all occurrences of the fields in the buffer
+ * @param p_ub - UBF buffer
+ * @return Number of all occurrences of the fields in buffer, -1 FAIL
+ */
+expublic BFLDOCC Bnum (UBFH *p_ub)
+{
+    char fn[] = "Bnum";
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+
+    API_ENTRY;
+
+    /* Do standard validation */
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", fn);
+        return EXFAIL;
+    }
+    else
+    {
+        return ndrx_Bnum(p_ub);
+    }
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
