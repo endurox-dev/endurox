@@ -214,6 +214,11 @@ expublic int test_impexp_string()
                  "TESTERROR: Exported JSON not equal to incoming string ");
             EXFAIL_OUT(ret);
         }
+        if (NULL!=istrtemp)
+        {
+            NDRX_FREE(istrtemp);
+            istrtemp=NULL;
+        }
     }
 
 out:
@@ -221,6 +226,7 @@ out:
     if (NULL!=istrtemp)
     {
         NDRX_FREE(istrtemp);
+        istrtemp=NULL;
     }
 
     return ret;

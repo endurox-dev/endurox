@@ -268,13 +268,19 @@ expublic int test_impexp_view()
                  "TESTERROR: Exported VIEW not equal to incoming VIEW ");
             EXFAIL_OUT(ret);
         }
-    }
+        if (NULL!=istrtemp)
+        {
+            NDRX_FREE(istrtemp);
+            istrtemp=NULL;
+        }
+   }
 
 out:
 
     if (NULL!=istrtemp)
     {
         NDRX_FREE(istrtemp);
+        istrtemp=NULL;
     }
 
 return ret;
