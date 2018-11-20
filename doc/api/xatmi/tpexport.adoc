@@ -8,7 +8,6 @@ NAME
 tpexport - export UBF|VIEW|STRING|CARRAY|JSON type buffer into the JSON formated text buffer
 
 
-
 SYNOPSIS
 --------
 #include <atmi.h>
@@ -203,5 +202,3 @@ SEE ALSO
 COPYING
 -------
 (C) Mavimax, Ltd
-
-
