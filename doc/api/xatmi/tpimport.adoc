@@ -199,11 +199,15 @@ EXAMPLE
 -------
 
 Sample code see under:
-*atmitest/test056_tpimpexp/atmiclt56_ubf.c* - import UBF buffer
-*atmitest/test056_tpimpexp/atmiclt56_view.c* - import VIEW buffer
-*atmitest/test056_tpimpexp/atmiclt56_carray.c* - import CARRAY buffer
-*atmitest/test056_tpimpexp/atmiclt56_json.c*  - import JSON buffer
-*atmitest/test056_tpimpexp/atmiclt56_string.c* - import STRING buffer
+- *atmitest/test056_tpimpexp/atmiclt56_ubf.c* - import UBF buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_view.c* - import VIEW buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_carray.c* - import CARRAY buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_json.c*  - import JSON buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_string.c* - import STRING buffer
 
 
 BUGS
