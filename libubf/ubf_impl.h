@@ -131,6 +131,7 @@ extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, cha
 extern int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
 extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
 
+extern BFLDOCC ndrx_Bnum(UBFH *p_ub);
 
 #ifdef	__cplusplus
 }
