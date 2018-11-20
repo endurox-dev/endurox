@@ -1,5 +1,5 @@
 TPEXPORT(3)
-==============
+===========
 :doctype: manpage
 
 
@@ -13,7 +13,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
+int tpexport(char *'ibuf', long 'ilen', char *'ostr', long *'olen', long 'flags')
 
 For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
 
@@ -23,18 +23,22 @@ DESCRIPTION
 -----------
 Function converts typed buffer to JSON formated text buffer.
 
-*'ibuf' XATMI buffer which will be exported to JSON formated text buffer.
-*'ilen' is used for buffer types such *CARRAY*, where buffer length is not 
+'ibuf' is XATMI buffer which will be exported to JSON formated text buffer.
+'ilen' is used for buffer types such *CARRAY*, where buffer length is not 
 described by type.
-*'ostr' exported output JSON formated text buffer. If TPEX_STRING flag is set, 
+'ostr' exported output JSON formated text buffer. If *TPEX_STRING* flag is set, 
 then JSON buffer will be conwerted to base64.
-*'olen' define maximum size for 'ostr'
+'olen' define maximum size for 'ostr'
 
-*JSON tags in the exported file*
-*buftype* - wich type of buffer exported (STRING, UBF, VIEW, CARRAY, JSON)
-*version* - exported version of JSON text buffer
-*subtype* - contains name of VIEW buffer, used only for exported VIEWs
-*data* - contains JSON formated data 
+*JSON tags in the exported file:*
+
+- *buftype* - wich type of buffer exported (STRING, UBF, VIEW, CARRAY, JSON)
+
+- *version* - exported version of JSON text buffer
+
+- *subtype* - contains name of VIEW buffer, used only for exported VIEWs
+
+- *data* - contains JSON formated data 
 
 For example following UBF buffer 
 --------------------------------------------------------------------------------
@@ -177,11 +181,16 @@ ERRORS
 EXAMPLE
 -------
 Sample code see under:
-*atmitest/test056_tpimpexp/atmiclt56_ubf.c* - import UBF buffer
-*atmitest/test056_tpimpexp/atmiclt56_view.c* - import VIEW buffer
-*atmitest/test056_tpimpexp/atmiclt56_carray.c* - import CARRAY buffer
-*atmitest/test056_tpimpexp/atmiclt56_json.c*  - import JSON buffer
-*atmitest/test056_tpimpexp/atmiclt56_string.c* - import STRING buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_ubf.c* - import UBF buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_view.c* - import VIEW buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_carray.c* - import CARRAY buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_json.c*  - import JSON buffer
+
+- *atmitest/test056_tpimpexp/atmiclt56_string.c* - import STRING buffer
 
 BUGS
 ----
