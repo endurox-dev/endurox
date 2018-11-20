@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpimport(char *'istr', long 'ilen', char **'obuf', long *'olen', long 'flags')
+int tpimport(char \*'istr', long 'ilen', char \*\*'obuf', long \*'olen', long 'flags')
 
 For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
 
@@ -36,7 +36,7 @@ If *TPEX_NOCHANGE* then do not allow to change the reply buffer type. If flag
 is set and different buffer type is received than original, 
 then error *TPEINVAL* is returned.
 
-*JSON tags in import file*:
+*JSON tags in import file:*
 
 - *buftype* - determine which type of buffer will be imported (STRING, UBF, VIEW, CARRAY, JSON)
 
