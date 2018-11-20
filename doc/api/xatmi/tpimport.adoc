@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpimport(char \*'istr', long 'ilen', char **'obuf', long *'olen', long 'flags')
+int tpimport(char \*'istr', long 'ilen', char **'obuf', long *'olen', long 'flags');
 
 For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
 
@@ -48,6 +48,7 @@ then error *TPEINVAL* is returned.
 
 
 For example following JSON formated text 
+
 --------------------------------------------------------------------------------
 {
     "buftype":"UBF",
@@ -66,6 +67,7 @@ For example following JSON formated text
 --------------------------------------------------------------------------------
 
 Will be imported to following UBF buffer:
+
 --------------------------------------------------------------------------------
 T_SHORT_FLD     1765
 T_LONG_FLD      3333111
@@ -79,8 +81,8 @@ T_STRING_FLD    HELLO WORLD
 T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00
 --------------------------------------------------------------------------------
 
-
 For example following JSON formated text 
+
 --------------------------------------------------------------------------------
 {
     "buftype\":\"VIEW\",
@@ -103,6 +105,7 @@ For example following JSON formated text
 --------------------------------------------------------------------------------
 
 Will be imported into following VIEW:
+
 --------------------------------------------------------------------------------
 VIEW MYVIEW56
 #type    cname      fbname              count   flag    size    null
@@ -118,6 +121,7 @@ END
 
 
 For example following JSON formated text 
+
 --------------------------------------------------------------------------------
 {
     "buftype\":"STRING",
@@ -127,14 +131,16 @@ For example following JSON formated text
 --------------------------------------------------------------------------------
 
 Will be imported into following STRING buffer
+
 --------------------------------------------------------------------------------
 HELLO WORLD
 --------------------------------------------------------------------------------
 
 
 For example following JSON formated text 
+
 --------------------------------------------------------------------------------
-{"
+{
     "buftype":"CARRAY",
     "version":1,
     "data":"SEVMTE8gV09STEQgQ0FSUkFZ"
@@ -142,14 +148,14 @@ For example following JSON formated text
 --------------------------------------------------------------------------------
 
 Will be imported into following CARRAY buffer
+
 --------------------------------------------------------------------------------
   0000  48 45 4c 4c 4f 20 57 4f 52 4c 44 20 43 41 52 52  HELLO WORLD CARR
   0010  41 59                                            AY
 --------------------------------------------------------------------------------
 
-
-
 For example following JSON formated text 
+
 --------------------------------------------------------------------------------
 {
     "buftype":"JSON",
@@ -166,6 +172,7 @@ For example following JSON formated text
 --------------------------------------------------------------------------------
 
 Will be imported into following JSON buffer
+
 --------------------------------------------------------------------------------
 {
     "T_SHORT_FLD":1765,
@@ -192,7 +199,7 @@ debug info from last function call.
 *TPEINVAL* Invalid parameter is given to function. Either 'istr' is NULL 
 or flags does not allow to change the value.
 
-TPEINVAL Invalid JSON or invalid base64 encoding, istr is NULL or obuf is NULL.
+*TPEINVAL* Invalid JSON or invalid base64 encoding, 'istr' is NULL or 'obuf' is NULL.
 
 
 EXAMPLE
