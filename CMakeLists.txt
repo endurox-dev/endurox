@@ -83,7 +83,7 @@ ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
 # Memory debugging:
-       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
+#       SET(CMAKE_C_FLAGS "-fsanitize=alignment -fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
 
     IF (DEFINE_SANITIZE)
         SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
