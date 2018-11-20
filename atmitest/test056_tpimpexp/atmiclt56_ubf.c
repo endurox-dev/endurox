@@ -197,6 +197,11 @@ expublic int test_impexp_ubf()
                  "TESTERROR: Exported UBF not equal to incoming string ");
             EXFAIL_OUT(ret);
         }
+        if (NULL!=istrtemp)
+        {
+            NDRX_FREE(istrtemp);
+            istrtemp=NULL;
+        }
     }
 
 out:
@@ -204,6 +209,7 @@ out:
     if (NULL!=istrtemp)
     {
         NDRX_FREE(istrtemp);
+        istrtemp=NULL;
     }
 
     return ret;
