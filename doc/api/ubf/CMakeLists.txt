@@ -129,6 +129,7 @@ set(MAN3_NAMES
     Bflddbdrop
     Bflddbdel
     Bflddbadd
+    Bnum
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
