@@ -22,10 +22,10 @@ DESCRIPTION
 -----------
 Function converts JSON formatted text buffer into typed message buffer. 
 
-*'istr' JSON formated buffer to import
- If 'ilen' is 0, 'istr' is assumed to point to a null-terminated string.
-*'obuf' Output buffer should be allocated with *tpalloc()* call. If the allocated 
-buffer size is shorter then received one, then Enduro/X will automatically realloc 
+'istr' is JSON formated buffer to import. If 'ilen' is 0, 'istr' is assumed 
+to point to a null-terminated string. 'obuf' is output buffer should be allocated 
+with *tpalloc()* call. If the allocated buffer size is shorter then received one, 
+then Enduro/X will automatically realloc 
 the buffer to new size. If 'olen' not NULL there will be stored imported buffer length.
 
 *Valid flags*
@@ -36,11 +36,15 @@ If *TPEX_NOCHANGE* then do not allow to change the reply buffer type. If flag
 is set and different buffer type is received than original, 
 then error *TPEINVAL* is returned.
 
-*JSON tags in import file*
-*buftype* - determine which type of buffer will be imported (STRING, UBF, VIEW, CARRAY, JSON)
-*version* - version of JSON text buffer to import
-*subtype* - contains name of VIEW buffer, used only to import VIEW buffer
-*data* - contains JSON formated data
+*JSON tags in import file*:
+
+- *buftype* - determine which type of buffer will be imported (STRING, UBF, VIEW, CARRAY, JSON)
+
+- *version* - version of JSON text buffer to import
+
+- *subtype* - contains name of VIEW buffer, used only to import VIEW buffer
+
+- *data* - contains JSON formated data
 
 
 For example following JSON formated text 
