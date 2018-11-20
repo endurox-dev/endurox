@@ -13,7 +13,7 @@ SYNOPSIS
 --------
 #include <atmi.h>
 
-int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
+int tpexport(char *'ibuf', long 'ilen', char *'ostr', long *'olen', long 'flags')
 
 For XATMI client link with '-latmiclt -latmi -lview -lnstd -lpthread -lrt -lm'
 
@@ -26,7 +26,7 @@ Function converts typed buffer to JSON formated text buffer.
 'ibuf' is XATMI buffer which will be exported to JSON formated text buffer.
 'ilen' is used for buffer types such *CARRAY*, where buffer length is not 
 described by type.
-'ostr' exported output JSON formated text buffer. If TPEX_STRING flag is set, 
+'ostr' exported output JSON formated text buffer. If *TPEX_STRING* flag is set, 
 then JSON buffer will be conwerted to base64.
 'olen' define maximum size for 'ostr'
 
