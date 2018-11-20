@@ -30,9 +30,9 @@ the buffer to new size. If 'olen' not NULL there will be stored imported buffer 
 
 *Valid flags*
 
-*TPEX_STRING* 
+If *TPEX_STRING* flag is set then imput JSON formated buffer is in base64. 
 
-*TPEX_NOCHANGE* Do not allow to change the reply buffer type. If flag 
+If *TPEX_NOCHANGE* then do not allow to change the reply buffer type. If flag 
 is set and different buffer type is received than original, 
 then error *TPEINVAL* is returned.
 
@@ -213,5 +213,3 @@ SEE ALSO
 COPYING
 -------
 (C) Mavimax, Ltd
-
-
