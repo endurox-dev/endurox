@@ -59,6 +59,7 @@ install (FILES
     sys_primitives.h
     sys_mqueue.h 
     sys_emqueue.h
+    sys_svq.h    
     oubf.h
     odebug.h
     ondebug.h
