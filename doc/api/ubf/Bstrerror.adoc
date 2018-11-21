@@ -18,11 +18,19 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Function returns string description of given error code. Enduro/X also loggs additional information for last error state, and that information is returned in string format together with description of 'err'. Typically when error occurs, then programmer calls *Bstrerror(Berror)*, thus function will closely describe what was happened. However if programmer calls *Bstrerror()* with other error code, then message will contain the description of 'err' plus last UBF call's logged error info. Then message and *Berror* infos are stored in thread local storage (TLS).
+Function returns string description of given error code. Enduro/X also logs 
+additional information for last error state, and that information is returned 
+in string format together with description of 'err'. Typically when error 
+occurs, then programmer calls *Bstrerror(Berror)*, thus function will 
+closely describe what was happened. However if programmer calls *Bstrerror()* 
+with other error code, then message will contain the description of 'err' 
+plus last UBF call's logged error info. Then message and *Berror* infos are 
+stored in thread local storage (TLS).
 
 RETURN VALUE
 ------------
-String containing formatted error code description plus last call's error logged info. For example:
+String containing formatted error code description plus last call's error 
+logged info. For example:
 
 ---------------------------------------------------------------------
 
@@ -51,7 +59,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Berrno(3) *B_error(3)*
+*Berror(3)* *B_error(3)*
 
 COPYING
 -------
