@@ -71,29 +71,29 @@ extern "C" {
 /* define an invalid field id used for first call to Bnext */
 #define BFIRSTFLDID (BFLDID)0
 
-#define BMINVAL             0 /* min error */
-#define BERFU0              1
-#define BALIGNERR           2
-#define BNOTFLD             3
-#define BNOSPACE            4
-#define BNOTPRES            5
-#define BBADFLD             6
-#define BTYPERR             7
-#define BEUNIX              8
-#define BBADNAME            9
-#define BMALLOC             10
-#define BSYNTAX             11
-#define BFTOPEN             12
-#define BFTSYNTAX           13
-#define BEINVAL             14
-#define BERFU1              15
-#define BBADTBL             16
-#define BBADVIEW            17
-#define BVFSYNTAX           18
-#define BVFOPEN             19
-#define BBADACM             20
-#define BNOCNAME            21
-#define BEBADOP             22
+#define BMINVAL             0  /**< min error */
+#define BERFU0              1  /**< Reserved for future use */
+#define BALIGNERR           2  /**< Buffer not aligned to platform address or corrupted */
+#define BNOTFLD             3  /**< Buffer not fielded / TLV formatted          */
+#define BNOSPACE            4  /**< No space in buffer */
+#define BNOTPRES            5  /**< Field not present */
+#define BBADFLD             6  /**< Bad field ID */
+#define BTYPERR             7  /**< Bad field type */
+#define BEUNIX              8  /**< System error occurred */
+#define BBADNAME            9  /**< Bad field name */
+#define BMALLOC             10 /**< Malloc failed, out of mem? */
+#define BSYNTAX             11 /**< UBF Boolean expression error or UBF bad text format */
+#define BFTOPEN             12 /**< Failed to open field tables */
+#define BFTSYNTAX           13 /**< Field table syntax error */
+#define BEINVAL             14 /**< Invalid value */
+#define BERFU1              15 /**< Reserved for future use */
+#define BBADTBL             16 /**< Reserved for future use */
+#define BBADVIEW            17 /**< Invalid compiled VIEW file */
+#define BVFSYNTAX           18 /**< Source VIEW file syntax error */
+#define BVFOPEN             19 /**< Failed to open VIEW file */
+#define BBADACM             20 /**< Reserved for future use */
+#define BNOCNAME            21 /**< Structure field not found for VIEW */
+#define BEBADOP             22 /**< Reserved for future use */
 #define BMAXVAL             22 /* max error */
     
 /* Bvopt options: */
