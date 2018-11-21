@@ -19,7 +19,8 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-The principle is similar to *perror()* POSIX function call. Function prints the last UBF error message including user message (in 'str') to *stderr*.
+The principle is similar to *perror()* POSIX function call. Function prints the 
+last UBF error message including user message (in 'str') to *stderr*.
 
 RETURN VALUE
 ------------
@@ -35,7 +36,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*CBchg(3)* *Badd(3)* *Binit(3)* *Bstrerror(3)*
+*CBchg(3)* *Badd(3)* *Binit(3)* *Bstrerror(3)* *Berror(3)*
 
 COPYING
 -------
