@@ -5,60 +5,57 @@ BERROR(3)
 
 NAME
 ----
-Berror - Get the error code of last UBF operation
+Berror - Last UBF API error code
 
 
 SYNOPSIS
 --------
-
 #include <ubf.h>
 
-#define Berror  (*_Bget_Ferror_addr())
+#define Berror	(*ndrx_Bget_Ferror_addr())
 
 Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Return the error code of last UBF operation. To get the description of the error, use Bstrerror(3) function.
+Macros returns last error code which occurred in UBF library. The error code
+is reset for every UBF library call which provides errors. The value is stored
+in Thread Local Storage (TLS). Thus usage of *Berror* macro is thread safe.
 
 RETURN VALUE
 ------------
-Returns the last error code.
+Last UBF error code.
 
+Following error codes currently are defined (see ubf.h):
 
-ERRORS
-------
-*BMINVAL* No error.
+--------------------------------------------------------------------------------
 
-*BALIGNERR* Unified buffer not UBF or corrupted.
+#define BMINVAL             0  /**< min error */
+#define BERFU0              1  /**< Reserved for future use */
+#define BALIGNERR           2  /**< Buffer not aligned to platform address or corrupted */
+#define BNOTFLD             3  /**< Buffer not fielded / TLV formatted          */
+#define BNOSPACE            4  /**< No space in buffer */
+#define BNOTPRES            5  /**< Field not present */
+#define BBADFLD             6  /**< Bad field ID */
+#define BTYPERR             7  /**< Bad field type */
+#define BEUNIX              8  /**< System error occurred */
+#define BBADNAME            9  /**< Bad field name */
+#define BMALLOC             10 /**< Malloc failed, out of mem? */
+#define BSYNTAX             11 /**< UBF Boolean expression error or UBF bad text format */
+#define BFTOPEN             12 /**< Failed to open field tables */
+#define BFTSYNTAX           13 /**< Field table syntax error */
+#define BEINVAL             14 /**< Invalid value */
+#define BERFU1              15 /**< Reserved for future use */
+#define BBADTBL             16 /**< Reserved for future use */
+#define BBADVIEW            17 /**< Invalid compiled VIEW file */
+#define BVFSYNTAX           18 /**< Source VIEW file syntax error */
+#define BVFOPEN             19 /**< Failed to open VIEW file */
+#define BBADACM             20 /**< Reserved for future use */
+#define BNOCNAME            21 /**< Structure field not found for VIEW */
+#define BEBADOP             22 /**< Reserved for future use */
+#define BMAXVAL             22 /* max error */
 
-*BNOTFLD* Unified buffer not UBF or corrupted.
-
-*BNOSPACE* No space for adding new field to buffer.
-
-*BNOTPRES* Field not present in buffer.
-
-*BBADFLD* Bad field ID.
-
-*BTYPERR* Invalid field type. Note that Field types are defined following: BFLD_SHORT (matches C short), BFLD_LONG (matches C long), BFLD_CHAR (matches C char), BFLD_FLOAT (matches C float), BFLD_DOUBLE (matches C double), BFLD_STRING (match C char* - NUL terminated), BFLD_CARRAY (matches C char*)
-
-*BEUNIX* Unix error.
-
-*BBADNAME* Bad field name.
-
-*BMALLOC* Failed to allocate memory.
-
-*BSYNTAX* Boolean expressions syntax error.
-
-*BFTOPEN* Failed to open field table.
-
-*BFTSYNTAX* Invalid field table syntax.
-
-*BEINVAL* Invalid argument passed to function.
-
-EXAMPLE
--------
-See *ubftest/ubfunit1.c* for sample code.
+--------------------------------------------------------------------------------
 
 BUGS
 ----
@@ -66,7 +63,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*CBchg(3)* *Badd(3)* *Binit(3)* *Bstrerror(3)*
+*Bstrerror(3)* *B_error(3)*
 
 COPYING
 -------
