@@ -69,7 +69,7 @@ int local_test_exlc(char *pfx)
     struct mq_attr attr;
     int err;
     
-    snprintf(qstr, sizeof(qstr), "/%s_test000_clt", pfx);
+    snprintf(qstr, sizeof(qstr), "/%s,test000,clt", pfx);
     
     attr.mq_flags = 0;
     attr.mq_maxmsg = 10;
@@ -137,7 +137,7 @@ int local_test_unlink(char *pfx)
     int i;
     mqd_t mq1 = (mqd_t)EXFAIL;
     
-    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_unl", pfx);
+    snprintf(qstr, sizeof(qstr), "/%s,test000,clt,unl", pfx);
     
     attr.mq_flags = 0;
     attr.mq_maxmsg = 10;
@@ -195,7 +195,7 @@ int local_test_nonexists(char *pfx)
     mqd_t mq1 = (mqd_t)EXFAIL;
     int err;
     
-    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_none", pfx);
+    snprintf(qstr, sizeof(qstr), "/%s,test000,clt,none", pfx);
     
     attr.mq_flags = 0;
     attr.mq_maxmsg = 10;
@@ -245,7 +245,7 @@ int local_test_receive(char *pfx)
     ndrx_stopwatch_t t;
     int tim;
     
-    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_rcv", pfx);
+    snprintf(qstr, sizeof(qstr), "/%s,test000,clt,rcv", pfx);
     
     for (i=0; i<4; i++)
     {
@@ -418,7 +418,7 @@ int local_test_send(char *pfx)
     ndrx_stopwatch_t t;
     int tim;
     
-    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_snd", pfx);
+    snprintf(qstr, sizeof(qstr), "/%s,test000,clt,snd", pfx);
     /* unlink the queue if something left from pervious tests... */
     ndrx_mq_unlink(qstr);
     
@@ -598,7 +598,7 @@ int local_test_qfull(char *pfx)
     ndrx_stopwatch_t t;
     int tim;
     
-    snprintf(qstr, sizeof(qstr), "/%s_test000_clt_full", pfx);
+    snprintf(qstr, sizeof(qstr), "/%s,test000,clt,full", pfx);
     /* unlink the queue if something left from pervious tests... */
     ndrx_mq_unlink(qstr);
     
