@@ -40,8 +40,8 @@ extern "C" {
 
 #define TEST_REPLY_SIZE         1024
     
-#define SV_QUEUE_NAME           "/test000_server"
-#define CL_QUEUE_NAME           "/test000_client"
+#define SV_QUEUE_NAME           "/test000,server"
+#define CL_QUEUE_NAME           "/test000,client"
 
 #ifdef	__cplusplus
 }
