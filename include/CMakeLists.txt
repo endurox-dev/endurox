@@ -46,6 +46,7 @@ install (FILES
     ndebug.h
     ndebugcmn.h
     ndrstandard.h
+    nstd_shm.h
     nstdutil.h
     nstd_tls.h
     thlock.h
