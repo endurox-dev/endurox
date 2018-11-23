@@ -677,9 +677,10 @@ int local_test_qfull(char *pfx)
         /* test the timeout */
         tim = ndrx_stopwatch_get_delta_sec(&t);
 
-        if (2!=tim)
+        if (tim < 2 || tim > 5)
         {
-            NDRX_LOG(log_error, "Expected send time 2, but got: %d", tim);
+            NDRX_LOG(log_error, "Expected send time atleast 2 and less "
+		"than 5, but got: %d", tim);
             EXFAIL_OUT(ret);
         }
 
