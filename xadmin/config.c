@@ -195,8 +195,29 @@ expublic int load_env_config(void)
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_DMNLOG);
         ret=EXFAIL;
         goto out;
-    }    
+    }
+    
+    p = getenv(CONF_NDRX_IPCKEY);
+    if (NULL==p)
+    {
+        /* Write to ULOG? */
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        ret=EXFAIL;
+        goto out;
+    }
+    else
+    {
+        int tmpkey;
 
+        /* bsd warning of long: */
+        sscanf(p, "%x", &tmpkey);
+        G_config.ipckey = tmpkey;
+
+        NDRX_LOG(log_debug, "SystemV SEM IPC Key set to: [%x]",
+                            G_config.ipckey);
+    }
+    
 out:
     return ret;
 }
