@@ -270,6 +270,8 @@ COMMANDS
     only the queues which currently are in use. *-w* prints mappings which
     were in use, but currently are not in use. The *-i*, *-w* arguments can
     be combined.
+*shms*::
+    Shows currently open shared memory segments.
 
 CONFIGURATION
 -------------

@@ -47,6 +47,7 @@
 #include <errno.h>
 #include <sys_unix.h>
 #include <inicfg.h>
+#include <utlist.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -86,6 +87,7 @@ exprivate int cmd_idle(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+exprivate int cmd_shms(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 /**
  * Initialize command mapping table
@@ -251,7 +253,8 @@ cmd_mapping_t M_command_map[] =
                                     "\tUsage: svsemids\n",
                                     NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL},
-    {"poller",    cmd_poller,EXFAIL,   1,  1,  0, "Print active poller sub-system", NULL}
+    {"poller",    cmd_poller,EXFAIL,   1,  1,  0, "Print active poller sub-system", NULL},
+    {"shms",      cmd_shms,EXFAIL,     1,  1,  0, "Print shared memory locks", NULL}
 };
 
 /*
@@ -491,6 +494,31 @@ exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
     printf("%s\n", ndrx_epoll_mode());
     return EXSUCCEED;
 }
+
+/**
+ * List shared mems if any...
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+exprivate int cmd_shms(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    string_list_t* elt = NULL;
+
+    string_list_t * list = ndrx_shm_shms_list(G_config.ipckey);
+    
+    LL_FOREACH(list, elt)
+    {
+        printf("%s\n", elt->qname);
+    }
+    
+    if (NULL!=list)
+    {
+        ndrx_string_list_free(list);
+    }
+}
+
 
 /**
  * Simple output
@@ -924,7 +952,8 @@ int main(int argc, char** argv) {
         /* Now process command buffer */
         if (G_cmd_argc_logical > 0 &&
             EXSUCCEED!=process_command_buffer(&have_next) &&
-                (!have_next || !isatty(0))) /* stop processing if not tty or do not have next */
+                /* stop processing if not tty or do not have next */
+                (!have_next || !isatty(0)))
         {
             ret=EXFAIL;
             goto out;
