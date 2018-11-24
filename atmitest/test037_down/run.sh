@@ -309,30 +309,27 @@ fi
 # Test for shared memory to be removed
 # looks like we can test this only on linux
 #
-if [ "$(uname)" == "Linux" ]; then
 
+echo "Shared mem objects: "
 
-    echo "Shared mem objects: "
+xadmin shms
+xadmin shms | wc | awk '{print $1}'
 
-    ls -1 /dev/shm${NDRX_QPREFIX},*
-    ls -1 /dev/shm${NDRX_QPREFIX},* | wc | awk '{print $1}'
+SHMS=`xadmin shms,* | wc | awk '{print $1}'`
 
-    SHMS=`ls -1 /dev/shm${NDRX_QPREFIX},* | wc | awk '{print $1}'`
+echo "DOM1 Shared memories: $SHMS"
 
-    echo "DOM1 Shared memories: $SHMS"
+if [[ `xadmin poller` == "SystemV" ]]; then
 
-    if [[ `xadmin poller` == "SystemV" ]]; then
+    if [[ "$SHMS" -ne "2" ]]; then 
+        echo "TESTERROR! There must be 2 shared memory objs for dom1 after kill!"
+        go_out 18
+    fi
+else
 
-        if [[ "$SHMS" -ne "2" ]]; then 
-            echo "TESTERROR! There must be 2 shared memory objs for dom1 after kill!"
-            go_out 18
-        fi
-    else
-
-        if [[ "$SHMS" -ne "0" ]]; then 
-            echo "TESTERROR! There must be no shared memory for dom1 after kill!"
-            go_out 18
-        fi
+    if [[ "$SHMS" -ne "0" ]]; then 
+        echo "TESTERROR! There must be no shared memory for dom1 after kill!"
+        go_out 18
     fi
 fi
 
