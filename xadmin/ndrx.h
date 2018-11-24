@@ -97,21 +97,23 @@ extern char *G_cmd_argv[MAX_ARGS];
  */
 typedef struct ndrx_config
 {
-    char pid_file[PATH_MAX];               /* PID file               */
-    mqd_t ndrxd_q;                         /* Queue to admin process */
-    char ndrxd_q_str[NDRX_MAX_Q_SIZE+1];   /* Queue to admin process */
-    char *qprefix;                         /* Global queue prefix    */
-    char *qpath;                           /* Global qpath prefix    */
+    char pid_file[PATH_MAX];               /**< PID file               */
+    mqd_t ndrxd_q;                         /**< Queue to admin process */
+    char ndrxd_q_str[NDRX_MAX_Q_SIZE+1];   /**< Queue to admin process */
+    char *qprefix;                         /**< Global queue prefix    */
+    char *qpath;                           /**< Global qpath prefix    */
 
     /* Reply queue (opened on admin utility startup) */
-    mqd_t reply_queue;                     /* Queue on which we wait reply */
-    char reply_queue_str[NDRX_MAX_Q_SIZE+1]; /* Reply queue (string)   */
+    mqd_t reply_queue;                     /**< Queue on which we wait reply */
+    char reply_queue_str[NDRX_MAX_Q_SIZE+1]; /**< Reply queue (string)       */
 
     /* Runtime status: */
-    int  ndrxd_stat;                       /* Back-end status        */
-    short is_idle;                         /* Are we idle?           */
-    char *ndrxd_logfile;                   /* Log filename for ndrxd */
-    long listcall_flags;                   /* flags used by list call */
+    int  ndrxd_stat;                       /**< Back-end status        */
+    short is_idle;                         /**< Are we idle?           */
+    char *ndrxd_logfile;                   /**< Log filename for ndrxd */
+    long listcall_flags;                   /**< flags used by list call*/
+    
+    key_t ipckey;                          /**< IPC Key used by Enduor/X */
 } ndrx_config_t;
 
 

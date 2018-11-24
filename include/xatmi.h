@@ -179,11 +179,26 @@ extern "C" {
 #define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /**< Number of separators in myid of client */
 
 /* Shared memory formats */
-#define NDRX_SHM_SRVINFO        "%s,shm,srvinfo"    /**< Server info SHM               */
-#define NDRX_SHM_SVCINFO        "%s,shm,svcinfo"    /**< Service info SHM              */
-#define NDRX_SHM_BRINFO         "%s,shm,brinfo"     /**< Bridge info SHM               */
-#define NDRX_SHM_P2S            "%s,shm,p2s"        /**< Posix to System V             */
-#define NDRX_SHM_S2P            "%s,shm,s2p"        /**< System V to Posix             */
+#define NDRX_SHM_SRVINFO_SFX    "shm,srvinfo"       /**< Server info SHM               */
+#define NDRX_SHM_SRVINFO        "%s," NDRX_SHM_SRVINFO_SFX
+#define NDRX_SHM_SRVINFO_KEYOFSZ 0                  /**< IPC Key offset                */
+
+#define NDRX_SHM_SVCINFO_SFX    "shm,svcinfo"       /**< Service info SHM              */
+#define NDRX_SHM_SVCINFO        "%s," NDRX_SHM_SVCINFO_SFX
+#define NDRX_SHM_SVCINFO_KEYOFSZ 1                  /**< IPC Key offset                */
+    
+#define NDRX_SHM_BRINFO_SFX     "shm,brinfo"        /**< Bridge info SHM               */
+#define NDRX_SHM_BRINFO         "%s," NDRX_SHM_BRINFO_SFX
+#define NDRX_SHM_BRINFO_KEYOFSZ 2                   /**< IPC Key offset                */
+    
+#define NDRX_SHM_P2S_SFX        "shm,p2s"           /**< Posix to System V             */
+#define NDRX_SHM_P2S            "%s," NDRX_SHM_P2S_SFX
+#define NDRX_SHM_P2S_KEYOFSZ    3                   /**< IPC Key offset                */
+    
+#define NDRX_SHM_S2P_SFX        "shm,s2p"           /**< System V to Posix             */
+#define NDRX_SHM_S2P            "%s," NDRX_SHM_S2P_SFX
+#define NDRX_SHM_S2P_KEYOFSZ    4                   /**< IPC Key offset                */
+    
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
 
 #define NDRX_KEY_FMT            "-k %s"             /**< format string for process key */
