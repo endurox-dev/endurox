@@ -315,7 +315,7 @@ echo "Shared mem objects: "
 xadmin shms
 xadmin shms | wc | awk '{print $1}'
 
-SHMS=`xadmin shms,* | wc | awk '{print $1}'`
+SHMS=`xadmin shms | wc | awk '{print $1}'`
 
 echo "DOM1 Shared memories: $SHMS"
 
