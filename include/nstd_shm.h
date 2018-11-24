@@ -61,6 +61,7 @@ typedef struct
     int fd;                             /**< opened fd                    */
     char *mem;                          /**< mapped memory                */
     int size;                           /**< size used by this shm block  */
+    key_t key;                          /**< for APIs who need it         */
 } ndrx_shm_t;
 
 /**
@@ -83,6 +84,8 @@ extern NDRX_API int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists);
 extern NDRX_API int ndrx_shm_attach(ndrx_shm_t *shm);
 extern NDRX_API int ndrx_shm_close(ndrx_shm_t *shm);
 extern NDRX_API int ndrx_shm_remove(ndrx_shm_t *shm);
+extern NDRX_API int ndrx_shm_remove_name(char *path, key_t ipckey);
+extern NDRX_API string_list_t * ndrx_shm_shms_list(key_t ipckey);
 extern NDRX_API int ndrx_shm_is_attached(ndrx_shm_t *shm);
 
 extern NDRX_API int ndrx_sem_attach(ndrx_sem_t *sem);

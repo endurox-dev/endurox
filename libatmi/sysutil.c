@@ -708,7 +708,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
     {
         NDRX_LOG(log_warn, "Unlinking [%s]", shm[i]);
         
-        if (EXSUCCEED!=shm_unlink(shm[i]))
+        if (EXSUCCEED!=ndrx_shm_remove_name(shm[i], G_atmi_env.ipckey))
         {
             NDRX_LOG(log_warn, "shm_unlink [%s] failed: %s (ignore)...", 
                     shm[i], strerror(errno));

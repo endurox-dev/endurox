@@ -114,7 +114,7 @@ exprivate ndrx_sem_t M_map_sem = {.semid=0};/**< RW semaphore for SHM protection
 exprivate char *M_qprefix = NULL;       /**< Queue prefix used by mappings  */
 exprivate long M_queuesmax = 0;         /**< Max number of queues           */
 exprivate int  M_readersmax = 0;        /**< Max number of concurrent lckrds*/
-exprivate key_t M_sem_key = 0;          /**< Semphoare key                  */
+exprivate key_t M_ipckey = 0;          /**< Semphoare key                  */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -263,10 +263,10 @@ expublic int ndrx_svqshm_init(int attach_only)
 	int tmpkey;
         
         sscanf(tmp, "%x", &tmpkey);
-	M_sem_key = tmpkey;
+	M_ipckey = tmpkey;
 
-        NDRX_LOG(log_debug, "(sysv queues): SystemV SEM IPC Key set to: [%x]",
-                            M_sem_key);
+        NDRX_LOG(log_debug, "(sysv queues): SystemV IPC Key set to: [%x]",
+                            M_ipckey);
     }
     
     memset(&M_map_p2s, 0, sizeof(M_map_p2s));
@@ -275,10 +275,14 @@ expublic int ndrx_svqshm_init(int attach_only)
     /* fill in shared memory details, path + size */
     
     M_map_p2s.fd = EXFAIL;
+    M_map_p2s.key = M_ipckey + NDRX_SHM_P2S_KEYOFSZ;
+    
     snprintf(M_map_p2s.path, sizeof(M_map_p2s.path), NDRX_SHM_P2S, M_qprefix);
     M_map_p2s.size = sizeof(ndrx_svq_map_t)*M_queuesmax;
     
     M_map_s2p.fd = EXFAIL;
+    M_map_s2p.key = M_ipckey + NDRX_SHM_S2P_KEYOFSZ;
+    
     snprintf(M_map_s2p.path, sizeof(M_map_s2p.path), NDRX_SHM_S2P, M_qprefix);
     M_map_s2p.size = sizeof(ndrx_svq_map_t)*M_queuesmax;
     
@@ -321,7 +325,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     memset(&M_map_sem, 0, sizeof(M_map_sem));
     
     /* Service queue ops */
-    M_map_sem.key = M_sem_key + NDRX_SEM_SV5LOCKS;
+    M_map_sem.key = M_ipckey + NDRX_SEM_SV5LOCKS;
     
     /*
      * Currently using single semaphore.
