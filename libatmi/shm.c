@@ -94,8 +94,14 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
     memset(&G_brinfo, 0, sizeof(G_brinfo));
 
     G_svcinfo.fd = EXFAIL;
+    G_svcinfo.key = G_atmi_env.ipckey + NDRX_SHM_SVCINFO_KEYOFSZ;
+    
     G_srvinfo.fd = EXFAIL;
+    G_srvinfo.key = G_atmi_env.ipckey + NDRX_SHM_SRVINFO_KEYOFSZ;
+    
     G_brinfo.fd = EXFAIL;
+    G_brinfo.key = G_atmi_env.ipckey + NDRX_SHM_BRINFO_KEYOFSZ;
+    
     
     snprintf(G_srvinfo.path, sizeof(G_srvinfo.path), NDRX_SHM_SRVINFO, q_prefix);
     snprintf(G_svcinfo.path, sizeof(G_svcinfo.path), NDRX_SHM_SVCINFO, q_prefix);
