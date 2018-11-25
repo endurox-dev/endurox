@@ -398,7 +398,7 @@ exprivate int cmd_idle(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 {
     int ret=EXSUCCEED;
 
-    if (!is_ndrxd_running() && NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
+    if (!is_ndrxd_running(NULL) && NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
     {
         ret = start_daemon_idle();
     }
@@ -423,7 +423,7 @@ exprivate int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 #define _STATUS_FMT     "STATUS: %s\n"
 
     /* Test current status... */
-    is_ndrxd_running();
+    is_ndrxd_running(NULL);
     
     if (NDRXD_STAT_NOT_STARTED==G_config.ndrxd_stat)
     {
@@ -680,7 +680,7 @@ expublic int process_command_buffer(int *p_have_next)
             EXFAIL_OUT(ret);
         }
         else if (NDRX_XADMIN_IDLEREQ==map->reqidle
-                && !is_ndrxd_running() && EXFAIL==ndrx_start_idle())
+                && !is_ndrxd_running(NULL) && EXFAIL==ndrx_start_idle())
         {
             EXFAIL_OUT(ret);
         }
