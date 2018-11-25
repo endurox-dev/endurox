@@ -91,11 +91,12 @@ void sign_chld_handler(int sig)
 }
 
 /**
- * Check weither idel instance running?
+ * Check whether idle instance running?
+ * @param p_pid PID to return
  * @return FALSE - not running
  *         TRUE - running or malfunction.
  */
-expublic int is_ndrxd_running(void)
+expublic int is_ndrxd_running(pid_t *p_pid)
 {
     int ret = EXFALSE;
     FILE *f = NULL;
@@ -160,6 +161,11 @@ expublic int is_ndrxd_running(void)
                     G_config.ndrxd_q_str);
             G_config.ndrxd_stat = NDRXD_STAT_MALFUNCTION;
         }
+    }
+    
+    if (NULL!=p_pid)
+    {
+        *p_pid = pid;
     }
 
 out:
@@ -288,7 +294,7 @@ expublic int start_daemon_idle(void)
         int started=EXFALSE;
         /* this is parent for child, wait 1 sec  */
         sleep(1);
-        started=is_ndrxd_running();
+        started=is_ndrxd_running(NULL);
 
 #define MAX_WSLEEP	5
 	/* give another 5 seconds... to start ndrxd */
@@ -299,7 +305,7 @@ expublic int start_daemon_idle(void)
                 fprintf(stderr, "* still not started, waiting %d/%d\n",
                             i, MAX_WSLEEP);
                 sleep(1);
-                started=is_ndrxd_running();
+                started=is_ndrxd_running(NULL);
                 if (started)
                         break;
             }
