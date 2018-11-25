@@ -39,6 +39,7 @@
 
 #include <ndrstandard.h>
 #include <ndebug.h>
+#include <nstd_shm.h>
 
 #include "ndrx.h"
 #include "cconfig.h"
@@ -517,6 +518,8 @@ exprivate int cmd_shms(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     {
         ndrx_string_list_free(list);
     }
+
+    return EXSUCCEED;
 }
 
 
