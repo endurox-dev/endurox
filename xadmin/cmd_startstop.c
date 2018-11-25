@@ -259,7 +259,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     short keep_running_ndrxd = EXFALSE;
     short force_off = EXFALSE;  /* force shutdown (for malfunction/no pid instances) */
     short dummy;
-    
+    pid_t pid = EXFAIL;
     ncloptmap_t clopt[] =
     {
         {'i', BFLD_SHORT, (void *)&srvid, 0, 
@@ -323,7 +323,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         call.complete_shutdown = EXTRUE;
     }
     
-    if (call.complete_shutdown && !is_ndrxd_running() && !force_off)
+    if (call.complete_shutdown && !is_ndrxd_running(&pid) && !force_off)
     {
         fprintf(stderr, "WARNING ! `ndrxd' daemon is in `%s', use -f "
                 "to force shutdown!\n",
@@ -359,8 +359,25 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         /* TODO: 
          * how about some sleep here to allow the ndrxd to kill shared resources
          * before user might want to move forward with next commands which open
-         * shm resources. Thus we can get some race conditions here
+         * shm resources. Thus we can get some race conditions here.
+         * Maybe monitor until the all resources are unlinked...
+         * or at least pid is dead.
          */
+        
+        if (EXFAIL!=pid)
+        {
+            /* monitor the pid */
+            while (EXSUCCEED==kill(pid, 0))
+            {
+                /* have some usleep */
+                usleep(100000);
+            }
+        }
+        else
+        {
+            /* no info of pid, so have some sleep */
+            sleep(1);
+        }
     }
 out:
     return ret;
