@@ -221,7 +221,7 @@ kernel.msgmnb=104960000
 
 EOF
 
-# load the values in current session
+# persist the values
 $ sudo sysctl -f /etc/sysctl.conf
 
 # Check status...
@@ -313,7 +313,25 @@ After changing the settings, reboot the server.
 
 OSX does not use require any kernel parameter changes, as emulated message queue
 is used here. Only it required that sufficient disk space is available to '/tmp'
-directory, as the memory mapped queue files will be stored there.
+directory, as the memory mapped queue files will be stored there. 
+
+As Enduro/X uses System V shared memory segments, the default sizes are not
+sufficient for the at least Enduro/X unit testing. Thus limits needs to be
+changed:
+
+--------------------------------------------------------------------------------
+$ sudo -s
+# cat << EOF >> /boot/loader.conf
+kern.sysv.shmmax=419430400
+kern.sysv.shmmin=1
+kern.sysv.shmmni=32
+kern.sysv.shmseg=8
+kern.sysv.shmall=102400
+
+EOF
+--------------------------------------------------------------------------------
+
+After this reboot is required.
 
 == Setup environment configuration
 
