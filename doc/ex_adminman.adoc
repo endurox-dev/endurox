@@ -221,7 +221,7 @@ kernel.msgmnb=104960000
 
 EOF
 
-# persist the values
+# load the values in current session
 $ sudo sysctl -f /etc/sysctl.conf
 
 # Check status...
