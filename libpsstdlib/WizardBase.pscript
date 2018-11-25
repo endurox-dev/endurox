@@ -48,11 +48,10 @@ class WizardBase {
 			qpath="/tmp/mq";
 			mk_mq_dev = true;
 		}
-		else if (osType=="DARWIN")
+
+		if (osType=="DARWIN")
 		{
 			shared_lib_pfx="dylib";
-			qpath="/tmp/mq";
-			mk_mq_dev = true;
 		}
 		else if (osType=="CYGWIN")
 		{
@@ -65,8 +64,9 @@ class WizardBase {
 		}
 		else if (osType=="AIX")
 		{
-                        qpath="/tmp/mq";
-			mk_mq_dev = true;
+                        qpath="/tmp";
+                        //system v does not need it..
+			//mk_mq_dev = true;
 		}
 		
 		/* Load the overrides from cli */
