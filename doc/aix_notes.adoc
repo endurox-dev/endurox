@@ -158,14 +158,6 @@ export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib64
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
-###############################################################
-# For AIX we do not have a tools for Posix queue listings, thus
-# we will use temporary files (pipes) in special folder
-rm -rf /tmp/mq
-mkdir /tmp/mq
-export NDRX_QPATH=/tmp/mq
-###############################################################
-
 EOF
 
 $ chmod +x $HOME/ndrx_home
