@@ -302,7 +302,8 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
         pthread_attr_setstacksize(&pthread_custom_attr, 
             ndrx_platf_stack_get_size());
         
-	pthread_create(&(*thread_p)->pthread, NULL, (void *)poolthread_do, (*thread_p));
+	pthread_create(&(*thread_p)->pthread, &pthread_custom_attr, 
+            (void *)poolthread_do, (*thread_p));
 	pthread_detach((*thread_p)->pthread);
 	return 0;
 }
