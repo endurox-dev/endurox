@@ -364,8 +364,7 @@ int main(int argc, char** argv)
         arg5 = (void *)4;
     }
     
-    pthread_attr_setstacksize(&pthread_custom_attr, 
-            ndrx_platf_stack_get_size());
+    ndrx_platf_stack_set(&pthread_custom_attr);
 
     /* create threads 1 and 2 */    
     pthread_create (&thread1, &pthread_custom_attr, (void *) &do_thread_work, arg1);
