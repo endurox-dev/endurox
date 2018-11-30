@@ -158,7 +158,7 @@ extern NDRX_API char* ndrx_str_rstrip(char* s, char *needle);
 extern NDRX_API char* ndrx_str_lstrip_ptr(char* s, char *needle);
 
 extern NDRX_API int ndrx_isint(char *str);
-extern NDRX_API int ndrx_nr_chars(char *str, char character);
+extern NDRX_API int ndrx_nr_chars(char *str, char chkchar);
 
 extern NDRX_API int ndrx_file_exists(char *filename);
 extern NDRX_API int ndrx_file_regular(char *path);
