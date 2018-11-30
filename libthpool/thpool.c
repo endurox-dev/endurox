@@ -76,16 +76,16 @@ typedef struct jobqueue{
 
 
 /* Thread */
-typedef struct thread{
+typedef struct poolthread{
 	int       id;                        /* friendly id               */
 	pthread_t pthread;                   /* pointer to actual thread  */
 	struct thpool_* thpool_p;            /* access to thpool          */
-} thread;
+} poolthread;
 
 
 /* Threadpool */
 typedef struct thpool_{
-	thread**   threads;                  /* pointer to threads        */
+	poolthread**   threads;                  /* pointer to threads        */
 	volatile int num_threads_alive;      /* threads currently alive   */
 	volatile int num_threads_working;    /* threads currently working */
 	pthread_mutex_t  thcount_lock;       /* used for thread count etc */
@@ -103,10 +103,10 @@ typedef struct thpool_{
 /* ========================== PROTOTYPES ============================ */
 
 
-static int  thread_init(thpool_* thpool_p, struct thread** thread_p, int id);
-static void* thread_do(struct thread* thread_p);
-static void  thread_hold(int sig_id);
-static void  thread_destroy(struct thread* thread_p);
+static int  poolthread_init(thpool_* thpool_p, struct poolthread** thread_p, int id);
+static void* poolthread_do(struct poolthread* thread_p);
+static void  poolthread_hold(int sig_id);
+static void  poolthread_destroy(struct poolthread* thread_p);
 
 static int   jobqueue_init(jobqueue* jobqueue_p);
 static void  jobqueue_clear(jobqueue* jobqueue_p);
@@ -154,7 +154,7 @@ struct thpool_* thpool_init(int num_threads){
 	}
 
 	/* Make threads in pool */
-	thpool_p->threads = (struct thread**)NDRX_MALLOC(num_threads * sizeof(struct thread *));
+	thpool_p->threads = (struct poolthread**)NDRX_MALLOC(num_threads * sizeof(struct poolthread *));
 	if (thpool_p->threads == NULL){
 		err("thpool_init(): Could not allocate memory for threads\n");
 		jobqueue_destroy(&thpool_p->jobqueue);
@@ -168,7 +168,7 @@ struct thpool_* thpool_init(int num_threads){
 	/* Thread init */
 	int n;
 	for (n=0; n<num_threads; n++){
-		thread_init(thpool_p, &thpool_p->threads[n], n);
+		poolthread_init(thpool_p, &thpool_p->threads[n], n);
 #if THPOOL_DEBUG
 			printf("THPOOL_DEBUG: Created thread %d in pool \n", n);
 #endif
@@ -245,7 +245,7 @@ void thpool_destroy(thpool_* thpool_p){
 	int n;
     /* avoid mem leak #250 */
 	for (n=0; n < threads_total; n++){
-		thread_destroy(thpool_p->threads[n]);
+		poolthread_destroy(thpool_p->threads[n]);
 	}
 	NDRX_FREE(thpool_p->threads);
 	NDRX_FREE(thpool_p);
@@ -283,25 +283,25 @@ int thpool_freethreads_nr(thpool_* thpool_p) {
  * @param id            id to be given to the thread
  * @return 0 on success, -1 otherwise.
  */
-static int thread_init (thpool_* thpool_p, struct thread** thread_p, int id){
+static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int id){
 
-	*thread_p = (struct thread*)NDRX_MALLOC(sizeof(struct thread));
+	*thread_p = (struct poolthread*)NDRX_MALLOC(sizeof(struct poolthread));
 	if (thread_p == NULL){
-		err("thread_init(): Could not allocate memory for thread\n");
+		err("poolthread_init(): Could not allocate memory for thread\n");
 		return -1;
 	}
 
 	(*thread_p)->thpool_p = thpool_p;
 	(*thread_p)->id       = id;
 
-	pthread_create(&(*thread_p)->pthread, NULL, (void *)thread_do, (*thread_p));
+	pthread_create(&(*thread_p)->pthread, NULL, (void *)poolthread_do, (*thread_p));
 	pthread_detach((*thread_p)->pthread);
 	return 0;
 }
 
 #if 0
 /* Sets the calling thread on hold */
-static void poolthread_hold () {
+static void poolpoolthread_hold () {
 	threads_on_hold = 1;
 	while (threads_on_hold){
 		sleep(1);
@@ -318,7 +318,7 @@ static void poolthread_hold () {
 * @param  thread        thread that will run this function
 * @return nothing
 */
-static void* thread_do(struct thread* thread_p){
+static void* poolthread_do(struct poolthread* thread_p){
 
 	/* Set thread name for profiling and debuging */
         int finish_off = 0;
@@ -377,7 +377,7 @@ static void* thread_do(struct thread* thread_p){
 
 
 /* Frees a thread  */
-static void thread_destroy (thread* thread_p){
+static void poolthread_destroy (poolthread* thread_p){
 	NDRX_FREE(thread_p);
 }
 
