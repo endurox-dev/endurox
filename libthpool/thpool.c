@@ -285,7 +285,11 @@ int thpool_freethreads_nr(thpool_* thpool_p) {
  */
 static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int id){
 
+        pthread_attr_t pthread_custom_attr;
+	pthread_attr_init(&pthread_custom_attr);
+        
 	*thread_p = (struct poolthread*)NDRX_MALLOC(sizeof(struct poolthread));
+        
 	if (thread_p == NULL){
 		err("poolthread_init(): Could not allocate memory for thread\n");
 		return -1;
@@ -293,7 +297,11 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
 
 	(*thread_p)->thpool_p = thpool_p;
 	(*thread_p)->id       = id;
-
+        
+        /* have some stack space... */
+        pthread_attr_setstacksize(&pthread_custom_attr, 
+            ndrx_platf_stack_get_size());
+        
 	pthread_create(&(*thread_p)->pthread, NULL, (void *)poolthread_do, (*thread_p));
 	pthread_detach((*thread_p)->pthread);
 	return 0;
@@ -320,10 +328,10 @@ static void poolpoolthread_hold () {
 */
 static void* poolthread_do(struct poolthread* thread_p){
 
-	/* Set thread name for profiling and debuging */
+	/* Set thread name for profiling and debugging */
         int finish_off = 0;
 	char thread_name[128] = {0};
-	sprintf(thread_name, "thread-pool-%d", thread_p->id);
+	snprintf(thread_name, sizeof(thread_name), "thread-pool-%d", thread_p->id);
 
 #ifdef EX_OS_LINUX
 	prctl(PR_SET_NAME, thread_name);
