@@ -993,7 +993,7 @@ expublic int ndrx_nr_chars(char *str, char chkchar)
     
     do
     {
-        if (*p == character)
+        if (*p == chkchar)
         {
             count++;
         }
