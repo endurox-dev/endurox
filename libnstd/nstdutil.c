@@ -983,17 +983,17 @@ expublic int ndrx_isint(char *str)
 /**
  * Count the number of specified chars in string
  * @param str
- * @param character
+ * @param chkchar chart to count
  * @return 
  */
-expublic int ndrx_nr_chars(char *str, char character)
+expublic int ndrx_nr_chars(char *str, char chkchar)
 {
     char *p = str;
     int count = 0;
     
     do
     {
-        if (*p == character)
+        if (*p == chkchar)
         {
             count++;
         }
