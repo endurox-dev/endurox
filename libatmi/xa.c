@@ -157,7 +157,7 @@ expublic int atmi_xa_init(void)
                     G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
             
             ndrx_TPset_error_fmt(TPEOS, "Failed to load XA lib [%s]: %s", 
-                    G_atmi_env, error?error:"no dlerror provided");
+                    G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
             EXFAIL_OUT(ret);
         }
 
