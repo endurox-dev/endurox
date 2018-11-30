@@ -335,8 +335,8 @@ static void poolthread_init (thpool_* thpool_p, struct poolthread** poolthread_p
 	(*poolthread_p)->id       = id;
 
 	/* have some stack space... */
-        pthread_attr_setstacksize(&pthread_custom_attr, 
-            ndrx_platf_stack_get_size());
+        ndrx_platf_stack_set(&pthread_custom_attr);
+        
 	pthread_create(&(*poolthread_p)->pthread, &pthread_custom_attr,
 			(void *)poolthread_do, (*poolthread_p));
 	pthread_detach((*poolthread_p)->pthread);

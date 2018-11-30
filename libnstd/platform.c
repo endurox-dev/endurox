@@ -94,4 +94,29 @@ expublic long ndrx_platf_stack_get_size(void)
    
     return M_stack_size;
 }
+
+/**
+ * Configure the stack size in the loop
+ * seems like AIX RLIMITS might say one value but accepts another
+ * Thus try in loop to reduce the stack until it is accepted
+ * @param pthread_custom_attr ptr to pthread_attr_t attr to set
+ */
+expublic void ndrx_platf_stack_set(void *pthread_custom_attr)
+{
+    long ssize = ndrx_platf_stack_get_size();
+    int ret;
+    pthread_attr_t *pattr = (pthread_attr_t *)pthread_custom_attr;
+    
+    while (EXSUCCEED!=(ret = pthread_attr_setstacksize(pattr, ssize)) && EINVAL==ret)
+    {
+        ssize /= 2;
+    }
+    
+    if (0==ssize)
+    {
+        userlog("Error ! failed to set stack value!");
+    }
+    
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
