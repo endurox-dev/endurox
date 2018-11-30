@@ -295,15 +295,15 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
 		return -1;
 	}
 
-	(*poolthread_p)->thpool_p = thpool_p;
-	(*poolthread_p)->id       = id;
+	(*thread_p)->thpool_p = thpool_p;
+	(*thread_p)->id       = id;
 
 	/* have some stack space... */
         ndrx_platf_stack_set(&pthread_custom_attr);
         
-	pthread_create(&(*poolthread_p)->pthread, &pthread_custom_attr,
-			(void *)poolthread_do, (*poolthread_p));
-	pthread_detach((*poolthread_p)->pthread);
+	pthread_create(&(*thread_p)->pthread, &pthread_custom_attr,
+			(void *)poolthread_do, (*thread_p));
+	pthread_detach((*thread_p)->pthread);
 	
 	return 0;
 }
