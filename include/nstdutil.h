@@ -197,6 +197,7 @@ extern NDRX_API void * ndrx_nstd_tls_new(int auto_destroy, int auto_set);
 
 /* Platform: */
 extern NDRX_API long ndrx_platf_stack_get_size(void);
+extern NDRX_API void ndrx_platf_stack_set(void *pthread_custom_attr);
 
 
 extern NDRX_API unsigned long ndrx_Crc32_ComputeBuf( unsigned long inCrc32, const void *buf,
