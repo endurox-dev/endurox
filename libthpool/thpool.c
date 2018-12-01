@@ -92,6 +92,7 @@ typedef struct thpool_{
 	pthread_cond_t  threads_all_idle;    /* signal to thpool_wait     */
         int threads_keepalive;
         int threads_on_hold;
+	int num_threads;
 
 	jobqueue  jobqueue;                  /* job queue                 */
 } thpool_;
@@ -141,6 +142,7 @@ struct thpool_* thpool_init(int num_threads){
 		err("thpool_init(): Could not allocate memory for thread pool\n");
 		return NULL;
 	}
+	thpool_p->num_threads   = 0;
 	thpool_p->threads_on_hold   = 0;
 	thpool_p->threads_keepalive = 1;
 	thpool_p->num_threads_alive   = 0;
@@ -169,6 +171,7 @@ struct thpool_* thpool_init(int num_threads){
 	int n;
 	for (n=0; n<num_threads; n++){
 		poolthread_init(thpool_p, &thpool_p->threads[n], n);
+		thpool_p->num_threads++;
 #if THPOOL_DEBUG
 			printf("THPOOL_DEBUG: Created thread %d in pool \n", n);
 #endif
@@ -217,7 +220,8 @@ void thpool_destroy(thpool_* thpool_p){
 	/* No need to destory if it's NULL */
 	if (thpool_p == NULL) return ;
 
-	volatile int threads_total = thpool_p->num_threads_alive;
+	int n;
+	volatile int threads_total = thpool_p->num_threads;
 
 	/* End each thread 's infinite loop */
 	thpool_p->threads_keepalive = 0;
@@ -242,8 +246,7 @@ void thpool_destroy(thpool_* thpool_p){
 	/* Job queue cleanup */
 	jobqueue_destroy(&thpool_p->jobqueue);
 	/* Deallocs */
-	int n;
-    /* avoid mem leak #250 */
+        /* avoid mem leak #250 */
 	for (n=0; n < threads_total; n++){
 		poolthread_destroy(thpool_p->threads[n]);
 	}
@@ -290,7 +293,7 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
         
 	*thread_p = (struct poolthread*)NDRX_MALLOC(sizeof(struct poolthread));
         
-	if (thread_p == NULL){
+	if (*thread_p == NULL){
 		err("poolthread_init(): Could not allocate memory for thread\n");
 		return -1;
 	}
