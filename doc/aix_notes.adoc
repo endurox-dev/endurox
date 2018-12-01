@@ -1,14 +1,14 @@
 Building Enduro/X On IBM AIX Platform
 =====================================
 Madars Vitolins
-v1.0, 2016-06:
-	Initial draft
+v1.1, 2018-11:
+	Enduro/X 6.0 release
 :doctype: book
 
 About manual
 ------------
 This manual describes how to build 'Enduro/X' on IBM AIX Platform. 
-Document is based on AIX 7.1. Compilers supported are GNU GCC and IBM xlC.
+Document is based on AIX 7.1 SP2, TL5. Compilers supported are GNU GCC and IBM xlC.
 
 == Overview
 
@@ -16,22 +16,13 @@ This manual includes basic installation of Enduro/X which does not
 include building of documentation, does not include platform script (as there 
 is issues with c++ headers), and does not use GPG-ME encryption for bridges.
 
-For AIX there is not management tools for Posix queues (like '/dev/mqueue' 
-file system for Linux). Thus Enduro/X have implemented wrappers for 'mq_open()' 
-call that makes empty files on file system in 'NDRX_QPATH' environment folder.
-This is kind of registry of queues opened by Enduro/X. Thus for performance 
-reasons, it is recommended to mount a memory based partition where middle-ware 
-can store these files.
-
 == Operating System Configuration
 
 For short installation process see ex_adminman(guides)(Enduro/X Administration Manual).
 
 == Installation process
 
-The installation process will install required pen source packages from 
-'http://www.perzl.org/aix/'. You may install packages with different approach. 
-This is just a sample process for getting build system working on under AIX. 
+The installation process will install required several open source packages. 
 For getting Enduro/X to work basically we need following packages:
 
 . git
@@ -48,6 +39,36 @@ For getting Enduro/X to work basically we need following packages:
  
 
 === Packages to be installed
+
+The approach how packages can be installed on system may differ. This document
+list just one the ways how to get system working.
+
+==== Install IBM Open Source RPMs
+
+Firstly for installation process there will be used official IBM Free software 
+RPM repository and only those package missing there will be installed 
+from www.oss4aix.org. Assuming that you have freshly installed Operating System,
+we need to install *yum* tool, so that all dependencies can be 
+stratified automatically.
+
+Download and install the RPM packages from the yum_bundle.tar file from 
+https://public.dhe.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/ .
+Ensure that install process does finish with out any errors. 
+ 
+---------------------------------------------------------------------
+# tar -xvf yum_bundle.tar
+# cd yum_bundle
+# rpm -ivh *.rpm
+---------------------------------------------------------------------
+
+Once yum is up and running, install following packages needed for build:
+
+---------------------------------------------------------------------
+# yum install flex bison libiconv curl openldap openssl zlib \
+libxml2 mktemp gcc gcc-cpp libxml2-devel
+---------------------------------------------------------------------
+
+==== Installing missing packages
 
 The following operations will be done from root user. This will download
 the all open source packages to local machine to /root/rpms folder.
@@ -84,28 +105,14 @@ ftp> mget *
 ...
 ---------------------------------------------------------------------
 
-Once all packages are downloaded. We can start to install required ones. 
-This will include also installation of GCC. However you may skip that if 
-you use xlC. This last step in the package install block.
+Once all packages are downloaded. We can start to install required ones. The
+download includes all of them, due to possible dependencies. But we need to
+install only two of them:
 
 ---------------------------------------------------------------------
-# rpm -i cmake-3.5.1-1.aix5.1.ppc.rpm
-# rpm  -i openssl-1.0.1s-1.aix5.1.ppc.rpm
-# rpm  -i --nodeps git-2.2.2-2.aix5.1.ppc.rpm
-# rpm -i libiconv-1.14-3.aix5.1.ppc.rpm
-# rpm -i --nodeps curl-7.47.1-1.aix5.1.ppc.rpm
-# rpm -i openldap-2.4.23-0.4.aix5.1.ppc.rpm
-# rpm -i libssh2-1.4.3-3.aix5.1.ppc.rpm zlib-1.2.4-2.aix5.1.ppc.rpm 
-# rpm -i flex-2.5.37-1.aix5.1.ppc.rpm
-# rpm -i bison-3.0.4-1.aix5.1.ppc.rpm  m4-1.4.17-1.aix5.1.ppc.rpm libsigsegv-2.10-1.aix5.2.ppc.rpm  
-# rpm -i --nodeps libxml2-2.9.3-1.aix5.1.ppc.rpm libxml2-devel-2.9.3-1.aix5.1.ppc.rpm    
+# rpm -i cmake-3.9.1-1.aix6.1.ppc.rpm
 # rpm -i mktemp-1.7-1.aix5.1.ppc.rpm
-# rpm -U --nodeps xz-*
-# rpm -i gcc-4.8.3-1.aix7.1.ppc.rpm gcc-c++-4.8.3-1.aix7.1.ppc.rpm gcc-cpp-4.8.3-1.aix7.1.ppc.rpm  libgcc-4.8.3-1.aix7.1.ppc.rpm libstdc++-devel-4.8.3-1.aix7.1.ppc.rpm  gmp-6.1.0-1.aix5.1.ppc.rpm  mpfr-3.1.4-1.aix5.1.ppc.rpm libmpc-1.0.3-1.aix5.1.ppc.rpm libstdc++-4.8.3-1.aix7.1.ppc.rpm 
 ---------------------------------------------------------------------
-
-NOTE the versions of packages for you might change. For some packages we do not 
-need such large dependency list, thus we add '--nodeps' for some.
 
 === Getting the source code
 For test purposes we will prepare new user for which Enduro/X will built 
@@ -170,12 +177,18 @@ shall make the building ok:
 
 ---------------------------------------------------------------------
 $ export OBJECT_MODE=64
+$ export CC=xlc 
+$ export CXX=xlC
 $ cd /home/user1/endurox
 $ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON\
       -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
+
+Note that we use in above snippet a exported compiler variables (CC, CXX), 
+this is due to bug in CMake 3.9 where xlC is not detected correctly. 
+See: https://www.ibm.com/developerworks/aix/library/au-aix-install-config-apache-subversions/index.html
 
 === Building the code with GCC
 
