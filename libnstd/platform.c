@@ -107,7 +107,9 @@ expublic void ndrx_platf_stack_set(void *pthread_custom_attr)
     int ret;
     pthread_attr_t *pattr = (pthread_attr_t *)pthread_custom_attr;
     
-    while (EXSUCCEED!=(ret = pthread_attr_setstacksize(pattr, ssize)) && EINVAL==ret)
+    while (EXSUCCEED!=(ret = pthread_attr_setstacksize(pattr, ssize)) 
+            && EINVAL==ret
+            && ssize > 0)
     {
         ssize /= 2;
     }
