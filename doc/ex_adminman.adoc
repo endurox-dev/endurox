@@ -288,8 +288,25 @@ get it working. Also perl is assumed to to be '/usr/bin/perl'. Thus:
 *reboot* to apply new settings (limits & mqueue mount)
 
 === AIX setup
+
 On the other hand AIX do not require any fine tuning for System V queues, because
-it is doing automatic adjustments to queue limitations.
+it is doing automatic adjustments to queue limitations. However to pass the
+Enduro/X standard unit tests, the security limits must be configured. Unit tests
+uses standard user "user1" for this purposes. Thus here stack, data mem size,
+file size and rss sizes are set to unlimited. For example if stack/data/rss is
+not set correctly, some multi-threaded components of Enduro/X might hang during
+the startup, for example *tpbridge(8)*.
+
+--------------------------------------------------------------------------------
+cat << EOF >> /etc/security/limits
+
+user1:
+        stack = 655360
+        data = -1
+        rss = -1
+        fsize = -1
+EOF
+--------------------------------------------------------------------------------
 
 === Solaris setup
 
@@ -847,7 +864,6 @@ environment before app boot. Also system settings must be checked in
 For other operating systems, please consult with corresponding manual for changing
 the message size and stack size.
 
-
 Also regarding the buffer sizes, when 'NDRX_MSGMAX' is set bellow 64K, the buffer
 size is fixed to 64K, this means that operations like network packet size when
 using tpbridge, is set to 64K.
@@ -857,6 +873,29 @@ not all space can be used by sending some data (for example CARRAY or UBF buffer
 Some overhead is added by Enduro/X, message headers, for bridge protocol format
 extra data is added for TLV structure. Thus to be safe, for example if expected
 data size is 64K, then message size should be set to something like 80KB.
+
+
+For threads which are spawned by Enduro/X for bridge, transaction manager and
+other processes, the Pthreads stack size is automatically adjusted. By default
+new thread does not use parent's thread stack size, but instead some default
+value is used. Which usually is quite small. Thus to get rid with this problem
+Enduro/X detects current process stack limit and tries to set this in thread
+attributes. To get current stack size, the getrlimit (RLIMIT_STACK, ...) system
+call is used. How ever with IBM AIX 7.1 SP 2 TL 5, it is been seen that 
+pthread_attr_setstacksize() fails for read stack size, with error *EINVAL*. Thus
+this give some uncertainty what stack size to use. Thus to fix the problem,
+the code tries in loop the use the size attribute, each time with failure new
+stack size is two times lower than previous. This is done until the correct
+value is found. If value is not found (i.e. target size is 0 after divisions),
+the user message is logged:
+
+--------------------------------------------------------------------------------
+Error ! failed to set stack value!
+--------------------------------------------------------------------------------
+
+Process continues after this, but it can be expected that random errors or
+core dumps may appear.
+
 
 == Enduro/X Smart Cache
 
