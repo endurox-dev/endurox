@@ -272,6 +272,9 @@ COMMANDS
     be combined.
 *shms*::
     Shows currently open shared memory segments.
+*pmode*::
+    Prints technical information about Enduro/X build mode 
+    (basically ndrx_config.h).
 
 CONFIGURATION
 -------------

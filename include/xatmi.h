@@ -692,6 +692,8 @@ extern NDRX_API int tpchkunsol(void);
 
 extern NDRX_API int tptoutset(int tout);
 extern NDRX_API int tptoutget(void);
+extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
+extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
 
 
 /* in external application: */
