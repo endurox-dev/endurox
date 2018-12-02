@@ -50,6 +50,7 @@
 #include <inicfg.h>
 #include <utlist.h>
 /*---------------------------Externs------------------------------------*/
+extern const char ndrx_G_resource_ndrx_config[];
 /*---------------------------Macros-------------------------------------*/
 
 #define PARSE_CMD_STUFF(X)\
@@ -89,6 +90,7 @@ exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 exprivate int cmd_stat(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_poller(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 exprivate int cmd_shms(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+exprivate int cmd_pmode(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 /**
  * Initialize command mapping table
@@ -255,7 +257,8 @@ cmd_mapping_t M_command_map[] =
                                     NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,   1,  1,  0, "Print UBF custom fields (from DB)", NULL},
     {"poller",    cmd_poller,EXFAIL,   1,  1,  0, "Print active poller sub-system", NULL},
-    {"shms",      cmd_shms,EXFAIL,     1,  1,  0, "Print shared memory locks", NULL}
+    {"shms",      cmd_shms,EXFAIL,     1,  1,  0, "Print shared memory locks", NULL},
+    {"pmode",     cmd_pmode,EXFAIL,     1,  1,  0, "Print Enduro/X builde (ndrx_config.h)", NULL}
 };
 
 /*
@@ -522,6 +525,18 @@ exprivate int cmd_shms(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     return EXSUCCEED;
 }
 
+/**
+ * Print build mode
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @return SUCCEED
+ */
+exprivate int cmd_pmode(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    printf("%s\n", ndrx_G_resource_ndrx_config);
+    return EXSUCCEED;
+}
 
 /**
  * Simple output

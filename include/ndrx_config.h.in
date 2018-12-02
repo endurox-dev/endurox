@@ -75,6 +75,9 @@
 /* Defined if pscript is off */
 #cmakedefine NDRX_DISABLEPSCRIPT @NDRX_DISABLEPSCRIPT@
 
+/* Is address sanitizer enabled */
+#cmakedefine NDRX_SANITIZE @NDRX_SANITIZE@
+
 /* Enduro/X memory debugging */
 #cmakedefine NDRX_MEMORY_DEBUG @NDRX_MEMORY_DEBUG@
 
