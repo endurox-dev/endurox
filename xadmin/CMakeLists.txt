@@ -90,6 +90,10 @@ add_custom_command(
   COMMAND exembedfile scripts/gen_test_local.pscript gen_test_local
   DEPENDS scripts/gen_test_local.pscript)
 
+add_custom_command(
+  OUTPUT ndrx_config.c
+  COMMAND exembedfile ../include/ndrx_config.h ndrx_config
+  DEPENDS scripts/gen_test_local.pscript)
 
 if(DEFINED EX_USE_SYSVQ)
     SET(SOURCE1 "cmd_svmaps.c")
@@ -107,7 +111,7 @@ add_executable (xadmin xadmin.c exec.c config.c
                 provision.c Exfields.c cmd_provision.c gen_go_server.c cmd_gen.c
                 gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
                 gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c
-                cmd_pubfdb.c ${SOURCE1} cmd_svids.c)
+                cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 

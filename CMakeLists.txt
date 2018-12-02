@@ -33,7 +33,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "6.0.1")
+set(VERSION "6.0.2")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -268,6 +268,10 @@ MATH (EXPR EX_PLATFORM_BITS "${EX_SIZEOF_VOIDPTR} * 8")
 
 IF (DEFINE_DISABLEPSCRIPT)
     set(NDRX_DISABLEPSCRIPT "1")
+ENDIF()
+
+IF (DEFINE_SANITIZE)
+    set(NDRX_SANITIZE "1")
 ENDIF()
 
 # Output the project version

@@ -299,13 +299,13 @@ if [ "$(uname)" == "Linux" ]; then
 	while read -r line ; do
     		echo "Processing [$line]"
     		# your code goes here
-    		MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
+    		#MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
     
-    		if [ "X$MATCH" != "X" ]; then
-        		echo "MATCH: [$MATCH]"
+    		if [[ $line == *"whileproc.sh"* ]]; then
+        		echo "MATCH: [$line]"
         		CNT=$((CNT+1))
     		else
-        		echo "NOT MATCH: [$MATCH]"
+        		echo "NOT MATCH: [$line]"
     		fi
 	done < <($PSCMD)
 
