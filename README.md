@@ -388,6 +388,9 @@ Support #252, Feature #281, Feature #307, Support #310, Support #326,
 Bug #330, Feature #331, Feature #333, Feature #334, Bug #338, 
 Bug #339, Bug #341, Bug #347, Support #350, Bug #351, Support #352, Bug #353
 
+- Version 6.0.2 released on 02/12/2018 (stable) Bug #355 and other stability issues fixed
+released with 6.0.1.
+
 # Build configurations
 
 ## Configure make with: 
