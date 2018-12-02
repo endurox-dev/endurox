@@ -880,13 +880,11 @@ extern NDRX_API atmi_lib_conf_t *ndrx_get_G_atmi_conf(void);
 extern NDRX_API atmi_lib_env_t *ndrx_get_G_atmi_env(void);
 extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
 
-/* tpimort() functions */
-extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
+/* tpimport() functions */
 extern NDRX_API int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
 extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
 
 /* tpexport() functions */
-extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
 extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 
