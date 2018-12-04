@@ -115,7 +115,7 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc
 
 xadmin down -y
 xadmin start -y || go_out 1
