@@ -115,7 +115,7 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc
 
 xadmin down -y
 xadmin start -y || go_out 1
@@ -302,11 +302,17 @@ if [ "$(uname)" == "Linux" ]; then
     		#MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
     
     		if [[ $line == *"whileproc.sh"* ]]; then
-        		echo "MATCH: [$line]"
-        		CNT=$((CNT+1))
+
+    			if [[ $line == *"$CPM_PID"* ]]; then
+        			echo "MATCH: [$line]"
+        			CNT=$((CNT+1))
+			else
+        			echo "NOT MATCH (2): [$line]"
+			fi
     		else
         		echo "NOT MATCH: [$line]"
     		fi
+
 	done < <($PSCMD)
 
 	PROC_COUNT_DIFFALLOW=$PROC_COUNT
