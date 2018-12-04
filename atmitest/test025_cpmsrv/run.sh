@@ -302,11 +302,17 @@ if [ "$(uname)" == "Linux" ]; then
     		#MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
     
     		if [[ $line == *"whileproc.sh"* ]]; then
-        		echo "MATCH: [$line]"
-        		CNT=$((CNT+1))
+
+    			if [[ $line == *"$CPM_PID"* ]]; then
+        			echo "MATCH: [$line]"
+        			CNT=$((CNT+1))
+			else
+        			echo "NOT MATCH (2): [$line]"
+			fi
     		else
         		echo "NOT MATCH: [$line]"
     		fi
+
 	done < <($PSCMD)
 
 	PROC_COUNT_DIFFALLOW=$PROC_COUNT
