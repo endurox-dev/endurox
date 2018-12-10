@@ -46,6 +46,7 @@ extern "C" {
 #define Fread32 Bread
 #define Fwrite32 Bwrite
 #define Fjoin32 Bjoin
+#define Fojoin32 Bojoin
 #define Flen32 Blen
 #define CFfind32 CBfind
 #define CFfindocc32 CBfindocc
