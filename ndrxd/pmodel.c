@@ -1044,7 +1044,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-            int i;
             fprintf(stderr, "Failed to start server [%s], error: %d, %s\n",
                                 cmd[0], err, strerror(err));
             
@@ -1519,9 +1518,11 @@ expublic int app_sreload(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+            if ((EXEOS!=call->binary_name[0] 
+                    && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    (EXEOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
+                    /* or If full shutdown requested */
+                    (EXEOS==call->binary_name[0] && p_pm->autostart))
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 
