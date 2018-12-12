@@ -153,8 +153,56 @@ expublic int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
 {
     int ret=EXSUCCEED;
+    UBF_header_t *hdr = (UBF_header_t *)dest;
+    char *p_fld;
+    BFLDID bfldid = BFIRSTFLDID;
+    BFLDOCC occ = 0;
+    BFLDLEN len=0;
+    Bnext_state_t state;
+    int nxt_stat;
+    Bfld_loc_info_t chg_state;
+    memset(&chg_state, 0, sizeof(chg_state));
+    memset(&state, 0, sizeof(state));
+    chg_state.last_checked = &hdr->bfldid;
 
-    return ret;
+    while(EXSUCCEED==ret &&
+        1==(nxt_stat=ndrx_Bnext(&state, src, &bfldid, &occ, NULL, &len, &p_fld)))
+    {
+        /*
+         * Update the occurrence in target buffer.
+         */
+        if (EXSUCCEED!=(ret=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE)))
+        {
+            UBF_LOG(log_debug, "Failed to set %s[%d]", 
+                                ndrx_Bfname_int(bfldid), occ);
+        }
+    }
+
+    if (EXFAIL==nxt_stat)
+    {
+        ret=EXFAIL;
+    }
+
+    memset(&state, 0, sizeof(state));
+    while(EXSUCCEED==ret &&
+        1==(nxt_stat=ndrx_Bnext(&state, dest, &bfldid, &occ, NULL, &len, &p_fld)))
+    {
+        /*
+         * Delete fields from destination buffer which not have in source buffer
+         */
+        if (EXFALSE == _Bpres(dest, bfldid, occ))
+        {
+            if (EXSUCCEED!=(ret=Bdel(dest, bfldid, occ)
+            {
+                UBF_LOG(log_debug, "Failed to delete %s[%d]", 
+                                ndrx_Bfname_int(bfldid), occ);
+            }
+        }
+    }
+
+    
+
+        return ret;
 }
 
 /**
@@ -177,7 +225,7 @@ expublic int ndrx_Bojoin (UBFH *dest, UBFH *src)
     memset(&chg_state, 0, sizeof(chg_state));
     memset(&state, 0, sizeof(state));
     chg_state.last_checked = &hdr->bfldid;
-            
+
     while(EXSUCCEED==ret &&
         1==(nxt_stat=ndrx_Bnext(&state, src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
@@ -192,7 +240,9 @@ expublic int ndrx_Bojoin (UBFH *dest, UBFH *src)
     }
 
     if (EXFAIL==nxt_stat)
+    {
         ret=EXFAIL;
+    }
 
     return ret;
 }
