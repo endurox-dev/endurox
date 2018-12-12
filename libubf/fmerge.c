@@ -192,7 +192,7 @@ expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
          */
         if (EXFALSE == _Bpres(dest, bfldid, occ))
         {
-            if (EXSUCCEED!=(ret=Bdel(dest, bfldid, occ)
+            if (EXSUCCEED!=(ret=Bdel(dest, bfldid, occ)))
             {
                 UBF_LOG(log_debug, "Failed to delete %s[%d]", 
                                 ndrx_Bfname_int(bfldid), occ);
