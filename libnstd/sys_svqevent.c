@@ -128,8 +128,8 @@ typedef struct
 
 /* have a thread handler for tout monitoring thread! */
 
-exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=0, 
-                                    .evpipe[1]=0};
+exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL, 
+                                    .evpipe[1]=EXFAIL};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
@@ -1172,6 +1172,7 @@ out:
 expublic void ndrx_svq_event_exit(int detach)
 {
     NDRX_LOG(log_debug, "Terminating event thread...");
+    
     if (M_alive)
     {
         ndrx_svq_moncmd_term();
@@ -1208,7 +1209,7 @@ exprivate void event_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
     
-    if (0==M_mon.evpipe[READ] && 0==M_mon.evpipe[WRITE])
+    if (EXFAIL==M_mon.evpipe[READ] && EXFAIL==M_mon.evpipe[WRITE])
     {
         NDRX_LOG(log_debug, "evpipe not open -> nothing to close");
         goto out;
@@ -1224,7 +1225,7 @@ exprivate void event_fork_prepare(void)
     }
     else
     {
-        M_mon.evpipe[READ] = 0;
+        M_mon.evpipe[READ] = EXFAIL;
     }
     
     if (EXSUCCEED!=close(M_mon.evpipe[WRITE]))
@@ -1234,7 +1235,7 @@ exprivate void event_fork_prepare(void)
     }
     else
     {
-        M_mon.evpipe[WRITE] = 0;
+        M_mon.evpipe[WRITE] = EXFAIL;
     }
     
 out:
@@ -1392,19 +1393,20 @@ expublic int ndrx_svq_event_init(void)
     M_mon.fdtab[PIPE_POLL_IDX].fd = M_mon.evpipe[READ];
     M_mon.fdtab[PIPE_POLL_IDX].events = POLLIN;
     
-    /* startup tup the thread */
+    /* startup up the thread */
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
-    
+    M_alive=EXTRUE;
     if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
         ndrx_svq_timeout_thread, NULL)))
     {
-        NDRX_LOG(log_error, "Failed to create monitoring thread: %s", strerror(errno));
+        M_alive=EXFALSE;
+        NDRX_LOG(log_error, "Failed to create monitoring thread: %s", 
+                strerror(errno));
         EXFAIL_OUT(ret);
     }
     
     /* register fork handlers */
-    M_alive=EXTRUE;
         
     if (first)
     {
@@ -1424,7 +1426,8 @@ expublic int ndrx_svq_event_init(void)
                 event_fork_resume, NULL)))
         {
             M_alive=EXFALSE;
-            NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
+            NDRX_LOG(log_error, "Failed to register fork handlers: %s", 
+                    strerror(ret));
             userlog("Failed to register fork handlers: %s", strerror(ret));
             EXFAIL_OUT(ret);
         }
@@ -1448,7 +1451,7 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     int ret = EXSUCCEED;
     int err = 0;
     
-    if (M_mon.evpipe[WRITE] > 0)
+    if (M_mon.evpipe[WRITE] != EXFAIL)
     {
         if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
                 sizeof(ndrx_svq_mon_cmd_t)))
@@ -1461,7 +1464,7 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     }
     else
     {
-        NDRX_LOG(log_info, "No even thread -> pipe closed.");
+        NDRX_LOG(log_info, "No event thread -> pipe closed.");
     }
     
 out:
@@ -1530,7 +1533,6 @@ expublic int ndrx_svq_moncmd_rmfd(int fd)
     ndrx_svq_mon_cmd_t cmd;
     
     memset(&cmd, 0, sizeof(cmd));
-    
     
     cmd.cmd = NDRX_SVQ_MON_RMFD;
     cmd.fd = fd;
