@@ -920,6 +920,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
 
+        /* for System V child event thread is not resumed
+         * but it is not a big deal, this just deallocates the resources
+         * after exec they will be free'd anyway.
+         */
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
         {
             userlog("Failed to close: [%s] err: %s",

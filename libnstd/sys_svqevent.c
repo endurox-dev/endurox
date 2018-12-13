@@ -1175,7 +1175,9 @@ expublic void ndrx_svq_event_exit(int detach)
     if (M_alive)
     {
         ndrx_svq_moncmd_term();
-        if (pthread_self()!=M_mon.evthread)
+        
+        /* if equals to 0 then threads are not the same...  */
+        if (0==pthread_equal(pthread_self(), M_mon.evthread))
         {
             NDRX_LOG(log_debug, "Join evthread...");
             pthread_join(M_mon.evthread, NULL);
@@ -1394,7 +1396,8 @@ expublic int ndrx_svq_event_init(void)
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
-    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL)))
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
+        ndrx_svq_timeout_thread, NULL)))
     {
         NDRX_LOG(log_error, "Failed to create monitoring thread: %s", strerror(errno));
         EXFAIL_OUT(ret);
