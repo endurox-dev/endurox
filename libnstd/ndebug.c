@@ -234,6 +234,14 @@ expublic void ndrx_dbg_unlock(void)
 }
 
 /**
+ * Update logger pids
+ */
+expublic void ndrx_dbg_pid_update(void)
+{
+    G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
+}
+
+/**
  * Return the logger according to current thread settings.
  * Note the internals should no call the logging. as this will cause recursive loop...
  * @param dbg_ptr
@@ -595,7 +603,7 @@ expublic void ndrx_init_debug(void)
     memset(&G_stdout_debug, 0, sizeof(G_stdout_debug));
     */
     
-    G_tp_debug.pid = G_ubf_debug.pid = G_ndrx_debug.pid = G_stdout_debug.pid = getpid();
+    ndrx_dbg_pid_update();
     
     ndrx_sys_get_hostname(hostname, sizeof(hostname));
     /* copy number of chars specified in hostname if debug config */
