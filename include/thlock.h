@@ -71,7 +71,7 @@ extern "C" {
     
 #define EX_SPIN_LOCKDECL(X) static pthread_spinlock_t X;\
         MUTEX_LOCKDECL(X##__initlock__);\
-        static int X##__first__ = EXTRUE;
+        static int volatile X##__first__ = EXTRUE;
 
 #define EX_SPIN_LOCK_V(X)\
     if (X##__first__)\
