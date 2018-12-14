@@ -964,6 +964,10 @@ expublic void ndrx_atfork_parent(void)
 expublic void ndrx_atfork_child(void)
 {
     int i;
+    
+    /* well we shall update pid for logger... */
+    ndrx_dbg_pid_update();
+    
     for (i=0; i<MAX_ATFORKS; i++)
     {
         if (NULL!=M_child[i])
