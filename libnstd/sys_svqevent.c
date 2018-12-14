@@ -1190,7 +1190,7 @@ expublic void ndrx_svq_event_exit(int detach)
     {
         /* detach resources */
         ndrx_svqshm_detach();
-    }   
+    }
 }
 
 /**
