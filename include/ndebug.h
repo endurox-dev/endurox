@@ -366,6 +366,7 @@ extern NDRX_API void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const c
 
 extern NDRX_API void ndrx_dbg_lock(void);
 extern NDRX_API void ndrx_dbg_unlock(void);
+extern NDRX_API void ndrx_dbg_pid_update(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
 extern NDRX_API int ndrx_dbg_intlock_isset(void);
