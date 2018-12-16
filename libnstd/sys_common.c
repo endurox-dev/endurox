@@ -356,9 +356,9 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
                 /* for example [/ ]cpmsrv\s */
                 ok++;
             }
-            if (EXEOS!=filter[i][0] && strstr(path, filter[i]))
+            else if (EXEOS!=filter[i][0] && strstr(path, filter[i]))
             {
-                /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
+             /*   NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
                 ok++;
             }
             else if (EXEOS==filter[i][0])
@@ -371,6 +371,8 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
                 /* NDRX_LOG(log_debug, "filter%d [%s] - fail", i, filter[i]); */
             }
         }
+        
+        /* NDRX_LOG(log_debug, "Filters vote %d/%d", ok, MAX_FILTER); */
         
         if (MAX_FILTER==ok)
         {

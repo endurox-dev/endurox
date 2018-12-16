@@ -152,6 +152,22 @@ EX_SPIN_LOCKDECL(M_delreflock);          /**< delete reference lock       */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Lock the reference list (should be done before forking..)
+ */
+exprivate void ndrx_svq_delref_lock(void)
+{
+    EX_SPIN_LOCK_V(M_delreflock);
+}
+
+/**
+ * Unlock reference list (shall be done after forking by parent and child)
+ */
+exprivate void ndrx_svq_delref_unlock(void)
+{
+    EX_SPIN_UNLOCK_V(M_delreflock);
+}
+
+/**
  * Register QD for delete - local ptr copy so that sanitizer does not see the
  * leak...
  * @param qd queue descriptor to register
@@ -1238,8 +1254,21 @@ exprivate void event_fork_prepare(void)
         M_mon.evpipe[WRITE] = EXFAIL;
     }
     
+    /* Lock the reference list to avoid partially locked by other threads
+     * in child process
+     */
+    ndrx_svq_delref_lock();
+    
 out:
     return;
+}
+
+/**
+ * Child resume after forking
+ */
+exprivate void event_fork_resume_child(void)
+{
+    ndrx_svq_delref_unlock();
 }
 
 /**
@@ -1251,6 +1280,9 @@ exprivate void event_fork_resume(void)
     int ret=EXSUCCEED;
     
     NDRX_LOG(log_debug, "Restoring System V Aux thread after fork %d", (int)getpid());
+    
+    
+    ndrx_svq_delref_unlock();
     
     /* create pipes */
     /* O_NONBLOCK */
@@ -1423,7 +1455,7 @@ expublic int ndrx_svq_event_init(void)
     
         if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
                 /* no need for child resume! */
-                event_fork_resume, NULL)))
+                event_fork_resume, event_fork_resume_child)))
         {
             M_alive=EXFALSE;
             NDRX_LOG(log_error, "Failed to register fork handlers: %s", 

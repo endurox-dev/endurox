@@ -136,6 +136,12 @@ expublic int ndrx_svqshm_down(int force)
     /* Terminate polling threads... if any... */
     ndrx_atfork_prepare();
     
+    /* WARNING ! RESUME AS CHILD (FREE UP QUEUE DEL REF LOCKS) !!!! 
+     * If in future we do some more with childs, then needs to think here
+     * how to avoid that.
+     */
+    ndrx_atfork_child();
+    
     if (force)
     {
         /* get write locks... */
