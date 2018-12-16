@@ -109,6 +109,7 @@ IF (DEFINED EX_USE_SYSVQ)
 ENDIF()
 
 add_subdirectory (test059_pq)
+add_subdirectory (test060_ndrxdfork)
 
 ################################################################################
 # Master test case driver
