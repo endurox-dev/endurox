@@ -122,7 +122,7 @@ exprivate void * check_child_exit(void *arg)
     int stat_loc;
     sigset_t blockMask;
     int sig;
-    
+    struct rusage rusage;
         
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
@@ -151,7 +151,10 @@ exprivate void * check_child_exit(void *arg)
 #endif
         
         NDRX_LOG(log_debug, "about to wait()");
+        /*
         while ((chldpid = wait(&stat_loc)) >= 0)
+         */  
+        while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
             /* Bug #108 01/04/2015, mvitolin
              * If config file is changed by foreground thread in this time,
