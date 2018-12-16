@@ -2,7 +2,7 @@
 Enduro/X is Open Source Middleware Platform for Distributed Transaction 
 Processing
 
-It is modern, microservices based middleware for writing distributed, open
+It is modern, micro-services based middleware for writing distributed, open
 systems (program consists of several executables) based applications. Thus 
 by using Enduro/X programmers do not have to worry about threads and concurrency 
 anymore, the load balacing and multi-CPU loading is done by Enduro/X middleware by it self,
@@ -13,7 +13,7 @@ just configure number of executables to start.
 
 For local inter-process-communication (IPC) Enduro/X uses kernel memory based Posix
 queues to avoid overhead of the TCP/IP protocol which is used in other middlewares
-or REST based microservice architectures. Thus this approach greatly increases
+or REST based micro-service architectures. Thus this approach greatly increases
 application speed, as kernel queues is basically a matter of block memory
 copy from one process to another (by contrast of 7 layers of TCP/IP stack and
 streaming nature of the sockets vs block copy). 
@@ -33,7 +33,7 @@ Dual licensed under Affero General Public License Version 3 for use in Open
 Source project or Commercial license Acquired from Mavimax Ltd 
 (https://www.mavimax.com),
 
-EnduroX have binddings for:
+EnduroX have bindings for:
 - Golang (client & server)
 - PHP (client)
 - Perl (client & server)
@@ -391,6 +391,10 @@ Bug #339, Bug #341, Bug #347, Support #350, Bug #351, Support #352, Bug #353
 - Version 6.0.2 released on 02/12/2018 (stable) Bug #355 and other stability issues fixed
 released with 6.0.1.
 
+- Version 6.0.3 released on 16/12/2018 (development) Bug #364, Bug #360. 
+Added new command "ps" for xadmin, so that unit tests have unified access to 
+processing listings across all supported OSes.
+	
 # Build configurations
 
 ## Configure make with: 

@@ -219,7 +219,8 @@ exprivate void * check_child_exit(void *arg)
     int stat_loc;
     sigset_t blockMask;
     int sig;
-        
+    struct rusage rusage;
+    
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
@@ -241,17 +242,21 @@ exprivate void * check_child_exit(void *arg)
 
         }        
 #endif
+        
         if (M_shutdown)
         {
             break;
+            
         }
         
         NDRX_LOG(log_debug, "about to wait()");
-        while ((chldpid = wait(&stat_loc)) >= 0)
+        
+        while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
             got_something++;
             handle_child(chldpid, stat_loc);
         }
+        
 #if EX_OS_DARWIN
         NDRX_LOG(6, "wait: %s", strerror(errno));
         if (!got_something)
@@ -331,7 +336,6 @@ expublic void ndrxd_sigchld_init(void)
 {
     sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
-    pthread_attr_t pthread_custom_attr_dog;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
     char *fn = "ndrxd_sigchld_init";
 
@@ -357,7 +361,6 @@ expublic void ndrxd_sigchld_init(void)
     }
     
     pthread_attr_init(&pthread_custom_attr);
-    pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
