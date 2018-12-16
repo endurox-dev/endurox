@@ -275,6 +275,15 @@ COMMANDS
 *pmode*::
     Prints technical information about Enduro/X build mode 
     (basically ndrx_config.h).
+*ps* [-a filter] [-b filter] [-c filter] [-d filter] [-r regexpfilter]::
+    Print running processes in system with command line arguments. This is similar
+    to *ps -ef* in Linux or equivalents on other Operating Systems. Enduro/X
+    *ps* command does not print the *xadmin* process, it is filtered out by
+    default. The flags *-a*, *-b*, *-c* and *-d* are just a words that must
+    be substring for the the ps output (i.e. basic grep). The *-r* argument is
+    regular regular expression that must be matched. If none of these arguments
+    are passed, then no filtering is done and max output is done (except the
+    xadmin by it self).
 
 CONFIGURATION
 -------------

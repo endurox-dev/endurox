@@ -267,6 +267,9 @@ extern int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 extern int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+/* Utils: */
+extern int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 #ifdef	__cplusplus
 }
 #endif
