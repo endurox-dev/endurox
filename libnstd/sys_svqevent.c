@@ -1256,8 +1256,9 @@ exprivate void event_fork_prepare(void)
     
     /* Lock the reference list to avoid partially locked by other threads
      * in child process
-     */
+     
     ndrx_svq_delref_lock();
+    */
     
 out:
     return;
@@ -1268,7 +1269,7 @@ out:
  */
 exprivate void event_fork_resume_child(void)
 {
-    ndrx_svq_delref_unlock();
+    /* ndrx_svq_delref_unlock(); */
 }
 
 /**
@@ -1282,7 +1283,7 @@ exprivate void event_fork_resume(void)
     NDRX_LOG(log_debug, "Restoring System V Aux thread after fork %d", (int)getpid());
     
     
-    ndrx_svq_delref_unlock();
+    /* ndrx_svq_delref_unlock(); */
     
     /* create pipes */
     /* O_NONBLOCK */
