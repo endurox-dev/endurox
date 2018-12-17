@@ -224,7 +224,10 @@ expublic void ndrxd_sigchld_init(void)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
+    /*
     if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        */
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
     {
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }

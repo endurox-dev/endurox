@@ -21,8 +21,8 @@ filetype plugin on
 set modeline 
 --------------------------------------------------------------------------------
 
-Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
-and cgreen (integrated into Enduro/X) for unit testing.
+Project also uses 'libxml2' (provided by system), 'exhash' (already included 
+in 'include' dir) and cgreen (integrated into Enduro/X) for unit testing.
 
 === C Programming style
 
@@ -918,7 +918,7 @@ returns after the processing back to waiting for message.
 
 [dia, systemv_message_dispatch_mode.dia, systemv_message_dispatch_mode.png, x500]
 -------------------------------
--------------------------------
+------------------------------- 
 
 === Poll mode
 
@@ -2189,6 +2189,11 @@ can be solved either by using *ndrx_fork(3)*, or
 
 Functions *ndrx_atfork_prepare()*/*ndrx_atfork_parent()*/*ndrx_atfork_child()*
 can be registered with *pthread_fork()* so that library fork calls are supported.
+
+*WARNING!* When operating in System V mode and user is performing *ndrx_fork(3)*,
+any other user threads shall not perform XATMI IPCs (tpcalls, tprecv, etc..) 
+in any other concurrent user thread, otherwise unexpected process corruption
+might happen. Thus corresponding synchronization shall be done at user code.
 
 == Source code management
 This section lists notes for Git usage for Enduro/X development. Usually we

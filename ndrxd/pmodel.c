@@ -92,6 +92,9 @@
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
 exprivate volatile int M_shutdown = EXFALSE; /**< Doing shutdown    */
+
+EX_SPIN_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -145,6 +148,8 @@ expublic int self_notify(srv_status_t *status, int block)
 
     NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
                         send_size, status->svc_count);
+    
+    EX_SPIN_LOCK_V(M_forklock);
     /* we want new q/open + close here,
      * so that we do not interference with our main queue blocked/non blocked flags.
      */
@@ -161,6 +166,7 @@ expublic int self_notify(srv_status_t *status, int block)
                         NULL,
                         NULL,
                         EXFALSE, TPNOBLOCK);
+    EX_SPIN_UNLOCK_V(M_forklock);
     
 out:
     return ret;
@@ -355,7 +361,10 @@ expublic void ndrxd_sigchld_init(void)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
+    /*
     if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        */
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
     {
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }
@@ -898,8 +907,15 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     
     /* clone our self */
+    
+    /*
+     * During the fork, no queue ops shall be done! This can cause
+     * System V event thread corruption.
+     */
+    EX_SPIN_LOCK_V(M_forklock);
     pid = ndrx_fork();
-
+    EX_SPIN_UNLOCK_V(M_forklock);
+    
     if( pid == 0)
     {
         char sysflags_str[30];

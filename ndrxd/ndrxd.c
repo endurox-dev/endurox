@@ -208,6 +208,9 @@ int main_init(int argc, char** argv)
 {
     int ret=EXSUCCEED;
     char *p;
+    struct sigaction oldact;
+
+sigaction(SIGINT, NULL, &oldact);
     
 #if 0
     
@@ -230,6 +233,9 @@ int main_init(int argc, char** argv)
     }
     
     /* We will ignore all stuff requesting shutdown! */
+    sigaction(SIGSEGV, NULL, &oldact);
+    sigaction(SIGPIPE, &oldact, NULL);
+
     signal(SIGHUP, SIG_IGN);
     signal(SIGTERM, SIG_IGN);
     signal(SIGINT, SIG_IGN);
