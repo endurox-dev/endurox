@@ -32,7 +32,7 @@
 ## -----------------------------------------------------------------------------
 ##
 
-export TESTNAME="test060_ndrxdfork"
+export TESTNAME="test060_ndxdfork"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
