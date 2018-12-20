@@ -147,13 +147,13 @@ cmd_mapping_t M_command_map[] =
                                     "\tUsage: down [OPTION]...\n"
                                     "\tOptional arguments: \n"
                                     "\t\t -y\tDo not ask for confirmation\n"
-                                    "\t\t -u\tRemove user resources by username\n", 
+                                    "\t\t -u\tRemove user resources by username", 
                                     NULL},
     {"udown",    cmd_udown, EXFAIL,              1,  2,  0, 
                                     "Remove resources by username\n"
                                     "\tUsage: udown [OPTION]...\n"
                                     "\tOptional arguments: \n"
-                                    "\t\t -y\tDo not ask for confirmation\n"
+                                    "\t\t -y\tDo not ask for confirmation"
                                     , NULL},
     {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,     1,  1,  1, 
                                     "Attached to ndrxd user session in progress"
@@ -353,11 +353,11 @@ cmd_mapping_t M_command_map[] =
 #endif
     {"svqids",    cmd_svqids,EXFAIL,            1,  1,  0, 
                                     "Print System V user queue ids\n"
-                                    "\tUsage: svqids\n"
+                                    "\tUsage: svqids"
                                     , NULL},
     {"svsemids",  cmd_svsemids,EXFAIL,          1,  1,  0, 
                                     "Print System V user semaphore ids\n"
-                                    "\tUsage: svsemids\n",
+                                    "\tUsage: svsemids",
                                     NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,            1,  1,  0, 
                                     "Print UBF custom fields (from DB)"
