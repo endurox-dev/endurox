@@ -153,8 +153,10 @@ command_map_t M_command_map [] =
     {NDRXD_COM_SET_RP,     cmd_dummy,          "xaset",     "", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_UNSET_RQ,   cmd_unset,          "xaunset",   ",-1,", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_UNSET_RP,   cmd_dummy,          "xaunset",   "", 0,NDRXD_CTX_NOCHG},
-    {NDRXD_COM_SRELOADI_RQ,cmd_sreloadi,         "sreloadi",  ",0,", 0,NDRXD_CTX_START},
-    {NDRXD_COM_SRELOADI_RP,cmd_dummy,           "sreloadi",  ",0,", 0,NDRXD_CTX_START}
+    {NDRXD_COM_SRELOADI_RQ,cmd_sreloadi,       "sreloadi",  ",0,", 0,NDRXD_CTX_START},
+    {NDRXD_COM_SRELOADI_RP,cmd_dummy,          "sreloadi",  ",0,", 0,NDRXD_CTX_START},
+    {NDRXD_COM_APPCONFIG_RQ,cmd_appconfig,     "appconfig",  ",-1,", 0,NDRXD_CTX_NOCHG},
+    {NDRXD_COM_APPCONFIG_RP,cmd_dummy,         "appconfig",  ",-1,", 0,NDRXD_CTX_NOCHG}
     
 };
 
@@ -413,7 +415,7 @@ expublic int command_wait_and_run(int *finished, int *abort)
     NDRX_LOG(log_debug, "Command ID: %d", call->command);
     if (call->command < NDRXD_COM_MIN || call->command > NDRXD_COM_MAX)
     {
-        NDRX_LOG(log_error, "Invalid command recieved: %d from [%s]!",
+        NDRX_LOG(log_error, "Invalid command received: %d from [%s]!",
                                 call->command, call->reply_queue);
 
         /* Reply with error - non supported! */

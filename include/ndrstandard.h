@@ -149,13 +149,18 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
     
 #else
     
-/* TODO: switch to STRLCPY if  */
+/**
+ * Copies string to maximum of target buffer size
+ * TODO: switch to STRLCPY if  
+ * @param X destination buffer (must be static char array with size sizeof available)
+ * @param Y string to copy from
+ */
 #define NDRX_STRCPY_SAFE(X, Y) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
 	int ndrx_XgCmDEk_bufzs = sizeof(X)-1;\
 	if (ndrx_I5SmWDM_len > ndrx_XgCmDEk_bufzs)\
 	{\
-		ndrx_I5SmWDM_len = ndrx_XgCmDEk_bufzs;\
+            ndrx_I5SmWDM_len = ndrx_XgCmDEk_bufzs;\
 	}\
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	X[ndrx_I5SmWDM_len]=0;\
