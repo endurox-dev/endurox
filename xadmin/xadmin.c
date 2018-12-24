@@ -98,289 +98,306 @@ exprivate int cmd_pmode(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
 cmd_mapping_t M_command_map[] = 
 {
     {"quit",    cmd_quit,  EXFAIL,              1,  1,  0, 
-                                    "Quit from command line utility"
-                                    , NULL},
+                "Quit from command line utility"
+                , NULL},
     {"q",       cmd_quit,  EXFAIL,              1,  1,  0, 
-                                    "Alias for `quit'"
-                                    , NULL},
+                "Alias for `quit'"
+                , NULL},
     {"exit",    cmd_quit,  EXFAIL,              1,  1,  0, 
-                                    "Alias for `quit'"
-                                    , NULL},
+                "Alias for `quit'"
+                , NULL},
     {"echo",    cmd_echo,  EXFAIL,              1,  999,0, 
-                                    "Echo text back to terminal"
-                                    , NULL},
+                "Echo text back to terminal"
+                , NULL},
     {"idle",    cmd_idle,  EXFAIL,              1,  1,  2, 
-                                    "Enter daemon process in idle state (if not started)"
-                                    , NULL},
+                "Enter daemon process in idle state (if not started)"
+                , NULL},
     {"help",    cmd_help,  EXFAIL,              1,  2,  0, 
-                                    "Print help (this output)\n"
-                                    "\t args: help [command]"
-                                    , NULL},
+                "Print help (this output)\n"
+                "\t args: help [command]"
+                , NULL},
     {"h",       cmd_help,  EXFAIL,              1,  2,  0, 
-                                    "Alias for `help'"
-                                    , NULL},
+                "Alias for `help'"
+                , NULL},
     {"info",    cmd_help,  EXFAIL,              1,  2,  0, 
-                                    "Alias for `help'"
-                                    , NULL},
+                "Alias for `help'"
+                , NULL},
     {"stat",    cmd_stat,  EXFAIL,              1,  1,  2, 
-                                    "Prints general status information"
-                                    , NULL},
+                "Prints general status information"
+                , NULL},
     {"ldcf",    cmd_ldcf,  NDRXD_COM_LDCF_RQ,   1,  1,  1, 
-                                    "Load configuration"
-                                    , NULL},
+                "Load configuration"
+                , NULL},
     {"start",   cmd_start, NDRXD_COM_START_RQ,  1,  5,  1, 
-                                    "Start application domain\n"
-                                    "\t Also loads configuration automatically.\n"
-                                    "\t args: start [-y] [-s <server>] [-i <srvid>]"
-                                    , NULL},
+                "Start application domain\n"
+                "\t Also loads configuration automatically.\n"
+                "\t args: start [-y] [-s <server>] [-i <srvid>]"
+                , NULL},
     {"psc",     cmd_psc,   NDRXD_COM_PSC_RQ,    1,  2,  1, 
-                                    "Print services\n"
-                                    "\t args: psc [-s]\n"
-                                    "\t -s : print full service name", 
-                                    NULL},
+                "Print services\n"
+                "\t args: psc [-s]\n"
+                "\t -s : print full service name", 
+                NULL},
     {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  5,  2, 
-                                    "Stop application domain\n"
-                                    "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]"
-                                    , NULL},
+                "Stop application domain\n"
+                "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]"
+                , NULL},
     {"down",    cmd_fdown, EXFAIL,              1,  3,  0, 
-                                    "Force App Server shutdown & resources cleanup\n"
-                                    "\tUsage: down [OPTION]...\n"
-                                    "\tOptional arguments: \n"
-                                    "\t\t -y\tDo not ask for confirmation\n"
-                                    "\t\t -u\tRemove user resources by username", 
-                                    NULL},
+                "Force App Server shutdown & resources cleanup\n"
+                "\tUsage: down [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -y\tDo not ask for confirmation\n"
+                "\t\t -u\tRemove user resources by username", 
+                NULL},
     {"udown",    cmd_udown, EXFAIL,              1,  2,  0, 
-                                    "Remove resources by username\n"
-                                    "\tUsage: udown [OPTION]...\n"
-                                    "\tOptional arguments: \n"
-                                    "\t\t -y\tDo not ask for confirmation"
-                                    , NULL},
+                "Remove resources by username\n"
+                "\tUsage: udown [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -y\tDo not ask for confirmation"
+                , NULL},
     {"cat",     cmd_cat,    NDRXD_COM_AT_RQ,     1,  1,  1, 
-                                    "Attached to ndrxd user session in progress"
-                                    , NULL},
+                "Attached to ndrxd user session in progress"
+                , NULL},
     {"reload",  cmd_reload,NDRXD_COM_RELOAD_RQ,  1,  1,  1, 
-                                    "Load new configuration"
-                                    , NULL},
+                "Load new configuration"
+                , NULL},
     {"testcfg", cmd_testcfg,NDRXD_COM_TESTCFG_RQ,1,  1,  1, 
-                                    "Test new configuration"
-                                    , NULL},
+                "Test new configuration"
+                , NULL},
     {"unadv",   cmd_unadv,NDRXD_COM_XADUNADV_RQ, 3,  3,  1,
-                                    "Un-advertise service.\n"
-                                    "\t args: unadv -i server_id -s service_name"
-                                    , NULL},
+                "Un-advertise service.\n"
+                "\t args: unadv -i server_id -s service_name"
+                , NULL},
     {"readv",   cmd_unadv,NDRXD_COM_XADREADV_RQ, 3,  3,  1,
-                                    "Re-advertise service.\n"
-                                    "\t args: readv -i server_id -s service_name\n"
-                                    "\t might be usable if service Q was unlinked"
-                                    , NULL},
+                "Re-advertise service.\n"
+                "\t args: readv -i server_id -s service_name\n"
+                "\t might be usable if service Q was unlinked"
+                , NULL},
     {"restart", cmd_r,    EXFAIL,                1,  4,  2, 
-                                    "Restart app or service (invokes start & stop with same args!)"
-                                    , NULL},
+                "Restart app or service (invokes start & stop with same args!)"
+                , NULL},
     {"r",       cmd_r,    EXFAIL,                1,  5,  2, 
-                                    "Alias for `restart'"
-                                    , NULL},
+                "Alias for `restart'"
+                , NULL},
     {"-v",      cmd_ver,  EXFAIL,                1,  1,  0, 
-                                    "Print version info"
-                                    , NULL},
+                "Print version info"
+                , NULL},
     {"ver",     cmd_ver,  EXFAIL,                1,  1,  0, 
-                                    "Print version info, same as -v"
-                                    , NULL},
+                "Print version info, same as -v"
+                , NULL},
     {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  2,  2, 
-                                    "Print process model"
-                                    "\tUsage ppm [OPTION]...\n"
-                                    "\t\t -2\tPrint Page 2\n"
-                                    ,NULL},
+                "Print process model"
+                "\tUsage ppm [OPTION]...\n"
+                "\t\t -2\tPrint Page 2\n"
+                ,NULL},
     {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1,  1, 
-                                    "Shared mem, print services"
-                                    , NULL},
+                "Shared mem, print services"
+                , NULL},
     {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, 
-                                    "Shared mem, print servers"
-                                    , NULL},
+                "Shared mem, print servers"
+                , NULL},
     {"cabort",cmd_cabort,NDRXD_COM_XACABORT_RQ,  1,  2,  1, 
-                                    "Abort app shutdown or startup.\n"
-                                    "\t args: abort [-y]"
-                                    , NULL},
+                "Abort app shutdown or startup.\n"
+                "\t args: abort [-y]"
+                , NULL},
     {"sreload", cmd_sreload, NDRXD_COM_SRELOAD_RQ,   1,  3,  1, 
-                                    "Restarts server instance by instance\n"
-                                    "\t Args: sreload [-y] [-s <server>] [-i <srvid>]"
-                                    , NULL},
+                "Restarts server instance by instance\n"
+                "\t Args: sreload [-y] [-s <server>] [-i <srvid>]"
+                , NULL},
     {"sr", cmd_sreload, NDRXD_COM_SRELOAD_RQ,    1,  3,  1, 
-                                    "Alias for `sreload'"
-                                    , NULL},
+                "Alias for `sreload'"
+                , NULL},
     {"pq",cmd_pq,NDRXD_COM_XAPQ_RQ,              1,  1,  1, 
-                                    "Print service queues"
-                                    , NULL},
+                "Print service queues"
+                , NULL},
     {"pqa",cmd_pqa,  EXFAIL,                     1,  2,  2, 
-                                    "Print all queues\n"
-                                    "\t args: pqa [-a]\n"
-                                    "\t -a - print all queues "
-                                    "(incl. other local systems)"
-                                    , NULL},
+                "Print all queues\n"
+                "\t args: pqa [-a]\n"
+                "\t -a - print all queues "
+                "(incl. other local systems)"
+                , NULL},
     /* New XA commands: printtrans (pt), abort, commit, exsting abort move to: sabort (start/stop) 
      * abort + install ctrl+c handler 
      */
     {"pt",        cmd_pt,EXFAIL,                 1,  1,  1, 
-                                    "Print transactions"
-                                    , NULL},
+                "Print transactions"
+                , NULL},
     {"printtrans",cmd_pt,EXFAIL,                 1,  1,  1, 
-                                    "Alias for `pt'"
-                                    , NULL},
+                "Alias for `pt'"
+                , NULL},
     {"abort",     cmd_abort,EXFAIL,              3,  5,  1, 
-                                    "Abort transaction\n"
-                                    "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]"
-                                    , NULL},
+                "Abort transaction\n"
+                "\t args: abort -t <RM Ref> -x <XID> [-g <Group No>] [-y]"
+                , NULL},
     {"aborttrans",cmd_abort,EXFAIL,              3,  5,  1, 
-                                    "Alias for `abort'"
-                                    , NULL},
+                "Alias for `abort'"
+                , NULL},
     {"commit",     cmd_commit,EXFAIL,            3,  4,  1, 
-                                    "Commit transaction\n"
-                                    "\t args: commit -t <RM Ref> -x <XID> [-y]"
-                                    , NULL},
+                "Commit transaction\n"
+                "\t args: commit -t <RM Ref> -x <XID> [-y]"
+                , NULL},
     {"committrans",cmd_commit,EXFAIL,            3,  4,  1, 
-                                    "Alias for `commit'"
-                                    , NULL},
+                "Alias for `commit'"
+                , NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,        1,  1,  1, 
-                                    "Print env (from ndrxd)"
-                                    , NULL},
+                "Print env (from ndrxd)"
+                , NULL},
     {"printenv",  cmd_pe,NDRXD_COM_PE_RQ,        2,  2,  1, 
-                                    "Alias for `pe'"
-                                    , NULL},
+                "Alias for `pe'"
+                , NULL},
     {"set",       cmd_set,NDRXD_COM_SET_RQ,     1,  99, 1, 
-                                    "Set env variable. \n"
-                                    "\t Format: VAR=SOME VALUE (will be contact with spaces)"
-                                    , NULL},
+                "Set env variable. \n"
+                "\t Format: VAR=SOME VALUE (will be contact with spaces)"
+                , NULL},
     {"unset",     cmd_unset,NDRXD_COM_UNSET_RQ, 1,  1,  1, 
-                                    "Set env variable. Forma: VAR"
-                                    , NULL},
+                "Set env variable. Forma: VAR"
+                , NULL},
     {"pc",        cmd_pc,EXFAIL,                1,  1,  1, 
-                                    "Print clients"
-                                    , NULL},
+                "Print clients"
+                , NULL},
     {"sc",        cmd_sc,EXFAIL,                1,  4,  1, 
-                                    "Stop client\n"
-                                    "\t args: sc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
-                                    , NULL},
-    {"bc",        cmd_bc,EXFAIL,                1,  4,  1, "Boot(start) client\n"
-                                    "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
-                                    , NULL},
+                "Stop client\n"
+                "\t args: sc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
+                , NULL},
+    {"bc",        cmd_bc,EXFAIL,                1,  4,  1, 
+                "Boot(start) client\n"
+                "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
+                , NULL},
     {"rc",        cmd_rc,EXFAIL,                1,  4,  1, 
-                                    "Reload/Restart clients one-by-one\n"
-                                    "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
-                                    , NULL},
+                "Reload/Restart clients one-by-one\n"
+                "\t args: bc -t <Tag> [-s <Subsection (default -)] [-w <wait in millis>]"
+                , NULL},
     {"mqlc",      cmd_mqlc,EXFAIL,              1,  1,  1, 
-                                    "List persistent queue configuration"
-                                    , NULL},
+                "List persistent queue configuration"
+                , NULL},
     {"mqlq",      cmd_mqlq,EXFAIL,              1,  1,  1, 
-                                    "List persistent queues (active/dynamic)"
-                                    , NULL},
+                "List persistent queues (active/dynamic)"
+                , NULL},
     {"mqrc",      cmd_mqrc,EXFAIL,              1,  1,  1, 
-                                    "Reload TMQ config"
-                                    , NULL},
+                "Reload TMQ config"
+                , NULL},
     {"mqlm",      cmd_mqlm,EXFAIL,              3,  3,  1, 
-                                    "List messages in q\n"
-                                    "\t args: mqlm -s <QSpace> -q <QName>"
-                                    , NULL},
+                "List messages in q\n"
+                "\t args: mqlm -s <QSpace> -q <QName>"
+                , NULL},
     {"mqdm",      cmd_mqdm,EXFAIL,              4,  4,  1, 
-                                    "Dump/peek message to stdout\n"
-                                    "\t args: mqdm -n <Cluster node id> -i <Server ID> -m <Message ID>"
-                                    , NULL},
+                "Dump/peek message to stdout\n"
+                "\t args: mqdm -n <Cluster node id> -i <Server ID> -m <Message ID>"
+                , NULL},
     {"mqch",      cmd_mqch,EXFAIL,              4,  4,  1, 
-                                    "Change queue config (runtime only)\n"
-                                    "\t args: mqch -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>"
-                                    , NULL},
+                "Change queue config (runtime only)\n"
+                "\t args: mqch -n <Cluster node id> -i <Server ID> -q <Q def (conf format)>"
+                , NULL},
     {"mqrm",      cmd_mqrm,EXFAIL,              4,  4,  1, 
-                                    "Remove message from Q space\n"
-                                    "\t args: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>"
-                                    , NULL},
+                "Remove message from Q space\n"
+                "\t args: mqrm -n <Cluster node id> -i <Server ID> -m <Message ID>"
+                , NULL},
     {"mqmv",      cmd_mqmv,EXFAIL,              6,  6,  1, 
-                                    "Move message to different qspace/qname\n"
-                                    "\t args: mqmv -n <Source cluster node id> -i <Source server ID>\n"
-                                    "\t -m <Source Message ID> -s <Dest qspace> -q <Dest qname>"
-                                    , NULL},
+                "Move message to different qspace/qname\n"
+                "\t args: mqmv -n <Source cluster node id> -i <Source server ID>\n"
+                "\t -m <Source Message ID> -s <Dest qspace> -q <Dest qname>"
+                , NULL},
     {"killall",   cmd_killall,EXFAIL,           1,  999,  0, 
-                                    "Kill all processes (in ps -ef) matching the name\n"
-                                    "\t args: killall <name1> <name2> ... <nameN>"
-                                    , NULL},
+                "Kill all processes (in ps -ef) matching the name\n"
+                "\t args: killall <name1> <name2> ... <nameN>"
+                , NULL},
     {"qrm",       cmd_qrm,EXFAIL,               1,  999,  0, 
-                                    "Remove specific queue\n"
-                                    "\t args: qrm <qname1> <qname2> ... <qnameN>"
-                                    , NULL},
+                "Remove specific queue\n"
+                "\t args: qrm <qname1> <qname2> ... <qnameN>"
+                , NULL},
     {"qrmall",    cmd_qrmall,EXFAIL,            1,  999,  0, 
-                                    "Remove queue matching the substring \n"
-                                    "\t args: qrmall <substr1> <substr2> ... <substrN>"
-                                    , NULL},
+                "Remove queue matching the substring \n"
+                "\t args: qrmall <substr1> <substr2> ... <substrN>"
+                , NULL},
     {"provision", cmd_provision,EXFAIL,         0,  999,  0, 
-                                     "Prepare initial Enduro/X instance environment \n"
-                                     "\t args: provision [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]"
-                                    , NULL},
+                "Prepare initial Enduro/X instance environment \n"
+                "\t args: provision [-d] [-v<param1>=<value1>] ... [-v<paramN>=<valueN>]"
+               , NULL},
     {"gen",       cmd_gen,EXFAIL,               0,  999,  0, 
-                                    "Generate sources\n"
-                                     "\t args: gen <target> <type> [-d] "
-                                     "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
-                                     "\t tagets/types available:"
-                                    , cmd_gen_help},
+                "Generate sources\n"
+                 "\t args: gen <target> <type> [-d] "
+                 "[-v<param1>=<value1>] ... [-v<paramN>=<valueN>]\n"
+                 "\t tagets/types available:"
+                , cmd_gen_help},
     {"cs",        cmd_cs,EXFAIL,                1,  3,  1, 
-                                    "Cache show\n"
-                                    "\t args: cs <cache_db_name>|-d <cache_db_name>"
-                                    , NULL},
+                "Cache show\n"
+                "\t args: cs <cache_db_name>|-d <cache_db_name>"
+                , NULL},
     {"cacheshow", cmd_cs,EXFAIL,                1,  3,  1, 
-                                    "Alias for `cs' "
-                                    , NULL},
+                "Alias for `cs' "
+                , NULL},
     {"cd",        cmd_cd,EXFAIL,                3,  4,  1, 
-                                    "Dump message in cache\n"
-                                    "\t args: cd -d <dbname> -k <key> [-i interpret_result]"
-                                    , NULL},
+                "Dump message in cache\n"
+                "\t args: cd -d <dbname> -k <key> [-i interpret_result]"
+                , NULL},
     {"cachedump", cmd_cd,EXFAIL,                3,  4,  1, 
-                                    "Alias for `cd' "
-                                    , NULL},
+                "Alias for `cd' "
+                , NULL},
     {"ci",        cmd_ci,EXFAIL,                2,  4,  1, 
-                                    "Invalidate cache\n"
-                                    "\t args: ci -d <dbname> [-k <key>][-r use_regexp]"
-                                    , NULL},
+                "Invalidate cache\n"
+                "\t args: ci -d <dbname> [-k <key>][-r use_regexp]"
+                , NULL},
     {"cacheinval",cmd_ci,EXFAIL,                2,  4,  1, 
-                                    "Alias for `ci' "
-                                    , NULL},
+                "Alias for `ci' "
+                , NULL},
 #ifdef EX_USE_SYSVQ
     {"svmaps",    cmd_svmaps,EXFAIL,            1,  6,  0, 
-                                    "Print System V Queue mapping tables\n"
-                                    "\tUsage: svmaps [OPTION]...\n"
-                                    "\tOptional arguments: \n"
-                                    "\t\t -p\tPrint Posix to System V table (default)\n"
-                                    "\t\t -s\tPrint System V to Posix table\n"
-                                    "\t\t -a\tPrint all entries (lots of records...)\n"
-                                    "\t\t -i\tPrint in use entries (default)\n"
-                                    "\t\t -w\tPrint entries which were used but now free",
-                                    NULL},
+                "Print System V Queue mapping tables\n"
+                "\tUsage: svmaps [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -p\tPrint Posix to System V table (default)\n"
+                "\t\t -s\tPrint System V to Posix table\n"
+                "\t\t -a\tPrint all entries (lots of records...)\n"
+                "\t\t -i\tPrint in use entries (default)\n"
+                "\t\t -w\tPrint entries which were used but now free",
+                NULL},
 #endif
     {"svqids",    cmd_svqids,EXFAIL,            1,  1,  0, 
-                                    "Print System V user queue ids\n"
-                                    "\tUsage: svqids"
-                                    , NULL},
+                "Print System V user queue ids\n"
+                "\tUsage: svqids"
+                , NULL},
     {"svsemids",  cmd_svsemids,EXFAIL,          1,  1,  0, 
-                                    "Print System V user semaphore ids\n"
-                                    "\tUsage: svsemids",
-                                    NULL},
+                "Print System V user semaphore ids\n"
+                "\tUsage: svsemids",
+                NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,            1,  1,  0, 
-                                    "Print UBF custom fields (from DB)"
-                                    , NULL},
+                "Print UBF custom fields (from DB)"
+                , NULL},
     {"poller",    cmd_poller,EXFAIL,            1,  1,  0, 
-                                    "Print active poller sub-system"
-                                    , NULL},
+                "Print active poller sub-system"
+                , NULL},
     {"shms",      cmd_shms,EXFAIL,              1,  1,  0, 
-                                    "Print shared memory locks"
-                                    , NULL},
+                "Print shared memory locks"
+                , NULL},
     {"pmode",     cmd_pmode,EXFAIL,             1,  1,  0, 
-                                    "Print Enduro/X build environment (ndrx_config.h)"
-                                    , NULL},
+                "Print Enduro/X build environment (ndrx_config.h)"
+                , NULL},
     {"ps",        cmd_ps,EXFAIL,                0,  5,  0, 
-                                    "List processes\n"
-                                    "\tUsage: ps [OPTION]...\n"
-                                    "\tOptional arguments: \n"
-                                    "\t\t -a\tFirst filter (grep style)\n"
-                                    "\t\t -b\tSecond filter\n"
-                                    "\t\t -c\tThird filter\n"
-                                    "\t\t -d\tForth filter\n"
-                                    "\t\t -r\tPosix regexp filter",
-                                    NULL},
+                "List processes\n"
+                "\tUsage: ps [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -a\tFirst filter (grep style)\n"
+                "\t\t -b\tSecond filter\n"
+                "\t\t -c\tThird filter\n"
+                "\t\t -d\tForth filter\n"
+                "\t\t -r\tPosix regexp filter"
+                , NULL},
+    {"appconfig", cmd_appconfig,  NDRXD_COM_APPCONFIG_RQ,    1,  2,  1, 
+                "Change/get ndrxd application cfg dynamically\n"
+                "\tUsage: appconfig SETTING [NEWVALUE]\n"
+                "\tPossible SETTING values: \n"
+                "\t\t sanity\tSanity check period (seconds), number\n"
+                "\t\t checkpm\tProcess model check sanity cycles, number\n"
+                "\t\t brrefresh\tNumber of sanity units to send full bridge refreshes\n"
+                "\t\t restart_min\tNumber of sanity units after which respawn died server\n"
+                "\t\t restart_step\tNumber of sanity units increment for died server respawn\n"
+                "\t\t restart_max\tMax number of sanity units for died server respawn\n"
+                "\t\t restart_to_check\tNumber of seconds for ndrxd to learn about\n"
+                    "\t\t\tsystem after recovery start of ndrxd\n"
+                "\t\t gather_pq_stats\tGather queue stats, Y/N\n"
+                "\t\t rqaddrttl\tNumber of seconds for System V Request Address\n"
+                    "\t\t\tto live with out servers"
+                , NULL},
 };
 
 /*
@@ -461,10 +478,14 @@ gencall_args_t G_call_args[] =
     {NDRXD_COM_XAPQ_RP,       NULL,         NULL,         EXFALSE},/*57*/
     {NDRXD_COM_PE_RQ,         pe_rsp_process,simple_output,EXTRUE},/*58*/
     {NDRXD_COM_PE_RP,         NULL,         NULL,         EXFALSE},/*59*/
-    {NDRXD_COM_SET_RQ,NULL,simple_output,      EXTRUE},/*60*/
-    {NDRXD_COM_SET_RP,        NULL,           NULL,       EXFALSE},/*61*/
-    {NDRXD_COM_UNSET_RQ,NULL,simple_output,    EXTRUE},/*62*/
-    {NDRXD_COM_UNSET_RP,       NULL,           NULL,      EXFALSE},/*63*/
+    {NDRXD_COM_SET_RQ,NULL,simple_output,                 EXTRUE},/*60*/
+    {NDRXD_COM_SET_RP,        NULL,         NULL,         EXFALSE},/*61*/
+    {NDRXD_COM_UNSET_RQ,NULL,simple_output,               EXTRUE},/*62*/
+    {NDRXD_COM_UNSET_RP,       NULL,        NULL,         EXFALSE},/*63*/
+    {NDRXD_COM_SRELOADI_RQ,    NULL,        NULL,         EXFALSE},/*64*/
+    {NDRXD_COM_SRELOADI_RP,    NULL,        NULL,         EXFALSE},/*65*/
+    {NDRXD_COM_SRELOAD_RQ,appconfig_rsp_process, simple_output,EXTRUE},/*66*/
+    {NDRXD_COM_SRELOAD_RP,    NULL,           NULL,        EXFALSE}/*67*/
 };
 
 /**
