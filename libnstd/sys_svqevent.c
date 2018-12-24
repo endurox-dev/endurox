@@ -1279,6 +1279,7 @@ exprivate void event_fork_resume(void)
 {
     int err;
     int ret=EXSUCCEED;
+    pthread_attr_t pthread_custom_attr;
     
     NDRX_LOG(log_debug, "Restoring System V Aux thread after fork %d", (int)getpid());
     
@@ -1329,8 +1330,10 @@ exprivate void event_fork_resume(void)
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
+    pthread_attr_init(&pthread_custom_attr);
+    ndrx_platf_stack_set(&pthread_custom_attr);
     M_alive=EXTRUE;
-    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), &pthread_custom_attr, 
             ndrx_svq_timeout_thread, NULL)))
     {
         M_alive=EXFALSE;
@@ -1361,6 +1364,7 @@ expublic int ndrx_svq_event_init(void)
     int err;
     int ret = EXSUCCEED;
     static int first = EXTRUE;
+    pthread_attr_t pthread_custom_attr;
    /* 
     * Signal handling 
     */
@@ -1429,8 +1433,12 @@ expublic int ndrx_svq_event_init(void)
     /* startup up the thread */
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
+    
+    pthread_attr_init(&pthread_custom_attr);
+    ndrx_platf_stack_set(&pthread_custom_attr);
+    
     M_alive=EXTRUE;
-    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), &pthread_custom_attr, 
         ndrx_svq_timeout_thread, NULL)))
     {
         M_alive=EXFALSE;

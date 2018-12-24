@@ -63,6 +63,15 @@ extern "C" {
     (TYPE__*)(((char *)(LIST__)->mem) + (INDEX__) * (LIST__)->size)
             
 #define NDRX_LOCALE_STOCK_DECSEP        '.'    /**< default decimal seperator */
+    
+/**
+ * @defgroup argsgrp Value types for ndrx_args_ functions
+ * @{
+ */
+#define NDRX_ARGS_BOOL                  1     /**< boolean type               */
+#define NDRX_ARGS_INT                   2     /**< integer type               */
+/** @} */ /* end of argsgrp */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -118,6 +127,23 @@ struct string_hash
     char *str;
     EX_hash_handle hh;
 };
+
+/**
+ * This is arguments parser and loader for mapped structures
+ */
+struct ndrx_args_loader
+{
+    long    offset;             /**< field offset                           */
+    size_t  elmsz;              /**< element size                           */
+    char*   cname;              /**< field name                             */
+    int     fld_type;           /**< field type, see  EXF_*                 */
+    int     min_len;            /**< string min len                         */
+    int     max_len;            /**< string max len                         */
+    double  min_value;          /**< minimum value for field                */
+    double  max_value;          /**< maximum value for the field            */
+};
+
+typedef struct ndrx_args_loader ndrx_args_loader_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
@@ -205,6 +231,17 @@ extern NDRX_API unsigned long ndrx_Crc32_ComputeBuf( unsigned long inCrc32, cons
 
 
 extern NDRX_API char *ndrx_strsep(char **s1, char *s2);
+
+
+extern NDRX_API int ndrx_args_loader_get(ndrx_args_loader_t *args, void *obj, 
+        char *fldnm, char *value, int valuesz,
+        char *errbuf, size_t errbufsz);
+
+
+extern NDRX_API int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj, 
+        char *fldnm, char *value,
+        char *errbuf, size_t errbufsz);
+
 
 #ifdef	__cplusplus
 }
