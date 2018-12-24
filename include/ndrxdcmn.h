@@ -85,83 +85,84 @@ extern "C" {
  *              +------22------+
  */
 /* Server performs un-advertise operation, informs server about this thing      */
-#define NDRXD_COM_SRVUNADV_RQ       22   /* Server unadvertise request          */
-#define NDRXD_COM_SRVUNADV_RP       23   /* Server unadvertise response         */
+#define NDRXD_COM_SRVUNADV_RQ       22   /**< Server unadvertise request        */
+#define NDRXD_COM_SRVUNADV_RP       23   /**< Server unadvertise response       */
 /* xadmin requests unadvertise */
-#define NDRXD_COM_XADUNADV_RQ       24   /* xadmin request for unadvertise, req */
-#define NDRXD_COM_XADUNADV_RP       25   /* xadmin request for unadvertise, resp*/
+#define NDRXD_COM_XADUNADV_RQ       24   /**< xadmin request for unadvertise, req */
+#define NDRXD_COM_XADUNADV_RP       25   /**< xadmin request for unadvertise, resp*/
 /* ndrxd forwards xadmin request to server */
-#define NDRXD_COM_NXDUNADV_RQ       26   /* ndrxd request for unadvertise, req  */
-#define NDRXD_COM_NXDUNADV_RP       27   /* ndrxd request for unadvertise, resp */
+#define NDRXD_COM_NXDUNADV_RQ       26   /**< ndrxd request for unadvertise, req*/
+#define NDRXD_COM_NXDUNADV_RP       27   /**< ndrxd request for unadvertise, resp*/
 
-#define NDRXD_COM_SRVADV_RQ         28   /* server requests advertise, req     */
-#define NDRXD_COM_SRVADV_RP         29   /* server reqeusts un-advertise, resp */
+#define NDRXD_COM_SRVADV_RQ         28   /**< server requests advertise, req    */
+#define NDRXD_COM_SRVADV_RP         29   /**< server reqeusts un-advertise, resp*/
     
-#define NDRXD_COM_XAPPM_RQ          30   /* print process model, req           */
-#define NDRXD_COM_XAPPM_RP          31   /* print process model, resp          */
+#define NDRXD_COM_XAPPM_RQ          30   /**< print process model, req          */
+#define NDRXD_COM_XAPPM_RP          31   /**< print process model, resp         */
     
-#define NDRXD_COM_XASHM_PSVC_RQ     32   /* print SHM services, req            */
-#define NDRXD_COM_XASHM_PSVC_RP     33   /* print SHM services, resp           */
+#define NDRXD_COM_XASHM_PSVC_RQ     32   /**< print SHM services, req           */
+#define NDRXD_COM_XASHM_PSVC_RP     33   /**< print SHM services, resp          */
     
-#define NDRXD_COM_XASHM_PSRV_RQ     34   /* print SHM servers, req             */
-#define NDRXD_COM_XASHM_PSRV_RP     35   /* print SHM servers, resp            */
+#define NDRXD_COM_XASHM_PSRV_RQ     34   /**< print SHM servers, req            */
+#define NDRXD_COM_XASHM_PSRV_RP     35   /**< print SHM servers, resp           */
 
-#define NDRXD_COM_NXDREADV_RQ       36   /* ndrxd request for readvertise, req  */
-#define NDRXD_COM_NXDREADV_RP       37   /* ndrxd request for readvertise, resp */
+#define NDRXD_COM_NXDREADV_RQ       36   /**< ndrxd request for readvertise, req */
+#define NDRXD_COM_NXDREADV_RP       37   /**< ndrxd request for readvertise, resp*/
     
-#define NDRXD_COM_XADREADV_RQ       38   /* xadmin request for readvertise, req  */
-#define NDRXD_COM_XADREADV_RP       39   /* xadmin request for readvertise, resp */
+#define NDRXD_COM_XADREADV_RQ       38   /**< xadmin request for readvertise, req*/
+#define NDRXD_COM_XADREADV_RP       39   /**< xadmin request for readvertise, resp*/
 
-#define NDRXD_COM_XACABORT_RQ        40   /* xadmin request for abort, req  */
-#define NDRXD_COM_XAABORT_RP        41   /* xadmin request for abort, resp */
+#define NDRXD_COM_XACABORT_RQ        40  /**< xadmin request for abort, req     */
+#define NDRXD_COM_XAABORT_RP        41   /**< xadmin request for abort, resp    */
 
-#define NDRXD_COM_BRCON_RQ          42   /* bridge, connected, req  */
-#define NDRXD_COM_BRCON_RP          43   /* bridge, connected, resp */
+#define NDRXD_COM_BRCON_RQ          42   /**< bridge, connected, req            */
+#define NDRXD_COM_BRCON_RP          43   /**< bridge, connected, resp           */
     
-#define NDRXD_COM_BRDISCON_RQ       44   /* bridge, disconnected, req  */
-#define NDRXD_COM_BRDISCON_RP       45   /* bridge, disconnected, resp */
+#define NDRXD_COM_BRDISCON_RQ       44   /**< bridge, disconnected, req         */
+#define NDRXD_COM_BRDISCON_RP       45   /**< bridge, disconnected, resp        */
 
-#define NDRXD_COM_BRREFERSH_RQ      46   /* bridge, refersh, req  */
-#define NDRXD_COM_BRREFERSH_RP      47   /* bridge, refersh, resp */
+#define NDRXD_COM_BRREFERSH_RQ      46   /**< bridge, refersh, req              */
+#define NDRXD_COM_BRREFERSH_RP      47   /**< bridge, refersh, resp             */
     
-#define NDRXD_COM_BRCLOCK_RQ        48   /* bridge, monotonic clock exchange, req  */
-#define NDRXD_COM_BRCLOCK_RP        49   /* bridge, monotonic clock exchange, rsp  */
+#define NDRXD_COM_BRCLOCK_RQ        48   /**< bridge, monotonic clock exchange, req*/
+#define NDRXD_COM_BRCLOCK_RP        49   /**< bridge, monotonic clock exchange, rsp*/
 
-#define NDRXD_COM_SRVGETBRS_RQ      50   /* Get bridges, request from server     */
-#define NDRXD_COM_SRVGETBRS_RP      51   /* Get bridges, response from ndrxd     */
+#define NDRXD_COM_SRVGETBRS_RQ      50   /**< Get bridges, request from server  */
+#define NDRXD_COM_SRVGETBRS_RP      51   /**< Get bridges, response from ndrxd  */
 
-#define NDRXD_COM_SRVPING_RQ        52   /* Server ping request                  */
-#define NDRXD_COM_SRVPING_RP        53   /* Server ping response                 */
+#define NDRXD_COM_SRVPING_RQ        52   /**< Server ping request               */
+#define NDRXD_COM_SRVPING_RP        53   /**< Server ping response              */
 
-#define NDRXD_COM_SRELOAD_RQ        54   /* xadmin request for server reload, req  */
-#define NDRXD_COM_SRELOAD_RP        55   /* xadmin request for server reload, resp */
+#define NDRXD_COM_SRELOAD_RQ        54   /**< xadmin request for server reload, req*/
+#define NDRXD_COM_SRELOAD_RP        55   /**< xadmin request for server reload, resp*/
 
-#define NDRXD_COM_XAPQ_RQ           56   /* xadmin print service queue, req  */
-#define NDRXD_COM_XAPQ_RP           57   /* xadmin print service queue, resp */
-    
-    
-#define NDRXD_COM_PE_RQ             58   /* xadmin print env, req  */
-#define NDRXD_COM_PE_RP             59   /* xadmin print env, resp */
-    
-#define NDRXD_COM_SET_RQ            60   /* xadmin set env, req  */
-#define NDRXD_COM_SET_RP            61   /* xadmin set env, resp */
-    
-#define NDRXD_COM_UNSET_RQ          62   /* xadmin unset env, req  */
-#define NDRXD_COM_UNSET_RP          63   /* xadmin unset env, resp */
-
-#define NDRXD_COM_SRELOADI_RQ       64   /* ndrxd request for server reload, req, internal  */
-#define NDRXD_COM_SRELOADI_RP       65   /* ndrxd request for server reload, resp, internal */
-
+#define NDRXD_COM_XAPQ_RQ           56   /**< xadmin print service queue, req   */
+#define NDRXD_COM_XAPQ_RP           57   /**< xadmin print service queue, resp  */
     
     
-#define NDRXD_COM_MAX               65
+#define NDRXD_COM_PE_RQ             58   /**< xadmin print env, req             */
+#define NDRXD_COM_PE_RP             59   /**< xadmin print env, resp            */
+    
+#define NDRXD_COM_SET_RQ            60   /**< xadmin set env, req               */
+#define NDRXD_COM_SET_RP            61   /**< xadmin set env, resp              */
+    
+#define NDRXD_COM_UNSET_RQ          62   /**< xadmin unset env, req             */
+#define NDRXD_COM_UNSET_RP          63   /**< xadmin unset env, resp            */
+
+#define NDRXD_COM_SRELOADI_RQ       64   /**< ndrxd request for server reload, req, internal  */
+#define NDRXD_COM_SRELOADI_RP       65   /**< ndrxd request for server reload, resp, internal */
+    
+#define NDRXD_COM_APPCONFIG_RQ      66   /**< ndrxd appconfig, req, internal    */
+#define NDRXD_COM_APPCONFIG_RP      67   /**< ndrxd appconfig, rsp, internal    */
+
+#define NDRXD_COM_MAX               67
 
 /* Command contexts */
-#define NDRXD_CTX_ANY               -1   /* Any context...                   */
-#define NDRXD_CTX_NOCHG             NDRXD_CTX_ANY   /* Do not change context! */
-#define NDRXD_CTX_ZERO              0    /* Zero context, no command running */
-#define NDRXD_CTX_START             1    /* Start command is running         */
-#define NDRXD_CTX_STOP              2    /* Stop context/command is running  */
+#define NDRXD_CTX_ANY               -1   /**< Any context...                    */
+#define NDRXD_CTX_NOCHG             NDRXD_CTX_ANY   /**< Do not change context! */
+#define NDRXD_CTX_ZERO              0    /**< Zero context, no command running  */
+#define NDRXD_CTX_START             1    /**< Start command is running          */
+#define NDRXD_CTX_STOP              2    /**< Stop context/command is running   */
 
 /* Max number of services can be advertised by servers! */
 #define MAX_SVC_PER_SVR             50
@@ -169,57 +170,58 @@ extern "C" {
 #define MAX_NDRXD_ERROR_LEN         2048
 /* NDRXD Error sesction */
 #define NDRXD_EMINVAL            0
-#define NDRXD_ESRVCIDDUP         1          /* Duplicat service ID          */
-#define NDRXD_ESRVCIDINV         2          /* Invalid service ID           */
-#define NDRXD_EOS                3          /* Operating System failure     */
-#define NDRXD_ECFGLDED           4          /* Configuration already loaded */
-#define NDRXD_ECFGINVLD          5          /* Invalid configuration file   */
-#define NDRXD_EPMOD              6          /* Process model failed         */
-#define NDRXD_ESHMINIT           7          /* Shared memory not initialized*/
-#define NDRXD_NOTSTARTED         8          /* App domain not started       */
-#define NDRXD_ECMDNOTFOUND       9          /* Command not found            */
-#define NDRXD_ENONICONTEXT       10         /* Non interractive context     */
-#define NDRXD_EREBBINARYRUN      11         /* Renamed binary in run state  */
-#define NDRXD_EBINARYRUN         12         /* Removed binary in run state  */
-#define NDRXD_ECONTEXT           13         /* Invalid command context      */
-#define NDRXD_EINVPARAM          14         /* Invalid paramters            */
-#define NDRXD_EABORT             15         /* Abort requested              */
-#define NDRXD_EENVFAIL           16         /* putenv failed                */
-#define NDRXD_EINVAL             17         /* Invalid argument             */
+#define NDRXD_ESRVCIDDUP         1          /**< Duplicat service ID          */
+#define NDRXD_ESRVCIDINV         2          /**< Invalid service ID           */
+#define NDRXD_EOS                3          /**< Operating System failure     */
+#define NDRXD_ECFGLDED           4          /**< Configuration already loaded */
+#define NDRXD_ECFGINVLD          5          /**< Invalid configuration file   */
+#define NDRXD_EPMOD              6          /**< Process model failed         */
+#define NDRXD_ESHMINIT           7          /**< Shared memory not initialized*/
+#define NDRXD_NOTSTARTED         8          /**< App domain not started       */
+#define NDRXD_ECMDNOTFOUND       9          /**< Command not found            */
+#define NDRXD_ENONICONTEXT       10         /**< Non interractive context     */
+#define NDRXD_EREBBINARYRUN      11         /**< Renamed binary in run state  */
+#define NDRXD_EBINARYRUN         12         /**< Removed binary in run state  */
+#define NDRXD_ECONTEXT           13         /**< Invalid command context      */
+#define NDRXD_EINVPARAM          14         /**< Invalid paramters            */
+#define NDRXD_EABORT             15         /**< Abort requested              */
+#define NDRXD_EENVFAIL           16         /**< putenv failed                */
+#define NDRXD_EINVAL             17         /**< Invalid argument             */
 #define NDRXD_EMAXVAL            1000
 
 /* This section list call types */
-#define NDRXD_CALL_TYPE_GENERIC         0   /* Generic call type        */
-#define NDRXD_CALL_TYPE_PM_INFO         1   /* Process model info       */
-#define NDRXD_CALL_TYPE_SVCINFO         2   /* Service info             */
-#define NDRXD_CALL_TYPE_PM_STARTING     3   /* Process model info (starting process)*/
-#define NDRXD_CALL_TYPE_PM_STARTED      4   /* Process model info  (started)*/
-#define NDRXD_CALL_TYPE_PM_STOPPING     5   /* Process model info  (stop initiated)*/
-#define NDRXD_CALL_TYPE_PM_STOPPED      6   /* Process model info  (stopped)*/
-#define NDRXD_CALL_TYPE_PM_RELERR       7   /* Reload error                 */
-#define NDRXD_CALL_TYPE_PM_PPM          8   /* Print process model          */
-#define NDRXD_CALL_TYPE_PM_SHM_PSVC     9   /* Print services from SHM      */
-#define NDRXD_CALL_TYPE_PM_SHM_PSRV     10  /* Print servers from SHM       */
-#define NDRXD_CALL_TYPE_BRIDGEINFO      11  /* Bridge info command          */
-#define NDRXD_CALL_TYPE_BRIDGESVCS      12  /* Bridge services command      */
-#define NDRXD_CALL_TYPE_BRBCLOCK        13  /* Bridge clock info            */
-#define NDRXD_CALL_TYPE_GETBRS          14  /* Get connected bridges        */
-#define NDRXD_CALL_TYPE_PQ              15  /* Response struct for `pq' cmd */
-#define NDRXD_CALL_TYPE_PE              16  /* Response struct for `pe' cmd */
+#define NDRXD_CALL_TYPE_GENERIC         0   /**< Generic call type        */
+#define NDRXD_CALL_TYPE_PM_INFO         1   /**< Process model info       */
+#define NDRXD_CALL_TYPE_SVCINFO         2   /**< Service info             */
+#define NDRXD_CALL_TYPE_PM_STARTING     3   /**< Process model info (starting process)*/
+#define NDRXD_CALL_TYPE_PM_STARTED      4   /**< Process model info  (started)*/
+#define NDRXD_CALL_TYPE_PM_STOPPING     5   /**< Process model info  (stop initiated)*/
+#define NDRXD_CALL_TYPE_PM_STOPPED      6   /**< Process model info  (stopped)*/
+#define NDRXD_CALL_TYPE_PM_RELERR       7   /**< Reload error                 */
+#define NDRXD_CALL_TYPE_PM_PPM          8   /**< Print process model          */
+#define NDRXD_CALL_TYPE_PM_SHM_PSVC     9   /**< Print services from SHM      */
+#define NDRXD_CALL_TYPE_PM_SHM_PSRV     10  /**< Print servers from SHM       */
+#define NDRXD_CALL_TYPE_BRIDGEINFO      11  /**< Bridge info command          */
+#define NDRXD_CALL_TYPE_BRIDGESVCS      12  /**< Bridge services command      */
+#define NDRXD_CALL_TYPE_BRBCLOCK        13  /**< Bridge clock info            */
+#define NDRXD_CALL_TYPE_GETBRS          14  /**< Get connected bridges        */
+#define NDRXD_CALL_TYPE_PQ              15  /**< Response struct for `pq' cmd */
+#define NDRXD_CALL_TYPE_PE              16  /**< Response struct for `pe' cmd */
+#define NDRXD_CALL_TYPE_APPCONFIG       17  /**< Response to appconfig command*/
 
-#define NDRXD_SRC_NDRXD                 0   /* Call source is daemon       */
-#define NDRXD_SRC_ADMIN                 1   /* Call source is admin utility*/
-#define NDRXD_SRC_SERVER                2   /* EnduroX server              */
-#define NDRXD_SRC_BRIDGE                3   /* EnduroX bridge server       */
+#define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
+#define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
+#define NDRXD_SRC_SERVER                2   /**< EnduroX server              */
+#define NDRXD_SRC_BRIDGE                3   /**< EnduroX bridge server       */
 
 /**
  * NDRXD flags/state:
  */
-#define NDRXD_STATE_CFG_OK      0x00000001	/* Configuration loaded       */
-#define NDRXD_STATE_SHUTDOWN	0x00000002	/* About to shutdown          */
-#define NDRXD_STATE_DOMSTART	0x00000004	/* Domain startup in progress */
-#define NDRXD_STATE_DOMSTARTED  0x00000008	/* Domain started             */
-#define NDRXD_STATE_SHUTDOWNED	0x00000010	/* Domain shutdowned          */
+#define NDRXD_STATE_CFG_OK      0x00000001  /**< Configuration loaded       */
+#define NDRXD_STATE_SHUTDOWN	0x00000002  /**< About to shutdown          */
+#define NDRXD_STATE_DOMSTART	0x00000004  /**< Domain startup in progress */
+#define NDRXD_STATE_DOMSTARTED  0x00000008  /**< Domain started             */
+#define NDRXD_STATE_SHUTDOWNED	0x00000010  /**< Domain shutdowned          */
     
 /**
  * Process state flags
@@ -263,20 +265,20 @@ extern "C" {
 /*
  *  values for bridge_refresh_svc_t.mode
  */
-#define BRIDGE_REFRESH_MODE_FULL        'F'       /* Full replacement arrived. */
-#define BRIDGE_REFRESH_MODE_DIFF        'D'       /* Contains diff +count or -count */
+#define BRIDGE_REFRESH_MODE_FULL        'F' /**< Full replacement arrived.      */
+#define BRIDGE_REFRESH_MODE_DIFF        'D' /**< Contains diff +count or -count */
 
 /*
  * Values for cmd_br_net_call_t.msg_type
  */
-#define BR_NET_CALL_MSG_TYPE_ATMI       'A' /* This is ATMI call                */
-#define BR_NET_CALL_MSG_TYPE_NOTIF      'N' /* This is ATMI, notif/broadcast    */
-#define BR_NET_CALL_MSG_TYPE_NDRXD      'X' /* This is EnduroX call             */
+#define BR_NET_CALL_MSG_TYPE_ATMI       'A' /**< This is ATMI call                */
+#define BR_NET_CALL_MSG_TYPE_NOTIF      'N' /**< This is ATMI, notif/broadcast    */
+#define BR_NET_CALL_MSG_TYPE_NDRXD      'X' /**< This is EnduroX call             */
 
-#define BR_NET_CALL_MAGIC               0x6A12CC51L /* Magic of the netcall  */
+#define BR_NET_CALL_MAGIC               0x6A12CC51L /**< Magic of the netcall  */
     
     
-#define PING_MAX_SEQ                    65536    /* Max sequence number of ping */
+#define PING_MAX_SEQ                    65536    /**< Max sequence number of ping */
     
     
 /* Data types describing bellow data structures */
@@ -299,9 +301,8 @@ extern "C" {
 #define EXF_MAX         13      /**< Maximum suported type */
 
 
-#define PQ_LEN                  12        /* The len of last print queue data */
-    
-#define EX_ENV_MAX              4096        /* max env name/value size */          
+#define PQ_LEN                  12        /**< The len of last print queue data */    
+#define EX_ENV_MAX              4096      /**< max env name/value size */          
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -426,6 +427,16 @@ typedef struct
 } command_setenv_t;
 
 /**
+ * Configure appconfig, dynamically
+ */
+typedef struct
+{
+    command_call_t call;            /**< Standard command call              */
+    char setting[MAXTIDENT+1];      /**< Setting name                       */
+    char svalue[MAXTIDENT+1];       /**< Request/Response value             */
+} command_appconfig_t;
+
+/**
  * Dynamic un/advertise structure
  */
 typedef struct
@@ -531,6 +542,17 @@ typedef struct
 } cmd_br_net_call_t;
 
 /***************** List of reply types/subtypes ***************************/
+
+
+/**
+ * Reply command of the appconfig
+ */
+typedef struct
+{
+    command_reply_t rply;           /**< Reply record                       */
+    char setting[MAXTIDENT+1];      /**< Setting name                       */
+    char svalue[MAXTIDENT+1];       /**< Request/Response value             */
+} command_reply_appconfig_t;
 
 /**
  * Reply for start/stop processing...
@@ -681,7 +703,7 @@ typedef struct
     char nodes[CONF_NDRX_NODEID_COUNT+1];
 } command_reply_getbrs_t;
 
-/*
+/**
  * Packet for print environment (limited to: FILENAME_MAX)
  */
 typedef struct

@@ -63,10 +63,10 @@ expublic void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
     *send_size += (sizeof(command_reply_reload_t) - sizeof(command_reply_t));
 
     if (NULL!=params->mod_param1)
-        strcpy(err_info->old_binary, params->mod_param1);
+        NDRX_STRCPY_SAFE(err_info->old_binary, params->mod_param1);
 
     if (NULL!=params->mod_param3)
-        strcpy(err_info->new_binary, params->mod_param3);
+        NDRX_STRCPY_SAFE(err_info->new_binary, params->mod_param3);
 
     err_info->error = params->param2;
     err_info->srvid = (int)params->param4;
