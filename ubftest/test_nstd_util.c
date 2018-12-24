@@ -206,8 +206,8 @@ Ensure(test_nstd_args)
     
     errbuf[0] = EXEOS;
     assert_equal(ndrx_args_loader_set(M_args_test_map, &test_val, 
-        "not_exists", "y", errbuf, sizeof(errbuf)), EXFALSE);
-    assert_string_equal(errbuf, "");
+        "not_exists", "y", errbuf, sizeof(errbuf)), EXFAIL);
+    assert_string_not_equal(errbuf, "");
     
     
     /* read values again and test... */
