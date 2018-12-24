@@ -284,6 +284,17 @@ COMMANDS
     regular regular expression that must be matched. If none of these arguments
     are passed, then no filtering is done and max output is done (except the
     xadmin by it self).
+*appconfig* SETTING [NEWVALUE]::
+    Change *ndrxconfig.xml(5)* "appconfig" section arguments dynamically for the
+    process running. Settings available for changing are *sanity*, *checkpm*, 
+    *brrefresh*, *restart_min*, *restart_step*, *restart_max*, 
+    *restart_to_check*, *gather_pq_stats* and *rqaddrttl*. For their descriptions
+    and possible values see *ndrxconfig.xml(5)* manpage. The syntax for command
+    is that if *NEWVALUE* is not provided, then current value is printed. If
+    *NEWVALUE* is provided, then value is changed and new value is printed to
+    stdout. *ndrxd* must be running (or will be started in idle state). Note
+    that configuration must be loaded in order to have non-error output from
+    command.
 
 CONFIGURATION
 -------------

@@ -370,6 +370,8 @@ extern int NDRXD_is_error(void);
 extern void NDRXD_append_error_msg(char *msg);
 extern int * _ndrxd_getNDRXD_errno_addr (void);
 extern char * ndrxd_strerror (int err);
+extern char * NDRXD_error_res_get(int **error_code_ptr, int *errbufsz);
+
 #define ndrxd_errno	(*_ndrxd_getNDRXD_errno_addr())
 
 /* Advertise & unadvertise */

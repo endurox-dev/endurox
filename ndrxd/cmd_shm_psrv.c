@@ -73,7 +73,7 @@ expublic void shm_psrv_reply_mod(command_reply_t *reply, size_t *send_size, mod_
     /* Copy data to reply structure */
     shm_psrv_info->last_call_flags = p_shm->last_call_flags;
     shm_psrv_info->last_command_id = p_shm->last_command_id;
-    strcpy(shm_psrv_info->last_reply_q, p_shm->last_reply_q);
+    NDRX_STRCPY_SAFE(shm_psrv_info->last_reply_q, p_shm->last_reply_q);
     shm_psrv_info->slot = params->param2;
     shm_psrv_info->srvid =p_shm->srvid; 
     shm_psrv_info->status = p_shm->status;

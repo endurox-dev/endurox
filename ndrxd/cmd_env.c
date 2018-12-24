@@ -152,7 +152,7 @@ static int cmd_set_common (command_call_t * call, char *data, size_t len, int co
         userlog("No = in env value [%s]", envcall->env);
         NDRX_LOG(log_error, "No = in env value [%s]", envcall->env);
         
-        sprintf(errmsg, "Invalid argument");
+        snprintf(errmsg, sizeof(errmsg), "Invalid argument");
         err_ret = NDRXD_EINVAL;
         
         EXFAIL_OUT(ret);
@@ -176,7 +176,7 @@ static int cmd_set_common (command_call_t * call, char *data, size_t len, int co
             NDRX_LOG(log_error, "unsetenv failed for [%s]: %s", envcall->env, strerror(err));
             
             
-            sprintf(errmsg, "unsetenv() failed: %.200s", strerror(err));
+            snprintf(errmsg, sizeof(errmsg), "unsetenv() failed: %.200s", strerror(err));
             
             EXFAIL_OUT(ret);
         }
@@ -188,7 +188,7 @@ static int cmd_set_common (command_call_t * call, char *data, size_t len, int co
         userlog("setenv failed for [%s]: %s", envcall->env, strerror(err));   
         NDRX_LOG(log_error, "setenv failed for [%s]: %s", envcall->env, strerror(err));
         
-        sprintf(errmsg, "setenv() failed: %.200s", strerror(err));
+        snprintf(errmsg, sizeof(errmsg), "setenv() failed: %.200s", strerror(err));
         EXFAIL_OUT(ret);
     }
     
