@@ -394,6 +394,8 @@ released with 6.0.1.
 - Version 6.0.3 released on 16/12/2018 (development) Bug #364, Bug #360. 
 Added new command "ps" for xadmin, so that unit tests have unified access to 
 processing listings across all supported OSes.
+
+- Version 6.0.5 released on 24/12/2018 (development) Feature #366
 	
 # Build configurations
 

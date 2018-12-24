@@ -94,8 +94,15 @@ xadmin start -y || go_out 1
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 echo "Sleeping 90..."
-sleep 90
+sleep 60
 RET=0
+
+echo "Terminate sanity checks of ndrxd...."
+
+xadmin appconfig sanity 99999
+
+echo "Sleep 20... let last sanity check to finish up..."
+sleep 30
 
 echo "Print the list of ndrxd's running ... "
 
