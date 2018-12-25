@@ -276,6 +276,10 @@ extern int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 extern int cmd_appconfig(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int appconfig_rsp_process(command_reply_t *reply, size_t reply_len);
 
+/* dping: */
+extern int cmd_dping(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+
 #ifdef	__cplusplus
 }
 #endif

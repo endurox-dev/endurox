@@ -139,7 +139,6 @@ extern "C" {
 #define NDRXD_COM_XAPQ_RQ           56   /**< xadmin print service queue, req   */
 #define NDRXD_COM_XAPQ_RP           57   /**< xadmin print service queue, resp  */
     
-    
 #define NDRXD_COM_PE_RQ             58   /**< xadmin print env, req             */
 #define NDRXD_COM_PE_RP             59   /**< xadmin print env, resp            */
     
@@ -154,8 +153,11 @@ extern "C" {
     
 #define NDRXD_COM_APPCONFIG_RQ      66   /**< ndrxd appconfig, req, internal    */
 #define NDRXD_COM_APPCONFIG_RP      67   /**< ndrxd appconfig, rsp, internal    */
+    
+#define NDRXD_COM_DPING_RQ          68   /**< tprecover ndrxd ping, req, int    */
+#define NDRXD_COM_DPING_RP          69   /**< tprecover ndrxd ping, req, int    */
 
-#define NDRXD_COM_MAX               67
+#define NDRXD_COM_MAX               69
 
 /* Command contexts */
 #define NDRXD_CTX_ANY               -1   /**< Any context...                    */
@@ -208,6 +210,7 @@ extern "C" {
 #define NDRXD_CALL_TYPE_PQ              15  /**< Response struct for `pq' cmd */
 #define NDRXD_CALL_TYPE_PE              16  /**< Response struct for `pe' cmd */
 #define NDRXD_CALL_TYPE_APPCONFIG       17  /**< Response to appconfig command*/
+#define NDRXD_CALL_TYPE_DPING           18  /**< NDRXD ping response type     */
 
 #define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
@@ -543,6 +546,17 @@ typedef struct
 
 /***************** List of reply types/subtypes ***************************/
 
+
+/**
+ * This is used only for ndrxd responses
+ * reply struct to ndrxd pings...
+ */
+typedef struct
+{
+    command_reply_t rply;           /**< Reply record                       */
+    int srvid;                      /**< server ID to be pinged             */
+    int seq;                        /**< sequence number in ping            */
+} command_reply_srvping_t;
 
 /**
  * Reply command of the appconfig
