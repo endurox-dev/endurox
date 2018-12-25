@@ -398,6 +398,12 @@ cmd_mapping_t M_command_map[] =
                 "\t\t rqaddrttl\tNumber of seconds for System V Request Address\n"
                     "\t\t\tto live with out servers"
                 , NULL},
+    {"dping", cmd_dping,EXFAIL,                1,  2,  1,  
+                "List processes\n"
+                "\tUsage: dping [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -c\tNumber of pings (default 4)"
+                , NULL}
 };
 
 /*
