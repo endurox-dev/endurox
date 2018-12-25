@@ -68,7 +68,7 @@ expublic int readv_request(int srvid, char *svc)
     p_pm = G_process_model_hash[srvid];
     
     /*Fill some details for readvertise*/
-    strcpy(call_srv.svc_nm, svc);
+    NDRX_STRCPY_SAFE(call_srv.svc_nm, svc);
     
     /* Call the server */
     ret = cmd_generic_call(NDRXD_COM_NXDREADV_RQ, NDRXD_SRC_ADMIN,

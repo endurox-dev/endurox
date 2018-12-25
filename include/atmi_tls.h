@@ -53,6 +53,8 @@ extern "C" {
     
 #define ATMI_TLS_ENTRY  if (NDRX_UNLIKELY(NULL==G_atmi_tls)) \
     {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(NULL, EXTRUE, EXTRUE);};
+    
+#define NDRX_NDRXD_PING_SEQ_MAX         32000 /**< max ping sequence to reset */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -136,6 +138,8 @@ typedef struct
     void (*p_unsol_handler) (char *data, long len, long flags);
     
     TPINIT client_init_data;
+    
+    int ndrxd_ping_seq;     /**< NDRXD daemon ping sequence sent */
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/

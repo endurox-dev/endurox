@@ -156,8 +156,9 @@ command_map_t M_command_map [] =
     {NDRXD_COM_SRELOADI_RQ,cmd_sreloadi,       "sreloadi",  ",0,", 0,NDRXD_CTX_START},
     {NDRXD_COM_SRELOADI_RP,cmd_dummy,          "sreloadi",  ",0,", 0,NDRXD_CTX_START},
     {NDRXD_COM_APPCONFIG_RQ,cmd_appconfig,     "appconfig",  ",-1,", 0,NDRXD_CTX_NOCHG},
-    {NDRXD_COM_APPCONFIG_RP,cmd_dummy,         "appconfig",  ",-1,", 0,NDRXD_CTX_NOCHG}
-    
+    {NDRXD_COM_APPCONFIG_RP,cmd_dummy,         "appconfig",  ",-1,", 0,NDRXD_CTX_NOCHG},
+    {NDRXD_COM_DPING_RQ,    cmd_dping,         "dping",  ",-1,", 0,NDRXD_CTX_NOCHG},
+    {NDRXD_COM_DPING_RP,    cmd_dummy,         "dping",  ",-1,", 0,NDRXD_CTX_NOCHG}
 };
 
 /**

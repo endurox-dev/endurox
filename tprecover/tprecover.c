@@ -58,7 +58,19 @@ extern char *optarg;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 static long M_restarts = 0;
-static long M_check = 5; /* defaulted to 5 sec */
+static long M_check = 5; /**< defaulted to 5 sec */
+/**
+ * ping timeout... (seconds to wait for ping) 
+ * WARNING ! As the process will be blocked in this time
+ * the backpings from ndrxd may stall too. Thus check ndrxconfig.xml *ping_max*
+ * setting, as ndrxd might kill the tprecover in this time.
+ * But usually ndrxd shall be fast to respond, thus ping timeout to 20 should
+ * be fine.
+ */
+static int M_ping_tout = 20;
+static int M_ping_max = 3; /**< max ping attempts with out success to kill ndrxd */
+
+static int M_bad_pings = 0; /**< bad pings reset at exec */
 /*---------------------------Prototypes---------------------------------*/
 int start_daemon_recover(void);
 
@@ -103,10 +115,14 @@ expublic int poll_timer(void)
         {
            EXFAIL_OUT(ret);
         }
+        
+        M_bad_pings = 0;
     }
     else
     {
-        /* todo: might want to check for queue... */
+        /* todo: perform ping of ndrxd... */
+        
+        
         NDRX_LOG(log_debug, "ndrxd process ok");
     }
 
@@ -201,6 +217,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "check (-c): %d", 
                         M_check);
                 break;
+            case 't':
+                M_ping_tout = atoi(optarg);
+                break;
+            case 'm':
+                M_ping_max = atoi(optarg);
+                break;
             default:
                 NDRX_LOG(log_error, "Unknown param %c - 0x%x", c, c);
 		EXFAIL_OUT(ret);
@@ -212,6 +234,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 
     /* Register timer check.... */
     NDRX_LOG(log_warn, "Config: ndrxd check time: %d sec", M_check);
+    NDRX_LOG(log_warn, "Config: ndrxd ping timeout: %d sec", M_ping_tout);
+    NDRX_LOG(log_warn, "Config: max pings for kill ndrxd: %d", M_ping_max);
+    
     if (EXSUCCEED!=tpext_addperiodcb((int)M_check, poll_timer))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
