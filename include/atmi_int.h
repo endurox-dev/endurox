@@ -872,6 +872,8 @@ extern NDRX_API void ndrx_down_userres(void);
 extern NDRX_API int ndrx_killall(char *mask);
 extern NDRX_API int ndrx_q_exists(char *qpath);
 extern NDRX_API int ndrx_get_cached_svc_q(char *q);
+extern NDRX_API int ndrx_ndrxd_ping(int *p_seq, long *p_time_msec,
+                    mqd_t listen_q, char * listen_q_str);
 
 /* Access to symbols: */
 

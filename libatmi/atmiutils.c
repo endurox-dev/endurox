@@ -597,7 +597,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
 
             ret=EXFAIL;
             goto out;
-        }
+        } /* even's are requests... */
         else if (test_call->command % 2 == 0 && NULL!=p_rply_request)
         {
             if (EXSUCCEED!=p_rply_request(msg_buffer_max, reply_len))
