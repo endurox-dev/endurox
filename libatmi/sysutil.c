@@ -1084,7 +1084,7 @@ expublic int ndrx_ndrxd_ping(int *p_seq, long *p_time_msec,
                         0,
                         NULL);
     
-   *p_time_msec = ndrx_stopwatch_get_delta_sec(&tim);
+   *p_time_msec = ndrx_stopwatch_get_delta(&tim);
    
 out:
       
