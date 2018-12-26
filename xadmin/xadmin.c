@@ -372,15 +372,17 @@ cmd_mapping_t M_command_map[] =
     {"pmode",     cmd_pmode,EXFAIL,             1,  1,  0, 
                 "Print Enduro/X build environment (ndrx_config.h)"
                 , NULL},
-    {"ps",        cmd_ps,EXFAIL,                0,  5,  0, 
+    {"ps",        cmd_ps,EXFAIL,                0,  7,  0, 
                 "List processes\n"
                 "\tUsage: ps [OPTION]...\n"
                 "\tOptional arguments: \n"
-                "\t\t -a\tFirst filter (grep style)\n"
-                "\t\t -b\tSecond filter\n"
-                "\t\t -c\tThird filter\n"
-                "\t\t -d\tForth filter\n"
-                "\t\t -r\tPosix regexp filter"
+                "\t\t -a FILTER1\tFirst filter (grep style)\n"
+                "\t\t -b FILTER2\tSecond filter\n"
+                "\t\t -c FILTER3\tThird filter\n"
+                "\t\t -d FILTER4\tForth filter\n"
+                "\t\t -r FILTER_REX\tPosix regexp filter\n"
+                "\t\t -p\tPrint PIDs only\n"
+                "\t\t -x PID\tExclude specific pid"
                 , NULL},
     {"appconfig", cmd_appconfig,  NDRXD_COM_APPCONFIG_RQ,    1,  2,  1, 
                 "Change/get ndrxd application cfg dynamically\n"
@@ -403,6 +405,13 @@ cmd_mapping_t M_command_map[] =
                 "\tUsage: dping [OPTION]...\n"
                 "\tOptional arguments: \n"
                 "\t\t -c\tNumber of pings (default 4)"
+                , NULL},
+    {"dpid", cmd_dpid,EXFAIL,                1,  1,  1,  
+                "Print ndrxd PID from pid file"
+                , NULL},
+    {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,              1,  1,  1,  
+                "Put ndrxd in sleep (disable activity for time period), for debug\n"
+                "\tUsage: dsleep SLEEP_SECONDS\n"
                 , NULL}
 };
 
@@ -491,7 +500,11 @@ gencall_args_t G_call_args[] =
     {NDRXD_COM_SRELOADI_RQ,    NULL,        NULL,         EXFALSE},/*64*/
     {NDRXD_COM_SRELOADI_RP,    NULL,        NULL,         EXFALSE},/*65*/
     {NDRXD_COM_SRELOAD_RQ,appconfig_rsp_process, simple_output,EXTRUE},/*66*/
-    {NDRXD_COM_SRELOAD_RP,    NULL,           NULL,        EXFALSE}/*67*/
+    {NDRXD_COM_SRELOAD_RP,    NULL,           NULL,       EXFALSE},/*67*/
+    {NDRXD_COM_DPING_RQ,    NULL, simple_output,          EXTRUE},/*68*/
+    {NDRXD_COM_DPING_RP,    NULL,           NULL,         EXFALSE},/*69*/
+    {NDRXD_COM_DSLEEP_RQ,    NULL, simple_output,          EXTRUE},/*70*/
+    {NDRXD_COM_DSLEEP_RP,    NULL,           NULL,         EXFALSE}/*71*/
 };
 
 /**

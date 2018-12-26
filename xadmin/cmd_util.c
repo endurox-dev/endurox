@@ -70,6 +70,8 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     char flt_c[PATH_MAX/4]={EXEOS};
     char flt_d[PATH_MAX/4]={EXEOS};
     char flt_r[PATH_MAX/4]={EXEOS};
+    long pid_x = EXFAIL;
+    short pid_only = EXFALSE;
     pid_t me = getpid();
     pid_t they;
     
@@ -88,6 +90,10 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Filter D (grep style)"},
         {'r', BFLD_STRING, (void *)flt_r, sizeof(flt_r), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Posix regexp"},
+        {'p', BFLD_SHORT,  (void *)&pid_only, sizeof(pid_only), 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Print pid only"},
+        {'x', BFLD_LONG,   (void *)&pid_x, sizeof(pid_x), 
+                                NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Exclude pid"},
         {0}
     };
     
@@ -109,12 +115,25 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
             if (EXSUCCEED==ndrx_proc_pid_get_from_ps(proc->qname, &they))
             {
                 /* will not print our selves... as usually not needed */
-                if (me!=they)
+                
+                if (EXFAIL!=pid_x && (int)pid_x==they)
                 {
-                    printf("%s\n", proc->qname);
+                    /* Exclude pid... */
+                    NDRX_LOG(log_debug, "Exclude %d", (int)they);
+                }
+                else if (me!=they)
+                {
+                    if (pid_only)
+                    {
+                        printf("%d\n", (int)they);
+                    }
+                    else
+                    {
+                        printf("%s\n", proc->qname);
+                    }
                 }
             }
-            else
+            else if (!pid_only)
             {
                 /* do not show our selves (our pid here) */
                 printf("%s\n", proc->qname);

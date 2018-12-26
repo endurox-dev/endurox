@@ -275,7 +275,7 @@ COMMANDS
 *pmode*::
     Prints technical information about Enduro/X build mode 
     (basically ndrx_config.h).
-*ps* [-a filter] [-b filter] [-c filter] [-d filter] [-r regexpfilter]::
+*ps* [-a filter] [-b filter] [-c filter] [-d filter] [-r regexpfilter] [-p] [x pid]::
     Print running processes in system with command line arguments. This is similar
     to *ps -ef* in Linux or equivalents on other Operating Systems. Enduro/X
     *ps* command does not print the *xadmin* process, it is filtered out by
@@ -283,7 +283,8 @@ COMMANDS
     be substring for the the ps output (i.e. basic grep). The *-r* argument is
     regular regular expression that must be matched. If none of these arguments
     are passed, then no filtering is done and max output is done (except the
-    xadmin by it self).
+    xadmin by it self). To enable printing PID only, use *-p* argument. To exclude
+    particular PID from printing, use *-x* argument.
 *appconfig* SETTING [NEWVALUE]::
     Change *ndrxconfig.xml(5)* "appconfig" section arguments dynamically for the
     process running. Settings available for changing are *sanity*, *checkpm*, 
@@ -295,6 +296,12 @@ COMMANDS
     stdout. *ndrxd* must be running (or will be started in idle state). Note
     that configuration must be loaded in order to have non-error output from
     command.
+*dping* [-c <loops>]::
+    Perform ndrxd pings By default 4 loops are done, but this can be overridden
+    by -c argument.
+*dsleep* SLEEP_SEC::
+    Put ndrxd in sleep mode, this is useful for debugging. Number of seconds to
+    sleep are denoted in *SLEEP_SEC* argument.
 
 CONFIGURATION
 -------------
