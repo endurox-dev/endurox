@@ -16,13 +16,41 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This is special ATMI system process which is started in standard way by
-'ndrxd' process application server boot. This service shall be run in single
+*ndrxd(8)* process application server boot. This service shall be run in single
 instance (min=1 and max=1). The process performs monitoring of the
-'ndrxd' executable. If it sees that 'ndrxd' process is dead, then
-it will start a new copy of 'ndrxd', which initially is put in recovery mode.
+*ndrxd* executable. Two checks at intervals are performed:
+
+1. Check is PID exists.
+
+2. Check the ping response from *ndrxd*
+
+If number of checks overreaches max pings setting, the *ndrxd* is killed by -9
+signal (if it was running), and then process is respawned.*tprecover* will start 
+a new copy of 'ndrxd', which initially is put in recovery mode.
 During recovery mode 'ndrxd' requests all running servers information about their
 services. Once learning mode is completed 'ndrxd' will start to do sanity works, pings
 and other processes to keep the system in order.
+
+*NOTE:* as pings and performed at intervals and *ndrxd* might be very busy (not
+a usual case), the careful calculation of ping timeout should be made, because
+*ndrxd* is doing back pings to *tprecover* process. Thus if *tprecover* waits
+for ping response for too long time, the ndrxd might kill the *tprecover* by
+it self. These settings are controlled in *ndrxconfig.xml(5)*, settings
+*<ping_time>* and *<ping_max>*.
+
+OPTIONS
+-------
+[*-c* 'CHECK_PERIOD']::
+This setting denotes how often to perform *ndrxd* availability checks. Number
+of seconds. The default value is *5*.
+
+[*-t* 'PING_TOUT']::
+Number of seconds to wait for *ndrxd* to respond to ping requests. The default
+value is *20*.
+
+[*-m* 'PING_MAX']::
+Max number of failed attempts of process existence tests or bad ping responses.
+If the number if overreached, the *ndrxd* gets killed and respawned.
 
 EXIT STATUS
 -----------
@@ -38,7 +66,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxconfig.xml(5)*
+*ndrxconfig.xml(5)* *ndrxd(8)*
 
 COPYING
 -------
