@@ -52,3 +52,7 @@ xadmin/gen_go_server.c
 xadmin/gen_ubf_tab.c
 xadmin/provision.c
 /dist/
+atmitest/test056_tpimpexp/t56.V
+atmitest/test056_tpimpexp/t56.h
+xadmin/gen_test_local.c
+xadmin/ndrx_config.c
