@@ -47,34 +47,10 @@
 #include <atmi_shm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define OFSZ(s,e)   EXOFFSET(s,e), EXELEM_SIZE(s,e)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-
-
-#define NDRX_ARGS_BOOL                  1     /**< boolean type               */
-#define NDRX_ARGS_INT                   2     /**< integer type               */
-#define NDRX_ARGS_STRING                3     /**< string type                */
-
-/**
- * Config field mappings
- */
-static ndrx_args_loader_t M_appcfg_map[] = 
-{
-    {OFSZ(config_t,sanity),         "sanity",           NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,checkpm),        "checkpm",          NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,brrefresh),      "brrefresh",        NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,restart_min),    "restart_min",      NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,restart_step),   "restart_step",     NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,restart_max),    "restart_max",      NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,restart_to_check),"restart_to_check",NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {OFSZ(config_t,gather_pq_stats), "gather_pq_stats", NDRX_ARGS_BOOL, 0, 0, 0, 0},
-    {OFSZ(config_t,rqaddrttl),      "rqaddrttl",        NDRX_ARGS_INT, 0, 0, 0, INT_MAX},
-    {EXFAIL}
-};
-
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -95,7 +71,8 @@ expublic void dping_reply_mod(command_reply_t *reply, size_t *send_size,
     rply->seq = req->seq;
     rply->srvid = req->srvid;
     
-    NDRX_LOG(log_debug, "magic: %ld", rply->rply.magic);
+    NDRX_LOG(log_debug, "magic: %ld reply ping seq %d", 
+            rply->rply.magic, rply->seq);
 }
 
 /**
@@ -121,8 +98,33 @@ expublic int cmd_dping (command_call_t * call, char *data, size_t len,
     }
     
 out:
-    NDRX_LOG(log_warn, "cmd_appconfig returns with status %d", ret);
+    NDRX_LOG(log_warn, "cmd_dping returns with status %d", ret);
     return ret;
+}
+
+/**
+ * Put ndrxd to sleep, reply first
+ * @param args
+ * @return
+ */
+expublic int cmd_dsleep (command_call_t * call, char *data, size_t len, 
+        int context)
+{
+    int ret=EXSUCCEED;
+    command_dsleep_t *dsleepcall = (command_dsleep_t *)call;
+    
+out:
+    if (EXSUCCEED!=simple_command_reply(call, ret, 0L, NULL, NULL, 0L, 0, NULL))
+    {
+        userlog("Failed to send reply back to [%s]", call->reply_queue);
+    }
+
+    NDRX_LOG(log_warn, "cmd_set returns with status %d, about to sleep: %d", 
+            ret, dsleepcall->secs);
+    
+    sleep(dsleepcall->secs);
+    
+    return EXSUCCEED; /* Do not want to break the system! */
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

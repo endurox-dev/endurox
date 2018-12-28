@@ -145,6 +145,41 @@ expublic int ndrx_chk_ndrxd(void)
 }
 
 /**
+ * Return PID of ndrxd
+ * @return PID of ndrxd or EXFAIL
+ */
+expublic pid_t ndrx_ndrxd_pid_get(void)
+{
+    pid_t ret = EXFAIL;
+    FILE *f = NULL;
+    char    pidbuf[64] = {EXEOS};
+    
+     if (NULL==(f=NDRX_FOPEN(G_atmi_env.ndrxd_pidfile, "r")))
+    {
+        NDRX_LOG(log_error, "Failed to open ndrxd PID file: [%s]: %s",
+                G_atmi_env.ndrxd_pidfile, strerror(errno));
+        
+        goto out;
+    }
+
+     /* Read the PID */
+    if (NULL==fgets(pidbuf, sizeof(pidbuf), f))
+    {
+        NDRX_LOG(log_error, "Failed to read from PID file: [%s]: %s",
+                G_atmi_env.ndrxd_pidfile, strerror(errno));
+        goto out;
+    }
+    ret = atoi(pidbuf);
+    
+out:
+    
+    NDRX_FCLOSE(f);
+    f = NULL;
+    
+    return ret;
+}
+
+/**
  * Prase client queue
  * @param pfx
  * @param proc
@@ -1001,7 +1036,7 @@ exprivate int ndrx_ndrxd_ping_rsp(command_reply_t *reply, size_t reply_len)
                 "got %d -> wait next",
                 NDRXD_COM_DPING_RP, reply->command);
         
-        reply->flags!=NDRXD_CALL_FLAGS_RSPHAVE_MORE;
+        reply->flags|=NDRXD_CALL_FLAGS_RSPHAVE_MORE;
         goto out;
     }
     else if (reply_len != sizeof(command_reply_srvping_t))
@@ -1020,7 +1055,7 @@ exprivate int ndrx_ndrxd_ping_rsp(command_reply_t *reply, size_t reply_len)
         NDRX_LOG(log_error, "ndrxd ping reply out of sequence, expected: %d, "
                 "got %d -> wait next",
                 G_atmi_tls->ndrxd_ping_seq, ping_reply->seq);
-        reply->flags!=NDRXD_CALL_FLAGS_RSPHAVE_MORE;
+        reply->flags|=NDRXD_CALL_FLAGS_RSPHAVE_MORE;
         goto out;
     }
     else
@@ -1053,6 +1088,8 @@ expublic int ndrx_ndrxd_ping(int *p_seq, long *p_time_msec,
     /* perform TLS entry */
     ATMI_TLS_ENTRY;
     
+    memset(&req, 0, sizeof(req));
+    
     G_atmi_tls->ndrxd_ping_seq++;
     
     if (NDRX_NDRXD_PING_SEQ_MAX < G_atmi_tls->ndrxd_ping_seq)
@@ -1061,10 +1098,16 @@ expublic int ndrx_ndrxd_ping(int *p_seq, long *p_time_msec,
     }
     
     *p_seq = G_atmi_tls->ndrxd_ping_seq;
+    req.seq = G_atmi_tls->ndrxd_ping_seq;
     
     ndrx_stopwatch_reset(&tim);
     
-    memset(&req, 0, sizeof(req));
+    /* we need the listen_q blocked */
+    if (EXSUCCEED!=ndrx_q_setblock(listen_q, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to set [%s] Q to blocked", listen_q_str);
+        EXFAIL_OUT(ret);
+    }
     
     ret=cmd_generic_bufcall(NDRXD_COM_DPING_RQ, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,

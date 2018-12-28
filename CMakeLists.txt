@@ -433,7 +433,8 @@ elseif (EXISTS /etc/os-release)
         LSB_RELEASE_OUTPUT_OS)
         string(REPLACE " " "_" LSB_RELEASE_OUTPUT_OS ${LSB_RELEASE_OUTPUT_OS})
 
-        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d '\"' -f2"
+        # fixes for CentOs 7.1810, having something like "7 (Core)" in output.
+        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d ' ' -f1 | cut -d '\"' -f2"
                 OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})

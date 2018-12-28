@@ -61,6 +61,64 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Put ndrxd in sleep for certain period of time (used for debugging).
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @param p_have_next
+ * @return 
+ */
+expublic int cmd_dsleep(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    int ret = EXSUCCEED;
+    command_dsleep_t call;
+    
+    memset(&call, 0, sizeof(call));
+    
+    call.secs = atoi(argv[1]);
+    
+    ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
+                    NDRXD_CALL_TYPE_DSLEEP,
+                    (command_call_t *)&call, sizeof(call),
+                    G_config.reply_queue_str,
+                    G_config.reply_queue,
+                    G_config.ndrxd_q,
+                    G_config.ndrxd_q_str,
+                    argc, argv,
+                    p_have_next,
+                    G_call_args,
+                    EXFALSE,
+                    G_config.listcall_flags);
+    
+out:
+    return ret;    
+}
+
+/**
+ * Print NDRXD pid number (from file)
+ * @param p_cmd_map
+ * @param argc
+ * @param argv
+ * @param p_have_next
+ * @return 
+ */
+expublic int cmd_dpid(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    pid_t pid;
+    int ret = EXSUCCEED;
+    
+    if (EXFAIL==(pid = ndrx_ndrxd_pid_get()))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    fprintf(stdout, "%d\n", pid);
+    
+out:
+    return ret;
+    
+}
+/**
  * Perform ndrxd ping
  * @param p_cmd_map
  * @param argc
@@ -98,7 +156,6 @@ expublic int cmd_dping(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     
     for (i=0; i<loops; i++)
     {
-        NDRX_LOG(log_error, "YOPT ===> %p", G_config.reply_queue);
         if (EXSUCCEED!=ndrx_ndrxd_ping(&seq, &tim, G_config.reply_queue, 
                 G_config.reply_queue_str))
         {

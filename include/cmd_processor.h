@@ -147,6 +147,9 @@ extern int cmd_appconfig (command_call_t * call, char *data, size_t len,
 extern int cmd_dping (command_call_t * call, char *data, size_t len, 
         int context);
 
+extern int cmd_dsleep (command_call_t * call, char *data, size_t len, 
+        int context);
+
 #ifdef	__cplusplus
 }
 #endif

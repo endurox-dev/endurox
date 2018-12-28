@@ -84,6 +84,9 @@ function go_out {
 }
 
 rm *dom*.log
+
+ulimit -c unlimited
+
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
@@ -107,6 +110,7 @@ sleep 30
 echo "Print the list of ndrxd's running ... "
 
 xadmin ps -a ndrxd -b $NDRX_RNDK
+DPID=`xadmin dpid`
 
 PROCS=`xadmin ps -a ndrxd -b $NDRX_RNDK | wc | awk '{print $1}'`
 
@@ -114,6 +118,17 @@ echo "Got number of ndrxd's: $PROCS"
 
 if [[ "X$PROCS" != "X1" ]]; then
     echo "Number of 'ndrxd' daemons is not 1, but $PROCS - FAIL"
+
+    echo "Making core dumps of any extra ndrxds..."
+
+    IFS=$'\n'       # make newlines the only separator
+    CORES=`xadmin ps -a ndrxd -b $NDRX_RNDK -p -x $DPID`
+    for c in $CORES; do
+        echo "Generate core for PID=$c"
+        kill -11 $c
+        break
+    done
+
     go_out -1
 fi
 
