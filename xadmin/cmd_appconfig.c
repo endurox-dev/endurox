@@ -87,6 +87,8 @@ expublic int cmd_appconfig(cmd_mapping_t *p_cmd_map, int argc, char **argv, int 
     int ret=EXSUCCEED;
     command_appconfig_t call;
     
+    memset(&call, 0, sizeof(call));
+    
     NDRX_STRCPY_SAFE(call.setting, argv[1]);
     
     if (argc==3)
