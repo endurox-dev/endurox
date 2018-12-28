@@ -277,7 +277,9 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     
 
 /**
- * List processes by filters
+ * List processes by filters.
+ * NOTE! Possibly might return empty results if OS have issues with forking,
+ * i.e. limits... etc.
  * @param filter1 - match the string1
  * @param filter2 - match the string2
  * @param filter3 - match the string3
@@ -333,9 +335,7 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     fp = popen(cmd, "r");
     if (fp == NULL)
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
-#endif
+        userlog("failed to run command [%s]: %s", cmd, strerror(errno));
         goto out;
     }
     

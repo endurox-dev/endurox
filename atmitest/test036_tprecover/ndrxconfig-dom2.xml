@@ -60,6 +60,7 @@
             <max>1</max>
             <srvid>1</srvid>
             <sysopt>-e ${TESTDIR}/tprecover-dom2.log -r</sysopt>
+            <appopt>-c1 -t1 -m3</appopt>
         </server>
         <server name="atmisv36">
             <min>10</min>

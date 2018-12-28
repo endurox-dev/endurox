@@ -198,6 +198,11 @@ out:
             }
         }
     }
+    else if ((mqd_t)EXFAIL!=G_config.ndrxd_q)
+    {
+        ndrx_mq_close(G_config.ndrxd_q);
+        G_config.ndrxd_q=(mqd_t)EXFAIL;
+    }
     return ret;
 }
 
