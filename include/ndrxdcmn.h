@@ -156,8 +156,11 @@ extern "C" {
     
 #define NDRXD_COM_DPING_RQ          68   /**< tprecover ndrxd ping, req, int    */
 #define NDRXD_COM_DPING_RP          69   /**< tprecover ndrxd ping, req, int    */
+    
+#define NDRXD_COM_DSLEEP_RQ         70   /**< tprecover ndrxd ping, req, int    */
+#define NDRXD_COM_DSLEEP_RP         71   /**< tprecover ndrxd ping, req, int    */
 
-#define NDRXD_COM_MAX               69
+#define NDRXD_COM_MAX               71
 
 /* Command contexts */
 #define NDRXD_CTX_ANY               -1   /**< Any context...                    */
@@ -211,6 +214,7 @@ extern "C" {
 #define NDRXD_CALL_TYPE_PE              16  /**< Response struct for `pe' cmd */
 #define NDRXD_CALL_TYPE_APPCONFIG       17  /**< Response to appconfig command*/
 #define NDRXD_CALL_TYPE_DPING           18  /**< NDRXD ping response type     */
+#define NDRXD_CALL_TYPE_DSLEEP          19  /**< Put NDRXD in sleep mode      */
 
 #define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
@@ -438,6 +442,16 @@ typedef struct
     char setting[MAXTIDENT+1];      /**< Setting name                       */
     char svalue[MAXTIDENT+1];       /**< Request/Response value             */
 } command_appconfig_t;
+
+
+/**
+ * Configure ndrxd daemon sleep, for debug
+ */
+typedef struct
+{
+    command_call_t call;            /**< Standard command call              */
+    int secs;                       /**< Sleep seconds                      */
+} command_dsleep_t;
 
 /**
  * Dynamic un/advertise structure

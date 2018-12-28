@@ -419,6 +419,7 @@ struct atmi_lib_env
     char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
     int     qprefix_match_len;              /**< Includes number bytes to match */
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
+    char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                   */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
@@ -867,6 +868,7 @@ extern NDRX_API void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub);
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);
 extern NDRX_API int ndrx_chk_ndrxd(void);
+extern NDRX_API pid_t ndrx_ndrxd_pid_get(void);
 extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res);
 extern NDRX_API void ndrx_down_userres(void);
 extern NDRX_API int ndrx_killall(char *mask);
