@@ -288,41 +288,22 @@ $PSCMD
 # Thus filter by cpmsrv pid in ps line...
 #
 CPM_PID=0
-if [ "$(uname)" == "FreeBSD" ]; then
-        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-else
-        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-fi
+#if [ "$(uname)" == "FreeBSD" ]; then
+#        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+#else
+#        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+#fi
 
-CNT=0
-if [ "$(uname)" == "Linux" ]; then
-	while read -r line ; do
-    		echo "Processing [$line]"
-    		# your code goes here
-    		#MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
-    
-    		if [[ $line == *"whileproc.sh"* ]]; then
-
-    			if [[ $line == *"$CPM_PID"* ]]; then
-        			echo "MATCH: [$line]"
-        			CNT=$((CNT+1))
-			else
-        			echo "NOT MATCH (2): [$line]"
-			fi
-    		else
-        		echo "NOT MATCH: [$line]"
-    		fi
-
-	done < <($PSCMD)
-
-	PROC_COUNT_DIFFALLOW=$PROC_COUNT
-
-else
-
-	CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
-fi
-
-echo "$PSCMD procs: $CNT"
+#
+# note that cpmsrv may perform forks for the child procss and we might get listings
+# at that moment and we may see a other cpmsrv... thus we need one with parent of ndrxd
+#
+NDRXD_PID=`xadmin ps -p -a $USER -b $NDRX_RNDK -c ndrxd`
+echo "NDRXD_PID=$NDRXD_PID"
+CPM_PID=`xadmin ps -p -a $USER -b $NDRX_RNDK -c cpmsrv -d $NDRXD_PID`
+echo "CPM_PID=$CPM_PID"
+CNT=`xadmin ps -a whileproc.sh -b $CPM_PID | wc | awk '{print $1}' `
+echo "procs: $CNT"
 
 if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
