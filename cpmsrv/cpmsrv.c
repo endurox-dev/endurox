@@ -170,8 +170,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     signed char c;
-    struct sigaction sa;
-    sigset_t wanted; 
+    sigset_t blockMask;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* Get the env */
@@ -213,32 +212,22 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         G_config.kill_interval = CLT_KILL_INTERVAL_DEFAULT;
     }
-#if 0
-    /* < seems with out this, sigaction on linux does not work... >*/
-    sigemptyset(&wanted); 
 
-    sigaddset(&wanted, SIGCHLD); 
-    if (EXSUCCEED!=pthread_sigmask(SIG_UNBLOCK, &wanted, NULL) )
-    {
-        NDRX_LOG(log_error, "pthread_sigmask failed for SIGCHLD: %s", strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    /* </ seems with out this, sigaction on linux does not work... >*/
+    /* do not want signals... was we will wait for pid
+     * in threaded and non threaded mode.
+     */
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
     
-    sa.sa_handler = sign_chld_handler;
-    sigemptyset (&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    if (EXFAIL==sigaction (SIGCHLD, &sa, 0))
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
     {
-        NDRX_LOG(log_error, "sigaction failed for SIGCHLD: %s", strerror(errno));
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s",
+                __func__, strerror(errno));
     }
-#endif
 
 #ifndef EX_CPM_NO_THREADS
     ndrxd_sigchld_init();
 #endif
-    /* signal(SIGCHLD, sign_chld_handler); */
     
     /* Load initial config */
     if (EXSUCCEED!=load_config())
