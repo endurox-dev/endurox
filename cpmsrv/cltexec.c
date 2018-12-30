@@ -200,7 +200,6 @@ exprivate void * check_child_exit(void *arg)
  */
 expublic void ndrxd_sigchld_init(void)
 {
-    sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
     pthread_attr_t pthread_custom_attr_dog;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
@@ -218,19 +217,6 @@ expublic void ndrxd_sigchld_init(void)
     sa.sa_flags = SA_RESTART; /* restart system calls please... */
     sigaction (SIGCHLD, &sa, 0);
 #endif
-    
-    /* Block the notification signal (do not need it here...) */
-    
-    sigemptyset(&blockMask);
-    sigaddset(&blockMask, SIGCHLD);
-    
-    /*
-    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
-        */
-    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
-    {
-        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
-    }
     
     pthread_attr_init(&pthread_custom_attr);
     pthread_attr_init(&pthread_custom_attr_dog);
