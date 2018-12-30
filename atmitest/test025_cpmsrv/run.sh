@@ -160,7 +160,9 @@ echo "Before reload [$OUT1]"
 
 xadmin rc -t BATCH% -s% -w 15000
 
+echo "***** PC *****"
 xadmin pc
+echo "***** PC, END *****"
 
 test_proc_cnt "ndrxbatchmode.sh" "3" "34"
 OUT2=`xadmin pc`
