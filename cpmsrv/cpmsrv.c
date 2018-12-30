@@ -697,7 +697,7 @@ out:
 exprivate int cpm_bc(UBFH *p_ub, int cd)
 {
     NDRX_LOG(log_debug, "Into %s", __func__);
-    return cpm_bcscrc(p_ub, cd, cpm_bc_obj, "marked for started");
+    return cpm_bcscrc(p_ub, cd, cpm_bc_obj, "marked for start");
 }
 
 
