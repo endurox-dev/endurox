@@ -115,7 +115,7 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc.sh
 
 xadmin down -y
 xadmin start -y || go_out 1
@@ -296,15 +296,7 @@ CPM_PID=0
 #        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
 #fi
 
-#
-# note that cpmsrv may perform forks for the child procss and we might get listings
-# at that moment and we may see a other cpmsrv... thus we need one with parent of ndrxd
-#
-NDRXD_PID=`xadmin ps -p -a $USER -b $NDRX_RNDK -c ndrxd`
-echo "NDRXD_PID=$NDRXD_PID"
-CPM_PID=`xadmin ps -p -a $USER -b $NDRX_RNDK -c cpmsrv -d $NDRXD_PID`
-echo "CPM_PID=$CPM_PID"
-CNT=`xadmin ps -a whileproc.sh -b $CPM_PID | wc | awk '{print $1}' `
+CNT=`xadmin ps -a whileproc.sh | wc | awk '{print $1}' `
 echo "procs: $CNT"
 
 if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
