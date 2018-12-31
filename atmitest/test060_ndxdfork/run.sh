@@ -129,7 +129,9 @@ if [[ "X$PROCS" != "X1" ]]; then
         break
     done
 
-    go_out -1
+    # let processes to stay
+    exit -1
+    #go_out -1
 fi
 
 go_out $RET
