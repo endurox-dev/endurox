@@ -296,6 +296,7 @@ CPM_PID=0
 #        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
 #fi
 
+xadmin ps -a whileproc.sh
 CNT=`xadmin ps -a whileproc.sh | wc | awk '{print $1}' `
 echo "procs: $CNT"
 
