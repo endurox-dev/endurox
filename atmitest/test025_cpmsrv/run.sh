@@ -115,7 +115,7 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc.sh
 
 xadmin down -y
 xadmin start -y || go_out 1
@@ -160,7 +160,9 @@ echo "Before reload [$OUT1]"
 
 xadmin rc -t BATCH% -s% -w 15000
 
+echo "***** PC *****"
 xadmin pc
+echo "***** PC, END *****"
 
 test_proc_cnt "ndrxbatchmode.sh" "3" "34"
 OUT2=`xadmin pc`
@@ -261,7 +263,10 @@ for ((i=1;i<=100;i++)); do
         xadmin bc -t WHILE -s $i
 done
 
-sleep 20
+# echo bash starts the sleep commands which performs a fork
+# thus at some point we might see two whileproc.sh before
+# whileproc.sh execs sleep
+sleep 30
 
 # have some sync (wait for startup to complete, print the output)
 xadmin pc
@@ -288,41 +293,15 @@ $PSCMD
 # Thus filter by cpmsrv pid in ps line...
 #
 CPM_PID=0
-if [ "$(uname)" == "FreeBSD" ]; then
-        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-else
-        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-fi
+#if [ "$(uname)" == "FreeBSD" ]; then
+#        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+#else
+#        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+#fi
 
-CNT=0
-if [ "$(uname)" == "Linux" ]; then
-	while read -r line ; do
-    		echo "Processing [$line]"
-    		# your code goes here
-    		#MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
-    
-    		if [[ $line == *"whileproc.sh"* ]]; then
-
-    			if [[ $line == *"$CPM_PID"* ]]; then
-        			echo "MATCH: [$line]"
-        			CNT=$((CNT+1))
-			else
-        			echo "NOT MATCH (2): [$line]"
-			fi
-    		else
-        		echo "NOT MATCH: [$line]"
-    		fi
-
-	done < <($PSCMD)
-
-	PROC_COUNT_DIFFALLOW=$PROC_COUNT
-
-else
-
-	CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
-fi
-
-echo "$PSCMD procs: $CNT"
+xadmin ps -a whileproc.sh
+CNT=`xadmin ps -a whileproc.sh | wc | awk '{print $1}' `
+echo "procs: $CNT"
 
 if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"
