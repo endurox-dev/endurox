@@ -141,14 +141,18 @@ exprivate void qd_hash_del(mqd_t qd)
 /**
  * Get he queue path
  * @param path
+ * @param[out] bufout where to copy the output path string 
+ * @param[out] bufoutsz output buffer size
  * @return 
  */
-static char *get_path(const char *path)
+static char *get_path(const char *path, char *bufout, size_t bufoutsz)
 {
     static int first = 1;
     static char q_path[PATH_MAX]={EXEOS};
     
+/*
     NSTD_TLS_ENTRY;
+*/
     
     if (first)
     {
@@ -162,10 +166,15 @@ static char *get_path(const char *path)
     }
     
     
+/*
     strcpy(G_nstd_tls->emq_x, q_path);
     strcat(G_nstd_tls->emq_x, path);
     
-    return G_nstd_tls->emq_x;
+*/
+    NDRX_STRNCPY_SAFE(bufout, q_path, bufoutsz);
+    NDRX_STRCAT_S(bufout, bufoutsz, path);
+
+    return bufout;
 }
 
 /**
@@ -372,6 +381,7 @@ expublic mqd_t emq_open(const char *pathname, int oflag, ...)
     struct msg_hdr      *msghdr;
     struct mq_attr      *attr;
     struct emq_info      *emqinfo;
+    char emq_x[PATH_MAX];
     pthread_mutexattr_t  mattr;
     pthread_condattr_t   cattr;
 #if defined(WIN32)
@@ -398,7 +408,7 @@ again:
         va_end(ap);
 
         /* open and specify O_EXCL and user-execute */
-        fd = open(get_path(pathname), oflag | O_EXCL | O_RDWR, mode | S_IXUSR);
+        fd = open(get_path(pathname, emq_x, sizeof(emq_x)), oflag | O_EXCL | O_RDWR, mode | S_IXUSR);
         if (fd < 0) {
             if (errno == EEXIST && (oflag & O_EXCL) == 0)
                 goto exists;            /* already exists, OK */
@@ -487,7 +497,7 @@ again:
 
             /* initialization complete, turn off user-execute bit */
 #if defined(WIN32)
-            if (chmod(get_path(pathname), mode) == -1)
+            if (chmod(get_path(pathname, emq_x, sizeof(emq_x)), mode) == -1)
 #else
             if (fchmod(fd, mode) == -1)
 #endif
@@ -502,7 +512,7 @@ again:
     }
 exists:
     /* open the file then memory map */
-    if ( (fd = open(get_path(pathname), O_RDWR)) < 0) {
+    if ( (fd = open(get_path(pathname, emq_x, sizeof(emq_x)), O_RDWR)) < 0) {
         if (errno == ENOENT && (oflag & O_CREAT))
             goto again;
         goto err;
@@ -510,7 +520,7 @@ exists:
 
     /* make certain initialization is complete */
     for (i = 0; i < MAX_TRIES; i++) {
-        if (stat(get_path(pathname), &statbuff) == -1) {
+        if (stat(get_path(pathname, emq_x, sizeof(emq_x)), &statbuff) == -1) {
             if (errno == ENOENT && (oflag & O_CREAT)) {
                 close(fd);
                 goto again;
@@ -562,7 +572,7 @@ err:
     /* don't let following function calls change errno */
     save_errno = errno;
     if (created)
-        unlink(get_path(pathname));
+        unlink(get_path(pathname, emq_x, sizeof(emq_x)));
 #if defined(WIN32)
     if (fmap != NULL) {
         if (mptr != NULL) {
@@ -931,8 +941,9 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
 
 expublic int emq_unlink(const char *pathname)
 {
+    char emq_x[PATH_MAX];
     NDRX_LOG(log_dump, "into: emq_unlink");
-    if (unlink(get_path(pathname)) == -1)
+    if (unlink(get_path(pathname, emq_x, sizeof(emq_x))) == -1)
     {
         NDRX_LOG(log_dump, "into: emq_unlink ret -1");
         return(-1);
