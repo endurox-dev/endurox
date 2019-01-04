@@ -33,6 +33,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
+include(CheckIncludeFile)
 set(VERSION "6.0.5")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
@@ -95,8 +96,17 @@ ENDIF ()
 # -pthread needed for System V pthread_atfork()
 SET(RT_LIB rt dl)
 if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
+
     set(EX_OS_LINUX "1")
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
+
+    # gnu pg fixes for rpi
+    CHECK_INCLUDE_FILE(/opt/vc/include/bcm_host.h BCMHOST)
+
+    if(BCMHOST)
+        SET(CMAKE_C_FLAGS "-D_FILE_OFFSET_BITS=64 ${CMAKE_C_FLAGS}")
+    endif()
+
     # Configure backend transport
     IF(DEFINE_SYSVQ)
         message("Linux - forced poll()")
