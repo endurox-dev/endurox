@@ -88,7 +88,7 @@ rm *dom*.log
 ulimit -c unlimited
 
 # Any bridges that are live must be killed!
-xadmin killall tpbridge
+xadmin killall tpbridge ndrxd
 
 set_dom1;
 xadmin down -y
