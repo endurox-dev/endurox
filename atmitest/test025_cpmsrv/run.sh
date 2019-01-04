@@ -263,10 +263,7 @@ for ((i=1;i<=100;i++)); do
         xadmin bc -t WHILE -s $i
 done
 
-# echo bash starts the sleep commands which performs a fork
-# thus at some point we might see two whileproc.sh before
-# whileproc.sh execs sleep
-sleep 30
+sleep 20
 
 # have some sync (wait for startup to complete, print the output)
 xadmin pc
