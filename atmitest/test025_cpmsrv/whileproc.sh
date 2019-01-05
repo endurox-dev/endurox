@@ -9,7 +9,5 @@ trap _term SIGTERM
 trap _term SIGINT
 
 while [[ 1 == 1 ]]; do
-        #sleep 1;
-	# do not fork... please while sleeping...
-	read -t 1 <> ndrxconfig.xml
+        sleep 1;
 done
