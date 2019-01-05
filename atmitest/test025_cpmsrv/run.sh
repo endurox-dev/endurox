@@ -289,15 +289,16 @@ $PSCMD
 # Having some issues when bash is doing forks inside the test script -> whileproc.sh
 # Thus filter by cpmsrv pid in ps line...
 #
-CPM_PID=0
+CPM_PID=`xadmin ppm | grep cpmsrv | awk '{print $3}'`
 #if [ "$(uname)" == "FreeBSD" ]; then
 #        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
 #else
 #        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
 #fi
 
+echo "CPM_PID=$CPM_PID"
 xadmin ps -a whileproc.sh
-CNT=`xadmin ps -a whileproc.sh | wc | awk '{print $1}' `
+CNT=`xadmin ps -a whileproc.sh | grep $CPM_PID | wc | awk '{print $1}' `
 echo "procs: $CNT"
 
 if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
