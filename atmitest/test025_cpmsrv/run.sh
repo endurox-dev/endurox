@@ -101,7 +101,7 @@ function test_proc_cnt {
     CNT=`$PSCMD | grep $proc | grep -v grep | wc | awk '{print $1}'`
     XPROC_COUNT=$cnt
     echo ">>> $PSCMD procs: $CNT"
-    if [[ "X$CNT" -ne "X$XPROC_COUNT" ]]; then 
+    if [[ "X$CNT" != "X$XPROC_COUNT" ]]; then 
         echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
         go_out $go
     fi
@@ -270,7 +270,7 @@ xadmin pc
 
 CNT=`xadmin pc | grep "WHILE" | grep "running pid" | wc | awk '{print $1}'`
 echo "xadmin procs: $CNT"
-if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
+if [[ "$CNT" != "$PROC_COUNT" ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to xadmin pc)!"
         go_out 6
 fi
@@ -289,15 +289,16 @@ $PSCMD
 # Having some issues when bash is doing forks inside the test script -> whileproc.sh
 # Thus filter by cpmsrv pid in ps line...
 #
-CPM_PID=0
+CPM_PID=`xadmin ppm | grep cpmsrv | awk '{print $3}'`
 #if [ "$(uname)" == "FreeBSD" ]; then
 #        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
 #else
 #        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
 #fi
 
+echo "CPM_PID=$CPM_PID"
 xadmin ps -a whileproc.sh
-CNT=`xadmin ps -a whileproc.sh | wc | awk '{print $1}' `
+CNT=`xadmin ps -a whileproc.sh | grep $CPM_PID | wc | awk '{print $1}' `
 echo "procs: $CNT"
 
 if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
