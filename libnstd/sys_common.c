@@ -233,9 +233,10 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     int is_error = EXFALSE;
     
 #ifdef EX_OS_FREEBSD
-    snprintf(cmd, sizeof(cmd), "ps -jauxxw");
+    /* snprintf(cmd, sizeof(cmd), "ps -jauxxw"); */
+    NDRX_STRCPY_SAFE(cmd, "ps -axo user,pid,ppid,%cpu,%mem,args");
 #else
-    snprintf(cmd, sizeof(cmd), "ps -ef");
+    NDRX_STRCPY_SAFE(cmd, "ps -ef");
 #endif
     
     fp = popen(cmd, "r");
@@ -305,12 +306,13 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     char *filter[MAX_FILTER] = {filter1, filter2, filter3, filter4, regex1};
     
 #ifdef EX_OS_FREEBSD
-    snprintf(cmd, sizeof(cmd), "ps -auwwx");
+    /* snprintf(cmd, sizeof(cmd), "ps -auwwx"); */
+    NDRX_STRCPY_SAFE(cmd, "ps -axo user,pid,ppid,%cpu,%mem,args");
 #elif EX_OS_DARWIN
     /* we need full username instead of uid in output...*/
-    snprintf(cmd, sizeof(cmd), "ps -je");
+    NDRX_STRCPY_SAFE(cmd, "ps -je");
 #else
-    snprintf(cmd, sizeof(cmd), "ps -ef");
+    NDRX_STRCPY_SAFE(cmd, "ps -ef");
 #endif
     
     if (EXEOS!=regex1[0])
