@@ -1,4 +1,7 @@
 # endurox
+
+## Build & test status
+
 | OS   |      Status      | OS       |      Status   |OS       |      Status   |
 |----------|:-------------:|----------|:-------------:|----------|:-------------:|
 | AIX 7.1 |  [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_1)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_1/) |Centos 6|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-centos6)](http://www.silodev.com:9090/jenkins/job/endurox-centos6/)|FreeBSD 11|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-freebsd11)](http://www.silodev.com:9090/jenkins/job/endurox-freebsd11/)|
@@ -7,6 +10,7 @@
 |Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 16.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu16)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu16/)|
 |Ubuntu 18.04|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
 
+## Overview
 
 Enduro/X is Open Source Middleware Platform for Distributed Transaction 
 Processing
