@@ -1,6 +1,6 @@
 # endurox
 
-## Build & test status
+## Build + test status
 
 | OS   |      Status      | OS       |      Status   |OS       |      Status   |
 |----------|:-------------:|----------|:-------------:|----------|:-------------:|
