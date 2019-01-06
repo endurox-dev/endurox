@@ -234,7 +234,7 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     
 #ifdef EX_OS_FREEBSD
     /* snprintf(cmd, sizeof(cmd), "ps -jauxxw"); */
-    NDRX_STRCPY_SAFE(cmd, "ps -axo user,pid,ppid,%cpu,%mem,args");
+    NDRX_STRCPY_SAFE(cmd, "ps -wwaxo user,pid,ppid,%cpu,%mem,args");
 #else
     NDRX_STRCPY_SAFE(cmd, "ps -ef");
 #endif
@@ -307,7 +307,7 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     
 #ifdef EX_OS_FREEBSD
     /* snprintf(cmd, sizeof(cmd), "ps -auwwx"); */
-    NDRX_STRCPY_SAFE(cmd, "ps -axo user,pid,ppid,%cpu,%mem,args");
+    NDRX_STRCPY_SAFE(cmd, "ps -wwaxo user,pid,ppid,%cpu,%mem,args");
 #elif EX_OS_DARWIN
     /* we need full username instead of uid in output...*/
     NDRX_STRCPY_SAFE(cmd, "ps -je");
