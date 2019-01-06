@@ -216,8 +216,8 @@ if [[ "X$OUT" == "X" ]]; then
 fi
 
 xadmin sc -t CHLD5
-test_proc_cnt "chld5.sh", "0", "26"
-test_proc_cnt "chld6.sh", "1", "27"
+test_proc_cnt "chld5.sh" "0" "26"
+test_proc_cnt "chld6.sh" "1" "27"
 
 ################################################################################
 # Child cleanup... testing, end
