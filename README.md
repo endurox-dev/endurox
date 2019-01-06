@@ -1,4 +1,7 @@
 # endurox
+
+Ubuntu 16.04: [![Build Status](http://www.silodev.com:9090/jenkins/job/endurox-go-ubuntu16/badge/icon)](http://www.silodev.com:9090/jenkins/job/endurox-go-ubuntu16/)
+
 Enduro/X is Open Source Middleware Platform for Distributed Transaction 
 Processing
 
