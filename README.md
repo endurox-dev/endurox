@@ -1,6 +1,6 @@
 # endurox
 
-## Build + test status
+## Build (including atmi/ubf tests) status
 
 | OS   |      Status      | OS       |      Status   |OS       |      Status   |
 |----------|:-------------:|----------|:-------------:|----------|:-------------:|
