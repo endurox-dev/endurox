@@ -409,6 +409,8 @@ Added new command "ps" for xadmin, so that unit tests have unified access to
 processing listings across all supported OSes.
 
 - Version 6.0.5 released on 24/12/2018 (development) Feature #366
+
+- Version 6.0.6 released on 08/01/2019 (stable) Marking stable release
 	
 # Build configurations
 
