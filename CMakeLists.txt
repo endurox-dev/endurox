@@ -33,7 +33,6 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-include(CheckIncludeFile)
 set(VERSION "6.0.5")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
@@ -101,9 +100,7 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
     set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
 
     # gnu pg fixes for rpi
-    CHECK_INCLUDE_FILE(/opt/vc/include/bcm_host.h BCMHOST)
-
-    if(BCMHOST)
+    if(EXISTS "/opt/vc/include/bcm_host.h")
         SET(CMAKE_C_FLAGS "-D_FILE_OFFSET_BITS=64 ${CMAKE_C_FLAGS}")
     endif()
 
