@@ -75,6 +75,7 @@ install (FILES
     view_cmn.h
     exdb.h
     nstopwatch.h
+    exthpool.h
     DESTINATION include)
 
 install (FILES

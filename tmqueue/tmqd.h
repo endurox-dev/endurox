@@ -43,7 +43,7 @@ extern "C" {
 #include <atmi.h>
 #include <utlist.h>
 #include <exhash.h>
-#include "thpool.h"
+#include <exthpool.h>
 #include "tmqueue.h"
     
 /*---------------------------Externs------------------------------------*/
