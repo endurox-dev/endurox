@@ -33,7 +33,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "6.0.6")
+set(VERSION "6.0.8")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -343,7 +343,7 @@ add_subdirectory (libcgreen)
 add_subdirectory (libexuuid)
 add_subdirectory (libubf)
 add_subdirectory (libnetproto)
-add_subdirectory (libthpool)
+add_subdirectory (libexthpool)
 add_subdirectory (ubftest)
 add_subdirectory (mkfldhdr)
 # Enduro/X sub-directories for ATMI
