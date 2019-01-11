@@ -61,7 +61,7 @@
 #include "tperror.h"
 #include "userlog.h"
 #include <xa_cmn.h>
-#include "thpool.h"
+#include <exthpool.h>
 #include "nstdutil.h"
 #include "tmqueue.h"
 #include "cconfig.h"

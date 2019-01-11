@@ -40,6 +40,14 @@ include_directories (. ../include)
 
 # Generate library from our source files
 
-add_library (thpool STATIC thpool.c)
-target_link_libraries(thpool nstd)# vim: set ts=4 sw=4 et smartindent:
+add_library (exthpool STATIC thpool.c)
+target_link_libraries(exthpool nstd)# vim: set ts=4 sw=4 et smartindent:
+
+install (TARGETS
+    exthpool
+    DESTINATION "${INSTALL_LIB_DIR}"
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries
+)
+
 # vim: set ts=4 sw=4 et smartindent:

@@ -58,7 +58,7 @@
 #include "tperror.h"
 #include "userlog.h"
 #include <xa_cmn.h>
-#include "thpool.h"
+#include <exthpool.h>
 #include "qcommon.h"
 #include "cconfig.h"
 #include <ubfutil.h>

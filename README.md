@@ -411,6 +411,8 @@ processing listings across all supported OSes.
 - Version 6.0.5 released on 24/12/2018 (development) Feature #366
 
 - Version 6.0.6 released on 08/01/2019 (stable) Marking stable release
+
+- Version 6.0.8 released on 11/01/2019 (stable) Feature #372
 	
 # Build configurations
 
