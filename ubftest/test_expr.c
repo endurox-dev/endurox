@@ -183,6 +183,16 @@ Ensure(test_expr_basic)
     assert_not_equal(tree, NULL);
     assert_equal(Bboolev(p_ub, tree), EXFALSE);
     Btreefree(tree);
+    
+    /*----------------------------------------------------------*/
+    /* Test syntax error, Support #374 */
+    /* tree=Bboolco ("T_STRING_2_FLD == 'hello x' !T_STRING_2_FLD"); */
+    /* tree=Bboolco ("'hello x' !T_STRING_2_FLD"); */
+    /* tree=Bboolco ("0 !T_STRING_2_FLD"); */
+    tree=Bboolco ("!T_STRING_2_FLD 0");
+    assert_equal(tree, NULL);
+    assert_equal(Berror, BSYNTAX);
+    Btreefree(tree);
 
 }
 

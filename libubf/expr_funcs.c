@@ -332,10 +332,11 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
     struct ast *a = NDRX_MALLOC(sizeof(struct ast));
     memset(a, 0, sizeof(struct ast));
 
-    if(!a) {
-      yyerror("out of space");
-      ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast");
-      return NULL;
+    if(!a)
+    {
+        yyerror("out of space");
+        ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast");
+        return NULL;
     }
     else
     {
@@ -647,7 +648,7 @@ struct ast * newlong(long l)
  */
 int get_float(value_block_t *v)
 {
-	int ret=EXSUCCEED;
+    int ret=EXSUCCEED;
     if (VALUE_TYPE_FLOAT==v->value_type)
     {
         /* do nothing. */
@@ -665,6 +666,8 @@ int get_float(value_block_t *v)
     else
     {
         UBF_LOG(log_error, "get_float: Unknown value type %d\n",
+                                    v->value_type);
+        ndrx_Bset_error_fmt(BSYNTAX, "get_float: Unknown value type %d\n",
                                     v->value_type);
         ret=EXFAIL;
     }
@@ -711,19 +714,21 @@ int conv_to_string(char *buf, value_block_t *v)
     
     if (VALUE_TYPE_LONG==v->value_type)
     {
-    v->value_type = VALUE_TYPE_STRING;
-            sprintf(v->strval, "%ld", v->longval);
+        v->value_type = VALUE_TYPE_STRING;
+                sprintf(v->strval, "%ld", v->longval);
     }
     else if (VALUE_TYPE_FLOAT==v->value_type)
     {
-    v->value_type = VALUE_TYPE_STRING;
-            sprintf(v->strval, "%.13lf", v->floatval);
+        v->value_type = VALUE_TYPE_STRING;
+                sprintf(v->strval, "%.13lf", v->floatval);
     }
     else
     {
-    UBF_LOG(log_error, "conv_to_string: Unknown value type %d\n",
-                            v->value_type);
-    ret=EXFAIL;
+        UBF_LOG(log_error, "conv_to_string: Unknown value type %d\n",
+                                v->value_type);
+        ndrx_Bset_error_fmt(BSYNTAX, "conv_to_string: Unknown value type %d\n",
+                                v->value_type);
+        ret=EXFAIL;
     }
 
     return ret;
@@ -749,6 +754,8 @@ int conv_to_long(value_block_t *v)
     else
     {
         UBF_LOG(log_error,"conv_to_long: Unknown value type %d\n",
+                                v->value_type);
+        ndrx_Bset_error_fmt(BSYNTAX, "conv_to_long: Unknown value type %d\n",
                                 v->value_type);
         ret=EXFAIL;
     }
