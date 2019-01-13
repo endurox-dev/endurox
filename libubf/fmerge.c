@@ -171,18 +171,20 @@ expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
         /*
          * Update the occurrence in target buffer.
          */
-        if (EXSUCCEED!=(ret=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE)))
+        if (EXSUCCEED!=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]", 
                                 ndrx_Bfname_int(bfldid), occ);
+            EXFAIL_OUT(ret);
         }
     }
 
     if (EXFAIL==nxt_stat)
     {
-        ret=EXFAIL;
+        EXFAIL_OUT(ret);
     }
 
+repeat:
     memset(&state, 0, sizeof(state));
     while(EXSUCCEED==ret &&
         1==(nxt_stat=ndrx_Bnext(&state, dest, &bfldid, &occ, NULL, &len, &p_fld)))
@@ -190,19 +192,20 @@ expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
         /*
          * Delete fields from destination buffer which not have in source buffer
          */
-        if (EXFALSE == _Bpres(dest, bfldid, occ))
+        if (EXFALSE != _Bpres(dest, bfldid, occ))
         {
             if (EXSUCCEED!=(ret=Bdel(dest, bfldid, occ)))
             {
                 UBF_LOG(log_debug, "Failed to delete %s[%d]", 
                                 ndrx_Bfname_int(bfldid), occ);
+                EXFAIL_OUT(ret);
             }
+            goto repeat;
         }
     }
 
-    
-
-        return ret;
+out:
+    return ret;
 }
 
 /**
@@ -232,10 +235,11 @@ expublic int ndrx_Bojoin (UBFH *dest, UBFH *src)
         /*
          * Update the occurrence in target buffer.
          */
-        if (EXSUCCEED!=(ret=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE)))
+        if (EXSUCCEED!=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]", 
                                 ndrx_Bfname_int(bfldid), occ);
+            EXFAIL_OUT(ret);
         }
     }
 
@@ -244,6 +248,7 @@ expublic int ndrx_Bojoin (UBFH *dest, UBFH *src)
         ret=EXFAIL;
     }
 
+out:
     return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
