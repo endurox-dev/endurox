@@ -413,7 +413,9 @@ processing listings across all supported OSes.
 - Version 6.0.6 released on 08/01/2019 (stable) Marking stable release
 
 - Version 6.0.8 released on 11/01/2019 (stable) Feature #372
-	
+
+- Version 6.0.10 released on 13/01/2019 (stable) Support #373, Bug #374
+
 # Build configurations
 
 ## Configure make with: 
