@@ -156,7 +156,7 @@ expublic pid_t ndrx_ndrxd_pid_get(void)
     
      if (NULL==(f=NDRX_FOPEN(G_atmi_env.ndrxd_pidfile, "r")))
     {
-        NDRX_LOG(log_error, "Failed to open ndrxd PID file: [%s]: %s",
+        NDRX_LOG(log_debug, "Failed to open ndrxd PID file: [%s]: %s",
                 G_atmi_env.ndrxd_pidfile, strerror(errno));
         
         goto out;
@@ -173,8 +173,11 @@ expublic pid_t ndrx_ndrxd_pid_get(void)
     
 out:
     
-    NDRX_FCLOSE(f);
-    f = NULL;
+    if (NULL!=f)
+    {
+        NDRX_FCLOSE(f);
+        f = NULL;
+    }
     
     return ret;
 }

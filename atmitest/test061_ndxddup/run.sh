@@ -76,8 +76,6 @@ function go_out {
     xadmin stop -y
     xadmin down -y
 
-
-
     # If some alive stuff left...
     xadmin killall atmiclt61
 
@@ -95,11 +93,20 @@ xadmin start -y || go_out 1
 
 #### Start additional ndrxd copy
 
-ndrxd &
+# this shall exit with failure
+ndrxd
 
+RET1=$?
+
+if [[ "X$RET1" == "X0" ]]; then
+    echo "Duplicate ndrxd exit status succeed, but must not be 0"
+    go_out -2
+fi
 
 ### Stop ndrxd
+echo "************************************** STOPPING..."
 xadmin stop -y
+echo "************************************** STOPPING DONE..."
 
 # There should be ndrxd processes running
 echo "**************************************"

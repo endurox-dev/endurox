@@ -209,8 +209,8 @@ int main_init(int argc, char** argv)
     int ret=EXSUCCEED;
     char *p;
     struct sigaction oldact;
-
-sigaction(SIGINT, NULL, &oldact);
+    pid_t ndrxd_pid;
+    sigaction(SIGINT, NULL, &oldact);
     
 #if 0
     
@@ -230,6 +230,20 @@ sigaction(SIGINT, NULL, &oldact);
     {
         NDRX_LOG(log_error, "Failed to load common env");
         EXFAIL_OUT(ret);
+    }
+    
+    /* Bug #375 check the ndrxd process existence by pid file */
+    ndrxd_pid = ndrx_ndrxd_pid_get();
+    
+    if (EXFAIL!=ndrxd_pid && EXSUCCEED==kill(ndrxd_pid, 0))
+    {
+        fprintf(stderr, "ERROR ! Duplicate startup, ndrxd with PID %d "
+                "already exists\n", ndrxd_pid);
+        NDRX_LOG(log_error, "ERROR ! Duplicate startup, ndrxd with PID %d "
+                "already exists", ndrxd_pid);
+        userlog("ERROR ! Duplicate startup, ndrxd with PID %d "
+                "already exists", ndrxd_pid);
+        exit(EXFAIL);
     }
     
     /* We will ignore all stuff requesting shutdown! */
