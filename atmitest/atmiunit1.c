@@ -484,6 +484,13 @@ Ensure(test060_ndxdfork)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test061_ndxddup)
+{
+    int ret;
+    ret=system_dbg("test061_ndxddup/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -580,6 +587,7 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test059_pq);
     add_test(suite, test060_ndxdfork);
+    add_test(suite, test061_ndxddup);
     
     return suite;
 }
