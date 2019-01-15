@@ -367,7 +367,7 @@ cmd_mapping_t M_command_map[] =
                 "Print active poller sub-system"
                 , NULL},
     {"shms",      cmd_shms,EXFAIL,              1,  1,  0, 
-                "Print shared memory locks"
+                "Print shared memory segments"
                 , NULL},
     {"pmode",     cmd_pmode,EXFAIL,             1,  1,  0, 
                 "Print Enduro/X build environment (ndrx_config.h)"
