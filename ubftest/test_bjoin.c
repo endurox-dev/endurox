@@ -169,6 +169,24 @@ Ensure(test_bjoin_simple)
     assert_string_equal(buf,"TEST STR VAL JOIN");
     assert_equal(Bpres(p_ub_dst, T_CARRAY_FLD, 0), EXFALSE);
 
+    assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
+    assert_equal(s,33);
+    assert_equal(Bget(p_ub_dst, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(l,-2048);
+    assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
+    assert_equal(c,'X');
+    assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
+    assert_double_equal(f,87.65);
+    assert_equal(Bget(p_ub_dst, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
+    assert_double_equal(d,12312.1111);
+    assert_equal(Bpres(p_ub_dst, T_STRING_FLD, 1), EXFALSE);
+
+    assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 2, (char *)&c, 0), EXSUCCEED);
+    assert_equal(c,'Q');
+    assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 2, (char *)&f, 0), EXSUCCEED);
+    assert_double_equal(f,12.31);
+    assert_equal(Bpres(p_ub_dst, T_DOUBLE_FLD, 2), EXFALSE);
+
 }
 
 TestSuite *ubf_bjoin_tests(void)
