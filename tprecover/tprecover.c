@@ -74,6 +74,10 @@ static int M_bad_pings = 0; /**< bad pings reset at exec */
 /*---------------------------Prototypes---------------------------------*/
 int start_daemon_recover(void);
 
+/* TODO: Handle sig-childs in period callback instead of 
+ * signals...
+ */
+
 /**
  * Monitor ndrxd & recover it if needed.
  * 1. could monitor process existance
