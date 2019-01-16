@@ -166,6 +166,11 @@ if [[ "X$OUT" == "X" ]]; then
 fi
 
 echo "Perform PING tests... - put ndrxd to sleep"
+
+echo "*************"
+ps -ef |grep ndrxd
+echo "************* EPS"
+
 DPID=`xadmin dpid`
 xadmin dsleep 20
 
