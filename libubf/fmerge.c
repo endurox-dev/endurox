@@ -185,9 +185,14 @@ expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
     }
 
 repeat:
+    hdr = (UBF_header_t *)dest;
+    bfldid = BFIRSTFLDID;
+    memset(&chg_state, 0, sizeof(chg_state));
     memset(&state, 0, sizeof(state));
+    chg_state.last_checked = &hdr->bfldid;
+
     while(EXSUCCEED==ret &&
-        1==(nxt_stat=ndrx_Bnext(&state, dest, &bfldid, &occ, NULL, &len, &p_fld)))
+        1==(nxt_stat=ndrx_Bnext(&state, src, &bfldid, &occ, NULL, &len, &p_fld)))
     {
         /*
          * Delete fields from destination buffer which not have in source buffer
