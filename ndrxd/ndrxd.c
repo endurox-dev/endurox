@@ -171,6 +171,8 @@ expublic int init_cmdline_opts(int argc, char **argv)
     int ret=EXSUCCEED;
     int c;
     extern char *optarg;
+    int have_key = EXFALSE;
+    int print_help = EXFALSE;
     
     /* Parse command line */
     while ((c = getopt(argc, argv, "h?rk:")) != -1)
@@ -183,15 +185,19 @@ expublic int init_cmdline_opts(int argc, char **argv)
                 break;
             case 'k':
                 /* No need for random key parsing yet */
+                have_key = EXTRUE;
                 break;
             case 'h': case '?':
-                printf("usage: %s [-r restart] [-k random key]\n",
-                        argv[0]);
-                
-                return EXFAIL;
-
+                print_help = EXTRUE;
                 break;
         }
+    }
+
+    if (!have_key || print_help)
+    {
+        printf("usage: %s -k random_key [-r restart]\n",
+                argv[0]);
+        return EXFAIL;
     }
     
 out:
