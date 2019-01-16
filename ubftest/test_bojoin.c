@@ -41,7 +41,7 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 
-void load_test_data_src(UBFH *p_ub)
+void load_test_data_bojoin_src(UBFH *p_ub)
 {
     short s = 88;
     long l = -1021;
@@ -87,7 +87,7 @@ void load_test_data_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 2, (char *)&d, 0), EXSUCCEED);
 }
 
-void load_test_data_dst(UBFH *p_ub)
+void load_test_data_bojoin_dst(UBFH *p_ub)
 {
     short s = 222;
     long l = 23456789;
@@ -146,8 +146,8 @@ Ensure(test_bojoin_simple)
     assert_equal(Binit(p_ub_src, sizeof(fb_src)), EXSUCCEED);
     assert_equal(Binit(p_ub_dst, sizeof(fb_dst)), EXSUCCEED);
 
-    load_test_data_src(p_ub_src);
-    load_test_data_dst(p_ub_dst);
+    load_test_data_bojoin_src(p_ub_src);
+    load_test_data_bojoin_dst(p_ub_dst);
 
     assert_equal(Bojoin(p_ub_dst, p_ub_src),EXSUCCEED);
 
