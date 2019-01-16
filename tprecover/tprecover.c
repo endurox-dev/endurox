@@ -74,9 +74,13 @@ static int M_bad_pings = 0; /**< bad pings reset at exec */
 /*---------------------------Prototypes---------------------------------*/
 int start_daemon_recover(void);
 
-/* TODO: Handle sig-childs in period callback instead of 
- * signals...
+/**
+ * Discard the deadly ndrxds
  */
+void handle_sigchld(void)
+{
+    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+}
 
 /**
  * Monitor ndrxd & recover it if needed.
@@ -114,7 +118,12 @@ expublic int poll_timer(void)
     int ret=EXSUCCEED;
     int seq;
     long tim;
-    int ndrxd_stat = ndrx_chk_ndrxd();
+    int ndrxd_stat;
+    
+    /* remove zomies */
+    handle_sigchld();
+    
+    ndrxd_stat = ndrx_chk_ndrxd();
     
     if (M_bad_pings > M_ping_max && !ndrxd_stat)
     {
@@ -229,15 +238,6 @@ out:
     return ret;
 }
 
-/**
- * Discard the deadly ndrxds
- */
-void handle_sigchld(int sig)
-{
-    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
-    signal(SIGCHLD, handle_sigchld);
-}
-
 /*
  * Do initialization
  */
@@ -246,7 +246,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret=EXSUCCEED;
     int c;
     extern char *optarg;
-
+    sigset_t blockMask;
+    
     NDRX_LOG(log_debug, "tpsvrinit called");
     /* Parse command line  */
     while((c = getopt(argc, argv, "c:t:m:")) != -1)
@@ -272,8 +273,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
 
-    signal(SIGCHLD, handle_sigchld);
-
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s",
+                __func__, strerror(errno));
+    }
+    
     /* Register timer check.... */
     NDRX_LOG(log_warn, "Config: ndrxd check time: %d sec", M_check);
     NDRX_LOG(log_warn, "Config: ndrxd ping timeout: %d sec", M_ping_tout);
