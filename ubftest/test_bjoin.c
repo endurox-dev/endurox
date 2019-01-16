@@ -41,7 +41,7 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 
-void load_test_data_src(UBFH *p_ub)
+void load_test_data_bjoin_src(UBFH *p_ub)
 {
     short s = 88;
     long l = -1021;
@@ -87,7 +87,7 @@ void load_test_data_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 2, (char *)&d, 0), EXSUCCEED);
 }
 
-void load_test_data_dst(UBFH *p_ub)
+void load_test_data_bjoin_dst(UBFH *p_ub)
 {
     short s = 222;
     long l = 23456789;
@@ -130,32 +130,6 @@ void load_test_data_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 3, (char *)&f, 0), EXSUCCEED);
 }
 
-/**
- * This simply reads all fields and adds them to another buffer, then do compare
- */
-Ensure(test_bjoin_simple)
-{
-    char fb_src[1400];
-    char fb_dst[1400];
-    UBFH *p_ub_src = (UBFH *)fb_src;
-    UBFH *p_ub_dst = (UBFH *)fb_dst;
-
-    UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
-    UBF_header_t *hdst = (UBF_header_t *)p_ub_dst;
-
-    assert_equal(Binit(p_ub_src, sizeof(fb_src)), EXSUCCEED);
-    assert_equal(Binit(p_ub_dst, sizeof(fb_dst)), EXSUCCEED);
-
-    load_test_data_src(p_ub_src);
-    load_test_data_dst(p_ub_dst);
-
-    assert_equal(Bjoin(p_ub_dst, p_ub_src),EXSUCCEED);
-
-}
-
-/**
- * This simply reads all fields and adds them to another buffer, then do compare
- */
 Ensure(test_bjoin_simple)
 {
     char fb_src[1400];
@@ -176,8 +150,8 @@ Ensure(test_bjoin_simple)
     assert_equal(Binit(p_ub_src, sizeof(fb_src)), EXSUCCEED);
     assert_equal(Binit(p_ub_dst, sizeof(fb_dst)), EXSUCCEED);
 
-    load_test_data_src(p_ub_src);
-    load_test_data_dst(p_ub_dst);
+    load_test_data_bjoin_src(p_ub_src);
+    load_test_data_bjoin_dst(p_ub_dst);
 
     assert_equal(Bjoin(p_ub_dst, p_ub_src),EXSUCCEED);
 
