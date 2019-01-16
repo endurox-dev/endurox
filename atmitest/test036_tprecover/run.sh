@@ -168,7 +168,7 @@ fi
 echo "Perform PING tests... - put ndrxd to sleep"
 
 echo "*************"
-ps -ef |grep ndrxd
+xadmin ps | grep ndrxd
 echo "************* EPS"
 
 DPID=`xadmin dpid`
