@@ -94,7 +94,7 @@ xadmin start -y || go_out 1
 #### Start additional ndrxd copy
 
 # this shall exit with failure
-ndrxd
+ndrxd -k $NDRX_RNDK
 
 RET1=$?
 
