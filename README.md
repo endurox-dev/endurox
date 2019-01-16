@@ -416,6 +416,8 @@ processing listings across all supported OSes.
 
 - Version 6.0.10 released on 13/01/2019 (stable) Support #373, Bug #374
 
+- Version 6.0.12 released on 16/01/2019 (stable) Bug #375, Bug #376
+
 # Build configurations
 
 ## Configure make with: 
