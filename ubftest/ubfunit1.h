@@ -87,6 +87,7 @@ extern TestSuite *ubf_readwrite_tests(void);
 extern TestSuite *ubf_mkfldhdr_tests(void);
 extern TestSuite *ubf_bcmp_tests(void);
 extern TestSuite *ubf_bnum_tests(void);
+extern TestSuite *ubf_bjoin_tests(void);
 extern TestSuite *ubf_bojoin_tests(void);
 
 
