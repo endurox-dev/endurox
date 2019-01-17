@@ -113,13 +113,13 @@ xadmin killall atmisrv
 set_dom1;
 #### Remove all shms
 xadmin down -y
-xadmin shms | cut -d ':' -f 1 | ipcrm -m {}
+xadmin shms | cut -d ':' -f 2 | xargs -i ipcrm -m {}
 xadmin start -y || go_out 1
 
 set_dom2;
 #### Remove all shsm
 xadmin down -y
-xadmin shms | cut -d ':' -f 1 | ipcrm -m {}
+xadmin shms | cut -d ':' -f 2 | xargs -i ipcrm -m {}
 xadmin start -y || go_out 2
 
 # Clean up the logs
