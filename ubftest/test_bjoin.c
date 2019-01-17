@@ -41,7 +41,7 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 
-void load_test_data_bjoin_src(UBFH *p_ub)
+void load_test_data_bjoin_dst(UBFH *p_ub)
 {
     short s = 88;
     long l = -1021;
@@ -69,7 +69,6 @@ void load_test_data_bjoin_src(UBFH *p_ub)
     len = strlen(carr);
 
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
@@ -87,12 +86,12 @@ void load_test_data_bjoin_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 2, (char *)&d, 0), EXSUCCEED);
 }
 
-void load_test_data_bjoin_dst(UBFH *p_ub)
+void load_test_data_bjoin_src(UBFH *p_ub)
 {
     short s = 222;
     long l = 23456789;
     char c = 'z';
-    float f = 99.99;
+    float f = 99.990000;
     double d = 987654.9876;
 
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
@@ -100,7 +99,7 @@ void load_test_data_bjoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL JOIN", 0), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 33;
@@ -136,7 +135,7 @@ Ensure(test_bjoin_simple)
     char fb_dst[1400];
     UBFH *p_ub_src = (UBFH *)fb_src;
     UBFH *p_ub_dst = (UBFH *)fb_dst;
-
+    
     short s;
     long l;
     char c;
@@ -147,13 +146,23 @@ Ensure(test_bjoin_simple)
     UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
     UBF_header_t *hdst = (UBF_header_t *)p_ub_dst;
 
-    assert_equal(Binit(p_ub_src, sizeof(fb_src)), EXSUCCEED);
-    assert_equal(Binit(p_ub_dst, sizeof(fb_dst)), EXSUCCEED);
+    Binit(p_ub_src, sizeof(fb_src));
+    Binit(p_ub_dst, sizeof(fb_dst));
 
     load_test_data_bjoin_src(p_ub_src);
     load_test_data_bjoin_dst(p_ub_dst);
 
+    UBF_LOG(log_debug, "Field num in src buffer [%d]", Bnum(p_ub_src));
+    UBF_LOG(log_debug, "Field num in dst buffer [%d]", Bnum(p_ub_dst));
+
+
     assert_equal(Bjoin(p_ub_dst, p_ub_src),EXSUCCEED);
+
+    UBF_LOG(log_debug, "Field num in src buffer after Bjoin [%d]", Bnum(p_ub_src));
+    UBF_LOG(log_debug, "Field num in dst buffer after Bjoin [%d]", Bnum(p_ub_dst));
+
+//                UBF_LOG(log_debug, "Failed to set %s[%d]", 
+//                                ndrx_Bfname_int(bfldid), occ);
 
     assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(s,222);
@@ -171,8 +180,7 @@ Ensure(test_bjoin_simple)
 
     assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(s,33);
-    assert_equal(Bget(p_ub_dst, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
-    assert_equal(l,-2048);
+    assert_equal(Bpres(p_ub_dst, T_LONG_FLD, 1), EXFALSE);
     assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
     assert_equal(c,'X');
     assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);

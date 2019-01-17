@@ -41,15 +41,13 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 
-void load_test_data_bojoin_src(UBFH *p_ub)
+void load_test_data_bojoin_dst(UBFH *p_ub)
 {
     short s = 88;
     long l = -1021;
     char c = 'c';
     float f = 17.31;
     double d = 12312.1111;
-    char carr[] = "CARRAY1 TEST STRING DATA";
-    BFLDLEN len = strlen(carr);
 
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
@@ -57,7 +55,6 @@ void load_test_data_bojoin_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
@@ -65,16 +62,12 @@ void load_test_data_bojoin_src(UBFH *p_ub)
     c = '.';
     f = 17.31;
     d = 12312.1111;
-    carr[0] = 'Y';
-    len = strlen(carr);
 
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING 2", 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     l = -2323;
@@ -87,12 +80,12 @@ void load_test_data_bojoin_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 2, (char *)&d, 0), EXSUCCEED);
 }
 
-void load_test_data_bojoin_dst(UBFH *p_ub)
+void load_test_data_bojoin_src(UBFH *p_ub)
 {
     short s = 222;
     long l = 23456789;
     char c = 'z';
-    float f = 99.99;
+    float f = 99.990000;
     double d = 987654.9876;
 
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
@@ -100,7 +93,7 @@ void load_test_data_bojoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL OUTER JOIN", 0), EXSUCCEED);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 33;
@@ -130,27 +123,63 @@ void load_test_data_bojoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 3, (char *)&f, 0), EXSUCCEED);
 }
 
-/**
- * This simply reads all fields and adds them to another buffer, then do compare
- */
 Ensure(test_bojoin_simple)
 {
     char fb_src[1400];
     char fb_dst[1400];
     UBFH *p_ub_src = (UBFH *)fb_src;
     UBFH *p_ub_dst = (UBFH *)fb_dst;
+    
+    short s;
+    long l;
+    char c;
+    float f;
+    double d;
+    char buf[100];
 
     UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
     UBF_header_t *hdst = (UBF_header_t *)p_ub_dst;
 
-    assert_equal(Binit(p_ub_src, sizeof(fb_src)), EXSUCCEED);
-    assert_equal(Binit(p_ub_dst, sizeof(fb_dst)), EXSUCCEED);
+    Binit(p_ub_src, sizeof(fb_src));
+    Binit(p_ub_dst, sizeof(fb_dst));
 
     load_test_data_bojoin_src(p_ub_src);
     load_test_data_bojoin_dst(p_ub_dst);
 
     assert_equal(Bojoin(p_ub_dst, p_ub_src),EXSUCCEED);
 
+    assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
+    assert_equal(s,222);
+    assert_equal(Bget(p_ub_dst, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
+    assert_equal(l,23456789);
+    assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
+    assert_equal(c,'z');
+    assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
+    assert_double_equal(f,99.99);
+    assert_equal(Bget(p_ub_dst, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
+    assert_double_equal(d,987654.9876);
+    assert_equal(Bget(p_ub_dst, T_STRING_FLD, 0, (char *)buf, 0), EXSUCCEED);
+    assert_string_equal(buf,"TEST STR VAL OUTER JOIN");
+
+    assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
+    assert_equal(s,33);
+    assert_equal(Bget(p_ub_dst, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
+    assert_equal(l,87.65);
+    
+    assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
+    assert_equal(c,'X');
+    assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
+    assert_double_equal(f,87.65);
+    assert_equal(Bget(p_ub_dst, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
+    assert_double_equal(d,12312.1111);
+    assert_equal(Bget(p_ub_dst, T_STRING_FLD, 1, (char *)buf,0), EXSUCCEED);
+    assert_string_equal(buf,"TEST STRING 2");
+
+    assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 2, (char *)&c, 0), EXSUCCEED);
+    assert_equal(c,'Q');
+    assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 2, (char *)&f, 0), EXSUCCEED);
+    assert_double_equal(f,12.31);
+    assert_equal(Bpres(p_ub_dst, T_DOUBLE_FLD, 2), EXFALSE);
 
 }
 
@@ -163,3 +192,4 @@ TestSuite *ubf_bojoin_tests(void)
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
+
