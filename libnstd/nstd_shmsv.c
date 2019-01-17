@@ -387,7 +387,8 @@ expublic string_list_t * ndrx_shm_shms_list(key_t ipckey)
         
         if (EXFAIL!=(fd = shmget(key, 0, S_IRWXU | S_IRWXG)))
         {
-            snprintf(segment, sizeof(segment), "%x: %s", key, M_map[i].suffix);
+            snprintf(segment, sizeof(segment), "%x:%d:%s", 
+                    key, fd, M_map[i].suffix);
             if (EXSUCCEED!=ndrx_string_list_add(&ret, segment))
             {
                 NDRX_LOG(log_error, "Failed to add shm segment to list");
