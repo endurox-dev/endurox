@@ -183,21 +183,18 @@ expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
     {
         EXFAIL_OUT(ret);
     }
-
+    UBF_LOG(log_debug, "Delete fields from destination buffer which not have in source buffer");
 repeat:
-    hdr = (UBF_header_t *)dest;
-    bfldid = BFIRSTFLDID;
-    memset(&chg_state, 0, sizeof(chg_state));
     memset(&state, 0, sizeof(state));
-    chg_state.last_checked = &hdr->bfldid;
+    bfldid= BFIRSTFLDID;
 
     while(EXSUCCEED==ret &&
-        1==(nxt_stat=ndrx_Bnext(&state, src, &bfldid, &occ, NULL, &len, &p_fld)))
+        1==(nxt_stat=ndrx_Bnext(&state, dest, &bfldid, &occ, NULL, &len, NULL)))
     {
         /*
          * Delete fields from destination buffer which not have in source buffer
          */
-        if (EXFALSE != _Bpres(dest, bfldid, occ))
+        if (EXTRUE != _Bpres(src, bfldid, occ))
         {
             if (EXSUCCEED!=(ret=Bdel(dest, bfldid, occ)))
             {
@@ -207,8 +204,9 @@ repeat:
             }
             goto repeat;
         }
-    }
 
+    }
+    
 out:
     return ret;
 }
