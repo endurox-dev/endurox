@@ -354,7 +354,7 @@ echo "After dom2 down..."
 $PSCMD
 
 xadmin pqa -a
-CNT=`xadmin pqa -a | wc | awk '{print $1}'`
+CNT=`xadmin pqa -a | grep dom | wc | awk '{print $1}'`
 echo "DOM1 Queues: $CNT"
 if [[ "$CNT" -ne "1" ]]; then 
     echo "TESTERROR! Dom1 & 2 all queues must be removed except 1 for xadmin!"
