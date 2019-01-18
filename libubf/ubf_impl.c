@@ -1190,6 +1190,9 @@ out:
  * @param
  * @param
  * @param
+ * @param upd_only - when is set to EXTRUE update only existing fields 
+ * and not add new fields in p_ub, otherwise update existing fields and 
+ * add new fields when they not exist in p_fb
  * @return
  */
 expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
