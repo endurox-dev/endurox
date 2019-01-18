@@ -5,7 +5,7 @@ Bojoin(3)
 
 NAME
 ----
-Bojon - outer join source buffer into destination buffer
+Bojoin - outer join source buffer into destination buffer
 
 
 SYNOPSIS
