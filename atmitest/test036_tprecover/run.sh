@@ -165,10 +165,34 @@ if [[ "X$OUT" == "X" ]]; then
     go_out 3
 fi
 
+echo "Perform PING tests... - put ndrxd to sleep"
+
+echo "*************"
+xadmin ps | grep ndrxd
+echo "************* EPS"
+
+DPID=`xadmin dpid`
+xadmin dsleep 20
+
+echo "Echo sleep for 20 to respawn back..."
+sleep 20
+
+DPID2=`xadmin dpid`
+
+echo "before pid=$DPID after pid=$DPID2"
+
+if [[ "X$" == "X$DPID2" ]]; then
+    echo "TESTERROR, ndrxd not started!"
+    go_out 4
+fi
+
+if [[ "X$DPID" == "X$DPID2" ]]; then
+    echo "TESTERROR, PIDS not switched, before=$DPID, after=$DPID2"
+    go_out 5
+fi
+
 RET=0
 
 go_out $RET
-
-
 
 # vim: set ts=4 sw=4 et smartindent:

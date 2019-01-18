@@ -344,6 +344,8 @@ kern.sysv.shmmin=1
 kern.sysv.shmmni=32
 kern.sysv.shmseg=8
 kern.sysv.shmall=102400
+kern.maxfiles=524288
+kern.maxfilesperproc=262144
 
 EOF
 --------------------------------------------------------------------------------

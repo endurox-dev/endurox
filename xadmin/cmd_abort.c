@@ -163,7 +163,7 @@ expublic int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     /* call the transaction manager */
     if (EXSUCCEED!=call_tm(srvcnm_real, tmxid_real, tmrmid_real))
     {
-        fprintf(stderr, "ERROR: %s\n", tpstrerror(tperrno));
+        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "%s\n", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     

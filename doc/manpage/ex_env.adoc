@@ -226,7 +226,7 @@ Mandatory Env. Variables
     Thus this semaphore is used read/write mode to protect the SystemV-to-Posix
     and Posix-to-SystemV mapping tables.
     The default value for this parameter is *50*.
-'NDRX_MSGQUEUESMAX'='MAX_IPC_QUEUES'::
+*NDRX_MSGQUEUESMAX*='MAX_IPC_QUEUES'::
     Max number of queues that can be mapped to System V sub-system. This parameter
     defines size for two shared memory chunks which names are '<NDRX_QPREFIX>,shm,p2s'
     and '<NDRX_QPREFIX>,shm,s2p'. The number defines number of queue entries in

@@ -110,8 +110,8 @@ expublic int cmd_srvadv (command_call_t * call, char *data, size_t len, int cont
         memset((char *)new_svc, 0, sizeof(new_svc));
 
         /* Fill up details */
-        strcpy(new_svc->svc.svc_nm, adv->svc_nm);
-        strcpy(new_svc->svc.fn_nm, adv->fn_nm);
+        NDRX_STRCPY_SAFE(new_svc->svc.svc_nm, adv->svc_nm);
+        NDRX_STRCPY_SAFE(new_svc->svc.fn_nm, adv->fn_nm);
         
         brd_begin_diff();
         

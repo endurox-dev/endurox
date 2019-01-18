@@ -91,8 +91,13 @@ exprivate void admin_fork_prepare(void)
 exprivate void admin_fork_resume(void)
 {
     int ret;
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
     
-    if (EXSUCCEED!=(ret=pthread_create(&M_evthread, NULL, &ndrx_svqadmin_run, NULL)))
+    ndrx_platf_stack_set(&pthread_custom_attr);
+    
+    if (EXSUCCEED!=(ret=pthread_create(&M_evthread, &pthread_custom_attr, 
+            &ndrx_svqadmin_run, NULL)))
     {
         NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
         userlog("Failed to create admin thread: %s", strerror(ret));
@@ -107,10 +112,15 @@ exprivate void admin_fork_resume(void)
 expublic int ndrx_svqadmin_init(mqd_t adminq)
 {
     int ret = EXSUCCEED;
+    pthread_attr_t pthread_custom_attr;
+    pthread_attr_init(&pthread_custom_attr);
+    
+    ndrx_platf_stack_set(&pthread_custom_attr);
     
     M_adminq = adminq;
     
-    if (EXSUCCEED!=(ret=pthread_create(&M_evthread, NULL, &ndrx_svqadmin_run, NULL)))
+    if (EXSUCCEED!=(ret=pthread_create(&M_evthread, &pthread_custom_attr, 
+            &ndrx_svqadmin_run, NULL)))
     {
         NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
         userlog("Failed to create admin thread: %s", strerror(ret));

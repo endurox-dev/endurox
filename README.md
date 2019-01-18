@@ -1,8 +1,21 @@
 # endurox
+
+## Build (including atmi/ubf tests) status
+
+| OS   |      Status      | OS       |      Status   |OS       |      Status   |
+|----------|:-------------:|----------|:-------------:|----------|:-------------:|
+| AIX 7.1 |  [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_1)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_1/) |Centos 6|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-centos6)](http://www.silodev.com:9090/jenkins/job/endurox-centos6/)|FreeBSD 11|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-freebsd11)](http://www.silodev.com:9090/jenkins/job/endurox-freebsd11/)|
+|Oracle Linux 7|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol7)](http://www.silodev.com:9090/jenkins/job/endurox-ol7/)|OSX 11.4|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-osx11_4)](http://www.silodev.com:9090/jenkins/job/endurox-osx11_4/)|raspbian8-arv7l|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-raspbian8-arv7l)](http://www.silodev.com:9090/jenkins/job/endurox-raspbian8-arv7l/)|
+|SLES 12|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles12)](http://www.silodev.com:9090/jenkins/job/endurox-sles12/)|SLES 15|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles15)](http://www.silodev.com:9090/jenkins/job/endurox-sles15/)|Solaris 10|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris10-sparc)](http://www.silodev.com:9090/jenkins/job/endurox-solaris10-sparc/)|
+|Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 16.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu16)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu16/)|
+|Ubuntu 18.04|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
+
+## Overview
+
 Enduro/X is Open Source Middleware Platform for Distributed Transaction 
 Processing
 
-It is modern, microservices based middleware for writing distributed, open
+It is modern, micro-services based middleware for writing distributed, open
 systems (program consists of several executables) based applications. Thus 
 by using Enduro/X programmers do not have to worry about threads and concurrency 
 anymore, the load balacing and multi-CPU loading is done by Enduro/X middleware by it self,
@@ -13,7 +26,7 @@ just configure number of executables to start.
 
 For local inter-process-communication (IPC) Enduro/X uses kernel memory based Posix
 queues to avoid overhead of the TCP/IP protocol which is used in other middlewares
-or REST based microservice architectures. Thus this approach greatly increases
+or REST based micro-service architectures. Thus this approach greatly increases
 application speed, as kernel queues is basically a matter of block memory
 copy from one process to another (by contrast of 7 layers of TCP/IP stack and
 streaming nature of the sockets vs block copy). 
@@ -33,7 +46,7 @@ Dual licensed under Affero General Public License Version 3 for use in Open
 Source project or Commercial license Acquired from Mavimax Ltd 
 (https://www.mavimax.com),
 
-EnduroX have binddings for:
+EnduroX have bindings for:
 - Golang (client & server)
 - PHP (client)
 - Perl (client & server)
@@ -390,6 +403,20 @@ Bug #339, Bug #341, Bug #347, Support #350, Bug #351, Support #352, Bug #353
 
 - Version 6.0.2 released on 02/12/2018 (stable) Bug #355 and other stability issues fixed
 released with 6.0.1.
+
+- Version 6.0.3 released on 16/12/2018 (development) Bug #364, Bug #360. 
+Added new command "ps" for xadmin, so that unit tests have unified access to 
+processing listings across all supported OSes.
+
+- Version 6.0.5 released on 24/12/2018 (development) Feature #366
+
+- Version 6.0.6 released on 08/01/2019 (stable) Marking stable release
+
+- Version 6.0.8 released on 11/01/2019 (stable) Feature #372
+
+- Version 6.0.10 released on 13/01/2019 (stable) Support #373, Bug #374
+
+- Version 6.0.12 released on 16/01/2019 (stable) Bug #375, Bug #376
 
 # Build configurations
 

@@ -128,8 +128,8 @@ typedef struct
 
 /* have a thread handler for tout monitoring thread! */
 
-exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=0, 
-                                    .evpipe[1]=0};
+exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL, 
+                                    .evpipe[1]=EXFAIL};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
@@ -150,6 +150,22 @@ EX_SPIN_LOCKDECL(M_delreflock);          /**< delete reference lock       */
  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Lock the reference list (should be done before forking..)
+ */
+exprivate void ndrx_svq_delref_lock(void)
+{
+    EX_SPIN_LOCK_V(M_delreflock);
+}
+
+/**
+ * Unlock reference list (shall be done after forking by parent and child)
+ */
+exprivate void ndrx_svq_delref_unlock(void)
+{
+    EX_SPIN_UNLOCK_V(M_delreflock);
+}
 
 /**
  * Register QD for delete - local ptr copy so that sanitizer does not see the
@@ -1172,10 +1188,13 @@ out:
 expublic void ndrx_svq_event_exit(int detach)
 {
     NDRX_LOG(log_debug, "Terminating event thread...");
+    
     if (M_alive)
     {
         ndrx_svq_moncmd_term();
-        if (pthread_self()!=M_mon.evthread)
+        
+        /* if equals to 0 then threads are not the same...  */
+        if (0==pthread_equal(pthread_self(), M_mon.evthread))
         {
             NDRX_LOG(log_debug, "Join evthread...");
             pthread_join(M_mon.evthread, NULL);
@@ -1187,7 +1206,7 @@ expublic void ndrx_svq_event_exit(int detach)
     {
         /* detach resources */
         ndrx_svqshm_detach();
-    }   
+    }
 }
 
 /**
@@ -1206,7 +1225,7 @@ exprivate void event_fork_prepare(void)
 {
     NDRX_LOG(log_debug, "Preparing System V Aux thread for fork");
     
-    if (0==M_mon.evpipe[READ] && 0==M_mon.evpipe[WRITE])
+    if (EXFAIL==M_mon.evpipe[READ] && EXFAIL==M_mon.evpipe[WRITE])
     {
         NDRX_LOG(log_debug, "evpipe not open -> nothing to close");
         goto out;
@@ -1222,7 +1241,7 @@ exprivate void event_fork_prepare(void)
     }
     else
     {
-        M_mon.evpipe[READ] = 0;
+        M_mon.evpipe[READ] = EXFAIL;
     }
     
     if (EXSUCCEED!=close(M_mon.evpipe[WRITE]))
@@ -1232,11 +1251,25 @@ exprivate void event_fork_prepare(void)
     }
     else
     {
-        M_mon.evpipe[WRITE] = 0;
+        M_mon.evpipe[WRITE] = EXFAIL;
     }
+    
+    /* Lock the reference list to avoid partially locked by other threads
+     * in child process
+     
+    ndrx_svq_delref_lock();
+    */
     
 out:
     return;
+}
+
+/**
+ * Child resume after forking
+ */
+exprivate void event_fork_resume_child(void)
+{
+    /* ndrx_svq_delref_unlock(); */
 }
 
 /**
@@ -1246,8 +1279,12 @@ exprivate void event_fork_resume(void)
 {
     int err;
     int ret=EXSUCCEED;
+    pthread_attr_t pthread_custom_attr;
     
     NDRX_LOG(log_debug, "Restoring System V Aux thread after fork %d", (int)getpid());
+    
+    
+    /* ndrx_svq_delref_unlock(); */
     
     /* create pipes */
     /* O_NONBLOCK */
@@ -1293,8 +1330,10 @@ exprivate void event_fork_resume(void)
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
+    pthread_attr_init(&pthread_custom_attr);
+    ndrx_platf_stack_set(&pthread_custom_attr);
     M_alive=EXTRUE;
-    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, 
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), &pthread_custom_attr, 
             ndrx_svq_timeout_thread, NULL)))
     {
         M_alive=EXFALSE;
@@ -1325,6 +1364,7 @@ expublic int ndrx_svq_event_init(void)
     int err;
     int ret = EXSUCCEED;
     static int first = EXTRUE;
+    pthread_attr_t pthread_custom_attr;
    /* 
     * Signal handling 
     */
@@ -1390,18 +1430,24 @@ expublic int ndrx_svq_event_init(void)
     M_mon.fdtab[PIPE_POLL_IDX].fd = M_mon.evpipe[READ];
     M_mon.fdtab[PIPE_POLL_IDX].events = POLLIN;
     
-    /* startup tup the thread */
+    /* startup up the thread */
     NDRX_LOG(log_debug, "System V Monitoring pipes fd read:%d write:%d",
                             M_mon.evpipe[READ], M_mon.evpipe[WRITE]);
     
-    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), NULL, ndrx_svq_timeout_thread, NULL)))
+    pthread_attr_init(&pthread_custom_attr);
+    ndrx_platf_stack_set(&pthread_custom_attr);
+    
+    M_alive=EXTRUE;
+    if (EXSUCCEED!=(ret=pthread_create(&(M_mon.evthread), &pthread_custom_attr, 
+        ndrx_svq_timeout_thread, NULL)))
     {
-        NDRX_LOG(log_error, "Failed to create monitoring thread: %s", strerror(errno));
+        M_alive=EXFALSE;
+        NDRX_LOG(log_error, "Failed to create monitoring thread: %s", 
+                strerror(errno));
         EXFAIL_OUT(ret);
     }
     
     /* register fork handlers */
-    M_alive=EXTRUE;
         
     if (first)
     {
@@ -1418,10 +1464,11 @@ expublic int ndrx_svq_event_init(void)
     
         if (EXSUCCEED!=(ret=ndrx_atfork(event_fork_prepare, 
                 /* no need for child resume! */
-                event_fork_resume, NULL)))
+                event_fork_resume, event_fork_resume_child)))
         {
             M_alive=EXFALSE;
-            NDRX_LOG(log_error, "Failed to register fork handlers: %s", strerror(ret));
+            NDRX_LOG(log_error, "Failed to register fork handlers: %s", 
+                    strerror(ret));
             userlog("Failed to register fork handlers: %s", strerror(ret));
             EXFAIL_OUT(ret);
         }
@@ -1445,7 +1492,7 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     int ret = EXSUCCEED;
     int err = 0;
     
-    if (M_mon.evpipe[WRITE] > 0)
+    if (M_mon.evpipe[WRITE] != EXFAIL)
     {
         if (EXFAIL==write (M_mon.evpipe[WRITE], (char *)cmd, 
                 sizeof(ndrx_svq_mon_cmd_t)))
@@ -1458,7 +1505,7 @@ exprivate int ndrx_svq_moncmd_send(ndrx_svq_mon_cmd_t *cmd)
     }
     else
     {
-        NDRX_LOG(log_info, "No even thread -> pipe closed.");
+        NDRX_LOG(log_info, "No event thread -> pipe closed.");
     }
     
 out:
@@ -1527,7 +1574,6 @@ expublic int ndrx_svq_moncmd_rmfd(int fd)
     ndrx_svq_mon_cmd_t cmd;
     
     memset(&cmd, 0, sizeof(cmd));
-    
     
     cmd.cmd = NDRX_SVQ_MON_RMFD;
     cmd.fd = fd;

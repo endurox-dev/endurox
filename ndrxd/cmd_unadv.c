@@ -75,7 +75,7 @@ expublic int cmd_xadunadv (command_call_t * call, char *data, size_t len, int co
     }
     
     /*Fill some details for unadvertise*/
-    strcpy(call_srv.svc_nm, unadv_xa->svc_nm);
+    NDRX_STRCPY_SAFE(call_srv.svc_nm, unadv_xa->svc_nm);
     
     /* Call the server */
     ret = cmd_generic_call(NDRXD_COM_NXDUNADV_RQ, NDRXD_SRC_ADMIN,

@@ -233,9 +233,10 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     int is_error = EXFALSE;
     
 #ifdef EX_OS_FREEBSD
-    snprintf(cmd, sizeof(cmd), "ps -jauxxw");
+    /* snprintf(cmd, sizeof(cmd), "ps -jauxxw"); */
+    NDRX_STRCPY_SAFE(cmd, "ps -wwaxo user,pid,ppid,%cpu,%mem,args");
 #else
-    snprintf(cmd, sizeof(cmd), "ps -ef");
+    NDRX_STRCPY_SAFE(cmd, "ps -ef");
 #endif
     
     fp = popen(cmd, "r");
@@ -277,7 +278,9 @@ expublic string_list_t * ndrx_sys_ps_getchilds(pid_t ppid)
     
 
 /**
- * List processes by filters
+ * List processes by filters.
+ * NOTE! Possibly might return empty results if OS have issues with forking,
+ * i.e. limits... etc.
  * @param filter1 - match the string1
  * @param filter2 - match the string2
  * @param filter3 - match the string3
@@ -303,12 +306,13 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     char *filter[MAX_FILTER] = {filter1, filter2, filter3, filter4, regex1};
     
 #ifdef EX_OS_FREEBSD
-    snprintf(cmd, sizeof(cmd), "ps -auwwx");
+    /* snprintf(cmd, sizeof(cmd), "ps -auwwx"); */
+    NDRX_STRCPY_SAFE(cmd, "ps -wwaxo user,pid,ppid,%cpu,%mem,args");
 #elif EX_OS_DARWIN
     /* we need full username instead of uid in output...*/
-    snprintf(cmd, sizeof(cmd), "ps -je");
+    NDRX_STRCPY_SAFE(cmd, "ps -je");
 #else
-    snprintf(cmd, sizeof(cmd), "ps -ef");
+    NDRX_STRCPY_SAFE(cmd, "ps -ef");
 #endif
     
     if (EXEOS!=regex1[0])
@@ -333,9 +337,7 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
     fp = popen(cmd, "r");
     if (fp == NULL)
     {
-#ifdef SYSCOMMON_ENABLE_DEBUG
-        NDRX_LOG(log_warn, "failed to run command [%s]: %s", cmd, strerror(errno));
-#endif
+        userlog("failed to run command [%s]: %s", cmd, strerror(errno));
         goto out;
     }
     
@@ -356,9 +358,9 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
                 /* for example [/ ]cpmsrv\s */
                 ok++;
             }
-            if (EXEOS!=filter[i][0] && strstr(path, filter[i]))
+            else if (EXEOS!=filter[i][0] && strstr(path, filter[i]))
             {
-                /* NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
+             /*   NDRX_LOG(log_debug, "filter%d [%s] - ok", i, filter[i]); */
                 ok++;
             }
             else if (EXEOS==filter[i][0])
@@ -371,6 +373,8 @@ expublic string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
                 /* NDRX_LOG(log_debug, "filter%d [%s] - fail", i, filter[i]); */
             }
         }
+        
+        /* NDRX_LOG(log_debug, "Filters vote %d/%d", ok, MAX_FILTER); */
         
         if (MAX_FILTER==ok)
         {
@@ -964,6 +968,10 @@ expublic void ndrx_atfork_parent(void)
 expublic void ndrx_atfork_child(void)
 {
     int i;
+    
+    /* well we shall update pid for logger... */
+    ndrx_dbg_pid_update();
+    
     for (i=0; i<MAX_ATFORKS; i++)
     {
         if (NULL!=M_child[i])
