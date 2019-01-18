@@ -1190,11 +1190,14 @@ out:
  * @param
  * @param
  * @param
+ * @param upd_only - when is set to EXTRUE update only existing fields 
+ * and not add new fields in p_ub, otherwise update existing fields and 
+ * add new fields when they not exist in p_fb
  * @return
  */
 expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                             char * buf, BFLDLEN len,
-                            Bfld_loc_info_t *last_start)
+                            Bfld_loc_info_t *last_start, int upd_only)
 {
     int ret=EXSUCCEED;
 
@@ -1346,6 +1349,12 @@ expublic int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     else
     {
+        if (EXTRUE == upd_only)
+        {
+            UBF_LOG(log_debug, "%s: Update only!! Field %d not found occ=%d",
+                    __func__, bfldid, occ);
+            goto out;
+        }
         /* We know something about last field?  */
         int missing_occ;
         int must_have_size;
