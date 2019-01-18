@@ -86,7 +86,7 @@ expublic int ndrx_Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src)
         /*
          * Update the occurrence in target buffer.
          */
-        if (EXSUCCEED!=(ret=ndrx_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state)))
+        if (EXSUCCEED!=(ret=ndrx_Bchg(p_ub_dst, bfldid, occ, p_fld, len, &chg_state, EXFALSE)))
         {
             UBF_LOG(log_debug, "Failed to set %s[%d]", 
                                 ndrx_Bfname_int(bfldid), occ);
@@ -144,4 +144,114 @@ expublic int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
     return ret;
 }
 
+/**
+ * Join two buffers, update only existing fields in dest, remove missing fields
+ * @param dest - dest buffer (being modified)
+ * @param src - src buffer (not modified)
+ * @return SUCCEED/FAIL
+ */
+expublic int ndrx_Bjoin (UBFH *dest, UBFH *src)
+{
+    int ret=EXSUCCEED;
+    UBF_header_t *hdr = (UBF_header_t *)dest;
+    char *p_fld;
+    BFLDID bfldid = BFIRSTFLDID;
+    BFLDOCC occ = 0;
+    BFLDLEN len=0;
+    Bnext_state_t state;
+    int nxt_stat;
+    Bfld_loc_info_t chg_state;
+    memset(&chg_state, 0, sizeof(chg_state));
+    memset(&state, 0, sizeof(state));
+    chg_state.last_checked = &hdr->bfldid;
+
+    while(EXSUCCEED==ret &&
+        1==(nxt_stat=ndrx_Bnext(&state, src, &bfldid, &occ, NULL, &len, &p_fld)))
+    {
+        /*
+         * Update the occurrence in target buffer.
+         */
+        if (EXSUCCEED!=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE))
+        {
+            UBF_LOG(log_debug, "Failed to set %s[%d]", 
+                                ndrx_Bfname_int(bfldid), occ);
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    if (EXFAIL==nxt_stat)
+    {
+        EXFAIL_OUT(ret);
+    }
+    UBF_LOG(log_debug, "Delete fields from destination buffer which not have in source buffer");
+repeat:
+    memset(&state, 0, sizeof(state));
+    bfldid= BFIRSTFLDID;
+
+    while(EXSUCCEED==ret &&
+        1==(nxt_stat=ndrx_Bnext(&state, dest, &bfldid, &occ, NULL, &len, NULL)))
+    {
+        /*
+         * Delete fields from destination buffer which not have in source buffer
+         */
+        if (EXTRUE != _Bpres(src, bfldid, occ))
+        {
+            if (EXSUCCEED!=(ret=Bdel(dest, bfldid, occ)))
+            {
+                UBF_LOG(log_debug, "Failed to delete %s[%d]", 
+                                ndrx_Bfname_int(bfldid), occ);
+                EXFAIL_OUT(ret);
+            }
+            goto repeat;
+        }
+
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Outer join two buffers, update existing, do not remove non-existing fields
+ * @param dest - dest buffer (being modified)
+ * @param src - src buffer (not modified)
+ * @return SUCCEED/FAIL
+ */
+expublic int ndrx_Bojoin (UBFH *dest, UBFH *src)
+{
+    int ret=EXSUCCEED;
+    UBF_header_t *hdr = (UBF_header_t *)dest;
+    char *p_fld;
+    BFLDID bfldid = BFIRSTFLDID;
+    BFLDOCC occ = 0;
+    BFLDLEN len=0;
+    Bnext_state_t state;
+    int nxt_stat;
+    Bfld_loc_info_t chg_state;
+    memset(&chg_state, 0, sizeof(chg_state));
+    memset(&state, 0, sizeof(state));
+    chg_state.last_checked = &hdr->bfldid;
+
+    while(EXSUCCEED==ret &&
+        1==(nxt_stat=ndrx_Bnext(&state, src, &bfldid, &occ, NULL, &len, &p_fld)))
+    {
+        /*
+         * Update the occurrence in target buffer.
+         */
+        if (EXSUCCEED!=ndrx_Bchg(dest, bfldid, occ, p_fld, len, &chg_state, EXTRUE))
+        {
+            UBF_LOG(log_debug, "Failed to set %s[%d]", 
+                                ndrx_Bfname_int(bfldid), occ);
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    if (EXFAIL==nxt_stat)
+    {
+        ret=EXFAIL;
+    }
+
+out:
+    return ret;
+}
 /* vim: set ts=4 sw=4 et smartindent: */

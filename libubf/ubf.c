@@ -361,7 +361,7 @@ expublic int Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
         return EXFAIL; /* <<<< RETURN HERE! */
     }
 
-    return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL);
+    return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL, EXFALSE);
 }
 
 /**
@@ -586,7 +586,7 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     if (usrtype==to_type)
     {
         UBF_LOG(log_debug, "CBchg: the same types - direct call!");
-        return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL); /* <<<< RETURN!!! */
+        return ndrx_Bchg(p_ub, bfldid, occ, buf, len, NULL, EXFALSE); /* <<<< RETURN!!! */
     }
     /* if types are not the same then go the long way... */
     
@@ -2357,28 +2357,68 @@ out:
 }
 /**
  * Join two buffers, update only existing fields in dest, remove missing fields
- * @param dest
- * @param src
- * @return EXFAIL
+ * @param dest - dest buffer (being modified)
+ * @param src - src buffer (not modified)
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int Bjoin(UBFH *dest, UBFH *src)
 {
+    int ret=EXSUCCEED;
     API_ENTRY;
-    ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
-    return EXFAIL;
+    /* Do standard validation */
+    UBF_LOG(log_debug, "Entering %s", __func__);
+    if (EXSUCCEED!=validate_entry(src, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail for src buf!", __func__);
+        ndrx_Bappend_error_msg("(Bjoin: arguments fail for src buf!)");
+        ret=EXFAIL;
+    }
+    else if (EXSUCCEED!=validate_entry(dest, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail for dest buf!", __func__);
+        ndrx_Bappend_error_msg("(Bjoin: arguments fail for dest buf!)");
+        ret=EXFAIL;
+    }
+    else
+    {
+        /* Call the implementation */
+        ret=ndrx_Bjoin (dest, src);
+    }
+    UBF_LOG(log_debug, "Return %s %d", __func__, ret);
+    return ret;
 }
 
 /**
  * Outer join two buffers, update existing, do not remove non-existing fields
- * @param dest
- * @param src
- * @return 
+ * @param dest - dest buffer (being modified)
+ * @param src - src buffer (not modified)
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int Bojoin(UBFH *dest, UBFH *src)
 {
+    int ret=EXSUCCEED;
     API_ENTRY;
-    ndrx_Bset_error_fmt(BERFU0, "%s no supported yet.", __func__);
-    return EXFAIL;
+    /* Do standard validation */
+    UBF_LOG(log_debug, "Entering %s", __func__);
+    if (EXSUCCEED!=validate_entry(src, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail for src buf!", __func__);
+        ndrx_Bappend_error_msg("(Bojoin: arguments fail for src buf!)");
+        ret=EXFAIL;
+    }
+    else if (EXSUCCEED!=validate_entry(dest, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail for dest buf!", __func__);
+        ndrx_Bappend_error_msg("(Bojoin: arguments fail for dest buf!)");
+        ret=EXFAIL;
+    }
+    else
+    {
+        /* Call the implementation */
+        ret=ndrx_Bojoin (dest, src);
+    }
+    UBF_LOG(log_debug, "Return %s %d", __func__, ret);
+    return ret;
 }
 
 /**
