@@ -108,6 +108,7 @@ extern "C" {
 #define Fread Bread
 #define Fwrite Bwrite
 #define Fjoin Bjoin
+#define Fojoin Bojoin
 #define Flen Blen
 #define CFfind CBfind
 #define CFfindocc CBfindocc
