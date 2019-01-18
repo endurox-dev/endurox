@@ -40,7 +40,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <xa_cmn.h>
-#include "thpool.h"
+#include <exthpool.h>
 /*---------------------------Externs------------------------------------*/
 extern pthread_t G_bacground_thread;
 extern int G_bacground_req_shutdown;    /* Is shutdown request? */

@@ -90,6 +90,8 @@ extern char *G_cmd_argv[MAX_ARGS];
         }
 
 #define XADMIN_INVALID_OPTIONS_MSG      "Invalid options, see `help'.\n"
+
+#define XADMIN_ERROR_FORMAT_PFX         "ERROR ! "
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -266,6 +268,18 @@ extern int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 
 extern int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* Utils: */
+extern int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* appconfig: */
+extern int cmd_appconfig(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int appconfig_rsp_process(command_reply_t *reply, size_t reply_len);
+
+/* dping: */
+extern int cmd_dping(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_dsleep(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_dpid(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 #ifdef	__cplusplus
 }

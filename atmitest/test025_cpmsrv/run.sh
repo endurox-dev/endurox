@@ -101,7 +101,7 @@ function test_proc_cnt {
     CNT=`$PSCMD | grep $proc | grep -v grep | wc | awk '{print $1}'`
     XPROC_COUNT=$cnt
     echo ">>> $PSCMD procs: $CNT"
-    if [[ "X$CNT" -ne "X$XPROC_COUNT" ]]; then 
+    if [[ "X$CNT" != "X$XPROC_COUNT" ]]; then 
         echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
         go_out $go
     fi
@@ -115,7 +115,7 @@ rm *.log
 #
 # Kill the children test processes if any
 #
-xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc
+xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc.sh
 
 xadmin down -y
 xadmin start -y || go_out 1
@@ -160,7 +160,9 @@ echo "Before reload [$OUT1]"
 
 xadmin rc -t BATCH% -s% -w 15000
 
+echo "***** PC *****"
 xadmin pc
+echo "***** PC, END *****"
 
 test_proc_cnt "ndrxbatchmode.sh" "3" "34"
 OUT2=`xadmin pc`
@@ -214,8 +216,8 @@ if [[ "X$OUT" == "X" ]]; then
 fi
 
 xadmin sc -t CHLD5
-test_proc_cnt "chld5.sh", "0", "26"
-test_proc_cnt "chld6.sh", "1", "27"
+test_proc_cnt "chld5.sh" "0" "26"
+test_proc_cnt "chld6.sh" "1" "27"
 
 ################################################################################
 # Child cleanup... testing, end
@@ -261,14 +263,14 @@ for ((i=1;i<=100;i++)); do
         xadmin bc -t WHILE -s $i
 done
 
-sleep 20
+sleep 40
 
 # have some sync (wait for startup to complete, print the output)
 xadmin pc
 
 CNT=`xadmin pc | grep "WHILE" | grep "running pid" | wc | awk '{print $1}'`
 echo "xadmin procs: $CNT"
-if [[ "$CNT" -ne "$PROC_COUNT" ]]; then 
+if [[ "$CNT" != "$PROC_COUNT" ]]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to xadmin pc)!"
         go_out 6
 fi
@@ -287,42 +289,17 @@ $PSCMD
 # Having some issues when bash is doing forks inside the test script -> whileproc.sh
 # Thus filter by cpmsrv pid in ps line...
 #
-CPM_PID=0
-if [ "$(uname)" == "FreeBSD" ]; then
-        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-else
-        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
-fi
+CPM_PID=`xadmin ppm | grep cpmsrv | awk '{print $3}'`
+#if [ "$(uname)" == "FreeBSD" ]; then
+#        CPM_PID=`ps -auwwx| grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+#else
+#        CPM_PID=`ps -ef | grep $USER | grep $NDRX_RNDK | grep cpmsrv | awk '{print $2}'`
+#fi
 
-CNT=0
-if [ "$(uname)" == "Linux" ]; then
-	while read -r line ; do
-    		echo "Processing [$line]"
-    		# your code goes here
-    		#MATCH=`echo $line | grep $CPM_PID |grep whileproc.sh`
-    
-    		if [[ $line == *"whileproc.sh"* ]]; then
-
-    			if [[ $line == *"$CPM_PID"* ]]; then
-        			echo "MATCH: [$line]"
-        			CNT=$((CNT+1))
-			else
-        			echo "NOT MATCH (2): [$line]"
-			fi
-    		else
-        		echo "NOT MATCH: [$line]"
-    		fi
-
-	done < <($PSCMD)
-
-	PROC_COUNT_DIFFALLOW=$PROC_COUNT
-
-else
-
-	CNT=`$PSCMD | grep whileproc.sh | grep -v grep | wc | awk '{print $1}'`
-fi
-
-echo "$PSCMD procs: $CNT"
+echo "CPM_PID=$CPM_PID"
+xadmin ps -a whileproc.sh
+CNT=`xadmin ps -a whileproc.sh | grep $CPM_PID | wc | awk '{print $1}' `
+echo "procs: $CNT"
 
 if [ "$CNT" -lt "$PROC_COUNT" ] || [ "$CNT" -gt "$PROC_COUNT_DIFFALLOW"  ]; then 
         echo "TESTERROR! $PROC_COUNT procs not booted (according to $PSCMD )!"

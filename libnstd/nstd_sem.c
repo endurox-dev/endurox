@@ -259,7 +259,7 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
         
         if (EEXIST==err && attach_on_exists)
         {
-            NDRX_LOG(log_error, "Semaphore exists [%x] - attaching",
+            NDRX_LOG(log_info, "Semaphore exists [%x] - attaching",
                     sem->key);
             return ndrx_sem_attach(sem);
         }

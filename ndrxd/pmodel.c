@@ -92,6 +92,9 @@
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
 exprivate volatile int M_shutdown = EXFALSE; /**< Doing shutdown    */
+
+EX_SPIN_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -145,6 +148,8 @@ expublic int self_notify(srv_status_t *status, int block)
 
     NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
                         send_size, status->svc_count);
+    
+    EX_SPIN_LOCK_V(M_forklock);
     /* we want new q/open + close here,
      * so that we do not interference with our main queue blocked/non blocked flags.
      */
@@ -161,6 +166,7 @@ expublic int self_notify(srv_status_t *status, int block)
                         NULL,
                         NULL,
                         EXFALSE, TPNOBLOCK);
+    EX_SPIN_UNLOCK_V(M_forklock);
     
 out:
     return ret;
@@ -219,7 +225,8 @@ exprivate void * check_child_exit(void *arg)
     int stat_loc;
     sigset_t blockMask;
     int sig;
-        
+    struct rusage rusage;
+    
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
@@ -241,17 +248,21 @@ exprivate void * check_child_exit(void *arg)
 
         }        
 #endif
+        
         if (M_shutdown)
         {
             break;
+            
         }
         
         NDRX_LOG(log_debug, "about to wait()");
-        while ((chldpid = wait(&stat_loc)) >= 0)
+        
+        while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
             got_something++;
             handle_child(chldpid, stat_loc);
         }
+        
 #if EX_OS_DARWIN
         NDRX_LOG(6, "wait: %s", strerror(errno));
         if (!got_something)
@@ -331,7 +342,6 @@ expublic void ndrxd_sigchld_init(void)
 {
     sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
-    pthread_attr_t pthread_custom_attr_dog;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
     char *fn = "ndrxd_sigchld_init";
 
@@ -351,13 +361,15 @@ expublic void ndrxd_sigchld_init(void)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
+    /*
     if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        */
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
     {
         NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
     }
     
     pthread_attr_init(&pthread_custom_attr);
-    pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
@@ -895,8 +907,15 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     
     /* clone our self */
+    
+    /*
+     * During the fork, no queue ops shall be done! This can cause
+     * System V event thread corruption.
+     */
+    EX_SPIN_LOCK_V(M_forklock);
     pid = ndrx_fork();
-
+    EX_SPIN_UNLOCK_V(M_forklock);
+    
     if( pid == 0)
     {
         char sysflags_str[30];
@@ -920,6 +939,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         /* Bug #176: close parent resources - not needed any more... */
         ndrxd_shm_close_all();
 
+        /* for System V child event thread is not resumed
+         * but it is not a big deal, this just deallocates the resources
+         * after exec they will be free'd anyway.
+         */
     	if (EXSUCCEED!=ndrx_mq_close(G_command_state.listenq))
         {
             userlog("Failed to close: [%s] err: %s",
@@ -1044,7 +1067,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-            int i;
             fprintf(stderr, "Failed to start server [%s], error: %d, %s\n",
                                 cmd[0], err, strerror(err));
             
@@ -1519,9 +1541,11 @@ expublic int app_sreload(command_startstop_t *call,
         DL_FOREACH(G_process_model, p_pm)
         {
             /* if particular binary shutdown requested (probably we could add some index!?) */
-            if ((EXEOS!=call->binary_name[0] && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
+            if ((EXEOS!=call->binary_name[0] 
+                    && 0==strcmp(call->binary_name, p_pm->binary_name)) ||
                     /* Do full startup if requested autostart! */
-                    (EXEOS==call->binary_name[0] && p_pm->autostart)) /* or If full shutdown requested */
+                    /* or If full shutdown requested */
+                    (EXEOS==call->binary_name[0] && p_pm->autostart))
             {
                 
                 stop_process(call, p_pm, p_shutdown_progress, 

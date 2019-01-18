@@ -83,7 +83,7 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     /* Load UBF fields (if no already loaded...) */
     if (EXFAIL==(ret=Bflddbload()))
     {
-        fprintf(stderr, "ERROR ! Failed to load UBF field database: %s\n", 
+        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "Failed to load UBF field database: %s\n", 
                 Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
@@ -100,7 +100,7 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     /* get DB Env */
     if (NULL==(dbenv=Bfldddbgetenv(&dbi_id, &dbi_nm)))
     {
-        fprintf(stderr, "ERROR ! Failed to load UBF DB env handler: %s\n", 
+        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "Failed to load UBF DB env handler: %s\n", 
                 Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
@@ -108,7 +108,7 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     /* begin transaction */
     if (EXSUCCEED!=(ret=edb_txn_begin(dbenv, NULL, EDB_RDONLY, &txn)))
     {
-        fprintf(stderr, "ERROR ! Failed to start LMDB transaction: %s\n", 
+        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "Failed to start LMDB transaction: %s\n", 
                 edb_strerror(ret));
         EXFAIL_OUT(ret);
     }
@@ -119,7 +119,8 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     
     if (EXSUCCEED!=(ret=edb_cursor_open(txn, *dbi_nm, &cursor)))
     {
-        fprintf(stderr, "ERROR ! Failed to open cursor: %s\n", edb_strerror(ret));
+        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "Failed to open cursor: %s\n",
+            edb_strerror(ret));
         EXFAIL_OUT(ret);
     }
     cursor_open = EXTRUE;
@@ -131,7 +132,8 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         {
             if (ret!=EDB_NOTFOUND)
             {
-                fprintf(stderr, "ERROR ! cursor get failed: %s\n", edb_strerror(ret));
+                fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "cursor get failed: %s\n",
+                    edb_strerror(ret));
             }
             goto out;
         }
@@ -139,7 +141,7 @@ expublic int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         if (EXSUCCEED!=Bflddbget(&data, &fldtype, &bfldno, &bfldid, 
                 fldname, sizeof(fldname)))
         {
-            fprintf(stderr, "ERROR ! failed to decode db data: %s\n", 
+            fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "failed to decode db data: %s\n", 
                     Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }

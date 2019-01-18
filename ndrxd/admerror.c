@@ -39,6 +39,7 @@
 #include <ndrxdcmn.h>
 #include <ndebug.h>
 #include <stdarg.h>
+#include <ndrxd.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRXD_ERROR_DESCRIPTION(X) (M_ndrxd_error_defs[X<NDRXD_EMINVAL?TPMINVAL:(X>NDRXD_EMAXVAL?NDRXD_EMAXVAL:X)].msg)
@@ -57,8 +58,8 @@ int M_ndrxd_error = NDRXD_EMINVAL;
  */
 struct err_msg
 {
-	int id;
-	char *msg;
+    int id;
+    char *msg;
 } M_ndrxd_error_defs [] =
 {
     {NDRXD_ERROR(NDRXD_EMINVAL)},	/* minimum error message */
@@ -80,10 +81,24 @@ struct err_msg
     {NDRXD_ERROR(NDRXD_EABORT)},
     {NDRXD_ERROR(NDRXD_EENVFAIL)},
     {NDRXD_ERROR(NDRXD_EINVAL)},
-    {NDRXD_ERROR(NDRXD_EMAXVAL)}	/* maxiumum error message */
+    
+    {NDRXD_ERROR(NDRXD_EMAXVAL)}	/* maximum error message */
 };
 
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Get error handling library resources, for direct access from other libraries
+ * @param error_code_ptr double ptr to error code
+ * @param errbufsz buffer size
+ * @return error string buffer
+ */
+expublic char * NDRXD_error_res_get(int **error_code_ptr, int *errbufsz)
+{
+    *error_code_ptr = &M_ndrxd_error;
+    *errbufsz = sizeof(M_ndrxd_error_msg_buf);
+    return M_ndrxd_error_msg_buf;
+}
 /**
  * Standard.
  * Printer error to stderr
@@ -91,11 +106,12 @@ struct err_msg
  */
 expublic void NDRXD_error (char *str)
 {
-	if (EXEOS!=M_ndrxd_error_msg_buf[0])
-		fprintf(stderr, "%s:%d:%s (%s)\n", str, M_ndrxd_error, NDRXD_ERROR_DESCRIPTION(M_ndrxd_error),
-                                            M_ndrxd_error_msg_buf);
-	else
-		fprintf(stderr, "%s:%d:%s\n", str, M_ndrxd_error, NDRXD_ERROR_DESCRIPTION(M_ndrxd_error));
+    if (EXEOS!=M_ndrxd_error_msg_buf[0])
+        fprintf(stderr, "%s:%d:%s (%s)\n", str, M_ndrxd_error, 
+                NDRXD_ERROR_DESCRIPTION(M_ndrxd_error), M_ndrxd_error_msg_buf);
+    else
+        fprintf(stderr, "%s:%d:%s\n", str, M_ndrxd_error, 
+                NDRXD_ERROR_DESCRIPTION(M_ndrxd_error));
 }
 
 /**
@@ -109,16 +125,16 @@ expublic char * ndrxd_strerror (int err)
 
     if (EXEOS!=M_ndrxd_error_msg_buf[0])
     {
-		snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
-                                err,
-                                NDRXD_ERROR_DESCRIPTION(err),
-                                M_ndrxd_error,
-                                M_ndrxd_error_msg_buf);
+        snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
+                        err,
+                        NDRXD_ERROR_DESCRIPTION(err),
+                        M_ndrxd_error,
+                        M_ndrxd_error_msg_buf);
     }
-	else
+    else
     {
-		snprintf(errbuf, sizeof(errbuf), "%d:%s",
-                            err, NDRXD_ERROR_DESCRIPTION(err));
+        snprintf(errbuf, sizeof(errbuf), "%d:%s",
+                    err, NDRXD_ERROR_DESCRIPTION(err));
     }
 
     return errbuf;
@@ -130,7 +146,7 @@ expublic char * ndrxd_strerror (int err)
  */
 expublic int * _ndrxd_getNDRXD_errno_addr (void)
 {
-	return &M_ndrxd_error;
+    return &M_ndrxd_error;
 }
 
 /**
@@ -193,7 +209,7 @@ expublic void NDRXD_set_error_fmt(int error_code, const char *fmt, ...)
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        strcpy(M_ndrxd_error_msg_buf, msg);
+        NDRX_STRCPY_SAFE(M_ndrxd_error_msg_buf, msg);
         M_ndrxd_error = error_code;
 
         NDRX_LOG(log_warn, "NDRXD_set_error_fmt: %d (%s) [%s]",
@@ -207,8 +223,8 @@ expublic void NDRXD_set_error_fmt(int error_code, const char *fmt, ...)
  */
 expublic void NDRXD_unset_error(void)
 {
-	M_ndrxd_error_msg_buf[0]=EXEOS;
-	M_ndrxd_error = BMINVAL;
+    M_ndrxd_error_msg_buf[0]=EXEOS;
+    M_ndrxd_error = BMINVAL;
 }
 /**
  * Return >0 if error is set

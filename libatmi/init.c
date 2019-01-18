@@ -398,6 +398,21 @@ expublic int ndrx_load_common_env(void)
                 G_atmi_env.is_clustered?"cluster":"non cluster/single node");
     }
     
+    p = getenv(CONF_NDRX_DPID);
+    if (NULL==p)
+    {
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_DPID);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_DPID);
+        ret=EXFAIL;
+        goto out;
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(G_atmi_env.ndrxd_pidfile, p);
+        
+        NDRX_LOG(log_debug, "`ndrxd' pid file set to: [%s]",
+                            G_atmi_env.ndrxd_pidfile);
+    }
     
     /* <XA Protocol configuration - currently optional...> */
     

@@ -78,8 +78,8 @@ FUNC ([_a-zA-Z][_a-zA-Z0-9]*"()")
 "+"				{ yylval.fn = ADDOP_PLUS;  return ADDOP; }
 "-"				{ yylval.fn = ADDOP_MINUS; return ADDOP; }
  /* Those bellow we are not going to work as ADDOP! */
-"~"				{ yylval.fn = UNARY_CMPL;  return ADDOP; }
-"!"				{ yylval.fn = UNARY_INV;   return ADDOP; }
+"~"				{ yylval.fn = UNARY_CMPL;  return UNARYOP; }
+"!"				{ yylval.fn = UNARY_INV;   return UNARYOP; }
  /* Mult ops */
 "*"				{ yylval.fn = MULOP_DOT;   return MULTOP; }
 "/"				{ yylval.fn = MULOP_DIV;   return MULTOP; }

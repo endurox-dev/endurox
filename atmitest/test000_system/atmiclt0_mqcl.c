@@ -677,10 +677,10 @@ int local_test_qfull(char *pfx)
         /* test the timeout */
         tim = ndrx_stopwatch_get_delta_sec(&t);
 
-        if (tim < 2 || tim > 10)
+        if (tim < 2 || tim > 20)
         {
             NDRX_LOG(log_error, "Expected send time atleast 2 and less "
-		"than 5, but got: %d", tim);
+		"than 20, but got: %d", tim);
             EXFAIL_OUT(ret);
         }
 

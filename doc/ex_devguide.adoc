@@ -21,8 +21,8 @@ filetype plugin on
 set modeline 
 --------------------------------------------------------------------------------
 
-Project also uses 'libxml2' (provided by system), 'exhash' (already included in 'include' dir) 
-and cgreen (integrated into Enduro/X) for unit testing.
+Project also uses 'libxml2' (provided by system), 'exhash' (already included 
+in 'include' dir) and cgreen (integrated into Enduro/X) for unit testing.
 
 === C Programming style
 
@@ -479,7 +479,7 @@ as the linked lists. The library can be instructed to refresh the memory configu
 Refresh function detects any files changed in disk (by time stamp) and reload the data
 in memory.
 
-=== Enduro/X common config setup
+=== Enduro/X common configuration setup
 
 Enduro/X can be configured by using ini file (or files) instead of environment variables, 
 ndrxdebug.conf and q.conf.
@@ -918,7 +918,7 @@ returns after the processing back to waiting for message.
 
 [dia, systemv_message_dispatch_mode.dia, systemv_message_dispatch_mode.png, x500]
 -------------------------------
--------------------------------
+------------------------------- 
 
 === Poll mode
 
@@ -2190,7 +2190,13 @@ can be solved either by using *ndrx_fork(3)*, or
 Functions *ndrx_atfork_prepare()*/*ndrx_atfork_parent()*/*ndrx_atfork_child()*
 can be registered with *pthread_fork()* so that library fork calls are supported.
 
+*WARNING!* When operating in System V mode and user is performing *ndrx_fork(3)*,
+any other user threads shall not perform XATMI IPCs (tpcalls, tprecv, etc..) 
+in any other concurrent user thread, otherwise unexpected process corruption
+might happen. Thus corresponding synchronization shall be done at user code.
+
 == Source code management
+
 This section lists notes for Git usage for Enduro/X development. Usually we
 modify the sample configuration in directory *sampleconfig* in order to get the
 test system working. But these changes should not be committed, as mostly
@@ -2205,6 +2211,31 @@ $ git update-index --assume-unchanged sampleconfig/ndrxconfig.xml
 $ git update-index --assume-unchanged sampleconfig/setndrx
 
 --------------------------------------------------------------------------------
+
+
+== Process debugging
+
+This section lists some notes about techniques for debugging memory issues for
+the binaries.
+
+
+=== Tracking down memory usage with Valgrind for XATMI servers
+
+Valgrind utility can be used with XATMI servers to get some insight in memory
+usage and leaks. Here is the sample XATMI server definition which uses Valgrind
+wrapper for server boot.
+
+--------------------------------------------------------------------------------
+ <server name="myserver">
+      <srvid>100</srvid>
+      <min>1</min>
+      <max>1</max>
+      <sysopt>-e /tmp/MYSERVER -r</sysopt>
+      <appopt>-c10</appopt>
+      <cmdline>valgrind --tool=massif --pages-as-heap=yes ${NDRX_SVPROCNAME} ${NDRX_SVCLOPT}</cmdline>
+ </server>
+--------------------------------------------------------------------------------
+
 
 numbered!:
 

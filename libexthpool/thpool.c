@@ -22,7 +22,7 @@
 #include <sys/prctl.h>
 #endif
 
-#include "thpool.h"
+#include <exthpool.h>
 
 #include <nstdutil.h>
 

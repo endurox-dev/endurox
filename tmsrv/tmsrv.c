@@ -69,7 +69,7 @@
 #include "tperror.h"
 #include "userlog.h"
 #include <xa_cmn.h>
-#include "thpool.h"
+#include <exthpool.h>
 #include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;

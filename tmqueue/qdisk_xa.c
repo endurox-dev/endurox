@@ -856,11 +856,11 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
             if (sizeof(msg_to_upd)!=(ret_len=fwrite((char *)&msg_to_upd, 1, sizeof(msg_to_upd), f)))
             {
                 int err = errno;
-                NDRX_LOG(log_error, "ERROR! Filed to write to msg file [%s]: "
+                NDRX_LOG(log_error, "ERROR! Failed to write to msg file [%s]: "
                         "req_len=%d, written=%d: %s", fname_msg,
                         sizeof(msg_to_upd), ret_len, strerror(err));
 
-                userlog("ERROR! Filed to write to msg file[%s]: req_len=%d, "
+                userlog("ERROR! Failed to write to msg file[%s]: req_len=%d, "
                         "written=%d: %s",
                         fname_msg, sizeof(msg_to_upd), ret_len, strerror(err));
 
@@ -949,10 +949,10 @@ exprivate int read_tx_block(FILE *f, char *block, int len)
     {
         int err = errno;
         
-        NDRX_LOG(log_error, "ERROR! Filed to read tx file: req_read=%d, read=%d: %s",
+        NDRX_LOG(log_error, "ERROR! Failed to read tx file: req_read=%d, read=%d: %s",
                 len, act_read, strerror(err));
         
-        userlog("ERROR! Filed to read tx file: req_read=%d, read=%d: %s",
+        userlog("ERROR! Failed to read tx file: req_read=%d, read=%d: %s",
                 len, act_read, strerror(err));
         EXFAIL_OUT(ret);
     }

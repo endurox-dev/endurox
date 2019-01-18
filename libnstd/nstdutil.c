@@ -1538,4 +1538,168 @@ expublic char *ndrx_strsep(char **s1, char *s2)
     return p1;
 }
 
+/**
+ * Parse arguments and load into target 
+ * @param[in] args argument descriptor
+ * @param[out] obj object to process
+ * @param[in] fldnm field name
+ * @param[in] value string value to load (will be converted accordingly)
+ * @param[out] errbuf error buffer where to put the error msg if parser fails
+ * @param [out] errbufsz error buffer size
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj, 
+        char *fldnm, char *value,
+        char *errbuf, size_t errbufsz)
+{
+    int ret = EXSUCCEED;
+    int *p_bool; 
+    int *p_int; 
+    int tmp_int;
+    
+    while (EXFAIL!=args->offset)
+    {
+        if (0==strcmp(fldnm, args->cname))
+        {
+            switch (args->fld_type)
+            {
+                case NDRX_ARGS_BOOL:
+
+                    p_bool = (int *)((char *)obj + args->offset);
+
+                    if (0==strcmp(value, "y") || 0==strcmp(value, "Y"))
+                    {
+                        *p_bool = EXTRUE;
+                    }
+                    else if (0==strcmp(value, "n") || 0==strcmp(value, "N"))
+                    {
+                        *p_bool = EXFALSE;
+                    }
+                    else
+                    {
+                        snprintf(errbuf, errbufsz, "Unsupported value for [%s] "
+                                "bool field must be [yYnN], got: [%s]", 
+                                args->cname, value);
+
+                        NDRX_LOG(log_error, "%s", errbuf);
+                        EXFAIL_OUT(ret);
+                    }
+
+                    NDRX_LOG(log_warn, "[%s] set to [%d]", args->cname, *p_bool);
+
+                    break;
+                case NDRX_ARGS_INT:
+
+                    /* TODO: Parse and set... */
+                    p_int = (int *)((char *)obj + args->offset);
+                    tmp_int = atoi(value);
+
+                    if (tmp_int < (int)args->min_value)
+                    {
+                        snprintf(errbuf, errbufsz, "Unsupported value for [%s] "
+                                "int field, min [%d], got: [%d]", 
+                                args->cname, (int)args->min_value, tmp_int);
+                        NDRX_LOG(log_error, "%s", errbuf);
+                        EXFAIL_OUT(ret);
+                    }
+                    else if (tmp_int > (int)args->max_value)
+                    {
+                        snprintf(errbuf, errbufsz, "Unsupported value for [%s] "
+                                "int field, max [%d], got: [%d]", 
+                                args->cname, (int)args->max_value, tmp_int);
+                        NDRX_LOG(log_error, "%s", errbuf);
+                        EXFAIL_OUT(ret);
+                    }
+                    *p_int = tmp_int;
+
+                    NDRX_LOG(log_warn, "[%s] set to [%d]", args->cname, *p_int);
+
+                    break;
+                default:
+                    snprintf(errbuf, errbufsz, "Type not supported: %d", 
+                            args->fld_type);
+                    EXFAIL_OUT(ret);
+                    break;
+            }
+            
+            break;
+        } /* fldnm == args->cname */
+        args++;
+    }
+    
+    if (EXFAIL==args->offset)
+    {
+        snprintf(errbuf, errbufsz, "Setting not found [%s]", fldnm);
+        NDRX_LOG(log_error, "%s", errbuf);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Get argument value
+ * @param[in] args argument descriptor
+ * @param[out] obj object to process
+ * @param[in] fldnm field name to get
+ * @param[out] value string value to load (will be converted accordingly)
+ * @param[out] valuesz buffer size of value
+ * @param[out] errbuf error buffer where to put the error msg if parser fails
+ * @param [out] errbufsz error buffer size
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_args_loader_get(ndrx_args_loader_t *args, void *obj, char *fldnm,
+        char *value, int valuesz,
+        char *errbuf, size_t errbufsz)
+{
+    int ret = EXSUCCEED;
+    int *p_bool; 
+    int *p_int; 
+    
+    while (EXFAIL!=args->offset)
+    {
+        if (0==strcmp(fldnm, args->cname))
+        {
+            switch (args->fld_type)
+            {
+                case NDRX_ARGS_BOOL:
+
+                    p_bool = (int *)((char *)obj + args->offset);
+
+                    snprintf(value, valuesz, "%s", (*p_bool)?"Y":"N");
+
+                    break;
+                case NDRX_ARGS_INT:
+
+                    p_int = (int *)((char *)obj + args->offset);
+
+                    snprintf(value, valuesz, "%d", *p_int);
+
+                    break;
+                default:
+                    snprintf(errbuf, errbufsz, "Type not supported: %d", 
+                            args->fld_type);
+                    NDRX_LOG(log_error, "%s", errbuf);
+                    EXFAIL_OUT(ret);
+                    break;
+            }
+            
+            /* we are done */
+            break;
+        }
+        args++;
+    }
+    
+    if (EXFAIL==args->offset)
+    {
+        snprintf(errbuf, errbufsz, "Setting not found [%s]", fldnm);
+        NDRX_LOG(log_error, "%s", errbuf);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
