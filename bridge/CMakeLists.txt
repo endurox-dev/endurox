@@ -83,7 +83,7 @@ IF (${CMAKE_OS_NAME} STREQUAL "SUNOS")
 	SET(EX_LIB_NET "socket")
 ENDIF()
 
-target_link_libraries (tpbridge exnet atmisrvinteg atmi netproto ubf thpool nstd ${RT_LIB}
+target_link_libraries (tpbridge exnet atmisrvinteg atmi netproto ubf exthpool nstd ${RT_LIB}
                 ${EX_LIB_GPGME} ${EX_LIB_NET} pthread)
 
 set_target_properties(tpbridge PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

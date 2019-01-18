@@ -57,6 +57,8 @@
 #include <exregex.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
+
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -138,6 +140,44 @@ expublic int ndrx_chk_ndrxd(void)
     }
     
     ndrx_string_list_free(list);
+    
+    return ret;
+}
+
+/**
+ * Return PID of ndrxd
+ * @return PID of ndrxd or EXFAIL
+ */
+expublic pid_t ndrx_ndrxd_pid_get(void)
+{
+    pid_t ret = EXFAIL;
+    FILE *f = NULL;
+    char    pidbuf[64] = {EXEOS};
+    
+     if (NULL==(f=NDRX_FOPEN(G_atmi_env.ndrxd_pidfile, "r")))
+    {
+        NDRX_LOG(log_debug, "Failed to open ndrxd PID file: [%s]: %s",
+                G_atmi_env.ndrxd_pidfile, strerror(errno));
+        
+        goto out;
+    }
+
+     /* Read the PID */
+    if (NULL==fgets(pidbuf, sizeof(pidbuf), f))
+    {
+        NDRX_LOG(log_error, "Failed to read from PID file: [%s]: %s",
+                G_atmi_env.ndrxd_pidfile, strerror(errno));
+        goto out;
+    }
+    ret = atoi(pidbuf);
+    
+out:
+    
+    if (NULL!=f)
+    {
+        NDRX_FCLOSE(f);
+        f = NULL;
+    }
     
     return ret;
 }
@@ -793,7 +833,8 @@ expublic int ndrx_killall(char *mask)
             /* Parse out process name & pid */
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
-            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && pid!=getpid() && pid!=0)
+            if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && 
+                    pid!=getpid() && pid!=0)
             {
                  NDRX_LOG(log_error, "! killing  sig=%d "
                          "pid=[%d]", signals[i], pid);
@@ -969,4 +1010,131 @@ out:
     }
     return ret;
 }
+
+/**
+ * Process ping response message
+ * @param reply reply buffer
+ * @param len buffer len received
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_ndrxd_ping_rsp(command_reply_t *reply, size_t reply_len)
+{
+    int ret=EXSUCCEED;
+    command_reply_srvping_t *ping_reply = (command_reply_srvping_t *)reply;
+    
+    if (reply_len < sizeof(command_reply_t))
+    {
+        userlog("NDRXD PING FAIL: Expected reply size: %d got %d!", 
+                sizeof(command_reply_t), reply_len);
+        NDRX_LOG(log_error, "NDRXD PING FAIL: Expected reply size: %d got %d!", 
+                sizeof(command_reply_t), reply_len);
+        
+        EXFAIL_OUT(ret);
+    }
+    else if (NDRXD_COM_DPING_RP!=reply->command)
+    {
+        userlog("NDRXD PING WARNING: Expected reply command %d got %d -> wait next",
+                NDRXD_COM_DPING_RP, reply->command);
+        NDRX_LOG(log_error, "NDRXD PING WARNING: Expected reply command %d "
+                "got %d -> wait next",
+                NDRXD_COM_DPING_RP, reply->command);
+        
+        reply->flags|=NDRXD_CALL_FLAGS_RSPHAVE_MORE;
+        goto out;
+    }
+    else if (reply_len != sizeof(command_reply_srvping_t))
+    {
+        /* Invalid size of reply command buffer  */
+        userlog("NDRXD PING FAIL: Expected reply size: %d got %d!", 
+                sizeof(command_reply_srvping_t), reply_len);
+        NDRX_LOG(log_error, "NDRXD PING FAIL: Expected reply size: %d got %d!", 
+                sizeof(command_reply_srvping_t), reply_len);
+        EXFAIL_OUT(ret);
+    }
+    else if (ping_reply->seq!=G_atmi_tls->ndrxd_ping_seq)
+    {
+        userlog("ndrxd ping reply out of sequence, expected: %d, got %d -> wait next",
+                G_atmi_tls->ndrxd_ping_seq, ping_reply->seq);
+        NDRX_LOG(log_error, "ndrxd ping reply out of sequence, expected: %d, "
+                "got %d -> wait next",
+                G_atmi_tls->ndrxd_ping_seq, ping_reply->seq);
+        reply->flags|=NDRXD_CALL_FLAGS_RSPHAVE_MORE;
+        goto out;
+    }
+    else
+    {
+        NDRX_LOG(log_debug, "Ping reply with seq=%d ok", ping_reply->seq);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Perform ndrxd ping.
+ * Also this should ignore out of the sequence messages.
+ * Timeout is controlled by standard NDRXD_TOUT or by tptoutset(3)
+ * @param[out] p_seq ping sequence number
+ * @param[out] p_time_msec ptr to ping milliseconds when succeed
+ * @param[in] listen_q queue on which we wait for response
+ * @param[in] listen_q_str queue string for putting in message for reply
+ * @return EXSUCCEED/EXFAIL (ping failed, timeout, no equeue, etc...)
+ */
+expublic int ndrx_ndrxd_ping(int *p_seq, long *p_time_msec,
+                    mqd_t listen_q, char * listen_q_str)
+{
+    int ret=EXSUCCEED;
+    command_srvping_t req;
+    size_t  send_size=sizeof(req);
+    ndrx_stopwatch_t tim;
+    
+    /* perform TLS entry */
+    ATMI_TLS_ENTRY;
+    
+    memset(&req, 0, sizeof(req));
+    
+    G_atmi_tls->ndrxd_ping_seq++;
+    
+    if (NDRX_NDRXD_PING_SEQ_MAX < G_atmi_tls->ndrxd_ping_seq)
+    {
+        G_atmi_tls->ndrxd_ping_seq=1;
+    }
+    
+    *p_seq = G_atmi_tls->ndrxd_ping_seq;
+    req.seq = G_atmi_tls->ndrxd_ping_seq;
+    
+    ndrx_stopwatch_reset(&tim);
+    
+    /* we need the listen_q blocked */
+    if (EXSUCCEED!=ndrx_q_setblock(listen_q, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to set [%s] Q to blocked", listen_q_str);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=cmd_generic_bufcall(NDRXD_COM_DPING_RQ, NDRXD_SRC_ADMIN,
+                        NDRXD_CALL_TYPE_GENERIC,
+                        (command_call_t *)&req, send_size,
+                        listen_q_str,
+                        listen_q,
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
+                        0, NULL,
+                        NULL,
+                        ndrx_ndrxd_ping_rsp,
+                        NULL,
+                        EXTRUE,
+                        EXFALSE,
+                        NULL,
+                        NULL,
+                        0,
+                        NULL);
+    
+   *p_time_msec = ndrx_stopwatch_get_delta(&tim);
+   
+out:
+      
+   return ret; 
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

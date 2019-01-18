@@ -171,6 +171,8 @@ expublic int init_cmdline_opts(int argc, char **argv)
     int ret=EXSUCCEED;
     int c;
     extern char *optarg;
+    int have_key = EXFALSE;
+    int print_help = EXFALSE;
     
     /* Parse command line */
     while ((c = getopt(argc, argv, "h?rk:")) != -1)
@@ -183,15 +185,19 @@ expublic int init_cmdline_opts(int argc, char **argv)
                 break;
             case 'k':
                 /* No need for random key parsing yet */
+                have_key = EXTRUE;
                 break;
             case 'h': case '?':
-                printf("usage: %s [-r restart] [-k random key]\n",
-                        argv[0]);
-                
-                return EXFAIL;
-
+                print_help = EXTRUE;
                 break;
         }
+    }
+
+    if (!have_key || print_help)
+    {
+        printf("usage: %s -k random_key [-r restart]\n",
+                argv[0]);
+        return EXFAIL;
     }
     
 out:
@@ -208,6 +214,9 @@ int main_init(int argc, char** argv)
 {
     int ret=EXSUCCEED;
     char *p;
+    struct sigaction oldact;
+    pid_t ndrxd_pid;
+    sigaction(SIGINT, NULL, &oldact);
     
 #if 0
     
@@ -229,7 +238,24 @@ int main_init(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    /* Bug #375 check the ndrxd process existence by pid file */
+    ndrxd_pid = ndrx_ndrxd_pid_get();
+    
+    if (EXFAIL!=ndrxd_pid && EXSUCCEED==kill(ndrxd_pid, 0))
+    {
+        fprintf(stderr, "ERROR ! Duplicate startup, ndrxd with PID %d "
+                "already exists\n", ndrxd_pid);
+        NDRX_LOG(log_error, "ERROR ! Duplicate startup, ndrxd with PID %d "
+                "already exists", ndrxd_pid);
+        userlog("ERROR ! Duplicate startup, ndrxd with PID %d "
+                "already exists", ndrxd_pid);
+        exit(EXFAIL);
+    }
+    
     /* We will ignore all stuff requesting shutdown! */
+    sigaction(SIGSEGV, NULL, &oldact);
+    sigaction(SIGPIPE, &oldact, NULL);
+
     signal(SIGHUP, SIG_IGN);
     signal(SIGTERM, SIG_IGN);
     signal(SIGINT, SIG_IGN);

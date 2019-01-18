@@ -232,7 +232,7 @@ extern "C" {
                     __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
     fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-    fprintf(stderr, "Copyright (C) 2017,2018 Mavimax Ltd. All Rights Reserved.\n\n");\
+    fprintf(stderr, "Copyright (C) 2017-2019 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
     fprintf(stderr, "AGPLv3 or Mavimax license for commercial use.\n\n");
     
@@ -419,6 +419,7 @@ struct atmi_lib_env
     char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
     int     qprefix_match_len;              /**< Includes number bytes to match */
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
+    char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                   */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
@@ -867,11 +868,14 @@ extern NDRX_API void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub);
 /* ATMI level process management: */
 extern NDRX_API int ndrx_chk_server(char *procname, short srvid);
 extern NDRX_API int ndrx_chk_ndrxd(void);
+extern NDRX_API pid_t ndrx_ndrxd_pid_get(void);
 extern NDRX_API int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_res);
 extern NDRX_API void ndrx_down_userres(void);
 extern NDRX_API int ndrx_killall(char *mask);
 extern NDRX_API int ndrx_q_exists(char *qpath);
 extern NDRX_API int ndrx_get_cached_svc_q(char *q);
+extern NDRX_API int ndrx_ndrxd_ping(int *p_seq, long *p_time_msec,
+                    mqd_t listen_q, char * listen_q_str);
 
 /* Access to symbols: */
 

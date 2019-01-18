@@ -85,6 +85,8 @@ add_executable (ndrxd   ndrxd.c
 			cmd_ping.c
 			cmd_pq.c
                         cmd_env.c
+                        cmd_appconfig.c
+                        cmd_dping.c
                         reloadonchange.c
                         ${ADDSANITY1}
             )

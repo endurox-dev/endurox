@@ -58,9 +58,29 @@ extern char *optarg;
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 static long M_restarts = 0;
-static long M_check = 5; /* defaulted to 5 sec */
+static long M_check = 5; /**< defaulted to 5 sec */
+/**
+ * ping timeout... (seconds to wait for ping) 
+ * WARNING ! As the process will be blocked in this time
+ * the backpings from ndrxd may stall too. Thus check ndrxconfig.xml *ping_max*
+ * setting, as ndrxd might kill the tprecover in this time.
+ * But usually ndrxd shall be fast to respond, thus ping timeout to 20 should
+ * be fine.
+ */
+static int M_ping_tout = 20;
+static int M_ping_max = 3; /**< max ping attempts with out success to kill ndrxd */
+
+static int M_bad_pings = 0; /**< bad pings reset at exec */
 /*---------------------------Prototypes---------------------------------*/
 int start_daemon_recover(void);
+
+/**
+ * Discard the deadly ndrxds
+ */
+void handle_sigchld(void)
+{
+    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
+}
 
 /**
  * Monitor ndrxd & recover it if needed.
@@ -89,27 +109,73 @@ out:
 
 /**
  * Periodic poll callback.
- * TODO: We might want to run pings here to ndrxd. If ping fails several times
+ * We might want to run pings here to ndrxd. If ping fails several times
  * we kill the ndrxd and restart it...!
  * @return 
  */
 expublic int poll_timer(void)
 {
     int ret=EXSUCCEED;
-    if (!ndrx_chk_ndrxd())
+    int seq;
+    long tim;
+    int ndrxd_stat;
+    
+    /* remove zomies */
+    handle_sigchld();
+    
+    ndrxd_stat = ndrx_chk_ndrxd();
+    
+    if (M_bad_pings > M_ping_max && !ndrxd_stat)
     {
-        NDRX_LOG(log_error, "ndrxd process missing - respawn!");
+        NDRX_LOG(log_always, "WARNING ! bad_pings=%d ping_max=%d and "
+                "ndrxd not running: respawn", 
+                M_bad_pings, M_ping_max);
+        
         if (EXSUCCEED!=start_daemon_recover())
         {
            EXFAIL_OUT(ret);
         }
+        
+        M_bad_pings = 0;
+    }
+    else if (!ndrxd_stat)
+    {
+        M_bad_pings++;
+        NDRX_LOG(log_always, "ndrxd not present (or resources issue for process listing...)"
+                    "increase bad_pings=%d ping_max=%d", 
+                    M_bad_pings, M_ping_max);
     }
     else
     {
-        /* todo: might want to check for queue... */
-        NDRX_LOG(log_debug, "ndrxd process ok");
+        /* perform ping of ndrxd... */
+        
+        if (EXSUCCEED!=ndrx_ndrxd_ping(&seq, &tim, ndrx_get_G_atmi_conf()->reply_q, 
+                ndrx_get_G_atmi_conf()->reply_q_str))
+        {
+            M_bad_pings++;
+            
+            NDRX_LOG(log_info, "ndrxd_ping_seq=%d bad_pings=%d: timeout or system error", 
+                    seq, M_bad_pings);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "ndrxd_ping_seq=%d time=%ld ms", seq, tim);
+        }
+        
+        if (M_bad_pings > M_ping_max)
+        {
+            /* get ndrxd pid... */
+            pid_t ndrxd_pid = ndrx_ndrxd_pid_get();
+            NDRX_LOG(log_always, "WARNING ! bad_pings=%d ping_max=%d -> kill %d %d", 
+                    M_bad_pings, M_ping_max, SIGKILL, (int)ndrxd_pid);
+            if (EXSUCCEED!=kill(ndrxd_pid, SIGKILL))
+            {
+                NDRX_LOG(log_error, "Failed to kill %d: %s", 
+                        (int)ndrxd_pid, strerror(errno));
+            }
+        }
     }
-
+    
 out:
     return ret;
 }
@@ -130,9 +196,10 @@ int start_daemon_recover(void)
     if( pid == 0)
     {
         FILE *f;
+        char *cmd[] = { "ndrxd", key, "-r", (char *)0 };
+
         /* this is child - start EnduroX back-end */
         snprintf(key, sizeof(key), NDRX_KEY_FMT, G_atmi_env.rnd_key);
-        char *cmd[] = { "ndrxd", key, "-r", (char *)0 };
 
         /* Open log file */
         if (NULL==(f=NDRX_FOPEN(ndrxd_logfile, "a")))
@@ -171,15 +238,6 @@ out:
     return ret;
 }
 
-/**
- * Discard the deadly ndrxds
- */
-void handle_sigchld(int sig)
-{
-    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {}
-    signal(SIGCHLD, handle_sigchld);
-}
-
 /*
  * Do initialization
  */
@@ -188,10 +246,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret=EXSUCCEED;
     int c;
     extern char *optarg;
-
+    sigset_t blockMask;
+    
     NDRX_LOG(log_debug, "tpsvrinit called");
     /* Parse command line  */
-    while((c = getopt(argc, argv, "c:")) != -1)
+    while((c = getopt(argc, argv, "c:t:m:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
@@ -201,6 +260,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "check (-c): %d", 
                         M_check);
                 break;
+            case 't':
+                M_ping_tout = atoi(optarg);
+                break;
+            case 'm':
+                M_ping_max = atoi(optarg);
+                break;
             default:
                 NDRX_LOG(log_error, "Unknown param %c - 0x%x", c, c);
 		EXFAIL_OUT(ret);
@@ -208,10 +273,20 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
 
-    signal(SIGCHLD, handle_sigchld);
-
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s",
+                __func__, strerror(errno));
+    }
+    
     /* Register timer check.... */
     NDRX_LOG(log_warn, "Config: ndrxd check time: %d sec", M_check);
+    NDRX_LOG(log_warn, "Config: ndrxd ping timeout: %d sec", M_ping_tout);
+    NDRX_LOG(log_warn, "Config: max pings for kill ndrxd: %d", M_ping_max);
+    
     if (EXSUCCEED!=tpext_addperiodcb((int)M_check, poll_timer))
     {
         NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
@@ -220,6 +295,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
     if (EXSUCCEED!=tpadvertise(NDRX_SYS_SVC_PFX TPRECOVERSVC, TPRECOVER))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TPRECOVER!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tptoutset(M_ping_tout))
     {
         NDRX_LOG(log_error, "Failed to initialize TPRECOVER!");
         EXFAIL_OUT(ret);

@@ -44,7 +44,7 @@
 #include <ubf.h>
 #include <test.fd.h>
 #include <string.h>
-#include <thpool.h>
+#include <exthpool.h>
 
 struct thread_server
 {

@@ -947,7 +947,9 @@ out:
 
 
 /**
- * Sending to OK q
+ * Sending to OK q.
+ * So answers of the forward and put in the reply queue.
+ * we wait for it to be filled up.
  */
 exprivate int basic_autoq_ok(void)
 {
@@ -993,7 +995,7 @@ exprivate int basic_autoq_ok(void)
         }
         tpfree((char *)buf);
     }
-    sleep(60); /* should be enough */
+    sleep(90); /* should be enough */
     
     for (i=0; i<100; i++)
     {

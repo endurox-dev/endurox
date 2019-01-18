@@ -102,8 +102,8 @@ xor_expr: equality_expr
 	    | xor_expr XOR equality_expr {$$ = newast(NODE_TYPE_XOR, SUB_XOR_OP, $1, $3); if (!$$ || G_error) YYERROR; }
 	    ;
 equality_expr: relational_expr
-		| string_constant EQOP_REG string_constant {$$ = newast(NODE_TYPE_EQOP, $2, $1, $3); if (!$$ || G_error) YYERROR; }
-		| field_ref EQOP_REG string_constant {$$ = newast(NODE_TYPE_EQOP, $2, $1, $3); if (!$$ || G_error) YYERROR; }
+            | string_constant EQOP_REG string_constant {$$ = newast(NODE_TYPE_EQOP, $2, $1, $3); if (!$$ || G_error) YYERROR; }
+	    | field_ref EQOP_REG string_constant {$$ = newast(NODE_TYPE_EQOP, $2, $1, $3); if (!$$ || G_error) YYERROR; }
 	    | equality_expr EQOP relational_expr {$$ = newast(NODE_TYPE_EQOP, $2, $1, $3); if (!$$ || G_error) YYERROR; }
 	    ;
 relational_expr: additive_expr
@@ -122,20 +122,20 @@ unary_expr: primary_expr
 primary_expr: unsigned_constant
 	    | OP boolean CP {$$ = $2;}
 	    | field_ref
-        | func_ref
+            | func_ref
 	    ;
 unsigned_constant: unsigned_number
 	    | string_constant
 	    ;
 unsigned_number: UFLOAT {$$ = newfloat($1); if (!$$ || G_error) YYERROR; }
 	    | ULONG {$$ = newlong($1); if (!$$ || G_error) YYERROR; }
-	    ;
+            ;
 string_constant: STRING {$$ = newstring($1); if (!$$ || G_error) YYERROR; }
-		;
+	    ;
 field_ref: FLDREF {$$ = newfld($1); if (!$$ || G_error) YYERROR; }
-		;
+            ;
 func_ref: FUNCREF {$$ = newfunc($1); if (!$$ || G_error) YYERROR; }
-		;
+            ;
 
 calclist: /* nothing */
   | calclist boolean EOL {

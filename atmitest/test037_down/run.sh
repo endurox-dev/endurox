@@ -111,11 +111,15 @@ xadmin killall ndrxd
 xadmin killall atmisrv
 
 set_dom1;
+#### Remove all shms
 xadmin down -y
+xadmin shms | cut -d ':' -f 2 | xargs -i ipcrm -m {}
 xadmin start -y || go_out 1
 
 set_dom2;
+#### Remove all shsm
 xadmin down -y
+xadmin shms | cut -d ':' -f 2 | xargs -i ipcrm -m {}
 xadmin start -y || go_out 2
 
 # Clean up the logs
@@ -354,7 +358,7 @@ echo "After dom2 down..."
 $PSCMD
 
 xadmin pqa -a
-CNT=`xadmin pqa -a | wc | awk '{print $1}'`
+CNT=`xadmin pqa -a | grep dom | wc | awk '{print $1}'`
 echo "DOM1 Queues: $CNT"
 if [[ "$CNT" -ne "1" ]]; then 
     echo "TESTERROR! Dom1 & 2 all queues must be removed except 1 for xadmin!"
