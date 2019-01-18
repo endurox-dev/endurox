@@ -638,6 +638,9 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_readwrite_tests());
     add_suite(suite, ubf_mkfldhdr_tests());
     add_suite(suite, ubf_bcmp_tests());
+    add_suite(suite, ubf_bnum_tests());
+    add_suite(suite, ubf_bjoin_tests());
+    add_suite(suite, ubf_bojoin_tests());
 
     if (argc > 1)
     {
