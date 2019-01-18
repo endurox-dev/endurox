@@ -1,4 +1,5 @@
 /**
+* @brief Test for Source buffer join functionality to Destination buffer (Bjoin)
  *
  * @file test_bjoin.c
  */
