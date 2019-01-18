@@ -1,4 +1,5 @@
 /**
+* @brief Test for Source buffer outer join functionality to Destination buffer (Bojoin)
  *
  * @file test_bojoin.c
  */
