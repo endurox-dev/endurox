@@ -126,6 +126,7 @@ if [[ "X$PROCS" != "X1" ]]; then
     for c in $CORES; do
         echo "Generate core for PID=$c"
         kill -11 $c
+        cp ../../dist/bin/ndrxd ndrxd.$c
         break
     done
 
