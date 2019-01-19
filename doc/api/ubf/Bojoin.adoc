@@ -19,12 +19,15 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Bojoin function is similar to Bjoin fuction.
-Outer join function update destination buffer in 'dest' with source buffer 'src' 
+Bojoin function is similar to Bjoin function.
+Outer join function updates destination buffer in 'dest' with source buffer 'src' 
 values based on matching fields and occurrence. Function will update existing 
 fields from source buffer to destination with matching occurrences. If field 
-does not exist or occurrence does not exists, then field/occurrence not removed 
-from destination buffer.
+does not exist or occurrence does not exists, then field/occurrence is not removed 
+from destination buffer. By comparing to *Bupdate(3)*, this function updates only
+matched fields, and does not add any missing as it is done by *Bupdate(3)*. By
+comparing to *Bjoin(3)*, *Bjoin(3)* will remove not matched fields from 'dest',
+but *Bojoin()* will leave dest fields non deleted.
 
 
 RETURN VALUE
