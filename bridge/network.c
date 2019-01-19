@@ -565,11 +565,11 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     
     if (len > sizeof(tmp) - sizeof(call))
     {
-        NDRX_LOG(log_error, "%s: Sending more that buf can handle: "
+        NDRX_LOG(log_error, "%s: Sending more than buf can handle: "
                 "len=%d, (outbufsz: %ld)", __func__, 
                 len, (long)(sizeof(tmp) - sizeof(call)));
         
-        userlog("%s: Sending more that buf can handle: "
+        userlog("%s: Sending more than buf can handle: "
                 "len=%d, (outbufsz: %ld)", __func__, 
                 len, (long)(sizeof(tmp) - sizeof(call)));
         
