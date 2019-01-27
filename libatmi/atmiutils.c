@@ -100,7 +100,7 @@
  */
 expublic void ndrx_tptoutset(int tout)
 {
-    NDRX_LOG(log_info, "%s: NDRX_TOUT override to from %d to %d seconds", 
+    NDRX_LOG(log_info, "%s: NDRX_TOUT override from %d to %d seconds", 
             __func__, G_atmi_env.time_out, tout);
     G_atmi_env.time_out = tout;
 }
