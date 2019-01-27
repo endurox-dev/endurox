@@ -405,6 +405,12 @@ expublic char * Bfname (BFLDID bfldid)
 {
     UBF_field_def_t *p_fld;
     API_ENTRY;
+    
+    if (bfldid < 0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "bfldid (%d) < 0", (int)bfldid);
+        goto out;
+    }
 
     if (EXSUCCEED!=ndrx_prepare_type_tables())
     {
@@ -413,7 +419,6 @@ expublic char * Bfname (BFLDID bfldid)
 
     /* Now try to find the data! */
     p_fld = _bfldidhash_get(bfldid);
-    
     
     if (NULL==p_fld)
     {

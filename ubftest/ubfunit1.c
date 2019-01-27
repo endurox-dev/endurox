@@ -295,6 +295,9 @@ Ensure(test_fld_table)
 {
     assert_equal(strcmp(Bfname(T_STRING_FLD), "T_STRING_FLD"), 0);
     assert_equal(Bfldid("T_STRING_FLD"), T_STRING_FLD);
+    
+    assert_equal(Bfname(-1), NULL);
+    
 }
 
 /**
