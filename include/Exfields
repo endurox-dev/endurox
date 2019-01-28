@@ -170,8 +170,33 @@ EX_CC_VALUE                 411         string -        Corresponding occurrence
 ################################################################################
 EX_IF_ECODE                 500         short  -        Result code (error code)
 EX_IF_EMSG                  501         string -        Result message
+
 # REST interface caller URL
 EX_IF_URL                   502         string -        Called URL for REST interface
+
+# Header fields, pairs for request
+EX_IF_REQHN                 503         string -        Request Header Name
+EX_IF_REQHV                 504         string -        Request header Value
+
+# Cookie request data
+EX_IF_REQCN                 505         string -        Request Cookie Name
+EX_IF_REQCV                 506         string -        Request Cookie Value
+
+# Header fields, pairs for response
+EX_IF_RSPHN                 507         string -        Response Header Name
+EX_IF_RSPHV                 508         string -        Response Header Value
+
+# Cookie response data
+EX_IF_RSPCN                 509         string -        Response Cookie Name
+EX_IF_RSPCV                 510         string -        Response Cookie Value
+
+EX_IF_RSPCPATH              511         string -        Response Cookie Path
+EX_IF_RSPCDOMAIN            512         string -        Response Cookie Domain
+EX_IF_RSPCEXPIRES           513         string -        Response Cookie Expires
+EX_IF_RSPCMAXAGE            514         string -        Response Cookie MaxAge
+EX_IF_RSPCSECURE            515         string -        Response Cookie Secure
+EX_IF_RSPCHTTPONLY          516         string -        Response Cookie HttpOnly
+
 ################################################################################
 # TCP Inter-connecting
 ################################################################################
