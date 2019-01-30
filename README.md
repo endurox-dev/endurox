@@ -420,6 +420,9 @@ processing listings across all supported OSes.
 
 - Version 6.0.13 released on 18/01/2019 (development) Feature #181
 
+- Version 6.0.14 released on 30/01/2019 (stable) Marking stable version
+
+
 # Build configurations
 
 ## Configure make with: 
