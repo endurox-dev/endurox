@@ -35,13 +35,8 @@
 #include <stdlib.h>
 #include <memory.h>
 
-#include <atmi.h>
-#include <atmi_int.h>
 #include <ndrstandard.h>
-#include <Exfields.h>
-#include <ubf.h>
-#include <ubf_int.h>
-#include <fdatatype.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/ 
 #define INF     1
@@ -58,16 +53,12 @@
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
-    FILE *in=NULL, *out=NULL;
-    int c;
-    int len = 0;
     char *inf, *outfpfx;
-    char outf[PATH_MAX+1] = {EXEOS};
-    int counter = 0;
 
     if (argc<3)
     {
-        fprintf(stderr, "syntax: %s <input file> <output file> [extension_override]\n", argv[0]);
+        fprintf(stderr, "syntax: %s <input file> <output file> "
+                "[extension_override]\n", argv[0]);
         EXFAIL_OUT(ret);
     }
     
@@ -76,72 +67,15 @@ int main(int argc, char** argv)
     
     if (argc > 3)
     {
-        sprintf(outf, "%s.%s", outfpfx, argv[3]);
+        ret = ndrx_file_gen_embed(inf, outfpfx, argv[3]);
     }
     else
     {
-        sprintf(outf, "%s.c", outfpfx);
-    }
-    
-    if (NULL==(in=fopen(inf, "rb")))
-    {
-        fprintf(stderr, "Failed to open [%s]: \n", inf);
-        EXFAIL_OUT(ret);
-    }
-    
-    if (NULL==(out=fopen(outf, "wb")))
-    {
-        fprintf(stderr, "Failed to open [%s]: \n", outf);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* write header */
-    
-    fprintf(out, "#include <stdlib.h>\n");
-    fprintf(out, "const char ndrx_G_resource_%s[] = {\n", outfpfx);
-    
-    /* read  & write */
-    while (EOF!=(c=(fgetc(in))))
-    {
-        counter++;
-        
-        fprintf(out, "0x%02x,", c);
-        
-        if (0 == counter % 10)
-        {
-            fprintf(out, "\n");
-        }
-        else
-        {
-            fprintf(out, " ");
-        }
-    }
-    
-    /* close resource */
-    fprintf(out, "0x00\n};\n");
-    
-    /* write off length (with out EOS..) */
-    fprintf(out, "const size_t ndrx_G_resource_%s_len = %d;\n", outfpfx, counter);
-    fprintf(out, "#define ndrx_G_resource_%s_len_def %d\n", outfpfx, counter);
-    
-    /* put the EOL... (additionally so that we can easy operate resource as string) */
+        ret = ndrx_file_gen_embed(inf, outfpfx, "c");
+    }   
     
 out:
     
-    if (NULL!=in)
-    {
-        fclose(in);
-    }
-    
-    if (NULL!=out)
-    {
-        fclose(out);
-    }
-    
-    if (EXSUCCEED!=ret) 
-    {
-        unlink(argv[OUTF]);
-    }
     return ret;
 }
 

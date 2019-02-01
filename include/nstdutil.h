@@ -243,6 +243,9 @@ extern NDRX_API int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj,
         char *errbuf, size_t errbufsz);
 
 
+extern NDRX_API int ndrx_file_gen_embed(char *in_fname, char *out_fname, 
+        char *out_suffix);
+
 #ifdef	__cplusplus
 }
 #endif
