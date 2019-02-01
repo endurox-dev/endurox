@@ -44,8 +44,11 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Exectuables
+# Executable
 add_executable (exembedfile embedfile.c)
+
+target_link_libraries (exembedfile nstd ${RT_LIB} pthread)
+set_target_properties(exembedfile PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Install bin
 install (TARGETS 
