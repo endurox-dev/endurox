@@ -537,7 +537,7 @@ struct ast * newstring(char *str)
     struct ast_string *a = NDRX_MALLOC(sizeof(struct ast_string));
     memset(a, 0, sizeof(struct ast_string));
 
-    a->str = malloc (strlen(str)+1);
+    a->str = NDRX_MALLOC (strlen(str)+1);
 
     if(!a || !a->str) {
         yyerror("out of space");
@@ -575,19 +575,20 @@ struct ast * newfloat(double d)
     struct ast_float *a = NDRX_MALLOC(sizeof(struct ast_float));
     memset(a, 0, sizeof(struct ast_float));
     
-    if(!a) {
+    if(!a) 
+    {
         yyerror("out of space");
         ndrx_Bset_error_msg(BMALLOC, "out of memory for new newfloat");
         return NULL;
     }
     else
     {
-      if (EXSUCCEED!=add_resource((char *)a))
-      {
-          yyerror("out of space");
-          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
-          return NULL;
-      }
+        if (EXSUCCEED!=add_resource((char *)a))
+        {
+            yyerror("out of space");
+            ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
+            return NULL;
+        }
     }
     
     a->nodetype = NODE_TYPE_FLOAT;
@@ -618,12 +619,12 @@ struct ast * newlong(long l)
     }
     else
     {
-      if (EXSUCCEED!=add_resource((char *)a))
-      {
-          yyerror("out of space");
-          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
-          return NULL;
-      }
+        if (EXSUCCEED!=add_resource((char *)a))
+        {
+            yyerror("out of space");
+            ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
+            return NULL;
+        }
     }
     
     a->nodetype = NODE_TYPE_LONG;
@@ -772,7 +773,8 @@ int conv_to_long(value_block_t *v)
  * @param v - returned value block
  * @return SUCCEED/FAIL
  */
-int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_t *rval, value_block_t *v)
+int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, 
+        value_block_t *rval, value_block_t *v)
 {
     int ret=EXSUCCEED;
 
@@ -868,7 +870,8 @@ int op_equal_float_cmp(int type, int sub_type, value_block_t *lval, value_block_
  * @param v
  * @return SUCCEED/FAIL
  */
-int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t *rval, value_block_t *v)
+int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, 
+        value_block_t *rval, value_block_t *v)
 {
     int ret=EXSUCCEED;
     v->value_type = VALUE_TYPE_LONG;
@@ -954,12 +957,13 @@ int op_equal_long_cmp(int type, int sub_type, value_block_t *lval, value_block_t
     return ret;
 }
 
-int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t *rval, value_block_t *v)
+int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, 
+        value_block_t *rval, value_block_t *v)
 {
     int ret=EXSUCCEED;
     int result;
-    char lval_buf[64]; /* should be enought for all data types */
-    char rval_buf[64]; /* should be enought for all data types */
+    char lval_buf[64]; /* should be enough for all data types */
+    char rval_buf[64]; /* should be enough for all data types */
     v->value_type = VALUE_TYPE_LONG;
 
     if (VALUE_TYPE_FLD_STR!=lval->value_type &&
@@ -981,7 +985,8 @@ int op_equal_str_cmp(int type, int sub_type, value_block_t *lval, value_block_t 
         result=strcmp(lval->strval, rval->strval);
 
         UBF_LOG(log_debug, "str CMP (%s/%s): [%s] vs [%s]",
-                        M_nodetypes[type], M_subtypes[sub_type], lval->strval, rval->strval);
+                M_nodetypes[type], M_subtypes[sub_type], 
+                lval->strval, rval->strval);
 
         if (NODE_TYPE_EQOP==type)
         {
