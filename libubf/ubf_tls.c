@@ -134,9 +134,11 @@ expublic int ndrx_ubf_tls_set(void *data)
  * @return 
  */
 expublic void ndrx_ubf_tls_free(void *data)
-{
+{    
     if (NULL!=data)
     {
+        ubf_tls_t *tls = (ubf_tls_t *)data;
+        
         if (data==G_ubf_tls)
         {
             if (G_ubf_tls->is_auto)
@@ -145,6 +147,13 @@ expublic void ndrx_ubf_tls_free(void *data)
             }
             G_ubf_tls=NULL;
         }
+        
+        /* Bug #381 */
+        if (NULL!=tls->str_buf_ptr)
+        {
+            NDRX_FREE(tls->str_buf_ptr);
+        }
+        
         NDRX_FREE((char*)data);
     }
 }
