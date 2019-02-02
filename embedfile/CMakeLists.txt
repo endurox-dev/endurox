@@ -34,20 +34,25 @@
 # Set a minimum version
 cmake_minimum_required(VERSION 2.8)
 
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
+
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
-				     ${ENDUROX_SOURCE_DIR}/libatmi
-					 ${ENDUROX_SOURCE_DIR}/libatmiclt
-					 ${ENDUROX_SOURCE_DIR}/include
-					 ${ENDUROX_SOURCE_DIR}/libnstd)
-
-# Make sure the linker can find the UBF library once it is built.
-link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+			${ENDUROX_SOURCE_DIR}/libatmi
+			${ENDUROX_SOURCE_DIR}/libatmiclt
+			${ENDUROX_SOURCE_DIR}/include
+			${ENDUROX_SOURCE_DIR}/libnstd)
 
 # Executable
 add_executable (exembedfile embedfile.c)
 
-target_link_libraries (exembedfile nstd ${RT_LIB} pthread)
+target_link_libraries (exembedfile nstd ${RT_LIB} pthread m)
 set_target_properties(exembedfile PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Install bin
