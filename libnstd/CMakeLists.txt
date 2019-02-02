@@ -93,7 +93,7 @@ add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         ini.c inicfg.c cconfig.c nerror.c nstd_tls.c ulog.c
                         sys_genunix.c 
                         ${NSTD_POLLER}
-                        ${NSTD_POLLR_2}
+                        ${NSTD_POLLER_2}
                         ${NSTD_POLLER_3}
                         ${NSTD_POLLER_4}
                         ${NSTD_POLLER_5}
