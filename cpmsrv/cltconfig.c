@@ -92,12 +92,13 @@ expublic void cpm_unlock_config(void)
 /**
  * Get lookup key
  * @param key_out
+ * @param [in] key_outsz \p key_out parameter buffer size
  * @param tag
  * @param subsect
  */
-expublic void cpm_get_key(char *key_out, char *tag, char *subsect)
+expublic void cpm_get_key(char *key_out, int key_outsz, char *tag, char *subsect)
 {
-    sprintf(key_out, "%s%c%s", tag, S_FS, subsect);
+    snprintf(key_out, key_outsz, "%s%c%s", tag, S_FS, subsect);
 }
 /**
  * Return client by tag & subsect
@@ -111,7 +112,7 @@ expublic cpm_process_t * cpm_client_get(char *tag, char *subsect)
     
     char key[CPM_KEY_LEN];
     
-    cpm_get_key(key, tag, subsect);
+    cpm_get_key(key, sizeof(key), tag, subsect);
     
     EXHASH_FIND_STR( G_clt_config, key, r);
     
@@ -196,12 +197,21 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     
     cpm_process_t cltproc;
     cpm_process_t *p_cltproc = NULL;
+    cpm_process_t *org_cltproc = NULL;
     char *p;
     cpm_process_t * p_cl;
+    int loop_subsectfrom;
+    int loop_subsectto;
+    int i, genloop;
     
     memset(&cltproc, 0, sizeof(cpm_process_t));
     
     cltproc.stat.flags |= CPM_F_KILL_LEVEL_DEFAULT;
+    cltproc.stat.rssmax = EXFAIL;
+    cltproc.stat.vszmax = EXFAIL;
+    
+    cltproc.stat.subsectfrom = EXFAIL;
+    cltproc.stat.subsectto = EXFAIL;
     
     for (attr=cur->properties; attr; attr = attr->next)
     {
@@ -267,6 +277,50 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 cltproc.stat.flags|=CPM_F_AUTO_START;
             }
             
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)attr->name, "rssmax"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+
+            if (EXSUCCEED!=ndrx_storage_decode(p, &cltproc.stat.rssmax))
+            {
+                NDRX_LOG(log_error, "Failed to parse `rssmax', invalid value");
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG(log_debug, "rssmax: %ld bytes", cltproc.stat.rssmax);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)attr->name, "vszmax"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+
+            if (EXSUCCEED!=ndrx_storage_decode(p, &cltproc.stat.vszmax))
+            {
+                NDRX_LOG(log_error, "Failed to parse `vszmax', invalid value");
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG(log_debug, "vszmax: %ld bytes", cltproc.stat.vszmax);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)attr->name, "subsectfrom"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+
+            cltproc.stat.subsectfrom = atoi(p);
+
+            NDRX_LOG(log_debug, "subsectfrom: %d", cltproc.stat.subsectfrom);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)attr->name, "subsectto"))
+        {
+            p = (char *)xmlNodeGetContent(attr->children);
+
+            cltproc.stat.subsectto = atoi(p);
+
+            NDRX_LOG(log_debug, "subsectto: %d", cltproc.stat.subsectto);
             xmlFree(p);
         }
         else if (0==strcmp((char *)attr->name, "klevel"))
@@ -418,6 +472,50 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
 
                     xmlFree(p);
                 }
+                else if (0==strcmp((char*)attr->name, "rssmax"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+
+                    if (EXSUCCEED!=ndrx_storage_decode(p, &p_cltproc->stat.rssmax))
+                    {
+                        NDRX_LOG(log_error, "Failed to parse `rssmax', invalid value");
+                        EXFAIL_OUT(ret);
+                    }
+
+                    NDRX_LOG(log_debug, "rssmax: %ld bytes", p_cltproc->stat.rssmax);
+                    xmlFree(p);
+                }
+                else if (0==strcmp((char*)attr->name, "vszmax"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+
+                    if (EXSUCCEED!=ndrx_storage_decode(p, &p_cltproc->stat.vszmax))
+                    {
+                        NDRX_LOG(log_error, "Failed to parse `vszmax', invalid value");
+                        EXFAIL_OUT(ret);
+                    }
+
+                    NDRX_LOG(log_debug, "vszmax: %ld bytes", p_cltproc->stat.vszmax);
+                    xmlFree(p);
+                }
+                else if (0==strcmp((char*)attr->name, "subsectfrom"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+
+                    p_cltproc->stat.subsectfrom = atoi(p);
+
+                    NDRX_LOG(log_debug, "subsectfrom: %d", p_cltproc->stat.subsectfrom);
+                    xmlFree(p);
+                }
+                else if (0==strcmp((char*)attr->name, "subsectto"))
+                {
+                    p = (char *)xmlNodeGetContent(attr->children);
+
+                    p_cltproc->stat.subsectto = atoi(p);
+
+                    NDRX_LOG(log_debug, "subsectto: %d", p_cltproc->stat.subsectto);
+                    xmlFree(p);
+                }
                 else if (0==strcmp((char *)attr->name, "klevel"))
                 {
                     int d;
@@ -455,85 +553,164 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 EXFAIL_OUT(ret);
             }
             
-            /* Default the subsect */
-            if (EXEOS==p_cltproc->subsect[0])
+            if (p_cltproc->stat.subsectfrom > EXFAIL && 
+                    p_cltproc->stat.subsectto < p_cltproc->stat.subsectfrom)
             {
-                NDRX_STRCPY_SAFE(p_cltproc->subsect, "-");
-            }
-            
-            /* Render the final command line */
-            if (EXSUCCEED!=setenv(NDRX_CLTTAG, p_cltproc->tag, 1))
-            {
-                NDRX_LOG(log_error, "Failed to set %s on line %hd", NDRX_CLTTAG, cur->line);
-                userlog("Failed to set %s on line %hd", NDRX_CLTTAG, cur->line);
+                NDRX_LOG(log_error, "Invalid subsectfrom/subsectto (<) for [%s] "
+                        "range at line %hd", p_cltproc->tag, cur->line);
+                userlog("Invalid subsectfrom/subsectto (<) for [%s] "
+                        "range at line %hd", p_cltproc->tag, cur->line);
                 EXFAIL_OUT(ret);
             }
             
-            if (EXSUCCEED!=setenv(NDRX_CLTSUBSECT, p_cltproc->subsect, 1))
+            if (p_cltproc->stat.subsectto > EXFAIL && p_cltproc->stat.subsectfrom < 0)
             {
-                NDRX_LOG(log_error, "Failed to set %s on line %hd", NDRX_CLTSUBSECT, cur->line);
-                userlog("Failed to set %s on line %hd", NDRX_CLTSUBSECT, cur->line);
-                EXFAIL_OUT(ret);   
+                NDRX_LOG(log_error, "Invalid config: subsectto (%d) > -1 && "
+                        "subsectfrom(%d) < 0 for [%s] "
+                        "range at line %hd", p_cltproc->stat.subsectto, 
+                        p_cltproc->stat.subsectfrom, 
+                        p_cltproc->tag, cur->line);
+                userlog("Invalid config: subsectto (%d) > -1 && "
+                        "subsectfrom(%d) < 0 for [%s] "
+                        "range at line %hd", p_cltproc->stat.subsectto, 
+                        p_cltproc->stat.subsectfrom, 
+                        p_cltproc->tag, cur->line);
+                EXFAIL_OUT(ret);
             }
             
-            /* format the command line (final) */
-            ndrx_str_env_subs_len(p_cltproc->stat.command_line, sizeof(p_cltproc->stat.command_line));
-            ndrx_str_env_subs_len(p_cltproc->stat.env, sizeof(p_cltproc->stat.env));
-            ndrx_str_env_subs_len(p_cltproc->stat.cctag, sizeof(p_cltproc->stat.cctag));
-            ndrx_str_env_subs_len(p_cltproc->stat.wd, sizeof(p_cltproc->stat.wd)); /* working dir */
-            /* Expand the logfile path... */
-            ndrx_str_env_subs_len(p_cltproc->stat.log_stdout, sizeof(p_cltproc->stat.log_stdout));
-            ndrx_str_env_subs_len(p_cltproc->stat.log_stderr, sizeof(p_cltproc->stat.log_stderr));
-            
-            /* add to hash list */
-            cpm_get_key(p_cltproc->key, p_cltproc->tag, p_cltproc->subsect);
-            
-            /* Try to lookup... */
-            p_cl  = cpm_client_get(p_cltproc->tag, p_cltproc->subsect);
-            
-            if (NULL==p_cl)
+            if (p_cltproc->stat.subsectfrom > EXFAIL)
             {
-                
-                /* Set the time of config load... */
-                cpm_set_cur_time(p_cltproc);
-
-                /* Add to hashlist */
-                p_cltproc->is_cfg_refresh = EXTRUE;
-
-                /* Try to get from hash, if found update the infos but keep the PID */
-
-                NDRX_LOG(log_info, "Adding %s/%s [%s] to process list", 
-                        p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
-                EXHASH_ADD_STR( G_clt_config, key, p_cltproc );
+                genloop = EXTRUE;
+                loop_subsectfrom = p_cltproc->stat.subsectfrom;
+                loop_subsectto = p_cltproc->stat.subsectto;
+                org_cltproc = p_cltproc;
             }
             else
             {
-                NDRX_LOG(log_info, "Refreshing %s/%s [%s] ...", 
-                        p_cltproc->tag, p_cltproc->subsect, 
-                        p_cltproc->stat.command_line);
-                p_cl->is_cfg_refresh = EXTRUE;
+                genloop = EXFALSE;
                 
-                
-                /* this will make use of newly allocated env */
-                memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
-                
-                p_cl->stat.envs = NULL;
+                loop_subsectfrom = 0;
+                loop_subsectto = 0;
+            }
             
-                if (EXSUCCEED!=ndrx_ndrxconf_envs_append(&p_cl->stat.envs, 
-                        p_cltproc->stat.envs))
+            for (i=loop_subsectfrom; i<loop_subsectto+1; i++)
+            {
+                if (genloop)
                 {
-                    NDRX_LOG(log_error, "Failed to join envs %p %p", &p_cl->stat.envs, 
-                            p_cltproc->stat.envs);
-                    userlog("Failed to join envs %p %p", "Failed to join envs %p %p", 
-                            &p_cl->stat.envs, 
-                            p_cltproc->stat.envs);
-                    EXFAIL_OUT(ret);
+                    /* Allocate new memory block for  */
+                    p_cltproc = NDRX_MALLOC(sizeof(cpm_process_t));
+                    if (NULL==p_cltproc)
+                    {
+                        NDRX_LOG(log_error, "malloc failed for p_cltproc (2) at %d!", i);
+                        userlog("malloc failed for p_cltproc (2) at %d!", i);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    memcpy(p_cltproc, org_cltproc, sizeof(cltproc));
+                    
+                    snprintf(p_cltproc->subsect, sizeof(p_cltproc->subsect), 
+                            "%d", i);
+                }
+                else
+                {
+                    /* Default the subsect */
+                    if (EXEOS==p_cltproc->subsect[0])
+                    {
+                        NDRX_STRCPY_SAFE(p_cltproc->subsect, "-");
+                    }
                 }
                 
-                /* free up current env... */
-                ndrx_ndrxconf_envs_envs_free(&p_cltproc->stat.envs);
-                
-                NDRX_FREE(p_cltproc);
+                /* Render the final command line */
+                if (EXSUCCEED!=setenv(NDRX_CLTTAG, p_cltproc->tag, 1))
+                {
+                    NDRX_LOG(log_error, "Failed to set %s on line %hd", 
+                            NDRX_CLTTAG, cur->line);
+                    userlog("Failed to set %s on line %hd", 
+                            NDRX_CLTTAG, cur->line);
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXSUCCEED!=setenv(NDRX_CLTSUBSECT, p_cltproc->subsect, 1))
+                {
+                    NDRX_LOG(log_error, "Failed to set %s on line %hd", 
+                            NDRX_CLTSUBSECT, cur->line);
+                    userlog("Failed to set %s on line %hd", 
+                            NDRX_CLTSUBSECT, cur->line);
+                    EXFAIL_OUT(ret);   
+                }
+
+                /* format the command line (final) */
+                ndrx_str_env_subs_len(p_cltproc->stat.command_line, 
+                        sizeof(p_cltproc->stat.command_line));
+                ndrx_str_env_subs_len(p_cltproc->stat.env, 
+                        sizeof(p_cltproc->stat.env));
+                ndrx_str_env_subs_len(p_cltproc->stat.cctag, 
+                        sizeof(p_cltproc->stat.cctag));
+                ndrx_str_env_subs_len(p_cltproc->stat.wd, 
+                        sizeof(p_cltproc->stat.wd)); /* working dir */
+                /* Expand the logfile path... */
+                ndrx_str_env_subs_len(p_cltproc->stat.log_stdout, 
+                        sizeof(p_cltproc->stat.log_stdout));
+                ndrx_str_env_subs_len(p_cltproc->stat.log_stderr, 
+                        sizeof(p_cltproc->stat.log_stderr));
+
+                /* add to hash list */
+                cpm_get_key(p_cltproc->key, sizeof(p_cltproc->key), 
+                        p_cltproc->tag, p_cltproc->subsect);
+
+                /* Try to lookup... */
+                p_cl  = cpm_client_get(p_cltproc->tag, p_cltproc->subsect);
+
+                if (NULL==p_cl)
+                {
+
+                    /* Set the time of config load... */
+                    cpm_set_cur_time(p_cltproc);
+
+                    /* Add to hashlist */
+                    p_cltproc->is_cfg_refresh = EXTRUE;
+
+                    /* Try to get from hash, if found update the infos but keep the PID */
+
+                    NDRX_LOG(log_info, "Adding %s/%s [%s] to process list", 
+                            p_cltproc->tag, p_cltproc->subsect, p_cltproc->stat.command_line);
+                    EXHASH_ADD_STR( G_clt_config, key, p_cltproc );
+                }
+                else
+                {
+                    NDRX_LOG(log_info, "Refreshing %s/%s [%s] ...", 
+                            p_cltproc->tag, p_cltproc->subsect, 
+                            p_cltproc->stat.command_line);
+                    p_cl->is_cfg_refresh = EXTRUE;
+
+
+                    /* this will make use of newly allocated env */
+                    memcpy(&p_cl->stat, &p_cltproc->stat, sizeof(p_cl->stat));
+
+                    p_cl->stat.envs = NULL;
+
+                    if (EXSUCCEED!=ndrx_ndrxconf_envs_append(&p_cl->stat.envs, 
+                            p_cltproc->stat.envs))
+                    {
+                        NDRX_LOG(log_error, "Failed to join envs %p %p", 
+                                &p_cl->stat.envs, p_cltproc->stat.envs);
+                        userlog("Failed to join envs %p %p", "Failed to join envs %p %p", 
+                                &p_cl->stat.envs, 
+                                p_cltproc->stat.envs);
+                        EXFAIL_OUT(ret);
+                    }
+
+                    /* free up current env... */
+                    ndrx_ndrxconf_envs_envs_free(&p_cltproc->stat.envs);
+
+                    NDRX_FREE(p_cltproc);
+                }
+            } /* for subsectfrom -> subsectto */
+            
+            if (genloop)
+            {
+                /* free up first tag client */
+                NDRX_FREE(org_cltproc);
             }
         }
     }

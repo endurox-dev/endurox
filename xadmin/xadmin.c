@@ -382,6 +382,7 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -d FILTER4\tForth filter\n"
                 "\t\t -r FILTER_REX\tPosix regexp filter\n"
                 "\t\t -p\tPrint PIDs only\n"
+                "\t\t -m\tPrint memory stats (pid), -p mode only (pid:rss:vsz in kb)\n"
                 "\t\t -x PID\tExclude specific pid"
                 , NULL},
     {"appconfig", cmd_appconfig,  NDRXD_COM_APPCONFIG_RQ,    1,  2,  1, 

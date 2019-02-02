@@ -326,6 +326,76 @@ exprivate int cpm_callback_timer(void)
         {
             /* Try to boot the process... */
             cpm_exec(c);
+            
+            
+        }
+        else if (CLT_STATE_STARTED==c->dyn.cur_state && 
+                (EXFAIL!=c->stat.rssmax || EXFAIL!=c->stat.vszmax)
+                )
+        {
+            /* Check for memory limits if defined... */
+            ndrx_proc_info_t inf;
+            
+            /* perform tests..., read current settings */
+            if (EXSUCCEED==ndrx_proc_get_infos(c->dyn.pid, &inf))
+            {
+                int reached = EXFALSE;
+                char memtype[4];
+                long lim_val;
+                long lim_max;
+                
+                if (c->stat.rssmax!=EXFAIL &&
+                        inf.rss * NDRX_STOR_KBYTE > c->stat.rssmax)
+                {
+                    reached = EXTRUE;
+                    lim_val = inf.rss * NDRX_STOR_KBYTE;
+                    lim_max = c->stat.rssmax;
+                    NDRX_STRCPY_SAFE(memtype, "RSS");
+                }
+                else if (c->stat.vszmax!=EXFAIL &&
+                        inf.vsz * NDRX_STOR_KBYTE > c->stat.vszmax)
+                {
+                    reached = EXTRUE;
+                    lim_val = inf.vsz * NDRX_STOR_KBYTE;
+                    lim_max = c->stat.vszmax;
+                    NDRX_STRCPY_SAFE(memtype, "VSZ");
+                }
+                
+                if (reached)
+                {
+                    char limitbuf[256];
+                    char valuebuf[256];
+                    
+                    ndrx_storage_encode(lim_max, limitbuf, sizeof(limitbuf));
+                    ndrx_storage_encode(lim_val, valuebuf, sizeof(valuebuf));
+                    
+                    NDRX_LOG(log_error, "Client pid = %d, cmdline [%s] "
+                            "%s memory limit reached: "
+                            "configured max: %s in system found: %s - restarting...",
+                            (int)c->dyn.pid, c->stat.command_line,
+                            memtype, limitbuf, valuebuf);
+                    
+                    userlog("Client pid = %d, cmdline [%s] "
+                            "%s memory limit reached: "
+                            "configured max: %s in system found: %s - restarting...",
+                            (int)c->dyn.pid, c->stat.command_line,
+                            memtype, limitbuf, valuebuf);
+                    
+                    /* gently kill the client... */
+                    cpm_kill(c);
+                    
+                    /* at next check we will boot it back... */
+                }
+            }
+            else
+            {
+                /* ignore error as not critical for system running
+                 * the process might be just exited 
+                 */
+                NDRX_LOG(log_warn, "Server pid = %d, srvid = %d, name [%s]: "
+                            "failed to read memory usage - ignore");
+            }
+            
         }
     }
     /* handle any signal 

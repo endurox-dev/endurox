@@ -111,6 +111,9 @@ struct conf_server_node
     int reloadonchange; /**< Reload binary on change - this max the monitoring of the bin */
     int respawn;	/**< Should we ndrxd respawn process automatically when dead */
     
+    long rssmax;    /**< Default max resource memory size in bytes -1 not chk */
+    long vszmax;    /**< Default max virtual memory size in bytes, -1 not chk */
+    
     /* have entries for environment */
     
     /** linked environment groups */
@@ -258,6 +261,9 @@ typedef struct
      */
     int rqaddrttl;
     char default_rqaddr[MAXTIDENT+1];	/**< Default request address */
+    
+    long default_rssmax; /**< Default max resource memory size in bytes, -1 nochk */
+    long default_vszmax; /**< Default max virtual memory size in bytes, -1 nochk */
     
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;

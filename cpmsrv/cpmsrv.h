@@ -49,36 +49,36 @@ extern "C" {
 
 /* Process flags */
     
-#define CPM_F_AUTO_START         0x00000001     /* bit for auto start                      */
-#define CPM_F_EXTENSIVE_CHECK    0x00000002     /* do extensive checks for process existance */
-#define CPM_F_KILL_LEVEL_LOW     0x00000004     /* Kill children at -9                      */
-#define CPM_F_KILL_LEVEL_HIGH    0x00000008     /* Kill children at normal shutdown         */
+#define CPM_F_AUTO_START         0x00000001     /**< bit for auto start                      */
+#define CPM_F_EXTENSIVE_CHECK    0x00000002     /**< do extensive checks for process existance */
+#define CPM_F_KILL_LEVEL_LOW     0x00000004     /**< Kill children at -9                      */
+#define CPM_F_KILL_LEVEL_HIGH    0x00000008     /**< Kill children at normal shutdown         */
     
-#define CPM_F_KILL_LEVEL_DEFAULT 0              /* default kill level                       */
+#define CPM_F_KILL_LEVEL_DEFAULT 0              /**< default kill level                       */
     
-#define NDRX_CLTTAG                 "NDRX_CLTTAG" /* Tag format string         */
-#define NDRX_CLTSUBSECT             "NDRX_CLTSUBSECT" /* Subsect format string */
+#define NDRX_CLTTAG                 "NDRX_CLTTAG" /**< Tag format string         */
+#define NDRX_CLTSUBSECT             "NDRX_CLTSUBSECT" /**< Subsect format string */
 
 
-#define CLT_WILDCARD                '%'         /* regexp -> .* */
+#define CLT_WILDCARD                '%'         /**< regexp -> .* */
     
-#define S_FS                        0x1c /* Field seperator */
+#define S_FS                        0x1c /**< Field seperator */
     
     
-#define CLT_STATE_NOTRUN            0   /* Not running                  */
-#define CLT_STATE_STARTING          1   /* Starting...                  */
-#define CLT_STATE_STARTED           2   /* Started                      */
+#define CLT_STATE_NOTRUN            0   /**< Not running                  */
+#define CLT_STATE_STARTING          1   /**< Starting...                  */
+#define CLT_STATE_STARTED           2   /**< Started                      */
     
-#define CLT_CHK_INTERVAL_DEFAULT    15  /* Do the checks every 15 sec   */
-#define CLT_KILL_INTERVAL_DEFAULT    30  /* Default kill interval       */
+#define CLT_CHK_INTERVAL_DEFAULT    15  /**< Do the checks every 15 sec   */
+#define CLT_KILL_INTERVAL_DEFAULT    30  /**< Default kill interval       */
     
 /* Individual shutdown: */
-#define CLT_STEP_INTERVAL           10000 /*  microseconds for usleep */
-#define CLT_STEP_SECOND              CLT_STEP_INTERVAL / 1000000.0f /* part of second */
+#define CLT_STEP_INTERVAL           10000 /**<  microseconds for usleep */
+#define CLT_STEP_SECOND              CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
     
 /* Global shutdown: */
-#define CLT_STEP_INTERVAL_ALL          300000 /*  microseconds for usleep */
-#define CLT_STEP_SECOND_ALL            CLT_STEP_INTERVAL / 1000000.0f /* part of second */
+#define CLT_STEP_INTERVAL_ALL          300000 /**< microseconds for usleep */
+#define CLT_STEP_SECOND_ALL            CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -92,10 +92,16 @@ struct cpm_static_info
     char command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
     char log_stdout[PATH_MAX+1];
     char log_stderr[PATH_MAX+1];
-    char wd[PATH_MAX+1]; /* Working dir */
+    char wd[PATH_MAX+1]; /**< Working dir */
     char env[PATH_MAX+1];
     char cctag[NDRX_CCTAG_MAX+1];
-    long flags;              /* flags of the process */
+    long flags;              /**< flags of the process */
+    
+    long rssmax;              /**< resident memory max, -1 no chk       */
+    long vszmax;              /**< virtual memory max, -1 no chk        */
+    
+    long subsectfrom;         /**< sub-section from                     */
+    long subsectto;           /**< sub-section to                       */
     
     /** list of process specific environment variables */
     ndrx_env_list_t *envs;
@@ -124,16 +130,16 @@ typedef struct cpm_dynamic_info cpm_dynamic_info_t;
  */
 struct cpm_process
 {   
-    char key[CPM_KEY_LEN+1]; /* tag<FS>subsect */
+    char key[CPM_KEY_LEN+1]; /**< tag<FS>subsect */
     
     char tag[CPM_TAG_LEN+1];
     char subsect[CPM_SUBSECT_LEN+1];
     
     cpm_static_info_t stat;
     cpm_dynamic_info_t dyn;
-    int is_cfg_refresh; /* Is config refreshed? */
+    int is_cfg_refresh; /**< Is config refreshed? */
 
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /**< makes this structure hashable */
 };
 typedef struct cpm_process cpm_process_t;
 
@@ -144,8 +150,8 @@ typedef struct cpm_process cpm_process_t;
 struct cpmsrv_config
 {
     char *config_file;
-    short chk_interval; /* Interval for process checking... */
-    short kill_interval; /* Signalling interval */
+    short chk_interval; /**< Interval for process checking... */
+    short kill_interval; /**< Signaling interval */
 };
 typedef struct cpmsrv_config cpmsrv_config_t;
 

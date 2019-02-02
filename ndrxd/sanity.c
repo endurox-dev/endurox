@@ -72,6 +72,7 @@ exprivate int check_cnvclt(char *qname);
 exprivate int check_cnvsrv(char *qname);
 exprivate int check_long_startup(void);
 exprivate int check_dead_processes(void);
+exprivate void check_memlimits(void);
 /**
  * Master process for sanity checking.
  * @param[in] finalchk perform final checks? Remove dread resources...
@@ -199,6 +200,11 @@ expublic int do_sanity_check(int finalchk)
         
         if (!finalchk)
         {
+            check_memlimits();
+        }
+        
+        if (!finalchk)
+        {
             brd_send_periodrefresh();
         }
         
@@ -253,10 +259,11 @@ out:
  * 
  * @param qname
  * @param process
+ * @param processsz buffer size of \p process
  * @param p_pid
  */
-exprivate void parse_q(char *qname, int is_server, char *process, pid_t *p_pid, 
-                    int *server_id, int is_xadmin)
+exprivate void parse_q(char *qname, int is_server, char *process, int processsz, 
+            pid_t *p_pid, int *server_id, int is_xadmin)
 {   
     char buf[NDRX_MAX_Q_SIZE+1];
     char *p;
@@ -286,7 +293,7 @@ exprivate void parse_q(char *qname, int is_server, char *process, pid_t *p_pid,
     /* Fix up with process name */
     p=strrchr(buf, NDRX_FMT_SEP);
             
-    strcpy(process, p+1);
+    NDRX_STRNCPY_SAFE(process, p+1, processsz);
     
     NDRX_LOG(6, "got process: pid: %d name: [%s]", 
                         *p_pid, process);
@@ -305,7 +312,7 @@ exprivate int unlink_dead_queue(char *qname)
     if ('/'!=qname[0])
     {
         NDRX_STRCPY_SAFE(q_str, "/");
-        strcat(q_str, qname);
+        NDRX_STRCAT_S(q_str, sizeof(q_str), qname);
         p = q_str;
     }
     else
@@ -403,7 +410,7 @@ exprivate int check_server(char *qname)
     
     memset((char *)status, 0, sizeof(srv_status_t));
     
-    parse_q(qname, EXTRUE, process, &pid, &srv_id, EXFALSE);
+    parse_q(qname, EXTRUE, process, sizeof(process), &pid, &srv_id, EXFALSE);
     
     if (!ndrx_sys_is_process_running(pid, process))
     {      
@@ -460,7 +467,7 @@ exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
         first=EXFALSE;
     }
     
-    parse_q(qname, EXFALSE, process, &pid, 0, is_xadmin);
+    parse_q(qname, EXFALSE, process, sizeof(process), &pid, 0, is_xadmin);
     
     if (sanity_cycle == prev_sanity_cycle &&
             0==strcmp(process, prev_process) &&
@@ -727,6 +734,87 @@ exprivate int check_dead_processes(void)
     
 out:
     return ret;   
+}
+
+/**
+ * Check process memory limits
+ */
+exprivate void check_memlimits(void)
+{
+    pm_node_t *p_pm;
+    ndrx_proc_info_t inf;
+    
+    DL_FOREACH(G_process_model, p_pm)
+    {
+        /* If still starting */
+        if (p_pm->state>=NDRXD_PM_MIN_RUNNING &&
+            p_pm->state<=NDRXD_PM_MAX_RUNNING &&
+                (EXFAIL!=p_pm->conf->rssmax || EXFAIL!=p_pm->conf->vszmax))
+        {
+            /* perform tests..., read current settings */
+            if (EXSUCCEED==ndrx_proc_get_infos(p_pm->pid, &inf))
+            {
+                int reached = EXFALSE;
+                char memtype[4];
+                long lim_val;
+                long lim_max;
+                
+                if (p_pm->conf->rssmax!=EXFAIL &&
+                        inf.rss * NDRX_STOR_KBYTE > p_pm->conf->rssmax)
+                {
+                    reached = EXTRUE;
+                    lim_val = inf.rss * NDRX_STOR_KBYTE;
+                    lim_max = p_pm->conf->rssmax;
+                    NDRX_STRCPY_SAFE(memtype, "RSS");
+                }
+                else if (p_pm->conf->vszmax!=EXFAIL &&
+                        inf.vsz * NDRX_STOR_KBYTE > p_pm->conf->vszmax)
+                {
+                    reached = EXTRUE;
+                    lim_val = inf.vsz * NDRX_STOR_KBYTE;
+                    lim_max = p_pm->conf->vszmax;
+                    NDRX_STRCPY_SAFE(memtype, "VSZ");
+                }
+                
+                if (reached)
+                {
+                    char limitbuf[256];
+                    char valuebuf[256];
+                    
+                    ndrx_storage_encode(lim_max, limitbuf, sizeof(limitbuf));
+                    ndrx_storage_encode(lim_val, valuebuf, sizeof(valuebuf));
+                    
+                    NDRX_LOG(log_error, "Server pid = %d, srvid = %d, name [%s] "
+                            "%s memory limit reached: "
+                            "configured max: %s in system found: %s - restarting...",
+                            (int)p_pm->pid, p_pm->srvid, p_pm->binary_name,
+                            memtype, limitbuf, valuebuf);
+                    
+                    userlog("Server pid = %d, srvid = %d, name [%s] "
+                            "%s memory limit reached: "
+                            "configured max: %s in system found: %s - restarting...",
+                            (int)p_pm->pid, p_pm->srvid, p_pm->binary_name,
+                            memtype, limitbuf, valuebuf);
+                    
+                    if (EXSUCCEED!=self_sreload(p_pm))
+                    {
+                        NDRX_LOG(log_warn, "Failed to send self notification "
+                                "about changed process - ignore!");
+                    }
+                }
+            }
+            else
+            {
+                /* ignore error as not critical for system running
+                 * the process might be just exited 
+                 */
+                NDRX_LOG(log_warn, "Server pid = %d, srvid = %d, name [%s]: "
+                            "failed to read memory usage - ignore");
+            }
+            
+        } /* If process still starting! */
+    }/* DL_FOREACH */
+    
 }
 
 /**

@@ -1,6 +1,6 @@
 /**
- * @brief NDR 'standard' common utilites
- *   Enduro Execution system platform library
+ * @brief NDR 'standard' common utilities
+ *   Enduro/eXecution system platform library
  *
  * @file nstdutil.c
  */
@@ -1701,5 +1701,122 @@ expublic int ndrx_args_loader_get(ndrx_args_loader_t *args, void *obj, char *fld
 out:
     return ret;
 }
+
+/**
+ * Decode numbers like:
+ * Kk -> *1024
+ * Mm -> *1024*1024
+ * Gg -> *1024*1024*1024
+ * Tt -> *1024*1024*1024*1024
+ * @param bytesenc
+ * @param outnrbytes
+ * @return EXSUCCEED/EXFAIL (invalid suffix)
+ */
+expublic int ndrx_storage_decode(char *bytesenc, long *outnrbytes)
+{
+    int ret = EXSUCCEED;
+    int len = strlen(bytesenc);
+    char tmp[256];
+    char suffix;
+    long vout;
+    
+    if (len < 2)
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_STRCPY_SAFE(tmp, bytesenc);
+    
+    suffix = bytesenc[len-1];
+    tmp[len-1] = EXEOS;
+    
+    vout = atol(tmp);
+    
+    if (suffix>='0' && suffix <= '9')
+    {
+        /* no suffix provided, all ok, just jump out... */
+        goto out;
+    }
+            
+    switch (suffix)
+    {
+        case 'T':
+        case 't':
+            vout *=NDRX_STOR_KBYTE;
+        case 'G':
+        case 'g':
+            vout *=NDRX_STOR_KBYTE;
+        case 'M':
+        case 'm':
+            vout *=NDRX_STOR_KBYTE;
+        case 'K':
+        case 'k':
+            vout *=NDRX_STOR_KBYTE;
+            break;
+        default:
+            NDRX_LOG(log_error, "Invalid suffix for [%s] %c", bytesenc, suffix);
+            EXFAIL_OUT(ret);
+            break;
+    }
+    
+out:
+    if (EXSUCCEED==ret)
+    {
+        *outnrbytes = vout;
+    }
+
+    return ret;
+}
+
+/**
+ * Encode the output number for human readable size
+ * @param bytes number of bytes
+ * @param outbuf where to store
+ * @param outbufsz text buffer size
+ */
+expublic void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz)
+{
+    int ret = EXSUCCEED;
+    int loops=0;
+    double left_over = bytes;
+    char suffix=EXEOS;
+    
+    while (1)
+    {
+        
+        if ( left_over < (double)NDRX_STOR_KBYTE)
+        {
+            break;
+        }
+        
+        left_over= left_over / (double)NDRX_STOR_KBYTE;
+        
+        loops++;
+    }
+    
+    switch (loops)
+    {
+        case 4:
+            suffix = 'T';
+        case 3:
+            suffix = 'G';
+        case 2:
+            suffix = 'M';
+            break;
+        case 1:
+            suffix = 'K';
+            break;
+        case 0:
+            suffix = 'B';
+            break;
+        default:
+            suffix = '?';
+            break;
+    }
+    
+    snprintf(outbuf, outbufsz, "%.3lf%c", left_over, suffix);
+    
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

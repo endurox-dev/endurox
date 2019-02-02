@@ -118,7 +118,7 @@ exprivate roc_exe_registry_t *rco_get_binary(char *binary_path, unsigned sanity_
             userlog("malloc failed: %s", strerror(errno));
             goto out;
         }
-        strcpy(ret->binary_path, binary_path);
+        NDRX_STRCPY_SAFE(ret->binary_path, binary_path);
         
         EXHASH_ADD_STR(M_binreg, binary_path, ret);
         
