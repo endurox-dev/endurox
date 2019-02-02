@@ -235,6 +235,15 @@ Mandatory Env. Variables
     number of queues that will be used on the system, but recommended number is
     something as twice it. Each queue entry requires about 168 bytes.
     The default value for this parameter is *20000*.
+*NDRX_CLTTAG*='CLIENT_PROCESS_TAG'::
+    This is client process tag exported to *cpmsrv(8)* controlled processes.
+    This value can be used also in *ndrxconfig.xml(5)*
+    when formatting client process command line and log file names.
+
+*NDRX_CLTSUBSECT*='CLIENT_PROCESS_TAG'::
+    This is client process tag's sub-section exported to *cpmsrv(8)* 
+    controlled processes. This value can be used also in *ndrxconfig.xml(5)*
+    when formatting client process command line and log file names.
 
 EXAMPLE
 -------

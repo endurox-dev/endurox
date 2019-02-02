@@ -70,7 +70,6 @@ expublic int do_respawn_check(void)
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
     long delta;
-    int wasrun = EXFALSE;
     int abort = EXFALSE;
     
     /* No sanity checks while app config not loaded */

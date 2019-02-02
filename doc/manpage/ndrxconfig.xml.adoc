@@ -41,6 +41,8 @@ SYNOPSIS
         <cctag>COMMON_CONFIG_TAG_DEFAULT</cctag>
         <protected>PROTECTED_SERVER_DEFAULT</protected>
         <reloadonchange>RELOAD_ON_CHANGE_DEFAULT</reloadonchange>
+        <rssmax>RSSMAX_DEFAULT</rssmax>
+        <vszmax>VSZMAX_DEFAULT</vszmax>
         <rqaddr>RQADDR_DEFAULT</rqaddr>
         <envs group="SVGRP_ENV_GROUP_NAME">
             <env name="SVGRP_ENV_VARIABLE_NAME">SVGRP_ENV_VARIABLE_VALUE</env>
@@ -78,6 +80,8 @@ SYNOPSIS
             <reloadonchange>RELOAD_ON_CHANGE_SERVER</reloadonchange>
             <fullpath>ATMI_SERVER_FULL_PATH</fullpath>
             <cmdline>ATMI_SERVER_COMMAND_LINE</cmdline>
+            <rssmax>ATMI_SERVER_RSSMAX</rssmax>
+            <vszmax>ATMI_SERVER_VSZMAX</vszmax>
             <rqaddr>RQADDR</rqaddr>
             <envs>
                 <usegroup>SVGRP_ENV_GROUP_NAME</usegroup>
@@ -113,7 +117,12 @@ SYNOPSIS
             CCTAG="CLT_CCTAG"
             wd="CLT_WD"
             klevel="CLT_KLEVEL"
-            autostart="CLT_AUTOSTART">
+            autostart="CLT_AUTOSTART"
+            rssmax="CLT_RSSMAX"
+            vszmax="CLT_VSZMAX"
+            subsectfrom="CLT_SUBSECTFROM"
+            subsectto="CLT_SUBSECTTO"
+            >
 
             <envs>
                 <usegroup>CLTGRP_ENV_GROUP_NAME</usegroup>
@@ -135,6 +144,10 @@ SYNOPSIS
                 wd="CLT_WD_EXEC" 
                 autostart="CLT_AUTOSTART_EXEC"
                 klevel="CLT_KLEVEL_EXEC"
+                rssmax="CLT_RSSMAX_EXEC"
+                vszmax="CLT_VSZMAX_EXEC"
+                subsectfrom="CLT_SUBSECTFROM_EXEC"
+                subsectto="CLT_SUBSECTTO_EXEC"
                 />
             <exec tag="CLT_TAG_EXEC2" 
                 subsect="CLT_SUBSECT2_EXEC2" 
@@ -292,6 +305,35 @@ DEBUG CONFIGURATION FILE SYNTAX
     cycle. This is recommended to be used *only* for development purposes. And
     must not be used on production servers! 
     This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
+*RSSMAX_DEFAULT*::
+    Maximum Resident Set Size memory size after which *ndrxd(8)* process will issue
+    server reload (sr) command (i.e. gracefully 
+    shutdown and start back) to server process if
+    particular server process resident memory goes over this defined value. 
+    The value can be override by *ATMI_SERVER_RSSMAX* for particular server 
+    instance.
+    This parameter is useful to be used to protect local machine against 
+    defective/binaries with memory leaks. The parameter value is 
+    expressed in bytes. Configuration file also accepts
+    suffixes such as "T" or "t" for terrabytes, "G" or "g" for gigabytes, "M" or
+    "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
+    limit resident memory to 10 megabytes. The default value is *-1*, which 
+    means that functionality is not used.
+*VSZMAX_DEFAULT*::
+    Maximum Virtual Set Size memory size (the number bytes program have asked to 
+    OS kernel for memory, but does it does *not* mean it is physically used or initialized) 
+    after which *ndrxd(8)* process will issue
+    server reload (sr) command (i.e. gracefully shutdown and start back) to
+    server process if particular server's process virtual memory goes 
+    over this defined value. The value can be override by 
+    *ATMI_SERVER_VSZMAX* for particular server instance.
+    This parameter is useful to be used to protect local machine
+    defective/binaries with memory leaks. The parameter value is 
+    expressed in bytes. Configuration file also accepts
+    suffixes such as "T" or "t" for terrabytes, "G" or "g" for gigabytes, "M" or
+    "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
+    limit resident memory to 10 megabytes. The default value is *-1*, which 
+    means that functionality is not used.
 *RQADDR_DEFAULT*::
     Request address (common service queue) used in System V mode. For other
     modes each service have it's own queue, but due to limitations of the System V
@@ -444,6 +486,49 @@ DEBUG CONFIGURATION FILE SYNTAX
     Tagname to be set for process.
 *CLT_SUBSECT_EXEC*::
     Subsection to be set for process. '-' used as default.
+*CLT_RSSMAX*::
+    Maximum Resident Set Size memory size after which *cpmsrv(8)* process will 
+    gracefully kill the client process by signals -2, -15, -9 if
+    particular client process resident memory goes over this defined value. 
+    After killing, the cpmsrv at first check interval will detect that client
+    is dead, and at next check interval it will be respawned.
+    The value can be override by *CLT_RSSMAX_EXEC*.
+    This parameter is useful to be used to protect local machine against 
+    defective/binaries with memory leaks. The parameter value is 
+    expressed in bytes. Configuration file also accepts
+    suffixes such as "T" or "t" for terrabytes, "G" or "g" for gigabytes, "M" or
+    "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
+    limit resident memory to 10 megabytes. The default value is *-1*, which 
+    means that functionality is not used.
+*CLT_VSZMAX*::
+    Maximum Virtual Set Size memory size (the number bytes program have asked to 
+    OS kernel for memory, but does it does *not* mean it is physically used or initialized) 
+    after which *cpmsrv(8)* process will 
+    gracefully kill the client process by signals -2, -15, -9 if
+    particular client process virtual memory goes over this defined value.
+    After killing, the cpmsrv at first check interval will detect that client
+    is dead, and at next check interval it will be respawned.
+    The value can be override by *CLT_RSSMAX_EXEC*.
+    This parameter is useful to be used to protect local machine against 
+    defective/binaries with memory leaks. The parameter value is 
+    expressed in bytes. Configuration file also accepts
+    suffixes such as "T" or "t" for terrabytes, "G" or "g" for gigabytes, "M" or
+    "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
+    limit resident memory to 10 megabytes. The default value is *-1*, which 
+    means that functionality is not used.
+*CLT_SUBSECTFROM*::
+    If set, then used to auto-generate number subsections for particular client
+    definition. In this case *CLT_SUBSECT_EXEC* parameter value is ignored.
+    The loop must start with non negative number and must not be greater than
+    integer (2147483647) and less or equal to *CLT_SUBSECTTO*. 
+    Default is *undefined* and not used. Can be overriden
+    by *CLT_SUBSECTFROM_EXEC*. Must be used together with *CLT_SUBSECTTO*.
+*CLT_SUBSECTTO*::
+    If set, then used to auto-generate number subsections for particular client
+    definition. In this case *CLT_SUBSECT_EXEC* parameter value is ignored.
+    The loop must end with non negative number and must not be greater than
+    integer (2147483647). Default is *undefined* and not used. Can be overriden
+    by *CLT_SUBSECTFROM_EXEC*. Must be used together with *CLT_SUBSECTFROM*.
 *CLT_KLEVEL*::
     Kill level of the client. *0* - do not kill child processes recursively 
     of the client, *1* - do kill child processes only when performing 

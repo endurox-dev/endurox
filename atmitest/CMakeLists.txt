@@ -110,6 +110,8 @@ ENDIF()
 
 add_subdirectory (test059_pq)
 add_subdirectory (test060_ndxdfork)
+add_subdirectory (test062_memlimits)
+add_subdirectory (test063_cpmrange)
 
 ################################################################################
 # Master test case driver

@@ -46,6 +46,7 @@
 #include "ndebug.h"
 #include "utlist.h"
 #include "nstdutil.h"
+#include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define     CHECK_PM_DEFAULT              2   /* Check process model on every */
@@ -263,6 +264,9 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     config->default_respawn = 1; /* we want respawn by default! */
     
+    config->default_rssmax = EXFAIL; /** Disabled */
+    config->default_vszmax = EXFAIL; /** Disabled */
+    
     if (NULL!=cur)
     {
         do
@@ -476,6 +480,32 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 }
 
                 NDRX_LOG(log_debug, "rqaddr: [%s]", config->default_rqaddr);
+            }
+            else if (0==strcmp((char*)cur->name, "rssmax"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                
+                if (EXSUCCEED!=ndrx_storage_decode(p, &config->default_rssmax))
+                {
+                    NDRX_LOG(log_error, "Failed to parse `rssmax', invalid value");
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_LOG(log_debug, "rssmax: %ld bytes", config->default_rssmax);
+                xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "vszmax"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                
+                if (EXSUCCEED!=ndrx_storage_decode(p, &config->default_vszmax))
+                {
+                    NDRX_LOG(log_error, "Failed to parse `vszmax', invalid value");
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_LOG(log_debug, "vszmax: %ld bytes", config->default_vszmax);
+                xmlFree(p);
             }
             
 #if 0
@@ -732,6 +762,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     p_srvnode->isprotected = EXFAIL;
     p_srvnode->reloadonchange = EXFAIL;
     p_srvnode->respawn = EXFAIL;
+    
+    p_srvnode->rssmax = config->default_rssmax;
+    p_srvnode->vszmax = config->default_vszmax;
 
     for (attr=cur->properties; attr; attr = attr->next)
     {
@@ -1007,6 +1040,32 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             
             NDRX_LOG(log_debug, "rqaddr: [%s]", p_srvnode->rqaddr);
         }
+        else if (0==strcmp((char*)cur->name, "rssmax"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+
+            if (EXSUCCEED!=ndrx_storage_decode(p, &p_srvnode->rssmax))
+            {
+                NDRX_LOG(log_error, "Failed to parse `rssmax', invalid value");
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG(log_debug, "rssmax: %ld bytes", p_srvnode->rssmax);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "vszmax"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+
+            if (EXSUCCEED!=ndrx_storage_decode(p, &p_srvnode->vszmax))
+            {
+                NDRX_LOG(log_error, "Failed to parse `vszmax', invalid value");
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG(log_debug, "vszmax: %ld bytes", p_srvnode->vszmax);
+            xmlFree(p);
+        }
         
     }
     
@@ -1103,7 +1162,7 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
-	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\"",
+	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\" RSSMAX=%ld VSZMAX=%ld",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, 
@@ -1115,7 +1174,9 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->reloadonchange?'Y':'N',
 		    p_srvnode->respawn?'Y':'N',
                     p_srvnode->fullpath,
-                    p_srvnode->cmdline
+                    p_srvnode->cmdline,
+                    p_srvnode->rssmax,
+                    p_srvnode->vszmax
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 

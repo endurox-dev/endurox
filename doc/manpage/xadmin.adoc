@@ -284,7 +284,10 @@ COMMANDS
     regular regular expression that must be matched. If none of these arguments
     are passed, then no filtering is done and max output is done (except the
     xadmin by it self). To enable printing PID only, use *-p* argument. To exclude
-    particular PID from printing, use *-x* argument.
+    particular PID from printing, use *-x* argument. The memory stats in kilobytes
+    can be printed with turning on argument *-m* which must be used together with
+    *-p*, then output is printed in format: "<pid>:<RSS>:<VSZ>", where RSS and
+    VSS memory is printed in Kilobytes.
 *appconfig* SETTING [NEWVALUE]::
     Change *ndrxconfig.xml(5)* "appconfig" section arguments dynamically for the
     process running. Settings available for changing are *sanity*, *checkpm*, 

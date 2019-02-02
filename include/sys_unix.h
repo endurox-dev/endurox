@@ -204,8 +204,8 @@ struct ndrx_epoll_event {
 typedef struct ndrx_proc_info ndrx_proc_info_t;
 struct ndrx_proc_info
 {
-    long rss;
-    long vsz;
+    long rss;   /**< resident memory in kilobytes       */
+    long vsz;   /**< virtual memory in kilobytes        */
 };
 
 #ifdef EX_OS_DARWIN

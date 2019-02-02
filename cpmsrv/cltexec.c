@@ -372,7 +372,7 @@ expublic int cpm_killall(void)
 /**
  * Kill the process...
  * Firstly -2, then -15, then -9
- * We shall do kill in synchrounus mode.
+ * We shall do kill in synchronous mode.
  * 
  * @param c
  * @return 
@@ -540,7 +540,29 @@ expublic int cpm_exec(cpm_process_t *c)
         
         /* some small delay so that parent gets time for PIDhash setup! */
         usleep(9000);
-
+        
+        /* Add env variables for NDRX_CLTTAG / NDRX_CLTSUBSECT */
+        
+        /* Fixes for #367 */
+        if (EXSUCCEED!=setenv(NDRX_CLTTAG, c->tag, EXTRUE))
+        {
+            NDRX_LOG(log_error, "Cannot set [%s] to [%s]: %s", 
+                    NDRX_CLTTAG, c->tag, strerror(errno));
+            userlog("Cannot set [%s] to [%s]: %s", 
+                    NDRX_CLTTAG, c->tag, strerror(errno));
+            exit(1);
+        }
+        
+        /* Fixes for #367 */
+        if (EXSUCCEED!=setenv(NDRX_CLTSUBSECT, c->subsect, EXTRUE))
+        {
+            NDRX_LOG(log_error, "Cannot set [%s] to [%s]: %s", 
+                    NDRX_CLTSUBSECT, c->subsect, strerror(errno));
+            userlog("Cannot set [%s] to [%s]: %s", 
+                    NDRX_CLTSUBSECT, c->subsect, strerror(errno));
+            exit(1);
+        }
+        
         NDRX_STRCPY_SAFE(cmd_str, c->stat.command_line);
 
         token = strtok(cmd_str, separators);

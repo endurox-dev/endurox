@@ -491,6 +491,20 @@ Ensure(test061_ndxddup)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test062_memlimits)
+{
+    int ret;
+    ret=system_dbg("test062_memlimits/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test063_cpmrange)
+{
+    int ret;
+    ret=system_dbg("test063_cpmrange/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -588,6 +602,8 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test059_pq);
     add_test(suite, test060_ndxdfork);
     add_test(suite, test061_ndxddup);
+    add_test(suite, test062_memlimits);
+    add_test(suite, test063_cpmrange);
     
     return suite;
 }
