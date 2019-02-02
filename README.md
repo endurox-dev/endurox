@@ -422,7 +422,9 @@ processing listings across all supported OSes.
 
 - Version 6.0.14 released on 30/01/2019 (stable) Marking stable version
 
-- Version 6.0.15 released on 01/01/2019 (development) Feature #380
+- Version 6.0.15 released on 01/01/2019 (development) Feature #380 
+
+- Version 6.0.17 released on 02/01/2019 (development) Feature #382, Feature #367, Support #303, Feature #271
 
 
 # Build configurations
