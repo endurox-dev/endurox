@@ -72,6 +72,7 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     char flt_r[PATH_MAX/4]={EXEOS};
     long pid_x = EXFAIL;
     short pid_only = EXFALSE;
+    short mems = EXFALSE;
     pid_t me = getpid();
     pid_t they;
     
@@ -92,6 +93,9 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Posix regexp"},
         {'p', BFLD_SHORT,  (void *)&pid_only, sizeof(pid_only), 
                                 NCLOPT_OPT | NCLOPT_TRUEBOOL, "Print pid only"},
+        {'m', BFLD_SHORT,  (void *)&mems, sizeof(mems), 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL,
+                            "Print memory stats (pid), -p mode only (pid:rss:vsz in kb)"},
         {'x', BFLD_LONG,   (void *)&pid_x, sizeof(pid_x), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Exclude pid"},
         {0}
@@ -102,6 +106,12 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
         fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (mems && !pid_only)
+    {
+        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "-m can be used only with -p!\n");
         EXFAIL_OUT(ret);
     }
     
@@ -125,7 +135,24 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
                 {
                     if (pid_only)
                     {
-                        printf("%d\n", (int)they);
+                        ndrx_proc_info_t inf;
+                        
+                        if (mems)
+                        {
+                            /* read memory stats... */
+                            memset(&inf, 0, sizeof(inf));
+                            
+                            if (EXSUCCEED!=ndrx_proc_get_infos(they, &inf))
+                            {
+                                fprintf(stderr, "Failed to read %d stats\n", 
+                                        (int)they);
+                            }
+                            printf("%d:%ld:%ld\n", (int)they, inf.rss, inf.vsz);
+                        }
+                        else
+                        {
+                            printf("%d\n", (int)they);
+                        }
                     }
                     else
                     {

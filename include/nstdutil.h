@@ -71,6 +71,9 @@ extern "C" {
 #define NDRX_ARGS_BOOL                  1     /**< boolean type               */
 #define NDRX_ARGS_INT                   2     /**< integer type               */
 /** @} */ /* end of argsgrp */
+    
+    
+#define NDRX_STOR_KBYTE                 1024    /**< number of bytes in KB    */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -245,6 +248,10 @@ extern NDRX_API int ndrx_args_loader_set(ndrx_args_loader_t *args, void *obj,
 
 extern NDRX_API int ndrx_file_gen_embed(char *in_fname, char *out_fname, 
         char *out_suffix);
+
+
+extern NDRX_API int ndrx_storage_decode(char *bytesenc, long *outnrbytes);
+extern NDRX_API void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz);
 
 #ifdef	__cplusplus
 }
