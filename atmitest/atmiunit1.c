@@ -602,7 +602,12 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test059_pq);
     add_test(suite, test060_ndxdfork);
     add_test(suite, test061_ndxddup);
+/* for sanitizer the memory layout does not match the
+ * test cases, thus cannot test...
+ */
+#ifndef NDRX_SANITIZE
     add_test(suite, test062_memlimits);
+#endif
     add_test(suite, test063_cpmrange);
     
     return suite;

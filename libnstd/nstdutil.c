@@ -1798,8 +1798,10 @@ expublic void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz)
     {
         case 4:
             suffix = 'T';
+            break;
         case 3:
             suffix = 'G';
+            break;
         case 2:
             suffix = 'M';
             break;

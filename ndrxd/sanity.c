@@ -809,7 +809,8 @@ exprivate void check_memlimits(void)
                  * the process might be just exited 
                  */
                 NDRX_LOG(log_warn, "Server pid = %d, srvid = %d, name [%s]: "
-                            "failed to read memory usage - ignore");
+                            "failed to read memory usage - ignore",
+                            (int)p_pm->pid, p_pm->srvid, p_pm->binary_name);
             }
             
         } /* If process still starting! */
