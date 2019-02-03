@@ -392,8 +392,9 @@ exprivate int cpm_callback_timer(void)
                 /* ignore error as not critical for system running
                  * the process might be just exited 
                  */
-                NDRX_LOG(log_warn, "Server pid = %d, srvid = %d, name [%s]: "
-                            "failed to read memory usage - ignore");
+                NDRX_LOG(log_warn, "Client pid = %d, cmdline [%s]: "
+                            "failed to read memory usage - ignore",
+                            (int)c->dyn.pid, c->stat.command_line);
             }
             
         }
