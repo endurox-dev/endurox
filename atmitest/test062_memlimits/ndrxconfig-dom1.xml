@@ -53,6 +53,7 @@
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
         <killtime>20</killtime>
+        <rssmax>45M</rssmax>
     </defaults>
     <servers>
         <server name="atmi.sv62" >
