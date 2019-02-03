@@ -110,7 +110,7 @@ if [[ "X$RET" != "X0" ]]; then
     go_out 1
 fi
 
-echo "Wait for server respawn... wait 20 sec..."
+echo "Wait for server respawn... wait 10 sec..."
 for((i=1;i<=10;i+=1)); do 
     xadmin ps -m -p -a atmi.sv62 2>/dev/null
     sleep 1
@@ -140,7 +140,7 @@ if [[ "X$RET" != "X0" ]]; then
     go_out 2
 fi
 
-echo "Wait for server respawn... wait 20 sec..."
+echo "Wait for server respawn... wait 10 sec..."
 for((i=1;i<=10;i+=1)); do 
     xadmin ps -m -p -a atmi.sv62 2>/dev/null
     sleep 1
