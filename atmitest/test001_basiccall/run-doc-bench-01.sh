@@ -46,10 +46,12 @@ else
 fi;
 
 . ../testenv.sh
+
 # client timeout
 export NDRX_TOUT=2
 export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
 
+xadmin down -y
 (./atmi.sv1 -t10 -i 123 2>&1) > ./atmisv1.log &
 sleep 1
 (./atmiclt1 x :B: 2>&1) > ./atmiclt1.log
