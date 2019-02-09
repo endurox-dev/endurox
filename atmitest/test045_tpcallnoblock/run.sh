@@ -71,7 +71,7 @@ function go_out {
 rm *.log
 
 (./atmi.sv45 -i123 2>&1) > ./atmisv45.log &
-sleep 1
+sleep 5
 (./atmiclt45 2>&1) > ./atmiclt45.log
 
 RET=$?
