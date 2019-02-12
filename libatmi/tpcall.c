@@ -831,18 +831,17 @@ expublic int ndrx_tpgetrply (int *cd,
             }
             else
             {
-                /* Convert only if we have data */
-                if (rply->data_len > 0)
-                {
-                    call_type = &G_buf_descr[rply->buffer_type_id];
+                /* Convert all, including NULL buffers  */
+                
+                call_type = &G_buf_descr[rply->buffer_type_id];
 
-                    ret=call_type->pf_prepare_incoming(call_type,
-                                    rply->data,
-                                    rply->data_len,
-                                    data,
-                                    len,
-                                    flags);
-                }
+                ret=call_type->pf_prepare_incoming(call_type,
+                                rply->data,
+                                rply->data_len,
+                                data,
+                                len,
+                                flags);
+                
                 /* put rcode in global */
                 G_atmi_tls->M_svc_return_code = rply->rcode;
 

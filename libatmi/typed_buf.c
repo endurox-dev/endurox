@@ -50,6 +50,7 @@
 #include <typed_carray.h>
 #include <typed_view.h>
 #include <tperror.h>
+#include <tpadm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -59,7 +60,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr);
 /*
  * Buffers allocated by process
  */
-expublic buffer_obj_t *G_buffers=NULL;
+expublic buffer_obj_t *ndrx_G_buffers=NULL;
 
 EX_SPIN_LOCKDECL(M_lock); /* This will allow multiple reads */
 
@@ -75,10 +76,13 @@ expublic typed_buffer_descr_t G_buf_descr[] =
                                 UBF_tpalloc, UBF_tprealloc, UBF_tpfree, UBF_test},
     {BUF_TYPE_INIT,  "TPINIT",  NULL,      NULL,             NULL,            NULL,
                                 TPINIT_tpalloc, NULL, TPINIT_tpfree, NULL},
-    {BUF_TYPE_NULL,  NULL,  NULL,      NULL,             NULL,            NULL,
+                                
+    {BUF_TYPE_NULL,  "NULL",  NULL,      NULL, TPNULL_prepare_outgoing,  TPNULL_prepare_incoming,
                                 TPNULL_tpalloc, NULL, TPNULL_tpfree, NULL},
+                                
     {BUF_TYPE_STRING,   "STRING", NULL,     NULL, STRING_prepare_outgoing, STRING_prepare_incoming,
                                 STRING_tpalloc, STRING_tprealloc, STRING_tpfree, STRING_test},
+                                
     {BUF_TYPE_CARRAY,   "CARRAY", "X_OCTET", NULL, CARRAY_prepare_outgoing, CARRAY_prepare_incoming,
                                 CARRAY_tpalloc, CARRAY_tprealloc, CARRAY_tpfree, CARRAY_test},
     {BUF_TYPE_JSON,   "JSON", NULL,     NULL, JSON_prepare_outgoing, JSON_prepare_incoming,
@@ -102,6 +106,40 @@ exprivate int buf_ptr_cmp_fn(buffer_obj_t *a, buffer_obj_t *b)
     return (a->buf==b->buf?EXSUCCEED:EXFAIL);
 }
 
+
+/**
+ * List currently allocated XATMI buffers
+ * @param list buffer list (pointers to actual data storage, not the index entries)
+ * @return EXSUCCEED (caller must free list)/EXFAIL (list is not alloc)
+ */
+expublic int ndrx_buffer_list(ndrx_growlist_t *list)
+{
+    int ret = EXSUCCEED;
+    int i = 0;
+    buffer_obj_t *elt, *tmp;
+    
+    ndrx_growlist_init(list, 100, sizeof(void *));
+    EX_SPIN_LOCK_V(M_lock);
+        
+    EXHASH_ITER(hh,ndrx_G_buffers,elt,tmp) 
+    {
+        ndrx_growlist_add(list, elt->buf, i);
+        i++;
+    }
+    
+out:
+        
+    EX_SPIN_UNLOCK_V(M_lock);
+
+    if (EXSUCCEED!=ret)
+    {
+        ndrx_growlist_free(list);
+    }
+
+    return ret;
+}
+
+
 /**
  * Find the buffer in list of known buffers
  * Publick version, uses locking...
@@ -114,14 +152,26 @@ expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
     buffer_obj_t *ret;
     
+    static buffer_obj_t nullbuf = {.autoalloc = EXFALSE, 
+        .buf = NULL, 
+        .size=0, 
+        .subtype="", 
+        .type_id=BUF_TYPE_NULL};
+    
+    if (NULL==ptr)
+    {
+        return &nullbuf;
+    }
+    
     EX_SPIN_LOCK_V(M_lock);
     /*
     ret = find_buffer_int(ptr);
     */
-    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
+    EXHASH_FIND_PTR( ndrx_G_buffers, ((void **)&ptr), ret);
 
 
     EX_SPIN_UNLOCK_V(M_lock);
+    
     return ret;
     
 }
@@ -142,7 +192,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr)
     DL_SEARCH(G_buffers, ret, &eltmp, buf_ptr_cmp_fn);
     */
     
-    EXHASH_FIND_PTR( G_buffers, ((void **)&ptr), ret);
+    EXHASH_FIND_PTR( ndrx_G_buffers, ((void **)&ptr), ret);
     
     return ret;
 }
@@ -250,7 +300,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
 
     /* Save the allocated buffer in the list */
     /* DL_APPEND(G_buffers, node); */
-    EXHASH_ADD_PTR(G_buffers, buf, node);
+    EXHASH_ADD_PTR(ndrx_G_buffers, buf, node);
 
 out:
     EX_SPIN_UNLOCK_V(M_lock);
@@ -297,8 +347,8 @@ expublic char * ndrx_tprealloc (char *buf, long len)
 
     node->buf = ret;
     /* update the hash list */
-    EXHASH_DEL(G_buffers, node);
-    EXHASH_ADD_PTR(G_buffers, buf, node);
+    EXHASH_DEL(ndrx_G_buffers, node);
+    EXHASH_ADD_PTR(ndrx_G_buffers, buf, node);
     
     node->size = len;
 
@@ -320,12 +370,12 @@ expublic void free_up_buffers(void)
     buffer_obj_t *elt, *tmp;
     typed_buffer_descr_t *buf_type = NULL;
     
-    DL_FOREACH_SAFE(G_buffers,elt,tmp) 
+    DL_FOREACH_SAFE(ndrx_G_buffers,elt,tmp) 
     {
         /* Free up the buffer */
         buf_type = &G_buf_descr[elt->sub_type_id];
         buf_type->pf_free(buf_type, elt->buf);
-        DL_DELETE(G_buffers,elt);
+        DL_DELETE(ndrx_G_buffers,elt);
         NDRX_FREE(elt);
     }
     
@@ -361,7 +411,7 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
         
         /* Remove that stuff from our linked list!! */
         /* DL_DELETE(G_buffers,elt); */
-        EXHASH_DEL(G_buffers, elt);
+        EXHASH_DEL(ndrx_G_buffers, elt);
         
         /* delete elt by it self */
         NDRX_FREE(elt);
@@ -415,7 +465,7 @@ expublic void free_auto_buffers(void)
     
     NDRX_LOG(log_debug, "free_auto_buffers enter");
     
-    DL_FOREACH_SAFE(G_buffers,elt,tmp) 
+    DL_FOREACH_SAFE(ndrx_G_buffers,elt,tmp) 
     {
         if (elt->autoalloc)
         {
@@ -425,7 +475,7 @@ expublic void free_auto_buffers(void)
             /* Free up the buffer */
             buf_type = &G_buf_descr[elt->type_id];
             buf_type->pf_free(buf_type, elt->buf);
-            DL_DELETE(G_buffers,elt);
+            DL_DELETE(ndrx_G_buffers,elt);
             /* fix up memory leak issues. */
             NDRX_FREE(elt);
         }
