@@ -83,4 +83,54 @@ expublic void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
     NDRX_FREE(buf);
 }
+
+/**
+ * Prepare outgoing message, just do nothing
+ * @param descr buffer type descr
+ * @param idata input data/null
+ * @param ilen 0
+ * @param obuf no data to install
+ * @param olen olen is 0
+ * @param flags ?
+ * @return EXSUCCEED
+ */
+expublic int TPNULL_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
+        long ilen, char *obuf, long *olen, long flags)
+{
+    if (NULL!=olen)
+    {
+        *olen = 0;
+    }
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Prepare incoming buffer, for NULL we just free any other previous buffer
+ * pointed to.
+ * @param descr description ptr
+ * @param rcv_data received data
+ * @param rcv_len data len received
+ * @param odata original XATMI buffer to push data in
+ * @param olen data buffer len
+ * @param flags flags
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int TPNULL_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+                        long rcv_len, char **odata, long *olen, long flags)
+{
+    if (NULL!=*odata)
+    {
+        tpfree(*odata);
+        *odata = NULL;
+    }
+    
+    if (NULL!=olen)
+    {
+        *olen = 0;
+    }
+    
+    return EXSUCCEED;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

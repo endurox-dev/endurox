@@ -75,7 +75,7 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-extern NDRX_API buffer_obj_t *G_buffers;
+extern NDRX_API buffer_obj_t *ndrx_G_buffers;
 extern NDRX_API typed_buffer_descr_t G_buf_descr[];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -105,6 +105,11 @@ extern NDRX_API void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 /* Type null buffer */
 extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern NDRX_API void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
+extern NDRX_API int TPNULL_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
+                    char *obuf, long *olen, long flags);
+
+extern NDRX_API int TPNULL_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+                        long rcv_len, char **odata, long *olen, long flags);
 
 /* Automatic buffer convert: */
 extern NDRX_API int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse);

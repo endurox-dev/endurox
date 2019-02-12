@@ -76,6 +76,7 @@ install (FILES
     exdb.h
     nstopwatch.h
     exthpool.h
+    exstring.h
     DESTINATION include)
 
 install (FILES
