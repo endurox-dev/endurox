@@ -1159,22 +1159,20 @@ inject_message:
             else
             {
                 NDRX_LOG(log_debug, "Buffer type id: %d", rply->buffer_type_id);
-                if (rply->data_len > 0)
-                {
-                    call_type = &G_buf_descr[rply->buffer_type_id];
+                
+                call_type = &G_buf_descr[rply->buffer_type_id];
 
-                    ret=call_type->pf_prepare_incoming(call_type,
-                                    rply->data,
-                                    rply->data_len,
-                                    data,
-                                    len,
-                                    flags);
-                    
-                    /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
-                    if (ret==EXFAIL)
-                    {
-                        goto out;
-                    }
+                ret=call_type->pf_prepare_incoming(call_type,
+                                rply->data,
+                                rply->data_len,
+                                data,
+                                len,
+                                flags);
+
+                /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
+                if (ret==EXFAIL)
+                {
+                    goto out;
                 }
                 
 #if 0
@@ -1396,29 +1394,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     /*
      * Prepare some data if have something to prepare
      */
-    if (NULL!=data)
-    {
-        /* fill up the details */
-        if (NULL==(buffer_info = ndrx_find_buffer(data)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
-            ret=EXFAIL;
-            goto out;
-        }
-
-        descr = &G_buf_descr[buffer_info->type_id];
-
-        /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
-        {
-            /* not good - error should be already set */
-            ret=EXFAIL;
-            goto out;
-        }
-
-        call->buffer_type_id = buffer_info->type_id;
-    }
-    else if (ATMI_COMMAND_CONNRPLY==command_id)
+    if (ATMI_COMMAND_CONNRPLY==command_id)
     {
         /* We send them conversion related Q 
         strcpy(call->conv_related_q_str, conv->my_listen_q_str);
@@ -1430,7 +1406,25 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     }
     else
     {
-        data_len=0; /* no data */
+        /* fill up the details */
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", data);
+            ret=EXFAIL;
+            goto out;
+        }
+
+        descr = &G_buf_descr[buffer_info->type_id];
+
+        /* prepare buffer for call */
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
+                &data_len, flags))
+        {
+            /* not good - error should be already set */
+            EXFAIL_OUT(ret);
+        }
+
+        call->buffer_type_id = buffer_info->type_id;
     }
     /* OK, now fill up the details */
     call->data_len = data_len;

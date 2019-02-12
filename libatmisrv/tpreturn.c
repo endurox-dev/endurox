@@ -161,7 +161,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     }
     
     /* prepare reply buffer */
-    if ((TPFAIL==rval || TPSUCCESS==rval) && NULL!=data)
+    if (TPFAIL==rval || TPSUCCESS==rval)
     {
         /* try convert the data */
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
