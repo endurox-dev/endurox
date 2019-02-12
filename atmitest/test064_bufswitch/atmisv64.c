@@ -40,6 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "test64.h"
+#include <tpadm.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -49,6 +50,73 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * NUll request, provides some new buffer back
+ * @param p_svc request infos
+ */
+void NULLREQ (TPSVCINFO *p_svc)
+{
+    if (NULL!=p_svc->data)
+    {
+        /* TODO: Test error */
+    }
+}
+
+/**
+ * Provides null response back. No matter of request buffer...
+ * @param p_svc request infos
+ */
+void NULLRSP(TPSVCINFO *p_svc)
+{
+    
+}
+
+/**
+ * JSON responder
+ * @param p_svc
+ */
+void JSONRSP(TPSVCINFO *p_svc)
+{
+    
+}
+
+/**
+ * String responder
+ * @param p_svc
+ */
+void STRINGRSP(TPSVCINFO *p_svc)
+{
+    
+}
+
+/**
+ * Carray responder
+ * @param p_svc
+ */
+void CARRAYRSP(TPSVCINFO *p_svc)
+{
+    
+}
+
+/**
+ * VIEW responder
+ * @param p_svc
+ */
+void VIEWRSP(TPSVCINFO *p_svc)
+{
+    
+}
+
+/**
+ * UBF Responder
+ * @param p_svc
+ */
+void UBFRSP(TPSVCINFO *p_svc)
+{
+    
+}
+
+#if 0
 /**
  * Standard service entry
  */
@@ -88,19 +156,61 @@ out:
                 0L);
 }
 
+#endif
+
 /**
  * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
+    int ret = EXSUCCEED;
+    
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    if (EXSUCCEED!=tpadvertise("NULLREQ", NULLREQ))
     {
-        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+        NDRX_LOG(log_error, "Failed to initialise NULLREQ!");
+        EXFAIL_OUT(ret);
     }
     
-    return EXSUCCEED;
+    if (EXSUCCEED!=tpadvertise("NULLRSP", NULLRSP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise NULLRSP!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("JSONRSP", JSONRSP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise JSONRSP!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("STRINGRSP", STRINGRSP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise STRINGRSP!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("CARRAYRSP", CARRAYRSP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise CARRAYRSP!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("VIEWRSP", VIEWRSP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise VIEWRSP!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("UBFRSP", UBFRSP))
+    {
+        NDRX_LOG(log_error, "Failed to initialise UBFRSP!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:    
+    return ret;
 }
 
 /**
@@ -108,7 +218,26 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
+    ndrx_growlist_t list;
     NDRX_LOG(log_debug, "tpsvrdone called");
+    
+    /* count buffer allocated.. shall be 0!!!! */
+    
+    if (EXSUCCEED!=ndrx_buffer_list(&list))
+    {
+        NDRX_LOG(log_error, "TESTERROR! Failed to build buffer list!");
+    }
+    else
+    {
+        if (EXFAIL < list.maxindexused)
+        {
+            NDRX_LOG(log_error, "TESTERROR! Max buffer index: %d, shall be -1 (as all free)!",
+                    list.maxindexused);
+        }
+        
+        ndrx_growlist_free(&list);   
+    }
+    
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

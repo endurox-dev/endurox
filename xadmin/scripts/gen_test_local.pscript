@@ -346,13 +346,15 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, ""tpsvrinit called"");
 
     if (EXSUCCEED!=tpadvertise(""TESTSV"", TESTSV))
     {
         NDRX_LOG(log_error, ""Failed to initialise TESTSV!"");
+        EXFAIL_OUT(ret);
     }
-    
+out:
     return EXSUCCEED;
 }
 
@@ -619,7 +621,7 @@ go_out $RET
     </defaults>
     <servers>
     " +("n"==::prov.dom2?
-@"      <server name=""atmi.sv"+::prov.testid+@""">
+@"        <server name=""atmi.sv"+::prov.testid+@""">
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
@@ -627,7 +629,7 @@ go_out $RET
         </server>
          ":""
         )+ 
-@"      <server name=""tpbridge"">
+@"        <server name=""tpbridge"">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
