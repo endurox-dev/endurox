@@ -93,10 +93,6 @@ set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
 
-
-
-# Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 30
 RET=0
 
 xadmin psc
@@ -104,7 +100,7 @@ xadmin ppm
 echo "Running off client"
 
 set_dom1;
-(./atmiclt64 2>&1) > ./atmiclt-dom1.log
+(./atmiclt64 NULLREQ 2>&1) > ./atmiclt-dom1.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt64 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
