@@ -51,9 +51,18 @@ ENDIF ($ENV{RELEASE_BUILD})
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
+
+add_custom_command(
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  OUTPUT t64.h t64.V
+  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" 
+            -b "../../scripts/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" 
+            t64.v_in
+  DEPENDS t64.v_in)
+
 ############################# Test - executables ###############################
-add_executable (atmi.sv64 atmisv64.c ../../libatmisrv/rawmain_integra.c)
-add_executable (atmiclt64 atmiclt64.c)
+add_executable (atmi.sv64 atmisv64.c t64.h ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt64 atmiclt64.c t64.h)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...

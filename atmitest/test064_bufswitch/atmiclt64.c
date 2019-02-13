@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test64.h"
+#include "t64.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -55,28 +56,90 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Universal service cross-tester
+ * @param svc service to call
+ * @param input_type input buffer to allocate (use "NULL", for none)
+ * @param intput_sub buffer sub-type
+ * @param output_type output buffer to expect (use "NULL", for none)
+ * @param output_sub output buffer sub-type, expected
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int tester(char *svc, char *input_type, char *input_sub, 
+        char *output_type, char *output_sub)
+{
+    char *data = NULL;
+    long len = 0;
+    int ret = EXSUCCEED;
+    
+    if (0!=strcmp("NULL", input_type) &&
+            NULL==(data = tpalloc(input_type, input_sub, 1024)))
+    {
+        NDRX_LOG(log_error, "Failed to alloc buffer!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0==strcmp(input_type, "STRING"))
+    {
+        strcpy(data, "HELLO CLIENT");
+    }
+    else if (0==strcmp(input_type, "JSON"))
+    {
+        strcpy(data, "[]");
+    }
+    else if (0==strcmp(input_type, "CARRAY"))
+    {
+        strcpy(data, "HELLO CARRAY CLIENT");
+    }
+    else if (0==strcmp(input_type, "VIEW"))
+    {
+        struct MYVIEW1 *vv = (struct MYVIEW1 *)data;
+        strcpy(vv->tstring3[2], "HELLO VIEW");
+    }
+    else if (0==strcmp(input_type, "UBF"))
+    {
+        if (EXSUCCEED!=Bchg((UBFH *)data, T_STRING_9_FLD, 4, "HELLO UBF CLIENT", 0L))
+        {
+            NDRX_LOG(log_error, "Failed to add T_STRING_9_FLD[4]: %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Unsupported buffer type [%s]", input_type);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* TODO: call server process!!! */
+    
+    
+    /* TODO: validate response!!!!! */
+        
+out:
+    return ret;
+}
+
+/**
  * Do the test call to the server
  */
 int main(int argc, char** argv)
 {
-
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int i;
     int ret=EXSUCCEED;
-    
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+            
+    if (argc < 2)
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
+        NDRX_LOG(log_error, "Usage: %s NULLREQ|NULLRSP|JSONRSP|STRINGRSP|"
+                "CARRAYRSP|VIEWRSP|UBFRSP", argv[0]);
+        EXFAIL_OUT(ret);
+    }
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    /* test case by case */
+    
+    if (0==strcmp(argv[1], "NULLREQ"))
     {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        /* call with NULL, respond with string */
     }
     
 out:
