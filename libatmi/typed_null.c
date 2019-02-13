@@ -59,7 +59,7 @@ expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr,
     char *ret=NULL;
     char fn[] = "TPNULL_tpalloc";
 
-    /* Allocate UBF buffer, 1 byte, what so ever.. */
+    /* Allocate UBF buffer, 1 byte, what so ever.. 
     ret=NDRX_MALLOC(1);
 
     if (NULL==ret)
@@ -69,6 +69,7 @@ expublic char	* TPNULL_tpalloc (typed_buffer_descr_t *descr,
                 sizeof(TPINIT));
         goto out;
     }
+    */
 
 out:
     return ret;
@@ -81,7 +82,7 @@ out:
  */
 expublic void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf)
 {
-    NDRX_FREE(buf);
+    /* NDRX_FREE(buf); - nothing to do on NULL! */
 }
 
 /**

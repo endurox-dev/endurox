@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include "test64.h"
 #include <tpadm.h>
+#include "t64.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -56,10 +57,28 @@
  */
 void NULLREQ (TPSVCINFO *p_svc)
 {
+    int ret = TPSUCCESS;
+    char *data = NULL;
+    
     if (NULL!=p_svc->data)
     {
-        /* TODO: Test error */
+        NDRX_LOG(log_error, "TESTERROR ! Null buffer expected!");
+        ret = TPFAIL;
+        goto out;
     }
+    
+    if (NULL==(data = tpalloc("STRING", NULL, 100)))
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc data!");
+        ret = TPFAIL;
+        goto out;
+    }
+    
+    strcpy(data, "HELLO");
+    
+out:
+    
+    tpreturn(ret, 0, data, 0, 0L);
 }
 
 /**
@@ -68,7 +87,7 @@ void NULLREQ (TPSVCINFO *p_svc)
  */
 void NULLRSP(TPSVCINFO *p_svc)
 {
-    
+    tpreturn(TPSUCCESS, 0, NULL, 0, 0L);
 }
 
 /**
@@ -77,7 +96,21 @@ void NULLRSP(TPSVCINFO *p_svc)
  */
 void JSONRSP(TPSVCINFO *p_svc)
 {
+    char *data = NULL;
+    int ret = TPSUCCESS;
     
+    if (NULL==(data = tpalloc("JSON", NULL, 100)))
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc JSON data!");
+        ret = TPFAIL;
+        goto out;
+    }
+    
+    strcpy(data, "{}");
+    
+out:
+    
+    tpreturn(ret, 0, data, 0, 0L);
 }
 
 /**
@@ -86,7 +119,21 @@ void JSONRSP(TPSVCINFO *p_svc)
  */
 void STRINGRSP(TPSVCINFO *p_svc)
 {
+    char *data = NULL;
+    int ret = TPSUCCESS;
     
+    if (NULL==(data = tpalloc("STRING", NULL, 100)))
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc STRING data!");
+        ret = TPFAIL;
+        goto out;
+    }
+    
+    strcpy(data, "WORLD");
+    
+out:
+    
+    tpreturn(ret, 0, data, 0, 0L);
 }
 
 /**
@@ -95,7 +142,21 @@ void STRINGRSP(TPSVCINFO *p_svc)
  */
 void CARRAYRSP(TPSVCINFO *p_svc)
 {
+    char *data = NULL;
+    int ret = TPSUCCESS;
     
+    if (NULL==(data = tpalloc("CARRAY", NULL, 100)))
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc CARRAY data!");
+        ret = TPFAIL;
+        goto out;
+    }
+    
+    strcpy(data, "SPACE");
+    
+out:
+    
+    tpreturn(ret, 0, data, strlen(data), 0L);
 }
 
 /**
@@ -104,7 +165,24 @@ void CARRAYRSP(TPSVCINFO *p_svc)
  */
 void VIEWRSP(TPSVCINFO *p_svc)
 {
+    int ret = TPSUCCESS;   
+    struct MYVIEW2 *v = NULL;
     
+    
+    if (NULL==(v = (struct MYVIEW2 *)tpalloc("VIEW", "MYVIEW2", 
+            sizeof(struct MYVIEW2))))
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc MYVIEW2 data!");
+        ret = TPFAIL;
+        goto out;
+    }
+    
+    memset(&v, 0, sizeof(v));
+    
+    NDRX_STRCPY_SAFE(v.tstring1, "TEST 55");
+    
+out:    
+    tpreturn(ret, 0, (char *)v, 0, 0L);    
 }
 
 /**
@@ -113,50 +191,27 @@ void VIEWRSP(TPSVCINFO *p_svc)
  */
 void UBFRSP(TPSVCINFO *p_svc)
 {
+    UBFH *data = NULL;
+    int ret = TPSUCCESS;
     
-}
-
-#if 0
-/**
- * Standard service entry
- */
-void TESTSV (TPSVCINFO *p_svc)
-{
-    int ret=EXSUCCEED;
-    char testbuf[1024];
-    UBFH *p_ub = (UBFH *)p_svc->data;
-
-    NDRX_LOG(log_debug, "%s got call", __func__);
-
-    /* Just print the buffer */
-    Bprint(p_ub);
-    
-    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    if (NULL==(data = (UBFH *)tpalloc("UBF", NULL, 1024)))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
-                 Bstrerror(Berror));
-        ret=EXFAIL;
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc UBF data!");
+        ret = TPFAIL;
         goto out;
     }
     
-    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    if (EXSUCCEED!=Bchg(data, T_STRING_FLD, 1, "HELLO WORLD", 0L))
     {
-        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
-            VALUE_EXPECTED, testbuf);
-        ret=EXFAIL;
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc STRING data!");
+        ret = TPFAIL;
         goto out;
     }
-        
     
 out:
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
-                0L,
-                (char *)p_ub,
-                0L,
-                0L);
+    
+    tpreturn(ret, 0, (char *)data, 0, 0L);
 }
-
-#endif
 
 /**
  * Do initialisation
