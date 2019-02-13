@@ -847,13 +847,15 @@ expublic long tptypes (char *ptr, char *type, char *subtype)
         ret=EXFAIL;
         goto out;
     }
-    
+   /* 
+    * we allow to get infos for null, the type will be NULL
     if (ptr==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "ptr cannot be null");
         ret=EXFAIL;
         goto out;
     }
+    */
 
     ret=ndrx_tptypes(ptr, type, subtype);
 

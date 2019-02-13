@@ -52,36 +52,6 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * NUll request, provides some new buffer back
- * @param p_svc request infos
- */
-void NULLREQ (TPSVCINFO *p_svc)
-{
-    int ret = TPSUCCESS;
-    char *data = NULL;
-    
-    if (NULL!=p_svc->data)
-    {
-        NDRX_LOG(log_error, "TESTERROR ! Null buffer expected!");
-        ret = TPFAIL;
-        goto out;
-    }
-    
-    if (NULL==(data = tpalloc("STRING", NULL, 100)))
-    {
-        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc data!");
-        ret = TPFAIL;
-        goto out;
-    }
-    
-    strcpy(data, "HELLO");
-    
-out:
-    
-    tpreturn(ret, 0, data, 0, 0L);
-}
-
-/**
  * Provides null response back. No matter of request buffer...
  * @param p_svc request infos
  */
@@ -179,7 +149,7 @@ void VIEWRSP(TPSVCINFO *p_svc)
     
     memset(&v, 0, sizeof(v));
     
-    NDRX_STRCPY_SAFE(v.tstring1, "TEST 55");
+    NDRX_STRCPY_SAFE(v->tstring1, "TEST 55");
     
 out:    
     tpreturn(ret, 0, (char *)v, 0, 0L);    
@@ -203,7 +173,8 @@ void UBFRSP(TPSVCINFO *p_svc)
     
     if (EXSUCCEED!=Bchg(data, T_STRING_FLD, 1, "HELLO WORLD", 0L))
     {
-        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc STRING data!");
+        NDRX_LOG(log_error, "TESTERROR ! Failed to set T_STRING_FLD: %s", 
+                Bstrerror(Berror));
         ret = TPFAIL;
         goto out;
     }
@@ -221,12 +192,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret = EXSUCCEED;
     
     NDRX_LOG(log_debug, "tpsvrinit called");
-
-    if (EXSUCCEED!=tpadvertise("NULLREQ", NULLREQ))
-    {
-        NDRX_LOG(log_error, "Failed to initialise NULLREQ!");
-        EXFAIL_OUT(ret);
-    }
     
     if (EXSUCCEED!=tpadvertise("NULLRSP", NULLRSP))
     {
