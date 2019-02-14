@@ -62,7 +62,7 @@ expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
-    char *ret_buf;
+    char *ret_buf = NULL;
     long ret_len;
     short nodeid = (short)tpgetnodeid();
     char tmpsvc[MAXTIDENT+1];
@@ -178,7 +178,7 @@ expublic long ndrx_tpunsubscribe(long subscription, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
-    char *ret_buf;
+    char *ret_buf = NULL;
     long ret_len;
     short nodeid = (short)tpgetnodeid();
     char tmpsvc[MAXTIDENT+1];
