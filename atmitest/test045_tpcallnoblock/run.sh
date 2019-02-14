@@ -54,7 +54,7 @@ xadmin killall atmiclt45 2>/dev/null
 xadmin down -y
 
 # client timeout
-export NDRX_TOUT=10
+export NDRX_TOUT=30
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 function go_out {
