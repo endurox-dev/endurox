@@ -147,7 +147,7 @@ void VIEWRSP(TPSVCINFO *p_svc)
         goto out;
     }
     
-    memset(&v, 0, sizeof(v));
+    memset(v, 0, sizeof(v));
     
     NDRX_STRCPY_SAFE(v->tstring1, "TEST 55");
     
@@ -239,6 +239,7 @@ out:
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     ndrx_growlist_t list;
+    
     NDRX_LOG(log_debug, "tpsvrdone called");
     
     /* count buffer allocated.. shall be 0!!!! */
