@@ -229,6 +229,16 @@ warmed_up:
         goto out;
     }
 
+    /* Support #386 p_ub now have become NULL, thus allocate it again  */
+        
+    p_ub = (UBFH *)tpalloc("UBF", NULL, 156000);
+
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to alloc ubf: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
 
     for (i=0; i<MAX_ASYNC_CALLS+2000; i++) /* Test the cd loop */
     {

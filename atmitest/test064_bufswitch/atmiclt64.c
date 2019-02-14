@@ -321,7 +321,8 @@ int main(int argc, char** argv)
                 ret_err = TPEOTYPE;
             }
             
-            if (EXSUCCEED!=tester(svcnm, *p, subtyp, *p, subtyp, TPNOCHANGE, ret_err, EXFALSE))
+            if (EXSUCCEED!=tester(svcnm, *p, subtyp, *p, subtyp, TPNOCHANGE, 
+                    ret_err, EXFALSE))
             {
                 NDRX_LOG(log_error, "2 fail");
                 EXFAIL_OUT(ret);
