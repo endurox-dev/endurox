@@ -93,8 +93,6 @@ void RETSOMEDATA(TPSVCINFO *p_svc)
  */
 void ECHO(TPSVCINFO *p_svc)
 {
-    int first=1;
-
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     /* Return OK */
