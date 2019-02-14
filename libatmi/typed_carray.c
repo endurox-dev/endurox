@@ -112,7 +112,7 @@ expublic int CARRAY_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
     if (NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
-                                        "with tpalloc()!", odata);
+                                        "with tpalloc()!", *odata);
         ret=EXFAIL;
         goto out;
     }

@@ -291,7 +291,7 @@ expublic char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
 
     node->buf = ret;
     NDRX_LOG(log_debug, "%s: type=%s subtype=%s len=%d allocated=%p", 
-             __func__, (NULL==type?"NULL":type),
+             __func__, usr_type->type,
             (NULL==subtype?"NULL":subtype),
             len, ret);
     node->size = len;

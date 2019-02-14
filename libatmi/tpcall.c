@@ -798,8 +798,10 @@ expublic int ndrx_tpgetrply (int *cd,
                     continue;
                 }
 
-                NDRX_LOG(log_warn, "Reply cd: %d, timestamp :%d callseq: %u from %s - expected OK!",
-                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
+                NDRX_LOG(log_warn, "Reply cd: %d, timestamp :%d callseq: %u from "
+                        "%s type_id: %hd (%s) - expected OK!",
+                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to,
+                        rply->buffer_type_id, (G_buf_descr[rply->buffer_type_id].type));
                 answ_ok=EXTRUE;
                 /* Free up call descriptor!! */
                 unlock_call_descriptor(rply->cd, CALL_NOT_ISSUED);
