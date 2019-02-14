@@ -285,7 +285,7 @@ warmed_up:
         /*
         * Test the case when some data should be returned
         */
-        if (EXFAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
             ret=EXFAIL;
@@ -324,7 +324,7 @@ warmed_up:
         /*
         * Test the case when some data should be returned
         */
-        if (EXFAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
             ret=EXFAIL;
