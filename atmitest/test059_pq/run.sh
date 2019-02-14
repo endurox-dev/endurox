@@ -88,6 +88,7 @@ function go_out {
 }
 
 rm *dom*.log
+export NDRX_SILENT=Y
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
@@ -164,13 +165,19 @@ sleep 5
 
 echo "Printing services"
 xadmin pq
+echo "Printing services, DONE"
 
 echo "Printing domain queues"
 xadmin pqa
+echo "Printing domain queues, DONE"
 
 echo "Printing all queues"
 xadmin pqa -a
+echo "Printing all queues, DONE"
+
+echo "PRINT Services"
 xadmin psc
+echo "PRINT Services, DONE"
 
 echo "Testing busy services..."
 
