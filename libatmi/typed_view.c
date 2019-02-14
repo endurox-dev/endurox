@@ -547,7 +547,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     NDRX_LOG(log_debug, "Received VIEW [%s]", subtype);
 
     /* Figure out the passed in buffer */
-    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
+    if (NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);
@@ -563,7 +563,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 0!=strcmp(outbufobj->subtype, subtype)))
         {
             /* Raise error! */
-            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s/%s but got %s/%s buffer",
+            ndrx_TPset_error_fmt(TPEOTYPE, "Receiver expects %s/%s but got %s/%s buffer",
                     G_buf_descr[BUF_TYPE_VIEW].type, 
                     subtype,
                     G_buf_descr[outbufobj->type_id].type,

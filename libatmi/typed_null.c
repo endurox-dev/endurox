@@ -120,6 +120,36 @@ expublic int TPNULL_prepare_outgoing (typed_buffer_descr_t *descr, char *idata,
 expublic int TPNULL_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
                         long rcv_len, char **odata, long *olen, long flags)
 {
+    
+    /* reject type switch if requested... */
+    int ret=EXSUCCEED;
+    buffer_obj_t *outbufobj=NULL;
+
+    NDRX_LOG(log_debug, "Entering %s", __func__);
+        
+    /* Figure out the passed in buffer */
+    if (NULL==(outbufobj=ndrx_find_buffer(*odata)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
+                                        "with tpalloc()!", odata);
+        EXFAIL_OUT(ret);
+    }
+
+    /* Check the data types */
+    if (NULL!=outbufobj)
+    {
+        /* If we cannot change the data type, then we trigger an error */
+        if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_NULL)
+        {
+            /* Raise error! */
+            ndrx_TPset_error_fmt(TPEOTYPE, "Receiver expects %s but got %s buffer",
+                                        G_buf_descr[BUF_TYPE_NULL].type,
+                                        G_buf_descr[outbufobj->type_id].type
+                                        );
+            EXFAIL_OUT(ret);
+        }
+    }
+    
     if (NULL!=*odata)
     {
         tpfree(*odata);
@@ -131,7 +161,8 @@ expublic int TPNULL_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
         *olen = 0;
     }
     
-    return EXSUCCEED;
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

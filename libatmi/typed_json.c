@@ -111,7 +111,7 @@ expublic int JSON_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
    
     
     /* Figure out the passed in buffer */
-    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
+    if (NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
                                         "with tpalloc()!", odata);
@@ -126,9 +126,10 @@ expublic int JSON_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_JSON)
         {
             /* Raise error! */
-            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
-                                        G_buf_descr[BUF_TYPE_JSON],
-                                        G_buf_descr[outbufobj->type_id]);
+            ndrx_TPset_error_fmt(TPEOTYPE, "Receiver expects %s but got %s buffer",
+                                        G_buf_descr[BUF_TYPE_NULL].type,
+                                        G_buf_descr[outbufobj->type_id].type
+                                        );
             ret=EXFAIL;
             goto out;
         }

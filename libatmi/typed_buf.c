@@ -93,6 +93,16 @@ expublic typed_buffer_descr_t G_buf_descr[] =
 };
 
 /*---------------------------Statics------------------------------------*/
+
+/**
+ * This is generic NULL buffer object
+ */
+exprivate buffer_obj_t M_nullbuf = {.autoalloc = EXFALSE, 
+        .buf = NULL, 
+        .size=0, 
+        .subtype="", 
+        .type_id=BUF_TYPE_NULL};
+    
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -151,16 +161,10 @@ out:
 expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
 {
     buffer_obj_t *ret;
-    
-    static buffer_obj_t nullbuf = {.autoalloc = EXFALSE, 
-        .buf = NULL, 
-        .size=0, 
-        .subtype="", 
-        .type_id=BUF_TYPE_NULL};
-    
+   
     if (NULL==ptr)
     {
-        return &nullbuf;
+        return &M_nullbuf;
     }
     
     EX_SPIN_LOCK_V(M_lock);
@@ -191,6 +195,11 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr)
     eltmp.buf = ptr;
     DL_SEARCH(G_buffers, ret, &eltmp, buf_ptr_cmp_fn);
     */
+    
+    if (NULL==ptr)
+    {
+        return &M_nullbuf;
+    }
     
     EXHASH_FIND_PTR( ndrx_G_buffers, ((void **)&ptr), ret);
     
@@ -394,6 +403,12 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
     typed_buffer_descr_t *buf_type = NULL;
 
     NDRX_LOG(log_debug, "_tpfree buf=%p", buf);
+
+    if (NULL==buf)
+    {
+        /* nothing to do for NULLs */
+        return;
+    }
     
     EX_SPIN_LOCK_V(M_lock);
     
@@ -429,8 +444,13 @@ expublic int ndrx_tpisautobuf(char *buf)
     int ret;
     buffer_obj_t *elt;
 
+    /* NULLs are Auto! */
+    if (NULL==buf)
+    {
+        return EXTRUE;
+    }
+
     EX_SPIN_LOCK_V(M_lock);
-    
     
     elt=find_buffer_int(buf);
 
@@ -503,7 +523,6 @@ expublic long ndrx_tptypes (char *ptr, char *type, char *subtype)
     EX_SPIN_LOCK_V(M_lock);
     
     buf =  find_buffer_int(ptr);
-    
     
     if (NULL==buf)
     {
