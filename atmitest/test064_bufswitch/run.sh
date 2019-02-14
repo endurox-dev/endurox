@@ -64,8 +64,6 @@ set_dom1() {
     export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 }
 
-
-
 #
 # Generic exit function
 #
@@ -85,10 +83,29 @@ function go_out {
     exit $1
 }
 
+#
+# Generic exit function
+#
+function validate_type {
+
+    xadmin stop -s atmi.sv64
+    
+    # Catch is there is test error!!!
+    if [ "X`grep TESTERROR *.log`" != "X" ]; then
+        echo "Test error detected!"
+        go_out -4
+    fi
+
+    xadmin start -s atmi.sv64
+}
+
+
 rm *dom*.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
+export VIEWDIR=.
+export VIEWFILES=t64.V
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
@@ -100,19 +117,68 @@ xadmin ppm
 echo "Running off client"
 
 set_dom1;
-(./atmiclt64 NULLREQ 2>&1) > ./atmiclt-dom1.log
-#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt64 2>&1) > ./atmiclt-dom1.log
 
+echo "NULL Tests..."
+(./atmiclt64 NULL 2>&1) > ./atmiclt-dom1.log
 RET=$?
-
 if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+validate_type;
+
+echo "JSON Tests..."
+(./atmiclt64 JSON 2>&1) > ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+validate_type;
+
+echo "STRING Tests..."
+(./atmiclt64 STRING 2>&1) > ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+validate_type;
+
+
+echo "CARRAY Tests..."
+(./atmiclt64 CARRAY 2>&1) > ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+validate_type;
+
+
+echo "VIEW Tests..."
+(./atmiclt64 VIEW 2>&1) > ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+validate_type;
+
+echo "UBF Tests..."
+(./atmiclt64 UBF 2>&1) > ./atmiclt-dom1.log
+RET=$?
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+validate_type;
+
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-        echo "Test error detected!"
-        RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
 

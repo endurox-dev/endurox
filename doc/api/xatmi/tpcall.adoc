@@ -69,8 +69,9 @@ ERRORS
 Note that *tpstrerror()* returns generic error message plus custom message with 
 debug info from last function call.
 
-*TPEINVAL* Invalid parameter is given to function. Either service name is NULL 
-or flags does not allow to change the value.
+*TPEINVAL* Invalid parameter is given to function. Either service name is NULL.
+
+*TPEOTYPE* Flags does not allow to change the response buffer type.
 
 *TPENOENT* No service ('svc' parameter) advertised in system.
 

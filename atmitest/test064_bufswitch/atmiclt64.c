@@ -47,6 +47,7 @@
 #include <nstdutil.h>
 #include "test64.h"
 #include "t64.h"
+#include <tpadm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -130,7 +131,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
     
     if (EXSUCCEED!=tpcall(svc, data, len, &data, &len, flags))
     {
-        NDRX_LOG(log_error, "Failed to call %s: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "Failed to call %s: %s", svc, tpstrerror(tperrno));
         
         /* is it failure? */
         tpcallerrgot = tperrno;
@@ -146,7 +147,10 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
     /* validate response!!!!! */
     
     /* get buffer types.. first... */
-    if (EXSUCCEED!=tptypes(data, btype, stype))
+    
+    NDRX_LOG(log_debug, "Response ptr: %p", data);
+    
+    if (EXFAIL==tptypes(data, btype, stype))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to read buffer %p type: %s",
                 data, tpstrerror(tperrno));
@@ -175,7 +179,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
     
     /* validate some values... */
     
-    if (0==strcmp(input_type, "STRING"))
+    if (0==strcmp(output_type, "STRING"))
     {
         if (0!=strcmp(data, "WORLD"))
         {
@@ -184,7 +188,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(input_type, "JSON"))
+    else if (0==strcmp(output_type, "JSON"))
     {
         if (0!=strcmp(data, "{}"))
         {
@@ -193,7 +197,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(input_type, "CARRAY"))
+    else if (0==strcmp(output_type, "CARRAY"))
     {
         if (0!=strncmp(data, "SPACE", 5))
         {
@@ -202,7 +206,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(input_type, "VIEW"))
+    else if (0==strcmp(output_type, "VIEW"))
     {
         struct MYVIEW2 *v = (struct MYVIEW2 *)data;
         
@@ -214,7 +218,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
         }
         
     }
-    else if (0==strcmp(input_type, "UBF"))
+    else if (0==strcmp(output_type, "UBF"))
     {
         char tmp[128];
         
@@ -231,7 +235,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
             EXFAIL_OUT(ret);
         }
     }
-    else if (0==strcmp(input_type, "NULL"))
+    else if (0==strcmp(output_type, "NULL"))
     {
         
     }
@@ -256,88 +260,99 @@ out:
  */
 int main(int argc, char** argv)
 {
-    long rsplen;
     int i;
     int ret=EXSUCCEED;
-            
+    char *bufs[] = {"NULL", "JSON", "STRING", "CARRAY", "VIEW", "UBF", ""};
+    char **p;
+    char subtyp[16];
+    char osubtyp[16];
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
+    ndrx_growlist_t list;
     if (argc < 2)
     {
-        NDRX_LOG(log_error, "Usage: %s NULLRSP|JSONRSP|STRINGRSP|"
-                "CARRAYRSP|VIEWRSP|UBFRSP", argv[0]);
+        NDRX_LOG(log_error, "Usage: %s NULL|JSON|STRING|"
+                "CARRAY|VIEW|UBF", argv[0]);
         EXFAIL_OUT(ret);
     }
 
     /* test case by case 
      * crossvalidate all types
      */
+    snprintf(svcnm, sizeof(svcnm), "%sRSP", argv[1]);
+    
+    if (0==strcmp(argv[1], "VIEW"))
+    {
+        NDRX_STRCPY_SAFE(osubtyp, "MYVIEW2");
+    }
+    else
+    {
+        osubtyp[0]=EXEOS;
+    }
     
     for (i=0; i<1000; i++)
     {
-        /* we pass in the buffer type, and sub-type from CLI...
-         * then build the service name and perform calls for all other buffer
-         * types and check the responses & their borders...
-         */
-        if (0==strcmp(argv[1], "NULLREQ"))
+        p = bufs;
+        
+        while (*p[0]!=EXEOS)
         {
-            /* call with NULL, respond with string */
-            
-#if 0
-            if (EXSUCCEED!=tester("NULLRSP", "NULL", "", "NULL", "", 0L, 0, EXTRUE))
+            int ret_err = 0;
+            if (0==strcmp(*p, "VIEW"))
             {
-                NDRX_LOG(log_error, "NULLREQ: 1 fail");
+                NDRX_STRCPY_SAFE(subtyp, "MYVIEW1");
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE(subtyp, "");
+            }
+            
+            /* call with buffer switch - normal call */
+            if (EXSUCCEED!=tester(svcnm, *p, subtyp, argv[1], osubtyp, 0L, 0, EXTRUE))
+            {
+                NDRX_LOG(log_error, "1 fail");
                 EXFAIL_OUT(ret);
             }
             
-            if (EXSUCCEED!=tester("NULLRSP", "STRING", "", "NULL", "", 0L, 0, EXTRUE))
+            /* deny buffer type switch */
+            if (0!=strcmp(argv[1], *p) ||
+                    /* for views */
+                    0==strcmp(*p, "VIEW")
+                    )
             {
-                NDRX_LOG(log_error, "NULLREQ: 2 fail");
+                ret_err = TPEOTYPE;
+            }
+            
+            if (EXSUCCEED!=tester(svcnm, *p, subtyp, *p, subtyp, TPNOCHANGE, ret_err, EXFALSE))
+            {
+                NDRX_LOG(log_error, "2 fail");
                 EXFAIL_OUT(ret);
             }
             
-            /* deny type switch */
-            if (EXSUCCEED!=tester("NULLRSP", "STRING", "", "STRING", "", 
-                    TPNOCHANGE, TPEINVAL, EXTRUE))
-            {
-                NDRX_LOG(log_error, "NULLREQ: 2 fail");
-                EXFAIL_OUT(ret);
-            }
-#endif
-            
-            /*
-            if (EXSUCCEED!=tester("NULLRSP", "JSON", "", "NULL", "", 0L, 0, EXTRUE))
-            {
-                NDRX_LOG(log_error, "NULLREQ: 3 fail");
-                EXFAIL_OUT(ret);
-            }
-            
-            if (EXSUCCEED!=tester("NULLRSP", "CARRAY", "", "NULL", "", 0L, 0, EXTRUE))
-            {
-                NDRX_LOG(log_error, "NULLREQ: 4 fail");
-                EXFAIL_OUT(ret);
-            }
-            
-            if (EXSUCCEED!=tester("NULLRSP", "VIEW", "", "NULL", "", 0L, 0, EXTRUE))
-            {
-                NDRX_LOG(log_error, "NULLREQ: 5 fail");
-                EXFAIL_OUT(ret);
-            }
-            
-            if (EXSUCCEED!=tester("NULLRSP", "UBF", "", "NULL", "", 0L, 0, EXTRUE))
-            {
-                NDRX_LOG(log_error, "NULLREQ: 6 fail");
-                EXFAIL_OUT(ret);
-            }
-             * 
-             * */
-
+            p++;
         }
     }
     
 out:
     
-    /* TODO: Count the buffers left in the system (allocated)
+    /* Count the buffers left in the system (allocated)
      * they must be 0.
      */
+    
+    if (EXSUCCEED==ndrx_buffer_list(&list))
+    {
+        NDRX_LOG(log_debug, "buffers left: %d", list.maxindexused);
+        
+        if (list.maxindexused > -1)
+        {
+            NDRX_LOG(log_error, "TESTERROR! Buffers in system: %d", 
+                    list.maxindexused+1);
+            ret=EXFAIL;
+        }
+    }
+    else
+    {
+        ret=EXFAIL;
+    }
+    
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 
