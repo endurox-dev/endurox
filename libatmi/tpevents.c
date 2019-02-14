@@ -246,7 +246,7 @@ expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
             int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
-    char *ret_buf;
+    char *ret_buf = NULL; /* This works as tpalloc'd NULL buffer! */
     long ret_len;
     short nodeid = (short)tpgetnodeid();
     char tmpsvc[MAXTIDENT+1];

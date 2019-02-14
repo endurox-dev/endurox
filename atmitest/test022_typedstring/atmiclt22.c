@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
             ret=EXFAIL;
             goto out;
         }
+        
         /* Realloc to some more... */
         if (NULL== (buf = tprealloc(buf, 2048)))
         {
