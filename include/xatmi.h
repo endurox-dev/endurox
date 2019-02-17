@@ -35,6 +35,8 @@ extern "C" {
 #define TPSENDONLY	0x00000800
 #define TPRECVONLY	0x00001000
 #define TPACK		0x00002000
+/** Software raised service error, any   */
+#define TPSOFTERR	0x00020000
 /** Suspend current transaction          */
 #define TPTRANSUSPEND	0x00040000
 /** Soft timout condition -> ret TPETIME */

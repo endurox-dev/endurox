@@ -253,6 +253,13 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->rcode = TPENOENT;
         ret=EXFAIL;
     }
+    else if (flags & TPSOFTERR)
+    {
+        NDRX_LOG(log_error, "TPSOFTERR present -> returning service "
+                "error code: %dl", call->rcode);
+        call->sysflags |=SYS_FLAG_REPLY_ERROR;
+        ret=EXFAIL;
+    }
     
     /* keep the timer from last call. */
     call->timer = last_call->timer;
