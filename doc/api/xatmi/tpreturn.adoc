@@ -53,6 +53,8 @@ return value will mark it as abort only.
 error for caller. In this case 'rcode' is set to *TPETIME*, that is later used 
 at client side for *tpreturn(3)* to respond with XATMI error.
 
+*TPSOFTERR* software generate XATMI error code. In this case 'rcode' indicates
+the error code to be returned to service caller.
 
 This function is available only for XATMI servers.
 
