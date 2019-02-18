@@ -327,8 +327,8 @@ exprivate int _ubf_load_def_table(void)
             /* Open field table file */
             if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
             {
-                ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
-                                    strerror(errno));
+                UBF_LOG(log_debug, "Failed to open %s with error: [%s]", 
+                        tmp, strerror(errno));
             }
             else
             {
@@ -341,6 +341,7 @@ exprivate int _ubf_load_def_table(void)
 
         if ( EXFALSE==exist_fld )
         {
+            ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s in [%s]", p, flddir);
             ret=EXFAIL;
             goto out;
         }
