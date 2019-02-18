@@ -1,0 +1,73 @@
+$/**
+$ * @brief Test UD file
+$ *   Using values from here for test UBF library.
+$ *
+$ * @file test1.fd.h
+$ */
+$/* -----------------------------------------------------------------------------
+$ * Enduro/X Middleware Platform for Distributed Transaction Processing
+$ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+$ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+$ * This software is released under one of the following licenses:
+$ * AGPL or Mavimax's license for commercial use.
+$ * -----------------------------------------------------------------------------
+$ * AGPL license:
+$ * 
+$ * This program is free software; you can redistribute it and/or modify it under
+$ * the terms of the GNU Affero General Public License, version 3 as published
+$ * by the Free Software Foundation;
+$ *
+$ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+$ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+$ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+$ * for more details.
+$ *
+$ * You should have received a copy of the GNU Affero General Public License along 
+$ * with this program; if not, write to the Free Software Foundation, Inc., 
+$ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+$ *
+$ * -----------------------------------------------------------------------------
+$ * A commercial use license is available from Mavimax, Ltd
+$ * contact@mavimax.com
+$ * -----------------------------------------------------------------------------
+$ */
+
+$#ifndef __TEST1_FD
+$#define __TEST1_FD
+
+*base 1100
+
+T1_CHAR_FLD		11	char	- 1 Chart test field 1
+T1_CHAR_2_FLD		12	char	- 1 Chart test field 2
+T1_CHAR_3_FLD		13	char	- 1 Chart test field 3
+T1_SHORT_FLD		14	short	- 1 Short test field 1
+T1_SHORT_2_FLD		15	short   - 1 Short test field 2
+T1_SHORT_3_FLD		16	short   - 1 Short test field 3
+T1_LONG_FLD		17	long	- 1 Long test field 1
+T1_LONG_2_FLD		18	long	- 1 Long test field 2
+T1_LONG_3_FLD		19	long	- 1 Long test field 3
+T1_FLOAT_FLD		20	float   - 1 Float test field 1
+T1_FLOAT_2_FLD		21	float	- 1 Float test field 2
+T1_FLOAT_3_FLD		22	float	- 1 Float test field 3
+T1_DOUBLE_FLD		23	double  - 1 Double test field 1
+T1_DOUBLE_2_FLD		24	double  - 1 Double test field 2
+T1_DOUBLE_3_FLD		25	double  - 1 Double test field 3
+T1_DOUBLE_4_FLD		26	double  - 1 Double test field 4
+T1_STRING_FLD		27	string  - 1 String test field 1
+T1_STRING_2_FLD		28	string  - 1 String test field 2
+T1_STRING_3_FLD		29	string  - 1 String test field 3
+T1_STRING_4_FLD		30	string  - 1 String test field 4
+T1_STRING_5_FLD		31	string  - 1 String test field 5
+T1_STRING_6_FLD		32	string  - 1 String test field 6
+T1_STRING_7_FLD		33	string  - 1 String test field 7
+T1_STRING_8_FLD		34	string  - 1 String test field 8
+T1_STRING_9_FLD		35	string  - 1 String test field 9
+T1_STRING_10_FLD	36	string  - 1 String test field 10
+T1_CARRAY_FLD		37	carray  - 1 Carray test field 1
+T1_CARRAY_2_FLD		38	carray	- 1 Carray test field 2
+T1_CARRAY_3_FLD		39	carray	- 1 Carray test field 3
+
+
+$#endif
+
+$/* vim: set ts=4 sw=4 et smartindent: */
