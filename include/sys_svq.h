@@ -39,6 +39,7 @@
 /*------------------------------Includes--------------------------------------*/
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/ipc.h>
 #include <sys/signal.h>
 #include <time.h>
 #include <sys_primitives.h>
