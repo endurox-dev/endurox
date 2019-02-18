@@ -163,7 +163,7 @@ exprivate char *get_next_from_env (int *ret)
     }
     else
     {
-        ret_dir=strtok_r(NULL, ",", &p_flddir);
+        ret_ptr=strtok_r(NULL, ",", &p_flds);
     }
     
 
