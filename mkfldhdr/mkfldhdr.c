@@ -1,7 +1,6 @@
 /**
  * @brief Part of UBF library
  *   Utility for generating field header files.
- *   !!! THERE IS NO SUPPORT for multiple directories with in FLDTBLDIR!!!
  *   Also the usage of default `fld.tbl' is not supported, as seems to be un-needed
  *   feature.
  *
@@ -122,9 +121,13 @@ exprivate char *get_next_from_env (int *ret)
     static int first = 1;
     static char *flddir=NULL;
     static char *flds=NULL;
+    static char *p_flds, *p_flddir;
     static char tmp_flds[FILENAME_MAX+1];
+    static char tmp_flddir[FILENAME_MAX+1];
     static char tmp[FILENAME_MAX+1];
     char *ret_ptr=NULL;
+    char *ret_dir=NULL;
+    FILE *fp;
     
     NDRX_LOG(log_debug, "%s enter", __func__);
     if (first)
@@ -139,7 +142,9 @@ exprivate char *get_next_from_env (int *ret)
             *ret=EXFAIL;
             return NULL;
         }
-        NDRX_LOG(log_debug, "Load field dir [%s]", flddir);
+        NDRX_LOG(log_debug, 
+                "Load field dir [%s] (multiple directories supported)", 
+                 flddir);
 
         flds = (char *)getenv(FIELDTBLS);
         if (NULL==flds)
@@ -153,16 +158,31 @@ exprivate char *get_next_from_env (int *ret)
         NDRX_LOG(log_debug, "About to load fields list [%s]", flds);
 
         NDRX_STRCPY_SAFE(tmp_flds, flds);
-        ret_ptr=strtok(tmp_flds, ",");
+        ret_ptr=strtok_r(tmp_flds, ",", &p_flds);
+
     }
     else
     {
-        ret_ptr=strtok(NULL, ",");
+        ret_dir=strtok_r(NULL, ",", &p_flddir);
+    }
+    
+
+    NDRX_STRCPY_SAFE(tmp_flddir, flddir);
+    ret_dir=strtok_r(tmp_flddir, ",", &p_flddir);
+    while (NULL != ret_dir)
+    {
+        snprintf(tmp, sizeof(tmp), "%s/%s", ret_dir, ret_ptr);
+        if (NULL!=(fp=NDRX_FOPEN(tmp, "r")))
+        {
+            NDRX_FCLOSE(fp);
+            break;
+        }
+        ret_dir=strtok_r(NULL, ",", &p_flddir);
     }
 
-    if (NULL!=ret_ptr)
+    if (NULL!=ret_ptr && NULL!=ret_dir)
     {
-        snprintf(tmp, sizeof(tmp), "%s/%s", flddir, ret_ptr);
+        snprintf(tmp, sizeof(tmp), "%s/%s", ret_dir, ret_ptr);
         ret_ptr=tmp;
     }
 

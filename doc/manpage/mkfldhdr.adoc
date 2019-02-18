@@ -129,7 +129,7 @@ ENVIRONMENT
 Comma separated list of field table file names.
 
 *FLDTBLDIR*::
-Directory where field tables are located.
+Comma separated list of directories where field tables are located.
 
 OPTIONS
 -------
