@@ -278,10 +278,13 @@ exprivate int _ubf_load_def_table(void)
 {
     char *flddir=NULL;
     char *flds=NULL;
-    char *p;
+    char *p, *pd;
+    char *p_flds, *p_flddir;
     FILE *fp;
     char tmp_flds[FILENAME_MAX+1];
+    char tmp_flddir[FILENAME_MAX+1];
     char tmp[FILENAME_MAX+1];
+    int exist_fld;
 
     int ret=EXSUCCEED;
 
@@ -293,7 +296,8 @@ exprivate int _ubf_load_def_table(void)
         ret=EXFAIL;
         goto out;
     }
-    UBF_LOG(log_debug, "Load field dir [%s]", flddir);
+    UBF_LOG(log_debug, 
+            "Load field dir [%s] (multiple directories supported)", flddir);
 
     flds = getenv(FIELDTBLS);
     if (NULL==flds)
@@ -309,30 +313,45 @@ exprivate int _ubf_load_def_table(void)
     _ubf_loader_init();
 
     NDRX_STRCPY_SAFE(tmp_flds, flds);
-    p=strtok(tmp_flds, ",");
+    p=strtok_r(tmp_flds, ",", &p_flds);
     while (NULL!=p)
     {
-        snprintf(tmp, sizeof(tmp), "%s/%s", flddir, p);
-        /* Open field table file */
-        if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
+        exist_fld=EXFALSE;
+        NDRX_STRCPY_SAFE(tmp_flddir, flddir);
+        pd=strtok_r(tmp_flddir, ",", &p_flddir);
+        while ( NULL!=pd && EXFALSE==exist_fld)
         {
-            ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
-                                strerror(errno));
+            snprintf(tmp, sizeof(tmp), "%s/%s", pd, p);
+            UBF_LOG(log_debug, "Open field table file [%s]", tmp);
+            
+            /* Open field table file */
+            if (NULL==(fp=NDRX_FOPEN(tmp, "r")))
+            {
+                ndrx_Bset_error_fmt(BFTOPEN, "Failed to open %s with error: [%s]", tmp,
+                                    strerror(errno));
+            }
+            else
+            {
+                ret=ndrx_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
+                exist_fld=EXTRUE;
+                NDRX_FCLOSE(fp);
+            }
+            pd=strtok_r(NULL, ",", &p_flddir);
+        }
+
+        if ( EXFALSE==exist_fld )
+        {
             ret=EXFAIL;
             goto out;
         }
-
-        ret=ndrx_ubf_load_def_file(fp, NULL, NULL, NULL, tmp, EXFALSE);
-
         /* Close file */
-        NDRX_FCLOSE(fp);
-        p=strtok(NULL, ",");
+        p=strtok_r(NULL, ",", &p_flds);
     }
     
     /* Load FIeld database... if have one! */
 
     M_field_def_loaded = EXTRUE;
-    
+
 out:
 
     return ret;
