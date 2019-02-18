@@ -49,7 +49,7 @@ dest or src is NULL.
 
 EXAMPLE
 -------
-See *ubftest/test_bjoin.c* for sample code.
+See *ubftest/test_bojoin.c* for sample code.
 
 BUGS
 ----
