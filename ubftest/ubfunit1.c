@@ -636,7 +636,7 @@ TestSuite *ubf_bmkfldid_multidir_tests() {
         fprintf(stderr, "Binit failed!\n");
     }
 
-    setenv("FLDTBLDIR", "./ubftab_test,./ubftab", 1);
+    setenv("FLDTBLDIR", "./ubftab_test:./ubftab", 1);
     setenv("FIELDTBLS", "test.fd,test1.fd,Exfields", 1);
 
     add_test(suite, test_Bmkfldid_multidir);

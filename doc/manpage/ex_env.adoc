@@ -142,7 +142,7 @@ Mandatory Env. Variables
     This is not Enduro/X specific env variable. But Enduro/X distribution bin 
     directory should be included in system PATH env. variable.
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
-    This is comma separated list of directories where .fd files are located. I.e. UBF field definitions.
+    This is colon separated list of directories where .fd files are located. I.e. UBF field definitions.
 *FIELDTBLS*='COMMA_SEPERATED_LIST_OF_FIELD_FILES'::
     This is comma separated list of field files found in FLDTBLDIR.
 *NDRX_CCONFIG*='NDRX_COMMON_CONFIG_FILE'::
