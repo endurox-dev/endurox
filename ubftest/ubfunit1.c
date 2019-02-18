@@ -38,6 +38,7 @@
 #include <ndrstandard.h>
 #include <string.h>
 #include "test.fd.h"
+#include "test1.fd.h"
 #include "ubfunit1.h"
 #include "ndebug.h"
 #include <fdatatype.h>
@@ -324,6 +325,34 @@ Ensure(test_Bmkfldid)
     assert_equal(Bmkfldid(BFLD_CARRAY, 1081), T_CARRAY_FLD);
 }
 
+Ensure(test_Bmkfldid_multidir)
+{
+    /* from test.fd */
+    assert_equal(strcmp(Bfname(T_STRING_FLD), "T_STRING_FLD"), 0);
+    /* from test1.fd */
+    /* Char */
+    assert_equal(Bmkfldid(BFLD_CHAR, 1111), T1_CHAR_FLD);
+    assert_equal(strcmp(Bfname(T1_CHAR_FLD), "T1_CHAR_FLD"), 0);
+    /* Long */
+    assert_equal(Bmkfldid(BFLD_LONG, 1118), T1_LONG_2_FLD);
+    assert_equal(strcmp(Bfname(T1_LONG_2_FLD), "T1_LONG_2_FLD"), 0);
+    /* Short */
+    assert_equal(Bmkfldid(BFLD_SHORT, 1116), T1_SHORT_3_FLD);
+    assert_equal(strcmp(Bfname(T1_SHORT_3_FLD), "T1_SHORT_3_FLD"), 0);
+    /* Float */
+    assert_equal(Bmkfldid(BFLD_FLOAT, 1122), T1_FLOAT_3_FLD);
+    assert_equal(strcmp(Bfname(T1_FLOAT_3_FLD), "T1_FLOAT_3_FLD"), 0);
+    /* Double */
+    assert_equal(Bmkfldid(BFLD_DOUBLE, 1126), T1_DOUBLE_4_FLD);
+    assert_equal(strcmp(Bfname(T1_DOUBLE_4_FLD), "T1_DOUBLE_4_FLD"), 0);
+    /* String */
+    assert_equal(Bmkfldid(BFLD_STRING, 1130), T1_STRING_4_FLD);
+    assert_equal(strcmp(Bfname(T1_STRING_4_FLD), "T1_STRING_4_FLD"), 0);
+    /* Carray */
+    assert_equal(Bmkfldid(BFLD_CARRAY, 1137), T1_CARRAY_FLD);
+    assert_equal(strcmp(Bfname(T1_CARRAY_FLD), "T1_CARRAY_FLD"), 0);
+}
+
 /**
  * Test function the returns field number out of ID
  */
@@ -593,6 +622,28 @@ TestSuite *ubf_basic_tests() {
     return suite;
 }
 
+/**
+ * Testing bmkfldid with multi directory in FLDTBLDIR environment
+ * @return 
+ */
+TestSuite *ubf_bmkfldid_multidir_tests() {
+    TestSuite *suite = create_test_suite();
+    
+    M_p_ub = malloc(DEFAULT_BUFFER);
+    memset(M_p_ub, 255, DEFAULT_BUFFER);
+    if (EXFAIL==Binit(M_p_ub, DEFAULT_BUFFER))
+    {
+        fprintf(stderr, "Binit failed!\n");
+    }
+
+    setenv("FLDTBLDIR", "./ubftab_test,./ubftab", 1);
+    setenv("FIELDTBLS", "test.fd,test1.fd,Exfields", 1);
+
+    add_test(suite, test_Bmkfldid_multidir);
+
+    return suite;
+}
+
 /*
  * Main test entry.
  */
@@ -644,6 +695,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_bnum_tests());
     add_suite(suite, ubf_bjoin_tests());
     add_suite(suite, ubf_bojoin_tests());
+    add_suite(suite, ubf_bmkfldid_multidir_tests());
 
     if (argc > 1)
     {
