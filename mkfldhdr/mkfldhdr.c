@@ -168,7 +168,7 @@ exprivate char *get_next_from_env (int *ret)
     
 
     NDRX_STRCPY_SAFE(tmp_flddir, flddir);
-    ret_dir=strtok_r(tmp_flddir, ",", &p_flddir);
+    ret_dir=strtok_r(tmp_flddir, ":", &p_flddir);
     while (NULL != ret_dir)
     {
         snprintf(tmp, sizeof(tmp), "%s/%s", ret_dir, ret_ptr);
@@ -177,7 +177,7 @@ exprivate char *get_next_from_env (int *ret)
             NDRX_FCLOSE(fp);
             break;
         }
-        ret_dir=strtok_r(NULL, ",", &p_flddir);
+        ret_dir=strtok_r(NULL, ":", &p_flddir);
     }
 
     if (NULL!=ret_ptr && NULL!=ret_dir)
