@@ -318,7 +318,7 @@ exprivate int _ubf_load_def_table(void)
     {
         exist_fld=EXFALSE;
         NDRX_STRCPY_SAFE(tmp_flddir, flddir);
-        pd=strtok_r(tmp_flddir, ",", &p_flddir);
+        pd=strtok_r(tmp_flddir, ":", &p_flddir);
         while ( NULL!=pd && EXFALSE==exist_fld)
         {
             snprintf(tmp, sizeof(tmp), "%s/%s", pd, p);
@@ -336,7 +336,7 @@ exprivate int _ubf_load_def_table(void)
                 exist_fld=EXTRUE;
                 NDRX_FCLOSE(fp);
             }
-            pd=strtok_r(NULL, ",", &p_flddir);
+            pd=strtok_r(NULL, ":", &p_flddir);
         }
 
         if ( EXFALSE==exist_fld )
