@@ -1,7 +1,6 @@
 /**
  * @brief Part of UBF library
  *   Utility for generating field header files.
- *   !!! THERE IS NO SUPPORT for multiple directories with in FLDTBLDIR!!!
  *   Also the usage of default `fld.tbl' is not supported, as seems to be un-needed
  *   feature.
  *
