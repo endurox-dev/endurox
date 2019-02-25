@@ -55,7 +55,8 @@ flag *TPEV_SENDONLY*, meaning that we become senders.
 
 *TPEV_SVCFAIL* Server returned *TPFAIL* with *tpreturn()*
 
-*TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*.
+*TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*, connection is closed
+automatically after this event.
 
 
 ERRORS
@@ -69,11 +70,14 @@ custom message with debug info from last function call.
 
 *TPEEVENT* Event received and it is installed into 'revent' field.
 
-*TPEPROTO* System level service failure. Server died during the message presence in service queue.
+*TPEPROTO* System level service failure. Server died during the message 
+presence in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
 
 EXAMPLE
