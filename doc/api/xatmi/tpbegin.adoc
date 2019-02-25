@@ -55,7 +55,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpbegin(3)* *tpcommit(3)* *tpopen(3)* *tpclose(3)* *tpsuspend(3)* *tpresume(3)*
+*tpabort(3)* *tpcommit(3)* *tpopen(3)* *tpclose(3)* *tpsuspend(3)* *tpresume(3)*
 
 COPYING
 -------
