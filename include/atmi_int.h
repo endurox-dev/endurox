@@ -810,7 +810,8 @@ extern NDRX_API void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
 extern NDRX_API int accept_connection(void);
 extern NDRX_API int svc_fail_to_start(void);
-extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, int killq);
+extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, 
+        int killq, char *dbgmsg);
 extern NDRX_API int close_open_client_connections(void);
 extern NDRX_API int have_open_connection(void);
 extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);

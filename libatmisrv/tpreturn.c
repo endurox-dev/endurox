@@ -302,7 +302,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         ndrx_get_ack(p_accept_conn, flags);
 
         /* If this is conversation, then we should release conversation queue */
-        normal_connection_shutdown(p_accept_conn, EXFALSE);
+        normal_connection_shutdown(p_accept_conn, EXFALSE, "tpreturn on open conversation");
     }
 
 return_to_main:

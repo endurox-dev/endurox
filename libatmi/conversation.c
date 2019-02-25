@@ -317,15 +317,17 @@ expublic tp_conversation_control_t*  get_current_connection(int cd)
 
 /**
  * Close connection (Normally!)
+ * @param [in] dbgmsg debug message
  * @return SUCCEED/FAIL
  */
-expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int killq)
+expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int killq,
+        char *dbgmsg)
 {
     int ret=EXSUCCEED;
-    char fn[] = "normal_connection_shutdown";
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s: Closing [%s]",  __func__, conv->my_listen_q_str);
+    NDRX_LOG(log_debug, "%s: %s: Closing [%s] killq=%d",  __func__, dbgmsg, 
+            conv->my_listen_q_str, killq);
 
     /* close down the queue */
     if (EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
@@ -1139,7 +1141,8 @@ inject_message:
             else if (ATMI_COMMAND_DISCONN==rply->command_id)
             {
                 conv->revent = *revent=TPEV_DISCONIMM;
-                if (EXFAIL==normal_connection_shutdown(conv, EXFALSE))
+                if (EXFAIL==normal_connection_shutdown(conv, EXFALSE, 
+                        "tprecv got ATMI_COMMAND_DISCONN"))
                 {
                     NDRX_LOG(log_error, "Failed to close conversation");
                     ret=EXFAIL;
@@ -1207,7 +1210,8 @@ inject_message:
                     /*
                      * Gracefully shutdown the connection
                      */
-                    if (EXSUCCEED!=normal_connection_shutdown(conv, EXTRUE))
+                    if (EXSUCCEED!=normal_connection_shutdown(conv, EXTRUE, 
+                            "tprecv got TPREPLY"))
                     {
                         ret=EXFAIL;
                         goto out;
@@ -1389,7 +1393,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
                                 "cd %d. Returning event %ld", cd, *revent);
 
         /* close our listening queue */
-        normal_connection_shutdown(conv, EXFALSE);
+        normal_connection_shutdown(conv, EXFALSE, "tpsend got closed conversation");
         ret=EXFAIL;
         ndrx_TPset_error(TPEEVENT); /* Set that we have event for caller! */
         goto out;
@@ -1545,7 +1549,10 @@ expublic int ndrx_tpdiscon (int cd)
 
     /* Close down then connection (We close down this only if we are server!)*/
     
-    if (EXFAIL==normal_connection_shutdown(conv, EXTRUE))
+    /* default to disconn...? */
+    
+    conv->revent =TPEV_DISCONIMM;
+    if (EXFAIL==normal_connection_shutdown(conv, EXTRUE, "tpdiscon called"))
     {
         ret=EXFAIL;
         goto out;
