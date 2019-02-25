@@ -980,7 +980,7 @@ expublic int ndrx_tprecv (int cd, char **data,
     long rply_len;
     unsigned prio;
     size_t rply_bufsz;
-    char *rply_buf; /* Allocate dynamically! */
+    char *rply_buf = NULL; /* Allocate dynamically! */
     tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
@@ -1270,7 +1270,11 @@ out:
         }   
     }
 
-    NDRX_FREE(rply_buf);
+    /* Bug #389 */
+    if (NULL!=rply_buf)
+    {
+        NDRX_FREE(rply_buf);
+    }
     
     return ret;
 }
