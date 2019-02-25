@@ -127,6 +127,27 @@ int main(int argc, char** argv) {
         ret=EXSUCCEED;
     }
     
+    /* check that we do not core dump when trying to fetch from closed connection */
+    ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
+    
+    if (EXSUCCEED==ret)
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Error shall be generated when "
+                "fetching from closed connection!");
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        ret = EXSUCCEED;
+    }
+    
+    if (tperrno!=TPEINVAL)
+    {
+        NDRX_LOG(log_error, "TESTERROR ! Expected err %d got %d!", 
+                TPEINVAL, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
