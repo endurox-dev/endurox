@@ -670,16 +670,18 @@ expublic int ndrx_tpgetrply (int *cd,
     /* Allocate the buffer, dynamically... */
     NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
 
-    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p", __func__, flags, pbuf);
+    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p cd_exp %d", __func__, 
+            flags, pbuf, cd_exp);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
     
     if (!(flags & TPGETANY) && 
-            CALL_WAITING_FOR_ANS!=G_atmi_tls->G_call_state[*cd].status)
+            CALL_WAITING_FOR_ANS!=G_atmi_tls->G_call_state[cd_exp].status)
     {
         ndrx_TPset_error_fmt(TPEBADDESC, "Call descriptor %d is %s", 
-                *cd, CALL_NOT_ISSUED==G_atmi_tls->G_call_state[*cd].status?"not issued":"canceled");
+                cd_exp, 
+                CALL_NOT_ISSUED==G_atmi_tls->G_call_state[*cd].status?"not issued":"canceled");
         EXFAIL_OUT(ret);
     }
     
