@@ -287,8 +287,16 @@ expublic int tpgetrply (int *cd, char **data, long *len, long flags)
         ret=EXFAIL;
         goto out;
     }
+    else if (*cd >= MAX_ASYNC_CALLS )
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "*cd >= %d", MAX_ASYNC_CALLS);
+        ret=EXFAIL;
+        goto out;
+    }
     else
+    {
         ret=ndrx_tpgetrply (cd, *cd, data, len, flags, NULL);
+    }
         
 out:
     return ret;

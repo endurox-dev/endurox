@@ -512,6 +512,14 @@ Ensure(test064_bufswitch)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test065_tpcancel)
+{
+    int ret;
+    ret=system_dbg("test065_tpcancel/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -617,6 +625,7 @@ TestSuite *atmi_test_all(void)
 #endif
     add_test(suite, test063_cpmrange);
     add_test(suite, test064_bufswitch);
+    add_test(suite, test065_tpcancel);
     
     return suite;
 }
