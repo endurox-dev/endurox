@@ -167,10 +167,10 @@ int main(int argc, char** argv) {
     
     NDRX_LOG(log_debug, "got tperror=%d %s", tperrno, tpstrerror(tperrno));
     
-    if (tperrno!=TPEBLOCK)
+    if (tperrno!=TPEBADDESC)
     {
-        NDRX_LOG(log_error, "TESTERROR! got tperror=%d %s expected TPENOBLOCK %d", 
-                tperrno, tpstrerror(tperrno), TPEBLOCK);
+        NDRX_LOG(log_error, "TESTERROR! got tperror=%d %s expected TPEBADDESC %d", 
+                tperrno, tpstrerror(tperrno), TPEBADDESC);
         ret=EXFAIL;
         goto out;
     }
