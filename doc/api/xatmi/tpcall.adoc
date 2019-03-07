@@ -59,7 +59,7 @@ request part of the call. This flag does not affect waiting for response from se
 
 RETURN VALUE
 ------------ 
-On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+On success, *tpcall()* returns 0; on error, -1 is returned, 
 with *tperrno* set to indicate the error. When server did tpreturn(), the 'rcode'
 value is accessible by caller by using tpurcode().
 
