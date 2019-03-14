@@ -644,15 +644,15 @@ out:
 
 /**
  * Internal version of tpgetrply.
- * @param cd
- * @param data
- * @param len
- * @param flags
- * @return
+ * @param cd call descriptor
+ * @param data data buffer into which return value
+ * @param len data len
+ * @param flags flags
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpgetrply (int *cd,
                        int cd_exp,
-                       char * *data ,
+                       char **data ,
                        long *len, long flags,
                        TPTRANID *p_tranid)
 {
