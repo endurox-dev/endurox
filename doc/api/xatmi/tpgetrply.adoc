@@ -59,6 +59,8 @@ ERRORS
 Note that *tpstrerror()* for last calls returns generic error message plus 
 custom message with debug info from last call.
 
+*TPEBLOCK* *TPENOBLOCK* was specified in flags and no message is in queue.
+
 *TPEINVAL* Invalid parameter is given to function. Particularly pointer 
 parameters are NULL.
 

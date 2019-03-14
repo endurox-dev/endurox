@@ -97,7 +97,8 @@ Mandatory Env. Variables
     Log level of 'xadmin'. From 1..5. 5 is max. Used by shell scripts.
 *NDRX_XA_RES_ID*='XA_RESOURCE_ID'::
     XA API two phase commit resource id.
-    Must be set if using distributed transactions.
+    Must be set if using distributed transactions. Valid value is in range
+    of 1..255.
 *NDRX_XA_OPEN_STR*='XA_OPEN_STRING'::
     This is open string for two phase commit XA driver.
     Must be set if using distributed transactions.
