@@ -120,6 +120,7 @@ set(MAN3_NAMES
         ndrx_atfork_prepare
         ndrx_atfork_parent
         ndrx_atfork_child
+        tuxgetenv
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

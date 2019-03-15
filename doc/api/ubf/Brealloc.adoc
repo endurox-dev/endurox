@@ -49,7 +49,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bfree(3)* *Balloc(3)* *Binit(3)* *Bused(3)*
+*Bfree(3)* *Balloc(3)* *Binit(3)* *Bused(3)* *Bneeded(3)*
 
 COPYING
 -------

@@ -1,0 +1,53 @@
+TUXGETENV(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tuxgetenv - Get transaction level
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+char *tuxgetenv(char *envname)
+
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Get environment variable. Function is pure wrapper for getenv() system function,
+as Enduro/X loads environment variables in standard way for the processes on
+Unix platform. The 'envname' is environment variable name.
+
+RETURN VALUE
+------------
+In case if variable is present, then *value* is returned, if variable is not
+found, then *NULL* is returned.
+
+
+ERRORS
+------
+Function does not return any errors.
+
+EXAMPLE
+-------
+See *atmitest/test055_envs/atmisv55.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)* *tpinit(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
