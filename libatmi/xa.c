@@ -821,7 +821,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     
     if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
-         NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
+        NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
         ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to read TM response");
         EXFAIL_OUT(ret);
     }

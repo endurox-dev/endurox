@@ -96,6 +96,7 @@ add_library (atmi SHARED
                 atmi_cache_keygrp.c
                 tpimport.c
                 tpexport.c
+                tx.c
             )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
