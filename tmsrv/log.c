@@ -172,7 +172,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
     tmp->tmnodeid = xai->tmnodeid;
     tmp->tmsrvid = xai->tmsrvid;
     tmp->tmrmid = xai->tmrmid;
-    strcpy(tmp->tmxid, xai->tmxid);
+    NDRX_STRCPY_SAFE(tmp->tmxid, xai->tmxid);
     
     tmp->t_start = ndrx_utc_tstamp();
     tmp->t_update = ndrx_utc_tstamp();
