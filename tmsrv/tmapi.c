@@ -190,6 +190,10 @@ expublic int tm_tpcommit(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
+    /* for tx.h we might want early return here as it is logged... 
+     just do tms_unlock_entry(p_tl); and that's it... and return
+     */
+    
     /* Drive - it will auto-rollback if needed... */
     if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
     {
