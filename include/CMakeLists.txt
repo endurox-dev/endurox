@@ -78,6 +78,7 @@ install (FILES
     exthpool.h
     Usysfl32.h
     tmenv.h
+    tx.h
     DESTINATION include)
 
 install (FILES
