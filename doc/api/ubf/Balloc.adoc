@@ -19,16 +19,20 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Allocates UBF buffer to store the number of fields of 'f' with length of 'v'.
+Allocates UBF buffer to store the number of fields of 'f' with total data storage
+in bytes of 'v'. The 'v' must also include the size for terminating zero bytes
+for strings if any string is added to buffer.
 
 
 RETURN VALUE
 ------------
-On success, *Balloc()* returns pointer to UBF buffer; on error, NULL is returned, with *Berror* set to indicate the error.
+On success, *Balloc()* returns pointer to UBF buffer; on error, NULL is 
+returned, with *Berror* set to indicate the error.
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom 
+message with debug info from last function call.
 
 *BEINVAL* The total size of bigger than *MAXUBFLEN*.
 

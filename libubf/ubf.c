@@ -57,6 +57,7 @@
 #include <thlock.h>
 #include <typed_view.h>
 #include <ubfdb.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -1297,8 +1298,13 @@ expublic int Bfree (UBFH *p_ub)
 expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 {
     UBFH *p_ub=NULL;
-    long alloc_size = f*(FF_USED_BYTES) + f*v + sizeof(UBF_header_t);
+    /* Warning! not according to spec, v here is size for all fields, not for 
+     * the single field. Consider to use Bneeded approach... */
+    long alloc_size;
     API_ENTRY;
+    
+    /* Bug #394 */
+    alloc_size = ndrx_Bneeded(f, v);
     
     if ( alloc_size > MAXUBFLEN)
     {
@@ -1340,8 +1346,10 @@ expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
 expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
 {
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
-    long alloc_size = f*(FF_USED_BYTES) + f*v + sizeof(UBF_header_t);
+    long alloc_size;
     API_ENTRY;
+
+    alloc_size = ndrx_Bneeded(f, v);
 
     UBF_LOG(log_debug, "Brealloc: enter p_ub=%p!", p_ub);
     
@@ -3186,6 +3194,36 @@ expublic BFLDOCC Bnum (UBFH *p_ub)
     {
         return ndrx_Bnum(p_ub);
     }
+}
+
+/**
+ * Return number of bytes required for UBF buffer
+ * @param nrfields number of fields
+ * @param totsize space required for all fields (data size)
+ * @return Space needed for UBF buffer or EXFAIL
+ */
+expublic long Bneeded(BFLDOCC nrfields, BFLDLEN totsize)
+{
+    long ret = EXSUCCEED;
+    API_ENTRY;
+    
+    if (nrfields<=0)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Invalid nrfields (<=0)");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (totsize<=0)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "Invalid totsize (<=0)");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* compute the total size */
+    ret = ndrx_Bneeded(nrfields, totsize);
+    
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
