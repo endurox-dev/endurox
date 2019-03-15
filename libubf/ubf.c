@@ -3222,6 +3222,14 @@ expublic long Bneeded(BFLDOCC nrfields, BFLDLEN totsize)
     /* compute the total size */
     ret = ndrx_Bneeded(nrfields, totsize);
     
+    
+    if (ret > MAXUBFLEN)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Buffer size estimated larger (%ld) than max (%ld)",
+                ret, (long)MAXUBFLEN);
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     return ret;
 }

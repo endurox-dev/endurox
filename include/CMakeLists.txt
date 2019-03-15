@@ -76,6 +76,8 @@ install (FILES
     exdb.h
     nstopwatch.h
     exthpool.h
+    Usysfl32.h
+    tmenv.h
     DESTINATION include)
 
 install (FILES
