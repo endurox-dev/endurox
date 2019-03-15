@@ -20,18 +20,22 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Reallocates UBF buffer to store the number of fields of 'f' with length of 'v'.
+Reallocates UBF buffer to store the number of fields of 'f' with total data 
+length of 'v' bytes, length must include zero terminator byte for strings.
 
 
 RETURN VALUE
 ------------
-On success, *Brealloc()* returns pointer to UBF buffer; on error, NULL is returned, with *Berror* set to indicate the error.
+On success, *Brealloc()* returns pointer to UBF buffer; on error, NULL is 
+returned, with *Berror* set to indicate the error.
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
-*BEINVAL* Buffer is shorter than currently bytes used, or the total size of bigger than *MAXUBFLEN*.
+*BEINVAL* Buffer is shorter than currently bytes used, or the total size 
+of bigger than *MAXUBFLEN*.
 
 *BMALLOC* Malloc failed.
 
