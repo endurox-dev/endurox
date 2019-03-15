@@ -45,6 +45,7 @@
 #include <ubf.h>
 #include <ubf_int.h>
 #include <ubfutil.h>
+#include <fdatatype.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IS_NOT_PRINTABLE(X) !(isprint(X) && !iscntrl(X))
@@ -267,5 +268,17 @@ expublic void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p_ub)
     }
 }
 
+/**
+ * Compute size of UBF buffer
+ * @param nrfields number of fields
+ * @param totsize total space required for data (bytes of all fields)
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize)
+{
+    /* the biggest field we have is carray, for which we have also len stored.. */
+    return sizeof(UBF_header_t) + totsize 
+            + nrfields*(EX_ALIGNMENT_BYTES+sizeof(UBF_carray_t));
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

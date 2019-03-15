@@ -47,17 +47,36 @@ Ensure(test_Balloc_Bfree)
 {
     UBFH *p_ub = NULL;
     int i;
+    long j;
+    char block[123];
     /* will check with valgrind - do we have memory leaks or not */
     
     for (i=0; i<10; i++)
     {
-        p_ub=Balloc(20, 30);
+        p_ub=Balloc(20, sizeof(block)*20);
         assert_not_equal(p_ub, NULL);
-        /* Put some data into memory so that we can test */
-        set_up_dummy_data(p_ub);
-        do_dummy_data_test(p_ub);
+        
+        for (j=0; j<20; j++)
+        {
+            assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXSUCCEED);
+        }
+        
+        /* this one shall fail as no space ...*/
+        /* lets leave some few for alignment */
+        for (j=0; j<10; j++)
+        {
+            Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
+        }
+        
+        assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXFAIL);
+        assert_equal(Berror, BNOSPACE);
+        
+        /* Feature #393
+         * ensure that we got a correct size estimate with working buffer 
+         */
+        assert_equal(Bneeded(20, sizeof(block)*20), Bsizeof(p_ub));
+        
         assert_equal(Bfree(p_ub), EXSUCCEED);
-
     }
 }
 
@@ -67,27 +86,55 @@ Ensure(test_Balloc_Bfree)
 Ensure(test_Brealloc)
 {
     UBFH *p_ub = NULL;
-
-    p_ub=Balloc(1, 30);
-    assert_not_equal(p_ub, NULL);
-
-    assert_equal(Badd(p_ub, T_STRING_FLD, BIG_TEST_STRING, 0), EXFAIL);
-    assert_equal(Berror, BNOSPACE);
-
-    /* Now reallocate, space should be bigger! */
-    p_ub=Brealloc(p_ub, 1, strlen(BIG_TEST_STRING)+1+2/* align */);
-    assert_not_equal(p_ub, NULL);
-    assert_equal(Badd(p_ub, T_STRING_FLD, BIG_TEST_STRING, 0), EXSUCCEED);
+    int i;
+    long j;
+    int loop;
+    char block[123];
+    /* will check with valgrind - do we have memory leaks or not */
     
-    /* should not allow to reallocate to 0! */
-    assert_equal(Brealloc(p_ub, 1, 0), NULL);
-    assert_equal(Berror, BEINVAL);
+    for (i=0; i<10; i++)
+    {
+        p_ub=Balloc(20, sizeof(block)*20);
+        assert_not_equal(p_ub, NULL);
+        
+        for (j=0; j<20; j++)
+        {
+            assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXSUCCEED);
+        }
+        
+        /* this one shall fail as no space ...*/
+        /* lets leave some few for alignment */
+        for (j=0; j<10; j++)
+        {
+            Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
+        }
+        
+        assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXFAIL);
+        assert_equal(Berror, BNOSPACE);
+        
+        /* now realloc... to 40 and 40 shall fill in */
+        p_ub=Balloc(40, sizeof(block)*40);
+        assert_not_equal(p_ub, NULL);
+        
+        loop = 40 - Bnum(p_ub);
+        for (j=0; j<loop; j++)
+        {
+            Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
+        }
+        
+        /* this one shall fail as no space ...*/
+        /* lets leave some few for alignment */
+        for (j=0; j<10; j++)
+        {
+            Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
+        }
+        
+        assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXFAIL);
+        assert_equal(Berror, BNOSPACE);
+        
+        assert_equal(Bfree(p_ub), EXSUCCEED);
 
-    /* should be bigger than existing. 4 is sizeof bfld, first in stuct */
-    assert_equal(Brealloc(p_ub, 1, strlen(BIG_TEST_STRING)-4), NULL);
-    assert_equal(Berror, BEINVAL);
-
-    assert_equal(EXSUCCEED, Bfree(p_ub));
+    }
 
 }
 

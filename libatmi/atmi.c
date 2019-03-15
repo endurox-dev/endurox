@@ -967,7 +967,8 @@ out:
 /**
  * Enqueue message
  */
-expublic int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags)
+expublic int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+        char *data, long len, long flags)
 {   
     long ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -1718,4 +1719,16 @@ extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl,
 out:
     return ret;
 }
+
+/**
+ * Read environment variable.
+ * On unix it is the same as getenv()
+ * @param envname env variable name
+ * @return env variable value or NULL if not found
+ */
+extern NDRX_API char *tuxgetenv(char *envname)
+{
+    return getenv(envname);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
