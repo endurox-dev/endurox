@@ -48,7 +48,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bfree(3)* *Brealloc(3)* *Binit(3)*
+*Bfree(3)* *Brealloc(3)* *Binit(3)* *Bneeded(3)*
 
 COPYING
 -------
