@@ -48,7 +48,7 @@ Ensure(test_Balloc_Bfree)
     UBFH *p_ub = NULL;
     int i;
     long j;
-    char block[123];
+    char block[1230];
     /* will check with valgrind - do we have memory leaks or not */
     
     for (i=0; i<10; i++)
@@ -62,11 +62,13 @@ Ensure(test_Balloc_Bfree)
         }
         
         /* this one shall fail as no space ...*/
-        /* lets leave some few for alignment */
+        /* lets leave some few for alignment 
+         * if payload is big enough, no add data needed
         for (j=0; j<10; j++)
         {
             Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
         }
+        */
         
         assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXFAIL);
         assert_equal(Berror, BNOSPACE);
@@ -89,7 +91,7 @@ Ensure(test_Brealloc)
     int i;
     long j;
     int loop;
-    char block[123];
+    char block[1230];
     /* will check with valgrind - do we have memory leaks or not */
     
     for (i=0; i<10; i++)
@@ -103,11 +105,12 @@ Ensure(test_Brealloc)
         }
         
         /* this one shall fail as no space ...*/
-        /* lets leave some few for alignment */
+        /* lets leave some few for alignment 
         for (j=0; j<10; j++)
         {
             Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
         }
+        */
         
         assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXFAIL);
         assert_equal(Berror, BNOSPACE);
@@ -123,11 +126,12 @@ Ensure(test_Brealloc)
         }
         
         /* this one shall fail as no space ...*/
-        /* lets leave some few for alignment */
+        /* lets leave some few for alignment 
         for (j=0; j<10; j++)
         {
             Badd(p_ub, T_CARRAY_FLD, block, sizeof(block));
         }
+        */
         
         assert_equal(Badd(p_ub, T_CARRAY_FLD, block, sizeof(block)), EXFAIL);
         assert_equal(Berror, BNOSPACE);
