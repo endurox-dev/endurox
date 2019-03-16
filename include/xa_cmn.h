@@ -123,8 +123,9 @@ extern "C" {
     X->tmknownrms[0] = EXEOS;
     
     
-#define TMTXFLAGS_DYNAMIC_REG      0x00000001  /* TX initiator uses dyanmic reg */
-#define TMTXFLAGS_RMIDKNOWN        0x00000002  /* RMID already registered       */
+#define TMTXFLAGS_DYNAMIC_REG      0x00000001  /**< TX initiator uses dyanmic reg */
+#define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered       */
+#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged      */
     
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1

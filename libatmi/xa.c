@@ -877,7 +877,7 @@ out:
  * API implementation of tpcommit
  *
  * @param timeout
- * @param flags
+ * @param flags TPTXCOMMITDLOG - return when prepared
  * @return 
  */
 expublic int ndrx_tpcommit(long flags)
@@ -885,6 +885,7 @@ expublic int ndrx_tpcommit(long flags)
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
     int do_abort = EXFALSE;
+    long tmflags = 0;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
     
     NDRX_LOG(log_debug, "%s enter", __func__);
@@ -896,10 +897,10 @@ expublic int ndrx_tpcommit(long flags)
         EXFAIL_OUT(ret);
     }
 
-    if (0!=flags)
+    if (0!=flags && !(flags & TPTXCOMMITDLOG))
     {
-        NDRX_LOG(log_error, "tpcommit: flags != 0");
-        ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0");
+        NDRX_LOG(log_error, "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
+        ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
         EXFAIL_OUT(ret);
     }
     
@@ -971,6 +972,7 @@ expublic int ndrx_tpcommit(long flags)
     NDRX_LOG(log_debug, "About to call TM");
     /* OK, we should call the server, request for transaction...  */
     
+    /* TODO: pass flags to call struct! */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPCOMMIT, EXFALSE, EXFAIL, 
             G_atmi_tls->G_atmi_xa_curtx.txinfo)))
     {
