@@ -46,6 +46,7 @@
 #include <ndrxdcmn.h>
 #include <userlog.h>
 #include <tx.h>
+#include <Exfields.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -106,6 +107,7 @@ exprivate int tx_map_error1(const char *dbg, int tpret, int allow_error)
         case TPEHEURISTIC:
             ret = TX_MIXED;
             break;
+        case TPEMATCH:
         case TPEABORT:
             ret = TX_ROLLBACK;
             break;
@@ -207,6 +209,8 @@ expublic int tx_commit(void)
 expublic int tx_info(TXINFO * txinfo)
 {
     int ret = TX_OK; /* not in tran mode */
+    UBFH *p_ub = NULL;
+    short   txstage;  /* In what state we are */
     ATMI_TLS_ENTRY;
     
     txinfo->transaction_control = G_atmi_tls->tx_transaction_control;
@@ -221,21 +225,71 @@ expublic int tx_info(TXINFO * txinfo)
     else
     {
         ret = 1; /* we are in transaction */
-        
-        /* TODO: copy off xid */
-        
+        txinfo->transaction_state = TX_ACTIVE;
+        /* copy off xid */
+        atmi_xa_deserialize_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, &G_atmi_tls->xid);
         
         /* check are we marked for rollback? */
         
         if (G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags & TMTXFLAGS_IS_ABORT_ONLY)
         {
-            //
+            /* is it rollback only? */
+            txinfo->transaction_state = TX_ROLLBACK_ONLY;
         }
-        
+        else
+        {
+            /* check with TM, what actually status we have? */
+            if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_STATUS, EXFALSE, EXFAIL, 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo)))
+            {
+                int tperr = tperrno;
+                NDRX_LOG(log_error, "Tran info failed with: %d", tperr);
+                
+                if (TPEMATCH==tperr)
+                {
+                    NDRX_LOG(log_debug, "Not matched by TM -> TX_TIMEOUT_ROLLBACK_ONLY");
+                    txinfo->transaction_state = TX_TIMEOUT_ROLLBACK_ONLY;
+                    
+                    /* switch tran state? */
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags !=TMTXFLAGS_IS_ABORT_ONLY;
+                }
+                else
+                {
+                    /* return the error if */
+                    ret = tx_map_error1(__func__, EXFAIL, EXFALSE);
+                }
+                goto out;
+            } /* if transaction not found.. */
+            
+            /* got transaction infos, check the state? 
+             * if if is rollback state the return that...
+             */
+            
+            if (EXSUCCEED!=Bget(p_ub, TMTXSTAGE, 0, (char *)&txstage, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to get TMTXSTAGE from tmsrv: %s", 
+                        Bstrerror(Berror));
+                ret = TX_FAIL;
+                goto out;
+            }
+            
+            /* analyze the stage */
+            NDRX_LOG(log_debug, "txstage=%hd", txstage)
+            if (txstage >= XA_TX_STAGE_ABORTING  && txstage <=XA_TX_STAGE_ABORTING)
+            {
+                NDRX_LOG(log_warn, "TM is rolling back..!");
+                txinfo->transaction_state = TX_ROLLBACK;
+            }
+        } /* if not local abort only.. */
+    } /* if have global tx */
+    
+out:    
+            
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
     }
-    
-    
-out:
+        
     return ret;
 }
 
@@ -256,7 +310,38 @@ expublic int tx_open(void)
 
 expublic int tx_rollback(void)
 {
+    int ret, ret2;
     
+    ret = tpcommit(0L);
+    
+    ret = tx_map_error1(__func__, ret, EXFALSE);
+    
+    /* chain the next transaction if required */
+    
+    if (TX_CHAINED==G_atmi_tls->tx_transaction_control)
+    {
+        if (TX_PROTOCOL_ERROR == ret ||  TX_FAIL==ret)
+            
+        {
+            NDRX_LOG(log_error, "Fatal error cannot chain tx");
+        }
+        else
+        {
+            ret2 = tpbegin(G_atmi_tls->tx_transaction_timeout, 0);
+            ret2 = tx_map_error1("tx_commit next tran begin: ", ret2, EXTRUE);
+            
+            /* if fail + fail base... */
+            if (TX_OK!=ret2)
+            {
+                ret2 += TX_NO_BEGIN;
+            }
+        }
+        
+        ret = ret2;
+    }
+    
+    NDRX_LOG(log_debug, "returns %d", ret);
+    return ret;
 }
 
 expublic int tx_set_commit_return(COMMIT_RETURN cr)

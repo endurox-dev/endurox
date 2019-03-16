@@ -158,6 +158,7 @@ extern void background_unlock(void);
 /* Admin functions */
 extern int tm_tpprinttrans(UBFH *p_ub, int cd);
 extern int tm_aborttrans(UBFH *p_ub);
+extern int tm_status(UBFH *p_ub);
 extern int tm_committrans(UBFH *p_ub);
 
 #ifdef	__cplusplus

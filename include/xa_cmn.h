@@ -59,7 +59,8 @@ extern "C" {
                                         or process doesn't know that resorce is involed */
 #define ATMI_XA_PRINTTRANS          'p' /* Print transactions to admin pt       */
 #define ATMI_XA_ABORTTRANS          'r' /* Abo[r]t transaction, admin util      */
-#define ATMI_XA_COMMITTRANS          'm' /* Co[m]mit transaction, admin util     */
+#define ATMI_XA_COMMITTRANS         'm' /* Co[m]mit transaction, admin util     */
+#define ATMI_XA_STATUS              's' /* Return transaction status            */
     
 /* Register new resource handler - remote process sends us info about working under same TXN */
 #define ATMI_XA_TMREGISTER          'R' /* Register new resource under txn...   */

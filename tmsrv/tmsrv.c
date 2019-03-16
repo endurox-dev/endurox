@@ -243,6 +243,15 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
                 goto out;
             }
             break;
+        case ATMI_XA_STATUS:
+            
+            /* request for printing active transactions */
+            if (EXSUCCEED!=tm_status(p_ub))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
         case ATMI_XA_COMMITTRANS:
             
             /* request for printing active transactions */
