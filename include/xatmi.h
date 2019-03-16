@@ -529,6 +529,9 @@ extern "C" {
 
 /** flag for ndrx_main_integra: Do not use long jump   */
 #define ATMI_SRVLIB_NOLONGJUMP     0x00000001
+    
+
+#define TPTXCOMMITDLOG             0x00000004  /**< Commit decision logged    */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

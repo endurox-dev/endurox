@@ -204,7 +204,7 @@ expublic int tx_commit(void)
 /**
  * Fill in transaction info block
  * @param txinfo
- * @return 
+ * @return TX_OK/
  */
 expublic int tx_info(TXINFO * txinfo)
 {
@@ -344,23 +344,104 @@ expublic int tx_rollback(void)
     return ret;
 }
 
+/**
+ * Set when to return from commit. Either when transaction is completed
+ * or when transaction is logged in persisted device for further background
+ * completion.
+ * The default is TX_COMMIT_COMPLETED.
+ * @param cr TX_COMMIT_DECISION_LOGGED or TX_COMMIT_COMPLETED
+ * @return TX_OK/TX_EINVAL/TX_PROTOCOL_ERROR
+ */
 expublic int tx_set_commit_return(COMMIT_RETURN cr)
 {
+    int ret = TX_OK;
+    ATMI_TLS_ENTRY;
     
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
+    {
+        ret = TX_PROTOCOL_ERROR;
+        goto out;
+    }
+    
+    if (TX_COMMIT_DECISION_LOGGED!=cr ||
+            TX_COMMIT_COMPLETED!=cr)
+    {
+        NDRX_LOG(log_error, "Invalid value: commit return %ld", (long)cr);
+        ret = TX_EINVAL;
+        goto out;
+    }
+    
+    G_atmi_tls->tx_commit_return = cr;
+    NDRX_LOG(log_info, "Commit return set to %ld", 
+            (long)G_atmi_tls->tx_commit_return);
+    
+out:
+    return ret;
 }
 
+/**
+ * Set what commit/rollback will do:- either open next tran
+ * or leave with out transaction
+ * @param tc TX_UNCHAINED/TX_CHAINED 
+ * @return TX_OK/TX_EINVAL
+ */
 expublic int tx_set_transaction_control(TRANSACTION_CONTROL tc)
 {
+    int ret = TX_OK;
+    ATMI_TLS_ENTRY;
     
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
+    {
+        ret = TX_PROTOCOL_ERROR;
+        goto out;
+    }
+    
+    if (TX_UNCHAINED!=tc ||
+            TX_CHAINED!=tc)    
+    {
+        NDRX_LOG(log_error, "Invalid value: transaction control %ld", (long)tc);
+        ret = TX_EINVAL;
+        goto out;
+    }
+    
+    G_atmi_tls->tx_transaction_control = tc;
+    NDRX_LOG(log_info, "Transaction control set to %ld", 
+            (long)G_atmi_tls->tx_transaction_control);
+    
+out:
+    return ret;
 }
 
+/**
+ * Set seconds for the transaction to time out by transaction manager
+ * @param tt timeout in seconds. 0 disables tout (i.e. uses maximum time by tmsrv)
+ * @return TX_OK/TX_EINVAL/TX_PROTOCOL_ERROR/
+ */
 expublic int tx_set_transaction_timeout(TRANSACTION_TIMEOUT tt)
 {
+    int ret = TX_OK;
+    ATMI_TLS_ENTRY;
     
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
+    {
+        ret = TX_PROTOCOL_ERROR;
+        goto out;
+    }
+    
+    if (tt < 0)
+    {
+        NDRX_LOG(log_error, "Invalid value: timeout %ld", (int)tt);
+        ret = TX_EINVAL;
+        goto out;
+    }
+    
+    G_atmi_tls->tx_transaction_timeout = tt;
+    
+    NDRX_LOG(log_info, "Transaction timeout out set to %ld", 
+            (long)G_atmi_tls->tx_transaction_timeout);
+    
+out:
+    return ret;
 }
-
-
-
-
 
 /* vim: set ts=4 sw=4 et smartindent: */

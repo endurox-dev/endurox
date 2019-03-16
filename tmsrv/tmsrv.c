@@ -194,6 +194,9 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
         ret=EXFAIL;
         goto out;
     }
+    
+    /* TODO: We need TMFLAGS */
+    
     NDRX_LOG(log_info, "Got command code: [%c]", cmd);
     
     switch(cmd)
@@ -209,7 +212,6 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_TPCOMMIT:
             
-            /* start new tran... */
             if (EXSUCCEED!=tm_tpcommit(p_ub))
             {
                 ret=EXFAIL;
@@ -218,7 +220,6 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_TPABORT:
             
-            /* start new tran... */
             if (EXSUCCEED!=tm_tpabort(p_ub))
             {
                 ret=EXFAIL;
@@ -254,7 +255,6 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_COMMITTRANS:
             
-            /* request for printing active transactions */
             if (EXSUCCEED!=tm_committrans(p_ub))
             {
                 ret=EXFAIL;
