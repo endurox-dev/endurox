@@ -593,7 +593,61 @@ out:
     return ret;
 }
 
+/**
+ * Get transaction status
+ * @param p_ub request buffer
+ * @return 
+ */
+expublic int tm_status(UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    atmi_xa_log_t *p_tl = NULL;
+    char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
+    short tmrmid = EXFAIL;
+    atmi_xa_tx_info_t xai;
+    /* We should try to abort transaction
+     Thus basically we need to lock the transaction on which we work on.
+     Otherwise, we can conflict with background.
+     */
+    background_lock();
+    
+    if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to read TMXID: %s", 
+                Bstrerror(Berror));
+        atmi_xa_set_error_msg(p_ub, TPESYSTEM, 0, "Protocol error, missing TMXID!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* optional */
+    Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
+    
+    /* Lookup for log. And then try to abort... */
+    if (NULL==(p_tl = tms_log_get_entry(tmxid)))
+    {
+        /* Generate error */
+        atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
+                tmxid);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Return full status of the transaction... */
+    if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, p_tl))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    if (NULL!=p_tl)
+    {
+        tms_unlock_entry(p_tl);
+    }
+        
+    background_unlock();
 
+    return ret;
+}
 
 /**
  * Commit transaction.
