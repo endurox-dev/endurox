@@ -1119,12 +1119,21 @@ out:
 
 /**
  * Close the entry to XA.
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpclose(void)
 {
     int ret=EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
+
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
+    {
+        NDRX_LOG(log_error, "tpclose: - cannot close as process in TX: [%s]", 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        ndrx_TPset_error_fmt(TPEPROTO, "tpclose: - cannot close as process in TX: [%s]", 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        EXFAIL_OUT(ret);
+    }
    
     ret = atmi_xa_close_entry();
     

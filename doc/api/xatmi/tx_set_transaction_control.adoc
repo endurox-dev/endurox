@@ -1,0 +1,72 @@
+TX_SET_TRANSACTION_CONTROL(3)
+=============================
+:doctype: manpage
+
+
+NAME
+----
+tx_set_transaction_control - Set how to behave at tx_commit() or tx_rollback()
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_set_transaction_control(TRANSACTION_CONTROL control);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Change the logic of how *tx_commit(3)* or *tx_rollback(3)* shall behave.
+
+Setting affects current transaction and is used during the phase when commit 
+or abort is performed. The setting value is stored in thread local stored for 
+particular control thread.
+
+Parameter 'control' accepts following values:
+
+- *TX_UNCHAINED* this is *default* value. Meaning that when commit or rollback has
+been performed, the current control thread will not be in transaction, i.e.
+thread have left any global transaction.
+
+- *TX_CHAINED* means that when transaction is committed or rolled back, a new
+transaction is started. The start of new transaction is performed only those
+cases when there is proper context for it. For example is commit or abort
+encouraged protocol error, the new transaction is not started. The commit/rollback
+error and new transaction state is returned combined error code. If error is
+received during starting next transaction, the error code is corrected (summed)
+with *TX_NO_BEGIN* error code.
+
+
+RETURN VALUE
+------------
+On success, *tx_set_transaction_control()* return *TX_OK*; on error, error code is returned
+
+ERRORS
+------
+
+*TX_EINVAL* The value of 'when_return' is not *TX_UNCHAINED* nor
+*TX_CHAINED*.
+
+*TX_PROTOCOL_ERROR* Transaction manager is not open by *tx_open(3)*
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_open(3)* *tx_close(3)* *tx_begin(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)*
+*tx_set_transaction_timeout(3)* *tx_set_commit_return(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

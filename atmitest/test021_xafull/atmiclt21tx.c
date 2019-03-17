@@ -522,7 +522,7 @@ int main(int argc, char** argv) {
     }
     
     /* try some error.. with commit, maybe close tm? */
-    
+#if 0
     if (TX_OK!=tx_close())
     {
         NDRX_LOG(log_error, "TESTERROR: tx_close() fail: %d", ret);
@@ -542,6 +542,7 @@ int main(int argc, char** argv) {
         NDRX_LOG(log_error, "TESTERROR: tx_open() fail: %d", ret);
         EXFAIL_OUT(ret);
     }
+#endif
     
     if (TX_OK!=(ret=tx_set_transaction_control(TX_UNCHAINED)))
     {
