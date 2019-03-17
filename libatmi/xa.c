@@ -868,7 +868,14 @@ out:
     /* TODO: We need remove curren transaction from HASH! */
     if (NULL!=p_ub)
     {
-        tpfree((char *)p_ub);
+        
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
     }
     return ret;
 }
@@ -989,7 +996,13 @@ expublic int ndrx_tpcommit(long flags)
 out:
     if (NULL!=p_ub)
     {
-        tpfree((char *)p_ub);
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
     }
 
     /* reset global transaction info */
@@ -1074,7 +1087,13 @@ expublic int ndrx_tpabort(long flags)
 out:
     if (NULL!=p_ub)
     {
-        tpfree((char *)p_ub);
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
     }
 
     /* reset global transaction info */
@@ -1382,7 +1401,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 NDRX_LOG(log_debug, "Dynamic reg - no start/join!");
         }
         /* Continue with static ...  ok it is known, then just join the transaction */
-        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
+        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), 
+                TMJOIN, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
             EXFAIL_OUT(ret);

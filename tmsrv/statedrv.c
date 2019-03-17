@@ -281,7 +281,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         if ( (flags &  flags) && XA_TX_STAGE_COMMITTING == descr->txstage)
         {
             NDRX_LOG(log_info, "Decision logged for commit return");
-            break;
+            goto out;
         }
         
         if (was_retry)
