@@ -530,7 +530,10 @@ extern "C" {
 /** flag for ndrx_main_integra: Do not use long jump   */
 #define ATMI_SRVLIB_NOLONGJUMP     0x00000001
     
-
+/*
+ * Flag for transaction processing i.e. 
+ * tpbegin/tpcommit/tpclose/tpopen/tpabort/tpsuspend/tpresume 
+ */
 #define TPTXCOMMITDLOG             0x00000004  /**< Commit decision logged    */
 
 /*---------------------------Enums--------------------------------------*/

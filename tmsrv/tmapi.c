@@ -120,7 +120,7 @@ expublic int tm_tpabort(UBFH *p_ub)
     }
     
     /* Call internal version of abort */
-    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMCOMMITFAIL, 
                 "Distributed transaction process did not finish completely");
@@ -145,7 +145,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     atmi_xa_tx_info_t xai;
     atmi_xa_log_t *p_tl = NULL;
     int do_abort = EXFALSE;
-    
+    long tmflags;
     NDRX_LOG(log_debug, "tm_tpcommit() called");
     
     /* 1. get transaction from hash */
@@ -154,6 +154,15 @@ expublic int tm_tpcommit(UBFH *p_ub)
         NDRX_LOG(log_error, "Failed to read transaction data");
         atmi_xa_set_error_msg(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                 "Invalid transaction data (missing fields)");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* tx.h support: */
+    if (EXSUCCEED!=Bget(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to get TMTXFLAGS: %s", Bstrerror(Berror));
+        atmi_xa_set_error_msg(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                "Failed to read TMTXFLAGS");
         EXFAIL_OUT(ret);
     }
     
@@ -190,12 +199,8 @@ expublic int tm_tpcommit(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    /* for tx.h we might want early return here as it is logged... 
-     just do tms_unlock_entry(p_tl); and that's it... and return
-     */
-    
     /* Drive - it will auto-rollback if needed... */
-    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL, tmflags)))
     {
         atmi_xa_set_error_msg(p_ub, ret, NDRX_XA_ERSN_RMCOMMITFAIL, 
                 "Transaction did not complete fully");
@@ -213,7 +218,7 @@ out:
         tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
 
         /* Call internal version of abort */
-        if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
+        if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL, 0L)))
         {
             atmi_xa_override_error(p_ub, ret);
             ret=EXFAIL;
@@ -579,7 +584,7 @@ expublic int tm_aborttrans(UBFH *p_ub)
     
     /* Switch transaction to aborting (if not already) */
     tms_log_stage(p_tl, XA_TX_STAGE_ABORTING);
-    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, tmrmid)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_ROLLBACK, tmrmid, 0L)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMERR, 
                 "Failed to abort transaction");
@@ -697,7 +702,7 @@ expublic int tm_committrans(UBFH *p_ub)
     /* init xai for tl... */
     XA_TX_COPY((&xai), p_tl);
     
-    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL)))
+    if (EXSUCCEED!=(ret=tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL, 0L)))
     {
         atmi_xa_set_error_fmt(p_ub, ret, NDRX_XA_ERSN_RMCOMMITFAIL, 
                 "Failed to commit transaction!");

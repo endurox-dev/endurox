@@ -258,7 +258,7 @@ expublic int background_loop(void)
                 /* If we have transaction in background, then do something with it
                  * The master_op does not matter, as we ignore the error code.
                  */
-                tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL);
+                tm_drive(&xai, p_tl, XA_OP_COMMIT, EXFAIL, 0L);
             }
             else
             {

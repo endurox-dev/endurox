@@ -18,7 +18,7 @@
 #define TX_H
 #define TX_H_VERSION 0 /* current version of this header file */
 
-#include <tx.h>
+#include <ndrx_config.h>
 
 /*
 * A value of -1 in formatID means that the XID is null.
@@ -54,27 +54,17 @@ typedef struct tx_info_t TXINFO;
 /*
 * Declarations of routines by which Applications call TMs:
 */
-#ifdef __STDC__
-extern int tx_begin(void);
-extern int tx_close(void);
-extern int tx_commit(void);
-extern int tx_info(TXINFO *);
-extern int tx_open(void);
-extern int tx_rollback(void);
-extern int tx_set_commit_return(COMMIT_RETURN);
-extern int tx_set_transaction_control(TRANSACTION_CONTROL);
-extern int tx_set_transaction_timeout(TRANSACTION_TIMEOUT);
-#else /* ifndef __STDC__ */
-extern int tx_begin();
-extern int tx_close();
-extern int tx_commit();
-extern int tx_info();
-extern int tx_open();
-extern int tx_rollback();
-extern int tx_set_commit_return();
-extern int tx_set_transaction_control();
-extern int tx_set_transaction_timeout();
-#endif /* ifndef __STDC__ */
+
+extern NDRX_API int tx_begin(void);
+extern NDRX_API int tx_close(void);
+extern NDRX_API int tx_commit(void);
+extern NDRX_API int tx_info(TXINFO *);
+extern NDRX_API int tx_open(void);
+extern NDRX_API int tx_rollback(void);
+extern NDRX_API int tx_set_commit_return(COMMIT_RETURN);
+extern NDRX_API int tx_set_transaction_control(TRANSACTION_CONTROL);
+extern NDRX_API int tx_set_transaction_timeout(TRANSACTION_TIMEOUT);
+
 /*
 * tx_*() return codes (transaction manager reports to application)
 */
