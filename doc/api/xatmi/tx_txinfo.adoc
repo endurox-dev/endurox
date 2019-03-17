@@ -1,0 +1,95 @@
+TX_TXINFO(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tx_info - Return transaction information
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_info(TXINFO *info);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function returns current transaction status information. This includes current
+control settings, timeout active XID. Information is returned in following
+structure
+
+--------------------------------------------------------------------------------
+
+struct tx_info_t {
+    XID xid;
+    COMMIT_RETURN when_return;
+    TRANSACTION_CONTROL transaction_control;
+    TRANSACTION_TIMEOUT transaction_timeout;
+    TRANSACTION_STATE transaction_state;
+};
+typedef struct tx_info_t TXINFO;
+
+--------------------------------------------------------------------------------
+
+Field 'xid' is returned only in case if there is active transaction. If there
+is no transaction, then empty *xid* is returned (xid.formatID set to -1).
+
+'transaction_state' may contain following values:
+
+- *TX_ACTIVE* transaction is active.
+
+- *TX_TIMEOUT_ROLLBACK_ONLY* transaction for current control thread is active,
+but transaction manager is not aware of transaction, thus it is assumed that
+there was timeout and transaction was rolled back.
+
+-  *TX_ROLLBACK_ONLY* transaction in current control thread is marked as rollback
+only.
+
+Field 'when_return' returns either *TX_COMMIT_COMPLETED* or *TX_COMMIT_DECISION_LOGGED*,
+set by *tx_set_commit_return(3)*.
+
+Field 'transaction_control' returns either *TX_UNCHAINED* or *TX_CHAINED* set by
+*tx_set_transaction_control(3)*.
+
+Field 'transaction_timeout' returns current timeout setting in seconds applied by
+*tx_set_transaction_timeout(3)*.
+
+
+RETURN VALUE
+------------
+On success, and if there is transaction started, then *tx_info()* return *1*,
+if there is no local transaction, *0* is returned. Nn error, error code is returned.
+
+ERRORS
+------
+
+*TX_PROTOCOL_ERROR* The function was called in an improper context 
+(for example, the caller has not yet called tx_open(3)).
+
+*TX_FAIL* Transaction manager (*tmsrv(8)*) failed to return transaction information.
+For exact information, see either process and/or transaction manager logs
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_begin(3)* *tpcommit(3)* *tx_rollback(3)* *tx_info(3)* *tx_close(3)*
+*tx_set_transaction_timeout(3)* *tx_set_transaction_control(3)*
+*tx_set_commit_return(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

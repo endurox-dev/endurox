@@ -1,18 +1,18 @@
-TPOPEN(3)
-=========
+TX_OPEN(3)
+==========
 :doctype: manpage
 
 
 NAME
 ----
-tpopen - Open XA sub-system, connect to XA resource manager
+tx_open - Open XA sub-system, connect from XA resource manager
 
 
 SYNOPSIS
 --------
-#include <atmi.h>
+#include <tx.h>
 
-int tpopen (void);
+int tx_open(void);
 
 For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
 
@@ -33,39 +33,32 @@ then you can use environment variable override functionality, see *ex_envover(5)
 and *ndrxconfig.xml(5)*. XA connection strings for Enduro/X drivers are stored 
 into *NDRX_XA_OPEN_STR* and *NDRX_XA_CLOSE_STR* variables. Enduro/X will try 
 to init XA sub-system  as soon as possible (i.e. load drivers, etc.). 
-If you want to delay this till actual *tpopen()*, 
-then you may set *NDRX_XA_LAZY_INIT* to 1. 
+If to delay initial XA drivers loading till actual *tx_open(3)* call, 
+then environment variable *NDRX_XA_LAZY_INIT* should be set to 1. 
 
 This function at lowest level, basically calls XA switches *xa_open_entry()* 
 function with *NDRX_XA_OPEN_STR* string.
 
-If *tpopen()* was already call and XA is initialized, then function will succeed,
+If *tx_open(3)* was already called and XA is initialized, then function will succeed,
  and no error will be generated.
+
+TX API is base on TP API. This function is based on *tpclose(3)* and it is possible
+to mix these two API kinds.
+
 
 RETURN VALUE
 ------------
-On success, *tpopen()* return zero; on error, -1 is returned, with 
-*tperrno* set to indicate the error.
-
+On success, *tx_close()* return *TX_OK*; on error, error code is returned
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message 
-with debug info from last function call.
 
-*TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more 
-info from last call.
-
-*TPESYSTEM* System failure occurred during serving. See logs i.e. 
-user log, or debugs for more info. This could also be a 
-problem with dynamical driver loading.
-
-*TPEOS* System failure occurred during serving. See logs i.e. user log, 
-or debugs for more info.
+*TX_FAIL* Failed to open XA resource (cannot load Enduro/X XA driver, cannot
+load resource manager driver or resource manager returned
 
 EXAMPLE
 -------
-See *atmitest/test021_xafull/atmiclt21.c* for sample code.
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
 
 BUGS
 ----
@@ -73,7 +66,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpcommit(3)* *tpopen(3)* *tpclose(3)* *tpsuspend(3)* *tpresume(3)*
+*tx_close(3)* *tpopen(3)* *tx_open(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)*
 
 COPYING
 -------

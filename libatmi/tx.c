@@ -86,6 +86,7 @@ exprivate int tx_map_error1(const char *dbg, int tpret, int allow_error)
         case TPEPROTO:
             ret = TX_PROTOCOL_ERROR;
             break;
+        case TPESVCFAIL:
         case TPESVCERR:
         case TPETIME:
             if (allow_error)
@@ -226,7 +227,14 @@ expublic int tx_info(TXINFO * txinfo)
     txinfo->transaction_timeout = G_atmi_tls->tx_transaction_timeout;
     txinfo->when_return = G_atmi_tls->tx_commit_return;
     
-    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
+    /* if TX is not open */
+    
+    if (!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
+    {
+        NDRX_LOG(log_warn, "XA interface is no topen!");
+        ret = TX_PROTOCOL_ERROR;
+    }
+    else if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         txinfo->xid.formatID = EXFAIL;
         goto out;
@@ -265,7 +273,7 @@ expublic int tx_info(TXINFO * txinfo)
                 else
                 {
                     /* return the error if */
-                    ret = tx_map_error1(__func__, EXFAIL, EXFALSE);
+                    ret = TX_FAIL;
                 }
                 goto out;
             } /* if transaction not found.. */
