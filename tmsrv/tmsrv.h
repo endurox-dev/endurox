@@ -122,7 +122,7 @@ extern int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl);
 extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
 
 extern int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op,
-                        short rmid);
+                        short rmid, long flags);
 
 /* Prepare API */
 extern int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);

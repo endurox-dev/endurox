@@ -885,7 +885,6 @@ expublic int ndrx_tpcommit(long flags)
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
     int do_abort = EXFALSE;
-    long tmflags = 0;
     XA_API_ENTRY(EXTRUE); /* already does ATMI_TLS_ENTRY; */
     
     NDRX_LOG(log_debug, "%s enter", __func__);
@@ -969,12 +968,12 @@ expublic int ndrx_tpcommit(long flags)
         }
     }
     
-    NDRX_LOG(log_debug, "About to call TM");
+    NDRX_LOG(log_debug, "About to call TM flags=%ld", flags);
     /* OK, we should call the server, request for transaction...  */
     
     /* TODO: pass flags to call struct! */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPCOMMIT, EXFALSE, EXFAIL, 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, flags)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPCOMMIT);
@@ -1060,7 +1059,7 @@ expublic int ndrx_tpabort(long flags)
     NDRX_LOG(log_debug, "About to call TM");
     /* OK, we should call the server, request for transaction...  */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, EXFALSE, EXFAIL, 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPBEGIN);
@@ -1398,7 +1397,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         NDRX_LOG(log_info, "RM not aware of this transaction");
         
         /* register new tx branch/rm */
-        if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMREGISTER, EXFALSE, EXFAIL, p_xai)))
+        if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMREGISTER, 
+                EXFALSE, EXFAIL, p_xai, 0L)))
         {
             NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                         ATMI_XA_TPBEGIN);   

@@ -168,8 +168,15 @@ expublic int tx_close(void)
 expublic int tx_commit(void)
 {
     int ret, ret2;
+    long flags = 0;
+    ATMI_TLS_ENTRY;
     
-    ret = tpcommit(0L);
+    if (TX_COMMIT_DECISION_LOGGED==G_atmi_tls->tx_commit_return)
+    {
+        flags|=TPTXCOMMITDLOG;
+    }
+    
+    ret = tpcommit(flags);
     
     ret = tx_map_error1(__func__, ret, EXFALSE);
     
@@ -240,7 +247,7 @@ expublic int tx_info(TXINFO * txinfo)
         {
             /* check with TM, what actually status we have? */
             if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_STATUS, EXFALSE, EXFAIL, 
-                G_atmi_tls->G_atmi_xa_curtx.txinfo)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L)))
             {
                 int tperr = tperrno;
                 NDRX_LOG(log_error, "Tran info failed with: %d", tperr);
