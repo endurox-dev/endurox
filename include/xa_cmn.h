@@ -122,10 +122,10 @@ extern "C" {
     X->tmsrvid = 0;\
     X->tmknownrms[0] = EXEOS;
     
-    
+/* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!! */
 #define TMTXFLAGS_DYNAMIC_REG      0x00000001  /**< TX initiator uses dyanmic reg */
 #define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered       */
-#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged      */
+#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged        */
     
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1
@@ -319,7 +319,7 @@ extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags);
 
 extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
-                    atmi_xa_tx_info_t *p_xai);
+                    atmi_xa_tx_info_t *p_xai, long flags);
 extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub);
 

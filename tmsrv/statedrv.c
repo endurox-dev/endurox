@@ -64,10 +64,11 @@
  * Do one try for transaciton processing using state machine defined in atmilib
  * @param p_xai - xa info structure
  * @param p_tl - transaction log
+ * @param [in] flags shared tran system and tp flags
  * @return TPreturn code.
  */
 expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op,
-                        short rmid)
+                        short rmid, long flags)
 {
     int ret = EXSUCCEED;
     int i;
@@ -80,7 +81,9 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     int try=0;
     int was_retry;
     int is_tx_finished = EXFALSE;
-    NDRX_LOG(log_info, "tm_drive() enter from xid=[%s]", p_xai->tmxid);
+    
+    NDRX_LOG(log_info, "tm_drive() enter from xid=[%s] flags=%ld", 
+            p_xai->tmxid, flags);
     do
     {
         short new_txstage = 0;
@@ -274,14 +277,12 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             again = EXTRUE;
         }
         
-#if 0
         /* if switched to committing & requested descision logged, then return */
-        if (flags &  && XA_TX_STAGE_COMMITTING == descr->txstage)
+        if ( (flags &  flags) && XA_TX_STAGE_COMMITTING == descr->txstage)
         {
             NDRX_LOG(log_info, "Decision logged for commit return");
             break;
         }
-#endif
         
         if (was_retry)
         {

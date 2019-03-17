@@ -723,7 +723,7 @@ exprivate void tx_tout_check_th(void *ptr)
                  * - meanwhile foreground calls commit()
                  * This can be reached with per transaction locking...
                  */
-                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL);
+                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L);
             }
         }
         LL_DELETE(tx_list,el);
