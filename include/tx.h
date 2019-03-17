@@ -19,6 +19,7 @@
 #define TX_H_VERSION 0 /* current version of this header file */
 
 #include <ndrx_config.h>
+#include <xa.h>
 
 /*
 * A value of -1 in formatID means that the XID is null.

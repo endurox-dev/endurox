@@ -76,6 +76,8 @@ exprivate int tx_map_error1(const char *dbg, int tpret, int allow_error)
         tperr = tperrno;
     }
     
+    NDRX_LOG(log_debug, "tpret=%d tperr=%d", tpret, tperr);
+    
     switch (tperr)
     {
         case 0:
@@ -315,11 +317,15 @@ expublic int tx_open(void)
     return ret;
 }
 
+/**
+ * Rollback transaction
+ * @return TX_* errors
+ */
 expublic int tx_rollback(void)
 {
     int ret, ret2;
     
-    ret = tpcommit(0L);
+    ret = tpabort(0L);
     
     ret = tx_map_error1(__func__, ret, EXFALSE);
     
@@ -327,7 +333,7 @@ expublic int tx_rollback(void)
     
     if (TX_CHAINED==G_atmi_tls->tx_transaction_control)
     {
-        if (TX_PROTOCOL_ERROR == ret ||  TX_FAIL==ret)
+        if (TX_PROTOCOL_ERROR == ret || TX_FAIL==ret)
             
         {
             NDRX_LOG(log_error, "Fatal error cannot chain tx");
@@ -370,7 +376,7 @@ expublic int tx_set_commit_return(COMMIT_RETURN cr)
         goto out;
     }
     
-    if (TX_COMMIT_DECISION_LOGGED!=cr ||
+    if (TX_COMMIT_DECISION_LOGGED!=cr &&
             TX_COMMIT_COMPLETED!=cr)
     {
         NDRX_LOG(log_error, "Invalid value: commit return %ld", (long)cr);
@@ -403,7 +409,7 @@ expublic int tx_set_transaction_control(TRANSACTION_CONTROL tc)
         goto out;
     }
     
-    if (TX_UNCHAINED!=tc ||
+    if (TX_UNCHAINED!=tc &&
             TX_CHAINED!=tc)    
     {
         NDRX_LOG(log_error, "Invalid value: transaction control %ld", (long)tc);
