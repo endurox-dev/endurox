@@ -262,10 +262,16 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char *p;
     char tmp[PATH_MAX];
     
-    config->default_respawn = 1; /* we want respawn by default! */
-    
-    config->default_rssmax = EXFAIL; /** Disabled */
-    config->default_vszmax = EXFAIL; /** Disabled */
+    if (!config->ctl_had_defaults)
+    {
+        config->default_respawn = 1; /* we want respawn by default! */
+
+        config->default_rssmax = EXFAIL; /** Disabled */
+        config->default_vszmax = EXFAIL; /** Disabled */
+     
+        /* next time reuse what ever we have */
+        config->ctl_had_defaults = EXTRUE;
+    }
     
     if (NULL!=cur)
     {
@@ -1229,6 +1235,7 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         goto out;
     }
 
+    config->ctl_had_defaults = EXFALSE;
     /* Loop over root elements */
     do
     {
