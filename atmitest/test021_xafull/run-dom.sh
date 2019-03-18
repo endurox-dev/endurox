@@ -369,6 +369,13 @@ if [[ $RET -ne 0 ]]; then
     go_out $RET
 fi
 
+CNT=`grep 'TXAPI LOGGED' RM2/committed/* | wc | awk '{print $1}'`
+
+if [ $CNT -ne 300 ]; then
+    echo "TXAPI LOGGED 300 not found: $CNT"
+    go_out -1
+fi
+
 ################################################################################
 # Test that pings works...
 ################################################################################
