@@ -57,7 +57,7 @@ add_executable (atmiclt21-105 atmiclt21-105.c)
 add_executable (atmiclt21-try atmiclt21-try.c)
 add_executable (atmiclt21-startfail atmiclt21-startfail.c)
 add_executable (atmiclt21-tpconvert atmiclt21-tpconvert.c)
-add_executable (atmiclt21tx atmiclt21tx)
+add_executable (atmiclt21tx atmiclt21tx.c)
 
 # Conversations
 add_executable (convsv21 convsv21.c ../../libatmisrv/rawmain_integra.c)
