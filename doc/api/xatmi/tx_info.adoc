@@ -1,4 +1,4 @@
-TX_TXINFO(3)
+TX_INFO(3)
 ============
 :doctype: manpage
 
