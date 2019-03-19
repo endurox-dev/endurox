@@ -61,7 +61,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrx_main(3)*
+*ndrx_main(3)* *_tmstartserver(3)*
 
 COPYING
 -------

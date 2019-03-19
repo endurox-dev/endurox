@@ -72,6 +72,7 @@ add_library (atmisrvnomain SHARED
                 pollextension.c
                 standard.c
                 oatmisrv.c
+                nomain.c
    	    )
 # Integration library
 add_library (atmisrvinteg SHARED

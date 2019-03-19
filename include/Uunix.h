@@ -1,7 +1,7 @@
 /**
- * @brief Simple static main library
+ * @brief Added for compatiblity
  *
- * @file rawmain.c
+ * @file Uunix.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,38 +30,27 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <ndrstandard.h>
+
+#ifndef UUNIX_H
+#define	UUNIX_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*---------------------------Includes-----------------------------------*/
 /*---------------------------Externs------------------------------------*/
-extern int ndrx_main(int argc, char** argv);
-extern int tpsvrinit(int argc, char **argv);
-extern void tpsvrdone(void);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-
-/** server init call */
-expublic int (*G_tpsvrinit__)(int, char **) = tpsvrinit;
-
-/** system call for server init */
-expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
-
-/** call for server done */
-expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * Forward the call to NDRX
- */
-int main(int argc, char** argv) {
-
-    return ndrx_main(argc, argv);
+#ifdef	__cplusplus
 }
+#endif
+
+#endif	/* UUNIX_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
