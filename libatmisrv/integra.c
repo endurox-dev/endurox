@@ -49,59 +49,53 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-int (*G_tpsvrinit__)(int, char **) = NULL;
-void (*G_tpsvrdone__)(void) = NULL;
-/* No jump please (default for integra) */
+
+/** server init call */
+expublic int (*G_tpsvrinit__)(int, char **) = NULL;
+
+/** system call for server init */
+expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
+
+/** call for server done */
+expublic void (*G_tpsvrdone__)(void) = NULL;
+
+/** No jump please (default for integra) */
 expublic long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; 
+
+/** Server boot structure */
+expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do initialization
+ * System init, advertise by table
+ * @param argc CLI arg count
+ * @param argv CLI values
+ * @return EXSUCCEED/EXFAIL
  */
-int tpsvrinit(int argc, char **argv)
+exprivate int tpsrvinit_sys(int argc, char** argv)
 {
     int ret = EXSUCCEED;
-    NDRX_LOG(log_debug, "tpsvrinit() called");
-    if (NULL!=G_tpsvrinit__)
+    struct tmdsptchtbl_t *tab = ndrx_G_tmsvrargs->svctab;
+    
+    while (NULL!=tab->svcnm)
     {
-        if (EXSUCCEED!=(ret = G_tpsvrinit__(argc, argv)))
+        if (EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
         {
-            NDRX_LOG(log_error, "G_tpsvrinit__() failed");
-            goto out;
+            if (tperrno!=TPEMATCH)
+            {
+                NDRX_LOG(log_error, "Failed to advertise svcnm [%s] funcnm [%s] ptr=%p: %s",
+                        tab->svcnm, tab->funcnm, tab->p_func, tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
         }
-        else
-        {
-            NDRX_LOG(log_debug, "G_tpsvrinit__() ok");
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_error, "G_tpsvrinit__ == NULL => FAIL!");
-        EXFAIL_OUT(ret);
+        
+        tab++;
     }
     
 out:
     return ret;
 }
-
-/**
- * Do de-initialization
- */
-void tpsvrdone(void)
-{
-    NDRX_LOG(log_debug, "tpsvrdone() called");
-    
-    if (NULL!=G_tpsvrdone__)
-    {
-        G_tpsvrdone__();
-    }
-    else
-    {
-        NDRX_LOG(log_warn, "G_tpsvrdone__ null, not calling");
-    }
-}
-
 
 /**
  * Forward the call to NDRX
@@ -114,6 +108,38 @@ int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **),
     G_tpsvrdone__ =  in_tpsvrdone;
     G_libatmisrv_flags = flags;
 
+    return ndrx_main(argc, argv);
+}
+
+/**
+ * Boot the Enduro/X 
+ * Feature #397
+ * @param argc command line argument count
+ * @param argv command line values
+ * @param tmsvrargs server startup info
+ * @return EXSUCCEED/EXFAIL
+ */
+int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
+{
+    int ret = EXSUCCEED;
+    
+    if (NULL==tmsvrargs)
+    {
+        NDRX_LOG(log_error, "Error ! tmsvrargs is NULL!");
+        userlog("Error ! tmsvrargs is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ndrx_G_tmsvrargs = tmsvrargs;
+    G_libatmisrv_flags = 0;
+    
+    G_tpsvrinit__ =  tmsvrargs->p_tpsvrinit;
+    /* use system init locally provided */
+    ndrx_G_tpsvrinit_sys = tpsrvinit_sys;
+    G_tpsvrdone__ =  tmsvrargs->p_tpsvrdone;
+    
+    
+out:
     return ndrx_main(argc, argv);
 }
 

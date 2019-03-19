@@ -1642,7 +1642,7 @@ out:
  * @param flags 
  * @return 
  */
-extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
+extern int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -1683,7 +1683,7 @@ out:
  * @param flags
  * @return 
  */
-extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, 
+extern int tpexportex(ndrx_expbufctl_t *bufctl, 
         char *ibuf, long ilen, char *ostr, long *olen, long flags)
 {
     int ret=EXSUCCEED;
@@ -1726,9 +1726,31 @@ out:
  * @param envname env variable name
  * @return env variable value or NULL if not found
  */
-extern NDRX_API char *tuxgetenv(char *envname)
+expublic char *tuxgetenv(char *envname)
 {
     return getenv(envname);
+}
+
+/**
+ * Added for compatibility
+ * @param flags ?
+ * @return always FAIL
+ */
+expublic int tperrordetail(long flags)
+{
+    /* STUB function */
+    return EXFAIL;
+}
+
+/**
+ * Basically the same as tpstrerror - it always returns the last err msg
+ * @param err ATMI error
+ * @param flags RFU
+ * @return error detail string
+ */
+expublic char * tpstrerrordetail(int err, long flags)
+{
+    return tpstrerror(err);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

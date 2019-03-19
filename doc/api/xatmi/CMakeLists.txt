@@ -130,6 +130,7 @@ set(MAN3_NAMES
         tx_set_commit_return
         tx_set_transaction_control
         tx_set_transaction_timeout
+        _tmstartserver
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
