@@ -78,20 +78,25 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
     int ret = EXSUCCEED;
     struct tmdsptchtbl_t *tab = ndrx_G_tmsvrargs->svctab;
     
-    while (NULL!=tab->svcnm)
+    if (NULL!=tab)
     {
-        if (EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
+        while (NULL!=tab->svcnm)
         {
-            if (tperrno!=TPEMATCH)
+            if (EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
             {
-                NDRX_LOG(log_error, "Failed to advertise svcnm [%s] funcnm [%s] ptr=%p: %s",
-                        tab->svcnm, tab->funcnm, tab->p_func, tpstrerror(tperrno));
-                EXFAIL_OUT(ret);
+                if (tperrno!=TPEMATCH)
+                {
+                    NDRX_LOG(log_error, "Failed to advertise svcnm "
+                        "[%s] funcnm [%s] ptr=%p: %s",
+                        tab->svcnm, tab->funcnm, tab->p_func,
+                        tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
             }
-        }
         
-        tab++;
-    }
+            tab++;
+        }
+    } /* if there is tab */
     
 out:
     return ret;
