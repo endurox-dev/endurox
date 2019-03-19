@@ -192,9 +192,21 @@ restart:
 
         if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
         {
-            NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_02]: %s",
-                    tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
+            /* try to receive something if we got limit... */
+            if (TPELIMIT==tperrno)
+            {
+                if (EXSUCCEED!=handle_replies(&p_ub, 0))
+                {
+                    NDRX_LOG(log_error, "handle_replies() failed");
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to call [SVC38_02]: %s",
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
         }
         M_calls_made++;
         if (0==i%10)
