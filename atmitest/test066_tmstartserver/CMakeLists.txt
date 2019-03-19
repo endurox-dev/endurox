@@ -1,7 +1,7 @@
 ##
-## @brief Makefile for header file for distribution
+## @brief Test for _tmstartserver() - server
 ##
-## @file CMakeLists.txt
+## @file atmisv66.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,59 +31,37 @@
 ## -----------------------------------------------------------------------------
 ##
 
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required(VERSION 2.8)
 
-install (FILES
-    userlog.h
-    fml.h
-    fml32.h
-    ubf.h
-    ubfutil.h
-    atmi.h
-    xatmi.h
-    pscript.h
-    exparson.h
-    ndebug.h
-    ndebugcmn.h
-    ndrstandard.h
-    nstd_shm.h
-    nstdutil.h
-    nstd_tls.h
-    thlock.h
-    exhash.h
-    cconfig.h 
-    inicfg.h
-    nerror.h
-    xa.h
-    ndrx_config.h
-    sys_unix.h
-    sys_primitives.h
-    sys_mqueue.h 
-    sys_emqueue.h
-    sys_svq.h    
-    oubf.h
-    odebug.h
-    ondebug.h
-    onerror.h
-    oatmisrv_integra.h
-    oatmi.h
-    oatmisrv.h
-    Exfields.h
-    Excompat.h
-    tpadm.h
-    evt_mib.h
-    view_cmn.h
-    exdb.h
-    nstopwatch.h
-    exthpool.h
-    Usysfl32.h
-    tmenv.h
-    tx.h
-    Uunix.h
-    DESTINATION include)
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
-install (FILES
-    Exfields
-    Excompat
-    DESTINATION share/endurox/ubftab)
+
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
+
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+
+############################# Test - executables ###############################
+add_executable (atmi.sv66 atmisv66.c)
+add_executable (atmiclt66 atmiclt66.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv66 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt66 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+
+set_target_properties(atmi.sv66 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt66 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################
+
 # vim: set ts=4 sw=4 et smartindent:
