@@ -345,7 +345,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     memset(&G_tmqueue_cfg, 0, sizeof(G_tmqueue_cfg));
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "q:m:s:p:t:")) != -1)
+    while ((c = getopt(argc, argv, "q:m:s:p:t:f:")) != -1)
     {
         NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
         switch(c)
