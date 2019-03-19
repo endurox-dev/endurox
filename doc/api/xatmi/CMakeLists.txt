@@ -123,7 +123,7 @@ set(MAN3_NAMES
         tuxgetenv
         tx_begin
         tx_close
-        tx_txinfo
+        tx_info
         tx_commit
         tx_rollback
         tx_open
