@@ -947,8 +947,14 @@ expublic int ndrx_tpcommit(long flags)
     if (do_abort)
     {
         ret = ndrx_tpabort(0); /*<<<<<<<<<< RETURN!!! */
-        if (EXSUCCEED==ret)
+        
+        /* in this case the tmsrv might already rolled back
+         * thus assume that transaction is aborted.
+         */
+        if (EXSUCCEED==ret || TPEPROTO==tperrno)
         {
+            /* clear current error */
+            ndrx_TPunset_error();
             ndrx_TPset_error_msg(TPEABORT,  "tpcommit: Transaction was marked for "
                     "abort and aborted now!");
             ret=EXFAIL;
