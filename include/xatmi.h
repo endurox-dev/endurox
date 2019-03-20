@@ -17,6 +17,7 @@ extern "C" {
 #include <stdint.h>
 #include <sys/types.h>
 #include <ubf.h>
+#include <xa.h>
 /*---------------------------Macros-------------------------------------*/
     
 /*
@@ -637,6 +638,39 @@ struct tpmyid_t
 
 typedef struct tpmyid_t TPMYID;
 
+
+/* Integration mode API, used by libatmisrvinteg.so: */
+
+/**
+ * Advertise table. For tmsvrargs_t must be terminated with NULL/0 entries
+ */
+struct tmdsptchtbl_t
+{
+    char *svcnm;                    /**< Service name                         */
+    char *funcnm;                   /**< Function name                        */
+    void (*p_func)(TPSVCINFO *);    /**< Function to run on service invocation*/
+    long rfu1;                      /**< Reserved 1                           */
+    long rfu2;                      /**< Reserved 2                           */
+};
+
+/**
+ * Server startup structure for compatibility mode
+ * Used by usable by _tmstartserver()
+ */
+struct tmsvrargs_t
+{
+  struct xa_switch_t * sw;          /**< XA Switch                            */
+  struct tmdsptchtbl_t *svctab;     /**< Service dispatch table               */
+  long rfu1;                        /**< Reserved for future use              */
+  int (*p_tpsvrinit)(int, char **); /**< Server init function                 */
+  void (*p_tpsvrdone)(void);        /**< callback to server done              */
+  void * rfu2;                      /**< Reserved for future use              */
+  void * rfu3;                      /**< Reserved for future use              */
+  void * rfu4;                      /**< Reserved for future use              */
+  void * rfu5;                      /**< Reserved for future use              */
+  void * rfu6;                      /**< Reserved for future use              */
+};
+
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API int (*G_tpsvrinit__)(int, char **);
 extern NDRX_API void (*G_tpsvrdone__)(void);
@@ -677,6 +711,8 @@ extern NDRX_API int tpopen (void);
 extern NDRX_API int tpclose (void);
 extern NDRX_API int tpgetlev (void);
 extern NDRX_API char * tpstrerror (int err);
+extern NDRX_API int tperrordetail(long flags);
+extern NDRX_API char * tpstrerrordetail(int err, long flags);
 extern NDRX_API char * tpecodestr(int err);
 extern NDRX_API char * tpsrvgetctxdata (void); 
 extern NDRX_API char * tpsrvgetctxdata2 (char *p_buf, long *p_len);
@@ -738,6 +774,8 @@ extern NDRX_API int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL 
 extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnomain */
 extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
             void (*in_tpsvrdone)(void), long flags);
+
+extern NDRX_API int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs);
 
 /* Contexting/switching TLS for all libs */
 extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);

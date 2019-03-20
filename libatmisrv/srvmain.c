@@ -644,13 +644,23 @@ int ndrx_main(int argc, char** argv)
     /*
      * Initialize services
      */
-    if (EXSUCCEED!=tpsvrinit(argc, argv))
+    if (NULL!=G_tpsvrinit__ && EXSUCCEED!=G_tpsvrinit__(argc, argv))
     {
         NDRX_LOG(log_error, "tpsvrinit() fail");
         userlog("tpsvrinit() fail");
         EXFAIL_OUT(ret);
     }
-
+    
+    /*
+     * Initialize services, system..
+     */
+    if (NULL!=ndrx_G_tpsvrinit_sys && EXSUCCEED!=ndrx_G_tpsvrinit_sys(argc, argv))
+    {
+        NDRX_LOG(log_error, "tpsvrinit_sys() fail");
+        userlog("tpsvrinit_sys() fail");
+        EXFAIL_OUT(ret);
+    }
+    
     /*
      * Push the services out!
      */
@@ -708,7 +718,10 @@ int ndrx_main(int argc, char** argv)
     
 out:
     /* finish up. */
-    tpsvrdone();
+    if (NULL!=G_tpsvrdone__)
+    {
+        G_tpsvrdone__();
+    }
 
     /*
      * un-initalize polling sub-system
