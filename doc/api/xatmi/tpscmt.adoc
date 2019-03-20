@@ -1,0 +1,67 @@
+TPSCMT(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tpscmt - Set commit return mode
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpscmt(long flags);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Change the logic how *tpcommit(3)* shall behave. Setting affects current
+transaction and is used during the phase when commit is performed. The setting
+value is stored in thread local stored for particular control thread. The value
+is shared with tx.h API.
+
+Parameter 'when_return' accepts following values:
+
+- *TP_CMT_LOGGED* which indicates that *tx_commit(3)* will return
+immediately after all transaction managers participating in transaction have
+been prepared for commit. And the actual commit is left for background thread
+at transaction manager *tmsrv(8)* server process. The *tmsrv(8)* run these
+jobs periodically at *-s* seconds interval, configured at server's command line
+parameter.
+
+- *TP_CMT_COMPLETE* the default value which means that *tpcommit(3)* will
+return only after full commit have been performed.
+
+RETURN VALUE
+------------
+On success, *tpinit()* returns 0. On error, -1 is returned, with *tperrno* set 
+to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* Invalid 'flag' value, must be either *TP_CMT_LOGGED* or *TP_CMT_COMPLETE*.
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_set_commit_return(3)* *tpcommit(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -373,6 +373,30 @@ out:
 }
 
 /**
+ * Set commit return (ATMI API, see tx_set_commit_return() for tx api)
+ * @param flags TP_CMT_LOGGED or TP_CMT_COMPLETE
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpscmt(long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret=ndrx_tpscmt(flags);
+    
+out:
+    return ret;
+}
+
+
+/**
  * Distributed transaction begin
  * @return SUCCEED/FAIL
  */
@@ -1751,6 +1775,27 @@ expublic int tperrordetail(long flags)
 expublic char * tpstrerrordetail(int err, long flags)
 {
     return tpstrerror(err);
+}
+
+/**
+ * User thread app init
+ * Added for compatibility
+ * @param tpthrinfo
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpappthrinit(TPINIT *tpinfo)
+{
+    return tpinit(tpinfo);
+}
+
+/**
+ * User thread terminate
+ * Added for compatibility
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpappthrterm(void)
+{
+    return tpterm();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

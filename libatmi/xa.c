@@ -735,6 +735,9 @@ out:
 /*                          ATMI API                                          */
 /******************************************************************************/
 
+
+
+
 /**
  * Begin the global transaction.
  * - We should check the context already, maybe we run in transaction already?
@@ -880,6 +883,45 @@ out:
     return ret;
 }
 
+
+/**
+ * Set when to return from commit. Either when transaction is completed
+ * or when transaction is logged in persisted device for further background
+ * completion.
+ * The default is TP_CMT_COMPLETE.
+ * @param flags TP_CMT_LOGGED or TP_CMT_COMPLETE
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_tpscmt(long flags)
+{
+    int ret = EXSUCCEED;
+    
+    if (TP_CMT_LOGGED!=flags &&
+            TP_CMT_COMPLETE!=flags)
+    {
+        NDRX_LOG(log_error, "Invalid value: commit return %ld", (long)flags);
+        ndrx_TPset_error_fmt(TPEINVAL,  "Invalid value: commit return %ld", 
+                (long)flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TP_CMT_COMPLETE==flags)
+    {
+        G_atmi_tls->tx_commit_return = TX_COMMIT_COMPLETED;
+    }
+    
+    if (TP_CMT_LOGGED==flags)
+    {
+        G_atmi_tls->tx_commit_return = TX_COMMIT_DECISION_LOGGED;
+    }
+    
+    NDRX_LOG(log_info, "Commit return set to %ld (TX)", 
+            (long)G_atmi_tls->tx_commit_return);
+    
+out:
+    return ret;
+}
+
 /**
  * API implementation of tpcommit
  *
@@ -908,6 +950,12 @@ expublic int ndrx_tpcommit(long flags)
         NDRX_LOG(log_error, "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
         ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
         EXFAIL_OUT(ret);
+    }
+    
+    /* flag is shared with tx: */
+    if (TX_COMMIT_DECISION_LOGGED == G_atmi_tls->tx_commit_return)
+    {
+        flags|=TPTXCOMMITDLOG;
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
