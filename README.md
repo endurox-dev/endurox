@@ -428,6 +428,8 @@ processing listings across all supported OSes.
 
 - Version 6.0.19 released on 15/03/2019 (development) Bug #394, Feature #393
 
+- Version 6.0.21 released on 19/03/2019 (development) Feature #397
+
 
 # Build configurations
 

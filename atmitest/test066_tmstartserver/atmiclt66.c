@@ -1,7 +1,7 @@
 /**
- * @brief Simple static main library
+ * @brief Test for _tmstartserver() - client
  *
- * @file rawmain.c
+ * @file atmiclt66.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -34,34 +34,78 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <math.h>
+
+#include <atmi.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
 #include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test66.h"
 /*---------------------------Externs------------------------------------*/
-extern int ndrx_main(int argc, char** argv);
-extern int tpsvrinit(int argc, char **argv);
-extern void tpsvrdone(void);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-
-/** server init call */
-expublic int (*G_tpsvrinit__)(int, char **) = tpsvrinit;
-
-/** system call for server init */
-expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
-
-/** call for server done */
-expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
-
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * Forward the call to NDRX
+/**
+ * Do the test call to the server
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
-    return ndrx_main(argc, argv);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
+    
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXFAIL == tpcall("SYSADV1", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "SYSADV1 failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED_2, 0, BFLD_STRING))
+    {
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }    
+
+    if (EXFAIL == tpcall("SYSADV2", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "SYSADV2 failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpterm();
+    fprintf(stderr, "Exit with %d\n", ret);
+
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
+

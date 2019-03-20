@@ -1,7 +1,9 @@
 /**
- * @brief Simple static main library
+ * @brief No main entry, user calls ndrx_main(argc, argv)
+ *  this ensure storage for the ndrx_G_tpsvrinit/ndrx_G_tpsvrinit_sys
+ *  and ndrx_G_tpsvrdone.
  *
- * @file rawmain.c
+ * @file nomain.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -55,13 +57,5 @@ expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-/*
- * Forward the call to NDRX
- */
-int main(int argc, char** argv) {
-
-    return ndrx_main(argc, argv);
-}
 
 /* vim: set ts=4 sw=4 et smartindent: */
