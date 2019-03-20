@@ -244,7 +244,8 @@ expublic int tx_info(TXINFO * txinfo)
         ret = 1; /* we are in transaction */
         txinfo->transaction_state = TX_ACTIVE;
         /* copy off xid */
-        atmi_xa_deserialize_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid, &G_atmi_tls->xid);
+        atmi_xa_deserialize_xid((unsigned char *)G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid,
+            &G_atmi_tls->xid);
         
         /* check are we marked for rollback? */
         
@@ -268,7 +269,7 @@ expublic int tx_info(TXINFO * txinfo)
                     txinfo->transaction_state = TX_TIMEOUT_ROLLBACK_ONLY;
                     
                     /* switch tran state? */
-                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags !=TMTXFLAGS_IS_ABORT_ONLY;
+                    G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |=TMTXFLAGS_IS_ABORT_ONLY;
                 }
                 else
                 {
