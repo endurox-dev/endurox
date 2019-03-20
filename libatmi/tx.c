@@ -176,7 +176,7 @@ expublic int tx_commit(void)
     
     if (TX_COMMIT_DECISION_LOGGED==G_atmi_tls->tx_commit_return)
     {
-        flags|=TPTXCOMMITDLOG;
+        flags|=TP_CMT_LOGGED;
     }
     
     ret = tpcommit(flags);

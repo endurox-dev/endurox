@@ -23,7 +23,11 @@ DESCRIPTION
 Function does commit the global transaction. Transaction must not be marked as 
 abort only (e.g. in case if *tpcall()* failed). After issuing the command, 
 *tmsrv(8)* will do the commit procedure, prepare phase first, log the 
-results of prepare to persistent storage, and then do the actual commit.
+results of prepare to persistent storage, and then do the actual commit. The
+commit control value value is set either by *tpscmt(3)* or *tx_set_commit_return(3)*
+additionally it can be overriden by the *TPTXCOMMITDLOG* flag.
+
+By default tpcommit performs full commit.
 
 *Valid flags*
 
@@ -79,7 +83,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpbegin(3)* *tpabort(3)* *tpopen(3)*
+*tpbegin(3)* *tpabort(3)* *tpopen(3)* *tpscmt(3)*
 
 COPYING
 -------
