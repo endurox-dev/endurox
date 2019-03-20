@@ -507,12 +507,6 @@ extern "C" {
 #define	CTXT_PRIV_NOCHK	0x00010		/**< Do not check signatures */
 #define	CTXT_PRIV_IGN	0x00020		/**< Ignore existing context */
 
-/* Tuxedo compatiblity/emulation - no use currently: */
-
-/* Flags to tpscmt() - TP_COMMIT_CONTROL values */
-#define TP_CMT_LOGGED   0x01       /**< RFU: return after commit decision is logged    */
-#define TP_CMT_COMPLETE 0x02       /**< RFU: return after commit has completed     */
-
 /* tpchkauth() return values */
 #define TPNOAUTH         0        /**< RFU: no authentication          */
 #define TPSYSAUTH        1        /**< RFU: system authentication          */
@@ -535,7 +529,11 @@ extern "C" {
  * Flag for transaction processing i.e. 
  * tpbegin/tpcommit/tpclose/tpopen/tpabort/tpsuspend/tpresume 
  */
-#define TPTXCOMMITDLOG             0x00000004  /**< Commit decision logged    */
+#define TPTXCOMMITDLOG             0x00000004  /**< Commit decision logged     */
+
+/* Flags to tpscmt() - TP_COMMIT_CONTROL values, for compatibility: */
+#define TP_CMT_LOGGED              0x04  /**< return after commit has logged   */
+#define TP_CMT_COMPLETE            0x08  /**< return after commit has completed*/
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -659,21 +657,23 @@ struct tmdsptchtbl_t
  */
 struct tmsvrargs_t
 {
-  struct xa_switch_t * sw;          /**< XA Switch                            */
+  struct xa_switch_t * xa_switch;   /**< XA Switch                            */
   struct tmdsptchtbl_t *svctab;     /**< Service dispatch table               */
-  long rfu1;                        /**< Reserved for future use              */
+  long flags;                       /**< Reserved for future use              */
   int (*p_tpsvrinit)(int, char **); /**< Server init function                 */
   void (*p_tpsvrdone)(void);        /**< callback to server done              */
-  void * rfu2;                      /**< Reserved for future use              */
-  void * rfu3;                      /**< Reserved for future use              */
-  void * rfu4;                      /**< Reserved for future use              */
-  void * rfu5;                      /**< Reserved for future use              */
-  void * rfu6;                      /**< Reserved for future use              */
+  void * reserved0;                 /**< Reserved for future use              */
+  void * reserved1;                 /**< Reserved for future use              */
+  void * reserved2;                 /**< Reserved for future use              */
+  void * reserved3;                 /**< Reserved for future use              */
+  void * reserved4;                 /**< Reserved for future use              */
 };
 
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API int (*G_tpsvrinit__)(int, char **);
 extern NDRX_API void (*G_tpsvrdone__)(void);
+/** For compatibility: */
+extern NDRX_API int _tmbuilt_with_thread_option;
 /*---------------------------Prototypes---------------------------------*/
 
 /*
@@ -702,6 +702,7 @@ extern NDRX_API int tpunadvertise(char *svcname);
  */
 extern NDRX_API void tpforward (char *svc, char *data, long len, long flags);
 extern NDRX_API int tpabort (long flags);
+extern NDRX_API int tpscmt(long flags);
 extern NDRX_API int tpbegin (unsigned long timeout, long flags);
 extern NDRX_API int tpcommit (long flags);
 extern NDRX_API int tpconvert (char *str, char *bin, long flags);
@@ -726,6 +727,7 @@ extern NDRX_API int tppost (char *eventname, char *data, long len, long flags);
 extern NDRX_API int * _exget_tperrno_addr (void);
 extern NDRX_API long * _exget_tpurcode_addr (void);
 extern NDRX_API int tpinit(TPINIT *tpinfo);
+extern NDRX_API int tpappthrinit(TPINIT *tpinfo);
 extern NDRX_API int tpchkauth(void);
 extern NDRX_API void (*tpsetunsol (void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags);
 extern NDRX_API int tpnotify(CLIENTID *clientid, char *data, long len, long flags);
@@ -752,6 +754,7 @@ extern NDRX_API int tpext_delperiodcb(void);
 extern NDRX_API int tpext_addb4pollcb(int (*p_b4pollcb)(void));
 extern NDRX_API int tpext_delb4pollcb(void);
 extern NDRX_API int tpterm (void);
+extern NDRX_API int tpappthrterm(void);
 extern NDRX_API int tpgetsrvid (void);
 
 /* JSON<->UBF buffer support */

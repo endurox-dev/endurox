@@ -131,6 +131,7 @@ set(MAN3_NAMES
         tx_set_transaction_control
         tx_set_transaction_timeout
         _tmstartserver
+        tpscmt
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 
