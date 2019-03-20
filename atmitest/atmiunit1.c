@@ -505,6 +505,13 @@ Ensure(test063_cpmrange)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test066_tmstartserver)
+{
+    int ret;
+    ret=system_dbg("test066_tmstartserver/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -609,6 +616,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test062_memlimits);
 #endif
     add_test(suite, test063_cpmrange);
+    add_test(suite, test066_tmstartserver);
     
     return suite;
 }

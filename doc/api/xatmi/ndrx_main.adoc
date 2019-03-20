@@ -49,7 +49,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrx_main_integra(3)*
+*ndrx_main_integra(3)* *_tmstartserver(3)*
 
 COPYING
 -------

@@ -1,0 +1,94 @@
+_TMSTARTSERVER(3)
+=================
+:doctype: manpage
+
+
+NAME
+----
+_tmstartserver - Start Enduro/X server process in compatibility mode
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int _tmstartserver( int 'argc', char **'argv', struct tmsvrargs_t *'tmsvrargs');
+
+
+Link with '-latmisrvnomain -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used to start Enduro/X XATMI server process. The startup routine
+takes standard command line arguments and additions structure 'tmsvrargs' filled
+with *tpsvrinit(3)* and *tpsvrdone(3)* callbacks, it also contains the XA Switch
+object and array filled with services to be advertised after the user's *tpsvrinit(3)*
+is done. Any services which user have advertised by *tpadvertise(3)* and which 
+have also exported to 'tmsvrargs.svctab', will be ignored (i.e. *TPEMATCH* error
+will be ignored). The 'tmsvrargs.svctab' table must be terminated with row for
+which 'svcnm' is set to NULL.
+
+
+The *struct tmsvrargs_t* structure is following:
+
+--------------------------------------------------------------------------------
+
+struct tmsvrargs_t
+{
+  struct xa_switch_t * sw;          /**< XA Switch                            */
+  struct tmdsptchtbl_t *svctab;     /**< Service dispatch table               */
+  long rfu1;                        /**< Reserved for future use              */
+  int (*p_tpsvrinit)(int, char **); /**< Server init function                 */
+  void (*p_tpsvrdone)(void);        /**< callback to server done              */
+  void * rfu2;                      /**< Reserved for future use              */
+  void * rfu3;                      /**< Reserved for future use              */
+  void * rfu4;                      /**< Reserved for future use              */
+  void * rfu5;                      /**< Reserved for future use              */
+  void * rfu6;                      /**< Reserved for future use              */
+};
+
+--------------------------------------------------------------------------------
+
+
+The *struct tmsvrargs_t* structure is following:
+
+--------------------------------------------------------------------------------
+
+struct tmdsptchtbl_t
+{
+    char *svcnm;                    /**< Service name                         */
+    char *funcnm;                   /**< Function name                        */
+    void (*p_func)(TPSVCINFO *);    /**< Function to run on service invocation*/
+    long rfu1;                      /**< Reserved 1                           */
+    long rfu2;                      /**< Reserved 2                           */
+};
+
+--------------------------------------------------------------------------------
+
+RFU bits should be initialized to 0 or NULL.
+
+RETURN VALUE
+------------
+On success, *_tmstartserver()* returns 0; on error, -1 is 
+returned, with *tperrno* set to indicate the error.
+
+ERRORS
+------
+For error records see NDRX and/or ULOG records.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+EXAMPLE
+-------
+See *atmitest/test004_basicevent/atmisv4_1ST.c* for sample code.
+
+SEE ALSO
+--------
+*ndrx_main(3)* *ndrx_main_integra(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
