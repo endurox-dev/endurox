@@ -53,6 +53,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
 export NDRX_TOUT=90
+export NDRX_LIBEXT="so"
 
 #
 # Domain 1 - here client will live
@@ -75,6 +76,7 @@ function set_dom1 {
     export NDRX_XA_RMLIB=libndrxxaqdisk.so
 if [ "$(uname)" == "Darwin" ]; then
     export NDRX_XA_RMLIB=libndrxxaqdisk.dylib
+    export NDRX_LIBEXT="dylib"
 fi
     export NDRX_XA_LAZY_INIT=0
 }
@@ -126,6 +128,9 @@ rm *dom*.log
 # Where to store TM logs
 rm -rf ./RM1
 mkdir RM1
+
+rm -rf ./RM2
+mkdir RM2
 
 # Where to store Q messages (QSPACE1)
 rm -rf ./QSPACE1
