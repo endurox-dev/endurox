@@ -392,17 +392,24 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=(ret=tpscmt(TP_CMT_LOGGED)))
+    if (TP_CMT_COMPLETE!=(ret=tpscmt(TP_CMT_LOGGED)))
     {
-        NDRX_LOG(log_error, "TESTERROR: tpscmt() fail: %s", 
-                tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: tpscmt() fail %d: %s", 
+                ret, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=(ret=tpscmt(TP_CMT_COMPLETE)))
+    if (TP_CMT_LOGGED!=(ret=tpscmt(TP_CMT_COMPLETE)))
     {
-        NDRX_LOG(log_error, "TESTERROR: tpscmt() fail: %s", 
-                tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: tpscmt() fail %d: %s", 
+                ret, tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TP_CMT_COMPLETE!=(ret=tpscmt(TP_CMT_COMPLETE)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpscmt() fail %d: %s", 
+                ret, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
      
@@ -433,7 +440,7 @@ int main(int argc, char** argv) {
     delta2 = ndrx_stopwatch_get_delta(&w);
     
     NDRX_LOG(log_warn, "Logged %ld msec vs %ld msec completed", delta1, delta2);
-    /*  might not be true as commit takes very short operation here in test..*/
+    /*  might not be true as commit takes very short operation here in test..
     if (delta2 <= delta1)
     {
         NDRX_LOG(log_error, "TESTERROR: Logged is slower or equal to full "
@@ -441,6 +448,7 @@ int main(int argc, char** argv) {
         ret=EXFAIL;
         goto out;
     }
+    */
     
     /***************************************************************************/
     NDRX_LOG(log_debug, "Testing chained ops...");

@@ -39,7 +39,8 @@ return only after full commit have been performed.
 
 RETURN VALUE
 ------------
-On success, *tpinit()* returns 0. On error, -1 is returned, with *tperrno* set 
+On success, *tpscmt()* return either *TP_CMT_LOGGED* or *TP_CMT_COMPLETE* depending
+on previous setting. On error, -1 is returned, with *tperrno* set 
 to indicate the error.
 
 ERRORS

@@ -905,6 +905,15 @@ expublic int ndrx_tpscmt(long flags)
         EXFAIL_OUT(ret);
     }
     
+    if (TX_COMMIT_COMPLETED==G_atmi_tls->tx_commit_return)
+    {
+        ret = TP_CMT_COMPLETE;
+    }
+    else
+    {
+        ret = TP_CMT_LOGGED;
+    }
+    
     if (TP_CMT_COMPLETE==flags)
     {
         G_atmi_tls->tx_commit_return = TX_COMMIT_COMPLETED;
@@ -915,8 +924,8 @@ expublic int ndrx_tpscmt(long flags)
         G_atmi_tls->tx_commit_return = TX_COMMIT_DECISION_LOGGED;
     }
     
-    NDRX_LOG(log_info, "Commit return set to %ld (TX)", 
-            (long)G_atmi_tls->tx_commit_return);
+    NDRX_LOG(log_info, "Commit return set to %ld (TX) ret %d", 
+            (long)G_atmi_tls->tx_commit_return, ret);
     
 out:
     return ret;
