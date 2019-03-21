@@ -282,11 +282,11 @@ expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval,
 {
     if (!M_is_open)
     {
-        NDRX_LOG(log_error, "TESTERROR!!! xa_complete_entry() - XA not open!");
+        NDRX_LOG(log_error, "xa_complete_entry() - XA not open!");
         return XAER_RMERR;
     }
     
-    NDRX_LOG(log_error, "TESTERROR!!! xa_complete_entry() - not using!!");
+    NDRX_LOG(log_error, "xa_complete_entry() - not using!!");
     return XAER_RMERR;
 }
 

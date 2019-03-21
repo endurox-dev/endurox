@@ -82,6 +82,11 @@ void FAILRND (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD!");
     }
+    
+    if (!tpgetlev())
+    {
+        NDRX_LOG(log_error, "TESTERROR: invocation must be transactional!");
+    }
 
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -115,6 +120,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
+    
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpopen: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
 
     if (EXSUCCEED!=tpadvertise("SVCOK", SVCOK))
     {
@@ -143,5 +154,10 @@ out:
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
+    
+    if (EXSUCCEED!=tpclose())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to tpclose: %s", tpstrerror(tperrno));
+    }
 }
 /* vim: set ts=4 sw=4 et smartindent: */
