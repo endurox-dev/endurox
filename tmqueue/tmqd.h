@@ -56,8 +56,15 @@ extern int G_forward_req_shutdown;    /* Is shutdown request? */
 #define THREADPOOL_DFLT         10   /* Default number of threads spawned   */
 #define TXTOUT_DFLT             30   /* Default XA transaction timeout      */
 
-#define TMQ_MODE_FIFO           'F' /* fifo q mode */
-#define TMQ_MODE_LIFO           'L' /* lifo q mode */
+#define TMQ_MODE_FIFO           'F' /**< fifo q mode                        */
+#define TMQ_MODE_LIFO           'L' /**< lifo q mode                        */
+
+/* Autoq flags: */
+#define TMQ_AUTOQ_MANUAL        'N' /**< Not automatic Q                    */
+#define TMQ_AUTOQ_AUTO          'Y' /**< Automatic                          */
+#define TMQ_AUTOQ_AUTOTX        'T' /**< Automatic, transactional           */
+#define TMQ_AUTOQ_ALLFLAGS      "NYT" /**< list of all flasg                */
+#define TMQ_AUTOQ_ISAUTO(X) ((TMQ_AUTOQ_AUTO==X) || (TMQ_AUTOQ_AUTOTX==X))
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -134,7 +141,7 @@ struct tmq_qhash
 };
 
 /**
- * Qeueue configuration.
+ * Queue configuration.
  * There will be special Q: "@DEFAULT" which contains the settings for default
  * (unknown queue)
  */
@@ -142,19 +149,18 @@ typedef struct tmq_qconfig tmq_qconfig_t;
 struct tmq_qconfig
 {
     char qname[TMQNAMELEN+1];
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /**< optional service name to call */
+    char autoq;      /**< Is this automatic queue                       */
+    int tries;       /**< Retry count for sending                       */
+    int waitinit;    /**< How long to wait for initial sending (sec)    */
+    int waitretry;   /**< How long to wait between retries (sec)        */
+    int waitretryinc;/**< Wait increment between retries (sec)          */
+    int waitretrymax;/**< Max wait  (sec)                               */
+    int memonly;    /**< is queue memory only                           */
+    char mode;      /**< queue mode fifo/lifo                           */
+    int txtout;     /**< transaction timeout (override if > -1)         */
     
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1]; /* optional service name to call */
-    
-    int autoq; /* Is this automatic queue */
-    int tries; /* Retry count for sending */
-    int waitinit; /* How long to wait for initial sending (sec) */
-    int waitretry; /* How long to wait between retries (sec) */
-    int waitretryinc; /* Wait increment between retries (sec) */
-    int waitretrymax; /* Max wait  (sec) */
-    int memonly; /* is queue memory only */
-    char mode; /* queue mode fifo/lifo*/
-    
-    EX_hash_handle hh; /* makes this structure hashable        */
+    EX_hash_handle hh; /**< makes this structure hashable               */
 };
 
 /**

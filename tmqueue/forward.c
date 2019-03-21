@@ -201,6 +201,7 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     char *fn = "thread_process_forward";
     int tperr;
     union tmq_block cmd_block;
+    int tout;
     
     if (!M_is_xa_open)
     {
@@ -215,7 +216,6 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
             M_is_xa_open = EXTRUE;
         }
     }
-
     
     tmq_msgid_serialize(msg->hdr.msgid, msgid_str); 
 
@@ -229,6 +229,17 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         /* might happen if we reconfigure on the fly. */
         NDRX_LOG(log_error, "Failed to get qconf for [%s]", msg->hdr.qname);
         EXFAIL_OUT(ret);
+    }
+    
+    if (qconf.txtout > EXFAIL)
+    {
+        tout = qconf.txtout;
+        NDRX_LOG(log_info, "txtout set to %d sec", tout);
+    }
+    else
+    {
+        tout = G_tmqueue_cfg.dflt_timeout;
+        NDRX_LOG(log_info, "txtout defaulted to %d sec", tout);
     }
     
     /* Alloc the buffer of the message type according to size (use prepare incoming?)
@@ -246,7 +257,22 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
         NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
         EXFAIL_OUT(ret);
     }
-
+    
+    if (TMQ_AUTOQ_AUTOTX==qconf.autoq)
+    {
+        NDRX_LOG(log_debug, "Service invocation shall be performed in "
+                "transactional mode...");
+        
+        if (EXSUCCEED!=tpbegin(tout, 0))
+        {
+            userlog("Failed to start tran: %s", tpstrerror(tperrno));
+            NDRX_LOG(log_error, "Failed to start tran!");
+            /* unlock the message */
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+            return;
+        }
+    }
+    
     /* call the service */
     NDRX_LOG(log_info, "Sending request to service: [%s]", qconf.svcnm);
     
@@ -270,14 +296,17 @@ out:
     */
 
     /* start the transaction */
-    if (EXSUCCEED!=tpbegin(G_tmqueue_cfg.dflt_timeout, 0))
+    if (!tpgetlev())
     {
-        userlog("Failed to start tran: %s", tpstrerror(tperrno));
-        NDRX_LOG(log_error, "Failed to start tran!");
-        /* unlock the message */
-        tmq_unlock_msg_by_msgid(msg->hdr.msgid);
-        
-        return;
+        if (EXSUCCEED!=tpbegin(tout, 0))
+        {
+            userlog("Failed to start tran: %s", tpstrerror(tperrno));
+            NDRX_LOG(log_error, "Failed to start tran!");
+            /* unlock the message */
+            tmq_unlock_msg_by_msgid(msg->hdr.msgid);
+
+            return;
+        }
     }
 
     /* 

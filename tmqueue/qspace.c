@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
@@ -79,6 +80,7 @@
 #define TMQ_QC_WAITRETRYMAX     "waitretrymax"
 #define TMQ_QC_MEMONLY          "memonly"
 #define TMQ_QC_MODE             "mode"
+#define TMQ_QC_TXTOUT           "txtout"    /**< transaction timeout override */
 
 #define EXHASH_FIND_STR_H2(head,findstr,out)                                     \
     EXHASH_FIND(h2,head,findstr,strlen(findstr),out)
@@ -211,12 +213,17 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     }
     else if (0==strcmp(key, TMQ_QC_AUTOQ))
     {
-        qconf->autoq = EXFALSE;
-        
-        if (value[0]=='y' || value[0]=='Y')
+        char val = toupper(value[0]);
+
+        if (NULL==strchr(TMQ_AUTOQ_ALLFLAGS, val))
         {
-            qconf->autoq = EXTRUE;
+            NDRX_LOG(log_error, "Invalid value [%c] for key [%s] (allowed: [%s])", 
+                    val, key, TMQ_AUTOQ_ALLFLAGS);
+            EXFAIL_OUT(ret);
         }
+        
+        qconf->autoq = val;
+        
     }
     else if (0==strcmp(key, TMQ_QC_WAITINIT))
     {
@@ -275,6 +282,11 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
             qconf->memonly = TRUE;
         }
         */
+    }
+    else if (0==strcmp(key, TMQ_QC_TXTOUT))
+    {   
+        /* transaction timeout */
+        qconf->txtout = atoi(value);
     }
     else if (0==strcmp(key, TMQ_QC_MODE))
     {
@@ -367,17 +379,18 @@ expublic int tmq_build_q_def(char *qname, int *p_is_defaulted, char *out_buf)
         EXFAIL_OUT(ret);
     }
     
-    sprintf(out_buf, "%s,svcnm=%s,autoq=%s,tries=%d,waitinit=%d,waitretry=%d,"
-                        "waitretryinc=%d,waitretrymax=%d,mode=%s",
+    sprintf(out_buf, "%s,svcnm=%s,autoq=%c,tries=%d,waitinit=%d,waitretry=%d,"
+                        "waitretryinc=%d,waitretrymax=%d,mode=%s,txtout=%d",
             qdef->qname, 
             qdef->svcnm, 
-            (qdef->autoq?"y":"n"),
+            qdef->autoq,
             qdef->tries,
             qdef->waitinit,
             qdef->waitretry,
             qdef->waitretryinc,
             qdef->waitretrymax,
-            qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo");
+            qdef->mode == TMQ_MODE_LIFO?"lifo":"fifo",
+            qdef->txtout);
 
 out:
     MUTEX_UNLOCK_V(M_q_lock);
@@ -576,6 +589,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
                     
             /* Try to load initial config from @ (TMQ_DEFAULT_Q) Q */
             qconf->mode = TMQ_MODE_FIFO; /* default to FIFO... */
+            qconf->txtout = EXFAIL;     /* use default */
             if (NULL!=(dflt=tmq_qconf_get(TMQ_DEFAULT_Q)))
             {
                 memcpy(qconf, dflt, sizeof(*dflt));
@@ -1412,7 +1426,7 @@ expublic fwd_qlist_t *tmq_get_qlist(int auto_only, int incl_def)
     EXHASH_ITER(hh, G_qhash, q, qtmp)
     {
         if (NULL!=(qconf=tmq_qconf_get_with_default(q->qname, NULL)) && 
-                ((auto_only && qconf->autoq) || !auto_only))
+                ((auto_only && TMQ_AUTOQ_ISAUTO(qconf->autoq)) || !auto_only))
         {
             if (NULL==(tmp = NDRX_CALLOC(1, sizeof(fwd_qlist_t))))
             {
