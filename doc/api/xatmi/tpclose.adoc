@@ -37,6 +37,8 @@ ERRORS
 Note that *tpstrerror()* returns generic error message plus custom message with 
 debug info from last function call.
 
+*TPEPROTO* Control thread is in global transaction.
+
 *TPERMERR* Resource Manager failed. The *tpstrerror()* will provide more 
 info from last call.
 
@@ -45,6 +47,7 @@ or debugs for more info. This could also be a problem with dynamical driver load
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, 
 or debugs for more info.
+
 
 EXAMPLE
 -------

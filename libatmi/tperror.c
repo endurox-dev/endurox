@@ -426,7 +426,16 @@ expublic void atmi_xa_set_error_msg(UBFH *p_ub, short error_code, short reason, 
 {
     if (!atmi_xa_is_error(p_ub))
     {
-        NDRX_LOG(log_warn, "%s: %d (%s) [%s]", __func__, error_code,
+        int lev;
+        if (TPMINVAL==error_code)
+        {
+            lev = log_debug;
+        }
+        else
+        {
+            lev = log_warn;
+        }
+        NDRX_LOG(lev, "%s: %d (%s) [%s]", __func__, error_code,
                                 ATMI_ERROR_DESCRIPTION(error_code), msg);
         
         Bchg(p_ub, TMERR_CODE, 0, (char *)&error_code, 0L);

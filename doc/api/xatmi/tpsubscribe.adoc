@@ -115,7 +115,7 @@ This function is available only for XATMI servers.
 
 RETURN VALUE
 ------------
-On success, *tpsubscribe()* return subscribtion id; on error, -1 is 
+On success, *tpsubscribe()* return subscription id; on error, -1 is 
 returned, with *tperrno* set to indicate the error.
 
 ERRORS

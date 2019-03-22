@@ -641,21 +641,36 @@ out:
     return ret;
 }
 
-
 /**
  * Generic transaction manager call
  * @param cmd - TM command
  * @param call_any - should we call any our RMID
  * @param rmid - should we call specific RM
  * @param p_xai
+ * @param [in] flags shared system flags and user transaction flags
+ *     see 
  * @return 
  */
 expublic UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid, 
-        atmi_xa_tx_info_t *p_xai)
+        atmi_xa_tx_info_t *p_xai, long flags)
 {
     UBFH *p_ub = atmi_xa_alloc_tm_call(cmd);
     
-    return atmi_xa_call_tm_generic_fb(cmd, NULL, call_any, rmid, p_xai, p_ub);
+    if (NULL!=p_ub)
+    {
+        if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&flags, 0L))
+        {
+            tpfree((char *)p_ub);
+            ndrx_TPset_error_fmt(TPESYSTEM,  
+                    "Failed to set TMTXFALGS %d:[%s]", 
+                    Berror, Bstrerror(Berror));
+            goto out;
+        }
+
+        return atmi_xa_call_tm_generic_fb(cmd, NULL, call_any, rmid, p_xai, p_ub);
+    }
+out:
+    return NULL;
 }
 
 /**

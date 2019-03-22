@@ -735,7 +735,6 @@ exprivate char * conv_long_int(struct conv_type *t, int cnv_dir, char *input_buf
 }
 
 /********************************* BFLD_CHAR ***********************************/
-/* Probably we have make experimets with tuxedo  */
 exprivate char * conv_char_short(struct conv_type *t, int cnv_dir, char *input_buf, 
 				int in_len, char *output_buf , int *out_len)
 {

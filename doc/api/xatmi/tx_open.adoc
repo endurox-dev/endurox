@@ -1,0 +1,74 @@
+TX_OPEN(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tx_open - Open XA sub-system, connect from XA resource manager
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_open(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Connect to the XA resource manager. Note that environment for process must be 
+configured, so that Enduro/X can load correct resource manager drivers. 
+See the *ex_env(5)* man page for environment variables, that must be set. 
+Basically Enduro/X will dynamically load library set in *NDRX_XA_DRIVERLIB* env 
+variable. This is the driver which provides in unified way of getting *xa_switch*. 
+As the xa_switches can be located in different Resource Managers, the second 
+library might be need to load and that is marked in *NDRX_XA_RMLIB* env variable. 
+The resource manager ID is set in *NDRX_XA_RES_ID* env variable. If your 
+application needs different resource managers or different transaction branches, 
+then you can use environment variable override functionality, see *ex_envover(5)* 
+and *ndrxconfig.xml(5)*. XA connection strings for Enduro/X drivers are stored 
+into *NDRX_XA_OPEN_STR* and *NDRX_XA_CLOSE_STR* variables. Enduro/X will try 
+to init XA sub-system  as soon as possible (i.e. load drivers, etc.). 
+If to delay initial XA drivers loading till actual *tx_open(3)* call, 
+then environment variable *NDRX_XA_LAZY_INIT* should be set to 1. 
+
+This function at lowest level, basically calls XA switches *xa_open_entry()* 
+function with *NDRX_XA_OPEN_STR* string.
+
+If *tx_open(3)* was already called and XA is initialized, then function will succeed,
+ and no error will be generated.
+
+TX API is base on TP API. This function is based on *tpclose(3)* and it is possible
+to mix these two API kinds.
+
+
+RETURN VALUE
+------------
+On success, *tx_close()* return *TX_OK*; on error, error code is returned
+
+ERRORS
+------
+
+*TX_FAIL* Failed to open XA resource (cannot load Enduro/X XA driver, cannot
+load resource manager driver or resource manager returned
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_close(3)* *tpopen(3)* *tx_open(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

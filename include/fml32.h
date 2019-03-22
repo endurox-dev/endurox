@@ -111,6 +111,7 @@ extern "C" {
 #define Fcmp32 Bcmp
 #define Fsubset32 Bsubset
 #define Fnum32 Bnum 
+#define Fneeded32 Bneeded
     
 /* VIEW related */
 #define Fvnull32 Bvnull

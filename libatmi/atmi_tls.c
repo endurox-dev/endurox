@@ -300,6 +300,11 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     /* unsol msgs */
     tls->p_unsol_handler = NULL;
     
+    /* tx related: */
+    tls->tx_commit_return = TX_COMMIT_COMPLETED;
+    tls->tx_transaction_control = TX_UNCHAINED;
+    tls->tx_transaction_timeout = 0;
+    
     pthread_mutex_init(&tls->mutex, NULL);
     
     /* set callback, when thread dies, we need to get the destructor 
