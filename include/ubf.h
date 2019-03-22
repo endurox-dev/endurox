@@ -251,6 +251,7 @@ extern NDRX_API int Bojoin(UBFH *dest, UBFH *src);
 extern NDRX_API int Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
 extern NDRX_API int Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
 extern NDRX_API BFLDOCC Bnum (UBFH * p_ub);
+extern NDRX_API long Bneeded(BFLDOCC nrfields, BFLDLEN totsize);
 
 /* VIEW related */
 extern NDRX_API int Bvnull(char *cstruct, char *cname, BFLDOCC occ, char *view);

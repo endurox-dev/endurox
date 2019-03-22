@@ -114,6 +114,7 @@ add_subdirectory (test062_memlimits)
 add_subdirectory (test063_cpmrange)
 add_subdirectory (test064_bufswitch)
 add_subdirectory (test065_tpcancel)
+add_subdirectory (test066_tmstartserver)
 
 ################################################################################
 # Master test case driver

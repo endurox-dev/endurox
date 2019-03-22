@@ -34,12 +34,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 extern int ndrx_main(int argc, char** argv);
+extern int tpsvrinit(int argc, char **argv);
+extern void tpsvrdone(void);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+
+/** server init call */
+expublic int (*G_tpsvrinit__)(int, char **) = tpsvrinit;
+
+/** system call for server init */
+expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
+
+/** call for server done */
+expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

@@ -39,7 +39,7 @@ then you may set *NDRX_XA_LAZY_INIT* to 1.
 This function at lowest level, basically calls XA switches *xa_open_entry()* 
 function with *NDRX_XA_OPEN_STR* string.
 
-If *tpopen()* was already call and XA is initialised, then function will succeed,
+If *tpopen()* was already call and XA is initialized, then function will succeed,
  and no error will be generated.
 
 RETURN VALUE

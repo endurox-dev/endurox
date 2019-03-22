@@ -173,7 +173,8 @@ extern "C" {
 #define Fcmp Bcmp
 #define Fsubset Bsubset
 #define Fnum Bnum 
-    
+#define Fneeded Bneeded
+
 /* VIEW related */
 #define Fvnull Bvnull
 #define Fvselinit Bvselinit

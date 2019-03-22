@@ -132,6 +132,7 @@ set(MAN3_NAMES
     Bnum
     Bjoin
     Bojoin
+    Bneeded
    )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

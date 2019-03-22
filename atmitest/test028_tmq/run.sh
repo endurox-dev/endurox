@@ -38,13 +38,13 @@ export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
-        # Do nothing 
-        echo > /dev/null
+    # Do nothing 
+    echo > /dev/null
 else
-        # started from parent folder
-        pushd .
-        echo "Doing cd"
-        cd $TESTNAME
+    # started from parent folder
+    pushd .
+    echo "Doing cd"
+    cd $TESTNAME
 fi;
 
 #
@@ -54,7 +54,7 @@ echo "Dynamic XA driver tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.so
 
 if [ "$(uname)" == "Darwin" ]; then
-	export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.dylib
+    export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdiskd.dylib
 fi
 
 ./run-dom.sh
@@ -72,7 +72,7 @@ echo "Static XA driver tests..."
 export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.so
 
 if [ "$(uname)" == "Darwin" ]; then
-	export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.dylib
+    export NDRX_XA_DRIVERLIB_FILENAME=libndrxxaqdisks.dylib
 fi
 
 ./run-dom.sh

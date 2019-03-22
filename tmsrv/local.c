@@ -103,7 +103,7 @@ expublic int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
     /* Call the remote TM.
      * TODO: How about error handling? 
      */
-    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMPREPARE, EXTRUE, rmid, p_xai);
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMPREPARE, EXTRUE, rmid, p_xai, 0L);
 
     if (NULL==p_ub)    
         return EXFAIL;
@@ -179,7 +179,7 @@ expublic int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
     /* Call the remote TM.
      * TODO: How about error handling? 
      */
-    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMABORT, EXTRUE, rmid, p_xai);
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMABORT, EXTRUE, rmid, p_xai, 0L);
 
     if (NULL==p_ub)    
         return EXFAIL;
@@ -256,7 +256,7 @@ expublic int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid)
     /* Call the remote TM.
      * TODO: How about error handling? 
      */
-    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMCOMMIT, EXTRUE, rmid, p_xai);
+    p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMCOMMIT, EXTRUE, rmid, p_xai, 0L);
 
     if (NULL==p_ub)    
         return EXFAIL;

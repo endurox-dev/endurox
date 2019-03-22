@@ -1,0 +1,55 @@
+TX_SET_TRANSACTION_TIMEOUT(3)
+=============================
+:doctype: manpage
+
+
+NAME
+----
+tx_set_transaction_timeout - Set timeout value for new transaction
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_set_transaction_timeout(TRANSACTION_TIMEOUT timeout);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function set timeout value for new transactions. The value is used when
+next *tx_begin(3)* is issued. The value does not affect any global transaction
+in progress. If value of 'timeout' is set to *0* then maximum timeout value
+is used for transaction. Units for 'timeout' is seconds.
+
+RETURN VALUE
+------------
+On success, *tx_set_transaction_timeout()* return *TX_OK*; on error, error code is returned
+
+ERRORS
+------
+
+*TX_EINVAL* Invalid value of 'timeout' parameter, less than 0.
+
+*TX_PROTOCOL_ERROR* Transaction manager is not open by *tx_open(3)*
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_open(3)* *tx_close(3)* *tx_begin(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)*
+*tx_set_transaction_control(3)* *tx_set_commit_return(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

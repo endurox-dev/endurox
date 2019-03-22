@@ -1,0 +1,56 @@
+TX_CLOSE(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tx_close - Close XA sub-system, disconnect from XA resource manager
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_close(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function disconnects control thread/process from XA driver. The function shall
+be called only when process have terminated global transaction. If resource
+manager was not open previously, function still succeed.
+
+TX API is base on TP API. This function is based on *tpclose(3)* and it is possible
+to mix these two API kinds.
+
+RETURN VALUE
+------------
+On success, *tx_close()* return *TX_OK*; on error, error code is returned
+
+ERRORS
+------
+
+*TX_PROTOCOL_ERROR* Process is in global transaction.
+
+*TX_ERROR* Resource manager error occurred during the close.
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_open(3)* *tpclose(3)* *tx_open(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

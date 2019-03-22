@@ -65,16 +65,15 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 
-int G_srv_id = EXFAIL; /* If we are server, then this will be server ID */
-volatile int G_is_env_loaded = 0; /* Is environment initialised */
+expublic int G_srv_id = EXFAIL; /* If we are server, then this will be server ID */
+expublic volatile int G_is_env_loaded = 0; /* Is environment initialised */
 /* NOTE: THIS BELLOW ONE IS NOT INITIALIZED FOR NDRXD! */
-atmi_lib_env_t G_atmi_env; /* ATMI library environmental configuration */
-/* List of context slots... */
-long M_contexts[MAX_CONTEXTS];
-
-MUTEX_LOCKDECL(M_env_lock);
-
+expublic atmi_lib_env_t G_atmi_env; /* ATMI library environmental configuration */
+expublic int _tmbuilt_with_thread_option;
 /*---------------------------Statics------------------------------------*/
+/* List of context slots... */
+exprivate long M_contexts[MAX_CONTEXTS];
+MUTEX_LOCKDECL(M_env_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**

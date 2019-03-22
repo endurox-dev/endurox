@@ -59,7 +59,8 @@ extern "C" {
                                         or process doesn't know that resorce is involed */
 #define ATMI_XA_PRINTTRANS          'p' /* Print transactions to admin pt       */
 #define ATMI_XA_ABORTTRANS          'r' /* Abo[r]t transaction, admin util      */
-#define ATMI_XA_COMMITTRANS          'm' /* Co[m]mit transaction, admin util     */
+#define ATMI_XA_COMMITTRANS         'm' /* Co[m]mit transaction, admin util     */
+#define ATMI_XA_STATUS              's' /* Return transaction status            */
     
 /* Register new resource handler - remote process sends us info about working under same TXN */
 #define ATMI_XA_TMREGISTER          'R' /* Register new resource under txn...   */
@@ -121,10 +122,11 @@ extern "C" {
     X->tmsrvid = 0;\
     X->tmknownrms[0] = EXEOS;
     
-    
-#define TMTXFLAGS_DYNAMIC_REG      0x00000001  /* TX initiator uses dyanmic reg */
-#define TMTXFLAGS_RMIDKNOWN        0x00000002  /* RMID already registered       */
-    
+/* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!! */
+#define TMTXFLAGS_DYNAMIC_REG      0x00000001  /**< TX initiator uses dyanmic reg */
+#define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered       */
+#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged        */
+
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1
 #define XA_OP_END                       2
@@ -317,7 +319,7 @@ extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags);
 
 extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
-                    atmi_xa_tx_info_t *p_xai);
+                    atmi_xa_tx_info_t *p_xai, long flags);
 extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub);
 

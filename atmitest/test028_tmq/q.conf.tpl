@@ -14,5 +14,5 @@ REPLYQ
 OKQ1,svcnm=SVCOK,autoq=y,tries=5,waitinit=1,waitretry=2,waitretryinc=2,waitretrymax=10,memonly=n
 # Bad service
 BADQ1,svcnm=SVCFAIL,autoq=y,tries=3,waitinit=1,waitretry=2,waitretryinc=2,waitretrymax=3,memonly=n
-# Random Bad
-RFQ,svcnm=FAILRND,autoq=y,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1,memonly=n
+# Random Bad, transactional
+RFQ,svcnm=FAILRND,autoq=T,tries=10,waitinit=1,waitretry=1,waitretryinc=0,waitretrymax=1,memonly=n

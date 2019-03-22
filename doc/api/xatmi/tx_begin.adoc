@@ -1,0 +1,70 @@
+TX_BEGIN(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+tx_begin - Start the global transaction
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_begin(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function starts global transaction for given thread. The resource managers prior
+must be open by tx_open(3). The transaction shall be terminated with tx_commit(3)
+or tx_rollback(3).
+
+When transaction is started, it uses settings applied by following functions:
+
+- tx_set_transaction_timeout(3) - transaction timeout, applied is on per thread bases,
+default is *0* - maximum timeout.
+
+TX API is base on TP API. This function is based on *tpbegin(3)* and it is possible
+to mix these two API kinds.
+
+RETURN VALUE
+------------
+On success, *tx_begin()* return *TX_OK*; on error, error code is returned
+
+
+ERRORS
+------
+
+*TX_PROTOCOL_ERROR* Function is called in improper context, either there was
+no call to 'tx_open()' or thread is already is global transaction.
+
+*TX_ERROR* Error occurred at transaction manager. The exact cause shall be checked
+in transaction manager log files. At this error, control thread is no more in
+global transaction.
+
+*TX_FAIL* System error occurred during starting the transaction. The exact cause
+shall be checked in current process and/or transaction manager log files. At this
+error, control thread is no more in global transaction.
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_open(3)* *tpbegin(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)* *tx_close(3)*
+*tx_set_transaction_timeout(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

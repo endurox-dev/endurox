@@ -10,7 +10,7 @@ q.conf - persistent, Transactional Message Queue (TMQ) configuration file
 
 SYNOPSIS
 --------
-<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretryinc=<RETRY_WAIT_INC>,waitretrymax=<WAIT_MAX>,mode=<MODE>
+<QUEUE_NAME>,svcnm=<SERVICE_NAME>,autoq=<AUTOMATIC_Q>,tries=<TRIES>,waitinit=<INIT_WAIT>,waitretry=<RETRY_WAIT>,waitretryinc=<RETRY_WAIT_INC>,waitretrymax=<WAIT_MAX>,mode=<MODE>[,txtout=<TXTOUT>]
 
 
 DESCRIPTION
@@ -35,7 +35,8 @@ DEBUG CONFIGURATION FILE SYNTAX
 	Service name to forward the message to. This is used for automatic queues. For manual queues
 	you may put some dummy value into. 
 *AUTOMATIC_Q*::
-	'y' - automatic queue. 'n' - not automatic.
+	*Y* (*y*) - automatic queue. *T* (*t*) - automatic and call is performed in 
+    global transaction. *N*(*n*) - not automatic.
 *TRIES*::
 	Number of tires to send the message to 'SERVICE_NAME' service. I.e retry will be done in case
 	if call returns the error. Parameter is used by automatic queues.
@@ -49,7 +50,10 @@ DEBUG CONFIGURATION FILE SYNTAX
 *WAIT_MAX*::
 	Maximum number of seconds to wait after taking in account 'RETRY_WAIT_INC'.
 *MODE*::
-	Queue mode, can be 'fifo' or 'lifo'. This setting affects 'tpdequeue()'.
+	Queue mode, can be *fifo* or *lifo*. This setting affects 'tpdequeue()'.
+*TXTOUT*::
+    Transaction timeout, either global (target service call is made in within global
+    transaction) if using *T* for 'autoq' or local timeout for transaction.
 
 
 EXAMPLE

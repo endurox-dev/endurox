@@ -36,5 +36,6 @@ cmake_minimum_required(VERSION 2.8)
 add_subdirectory (oracle)
 add_subdirectory (db2)
 add_subdirectory (wsmq)
+add_subdirectory (dum)
 
 # vim: set ts=4 sw=4 et smartindent:

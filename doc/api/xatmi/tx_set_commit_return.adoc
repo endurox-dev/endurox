@@ -1,0 +1,68 @@
+TX_SET_COMMIT_RETURN(3)
+=======================
+:doctype: manpage
+
+
+NAME
+----
+tx_set_commit_return - Set commit return mode for TX API
+
+
+SYNOPSIS
+--------
+#include <tx.h>
+
+int tx_set_commit_return(COMMIT_RETURN when_return);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Change the logic how *tx_commit(3)* shall behave. Setting affects current
+transaction and is used during the phase when commit is performed. The setting
+value is stored in thread local stored for particular control thread.
+
+Parameter 'when_return' accepts following values:
+
+- *TX_COMMIT_DECISION_LOGGED* which indicates that *tx_commit(3)* will return
+immediately after all transaction managers participating in transaction have
+been prepared for commit. And the actual commit is left for background thread
+at transaction manager *tmsrv(8)* server process. The *tmsrv(8)* run these
+jobs periodically at *-s* seconds interval, configured at server's command line
+parameter.
+
+- *TX_COMMIT_COMPLETED* the default value which means that *tx_commit(3)* will
+return only after full commit have been performed.
+
+
+RETURN VALUE
+------------
+On success, *tx_set_commit_return()* return *TX_OK*; on error, error code is returned
+
+ERRORS
+------
+
+*TX_EINVAL* The value of 'when_return' is not *TX_COMMIT_DECISION_LOGGED* nor
+*TX_COMMIT_COMPLETED*.
+
+*TX_PROTOCOL_ERROR* Transaction manager is not open by *tx_open(3)*
+
+EXAMPLE
+-------
+See *atmitest/test021_xafull/atmiclt21tx.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tx_open(3)* *tx_close(3)* *tx_begin(3)* *tx_commit(3)* *tx_rollback(3)* *tx_info(3)*
+*tx_set_transaction_timeout(3)* *tx_set_transaction_control(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
