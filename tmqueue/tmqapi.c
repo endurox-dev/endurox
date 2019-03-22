@@ -675,7 +675,7 @@ expublic int tmq_mqlm(UBFH *p_ub, int cd)
 {
     int ret = EXSUCCEED;
     long revent;
-    tmq_memmsg_t *el, *tmp, *list;
+    tmq_memmsg_t *el = NULL, *tmp = NULL, *list = NULL;
     short nodeid = tpgetnodeid();
     short srvid = tpgetsrvid();
     char *fn = "tmq_mqlm";
@@ -743,13 +743,17 @@ expublic int tmq_mqlm(UBFH *p_ub, int cd)
             NDRX_LOG(log_debug,"sent ok");
         }
         
+        
+    }
+    
+out:
+    /* delete the list if any */
+    DL_FOREACH_SAFE(list,el,tmp)
+    {
         DL_DELETE(list, el);
         NDRX_FREE((char *)el->msg);
         NDRX_FREE((char *)el);
     }
-    
-out:
-
     return ret;
 }
 
