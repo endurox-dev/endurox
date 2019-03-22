@@ -77,6 +77,10 @@ install (FILES
     nstopwatch.h
     exthpool.h
     exstring.h
+    Usysfl32.h
+    tmenv.h
+    tx.h
+    Uunix.h
     DESTINATION include)
 
 install (FILES

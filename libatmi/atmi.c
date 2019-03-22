@@ -381,6 +381,30 @@ out:
 }
 
 /**
+ * Set commit return (ATMI API, see tx_set_commit_return() for tx api)
+ * @param flags TP_CMT_LOGGED or TP_CMT_COMPLETE
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpscmt(long flags)
+{
+    int ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret=ndrx_tpscmt(flags);
+    
+out:
+    return ret;
+}
+
+
+/**
  * Distributed transaction begin
  * @return SUCCEED/FAIL
  */
@@ -977,7 +1001,8 @@ out:
 /**
  * Enqueue message
  */
-expublic int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char *data, long len, long flags)
+expublic int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, 
+        char *data, long len, long flags)
 {   
     long ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -1651,7 +1676,7 @@ out:
  * @param flags 
  * @return 
  */
-extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
+extern int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
 {
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
@@ -1692,7 +1717,7 @@ out:
  * @param flags
  * @return 
  */
-extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, 
+extern int tpexportex(ndrx_expbufctl_t *bufctl, 
         char *ibuf, long ilen, char *ostr, long *olen, long flags)
 {
     int ret=EXSUCCEED;
@@ -1728,4 +1753,59 @@ extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl,
 out:
     return ret;
 }
+
+/**
+ * Read environment variable.
+ * On unix it is the same as getenv()
+ * @param envname env variable name
+ * @return env variable value or NULL if not found
+ */
+expublic char *tuxgetenv(char *envname)
+{
+    return getenv(envname);
+}
+
+/**
+ * Added for compatibility
+ * @param flags ?
+ * @return always FAIL
+ */
+expublic int tperrordetail(long flags)
+{
+    /* STUB function */
+    return EXFAIL;
+}
+
+/**
+ * Basically the same as tpstrerror - it always returns the last err msg
+ * @param err ATMI error
+ * @param flags RFU
+ * @return error detail string
+ */
+expublic char * tpstrerrordetail(int err, long flags)
+{
+    return tpstrerror(err);
+}
+
+/**
+ * User thread app init
+ * Added for compatibility
+ * @param tpthrinfo
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpappthrinit(TPINIT *tpinfo)
+{
+    return tpinit(tpinfo);
+}
+
+/**
+ * User thread terminate
+ * Added for compatibility
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpappthrterm(void)
+{
+    return tpterm();
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -357,6 +357,26 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"105"* ]]; then
 fi
 
 ################################################################################
+# XA API TESTS
+################################################################################
+
+echo "TX API Test"
+(./atmiclt21tx 2>&1) > ./atmiclt-dom1-tx.log
+RET=$?
+
+if [[ $RET -ne 0 ]]; then
+    echo "TX API Test fail"
+    go_out $RET
+fi
+
+CNT=`grep 'TXAPI LOGGED' RM2/committed/* | wc | awk '{print $1}'`
+
+if [ $CNT -ne 300 ]; then
+    echo "TXAPI LOGGED 300 not found: $CNT"
+    go_out -1
+fi
+
+################################################################################
 # Test that pings works...
 ################################################################################
 PING_DOM1=`grep 'PING OK 0' TM1*.log`
@@ -398,6 +418,7 @@ fi
 ################################################################################
 # Normal tests
 ################################################################################
+
 echo "Testing journal recovery..."
 cp ./test_data/* ./RM1
 xadmin restart -s tmsrv

@@ -50,6 +50,10 @@ extern NDRX_API "C" {
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
+
+/* system call for server init */
+extern int (*ndrx_G_tpsvrinit_sys)(int, char **);
+
 /*---------------------------Macros-------------------------------------*/
 #define MIN_SVC_LIST_LEN        30
 #define SVN_LIST_REALLOC        15

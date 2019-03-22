@@ -426,6 +426,12 @@ processing listings across all supported OSes.
 
 - Version 6.0.17 released on 02/01/2019 (development) Feature #382, Feature #367, Support #303, Feature #271
 
+- Version 6.0.19 released on 15/03/2019 (development) Bug #394, Feature #393
+
+- Version 6.0.21 released on 19/03/2019 (development) Feature #397
+
+- Version 6.0.23 released on 19/03/2019 (development) Additional work for Feature #397
+
 
 # Build configurations
 

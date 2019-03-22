@@ -735,6 +735,9 @@ out:
 /*                          ATMI API                                          */
 /******************************************************************************/
 
+
+
+
 /**
  * Begin the global transaction.
  * - We should check the context already, maybe we run in transaction already?
@@ -821,7 +824,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     
     if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
     {
-         NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
+        NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
         ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to read TM response");
         EXFAIL_OUT(ret);
     }
@@ -868,8 +871,63 @@ out:
     /* TODO: We need remove curren transaction from HASH! */
     if (NULL!=p_ub)
     {
-        tpfree((char *)p_ub);
+        
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
     }
+    return ret;
+}
+
+
+/**
+ * Set when to return from commit. Either when transaction is completed
+ * or when transaction is logged in persisted device for further background
+ * completion.
+ * The default is TP_CMT_COMPLETE.
+ * @param flags TP_CMT_LOGGED or TP_CMT_COMPLETE
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_tpscmt(long flags)
+{
+    int ret = EXSUCCEED;
+    
+    if (TP_CMT_LOGGED!=flags &&
+            TP_CMT_COMPLETE!=flags)
+    {
+        NDRX_LOG(log_error, "Invalid value: commit return %ld", (long)flags);
+        ndrx_TPset_error_fmt(TPEINVAL,  "Invalid value: commit return %ld", 
+                (long)flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TX_COMMIT_COMPLETED==G_atmi_tls->tx_commit_return)
+    {
+        ret = TP_CMT_COMPLETE;
+    }
+    else
+    {
+        ret = TP_CMT_LOGGED;
+    }
+    
+    if (TP_CMT_COMPLETE==flags)
+    {
+        G_atmi_tls->tx_commit_return = TX_COMMIT_COMPLETED;
+    }
+    
+    if (TP_CMT_LOGGED==flags)
+    {
+        G_atmi_tls->tx_commit_return = TX_COMMIT_DECISION_LOGGED;
+    }
+    
+    NDRX_LOG(log_info, "Commit return set to %ld (TX) ret %d", 
+            (long)G_atmi_tls->tx_commit_return, ret);
+    
+out:
     return ret;
 }
 
@@ -877,7 +935,7 @@ out:
  * API implementation of tpcommit
  *
  * @param timeout
- * @param flags
+ * @param flags TPTXCOMMITDLOG - return when prepared
  * @return 
  */
 expublic int ndrx_tpcommit(long flags)
@@ -896,11 +954,17 @@ expublic int ndrx_tpcommit(long flags)
         EXFAIL_OUT(ret);
     }
 
-    if (0!=flags)
+    if (0!=flags && !(flags & TPTXCOMMITDLOG))
     {
-        NDRX_LOG(log_error, "tpcommit: flags != 0");
-        ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0");
+        NDRX_LOG(log_error, "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
+        ndrx_TPset_error_msg(TPEINVAL,  "tpcommit: flags != 0 && !TPTXCOMMITDLOG");
         EXFAIL_OUT(ret);
+    }
+    
+    /* flag is shared with tx: */
+    if (TX_COMMIT_DECISION_LOGGED == G_atmi_tls->tx_commit_return)
+    {
+        flags|=TPTXCOMMITDLOG;
     }
     
     if (!G_atmi_tls->G_atmi_xa_curtx.txinfo)
@@ -940,8 +1004,14 @@ expublic int ndrx_tpcommit(long flags)
     if (do_abort)
     {
         ret = ndrx_tpabort(0); /*<<<<<<<<<< RETURN!!! */
-        if (EXSUCCEED==ret)
+        
+        /* in this case the tmsrv might already rolled back
+         * thus assume that transaction is aborted.
+         */
+        if (EXSUCCEED==ret || TPEPROTO==tperrno)
         {
+            /* clear current error */
+            ndrx_TPunset_error();
             ndrx_TPset_error_msg(TPEABORT,  "tpcommit: Transaction was marked for "
                     "abort and aborted now!");
             ret=EXFAIL;
@@ -968,11 +1038,12 @@ expublic int ndrx_tpcommit(long flags)
         }
     }
     
-    NDRX_LOG(log_debug, "About to call TM");
+    NDRX_LOG(log_debug, "About to call TM flags=%ld", flags);
     /* OK, we should call the server, request for transaction...  */
     
+    /* TODO: pass flags to call struct! */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPCOMMIT, EXFALSE, EXFAIL, 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, flags)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPCOMMIT);
@@ -988,7 +1059,13 @@ expublic int ndrx_tpcommit(long flags)
 out:
     if (NULL!=p_ub)
     {
-        tpfree((char *)p_ub);
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
     }
 
     /* reset global transaction info */
@@ -1058,7 +1135,7 @@ expublic int ndrx_tpabort(long flags)
     NDRX_LOG(log_debug, "About to call TM");
     /* OK, we should call the server, request for transaction...  */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, EXFALSE, EXFAIL, 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPBEGIN);
@@ -1073,7 +1150,13 @@ expublic int ndrx_tpabort(long flags)
 out:
     if (NULL!=p_ub)
     {
-        tpfree((char *)p_ub);
+        /* save errors */
+        atmi_error_t err;
+        
+        /* Save the original error/needed later! */
+        ndrx_TPsave_error(&err);
+        tpfree((char *)p_ub);  /* This stuff removes ATMI error!!! */
+        ndrx_TPrestore_error(&err);
     }
 
     /* reset global transaction info */
@@ -1099,12 +1182,21 @@ out:
 
 /**
  * Close the entry to XA.
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpclose(void)
 {
     int ret=EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
+
+    if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
+    {
+        NDRX_LOG(log_error, "tpclose: - cannot close as process in TX: [%s]", 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        ndrx_TPset_error_fmt(TPEPROTO, "tpclose: - cannot close as process in TX: [%s]", 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmxid);
+        EXFAIL_OUT(ret);
+    }
    
     ret = atmi_xa_close_entry();
     
@@ -1381,7 +1473,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 NDRX_LOG(log_debug, "Dynamic reg - no start/join!");
         }
         /* Continue with static ...  ok it is known, then just join the transaction */
-        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
+        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), 
+                TMJOIN, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
             EXFAIL_OUT(ret);
@@ -1396,7 +1489,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         NDRX_LOG(log_info, "RM not aware of this transaction");
         
         /* register new tx branch/rm */
-        if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMREGISTER, EXFALSE, EXFAIL, p_xai)))
+        if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMREGISTER, 
+                EXFALSE, EXFAIL, p_xai, 0L)))
         {
             NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                         ATMI_XA_TPBEGIN);   

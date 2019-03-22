@@ -265,6 +265,8 @@ typedef struct
     long default_rssmax; /**< Default max resource memory size in bytes, -1 nochk */
     long default_vszmax; /**< Default max virtual memory size in bytes, -1 nochk */
     
+    int ctl_had_defaults; /**< Have defaults loaded atleast 1 time */
+    
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;
     

@@ -120,6 +120,18 @@ set(MAN3_NAMES
         ndrx_atfork_prepare
         ndrx_atfork_parent
         ndrx_atfork_child
+        tuxgetenv
+        tx_begin
+        tx_close
+        tx_info
+        tx_commit
+        tx_rollback
+        tx_open
+        tx_set_commit_return
+        tx_set_transaction_control
+        tx_set_transaction_timeout
+        _tmstartserver
+        tpscmt
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

@@ -46,6 +46,7 @@ extern "C" {
 #include <tperror.h>
 #include <nstd_tls.h>
 #include <ubf_tls.h>
+#include <tx.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -140,6 +141,28 @@ typedef struct
     TPINIT client_init_data;
     
     int ndrxd_ping_seq;     /**< NDRXD daemon ping sequence sent */
+    
+    
+    /*  TX Specification related: */
+    
+    /**
+     * Shall tx_commit() return when transaction is completed
+     * or return when logged for completion?
+     * Default: Wait for complete.
+     */
+    COMMIT_RETURN tx_commit_return;
+
+   /**
+    * Shall caller start new transaction when commit/abort is called?
+    * Default NO
+    */
+   TRANSACTION_CONTROL tx_transaction_control;
+
+   /**
+    * What is transaction timeout? In seconds.
+    */
+   TRANSACTION_TIMEOUT tx_transaction_timeout;
+
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/

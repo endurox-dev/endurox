@@ -105,7 +105,7 @@ for (j=0; j<1000; j++)
             /* Start the sending stuff now! */
             for (i=0; i<1 && EXSUCCEED==ret; i++)
             {
-        	sprintf(tmp, "CLT: %d\n", i);
+        	snprintf(tmp, sizeof(tmp), "CLT: %d\n", i);
 	        Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L);
                 ret=tpsend(cd, (char *)p_ub, 0L, 0L, &revent);
             }

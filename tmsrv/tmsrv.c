@@ -194,6 +194,9 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
         ret=EXFAIL;
         goto out;
     }
+    
+    /* TODO: We need TMFLAGS */
+    
     NDRX_LOG(log_info, "Got command code: [%c]", cmd);
     
     switch(cmd)
@@ -209,7 +212,6 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_TPCOMMIT:
             
-            /* start new tran... */
             if (EXSUCCEED!=tm_tpcommit(p_ub))
             {
                 ret=EXFAIL;
@@ -218,7 +220,6 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_TPABORT:
             
-            /* start new tran... */
             if (EXSUCCEED!=tm_tpabort(p_ub))
             {
                 ret=EXFAIL;
@@ -243,9 +244,17 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
                 goto out;
             }
             break;
-        case ATMI_XA_COMMITTRANS:
+        case ATMI_XA_STATUS:
             
             /* request for printing active transactions */
+            if (EXSUCCEED!=tm_status(p_ub))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
+        case ATMI_XA_COMMITTRANS:
+            
             if (EXSUCCEED!=tm_committrans(p_ub))
             {
                 ret=EXFAIL;
@@ -714,7 +723,7 @@ exprivate void tx_tout_check_th(void *ptr)
                  * - meanwhile foreground calls commit()
                  * This can be reached with per transaction locking...
                  */
-                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL);
+                tm_drive(&xai, p_tl, XA_OP_ROLLBACK, EXFAIL, 0L);
             }
         }
         LL_DELETE(tx_list,el);

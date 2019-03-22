@@ -137,6 +137,23 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             EXFAIL_OUT(ret);
         }
         
+        /* test the tuxgetenv() */
+        
+        if (tuxgetenv("HELLO4") != getenv("HELLO4"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! Invalid tuxenv vs getenv: [%s] vs [%s]", 
+                    tuxgetenv("HELLO4"), getenv("HELLO4"));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* Feature #393 */
+        if (NULL!=tuxgetenv("NON_EXISTING_HELL99999"))
+        {
+            NDRX_LOG(log_error, "TESTERROR ! NON_EXISTING_HELL99999 shall be "
+                    "missing but got [%s]", tuxgetenv("NON_EXISTING_HELL99999"));
+            EXFAIL_OUT(ret);
+        }
+            
         if (0!=strcmp((p=getenv("HELLO5")), "THIS IS 5"))
         {
             NDRX_LOG(log_error, "TESTERROR ! Expected [THIS IS 5] got [%s]", p);

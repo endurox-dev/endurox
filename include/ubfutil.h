@@ -71,6 +71,8 @@ extern NDRX_API int atmi_cvt_ubf_to_c(ubf_c_map_t *map, UBFH *p_ub, void *c_stru
 extern NDRX_API void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub);
 extern NDRX_API void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p_ub);
 
+extern NDRX_API long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize);
+
     
 #ifdef	__cplusplus
 }
