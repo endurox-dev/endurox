@@ -358,8 +358,10 @@ int main(int argc, char** argv) {
             NDRX_LOG(log_error, "TESTERROR: tx_begin() fail: %d", ret);
             EXFAIL_OUT(ret);
         }
+        /* needs newline for solaris grep, otherwise we get 1 line */
+        Bchg(p_ub, T_STRING_FLD, 0, "TXAPI LOGGED\n", 0L);
 
-        Bchg(p_ub, T_STRING_FLD, 0, "TXAPI LOGGED", 0L);
+
 
         /* Call Svc1 */
         if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
@@ -421,7 +423,7 @@ int main(int argc, char** argv) {
             EXFAIL_OUT(ret);
         }
 
-        Bchg(p_ub, T_STRING_FLD, 0, "TXAPI FULL", 0L);
+        Bchg(p_ub, T_STRING_FLD, 0, "TXAPI FULL\n", 0L);
 
         /* Call Svc1 */
         if (EXFAIL == (ret=tpcall("RUNTX", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0)))
