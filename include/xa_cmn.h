@@ -359,6 +359,8 @@ extern NDRX_API int ndrx_tpcommit(long flags);
 extern NDRX_API int ndrx_tpabort(long flags);
 extern NDRX_API int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting);
 extern NDRX_API int ndrx_tpresume (TPTRANID *tranid, long flags);
+extern NDRX_API int ndrx_tpscmt(long flags);
+
 
 extern NDRX_API int _tp_srv_join_or_new_from_call(tp_command_call_t *call, int is_ax_reg_callback);
 extern NDRX_API int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai, int is_ax_reg_callback,
