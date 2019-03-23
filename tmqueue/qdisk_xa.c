@@ -422,7 +422,8 @@ exprivate int send_unlock_notif(union tmq_upd_block *p_upd)
     ndrx_debug_dump_UBF(log_info, "calling Q space with", p_ub);
     
     /*Call The TMQ- server */
-    sprintf(svcnm, NDRX_SVC_TMQ, (long)p_upd->hdr.nodeid, (int)p_upd->hdr.srvid);
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TMQ, (long)p_upd->hdr.nodeid, 
+        (int)p_upd->hdr.srvid);
 
     NDRX_LOG(log_debug, "About to notify [%s]", svcnm);
             
@@ -1032,7 +1033,7 @@ exprivate int write_to_tx_file(char *block, int len)
     set_filenames();
     
     /* Open file for write... */
-    NDRX_LOG(log_info, "Writting command file: [%s]", M_filename_active);
+    NDRX_LOG(log_info, "Writing command file: [%s]", M_filename_active);
     if (NULL==(f = NDRX_FOPEN(M_filename_active, "a+b")))
     {
         int err = errno;
