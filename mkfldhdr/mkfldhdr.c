@@ -169,14 +169,21 @@ exprivate char *get_next_from_env (int *ret)
 
     NDRX_STRCPY_SAFE(tmp_flddir, flddir);
     ret_dir=strtok_r(tmp_flddir, ":", &p_flddir);
-    while (NULL != ret_dir)
+    while (NULL!=ret_ptr && NULL != ret_dir)
     {
         snprintf(tmp, sizeof(tmp), "%s/%s", ret_dir, ret_ptr);
+        /* maybe use stat here? */
+	if (ndrx_file_exists(tmp))
+        {
+            break;
+        }
+#if 0
         if (NULL!=(fp=NDRX_FOPEN(tmp, "r")))
         {
             NDRX_FCLOSE(fp);
             break;
         }
+#endif
         ret_dir=strtok_r(NULL, ":", &p_flddir);
     }
 
