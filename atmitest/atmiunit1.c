@@ -505,7 +505,6 @@ Ensure(test063_cpmrange)
     assert_equal(ret, EXSUCCEED);
 }
 
-<<<<<<< HEAD
 Ensure(test064_bufswitch)
 {
     int ret;
@@ -520,8 +519,6 @@ Ensure(test065_tpcancel)
     assert_equal(ret, EXSUCCEED);
 }
 
-
-=======
 Ensure(test066_tmstartserver)
 {
     int ret;
@@ -529,7 +526,6 @@ Ensure(test066_tmstartserver)
     assert_equal(ret, EXSUCCEED);
 }
 
->>>>>>> master
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -634,12 +630,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test062_memlimits);
 #endif
     add_test(suite, test063_cpmrange);
-<<<<<<< HEAD
     add_test(suite, test064_bufswitch);
     add_test(suite, test065_tpcancel);
-=======
     add_test(suite, test066_tmstartserver);
->>>>>>> master
     
     return suite;
 }
