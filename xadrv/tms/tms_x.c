@@ -1,7 +1,7 @@
 /**
  * @brief Load the xa switch passed to _tmstartserver
  *
- * @file tms_s.c
+ * @file tms_x.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
