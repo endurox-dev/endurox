@@ -1,5 +1,5 @@
 ##
-## @brief Drivers for XA processing
+## @brief Use libary passed to _tmstartserver 
 ##
 ## @file CMakeLists.txt
 ##
@@ -30,13 +30,35 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
+
+# Set minimum version
 cmake_minimum_required(VERSION 2.8)
 
-# Sub Dirs
-add_subdirectory (oracle)
-add_subdirectory (db2)
-add_subdirectory (wsmq)
-add_subdirectory (dum)
-add_subdirectory (tms)
+# Add debug options
+# By default if RELEASE_BUILD is not defined, then we run in debug!
+IF ($ENV{RELEASE_BUILD})
+	# do nothing
+ELSE ($ENV{RELEASE_BUILD})
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
+ENDIF ($ENV{RELEASE_BUILD})
 
+# Make sure the compiler can find include files from our UBF library.
+include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+
+add_library (ndrxxatmsx SHARED
+                        tms_x.c
+   	        )
+
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(ndrxxatmsx atmi ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(ndrxxatmsx atmi ubf nstd)
+endif()
+
+
+# Install bin
+install (TARGETS 
+    ndrxxatmsx
+    DESTINATION "${INSTALL_LIB_DIR}"
+    )
 # vim: set ts=4 sw=4 et smartindent:

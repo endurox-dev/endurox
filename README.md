@@ -436,6 +436,8 @@ processing listings across all supported OSes.
 
 - Version 6.0.26 released on 25/03/2019 (stable) Support #400
 
+- Version 6.0.27 released on 30/03/2019 (development) Feature #402
+
 # Build configurations
 
 ## Configure make with: 
