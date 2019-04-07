@@ -68,7 +68,7 @@ static ubf_c_map_t M_tpqctl_map[] =
     {EX_QPRIORITY,      0, OFSZ(TPQCTL, priority),      BFLD_LONG}, /* 2 */
     {EX_QDIAGNOSTIC,    0, OFSZ(TPQCTL, diagnostic),    BFLD_LONG}, /* 3 */
     {EX_QMSGID,         0, OFSZ(TPQCTL, msgid),         BFLD_CARRAY}, /* 4 */
-    {EX_QCORRID,        0, OFSZ(TPQCTL, corrid),        BFLD_STRING}, /* 5 */
+    {EX_QCORRID,        0, OFSZ(TPQCTL, corrid),        BFLD_CARRAY}, /* 5 */
     {EX_QREPLYQUEUE,    0, OFSZ(TPQCTL, replyqueue),    BFLD_STRING}, /* 6 */
     {EX_QFAILUREQUEUE,  0, OFSZ(TPQCTL, failurequeue),  BFLD_STRING}, /* 7 */
     {EX_CLTID,          0, OFSZ(TPQCTL, cltid),         BFLD_STRING}, /* 8 */
@@ -367,11 +367,14 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     
     memset(&errbuf, 0, sizeof(errbuf));
     
+    /*
+     * Support #403
     if (NULL==data)
     {
         ndrx_TPset_error_fmt(TPEINVAL,  "%s: data is null!", __func__);
         EXFAIL_OUT(ret);
     }
+    */
     
     if (NULL==qspace || (EXEOS==*qspace && !nodeid && !srvid))
     {
