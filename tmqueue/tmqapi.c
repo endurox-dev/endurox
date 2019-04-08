@@ -238,6 +238,9 @@ expublic int tmq_enqueue(UBFH *p_ub)
         
         EXFAIL_OUT(ret);
     }
+
+    /* if all ok, for performance reasons remove the data block from reply */
+    Bdel(p_ub, EX_DATA, 0);
     
 out:
     /* free up the temp memory */
