@@ -517,10 +517,14 @@ out:
 
     if (NULL!=p_ub)
     {
+        atmi_error_t err;
+        /* save any error here... */
+        ndrx_TPsave_error(&err);
         tpfree((char *)p_ub);
+        ndrx_TPrestore_error(&err);
     }
 
-        /* restore the error if have */
+    /* restore the error if have */
     if (errbuf.atmi_error)
     {
         if (ctl->diagnostic)
@@ -694,7 +698,7 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
         
         if (!BUF_IS_TYPEID_VALID(buftyp))
         {
-            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: inalid buffer type id recieved %hd", 
+            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: invalid buffer type id received %hd", 
                     __func__, buftyp);
             EXFAIL_OUT(ret);
         }
@@ -731,7 +735,11 @@ out:
 
     if (NULL!=p_ub)
     {
+        atmi_error_t err;
+        /* save any error here... */
+        ndrx_TPsave_error(&err);
         tpfree((char *)p_ub);
+        ndrx_TPrestore_error(&err);
     }
 
     /* restore the error if have */

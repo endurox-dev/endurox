@@ -71,7 +71,7 @@ extern "C" {
 
 /* others: VIEW X_COMMON X_C_TYPE X_OCTET FML32 VIEW32 - not supported currently */
 /* see G_buf_descr */
-#define BUF_IS_TYPEID_VALID(X) (0<=X && X <= 6)
+#define BUF_IS_TYPEID_VALID(X) (BUF_TYPE_MIN<=X && X <= BUF_TYPE_MAX)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

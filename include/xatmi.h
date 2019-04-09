@@ -457,7 +457,7 @@ extern "C" {
 #define	TPQGETBYMSGIDOLD 0x00008	/**< RFU, deprecated */		
 #define	TPQMSGID	0x00010		/**< get msgid of enq/deq message */		
 #define	TPQPRIORITY	0x00020		/**< set/get message priority */		
-#define	TPQTOP		0x00040		/**< RFU, enqueue at queue top */		
+#define	TPQTOP		0x00040		/**< RFU, enqueue at queue top */
 #define	TPQWAIT		0x00080		/**< RFU, wait for dequeuing */		
 #define	TPQREPLYQ	0x00100		/**< set/get reply queue */		
 #define	TPQTIME_ABS	0x00200		/**< RFU, set absolute time */		
