@@ -454,7 +454,21 @@ do {                                                                            
    (add)->prev = (add);                                                                        \
    (add)->next = (add);                                                                        \
  }                                                                                             \
-(head)=(add);                                                                                  \
+ (head)=(add);                                                                                  \
+} while (0)
+/* Added for Enduro/X Queues: */
+#define CDL_APPEND(head,add)                                                                  \
+do {                                                                                           \
+ if (head) {                                                                                   \
+   (add)->prev = (head)->prev;                                                                 \
+   (add)->next = (head);                                                                       \
+   (head)->prev = (add);                                                                       \
+   (add)->prev->next = (add);                                                                  \
+ } else {                                                                                      \
+   (add)->prev = (add);                                                                        \
+   (add)->next = (add);                                                                        \
+   (head)=(add);                                                                                  \
+ }                                                                                             \
 } while (0)
 
 #define CDL_DELETE(head,del)                                                                   \
