@@ -790,7 +790,7 @@ expublic int tmq_msg_add(tmq_msg_t *msg, int is_recovery)
     }
     
     /* Add the message to end of the queue */
-    CDL_PREPEND(qhash->q, mmsg);    
+    CDL_APPEND(qhash->q, mmsg);    
     
     /* Add the hash of IDs */
     tmq_msgid_serialize(mmsg->msg->hdr.msgid, msgid_str); 
