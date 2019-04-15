@@ -221,6 +221,13 @@ struct atmi_xa_log
     
     /* the list of RMs (the ID is index) statuses.
      * 0x0 indicates that RM is not in use.
+     * TODO: Under "rmstatus" we need an array of branch xids.
+     * To cope with Postgresql and Mysql - as for these
+     * there is no JOIN, thus any processing unit is new
+     * transaction, even under the same resource manager.
+     * This we need status for each of the branches and these
+     * branches will drive the final status. At RM level we
+     * just need to know that we are involved.
      */
     atmi_xa_rm_status_t rmstatus[NDRX_MAX_RMS]; /* RM=1 index is 0 */
     

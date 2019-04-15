@@ -1212,6 +1212,10 @@ out:
  * NODE: we might get additional error code:TPERMERR when xa_end fails.
  * @param tranid
  * @param flags
+ * @param[in] is_contexting are we doing context swtching? 
+ *  and if driver flags sys that no api suspend needed, then do not call the xa-commands
+ *  particulary this is needed for java api for which transaction state is kept in
+ *  java object and not in C TLS.
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
