@@ -162,7 +162,10 @@ typedef struct
     * What is transaction timeout? In seconds.
     */
    TRANSACTION_TIMEOUT tx_transaction_timeout;
-
+   
+   
+   void *integptr1;        /**< Integration pointer 1, e.g. java env.         */
+   void *integptr2;        /**< Integration pointer 2, e.g. java ATMI Ctx     */
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/
