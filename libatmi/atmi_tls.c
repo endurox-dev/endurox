@@ -305,6 +305,9 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->tx_transaction_control = TX_UNCHAINED;
     tls->tx_transaction_timeout = 0;
     
+    tls->integptr1 = NULL;
+    tls->integptr2 = NULL;
+    
     pthread_mutex_init(&tls->mutex, NULL);
     
     /* set callback, when thread dies, we need to get the destructor 
@@ -506,6 +509,26 @@ out:
             ret, context, G_atmi_tls);
 #endif
     return ret;
+}
+
+/**
+ * Return data from context
+ * This assumes that ATMI Context currently IS set!
+ * @param[out] data output data where to store the result
+ */
+expublic void ndrx_ctx_priv_get(ndrx_ctx_priv_t *data)
+{
+    /* TODO: Return context based data */
+}
+
+/**
+ * Set context related data
+ * This assumes that ATMI Context currently IS set!
+ * @param[in] data what data to set in the TLS.
+ */
+expublic void ndrx_ctx_priv_set(ndrx_ctx_priv_t *data)
+{
+    /* TODO: Set context data */
 }
 
 /**
