@@ -518,7 +518,8 @@ out:
  */
 expublic void ndrx_ctx_priv_get(ndrx_ctx_priv_t *data)
 {
-    /* TODO: Return context based data */
+    data->integptr1 = G_atmi_tls->integptr1;
+    data->integptr2 = G_atmi_tls->integptr2;
 }
 
 /**
@@ -528,7 +529,8 @@ expublic void ndrx_ctx_priv_get(ndrx_ctx_priv_t *data)
  */
 expublic void ndrx_ctx_priv_set(ndrx_ctx_priv_t *data)
 {
-    /* TODO: Set context data */
+    G_atmi_tls->integptr1 = data->integptr1;
+    G_atmi_tls->integptr2 = data->integptr2;
 }
 
 /**
