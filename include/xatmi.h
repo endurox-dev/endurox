@@ -825,6 +825,11 @@ extern NDRX_API void ndrx_atfork_prepare(void);
 extern NDRX_API void ndrx_ctx_priv_get(ndrx_ctx_priv_t *data);
 extern NDRX_API void ndrx_ctx_priv_set(ndrx_ctx_priv_t *data);
 
+/* XA Driver settings... */
+extern NDRX_API void ndrx_xa_noapisusp(int val);
+extern NDRX_API void ndrx_xa_nojoin(int val);
+extern NDRX_API void ndrx_xa_nostartxid(int val);
+
 #if defined(__cplusplus)
 }
 #endif
