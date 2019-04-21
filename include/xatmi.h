@@ -822,8 +822,7 @@ extern NDRX_API void ndrx_atfork_parent(void);
 extern NDRX_API void ndrx_atfork_prepare(void);
 
 /* Additional contexting - integration related */
-extern NDRX_API void ndrx_ctx_priv_get(ndrx_ctx_priv_t *data);
-extern NDRX_API void ndrx_ctx_priv_set(ndrx_ctx_priv_t *data);
+extern NDRX_API ndrx_ctx_priv_t* ndrx_ctx_priv_get(void);
 
 /* XA Driver settings... */
 extern NDRX_API void ndrx_xa_noapisusp(int val);
