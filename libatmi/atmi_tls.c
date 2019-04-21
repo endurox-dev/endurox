@@ -305,8 +305,7 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->tx_transaction_control = TX_UNCHAINED;
     tls->tx_transaction_timeout = 0;
     
-    tls->integptr1 = NULL;
-    tls->integptr2 = NULL;
+    memset(&tls->integpriv, 0, sizeof(tls->integpriv));
     
     pthread_mutex_init(&tls->mutex, NULL);
     
@@ -516,21 +515,16 @@ out:
  * This assumes that ATMI Context currently IS set!
  * @param[out] data output data where to store the result
  */
-expublic void ndrx_ctx_priv_get(ndrx_ctx_priv_t *data)
+expublic ndrx_ctx_priv_t* ndrx_ctx_priv_get(void)
 {
-    data->integptr1 = G_atmi_tls->integptr1;
-    data->integptr2 = G_atmi_tls->integptr2;
-}
-
-/**
- * Set context related data
- * This assumes that ATMI Context currently IS set!
- * @param[in] data what data to set in the TLS.
- */
-expublic void ndrx_ctx_priv_set(ndrx_ctx_priv_t *data)
-{
-    G_atmi_tls->integptr1 = data->integptr1;
-    G_atmi_tls->integptr2 = data->integptr2;
+    if (NULL==G_atmi_tls)
+    {
+        return NULL;
+    }
+    else
+    {
+        &G_atmi_tls->integpriv;
+    }
 }
 
 /**

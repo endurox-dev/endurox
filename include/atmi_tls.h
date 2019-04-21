@@ -164,8 +164,8 @@ typedef struct
    TRANSACTION_TIMEOUT tx_transaction_timeout;
    
    
-   void *integptr1;        /**< Integration pointer 1, e.g. java env.         */
-   void *integptr2;        /**< Integration pointer 2, e.g. java ATMI Ctx     */
+   
+   ndrx_ctx_priv_t integpriv;    /**< integration  private data               */
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/
