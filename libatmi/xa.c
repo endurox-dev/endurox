@@ -549,7 +549,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int atmi_xa_end_entry(XID *xid)
+expublic int atmi_xa_end_entry(XID *xid, long flags)
 {
     int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
@@ -558,7 +558,7 @@ expublic int atmi_xa_end_entry(XID *xid)
     
     /* we do always success (as TX intiator decides commit or abort...! */
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_end_entry(xid, 
-                                    G_atmi_env.xa_rmid, TMSUCCESS)))
+                                    G_atmi_env.xa_rmid, flags)))
     {
         NDRX_LOG(log_error, "xa_end_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
@@ -1029,7 +1029,7 @@ expublic int ndrx_tpcommit(long flags)
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), TMSUCCESS)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1123,7 +1123,7 @@ expublic int ndrx_tpabort(long flags)
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), TMSUCCESS)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1278,8 +1278,17 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     if (!XA_IS_DYNAMIC_REG || 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
+        
+        long xaflags = TMSUSPEND;
+        
+        if (!(G_atmi_env.xa_sw->flags & TMNOMIGRATE))
+        {
+            NDRX_LOG(log_debug, "Setting migrate flag for suspend");
+            xaflags!=TMMIGRATE;
+        }
+        
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), xaflags)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1608,7 +1617,7 @@ expublic int _tp_srv_disassoc_tx(void)
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), TMSUCCESS)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
