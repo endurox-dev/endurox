@@ -44,9 +44,46 @@ extern "C" {
 #define _(X)  X
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+/**
+ * Integration mode Context based storage
+ */
+struct ndrx_ctx_priv
+{
+    void *integptr1; /**< integration pointer 1, private */
+    void *integptr2; /**< integration pointer 2, private */
+    void *integptr3; /**< integration pointer 3, private */
+};
+typedef struct ndrx_ctx_priv ndrx_ctx_priv_t;
+
+/**
+ * Integration mode Environment based storage
+ */
+struct ndrx_env_priv
+{
+    long integlng0;  /**< Integration storage 0          */
+    void *integptr1; /**< integration pointer 1, private */
+    void *integptr2; /**< integration pointer 2, private */
+    void *integptr3; /**< integration pointer 3, private */
+};
+typedef struct ndrx_env_priv ndrx_env_priv_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/* Additional contexting - integration related */
+
+/* Data from TLS Context */
+extern NDRX_API ndrx_ctx_priv_t* ndrx_ctx_priv_get(void);
+
+/* Data from environment */
+extern NDRX_API ndrx_env_priv_t* ndrx_env_priv_get(void);
+
+/* XA Driver settings... */
+extern NDRX_API void ndrx_xa_noapisusp(int val);
+extern NDRX_API void ndrx_xa_nojoin(int val);
+extern NDRX_API void ndrx_xa_nostartxid(int val);
 
 #ifdef	__cplusplus
 }

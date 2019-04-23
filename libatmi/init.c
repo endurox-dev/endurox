@@ -522,6 +522,7 @@ expublic int ndrx_load_common_env(void)
     
     /* </XA Protocol configuration> */
     
+    memset(&G_atmi_env.integpriv, 0, sizeof(G_atmi_env.integpriv));
     
     /* <poll() mode configuration> */
     
@@ -989,4 +990,14 @@ expublic void tp_thread_shutdown(void *ptr, int *p_finish_off)
     
     *p_finish_off = EXTRUE;
 }
+
+/**
+ * Return ENV data pointer
+ * @return pointer to private env storage
+ */
+expublic ndrx_env_priv_t* ndrx_env_priv_get(void)
+{
+    return &G_atmi_env.integpriv;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
