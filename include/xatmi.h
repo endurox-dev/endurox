@@ -638,17 +638,6 @@ struct tpmyid_t
 
 typedef struct tpmyid_t TPMYID;
 
-
-/**
- * Integration mode Context based storage
- */
-struct ndrx_ctx_priv
-{
-    void *integptr1; /**< integration pointer 1, private */
-    void *integptr2; /**< integration pointer 2, private */
-};
-typedef struct ndrx_ctx_priv ndrx_ctx_priv_t;
-
 /* Integration mode API, used by libatmisrvinteg.so: */
 
 /**
@@ -821,13 +810,6 @@ extern NDRX_API void ndrx_atfork_child(void);
 extern NDRX_API void ndrx_atfork_parent(void);
 extern NDRX_API void ndrx_atfork_prepare(void);
 
-/* Additional contexting - integration related */
-extern NDRX_API ndrx_ctx_priv_t* ndrx_ctx_priv_get(void);
-
-/* XA Driver settings... */
-extern NDRX_API void ndrx_xa_noapisusp(int val);
-extern NDRX_API void ndrx_xa_nojoin(int val);
-extern NDRX_API void ndrx_xa_nostartxid(int val);
 
 #if defined(__cplusplus)
 }
