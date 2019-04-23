@@ -51,6 +51,7 @@ extern "C" {
 #include <userlog.h>
 #include <tperror.h>
 #include <exparson.h>
+#include <tmenv.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -421,6 +422,8 @@ struct atmi_lib_env
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                   */
     
+    ndrx_env_priv_t integpriv;    /**< integration  private data               */
+    
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
 
@@ -667,8 +670,6 @@ struct ndrx_qdet
 };
 
 typedef struct ndrx_qdet ndrx_qdet_t;
-
-
 
 /**
  * tpcall() cache control structure - additional data to tpacall for providing
