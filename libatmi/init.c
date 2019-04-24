@@ -177,6 +177,8 @@ expublic int ndrx_load_common_env(void)
         exit(EXFAIL);
     }
     
+    memset(&G_atmi_env.integpriv, 0, sizeof(G_atmi_env.integpriv));
+
     /* Read MAX servers */
     p = getenv(CONF_NDRX_SRVMAX);
     
@@ -521,8 +523,6 @@ expublic int ndrx_load_common_env(void)
     }
     
     /* </XA Protocol configuration> */
-    
-    memset(&G_atmi_env.integpriv, 0, sizeof(G_atmi_env.integpriv));
     
     /* <poll() mode configuration> */
     
