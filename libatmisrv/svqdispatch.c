@@ -1324,6 +1324,12 @@ expublic int sv_wait_for_request(void)
                     }
                     
                     /* Save on the big message copy... */
+                    /* in case of MINDISPATCHTHREADS, buf needs to be dynamic
+                     * allocated (and re-used if one threaded used)
+                     * if using > 1 thread, then sv_server_request shall be
+                     * processed by thread_pool and reset the msg_buf to NULL
+                     * so that we allocate new one.
+                     */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
                     
