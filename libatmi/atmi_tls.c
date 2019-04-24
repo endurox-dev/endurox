@@ -523,7 +523,7 @@ expublic ndrx_ctx_priv_t* ndrx_ctx_priv_get(void)
     }
     else
     {
-        &G_atmi_tls->integpriv;
+        return &G_atmi_tls->integpriv;
     }
 }
 
