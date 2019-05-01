@@ -152,7 +152,9 @@ typedef struct ndrx_args_loader ndrx_args_loader_t;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+extern NDRX_API int ndrx_string_list_splitadd(string_list_t**list, char *string, char *sep);
 extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
+extern NDRX_API void ndrx_string_list_free(string_list_t* list);
 
 extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size);
 extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);
