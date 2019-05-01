@@ -43,7 +43,8 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "xatmi.h"
-
+#include <utlist.h>
+#include <nstdutil.h>
 /**
  * Test NDRX_STRCPY_S macro
  */
@@ -80,6 +81,44 @@ Ensure(test_nstd_ndrx_asprintf)
     
     NDRX_FREE(p);
     
+}
+
+/**
+ * Test split add
+ */
+Ensure(test_ndrx_string_list_splitadd)
+{
+    string_list_t *list = NULL;
+    string_list_t *el = NULL;
+    int i = 0;
+    
+    assert_equal(ndrx_string_list_splitadd(&list, "\tHELLO: WORLD:22", ":"), EXSUCCEED);
+    
+    /* Check the entries in list: */
+    LL_FOREACH(list, el)
+    {
+        i++;
+        
+        switch (i)
+        {
+            case 1:
+                assert_equal(el->qname, "HELLO");
+                break;
+            case 2:
+                assert_equal(el->qname, "WORLD");
+                break;
+            case 3:
+                assert_equal(el->qname, "22");
+                break;
+            default:
+                /* Too many entries! */
+                NDRX_LOG(log_error, "Too many entries! [%s]", el->qname);
+                assert_equal(EXFALSE, EXTRUE);
+                break;
+        }
+    }
+    
+    ndrx_string_list_free(list);
 }
 
 /**
