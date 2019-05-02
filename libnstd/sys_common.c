@@ -266,7 +266,7 @@ expublic int ndrx_string_list_splitadd(string_list_t**list, char *string, char *
             EXFAIL_OUT(ret);
         }
         
-        NDRX_LOG(log_debug, "Adding [%s]", tmp);
+        NDRX_LOG(log_debug, "Adding [%s]", tmp->qname);
         /*  Add the string to list finally */
         LL_APPEND(*list, tmp);
     }
