@@ -289,7 +289,8 @@ expublic int start_daemon_idle(void)
 
         if (EXSUCCEED != execvp ("ndrxd", cmd))
         {
-            fprintf(stderr, "Failed to start server - ndrxd!\n");
+            fprintf(stderr, "Failed to start server - ndrxd: %s\n",
+                strerror(errno));
             exit(1);
         }
     }
