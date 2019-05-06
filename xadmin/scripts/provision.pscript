@@ -639,13 +639,13 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
                     switch (getosname())
                     {
                         case "AIX":
-                            shlibstr = "export LIBPATH="+::prov.shLibs;
+                            shlibstr = "export LIBPATH=$LIBPATH:"+::prov.shLibs;
                         break;
                         case "DARWIN":
-                            shlibstr = "export DYLD_LIBRARY_PATH="+::prov.shLibs;
+                            shlibstr = "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:"+::prov.shLibs;
                         break;
                         default:
-                            shlibstr = "export LD_LIBRARY_PATH="+::prov.shLibs;
+                            shlibstr = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"+::prov.shLibs;
                         break;
                     }
                 }
