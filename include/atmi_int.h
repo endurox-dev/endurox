@@ -228,6 +228,16 @@ extern "C" {
 #define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /* Test the line */
 #define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /* List of error codes for retry */
     
+/**
+ * Internal system flags
+ * @defgroup xa_flags_sys
+ * @{
+ */
+#define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting */
+#define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported          */
+#define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No support begin xid       */
+/** @} */ /* xa_flags_sys */
+    
 #define NDRX_BANNER \
     fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, \
                     __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
@@ -404,6 +414,7 @@ struct atmi_lib_env
     char xa_rmlib[PATH_MAX];    /**< RM library               */
     int  xa_lazy_init;          /**< Should we  init lately?  */
     char xa_flags[PATH_MAX];    /**< Specific flags for XA    */
+    long xa_flags_sys;          /**< Internal driver specfic flags */
     struct xa_switch_t * xa_sw; /**< handler to XA switch     */
     
     char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
