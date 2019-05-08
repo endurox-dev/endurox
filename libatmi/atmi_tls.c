@@ -89,7 +89,11 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
                      __func__, tls->G_atmi_xa_curtx.txinfo);
 #endif
         
-        if (priv_flags & CTXT_PRIV_TRAN)
+        /* well for java we do not need to suspend the transaction,,
+         * do we?
+         */
+        if (priv_flags & CTXT_PRIV_TRAN && 
+                !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOAPISUSP))
         {
             tls->global_tx_suspended = EXFALSE;
             
@@ -168,7 +172,8 @@ expublic int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
          * For Object API some of the operations do not request transaction to
          * be open.
          */
-        if (priv_flags & CTXT_PRIV_TRAN)
+        if (priv_flags & CTXT_PRIV_TRAN && 
+                !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOAPISUSP))
         {
             if(tls->global_tx_suspended)
             {   
