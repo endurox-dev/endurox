@@ -1649,4 +1649,58 @@ expublic int _tp_srv_tell_tx_fail(void)
 out:
     return ret;
 }
+
+/**
+ * Disable suspend at context switching
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_noapisusp(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "No Context tran suspend");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOAPISUSP;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOAPISUSP;
+    }
+}
+
+/**
+ * XA Driver does not support join call
+ * Such us Mysql/Posgresql
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_nojoin(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA No JOIN");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOJOIN;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOJOIN;
+    }
+}
+
+/**
+ * The XA does not support start marking with XID, such as Posgresql
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_nostartxid(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA No JOIN");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOSTARTXID;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOSTARTXID;
+    }
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

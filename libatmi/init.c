@@ -485,6 +485,9 @@ expublic int ndrx_load_common_env(void)
         G_atmi_env.xa_lazy_init = atoi(p);
     }
     
+    /* no flags set */
+    G_atmi_env.xa_flags_sys = 0;
+    
     NDRX_LOG(log_debug, "[%s]: Lazy XA Init: %s", 
                 CONF_NDRX_XA_LAZY_INIT,
                 G_atmi_env.xa_lazy_init?"TRUE":"FALSE");

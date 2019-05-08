@@ -53,6 +53,7 @@ struct ndrx_ctx_priv
     void *integptr1; /**< integration pointer 1, private */
     void *integptr2; /**< integration pointer 2, private */
     void *integptr3; /**< integration pointer 3, private */
+    long integlng4;  /**< Integration storage 4          */
 };
 typedef struct ndrx_ctx_priv ndrx_ctx_priv_t;
 
