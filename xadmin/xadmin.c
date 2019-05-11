@@ -49,6 +49,7 @@
 #include <sys_unix.h>
 #include <inicfg.h>
 #include <utlist.h>
+#include <linenoise.h>
 /*---------------------------Externs------------------------------------*/
 extern const char ndrx_G_resource_ndrx_config[];
 /*---------------------------Macros-------------------------------------*/
@@ -556,6 +557,27 @@ exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 }
 
 /**
+ * Generate completion list
+ * @param buf buffer with keys request
+ * @param lc list to fill
+ */
+exprivate void completion_handler(const char *buf, linenoiseCompletions *lc) 
+{
+    int i;
+    
+    for (i=0; i<N_DIM(M_command_map); i++)
+    {
+        int len = strlen(buf);
+        
+        if (0==strncmp(M_command_map[i].cmd, buf, len))
+        {
+            linenoiseAddCompletion(lc,M_command_map[i].cmd);
+        }
+    }
+}
+
+
+/**
  * Start idle instance (if backend does not exists!)
  * @param p_cmd_map
  * @param argc
@@ -760,17 +782,37 @@ exprivate int get_cmd(int *p_have_next)
 
         /* Welcome only if it is terminal */
         if (is_tty())
-            printf("NDRX %s> ", ndrx_xadmin_nodeid());
-
-        /* We should get something! */
-        while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
         {
-            /* if we do not have tty, then exit */
-            if (!is_tty())
+            /* in this case it is interactive session 
+             * also we shall save the history file
+             * to home folder?
+             */
+            char *line;
+            char banner[128];
+            
+            snprintf(banner, sizeof(banner), "NDRX %s> ", ndrx_xadmin_nodeid());
+
+            line = linenoise(banner);
+            
+            if (NULL!=line)
             {
-                /* do not have next */
-                *p_have_next = EXFALSE;
-                goto out;
+                NDRX_STRCPY_SAFE(M_buffer, line);
+            }
+            
+            NDRX_FREE(line);
+        }
+        else
+        {
+            /* We should get something! */
+            while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
+            {
+                /* if we do not have tty, then exit */
+                if (!is_tty())
+                {
+                    /* do not have next */
+                    *p_have_next = EXFALSE;
+                    goto out;
+                }
             }
         }
 
@@ -872,6 +914,13 @@ expublic int process_command_buffer(int *p_have_next)
             fprintf(stderr, "exec: %s\n", M_cmd_argv[0]); */
             ret = M_command_map[i].p_exec_command(&M_command_map[i],
                                     G_cmd_argc_raw, (char **)G_cmd_argv, p_have_next);
+            
+            /* save history for arrow up.. */
+            if (EXFAIL!=ret && is_tty())
+            {
+                linenoiseHistoryAdd(M_buffer_prev);
+            }
+            
         }
     }
 out:
@@ -980,6 +1029,7 @@ expublic int ndrx_init(int need_init)
     int i;
     ndrx_inicfg_t *cfg = NULL;
     
+    
 #ifdef EX_USE_EMQ
     /* We need to get lock in */
     emq_set_lock_timeout(10);
@@ -1066,6 +1116,16 @@ expublic int ndrx_init(int need_init)
     {
         NDRX_LOG(log_error, "Failed to load gen scripts");
         EXFAIL_OUT(ret);    
+    }
+    
+    /* setup console handler */
+    
+    linenoiseSetCompletionCallback(completion_handler);
+    if (!linenoiseHistorySetMaxLen(100))
+    {
+        NDRX_LOG(log_error, "Failed to setup Console input history: %s", 
+                strerror(errno));
+        EXFAIL_OUT(ret);
     }
     
 out:
