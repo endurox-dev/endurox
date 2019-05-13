@@ -797,6 +797,7 @@ exprivate int get_cmd(int *p_have_next)
             if (NULL!=line)
             {
                 NDRX_STRCPY_SAFE(M_buffer, line);
+                linenoiseHistoryAdd(line);
             }
             
             NDRX_FREE(line);
@@ -914,13 +915,6 @@ expublic int process_command_buffer(int *p_have_next)
             fprintf(stderr, "exec: %s\n", M_cmd_argv[0]); */
             ret = M_command_map[i].p_exec_command(&M_command_map[i],
                                     G_cmd_argc_raw, (char **)G_cmd_argv, p_have_next);
-            
-            /* save history for arrow up.. */
-            if (EXFAIL!=ret && is_tty())
-            {
-                linenoiseHistoryAdd(M_buffer_prev);
-            }
-            
         }
     }
 out:
