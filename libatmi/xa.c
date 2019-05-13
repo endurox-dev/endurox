@@ -554,7 +554,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
     int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
     
-    NDRX_LOG(log_debug, "atmi_xa_end_entry");
+    NDRX_LOG(log_debug, "atmi_xa_end_entry flags %ld", flags);
     
     /* we do always success (as TX intiator decides commit or abort...! */
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_end_entry(xid, 
