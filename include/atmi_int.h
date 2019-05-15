@@ -148,6 +148,8 @@ extern "C" {
 
     
 #define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
+#define NDRX_XID_TRID_LEN   sizeof(exuuid_t)
+#define NDRX_XID_BQUAL_LEN  sizeof(unsigned char) + sizeof(short) + sizeof(short)
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)

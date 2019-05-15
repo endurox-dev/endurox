@@ -71,8 +71,8 @@ expublic void atmi_xa_new_xid(XID *xid)
     exuuid_t uuid_val;
     atmi_lib_env_t *atmi_env = ndrx_get_G_atmi_env();
     unsigned char rmid =  (unsigned char)atmi_env->xa_rmid;
-    short node_id = (short) atmi_env->our_nodeid;
-    short srv_id = (short) G_srv_id;
+    short node_id = (short) htons(atmi_env->our_nodeid);
+    short srv_id = (short) htons(G_srv_id);
     
     /* Do the locking, so that we get unique xids... */
     MUTEX_LOCK_V(M_xid_gen_lock);
@@ -83,8 +83,16 @@ expublic void atmi_xa_new_xid(XID *xid)
      */
     
     xid->formatID = NDRX_XID_FORMAT_ID;
-    xid->gtrid_length = sizeof(exuuid_t);
-    xid->bqual_length = sizeof(unsigned char) + sizeof(short) + sizeof(short);
+    
+    /* Oracle JDBC driver requires max lenght xid otherwise it gives
+     * java.sql.SQLException: ORA-25352: no current transaction
+     */
+    /* xid->gtrid_length = sizeof(exuuid_t); */
+    /* xid->bqual_length = sizeof(unsigned char) + sizeof(short) + sizeof(short); */
+    
+    xid->gtrid_length = MAXGTRIDSIZE;
+    xid->bqual_length = MAXBQUALSIZE;
+    
     memset(xid->data, 0, XIDDATASIZE); /* this is not necessary, but... */
     exuuid_generate(uuid_val);
     memcpy(xid->data, uuid_val, sizeof(exuuid_t));
@@ -93,17 +101,20 @@ expublic void atmi_xa_new_xid(XID *xid)
     NDRX_LOG(log_debug, "New xid, rmid=%d(%c), node_id=%hd, srv_id=%hd",
 		(int)rmid, rmid, node_id, srv_id);
 
-    memcpy(xid->data + sizeof(exuuid_t), (char *)&rmid, sizeof(unsigned char));
+    memcpy(xid->data + NDRX_XID_TRID_LEN, (char *)&rmid, sizeof(unsigned char));
     /* Have an additional infos for transaction id... */
     memcpy(xid->data  
-            +sizeof(exuuid_t)  
+            +NDRX_XID_TRID_LEN
             +sizeof(unsigned char)
             ,(char *)&(node_id), sizeof(short));
     memcpy(xid->data  
-            +sizeof(exuuid_t) 
+            +NDRX_XID_TRID_LEN
             +sizeof(unsigned char)
             +sizeof(short)
             ,(char *)&(srv_id), sizeof(short));
+    
+    /* copy first block to second, to have the same values in the block.. */
+    memcpy(xid->data+MAXGTRIDSIZE, xid->data, MAXBQUALSIZE);
     
     MUTEX_UNLOCK_V(M_xid_gen_lock);
 }

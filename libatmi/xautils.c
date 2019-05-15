@@ -40,6 +40,7 @@
 
 #include <atmi.h>
 #include <atmi_shm.h>
+#include <atmi_int.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrxd.h>
@@ -138,9 +139,12 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     tmp[5] = (unsigned char)xid->bqual_length;
     tot_len+=1;
     
-    /* copy off the data: TODO - is data in uid endianness agnostic? */
-    memcpy(tmp+6, xid->data, data_len);
-    tot_len+=data_len;
+    /* copy off the data portions: TODO - is data in uid endianness agnostic? */
+    memcpy(tmp+6, xid->data, NDRX_XID_TRID_LEN);
+    tot_len+=NDRX_XID_TRID_LEN;
+    
+    memcpy(tmp+6+NDRX_XID_TRID_LEN, xid->data+NDRX_XID_TRID_LEN, NDRX_XID_BQUAL_LEN);
+    tot_len+=NDRX_XID_BQUAL_LEN;
     
     NDRX_DUMP(log_debug, "Original XID", xid, sizeof(*xid));
     
@@ -198,7 +202,9 @@ expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
     /* restore bqual_length */
     xid_out->bqual_length = tmp[5];
     
-    memcpy(xid_out->data, tmp+6, tot_len - 6);
+    /* restore the id */
+    memcpy(xid_out->data, tmp+6, NDRX_XID_TRID_LEN+NDRX_XID_BQUAL_LEN);
+    memcpy(xid_out->data+MAXGTRIDSIZE, tmp+6, NDRX_XID_TRID_LEN+NDRX_XID_BQUAL_LEN);
  
     NDRX_DUMP(log_debug, "Original XID restored ", xid_out, sizeof(*xid_out));
     
