@@ -176,6 +176,7 @@ extern NDRX_API int ndrx_str_subs_context(char * str, int buf_size, char opensym
         int (*pf_get_data) (void *data1, void *data2, void *data3, void *data4,
             char *symbol, char *outbuf, long outbufsz));
 extern NDRX_API char *ndrx_str_replace(char *orig, char *rep, char *with);
+extern NDRX_API char *ndrx_strchr_repl (char *str, char from_char, char to_char);
 extern NDRX_API void ndrx_utc_tstamp2(long *t, long *tusec);
 extern NDRX_API int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2);
 extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
