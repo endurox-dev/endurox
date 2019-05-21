@@ -213,7 +213,7 @@ out:
  * @return 
  */
 expublic void ndrx_atmi_tls_free(void *data)
-{
+{   
     if (NULL!=data)
     {
         if (data == G_atmi_tls)
@@ -337,6 +337,7 @@ out:
     if (EXSUCCEED!=ret && NULL!=tls)
     {
         ndrx_atmi_tls_free((char *)tls);
+        tls = NULL;
     }
 
     return (void *)tls;
@@ -393,8 +394,11 @@ expublic int ndrx_tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p",  __func__, 
             context, G_atmi_tls);
     
-    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
-        ((atmi_tls_t *)context)->is_associated_with_thread);
+    if (NULL!=context)
+    {
+        NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+            ((atmi_tls_t *)context)->is_associated_with_thread);
+    }
 
     NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
         (priv_flags) & CTXT_PRIV_NSTD );
@@ -622,4 +626,15 @@ out:
 
     return ret;
 }
+
+/**
+ * Reconfigure context.
+ * Current context must be set.
+ * @param is_auto TRUE -> automatic dealloc, FALSE -> manual context dealloc
+ */
+expublic void ndrx_ctx_auto(int is_auto)
+{
+    G_atmi_tls->is_auto = is_auto;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

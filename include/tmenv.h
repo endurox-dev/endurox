@@ -77,6 +77,7 @@ typedef struct ndrx_env_priv ndrx_env_priv_t;
 
 /* Data from TLS Context */
 extern NDRX_API ndrx_ctx_priv_t* ndrx_ctx_priv_get(void);
+extern NDRX_API void ndrx_ctx_auto(int is_auto);
 
 /* Data from environment */
 extern NDRX_API ndrx_env_priv_t* ndrx_env_priv_get(void);

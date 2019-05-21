@@ -1820,5 +1820,27 @@ expublic void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz)
     
 }
 
+/**
+ * Replace one character to another
+ * @param str string to change
+ * @param from_char find & replace this char
+ * @param to_char replace with this change
+ * @return input string
+ */
+expublic char *ndrx_strchr_repl (char *str, char from_char, char to_char) 
+{
+    
+    char *p = str;
+    
+    while ((p = strchr (p, from_char)) != NULL)
+    {
+        *p = to_char;
+        p++;
+    }
+    
+    return str;
+}
+
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
