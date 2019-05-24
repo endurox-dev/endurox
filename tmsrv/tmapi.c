@@ -253,7 +253,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
     
     atmi_xa_new_xid(&xid);
     
-    /* we should start new transaction... (only if static...) */
+    /* we should start new transaction... (only if static...) 
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
         if (EXSUCCEED!=(ret = atmi_xa_start_entry(&xid, 0, EXFALSE)))
@@ -270,8 +270,13 @@ expublic int tm_tpbegin(UBFH *p_ub)
     }
     else
     {
-        xai.tmknownrms[0] = EXEOS;
+        
     }
+    */
+    
+    /* mark that we know about this RM */
+    xai.tmknownrms[0] = G_atmi_env.xa_rmid;
+    xai.tmknownrms[1] = EXEOS;
     
     atmi_xa_serialize_xid(&xid, xid_str);
     
@@ -292,7 +297,8 @@ expublic int tm_tpbegin(UBFH *p_ub)
     {
         NDRX_LOG(log_debug, "TX tout: %ld", txtout);
     }
-    /* Only for static... */
+    
+    /* Only for static...
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
         if (EXSUCCEED!=(ret = atmi_xa_end_entry(&xid, TMSUCCESS)))
@@ -304,6 +310,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
             goto out;
         }
     }
+    */
     
     if (EXSUCCEED!=atmi_xa_load_tx_info(p_ub, &xai))
     {

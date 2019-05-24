@@ -240,9 +240,9 @@ out:
  */
 exprivate void tms_get_file_name(atmi_xa_log_t *p_tl)
 {
-    sprintf(p_tl->fname, "%s/TRN-%ld-%hd-%d-%s", G_tmsrv_cfg.tlog_dir, 
-            tpgetnodeid(), G_atmi_env.xa_rmid, G_server_conf.srv_id,
-            p_tl->tmxid);
+    snprintf(p_tl->fname, sizeof(p_tl->fname), "%s/TRN-%ld-%hd-%d-%s", 
+            G_tmsrv_cfg.tlog_dir, tpgetnodeid(), G_atmi_env.xa_rmid, 
+            G_server_conf.srv_id, p_tl->tmxid);
 }
 
 /**
@@ -315,7 +315,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         EXFAIL_OUT(ret);
     }
     
-    strcpy((*pp_tl)->fname, logfile);
+    NDRX_STRCPY_SAFE((*pp_tl)->fname, logfile);
     
     /* TODO: might want to check buffer sizes? */
     len = strlen(tmxid);
@@ -325,7 +325,7 @@ expublic int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl)
         EXFAIL_OUT(ret);
     }
     
-    strcpy((*pp_tl)->tmxid, tmxid);
+    NDRX_STRCPY_SAFE((*pp_tl)->tmxid, tmxid);
     (*pp_tl)->is_background = EXTRUE;
     /* Open the file */
     if (EXSUCCEED!=tms_open_logfile(*pp_tl, "r+"))
