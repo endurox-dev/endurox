@@ -2237,6 +2237,41 @@ wrapper for server boot.
 --------------------------------------------------------------------------------
 
 
+== Two Phase Commit Processing notes
+
+This section describes various aspects of distributed transaction processing.
+
+=== Normal Enduro/X Operations of Two Phase Commit
+
+The processing sequence of distributed transaction from XATMI point of view
+is following:
+
+- For each Resource Manager (RM, e.g. database), there is configured *tmsrv(8)*
+process.
+
+- XATMI process connects to RM with *tpopen(3)* function call
+
+- XATMI process starts transaction with *tpbegin(3)* function call. When this
+request is issued, internally this calls *tmsrv(8)* for requesting the new
+transaction XID. At this point tmsrv start accounting of the transaction. And
+XID is returned to the caller process.
+
+- XATMI process calls joins the transaction by call of xa_start(). Previous versions
+of Enduro/X used TMJOIN flag, because tmsrv did already start the transaction in
+database. With 6.1 release, TMJOIN is not used, because tmsrv only generates XID,
+and does not perform any work with database.
+
+
+=== Non XA Switch ready database
+
+There are several databases which provide incomplete support for XOpen Groups
+XA Standard implementation. 
+
+=== TMSRV Transaction log format
+
+
+
+
 numbered!:
 
 [bibliography]
