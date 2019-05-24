@@ -1,5 +1,12 @@
 /**
  * @brief tmsrv - transaction logging & accounting
+ *      for systems which are not support TMJOIN, we shall create additional
+ *      XIDs for each of the involved process session. These XIDs shall be used
+ *      as "sub-xids". There will be Master XID involved in process and
+ *      sub-xids will be logged in tmsrv and will be known by processes locally
+ *      Thus p_tl->rmstatus needs to be extended with hash list of the local
+ *      transaction ids. We shall keep the structure universal, and use
+ *      sub-xids even TMJOIN is supported.
  *
  * @file log.c
  */
