@@ -843,7 +843,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     /* OK... now join the transaction (if we are static...) (only if static) */
     if (!XA_IS_DYNAMIC_REG)
     {
-        if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai), TMJOIN, EXFALSE))
+        if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai), TMNOFLAGS, EXFALSE))
         {
             /* TODO: Unset current transaction */
             atmi_xa_reset_curtx();
