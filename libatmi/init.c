@@ -620,7 +620,7 @@ expublic int ndrx_tpterm (void)
         ndrx_TPset_error_msg(TPEPROTO, "tpterm called from server!");
         goto out;
     }
-
+    
     /* Close client connections */
     if (EXSUCCEED!=close_open_client_connections())
     {
@@ -628,6 +628,9 @@ expublic int ndrx_tpterm (void)
         ndrx_TPset_error_msg(TPESYSTEM, "Failed to close conversations!");
         goto out;
     }
+    
+    /* Close XA  */
+    atmi_xa_uninit();
 
     /* Shutdown client queues */
     if (0!=G_atmi_tls->G_atmi_conf.reply_q)
@@ -670,8 +673,6 @@ expublic int ndrx_tpterm (void)
     G_atmi_tls->G_atmi_is_init = EXFALSE;
     NDRX_LOG(log_debug, "%s: ATMI library un-initialized", fn);
     
-    /* close also  */
-    atmi_xa_uninit();
 
 out:
     NDRX_LOG(log_debug, "%s returns %d", fn, ret);
