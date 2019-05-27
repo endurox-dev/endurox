@@ -57,6 +57,13 @@ EXDM_RESTARTS   15      long    -       ndrxd restarts done
 # Transaction manager specific fields
 TMCMD           20      char    -       Transaction Manager Command code
 TMXID           21      string  -       XID used for TM exchange
+#
+# this is assigned per resource manager. Thus TMSRV for earch RM
+# Keeps counter starting from 0 of the branch qualifiers.
+# if we operate in mode with support of TMJOIN, then in several places
+# in code we can assume that TID is 0 with out requesting new XID for TMSRV.
+#
+TMTID           22      long    -       Branch qualifier ID assigned by tmsrv
 TMRMID          23      short   -       Resource Manager ID - branch id (master)
 TMNODEID        22      short   -       Transaction Manager Node id
 TMSRVID         24      short   -       Server ID of Transaction Manager
