@@ -43,6 +43,7 @@
 #define	EXDM_RESTARTS	((BFLDID32)33554547)	/* number: 115	 type: long */
 #define	TMCMD	((BFLDID32)67108984)	/* number: 120	 type: char */
 #define	TMXID	((BFLDID32)167772281)	/* number: 121	 type: string */
+#define	TMTID	((BFLDID32)33554554)	/* number: 122	 type: long */
 #define	TMRMID	((BFLDID32)123)	/* number: 123	 type: short */
 #define	TMNODEID	((BFLDID32)122)	/* number: 122	 type: short */
 #define	TMSRVID	((BFLDID32)124)	/* number: 124	 type: short */
