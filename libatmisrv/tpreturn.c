@@ -280,6 +280,15 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->sysflags |=SYS_CONVERSATION;
     }
     
+    /* well if we are in global TX we shall disconnect/end here
+     * otherwise tmsrv might get locked txn..
+     */
+
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
+    {
+        _tp_srv_disassoc_tx();
+    }
+    
     /* send the reply back actually */
     NDRX_LOG(log_debug, "Returning to %s cd %d, timestamp %d, callseq: %u, rval: %d, rcode: %ld",
                             reply_to, call->cd, call->timestamp, call->callseq,
@@ -350,10 +359,6 @@ return_to_main:
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
-        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
-        {
-            _tp_srv_disassoc_tx();
-        }
     }
 
     return;
@@ -512,6 +517,12 @@ expublic void _tpforward (char *svc, char *data,
         reply_with_failure(flags, last_call, NULL, NULL, TPESVCERR);
         goto out;
     }
+    
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
+    {
+        _tp_srv_disassoc_tx();
+    }
+
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
                     call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
         
@@ -584,10 +595,6 @@ out:
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
-        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
-        {
-            _tp_srv_disassoc_tx();
-        }
     }
     
     return;

@@ -1278,17 +1278,19 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     if (!XA_IS_DYNAMIC_REG || 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
-        
+        /*
+	 * causes ORA-24775 error
         long xaflags = TMSUSPEND;
         
         if (!(G_atmi_env.xa_sw->flags & TMNOMIGRATE))
         {
             NDRX_LOG(log_debug, "Setting migrate flag for suspend");
-            xaflags!=TMMIGRATE;
+            xaflags|=TMMIGRATE;
         }
+        */
         
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), xaflags)))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), TMSUCCESS)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
