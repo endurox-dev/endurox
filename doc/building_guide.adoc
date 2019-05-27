@@ -252,6 +252,23 @@ export NDRX_MSGSIZEMAX=1049600
 # Increase stack size
 ulimit -s 30751
 
+################################################################################
+# In case if building with Oracle DB database testing support
+# i.e. having flag -DENABLE_TEST47=ON
+# or building endurox-java with Oracle DB tests (02_xaoracle), then
+# configure bellow setting (demo values provided):
+# If so - uncomment bellow
+################################################################################
+#export EX_ORA_HOST=localhost
+#export EX_ORA_USER=exdbtest
+#export EX_ORA_PASS=exdbtest1
+#export EX_ORA_PORT=1539
+#export EX_ORA_SID=XE
+#export EX_ORA_OCILIB=/opt/oracle/product/18c/dbhomeXE/lib/libclntsh.so
+#export ORACLE_HOME=/opt/oracle/product/18c/dbhomeXE
+#export PATH=$PATH:$ORACLE_HOME/bin
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/oracle/product/18c/dbhomeXE/lib
+
 EOF
 
 $ chmod +x $HOME/ndrx_home
@@ -306,6 +323,38 @@ Running "main"...
 Running "main"...
 Completed "main": 21 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
+
+=== Testing Oracle DB
+
+If EX_ORA_ settings are loaded int the ndrx_home environment file and project
+is started with *-DENABLE_TEST47=ON* setting, then before running the tests,
+tables needs to be created for testing. Tables can be loaded in with help of
+Oracle sqlplus tool:
+
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/atmitest/test047_oradb
+$ ./sqlplus.run 
+
+SQL*Plus: Release 18.0.0.0.0 - Production on Sun May 26 16:46:53 2019
+Version 18.4.0.0.0
+
+Copyright (c) 1982, 2018, Oracle.  All rights reserved.
+
+Last Successful login time: Sun May 26 2019 16:42:36 +03:00
+
+Connected to:
+Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Version 18.4.0.0.0
+
+SQL> @tables.sql
+
+Table created.
+
+SQL> quit
+
+---------------------------------------------------------------------
+
+Once this is done, the test shall execute with out the problems.
 
 
 == Conclusions

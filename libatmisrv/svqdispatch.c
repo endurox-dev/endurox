@@ -979,7 +979,10 @@ expublic int sv_server_request(char *buf, int len)
             _tp_srv_tell_tx_fail();
         }
         
-        /* If we were in global tx, then we have to disassociate us from tx...*/
+        /* If we were in global tx, then we have to disassociate us from tx...
+         * this is done in return/forward stmt.
+         * but check again if we did return with out return?
+         */
         if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
             _tp_srv_disassoc_tx();

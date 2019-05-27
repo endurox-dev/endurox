@@ -67,10 +67,10 @@ set_dom1() {
 
     # XA SECTION
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=./+nolocal=f+Threads=true"
+    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_DRIVERLIB=libndrxxaoras.so
-    export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so
+    export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
     # XA SECTION, END
 }

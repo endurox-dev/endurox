@@ -73,7 +73,7 @@ int check_balance(char *accnum, long *balance)
         goto out;
     }
 
-    if (EXFAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (EXFAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND|TPNOABORT))
     {
         NDRX_LOG(log_error, "BALANCE failed: %s", tpstrerror(tperrno));
         ret=EXFAIL;
@@ -130,6 +130,22 @@ int main(int argc, char** argv)
         goto out;
     }
     
+    if (EXSUCCEED != tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "tpbegin failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    check_balance(tmp, &bal);
+    
+    if (EXSUCCEED != tpcommit(0))
+    {
+        NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
     for (l=0; l<100; l++)
     {
         

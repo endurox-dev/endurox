@@ -2256,19 +2256,53 @@ request is issued, internally this calls *tmsrv(8)* for requesting the new
 transaction XID. At this point tmsrv start accounting of the transaction. And
 XID is returned to the caller process.
 
-- XATMI process calls joins the transaction by call of xa_start(). Previous versions
-of Enduro/X used TMJOIN flag, because tmsrv did already start the transaction in
+- XATMI process calls starts transaction by call of xa_start(). Previous versions
+of Enduro/X used *TMJOIN* flag, because tmsrv did already start the transaction in
 database. With 6.1 release, TMJOIN is not used, because tmsrv only generates XID,
 and does not perform any work with database.
+
+- In case of process doing tpsuspend(3) call, the xa_end() function with 
+*TMSUCCESS* is called. The suspend data can be used by other processes on
+the same architecture machines to resume the transaction.
 
 
 === Non XA Switch ready database
 
-There are several databases which provide incomplete support for XOpen Groups
-XA Standard implementation. 
+There are several databases which provide incomplete support for X/Open Groups
+XA Standard implementation. For example Mysql/MariaDB or Postgresql. In case
+of these databases, process cannot join existing transaction with xa_start().
+Thus here every time process attempts to join TX, new transaction id is
+requested from master *tmsrv*. The *tmsrv* logs this id in journal file,
+because even if transaction is not prepared, for Postgresql prepare is only
+way to report the XID to database.
 
 === TMSRV Transaction log format
 
+Currently there are to versions of the log, v1 and v1.1. V1.1 version is extended
+for Multi TID per RM support. Transaction log file consists of several record
+types. It logs general info about transaction, information about current 
+state and each Resource Managers (RM) status. The file format is simple. It is
+text file with Unix newlines. Each record is written on each text line. The
+field separator in record is colon ":". Each record starts with Unix UTC
+timestamp in milliseconds. Log handling is done in *tmsrv/log.c*
+source code. Following record types ("log commands") are used:
+
+- *I* - Information about transaction
+
+- *S* - Identify stage of transaction (is it active, committing, abort, etc.)
+
+- *R* - Resource manager status information (is it active, prepared, committed, etc.)
+
+==== General info about
+
+
+
+[width="80%", options="header"]
+|=========================================================
+|Timestamp|Command Code|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch|Target 
+|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode
+|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode
+|=========================================================
 
 
 
