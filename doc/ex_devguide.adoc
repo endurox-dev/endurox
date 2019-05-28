@@ -2287,7 +2287,7 @@ field separator in record is colon ":". Each record starts with Unix UTC
 timestamp in milliseconds. Log handling is done in *tmsrv/log.c*
 source code. Following record types ("log commands") are used:
 
-- *I* - Information about transaction
+- *I* - General Information about transaction
 
 - *S* - Identify stage of transaction (is it active, committing, abort, etc.)
 
@@ -2296,12 +2296,13 @@ source code. Following record types ("log commands") are used:
 ==== General info about
 
 
-
 [width="80%", options="header"]
 |=========================================================
-|Timestamp|Command Code|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch|Target 
-|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode
-|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode
+|Nr|Field name|Type|Mand/Opt|Version|Description
+|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
+|2|Record type id|Const "I"|Mand|1|Record type identifier
+|3|Resource manager ID|N..5|Mand|1|Resource manager ID which have started TX
+|4|Clust node id|N..5|Mand|1|Cluster Node id which started transaction
 |=========================================================
 
 
