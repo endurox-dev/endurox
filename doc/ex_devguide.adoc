@@ -2287,22 +2287,73 @@ field separator in record is colon ":". Each record starts with Unix UTC
 timestamp in milliseconds. Log handling is done in *tmsrv/log.c*
 source code. Following record types ("log commands") are used:
 
-- *I* - Information about transaction
+- *I* - General Information about transaction
 
 - *S* - Identify stage of transaction (is it active, committing, abort, etc.)
 
 - *R* - Resource manager status information (is it active, prepared, committed, etc.)
 
-==== General info about
+==== General info about the transaction
 
+This gives basically some initial infos about transaction. Which tmsrv created
+it, what is the timeout setting.
 
 
 [width="80%", options="header"]
 |=========================================================
-|Timestamp|Command Code|Release|OS Name|C Compiler ID|OS Version|IPC Transport|CPU Arch|Target 
-|endurox |5.4.1 |1 |Ubuntu | 18.04| GNU GCC| EPOLL |x86_64 | 64 bit mode
-|endurox |5.4.1 |1 |SUNOS - Solaris | 5.10 (10)|GNU GCC |System V queues |SPARC | 64 bit mode
+|Nr|Field name|Type|Mand/Opt|Version|Description
+|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
+|2|Record type id|Const "I"|Mand|1|Record type identifier
+|3|Resource manager ID|N..5|Mand|1|Resource manager ID which have started TX
+|4|Cluster node id|N..5|Mand|1|Cluster Node id which started transaction
+|5|TMSRV id|N..5|Mand|1|Transaction manager server id (srvid from ndrxconfig.xml)
+|6|Transaction timeout|N..19|Mand|1|Transaction timeout set by tpbegin(3)
+|7|Initial list of resource managers participating in transaction (active)|ANS..1023|Mand|In version 1 this
+was list of active resource managers. Starting with Enduro/X 6.1, transaction logging is start when
+transaction is active, thus each active RM is logged with *R* record. Thus there is
+no real reason for this record. Thus from Enduor/X 6.1, this will have only 
+first RM logged which opened the
+transaction, basically the same id found in Field Nr. 3.
 |=========================================================
+
+
+==== Transaction stage identification
+
+[width="80%", options="header"]
+|=========================================================
+|Nr|Field name|Type|Mand/Opt|Version|Description
+|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
+|2|Record type id|Const "S"|Mand|1|Record type identifier
+|3|Stage code|N..2|Mand|1|*0* - transaction does no exists,
+*5* - transaction is active in processing,
+*20* - transaction is aborting,
+*25* - transaction aborted with hazard,
+*30* - heuristically aborted,
+*35* - aborted ok,
+*40* - preparing,
+*55* - committed (hazard),
+*65* - heuristically committed,
+*70* - committed ok
+|=========================================================
+
+
+==== Resource manager status information
+
+Each resource manager (database, etc) has it's own status distributed transaction,
+either it is joined to transaction, prepared, committed, error. If resource
+manager supports *TMJOIN*, then only one record is made for resource manager.
+If resource manager does not support *TMJOIN*, then each time thread starts to
+process, new transaction id is requested. Thus it is logged separately to log file.
+This functionality is starting with record version 2.
+
+[width="80%", options="header"]
+|=========================================================
+|Nr|Field name|Type|Mand/Opt|Version|Description
+|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
+|2|Record type id|Const "R"|Mand|1|Record type identifier - resource manager status
+|3|TODO|N|Mand|1|TODO
+|=========================================================
+
 
 
 
