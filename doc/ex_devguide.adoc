@@ -2351,10 +2351,23 @@ This functionality is starting with record version 2.
 |Nr|Field name|Type|Mand/Opt|Version|Description
 |1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
 |2|Record type id|Const "R"|Mand|1|Record type identifier - resource manager status
-|3|TODO|N|Mand|1|TODO
+|3|Resource Manager ID|N..5|Mand|1|Particular ID of resource manager for which
+status is being tracked
+|4|Resource Manager status|A1|Mand|1|0x0 - NULL, 
+*n* - Non transaction,
+*i* - Idle state (not used),
+*j* - RM is in joined state (active),
+*p* - RM is in prepared state,
+*a* - RM is in abort state,
+*b* - Aborted (heuristically),
+*d* - Aborted (hazard),
+*c*- Committed,
+*r* - Committed (was read only),
+*h* - Committed (Heuristically),
+*z* - Hazard (committed or aborted)
+|5|Transaction ID|N..19|Opt|2|Transaction id, per resource manager. If value
+is not set, then it defaults to *0*
 |=========================================================
-
-
 
 
 numbered!:
