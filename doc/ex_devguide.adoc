@@ -2338,6 +2338,7 @@ transaction, basically the same id found in Field Nr. 3.
 
 
 ==== Resource manager status information
+
 Each resource manager (database, etc) has it's own status distributed transaction,
 either it is joined to transaction, prepared, committed, error. If resource
 manager supports *TMJOIN*, then only one record is made for resource manager.
