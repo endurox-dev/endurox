@@ -195,6 +195,14 @@ struct atmi_xa_rm_status
     char rmstatus; /* RM=1 index is 0 */
     int  rmerrorcode; /* ATMI error code */
     short  rmreason; /* Reason code of RM */
+    /* TODO:
+     * - Have a TID counter here 
+     * - add linked list or hash list? Seems like linked list should
+     *   be enough. We could use DL list here, so that we can quickly
+     *   find the last position to which add. But if we read the logs
+     *   we need to update RM statuses, and that access will be done
+     *   on per transaction basis. Thus EXHASH is needed here.
+     */
 };
 typedef struct atmi_xa_rm_status atmi_xa_rm_status_t;
 
