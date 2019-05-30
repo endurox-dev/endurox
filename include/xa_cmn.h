@@ -188,13 +188,30 @@ struct atmi_xa_curtx
 typedef struct atmi_xa_curtx atmi_xa_curtx_t;
 
 /**
+ * Transaction entry (mysql, postgresql for each connect session requires
+ * new TID)
+ */
+struct atmi_xa_rm_status_btid
+{
+    char rmstatus; /**< RM=1 index is 0 */
+    int  rmerrorcode; /**< ATMI error code */
+    short rmreason; /**< Reason code of RM */
+    long btid;
+    
+    EX_hash_handle hh;         /**< makes this structure hashable */
+};
+typedef struct atmi_xa_rm_status_tid atmi_xa_rm_status_tid_t;
+
+/**
  * Resource monitor status during the prepare-commit phase
  */
 struct atmi_xa_rm_status
 {
+#if 0
     char rmstatus; /* RM=1 index is 0 */
     int  rmerrorcode; /* ATMI error code */
     short  rmreason; /* Reason code of RM */
+#endif
     /* TODO:
      * - Have a TID counter here 
      * - add linked list or hash list? Seems like linked list should
@@ -203,6 +220,10 @@ struct atmi_xa_rm_status
      *   we need to update RM statuses, and that access will be done
      *   on per transaction basis. Thus EXHASH is needed here.
      */
+    
+    atmi_xa_rm_status_tid_t *btid_hash; /**<  Branch TID Hash */
+    
+    long tidcounter;   /**< TID counter*/
 };
 typedef struct atmi_xa_rm_status atmi_xa_rm_status_t;
 
