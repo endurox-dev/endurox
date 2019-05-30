@@ -52,8 +52,16 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ######################################
-add_executable (tmsrv tmsrv.c xasrvutil.c log.c local.c background.c tmapi.c
-                    statedrv.c ../libatmisrv/rawmain_integra.c)
+add_executable (tmsrv 
+                    tmsrv.c 
+                    xasrvutil.c 
+                    log.c 
+                    local.c 
+                    background.c 
+                    tmapi.c
+                    btid.c
+                    statedrv.c 
+                    ../libatmisrv/rawmain_integra.c)
 target_link_libraries (tmsrv atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
