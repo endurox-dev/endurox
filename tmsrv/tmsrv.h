@@ -161,6 +161,9 @@ extern int tm_aborttrans(UBFH *p_ub);
 extern int tm_status(UBFH *p_ub);
 extern int tm_committrans(UBFH *p_ub);
 
+/* Branch TID manipulations */
+extern long tms_btid_gettid(atmi_xa_log_t *p_tl, int rmid);
+
 #ifdef	__cplusplus
 }
 #endif
