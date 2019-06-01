@@ -2302,18 +2302,16 @@ it, what is the timeout setting.
 [width="80%", options="header"]
 |=========================================================
 |Nr|Field name|Type|Mand/Opt|Version|Description
-|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
-|2|Record type id|Const "I"|Mand|1|Record type identifier
-|3|Resource manager ID|N..5|Mand|1|Resource manager ID which have started TX
-|4|Cluster node id|N..5|Mand|1|Cluster Node id which started transaction
-|5|TMSRV id|N..5|Mand|1|Transaction manager server id (srvid from ndrxconfig.xml)
-|6|Transaction timeout|N..19|Mand|1|Transaction timeout set by tpbegin(3)
-|7|Initial list of resource managers participating in transaction (active)|ANS..1023|Mand|In version 1 this
+|1|tstamp|N13|Mand|1|UTC Time stamp when record added
+|2|cmdid|Const "I"|Mand|1|Record type identifier
+|3|tmrmid|N..5|Mand|1|Resource manager ID which have started TX
+|4|tmnodeid|N..5|Mand|1|Cluster Node id which started transaction
+|5|tmsrvid|N..5|Mand|1|Transaction manager server id (srvid from ndrxconfig.xml)
+|6|txtout|N..19|Mand|1|Transaction timeout set by tpbegin(3)
+|7|rmsbuf|ANS..1023|Mand|In version 1 this
 was list of active resource managers. Starting with Enduro/X 6.1, transaction logging is start when
 transaction is active, thus each active RM is logged with *R* record. Thus there is
-no real reason for this record. Thus from Enduor/X 6.1, this will have only 
-first RM logged which opened the
-transaction, basically the same id found in Field Nr. 3.
+no real reason for this record. Thus from Enduro/X 6.1 this fields is not used.
 |=========================================================
 
 
@@ -2322,9 +2320,9 @@ transaction, basically the same id found in Field Nr. 3.
 [width="80%", options="header"]
 |=========================================================
 |Nr|Field name|Type|Mand/Opt|Version|Description
-|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
-|2|Record type id|Const "S"|Mand|1|Record type identifier
-|3|Stage code|N..2|Mand|1|*0* - transaction does no exists,
+|1|tstamp|N13|Mand|1|UTC Time stamp when record added
+|2|cmdid|Const "S"|Mand|1|Record type identifier
+|3|txstage|N..2|Mand|1|*0* - transaction does no exists,
 *5* - transaction is active in processing,
 *20* - transaction is aborting,
 *25* - transaction aborted with hazard,
@@ -2349,11 +2347,11 @@ This functionality is starting with record version 2.
 [width="80%", options="header"]
 |=========================================================
 |Nr|Field name|Type|Mand/Opt|Version|Description
-|1|UTC Time stamp|N13|Mand|1|UTC Time stamp when record added
-|2|Record type id|Const "R"|Mand|1|Record type identifier - resource manager status
-|3|Resource Manager ID|N..5|Mand|1|Particular ID of resource manager for which
+|1|tstamp|N13|Mand|1|UTC Time stamp when record added
+|2|cmdid|Const "R"|Mand|1|Record type identifier - resource manager status
+|3|rmid|N..5|Mand|1|Particular ID of resource manager for which
 status is being tracked
-|4|Resource Manager status|A1|Mand|1|0x0 - NULL, 
+|4|rmstatus|A1|Mand|1|0x0 - NULL, 
 *n* - Non transaction,
 *i* - Idle state (not used),
 *j* - RM is in joined state (active),
@@ -2365,7 +2363,10 @@ status is being tracked
 *r* - Committed (was read only),
 *h* - Committed (Heuristically),
 *z* - Hazard (committed or aborted)
-|5|Transaction ID|N..19|Opt|2|Transaction id, per resource manager. If value
+|5|rmerrorcode|N..3|Mand|1|TP Error code when RM entered in this status. *0* -
+means no error occurred.
+|6|rmreason|NS..4|Mand|1|XA Error code for caused RM status
+|7|btid|N..19|Opt|2|Transaction id, per resource manager. If value
 is not set, then it defaults to *0*
 |=========================================================
 
