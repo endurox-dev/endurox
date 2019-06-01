@@ -196,7 +196,8 @@ out:
 }
 
 /**
- * Add RM to transaction
+ * Add RM to transaction.
+ * TODO: Needs to check of returning new TID
  * @param xai
  * @param rmid - 1 based rmid
  * @return 
@@ -624,6 +625,8 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     /* Read involved resrouce managers - put them in join state */
     TOKEN_READ("info", "rmsbuf");
     
+#if 0
+    - not used anymore. All active branches are logged as RM status
     p2 = strtok_r (p, ",", &saveptr1);
     while (p2 != NULL)
     {
@@ -639,6 +642,7 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
         
         p2 = strtok_r (NULL, ",", &saveptr1);
     }
+#endif
     
 out:                
     return ret;
@@ -700,31 +704,35 @@ out:
 /**
  * Change + write RM status to file
  * FORMAT: <rmid>:<rmstatus>:<rmerrorcode>:<rmreason>
- * @param p_tl
- * @param stage
+ * @param p_tl transaction
+ * @param[in] btid transaction branch
+ * @param[in] rmstatus Resource manager status
+ * @param[in] rmerrorcode Resource manager error code
+ * @param[in] rmreason reason code
  * @return SUCCEED/FAIL
  */
-expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, short rmid, 
-        char rmstatus, int  rmerrorcode, short  rmreason)
+expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *btid, 
+        char rmstatus, int rmerrorcode, short rmreason)
 {
     int ret = EXSUCCEED;
     int do_log = EXFALSE;
     
     CHK_THREAD_ACCESS;
     
-    if (p_tl->rmstatus[rmid-1].rmstatus != rmstatus)
+    if (btid->rmstatus != rmstatus)
     {
         do_log = EXTRUE;
     }
     
-    p_tl->rmstatus[rmid-1].rmstatus = rmstatus;
-    p_tl->rmstatus[rmid-1].rmerrorcode = rmerrorcode;
-    p_tl->rmstatus[rmid-1].rmreason = rmreason;
+    btid->rmstatus = rmstatus;
+    btid->rmerrorcode = rmerrorcode;
+    btid->rmreason = rmreason;
+ 
     
     if (do_log)
     {
-        if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_RMSTAT, "%hd:%c:%d:%hd", 
-                rmid, rmstatus, rmerrorcode, rmreason))
+        if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_RMSTAT, "%hd:%c:%d:%hd:%ld",
+                btid->rmid, rmstatus, rmerrorcode, rmreason, btid->btid))
         {
             ret=EXFAIL;
             goto out;
@@ -748,6 +756,7 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
     int rmerrorcode;
     short rmreason;
     int rmid;
+    long btid;
     TOKEN_READ_VARS;
    
     TOKEN_READ("rmstat", "tstamp");
@@ -772,9 +781,17 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
     TOKEN_READ("rmstat", "rmreason");
     rmreason = (short)atoi(p);
    
+    TOKEN_READ("rmstat", "btid");
+    btid = atol(p);
+    
+    /*
     p_tl->rmstatus[rmid-1].rmstatus = rmstatus;
     p_tl->rmstatus[rmid-1].rmerrorcode = rmerrorcode;
     p_tl->rmstatus[rmid-1].rmreason = rmreason;
+     * */
+    
+    ret = tms_btid_addupd(p_tl, rmid, 
+            btid, rmstatus, rmerrorcode, rmreason);
    
 out:
     return ret;    
@@ -794,26 +811,30 @@ expublic int tm_chk_tx_status(atmi_xa_log_t *p_tl)
     int i;
     int all_aborted = EXTRUE;
     int all_committed = EXTRUE;
-    
+    atmi_xa_rm_status_btid_t *el, *elt;
     CHK_THREAD_ACCESS;
     
     for (i=0; i<NDRX_MAX_RMS; i++)
     {
-        if (!(XA_RM_STATUS_COMMITTED == p_tl->rmstatus[i].rmstatus ||
-            XA_RM_STATUS_COMMITTED_RO == p_tl->rmstatus[i].rmstatus)
-                )
+        /* HASH Iterate over the branches */
+        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
         {
-            all_committed = EXFALSE;
-            break;
-        }
-        
-        if (!(XA_RM_STATUS_ABORTED == p_tl->rmstatus[i].rmstatus ||
-            XA_RM_STATUS_COMMITTED_RO == p_tl->rmstatus[i].rmstatus)
-                )
-        {
-            all_aborted = EXFALSE;
-            break;
-        }
+            if (!(XA_RM_STATUS_COMMITTED == el->rmstatus ||
+                XA_RM_STATUS_COMMITTED_RO == el->rmstatus)
+                    )
+            {
+                all_committed = EXFALSE;
+                break;
+            }
+
+            if (!(XA_RM_STATUS_ABORTED == el->rmstatus ||
+                XA_RM_STATUS_COMMITTED_RO == el->rmstatus)
+                    )
+            {
+                all_aborted = EXFALSE;
+                break;
+            }
+        } /* Hash iter */
     }
     
     if (all_aborted || all_committed)
@@ -925,19 +946,26 @@ expublic void tms_tx_hash_unlock(void)
 
 /**
  * Copy TLOG info to FB (for display purposes)
+ * The function has mandatory task to fill in the general fields about
+ * transaction.
+ * The actual RM/Branch tids are fill up till we get UBF buffer error (full)
  * @param p_ub - Dest UBF
  * @param p_tl - Transaction log
- * @return 
+ * @param incl_rm_stat include RM status in response buffer
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl)
+expublic int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl, int incl_rm_stat)
 {
     int ret = EXSUCCEED;
     long tspent;
     short i;
     tspent = p_tl->txtout - ndrx_stopwatch_get_delta_sec(&p_tl->ttimer);    
+    atmi_xa_rm_status_btid_t *el, *elt;
     
     if (tspent<0)
+    {
         tspent = 0;
+    }
     
     if (
             EXSUCCEED!=Bchg(p_ub, TMXID, 0, (char *)p_tl->tmxid, 0L) ||
@@ -957,26 +985,33 @@ expublic int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl)
     }
     
     /* return the info about RMs: */
-    for (i=0; i<NDRX_MAX_RMS; i++)
+    for (i=0; incl_rm_stat && i<NDRX_MAX_RMS; i++)
     {
-        if (p_tl->rmstatus[i].rmstatus)
+        /* loop over the Branch TIDs  */
+        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
         {
             /* cast to long... */
-            long rmerrorcode =  (long)p_tl->rmstatus[i].rmerrorcode;
-            short rmid = i+1;
+            long rmerrorcode =  (long)el->rmerrorcode;
+            
             if (
-                EXSUCCEED!=Badd(p_ub, TMTXRMID, (char *)&rmid, 0L) ||
+                EXSUCCEED!=Badd(p_ub, TMTXRMID, (char *)&el->rmid, 0L) ||
+                EXSUCCEED!=Badd(p_ub, TMTXBTID, (char *)&el->btid, 0L) ||
                 EXSUCCEED!=Badd(p_ub, TMTXRMSTATUS,
-                    (char *)&(p_tl->rmstatus[i].rmstatus), 0L) ||
+                    (char *)&(el->rmstatus), 0L) ||
                 EXSUCCEED!=Badd(p_ub, TMTXRMERRCODE,
                     (char *)&rmerrorcode, 0L) ||
                 EXSUCCEED!=Badd(p_ub, TMTXRMREASON,
-                    (char *)&(p_tl->rmstatus[i].rmreason), 0L)
+                    (char *)&(el->rmreason), 0L)
                 )
             {
-                NDRX_LOG(log_error, "Failed to return fields: [%s]", 
+                /* there could be tons of these branches for 
+                 * mysql/mariadb or posgresql 
+                 */
+                NDRX_LOG(log_error, "Failed to return fields: [%s] - ignore", 
                             Bstrerror(Berror));
-                EXFAIL_OUT(ret);
+                
+                /* finish off. */
+                goto out;
             }
         }
     } /* for */

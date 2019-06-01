@@ -117,7 +117,7 @@ extern int tm_chk_tx_status(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode);
 extern void tms_tx_hash_lock(void);
 extern void tms_tx_hash_unlock(void);
-extern int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl);
+extern int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl, int inc_rm_stat);
         
 extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
 
@@ -163,6 +163,15 @@ extern int tm_committrans(UBFH *p_ub);
 
 /* Branch TID manipulations */
 extern long tms_btid_gettid(atmi_xa_log_t *p_tl, int rmid);
+
+
+extern atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl, 
+        short rmid, long btid);
+extern int tms_btid_add(atmi_xa_log_t *p_tl, short rmid, 
+            long btid, char rmstatus, int  rmerrorcode, short rmreason);
+extern int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
+            long btid, char rmstatus, int  rmerrorcode, short rmreason);
+
 
 #ifdef	__cplusplus
 }

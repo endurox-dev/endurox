@@ -238,6 +238,10 @@ do {                                                                            
     EXHASH_FIND(hh,head,findint,sizeof(int),out)
 #define EXHASH_ADD_INT(head,intfield,add)                                          \
     EXHASH_ADD(hh,head,intfield,sizeof(int),add)
+#define EXHASH_FIND_LONG(head,findlong,out)                                          \
+    EXHASH_FIND(hh,head,findlong,sizeof(long),out)
+#define EXHASH_ADD_LONG(head,longfield,add)                                          \
+    EXHASH_ADD(hh,head,longfield,sizeof(long),add)
 #define EXHASH_FIND_PTR(head,findptr,out)                                          \
     EXHASH_FIND(hh,head,findptr,sizeof(void *),out)
 #define EXHASH_ADD_PTR(head,ptrfield,add)                                          \

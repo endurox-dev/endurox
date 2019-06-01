@@ -193,14 +193,15 @@ typedef struct atmi_xa_curtx atmi_xa_curtx_t;
  */
 struct atmi_xa_rm_status_btid
 {
-    char rmstatus; /**< RM=1 index is 0 */
-    int  rmerrorcode; /**< ATMI error code */
-    short rmreason; /**< Reason code of RM */
-    long btid;
+    char rmstatus;  /**< RM=1 index is 0                            */
+    int  rmerrorcode;/**< ATMI error code                           */
+    short rmreason; /**< Reason code of RM                          */
+    long btid;      /**< Transaction ID in branch                   */
+    short rmid;     /**< Resource manager ID (starting from 1)      */
     
-    EX_hash_handle hh;         /**< makes this structure hashable */
+    EX_hash_handle hh;         /**< makes this structure hashable   */
 };
-typedef struct atmi_xa_rm_status_tid atmi_xa_rm_status_tid_t;
+typedef struct atmi_xa_rm_status_btid atmi_xa_rm_status_btid_t;
 
 /**
  * Resource monitor status during the prepare-commit phase
@@ -221,7 +222,7 @@ struct atmi_xa_rm_status
      *   on per transaction basis. Thus EXHASH is needed here.
      */
     
-    atmi_xa_rm_status_tid_t *btid_hash; /**<  Branch TID Hash */
+    atmi_xa_rm_status_btid_t *btid_hash; /**<  Branch TID Hash */
     
     long tidcounter;   /**< TID counter*/
 };
