@@ -68,16 +68,101 @@
  * @param rmid resource manager id
  * @return new TID
  */
-expublic long tms_btid_gettid(atmi_xa_log_t *p_tl, int rmid)
+expublic long tms_btid_gettid(atmi_xa_log_t *p_tl, short rmid)
 {
-    long ret = p_tl->rmstatus[rmid-1].btid;
+    long ret = p_tl->rmstatus[rmid-1].tidcounter;
     
-    p_tl->rmstatus[rmid-1].btid++;
+    p_tl->rmstatus[rmid-1].tidcounter++;
     
-    
-    NDRX_LOG(log_info, "New Branch TID %ld for rmid %d", ret, rmid);
+    NDRX_LOG(log_info, "New Branch TID %ld for rmid %hd", ret, rmid);
     
     return ret;
 }
+
+/**
+ * Find branch transaction by id
+ * @param[in] p_tl Transaction entry
+ * @param[in] rmid Resource manager id
+ * @param[in] btid transaction id
+ * @return transaction branch or NULL if not found
+ */
+expublic atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl, 
+        short rmid, long btid)
+{
+    atmi_xa_rm_status_btid_t *ret = NULL;
+    
+    EXHASH_FIND_LONG(p_tl->rmstatus[rmid-1].btid_hash, btid, ret);
+    
+    return ret;
+}
+
+
+/**
+ * Add transaction branch to whole transaction
+ * @param[in] p_tl transaction obj
+ * @param[in] rmid resource manager id
+ * @param[in] btid branch transaction id
+ * @param[in] rmstatus Resource status
+ * @param[in] rmerrorcode last error reported for btid
+ * @param[in] rmreason reason code reported for btid
+ * @return EXSUCCEED/EXFAIL
+ */    
+expublic int tms_btid_add(atmi_xa_log_t *p_tl, short rmid, 
+            long btid, char rmstatus, int  rmerrorcode, short rmreason)
+ {
+    int ret = EXSUCCEED;
+    atmi_xa_rm_status_btid_t * tid = NDRX_MALLOC(sizeof(atmi_xa_rm_status_btid_t));
+    
+    if (NULL==tid)
+    {
+        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", 
+                sizeof(atmi_xa_rm_status_btid_t), strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    tid->rmid = rmid;
+    tid->btid = btid;
+    tid->rmstatus = rmstatus;
+    tid->rmerrorcode = rmerrorcode;
+    tid->rmreason = rmreason;
+    
+    EXHASH_ADD_LONG(hh, p_tl->rmstatus[rmid-1].btid_hash, btid, tid);
+    
+out:
+    return ret;
+}
+
+/**
+ * Add or update branch tid entry
+ * @param[in] p_tl transaction object
+ * @param[in] rmid resource manager id, starting from 1
+ * @param[in] btid branch tid
+ * @param[in] rmstatus branch tid status
+ * @param[in] rmerrorcode branch tid error code
+ * @param[in] rmreason branch tid reasoncode
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
+            long btid, char rmstatus, int  rmerrorcode, short rmreason)
+{
+    int ret = EXSUCCEED;
+    atmi_xa_rm_status_btid_t *exist = tms_btid_find(p_tl, rmid, btid);
+    
+    if (NULL!=exist)
+    {
+        exist->rmstatus = rmstatus;
+        exist->rmerrorcode = rmerrorcode;
+        exist->rmreason = rmreason;
+    }
+    else
+    {
+        ret = tms_btid_add(p_tl, rmid, btid, rmstatus, rmerrorcode, rmreason);
+    }
+    
+out:
+    return ret;
+}
+
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
