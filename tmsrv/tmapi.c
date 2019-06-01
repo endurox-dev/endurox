@@ -644,7 +644,7 @@ expublic int tm_status(UBFH *p_ub)
     }
     
     /* Return full status of the transaction... */
-    if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, p_tl))
+    if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, p_tl), EXFALSE)
     {
         EXFAIL_OUT(ret);
     }

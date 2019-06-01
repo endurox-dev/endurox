@@ -180,10 +180,19 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     NDRX_FREE(thread_data);
     /**************************************************************************/
     
-    /* get some more stuff! */
+    /* get some more space! 
+     */
     if (Bunused (p_ub) < 4096)
     {
-        p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
+        int allocs;
+        p_ub = (UBFH *)tprealloc ((char *)p_ub, allocs=(Bsizeof (p_ub) + 4096));
+        
+        if (NULL=p_ub)
+        {
+            NDRX_LOG(log_error, "Failed realloc UBF to %d bytes: %s", 
+                    allocs, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
     }
     
     ndrx_debug_dump_UBF(log_info, "TPTMSRV call buffer:", p_ub);
@@ -228,7 +237,9 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_PRINTTRANS:
             
-            /* request for printing active transactions */
+            /* request for printing active transactions 
+             * we shall allocate the buffer to max possible size
+             */
             if (EXSUCCEED!=tm_tpprinttrans(p_ub, cd))
             {
                 ret=EXFAIL;
