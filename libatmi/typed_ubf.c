@@ -260,6 +260,8 @@ out:
 
 /**
  * Re-allocate UBF buffer. Firstly we will find it in the list.
+ * TODO: Fix the realloc to bytes, instead of fields, set by Brealloc!!!
+ * 
  * @param ptr
  * @param size
  * @return
