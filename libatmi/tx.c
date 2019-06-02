@@ -258,7 +258,7 @@ expublic int tx_info(TXINFO * txinfo)
         {
             /* check with TM, what actually status we have? */
             if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_STATUS, EXFALSE, EXFAIL, 
-                G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L, EXFAIL)))
             {
                 int tperr = tperrno;
                 NDRX_LOG(log_error, "Tran info failed with: %d", tperr);

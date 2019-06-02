@@ -180,7 +180,8 @@ expublic int tm_tpcommit(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    /* Open log file */
+    /* Open log file 
+     * - now we open the file at the start of the transaction.
     if (EXSUCCEED!=tms_open_logfile(p_tl, "w"))
     {
         NDRX_LOG(log_error, "Failed to open log file");
@@ -189,6 +190,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
         do_abort = EXTRUE;
         EXFAIL_OUT(ret);
     }
+    */
     
     /* Log that we start commit... */
     if (EXSUCCEED!=tms_log_info(p_tl) ||
@@ -243,6 +245,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
     char xid_str[NDRX_XID_SERIAL_BUFSIZE];
     long txtout;
     long tmflags;
+    long btid = EXFAIL;
     NDRX_LOG(log_debug, "tm_tpbegin() called");
     
     if (EXSUCCEED!=Bget(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
@@ -323,11 +326,24 @@ expublic int tm_tpbegin(UBFH *p_ub)
     }
     
     /* Log into journal */
-    if (EXSUCCEED!=tms_log_start(&xai, txtout, tmflags))
+    if (EXSUCCEED!=tms_log_start(&xai, txtout, tmflags, &btid))
     {
         NDRX_LOG(log_error, "Failed to log the transaction!");
         atmi_xa_set_error_fmt(p_ub, TPETRAN, NDRX_XA_ERSN_LOGFAIL, 
                     "Failed to log the transaction!");
+        do_rollback = EXTRUE;
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* TID to log */
+    if (EXFAIL!=Bchg(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to set TMTXBTID: %s", Bstrerror(Berror));
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 
+                    "Failed to set TMTXBTID: %s", Bstrerror(Berror));
+        
+        /* How about closing log the file? */
         do_rollback = EXTRUE;
         ret=EXFAIL;
         goto out;
@@ -387,7 +403,7 @@ expublic int tm_tmregister(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged))
+    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged, &btid))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
                     "Failed to log new RM!");
@@ -530,7 +546,7 @@ expublic int tm_tpprinttrans(UBFH *p_ub, int cd)
         
         /* Erase FB & setup the info there... */
         Bproj(p_ub, NULL); /* clear the FB! */
-        if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, &(el->p_tl)))
+        if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, &(el->p_tl), EXTRUE))
         {
             EXFAIL_OUT(ret);
         }
@@ -665,7 +681,7 @@ expublic int tm_status(UBFH *p_ub)
     }
     
     /* Return full status of the transaction... */
-    if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, p_tl), EXFALSE)
+    if (EXSUCCEED!=tms_log_cpy_info_to_fb(p_ub, p_tl, EXFALSE))
     {
         EXFAIL_OUT(ret);
     }

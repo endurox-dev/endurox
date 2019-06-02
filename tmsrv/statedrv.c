@@ -91,6 +91,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         int op_ret = 0;
         int op_reason = 0;
         int op_tperrno = 0;
+        atmi_xa_rm_status_btid_t *el, *elt;
         was_retry = EXFALSE;
         
         again = EXFALSE;
@@ -108,109 +109,109 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         
         for (i=0; i<NDRX_MAX_RMS; i++)
         {
-            /* Skipt not joined... */
-            if (!p_tl->rmstatus[i].rmstatus || (EXFAIL!=rmid && i+1!=rmid))
-                continue;
+            EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
+            {
 
-            NDRX_LOG(log_info, "RMID: %hd status %c", 
-					i+1, p_tl->rmstatus[i].rmstatus);
-            
-            op_reason = XA_OK;
-            op_tperrno = 0;
-            op_code = xa_status_get_op(p_tl->txstage, p_tl->rmstatus[i].rmstatus);
-            switch (op_code)
-            {
-                case XA_OP_NOP:
-                    NDRX_LOG(log_info, "OP_NOP");
-                    break;
-                case XA_OP_PREPARE:
-                    NDRX_LOG(log_error, "Prepare RMID %d", i+1);
-                    if (EXSUCCEED!=(op_ret = tm_prepare_combined(p_xai, i+1)))
-                    {
-                        op_reason = atmi_xa_get_reason();
-                        op_tperrno = tperrno;
-                    }
-                    break;
-                case XA_OP_COMMIT:
-                    NDRX_LOG(log_info, "Commit RMID %d", i+1);
-                    if (EXSUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1)))
-                    {
-                        op_reason = atmi_xa_get_reason();
-                        op_tperrno = tperrno;
-                    }
-                    break;
-                case XA_OP_ROLLBACK:
-                    NDRX_LOG(log_info, "Rollback RMID %d", i+1);
-                    if (EXSUCCEED!=(op_ret = tm_rollback_combined(p_xai, i+1)))
-                    {
-                        op_reason = atmi_xa_get_reason();
-                        op_tperrno = tperrno;
-                    }
-                    break;
-                default:
-                    NDRX_LOG(log_error, "Invalid opcode %d", op_code);
-                    ret=TPESYSTEM;
-                    goto out;
-                    break;
-            }
-            NDRX_LOG(log_info, "Operation tperrno: %d, xa return code: %d",
-                                     op_tperrno, op_reason);
-            
-            if (op_reason==XA_RETRY) 
-            {
-                was_retry = EXTRUE;   
-            }
-            
-            /* Now get the transition of the state/vote */
-            if (XA_OP_NOP == op_code)
-            {
-                if (NULL==(vote_txstage = xa_status_get_next_by_new_status(p_tl->txstage, 
-                        p_tl->rmstatus[i].rmstatus)))
+                NDRX_LOG(log_info, "RMID: %hd status %c", 
+                                            i+1, el->rmstatus);
+
+                op_reason = XA_OK;
+                op_tperrno = 0;
+                op_code = xa_status_get_op(p_tl->txstage, el->rmstatus);
+                switch (op_code)
                 {
-                    NDRX_LOG(log_error, "No stage info for %hd/%c - ignore", p_tl->txstage, 
-                        p_tl->rmstatus[i].rmstatus);
-                    /*
-                    ret=TPESYSTEM;
-                    goto out;
-                    */
-                    continue;
+                    case XA_OP_NOP:
+                        NDRX_LOG(log_info, "OP_NOP");
+                        break;
+                    case XA_OP_PREPARE:
+                        NDRX_LOG(log_error, "Prepare RMID %d", i+1);
+                        if (EXSUCCEED!=(op_ret = tm_prepare_combined(p_xai, i+1, el->btid)))
+                        {
+                            op_reason = atmi_xa_get_reason();
+                            op_tperrno = tperrno;
+                        }
+                        break;
+                    case XA_OP_COMMIT:
+                        NDRX_LOG(log_info, "Commit RMID %d", i+1);
+                        if (EXSUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1, el->btid)))
+                        {
+                            op_reason = atmi_xa_get_reason();
+                            op_tperrno = tperrno;
+                        }
+                        break;
+                    case XA_OP_ROLLBACK:
+                        NDRX_LOG(log_info, "Rollback RMID %d", i+1);
+                        if (EXSUCCEED!=(op_ret = tm_rollback_combined(p_xai, i+1, el->btid)))
+                        {
+                            op_reason = atmi_xa_get_reason();
+                            op_tperrno = tperrno;
+                        }
+                        break;
+                    default:
+                        NDRX_LOG(log_error, "Invalid opcode %d", op_code);
+                        ret=TPESYSTEM;
+                        goto out;
+                        break;
                 }
-            }
-            else
-            {
-                if (NULL==(vote_txstage = xa_status_get_next_by_op(p_tl->txstage, 
-                        p_tl->rmstatus[i].rmstatus, op_code, op_reason)))
+                NDRX_LOG(log_info, "Operation tperrno: %d, xa return code: %d",
+                                         op_tperrno, op_reason);
+
+                if (op_reason==XA_RETRY) 
                 {
-                    NDRX_LOG(log_error, "Invalid stage for %hd/%c/%d/%d", 
-                            p_tl->txstage, p_tl->rmstatus[i].rmstatus, op_code, op_reason);
-                    ret=TPESYSTEM;
-                    goto out;
+                    was_retry = EXTRUE;   
                 }
-                
-                /* Log RM status change... */
-                tms_log_rmstatus(p_tl, i+1, vote_txstage->next_rmstatus, tperrno, 
-                        op_reason);
+
+                /* Now get the transition of the state/vote */
+                if (XA_OP_NOP == op_code)
+                {
+                    if (NULL==(vote_txstage = xa_status_get_next_by_new_status(p_tl->txstage, 
+                            el->rmstatus)))
+                    {
+                        NDRX_LOG(log_error, "No stage info for %hd/%c - ignore", p_tl->txstage, 
+                            el->rmstatus);
+                        /*
+                        ret=TPESYSTEM;
+                        goto out;
+                        */
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (NULL==(vote_txstage = xa_status_get_next_by_op(p_tl->txstage, 
+                            el->rmstatus, op_code, op_reason)))
+                    {
+                        NDRX_LOG(log_error, "Invalid stage for %hd/%c/%d/%d", 
+                                p_tl->txstage, el->rmstatus, op_code, op_reason);
+                        ret=TPESYSTEM;
+                        goto out;
+                    }
+
+                    /* Log RM status change... */
+                    tms_log_rmstatus(p_tl, el, vote_txstage->next_rmstatus, 
+                            tperrno, op_reason);
+                }
+                /* Stage switching... */
+
+                stagearr[i] = vote_txstage->next_txstage; YOPT! Stage Array build as incremental array
+
+                if ((descr->txs_stage_min>vote_txstage->next_txstage ||
+                        descr->txs_max_complete<vote_txstage->next_txstage) && descr->allow_jump)
+                {
+                    NDRX_LOG(log_warn, "Stage group left!");
+
+                    new_txstage = vote_txstage->next_txstage;
+                    /* switch the stage */
+                    again = EXTRUE;
+                    break;
+                }
+
+                /* Maybe we need some kind of arrays to put return stages in? 
+                 We need to put all states in one array.
+                 1. If there is any stage in the min & max ranges => Stick with the lowest from range
+                 2. If there is nothing in range, but have stuff outside, then take lowest from outside
+                 */
             }
-            /* Stage switching... */
-            
-            stagearr[i] = vote_txstage->next_txstage;
-            
-            if ((descr->txs_stage_min>vote_txstage->next_txstage ||
-                    descr->txs_max_complete<vote_txstage->next_txstage) && descr->allow_jump)
-            {
-                NDRX_LOG(log_warn, "Stage group left!");
-                
-                new_txstage = vote_txstage->next_txstage;
-                /* switch the stage */
-                again = EXTRUE;
-                break;
-            }
-                    
-            /* Maybe we need some kind of arrays to put return stages in? 
-             We need to put all states in one array.
-             1. If there is any stage in the min & max ranges => Stick with the lowest from range
-             2. If there is nothing in range, but have stuff outside, then take lowest from outside
-             */
         }
         
         if (!new_txstage)
