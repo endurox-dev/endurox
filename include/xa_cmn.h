@@ -151,21 +151,24 @@ struct atmi_xa_tx_cd
 };
 
 typedef struct atmi_xa_tx_cd atmi_xa_tx_cd_t;
-    
+
+/**
+ * Why this hash is needed?
+ */
 struct atmi_xa_tx_info
 {
     ATMI_XA_TX_INFO_FIELDS;
     
-    
-    int is_tx_suspended; /* Is current transaction suspended?   */
-    int is_tx_initiator; /* Are current process transaction intiator? */
-    int is_ax_reg_called; /* Have work done, needs xa_end()! */
+    long btid;           /**< Branch TID, used locally only atmi procs      */
+    int is_tx_suspended; /* Is current transaction suspended?               */
+    int is_tx_initiator; /* Are current process transaction intiator?       */
+    int is_ax_reg_called; /* Have work done, needs xa_end()!                */
     
     atmi_xa_tx_cd_t *call_cds;  /* hash list of call descriptors involved in tx 
-                                 * (checked for commit/abort/tpreturn) */
-    atmi_xa_tx_cd_t *conv_cds;  /* hash list of conversation open */
+                                 * (checked for commit/abort/tpreturn)      */
+    atmi_xa_tx_cd_t *conv_cds;  /* hash list of conversation open           */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable             */
 };
 typedef struct atmi_xa_tx_info atmi_xa_tx_info_t;
 
@@ -356,7 +359,7 @@ extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags);
 
 extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
-                    atmi_xa_tx_info_t *p_xai, long flags);
+                    atmi_xa_tx_info_t *p_xai, long flags, long btid);
 extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub);
 
@@ -372,13 +375,11 @@ extern NDRX_API int atmi_xa_is_current_rm_known(char *tmknownrms);
 extern NDRX_API void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo);
 
 extern NDRX_API UBFH * atmi_xa_alloc_tm_call(char cmd);
-extern NDRX_API int atmi_xa_set_curtx_from_tm(UBFH *p_ub);
 extern NDRX_API int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai);
-extern NDRX_API int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai);
 extern NDRX_API void atmi_xa_reset_curtx(void);
 extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
 extern NDRX_API int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern NDRX_API XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai);
+extern NDRX_API XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid);
 extern NDRX_API void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai);
 
 /* CD registration with transaction: */

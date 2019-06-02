@@ -91,7 +91,7 @@ expublic atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl,
 {
     atmi_xa_rm_status_btid_t *ret = NULL;
     
-    EXHASH_FIND_LONG(p_tl->rmstatus[rmid-1].btid_hash, btid, ret);
+    EXHASH_FIND_LONG(p_tl->rmstatus[rmid-1].btid_hash, (&btid), ret);
     
     return ret;
 }
@@ -105,10 +105,12 @@ expublic atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl,
  * @param[in] rmstatus Resource status
  * @param[in] rmerrorcode last error reported for btid
  * @param[in] rmreason reason code reported for btid
+ * @param[out] bt pointer to allocated TID
  * @return EXSUCCEED/EXFAIL
  */    
 expublic int tms_btid_add(atmi_xa_log_t *p_tl, short rmid, 
-            long btid, char rmstatus, int  rmerrorcode, short rmreason)
+            long btid, char rmstatus, int  rmerrorcode, short rmreason,
+            atmi_xa_rm_status_btid_t **bt)
  {
     int ret = EXSUCCEED;
     atmi_xa_rm_status_btid_t * tid = NDRX_MALLOC(sizeof(atmi_xa_rm_status_btid_t));
@@ -126,7 +128,17 @@ expublic int tms_btid_add(atmi_xa_log_t *p_tl, short rmid,
     tid->rmerrorcode = rmerrorcode;
     tid->rmreason = rmreason;
     
-    EXHASH_ADD_LONG(hh, p_tl->rmstatus[rmid-1].btid_hash, btid, tid);
+    EXHASH_ADD_LONG((p_tl->rmstatus[rmid-1].btid_hash), btid, tid);
+    
+    /* If end point self assigned transaction ID,
+     * then step up the counter.
+     * This might happen only if join is used and process have used
+     * 0 tid 
+     */
+    if (p_tl->rmstatus[rmid-1].tidcounter <= btid)
+    {
+        p_tl->rmstatus[rmid-1].tidcounter = btid + 1;
+    }
     
 out:
     return ret;
@@ -141,25 +153,31 @@ out:
  * @param[in] rmerrorcode branch tid error code
  * @param[in] rmreason branch tid reasoncode
  * @param[out] exists did record exist? EXTRUE/EXFAIL
+ * @param[out] bt btranch transaction object ptr output
  * @return EXSUCCEED/EXFAIL
  */
 expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
             long *btid, char rmstatus, int  rmerrorcode, short rmreason,
-            int *exists)
+            int *exists, atmi_xa_rm_status_btid_t **bt)
 {
     int ret = EXSUCCEED;
-    atmi_xa_rm_status_btid_t *bt;
     
     if (EXFAIL!=*btid)
     {   
-        bt = tms_btid_find(p_tl, rmid, *btid);
+        *bt = tms_btid_find(p_tl, rmid, *btid);
     }
     
     if (NULL!=bt)
     {
-        bt->rmstatus = rmstatus;
-        bt->rmerrorcode = rmerrorcode;
-        bt->rmreason = rmreason;
+        /* only if new status is higher than old status
+         * used by registering transaction
+         */
+        if (rmstatus > (*bt)->rmstatus)
+        {
+            (*bt)->rmstatus = rmstatus;
+            (*bt)->rmerrorcode = rmerrorcode;
+            (*bt)->rmreason = rmreason;
+        }
         
         if (NULL!=exists)
         {
@@ -174,7 +192,7 @@ expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid,
             *btid = tms_btid_gettid(p_tl, rmid);
         }
         
-        ret = tms_btid_add(p_tl, rmid, *btid, rmstatus, rmerrorcode, rmreason);
+        ret = tms_btid_add(p_tl, rmid, *btid, rmstatus, rmerrorcode, rmreason, bt);
         
         if (NULL!=exists)
         {
@@ -186,7 +204,6 @@ expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid,
 out:
     return ret;
 }
-
 
 
 /* vim: set ts=4 sw=4 et smartindent: */

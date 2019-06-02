@@ -120,25 +120,23 @@ extern void tms_tx_hash_lock(void);
 extern void tms_tx_hash_unlock(void);
 extern int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl, int inc_rm_stat);
         
-extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-
 extern int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op,
                         short rmid, long flags);
 
 /* Prepare API */
-extern int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid);
-extern int tm_prepare_combined(atmi_xa_tx_info_t *p_xai, short rmid);
+extern int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_prepare_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
 /* Rollback API */
-extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid);
-extern int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid);
+extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
 /* Commit API */
-extern int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid);
-extern int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid);
+extern int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
 extern int tm_tpbegin(UBFH *p_ub);
 extern int tm_tpcommit(UBFH *p_ub);
@@ -163,15 +161,17 @@ extern int tm_status(UBFH *p_ub);
 extern int tm_committrans(UBFH *p_ub);
 
 /* Branch TID manipulations */
-extern long tms_btid_gettid(atmi_xa_log_t *p_tl, int rmid);
+extern long tms_btid_gettid(atmi_xa_log_t *p_tl, short rmid);
 
 
 extern atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl, 
         short rmid, long btid);
 extern int tms_btid_add(atmi_xa_log_t *p_tl, short rmid, 
-            long btid, char rmstatus, int  rmerrorcode, short rmreason);
+            long btid, char rmstatus, int  rmerrorcode, short rmreason,
+            atmi_xa_rm_status_btid_t **bt);
 extern int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
-            long *btid, char rmstatus, int  rmerrorcode, short rmreason, int *exists);
+            long *btid, char rmstatus, int  rmerrorcode, short rmreason, int *exists,
+            atmi_xa_rm_status_btid_t **bt);
 
 
 #ifdef	__cplusplus
