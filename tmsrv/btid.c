@@ -136,27 +136,51 @@ out:
  * Add or update branch tid entry
  * @param[in] p_tl transaction object
  * @param[in] rmid resource manager id, starting from 1
- * @param[in] btid branch tid
+ * @param[in,out] btid branch tid
  * @param[in] rmstatus branch tid status
  * @param[in] rmerrorcode branch tid error code
  * @param[in] rmreason branch tid reasoncode
+ * @param[out] exists did record exist? EXTRUE/EXFAIL
  * @return EXSUCCEED/EXFAIL
  */
 expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
-            long btid, char rmstatus, int  rmerrorcode, short rmreason)
+            long *btid, char rmstatus, int  rmerrorcode, short rmreason,
+            int *exists)
 {
     int ret = EXSUCCEED;
-    atmi_xa_rm_status_btid_t *exist = tms_btid_find(p_tl, rmid, btid);
+    atmi_xa_rm_status_btid_t *bt;
     
-    if (NULL!=exist)
+    if (EXFAIL!=*btid)
+    {   
+        bt = tms_btid_find(p_tl, rmid, *btid);
+    }
+    
+    if (NULL!=bt)
     {
-        exist->rmstatus = rmstatus;
-        exist->rmerrorcode = rmerrorcode;
-        exist->rmreason = rmreason;
+        bt->rmstatus = rmstatus;
+        bt->rmerrorcode = rmerrorcode;
+        bt->rmreason = rmreason;
+        
+        if (NULL!=exists)
+        {
+            *exists = EXTRUE;
+        }
     }
     else
     {
-        ret = tms_btid_add(p_tl, rmid, btid, rmstatus, rmerrorcode, rmreason);
+        if (EXFAIL==*btid)
+        {
+            /* generate new TID */
+            *btid = tms_btid_gettid(p_tl, rmid);
+        }
+        
+        ret = tms_btid_add(p_tl, rmid, *btid, rmstatus, rmerrorcode, rmreason);
+        
+        if (NULL!=exists)
+        {
+            *exists = EXFALSE;
+        }
+        
     }
     
 out:

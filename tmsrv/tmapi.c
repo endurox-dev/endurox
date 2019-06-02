@@ -360,6 +360,7 @@ expublic int tm_tmregister(UBFH *p_ub)
     int is_already_logged = EXFALSE;
     atmi_xa_tx_info_t xai;
     long tmflags = 0;
+    long btid=EXFAIL;
     
     if (EXSUCCEED!=Bget(p_ub, TMCALLERRM, 0, (char *)&callerrm, 0L))
     {
@@ -375,6 +376,17 @@ expublic int tm_tmregister(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
+    /* read BTID (if have one in their side) */
+    
+    if (EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&btid, NULL) && Berror!=BNOTPRES)
+    {
+        NDRX_LOG(log_error, "Failed to get TMTXBTID: %s", Bstrerror(Berror));
+        
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 
+                     "Failed to get TMTXBTID: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
@@ -385,6 +397,15 @@ expublic int tm_tmregister(UBFH *p_ub)
     if (is_already_logged)
     {
         tmflags|=TMTXFLAGS_RMIDKNOWN;
+    }
+    
+    /* return new TID */
+    if (!Bpres(p_ub, TMTXBTID, 0) &&
+            EXSUCCEED!=Bchg(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 
+                    "Failed to set TMTXBTID!");
+        EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))

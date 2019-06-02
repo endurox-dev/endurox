@@ -102,16 +102,17 @@ extern void atmi_xa_new_xid(XID *xid);
 
 extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_t * tms_log_get_entry(char *tmxid);
-extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags);
-extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged);
+extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
+extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 
+        long *btid);
 extern int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode);
 extern int tms_is_logfile_open(atmi_xa_log_t *p_tl);
 extern void tms_close_logfile(atmi_xa_log_t *p_tl);
 extern void tms_remove_logfile(atmi_xa_log_t *p_tl);
 extern int tms_log_info(atmi_xa_log_t *p_tl);
 extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage);
-extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, short rmid, 
-        char rmstatus, int  rmerrorcode, short  rmreason);
+extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
+        char rmstatus, int rmerrorcode, short rmreason);
 extern int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl);
 extern int tm_chk_tx_status(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode);
@@ -170,7 +171,7 @@ extern atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl,
 extern int tms_btid_add(atmi_xa_log_t *p_tl, short rmid, 
             long btid, char rmstatus, int  rmerrorcode, short rmreason);
 extern int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
-            long btid, char rmstatus, int  rmerrorcode, short rmreason);
+            long *btid, char rmstatus, int  rmerrorcode, short rmreason, int *exists);
 
 
 #ifdef	__cplusplus
