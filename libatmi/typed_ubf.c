@@ -245,7 +245,7 @@ expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *l
     }
 
     /* Allocate UBF buffer */
-    ret=(char *)Balloc(1, *len);
+    ret=(char *)ndrx_Balloc(0, 0, *len);
 
     if (NULL==ret)
     {
@@ -272,13 +272,13 @@ expublic char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long l
     UBFH *p_ub = (UBFH *)cur_ptr;
     char fn[] = "UBF_tprealloc";
 
-    if (0==len)
+    if (UBF_DEFAULT_SIZE > len)
     {
         len = UBF_DEFAULT_SIZE;
     }
 
     /* Allocate UBF buffer */
-    ret=(char *)Brealloc(p_ub, 1, len);
+    ret=(char *)ndrx_Brealloc(p_ub, 0, 0, len);
 
     if (NULL==ret)
     {

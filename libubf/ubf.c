@@ -1289,53 +1289,6 @@ expublic int Bfree (UBFH *p_ub)
 }
 
 /**
- * Allocates buffer & do the initialisation
- * Assuming that using GLIBC which returns already aligned.
- * @param f - number of fields
- * @param v - field size
- * @return
- */
-expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
-{
-    UBFH *p_ub=NULL;
-    /* Warning! not according to spec, v here is size for all fields, not for 
-     * the single field. Consider to use Bneeded approach... */
-    long alloc_size;
-    API_ENTRY;
-    
-    /* Bug #394 */
-    alloc_size = ndrx_Bneeded(f, v);
-    
-    if ( alloc_size > MAXUBFLEN)
-    {
-        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
-                alloc_size, MAXUBFLEN);
-    }
-    else
-    {
-        p_ub=NDRX_MALLOC(alloc_size);
-        if (NULL==p_ub)
-        {
-            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
-        }
-        else
-        {
-            if (EXSUCCEED!=Binit(p_ub, alloc_size))
-            {
-                NDRX_FREE(p_ub); /* Free up allocated memory! */
-                p_ub=NULL;
-                UBF_LOG(log_error, "Balloc failed - abort Balloc!");
-            }
-        }
-    }
-    
-    UBF_LOG(log_debug, "Balloc: Returning %p!", p_ub);
-    
-    return p_ub;
-}
-
-
-/**
  * API function for Bupdate.
  * @param p_ub_dst - dest buffer to update
  * @param p_ub_src - source buffer to take values out from.
@@ -3162,5 +3115,42 @@ expublic long Bneeded(BFLDOCC nrfields, BFLDLEN totsize)
 out:
     return ret;
 }
+
+/**
+ * Reallocate UBF block
+ * @param p_Fb
+ * @param f number of fields
+ * @param v field length in bytes
+ * @return reallocated UBF buffer or NULL on failure
+ */
+expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
+{
+    API_ENTRY;
+    
+    return ndrx_Balloc (f, v, EXFAIL);
+}
+
+/**
+ * Reallocate UBF block
+ * @param p_Fb
+ * @param f number of fields
+ * @param v field length in bytes
+ * @return reallocated UBF buffer or NULL on failure
+ */
+expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
+{
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        p_ub=NULL;
+    }
+    
+    
+    return ndrx_Brealloc (p_ub, f, v, EXFAIL);
+}
+
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

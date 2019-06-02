@@ -2365,7 +2365,7 @@ status is being tracked
 *z* - Hazard (committed or aborted)
 |5|rmerrorcode|N..3|Mand|1|TP Error code when RM entered in this status. *0* -
 means no error occurred.
-|6|rmreason|NS..4|Mand|1|XA Error code for caused RM status
+|6|rmreason|NS..4|Mand|1|XA Error code for caused RM status.
 |7|btid|N..19|Opt|2|Transaction id, per resource manager. If value
 is not set, then it defaults to *0*
 |=========================================================
