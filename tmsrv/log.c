@@ -156,9 +156,11 @@ expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid)
  * Log transaction as started
  * @param xai - XA Info struct
  * @param txtout - transaction timeout
+ * @param[out] btid branch transaction id (if not dynamic reg)
  * @return SUCCEED/FAIL
  */
-expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
+expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
+        long *btid)
 {
     int ret = EXSUCCEED;
     atmi_xa_log_t *tmp = NULL;
@@ -171,11 +173,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
         goto out;
     }
     tmp->txstage = XA_TX_STAGE_ACTIVE;
-    /* Only for static... */
-    if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
-    {
-        tmp->rmstatus[xai->tmrmid-1].rmstatus = XA_RM_STATUS_ACTIVE;
-    }
+    
     tmp->tmnodeid = xai->tmnodeid;
     tmp->tmsrvid = xai->tmsrvid;
     tmp->tmrmid = xai->tmrmid;
@@ -187,6 +185,28 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags)
     
     ndrx_stopwatch_reset(&tmp->ttimer);
     
+    /* TODO: Open the log file & write */
+    
+    
+    /* Only for static... */
+    if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
+    {
+        /* assign btid? 
+        tmp->rmstatus[xai->tmrmid-1].rmstatus = XA_RM_STATUS_ACTIVE;
+        */
+        
+        *btid = tms_btid_gettid(tmp, xai->tmrmid);
+
+        if (EXSUCCEED!=tms_btid_add(tmp, xai->tmrmid, *btid, XA_RM_STATUS_ACTIVE, 0, 0))
+        {
+            NDRX_LOG(log_error, "Failed to add BTID: %ld", *btid);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* TODO: log to transaction file -> Write off RM status */
+        
+    }
+    
     MUTEX_LOCK_V(M_tx_hash_lock);
     EXHASH_ADD_STR( M_tx_hash, tmxid, tmp);
     MUTEX_UNLOCK_V(M_tx_hash_lock);
@@ -197,25 +217,33 @@ out:
 
 /**
  * Add RM to transaction.
- * TODO: Needs to check of returning new TID
+ * If tid is known, then check and/or add.
+ * If add, then ensure that we step up the BTID counter, if the number is
+ * higher than counter have.
  * @param xai
  * @param rmid - 1 based rmid
- * @return 
+ * @param[in,out] btid branch tid (if it is known, i.e. 0), if not known, then -1
+ *  for unknown BTID requests, new BTID is generated
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged)
+expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged,
+        long *btid)
 {
     int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl= NULL;
-    atmi_xa_rm_status_t stat;
-    
+    /* atmi_xa_rm_status_t stat; */
+    /*
     memset(&stat, 0, sizeof(stat));
     stat.rmstatus = XA_RM_STATUS_ACTIVE;
+     * 
+    */
     
     if (NULL==(p_tl = tms_log_get_entry(xai->tmxid)))
     {
         NDRX_LOG(log_error, "No transaction under xid_str: [%s]", 
                 xai->tmxid);
-        EXFAIL_OUT(ret);
+        ret=EXFAIL;
+        goto out_nolock;
     }
     
     if (1 > rmid || rmid>NDRX_MAX_RMS)
@@ -224,20 +252,30 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
         EXFAIL_OUT(ret);
     }
     
+    /*
     if (p_tl->rmstatus[rmid-1].rmstatus && NULL!=p_is_already_logged)
     {
         *p_is_already_logged = EXTRUE;
     }
-    
+     * */
+    /*
     p_tl->rmstatus[rmid-1] = stat;
+    */
     
-    NDRX_LOG(log_info, "RMID %hd joined to xid_str: [%s]", 
-            rmid, xai->tmxid);
+    ret = tms_btid_addupd(p_tl, rmid, btid, XA_RM_STATUS_ACTIVE, 
+            0, 0, p_is_already_logged);
     
+    NDRX_LOG(log_info, "RMID %hd/%ld joined to xid_str: [%s]", 
+            rmid, *btid, xai->tmxid);
+    
+    /* TODO: log to transaction file */
+   
+out:
     /* unlock transaction from thread */
     tms_unlock_entry(p_tl);
+
+out_nolock:
     
-out:
     return ret;
 }
 
@@ -705,13 +743,13 @@ out:
  * Change + write RM status to file
  * FORMAT: <rmid>:<rmstatus>:<rmerrorcode>:<rmreason>
  * @param p_tl transaction
- * @param[in] btid transaction branch
+ * @param[in] bt transaction branch
  * @param[in] rmstatus Resource manager status
  * @param[in] rmerrorcode Resource manager error code
  * @param[in] rmreason reason code
  * @return SUCCEED/FAIL
  */
-expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *btid, 
+expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
         char rmstatus, int rmerrorcode, short rmreason)
 {
     int ret = EXSUCCEED;
@@ -719,20 +757,20 @@ expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bti
     
     CHK_THREAD_ACCESS;
     
-    if (btid->rmstatus != rmstatus)
+    if (bt->rmstatus != rmstatus)
     {
         do_log = EXTRUE;
     }
     
-    btid->rmstatus = rmstatus;
-    btid->rmerrorcode = rmerrorcode;
-    btid->rmreason = rmreason;
+    bt->rmstatus = rmstatus;
+    bt->rmerrorcode = rmerrorcode;
+    bt->rmreason = rmreason;
  
     
     if (do_log)
     {
         if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_RMSTAT, "%hd:%c:%d:%hd:%ld",
-                btid->rmid, rmstatus, rmerrorcode, rmreason, btid->btid))
+                bt->rmid, rmstatus, rmerrorcode, rmreason, bt->btid))
         {
             ret=EXFAIL;
             goto out;
@@ -791,7 +829,7 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
      * */
     
     ret = tms_btid_addupd(p_tl, rmid, 
-            btid, rmstatus, rmerrorcode, rmreason);
+            &btid, rmstatus, rmerrorcode, rmreason, NULL);
    
 out:
     return ret;    

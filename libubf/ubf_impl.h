@@ -137,6 +137,11 @@ extern BFLDOCC ndrx_Bnum(UBFH *p_ub);
 extern int ndrx_Bjoin(UBFH *dest, UBFH *src);
 extern int ndrx_Bojoin(UBFH *dest, UBFH *src);
 
+extern UBFH * ndrx_Balloc (BFLDOCC f, BFLDLEN v, long len_set);
+extern UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set);
+
+extern long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -1911,9 +1911,60 @@ expublic BFLDOCC ndrx_Bnum(UBFH *p_ub)
 }
 
 /**
+ * Allocates buffer & do the initialisation
+ * Assuming that using GLIBC which returns already aligned.
+ * @param f - number of fields
+ * @param v - field size
+ * @param len_set directly allocate from given bytes
+ * @return ptr to UBF buffer or NULL
+ */
+expublic UBFH * ndrx_Balloc (BFLDOCC f, BFLDLEN v, long len_set)
+{
+    UBFH *p_ub=NULL;
+    long alloc_size;
+    
+    if (EXFAIL!=len_set)
+    {
+        alloc_size = len_set;
+    }
+    else
+    {
+        /* Bug #394 */
+        alloc_size = ndrx_Bneeded(f, v);
+    }
+    
+    if ( alloc_size > MAXUBFLEN)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
+                alloc_size, MAXUBFLEN);
+    }
+    else
+    {
+        p_ub=NDRX_MALLOC(alloc_size);
+        if (NULL==p_ub)
+        {
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+        }
+        else
+        {
+            if (EXSUCCEED!=Binit(p_ub, alloc_size))
+            {
+                NDRX_FREE(p_ub); /* Free up allocated memory! */
+                p_ub=NULL;
+                UBF_LOG(log_error, "Balloc failed - abort Balloc!");
+            }
+        }
+    }
+    
+    UBF_LOG(log_debug, "Balloc: Returning %p!", p_ub);
+    
+    return p_ub;
+}
+
+
+/**
  * Reallocate the memory
  * Assuming that using GLIBC which is already aligned
- * TODO: Move to API version wrapper. Provide byte mode.
  * 
  * @param p_Fb
  * @param f
@@ -1926,26 +1977,16 @@ expublic UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set)
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     long alloc_size;
     
-    /*
-    API_ENTRY;
-    */
-
     UBF_LOG(log_debug, "Brealloc: enter p_ub=%p f=%d v=%d len_set=%ld", 
         p_ub, (int)f, (int)v, len_set);
     
-    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    if (EXFAIL!=len_set)
     {
-        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
-        p_ub=NULL;
-    }
-    
-    if (len_set == 0)
-    {
-        alloc_size = ndrx_Bneeded(f, v);
+        alloc_size = len_set;
     }
     else
     {
-        alloc_size = len_set;
+        alloc_size = ndrx_Bneeded(f, v);
     }
 
     /*
@@ -1955,7 +1996,7 @@ expublic UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set)
     {
         ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
                 alloc_size, hdr->buf_len+1, MAXUBFLEN);
-        /* TODO: shouldn't we free up? to avoid memory leak? */
+        Bfree(p_ub);
         p_ub=NULL;
     }
     else

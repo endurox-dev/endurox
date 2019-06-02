@@ -118,6 +118,12 @@ extern "C" {
 extern NDRX_API long ndrx_msgsizemax (void);
 #define NDRX_MSGSIZEMAX          ndrx_msgsizemax()
 
+/**
+ * Overhead applied to max buffer size used during the trasnport / 
+ * encapuslation structures.
+ */
+#define NDRX_MSGSIZEMAX_OVERHD   200
+
 #define NDRX_PADDING_MAX         16 /* Max compiled padding in struct (assumed) */
 
 #if 0

@@ -147,7 +147,7 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
-    
+    long allocsz;
     /**************************************************************************/
     /*                        THREAD CONTEXT RESTORE                          */
     /**************************************************************************/
@@ -184,13 +184,12 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
      */
     if (Bunused (p_ub) < 4096)
     {
-        int allocs;
-        p_ub = (UBFH *)tprealloc ((char *)p_ub, allocs=(Bsizeof (p_ub) + 4096));
+        p_ub = (UBFH *)tprealloc ((char *)p_ub, allocsz=(Bsizeof (p_ub) + 4096));
         
-        if (NULL=p_ub)
+        if (NULL==p_ub)
         {
             NDRX_LOG(log_error, "Failed realloc UBF to %d bytes: %s", 
-                    allocs, tpstrerror(tperrno));
+                    allocsz, tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
     }
@@ -240,6 +239,17 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             /* request for printing active transactions 
              * we shall allocate the buffer to max possible size
              */
+            
+            p_ub = (UBFH *)tprealloc ((char *)p_ub, allocsz=
+                    (NDRX_MSGSIZEMAX-NDRX_MSGSIZEMAX_OVERHD));
+        
+            if (NULL==p_ub)
+            {
+                NDRX_LOG(log_error, "Failed realloc UBF to %d bytes: %s", 
+                        allocsz, tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+
             if (EXSUCCEED!=tm_tpprinttrans(p_ub, cd))
             {
                 ret=EXFAIL;
