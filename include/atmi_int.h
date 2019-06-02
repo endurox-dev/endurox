@@ -237,7 +237,7 @@ extern "C" {
  */
 #define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting */
 #define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported          */
-#define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No support begin xid       */
+
 /** @} */ /* xa_flags_sys */
     
 #define NDRX_BANNER \

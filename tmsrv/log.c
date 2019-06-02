@@ -164,7 +164,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
 {
     int ret = EXSUCCEED;
     atmi_xa_log_t *tmp = NULL;
-    
+    atmi_xa_rm_status_btid_t *bt;
     /* 1. Add stuff to hash list */
     if (NULL==(tmp = NDRX_CALLOC(sizeof(atmi_xa_log_t), 1)))
     {
@@ -185,8 +185,17 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     
     ndrx_stopwatch_reset(&tmp->ttimer);
     
-    /* TODO: Open the log file & write */
+    /* TODO: Open the log file & write tms_close_logfile
+     * Only question, how long 
+     */
     
+    /* Open log file */
+    if (EXSUCCEED!=tms_open_logfile(tmp, "w"))
+    {
+        NDRX_LOG(log_error, "Failed to create transaction log file");
+        userlog("Failed to create transaction log file");
+        EXFAIL_OUT(ret);
+    }
     
     /* Only for static... */
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
@@ -197,14 +206,21 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
         
         *btid = tms_btid_gettid(tmp, xai->tmrmid);
 
-        if (EXSUCCEED!=tms_btid_add(tmp, xai->tmrmid, *btid, XA_RM_STATUS_ACTIVE, 0, 0))
+        /* Just get the TID, status will be changed with file update  */
+        if (EXSUCCEED!=tms_btid_add(tmp, xai->tmrmid, *btid, XA_RM_STATUS_NULL, 
+                0, 0, &bt))
         {
             NDRX_LOG(log_error, "Failed to add BTID: %ld", *btid);
             EXFAIL_OUT(ret);
         }
         
-        /* TODO: log to transaction file -> Write off RM status */
-        
+        /* log to transaction file -> Write off RM status */
+        if (EXSUCCEED!=tms_log_rmstatus(tmp, bt, XA_RM_STATUS_ACTIVE, 0, 0))
+        {
+            NDRX_LOG(log_error, "Failed to write RM status to file: %ld", *btid);
+            EXFAIL_OUT(ret);
+        }
+
     }
     
     MUTEX_LOCK_V(M_tx_hash_lock);
@@ -231,6 +247,8 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
 {
     int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl= NULL;
+    atmi_xa_rm_status_btid_t *bt;
+    
     /* atmi_xa_rm_status_t stat; */
     /*
     memset(&stat, 0, sizeof(stat));
@@ -262,13 +280,26 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
     p_tl->rmstatus[rmid-1] = stat;
     */
     
-    ret = tms_btid_addupd(p_tl, rmid, btid, XA_RM_STATUS_ACTIVE, 
-            0, 0, p_is_already_logged);
+    ret = tms_btid_addupd(p_tl, rmid, btid, XA_RM_STATUS_NULL, 
+            0, 0, p_is_already_logged, &bt);
     
-    NDRX_LOG(log_info, "RMID %hd/%ld joined to xid_str: [%s]", 
+    /* log to transaction file */
+    if (!(*p_is_already_logged))
+    {
+        NDRX_LOG(log_info, "RMID %hd/%ld added to xid_str: [%s]", 
             rmid, *btid, xai->tmxid);
-    
-    /* TODO: log to transaction file */
+        
+        if (EXSUCCEED!=tms_log_rmstatus(p_tl, bt, XA_RM_STATUS_ACTIVE, 0, 0))
+        {
+            NDRX_LOG(log_error, "Failed to write RM status to file: %ld", *btid);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        NDRX_LOG(log_info, "RMID %hd/%ld already joined to xid_str: [%s]", 
+            rmid, *btid, xai->tmxid);
+    }
    
 out:
     /* unlock transaction from thread */
@@ -589,7 +620,7 @@ expublic int tms_log_info(atmi_xa_log_t *p_tl)
     
     CHK_THREAD_ACCESS;
     
-    /* log the RMs participating in transaction */
+    /* log the RMs participating in transaction 
     for (i=0; i<NDRX_MAX_RMS; i++)
     {
         if (p_tl->rmstatus[i].rmstatus)
@@ -604,6 +635,9 @@ expublic int tms_log_info(atmi_xa_log_t *p_tl)
             sprintf(rmsbuf+len, "%d", i+1);
         }
     }
+     *
+     */
+    
     if (EXSUCCEED!=tms_log_write_line(p_tl, LOG_COMMAND_I, "%hd:%hd:%hd:%ld:%s", 
             p_tl->tmrmid, p_tl->tmnodeid, p_tl->tmsrvid, p_tl->txtout, rmsbuf))
     {
@@ -756,7 +790,7 @@ expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt,
     int do_log = EXFALSE;
     
     CHK_THREAD_ACCESS;
-    
+
     if (bt->rmstatus != rmstatus)
     {
         do_log = EXTRUE;
@@ -765,7 +799,6 @@ expublic int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt,
     bt->rmstatus = rmstatus;
     bt->rmerrorcode = rmerrorcode;
     bt->rmreason = rmreason;
- 
     
     if (do_log)
     {
@@ -795,6 +828,8 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
     short rmreason;
     int rmid;
     long btid;
+    atmi_xa_rm_status_btid_t *bt;
+    
     TOKEN_READ_VARS;
    
     TOKEN_READ("rmstat", "tstamp");
@@ -829,7 +864,7 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
      * */
     
     ret = tms_btid_addupd(p_tl, rmid, 
-            &btid, rmstatus, rmerrorcode, rmreason, NULL);
+            &btid, rmstatus, rmerrorcode, rmreason, NULL, &bt);
    
 out:
     return ret;    

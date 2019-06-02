@@ -43,6 +43,7 @@
 #include <typed_buf.h>
 #include <ndebug.h>
 #include <fdatatype.h>
+#include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define UBF_DEFAULT_SIZE    1024
