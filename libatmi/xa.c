@@ -189,6 +189,12 @@ expublic int atmi_xa_init(void)
         NDRX_LOG(log_info, "Using XA %s", 
                 (G_atmi_env.xa_sw->flags&TMREGISTER)?"dynamic registration":"static registration");
         
+        if (G_atmi_env.xa_sw->flags & TMNOMIGRATE)
+        {
+            NDRX_LOG(log_warn, "XA Switch has TMNOMIGRATE flag -> fallback to nojoin");
+            ndrx_xa_nojoin(EXTRUE);
+        }
+        
         /* Parse the flags... and store the config 
          * This is done for Feature #160. Customer have an issue with xa_start
          * after a while. Suspect that firewall closes connections and oracle XA
@@ -300,7 +306,13 @@ expublic int atmi_xa_init(void)
                             G_atmi_env.xa_recon_retcodes, 
                             G_atmi_env.xa_recon_times, 
                             G_atmi_env.xa_recon_usleep);
-                } /* If tag is RECON */
+                } /* If tag is NOJOIN */
+                else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOJOIN))
+                {
+                    NDRX_LOG(log_warn, "NOJOIN flag found");
+                    ndrx_xa_nojoin(EXTRUE);
+                }
+                
             } /* for tag.. */
         } /* if xa_flags set */
         
