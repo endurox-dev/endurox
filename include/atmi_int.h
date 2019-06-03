@@ -224,11 +224,12 @@ extern "C" {
     
 
 #define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
-#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio     */
+#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */
 
-#define NDRX_XA_FLAG_RECON  "RECON"  /* Reconnect on tpbegin(), xa_start() if fails */
-#define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /* Test the line */
-#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /* List of error codes for retry */
+#define NDRX_XA_FLAG_NOJOIN  "NOJOIN"  /**< XA Switch does not support TMJOIN mode  */
+#define NDRX_XA_FLAG_RECON  "RECON"    /**< Reconnect on tpbegin(), xa_start() if fails */
+#define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /**< Test the line                       */
+#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /**< List of error codes for retry   */
     
 /**
  * Internal system flags
