@@ -354,7 +354,7 @@ out:
     /* We should abort the transaction right now */
     if (do_rollback)
     {
-        ret = tm_rollback_local(p_ub, &xai);
+        ret = tm_rollback_local(p_ub, &xai, btid);
     }
 
     return ret;
@@ -455,7 +455,7 @@ expublic int tm_tmprepare(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=(ret = tm_prepare_local(p_ub, &xai)))
+    if (EXSUCCEED!=(ret = tm_prepare_local(p_ub, &xai, xai.btid)))
     {
         EXFAIL_OUT(ret);
     }
@@ -483,7 +483,7 @@ expublic int tm_tmcommit(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=(ret = tm_commit_local(p_ub, &xai)))
+    if (EXSUCCEED!=(ret = tm_commit_local(p_ub, &xai, xai.btid)))
     {
         EXFAIL_OUT(ret);
     }
@@ -511,7 +511,7 @@ expublic int tm_tmabort(UBFH *p_ub)
     }
     
     /* read xai from FB... */
-    if (EXSUCCEED!=(ret = tm_rollback_local(p_ub, &xai)))
+    if (EXSUCCEED!=(ret = tm_rollback_local(p_ub, &xai, xai.btid)))
     {
         EXFAIL_OUT(ret);
     }
