@@ -568,6 +568,11 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
     MUTEX_LOCK_V(M_tx_hash_lock);
     EXHASH_DEL(M_tx_hash, p_tl); 
     MUTEX_UNLOCK_V(M_tx_hash_lock);
+    
+    /* TODO: Remove branch TIDs */
+    YOPT! REMOVE BTIDs
+    
+    
     NDRX_FREE(p_tl);
     
 }
