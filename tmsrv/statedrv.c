@@ -56,6 +56,17 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * branch tid vote entry
+ */
+typedef struct 
+{
+    short rmid; /**< RM ID is voting    */
+    char stage; /**< to stage           */
+    long btid;  /**< with branch id     */
+} btid_vote_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -75,7 +86,9 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     int again;
     rmstatus_driver_t* vote_txstage;
     txstage_descriptor_t* descr;
-    char stagearr[NDRX_MAX_RMS];
+    /* char stagearr[NDRX_MAX_RMS];*/
+    ndrx_growlist_t stagearr; /**< grow list of voted stages */
+    
     int min_in_group;
     int min_in_overall;
     int try=0;
@@ -84,6 +97,9 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     
     NDRX_LOG(log_info, "tm_drive() enter from xid=[%s] flags=%ld", 
             p_xai->tmxid, flags);
+    
+    memset(&stagearr, 0, sizeof(stagearr));
+    
     do
     {
         short new_txstage = 0;
@@ -105,8 +121,21 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
         
         NDRX_LOG(log_info, "Entered in stage: %s", descr->descr);
         
-        memset(stagearr, 0, sizeof(stagearr));
-        
+        if (NULL!=stagearr.mem)
+        {
+            /* reset the momory, no reset needed. */
+            stagearr.maxindexused = -1;
+        }
+        else
+        {
+            if (EXSUCCEED!=ndrx_growlist_init(&stagearr, 100, sizeof(btid_vote_t)))
+            {
+                NDRX_LOG(log_error, "Failed to allocate growlist!");
+                ret=TPESYSTEM;
+                goto out;
+            }
+        }
+         
         for (i=0; i<NDRX_MAX_RMS; i++)
         {
             EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
