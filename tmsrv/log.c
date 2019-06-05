@@ -540,7 +540,8 @@ expublic void tms_close_logfile(atmi_xa_log_t *p_tl)
 expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
 {
     int have_file = EXFALSE;
-    
+    int i;
+    atmi_xa_rm_status_btid_t *el, *elt;
     if (tms_is_logfile_open(p_tl))
     {
         have_file = EXTRUE;
@@ -569,9 +570,16 @@ expublic void tms_remove_logfile(atmi_xa_log_t *p_tl)
     EXHASH_DEL(M_tx_hash, p_tl); 
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
-    /* TODO: Remove branch TIDs */
-    YOPT! REMOVE BTIDs
+    /* Remove branch TIDs */
     
+    for (i=0; i<NDRX_MAX_RMS; i++)
+    {
+        EXHASH_ITER(hh, p_tl->rmstatus[i].btid_hash, el, elt)
+        {
+            EXHASH_DEL(p_tl->rmstatus[i].btid_hash, el);
+            NDRX_FREE(el);
+        }
+    }
     
     NDRX_FREE(p_tl);
     
