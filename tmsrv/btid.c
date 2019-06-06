@@ -113,22 +113,22 @@ expublic int tms_btid_add(atmi_xa_log_t *p_tl, short rmid,
             atmi_xa_rm_status_btid_t **bt)
  {
     int ret = EXSUCCEED;
-    atmi_xa_rm_status_btid_t * tid = NDRX_MALLOC(sizeof(atmi_xa_rm_status_btid_t));
+    *bt = NDRX_MALLOC(sizeof(atmi_xa_rm_status_btid_t));
     
-    if (NULL==tid)
+    if (NULL==*bt)
     {
         NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", 
                 sizeof(atmi_xa_rm_status_btid_t), strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    tid->rmid = rmid;
-    tid->btid = btid;
-    tid->rmstatus = rmstatus;
-    tid->rmerrorcode = rmerrorcode;
-    tid->rmreason = rmreason;
+    (*bt)->rmid = rmid;
+    (*bt)->btid = btid;
+    (*bt)->rmstatus = rmstatus;
+    (*bt)->rmerrorcode = rmerrorcode;
+    (*bt)->rmreason = rmreason;
     
-    EXHASH_ADD_LONG((p_tl->rmstatus[rmid-1].btid_hash), btid, tid);
+    EXHASH_ADD_LONG((p_tl->rmstatus[rmid-1].btid_hash), btid, (*bt));
     
     /* If end point self assigned transaction ID,
      * then step up the counter.
@@ -167,7 +167,7 @@ expublic int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid,
         *bt = tms_btid_find(p_tl, rmid, *btid);
     }
     
-    if (NULL!=bt)
+    if (NULL!=(*bt))
     {
         /* only if new status is higher than old status
          * used by registering transaction
