@@ -138,6 +138,14 @@ extern "C" {
 #define XA_OP_RECOVER                   8
 #define XA_OP_CLOSE                     9
     
+/**
+ * Flags passed to atmi_xa_read_tx_info
+ * @defgroup atmi_xa_read_tx_info_flags
+ * @{
+ */
+#define XA_TXINFO_NOBTID                0x00000001  /**< no BTID extract */
+/** @} */ /* end of atmi_xa_read_tx_info_flags */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -378,7 +386,7 @@ extern NDRX_API UBFH * atmi_xa_alloc_tm_call(char cmd);
 extern NDRX_API int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai);
 extern NDRX_API void atmi_xa_reset_curtx(void);
 extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
-extern NDRX_API int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
+extern NDRX_API int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, int flags);
 extern NDRX_API XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid);
 extern NDRX_API void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai);
 
