@@ -185,6 +185,9 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     
     ndrx_stopwatch_reset(&tmp->ttimer);
     
+    /* lock for us, yet it is not shared*/
+    tmp->lockthreadid = ndrx_gettid();
+    
     /* TODO: Open the log file & write tms_close_logfile
      * Only question, how long 
      */
@@ -228,6 +231,12 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
     MUTEX_UNLOCK_V(M_tx_hash_lock);
     
 out:
+    
+    /* unlock */
+    if (NULL!=tmp)
+    {
+        tms_unlock_entry(tmp);
+    }
     return ret;
 }
 
@@ -841,7 +850,7 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
     short rmreason;
     int rmid;
     long btid;
-    atmi_xa_rm_status_btid_t *bt;
+    atmi_xa_rm_status_btid_t *bt = NULL;
     
     TOKEN_READ_VARS;
    

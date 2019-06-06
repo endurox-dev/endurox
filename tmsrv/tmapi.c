@@ -337,7 +337,7 @@ expublic int tm_tpbegin(UBFH *p_ub)
     }
     
     /* TID to log */
-    if (EXFAIL!=Bchg(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
+    if (EXSUCCEED!=Bchg(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
     {
         NDRX_LOG(log_error, "Failed to set TMTXBTID: %s", Bstrerror(Berror));
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 

@@ -728,13 +728,16 @@ out:
 /**
  * Return current transactions XID in context of the branch.
  * We should deserialize & replace branch id
+ * Branch details are added to each part of the XID at the end.
  * TODO: add cache.
- * TODO: BTID
+ * @param[in] btid branch tid which is part of xid
  * @return 
  */
 expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid)
 {
     unsigned char rmid = (unsigned char)G_atmi_env.xa_rmid; /* max 255...! */
+    long btidh = htonll(btid);
+    
     ATMI_TLS_ENTRY;
     
     memset(&G_atmi_tls->xid, 0, sizeof(G_atmi_tls->xid));
@@ -743,10 +746,38 @@ expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid)
     /* set current branch id - do we need this actually? 
      * How about byte order?
      */
-    memcpy(G_atmi_tls->xid.data + sizeof(exuuid_t), 
-            &rmid, sizeof(unsigned char));
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length - 
+            sizeof(long) - 
+            sizeof(char), 
+            &rmid, 
+            sizeof(unsigned char));
     
-    /* TOOD: Add BTID */
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length + 
+            G_atmi_tls->xid.bqual_length - 
+            sizeof(long) - 
+            sizeof(char),
+            &rmid, 
+            sizeof(unsigned char));
+    
+    /* Add Branch TID: */
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length - 
+            sizeof(long),
+            &btidh, 
+            sizeof(btidh));
+    
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length + 
+            G_atmi_tls->xid.bqual_length - 
+            sizeof(long),
+            &btidh, 
+            sizeof(btidh));
+    
+    /* Dump the branch XID */
+    
+    NDRX_DUMP(log_debug, "Branch XID", &G_atmi_tls->xid, sizeof(G_atmi_tls->xid));
     
     return &G_atmi_tls->xid;
 }   

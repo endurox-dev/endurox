@@ -100,7 +100,8 @@ expublic void atmi_xa_new_xid(XID *xid)
     /*Bug #228 - using incorrect rmid field was using short from env instead of rmid (uchar)*/
     NDRX_LOG(log_debug, "New xid, rmid=%d(%c), node_id=%hd, srv_id=%hd",
 		(int)rmid, rmid, node_id, srv_id);
-
+    
+    
     memcpy(xid->data + NDRX_XID_TRID_LEN, (char *)&rmid, sizeof(unsigned char));
     /* Have an additional infos for transaction id... */
     memcpy(xid->data  
