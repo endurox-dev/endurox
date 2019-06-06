@@ -332,9 +332,11 @@ out:
  * Read transaction info received from TM
  * @param p_ub
  * @param p_xai
+ * @param[in] flags see atmi_xa_read_tx_info_flags group
  * @return 
  */
-expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai,
+                    int flags)
 {
     int ret = EXSUCCEED;
     
@@ -346,9 +348,18 @@ expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
             EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&p_xai->btid, 0L)
             )
     {
-        NDRX_LOG(log_error, "Failed to setup TMXID/TMRMID/TMNODEID/"
+        NDRX_LOG(log_error, "Failed to get TMXID/TMRMID/TMNODEID/"
                 "TMSRVID/TMKNOWNRMS/TMTXBTID! - %s", Bstrerror(Berror));
         EXFAIL_OUT(ret);
+    }
+
+    if (!(flags & XA_TXINFO_NOBTID))
+    {
+        if (EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&p_xai->btid, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to get TMTXBTID! - %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
