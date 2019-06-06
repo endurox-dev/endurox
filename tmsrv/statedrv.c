@@ -88,6 +88,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
     txstage_descriptor_t* descr;
     /* char stagearr[NDRX_MAX_RMS];*/
     ndrx_growlist_t stagearr; /**< grow list of voted stages */
+    btid_vote_t vote;
     
     int min_in_group;
     int min_in_overall;
@@ -126,14 +127,10 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             /* reset the momory, no reset needed. */
             stagearr.maxindexused = -1;
         }
-        else
+        else if (0==stagearr.size) /* not initialized */
         {
-            if (EXSUCCEED!=ndrx_growlist_init(&stagearr, 100, sizeof(btid_vote_t)))
-            {
-                NDRX_LOG(log_error, "Failed to allocate growlist!");
-                ret=TPESYSTEM;
-                goto out;
-            }
+            /* this does not allocate memory */
+            ndrx_growlist_init(&stagearr, 100, sizeof(btid_vote_t));
         }
          
         for (i=0; i<NDRX_MAX_RMS; i++)
@@ -221,9 +218,22 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                             tperrno, op_reason);
                 }
                 /* Stage switching... */
-
+/*
                 stagearr[i] = vote_txstage->next_txstage; YOPT! Stage Array build as incremental array
-
+*/
+                vote.btid = el->btid;
+                vote.rmid = el->rmid;
+                vote.stage = vote_txstage->next_txstage;
+                
+                if (EXSUCCEED!=ndrx_growlist_append(&stagearr, &vote))
+                {
+                    NDRX_LOG(log_error, "Failed to add rmid=%hd, btid=%hd to "
+                            "stagearr with stage=%c",
+                            vote.rmid, vote.btid, vote.stage);
+                    ret=TPESYSTEM;
+                    goto out;
+                }
+                
                 if ((descr->txs_stage_min>vote_txstage->next_txstage ||
                         descr->txs_max_complete<vote_txstage->next_txstage) && descr->allow_jump)
                 {
@@ -248,32 +258,32 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             min_in_group = XA_TX_STAGE_MAX_NEVER;
             min_in_overall = XA_TX_STAGE_MAX_NEVER;
             /* Calculate from array */
-            for (i=0; i<NDRX_MAX_RMS; i++)
+            for (i=0; i<=stagearr.maxindexused; i++)
             {
-                if (stagearr[i])
+                btid_vote_t *ve = stagearr.mem+sizeof(btid_vote_t)*i;
+                
+                NDRX_LOG(log_info, "RM %hd btid=%ld votes for stage: %d", 
+                        ve->rmid, ve->btid, ve->stage);
+
+                /* Bug #150 */
+                if (ve->stage < min_in_overall)
                 {
-                    NDRX_LOG(log_info, "RM %d votes for stage: %d", i+1, stagearr[i]);
-                    
-                    /* Bug #150 */
-                    if (stagearr[i] < min_in_overall)
-                    {
-                        min_in_overall = stagearr[i];
-                        NDRX_LOG(log_debug, "min_in_overall=>%d", min_in_overall);
-                    }
-                    
-                    /* what is this? Descr and vote_txstage will be last
-                     * from the loop - wrong!
-                     * We play with next stages from arr: stagearr[i]
-                     * What is group? Seems like same type of staging, i.e.
-                     * still committing
-                     */
-                    if (descr->txs_stage_min<=stagearr[i] && 
-                            descr->txs_max_complete>=stagearr[i] &&
-                            min_in_group < stagearr[i])
-                    {
-                        min_in_group = stagearr[i];
-                        NDRX_LOG(log_debug, "min_in_group=>%d", min_in_group);
-                    }
+                    min_in_overall = ve->stage;
+                    NDRX_LOG(log_debug, "min_in_overall=>%d", min_in_overall);
+                }
+
+                /* what is this? Descr and vote_txstage will be last
+                 * from the loop - wrong!
+                 * We play with next stages from arr: stagearr[i]
+                 * What is group? Seems like same type of staging, i.e.
+                 * still committing
+                 */
+                if (descr->txs_stage_min<=ve->stage && 
+                        descr->txs_max_complete>=ve->stage &&
+                        min_in_group < ve->stage)
+                {
+                    min_in_group = ve->stage;
+                    NDRX_LOG(log_debug, "min_in_group=>%d", min_in_group);
                 }
             }/* for */
             
@@ -372,6 +382,11 @@ out:
         
         /* Unlock the transaction */
         tms_unlock_entry(p_tl);
+    }
+
+    if (NULL!=stagearr.mem)
+    {
+        ndrx_growlist_free(&stagearr);
     }
 
     NDRX_LOG(log_info, "tm_drive() returns %d", ret);

@@ -272,6 +272,10 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #endif
 
+
+
+
+
 #ifdef	__cplusplus
 }
 #endif
