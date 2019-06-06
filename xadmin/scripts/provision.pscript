@@ -119,7 +119,7 @@ class Provision extends WizardBase {
 	
 	</ order=24, name = "Bridge -> IP: Connect to", type="regex", regex="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$", 
                 depend="(::prov.bridge==\"y\" && ::prov.bridgeRole.toupper()==\"A\")"/> 
-	ipc = "172.0.0.1";
+	ipc = "127.0.0.1";
 	
 	</ order=25, name = "Bridge -> IP: Port number", type="number", min=0, max=65000, 
                 depend="(::prov.bridge==\"y\")" /> 
