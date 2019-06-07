@@ -85,7 +85,7 @@ expublic int tm_tpabort(UBFH *p_ub)
     NDRX_LOG(log_debug, "tm_tpabort() called");
     
     /* 1. get transaction from hash */
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, XA_TXINFO_NOBTID))
     {
         NDRX_LOG(log_error, "Failed to read transaction data");
         /* - will assume that completed OK!
@@ -149,7 +149,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     NDRX_LOG(log_debug, "tm_tpcommit() called");
     
     /* 1. get transaction from hash */
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, XA_TXINFO_NOBTID))
     {
         NDRX_LOG(log_error, "Failed to read transaction data");
         atmi_xa_set_error_msg(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
@@ -385,7 +385,7 @@ expublic int tm_tmregister(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, XA_TXINFO_NOBTID))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
@@ -448,7 +448,7 @@ expublic int tm_tmprepare(UBFH *p_ub)
     
     NDRX_LOG(log_debug, "tm_tmprepare called.");
     /* read xai from FB... */
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
@@ -476,7 +476,7 @@ expublic int tm_tmcommit(UBFH *p_ub)
     
     NDRX_LOG(log_debug, "tm_tmcommit called.");
     /* read xai from FB... */
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
@@ -503,7 +503,7 @@ expublic int tm_tmabort(UBFH *p_ub)
     atmi_xa_tx_info_t xai;
     
     NDRX_LOG(log_debug, "tm_tmabort called.");
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
                     "Failed to read transaction info!");
