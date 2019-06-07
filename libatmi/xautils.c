@@ -344,12 +344,11 @@ expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai,
             EXSUCCEED!=Bget(p_ub, TMRMID, 0, (char *)&p_xai->tmrmid, 0L) ||
             EXSUCCEED!=Bget(p_ub, TMNODEID, 0, (char *)&p_xai->tmnodeid, 0L) ||
             EXSUCCEED!=Bget(p_ub, TMSRVID, 0, (char *)&p_xai->tmsrvid, 0L) ||
-            EXSUCCEED!=Bget(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L) ||
-            EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&p_xai->btid, 0L)
+            EXSUCCEED!=Bget(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L)
             )
     {
         NDRX_LOG(log_error, "Failed to get TMXID/TMRMID/TMNODEID/"
-                "TMSRVID/TMKNOWNRMS/TMTXBTID! - %s", Bstrerror(Berror));
+                "TMSRVID/TMKNOWNRMS! - %s", Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
 
