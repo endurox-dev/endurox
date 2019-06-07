@@ -193,8 +193,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     */
     
     /* Log that we start commit... */
-    if (EXSUCCEED!=tms_log_info(p_tl) ||
-            EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_PREPARING))    
+    if (EXSUCCEED!=tms_log_stage(p_tl, XA_TX_STAGE_PREPARING))    
     {
         NDRX_LOG(log_error, "Failed to log tx - abort!");
         do_abort = EXTRUE;
