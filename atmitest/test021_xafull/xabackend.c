@@ -611,6 +611,7 @@ expublic int xa_prepare_entry_stat105(XID *xid, int rmid, long flags)
     int ret =  xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
     
     /* seems have issues with freebsd ... abort();*/
+    NDRX_LOG(log_error, "105 - simulating failure at prepare!");
     exit(EXFAIL);
 }
 
