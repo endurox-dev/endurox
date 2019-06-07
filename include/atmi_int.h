@@ -227,6 +227,7 @@ extern "C" {
 #define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */
 
 #define NDRX_XA_FLAG_NOJOIN  "NOJOIN"  /**< XA Switch does not support TMJOIN mode  */
+#define NDRX_XA_FLAG_NOSTARTXID  "NOSTARTXID"  /**< No XID in start call to RM  */
 #define NDRX_XA_FLAG_RECON  "RECON"    /**< Reconnect on tpbegin(), xa_start() if fails */
 #define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /**< Test the line                       */
 #define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /**< List of error codes for retry   */
@@ -238,6 +239,7 @@ extern "C" {
  */
 #define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting */
 #define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported          */
+#define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No XID given in start      */
 
 /** @} */ /* xa_flags_sys */
     

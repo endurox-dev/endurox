@@ -214,6 +214,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
         /* assign btid? 
         tmp->rmstatus[xai->tmrmid-1].rmstatus = XA_RM_STATUS_ACTIVE;
         */
+        char start_stat = XA_RM_STATUS_ACTIVE;
         
         *btid = tms_btid_gettid(tmp, xai->tmrmid);
 
@@ -225,8 +226,15 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
             EXFAIL_OUT(ret);
         }
         
+        if (tmflags & TMTXFLAGS_TPNOSTARTXID)
+        {
+            NDRX_LOG(log_info, "TPNOSTARTXID => starting as %c - prepared", 
+                    XA_RM_STATUS_PREP);
+            start_stat = XA_RM_STATUS_PREP;
+        }
+        
         /* log to transaction file -> Write off RM status */
-        if (EXSUCCEED!=tms_log_rmstatus(tmp, bt, XA_RM_STATUS_ACTIVE, 0, 0))
+        if (EXSUCCEED!=tms_log_rmstatus(tmp, bt, start_stat, 0, 0))
         {
             NDRX_LOG(log_error, "Failed to write RM status to file: %ld", *btid);
             EXFAIL_OUT(ret);
@@ -264,7 +272,7 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
 {
     int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl= NULL;
-    atmi_xa_rm_status_btid_t *bt;
+    atmi_xa_rm_status_btid_t *bt = NULL;
     
     /* atmi_xa_rm_status_t stat; */
     /*
@@ -516,7 +524,7 @@ out:
     /* Clean up if error. */
     if (EXSUCCEED!=ret && NULL!=*pp_tl)
     {
-        NDRX_FREE(pp_tl);
+        NDRX_FREE((*pp_tl));
         *pp_tl = NULL;
     }
 

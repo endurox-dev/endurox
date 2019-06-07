@@ -71,6 +71,14 @@ void BALANCE (TPSVCINFO *p_svc)
     EXEC SQL END DECLARE SECTION;
     
     NDRX_LOG(log_debug, "%s got call", __func__);
+    
+    /* reallocate the buffer... */
+    p_ub = (char *)tprealloc((char *)p_ub, Bsizeof(p_ub) + 1024);
+    
+    if (NULL==p_ub)
+    {
+        EXFAIL_OUT(ret);
+    }
 
     /* Just print the buffer */
     Bprint(p_ub);

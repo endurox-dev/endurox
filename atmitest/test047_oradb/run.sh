@@ -50,7 +50,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
-export NDRX_TOUT=10
+export NDRX_TOUT=20
 
 #
 # Domain 1 - here client will live
@@ -72,6 +72,8 @@ set_dom1() {
     export NDRX_XA_DRIVERLIB=libndrxxaoras.so
     export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
+    # TODO: Add both test modes... 
+    export NDRX_XA_FLAGS=NOJOIN
     # XA SECTION, END
 }
 
