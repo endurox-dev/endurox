@@ -70,6 +70,10 @@ expublic rmstatus_driver_t G_rm_status_driver[] =
     /* If no transaction, then assume committed, read only: */
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_NOTA, XAER_NOTA, XA_RM_STATUS_COMMITTED_RO,  XA_TX_STAGE_COMMITTING},
     {XA_TX_STAGE_PREPARING, XA_RM_STATUS_ACTIVE, XA_OP_PREPARE, XAER_INVAL,XAER_INVAL,XA_RM_STATUS_ACTIVE,        XA_TX_STAGE_ABORTING},
+    /* for PostgreSQL we have strange situation, that only case to work in distributed way is to mark the transaction as
+     * prepared once the processing thread disconnects. Thus even transaction is active, the resource is prepared.
+     */
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_PREP,   XA_OP_NOP,     XAER_INVAL,XAER_INVAL,XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
     /* Driving of the COMMITTING */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_OK,     XA_OK,     XA_RM_STATUS_COMMITTED,     XA_TX_STAGE_COMMITTED},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_RMERR,XAER_RMERR,XA_RM_STATUS_COMMIT_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD},

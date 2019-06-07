@@ -881,11 +881,31 @@ out:
     /* Restore transaction if was suspended. */
     if (flags & TPTRANSUSPEND && p_tranid && p_tranid->tmxid[0])
     {
+        /* Save error... (if any...) 
+         * Bug #417
+         */
+        atmi_error_t err;
+        int err_saved = EXFALSE;
+        
+        if (0!=tperrno)
+        {
+            ndrx_TPsave_error(&err);
+            err_saved = EXTRUE;
+        }
+        
         /* resume the transaction */
         if (EXSUCCEED!=ndrx_tpresume(p_tranid, 0) && EXSUCCEED==ret)
         {
             ret=EXFAIL;
         }
+        
+        /* Restore error if was saved.. */
+        
+        if (err_saved)
+        {
+            ndrx_TPrestore_error(&err);
+        }
+        
     }
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo && 

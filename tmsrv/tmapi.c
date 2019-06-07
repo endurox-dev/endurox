@@ -377,6 +377,9 @@ expublic int tm_tmregister(UBFH *p_ub)
     long tmflags = 0;
     long btid=EXFAIL;
     
+    
+    /* TODO: Get flags! */
+    
     if (EXSUCCEED!=Bget(p_ub, TMCALLERRM, 0, (char *)&callerrm, 0L))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
@@ -402,6 +405,7 @@ expublic int tm_tmregister(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
+    /* TODO: Pass flags to */
     if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged, &btid))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
