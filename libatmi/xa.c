@@ -834,7 +834,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     
     /* Load tx info... */
     
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
     {
         NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
         ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to read TM response");
@@ -1541,7 +1541,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         /* - if have JOIN, then we use default BTID 0
          * - if no JOIN, then ATMI_XA_TMREGISTER will give new TID
          */
-        if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN)
+        if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN))
         {
             btid = 0;
         }
