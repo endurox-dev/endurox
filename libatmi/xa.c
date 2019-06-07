@@ -312,6 +312,11 @@ expublic int atmi_xa_init(void)
                     NDRX_LOG(log_warn, "NOJOIN flag found");
                     ndrx_xa_nojoin(EXTRUE);
                 }
+                else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSTARTXID))
+                {
+                    NDRX_LOG(log_warn, "NOSTARTXID flag found");
+                    ndrx_xa_nojoin(EXTRUE);
+                }
                 
             } /* for tag.. */
         } /* if xa_flags set */
@@ -811,6 +816,11 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
          * local RMs work)
          */
         tmflags|=TMTXFLAGS_DYNAMIC_REG;
+    }
+    
+    if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
+    {
+        tmflags|=TMTXFLAGS_TPNOSTARTXID;
     }
     
     if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
@@ -1546,9 +1556,15 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             btid = 0;
         }
         
+        if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
+        {
+            tmflags|=TMTXFLAGS_TPNOSTARTXID;
+        }
+
+        
         /* register new tx branch/rm */
         if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMREGISTER, 
-                EXFALSE, EXFAIL, p_xai, 0L, btid)))
+                EXFALSE, EXFAIL, p_xai, tmflags, btid)))
         {
             NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                         ATMI_XA_TPBEGIN);   
@@ -1747,5 +1763,26 @@ expublic void ndrx_xa_nojoin(int val)
         G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOJOIN;
     }
 }
+
+/**
+ * XA Driver does not mark the transaction at start, thus no start XID
+ * Thus in this case before process calls "end", the prepare statement will be
+ * issued. Also when we request the new BTID, we shall report, that branch
+ * is in prepared state...
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_nostartxid(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA No STAR XID");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOSTARTXID;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOSTARTXID;
+    }
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
