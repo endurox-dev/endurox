@@ -200,6 +200,14 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
         EXFAIL_OUT(ret);
     }
     
+    /* log the opening infos */
+    if (EXSUCCEED!=tms_log_info(tmp))
+    {
+        NDRX_LOG(log_error, "Failed to log tran info");
+        userlog("Failed to log tran info");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Only for static... */
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
