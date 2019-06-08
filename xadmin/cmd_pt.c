@@ -179,7 +179,7 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-int call_tm(char *svcnm)
+exprivate int call_tm(char *svcnm)
 {
   UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_PRINTTRANS);
     int ret=EXSUCCEED;

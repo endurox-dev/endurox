@@ -140,6 +140,34 @@ COMMANDS
     Commit transaction. '-y' is for auto confirmation.
 *committrans*::
     Alias for 'commit'.
+*recoverlocal* [-s <TM SERVICE>]::
+    List local/for each TMSRV heuristic in-doubt transactions. This makes query
+    to RM with xa_recover. With '-s' flag specific TMSRV service can be specified.
+    otherwise all visible TMSRV servers are queried.
+*commitlocal* [-s <TM SERVICE> [-x <XID>]] [-y]::
+    Commit in-doubt transaction. If '-x' xid reported by recoverlocal is not
+    specified, then all transactions are tried to be committed. If '-s' is set
+    then specific TMSRV instance service is queried. If '-x' is set, '-s' must
+    be set too, because specific XID must be part of some specific instance.
+    The status of particular operation is reported back to stdout. Note that
+    only prepared transactions can be processed by this command. Heuristically
+    committed/aborted transaction may be only forgot. If so, context errors
+    may be given.
+*abortlocal* [-s <TM SERVICE> [-x <XID>]] [-y]::
+    Abort in-doubt transaction. If '-x' xid reported by recoverlocal is not
+    specified, then all transactions are tried to be aborted. If '-s' is set
+    then specific TMSRV instance service is queried. If '-x' is set, '-s' must
+    be set too, because specific XID must be part of some specific instance.
+    The status of particular operation is reported back to stdout. Note that
+    only prepared transactions can be processed by this command. Heuristically
+    committed/aborted transaction may be only forgot. If so, context errors
+    may be given.
+*forgetlocal* [-s <TM SERVICE> [-x <XID>]] [-y]::
+    Abort in-doubt transaction. If '-x' xid reported by recoverlocal is not
+    specified, then all transactions are tried to be forgotten. If '-s' is set
+    then specific TMSRV instance service is queried. If '-x' is set, '-s' must
+    be set too, because specific XID must be part of some specific instance.
+    The status of particular operation is reported back to stdout.
 *pe*::
     Print Environment variables of 'ndrxd' process.
 *printenv*::

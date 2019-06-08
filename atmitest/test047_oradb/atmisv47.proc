@@ -73,7 +73,7 @@ void BALANCE (TPSVCINFO *p_svc)
     NDRX_LOG(log_debug, "%s got call", __func__);
     
     /* reallocate the buffer... */
-    p_ub = (char *)tprealloc((char *)p_ub, Bsizeof(p_ub) + 1024);
+    p_ub = (UBFH *)tprealloc((char *)p_ub, Bsizeof(p_ub) + 1024);
     
     if (NULL==p_ub)
     {

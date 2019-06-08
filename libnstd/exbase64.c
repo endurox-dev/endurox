@@ -105,7 +105,7 @@ exprivate unsigned char *b64_decode(unsigned char *data,
 expublic char * ndrx_xa_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
-                    char *encoded_data) 
+                    char *encoded_data)
 {
     return b64_encode(data, input_length, output_length, 
             encoded_data, encoding_table_xa);
