@@ -104,7 +104,7 @@ extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_t * tms_log_get_entry(char *tmxid);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 
-        long *btid);
+        long *btid, long flags);
 extern int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode);
 extern int tms_is_logfile_open(atmi_xa_log_t *p_tl);
 extern void tms_close_logfile(atmi_xa_log_t *p_tl);
