@@ -68,6 +68,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
     int ret = EXSUCCEED;
     char tmxid[1024];
     BFLDLEN len;
+    XID xid;
     
     /* the xid is binary XID recovered in hex */
     if (EXSUCCEED!=Bget(p_ub, TMXID, 0, (char *)tmxid, 0L))
@@ -80,6 +81,9 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
     
     /* list in copy/past for commit/abort local format */
     printf("%s: %s\n", svcnm, tmxid);
+    
+    /* TODO: Print Enduro/X related data... (if have one) */
+    
     
     /* Check do we have error fields? of so then print the status? */
     
