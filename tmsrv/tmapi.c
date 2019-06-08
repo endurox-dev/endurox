@@ -58,8 +58,10 @@
 #include "../libatmisrv/srv_int.h"
 #include "tperror.h"
 #include <xa_cmn.h>
+#include <exbase64.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define XID_RECOVER_BLOCK_SZ        1000
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -768,4 +770,234 @@ out:
 
     return ret;
 }
+
+/**
+ * Return list of in doubt local transactions.
+ * This returns info directly from RM
+ * @param p_ub
+ * @param cd - call descriptor
+ * @return 
+ */
+expublic int tm_recoverlocal(UBFH *p_ub, int cd)
+{
+    int ret = EXSUCCEED;
+    long revent;
+    XID arraxid[XID_RECOVER_BLOCK_SZ];
+    long flags = TMSTARTRSCAN;
+    int i;
+    char tmp[1024];
+    size_t out_len = 0;
+    
+    while ((ret = atmi_xa_recover_entry(arraxid, XID_RECOVER_BLOCK_SZ, G_atmi_env.xa_rmid, 
+            flags)) > 0)
+    {       
+        /* reset first */
+        if (TMNOFLAGS!=flags)
+        {
+            flags = TMNOFLAGS;
+        }
+        
+        NDRX_LOG(log_debug, "Recovered txns %d flags: %ld", ret, flags);
+        
+        for (i=0; i<ret; i++)
+        {
+            /* generate xid as base64 string? */
+            ndrx_xa_base64_encode((unsigned char *)&arraxid[i], sizeof(arraxid[i]), 
+                    &out_len, tmp);
+            tmp[out_len] = EXEOS;
+            
+            NDRX_LOG(log_debug, "Recovered xid: [%s]", tmp);
+            
+            if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmp, 0))
+            {
+                NDRX_LOG(log_error, "Failed to set TMXID to [%s]", tmp);
+                EXFAIL_OUT(ret);
+            }
+            
+            if (EXFAIL == tpsend(cd,
+                                (char *)p_ub,
+                                0L,
+                                0,
+                                &revent))
+            {
+                NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                                    tpstrerror(tperrno), revent);
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                NDRX_LOG(log_debug,"sent ok");
+            }
+        }
+        
+        if (ret < XID_RECOVER_BLOCK_SZ)
+        {
+            /* this is EOF according to the spec */
+            break;
+        }
+        
+    }
+    
+out:
+
+    /* close the "cursor"  - no need we scan till end..
+    atmi_xa_recover_entry(NULL, 0, G_atmi_env.xa_rmid, TMENDRSCAN);
+     * */
+
+    return ret;
+}
+
+/**
+ * Perform local operation on single xid and send results back to server.
+ * @param p_ub UBF buffer for connection
+ * @param cd connection descriptor
+ * @param cmd op code
+ * @param xid ptr XID
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int tm_proclocal_single(UBFH *p_ub, int cd, char cmd, XID *xid)
+{
+    int ret = EXSUCCEED;
+    char tmp[1024];
+    size_t out_len = 0;
+    long revent;
+        
+    atmi_xa_unset_error(p_ub);
+    ndrx_TPunset_error();
+    
+    switch (cmd)
+    {
+        case ATMI_XA_COMMITLOCAL:
+            ret = atmi_xa_commit_entry(xid, TMNOFLAGS);
+            break;
+        case ATMI_XA_ABORTLOCAL:
+            ret = atmi_xa_rollback_entry(xid, TMNOFLAGS);
+            break;
+        case ATMI_XA_FORGETLOCAL:
+            ret = atmi_xa_forget_entry(xid, TMNOFLAGS);
+            break;
+        default:
+            NDRX_LOG(log_error, "Invalid Opcode: %c", cmd);
+            EXFAIL_OUT(ret);
+            break;
+    }
+    
+    /* load the result in UBF */
+    ndrx_TPset_error_ubf(p_ub);
+    
+    ret = EXSUCCEED;
+    
+    ndrx_xa_base64_encode((unsigned char *)xid, sizeof(*xid), 
+                    &out_len, tmp);
+    tmp[out_len] = EXEOS;
+            
+    if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmp, 0))
+    {
+        NDRX_LOG(log_error, "Failed to set TMXID to [%s]", tmp);
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXFAIL == tpsend(cd,
+                        (char *)p_ub,
+                        0L,
+                        0,
+                        &revent))
+    {
+        NDRX_LOG(log_error, "Send data failed [%s] %ld",
+                            tpstrerror(tperrno), revent);
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+        NDRX_LOG(log_debug,"sent ok");
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Process manually the local transactions.
+ * Return the list of processed + status
+ * @param cmd ATMI_XA_COMMITLOCAL / ATMI_XA_ABORTLOCAL / ATMI_XA_FORGETLOCAL
+ * @param p_ub
+ * @param cd - call descriptor
+ * @return 
+ */
+expublic int tm_proclocal(char cmd, UBFH *p_ub, int cd)
+{
+    int ret = EXSUCCEED;
+    
+    XID one;
+    char onestr[sizeof(XID)*2];
+    long flags = TMSTARTRSCAN;
+    XID arraxid[XID_RECOVER_BLOCK_SZ];
+    int i;
+    size_t out_len = 0;
+    BFLDLEN len;
+    
+    /* if there is single tran, then process it, if not, then loop over */
+    
+    if (Bpres(p_ub, TMXID, 0))
+    {
+        NDRX_LOG(log_debug, "XID present -> process single");
+        len = sizeof(onestr);
+        if (EXSUCCEED!=Bget(p_ub, TMXID, 0, onestr, &len))
+        {
+            NDRX_LOG(log_error, "Failed to get TMXID: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        ndrx_xa_base64_decode((unsigned char *)onestr, strlen(onestr), 
+                &out_len, (char *)&one);
+        
+        if (EXSUCCEED!=tm_proclocal_single(p_ub, cd, cmd, &one))
+        {
+            NDRX_DUMP(log_error, "Failed to process local xid", &one, sizeof(one));
+            EXFAIL_OUT(ret);
+        }
+            
+    } /* we process one by one otherwise we get improper one by one process */
+    else while ((ret = atmi_xa_recover_entry(arraxid, XID_RECOVER_BLOCK_SZ, G_atmi_env.xa_rmid, 
+            flags)) > 0)
+    {       
+        /* reset first */
+        if (TMNOFLAGS!=flags)
+        {
+            flags = TMNOFLAGS;
+        }
+        
+        NDRX_LOG(log_debug, "Recovered txns %d flags: %ld", ret, flags);
+        /*
+        atmi_xa_recover_entry(NULL, 0, G_atmi_env.xa_rmid, TMENDRSCAN);
+        */
+        
+        for (i=0; i<ret; i++)
+        {   
+            if (EXSUCCEED!=tm_proclocal_single(p_ub, cd, cmd, &arraxid[i]))
+            {
+                NDRX_DUMP(log_error, "Failed to process local xid", &arraxid[i], 
+                        sizeof(arraxid[i]));
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        if (ret < XID_RECOVER_BLOCK_SZ)
+        {
+            /* this is EOF according to the spec */
+            break;
+        }
+        
+    }
+    
+out:
+
+    return ret;
+}
+
+
+
+
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

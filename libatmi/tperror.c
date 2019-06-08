@@ -451,7 +451,8 @@ expublic void atmi_xa_set_error_msg(UBFH *p_ub, short error_code, short reason, 
  * @param fmt - format stirng
  * @param ... - format details
  */
-expublic void atmi_xa_set_error_fmt(UBFH *p_ub, short error_code, short reason, const char *fmt, ...)
+expublic void atmi_xa_set_error_fmt(UBFH *p_ub, short error_code, short reason, 
+        const char *fmt, ...)
 {
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
     va_list ap;
@@ -462,13 +463,30 @@ expublic void atmi_xa_set_error_fmt(UBFH *p_ub, short error_code, short reason, 
         (void) vsnprintf(msg, sizeof(msg), fmt, ap);
         va_end(ap);
 
-        NDRX_LOG(log_warn, "atmi_xa_set_error_fmt: %d (%s) [%s]",
-                        error_code, ATMI_ERROR_DESCRIPTION(error_code),
-                        msg);
+            NDRX_LOG(log_warn, "atmi_xa_set_error_fmt: %d (%s) [%s]",
+                            error_code, ATMI_ERROR_DESCRIPTION(error_code),
+                            msg);
         Bchg(p_ub, TMERR_CODE, 0, (char *)&error_code, 0L);
         Bchg(p_ub, TMERR_REASON, 0, (char *)&reason, 0L);
         Bchg(p_ub, TMERR_MSG, 0, msg, 0L);
     }
+}
+
+/**
+ * Set local error to UBF
+ * @param p_ub UBF buffer to fill with error data
+ */
+expublic void ndrx_TPset_error_ubf(UBFH *p_ub)
+{
+    short error_code;
+    short reason;
+        
+    error_code = (short)G_atmi_tls->M_atmi_error;
+    reason = (short)G_atmi_tls->M_atmi_reason;
+    
+    Bchg(p_ub, TMERR_CODE, 0, (char *)&error_code, 0L);
+    Bchg(p_ub, TMERR_REASON, 0, (char *)&reason, 0L);
+    Bchg(p_ub, TMERR_MSG, 0, G_atmi_tls->M_atmi_error_msg_buf, 0L);
 }
 
 /**
@@ -489,9 +507,9 @@ expublic void atmi_xa_override_error(UBFH *p_ub, short error_code)
  */
 expublic void atmi_xa_unset_error(UBFH *p_ub)
 {
-        Bdel(p_ub, TMERR_CODE, 0);
-        Bdel(p_ub, TMERR_REASON, 0);
-        Bdel(p_ub, TMERR_MSG, 0);
+    Bdel(p_ub, TMERR_CODE, 0);
+    Bdel(p_ub, TMERR_REASON, 0);
+    Bdel(p_ub, TMERR_MSG, 0);
 }
 /**
  * Return >0 if error is set

@@ -240,6 +240,25 @@ cmd_mapping_t M_command_map[] =
     {"committrans",cmd_commit,EXFAIL,            3,  4,  1, 
                 "Alias for `commit'"
                 , NULL},
+    {"recoverlocal",cmd_recoverlocal,EXFAIL,         1,  2,  1, 
+                "Print local local in-doubt transactions\n"
+                "\t args: recoverlocal [-s <TM SERVICE>]\n"
+                , NULL},
+    {"commitlocal",cmd_commitlocal,EXFAIL,         2,  5,  1, 
+                "Commit local in-doubt transaction\n"
+                "\t args: commitlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
+                "\t -x - particular XID"
+                , NULL},
+    {"abortlocal",cmd_abortlocal,EXFAIL,         1,  4,  1, 
+                "Abort local in-doubt transaction\n"
+                "\t args: abortlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
+                "\t -x - particular XID"
+                , NULL},
+    {"forgetlocal",cmd_forgetlocal,EXFAIL,         1,  4,  1, 
+                "Abort local in-doubt transaction\n"
+                "\t args: forgetlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
+                "\t -x - particular XID"
+                , NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,        1,  1,  1, 
                 "Print env (from ndrxd)"
                 , NULL},
