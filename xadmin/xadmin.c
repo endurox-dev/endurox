@@ -244,7 +244,7 @@ cmd_mapping_t M_command_map[] =
                 "Print local local in-doubt transactions\n"
                 "\t args: recoverlocal [-s <TM SERVICE>]\n"
                 , NULL},
-    {"commitlocal",cmd_commitlocal,EXFAIL,         2,  5,  1, 
+    {"commitlocal",cmd_commitlocal,EXFAIL,         1,  5,  1, 
                 "Commit local in-doubt transaction\n"
                 "\t args: commitlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
                 "\t -x - particular XID"

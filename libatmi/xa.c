@@ -585,7 +585,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
     }
     
     /* If having no start xid, then we must call prepare! (for postgresql) */
-    
+
     if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
     {
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
