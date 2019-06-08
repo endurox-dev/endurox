@@ -268,7 +268,7 @@ out:
  * @return EXSUCCEED/EXFAIL
  */
 expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged,
-        long *btid)
+        long *btid, long flags)
 {
     int ret = EXSUCCEED;
     atmi_xa_log_t *p_tl= NULL;
@@ -311,10 +311,19 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
     /* log to transaction file */
     if (!(*p_is_already_logged))
     {
+        char start_stat = XA_RM_STATUS_ACTIVE;
+        
         NDRX_LOG(log_info, "RMID %hd/%ld added to xid_str: [%s]", 
             rmid, *btid, xai->tmxid);
         
-        if (EXSUCCEED!=tms_log_rmstatus(p_tl, bt, XA_RM_STATUS_ACTIVE, 0, 0))
+        if (flags & TMTXFLAGS_TPNOSTARTXID)
+        {
+            NDRX_LOG(log_info, "TPNOSTARTXID => adding as %c - prepared", 
+                    XA_RM_STATUS_PREP);
+            start_stat = XA_RM_STATUS_PREP;
+        }
+        
+        if (EXSUCCEED!=tms_log_rmstatus(p_tl, bt, start_stat, 0, 0))
         {
             NDRX_LOG(log_error, "Failed to write RM status to file: %ld", *btid);
             EXFAIL_OUT(ret);
