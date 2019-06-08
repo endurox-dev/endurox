@@ -319,6 +319,24 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
                 goto out;
             }
             break;
+        case ATMI_XA_RECOVERLOCAL:
+            if (EXSUCCEED!=tm_recoverlocal(p_ub, cd))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
+        case ATMI_XA_COMMITLOCAL:
+        case ATMI_XA_ABORTLOCAL:
+        case ATMI_XA_FORGETLOCAL:
+            
+            if (EXSUCCEED!=tm_proclocal(cmd, p_ub, cd))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            
+            break;
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
             ret=EXFAIL;

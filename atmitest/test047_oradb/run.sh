@@ -73,7 +73,7 @@ set_dom1() {
     export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
     # TODO: Add both test modes... 
-    export NDRX_XA_FLAGS="NOJOIN;NOSTARTXID"
+    export NDRX_XA_FLAGS="NOJOIN"
     # XA SECTION, END
 }
 
@@ -109,6 +109,11 @@ RET=0
 xadmin psc
 xadmin ppm
 echo "Running off client"
+
+xadmin forgetlocal -y
+xadmin abortlocal -y
+#xadmin abortlocal -y -s "@TM-1-1-50" -x "ofeUYQAAAABAAAAAAAAAAEAAAAAAAAAAabeXTKBVRgyQ+BS8gtZygwEAAQAyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAwWm3l0ygVUYMkPgUvILWcoMBAAEAMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAME="
+xadmin recoverlocal
 
 set_dom1;
 (./atmiclt47 2>&1) > ./atmiclt-dom1.log

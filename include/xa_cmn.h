@@ -62,6 +62,13 @@ extern "C" {
 #define ATMI_XA_COMMITTRANS         'm' /* Co[m]mit transaction, admin util     */
 #define ATMI_XA_STATUS              's' /* Return transaction status            */
     
+    
+#define ATMI_XA_RECOVERLOCAL        'l' /**< Recover local transactions         */
+#define ATMI_XA_COMMITLOCAL         'o' /**< Commit local transaction           */
+#define ATMI_XA_ABORTLOCAL          't' /**< Abort local transactions           */
+#define ATMI_XA_FORGETLOCAL         'f' /**< Forget local transactions          */
+
+
 /* Register new resource handler - remote process sends us info about working under same TXN */
 #define ATMI_XA_TMREGISTER          'R' /* Register new resource under txn...   */
 #define ATMI_XA_TMPREPARE           'P' /* Sends prepare statement to slave RM  */    
@@ -362,10 +369,11 @@ extern NDRX_API int atmi_xa_open_entry(void);
 extern NDRX_API int atmi_xa_close_entry(void);
 extern NDRX_API int atmi_xa_start_entry(XID *xid, long flags, int ping_try);
 extern NDRX_API int atmi_xa_end_entry(XID *xid, long flags);
-extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_prepare_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags);
+extern NDRX_API int atmi_xa_forget_entry(XID *xid, long flags);
 
 extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
                     atmi_xa_tx_info_t *p_xai, long flags, long btid);

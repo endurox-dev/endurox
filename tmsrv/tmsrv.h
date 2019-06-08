@@ -159,6 +159,8 @@ extern int tm_tpprinttrans(UBFH *p_ub, int cd);
 extern int tm_aborttrans(UBFH *p_ub);
 extern int tm_status(UBFH *p_ub);
 extern int tm_committrans(UBFH *p_ub);
+extern int tm_recoverlocal(UBFH *p_ub, int cd);
+extern int tm_proclocal(char cmd, UBFH *p_ub, int cd);
 
 /* Branch TID manipulations */
 extern long tms_btid_gettid(atmi_xa_log_t *p_tl, short rmid);

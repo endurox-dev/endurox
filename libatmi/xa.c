@@ -592,11 +592,20 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
         if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
         {
-            NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
+            if (XA_RDONLY!=ret)
+            {
+                NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
-            ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
-                    ret, atmi_xa_geterrstr(ret));
-            goto out;
+                
+                ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, 
+                        "xa_prepare_entry - fail: %d [%s]", 
+                        ret, atmi_xa_geterrstr(ret));
+                goto out;
+            }
+            else
+            {
+                ret = XA_OK;
+            }
         }
     }
     
@@ -613,7 +622,7 @@ out:
  */
 expublic int atmi_xa_rollback_entry(XID *xid, long flags)
 {
-int ret = EXSUCCEED;
+    int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_rollback_entry");
@@ -658,6 +667,34 @@ int ret = EXSUCCEED;
 out:
     return ret;
 }
+
+/**
+ * Forget RM known transaction
+ * @param xid
+ * @param flags
+ * @return XA error code
+ */
+expublic int atmi_xa_forget_entry(XID *xid, long flags)
+{
+    int ret = EXSUCCEED;
+    XA_API_ENTRY(EXTRUE);
+    
+    NDRX_LOG(log_debug, "atmi_xa_forget_entry");
+     
+    if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_forget_entry(xid, 
+                                    G_atmi_env.xa_rmid, flags)))
+    {
+        NDRX_LOG(log_error, "xa_forget_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_forget_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
 
 /**
  * Prepare for commit current transaction on local resource manager.

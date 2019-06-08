@@ -73,7 +73,7 @@ expublic rmstatus_driver_t G_rm_status_driver[] =
     /* for PostgreSQL we have strange situation, that only case to work in distributed way is to mark the transaction as
      * prepared once the processing thread disconnects. Thus even transaction is active, the resource is prepared.
      */
-    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_PREP,   XA_OP_NOP,     XAER_INVAL,XAER_INVAL,XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
+    {XA_TX_STAGE_PREPARING, XA_RM_STATUS_PREP,   XA_OP_NOP,     XA_OK,XA_OK,            XA_RM_STATUS_PREP,          XA_TX_STAGE_COMMITTING},
     /* Driving of the COMMITTING */
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XA_OK,     XA_OK,     XA_RM_STATUS_COMMITTED,     XA_TX_STAGE_COMMITTED},
     {XA_TX_STAGE_COMMITTING, XA_RM_STATUS_PREP,   XA_OP_COMMIT,  XAER_RMERR,XAER_RMERR,XA_RM_STATUS_COMMIT_HAZARD, XA_TX_STAGE_COMMITTED_HAZARD},

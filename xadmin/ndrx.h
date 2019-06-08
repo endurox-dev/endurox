@@ -214,6 +214,11 @@ extern int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 extern int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+extern int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_commitlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_abortlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_forgetlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 
 /* env: */
 extern int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
