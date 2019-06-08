@@ -315,7 +315,7 @@ expublic int atmi_xa_init(void)
                 else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSTARTXID))
                 {
                     NDRX_LOG(log_warn, "NOSTARTXID flag found");
-                    ndrx_xa_nojoin(EXTRUE);
+                    ndrx_xa_nostartxid(EXTRUE);
                 }
                 
             } /* for tag.. */
@@ -583,6 +583,23 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
                 ret, atmi_xa_geterrstr(ret));
         goto out;
     }
+    
+    /* If having no start xid, then we must call prepare! (for postgresql) */
+    
+    if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
+    {
+        NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
+        if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
+                                        G_atmi_env.xa_rmid, TMNOFLAGS)))
+        {
+            NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
+                    ret, atmi_xa_geterrstr(ret));
+            ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_prepare_entry - fail: %d [%s]", 
+                    ret, atmi_xa_geterrstr(ret));
+            goto out;
+        }
+    }
+    
     
 out:
     return ret;

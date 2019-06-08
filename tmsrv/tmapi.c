@@ -405,8 +405,14 @@ expublic int tm_tmregister(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: Pass flags to */
-    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged, &btid))
+    if (EXSUCCEED!=Bget(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                    "Missing TMTXFLAGS in buffer");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged, &btid, tmflags))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
                     "Failed to log new RM!");
