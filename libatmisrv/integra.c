@@ -68,7 +68,11 @@ expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * System init, advertise by table
+ * System init, advertise by table.
+ * TODO: This shall use -N flag. Also new param -S shall be introduced
+ * which would allow to advertise by function names from CLI. Probably parsed
+ * lists and flags shall be pushed in some global variable so that we do not corrupt
+ * the current position of the opts parser
  * @param argc CLI arg count
  * @param argv CLI values
  * @return EXSUCCEED/EXFAIL
