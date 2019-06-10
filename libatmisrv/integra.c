@@ -72,7 +72,14 @@ expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
  * TODO: This shall use -N flag. Also new param -S shall be introduced
  * which would allow to advertise by function names from CLI. Probably parsed
  * lists and flags shall be pushed in some global variable so that we do not corrupt
- * the current position of the opts parser
+ * the current position of the opts parser.
+ * Also -N shall be applied to these bellow services which we are about to advertise???
+ * Also -s flag shall be processed here against the system services...
+ * or that will be done later, not ?
+ * So if we use -N and we have -S aliases, then not having -s will kill the service first
+ * maybe we need to automatically "unblacklist particular service" ??
+ * Thus any function aliased service must be added to G_server_conf.svc_list with out further
+ * aliase. Then it will pass the advertise loop
  * @param argc CLI arg count
  * @param argv CLI values
  * @return EXSUCCEED/EXFAIL
