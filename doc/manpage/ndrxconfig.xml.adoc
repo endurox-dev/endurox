@@ -398,6 +398,13 @@ DEBUG CONFIGURATION FILE SYNTAX
     converted messages even if caller to UBF service sends JSON and vice versa, then 
     following options might be set to command line:
     '-xUBF1FUNC,UBF2FUNC:JSON2UBF -xJSONFUNC:UBF2JSON'.
+    When Enduro/X is build with integration lib (libatmisrvinteg) user have ability
+    to map the functions with -S <service_name1>/<service_name2>:<function name>
+    passed to buildserver at build time or registered in tmdsptchtbl_t array
+    passed to _tmstartserver(). The -S are processed and service array is prepared,
+    afterwards the -N and -s<service_name1> flag works as usual, with -N disable
+    all service advertise and with -s some single service may be enabled.
+
 *ATMI_SERVER_APPLICATION_OPTIONS*::
     Application specific command line options. This follows content after sys options as:
     'system options -- app options'.

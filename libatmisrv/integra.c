@@ -88,12 +88,16 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
 {
     int ret = EXSUCCEED;
     struct tmdsptchtbl_t *tab = ndrx_G_tmsvrargs->svctab;
-    
+    svc_entry_t *el;
+    int found;
     if (NULL!=tab)
     {
+        /* run advertise loop over all services */
         while (NULL!=tab->svcnm)
         {
-            if (EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
+            /* advertise only if have service name */
+            if (EXEOS!=tab->svcnm[0] &&
+                    EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
             {
                 if (tperrno!=TPEMATCH)
                 {
@@ -107,6 +111,46 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
         
             tab++;
         }
+        
+        /* run -S loop function maps -> loop over G_server_conf.funcsvc_list
+         * and loop over the "svctab", find the functions, and call the
+         * tpadvertise_full call.
+         */
+        DL_FOREACH(G_server_conf.funcsvc_list, el)
+        {
+            tab = ndrx_G_tmsvrargs->svctab;
+            found = EXFALSE;
+            while (NULL!=tab->svcnm)
+            {
+                if (0==strcmp(el->svc_aliasof, tab->funcnm))
+                {
+                    /* advertise only if have service name */
+                    if (EXSUCCEED!=tpadvertise_full(el->svc_nm, tab->p_func, tab->funcnm))
+                    {
+                        if (tperrno!=TPEMATCH)
+                        {
+                            NDRX_LOG(log_error, "Failed to advertise svcnm "
+                                "[%s] funcnm [%s] ptr=%p: %s",
+                                el->svc_nm, tab->funcnm, tab->p_func,
+                                tpstrerror(tperrno));
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    found = EXTRUE;
+                    break;
+                }
+                tab++;
+            }
+            
+            if (!found)
+            {
+                ndrx_TPset_error_fmt(TPEMATCH, "ERROR Function not found for "
+                        "service mapping (-S) service name [%s] function [%s]!",
+                        el->svc_nm, el->svc_aliasof);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
     } /* if there is tab */
     
 out:
