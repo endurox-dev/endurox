@@ -144,17 +144,19 @@ expublic void ndrx_skipsvc_delhash(void)
  * -s<New Service1>[,|/]<New Service2>[,|/]..[,|/]<New Service N>:<existing service>
  * e.g.
  * -sNEWSVC1/NEWSVC2:EXISTINGSVC
+ * @param msg1 debug msg1
  * @param argc
  * @param argv
  * @return
  */
-expublic int parse_svc_arg(char *arg)
+expublic int ndrx_parse_svc_arg_cmn(char *msg1,
+        svc_entry_t **root_svc_list, char *arg)
 {
     char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char *p;
     svc_entry_t *entry=NULL;
 
-    NDRX_LOG(log_debug, "Parsing service entry: [%s]", arg);
+    NDRX_LOG(log_debug, "Parsing %s entry: [%s]", msg1, arg);
     
     if (NULL!=(p=strchr(arg, ':')))
     {
@@ -183,29 +185,49 @@ expublic int parse_svc_arg(char *arg)
 
         NDRX_STRNCPY(entry->svc_nm, p, XATMI_SERVICE_NAME_LENGTH);
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
-        entry->svc_alias[0]=EXEOS;
+        entry->svc_aliasof[0]=EXEOS;
                 
         if (EXEOS!=alias_name[0])
         {
-            NDRX_STRCPY_SAFE(entry->svc_alias, alias_name);
+            NDRX_STRCPY_SAFE(entry->svc_aliasof, alias_name);
         }
         
         /*
          * Should we check duplicate names here?
          */
-        DL_APPEND(G_server_conf.svc_list, entry);
+        DL_APPEND((*root_svc_list), entry);
 
-        NDRX_LOG(log_debug, "-s [%s]:[%s]", entry->svc_nm, entry->svc_alias);
+        NDRX_LOG(log_debug, "%s [%s]:[%s]", msg1, entry->svc_nm, entry->svc_aliasof);
         p = strtok(NULL, ",/");
     }
     
     return EXSUCCEED;
 }
 
+/**
+ * Process -s CLI flag / fill array, service:service mapping flag
+ * @param arg -s flag value
+ * @return 
+ */
+expublic int ndrx_parse_svc_arg(char *arg)
+{
+    return ndrx_parse_svc_arg_cmn("-s", &G_server_conf.svc_list, arg);
+}
+
+/**
+ * parse -S service:function mapping flag
+ * @param root_svc_list
+ * @param arg -S flag value
+ */
+expublic int ndrx_parse_func_arg(char *arg)
+{
+    return ndrx_parse_svc_arg_cmn("-S", &G_server_conf.funcsvc_list, arg);
+}
+
 /*
  * Lookup conversion function registered for hash
  */
-expublic long xcvt_lookup(char *fn_nm)
+expublic long ndrx_xcvt_lookup(char *fn_nm)
 {
     xbufcvt_entry_t *entry=NULL;
     
@@ -224,7 +246,7 @@ expublic long xcvt_lookup(char *fn_nm)
  * @param argc
  * @return
  */
-int parse_xcvt_arg(char *arg)
+int ndrx_parse_xcvt_arg(char *arg)
 {
     char cvtfunc[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char *p;
@@ -338,7 +360,7 @@ expublic int ndrx_init(int argc, char** argv)
     }
     
     /* Parse command line, will use simple getopt */
-    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:--")) != EXFAIL)
+    while ((c = getopt(argc, argv, "h?:D:i:k:e:R:rs:t:x:Nn:S:--")) != EXFAIL)
     {
         switch(c)
         {
@@ -363,10 +385,13 @@ expublic int ndrx_init(int argc, char** argv)
                 NDRX_STRCPY_SAFE(rqaddress, optarg);
                 break;
             case 's':
-                ret=parse_svc_arg(optarg);
+                ret=ndrx_parse_svc_arg(optarg);
+                break;
+            case 'S':
+                ret=ndrx_parse_func_arg(optarg);
                 break;
             case 'x':
-                ret=parse_xcvt_arg(optarg);
+                ret=ndrx_parse_xcvt_arg(optarg);
                 break;
             case 'D': /* Not used. */
                 dbglev = atoi(optarg);
