@@ -74,7 +74,7 @@
     <servers>
         <server name="atmi.sv66">
             <srvid>20</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1-${NDRX_SVSRVID}.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1-${NDRX_SVSRVID}.log -r -SNEWSVC/NEWS2:somefunc -N -sNEWS2</sysopt>
         </server>
     </servers>    
 </endurox>
