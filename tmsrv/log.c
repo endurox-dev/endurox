@@ -742,9 +742,9 @@ exprivate int tms_parse_info(char *buf, atmi_xa_log_t *p_tl)
     p_tl->txtout = atol(p);
     
     /* Read involved resrouce managers - put them in join state */
+#if 0
     TOKEN_READ("info", "rmsbuf");
     
-#if 0
     - not used anymore. All active branches are logged as RM status
     p2 = strtok_r (p, ",", &saveptr1);
     while (p2 != NULL)
