@@ -127,6 +127,37 @@ out:
 }
 
 /**
+ * Another function, no service
+ */
+void somefunc (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, "somefunc", 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+
+/**
  * Do initialisation
  */
 int tpsvrinit(int argc, char **argv)
@@ -155,6 +186,7 @@ void tpsvrdone(void)
 static struct tmdsptchtbl_t tmdsptchtbl[] = {
     {"SYSADV1","TESTSV",(void (*)(TPSVCINFO *)) TESTSV, 0, 0 },
     {"SYSADV2","HELLOSV",(void (*)(TPSVCINFO *)) HELLOSV, 0, 0 },
+    {"","somefunc",(void (*)(TPSVCINFO *)) somefunc, 0, 0 },
     { NULL, NULL, NULL, 0, 0 }
 };
 
