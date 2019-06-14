@@ -68,7 +68,18 @@ expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * System init, advertise by table
+ * System init, advertise by table.
+ * TODO: This shall use -N flag. Also new param -S shall be introduced
+ * which would allow to advertise by function names from CLI. Probably parsed
+ * lists and flags shall be pushed in some global variable so that we do not corrupt
+ * the current position of the opts parser.
+ * Also -N shall be applied to these bellow services which we are about to advertise???
+ * Also -s flag shall be processed here against the system services...
+ * or that will be done later, not ?
+ * So if we use -N and we have -S aliases, then not having -s will kill the service first
+ * maybe we need to automatically "unblacklist particular service" ??
+ * Thus any function aliased service must be added to G_server_conf.svc_list with out further
+ * aliase. Then it will pass the advertise loop
  * @param argc CLI arg count
  * @param argv CLI values
  * @return EXSUCCEED/EXFAIL
@@ -77,12 +88,16 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
 {
     int ret = EXSUCCEED;
     struct tmdsptchtbl_t *tab = ndrx_G_tmsvrargs->svctab;
-    
+    svc_entry_t *el;
+    int found;
     if (NULL!=tab)
     {
+        /* run advertise loop over all services */
         while (NULL!=tab->svcnm)
         {
-            if (EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
+            /* advertise only if have service name */
+            if (EXEOS!=tab->svcnm[0] &&
+                    EXSUCCEED!=tpadvertise_full(tab->svcnm, tab->p_func, tab->funcnm))
             {
                 if (tperrno!=TPEMATCH)
                 {
@@ -96,6 +111,46 @@ exprivate int tpsrvinit_sys(int argc, char** argv)
         
             tab++;
         }
+        
+        /* run -S loop function maps -> loop over G_server_conf.funcsvc_list
+         * and loop over the "svctab", find the functions, and call the
+         * tpadvertise_full call.
+         */
+        DL_FOREACH(G_server_conf.funcsvc_list, el)
+        {
+            tab = ndrx_G_tmsvrargs->svctab;
+            found = EXFALSE;
+            while (NULL!=tab->svcnm)
+            {
+                if (0==strcmp(el->svc_aliasof, tab->funcnm))
+                {
+                    /* advertise only if have service name */
+                    if (EXSUCCEED!=tpadvertise_full(el->svc_nm, tab->p_func, tab->funcnm))
+                    {
+                        if (tperrno!=TPEMATCH)
+                        {
+                            NDRX_LOG(log_error, "Failed to advertise svcnm "
+                                "[%s] funcnm [%s] ptr=%p: %s",
+                                el->svc_nm, tab->funcnm, tab->p_func,
+                                tpstrerror(tperrno));
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    found = EXTRUE;
+                    break;
+                }
+                tab++;
+            }
+            
+            if (!found)
+            {
+                ndrx_TPset_error_fmt(TPEMATCH, "ERROR Function not found for "
+                        "service mapping (-S) service name [%s] function [%s]!",
+                        el->svc_nm, el->svc_aliasof);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
     } /* if there is tab */
     
 out:

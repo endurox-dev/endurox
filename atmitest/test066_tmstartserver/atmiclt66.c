@@ -64,6 +64,7 @@ int main(int argc, char** argv)
     long rsplen;
     int i;
     int ret=EXSUCCEED;
+    char *p;
     
     if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
     {
@@ -98,6 +99,35 @@ int main(int argc, char** argv)
         NDRX_LOG(log_error, "SYSADV2 failed: %s", tpstrerror(tperrno));
         ret=EXFAIL;
         goto out;
+    }
+    
+    
+    if (EXFAIL == tpcall("NEWS2", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "SYSADV2 failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (0!=strcmp((p=Bfind(p_ub, T_STRING_FLD, 0, 0L)), "somefunc"))
+    {
+        NDRX_LOG(log_error, "sumefunc failed: got [%s]", p);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* ensure that NEWSVC is missing */
+    if (EXSUCCEED == tpcall("NEWSVC", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "NEWSVC CALL OK! But must be TPENOENT");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (TPENOENT!=tperrno)
+    {
+        NDRX_LOG(log_error, "Expected %d but got %d", TPENOENT, tperrno);
+        ret=EXFAIL;
+        goto out;   
     }
     
 out:
