@@ -57,7 +57,7 @@ expublic __thread char ndrx_G_PG_conname[65]={EXEOS}; /**< connection name    */
 MUTEX_LOCKDECL(M_conndata_lock);
 exprivate ndrx_pgconnect_t M_conndata; /**< parsed connection data            */
 exprivate int M_conndata_ok = EXFALSE; /**< Is connection parsed ok & cached? */
-
+exprivate __thread PGconn * M_conn = NULL;   /**< Actual connection           */ 
 exprivate __thread int M_status = CONN_CLOSED;  /**< thread based status      */
 
 /*---------------------------Prototypes---------------------------------*/
@@ -134,6 +134,7 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
     int ret = XA_OK;
     static int conn_counter = 0;
     int connid;
+    
     if (CONN_OPEN==M_status)
     {
         NDRX_LOG(log_error, "Connection is already open");
@@ -198,10 +199,19 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
     {
         NDRX_LOG(log_error, "ECPGconnect failed: %s");
         ret = XAER_RMERR;
+        goto out;
+    }
+    
+    M_conn = ECPGget_PGconn(ndrx_G_PG_conname);
+    if (NULL==M_conn)
+    {
+        NDRX_LOG(log_error, "Postgres error: failed to get PQ connection!");
+        ret = XAER_RMERR;
+        goto out;
     }
     
     M_status = CONN_OPEN;
-    NDRX_LOG(log_info, "Connection [%s] is open", ndrx_G_PG_conname);
+    NDRX_LOG(log_info, "Connection [%s] is open %p", ndrx_G_PG_conname, M_conn);
     
 out:
     return EXFAIL;
@@ -217,15 +227,32 @@ out:
  */
 exprivate int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
+    int ret = XA_OK;
     
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Already closed");
+        goto out;
+    }
     
-    return EXFAIL;
+    if (!ECPGdisconnect(__LINE__, ndrx_G_PG_conname))
+    {
+        NDRX_LOG(log_error, "ECPGdisconnect failed: %s", 
+                PQerrorMessage(M_conn));
+        return XAER_RMERR;
+    }
+    
+    M_conn = NULL;
+    M_status = CONN_CLOSED;
+    
+    NDRX_LOG(log_info, "Connection closed");
+    
+out:
+    return ret;
 }
 
-
 /**
- * In this case we need to convert our internal XID format to java XID
- * and pass it in the call.
+ * Just start the transaction.
  * @param xa_info
  * @param rmid
  * @param flags
@@ -233,11 +260,41 @@ exprivate int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lo
  */
 exprivate int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    return EXFAIL;
+    int ret = XA_OK;
+    PGresult *res = NULL;
+    
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
+    
+    if (TMNOFLAGS != flags)
+    {
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to start_entry", flags);
+        ret = XAER_INVAL;
+        goto out;
+    }
+
+    /* start PG transaction */
+    res = PQexec(M_conn, "BEGIN");
+    if (PGRES_COMMAND_OK != PQresultStatus(res))
+    {
+        NDRX_LOG(log_error, "Failed to begin transaction: %s", PQerrorMessage(M_conn));
+        ret = XAER_RMERR;
+        goto out;
+    }
+    
+out:
+    
+    PQclear(res);
+
+    return ret;
 }
 
 /**
- * Terminate XA access
+ * Terminate transaction in progress
  * @param sw
  * @param xid
  * @param rmid
@@ -246,11 +303,20 @@ exprivate int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
  */
 exprivate int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
+    int ret = XA_OK;
+    
+    /* TODO: Check flags */
+    
+    /* TODO: Check is XA Open */
+    
+    /* TODO: Nothing more to check, as process will get prepare entry */
+    
     return EXFAIL;
 }
 
 /**
- * Rollback
+ * We rollback only prepared transaction.
+ * Thus every transaction will get prepare call
  * @param sw
  * @param xid
  * @param rmid
@@ -272,6 +338,17 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
  */
 exprivate int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
+     /*
+     * TODO:
+     * PQtransactionStatus(con->connection);
+     * - Transaction must be open
+     */
+    
+    /* well we do not do anything here, because our exit from transaction is
+     * to prepare it and that is done by Enduro/X
+     */
+    
+     
     return EXFAIL;
 }
 
