@@ -481,3 +481,5 @@ on for SPARC cpus.
 
 - To enable address sanitizer for GCC/Clang on supported hardware platforms,
 use '-DDEFINE_SANITIZE=1'
+
+- To enable PostgreSQL XA Driver build use '-DENABLE_POSTGRES'
