@@ -43,7 +43,7 @@ add_subdirectory (tms)
 # Build with Posgresql support
 #
 IF (ENABLE_POSTGRES)
-add_sudirectory (postgres)
+add_subdirectory (postgres)
 ENDIF()
 
 # vim: set ts=4 sw=4 et smartindent:
