@@ -45,17 +45,17 @@ ENDIF ($ENV{RELEASE_BUILD})
 find_package(PostgreSQL REQUIRED)
 
 # Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
+                        ${PostgreSQL_INCLUDE_DIRS})
+
+link_directories(${PostgreSQL_LIBRARY_DIRS})
 
 add_library (ndrxxapg SHARED
                         pgswitch.c
+                        pgconfig.c
    	        )
 
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(ndrxxatmsx atmi ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(ndrxxatmsx atmi ubf nstd)
-endif()
+target_link_libraries(ndrxxapg atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
 
 
 # Install bin
