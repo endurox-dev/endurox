@@ -53,6 +53,7 @@ link_directories(${PostgreSQL_LIBRARY_DIRS})
 add_library (ndrxxapg SHARED
                         pgswitch.c
                         pgconfig.c
+                        pgxid.c
    	        )
 
 target_link_libraries(ndrxxapg atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})

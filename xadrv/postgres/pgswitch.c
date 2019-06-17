@@ -305,13 +305,25 @@ exprivate int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
 {
     int ret = XA_OK;
     
-    /* TODO: Check flags */
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
     
-    /* TODO: Check is XA Open */
+    if (TMNOFLAGS != flags)
+    {
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to start_entry", flags);
+        ret = XAER_INVAL;
+        goto out;
+    }
+
     
-    /* TODO: Nothing more to check, as process will get prepare entry */
+    NDRX_LOG(log_debug, "END OK");
+out:
     
-    return EXFAIL;
+    return ret;
 }
 
 /**
@@ -353,7 +365,8 @@ exprivate int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
 }
 
 /**
- * Commit
+ * If XID is not found then we shall assume that transaction prepare failed
+ * for some reason, and we shall return XA_HEURRB.
  * @param sw
  * @param xid
  * @param rmid
