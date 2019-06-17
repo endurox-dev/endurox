@@ -112,13 +112,47 @@ out:
 
 /**
  * Convert Database TX ID to XID
- * @param[in] buf db string
+ * @param[in] buf db string.
  * @param[out] xid XID 
- * @return EXSUCCEED/EXFAIL
+ * @return EXSUCCEED/EXFAIL (invalid format)
  */
 expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
 {
     int ret = EXSUCCEED;
+    char *tok, *saveptr1;
+    int cnt=0;
+    char tmp[201];
+    
+    NDRX_STRCPY_SAFE(tmp, buf);
+    
+    NDRX_LOG(log_debug, "About to process PG xid: [%s]", tmp);
+    
+    tok=strtok_r (tmp, "_", &saveptr1);
+    while( tok != NULL ) 
+    {
+        NDRX_LOG(log_debug, "Got token: [%s]", tok);
+        switch (cnt)
+        {
+            case 0:
+                /* format id */
+                break;
+            case 1:
+                /* gtrid */
+                break;
+            case 2:
+                /* bqual */
+                break;
+            default:
+                /* Invalid format ID! */
+                NDRX_LOG(log_error, "Invalid PG XID, token nr: %d", cnt);
+                EXFAIL_OUT(ret);
+                break;
+        }
+        
+        cnt++;
+        tok=strtok_r (NULL,";", &saveptr1);
+    }
+
     
     /* TODO: strtok_r over the the buf */
     
