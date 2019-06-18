@@ -681,7 +681,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
 {
     int ret = EXSUCCEED;
     CLIENTID *cltid;
-    size_t out_len;
+    size_t out_len = 0;
     
     if (flags & TPTOSTRING)
     {
@@ -700,7 +700,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
              * but currently do not see reason for this
              */
             ndrx_xa_base64_encode((unsigned char *)bin, sizeof(TPTRANID), &out_len, str);
-            str[out_len] = EXEOS;
+            /* str[out_len] = EXEOS; */
         }
         else if (flags & TPCONVXID)
         {

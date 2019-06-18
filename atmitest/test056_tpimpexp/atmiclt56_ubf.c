@@ -61,7 +61,7 @@
  * 
  * @return 
  */
-expublic int test_impexp_ubf()
+expublic int test_impexp_ubf(void)
 {
     int ret = EXSUCCEED;
     int i;
@@ -139,7 +139,10 @@ expublic int test_impexp_ubf()
 
     /* testing with base64 flag*/
     NDRX_LOG(log_debug, "convert to b64");
-    if (NULL==ndrx_base64_encode((unsigned char *)json_ubf_in, strlen(json_ubf_in), &len_b64, json_ubf_in_b64))
+    
+    len_b64 = sizeof(json_ubf_in_b64);
+    if (NULL==ndrx_base64_encode((unsigned char *)json_ubf_in, strlen(json_ubf_in), 
+            &len_b64, json_ubf_in_b64))
     {
             NDRX_LOG(log_error, "Failed to convert to b64!");
             EXFAIL_OUT(ret);

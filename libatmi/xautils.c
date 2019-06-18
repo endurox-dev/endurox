@@ -119,7 +119,6 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     int ret=EXSUCCEED;
     unsigned char tmp[XIDDATASIZE+64];
     int tot_len;
-    int data_len = xid->gtrid_length+xid->bqual_length;
     size_t out_len = 0;
     /* we should serialize stuff in platform independent format... */
     
@@ -152,7 +151,7 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     NDRX_DUMP(log_debug, "XID data for serialization", tmp, tot_len);
     
     ndrx_xa_base64_encode(tmp, tot_len, &out_len, xid_str_out);
-    xid_str_out[out_len] = EXEOS;
+    /* xid_str_out[out_len] = EXEOS; */
     
     NDRX_LOG(log_debug, "Serialized xid: [%s]", xid_str_out);    
     

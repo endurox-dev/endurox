@@ -356,10 +356,10 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
     }
     
     /* encode to base64... */
-    
+    b64len = (size_t)olen;
     ndrx_base64_encode((unsigned char *)buf, bufsz, &b64len, output);
     
-    output[b64len] = EXEOS;
+    /* output[b64len] = EXEOS; */
     
 #ifdef CRYPTODEBUG
     

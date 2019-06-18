@@ -786,7 +786,7 @@ expublic int tm_recoverlocal(UBFH *p_ub, int cd)
     long flags = TMSTARTRSCAN;
     int i;
     char tmp[1024];
-    size_t out_len = 0;
+    size_t out_len = sizeof(tmp);
     
     while ((ret = atmi_xa_recover_entry(arraxid, XID_RECOVER_BLOCK_SZ, G_atmi_env.xa_rmid, 
             flags)) > 0)
@@ -804,7 +804,7 @@ expublic int tm_recoverlocal(UBFH *p_ub, int cd)
             /* generate xid as base64 string? */
             ndrx_xa_base64_encode((unsigned char *)&arraxid[i], sizeof(arraxid[i]), 
                     &out_len, tmp);
-            tmp[out_len] = EXEOS;
+            /* tmp[out_len] = EXEOS; */
             
             NDRX_LOG(log_debug, "Recovered xid: [%s]", tmp);
             
@@ -859,7 +859,7 @@ exprivate int tm_proclocal_single(UBFH *p_ub, int cd, char cmd, XID *xid)
 {
     int ret = EXSUCCEED;
     char tmp[1024];
-    size_t out_len = 0;
+    size_t out_len = sizeof(tmp);
     long revent;
         
     atmi_xa_unset_error(p_ub);
@@ -889,7 +889,7 @@ exprivate int tm_proclocal_single(UBFH *p_ub, int cd, char cmd, XID *xid)
     
     ndrx_xa_base64_encode((unsigned char *)xid, sizeof(*xid), 
                     &out_len, tmp);
-    tmp[out_len] = EXEOS;
+    /* tmp[out_len] = EXEOS; */
             
     if (EXSUCCEED!=Bchg(p_ub, TMXID, 0, tmp, 0))
     {
