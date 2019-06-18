@@ -144,7 +144,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 /* If it is carray - parse hex... */
                 if (IS_BIN(fid))
                 {
-                    size_t st_len;
+                    size_t st_len = sizeof(bin_buf);
                     NDRX_LOG(log_debug, "Field is binary..."
                             " convert from b64...");
 
@@ -257,7 +257,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                             /* If it is carray - parse hex... */
                             if (IS_BIN(fid))
                             {
-                                size_t st_len;
+                                size_t st_len = sizeof(bin_buf);
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
@@ -480,7 +480,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             /* If it is carray, then convert to hex... */
             if (IS_BIN(fldid))
             {
-                size_t outlen;
+                size_t outlen = sizeof(b64_buf);
                 NDRX_LOG(log_debug, "Field is binary... convert to b64");
 
                 if (NULL==ndrx_base64_encode((unsigned char *)strval, flen, 
@@ -492,7 +492,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     
                     EXFAIL_OUT(ret);
                 }
-                b64_buf[outlen] = EXEOS;
+                /* b64_buf[outlen] = EXEOS; */
                 s_ptr = b64_buf;
 
             }

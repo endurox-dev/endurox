@@ -134,7 +134,9 @@ expublic int test_impexp_string()
 
     /* testing with base64 flag*/
     NDRX_LOG(log_debug, "convert to b64");
-    if (NULL==ndrx_base64_encode((unsigned char *)json_string_in, strlen(json_string_in), &len_b64, json_string_in_b64))
+    len_b64 = sizeof(json_string_in_b64);
+    if (NULL==ndrx_base64_encode((unsigned char *)json_string_in, strlen(json_string_in), 
+            &len_b64, json_string_in_b64))
     {
             NDRX_LOG(log_error, "Failed to convert to b64!");
             EXFAIL_OUT(ret);
@@ -180,7 +182,7 @@ expublic int test_impexp_string()
                  json_string_out_b64, olen);
 
         /* decode from b64 to check returned data */
-         bufsz = strlen(json_string_out_b64);
+        bufsz = strlen(json_string_out_b64);
         if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
         {
             NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(json_string_out_b64));
