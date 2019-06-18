@@ -302,13 +302,14 @@ expublic int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
  */
 expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
 {
-    size_t out_len;
+    size_t out_len = 0;
     
     NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
     
-    ndrx_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
+    ndrx_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, 
+            msgid_str_out);
 
-    msgid_str_out[out_len] = EXEOS;
+    /* msgid_str_out[out_len] = EXEOS; */
     
     NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
     
@@ -323,13 +324,14 @@ expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
  */
 expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
 {
-    size_t tot_len;
+    size_t tot_len = EXFAIL;
     
     NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
     
     memset(msgid_out, 0, TMMSGIDLEN);
         
-    ndrx_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
+    ndrx_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), 
+            &tot_len, msgid_out);
     
     NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
     

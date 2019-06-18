@@ -63,6 +63,8 @@ typedef struct ndrx_pgconnect ndrx_pgconnect_t;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int ndrx_pg_xa_cfgparse(char *buffer, ndrx_pgconnect_t *conndata);
+extern int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz);
+extern int ndrx_pg_db_to_xid(char *buf, XID *xid);
 
 #ifdef	__cplusplus
 }

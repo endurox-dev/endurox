@@ -68,14 +68,15 @@ Ensure(test_nstd_base64)
 {
     char bin[TPCONVMAXSTR];
     char str[TPCONVMAXSTR];
-    size_t outlen;
+    size_t outlen = sizeof(str);
     
     assert_not_equal(ndrx_xa_base64_encode((unsigned char *)M_bin_data, sizeof(M_bin_data), 
             &outlen, str), NULL);
     
-    str[outlen] = EXEOS;
+    /* str[outlen] = EXEOS; */
     NDRX_LOG(log_debug, "Got b64 string: [%s]", str);
     
+    outlen = sizeof(bin);
     assert_not_equal(ndrx_xa_base64_decode((unsigned char *)str, strlen(str),
             &outlen, bin), NULL);
     

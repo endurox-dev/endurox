@@ -83,7 +83,7 @@ expublic int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz)
         EXFAIL_OUT(ret);
     }
     
-    *(buf + curpos + outsz) = EXEOS;
+    /* *(buf + curpos + outsz) = EXEOS; */
     
     NDRX_STRCAT_S(buf, bufsz, "_");
     
@@ -101,7 +101,7 @@ expublic int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz)
         EXFAIL_OUT(ret);
     }
     
-    *(buf + curpos + outsz) = EXEOS;
+    /* *(buf + curpos + outsz) = EXEOS; */
     
     NDRX_LOG(log_debug, "Got PG XID: [%s]", buf);
     
@@ -122,6 +122,7 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
     char *tok, *saveptr1;
     int cnt=0;
     char tmp[201];
+    size_t len;
     
     NDRX_STRCPY_SAFE(tmp, buf);
     
@@ -135,12 +136,31 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
         {
             case 0:
                 /* format id */
+                xid->formatID = atol(tok);
                 break;
             case 1:
+                
                 /* gtrid */
+                len = MAXGTRIDSIZE;
+                if (NULL==ndrx_base64_decode(tok, strlen(tok), &len, xid->data))
+                {
+                    NDRX_LOG(log_error, "Failed to decode gtrid!");
+                    EXFAIL_OUT(ret);
+                }
+                xid->gtrid_length = len;
+                
                 break;
             case 2:
                 /* bqual */
+                len = MAXBQUALSIZE;
+                if (NULL==ndrx_base64_decode(tok, strlen(tok), 
+                        &len, xid->data+xid->gtrid_length))
+                {
+                    NDRX_LOG(log_error, "Failed to decode bqual!");
+                    EXFAIL_OUT(ret);
+                }
+                xid->bqual_length = len;
+                
                 break;
             default:
                 /* Invalid format ID! */
@@ -148,19 +168,15 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
                 EXFAIL_OUT(ret);
                 break;
         }
-        
         cnt++;
         tok=strtok_r (NULL,";", &saveptr1);
     }
+    
+    NDRX_DUMP(log_debug, "Got XID from PG", xid, sizeof(*xid));
 
-    
-    /* TODO: strtok_r over the the buf */
-    
-    /* TODO: Convert back the format id & gtrid/bquals + len */
-    
 out:
+
     return ret;
 }
-
 
 /* vim: set ts=4 sw=4 et smartindent: */
