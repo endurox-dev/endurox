@@ -341,7 +341,8 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
 }
 
 /**
- * prepare
+ * Prepare transaction. Any error from statement exec makes the current
+ * job to be rolled back.
  * @param sw
  * @param xid
  * @param rmid
@@ -350,18 +351,53 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
  */
 exprivate int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-     /*
-     * TODO:
-     * PQtransactionStatus(con->connection);
-     * - Transaction must be open
-     */
     
-    /* well we do not do anything here, because our exit from transaction is
-     * to prepare it and that is done by Enduro/X
-     */
+    int ret = XA_OK;
+    char stmt[1024];
+    char pgxid[NDRX_PG_STMTBUFSZ];
+    PGresult *res = NULL;
+        
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
     
-     
-    return EXFAIL;
+    if (TMNOFLAGS != flags)
+    {
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to xa_prepare_entry", 
+                flags);
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=ndrx_pg_xid_to_db(xid, pgxid, sizeof(pgxid)))
+    {
+        NDRX_DUMP(log_error, "Failed to convert XID to pg string", xid, sizeof(*xid));
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    snprintf(stmt, sizeof(stmt), "PREPARE TRANSACTION '%s';", pgxid);
+    
+    NDRX_LOG(log_info, "Exec: [%s]", stmt);
+    
+    res = PQexec(M_conn, stmt);
+    if (PGRES_COMMAND_OK != PQresultStatus(res)) 
+    {
+        NDRX_LOG(log_error, "Failed to prepare transaction by [%s]: %s -> roll'd back",
+                stmt, PQerrorMessage(M_conn));
+        
+        ret = XA_RBROLLBACK;
+    }
+    
+    NDRX_LOG(log_debug, "PREPARE OK");
+out:
+    
+    PQclear(res);
+
+    return ret;
 }
 
 /**
