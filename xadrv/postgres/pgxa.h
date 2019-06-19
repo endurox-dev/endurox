@@ -39,10 +39,12 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <xa.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define NDRX_PG_XID_LEN 200 /**< XID Length as defined by PREPARE TRANSACTION */
+#define NDRX_PG_XID_LEN     200 /**< XID Length as defined by PREPARE TRANSACTION */
+#define NDRX_PG_STMTBUFSZ   1024 /**< Statement buffer length */
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
