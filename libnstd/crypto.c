@@ -416,11 +416,11 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     /* convert base64 to bin */
     if (NULL==ndrx_base64_decode(input, len, &bufsz, buf))
     {
-        _Nset_error_fmt(NEFORMAT, "%s, ndrx_base64_decode failed (input len: %ld", 
-                __func__, len);
-        NDRX_LOG_EARLY(log_error, "%s, ndrx_base64_decode failed (input len: %ld", 
-                __func__, len);
-        userlog("%s, ndrx_base64_decode failed (input len: %ld", 
+        _Nset_error_fmt(NEFORMAT, "%s, ndrx_base64_decode failed (input len: %ld) input: [%s]", 
+                __func__, len, input);
+        NDRX_LOG_EARLY(log_error, "%s, ndrx_base64_decode failed (input len: %ld) input: [%s]", 
+                __func__, len, input);
+        userlog("%s, ndrx_base64_decode failed (input len: %ld)", 
                 __func__, len);
         EXFAIL_OUT(ret);
     }
