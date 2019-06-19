@@ -137,7 +137,7 @@ void TEST26_JSON2UBF(TPSVCINFO *p_svc)
     
     if (EXSUCCEED!=Bchg(buf, T_STRING_FLD, 2, "HELLO FROM UBF!", 0L))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_FLD!");
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_LONG_FLD!: %s", Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
