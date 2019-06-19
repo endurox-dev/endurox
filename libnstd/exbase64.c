@@ -193,12 +193,12 @@ exprivate char * b64_encode(const unsigned char *data,
     size_t tmp_len;
     
     /* Ensure position for EOS */
-    tmp_len = 4 * ((input_length + 2) / 3) + 1;
+    tmp_len = 4 * ((input_length + 2) / 3);
     
-    if (*output_length > 0 && *output_length < tmp_len)
+    if (*output_length > 0 && *output_length < (tmp_len+1) /*  +1 for EOS */ )
     {
-        NDRX_LOG(log_error, "Failed to encode data len incl EOS %d but buffer %d",
-                tmp_len, *output_length);
+        NDRX_LOG(log_error, "Failed to encode data len incl EOS %d but buffer sz %d",
+                (int)(tmp_len+1), (int)*output_length);
     }
     
     *output_length = tmp_len;
@@ -253,10 +253,10 @@ exprivate unsigned char *b64_decode(unsigned char *data,
 
     if (input_length % 4 != 0) 
     {
-        NDRX_LOG(log_error, "Invalid input_length!");
+        NDRX_LOG(log_error, "Invalid input_length: %d!", input_length);
         return NULL;
     }
-    
+
     tmp_len = input_length / 4 * 3;
             
     if (*output_length > 0 && *output_length < tmp_len)
