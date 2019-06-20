@@ -51,16 +51,16 @@ extern "C" {
 
 /* Internal XA commands */
 /* buffer usage: */
-#define ATMI_XA_TPBEGIN             'b' /* Begin global transaction             */
-#define ATMI_XA_TPCOMMIT            'c' /* Commit global transaction            */
-#define ATMI_XA_TPABORT             'a' /* Abort global transaction             */
+#define ATMI_XA_TPBEGIN             'b' /**< Begin global transaction           */
+#define ATMI_XA_TPCOMMIT            'c' /**< Commit global transaction          */
+#define ATMI_XA_TPABORT             'a' /**< Abort global transaction           */
     
-#define ATMI_XA_TPJOIN              'j' /* Process is joining to txn, under new RM
+#define ATMI_XA_TPJOIN              'j' /**< Process is joining to txn, under new RM
                                         or process doesn't know that resorce is involed */
-#define ATMI_XA_PRINTTRANS          'p' /* Print transactions to admin pt       */
-#define ATMI_XA_ABORTTRANS          'r' /* Abo[r]t transaction, admin util      */
-#define ATMI_XA_COMMITTRANS         'm' /* Co[m]mit transaction, admin util     */
-#define ATMI_XA_STATUS              's' /* Return transaction status            */
+#define ATMI_XA_PRINTTRANS          'p' /**< Print transactions to admin pt     */
+#define ATMI_XA_ABORTTRANS          'r' /**< Abo[r]t transaction, admin util    */
+#define ATMI_XA_COMMITTRANS         'm' /**< Co[m]mit transaction, admin util   */
+#define ATMI_XA_STATUS              's' /**< Return transaction status          */
     
     
 #define ATMI_XA_RECOVERLOCAL        'l' /**< Recover local transactions         */
@@ -70,48 +70,51 @@ extern "C" {
 
 
 /* Register new resource handler - remote process sends us info about working under same TXN */
-#define ATMI_XA_TMREGISTER          'R' /* Register new resource under txn...   */
-#define ATMI_XA_TMPREPARE           'P' /* Sends prepare statement to slave RM  */    
-#define ATMI_XA_TMCOMMIT            'C' /* Sends commit to remove RM            */
-#define ATMI_XA_TMABORT             'A' /* Master TM sends us Abort local tx    */
+#define ATMI_XA_TMREGISTER          'R' /**< Register new resource under txn... */
+#define ATMI_XA_TMPREPARE           'P' /**< Sends prepare statement to slave RM*/    
+#define ATMI_XA_TMCOMMIT            'C' /**< Sends commit to remove RM          */
+#define ATMI_XA_TMABORT             'A' /**< Master TM sends us Abort local tx  */
+#define ATMI_XA_TMSTATUS            'S' /**< Member is sending it actual status */
     
 /* Transaction status per RM */
-#define XA_RM_STATUS_NULL           0  /* NULL                                  */
-#define XA_RM_STATUS_NONE           'n' /* Non transaction                      */
-#define XA_RM_STATUS_IDLE           'i' /* Idle state, according to book        */
-#define XA_RM_STATUS_ACTIVE         'j' /* RM is in joined state, book: atctive */
-#define XA_RM_STATUS_PREP           'p' /* RM is in prepared state              */
-#define XA_RM_STATUS_ABORTED        'a' /* RM is in abort state                 */
-#define XA_RM_STATUS_ABORT_HEURIS   'b' /* Aborted houristically                */
-#define XA_RM_STATUS_ABORT_HAZARD   'd' /* Aborted, hazard                      */
-#define XA_RM_STATUS_COMMITTED      'c' /* Committed                            */
-#define XA_RM_STATUS_COMMITTED_RO   'r' /* Committed, was read only             */
-#define XA_RM_STATUS_COMMIT_HEURIS  'h' /* Committed, Heuristically             */
-#define XA_RM_STATUS_COMMIT_HAZARD  'z' /* Hazrad, committed or aborted         */
+#define XA_RM_STATUS_NULL           0   /**< NULL                               */
+#define XA_RM_STATUS_NONE           'n' /**< Non transaction                    */
+#define XA_RM_STATUS_IDLE           'i' /**< Idle state, according to book      */
+#define XA_RM_STATUS_ACTIVE         'j' /**< RM is in joined state, book: atctive*/
+#define XA_RM_STATUS_PREP           'p' /**< RM is in prepared state            */
+#define XA_RM_STATUS_ABORTED        'a' /**< RM is in abort state               */
+/** For Postgres probably we need unknown which at commit prepare leads to abort*/
+#define XA_RM_STATUS_UNKOWN         'u' /**< RM has unknown status              */
+#define XA_RM_STATUS_ABORT_HEURIS   'b' /**< Aborted houristically              */
+#define XA_RM_STATUS_ABORT_HAZARD   'd' /**< Aborted, hazard                    */
+#define XA_RM_STATUS_COMMITTED      'c' /**< Committed                          */
+#define XA_RM_STATUS_COMMITTED_RO   'r' /**< Committed, was read only           */
+#define XA_RM_STATUS_COMMIT_HEURIS  'h' /**< Committed, Heuristically           */
+#define XA_RM_STATUS_COMMIT_HAZARD  'z' /**< Hazrad, committed or aborted       */
     
 /* Transaction Stages */
 /* The lowest number of RM outcomes, denotes the more exact Result */
-#define XA_TX_STAGE_NULL                     0   /* Transaction does not exists */
-#define XA_TX_STAGE_ACTIVE                   5   /* Transaction is in active processing */
+#define XA_TX_STAGE_NULL                     0   /**< Transaction does not exists */
+#define XA_TX_STAGE_ACTIVE                   5   /**< Transaction is in active processing */
 /* Abort base: */
-#define XA_TX_STAGE_ABORTING                 20   /* Aborting                   */
-#define XA_TX_STAGE_ABORTED_HAZARD           25   /* Abort, Hazard              */
-#define XA_TX_STAGE_ABORTED_HEURIS           30   /* Aborted, Heuristically     */
-#define XA_TX_STAGE_ABORTED                  35   /* Finished ok                */
+#define XA_TX_STAGE_ABORTING                 20   /**< Aborting                 */
+#define XA_TX_STAGE_ABORTED_HAZARD           25   /**< Abort, Hazard            */
+#define XA_TX_STAGE_ABORTED_HEURIS           30   /**< Aborted, Heuristically   */
+#define XA_TX_STAGE_ABORTED                  35   /**< Finished ok              */
 
 /* Entered in preparing stage, with possiblity to fall back to Abort... */
-#define XA_TX_STAGE_PREPARING                40   /* Doing prepare              */
+#define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
     
 /* Commit base 
  * TODO: Might think, if first commit fails (with no TX), then we still migth roll back
  * all the stuff.
  */
-#define XA_TX_STAGE_COMMITTING               50   /* Prepared                   */
-#define XA_TX_STAGE_COMMITTED_HAZARD         55   /* Commit, hazard             */
-#define XA_TX_STAGE_COMMITTED_HEURIS         65   /* Commit Heuristically       */
-#define XA_TX_STAGE_COMMITTED                70   /* Commit OK                  */
+#define XA_TX_STAGE_COMMITTING               50   /**< Prepared                 */
+#define XA_TX_STAGE_COMMITTED_HAZARD         55   /**< Commit, hazard           */
+#define XA_TX_STAGE_COMMITTED_HEURIS         65   /**< Commit Heuristically     */
+#define XA_TX_STAGE_COMMITTED                70   /**< Commit OK                */
     
-#define XA_TX_STAGE_MAX_NEVER                100  /* Upper never stage          */
+#define XA_TX_STAGE_MAX_NEVER                100  /**< Upper never stage        */
 
 #define XA_TX_COPY(X,Y)\
     X->tmtxflags = Y->tmtxflags;\
@@ -129,11 +132,11 @@ extern "C" {
     X->tmsrvid = 0;\
     X->tmknownrms[0] = EXEOS;
     
-/* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!! */
+/* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!!            */
 #define TMTXFLAGS_DYNAMIC_REG      0x00000001  /**< TX initiator uses dyanmic reg */
-#define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered       */
-#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged        */
-#define TMTXFLAGS_TPNOSTARTXID     0x00000010  /**< internal, end makes prepare   */
+#define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered     */
+#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged      */
+#define TMTXFLAGS_TPNOSTARTXID     0x00000010  /**< internal, end makes prepare */
 
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1

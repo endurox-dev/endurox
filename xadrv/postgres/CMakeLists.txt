@@ -59,6 +59,13 @@ add_library (ndrxxapg SHARED
 target_link_libraries(ndrxxapg atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
 
 
+
+add_executable (pgtest
+                    codestest.c)
+target_link_libraries (pgtest nstd ${RT_LIB} pthread pq ecpg)
+set_target_properties(pgtest PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+
 # Install bin
 install (TARGETS 
     ndrxxapg
