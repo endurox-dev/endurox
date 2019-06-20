@@ -197,7 +197,8 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
     if (!ECPGconnect (__LINE__, M_conndata.c, M_conndata.url, M_conndata.user, 
             M_conndata.password, ndrx_G_PG_conname, EXFALSE))
     {
-        NDRX_LOG(log_error, "ECPGconnect failed: %s");
+        NDRX_LOG(log_error, "ECPGconnect failed, code %ld state: [%s]: %s", 
+                (long)sqlca.sqlcode, sqlca.sqlstate, sqlca.sqlerrm.sqlerrmc);
         ret = XAER_RMERR;
         goto out;
     }
@@ -337,7 +338,50 @@ out:
  */
 exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    return EXFAIL;
+    int ret = XA_OK;
+    char stmt[1024];
+    char pgxid[NDRX_PG_STMTBUFSZ];
+    PGresult *res = NULL;
+        
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
+    
+    if (TMNOFLAGS != flags)
+    {
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to xa_prepare_entry", 
+                flags);
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=ndrx_pg_xid_to_db(xid, pgxid, sizeof(pgxid)))
+    {
+        NDRX_DUMP(log_error, "Failed to convert XID to pg string", xid, sizeof(*xid));
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    snprintf(stmt, sizeof(stmt), "ROLLBACK PREPARED '%s';", pgxid);
+    
+    NDRX_LOG(log_info, "Exec: [%s]", stmt);
+    
+    res = PQexec(M_conn, stmt);
+    if (PGRES_COMMAND_OK != PQresultStatus(res)) 
+    {
+        NDRX_LOG(log_error, "Failed to commit transaction by [%s]: %s",
+                stmt, PQerrorMessage(M_conn));
+        
+        ret = XAER_RMERR;
+    }
+    
+    NDRX_LOG(log_debug, "COMMIT OK");
+out:
+    
+    PQclear(res);
 }
 
 /**
@@ -351,7 +395,6 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
  */
 exprivate int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    
     int ret = XA_OK;
     char stmt[1024];
     char pgxid[NDRX_PG_STMTBUFSZ];
@@ -411,7 +454,52 @@ out:
  */
 exprivate int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    return EXFAIL;
+    int ret = XA_OK;
+    char stmt[1024];
+    char pgxid[NDRX_PG_STMTBUFSZ];
+    PGresult *res = NULL;
+        
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
+    
+    if (TMNOFLAGS != flags)
+    {
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to xa_prepare_entry", 
+                flags);
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=ndrx_pg_xid_to_db(xid, pgxid, sizeof(pgxid)))
+    {
+        NDRX_DUMP(log_error, "Failed to convert XID to pg string", xid, sizeof(*xid));
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    snprintf(stmt, sizeof(stmt), "COMMIT PREPARED '%s';", pgxid);
+    
+    NDRX_LOG(log_info, "Exec: [%s]", stmt);
+    
+    res = PQexec(M_conn, stmt);
+    if (PGRES_COMMAND_OK != PQresultStatus(res)) 
+    {
+        NDRX_LOG(log_error, "Failed to commit transaction by [%s]: %s",
+                stmt, PQerrorMessage(M_conn));
+        
+        ret = XAER_RMERR;
+    }
+    
+    NDRX_LOG(log_debug, "COMMIT OK");
+out:
+    
+    PQclear(res);
+
+    return ret;
 }
 
 /**
