@@ -216,7 +216,7 @@ expublic char * CARRAY_tpalloc (typed_buffer_descr_t *descr, char *subtype, long
 {
     char *ret;
 
-    if (0==*len)
+    if (CARRAY_DEFAULT_SIZE > *len )
     {
         *len = CARRAY_DEFAULT_SIZE;
     }

@@ -240,7 +240,7 @@ expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *l
 {
     char *ret=NULL;
 
-    if (0==*len)
+    if (UBF_DEFAULT_SIZE > *len)
     {
         *len = UBF_DEFAULT_SIZE;
     }

@@ -329,9 +329,15 @@ expublic char * ndrx_tprealloc (char *buf, long len)
     typed_buffer_descr_t *buf_type = NULL;
 
     NDRX_LOG(log_debug, "%s buf=%p, len=%ld",  __func__, buf, len);
+
+    if (NULL==buf)
+    {
+        /* No realloc for NULL buffer */
+        goto out_nolock;
+    }
     
     EX_SPIN_LOCK_V(M_lock);
-    
+
     if (NULL==(node=find_buffer_int(buf)))
     {
          ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p is not know to system",  
@@ -363,6 +369,7 @@ expublic char * ndrx_tprealloc (char *buf, long len)
 
 out:
     EX_SPIN_UNLOCK_V(M_lock);
+out_nolock:
     return ret;
     
 }
