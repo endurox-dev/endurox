@@ -588,6 +588,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
 
     if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
     {
+        char stat;
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
         if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
@@ -607,6 +608,32 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
                 ret = XA_OK;
             }
         }
+        
+        /* TODO: Report status to TMSRV that we performed prepare
+         * and report the results back...
+         * If there is failure with TMSRV, then rollback prepared transaction
+         */
+        if (XA_OK==ret)
+        {
+            stat = XA_RM_STATUS_PREP;
+        }
+        else if (XA_RDONLY==ret)
+        {
+            stat = XA_RM_STATUS_COMMITTED_RO;
+        }
+        else
+        {
+            /* this is rollback */
+            stat = XA_RM_STATUS_ABORTED;
+        }
+        
+        /* call tmsrv */
+        
+        /* TODO:
+         * if call failed due to transaction not found or status unknown
+         * then we rollback the transaction
+         */
+        
     }
     
     
