@@ -217,7 +217,7 @@ expublic char * JSON_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *
 {
     char *ret;
 
-    if (0==*len)
+    if (JSON_DEFAULT_SIZE>*len)
     {
         *len = JSON_DEFAULT_SIZE;
     }

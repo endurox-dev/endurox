@@ -95,6 +95,7 @@ void TESTSVFN (TPSVCINFO *p_svc)
 
     /* Just print the buffer */
     Bprint(p_ub);
+
     if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096))) /* allocate some stuff for more data to put in  */
     {
         ret=EXFAIL;
