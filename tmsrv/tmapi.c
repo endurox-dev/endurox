@@ -664,7 +664,7 @@ expublic int tm_status(UBFH *p_ub)
     atmi_xa_log_t *p_tl = NULL;
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     short tmrmid = EXFAIL;
-    atmi_xa_tx_info_t xai;
+    
     /* We should try to abort transaction
      Thus basically we need to lock the transaction on which we work on.
      Otherwise, we can conflict with background.

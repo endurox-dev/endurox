@@ -115,6 +115,12 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
 /**
  * Get the log entry of the transaction
  * Now we should lock it for thread.
+ * TODO: Add option for wait on lock.
+ * This would be needed for cases for example when Postgres may report
+ * the status in background, and for some reason TMSRV already processes the
+ * transaction (ether abort, or new register branch, etc...) and some stalled
+ * PG process wants to finish the work off. Thus we need to waited lock for
+ * foreground operations.
  * @param tmxid - serialized XID
  * @return NULL or log entry
  */
