@@ -246,7 +246,7 @@ expublic int background_loop(void)
             }
             
             /* Now try to get transaction for real (with a lock!) */
-            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid)))
+            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
             {
                 p_tl->trycount++;
                 

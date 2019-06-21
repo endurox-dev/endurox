@@ -101,7 +101,7 @@ extern tmsrv_cfg_t G_tmsrv_cfg;
 extern void atmi_xa_new_xid(XID *xid);
 
 extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
-extern atmi_xa_log_t * tms_log_get_entry(char *tmxid);
+extern atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 
         long *btid, long flags);
@@ -146,6 +146,7 @@ extern int tm_tmprepare(UBFH *p_ub);
 extern int tm_tmcommit(UBFH *p_ub);
 extern int tm_tmabort(UBFH *p_ub);
 extern int tm_tmregister(UBFH *p_ub);
+extern int tm_rmstatus(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);

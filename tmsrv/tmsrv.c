@@ -319,6 +319,15 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
                 goto out;
             }
             break;
+        case ATMI_XA_RMSTATUS:
+            /* Report the status of resource manager involvement in transaction
+             */
+            if (EXSUCCEED!=tm_rmstatus(p_ub))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
         case ATMI_XA_RECOVERLOCAL:
             if (EXSUCCEED!=tm_recoverlocal(p_ub, cd))
             {
@@ -748,7 +757,7 @@ exprivate void tx_tout_check_th(void *ptr)
                     el->p_tl.tmxid, tspent, 
                     el->p_tl.txtout);
             
-            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid)))
+            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
             {
                 XA_TX_COPY((&xai), p_tl);
 

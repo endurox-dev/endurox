@@ -102,7 +102,7 @@ expublic int tm_tpabort(UBFH *p_ub)
     }
     
     /* read tx from hash */
-    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, 0)))
     {
         NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
                 xai.tmxid);
@@ -169,7 +169,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     }
     
     /* read tx from hash */
-    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, 0)))
     {
         NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
                 xai.tmxid);
@@ -446,6 +446,86 @@ out:
     return ret; 
 }
 
+/**
+ * Report transaction status of the branch
+ * @param p_ub
+ * @return 
+ */
+expublic int tm_rmstatus(UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    short   callerrm;
+    int is_already_logged = EXFALSE;
+    atmi_xa_tx_info_t xai;
+    long tmflags = 0;
+    long btid=EXFAIL;
+    char rmstatus;
+    
+    
+    /* TODO: Get flags! */
+    
+    if (EXSUCCEED!=Bget(p_ub, TMCALLERRM, 0, (char *)&callerrm, 0L))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                    "Missing TMCALLERRM field: %s!", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, XA_TXINFO_NOBTID))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                    "Failed to read transaction info!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* read BTID (if have one in their side) */
+    
+    if (EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&btid, NULL))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                    "Missing TMTXBTID!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=Bget(p_ub, TMTXRMSTATUS, 0, (char *)&rmstatus, 0L))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_INVPARAM, 
+                    "Missing TMTXRMSTATUS in buffer");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged, &btid, tmflags))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
+                    "Failed to log new RM!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (is_already_logged)
+    {
+        tmflags|=TMTXFLAGS_RMIDKNOWN;
+    }
+    
+    /* return new TID */
+    if (!Bpres(p_ub, TMTXBTID, 0) &&
+            EXSUCCEED!=Bchg(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 
+                    "Failed to set TMTXBTID!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
+    {
+        atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_UBFERR, 
+                    "Failed to set TMTXFLAGS!");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret; 
+}
+
 
 /**
  * Do the internal prepare of transaction (request sent from other TM)
@@ -622,7 +702,7 @@ expublic int tm_aborttrans(UBFH *p_ub)
     Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
     
     /* Lookup for log. And then try to abort... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, 0)))
     {
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
@@ -683,7 +763,7 @@ expublic int tm_status(UBFH *p_ub)
     Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
     
     /* Lookup for log. And then try to abort... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, 0)))
     {
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
@@ -736,7 +816,7 @@ expublic int tm_committrans(UBFH *p_ub)
     }
     
     /* Lookup for log. And then try to commit... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, 0)))
     {
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
