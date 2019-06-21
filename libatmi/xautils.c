@@ -385,16 +385,18 @@ expublic void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms)
     int i;
     int cnt = strlen(tmknownrms);
     char tmp[128]={EXEOS};
+    int len;
     
     for (i=0; i<cnt; i++)
     {
+        len = strlen(tmp);
         if (i<cnt-1)
         {
-            sprintf(tmp+strlen(tmp), "%hd ", (short)tmknownrms[i]);
+            snprintf(tmp+len, sizeof(tmp)-len, "%hd ", (short)tmknownrms[i]);
         }
         else
         {
-            sprintf(tmp+strlen(tmp), "%hd", (short)tmknownrms[i]);
+            snprintf(tmp+len, sizeof(tmp)-len, "%hd", (short)tmknownrms[i]);
         }
     }
     NDRX_LOG(dbglev, "%s: %s", msg, tmp);
@@ -574,6 +576,50 @@ expublic int atmi_xa_tm_admincall(char cmd, UBFH *p_ub)
     
 out:
     return ret;
+}
+
+/**
+ * Call Transaction Manager, report status of BTID
+ * @param p_xai transaction info block
+ * @param rmstatus status to report
+ * @return NULL on 
+ */
+expublic UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rmstatus)
+{
+    UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_TMSTATUS);
+    
+    
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "Failed to allocate %c command buffer", ATMI_XA_TMSTATUS);
+        goto out;
+    }
+    
+    /* Set BTID */
+    if (EXSUCCEED!=Bchg(p_ub, TMTXBTID, 0, (char *)&(p_xai->btid), 0L))
+    {
+        tpfree((char *)p_ub);
+        ndrx_TPset_error_fmt(TPESYSTEM,  
+                "Failed to set TMTXBTID %d:[%s]", 
+                Berror, Bstrerror(Berror));
+        goto out;
+    }
+    
+    /* Set RM status */
+    if (EXSUCCEED!=Bchg(p_ub, TMTXRMSTATUS, 0, (char *)&rmstatus, 0L))
+    {
+        tpfree((char *)p_ub);
+        ndrx_TPset_error_fmt(TMTXRMSTATUS,  
+                "Failed to set TMTXBTID %d:[%s]", 
+                Berror, Bstrerror(Berror));
+        goto out;
+    }
+    /* finally call the TMSRV */
+    p_ub=atmi_xa_call_tm_generic_fb(ATMI_XA_TMSTATUS, NULL, EXFALSE, EXFAIL, p_xai, p_ub);
+    
+out:    
+    return p_ub;
+    
 }
 
 /**

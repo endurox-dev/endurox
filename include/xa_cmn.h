@@ -382,6 +382,7 @@ extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid
                     atmi_xa_tx_info_t *p_xai, long flags, long btid);
 extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub);
+extern NDRX_API UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rmstatus);
 
 /* interface to ATMI lib/utils */
 extern NDRX_API char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out);

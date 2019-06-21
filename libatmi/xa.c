@@ -569,6 +569,9 @@ out:
 expublic int atmi_xa_end_entry(XID *xid, long flags)
 {
     int ret = EXSUCCEED;
+    char stat;
+    UBFH *p_ub = NULL;
+        
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_end_entry flags %ld", flags);
@@ -588,7 +591,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
 
     if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
     {
-        char stat;
+        
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
         if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
@@ -609,7 +612,7 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
             }
         }
         
-        /* TODO: Report status to TMSRV that we performed prepare
+        /* Report status to TMSRV that we performed prepare
          * and report the results back...
          * If there is failure with TMSRV, then rollback prepared transaction
          */
@@ -629,15 +632,30 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
         
         /* call tmsrv */
         
-        /* TODO:
+        /*
          * if call failed due to transaction not found or status unknown
          * then we rollback the transaction
          */
+        
+        NDRX_LOG(log_debug, "Reporting branch transaction status: %c", stat);
+        p_ub = atmi_xa_call_tm_rmstatus(G_atmi_tls->G_atmi_xa_curtx.txinfo, stat);
+        
+        /* if there is matching error, then we abort the  */
+        if (TPEMATCH==tperrno)
+        {
+            NDRX_LOG(log_error, "Got matching error! Abort transaction");
+            atmi_xa_rollback_entry(xid, 0L);
+        }
         
     }
     
     
 out:
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+                                
     return ret;
 }
 
@@ -1648,7 +1666,7 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 EXFALSE, EXFAIL, p_xai, tmflags, btid)))
         {
             NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
-                        ATMI_XA_TPBEGIN);   
+                        ATMI_XA_TMREGISTER);   
             EXFAIL_OUT(ret);
         }
 
