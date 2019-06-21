@@ -586,12 +586,12 @@ out:
  */
 expublic UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rmstatus)
 {
-    UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_TMSTATUS);
+    UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_RMSTATUS);
     
     
     if (NULL==p_ub)
     {
-        NDRX_LOG(log_error, "Failed to allocate %c command buffer", ATMI_XA_TMSTATUS);
+        NDRX_LOG(log_error, "Failed to allocate %c command buffer", ATMI_XA_RMSTATUS);
         goto out;
     }
     
@@ -615,7 +615,7 @@ expublic UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rmstatus)
         goto out;
     }
     /* finally call the TMSRV */
-    p_ub=atmi_xa_call_tm_generic_fb(ATMI_XA_TMSTATUS, NULL, EXFALSE, EXFAIL, p_xai, p_ub);
+    p_ub=atmi_xa_call_tm_generic_fb(ATMI_XA_RMSTATUS, NULL, EXFALSE, EXFAIL, p_xai, p_ub);
     
 out:    
     return p_ub;
