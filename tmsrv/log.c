@@ -122,9 +122,12 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
  * PG process wants to finish the work off. Thus we need to waited lock for
  * foreground operations.
  * @param tmxid - serialized XID
+ * @param[in] dowait Shall we wait certain time for operation to complete (short wait)
+ *  mostly used when RM reports back status (like PG on end). The wait is short
+ *  as status report shall finish fast, the same with timeout check.
  * @return NULL or log entry
  */
-expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid)
+expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait)
 {
     atmi_xa_log_t *r = NULL;
     
@@ -287,7 +290,7 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
      * 
     */
     
-    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid)))
+    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, 0)))
     {
         NDRX_LOG(log_error, "No transaction under xid_str: [%s]", 
                 xai->tmxid);

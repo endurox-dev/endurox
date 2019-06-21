@@ -74,7 +74,7 @@ extern "C" {
 #define ATMI_XA_TMPREPARE           'P' /**< Sends prepare statement to slave RM*/    
 #define ATMI_XA_TMCOMMIT            'C' /**< Sends commit to remove RM          */
 #define ATMI_XA_TMABORT             'A' /**< Master TM sends us Abort local tx  */
-#define ATMI_XA_TMSTATUS            'S' /**< Member is sending it actual status */
+#define ATMI_XA_RMSTATUS            'S' /**< Member is sending it actual status */
     
 /* Transaction status per RM */
 #define XA_RM_STATUS_NULL           0   /**< NULL                               */
