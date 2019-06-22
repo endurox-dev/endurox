@@ -80,6 +80,7 @@
                 p_tl->tmxid, ndrx_gettid(), p_tl->lockthreadid);\
         return EXFAIL;\
     }
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -122,15 +123,20 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
  * PG process wants to finish the work off. Thus we need to waited lock for
  * foreground operations.
  * @param tmxid - serialized XID
- * @param[in] dowait Shall we wait certain time for operation to complete (short wait)
- *  mostly used when RM reports back status (like PG on end). The wait is short
- *  as status report shall finish fast, the same with timeout check.
+ * @param[in] dowait milliseconds to wait for lock, before give up
  * @return NULL or log entry
  */
 expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait)
 {
     atmi_xa_log_t *r = NULL;
+    ndrx_stopwatch_t w;
     
+    if (dowait)
+    {
+        ndrx_stopwatch_reset(&w);
+    }
+    
+restart:
     MUTEX_LOCK_V(M_tx_hash_lock);
     EXHASH_FIND_STR( M_tx_hash, tmxid, r);
     
@@ -138,13 +144,22 @@ expublic atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait)
     {
         if (r->lockthreadid)
         {
-            NDRX_LOG(log_error, "Transaction [%s] already locked for thread_id: %lu",
-                    tmxid,
-                    r->lockthreadid);
+            if (dowait && ndrx_stopwatch_get_delta(&w) < dowait)
+            {
+                MUTEX_UNLOCK_V(M_tx_hash_lock);
+                /* sleep 100 msec */
+                usleep(100000);
+                goto restart;
+                
+            }
             
-            userlog("tmsrv: Transaction [%s] already locked for thread_id: %lu",
-                    tmxid,
-                    r->lockthreadid);
+            NDRX_LOG(log_error, "Transaction [%s] already locked for thread_id: "
+                    "%lu lock time: %d msec",
+                    tmxid, r->lockthreadid, dowait);
+            
+            userlog("tmsrv: Transaction [%s] already locked for thread_id: %lu "
+                    "lock time: %d msec",
+                    tmxid, r->lockthreadid, dowait);
             r = NULL;
         }
         else
@@ -239,7 +254,7 @@ expublic int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags,
         {
             NDRX_LOG(log_info, "TPNOSTARTXID => starting as %c - prepared", 
                     XA_RM_STATUS_PREP);
-            start_stat = XA_RM_STATUS_PREP;
+            start_stat = XA_RM_STATUS_UNKOWN;
         }
         
         /* log to transaction file -> Write off RM status */
@@ -290,7 +305,7 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
      * 
     */
     
-    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, 0)))
+    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         NDRX_LOG(log_error, "No transaction under xid_str: [%s]", 
                 xai->tmxid);
@@ -327,9 +342,9 @@ expublic int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already
         
         if (flags & TMTXFLAGS_TPNOSTARTXID)
         {
-            NDRX_LOG(log_info, "TPNOSTARTXID => adding as %c - prepared", 
-                    XA_RM_STATUS_PREP);
-            start_stat = XA_RM_STATUS_PREP;
+            NDRX_LOG(log_info, "TPNOSTARTXID => adding as %c - unknown", 
+                    XA_RM_STATUS_UNKOWN);
+            start_stat = XA_RM_STATUS_UNKOWN;
         }
         
         if (EXSUCCEED!=tms_log_rmstatus(p_tl, bt, start_stat, 0, 0))
@@ -352,6 +367,78 @@ out_nolock:
     
     return ret;
 }
+
+/**
+ * Change RM status
+ * @param xai
+ * @param rmid - 1 based rmid
+ * @param[in] btid branch tid 
+ * @param[in] rmstatus RM status to set
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid, 
+        long btid, char rmstatus, UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    atmi_xa_log_t *p_tl= NULL;
+    atmi_xa_rm_status_btid_t *bt = NULL;
+    
+    NDRX_LOG(log_debug, "xid: [%s] BTID %ld change status to [%c]",
+            xai->tmxid, btid, rmstatus);
+    
+    if (NULL==(p_tl = tms_log_get_entry(xai->tmxid, NDRX_LOCK_WAIT_TIME)))
+    {
+        NDRX_LOG(log_error, "No transaction under xid_str: [%s] - match ", 
+                xai->tmxid);
+        
+        atmi_xa_set_error_fmt(p_ub, TPEMATCH, NDRX_XA_ERSN_NOTX, 
+                    "Failed to get transaction or locked for processing!");
+        
+        ret=EXFAIL;
+        goto out_nolock;
+    }
+    
+    bt = tms_btid_find(p_tl, rmid, btid);
+    
+    if (rmstatus!=bt->rmstatus || XA_RM_STATUS_UNKOWN!=bt->rmstatus)
+    {
+        NDRX_LOG(log_error, "No transaction under xid_str: [%s] - match ", 
+                xai->tmxid);
+        
+        atmi_xa_set_error_fmt(p_ub, TPEMATCH, NDRX_XA_ERSN_INVPARAM, 
+                    "BTID %ld in status %c but want to set to: %c!",
+                btid, bt->rmstatus, rmstatus);
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Change status to expected one.. */
+    
+    if (EXSUCCEED!=tms_log_rmstatus(p_tl, bt, rmstatus, 0, 0))
+    {
+        NDRX_LOG(log_error, "Failed to write RM status to file: %ld, "
+                "new stat: %c old stat: [%c]", 
+                btid, rmstatus, bt->rmstatus);
+        
+        atmi_xa_set_error_fmt(p_ub, TPEMATCH, NDRX_XA_ERSN_RMLOGFAIL, 
+                    "BTID %ld in status %c but want to set to: %c!",
+                btid, bt->rmstatus, rmstatus);
+        
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "xid: [%s] BTID %ld change status to [%c] OK",
+            xai->tmxid, btid, rmstatus);
+   
+out:
+    /* unlock transaction from thread */
+    tms_unlock_entry(p_tl);
+
+out_nolock:
+    
+    return ret;
+}
+
 
 /**
  * Get the log file name for particular transaction
