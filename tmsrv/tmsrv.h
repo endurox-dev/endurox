@@ -55,6 +55,10 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements   */
 #define COPY_MODE_BACKGROUND        0x2       /* Copy background elements   */
 #define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?      */
+
+
+#define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -105,6 +109,8 @@ extern atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait);
 extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
 extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 
         long *btid, long flags);
+extern int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid, 
+        long btid, char rmstatus, UBFH *p_ub);
 extern int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode);
 extern int tms_is_logfile_open(atmi_xa_log_t *p_tl);
 extern void tms_close_logfile(atmi_xa_log_t *p_tl);
