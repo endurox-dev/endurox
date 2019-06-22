@@ -102,7 +102,7 @@ expublic int tm_tpabort(UBFH *p_ub)
     }
     
     /* read tx from hash */
-    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, 0)))
+    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
                 xai.tmxid);
@@ -169,7 +169,7 @@ expublic int tm_tpcommit(UBFH *p_ub)
     }
     
     /* read tx from hash */
-    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, 0)))
+    if (NULL==(p_tl = tms_log_get_entry(xai.tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         NDRX_LOG(log_error, "Transaction with xid [%s] not logged", 
                 xai.tmxid);
@@ -493,8 +493,9 @@ expublic int tm_rmstatus(UBFH *p_ub)
                     "Missing TMTXRMSTATUS in buffer");
         EXFAIL_OUT(ret);
     }
-    
-    if (EXSUCCEED!=tms_log_addrm(&xai, callerrm, &is_already_logged, &btid, tmflags))
+
+    if (EXSUCCEED!=tms_log_chrmstat(xai, callerrm, 
+        btid, rmstatus, p_ub))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
                     "Failed to log new RM!");
@@ -702,7 +703,7 @@ expublic int tm_aborttrans(UBFH *p_ub)
     Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
     
     /* Lookup for log. And then try to abort... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid, 0)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
@@ -763,7 +764,7 @@ expublic int tm_status(UBFH *p_ub)
     Bget(p_ub, TMTXRMID, 0, (char *)&tmrmid, 0L);
     
     /* Lookup for log. And then try to abort... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid, 0)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
@@ -816,7 +817,7 @@ expublic int tm_committrans(UBFH *p_ub)
     }
     
     /* Lookup for log. And then try to commit... */
-    if (NULL==(p_tl = tms_log_get_entry(tmxid, 0)))
+    if (NULL==(p_tl = tms_log_get_entry(tmxid, NDRX_LOCK_WAIT_TIME)))
     {
         /* Generate error */
         atmi_xa_set_error_fmt(p_ub, TPEMATCH, 0, "Transaction not found (%s)!", 
