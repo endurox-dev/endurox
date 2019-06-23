@@ -661,6 +661,10 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count,
         {
             nrtx++;
         }
+        else
+        {
+            break;
+        }
     }
     
     ret = nrtx;
