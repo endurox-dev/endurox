@@ -400,7 +400,13 @@ expublic int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid,
     
     bt = tms_btid_find(p_tl, rmid, btid);
     
-    if (rmstatus!=bt->rmstatus || XA_RM_STATUS_UNKOWN!=bt->rmstatus)
+    if (rmstatus==bt->rmstatus)
+    {
+        NDRX_LOG(log_warn, "xid: [%s] BTID %ld already in status [%c]",
+            xai->tmxid, btid, rmstatus);
+    }
+    
+    if (XA_RM_STATUS_UNKOWN!=bt->rmstatus)
     {
         NDRX_LOG(log_error, "No transaction under xid_str: [%s] - match ", 
                 xai->tmxid);

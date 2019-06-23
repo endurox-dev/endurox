@@ -494,8 +494,7 @@ expublic int tm_rmstatus(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
 
-    if (EXSUCCEED!=tms_log_chrmstat(xai, callerrm, 
-        btid, rmstatus, p_ub))
+    if (EXSUCCEED!=tms_log_chrmstat(&xai, callerrm, btid, rmstatus, p_ub))
     {
         atmi_xa_set_error_fmt(p_ub, TPESYSTEM, NDRX_XA_ERSN_RMLOGFAIL, 
                     "Failed to log new RM!");
@@ -883,8 +882,13 @@ expublic int tm_recoverlocal(UBFH *p_ub, int cd)
         for (i=0; i<ret; i++)
         {
             /* generate xid as base64 string? */
-            ndrx_xa_base64_encode((unsigned char *)&arraxid[i], sizeof(arraxid[i]), 
-                    &out_len, tmp);
+            out_len = sizeof(tmp);
+            if (NULL==ndrx_xa_base64_encode((unsigned char *)&arraxid[i], sizeof(arraxid[i]), 
+                    &out_len, tmp))
+            {
+                NDRX_LOG(log_error, "Base64 encode failed");
+                EXFAIL_OUT(ret);
+            }
             /* tmp[out_len] = EXEOS; */
             
             NDRX_LOG(log_debug, "Recovered xid: [%s]", tmp);

@@ -62,7 +62,7 @@
 #include "userlog.h"
 #include "utlist.h"
 #include <expluginbase.h>
-
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -552,7 +552,8 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             else
             {
                 /* add the .%d */
-                strcat(tmp_ptr->filename_th_template, ".%u");
+                NDRX_STRCAT_S(tmp_ptr->filename_th_template, 
+                        sizeof(tmp_ptr->filename_th_template), ".%u");
             }
             
             if (NULL!=dbg_ptr)
@@ -606,6 +607,7 @@ expublic void ndrx_init_debug(void)
     ndrx_dbg_pid_update();
     
     ndrx_sys_get_hostname(hostname, sizeof(hostname));
+    
     /* copy number of chars specified in hostname if debug config */
     
     G_tp_debug.hostnamecrc32 = G_ubf_debug.hostnamecrc32 = 
@@ -729,6 +731,10 @@ expublic void ndrx_init_debug(void)
         /* kill the conf */
         ndrx_keyval_hash_free(conf);
     }
+    
+    
+    /* Initialize system test sub-system */
+    ndrx_systest_init();
     
     G_ndrx_debug_first = EXFALSE;
     

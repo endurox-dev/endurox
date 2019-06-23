@@ -52,6 +52,7 @@
 #include "../libatmisrv/srv_int.h"
 #include "tperror.h"
 #include <xa_cmn.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -159,7 +160,16 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                         break;
                     case XA_OP_COMMIT:
                         NDRX_LOG(log_info, "Commit RMID %d", i+1);
-                        if (EXSUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1, el->btid)))
+                        
+                        /* system test entry point
+                         * for case when tmsrv is unable to complete...
+                         */
+                        if (NDRX_SYSTEST_ENBLD && ndrx_systest_case(NDRX_SYSTEST_TMSCOMMIT))
+                        {
+                            op_reason = XAER_RMERR;
+                            op_tperrno = TPESVCERR;
+                        }
+                        else if (EXSUCCEED!=(op_ret = tm_commit_combined(p_xai, i+1, el->btid)))
                         {
                             op_reason = atmi_xa_get_reason();
                             op_tperrno = tperrno;
