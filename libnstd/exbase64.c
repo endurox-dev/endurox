@@ -199,6 +199,7 @@ exprivate char * b64_encode(const unsigned char *data,
     {
         NDRX_LOG(log_error, "Failed to encode data len incl EOS %d but buffer sz %d",
                 (int)(tmp_len+1), (int)*output_length);
+        return NULL;
     }
     
     *output_length = tmp_len;
@@ -256,21 +257,28 @@ exprivate unsigned char *b64_decode(unsigned char *data,
         NDRX_LOG(log_error, "Invalid input_length: %d!", input_length);
         return NULL;
     }
+    
+    if (input_length <= 0)
+    {
+        NDRX_LOG(log_error, "Invalid input length %d <= 0!", input_length);
+        return NULL;
+    }
 
     tmp_len = input_length / 4 * 3;
-            
+    
+    /* strip off padding if any.. */
+    if (data[input_length - 1] == '=') tmp_len--;
+    if (data[input_length - 2] == '=') tmp_len--;
+    
     if (*output_length > 0 && *output_length < tmp_len)
     {
-        NDRX_LOG(log_error, "OUtput buffer too short: Output buffer size: %d, "
+        NDRX_LOG(log_error, "Output buffer too short: Output buffer size: %d, "
                 "but data output size: %d", (int)*output_length, (int)tmp_len);
         return NULL;
     }
 
     *output_length = tmp_len;
     
-    if (data[input_length - 1] == '=') (*output_length)--;
-    if (data[input_length - 2] == '=') (*output_length)--;
-
     /*
     unsigned char *decoded_data = NDRX_MALLOC(*output_length);
     if (decoded_data == NULL) return NULL;

@@ -406,7 +406,6 @@ struct atmi_lib_env
     int     our_nodeid;  /**< Cluster node id */
     int     ldbal;       /**< Load balance settings */
     int     is_clustered;/**< Will we run in cluster mode or not? */
-    int     testmode; 	 /**< Do we run in test mode? */
     
     /**
      * @defgroup xa_params XA configuration parameters

@@ -74,6 +74,7 @@ expublic int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz)
     
     curpos = strlen(buf);
             
+    outsz = bufsz - curpos;
     if (NULL==ndrx_base64_encode(xid->data,
                     xid->gtrid_length,
                     &outsz,
@@ -91,13 +92,13 @@ expublic int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz)
     curpos = strlen(buf);
     
     /* build up the bqual part */
-    
+    outsz = bufsz - curpos;
     if (NULL==ndrx_base64_encode(xid->data + xid->gtrid_length,
                     xid->bqual_length,
                     &outsz,
                     buf + curpos))
     {
-        NDRX_LOG(log_error, "Failed to encode gtrid!");
+        NDRX_LOG(log_error, "Failed to encode bqual!");
         EXFAIL_OUT(ret);
     }
     
@@ -123,11 +124,30 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
     int cnt=0;
     char tmp[201];
     size_t len;
+    int i;
     
     NDRX_STRCPY_SAFE(tmp, buf);
     
     NDRX_LOG(log_debug, "About to process PG xid: [%s]", tmp);
     
+    len = strlen(buf);
+    
+    for (i=0; i<len; i++)
+    {
+        if ('_'==buf[i])
+        {
+            cnt++;
+        }
+    }
+    
+    if (cnt!=2)
+    {
+        NDRX_LOG(log_warn, "Not Enduor/X XID format transaction id: "
+                "[%s] - not parsing", buf);
+        goto out;
+    }
+    
+    cnt=0;
     tok=strtok_r (tmp, "_", &saveptr1);
     while( tok != NULL ) 
     {
@@ -149,6 +169,8 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
                 }
                 xid->gtrid_length = len;
                 
+                NDRX_LOG(log_debug, "gtrid len: %d", xid->gtrid_length);
+                
                 break;
             case 2:
                 /* bqual */
@@ -160,6 +182,7 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
                     EXFAIL_OUT(ret);
                 }
                 xid->bqual_length = len;
+                NDRX_LOG(log_debug, "bqual len: %d", xid->bqual_length);
                 
                 break;
             default:
@@ -169,7 +192,7 @@ expublic int ndrx_pg_db_to_xid(char *buf, XID *xid)
                 break;
         }
         cnt++;
-        tok=strtok_r (NULL,";", &saveptr1);
+        tok=strtok_r (NULL,"_", &saveptr1);
     }
     
     NDRX_DUMP(log_debug, "Got XID from PG", xid, sizeof(*xid));
