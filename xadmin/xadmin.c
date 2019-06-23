@@ -583,10 +583,26 @@ exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
 exprivate void completion_handler(const char *buf, linenoiseCompletions *lc) 
 {
     int i;
+    char tmp[128];
+    int len;
     
-    for (i=0; i<N_DIM(M_command_map); i++)
+    if (0==strncmp(buf, "help", 4))
     {
-        int len = strlen(buf);
+        for (i=0; i<N_DIM(M_command_map); i++)
+        {
+            snprintf(tmp, sizeof(tmp), "help %s", M_command_map[i].cmd);
+        
+            len = strlen(buf);
+            if (0==strncmp(tmp, buf, len))
+            {
+                linenoiseAddCompletion(lc,tmp);
+            }
+            
+        }
+    }
+    else for (i=0; i<N_DIM(M_command_map); i++)
+    {
+        len = strlen(buf);
         
         if (0==strncmp(M_command_map[i].cmd, buf, len))
         {

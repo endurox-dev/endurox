@@ -71,6 +71,7 @@
 #include <xa_cmn.h>
 #include <exthpool.h>
 #include <ubfutil.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 extern char *optarg;
@@ -843,7 +844,7 @@ expublic void tm_ping_db(void *ptr, int *p_finish_off)
         else
         {
             /* for tests needs higher debug level to reduce space */
-            NDRX_LOG(G_atmi_env.testmode?log_error:log_debug,
+            NDRX_LOG(NDRX_SYSTEST_ENBLD?log_error:log_debug,
 		"RMID %hd TID: %lu: PING OK %d", 
                 G_atmi_env.xa_rmid, tid, ret);
         }

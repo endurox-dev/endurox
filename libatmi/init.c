@@ -277,15 +277,7 @@ expublic int ndrx_load_common_env(void)
         G_atmi_env.msgsize_max = atoi(p);
         NDRX_LOG(log_debug, "Posix queue msgsize_max set to: [%d]",
                             G_atmi_env.msgsize_max);
-    }
-
-    p = getenv(CONF_NDRX_TESTMODE);
-    if (NULL!=p)
-    {
-        G_atmi_env.testmode = atoi(p);
-        NDRX_LOG(log_debug, "Test mode set to: %d", G_atmi_env.testmode);
-    }
-    
+    }    
     p = getenv(CONF_NDRX_QPREFIX);
     if (NULL==p)
     {

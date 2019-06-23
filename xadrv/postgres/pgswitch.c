@@ -39,6 +39,7 @@
 #include <atmi.h>
 
 #include "atmi_shm.h"
+#include "utlist.h"
 
 #include <xa.h>
 #include <ecpglib.h>
@@ -48,8 +49,24 @@
 /*---------------------------Macros-------------------------------------*/
 #define CONN_CLOSED 0   /**< The interface is not open  */
 #define CONN_OPEN   1   /**< The interface is open      */
+#define TRAN_NOT_FOUND  "42704" /**< SQL State for transaction not found */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/* we need a list of XIDs for keeping the recovery BTID copies: */
+
+/**
+ * List of xid left for fetch
+ */
+typedef struct ndrx_xid_list ndrx_xid_list_t;
+struct ndrx_xid_list
+{
+    XID xid;
+
+    ndrx_xid_list_t *next, *prev;
+};
+
+
 /*---------------------------Globals------------------------------------*/
 expublic __thread char ndrx_G_PG_conname[65]={EXEOS}; /**< connection name    */
 /*---------------------------Statics------------------------------------*/
@@ -57,8 +74,11 @@ expublic __thread char ndrx_G_PG_conname[65]={EXEOS}; /**< connection name    */
 MUTEX_LOCKDECL(M_conndata_lock);
 exprivate ndrx_pgconnect_t M_conndata; /**< parsed connection data            */
 exprivate int M_conndata_ok = EXFALSE; /**< Is connection parsed ok & cached? */
+
+/* threaded data: */
 exprivate __thread PGconn * M_conn = NULL;   /**< Actual connection           */ 
 exprivate __thread int M_status = CONN_CLOSED;  /**< thread based status      */
+exprivate __thread ndrx_xid_list_t *M_list = NULL; /**< XID list of cur recov */
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -100,6 +120,73 @@ struct xa_switch_t ndrxpgsw =
     .xa_forget_entry = xa_forget_entry_stat,
     .xa_complete_entry = xa_complete_entry_stat
 };
+
+/**
+ * Add entry to list
+ * @param xid to put on list
+ * @return EXSUCCEED/EXFAIL(OOM)
+ */
+exprivate int xid_list_add(XID *xid)
+{
+    int ret = EXSUCCEED;
+    ndrx_xid_list_t *el;
+    
+    el = NDRX_CALLOC(1, sizeof(ndrx_xid_list_t));
+    
+    if (NULL==el)
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to calloc: %d bytes: %s", 
+                sizeof(ndrx_xid_list_t), strerror(err));
+        userlog("Failed to calloc: %d bytes: %s", 
+                sizeof(ndrx_xid_list_t), strerror(err));
+        EXFAIL_OUT(ret);
+    }
+    
+    memcpy((char *)&(el->xid), (char *)xid, sizeof(XID));
+    
+    
+    DL_APPEND(M_list, el);
+    
+out:
+    return ret;
+}
+
+/**
+ * Fetch the next xid
+ * @param xid
+ * @return EXTRUE - have next / EXFALSE - we have EOF
+ */
+exprivate int xid_list_get_next(XID *xid)
+{
+    ndrx_xid_list_t *tmp;
+    if (NULL!=M_list)
+    {
+        memcpy((char *)xid, (char *)&M_list->xid, sizeof(XID));
+        
+        tmp = M_list;
+        DL_DELETE(M_list, M_list);
+        NDRX_FREE((char *)tmp);
+        return EXTRUE;
+    }
+    
+    return EXFALSE;
+}
+
+/**
+ * Remove all from XID list
+ */
+exprivate void xid_list_free(void)
+{
+    ndrx_xid_list_t *el, *elt;
+    
+    DL_FOREACH_SAFE(M_list,el,elt)
+    {
+        DL_DELETE(M_list,el);
+        NDRX_FREE(el);
+    }
+    
+}
 
 /**
  * API entry of loading the driver
@@ -186,7 +273,7 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
         
         ndrx_get_dt_local(&date, &time, &usec);
         
-        snprintf(ndrx_G_PG_conname, sizeof(conn_counter), "%ld-%ld%ld-%d",
+        snprintf(ndrx_G_PG_conname, sizeof(ndrx_G_PG_conname), "%ld-%ld%ld-%d",
                 date, time, (long)(usec / 1000), connid);
     }
     
@@ -215,7 +302,7 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
     NDRX_LOG(log_info, "Connection [%s] is open %p", ndrx_G_PG_conname, M_conn);
     
 out:
-    return EXFAIL;
+    return ret;
 }
 
 /**
@@ -328,15 +415,18 @@ out:
 }
 
 /**
- * We rollback only prepared transaction.
- * Thus every transaction will get prepare call
- * @param sw
- * @param xid
- * @param rmid
- * @param flags
- * @return 
+ * Common transaction management routine
+ * @param sw XA Switch
+ * @param sql_cmd SQL Command to execute
+ * @param dbg_msg debug message related with command
+ * @param xid transaction XID
+ * @param rmid resource manager ID
+ * @param flags currently not flags are supported
+ * @param[in] is_prep is this prepare statement call
+ * @return XA error code or XA_OK
  */
-exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+exprivate int xa_tran_entry(struct xa_switch_t *sw, char *sql_cmd, char *dbg_msg,
+        XID *xid, int rmid, long flags, int is_prep)
 {
     int ret = XA_OK;
     char stmt[1024];
@@ -352,8 +442,8 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
     
     if (TMNOFLAGS != flags)
     {
-        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to xa_prepare_entry", 
-                flags);
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to %s", 
+                flags, dbg_msg);
         ret = XAER_INVAL;
         goto out;
     }
@@ -365,23 +455,53 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
         goto out;
     }
     
-    snprintf(stmt, sizeof(stmt), "ROLLBACK PREPARED '%s';", pgxid);
+    snprintf(stmt, sizeof(stmt), "%s '%s';", sql_cmd, pgxid);
     
     NDRX_LOG(log_info, "Exec: [%s]", stmt);
     
     res = PQexec(M_conn, stmt);
     if (PGRES_COMMAND_OK != PQresultStatus(res)) 
     {
-        NDRX_LOG(log_error, "Failed to commit transaction by [%s]: %s",
-                stmt, PQerrorMessage(M_conn));
+        char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
         
-        ret = XAER_RMERR;
+        if (0==strcmp(TRAN_NOT_FOUND, state))
+        {
+            NDRX_LOG(log_info, "Transaction not found (probably read-only branch)");
+        }
+        else
+        {
+            NDRX_LOG(log_error, "SQL STATE %s: Failed to %s transaction by [%s]: %s",
+                    state, dbg_msg, stmt, PQerrorMessage(M_conn));
+
+            if (is_prep)
+            {
+                NDRX_LOG(log_error, "Work is rolled back automatically by PG");
+                ret = XA_RBROLLBACK;
+            }
+        }
     }
     
-    NDRX_LOG(log_debug, "COMMIT OK");
+    NDRX_LOG(log_debug, "%s OK", dbg_msg);
 out:
     
     PQclear(res);
+
+    return ret;
+}
+
+/**
+ * We rollback only prepared transaction.
+ * Thus every transaction will get prepare call
+ * @param sw
+ * @param xid
+ * @param rmid
+ * @param flags
+ * @return 
+ */
+exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+{
+    return xa_tran_entry(sw, "ROLLBACK PREPARED", "ROLLBACK", 
+            xid, rmid, flags, EXFALSE);
 }
 
 /**
@@ -395,52 +515,9 @@ out:
  */
 exprivate int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    int ret = XA_OK;
-    char stmt[1024];
-    char pgxid[NDRX_PG_STMTBUFSZ];
-    PGresult *res = NULL;
-        
-    if (CONN_OPEN!=M_status)
-    {
-        NDRX_LOG(log_debug, "XA Not open");
-        ret = XAER_PROTO;
-        goto out;
-    }
     
-    if (TMNOFLAGS != flags)
-    {
-        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to xa_prepare_entry", 
-                flags);
-        ret = XAER_INVAL;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=ndrx_pg_xid_to_db(xid, pgxid, sizeof(pgxid)))
-    {
-        NDRX_DUMP(log_error, "Failed to convert XID to pg string", xid, sizeof(*xid));
-        ret = XAER_INVAL;
-        goto out;
-    }
-    
-    snprintf(stmt, sizeof(stmt), "PREPARE TRANSACTION '%s';", pgxid);
-    
-    NDRX_LOG(log_info, "Exec: [%s]", stmt);
-    
-    res = PQexec(M_conn, stmt);
-    if (PGRES_COMMAND_OK != PQresultStatus(res)) 
-    {
-        NDRX_LOG(log_error, "Failed to prepare transaction by [%s]: %s -> roll'd back",
-                stmt, PQerrorMessage(M_conn));
-        
-        ret = XA_RBROLLBACK;
-    }
-    
-    NDRX_LOG(log_debug, "PREPARE OK");
-out:
-    
-    PQclear(res);
-
-    return ret;
+    return xa_tran_entry(sw, "PREPARE TRANSACTION", "PREPARE", 
+            xid, rmid, flags, EXTRUE);
 }
 
 /**
@@ -454,52 +531,8 @@ out:
  */
 exprivate int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    int ret = XA_OK;
-    char stmt[1024];
-    char pgxid[NDRX_PG_STMTBUFSZ];
-    PGresult *res = NULL;
-        
-    if (CONN_OPEN!=M_status)
-    {
-        NDRX_LOG(log_debug, "XA Not open");
-        ret = XAER_PROTO;
-        goto out;
-    }
-    
-    if (TMNOFLAGS != flags)
-    {
-        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to xa_prepare_entry", 
-                flags);
-        ret = XAER_INVAL;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=ndrx_pg_xid_to_db(xid, pgxid, sizeof(pgxid)))
-    {
-        NDRX_DUMP(log_error, "Failed to convert XID to pg string", xid, sizeof(*xid));
-        ret = XAER_INVAL;
-        goto out;
-    }
-    
-    snprintf(stmt, sizeof(stmt), "COMMIT PREPARED '%s';", pgxid);
-    
-    NDRX_LOG(log_info, "Exec: [%s]", stmt);
-    
-    res = PQexec(M_conn, stmt);
-    if (PGRES_COMMAND_OK != PQresultStatus(res)) 
-    {
-        NDRX_LOG(log_error, "Failed to commit transaction by [%s]: %s",
-                stmt, PQerrorMessage(M_conn));
-        
-        ret = XAER_RMERR;
-    }
-    
-    NDRX_LOG(log_debug, "COMMIT OK");
-out:
-    
-    PQclear(res);
-
-    return ret;
+    return xa_tran_entry(sw, "COMMIT PREPARED", "COMMIT", 
+            xid, rmid, flags, EXFALSE);
 }
 
 /**
@@ -514,9 +547,133 @@ out:
  * @param flags flags
  * @return XA_OK, XERR
  */
-exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
+exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, 
+        int rmid, long flags)
 {
-    return EXFAIL;
+    int ret = XA_OK;
+    long accepted_flags = TMSTARTRSCAN|TMENDRSCAN|TMNOFLAGS;
+    PGresult   *res = NULL;
+    int i;
+    int nrtx;
+    
+    /* check the flags */
+    if ( (flags | accepted_flags) != accepted_flags)
+    {
+        NDRX_LOG(log_error, "Accepted flags are: TMSTARTRSCAN|TMENDRSCAN|TMNOFLAGS, but got %ld",
+                flags);
+        ret = XAER_INVAL;
+    }
+    
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
+    
+    
+    if (flags & TMSTARTRSCAN)
+    {
+        /* remove any old scans... */
+        xid_list_free();
+        
+        /* Start a transaction block */
+        res = PQexec(M_conn, "BEGIN");
+        if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        {
+            NDRX_LOG(log_error, "BEGIN command failed: %s", 
+                    PQerrorMessage(M_conn));
+            PQclear(res);
+            ret = XAER_RMERR;
+            goto out;
+        }
+        
+        PQclear(res);
+        
+        
+        /* as local transaction processor at tmsrv will scan the XIDs
+         * and perform commit/abort/(forget), that cannot be done in transaction
+         * thus we need to scan and fill local linked list of XIDs fetched
+         */
+
+        /*
+         * Fetch rows from pg_database, the system catalog of databases
+         */
+        res = PQexec(M_conn, "DECLARE ndrx_pq_list_xids "
+                 "CURSOR  FOR SELECT gid FROM pg_prepared_xacts ORDER BY prepared;");
+
+        if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        {
+            fprintf(stderr, "DECLARE CURSOR failed: %s", PQerrorMessage(M_conn));
+            PQclear(res);
+            ret = XAER_RMERR;
+         goto out;
+        }
+
+        PQclear(res);
+
+        res = PQexec(M_conn, "FETCH ALL in ndrx_pq_list_xids;");
+        if (PQresultStatus(res) != PGRES_TUPLES_OK)
+        {
+            fprintf(stderr, "FETCH ALL failed: %s", PQerrorMessage(M_conn));
+            PQclear(res);
+        }
+
+        /* Read xids into linked list? */
+        nrtx = PQntuples(res);
+        
+        NDRX_LOG(log_info, "Recovered %d transactions", nrtx);
+        for (i = 0; i < nrtx; i++)
+        {
+            char *btid = PQgetvalue(res, i, 0);
+            XID xid_fetch;
+            
+            NDRX_LOG(log_debug, "Got BTID: [%s] - try parse", btid);
+            if (EXSUCCEED!=ndrx_pg_db_to_xid(btid, &xid_fetch))
+            {
+                continue;
+            }
+            
+            /* Add to DL */
+            if (EXSUCCEED!=xid_list_add(&xid_fetch))
+            {
+                NDRX_LOG(log_error, "Failed to add BTID to list!");
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* close the scan */
+        res = PQexec(M_conn, "CLOSE ndrx_pq_list_xids;");
+        PQclear(res);
+
+        /* end the transaction */
+        res = PQexec(M_conn, "END;");
+        PQclear(res);
+        
+    } /* TMSTARTRSCAN */
+    
+    /* load transactions into list (as much as we have...) */
+    nrtx = 0;
+    
+    for (i=0; i<count; i++)
+    {
+        if (EXTRUE==xid_list_get_next(&xid[i]))
+        {
+            nrtx++;
+        }
+    }
+    
+    ret = nrtx;
+    
+    if (TMENDRSCAN & flags)
+    {
+        xid_list_free();
+    }
+    
+out:    
+    
+    NDRX_LOG(log_info, "Returning %d", ret);
+    return ret;
 }
 
 /**
@@ -529,7 +686,8 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int
  */
 exprivate int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    return EXFAIL;
+    return xa_tran_entry(sw, "ROLLBACK PREPARED", "FORGET", 
+            xid, rmid, flags, EXFALSE);
 }
 
 /**
