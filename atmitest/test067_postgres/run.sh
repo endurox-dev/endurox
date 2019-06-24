@@ -1,7 +1,8 @@
+#!/bin/bash
 ##
-## @brief PosgreSQL XA Switch Makefile
+## @brief PostgreSQL PQ TMSRV driver tests / branch transactions - test launcher
 ##
-## @file CMakeLists.txt
+## @file run.sh
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,44 +32,56 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set minimum version
-cmake_minimum_required(VERSION 2.8)
+TESTNAME="test067_postgres"
 
-# Add debug options
-# By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
-	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
-	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+PWD=`pwd`
+if [ `echo $PWD | grep $TESTNAME ` ]; then
+	# Do nothing 
+	echo > /dev/null
+else
+	# started from parent folder
+	pushd .
+	echo "Doing cd"
+	cd test067_postgres
+fi;
 
-find_package(PostgreSQL REQUIRED)
+. ../testenv.sh
 
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
-                        ${PostgreSQL_INCLUDE_DIRS})
+export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
+export PATH=$PATH:$TESTDIR
 
-link_directories(${PostgreSQL_LIBRARY_DIRS})
+xadmin killall atmi.sv67 2>/dev/null
+xadmin killall atmiclt67 2>/dev/null
 
-add_library (ndrxxapq SHARED
-                        pgswitch.c
-                        pgconfig.c
-                        pgxid.c
-   	        )
+# client timeout
+export NDRX_TOUT=10
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
-target_link_libraries(ndrxxapq atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
-
-
-
-add_executable (pgtest
-                    codestest.c)
-target_link_libraries (pgtest nstd ${RT_LIB} pthread pq ecpg)
-set_target_properties(pgtest PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+function go_out {
+    echo "Test exiting with: $1"
+    xadmin killall atmi.sv67 2>/dev/null
+    xadmin killall atmiclt67 2>/dev/null
+    
+    popd 2>/dev/null
+    exit $1
+}
 
 
-# Install bin
-install (TARGETS 
-    ndrxxapq
-    DESTINATION "${INSTALL_LIB_DIR}"
-    )
+rm *.log
+
+(./atmi.sv67 -i123 2>&1) > ./atmisv67.log &
+sleep 1
+(./atmiclt67 2>&1) > ./atmiclt67.log
+
+RET=$?
+
+# Catch is there is test error!!!
+if [ "X`grep TESTERROR *.log`" != "X" ]; then
+	echo "Test error detected!"
+	go_out -2
+fi
+
+go_out $RET
+
 # vim: set ts=4 sw=4 et smartindent:
+

@@ -1,7 +1,7 @@
 ##
-## @brief PosgreSQL XA Switch Makefile
+## @brief PostgreSQL PQ TMSRV driver tests / branch transactions - server
 ##
-## @file CMakeLists.txt
+## @file atmisv67.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,8 +31,14 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set minimum version
 cmake_minimum_required(VERSION 2.8)
+
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
+
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -42,33 +48,29 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-find_package(PostgreSQL REQUIRED)
 
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
-                        ${PostgreSQL_INCLUDE_DIRS})
+set( PGSQL_CMD "ecpg" )
+set( PGSQL_ARG "atmisv67.pgc" )
 
-link_directories(${PostgreSQL_LIBRARY_DIRS})
+add_custom_command( OUTPUT atmisv67.c
+                    COMMAND ${PGSQL_CMD} ${PGSQL_ARG}
+                    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${PGSQL_ARG}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 
-add_library (ndrxxapq SHARED
-                        pgswitch.c
-                        pgconfig.c
-                        pgxid.c
-   	        )
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-target_link_libraries(ndrxxapq atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
+############################# Test - executables ###############################
+add_executable (atmi.sv67 atmisv67.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt67 atmiclt67.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
+set_target_properties(atmi.sv67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################
 
-
-add_executable (pgtest
-                    codestest.c)
-target_link_libraries (pgtest nstd ${RT_LIB} pthread pq ecpg)
-set_target_properties(pgtest PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-
-
-# Install bin
-install (TARGETS 
-    ndrxxapq
-    DESTINATION "${INSTALL_LIB_DIR}"
-    )
 # vim: set ts=4 sw=4 et smartindent:
