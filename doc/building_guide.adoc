@@ -57,12 +57,21 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04
+
 ---------------------------------------------------------------------
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++-dev \
 	libgpgme11-dev libxml2-dev libxml2-utils git
+---------------------------------------------------------------------
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ sudo apt-get install  postgresql postgresql-client libecpg-dev \
+ libpq-dev postgresql-server-dev-all
 ---------------------------------------------------------------------
 
 For Linux Mint Mate 19+ additional packages are required (or you get
