@@ -290,7 +290,7 @@ ulimit -s 30751
 #export EX_PG_PASS=exdbtest1
 # currently uses default port
 #export EX_PG_PORT=5432
-#export EX_PG_DB=XE
+#export EX_PG_DB=xe
 
 
 EOF
