@@ -413,17 +413,16 @@ $ psql
 
 > alter user exdbtest with encrypted password 'exdbtest1';
 > grant all privileges on database xe to exdbtest ;
-> q
+> \q
 
 --------------------------------------------------------------------------------
 
 To enable prepared transactions, edit postgresql.conf and set `max_prepared_transactions'
-greater than 0.
-
+greater than 0, e.g. 1000.
 
 --------------------------------------------------------------------------------
 
-$ vi /etc/postgresql/9.5/main/postgresql.conf
+$ vi /etc/postgresql/*/main/postgresql.conf
 
 # Edit the max_prepared_transactions
 
