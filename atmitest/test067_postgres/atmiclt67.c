@@ -61,27 +61,49 @@
  */
 int main(int argc, char** argv)
 {
-
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int i;
     int ret=EXSUCCEED;
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "Failed to open: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==CBchg(p_ub, T_LONG_FLD, 0, "1", 0, BFLD_STRING))
     {
         NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }    
 
     if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpcommit(0))
+    {
+        NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
     }
     
 out:
+    
+    if (EXSUCCEED!=ret)
+    {
+        tpabort(0);
+    }
+
+    tpclose();
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 
