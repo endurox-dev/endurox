@@ -33,11 +33,14 @@
 
 cmake_minimum_required(VERSION 2.8)
 
+find_package(PostgreSQL REQUIRED)
+
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
-					 ${ENDUROX_SOURCE_DIR}/ubftest)
+					 ${ENDUROX_SOURCE_DIR}/ubftest
+                                         ${PostgreSQL_INCLUDE_DIRS})
 
 
 # Add debug options
@@ -66,7 +69,8 @@ add_executable (atmiclt67 atmiclt67.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB}
+                    ecpg ${PostgreSQL_LIBRARIES})
 target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

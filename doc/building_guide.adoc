@@ -422,7 +422,19 @@ $ /etc/init.d/postgresql restart
 
 --------------------------------------------------------------------------------
 
-After these steps, the PosgreSQL is ready for testing.
+After these steps test database table shall be created. That could be done in
+following way:
+
+---------------------------------------------------------------------
+$ source ~/ndrx_home
+$ cd /home/user1/endurox/atmitest/test067_postgres
+$ cat tables.sql | ./psql.run 
+CREATE TABLE
+
+---------------------------------------------------------------------
+
+Now PostgreSQL is ready for Enduro/X testing.
+
 
 == Conclusions
 

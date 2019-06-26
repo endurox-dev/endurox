@@ -73,7 +73,7 @@ set_dom1() {
     export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
     # TODO: Add both test modes... 
-    export NDRX_XA_FLAGS="NOJOIN"
+    #export NDRX_XA_FLAGS="NOJOIN"
     # XA SECTION, END
 }
 

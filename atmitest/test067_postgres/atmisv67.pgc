@@ -50,7 +50,8 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Standard service entry
+ * Standard service entry.
+ * transaction shall be open by caller.
  */
 void TESTSV (TPSVCINFO *p_svc)
 {
@@ -58,27 +59,28 @@ void TESTSV (TPSVCINFO *p_svc)
     char testbuf[1024];
     UBFH *p_ub = (UBFH *)p_svc->data;
 
-    NDRX_LOG(log_debug, "%s got call", __func__);
+    EXEC SQL BEGIN DECLARE SECTION;
+    long id;
+    EXEC SQL END DECLARE SECTION;
 
-    /* Just print the buffer */
-    Bprint(p_ub);
+    tplogprintubf(log_debug, "Got UBF", p_ub);
     
-    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    if (EXFAIL==Bget(p_ub, T_LONG_FLD, 0, (char *)&id, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", 
                  Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
-    
-    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+
+    EXEC SQL INSERT INTO EXTEST(userid) VALUES (:id);
+
+    if ((sqlca.sqlcode < 0) || (sqlca.sqlcode == 100))
     {
-        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
-            VALUE_EXPECTED, testbuf);
-        ret=EXFAIL;
-        goto out;
+
+        NDRX_LOG(log_error, "TESTERROR: error code [%d] message [%s] rows %d, warning %c", 
+                    sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc, sqlca.sqlerrd[2], sqlca.sqlwarn[0]);
+        EXFAIL_OUT(ret);
     }
-        
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -96,13 +98,23 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    /*
+     * This opens connection to database
+     */
+    if (EXSUCCEED!=tpopen())
     {
-        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+        NDRX_LOG(log_error, "Failed to tpopen: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
 out:
-    return EXSUCCEED;
+    return ret;
 }
 
 /**
@@ -111,6 +123,7 @@ out:
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
+    tpclose();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -355,7 +355,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
 out:
-    return EXSUCCEED;
+    return ret;
 }
 
 /**
