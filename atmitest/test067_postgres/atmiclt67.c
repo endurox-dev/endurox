@@ -57,13 +57,32 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * RUn list of SQLs
+ * @param [in] array of string with statements
+ * @param [in] should we return from last stmt first value
+ * @param [out] return value of the first col/row
+ * @return EXSUCCEED/EXFAIL and return value 
+ */
+long sql_run(char **list, int ret_col_row_1, long *ret_val)
+{
+    
+}
+
+int sql_delete(void)
+{
+    
+}
+
+/**
  * Do the test call to the server
+ * Also we need some test cases from shell processing with stalled commits.
+ * Thus needs some parameters to be passed to executable.
  */
 int main(int argc, char** argv)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
-    int i;
+    long i;
     int ret=EXSUCCEED;
     
     if (EXSUCCEED!=tpopen())
@@ -78,16 +97,19 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==CBchg(p_ub, T_LONG_FLD, 0, "1", 0, BFLD_STRING))
+    for (i=0; i<900; i++)
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }    
+        if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }    
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
     }
     
     if (EXSUCCEED!=tpcommit(0))
