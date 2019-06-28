@@ -712,7 +712,7 @@ exprivate int check_dead_processes(void)
                         p_pm->state);
                 /*Send self notification*/
                 
-                memset(buf, 0, sizeof(buf));
+                memset(buf, 0, sizeof(srv_status_t));
                 
                 status->srvinfo.pid = p_pm->pid;
                 status->srvinfo.state = NDRXD_PM_DIED;
