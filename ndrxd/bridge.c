@@ -758,7 +758,8 @@ expublic void brd_end_diff(void)
             /* First time, build the diff message */
             if (first)
             {
-                memset(buf, 0, sizeof(buf));
+                memset(buf, 0, sizeof(bridge_refresh_t));
+
                 brd_build_refresh_msg(G_bridge_svc_diff, refresh, 
                         BRIDGE_REFRESH_MODE_DIFF);
                 first=EXFALSE;
