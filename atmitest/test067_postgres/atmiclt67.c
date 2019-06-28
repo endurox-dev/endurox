@@ -68,9 +68,37 @@ long sql_run(char **list, int ret_col_row_1, long *ret_val)
     
 }
 
+int sql_prepare(void)
+{
+
+    char *commands[]   = {
+            /* Command code       Accepted SQL states*/
+            "drop table extest;", "0000;42P01"
+            ,"CREATE TABLE extest(userid integer UNIQUE NOT NULL);", "0000"
+            ,NULL, NULL};
+    /* TODO: EXEC */
+}
+
 int sql_delete(void)
 {
-    
+    char *commands[]   = {
+            /* Command code       Accepted SQL states*/
+            "delete from extest;", "0000"
+            ,NULL, NULL};
+}
+
+
+long sql_count(void)
+{
+    char *commands[]   = {
+            /* Command code       Accepted SQL states*/
+            "select count(*) from extest;", "0000"
+            ,NULL, NULL};
+}
+
+long sql_insert(void)
+{
+    /* run some insert */
 }
 
 /**

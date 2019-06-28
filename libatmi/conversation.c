@@ -820,7 +820,9 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
      * id on which we can reach the server!
      * TODO: We might want to move to dynamic memory..?
      */
+    /* - is this needed?
     memset(buf, 0, sizeof(buf));
+    */
 
     if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
