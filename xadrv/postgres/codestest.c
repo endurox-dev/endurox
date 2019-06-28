@@ -152,6 +152,8 @@ int main(int argc, char **argv)
             det++;
         }
         i++;
+        
+        /* TODO: Free up res!? */
     }
     /*
      WE GET:

@@ -392,6 +392,7 @@ out:
 exprivate int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     int ret = XA_OK;
+    long accepted_flags = TMSUCCESS|TMFAIL;
     
     if (CONN_OPEN!=M_status)
     {
@@ -400,9 +401,11 @@ exprivate int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flag
         goto out;
     }
     
-    if (TMNOFLAGS != flags)
+    /* check the flags */
+    if ( (flags | accepted_flags) != accepted_flags)
     {
-        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld), passed to start_entry", flags);
+        NDRX_LOG(log_error, "Accepted flags are: TMSUCCESS|TMFAIL, but got %ld",
+                flags);
         ret = XAER_INVAL;
         goto out;
     }
@@ -432,7 +435,7 @@ exprivate int xa_tran_entry(struct xa_switch_t *sw, char *sql_cmd, char *dbg_msg
     char stmt[1024];
     char pgxid[NDRX_PG_STMTBUFSZ];
     PGresult *res = NULL;
-        
+    
     if (CONN_OPEN!=M_status)
     {
         NDRX_LOG(log_debug, "XA Not open");
@@ -562,6 +565,7 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count,
         NDRX_LOG(log_error, "Accepted flags are: TMSTARTRSCAN|TMENDRSCAN|TMNOFLAGS, but got %ld",
                 flags);
         ret = XAER_INVAL;
+        goto out;
     }
     
     if (CONN_OPEN!=M_status)
