@@ -257,9 +257,12 @@ expublic int tm_tpbegin(UBFH *p_ub)
     
     atmi_xa_new_xid(&xid);
     
-    /* we should start new transaction... (only if static...) 
+    xai.tmknownrms[0] = 0;
+    
+    /* we should start new transaction... (only if static...) */
     if (!(tmflags & TMTXFLAGS_DYNAMIC_REG))
     {
+        /*
         if (EXSUCCEED!=(ret = atmi_xa_start_entry(&xid, 0, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to start new transaction!");
@@ -268,20 +271,16 @@ expublic int tm_tpbegin(UBFH *p_ub)
                     "xa error: %d [%s]", ret, atmi_xa_geterrstr(ret));
             goto out;
         }
+        */
         
-        xai.tmknownrms[0] = G_atmi_env.xa_rmid;
-        xai.tmknownrms[1] = EXEOS;
+        /* We know it only if it is not BTID resource */
+        if (!(tmflags & TMTXFLAGS_TPNOSTARTXID))
+        {
+            xai.tmknownrms[0] = G_atmi_env.xa_rmid;
+            xai.tmknownrms[1] = EXEOS;
+        }
     }
-    else
-    {
-        
-    }
-    */
-    
-    /* mark that we know about this RM */
-    xai.tmknownrms[0] = G_atmi_env.xa_rmid;
-    xai.tmknownrms[1] = EXEOS;
-    
+
     atmi_xa_serialize_xid(&xid, xid_str);
     
     /* load the XID into buffer */

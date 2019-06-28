@@ -746,7 +746,7 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
 
     set_filename_base(xid, rmid);
     names_max = get_filenames_max();
-    
+
     for (i=names_max; i>=1; i--)
     {
         if (EXSUCCEED!=file_move(i, M_folder_active, M_folder_prepared))
