@@ -191,7 +191,7 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     command_dynadvertise_t *unadv = (command_dynadvertise_t *)buf;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, sizeof(command_dynadvertise_t));
     
     /* format out the status report */
     unadv->srvid= G_server_conf.srv_id;
@@ -240,7 +240,7 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     command_dynadvertise_t *adv = (command_dynadvertise_t *)buf;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, sizeof(command_dynadvertise_t));
     
     /* format out the status report */
     adv->srvid= G_server_conf.srv_id;

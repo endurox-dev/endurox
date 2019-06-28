@@ -818,12 +818,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 
     /* So now, we shall receive back handshake, by receving private queue 
      * id on which we can reach the server!
-     * TODO: We might want to move to dynamic memory..?
      */
-    /* - is this needed?
-    memset(buf, 0, sizeof(buf));
-    */
-
     if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
         /* We should have */
@@ -835,7 +830,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
             goto out;
         }
     }
-    
+    /* EOS is already included, where q name is set by ndrx_tpsend() */ 
     NDRX_STRCPY_SAFE(conv->reply_q_str, buf);
     if (is_bridge)
     {
