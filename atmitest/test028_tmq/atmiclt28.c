@@ -307,7 +307,7 @@ exprivate int basic_q_test(void)
         if (EXSUCCEED!=tpdequeue("MYSPACE", "TEST1", &qc, &buf, 
                 &len, TPNOTRAN))
         {
-            NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
                     tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
             EXFAIL_OUT(ret);
         }
