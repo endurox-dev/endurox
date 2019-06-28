@@ -57,12 +57,21 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04
+
 ---------------------------------------------------------------------
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++-dev \
 	libgpgme11-dev libxml2-dev libxml2-utils git
+---------------------------------------------------------------------
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ sudo apt-get install  postgresql postgresql-client libecpg-dev \
+ libpq-dev postgresql-server-dev-all
 ---------------------------------------------------------------------
 
 For Linux Mint Mate 19+ additional packages are required (or you get
@@ -281,7 +290,7 @@ ulimit -s 30751
 #export EX_PG_PASS=exdbtest1
 # currently uses default port
 #export EX_PG_PORT=5432
-#export EX_PG_DB=XE
+#export EX_PG_DB=xe
 
 
 EOF
@@ -404,17 +413,16 @@ $ psql
 
 > alter user exdbtest with encrypted password 'exdbtest1';
 > grant all privileges on database xe to exdbtest ;
-> q
+> \q
 
 --------------------------------------------------------------------------------
 
 To enable prepared transactions, edit postgresql.conf and set `max_prepared_transactions'
-greater than 0.
-
+greater than 0, e.g. 1000.
 
 --------------------------------------------------------------------------------
 
-$ vi /etc/postgresql/9.5/main/postgresql.conf
+$ vi /etc/postgresql/*/main/postgresql.conf
 
 # Edit the max_prepared_transactions
 
