@@ -153,7 +153,7 @@ int main(int argc, char **argv)
         }
         i++;
         
-        /* TODO: Free up res!? */
+        PQclear(res);
     }
     /*
      WE GET:

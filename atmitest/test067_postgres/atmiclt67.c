@@ -65,7 +65,32 @@
  */
 long sql_run(char **list, int ret_col_row_1, long *ret_val)
 {
+    PGconn * conn = ECPGget_PGconn("");
+    long ret = EXSUCCEED;
+    char *command, char *codes;
+    int i;
     
+    /* get connection object */
+    if (NULL==conn)
+    {
+        NDRX_LOG(log_error, "Failed to get connection!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* process the commands */
+    for (i=0; NULL!=list[i]; i+=2)
+    {
+        command = list[i];
+        codes = list[i+1];
+        
+        NDRX_LOG(log_debug, "Command [%s] codes [%s]", command, codes);
+        
+        
+    }
+    
+    
+out:
+    return ret;
 }
 
 int sql_prepare(void)
@@ -99,6 +124,12 @@ long sql_count(void)
 long sql_insert(void)
 {
     /* run some insert */
+    
+    char *commands[]   = {
+            /* Command code       Accepted SQL states*/
+            "insert into extest(userid) values ((select COALESCE(max(userid), 1)+1 from extest));", "0000"
+            ,NULL, NULL};
+    
 }
 
 /**
