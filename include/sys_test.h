@@ -50,6 +50,12 @@ extern NDRX_API int ndrx_G_systest_enabled;
  * For TMSRV error will be returned and commit will fail.
  */
 #define NDRX_SYSTEST_TMSCOMMIT   ",TMSNOCOMMIT,"
+
+/**
+ * For PostgreSQL mode, prepare call at xa_end fails
+ * The commit of transaction shall also fail with reason of rollback.
+ */
+#define NDRX_SYSTEST_ENDPREPFAIL   ",ENDPREPFAIL,"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

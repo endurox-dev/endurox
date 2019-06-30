@@ -93,6 +93,7 @@ add_subdirectory (test046_twopasscfg)
 IF (ENABLE_TEST47)
 add_subdirectory (test047_oradb)
 ENDIF()
+
 add_subdirectory (test048_cache)
 add_subdirectory (test049_masksvc)
 add_subdirectory (test050_ubfdb)
@@ -115,7 +116,10 @@ add_subdirectory (test063_cpmrange)
 add_subdirectory (test064_bufswitch)
 add_subdirectory (test065_tpcancel)
 add_subdirectory (test066_tmstartserver)
+
+IF (ENABLE_POSTGRES)
 add_subdirectory (test067_postgres)
+ENDIF()
 
 ################################################################################
 # Master test case driver
