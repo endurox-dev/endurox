@@ -78,6 +78,9 @@
 /* Is address sanitizer enabled */
 #cmakedefine NDRX_SANITIZE @NDRX_SANITIZE@
 
+/** Build for postgresql */
+#cmakedefine NDRX_USE_POSTGRES @NDRX_USE_POSTGRES@
+
 /* Enduro/X memory debugging */
 #cmakedefine NDRX_MEMORY_DEBUG @NDRX_MEMORY_DEBUG@
 

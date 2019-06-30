@@ -247,6 +247,99 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    if (argc > 1)
+    {
+        if (0==strcmp("endfail", argv[1]))
+        {
+            sql_mktab();
+            
+            for (i=0; i<100; i++)
+            {
+                if (EXSUCCEED!=tpbegin(60, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXSUCCEED!=sql_insert())
+                {
+                    NDRX_LOG(log_error, "Failed to insert: %s");
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXSUCCEED==tpcommit(0))
+                {
+                    NDRX_LOG(log_error, "Commit must fail!");
+                    EXFAIL_OUT(ret);
+                }
+
+                if (tperrno!=TPEABORT)
+                {
+                    NDRX_LOG(log_error, "Expected TPEABORT got: %d!", tperrno);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
+            ret = EXSUCCEED;
+            goto out;
+        } /* end fail test */
+        else if (0==strcmp("doinsert", argv[1]))
+        {
+            sql_mktab();
+
+            /* run some inserts... say 50 */
+            
+            if (EXSUCCEED!=tpbegin(60, 0))
+            {
+                NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+
+            for (i=0; i<50; i++)
+            {
+
+                if (EXSUCCEED!=sql_insert())
+                {
+                    NDRX_LOG(log_error, "Failed to insert: %s");
+                    EXFAIL_OUT(ret);
+                }
+                
+            }
+            
+            if (EXSUCCEED==tpcommit(0))
+            {
+                NDRX_LOG(log_error, "Commit must fail!");
+                EXFAIL_OUT(ret);
+            }
+            
+            goto out;
+            
+        }
+        else if (0==strcmp("ck50", argv[1]))
+        {
+         
+            if (50!=(ret=(int)sql_count()))
+            {
+                NDRX_LOG(log_error, "Got count: %d, expected 50", ret);
+                EXFAIL_OUT(ret);
+            }
+            ret = EXSUCCEED;
+            goto out;
+            
+        }
+        else if (0==strcmp("ck0", argv[1]))
+        {
+            if (0!=(ret=(int)sql_count()))
+            {
+                NDRX_LOG(log_error, "Got count: %d, expected 0", ret);
+                EXFAIL_OUT(ret);
+            }
+            ret = EXSUCCEED;
+            goto out;
+        }
+        
+    }
+    
     sql_mktab();
     
     /**************************************************************************/

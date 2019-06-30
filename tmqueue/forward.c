@@ -280,6 +280,16 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         tperr = tperrno;
         NDRX_LOG(log_error, "%s failed: %s", qconf.svcnm, tpstrerror(tperr));
+        
+        /* Bug #421 if called in transaction, then abort current one
+         * because need to increment the counters in new transaction
+         */
+        if (tpgetlev())
+        {
+            NDRX_LOG(log_error, "Abort current transaction for counter increment");
+            tpabort(0L);
+        }
+            
         EXFAIL_OUT(ret);
     }
     
