@@ -593,6 +593,8 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
     {
         
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
+        
+        /* TODO: Have test entry -> that prepare fails... */
         if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
         {
