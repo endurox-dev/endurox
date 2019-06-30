@@ -71,7 +71,8 @@ add_executable (atmiclt67 atmiclt67.c)
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB}
                     ecpg ${PostgreSQL_LIBRARIES})
-target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB}
+                    ecpg ${PostgreSQL_LIBRARIES})
 
 set_target_properties(atmi.sv67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
