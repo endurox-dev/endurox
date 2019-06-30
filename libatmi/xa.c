@@ -60,6 +60,7 @@
 #include <tperror.h>
 #include <atmi_tls.h>
 #include "Exfields.h"
+#include "sys_test.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -594,7 +595,6 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
         
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
         
-        /* TODO: Have test entry -> that prepare fails... */
         if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
         {
@@ -612,6 +612,15 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
             {
                 ret = XA_OK;
             }
+        }
+        
+        /* test of transaction automatic rollback */
+        if ((XA_OK==ret || XA_RDONLY == ret) &&
+                NDRX_SYSTEST_ENBLD && ndrx_systest_case(NDRX_SYSTEST_ENDPREPFAIL))
+        {
+            NDRX_LOG(log_error, "SYSTEST! Generating end-fail error");
+            atmi_xa_rollback_entry(xid, 0L);
+            ret = XAER_RMERR;
         }
         
         /* Report status to TMSRV that we performed prepare

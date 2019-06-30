@@ -281,6 +281,10 @@ IF (DEFINE_SANITIZE)
     set(NDRX_SANITIZE "1")
 ENDIF()
 
+IF (DEFINE_POSTGRES)
+    set(NDRX_USE_POSTGRES "1")
+ENDIF()
+
 # Output the project version
 set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
 

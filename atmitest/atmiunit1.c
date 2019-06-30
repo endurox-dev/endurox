@@ -526,6 +526,13 @@ Ensure(test066_tmstartserver)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test067_postgres)
+{
+    int ret;
+    ret=system_dbg("test067_postgres/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -633,6 +640,10 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test064_bufswitch);
     add_test(suite, test065_tpcancel);
     add_test(suite, test066_tmstartserver);
+    
+#ifdef NDRX_USE_POSTGRES
+    add_test(suite, test067_postgres);
+#endif
     
     return suite;
 }
