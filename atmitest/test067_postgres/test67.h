@@ -47,6 +47,9 @@ extern long sql_count(void);
 extern int sql_insert(void);
 extern int sql_insert2(void);
 
+
+extern int q_run(UBFH **pp_ub);
+
 #ifdef  __cplusplus
 }
 #endif

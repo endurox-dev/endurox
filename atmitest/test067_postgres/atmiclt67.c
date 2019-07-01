@@ -76,7 +76,7 @@ expublic long sql_run(char **list, int ret_col_row_1, long *ret_val)
     /* get connection object */
     if (NULL==conn)
     {
-        NDRX_LOG(log_error, "Failed to get connection!");
+        NDRX_LOG(log_error, "TESTERROR: Failed to get connection!");
         EXFAIL_OUT(ret);
     }
     
@@ -104,7 +104,7 @@ expublic long sql_run(char **list, int ret_col_row_1, long *ret_val)
             
             if (0==strstr(codes,state))
             {
-                NDRX_LOG(log_error, "Statement [%s] failed with [%s] accepted [%s]",
+                NDRX_LOG(log_error, "TESTERROR: Statement [%s] failed with [%s] accepted [%s]",
                         command, state, codes);
                 EXFAIL_OUT(ret);
             }
@@ -116,7 +116,7 @@ expublic long sql_run(char **list, int ret_col_row_1, long *ret_val)
     {
         if (PGRES_TUPLES_OK != estat)
         {
-            NDRX_LOG(log_error, "Requested result, but none provided!");
+            NDRX_LOG(log_error, "TESTERROR: Requested result, but none provided!");
             EXFAIL_OUT(ret);
         }
         else
@@ -176,7 +176,7 @@ expublic long sql_count(void)
     
     if (EXSUCCEED!=sql_run(commands, EXTRUE, &ret_val))
     {
-        NDRX_LOG(log_error, "Failed to get count!");
+        NDRX_LOG(log_error, "TESTERROR: Failed to get count!");
         ret_val = EXFAIL;
         goto out;
     }
@@ -243,12 +243,13 @@ int main(int argc, char** argv)
     /* open connection */
     if (EXSUCCEED!=tpopen())
     {
-        NDRX_LOG(log_error, "Failed to open: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to open: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     if (argc > 1)
     {
+        NDRX_LOG(log_debug, "Got test case: [%s]", argv[1]);
         if (0==strcmp("endfail", argv[1]))
         {
             sql_mktab();
@@ -257,25 +258,27 @@ int main(int argc, char** argv)
             {
                 if (EXSUCCEED!=tpbegin(60, 0))
                 {
-                    NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+                    NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", 
+                            tpstrerror(tperrno));
                     EXFAIL_OUT(ret);
                 }
 
                 if (EXSUCCEED!=sql_insert())
                 {
-                    NDRX_LOG(log_error, "Failed to insert: %s");
+                    NDRX_LOG(log_error, "TESTERROR: Failed to insert: %s");
                     EXFAIL_OUT(ret);
                 }
 
                 if (EXSUCCEED==tpcommit(0))
                 {
-                    NDRX_LOG(log_error, "Commit must fail!");
+                    NDRX_LOG(log_error, "TESTERROR: Commit must fail!");
                     EXFAIL_OUT(ret);
                 }
 
                 if (tperrno!=TPEABORT)
                 {
-                    NDRX_LOG(log_error, "Expected TPEABORT got: %d!", tperrno);
+                    NDRX_LOG(log_error, "TESTERROR: Expected TPEABORT got: %d!", 
+                            tperrno);
                     EXFAIL_OUT(ret);
                 }
             }
@@ -291,7 +294,8 @@ int main(int argc, char** argv)
             
             if (EXSUCCEED!=tpbegin(60, 0))
             {
-                NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+                NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", 
+                        tpstrerror(tperrno));
                 EXFAIL_OUT(ret);
             }
 
@@ -300,7 +304,7 @@ int main(int argc, char** argv)
 
                 if (EXSUCCEED!=sql_insert())
                 {
-                    NDRX_LOG(log_error, "Failed to insert: %s");
+                    NDRX_LOG(log_error, "TESTERROR: Failed to insert: %s");
                     EXFAIL_OUT(ret);
                 }
                 
@@ -308,7 +312,7 @@ int main(int argc, char** argv)
             
             if (EXSUCCEED==tpcommit(0))
             {
-                NDRX_LOG(log_error, "Commit must fail!");
+                NDRX_LOG(log_error, "TESTERROR: Commit must fail!");
                 EXFAIL_OUT(ret);
             }
             
@@ -320,7 +324,7 @@ int main(int argc, char** argv)
          
             if (50!=(ret=(int)sql_count()))
             {
-                NDRX_LOG(log_error, "Got count: %d, expected 50", ret);
+                NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 50", ret);
                 EXFAIL_OUT(ret);
             }
             ret = EXSUCCEED;
@@ -331,10 +335,15 @@ int main(int argc, char** argv)
         {
             if (0!=(ret=(int)sql_count()))
             {
-                NDRX_LOG(log_error, "Got count: %d, expected 0", ret);
+                NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
                 EXFAIL_OUT(ret);
             }
             ret = EXSUCCEED;
+            goto out;
+        }
+        else if (0==strcmp("testq", argv[1]))
+        {
+            ret = q_run(&p_ub);
             goto out;
         }
         
@@ -347,7 +356,7 @@ int main(int argc, char** argv)
     /**************************************************************************/
     if (EXSUCCEED!=tpbegin(60, 0))
     {
-        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -361,7 +370,7 @@ int main(int argc, char** argv)
 
         if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
         {
-            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            NDRX_LOG(log_error, "TESTERROR: TESTSV failed: %s", tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
     }
@@ -369,19 +378,19 @@ int main(int argc, char** argv)
     /* test that we have 0 records here... */
     if (EXSUCCEED!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 0", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
         EXFAIL_OUT(ret);
     }
         
     if (EXSUCCEED!=tpcommit(0))
     {
-        NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     if (900!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 900", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 900", ret);
         EXFAIL_OUT(ret);
     }
     
@@ -396,7 +405,7 @@ int main(int argc, char** argv)
     
     if (EXSUCCEED!=tpbegin(60, 0))
     {
-        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -407,7 +416,7 @@ int main(int argc, char** argv)
     
     if (1000!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 1000", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 1000", ret);
         EXFAIL_OUT(ret);
     }
     
@@ -415,13 +424,13 @@ int main(int argc, char** argv)
     
     if (EXSUCCEED!=tpsuspend(&t, 0L))
     {
-        NDRX_LOG(log_error, "Failed to suspend: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to suspend: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     if (0!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 0", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
         EXFAIL_OUT(ret);
     }
     
@@ -430,7 +439,7 @@ int main(int argc, char** argv)
     
     if (EXSUCCEED!=tpbegin(60, 0))
     {
-        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -438,40 +447,40 @@ int main(int argc, char** argv)
     
     if (3!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 1000", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 1000", ret);
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=tpcommit(0))
     {
-        NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "continue with org tran...");
     if (EXSUCCEED!=tpresume(&t, 0L))
     {
-        NDRX_LOG(log_error, "Failed to resume: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to resume: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     /* as this is new branch tran, we get 0 */
     if (3!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 3", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 3", ret);
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=tpcommit(0))
     {
-        NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     /* as this is new branch tran, we get 0 */
     if (1003!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 1000", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 1000", ret);
         EXFAIL_OUT(ret);
     }
     
@@ -483,7 +492,7 @@ int main(int argc, char** argv)
     
     if (EXSUCCEED!=tpbegin(60, 0))
     {
-        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -495,19 +504,19 @@ int main(int argc, char** argv)
     /* as this is new branch tran, we get 0 */
     if (499!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 499", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 499", ret);
         EXFAIL_OUT(ret);
     }
     
     if (EXSUCCEED!=tpabort(0))
     {
-        NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to abort: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
     if (0!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 0", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
         EXFAIL_OUT(ret);
     }
     
@@ -520,7 +529,7 @@ int main(int argc, char** argv)
     
     if (EXSUCCEED!=tpbegin(5, 0))
     {
-        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
@@ -532,7 +541,7 @@ int main(int argc, char** argv)
     /* as this is new branch tran, we get 0 */
     if (10!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 10", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 10", ret);
         EXFAIL_OUT(ret);
     }
     
@@ -541,20 +550,20 @@ int main(int argc, char** argv)
     
     if (EXSUCCEED==tpcommit(0))
     {
-        NDRX_LOG(log_error, "Commit OK, must fail!");
+        NDRX_LOG(log_error, "TESTERROR: Commit OK, must fail!");
         EXFAIL_OUT(ret);
     }
     
     if (TPEABORT!=tperrno)
     {
-        NDRX_LOG(log_error, "Transaction must be aborted!");
+        NDRX_LOG(log_error, "TESTERROR: Transaction must be aborted!");
         EXFAIL_OUT(ret);
     }
 
     /* as this is new branch tran, we get 0 */
     if (0!=(ret=(int)sql_count()))
     {
-        NDRX_LOG(log_error, "Got count: %d, expected 0", ret);
+        NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 0", ret);
         EXFAIL_OUT(ret);
     }
     
