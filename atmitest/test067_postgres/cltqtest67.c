@@ -63,12 +63,148 @@
  * transaction/insert/queue add - commit (test count ok / have messages OK)
  * Say 100 msg·
  */
-expublic int q_run(void)
+expublic int q_run(UBFH **pp_ub)
 {
     int ret = EXSUCCEED;
+    long i, j;
+    long len;
+    long tmp;
+    long rsplen;
+    TPQCTL qc;
     
+    sql_mktab();
     
-    
+    for (i=0; i<2; i++)
+    {
+        /* start tran... */
+        if (EXSUCCEED!=tpbegin(60, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        for (j=0; j<100; j++)
+        {
+            if (EXFAIL==Bchg(*pp_ub, T_LONG_FLD, 0, (char *)&j, 0))
+            {
+                NDRX_LOG(log_debug, "TESTERROR: Failed to set T_LONG_FLD: %s", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }    
+
+            if (EXFAIL == tpcall("TESTSV", (char *)*pp_ub, 0L, (char **)pp_ub, &rsplen,0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: TESTSV failed: %s", tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+            /* enqueue message... */
+            
+            /* enqueue the data buffer */
+            memset(&qc, 0, sizeof(qc));
+            if (EXSUCCEED!=tpenqueue("MYSPACE", "STATQ", &qc, (char *)*pp_ub, 
+                    0L, 0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        if (0==i)
+        {
+            if (EXSUCCEED!=tpabort(0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to abort: %s", tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+            /* Check the counts, must be 0 */
+            if (0!=(ret=(int)sql_count()))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Invalid count expected 0 got: %d", ret);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* dequeue shall fail... / no msg */
+            
+            memset(&qc, 0, sizeof(qc));
+
+            if (EXSUCCEED==tpdequeue("MYSPACE", "STATQ", &qc, (char **)pp_ub, 
+                    &len, TPNOTRAN))
+            {
+                /*
+                NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                 * */
+                NDRX_LOG(log_error, "TESTERROR: Queue must be empty but it is not!");
+                EXFAIL_OUT(ret);
+            }
+            
+            if (TPEDIAGNOSTIC!=tperrno)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected TPEDIAGNOSTIC, but got %d", tperrno);
+                EXFAIL_OUT(ret);
+            }
+            
+            if (QMENOMSG!=qc.diagnostic)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected QMENOMSG, but got %d", 
+                        qc.diagnostic);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            if (EXSUCCEED!=tpcommit(0L))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+            /* Check the counts, must be 0 */
+            if (100!=(ret=(int)sql_count()))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Invalid count expected 100 got: %d", 
+                        ret);
+                EXFAIL_OUT(ret);
+            }
+            ret = EXSUCCEED;
+            
+            for (j=0; j<100; j++)
+            {
+                /* there must be 100 msgs in queue */
+
+                memset(&qc, 0, sizeof(qc));
+
+                if (EXSUCCEED!=tpdequeue("MYSPACE", "STATQ", &qc, (char **)pp_ub, 
+                        &len, TPNOTRAN))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed at %d %s diag: %d:%s", 
+                            i, tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* test the buffer */
+
+                if (EXSUCCEED!=Bget(*pp_ub, T_LONG_FLD, 0, (char *)&tmp, 0L))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD at %d: %s",
+                            i, Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (tmp!=j)
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Invalid msg from Q: expected %ld got %ld",
+                            j, tmp);
+                    EXFAIL_OUT(ret);
+                }
+            }
+        } /* if i=1 (this is case for commit) */
+        
+    } /* for test case */
 out:
     return ret;
 }
