@@ -408,6 +408,7 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
 {
     buffer_obj_t *elt;
     typed_buffer_descr_t *buf_type = NULL;
+    tp_command_call_t * last_call;
 
     NDRX_LOG(log_debug, "_tpfree buf=%p", buf);
 
@@ -427,6 +428,17 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
 
     if (NULL!=elt)
     {
+        /* Check isn't it auto buffer, then reset that one too */
+        last_call = ndrx_get_G_last_call();
+        
+        if (elt==last_call->autobuf)
+        {
+            /* kill the auto buf.. 
+             * Thus user is left to manage the buffer by it self.
+             */
+            last_call->autobuf = NULL;
+        }
+            
         buf_type = &G_buf_descr[elt->type_id];
         /* Remove it! */
         buf_type->pf_free(buf_type, elt->buf);

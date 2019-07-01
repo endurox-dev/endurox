@@ -34,6 +34,11 @@ received request prior doing *tpcontinue(3)* shall make the auto buffer free *tp
 If the 'TPNOAUTBUF' was specified at state restore, then tpreturn() command will
 not try to free the auto buffer.
 
+Note that if with call buffer user internally makes calls which changes the buffer
+type, then original call buffer is made free and the changed type buffer now
+is user allocated. Thus to deallocated the buffer either user does free of it, 
+or performs tpreturn/tpforward with it.
+
 'Len' is needed in case if buffer type is not self describing. Internally function uses 
 long jump to get back to internal message polling mechanisms. *tpreturn()* is 
 used for normal service calls and for conversational service calls. *tpdiscon()* 
