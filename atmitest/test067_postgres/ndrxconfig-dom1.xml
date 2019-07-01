@@ -85,7 +85,7 @@
             <envs><usegroup>QUEUE</usegroup></envs>
             <min>1</min>
             <max>1</max>
-            <sysopt>-e ${TESTDIR}/TM.log -r -- -t1 -l${TESTDIR}/RM2 -m10</sysopt>
+            <sysopt>-e ${TESTDIR}/TM2.log -r -- -t1 -l${TESTDIR}/RM2 -m10</sysopt>
         </server>
         
         <server name="tmqueue">
