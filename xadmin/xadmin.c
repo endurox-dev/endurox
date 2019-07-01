@@ -813,6 +813,7 @@ exprivate int get_cmd(int *p_have_next)
     else /* Operate with stdin. */
     {
         char *p;
+        int len;
         memset(M_buffer, 0, sizeof(M_buffer));
 
         /* Welcome only if it is terminal */
@@ -853,8 +854,9 @@ exprivate int get_cmd(int *p_have_next)
         }
 
         /* strip off trailing newline */
-        if ('\n'==M_buffer[strlen(M_buffer)-1])
-            M_buffer[strlen(M_buffer)-1] = EXEOS;
+        len = strlen(M_buffer);
+        if (len > 0 && '\n'==M_buffer[len-1])
+            M_buffer[len-1] = EXEOS;
         
         /* Allow repeated commands */
         if (is_tty())

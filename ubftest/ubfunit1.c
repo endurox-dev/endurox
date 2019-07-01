@@ -626,7 +626,7 @@ TestSuite *ubf_basic_tests() {
  * Testing bmkfldid with multi directory in FLDTBLDIR environment
  * @return 
  */
-TestSuite *ubf_bmkfldid_multidir_tests() {
+TestSuite *ubf_bmkfldid_multidir_tests(void) {
     TestSuite *suite = create_test_suite();
     
     M_p_ub = malloc(DEFAULT_BUFFER);
