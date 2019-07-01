@@ -320,6 +320,12 @@ return_to_main:
      * - well mvitolin 16/01/2017 - only auto buffers & this one.
      * Not sure how with Tuxedo multi-threading?
      * - mvitolin 03/03/2017 - will make free any buffer
+     * 
+     * - mvitolin 01/07/2019 - with NULL buffers (which are real NULLs we have
+     * an issue). Because for those there are is no pointer descriptor object.
+     * thus if prepare incoming NULL did de-reallocate the object, then we
+     * never know it. Thus in this case all prepare incomings if doing buffer
+     * free, shall check the last call and reset the auto buf.
      */
     if (NULL!=data)
     {
