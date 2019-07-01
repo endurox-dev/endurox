@@ -64,7 +64,7 @@
  * @param [out] return value of the first col/row
  * @return EXSUCCEED/EXFAIL and return value 
  */
-long sql_run(char **list, int ret_col_row_1, long *ret_val)
+expublic long sql_run(char **list, int ret_col_row_1, long *ret_val)
 {
     PGconn * conn = ECPGget_PGconn(NULL);
     long ret = EXSUCCEED;
@@ -137,7 +137,7 @@ out:
  * Create tables
  * @return  EXSUCCEED/EXFAIL
  */
-int sql_mktab(void)
+expublic int sql_mktab(void)
 {
 
     char *commands[]   = {
@@ -152,7 +152,7 @@ int sql_mktab(void)
  * Delete from table
  * @return EXSUCCEED/EXFAIL
  */
-int sql_delete(void)
+expublic int sql_delete(void)
 {
     char *commands[]   = {
             /* Command code       Accepted SQL states*/
@@ -166,7 +166,7 @@ int sql_delete(void)
  * Count records added to table
  * @return count/EXFAIL
  */
-long sql_count(void)
+expublic long sql_count(void)
 {
     long ret_val = EXSUCCEED;
     char *commands[]   = {
@@ -191,7 +191,7 @@ out:
  * more data, call sql_insert2
  * @return 
  */
-int sql_insert(void)
+expublic int sql_insert(void)
 {
     /* run some insert */
     
@@ -208,7 +208,7 @@ int sql_insert(void)
  * In transaction inserts / for suspended
  * @return 
  */
-int sql_insert2(void)
+expublic int sql_insert2(void)
 {
     /* run some insert */
     
