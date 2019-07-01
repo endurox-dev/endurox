@@ -77,6 +77,12 @@ set_dom1() {
 
 }
 
+export NDRX_LIBEXT="so"
+
+if [ "$(uname)" == "Darwin" ]; then
+    export NDRX_XA_RMLIB=libndrxxaqdisk.dylib
+    export NDRX_LIBEXT="dylib"
+fi
 
 #
 # Generic exit function
