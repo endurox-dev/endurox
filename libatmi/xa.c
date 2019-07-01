@@ -498,10 +498,11 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
         {
             for (tries=1; tries<G_atmi_env.xa_recon_times; tries++)
             {
-                NDRX_LOG(log_warn, "RECON: Attempt %d, sleeping %ld micro-sec", 
-                        tries, G_atmi_env.xa_recon_usleep);
-                usleep(G_atmi_env.xa_recon_usleep);
+                NDRX_LOG(log_warn, "RECON: Attempt %d/%d, sleeping %ld micro-sec", 
+                        tries, G_atmi_env.xa_recon_times, 
+                        G_atmi_env.xa_recon_usleep);
                 
+                usleep(G_atmi_env.xa_recon_usleep);
                 
                 NDRX_LOG(log_warn, "RECON: Retrying...");
                 
@@ -530,6 +531,9 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
                             "fail: %d [%s]", 
                     __func__, tries, ret, atmi_xa_geterrstr(ret));
                 }
+                
+                NDRX_LOG(log_debug, "tries %d / times %d", tries, 
+                        G_atmi_env.xa_recon_times);
             } /* for tries */
         } /* if retry supported. */
         
