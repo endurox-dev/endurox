@@ -124,7 +124,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
-        ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES; /* so this is not used.. */
+        ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES;
     }
     
     return ret;

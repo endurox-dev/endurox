@@ -832,7 +832,7 @@ expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid)
     
     /* Dump the branch XID */
     
-    NDRX_LOG(log_debug, "YOPT BTID=%ld/%ld rmid=%d", btid, btidh, (int)rmid);
+    NDRX_LOG(log_debug, "BTID=%ld/%ld rmid=%d", btid, btidh, (int)rmid);
     NDRX_DUMP(log_debug, "Branch XID", &G_atmi_tls->xid, sizeof(G_atmi_tls->xid));
     
     return &G_atmi_tls->xid;
