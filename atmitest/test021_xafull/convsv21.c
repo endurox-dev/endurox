@@ -53,7 +53,8 @@ void CONVSV (TPSVCINFO *p_svc)
     /* Just print the buffer */
     Bprint(p_ub);
 
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 6000))) /* allocate some stuff for more data to put in  */
+    /* allocate some stuff for more data to put in  */
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 6000)))
     {
         ret=EXFAIL;
         goto out;
@@ -61,7 +62,7 @@ void CONVSV (TPSVCINFO *p_svc)
 
     for (i=0; i<1; i++)
     {
-        sprintf(tmp, "SRV SND: %d", i);
+        snprintf(tmp, sizeof(tmp), "SRV SND: %d", i);
         Bchg(p_ub, T_STRING_FLD, 0, (char *)tmp, 0);
 
         if (p_svc->flags & TPSENDONLY)

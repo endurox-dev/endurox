@@ -159,15 +159,12 @@ out:
     {
         NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
     }
 
     if (EXSUCCEED!=tpterm())
     {
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
         ret=EXFAIL;
-        goto out;
     }
     
     return ret;
