@@ -321,7 +321,11 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
     
     if (!M_is_open)
     {
-        NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() - XA not open!");
+        /* do not generate  */
+        if (&ndrxstatsw_startfail != sw)
+        {
+            NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() - XA not open!");
+        }
         return XAER_RMERR;
     }
     

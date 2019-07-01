@@ -295,24 +295,27 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"startfail"* ]]; then
 	(./atmiclt21-startfail $TEST160_FLAG 2>&1) > ./atmiclt-startfail-dom1.log
 	RET=$?
 
+        echo "Wait 25 sec for abort..."
+        sleep 25
 	#
 	# If all ok, test for transaction files.
 	#
 	if [ $RET == 0 ]; then
 	
-		# test for transaction to be aborted..
-		# there should be no TRN- files at top level
+            # test for transaction to be aborted..
+            # there should be no TRN- files at top level
 
-		if [ -f ./RM1/TRN-* ]; then
-			echo "Transaction must be completed!"
-			RET=-2
-		fi
-		
-		#if [ ! -f ./RM1/aborted/* ]; then
-		#	echo "Transaction must be aborted!"
-		#	RET=-3
-		#fi
-		
+            logfiles=(./RM1/TRN-*)
+            if [[ -f ${logfiles[0]} ]]; then
+                    echo "Transaction must be completed!"
+                    RET=-2
+            fi
+
+            #if [ ! -f ./RM1/aborted/* ]; then
+            #	echo "Transaction must be aborted!"
+            #	RET=-3
+            #fi
+
 	fi
 
 	go_out $RET
