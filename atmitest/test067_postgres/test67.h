@@ -39,6 +39,13 @@ extern "C" {
 
 
 #define VALUE_EXPECTED "Hello EnduroX"
+    
+extern long sql_run(char **list, int ret_col_row_1, long *ret_val);
+extern int sql_mktab(void);
+extern int sql_delete(void);
+extern long sql_count(void);
+extern int sql_insert(void);
+extern int sql_insert2(void);
 
 #ifdef  __cplusplus
 }
