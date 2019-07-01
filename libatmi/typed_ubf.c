@@ -122,6 +122,8 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         ret=EXFAIL;
         goto out;
     }
+    /* Needs to add trailer bytes space */
+    rcv_buf_size+=FF_USED_BYTES;
 
     /* Figure out the passed in buffer */
     if (NULL==(outbufobj=ndrx_find_buffer(*odata)))

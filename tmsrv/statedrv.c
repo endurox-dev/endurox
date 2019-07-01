@@ -228,9 +228,6 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                             tperrno, op_reason);
                 }
                 /* Stage switching... */
-/*
-                stagearr[i] = vote_txstage->next_txstage; YOPT! Stage Array build as incremental array
-*/
                 vote.btid = el->btid;
                 vote.rmid = el->rmid;
                 vote.stage = vote_txstage->next_txstage;
