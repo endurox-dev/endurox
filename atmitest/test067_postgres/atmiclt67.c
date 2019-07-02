@@ -346,6 +346,43 @@ int main(int argc, char** argv)
             ret = q_run(&p_ub);
             goto out;
         }
+        else if (0==strcmp("tout", argv[1]))
+        {
+            if (EXSUCCEED!=tpbegin(60, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+
+            if (EXSUCCEED == tpcall("TOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
+                    &rsplen,0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: expected error got OK");
+                EXFAIL_OUT(ret);
+            }
+            
+            if (TPETIME!=tperrno)
+            {
+                NDRX_LOG(log_error, "TESTERROR: expected TPETIME, got %d",
+                        tperrno);
+                EXFAIL_OUT(ret);
+            }
+            
+            if (EXSUCCEED==tpcommit(0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Commit must fail!");
+                EXFAIL_OUT(ret);
+            }
+            
+            if (TPEABORT!=tperrno)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Commit not TPEABORT got %d!", tperrno);
+                EXFAIL_OUT(ret);
+            }
+            ret = EXSUCCEED;
+            goto out;
+        }
         
     }
     
