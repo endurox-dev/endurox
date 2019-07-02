@@ -354,7 +354,7 @@ int main(int argc, char** argv)
                         tpstrerror(tperrno));
                 EXFAIL_OUT(ret);
             }
-
+            /* Bug #417 */
             if (EXSUCCEED == tpcall("TOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
                     &rsplen,TPTRANSUSPEND))
             {
