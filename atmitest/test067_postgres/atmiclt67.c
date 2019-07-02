@@ -356,7 +356,7 @@ int main(int argc, char** argv)
             }
 
             if (EXSUCCEED == tpcall("TOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
-                    &rsplen,0))
+                    &rsplen,TPTRANSUSPEND))
             {
                 NDRX_LOG(log_error, "TESTERROR: expected error got OK");
                 EXFAIL_OUT(ret);
