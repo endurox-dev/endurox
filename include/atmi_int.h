@@ -425,6 +425,8 @@ struct atmi_lib_env
     int xa_recon_times;         /**< Number of times to retry the recon    */
     long xa_recon_usleep;       /**< Microseconds to sleep between retries */
     
+    int (*pf_xa_loctxabort)(XID *xid, long flags); /**< Local abort function  */
+    
     /**@}*/
     
     int     nrsems; /**< number of sempahores for poll() mode of service mem */
