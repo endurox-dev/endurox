@@ -569,13 +569,17 @@ out:
  * Disassociate current thread from transaction
  * @param xid
  * @param flags
+ * @param[in] aborting if set to EXTRUE, we know that abort will follow.
+ *  used by posgresql to not to do xa_prepare at the end when rollback will
+ *  follow
  * @return 
  */
-expublic int atmi_xa_end_entry(XID *xid, long flags)
+expublic int atmi_xa_end_entry(XID *xid, long flags, int aborting)
 {
     int ret = EXSUCCEED;
     char stat;
     UBFH *p_ub = NULL;
+    int local_rb = EXFALSE;
         
     XA_API_ENTRY(EXTRUE);
     
@@ -598,8 +602,19 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
     {
         
         NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
-        
-        if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
+        if (aborting && G_atmi_env.pf_xa_loctxabort)
+        {
+            NDRX_LOG(log_info, "Aborting using local rollback func");
+            local_rb = EXTRUE;
+            ret = G_atmi_env.pf_xa_loctxabort(xid, TMNOFLAGS);
+            
+            if (XA_OK!=ret)
+            {
+                NDRX_LOG(log_error, "Failed to disconnect from transaction: %d", ret);
+                userlog("Failed to disconnect from transaction: %d", ret);
+            }
+        }
+        else if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
                                         G_atmi_env.xa_rmid, TMNOFLAGS)))
         {
             if (XA_RDONLY!=ret)
@@ -631,7 +646,11 @@ expublic int atmi_xa_end_entry(XID *xid, long flags)
          * and report the results back...
          * If there is failure with TMSRV, then rollback prepared transaction
          */
-        if (XA_OK==ret)
+        if (local_rb)
+        {
+            stat = XA_RM_STATUS_ABORTED;
+        }
+        else if (XA_OK==ret)
         {
             stat = XA_RM_STATUS_PREP;
         }
@@ -1164,9 +1183,8 @@ expublic int ndrx_tpcommit(long flags)
     if (!XA_IS_DYNAMIC_REG || 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
-        if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS)))
+        if (EXSUCCEED!= (ret=atmi_xa_end_entry(atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1261,7 +1279,7 @@ expublic int ndrx_tpabort(long flags)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
-                    G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXTRUE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1436,7 +1454,7 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
         
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
-                    G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1810,7 +1828,7 @@ expublic int _tp_srv_disassoc_tx(void)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
                 atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
-                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1898,5 +1916,15 @@ expublic void ndrx_xa_nostartxid(int val)
     }
 }
 
+/**
+ * Set local abort function. Recommended for NOSTARTXID to avoid prepare before
+ * abort. Set by XA Driver.
+ * @param pf_xa_loctxabort NULL or ptr to local transaction abort function.
+ */
+expublic void ndrx_xa_setloctxabort(int (*pf_xa_loctxabort)(XID *xid, long flags))
+{
+    G_atmi_env.pf_xa_loctxabort = pf_xa_loctxabort;
+    NDRX_LOG(log_debug, "xa_loctxabort set to %p", G_atmi_env.pf_xa_loctxabort);
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

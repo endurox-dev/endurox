@@ -39,6 +39,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <xa.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _(X)  X
@@ -86,6 +87,7 @@ extern NDRX_API ndrx_env_priv_t* ndrx_env_priv_get(void);
 extern NDRX_API void ndrx_xa_noapisusp(int val);
 extern NDRX_API void ndrx_xa_nojoin(int val);
 extern NDRX_API void ndrx_xa_nostartxid(int val);
+extern NDRX_API void ndrx_xa_setloctxabort(int (*pf_xa_loctxabort)(XID *xid, long flags));
 
 #ifdef	__cplusplus
 }
