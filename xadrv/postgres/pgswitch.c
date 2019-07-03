@@ -104,6 +104,8 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int
 exprivate int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 exprivate int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
+exprivate int xa_rollback_local(XID *xid, long flags);
+
 struct xa_switch_t ndrxpgsw = 
 { 
     .name = "ndrxpgsw",
@@ -201,6 +203,8 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     /* prase the config and share it between threads */
     
     ndrx_xa_nostartxid(EXTRUE);
+    ndrx_xa_setloctxabort(xa_rollback_local);
+    
     return &ndrxpgsw;
 }
 
@@ -710,6 +714,65 @@ exprivate int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
 exprivate int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
 {
     return EXFAIL;
+}
+
+/**
+ * Abort local transaction, with out XID
+ * Use for xa_end so that we do not enter in prepared state if we know that
+ * we are doing abort
+ * @param xid transaction xid, not used
+ * @param flags flags, not used
+ * @return XA_OK, XE_ERR
+ */
+exprivate int xa_rollback_local(XID *xid, long flags)
+{
+    int ret = XA_OK;
+    char stmt[1024];
+    char pgxid[NDRX_PG_STMTBUFSZ];
+    PGresult *res = NULL;
+    
+    if (CONN_OPEN!=M_status)
+    {
+        NDRX_LOG(log_debug, "XA Not open");
+        ret = XAER_PROTO;
+        goto out;
+    }
+    
+    if (TMNOFLAGS != flags)
+    {
+        NDRX_LOG(log_error, "Flags not TMNOFLAGS (%ld)", 
+                flags);
+        ret = XAER_INVAL;
+        goto out;
+    }
+    
+    NDRX_STRCPY_SAFE(stmt, "ROLLBACK");
+    
+    NDRX_LOG(log_info, "Exec: [%s]", stmt);
+    
+    res = PQexec(M_conn, stmt);
+    
+    if (PGRES_COMMAND_OK != PQresultStatus(res)) 
+    {
+        char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+        
+        if (0==strcmp(TRAN_NOT_FOUND, state))
+        {
+            NDRX_LOG(log_info, "Transaction not found");
+        }
+        else
+        {
+            ret = XAER_RMERR;
+        }
+    }
+    
+    NDRX_LOG(log_debug, "%s OK", stmt);
+    
+out:
+    
+    PQclear(res);
+
+    return ret;
 }
 
 /* Static entries */
