@@ -45,8 +45,10 @@
 #include <gencall.h>
 #include <utlist.h>
 #include <Exfields.h>
+#include <xa.h>
 
 #include "xa_cmn.h"
+#include "exbase64.h"
 #include <ndrx.h>
 #include <nclopt.h>
 /*---------------------------Externs------------------------------------*/
@@ -60,15 +62,16 @@ exprivate int M_rcv_count;
 
 /**
  * List in-doubt transactions
- * @param svcnm
+ * @param[in] p_ub UBF buffer with TM response
+ * @param[in] svcnm TM service name
+ * @param[in] parse shall we parse the XID
  * @return SUCCEED/FAIL
  */
-exprivate int print_buffer(UBFH *p_ub, char *svcnm)
+exprivate int print_buffer(UBFH *p_ub, char *svcnm, short parse)
 {
     int ret = EXSUCCEED;
     char tmxid[1024];
     BFLDLEN len;
-    XID xid;
     
     /* the xid is binary XID recovered in hex */
     if (EXSUCCEED!=Bget(p_ub, TMXID, 0, (char *)tmxid, 0L))
@@ -80,12 +83,68 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
     }
     
     /* list in copy/past for commit/abort local format */
-    printf("%s: %s\n", svcnm, tmxid);
+    printf("XID: %s: %s\n", svcnm, tmxid);
     
     /* TODO: Print Enduro/X related data... (if have one) */
     
+    if (parse)
+    {
+        XID xid;
+        size_t sz;
+        
+        memset(&xid, 0, sizeof(xid));
+
+        sz = sizeof(xid);
+        if (NULL==ndrx_xa_base64_decode(tmxid, strlen(tmxid), &sz, (char *)&xid))
+        {
+            NDRX_LOG(log_warn, "Failed to parse XID -> Corrupted base64?");
+        }
+        else
+        {
+            /* print general info */
+            printf("DATA: formatID: 0x%lx (%s) gtrid_length: %ld bqual_length: %ld\n",
+                    xid.formatID, 
+                    (NDRX_XID_FORMAT_ID==xid.formatID?
+                        "fmt OK":"Not Enduro/X or different arch"),
+                    xid.gtrid_length, xid.bqual_length);
+            
+            /* print raw xid */
+            STDOUT_DUMP(log_info,"RAW XID", &xid, sizeof(xid));
+            
+            if (NDRX_XID_FORMAT_ID==xid.formatID)
+            {
+                short nodeid;
+                short srvid;
+                unsigned char rmid_start;
+                unsigned char rmid_cur;
+                long btid;
+                char xid_str[NDRX_XID_SERIAL_BUFSIZE];
+                
+                NDRX_LOG(log_debug, "Format OK");
+                
+                /* Print Enduro/X related xid data */
+                
+                atmi_xa_xid_get_info(&xid, &nodeid, 
+                    &srvid, &rmid_start, &rmid_cur, &btid);
+                
+                /* the generic xid would be with out branch & current rmid */
+                
+                /* reset xid trailer to have original xid_str */
+                memset(xid.data + xid.gtrid_length - 
+                    sizeof(long) - sizeof(unsigned char), 
+                        0, sizeof(long)+sizeof(unsigned char));
+                
+                atmi_xa_serialize_xid(&xid, xid_str);
+                
+                printf("DETAILS: tm_nodeid: %hd tm_srvid: %hd tm_rmid: %d cur_rmid: %d btid: %ld\n",
+                        nodeid, srvid, (int)rmid_start, (int)rmid_cur, btid);
+                printf("XID_STR: [%s]\n", xid_str);
+            }
+            
+        }
+    }
     
-    /* Check do we have error fields? of so then print the status? */
+     /* Check do we have error fields? of so then print the status? */
     
     if (Bpres(p_ub, TMERR_CODE, 0))
     {
@@ -104,6 +163,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
         }
         
         printf("RESULT: tp code: %hd, xa reason: %hd, msg: %s\n", code, reason, msg);
+        
     }
     
 out:
@@ -114,7 +174,7 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-exprivate int call_tm(UBFH *p_ub, char *svcnm)
+exprivate int call_tm(UBFH *p_ub, char *svcnm, short parse)
 {
     int ret=EXSUCCEED;
     int cd;
@@ -173,7 +233,7 @@ exprivate int call_tm(UBFH *p_ub, char *svcnm)
         {
             /*fprintf(stderr, "Response: \n");
             Bfprint(p_ub, stderr);*/
-            if (EXSUCCEED!=print_buffer(p_ub, svcnm))
+            if (EXSUCCEED!=print_buffer(p_ub, svcnm, parse))
             {
                 EXFAIL_OUT(ret);
             }
@@ -235,11 +295,14 @@ expublic int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc,
     atmi_svc_list_t *el, *tmp, *list;
     char svcnm[MAXTIDENT+1]={EXEOS};
     UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_RECOVERLOCAL);
+    short parse = EXFALSE;
     
     ncloptmap_t clopt[] =
     {
         {'s', BFLD_STRING, (void *)svcnm, sizeof(svcnm), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "TM Service Name"},
+        {'p', BFLD_SHORT, (void *)&parse, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Parse xid"},
         {0}
     };
     
@@ -268,7 +331,7 @@ expublic int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc,
     if (EXEOS!=svcnm[0])
     {
         NDRX_LOG(log_debug, "TM Service name specified: [%s]", svcnm);
-        ret = call_tm(p_ub, svcnm);
+        ret = call_tm(p_ub, svcnm, parse);
     }
     else
     {
@@ -281,7 +344,7 @@ expublic int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc,
 
             NDRX_LOG(log_info, "About to call service: [%s]\n", el->svcnm);
 
-            ret = call_tm(p_ub, el->svcnm);
+            ret = call_tm(p_ub, el->svcnm, parse);
             /* Have some housekeep. */
             LL_DELETE(list,el);
             NDRX_FREE(el);
@@ -319,6 +382,7 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
     char xid[sizeof(XID)*2] = {EXEOS};
     char msgfmt[128];
     short confirm = EXFALSE;
+    short parse = EXFALSE;
     
     UBFH *p_ub = atmi_xa_alloc_tm_call(tmcmd);
     
@@ -331,6 +395,8 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
                                 "XID to process (for recoverlocal output)"},
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT | NCLOPT_TRUEBOOL, "Confirm"},
+        {'p', BFLD_SHORT, (void *)&parse, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Parse xid"},
                                 
         {0}
     };
@@ -382,7 +448,7 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
     if (EXEOS!=svcnm[0])
     {
         NDRX_LOG(log_debug, "TM Service name specified: [%s]", svcnm);
-        ret = call_tm(p_ub, svcnm);
+        ret = call_tm(p_ub, svcnm, parse);
     }
     else
     {
@@ -395,7 +461,7 @@ exprivate int cmd_x_local(char *msg, char tmcmd, cmd_mapping_t *p_cmd_map,
 
             NDRX_LOG(log_info, "About to call service: [%s]\n", el->svcnm);
 
-            ret = call_tm(p_ub, el->svcnm);
+            ret = call_tm(p_ub, el->svcnm, parse);
             /* Have some housekeep. */
             LL_DELETE(list,el);
             NDRX_FREE(el);

@@ -81,32 +81,60 @@
 
 /**
  * Extract info from xid.
- * @param xid xid
- * @param p_nodeid return nodeid
- * @param p_srvid return serverid
+ * @param[in] xid binary xid
+ * @param[out] p_nodeid cluster node id on which tran started
+ * @param[out] p_srvid server which started xid
+ * @param[out] p_rmid_start resource manager id which started tran
+ * @param[out] p_rmid_cur current database RM ID
+ * @param[out] p_btid current branch id
  */
-expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
+expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid)
 {
     
-    memcpy((char *)p_nodeid, xid->data + sizeof(exuuid_t) + sizeof(unsigned char), 
-            sizeof(short));
+    memcpy((char *)p_rmid_start, xid->data + NDRX_XID_TRID_LEN, sizeof(unsigned char));
+
+    memcpy((char *)(p_nodeid), xid->data+NDRX_XID_TRID_LEN+sizeof(unsigned char)
+            ,sizeof(short));
     
-    memcpy((char *)p_srvid, xid->data + sizeof(exuuid_t) 
-            +sizeof(unsigned char) + sizeof(short), sizeof(short));
+    memcpy((char *)(p_srvid), xid->data+NDRX_XID_TRID_LEN+sizeof(unsigned char)
+            +sizeof(short)
+            ,sizeof(short));
+    
+    memcpy(p_rmid_cur, G_atmi_tls->xid.data + G_atmi_tls->xid.gtrid_length - 
+            sizeof(long) - sizeof(char), sizeof(unsigned char));
+    
+    memcpy(p_btid, G_atmi_tls->xid.data + G_atmi_tls->xid.gtrid_length - 
+            sizeof(long), sizeof(long));
+    
+    *p_nodeid = (short) ntohs(*p_nodeid);
+    *p_srvid = (short) ntohs(*p_srvid);
+    *p_btid = (long)ntohll(*p_btid);
+    
+    NDRX_LOG(log_debug, "%hd/%hd/%hd/%ld",
+            (short)*p_rmid_start, *p_srvid, (short)*p_rmid_cur, *p_btid);
+    
 }
 
 
 /**
  * Return XID info for XID string
- * @param xid_str
- * @param p_nodeid
- * @param p_srvid
+ * @param[in] xid_str
+ * @param[out] p_nodeid cluster node id on which tran started
+ * @param[out] p_srvid server which started xid
+ * @param[out] p_rmid_start resource manager id which started tran
+ * @param[out] p_rmid_cur current database RM ID
+ * @param[out] p_btid current branch id
  */
-expublic void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid)
+expublic void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid)
 {
     XID xid;
     memset(&xid, 0, sizeof(xid));
-    atmi_xa_xid_get_info(atmi_xa_deserialize_xid((unsigned char *)xid_str, &xid), p_nodeid, p_srvid);
+    atmi_xa_xid_get_info(atmi_xa_deserialize_xid((unsigned char *)xid_str, &xid), 
+        p_nodeid, p_srvid, p_rmid_start, p_rmid_cur, p_btid);
 }
 
 /**

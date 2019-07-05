@@ -290,7 +290,7 @@ exprivate char *get_file_name_final(char *fname)
 {
     static __thread char buf[PATH_MAX+1];
     
-    sprintf(buf, "%s/%s", M_folder_committed, fname);
+    snprintf(buf, sizeof(buf), "%s/%s", M_folder_committed, fname);
     NDRX_LOG(log_debug, "Filename built: %s", buf);
     
     return buf;

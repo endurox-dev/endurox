@@ -386,8 +386,14 @@ extern NDRX_API UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rm
 
 /* interface to ATMI lib/utils */
 extern NDRX_API char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out);
-extern NDRX_API void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid);
-extern NDRX_API void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid);
+extern NDRX_API void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid);
+
+extern NDRX_API void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid);
+
 extern NDRX_API XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out);
 extern NDRX_API int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
 extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
