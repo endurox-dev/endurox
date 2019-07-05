@@ -240,24 +240,33 @@ cmd_mapping_t M_command_map[] =
     {"committrans",cmd_commit,EXFAIL,            3,  4,  1, 
                 "Alias for `commit'"
                 , NULL},
-    {"recoverlocal",cmd_recoverlocal,EXFAIL,         1,  2,  1, 
+    {"recoverlocal",cmd_recoverlocal,EXFAIL,         1,  3,  1, 
                 "Print local local in-doubt transactions\n"
-                "\t args: recoverlocal [-s <TM SERVICE>]\n"
+                "\t args: recoverlocal [-s <TM SERVICE>] [-p]\n"
+                "\t -s - TMSRV which to query for transactions\n"
+                "\t -p - Parse XID and print details"
                 , NULL},
     {"commitlocal",cmd_commitlocal,EXFAIL,         1,  5,  1, 
                 "Commit local in-doubt transaction\n"
-                "\t args: commitlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
-                "\t -x - particular XID"
+                "\t args: commitlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
+                "\t -s - TMSRV which serves transaction\n"
+                "\t -x - particular XID\n"
+                "\t -y - confirm\n"
+                "\t -p - Parse XID and print details"
                 , NULL},
-    {"abortlocal",cmd_abortlocal,EXFAIL,         1,  4,  1, 
+    {"abortlocal",cmd_abortlocal,EXFAIL,         1,  5,  1, 
                 "Abort local in-doubt transaction\n"
-                "\t args: abortlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
-                "\t -x - particular XID"
+                "\t args: abortlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
+                "\t -x - particular XID\n"
+                "\t -y - confirm\n"
+                "\t -p - Parse XID and print details"
                 , NULL},
-    {"forgetlocal",cmd_forgetlocal,EXFAIL,         1,  4,  1, 
+    {"forgetlocal",cmd_forgetlocal,EXFAIL,         1,  5,  1, 
                 "Abort local in-doubt transaction\n"
-                "\t args: forgetlocal [-s <TM SERVICE> [-x <XID>]] [-y]\n"
-                "\t -x - particular XID"
+                "\t args: forgetlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
+                "\t -x - particular XID\n"
+                "\t -y - confirm\n"
+                "\t -p - Parse XID and print details"
                 , NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,        1,  1,  1, 
                 "Print env (from ndrxd)"
