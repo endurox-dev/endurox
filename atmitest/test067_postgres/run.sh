@@ -123,7 +123,7 @@ xadmin start -y || go_out 1
 
 # remove any prep transactions
 
-xadmin recoverlocal
+xadmin recoverlocal -p
 xadmin abortlocal -y
 
 
@@ -207,7 +207,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 
-xadmin recoverlocal
+xadmin recoverlocal -p
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
 
@@ -218,7 +218,7 @@ if [ "X$CNT" != "X1" ]; then
 
 fi
 
-xadmin commitlocal -y
+xadmin commitlocal -y -p
 
 
 echo "Check 50"
@@ -241,7 +241,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 
-xadmin abortlocal -y
+xadmin abortlocal -y -p
 
 
 echo "Check 0"
