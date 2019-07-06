@@ -206,8 +206,7 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-
-xadmin recoverlocal -p
+xadmin recoverlocal
 CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 
 
@@ -218,7 +217,7 @@ if [ "X$CNT" != "X1" ]; then
 
 fi
 
-xadmin commitlocal -y -p
+xadmin commitlocal -y
 
 
 echo "Check 50"
@@ -231,8 +230,8 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 
-echo "Do insert..."
-(./atmiclt67 doinsert 2>&1) >> ./atmiclt-dom1.log
+echo "Do insert2..."
+(./atmiclt67 insert2 2>&1) >> ./atmiclt-dom1.log
 
 RET=$?
 
@@ -240,9 +239,7 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-
 xadmin abortlocal -y -p
-
 
 echo "Check 0"
 (./atmiclt67 ck0 2>&1) >> ./atmiclt-dom1.log

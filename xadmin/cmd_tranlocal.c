@@ -83,7 +83,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm, short parse)
     }
     
     /* list in copy/past for commit/abort local format */
-    printf("XID: %s: %s\n", svcnm, tmxid);
+    printf("XID: -s %s -x %s\n", svcnm, tmxid);
     
     /* TODO: Print Enduro/X related data... (if have one) */
     
@@ -104,7 +104,8 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm, short parse)
             /* print general info */
             printf("DATA: formatID: 0x%lx (%s) gtrid_length: %ld bqual_length: %ld\n",
                     xid.formatID, 
-                    (NDRX_XID_FORMAT_ID==xid.formatID?
+                    ((NDRX_XID_FORMAT_ID==xid.formatID ||
+                        NDRX_XID_FORMAT_ID==(long)ntohll(xid.formatID))?
                         "fmt OK":"Not Enduro/X or different arch"),
                     xid.gtrid_length, xid.bqual_length);
             
