@@ -179,8 +179,20 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
          */
         if (ATMI_COMMAND_TPCALL==gen_command->command_id)
         {
-            ndrx_reply_with_failure((tp_command_call_t *)gen_command, 
-                    TPNOBLOCK, TPENOENT, G_command_state.listenq_str);
+            tp_command_call_t *tp_call = (tp_command_call_t *)gen_command;
+            
+            /* Bug #425: Check is process wait for reply? */
+            
+            if (!(tp_call->flags & TPNOREPLY))
+            {
+                ndrx_reply_with_failure(tp_call, TPNOBLOCK, TPENOENT, 
+                        G_command_state.listenq_str);
+            }
+            else
+            {
+                NDRX_LOG(log_warn, "No reply because of TPNOREPLY");
+                ndrx_dump_call_struct(log_error, tp_call);
+            }
         }
         else
         {

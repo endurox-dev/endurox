@@ -7,6 +7,11 @@
 ##   WE MIGHT SET THE FLAG IN SHARED MEMORY THAT SERVICE IS NOT AVAILABLE, AND LEAVE ENQUEUED
 ##   ONES FOR PROCESSING.
 ##   But for current implementation SVCERR will be OK too, at last it is not a timeout!
+##   ---
+##   06/07/2019 test case for Bug #425. Reply to caller shall not be made if
+##   Server was invoked tpacall with TPNOREPLY, in logs we shall not get the
+##   for the second call. As first will be consumed by server and then it dies.
+##   the second call waits in queue and is discarded..
 ##
 ## @file run.sh
 ##
@@ -112,6 +117,26 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
 	go_out 4
 fi
+
+echo "Test of Bug #425 - tpacall + TPNOREPLY, second call no reply generate"
+
+xadmin stop -y
+xadmin start -y
+
+(./atmiclt_$TESTNO tpacall_norply 2>&1) >> ./atmiclt.log
+
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+if [ "X`grep 'Dropping' *.log`" != "X" ]; then
+	echo "There must be no [Dropping unsolicited reply]!"
+	go_out 5
+fi
+
 
 go_out 0
 
