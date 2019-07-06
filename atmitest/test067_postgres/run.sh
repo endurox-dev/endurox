@@ -257,6 +257,114 @@ fi
 # Try to get count from Q -> no records
 # Try to get from Db -> 0 records
 # the same with commit, must have records for both..
+################################################################################
+
+unset NDRX_TESTMODE
+
+xadmin stop -y
+xadmin start -y
+
+echo "Queue Forward transactional tests..."
+
+(./atmiclt67 enqok 2>&1) >> ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Sleep 5 - wait for forward"
+sleep 5
+
+echo "There should be 1 msg in table"
+(./atmiclt67 ck1 2>&1) >> ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Invalid count in table!"
+    go_out $RET
+fi
+
+echo "There should be no messages in queue"
+
+xadmin mqlm -s "MYSPACE" -q "OKQ1"
+OUT=`xadmin mqlm -s "MYSPACE" -q "OKQ1"`
+
+if [ "X$OUT" != "X" ]; then
+    echo "No output expected for Q!"
+    go_out 100
+fi
+
+echo "There should be no prepared transactions"
+
+xadmin recoverlocal
+
+OUT=`xadmin recoverlocal`
+
+if [ "X$OUT" != "X" ]; then
+    echo "No output expected for transactions!"
+    go_out 101
+fi
+
+
+echo "Queue dead queue"
+
+(./atmiclt67 enqfail 2>&1) >> ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+echo "Sleep 5 - wait for forward / sill msg in Q"
+sleep 5
+
+xadmin mqlm -s "MYSPACE" -q "BADQ1"
+OUT=`xadmin mqlm -s "MYSPACE" -q "BADQ1"`
+
+if [ "X$OUT" == "X" ]; then
+    echo "Expected message BADQ1!"
+    go_out 100
+fi
+
+echo "Wait 15 to finish Q off"
+sleep 15
+
+echo "There should be 0 msg in table"
+(./atmiclt67 ck0 2>&1) >> ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Invalid count in table, must be 0!"
+    go_out $RET
+fi
+
+echo "There should be no messages in queue (as expired & removed)"
+
+xadmin mqlm -s "MYSPACE" -q "BADQ1"
+OUT=`xadmin mqlm -s "MYSPACE" -q "BADQ1"`
+
+if [ "X$OUT" != "X" ]; then
+    echo "No output expected for Q!"
+    go_out 100
+fi
+
+echo "There should be no prepared transactions"
+
+xadmin recoverlocal
+
+OUT=`xadmin recoverlocal`
+
+if [ "X$OUT" != "X" ]; then
+    echo "No output expected for transactions!"
+    go_out 101
+fi
+
+################################################################################
 # 2. We enqueue message to auto Q, the service for Q fails with TPFAIL.
 # the service must test that transaction was started.
 # after certain time the shell shall wait and see that there is no message in
