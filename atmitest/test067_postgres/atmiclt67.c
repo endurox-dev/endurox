@@ -223,6 +223,69 @@ expublic int sql_insert2(void)
 }
 
 /**
+ * Insert something into queue
+ * @param p_ub UBF buffer to insert
+ * @param queue queue name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int q_insert(UBFH *p_ub, char *queue)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    
+    memset(&qc, 0, sizeof(qc));
+    if (EXSUCCEED!=tpenqueue("MYSPACE", queue, &qc, (char *)p_ub, 0L, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * get queue message stats, the message by it self is discarded
+ * @param p_ub UBF buffer to insert
+ * @param queue queue name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int q_count(UBFH **pp_ub, char *queue)
+{
+    int ret = EXSUCCEED;
+    TPQCTL qc;
+    long len;
+    
+    while(1)
+    {
+        memset(&qc, 0, sizeof(qc));
+        
+        if (EXSUCCEED!=tpdequeue("MYSPACE", queue, &qc, (char **)pp_ub, &len, 0L))
+        {
+            if (TPEDIAGNOSTIC==tperrno && QMENOMSG==qc.diagnostic)
+            {
+                /* finish the counting */
+                break;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s", 
+                        tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        ret++;
+    }
+    
+out:
+    NDRX_LOG(log_debug, "Found %d messages in [%s] queue", ret, queue);
+    return ret;
+}
+
+
+/**
  * 1. Do the test call to the server
  * Also we need some test cases from shell processing with stalled commits.
  * Thus needs some parameters to be passed to executable.
@@ -340,7 +403,7 @@ int main(int argc, char** argv)
                 {
                     NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
                     EXFAIL_OUT(ret);
-                }    
+                }
 
                 if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
                 {
@@ -380,6 +443,16 @@ int main(int argc, char** argv)
             ret = EXSUCCEED;
             goto out;
         }
+        else if (0==strcmp("ck1", argv[1]))
+        {
+            if (1!=(ret=(int)sql_count()))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Got count: %d, expected 1", ret);
+                EXFAIL_OUT(ret);
+            }
+            ret = EXSUCCEED;
+            goto out;
+        }
         else if (0==strcmp("testq", argv[1]))
         {
             ret = q_run(&p_ub);
@@ -393,6 +466,7 @@ int main(int argc, char** argv)
                         tpstrerror(tperrno));
                 EXFAIL_OUT(ret);
             }
+            
             /* Bug #417 */
             if (EXSUCCEED == tpcall("TOUTSV", (char *)p_ub, 0L, (char **)&p_ub, 
                     &rsplen,TPTRANSUSPEND))
@@ -422,6 +496,50 @@ int main(int argc, char** argv)
             ret = EXSUCCEED;
             goto out;
         }
+        else if (0==strcmp("enqfail", argv[1]))
+        {
+            /* clear the table */
+            sql_mktab();
+            
+            if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
+            {
+                NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+
+            /* enqueue to fail server */
+            if (EXSUCCEED!=q_insert(p_ub, "BADQ1"))
+            {
+                NDRX_LOG(log_error, "Failed to enq to BADQ1!");
+                EXFAIL_OUT(ret);
+            }
+            
+            ret = EXSUCCEED;
+            goto out;
+            
+        } /* if test q */
+        else if (0==strcmp("enqok", argv[1]))
+        {
+            /* clear the table */
+            sql_mktab();
+            
+            if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
+            {
+                NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+
+            /* enqueue to fail server */
+            if (EXSUCCEED!=q_insert(p_ub, "OKQ1"))
+            {
+                NDRX_LOG(log_error, "Failed to enq to OKQ1!");
+                EXFAIL_OUT(ret);
+            }
+            
+            ret = EXSUCCEED;
+            goto out;
+            
+        } /* if test q */
         
     }
     
