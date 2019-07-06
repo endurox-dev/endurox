@@ -72,12 +72,12 @@ expublic int q_run(UBFH **pp_ub)
     long rsplen;
     TPQCTL qc;
     
-    sql_mktab();
-    
-    for (i=0; i<2; i++)
+    for (i=0; i<3; i++)
     {
+        sql_mktab();
+        
         /* start tran... */
-        if (EXSUCCEED!=tpbegin(60, 0))
+        if (EXSUCCEED!=tpbegin(15, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
             EXFAIL_OUT(ret);
@@ -111,12 +111,34 @@ expublic int q_run(UBFH **pp_ub)
             }
         }
         
-        if (0==i)
+        if (0==i || 2==i)
         {
-            if (EXSUCCEED!=tpabort(0L))
+            if (2==i)
             {
-                NDRX_LOG(log_error, "TESTERROR: Failed to abort: %s", tpstrerror(tperrno));
-                EXFAIL_OUT(ret);
+                sleep(20);
+                
+                if (EXSUCCEED==tpcommit(0L))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: tpcommit must fail but succeed!");
+                    EXFAIL_OUT(ret);
+                }
+                
+                if (TPEABORT!=tperrno)
+                {
+                    NDRX_LOG(log_error, "TESTERROR: transaction must be aborted but: %s!",
+                            tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
+                
+            }
+            else
+            {
+                if (EXSUCCEED!=tpabort(0L))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: Failed to abort: %s", 
+                            tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
             }
             
             /* Check the counts, must be 0 */
@@ -203,6 +225,7 @@ expublic int q_run(UBFH **pp_ub)
                 }
             }
         } /* if i=1 (this is case for commit) */
+        
         
     } /* for test case */
 out:

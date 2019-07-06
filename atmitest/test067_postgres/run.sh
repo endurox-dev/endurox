@@ -320,7 +320,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 echo "Sleep 5 - wait for forward / sill msg in Q"
-sleep 5
+sleep 2
 
 xadmin mqlm -s "MYSPACE" -q "BADQ1"
 OUT=`xadmin mqlm -s "MYSPACE" -q "BADQ1"`
