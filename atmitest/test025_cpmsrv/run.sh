@@ -158,6 +158,9 @@ OUT1=`xadmin pc`
 
 echo "Before reload [$OUT1]"
 
+# shall pass on w/out problem...
+xadmin rc NOT_EXISTS_TEST
+
 xadmin rc -t BATCH% -s% -w 15000
 
 echo "***** PC *****"
