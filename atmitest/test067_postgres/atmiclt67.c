@@ -319,6 +319,45 @@ int main(int argc, char** argv)
             goto out;
             
         }
+        else if (0==strcmp("insert2", argv[1]))
+        {
+
+            sql_mktab();
+
+            /* run some inserts... say 50 */
+            
+            if (EXSUCCEED!=tpbegin(60, 0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+
+            /* generate multiple TIDS: */
+            for (i=0; i<100; i++)
+            {
+                if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
+                {
+                    NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+                    EXFAIL_OUT(ret);
+                }    
+
+                if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+                {
+                    NDRX_LOG(log_error, "TESTERROR: TESTSV failed: %s", tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
+            }
+
+            if (EXSUCCEED==tpcommit(0))
+            {
+                NDRX_LOG(log_error, "TESTERROR: Commit must fail!");
+                EXFAIL_OUT(ret);
+            }
+            
+            goto out;
+            
+        }      
         else if (0==strcmp("ck50", argv[1]))
         {
          

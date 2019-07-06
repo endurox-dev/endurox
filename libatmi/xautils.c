@@ -102,10 +102,10 @@ expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid,
             +sizeof(short)
             ,sizeof(short));
     
-    memcpy(p_rmid_cur, G_atmi_tls->xid.data + G_atmi_tls->xid.gtrid_length - 
+    memcpy(p_rmid_cur, xid->data + xid->gtrid_length - 
             sizeof(long) - sizeof(char), sizeof(unsigned char));
-    
-    memcpy(p_btid, G_atmi_tls->xid.data + G_atmi_tls->xid.gtrid_length - 
+        
+    memcpy(p_btid, xid->data + xid->gtrid_length - 
             sizeof(long), sizeof(long));
     
     *p_nodeid = (short) ntohs(*p_nodeid);
