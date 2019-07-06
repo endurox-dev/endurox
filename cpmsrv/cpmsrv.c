@@ -667,10 +667,21 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
     {
         c = cpm_client_get(tag, subsect);
-        if (EXSUCCEED!=(p_func(p_ub, cd, tag, subsect, c, &nr_proc)))
+        /* Bug #428 */
+        if (NULL!=c)
         {
-            NDRX_LOG(log_error, "%s: cpm_bc_obj failed", __func__);
-            EXFAIL_OUT(ret);
+            if (EXSUCCEED!=(p_func(p_ub, cd, tag, subsect, c, &nr_proc)))
+            {
+                NDRX_LOG(log_error, "%s: cpm_bc_obj failed", __func__);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+        
+            snprintf(msg, sizeof(msg), "Client process %s/%s not found",
+                    tag, subsect);
+            cpm_send_msg(p_ub, cd, msg);
         }
     }
     else
