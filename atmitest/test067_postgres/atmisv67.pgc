@@ -50,10 +50,9 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Standard service entry.
- * transaction shall be open by caller.
+ * Shared test function add some data to DB
  */
-void TESTSV (TPSVCINFO *p_svc)
+int shared_svc_func(TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     char testbuf[1024];
@@ -83,9 +82,21 @@ void TESTSV (TPSVCINFO *p_svc)
     }
     
 out:
+    return ret;
+}
+
+/**
+ * Standard service entry.
+ * transaction shall be open by caller.
+ */
+void TESTSV (TPSVCINFO *p_svc)
+{
+    int ret;
+    ret = shared_svc_func(p_svc);
+    
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
-                (char *)p_ub,
+                p_svc->data,
                 0L,
                 0L);
 }
@@ -109,6 +120,23 @@ out:
                 0L);
 }
 
+/**
+ * Failure service
+ */
+void FAILSV (TPSVCINFO *p_svc)
+{
+    int ret;
+    
+    /* do some insert */
+    ret = shared_svc_func(p_svc);
+    
+    /* fail the insert */
+    tpreturn(  TPFAIL,
+                0L,
+                p_svc->data,
+                0L,
+                0L);
+}
 
 /**
  * Do initialisation
@@ -132,12 +160,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise TESTSV: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
-
-    if (EXSUCCEED!=tpadvertise("TOUTSV", TOUTSV))
+    else if (EXSUCCEED!=tpadvertise("TOUTSV", TOUTSV))
     {
         NDRX_LOG(log_error, "Failed to initialise TOUTSV: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+    else if (EXSUCCEED!=tpadvertise("FAILSV", FAILSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise FAILSV: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
 
 out:
     return ret;
