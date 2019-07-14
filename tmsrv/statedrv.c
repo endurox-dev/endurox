@@ -203,7 +203,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                     if (NULL==(vote_txstage = xa_status_get_next_by_new_status(p_tl->txstage, 
                             el->rmstatus)))
                     {
-                        NDRX_LOG(log_error, "No stage info for %hd/%c - ignore", p_tl->txstage, 
+                        NDRX_LOG(log_info, "No stage info for %hd/%c - ignore", p_tl->txstage, 
                             el->rmstatus);
                         /*
                         ret=TPESYSTEM;
