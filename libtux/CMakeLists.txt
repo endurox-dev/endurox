@@ -1,6 +1,5 @@
 ##
-## @brief Enduro Execution platform's UBF library
-##   We are using flex & bison for boolean expressions!
+## @brief Tuxedo compatibility library (dependecy loader)
 ##
 ## @file CMakeLists.txt
 ##
@@ -33,76 +32,37 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.6)
-
-find_package(BISON)
-find_package(FLEX)
-
-BISON_TARGET(EXPRPARSER expr.y ${CMAKE_CURRENT_BINARY_DIR}/expr.tab.c)
-FLEX_TARGET(EXPRSCANNER expr.l ${CMAKE_CURRENT_BINARY_DIR}/expr.lex.c)
-
-#set(CMAKE_C_FLAGS_DEBUG "-DUBF_DEBUG" ${CMAKE_C_FLAGS_DEBUG})
+cmake_minimum_required(VERSION 2.8)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
 	# do nothing
 ELSE ($ENV{RELEASE_BUILD})
-	ADD_DEFINITIONS("-D UBF_DEBUG")
+	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+add_library(tux SHARED $<TARGET_OBJECTS:objnstd>
+                       $<TARGET_OBJECTS:objubf>
+                       $<TARGET_OBJECTS:objatmi>
+                       $<TARGET_OBJECTS:objatmisrvinteg>)
 
-# Create a library called "UBF" which includes the source files.
-# The extension is already found. Any number of sources could be listed here. 
-add_library (objubf OBJECT
-		ubf_impl.c
-		ubf.c
-		fproj_impl.c
-		find_impl.c
-		get_impl.c
-		bprint_impl.c
-		fmerge.c
-		ferror.c 
-		fdatatype.c
-		fieldtable.c
-		cf.c 
-		expr_funcs.c
-		utils.c
-                b_readwrite.c
-                ubf_tls.c
-                view_null.c
-                view_parser.c
-                view_plot.c
-                view_struct.c
-                view_ubf.c
-		view_access.c
-		${BISON_EXPRPARSER_OUTPUTS} 
-		${FLEX_EXPRSCANNER_OUTPUTS}
-                bcmp.c
-                fielddb.c
-	)
+target_link_libraries(tux ${RT_LIB} pthread)
 
-# shared libraries need PIC
-set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)
 
-# shared and static libraries built from the same object files
-add_library(ubf SHARED $<TARGET_OBJECTS:objubf>)
+#FML32 Emul
+add_library (fml32 SHARED 
+                    dum.c
+                        )
 
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
-    # for XL tls
-    target_link_libraries(ubf pthread)
-endif()
-
+#
+# Also needs to provide dummy fml32 library for NetXMS Build
+#
 install (TARGETS 
-    ubf 
+    tux fml32
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries
     )
+
 # vim: set ts=4 sw=4 et smartindent:

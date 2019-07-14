@@ -89,7 +89,7 @@ elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
 endif ()
 
-add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
+add_library (objnstd OBJECT ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         ini.c inicfg.c cconfig.c nerror.c nstd_tls.c ulog.c
                         sys_genunix.c 
                         ${NSTD_POLLER}
@@ -104,6 +104,12 @@ add_library (nstd SHARED ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.c
                         edbutil.c crc32.c nstd_shmsv.c ${NSTD_SYS_4} ${NSTD_SYS_5}
                         nstd_sem.c ${NSTD_SYS_6} emb.c sys_test.c
                         )
+
+# shared libraries need PIC
+set_property(TARGET objnstd PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(nstd SHARED $<TARGET_OBJECTS:objnstd>)
 
 if(${CMAKE_OS_NAME} STREQUAL "AIX")
     # for tls support
