@@ -170,8 +170,8 @@ Also it describes time frames in which ATMI server should start or stop.
 Internal server ping can be configured here too.
 
 
-DEBUG CONFIGURATION FILE SYNTAX
--------------------------------
+PARAMETERS
+----------
 
 *SANITY_SECONDS*::
     Number of seconds after which perform system sanity checks. This number
