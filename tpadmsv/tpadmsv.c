@@ -1,0 +1,108 @@
+/**
+ * @brief Administrative server
+ *
+ * @file tpadmsv.c
+ */
+/* -----------------------------------------------------------------------------
+ * Enduro/X Middleware Platform for Distributed Transaction Processing
+ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * This software is released under one of the following licenses:
+ * AGPL or Mavimax's license for commercial use.
+ * -----------------------------------------------------------------------------
+ * AGPL license:
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License, version 3 as published
+ * by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along 
+ * with this program; if not, write to the Free Software Foundation, Inc., 
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * -----------------------------------------------------------------------------
+ * A commercial use license is available from Mavimax, Ltd
+ * contact@mavimax.com
+ * -----------------------------------------------------------------------------
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <regex.h>
+#include <utlist.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+
+#include <ndebug.h>
+#include <atmi.h>
+#include <atmi_int.h>
+#include <typed_buf.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <Exfields.h>
+
+#include "brdcstsv.h"
+/*---------------------------Externs------------------------------------*/
+extern int optind, optopt, opterr;
+extern char *optarg;
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+static long M_restarts = 0;
+static long M_check = 5; /* defaulted to 5 sec */
+/*---------------------------Prototypes---------------------------------*/
+int start_daemon_recover(void);
+
+/**
+ * Nothing to do here..
+ * 
+ * @param p_svc
+ */
+void MIB (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0,
+                (char *)p_svc->data,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialization
+ * Have a local MIB & shared MIB
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret=EXSUCCEED;
+    char svcnm[MAXTIDENT+1];
+    
+    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
+
+    if (EXSUCCEED!=tpadvertise(svcnm, .MIB))
+    {
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", svcnm);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+    return ret;
+}
+
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    /* just for build... */
+}
+
+/* vim: set ts=4 sw=4 et smartindent: */
