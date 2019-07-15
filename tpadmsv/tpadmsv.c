@@ -38,7 +38,6 @@
 #include <utlist.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/wait.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -47,18 +46,15 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <Exfields.h>
+#include <ubfutil.h>
 
-#include "brdcstsv.h"
+#include "tpadmsv.h"
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-static long M_restarts = 0;
-static long M_check = 5; /* defaulted to 5 sec */
 /*---------------------------Prototypes---------------------------------*/
 int start_daemon_recover(void);
 
@@ -70,6 +66,11 @@ int start_daemon_recover(void);
 void MIB (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
+    
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    
+    
+    ndrx_debug_dump_UBF(log_info, "Request buffer:", p_ub);
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -86,15 +87,21 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-    char svcnm[MAXTIDENT+1];
+    char svcnm2[MAXTIDENT+1];
     
-    snprintf(svcnm, sizeof(svcnm), NDRX_SVC_TPBROAD, tpgetnodeid());
+    snprintf(svcnm2, sizeof(svcnm2), NDRX_SVC_TMIBNODE, tpgetnodeid());
 
-    if (EXSUCCEED!=tpadvertise(svcnm, .MIB))
+    if (EXSUCCEED!=tpadvertise(NDRX_SVC_TMIB, MIB))
     {
-        NDRX_LOG(log_error, "Failed to initialize [%s]!", svcnm);
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", NDRX_SVC_TMIB);
         EXFAIL_OUT(ret);
     }
+    else if (EXSUCCEED!=tpadvertise(svcnm2, MIB))
+    {
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", svcnm2);
+        EXFAIL_OUT(ret);
+    }
+    
 
 out:
     return ret;
