@@ -12,7 +12,7 @@ SYNOPSIS
 --------
 --------------------------------------------------------------------------------
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR={"url":\"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}\", \"user\":\"${EX_PG_USER}\", \"password\":\"${EX_PG_PASS}\"}"
+NDRX_XA_OPEN_STR={"url":"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}", "user":"${EX_PG_USER}", "password":"${EX_PG_PASS}"}"
 NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 NDRX_XA_DRIVERLIB=libndrxxapq.so
 NDRX_XA_RMLIB=-
@@ -68,14 +68,21 @@ ECPG routines. But thanks to their API, the connection handler can be extracted
 to used by libPQ.
 
 
+The connection details are encoded in JSON based string which contains the
+database URL, user name and password.
+
 CONNECTION PARAMETERS
 ---------------------
-*EX_PG_HOST*::
-    Clean up the cache database when Enduro/X application domain is booting. The
-    reset is performed by *tpcachebtsv* binary. Thus this binary must be configured
-    in *ndrxconfig.xml(5)*. And it should be one of the first XATMI servers booted.
-    The *tpcachetbsv* simple removes database files at boot.
+*url*::
+    This is standard PostgreSQL connection URL. Typically it contains database
+    host, port and database name. The Enduro/X standard environment variable
+    substitution is used here.
 
+*user*::
+    This is database user name
+    
+*password*::
+    
 CONFIGURATION EXAMPLE
 ---------------------
 ...
@@ -88,8 +95,8 @@ ECPG C EXAMPLE
 --------------
 ...
 
-For more unit tests please see 'atmitest/test048_cache' unit test folder ini
-files.
+For more unit tests please see 'atmitest/test067_postgres' unit test folder for
+ECPG, PQ source examples and configuration.
 
 
 BUGS
