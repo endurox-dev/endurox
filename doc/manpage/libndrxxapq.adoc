@@ -12,7 +12,11 @@ SYNOPSIS
 --------
 --------------------------------------------------------------------------------
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR={"url":"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}", "user":"${EX_PG_USER}", "password":"${EX_PG_PASS}"}"
+NDRX_XA_OPEN_STR={"url":"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}"
+        ,"user":"${EX_PG_USER}"
+        ,"password":"${EX_PG_PASS}"
+        ,"compat":"PGSQL|INFORMIX|INFORMIX_SE"
+        }"
 NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
 NDRX_XA_DRIVERLIB=libndrxxapq.so
 NDRX_XA_RMLIB=-
@@ -21,7 +25,6 @@ NDRX_XA_LAZY_INIT=1
 
 DESCRIPTION
 -----------
-
 This is XA driver specifically written Enduro/X needs. It provides an XA switch
 emulation on top of PostgreSQL prepared transactions. PostgreSQL by default
 does not support XA switch. Also when transaction start, there is no possibility
@@ -79,17 +82,109 @@ CONNECTION PARAMETERS
     substitution is used here.
 
 *user*::
-    This is database user name
+    This is  PosgreSQL connection user name. Enduro/X standard environment
+    substitution applies. Used where applies.
     
 *password*::
+    Password used for establishing connection. Enduro/X standard environment
+    substitution applies. Used where applies.
+
+*compat*::
+    Compatibility mode. The default is *PGSQL*. Other options are *INFORMIX*
+    and *INFORMIX_SE*.
     
+EXTERNAL SYMBOLS
+----------------
+*ndrx_G_PG_conname*::
+    This is connection name currently associated with thread. It is thread is
+    stored in thread local storage (TLS). Definition is 
+    *__thread char ndrx_G_PG_conname[65]*.
+
 CONFIGURATION EXAMPLE
 ---------------------
-...
+When starting to use Enduro/X PQ XA Driver, ensure that PosgreSQL PQ and ECPG
+libraries are installed. Particularity *libecpg* and *libpq* must be installed.
+
+The typical configuration is done as a standard Enduro/X XA resource configuration,
+which can be set directly in environment variables or in *[@global]* section in
+application configuration (e.g. app.ini). This gives example of app.ini configuration.
+
+Sample configuration *app.ini* for CCTAG *DB1_PQ*:
+
+--------------------------------------------------------------------------------
+[@global/DB1_PQ]
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR={ "url":"tcp:postgresql://localhost:5432/testdb", 
+	"user":"testuser", "password":"testuser1"}
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
+NDRX_XA_DRIVERLIB=libndrxxapq.so
+NDRX_XA_RMLIB=-
+NDRX_XA_LAZY_INIT=1
+--------------------------------------------------------------------------------
+
 
 LIBPQ C EXAMPLE
 ---------------
-...
+
+--------------------------------------------------------------------------------
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <atmi.h>
+#include <ecpglib.h>
+
+int main(int argc, char** argv)
+{
+    PGconn * conn = ECPGget_PGconn(NULL);
+    /* open connection */
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to open: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    res = PQexec(conn, command);
+    
+    estat =PQresultStatus(res);
+    if (PGRES_COMMAND_OK != estat && PGRES_TUPLES_OK != estat) 
+    {
+        char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+        char *ok = "0000";
+        if (NULL==state)
+        {
+            state = ok;
+        }
+        
+        if (0==strstr(codes,state))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Statement [%s] failed with [%s] accepted [%s]",
+                    command, state, codes);
+            EXFAIL_OUT(ret);
+        }
+    }
+
+
+    if (EXSUCCEED==tpcommit(0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Commit OK, must fail!");
+        EXFAIL_OUT(ret);
+    }
+    tpclose();
+    tpterm();
+
+}
+--------------------------------------------------------------------------------
+
+Build the program with:
+
+$ cc 
 
 ECPG C EXAMPLE
 --------------
