@@ -46,6 +46,7 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <Exfields.h>
+#include <Excompat.h>
 #include <ubfutil.h>
 
 #include "tpadmsv.h"
@@ -71,6 +72,8 @@ void MIB (TPSVCINFO *p_svc)
     
     
     ndrx_debug_dump_UBF(log_info, "Request buffer:", p_ub);
+    
+    /* TODO: Get request class: */
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,

@@ -72,7 +72,7 @@ export NDRX_LEV=5
 
 # UBFTAB
 #export FLDTBLDIR=$NDRX_APPHOME/ubftest/ubftab
-export FIELDTBLS=Exfields,test.fd
+export FIELDTBLS=Excompat,Exfields,test.fd
 
 # Load dynamically....!
 . ~/ndrx_home
