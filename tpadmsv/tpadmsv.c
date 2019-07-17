@@ -57,7 +57,8 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-int start_daemon_recover(void);
+
+expublic char ndrx_G_svcnm2[MAXTIDENT+1]; /** our service name, per instance. */
 
 /**
  * Nothing to do here..
@@ -67,14 +68,42 @@ int start_daemon_recover(void);
 void MIB (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
-    
+    char clazz[MAXTIDENT+1];
+    char op[MAXTIDENT+1];
+    BFLDLEN len;
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     
     ndrx_debug_dump_UBF(log_info, "Request buffer:", p_ub);
     
-    /* TODO: Get request class: */
+    /* Get request class: 
+     * In case if we get cursor from other node, then we shall forward there
+     * the current request.
+     */
+    len = sizeof(clazz);
+    if (EXSUCCEED!=Bget(TA_CLASS, 0, clazz, &len))
+    {
+        NDRX_LOG(log_error, "Failed to get TA_CLASS: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
     
+    len = sizeof(op);
+    if (EXSUCCEED!=Bget(TA_OPERATION, 0, op, &len))
+    {
+        NDRX_LOG(log_error, "Failed to get TA_OPERATION: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* TODO: Needs functions for error handling:
+     * with following arguments:
+     * TA_ERROR code, TA_BADFLD (optional only for INVAL), TA_STATUS message.
+     * The function shall receive UBF buffer and allow to process the format
+     * string which is loaded into TA_STATUS.
+     * 
+     * We need a function to check is buffer approved, if so then we can set
+     * the reject. Reject on reject is not possible (first is more significant).
+     */
+
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -91,21 +120,20 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-    char svcnm2[MAXTIDENT+1];
     
-    snprintf(svcnm2, sizeof(svcnm2), NDRX_SVC_TMIBNODE, tpgetnodeid());
+    snprintf(ndrx_G_svcnm2, sizeof(ndrx_G_svcnm2), NDRX_SVC_TMIBNODE, 
+            tpgetnodeid(), tpgetsrvid());
 
     if (EXSUCCEED!=tpadvertise(NDRX_SVC_TMIB, MIB))
     {
         NDRX_LOG(log_error, "Failed to initialize [%s]!", NDRX_SVC_TMIB);
         EXFAIL_OUT(ret);
     }
-    else if (EXSUCCEED!=tpadvertise(svcnm2, MIB))
+    else if (EXSUCCEED!=tpadvertise(ndrx_G_svcnm2, MIB))
     {
-        NDRX_LOG(log_error, "Failed to initialize [%s]!", svcnm2);
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", ndrx_G_svcnm2);
         EXFAIL_OUT(ret);
     }
-    
 
 out:
     return ret;

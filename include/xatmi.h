@@ -115,7 +115,7 @@ extern "C" {
     
 #define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher       */
 #define NDRX_SVC_TMIB     ".TMIB"               /**< Tp Management information base           */
-#define NDRX_SVC_TMIBNODE ".TMIB%03ld"           /**< Tp Management information base, per nodr */
+#define NDRX_SVC_TMIBNODE ".TMIB-%ld-%d"        /**< Tp Management information base, node, server */
 
 #define NDRX_SVC_RM       "@TM-%d"              /**< resource_id */
 #define NDRX_SVC_TM       "@TM-%d-%d"           /**< Node_idresource_id */

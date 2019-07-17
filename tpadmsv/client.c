@@ -1,7 +1,7 @@
 /**
- * @brief Library for keeping snapshoot cursor data
+ * @brief This is client image grabber & mapping
  *
- * @file snapshoot.c
+ * @file client.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -54,78 +54,24 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Client class infos mapping table
+ */
+expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
+{  
+    /* Driving of the Preparing: */
+    {TA_CLIENTID,       EXOFFSET(ndrx_adm_client_t, clientid)}
+    ,{TA_CLTNAME,       EXOFFSET(ndrx_adm_client_t, name)}
+    ,{TA_LMID,          EXOFFSET(ndrx_adm_client_t, lmid)}
+    ,{TA_STATE,         EXOFFSET(ndrx_adm_client_t, state)}
+    ,{TA_PID,           EXOFFSET(ndrx_adm_client_t, pid)}
+    ,{TA_CURCONV,       EXOFFSET(ndrx_adm_client_t, curconv)}
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate long M_cntr = 1; /**< Counter of the cursor ID */
-exprivate ndrx_adm_cursors_t *M_cursors = NULL; /**< List of open cursors */
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Open new cursor. Assign the cursor id
- * @param clazz
- * @param data data to load into cursor
- * @return 
- */
-expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(char *clazz, ndrx_adm_cursors_t *data)
-{
-    int ret = EXSUCCEED;
-    char curs[MAXTIDENT+1];
-    ndrx_adm_cursors_t *el = NULL;
-    
-    
-    M_cntr++;
-    
-    if (M_cntr > 999999999)
-    {
-        M_cntr=1;
-    }
-    
-    /* Cursor format:
-     * .TMIB-N-S_CCNNNNNN
-     * Where:
-     * - N -> Node id;
-     * - S -> Service ID
-     */
-    snprintf(curs, sizeof(curs), "%s_%s%09d", G_svcnm2, clazz, M_cntr);
-    
-    /* Allocate the hash. */
-    
-    el = NDRX_MALLOC(sizeof(ndrx_adm_cursors_t));
-    
-    if (NULL==el)
-    {
-        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", sizeof(ndrx_adm_cursors_t),
-                strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    
-    memcpy(el, data, sizeof(ndrx_adm_cursors_t));
-    NDRX_STRCPY_SAFE(el->cursorid, curs);
-    
-    EXHASH_ADD_STR( M_cursors, cursorid, el );
-    
-out:
-    
-    if (EXSUCCEED!=ret && NULL!=el)
-    {
-        NDRX_FREE(el);
-        el = NULL;
-    }
-    
-    return el;
-}
-
-/**
- * This shall find the cursor, and perform the buffer mappings according to tables
- *  and structures.
- *  The buffer shall be received and filled accordingly. If fetched till the end
- *  the data item shall be deleted.
- * @return EXUSCCEED/EXFAIL
- */
-expublic int ndrx_adm_curs_fetch(UBFH *p_ub)
-{
-    
-}
 
 
 
