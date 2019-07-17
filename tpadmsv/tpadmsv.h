@@ -39,6 +39,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 /*---------------------------Externs------------------------------------*/
+extern char ndrx_G_svcnm2[];
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -48,7 +49,7 @@ extern "C" {
  */
 struct ndrx_adm_cursors
 {
-    char cursorid[32];          /**< Cached cursor id                       */
+    char cursorid[MAXTIDENT+1]; /**< Cached cursor id                       */
     char *memblock;             /**< Memory block                           */
     long items_tot;             /**< Total number of items                  */
     int curspos;                /**< Current cursor position                */
@@ -63,32 +64,34 @@ struct ndrx_adm_cursors
  */
 typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
 
+/**
+ * C structure fields to UBF fields which are loaded to caller
+ */
+typedef struct
+{
+    int c_offset;
+    BFLDID fid;
+} ndrx_adm_elmap_t;
+
+
+/**
+ * Image of the client information
+ */
+typedef struct 
+{
+    char clientid[78+1];      /**< myid                                 */
+    char name[MAXTIDENT+1];   /**< process name                         */
+    char lmid[MAXTIDENT+1];   /**< cluster node id                      */
+    /** may be: ACT, SUS (not used), DEA - dead */
+    char state[15+1];         /**< state of the client live/dead by pid */
+    long pid;                 /**< process PID                          */
+    long curconv;             /**< number of conversations process into */
+} ndrx_adm_client_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Open new cursor
- * @param clazz
- * @param data data to load into cursor
- * @return 
- */
-expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(char *clazz, ndrx_adm_cursors_t *data)
-{
-    return NULL;
-}
-
-/**
- * This shall find the cursor, and perform the buffer mappings according to tables
- *  and structures.
- *  The buffer shall be received and filled accordingly. If fetched till the end
- *  the data item shall be deleted.
- * @return 
- */
-expublic int ndrx_adm_curs_fetch()
-{
-    
-}
 
 #ifdef	__cplusplus
 }
