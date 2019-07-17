@@ -42,10 +42,53 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Admin cursors open
+ */
+struct ndrx_adm_cursors
+{
+    char cursorid[32];          /**< Cached cursor id                       */
+    char *memblock;             /**< Memory block                           */
+    long items_tot;             /**< Total number of items                  */
+    int curspos;                /**< Current cursor position                */
+    long itemsize;              /**< Block size                             */
+    
+    ndrx_stopwatch_t w;         /**< Stopwatch when the cursor was open     */
+    EX_hash_handle hh;          /**< makes this structure hashable          */
+};
+
+/**
+ * Cursors type
+ */
+typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Open new cursor
+ * @param clazz
+ * @param data data to load into cursor
+ * @return 
+ */
+expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(char *clazz, ndrx_adm_cursors_t *data)
+{
+    return NULL;
+}
+
+/**
+ * This shall find the cursor, and perform the buffer mappings according to tables
+ *  and structures.
+ *  The buffer shall be received and filled accordingly. If fetched till the end
+ *  the data item shall be deleted.
+ * @return 
+ */
+expublic int ndrx_adm_curs_fetch()
+{
+    
+}
 
 #ifdef	__cplusplus
 }
