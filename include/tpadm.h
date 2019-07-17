@@ -45,6 +45,18 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MIB_LOCAL   0x00001
+    
+/** Error codes for Admin API 
+ * @defgroup MIB_ERRORS MIB API error codes
+ * @{
+ */
+#define TAEAPP          1   /**< Other componets failure                */
+#define TAECONFIG       2   /**< Configuration file failure             */    
+#define TAEINVAL        3   /**< Invalid argument, see TA_BADFLD        */    
+#define TAEOS           4   /**< Operating system error, see TA_STATUS  */    
+    
+/** @}*/
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
