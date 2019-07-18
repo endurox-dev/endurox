@@ -1,7 +1,7 @@
 /**
- * @brief Enduro/X application server administration interface
+ * @brief Admin API error handling
  *
- * @file tpadm.h
+ * @file tpadmerror.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,61 +30,63 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <regex.h>
+#include <utlist.h>
+#include <unistd.h>
+#include <signal.h>
 
-#ifndef TPADM_H
-#define	TPADM_H
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <Excompat.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <atmi_int.h>
+#include <typed_buf.h>
+#include <ndrstandard.h>
 #include <ubf.h>
-#include <nstdutil.h>
+#include <Exfields.h>
+#include <Excompat.h>
+#include <ubfutil.h>
+
+#include "tpadmsv.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MIB_LOCAL   0x00001
-    
-/** Error codes for Admin API 
- * @defgroup MIB_ERRORS MIB API error codes
- * @{
- */
-#define TAEAPP          -1   /**< Other componets failure                */
-#define TAECONFIG       -2   /**< Configuration file failure             */    
-#define TAEINVAL        -3   /**< Invalid argument, see TA_BADFLD        */    
-#define TAEOS           -4   /**< Operating system error, see TA_STATUS  */    
-#define TAEPERM         -6   /**< No permissions for operation           */
-#define TAEPREIMAGE     -7   /**< Set failed due to invalid image        */
-#define TAEPROTO        -8   /**< Protocol error                         */
-#define TAEREQUIRED     -9   /**< Required field missing see TA_BADFLD   */
-#define TAESUPPORT      -10  /**< Admin call not support in current ver  */
-#define TAESYSTEM       -11  /**< System (Enduro/X) error occurred       */
-#define TAEUNIQ         -12  /**< Object for update not identified       */
-    
-#define TAOK            0    /**< Request succeed, no up-updates         */
-#define TAUPDATED       1    /**< Succeed, updates made                  */
-#define TAPARTIAL       2    /**< Partial succeed, have updates          */
-/** @}*/
-
-#define NDRX_TA_CLASS_CLIENT        "T_CLIENT"      /**<  Client process class */
-    
-#define NDRX_TA_OPERATION           "GET"           /**< Get infos             */
-#defien NDRX_TA_GETNEXT             "GETNEXT"       /**< Read next curs        */
-
-    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags);
-extern NDRX_API int ndrx_buffer_list(ndrx_growlist_t *list);
 
-#ifdef	__cplusplus
+/**
+ * Read TA_ERROR from UBF buffer.
+ * If no error is set, then OK is returned.
+ * @param p_ub UBF buffer
+ * @return 
+ */
+expublic long ndrx_adm_error_get(UBFH *p_ub)
+{
+    
 }
-#endif
 
-#endif	/* TPADM_H */
+/**
+ * Set error for the current request
+ * @param[out] p_ub UBF buffer with request data
+ * @param[in] error_code error code (or OK status) to be set
+ * @param[in] fldid Field id with has the error (if not BFLDID)
+ * @param[in] fmt format string for the message
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_adm_error_set(UBFH *p_ub, long error_code, 
+        long fldid, const char *fmt, ...)
+{
+    char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
+    va_list ap;
+
+    va_start(ap, fmt);
+    (void) vsnprintf(msg, sizeof(msg), fmt, ap);
+    va_end(ap);
+
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
