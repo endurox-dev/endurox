@@ -48,6 +48,7 @@
 #include <Exfields.h>
 #include <Excompat.h>
 #include <ubfutil.h>
+#include <sys_unix.h>
 
 #include "tpadmsv.h"
 /*---------------------------Externs------------------------------------*/
@@ -67,12 +68,65 @@ expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
     ,{TA_STATE,         EXOFFSET(ndrx_adm_client_t, state)}
     ,{TA_PID,           EXOFFSET(ndrx_adm_client_t, pid)}
     ,{TA_CURCONV,       EXOFFSET(ndrx_adm_client_t, curconv)}
+    ,{TA_CONTEXTID,     EXOFFSET(ndrx_adm_client_t, contextid)}
 };
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+/**
+ * Build up the cursor
+ * Scan the queues and add the elements
+ * @param cursnew this is new cursor domain model
+ */
+expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew)
+{
+    int ret = EXSUCCEED;
+    
+    string_list_t* qlist = NULL;
+    string_list_t* elt = NULL;
 
+    
+    /* setup the list */
+    if (EXSUCCEED!=ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_client_t)))
+    {
+        NDRX_LOG(log_error, "Failed to setup growlist! OOM?");
+        EXFAIL_OUT(ret);
+    }
+    
+     qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
+    
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "posix queue listing failed!");
+        EXFAIL_OUT(ret);
+    }
+     
+    LL_FOREACH(qlist,elt)
+    {
+        /* parse the queue..., extract clients.. */
+        
+        /* if not print all, then skip this queue */
+        if (0!=strncmp(elt->qname, 
+                G_atmi_env.qprefix_match, G_atmi_env.qprefix_match_len))
+        {
+            continue;
+        }
+        /* extract clients... get
+        typ = ndrx_q_type_get(elt->qname);
+        */
+    }
+    
+    
+out:
+    
+    if (NULL!=qlist)
+    {
+        ndrx_string_list_free(qlist);
+    }
+
+    return ret;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
