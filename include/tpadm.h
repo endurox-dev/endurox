@@ -69,8 +69,8 @@ extern "C" {
 
 #define NDRX_TA_CLASS_CLIENT        "T_CLIENT"      /**<  Client process class */
     
-#define NDRX_TA_OPERATION           "GET"           /**< Get infos             */
-#defien NDRX_TA_GETNEXT             "GETNEXT"       /**< Read next curs        */
+#define NDRX_TA_GET                 "GET"           /**< Get infos             */
+#define NDRX_TA_GETNEXT             "GETNEXT"       /**< Read next curs        */
 
     
 /*---------------------------Enums--------------------------------------*/
