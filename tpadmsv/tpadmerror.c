@@ -50,6 +50,7 @@
 #include <ubfutil.h>
 
 #include "tpadmsv.h"
+#include <tpadm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -66,7 +67,14 @@
  */
 expublic long ndrx_adm_error_get(UBFH *p_ub)
 {
+    long err = TAOK;
     
+    if (Bpres(p_ub, TA_ERROR, 0))
+    {
+        Bget(p_ub, TA_ERROR, 0, (char *)&err, 0L);
+    }
+    
+    return err;
 }
 
 /**
@@ -80,12 +88,59 @@ expublic long ndrx_adm_error_get(UBFH *p_ub)
 expublic int ndrx_adm_error_set(UBFH *p_ub, long error_code, 
         long fldid, const char *fmt, ...)
 {
+    long curerr;
+    int ret = EXSUCCEED;
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
     va_list ap;
 
+    if (TAOK!=(curerr=ndrx_adm_error_get(p_ub)))
+    {
+        NDRX_LOG(log_info, "Error code %d already set -> no override to %d",
+                curerr, error_code);
+        goto out;
+    }
+    
     va_start(ap, fmt);
     (void) vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
+    
+    if (error_code >= TAOK)
+    {
+        NDRX_LOG(log_info, "Setting MIB error to: %d:[%s] (%d)",
+                error_code, msg, fldid);
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Setting MIB error to: %d:[%s] (%d)",
+                error_code, msg, fldid);
+    }
+    
+    if (EXSUCCEED!=Bchg(p_ub, TA_ERROR, 0, (char *)&error_code, 0L))
+    {
+        NDRX_LOG(log_error, "Failed to set TA_ERROR: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS!=msg[0])
+    {
+        if (EXSUCCEED!=Bchg(p_ub, TA_STATUS, 0, (char *)msg, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to set TA_STATUS: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    if (BBADFLDID!=fldid)
+    {
+        if (EXSUCCEED!=Bchg(p_ub, TA_BADFLD, 0, (char *)&fldid, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to set TA_BADFLD: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+out:
+    return ret;
 
 }
 

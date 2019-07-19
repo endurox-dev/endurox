@@ -41,28 +41,16 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 extern char ndrx_G_svcnm2[];
 /*---------------------------Macros-------------------------------------*/
+
+/** minimum error free size to install in buffer                */
+#define TPADM_ERROR_MINSZ           MAX_TP_ERROR_LEN+128
+/** minimum free buffer size for processing responses / paging  */
+#define TPADM_BUFFER_MINSZ          4096
+
+/** client data size                                            */
+#define TPADM_CLIENT_DATASZ         (sizeof(ndrx_adm_client_t)*2)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/**
- * Admin cursors open
- */
-struct ndrx_adm_cursors
-{
-    char cursorid[MAXTIDENT+1]; /**< Cached cursor id                       */
-    char *memblock;             /**< Memory block                           */
-    long items_tot;             /**< Total number of items                  */
-    int curspos;                /**< Current cursor position                */
-    long itemsize;              /**< Block size                             */
-    
-    ndrx_stopwatch_t w;         /**< Stopwatch when the cursor was open     */
-    EX_hash_handle hh;          /**< makes this structure hashable          */
-};
-
-/**
- * Cursors type
- */
-typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
 
 /**
  * C structure fields to UBF fields which are loaded to caller
@@ -72,6 +60,25 @@ typedef struct
     int c_offset;
     BFLDID fid;
 } ndrx_adm_elmap_t;
+
+/**
+ * Admin cursors open
+ */
+struct ndrx_adm_cursors
+{
+    char cursorid[MAXTIDENT+1]; /**< Cached cursor id                       */
+    int curspos;                /**< Current cursor position                */
+    ndrx_growlist_t list;       /**< List of the cursor items               */
+    
+    ndrx_stopwatch_t w;         /**< Stopwatch when the cursor was open     */
+    ndrx_adm_elmap_t *map;      /**< Field map for response                 */
+    EX_hash_handle hh;          /**< makes this structure hashable          */
+};
+
+/**
+ * Cursors type
+ */
+typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
 
 
 /**
@@ -86,12 +93,18 @@ typedef struct
     char state[15+1];         /**< state of the client live/dead by pid */
     long pid;                 /**< process PID                          */
     long curconv;             /**< number of conversations process into */
+    long contextid;           /**< Multi-threading context id           */
 } ndrx_adm_client_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern long ndrx_adm_error_get(UBFH *p_ub);
+extern int ndrx_adm_error_set(UBFH *p_ub, long error_code, 
+        long fldid, const char *fmt, ...);
 
+/* Class types: */
+extern int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew);
 
 #ifdef	__cplusplus
 }
