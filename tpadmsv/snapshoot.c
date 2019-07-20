@@ -72,7 +72,6 @@ expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(char *clazz, ndrx_adm_cursors_t *
     char curs[MAXTIDENT+1];
     ndrx_adm_cursors_t *el = NULL;
     
-    
     M_cntr++;
     
     if (M_cntr > 999999999)
@@ -86,7 +85,7 @@ expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(char *clazz, ndrx_adm_cursors_t *
      * - N -> Node id;
      * - S -> Service ID
      */
-    snprintf(curs, sizeof(curs), "%s_%s%09d", G_svcnm2, clazz, M_cntr);
+    snprintf(curs, sizeof(curs), "%s_%s%09ld", ndrx_G_svcnm2, clazz, M_cntr);
     
     /* Allocate the hash. */
     

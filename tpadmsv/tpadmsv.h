@@ -96,6 +96,15 @@ typedef struct
     long contextid;           /**< Multi-threading context id           */
 } ndrx_adm_client_t;
 
+/**
+ * Map classes to operations
+ */
+typedef struct
+{
+    char clazz[MAXTIDENT+1];                    /**< Class name               */
+    void (*p_get)(ndrx_adm_cursors_t *cursnew, long flags); /**< Get cursor   */
+} ndrx_adm_class_map_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -104,7 +113,7 @@ extern int ndrx_adm_error_set(UBFH *p_ub, long error_code,
         long fldid, const char *fmt, ...);
 
 /* Class types: */
-extern int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew);
+extern int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew, long flags);
 
 #ifdef	__cplusplus
 }

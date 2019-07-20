@@ -52,7 +52,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Executables ###############################
 add_executable (tpadmsv tpadmsv.c ../libatmisrv/rawmain_integra.c
-            tpadmerror.c client.c)
+            tpadmerror.c client.c snapshoot.c)
 target_link_libraries (tpadmsv atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
 set_target_properties(tpadmsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

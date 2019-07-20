@@ -79,23 +79,24 @@ expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
  * Build up the cursor
  * Scan the queues and add the elements
  * @param cursnew this is new cursor domain model
+ * @param flags not used
  */
-expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew)
+expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew, long flags)
 {
     int ret = EXSUCCEED;
-    
+    int typ;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
-
+    TPMYID myid;
+    ndrx_adm_client_t clt;
+    ndrx_adm_client_t *p_clt;
     
+    int idx=0;
+    int i;
     /* setup the list */
-    if (EXSUCCEED!=ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_client_t)))
-    {
-        NDRX_LOG(log_error, "Failed to setup growlist! OOM?");
-        EXFAIL_OUT(ret);
-    }
+    ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_client_t));
     
-     qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
+    qlist = ndrx_sys_mqueue_list_make(G_atmi_env.qpath, &ret);
     
     if (EXSUCCEED!=ret)
     {
@@ -116,8 +117,63 @@ expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew)
         /* extract clients... get
         typ = ndrx_q_type_get(elt->qname);
         */
-    }
-    
+        typ = ndrx_q_type_get(elt->qname);
+        
+        
+        if (NDRX_QTYPE_CLTRPLY==typ)
+        {
+            memset(&clt, 0, sizeof(clt));
+            if (EXSUCCEED==ndrx_cvnq_parse_client(elt->qname, &myid))
+            {
+                clt.pid = myid.pid;
+                NDRX_STRCPY_SAFE(clt.clientid, elt->qname);
+                clt.contextid = myid.contextid;
+                NDRX_STRCPY_SAFE(clt.name, myid.binary_name);
+                snprintf(clt.lmid, sizeof(clt.lmid), "%d", myid.nodeid);
+                
+                if (EXSUCCEED==kill(myid.pid, 0))
+                {
+                    NDRX_STRCPY_SAFE(clt.state, "ACT");
+                }
+                else
+                {
+                    NDRX_STRCPY_SAFE(clt.state, "DEA");
+                }
+            
+                if (EXSUCCEED!=ndrx_growlist_add(&cursnew->list, (void *)&clt, idx))
+                {
+                    NDRX_LOG(log_error, "Growlist failed - out of memory?");
+                    EXFAIL_OUT(ret);
+                }
+                idx++;
+            }
+        }
+        else if (NDRX_QTYPE_CONVINIT==typ)
+        {
+            /* parse: NDRX_CONV_INITATOR_Q_PFX and search for client if so */
+            if (EXSUCCEED==ndrx_cvnq_parse_client(elt->qname, &myid))
+            {
+                /* search for client... */
+                for (i=0; i<=cursnew->list.maxindexused; i++)
+                {
+                    p_clt = (ndrx_adm_client_t *) (cursnew->list.mem + i*sizeof(ndrx_adm_client_t));
+                    
+                    /* reset binary_name to common len... */
+                    myid.binary_name[MAXTIDENT];
+                    if (p_clt->pid == myid.pid
+                            && p_clt->contextid == myid.contextid
+                            && 0==strcmp(p_clt->name, myid.binary_name)
+                            && myid.nodeid == atoi(p_clt->lmid)
+                            )
+                    {
+                        p_clt->curconv++;
+                        break;
+                    }
+                }
+            } /* If q parse OK */
+        } /* NDRX_CLT_QREPLY_PFX==typ */
+        
+    } /* LL_FOREACH(qlist,elt) */
     
 out:
     
