@@ -56,6 +56,7 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
 /*---------------------------Statics------------------------------------*/
 
 /**
@@ -64,7 +65,7 @@
 exprivate ndrx_adm_class_map_t M_class_map[] =
 {  
     /* Driving of the Preparing: */
-    {NDRX_TA_CLASS_CLIENT,       &ndrx_adm_client_get}
+    {NDRX_TA_CLASS_CLIENT,      "CL",       &ndrx_adm_client_get}
 };
 
 /*---------------------------Prototypes---------------------------------*/
@@ -82,7 +83,7 @@ exprivate ndrx_adm_class_map_t *class_map_get(char *clazz)
     
     for (i=0; i<N_DIM(M_class_map); i++)
     {
-        if (0==strcmp(M_class_map.clazz, clazz))
+        if (0==strcmp(M_class_map[i].clazz, clazz))
         {
             return &M_class_map[i];
         }
@@ -100,14 +101,17 @@ void MIB (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     char clazz[MAXTIDENT+1];
     char op[MAXTIDENT+1];
-    char cursorid[MAXTIDENT+1];
+    char cursid[MAXTIDENT+1];
     ndrx_adm_cursors_t cursnew; /* New cursor */
     ndrx_adm_cursors_t *curs;
     BFLDLEN len;
-    ndrx_adm_class_map_t *map;
+    ndrx_adm_class_map_t *class_map;
+    int is_get = EXFALSE;
+    long ret_occurs = 0;
+    long ret_more = 0;
     UBFH *p_ub = (UBFH *)p_svc->data;
     /* get the incoming buffer new size: */
-    long bufsz = NDRX_MIN(TPADM_BUFFER_MINSZ, NDRX_MSGSIZEMAX);
+    long bufsz = NDRX_MIN(ndrx_G_adm_config.buffer_minsz, NDRX_MSGSIZEMAX);
     
     /* Allocate some buffer size  */
     
@@ -121,21 +125,6 @@ void MIB (TPSVCINFO *p_svc)
         NDRX_LOG(log_error, "Failed realloc UBF to %d bytes: %s", 
                 bufsz, tpstrerror(tperrno));
         p_ub = (UBFH *)p_svc->data;
-        EXFAIL_OUT(ret);
-    }
-    
-    /* Get request class: 
-     * In case if we get cursor from other node, then we shall forward there
-     * the current request.
-     */
-    len = sizeof(clazz);
-    if (EXSUCCEED!=Bget(p_ub, TA_CLASS, 0, clazz, &len))
-    {
-        NDRX_LOG(log_error, "Failed to get TA_CLASS: %s", Bstrerror(Berror));
-        
-        ndrx_adm_error_set(p_ub, TAEREQUIRED, TA_CLASS, 
-                "Failed to get TA_CLASS: %s", Bstrerror(Berror));
-        
         EXFAIL_OUT(ret);
     }
     
@@ -153,8 +142,8 @@ void MIB (TPSVCINFO *p_svc)
     /* get cursor if required */
     if (0==strcmp(NDRX_TA_GETNEXT, op))
     {
-        len = sizeof(cursorid);
-        if (EXSUCCEED!=Bget(p_ub, TA_CURSOR, 0, cursorid, &len))
+        len = sizeof(cursid);
+        if (EXSUCCEED!=Bget(p_ub, TA_CURSOR, 0, cursid, &len))
         {
             NDRX_LOG(log_error, "Failed to get TA_CURSOR: %s", Bstrerror(Berror));
 
@@ -163,6 +152,25 @@ void MIB (TPSVCINFO *p_svc)
 
             EXFAIL_OUT(ret);
         }
+        
+        /* TODO: check the cursor target, if other MIB server, then forward
+         * the call
+         */
+    }
+    
+    /* Get request class: 
+     * In case if we get cursor from other node, then we shall forward there
+     * the current request.
+     */
+    len = sizeof(clazz);
+    if (EXSUCCEED!=Bget(p_ub, TA_CLASS, 0, clazz, &len))
+    {
+        NDRX_LOG(log_error, "Failed to get TA_CLASS: %s", Bstrerror(Berror));
+        
+        ndrx_adm_error_set(p_ub, TAEREQUIRED, TA_CLASS, 
+                "Failed to get TA_CLASS: %s", Bstrerror(Berror));
+        
+        EXFAIL_OUT(ret);
     }
     
     /* TODO: Needs functions for error handling:
@@ -177,9 +185,9 @@ void MIB (TPSVCINFO *p_svc)
 
     
     /* find class */
-    map = class_map_get(clazz);
+    class_map = class_map_get(clazz);
     
-    if (NULL==map)
+    if (NULL==class_map)
     {
         NDRX_LOG(log_error, "Unsupported class [%s]", clazz);
 
@@ -190,11 +198,12 @@ void MIB (TPSVCINFO *p_svc)
         
     if (0==strcmp(NDRX_TA_GET, op))
     {
+        is_get = EXTRUE;
         memset(&cursnew, 0, sizeof(cursnew));
         
         /* get cursor data */
         NDRX_LOG(log_debug, "About to open cursor [%s]",  clazz);
-        if (EXSUCCEED!=map->p_get(&cursnew, 0L))
+        if (EXSUCCEED!=class_map->p_get(clazz, &cursnew, 0L))
         {
             NDRX_LOG(log_error, "Failed to open %s cursor", clazz);
 
@@ -203,21 +212,67 @@ void MIB (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
         
-        /* Prepare cursor */
-        curs = ndrx_adm_curs_new(clazz, &cursnew);
+        /* Prepare cursor  */
+        curs = ndrx_adm_curs_new(p_ub, class_map, &cursnew);
         
         if (NULL==curs)
         {
             /* ERR ! Failed to open cursor.. */
+            NDRX_LOG(log_error, "Failed to open cursor for %s", clazz);
+
+            ndrx_adm_error_set(p_ub, TAESYSTEM, BBADFLDID, 
+                        "Failed to open cursor for %s", clazz);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (0==strcmp(NDRX_TA_GETNEXT, op))
+    {
+        /* read cursor id */
+        curs = ndrx_adm_curs_get(cursid);
+    }
+    
+    if (is_get)
+    {
+        
+        if (NULL==curs)
+        {
+            /* Load the fields in the buffer */  
+            goto out_nomore;
         }
         
+        /* Fetch cursor to UBF buffer */
+        if (EXSUCCEED!=ndrx_adm_curs_fetch(p_ub, curs))
+        {
+            NDRX_LOG(log_error, "Failed to fetch!");
+            ndrx_adm_error_set(p_ub, TAESYSTEM, BBADFLDID, 
+                        "Failed to fetch!");
+        }
+    }
+    
+out_nomore:
+    
+    if (is_get)
+    {
+        if (EXSUCCEED!=Bchg(p_ub, TA_OCCURS, 0, (char *)&ret_occurs, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to set TA_OCCURS to %ld: %s",
+                    ret_occurs, Bstrerror(Berror));
+        }
+            
+        if (EXSUCCEED!=Bchg(p_ub, TA_MORE, 0, (char *)&ret_more, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to set TA_MORE to %ld: %s",
+                    ret_occurs, Bstrerror(Berror));
+        }
         
+        /* approve the request... */
+        ndrx_adm_error_set(p_ub, TAOK, BBADFLDID, "OK");
     }
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
-                (char *)p_svc->data,
+                (char *)p_ub,
                 0L,
                 0L);
 }
@@ -229,6 +284,68 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
+    char c;
+    
+    memset(&ndrx_G_adm_config, 0, sizeof(ndrx_G_adm_config));
+    
+    /* parse clopt: cursor limit and buffer size to alloc... */
+    
+    /* Parse command line  */
+    while ((c = getopt(argc, argv, "n:b:v:s:")) != -1)
+    {
+        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        switch(c)
+        {
+            case 'n':
+                /* number of cursors allow */
+                ndrx_G_adm_config.cursors_max = atoi(optarg);
+                break;
+            case 'b':
+                /* initial buffer size */    
+                ndrx_G_adm_config.buffer_minsz = atoi(optarg);
+                break;
+            case 'v':
+                /* cursor validity time, seconds */
+                ndrx_G_adm_config.validity = atoi(optarg);
+                break;
+            case 's':
+                /* scan time for dead cursors */
+                ndrx_G_adm_config.scantime = atoi(optarg);
+                break;
+        }
+    }
+    
+    if (ndrx_G_adm_config.buffer_minsz<=0)
+    {
+        ndrx_G_adm_config.buffer_minsz = TPADM_DEFAULT_BUFFER_MINSZ;
+    }
+    
+    if (ndrx_G_adm_config.validity<=0)
+    {
+        ndrx_G_adm_config.validity = TPADM_DEFAULT_VALIDITY;
+    }
+    
+    if (ndrx_G_adm_config.scantime<=0)
+    {
+        ndrx_G_adm_config.scantime = TPADM_DEFAULT_SCANTIME;
+    }
+    
+    if (ndrx_G_adm_config.cursors_max<=0)
+    {
+        ndrx_G_adm_config.cursors_max = TPADM_DEFAULT_CURSORS_MAX;
+    }
+    
+    NDRX_LOG(log_info, "Max number of cursors allow: %d", 
+            ndrx_G_adm_config.cursors_max);
+    
+    NDRX_LOG(log_info, "Alloc buffer size for return: %d bytes", 
+            ndrx_G_adm_config.buffer_minsz);
+    
+    NDRX_LOG(log_info, "Cursor validity seconds: %d sec", 
+            ndrx_G_adm_config.validity);
+    
+    NDRX_LOG(log_info, "Cursor housekeep: %d sec", 
+            ndrx_G_adm_config.scantime);
     
     snprintf(ndrx_G_svcnm2, sizeof(ndrx_G_svcnm2), NDRX_SVC_TMIBNODE, 
             tpgetnodeid(), tpgetsrvid());
@@ -241,6 +358,17 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     else if (EXSUCCEED!=tpadvertise(ndrx_G_svcnm2, MIB))
     {
         NDRX_LOG(log_error, "Failed to initialize [%s]!", ndrx_G_svcnm2);
+        EXFAIL_OUT(ret);
+    }
+    
+        /* Register timer check.... */
+    if (EXSUCCEED==ret &&
+            EXSUCCEED!=tpext_addperiodcb(ndrx_G_adm_config.scantime, 
+            ndrx_adm_curs_housekeep))
+    {
+        
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 

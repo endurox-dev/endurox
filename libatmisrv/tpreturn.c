@@ -160,6 +160,8 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         XA_TX_COPY(call, ndrx_get_G_atmi_xa_curtx()->txinfo);
     }
     
+    /* will override later */
+    call->rcode = rcode;
     /* prepare reply buffer */
     if (TPFAIL==rval || TPSUCCESS==rval)
     {
@@ -232,7 +234,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->data_len = 0;
     }
     call->rval = rval;
-    call->rcode = rcode;
 
     data_len = sizeof(tp_command_call_t)+call->data_len;
     call->command_id = ATMI_COMMAND_TPREPLY;

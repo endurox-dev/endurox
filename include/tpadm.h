@@ -61,6 +61,7 @@ extern "C" {
 #define TAESUPPORT      -10  /**< Admin call not support in current ver  */
 #define TAESYSTEM       -11  /**< System (Enduro/X) error occurred       */
 #define TAEUNIQ         -12  /**< Object for update not identified       */
+#define TAELIMIT        -13  /**< Cursor limit reached-wait for houskeep */
     
 #define TAOK            0    /**< Request succeed, no up-updates         */
 #define TAUPDATED       1    /**< Succeed, updates made                  */

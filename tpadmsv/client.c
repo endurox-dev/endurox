@@ -69,6 +69,7 @@ expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
     ,{TA_PID,           EXOFFSET(ndrx_adm_client_t, pid)}
     ,{TA_CURCONV,       EXOFFSET(ndrx_adm_client_t, curconv)}
     ,{TA_CONTEXTID,     EXOFFSET(ndrx_adm_client_t, contextid)}
+    ,{BBADFLDID}
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -78,10 +79,11 @@ expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
 /**
  * Build up the cursor
  * Scan the queues and add the elements
+ * @param clazz class name
  * @param cursnew this is new cursor domain model
  * @param flags not used
  */
-expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew, long flags)
+expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags)
 {
     int ret = EXSUCCEED;
     int typ;
@@ -93,6 +95,7 @@ expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew, long flags)
     
     int idx=0;
     int i;
+    cursnew->map = ndrx_G_client_map;
     /* setup the list */
     ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_client_t));
     
@@ -123,7 +126,10 @@ expublic int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew, long flags)
         if (NDRX_QTYPE_CLTRPLY==typ)
         {
             memset(&clt, 0, sizeof(clt));
-            if (EXSUCCEED==ndrx_cvnq_parse_client(elt->qname, &myid))
+            /*
+            expublic int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr)
+            */
+            if (EXSUCCEED==ndrx_myid_parse_qname(elt->qname, &myid))
             {
                 clt.pid = myid.pid;
                 NDRX_STRCPY_SAFE(clt.clientid, elt->qname);
