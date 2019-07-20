@@ -57,9 +57,39 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/**
+ * Mapping to from classes to their operations...
+ */
+exprivate ndrx_adm_class_map_t M_class_map[] =
+{  
+    /* Driving of the Preparing: */
+    {NDRX_TA_CLASS_CLIENT,       &ndrx_adm_client_get}
+};
+
 /*---------------------------Prototypes---------------------------------*/
 
 expublic char ndrx_G_svcnm2[MAXTIDENT+1]; /** our service name, per instance. */
+
+/**
+ * Return class map
+ * @param clazz class name
+ * @return ptr to class descr or NULL
+ */
+exprivate ndrx_adm_class_map_t *class_map_get(char *clazz)
+{
+    int i;
+    
+    for (i=0; i<N_DIM(M_class_map); i++)
+    {
+        if (0==strcmp(M_class_map.clazz, clazz))
+        {
+            return &M_class_map[i];
+        }
+    }
+    
+    return NULL;
+}
 
 /**
  * MIB Service
@@ -72,7 +102,9 @@ void MIB (TPSVCINFO *p_svc)
     char op[MAXTIDENT+1];
     char cursorid[MAXTIDENT+1];
     ndrx_adm_cursors_t cursnew; /* New cursor */
+    ndrx_adm_cursors_t *curs;
     BFLDLEN len;
+    ndrx_adm_class_map_t *map;
     UBFH *p_ub = (UBFH *)p_svc->data;
     /* get the incoming buffer new size: */
     long bufsz = NDRX_MIN(TPADM_BUFFER_MINSZ, NDRX_MSGSIZEMAX);
@@ -144,30 +176,41 @@ void MIB (TPSVCINFO *p_svc)
      */
 
     
+    /* find class */
+    map = class_map_get(clazz);
+    
+    if (NULL==map)
+    {
+        NDRX_LOG(log_error, "Unsupported class [%s]", clazz);
+
+        ndrx_adm_error_set(p_ub, TAESUPPORT, BBADFLDID, 
+                    "Unsupported class [%s]", clazz);
+        EXFAIL_OUT(ret);
+    }
+        
     if (0==strcmp(NDRX_TA_GET, op))
     {
         memset(&cursnew, 0, sizeof(cursnew));
         
-        /* run the selector... */
-        if (0==strcmp(clazz, NDRX_TA_CLASS_CLIENT))
+        /* get cursor data */
+        NDRX_LOG(log_debug, "About to open cursor [%s]",  clazz);
+        if (EXSUCCEED!=map->p_get(&cursnew, 0L))
         {
-            if (EXSUCCEED!=ndrx_adm_client_get(&cursnew))
-            {
-                NDRX_LOG(log_error, "Failed to open client cursor");
+            NDRX_LOG(log_error, "Failed to open %s cursor", clazz);
 
-                ndrx_adm_error_set(p_ub, TAESYSTEM, BBADFLDID, 
-                            "Failed to open client cursor");
-                EXFAIL_OUT(ret);
-            }
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Unsupported class [%s]", clazz);
-
-            ndrx_adm_error_set(p_ub, TAESUPPORT, BBADFLDID, 
-                        "Unsupported class [%s]", clazz);
+            ndrx_adm_error_set(p_ub, TAESYSTEM, BBADFLDID, 
+                        "Failed to open %s cursor", clazz);
             EXFAIL_OUT(ret);
         }
+        
+        /* Prepare cursor */
+        curs = ndrx_adm_curs_new(clazz, &cursnew);
+        
+        if (NULL==curs)
+        {
+            /* ERR ! Failed to open cursor.. */
+        }
+        
         
     }
     
