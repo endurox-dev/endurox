@@ -145,6 +145,30 @@ out:
     return ret;
 }
 
+/**
+ * Parse client details from queue
+ * @param[in] qname queue string
+ * @param[out] p_myid parsed details
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_myid_parse_qname(char *qname, TPMYID *p_myid)
+{
+    int ret = EXSUCCEED;
+    char *p;
+    
+    if (NULL==(p = strchr(qname, NDRX_FMT_SEP)))
+    {
+        NDRX_LOG(log_error, "Invalid queue (1) - no prefix seperator: %s", 
+                qname);
+        EXFAIL_OUT(ret);
+    }
+    p++;
+    
+    ret = ndrx_myid_parse(p, p_myid, EXFALSE);
+    
+out:
+    return ret;
+}
 
 /**
  * Step forward number of separators
