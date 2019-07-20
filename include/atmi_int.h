@@ -778,6 +778,7 @@ extern NDRX_API int fill_reply_queue(char *nodestack,
             char *org_reply_to, char *reply_to);
 
 extern NDRX_API int ndrx_cvnq_parse_client(char *qname, TPMYID *p_myid);
+extern NDRX_API int ndrx_myid_parse_qname(char *qname, TPMYID *p_myid);
 extern NDRX_API int ndrx_cvnq_parse_server(char *qname, TPMYID *p_myid_first,  
         TPMYID *p_myid_second);
 extern NDRX_API int ndrx_myid_parse(char *my_id, TPMYID *out, int iscnv_initator);

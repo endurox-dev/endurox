@@ -44,21 +44,40 @@ extern char ndrx_G_svcnm2[];
 
 /** minimum error free size to install in buffer                */
 #define TPADM_ERROR_MINSZ           MAX_TP_ERROR_LEN+128
-/** minimum free buffer size for processing responses / paging  */
-#define TPADM_BUFFER_MINSZ          4096
+
 
 /** client data size                                            */
 #define TPADM_CLIENT_DATASZ         (sizeof(ndrx_adm_client_t)*2)
+
+/** minimum free buffer size for processing responses / paging  */
+#define TPADM_DEFAULT_BUFFER_MINSZ      4096
+/** Number of seconds to live */
+#define TPADM_DEFAULT_VALIDITY          30      
+/** houskeep of the cursors */
+#define TPADM_DEFAULT_SCANTIME          15
+/** Max number of open cursors same time */
+#define TPADM_DEFAULT_CURSORS_MAX       100
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Admin server configuration
+ */
+typedef struct
+{
+    int buffer_minsz;
+    int validity;
+    int scantime;
+    int cursors_max;
+} ndrx_adm_conf_t;
 
 /**
  * C structure fields to UBF fields which are loaded to caller
  */
 typedef struct
 {
-    int c_offset;
     BFLDID fid;
+    int c_offset;
 } ndrx_adm_elmap_t;
 
 /**
@@ -102,18 +121,32 @@ typedef struct
 typedef struct
 {
     char clazz[MAXTIDENT+1];                    /**< Class name               */
-    void (*p_get)(ndrx_adm_cursors_t *cursnew, long flags); /**< Get cursor   */
+    char clazzshort[3];                         /**< Short class name         */
+    /** Get cursor   */
+    int (*p_get)(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 } ndrx_adm_class_map_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+extern ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
+
 /*---------------------------Prototypes---------------------------------*/
 extern long ndrx_adm_error_get(UBFH *p_ub);
 extern int ndrx_adm_error_set(UBFH *p_ub, long error_code, 
         long fldid, const char *fmt, ...);
 
 /* Class types: */
-extern int ndrx_adm_client_get(ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern ndrx_adm_cursors_t* ndrx_adm_curs_get(char *cursid);
+
+extern ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t *map,
+        ndrx_adm_cursors_t *data);
+
+extern int ndrx_adm_curs_housekeep(void);
+extern void ndrx_adm_curs_close(ndrx_adm_cursors_t *curs);
+extern int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs);
+
 
 #ifdef	__cplusplus
 }
