@@ -271,6 +271,7 @@ void MIB (TPSVCINFO *p_svc)
     }
     else if (0==strcmp(NDRX_TA_GETNEXT, op))
     {
+        is_get = EXTRUE;
         /* read cursor id */
         curs = ndrx_adm_curs_get(cursid);
     }

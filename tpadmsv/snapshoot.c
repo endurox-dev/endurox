@@ -57,7 +57,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate long M_cntr = 1; /**< Counter of the cursor ID */
+exprivate long M_cntr = 0; /**< Counter of the cursor ID */
 exprivate ndrx_adm_cursors_t *M_cursors = NULL; /**< List of open cursors */
 exprivate int M_nr_cursor = 0;  /**< Number of cursor open. */
 /*---------------------------Prototypes---------------------------------*/
@@ -255,7 +255,7 @@ expublic int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs,
     NDRX_LOG(log_info, "Cursor [%s] fetch end at curpos=%d total=%d (0 base)", 
             curs->cursorid, curs->curspos, curs->list.maxindexused);
     
-    if (curs->curspos == curs->list.maxindexused)
+    if (curs->curspos > curs->list.maxindexused)
     {
         NDRX_LOG(log_debug, "Cursor %d fetched fully -> remove", curs->cursorid);
         ndrx_adm_curs_close(curs);
