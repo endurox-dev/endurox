@@ -51,10 +51,26 @@
 #include <sys_unix.h>
 
 #include "tpadmsv.h"
+#include "expr.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Image of the client information
+ */
+typedef struct 
+{
+    char clientid[78+1];      /**< myid                                 */
+    char name[MAXTIDENT+1];   /**< process name                         */
+    char lmid[MAXTIDENT+1];   /**< cluster node id                      */
+    /** may be: ACT, SUS (not used), DEA - dead */
+    char state[15+1];         /**< state of the client live/dead by pid */
+    long pid;                 /**< process PID                          */
+    long curconv;             /**< number of conversations process into */
+    long contextid;           /**< Multi-threading context id           */
+} ndrx_adm_client_t;
 
 /**
  * Client class infos mapping table
@@ -89,6 +105,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     int typ;
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
+    ndrx_qdet_t qdet;
     TPMYID myid;
     ndrx_adm_client_t clt;
     ndrx_adm_client_t *p_clt;
@@ -126,18 +143,16 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         if (NDRX_QTYPE_CLTRPLY==typ)
         {
             memset(&clt, 0, sizeof(clt));
-            /*
-            expublic int ndrx_qdet_parse_cltqstr(ndrx_qdet_t *qdet, char *qstr)
-            */
-            if (EXSUCCEED==ndrx_myid_parse_qname(elt->qname, &myid))
+            
+            if (EXSUCCEED==ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
             {
-                clt.pid = myid.pid;
+                clt.pid = qdet.pid;
                 NDRX_STRCPY_SAFE(clt.clientid, elt->qname);
-                clt.contextid = myid.contextid;
-                NDRX_STRCPY_SAFE(clt.name, myid.binary_name);
-                snprintf(clt.lmid, sizeof(clt.lmid), "%d", myid.nodeid);
+                clt.contextid = qdet.contextid;
+                NDRX_STRCPY_SAFE(clt.name, qdet.binary_name);
+                snprintf(clt.lmid, sizeof(clt.lmid), "%ld", tpgetnodeid());
                 
-                if (EXSUCCEED==kill(myid.pid, 0))
+                if (EXSUCCEED==kill(qdet.pid, 0))
                 {
                     NDRX_STRCPY_SAFE(clt.state, "ACT");
                 }
@@ -151,6 +166,8 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                     NDRX_LOG(log_error, "Growlist failed - out of memory?");
                     EXFAIL_OUT(ret);
                 }
+                
+                NDRX_LOG(log_debug, "client [%s] state %s added", clt.name, clt.state);
                 idx++;
             }
         }
@@ -173,6 +190,8 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                             )
                     {
                         p_clt->curconv++;
+                        NDRX_LOG(log_debug, "client [%s] currconv incremented to %ld", 
+                                p_clt->name, p_clt->curconv);
                         break;
                     }
                 }
@@ -186,6 +205,11 @@ out:
     if (NULL!=qlist)
     {
         ndrx_string_list_free(qlist);
+    }
+
+    if (EXSUCCEED!=ret)
+    {
+        ndrx_growlist_free(&cursnew->list);
     }
 
     return ret;

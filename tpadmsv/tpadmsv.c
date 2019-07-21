@@ -66,6 +66,11 @@ exprivate ndrx_adm_class_map_t M_class_map[] =
 {  
     /* Driving of the Preparing: */
     {NDRX_TA_CLASS_CLIENT,      "CL",       &ndrx_adm_client_get}
+    ,{NDRX_TA_CLASS_DOMAIN,     "DM",       &ndrx_adm_domain_get}
+    ,{NDRX_TA_CLASS_MACHINE,    "MA",       &ndrx_adm_machine_get}
+    ,{NDRX_TA_CLASS_QUEUE,      "QU",       &ndrx_adm_queue_get}
+    ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get}
+    ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get}
 };
 
 /*---------------------------Prototypes---------------------------------*/
@@ -102,6 +107,7 @@ void MIB (TPSVCINFO *p_svc)
     char clazz[MAXTIDENT+1];
     char op[MAXTIDENT+1];
     char cursid[MAXTIDENT+1];
+    char cursid_svc[MAXTIDENT+1];
     ndrx_adm_cursors_t cursnew; /* New cursor */
     ndrx_adm_cursors_t *curs;
     BFLDLEN len;
@@ -142,6 +148,7 @@ void MIB (TPSVCINFO *p_svc)
     /* get cursor if required */
     if (0==strcmp(NDRX_TA_GETNEXT, op))
     {
+        char *p;
         len = sizeof(cursid);
         if (EXSUCCEED!=Bget(p_ub, TA_CURSOR, 0, cursid, &len))
         {
@@ -153,9 +160,33 @@ void MIB (TPSVCINFO *p_svc)
             EXFAIL_OUT(ret);
         }
         
-        /* TODO: check the cursor target, if other MIB server, then forward
+        /* check the cursor target, if other MIB server, then forward
          * the call
          */
+        
+        NDRX_STRCPY_SAFE(cursid_svc, cursid);
+        
+        p=strchr(cursid_svc, '_');
+        
+        if (NULL!=p)
+        {
+            *p = EXEOS;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Invalid TA_CURSOR format [%s]", cursid_svc);
+
+            ndrx_adm_error_set(p_ub, TAEINVAL, TA_CURSOR, 
+                        "Invalid TA_CURSOR format [%s]", cursid_svc);
+            EXFAIL_OUT(ret);
+        }
+        
+        if (0!=strcmp(cursid_svc, ndrx_G_svcnm2))
+        {
+            NDRX_LOG(log_info, "Not our cursor our [%s] vs [%s] - forward",
+                    ndrx_G_svcnm2, cursid_svc);
+            tpforward(cursid_svc, (char *)p_ub, 0, 0L);
+        }
     }
     
     /* Get request class: 
@@ -203,6 +234,7 @@ void MIB (TPSVCINFO *p_svc)
         
         /* get cursor data */
         NDRX_LOG(log_debug, "About to open cursor [%s]",  clazz);
+        cursnew.list.maxindexused = EXFAIL;
         if (EXSUCCEED!=class_map->p_get(clazz, &cursnew, 0L))
         {
             NDRX_LOG(log_error, "Failed to open %s cursor", clazz);
@@ -224,6 +256,18 @@ void MIB (TPSVCINFO *p_svc)
                         "Failed to open cursor for %s", clazz);
             EXFAIL_OUT(ret);
         }
+        
+        /* Load cursor id */
+        
+        if (EXSUCCEED!=Bchg(p_ub, TA_CURSOR, 0, curs->cursorid, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to add cursor name: %s", Bstrerror(Berror));
+
+            ndrx_adm_error_set(p_ub, TAESYSTEM, BBADFLDID, 
+                        "Failed to add cursor name: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
     }
     else if (0==strcmp(NDRX_TA_GETNEXT, op))
     {
@@ -241,7 +285,7 @@ void MIB (TPSVCINFO *p_svc)
         }
         
         /* Fetch cursor to UBF buffer */
-        if (EXSUCCEED!=ndrx_adm_curs_fetch(p_ub, curs))
+        if (EXSUCCEED!=ndrx_adm_curs_fetch(p_ub, curs, &ret_occurs, &ret_more))
         {
             NDRX_LOG(log_error, "Failed to fetch!");
             ndrx_adm_error_set(p_ub, TAESYSTEM, BBADFLDID, 
@@ -262,7 +306,7 @@ out_nomore:
         if (EXSUCCEED!=Bchg(p_ub, TA_MORE, 0, (char *)&ret_more, 0L))
         {
             NDRX_LOG(log_error, "Failed to set TA_MORE to %ld: %s",
-                    ret_occurs, Bstrerror(Berror));
+                    ret_more, Bstrerror(Berror));
         }
         
         /* approve the request... */
@@ -270,6 +314,9 @@ out_nomore:
     }
     
 out:
+    
+    ndrx_debug_dump_UBF(log_info, "Reply buffer:", p_ub);
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0,
                 (char *)p_ub,

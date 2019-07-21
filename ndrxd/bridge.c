@@ -270,8 +270,8 @@ expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *ref
             search_svc[0]=',';
             search_svc[1]=EXEOS;
             
-            strcat(search_svc, refresh->svcs[i].svc_nm);
-            strcat(search_svc, ",");
+            NDRX_STRCPY_SAFE(search_svc, refresh->svcs[i].svc_nm);
+            NDRX_STRCPY_SAFE(search_svc, ",");
             
             /*
              * If blacklist set, then filter out blacklisted services
@@ -463,7 +463,7 @@ expublic int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int di
                 goto out;
             }
             r->count=-1; /* should be 1 */
-            strcpy(r->svc_nm, svc);
+            NDRX_STRCPY_SAFE(r->svc_nm, svc);
             EXHASH_ADD_STR( *svcs, svc_nm, r );
         }
         else
@@ -633,7 +633,7 @@ expublic int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
             ret=EXFAIL;
             goto out;
         }
-        strcpy(r->svc_nm, svc);
+        NDRX_STRCPY_SAFE(r->svc_nm, svc);
         r->count = count;
         EXHASH_ADD_STR( cur->theyr_services, svc_nm, r );
     }

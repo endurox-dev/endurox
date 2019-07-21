@@ -69,6 +69,11 @@ extern "C" {
 /** @}*/
 
 #define NDRX_TA_CLASS_CLIENT        "T_CLIENT"      /**<  Client process class */
+#define NDRX_TA_CLASS_DOMAIN        "T_DOMAIN"      /**<  Domain class         */
+#define NDRX_TA_CLASS_MACHINE       "T_MACHINE"     /**<  Machine class        */
+#define NDRX_TA_CLASS_QUEUE         "T_QUEUE"       /**<  Queue class          */
+#define NDRX_TA_CLASS_SERVER        "T_SERVER"      /**<  Server class         */
+#define NDRX_TA_CLASS_SERVICE       "T_SERVICE"     /**<  Service class        */
     
 #define NDRX_TA_GET                 "GET"           /**< Get infos             */
 #define NDRX_TA_GETNEXT             "GETNEXT"       /**< Read next curs        */

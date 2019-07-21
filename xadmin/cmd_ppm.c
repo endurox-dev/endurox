@@ -138,7 +138,7 @@ exprivate char *decode_flags(int flags)
         strcat(buf, "B");
     }
     
-    if (flags & SRV_KEY_FLAGS_BRIDGE)
+    if (flags & SRV_KEY_FLAGS_SENDREFERSH)
     {
         strcat(buf, "r");
     }
