@@ -110,7 +110,7 @@ expublic int simple_command_reply(command_call_t * call,
     /* Do reply with ATMI helper function */
     ret = ndrx_generic_q_send_2(call->reply_queue, 
             (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT, 0);
-    
+    NDRX_LOG(log_error, "YOPT reply: %s %d", call->reply_queue, ret);
     if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "Marking reply queue as dead!");
