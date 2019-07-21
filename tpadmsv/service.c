@@ -116,13 +116,21 @@ expublic int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long
     {
         shm_svcinfo_t* ent = SHM_SVCINFO_INDEX(svcinfo, i);
 
-        if (ent->flags & NDRXD_SVCINFO_INIT 
-                && ent->srvs > 0)
+        if (ent->flags & NDRXD_SVCINFO_INIT)
         {
             memset(&svc, 0, sizeof(svc));
             
+            /* WARNING ! we might get incomplete readings here! */
             NDRX_STRCPY_SAFE(svc.service, ent->service);
-            NDRX_STRCPY_SAFE(svc.state, "ACT");
+            
+            if (ent->srvs > 0)
+            {
+                NDRX_STRCPY_SAFE(svc.state, "ACT");
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE(svc.state, "INA");
+            }
             
             if (EXSUCCEED!=ndrx_growlist_add(&cursnew->list, (void *)&svc, idx))
             {
