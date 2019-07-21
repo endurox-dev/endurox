@@ -113,7 +113,6 @@ expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t 
         ndrx_adm_cursors_t *data)
 {
     int ret = EXSUCCEED;
-    char cursid[MAXTIDENT+1];
     ndrx_adm_cursors_t *el = NULL;
     
     if (M_nr_cursor+1 > ndrx_G_adm_config.cursors_max)
@@ -139,7 +138,7 @@ expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t 
      * - N -> Node id;
      * - S -> Service ID
      */
-    snprintf(cursid, sizeof(cursid), "%s_%s%09ld", ndrx_G_svcnm2, 
+    snprintf(data->cursorid, sizeof(data->cursorid), "%s_%s%09ld", ndrx_G_svcnm2, 
             class_map->clazzshort, M_cntr);
     
     /* Allocate the hash. */
@@ -154,7 +153,6 @@ expublic ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t 
     }
     
     memcpy(el, data, sizeof(ndrx_adm_cursors_t));
-    NDRX_STRCPY_SAFE(el->cursorid, cursid);
     ndrx_stopwatch_reset(&el->w);
     
     EXHASH_ADD_STR( M_cursors, cursorid, el );
@@ -192,16 +190,20 @@ expublic void ndrx_adm_curs_close(ndrx_adm_cursors_t *curs)
  *  the data item shall be deleted.
  * @param[out] p_ub where to fetch the cursor data
  * @param[in] curs which cursor to fetch
- * @return occurrences loaded/EXFAIL
+ * @param[out] ret_occurs number of occurrences loaded into buffer
+ * @param[out] ret_more number of items left in buffer
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs)
+expublic int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs,
+        long *ret_occurs, long *ret_more)
 {
-    int ret = 0;
+    int ret = EXSUCCEED;
     int i;
     long freesz;
     void *cur_pos;
     ndrx_adm_elmap_t *map;
     int start_pos = curs->curspos;
+    int req;
     
     /*
      * - estimate free size one block + error block.
@@ -209,17 +211,18 @@ expublic int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs)
      */
     
     NDRX_LOG(log_info, "Cursor [%s] curpos=%d total=%d", curs->cursorid, 
-            curs->curspos, curs->list.maxindexused);
-    
+            curs->curspos, curs->list.maxindexused+1);
+    *ret_occurs = 0;
+    *ret_more = 0;
     for (i=start_pos; i<=curs->list.maxindexused; i++)
     {
-        freesz = Bfree(p_ub);
+        freesz = Bunused(p_ub);
         
-        if (freesz < (curs->list.size*2) + TPADM_ERROR_MINSZ)
+        if (freesz < (req=((curs->list.size*2) + TPADM_ERROR_MINSZ)))
         {
+            NDRX_LOG(log_debug, "Free: %ld, require: %d", freesz, req);
             break;
         }
-        
         
         /* Load the data according to current position & mapping */
         cur_pos = curs->list.mem + (curs->list.size*i);
@@ -231,7 +234,7 @@ expublic int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs)
         while (BBADFLDID!=map->fid)
         {
             BFLDOCC occ = i - start_pos;
-            void *elm = cur_pos + curs->list.size*i;
+            void *elm = cur_pos + map->c_offset;
             
             /* the C types matches UBF types! */
             if (EXSUCCEED!=Bchg(p_ub, map->fid, occ, elm, 0L))
@@ -244,23 +247,27 @@ expublic int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs)
             map++;
         }
         
+        NDRX_LOG(log_debug, "OCC %d loaded", curs->curspos);
         curs->curspos++;
-        ret++;
+        (*ret_occurs)++;
     }
     
-    NDRX_LOG(log_info, "Cursor [%s] fetch end at curpos=%d total=%d", curs->cursorid, 
-            curs->curspos, curs->list.maxindexused);
+    NDRX_LOG(log_info, "Cursor [%s] fetch end at curpos=%d total=%d (0 base)", 
+            curs->cursorid, curs->curspos, curs->list.maxindexused);
     
     if (curs->curspos == curs->list.maxindexused)
     {
         NDRX_LOG(log_debug, "Cursor %d fetched fully -> remove", curs->cursorid);
         ndrx_adm_curs_close(curs);
     }
+    else
+    {
+        *ret_more = (curs->list.maxindexused+1) - *ret_occurs;
+    }
     
 out:
     return ret;
 }
-
 
 
 /* vim: set ts=4 sw=4 et smartindent: */

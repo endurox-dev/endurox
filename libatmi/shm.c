@@ -600,6 +600,38 @@ not_locked:
 }
 
 /**
+ * return number of service active in system
+ * @return nr_services / EXFAIL
+ */
+expublic int ndrx_shm_get_svc_count(void)
+{
+    int ret = 0;
+    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
+    int i;
+    
+    if (!ndrx_shm_is_attached(&G_svcinfo))
+    {
+        /* no SHM infos */
+        NDRX_LOG(log_debug, "SHM not attached -> no service count");
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    for (i=0; i< G_max_svcs; i++)
+    {
+        shm_svcinfo_t* ent = SHM_SVCINFO_INDEX(svcinfo, i);
+        
+        if (ent->flags & NDRXD_SVCINFO_INIT 
+                && ent->srvs > 0)
+        {
+            ret++;
+        }
+    }
+out:
+    return ret;
+}
+
+/**
  * Search over the memory for service.
  * This is internal version and not meant be used outside of this file.
  * @param svc - service name

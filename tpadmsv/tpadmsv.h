@@ -99,22 +99,6 @@ struct ndrx_adm_cursors
  */
 typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
 
-
-/**
- * Image of the client information
- */
-typedef struct 
-{
-    char clientid[78+1];      /**< myid                                 */
-    char name[MAXTIDENT+1];   /**< process name                         */
-    char lmid[MAXTIDENT+1];   /**< cluster node id                      */
-    /** may be: ACT, SUS (not used), DEA - dead */
-    char state[15+1];         /**< state of the client live/dead by pid */
-    long pid;                 /**< process PID                          */
-    long curconv;             /**< number of conversations process into */
-    long contextid;           /**< Multi-threading context id           */
-} ndrx_adm_client_t;
-
 /**
  * Map classes to operations
  */
@@ -138,6 +122,14 @@ extern int ndrx_adm_error_set(UBFH *p_ub, long error_code,
 
 /* Class types: */
 extern int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_domain_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_machine_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_server_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+
+extern int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
+
 extern ndrx_adm_cursors_t* ndrx_adm_curs_get(char *cursid);
 
 extern ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t *map,
@@ -145,7 +137,8 @@ extern ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t *m
 
 extern int ndrx_adm_curs_housekeep(void);
 extern void ndrx_adm_curs_close(ndrx_adm_cursors_t *curs);
-extern int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs);
+extern int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs,
+        long *ret_occurs, long *ret_more);
 
 
 #ifdef	__cplusplus

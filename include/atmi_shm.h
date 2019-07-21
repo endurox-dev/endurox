@@ -71,6 +71,7 @@ extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge,
 extern NDRX_API int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len); /* poll() only */
 extern NDRX_API int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, 
 				      int *p_install_cmd);
+extern NDRX_API int ndrx_shm_get_svc_count(void);
 extern NDRX_API int ndrx_shm_install_svc(char *svc, int flags, int resid);
 extern NDRX_API int ndrx_shm_install_svc_br(char *svc, int flags, 
                 int is_bridge, int nodeid, int count, char mode, int resid);

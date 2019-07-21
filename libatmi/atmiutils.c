@@ -317,6 +317,8 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
     long add_flags = 0;
     SET_TOUT_CONF;
 
+    NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld", len);
+    
     /* Set nonblock flag to system, if provided to EnduroX */
     if (flags & TPNOBLOCK)
     {
@@ -458,6 +460,7 @@ restart:
     }
     
 out:
+    NDRX_LOG(log_debug, "ndrx_generic_q_receive: %ld", ret);
     return ret;
 }
 
@@ -468,12 +471,12 @@ out:
 expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, char *reply_q)
 {
-        call->command = ndrxd_cmd;
-        call->magic = NDRX_MAGIC;
-        call->msg_src = msg_src;
-        call->msg_type = msg_type;
-        NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
-        call->caller_nodeid = G_atmi_env.our_nodeid;
+    call->command = ndrxd_cmd;
+    call->magic = NDRX_MAGIC;
+    call->msg_src = msg_src;
+    call->msg_type = msg_type;
+    NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
+    call->caller_nodeid = G_atmi_env.our_nodeid;
 }
 
 /**
