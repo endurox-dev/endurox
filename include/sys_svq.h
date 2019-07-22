@@ -57,8 +57,10 @@
 
 #define NDRX_SVQ_SIG SIGUSR2    /**< Signal used for timeout wakeups    */
 
-#define NDRX_SVQ_MAP_ISUSED       0x00000001  /**< Queue is used              */
-#define NDRX_SVQ_MAP_WASUSED      0x00000002  /**< Queue was used (or is used)*/
+/** Queue is used              */
+#define NDRX_SVQ_MAP_ISUSED       NDRX_LH_FLAG_ISUSED
+/** Queue was used (or is used)*/
+#define NDRX_SVQ_MAP_WASUSED      NDRX_LH_FLAG_WASUSED
 #define NDRX_SVQ_MAP_EXPIRED      0x00000004  /**< Queue expired by ctime     */
 #define NDRX_SVQ_MAP_SCHEDRM      0x00000008  /**< Schedule queue removal     */
 #define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This is request address q  */

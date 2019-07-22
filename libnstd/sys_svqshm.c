@@ -441,6 +441,45 @@ expublic int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p,
     return ndrx_G_svqshm_init;
 }
 
+
+#if 0
+int (*p_key_hash)(ndrx_lh_config_t *conf, void *key_get, size_t key_len);
+    
+/** Flags (short type) offset in element */
+int  flags_offset;
+    
+/** Key hash func   */
+void (*p_key_debug)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
+    char *dbg_out, size_t dbg_len);
+    
+/** Value debug     */
+void (*p_val_debug)(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len);
+    
+/** Compare value at index, ret 0 if equals */
+int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
+#endif
+
+exprivate int qstr_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_len)
+{
+    return ndrx_hash_fn(key_get) % conf->elmmax;
+}
+
+exprivate void qstr_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
+    char *dbg_out, size_t dbg_len)
+{
+    NDRX_STRNCPY_SAFE(dbg_out, key_get, dbg_len);
+}
+
+exprivate void qstr_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len)
+{
+    NDRX_STRNCPY_SAFE(dbg_out, NDRX_SVQ_INDEX(conf->memptr, idx)->qstr, dbg_len);
+}
+
+exprivate int qstr_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx)
+{
+    return strcmp(NDRX_SVQ_INDEX(conf->memptr, idx)->qstr, key_get);
+}
+
 /**
  * Get position, hash the pathname and find free space if creating
  * or just empty position, if not found..
@@ -452,6 +491,7 @@ expublic int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p,
 exprivate int position_get_qstr(char *pathname, int oflag, int *pos, 
         int *have_value)
 {
+#if 0
     int ret=SHM_ENT_NONE;
     int try = EXFAIL;
     int start = try;
@@ -595,6 +635,18 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
                 NDRX_SVQ_INDEX(svq, try)->flags, NDRX_SVQ_INDEX(svq, try)->qstr);
     
     return ret;
+#endif
+    ndrx_lh_config_t conf;
+    
+    conf.elmmax = M_queuesmax;
+    conf.elmsz = sizeof(ndrx_svq_map_t);
+    conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
+    conf.memptr = M_map_p2s.mem;
+    conf.p_key_hash=&qstr_key_hash;
+    conf.p_key_debug=&qstr_key_debug;
+    conf.p_val_debug=&qstr_val_debug;
+    conf.p_compare=&qstr_compare;
+    return ndrx_lh_position_get(&conf, pathname, 0, oflag, pos, have_value, "qstr");
 }
 
 /**

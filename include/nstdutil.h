@@ -84,6 +84,16 @@ extern "C" {
 # define ntohll(x) (((uint64_t)ntohl( (x) & 0xFFFFFFFF) << 32) | ntohl( (x) >> 32))
 #endif
 
+
+/**
+ * Linear hashing flags, used for short data type
+ * @defgroup linhash Linear hashing value flags
+ * @{
+ */    
+#define NDRX_LH_FLAG_ISUSED         0x0001  /**< Entry is used              */
+#define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry is used              */
+/** @} */ /* end of linhash */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -156,6 +166,43 @@ struct ndrx_args_loader
 };
 
 typedef struct ndrx_args_loader ndrx_args_loader_t;
+
+
+/**
+ * Linear memory hash
+ */
+typedef struct ndrx_lh_config ndrx_lh_config_t;
+
+/**
+ * Linear hashing config
+ */
+struct ndrx_lh_config
+{
+    /** memory pointer */
+    void *memptr;
+    
+    /** Max number of elements */
+    int elmmax;
+    
+    /** Element size */
+    size_t elmsz;
+    
+    /** Key hash func */
+    int (*p_key_hash)(ndrx_lh_config_t *conf, void *key_get, size_t key_len);
+    
+    /** Flags (short type) offset in element */
+    int  flags_offset;
+    
+    /** Key hash func   */
+    void (*p_key_debug)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
+        char *dbg_out, size_t dbg_len);
+    
+    /** Value debug     */
+    void (*p_val_debug)(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len);
+    
+    /** Compare value at index, ret 0 if equals */
+    int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
+};
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
@@ -264,6 +311,10 @@ extern NDRX_API int ndrx_file_gen_embed(char *in_fname, char *out_fname,
 
 extern NDRX_API int ndrx_storage_decode(char *bytesenc, long *outnrbytes);
 extern NDRX_API void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz);
+
+extern NDRX_API int ndrx_lh_position_get(ndrx_lh_config_t *conf, 
+        void *key_get, size_t key_len, 
+        int oflag, int *pos, int *have_value, char *key_typ);
 
 #ifdef	__cplusplus
 }
