@@ -57,6 +57,7 @@
 #include <exregex.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 
 #include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
@@ -289,7 +290,7 @@ expublic void ndrx_down_userres(void)
 
     NDRX_LOG(log_warn, "Remove user specific resources - System V queues");
     memset(&g, 0, sizeof(g));
-    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXTRUE))
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_QUE))
     {
         sysvres = (int *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
@@ -307,13 +308,31 @@ expublic void ndrx_down_userres(void)
 
     NDRX_LOG(log_warn, "Remove user specific resources - System V semaphores");
     memset(&g, 0, sizeof(g));
-    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXFALSE))
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_SEM))
     {
         sysvres = (int *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
         {
             NDRX_LOG(log_warn, "Removing SEM ID=%d", sysvres[i]);
             if (EXSUCCEED!=semctl(sysvres[i], 0, IPC_RMID))
+            {
+                NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
+                        sysvres[i], strerror(errno));
+            }
+        }
+        ndrx_growlist_free(&g);
+    }
+    
+    
+    NDRX_LOG(log_warn, "Remove user specific resources - System V shard mem");
+    memset(&g, 0, sizeof(g));
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_SHM))
+    {
+        sysvres = (int *)g.mem;
+        for (i=0; i<=g.maxindexused; i++)
+        {
+            NDRX_LOG(log_warn, "Removing SHM ID=%d", sysvres[i]);
+            if (EXSUCCEED!=shmctl(sysvres[i], IPC_RMID, NULL))
             {
                 NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
                         sysvres[i], strerror(errno));
