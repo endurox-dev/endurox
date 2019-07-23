@@ -56,7 +56,7 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define GET_FLAGS(CONF, IDX)  *((short*) (CONF->memptr + (CONF->elmsz * IDX) + CONF->flags_offset))
+#define GET_FLAGS(CONF, IDX)  *((short*) ((*CONF->memptr) + (CONF->elmsz * IDX) + CONF->flags_offset))
 
 #define NDRX_LH_ENT_NONE            0       /**< Linear hash entry not used */
 #define NDRX_LH_ENT_MATCH           1       /**< Linear hash entry matched  */
@@ -150,7 +150,7 @@ expublic int ndrx_lh_position_get(ndrx_lh_config_t *conf,
     *pos=EXFAIL;
     
     NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p oflag: %d", 
-                                        key_debug, try, conf->memptr, oflag);
+                                        key_debug, try, *(conf->memptr), oflag);
     /*
      * So we loop over filled entries until we found empty one or
      * one which have been initialised by this service.

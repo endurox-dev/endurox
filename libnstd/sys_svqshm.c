@@ -472,12 +472,12 @@ exprivate void qstr_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_
 
 exprivate void qstr_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len)
 {
-    NDRX_STRNCPY_SAFE(dbg_out, NDRX_SVQ_INDEX(conf->memptr, idx)->qstr, dbg_len);
+    NDRX_STRNCPY_SAFE(dbg_out, NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, dbg_len);
 }
 
 exprivate int qstr_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx)
 {
-    return strcmp(NDRX_SVQ_INDEX(conf->memptr, idx)->qstr, key_get);
+    return strcmp(NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, key_get);
 }
 
 /**
@@ -636,17 +636,70 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     
     return ret;
 #endif
-    ndrx_lh_config_t conf;
+    static ndrx_lh_config_t conf;
+    static int first = EXTRUE;
     
-    conf.elmmax = M_queuesmax;
-    conf.elmsz = sizeof(ndrx_svq_map_t);
-    conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
-    conf.memptr = M_map_p2s.mem;
-    conf.p_key_hash=&qstr_key_hash;
-    conf.p_key_debug=&qstr_key_debug;
-    conf.p_val_debug=&qstr_val_debug;
-    conf.p_compare=&qstr_compare;
+    if (first)
+    {
+        conf.elmmax = M_queuesmax;
+        conf.elmsz = sizeof(ndrx_svq_map_t);
+        conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
+        conf.memptr = (void **)&(M_map_p2s.mem);
+        conf.p_key_hash=&qstr_key_hash;
+        conf.p_key_debug=&qstr_key_debug;
+        conf.p_val_debug=&qstr_val_debug;
+        conf.p_compare=&qstr_compare;
+        first = EXFALSE;
+    }
+    
     return ndrx_lh_position_get(&conf, pathname, 0, oflag, pos, have_value, "qstr");
+}
+
+/**
+ * Linear hashing hash function
+ * @param conf hash config
+ * @param key_get key data
+ * @param key_len key len
+ * @return hashed value (some number) within the memory range
+ */
+exprivate int qid_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_len)
+{
+    return *((int *)key_get) % conf->elmmax;
+}
+
+/**
+ * Key debug output generator
+ * @param conf
+ * @param key_get
+ * @param key_len
+ * @param dbg_out
+ * @param dbg_len
+ */
+exprivate void qid_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
+    char *dbg_out, size_t dbg_len)
+{
+    snprintf(dbg_out, dbg_len, "%d", *((int *)key_get));
+}
+
+exprivate void qid_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len)
+{
+    /*NDRX_STRNCPY_SAFE(dbg_out, NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, dbg_len);*/
+    
+    snprintf(dbg_out, dbg_len, "%d", NDRX_SVQ_INDEX((*conf->memptr), idx)->qid);
+    
+}
+
+exprivate int qid_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx)
+{
+    /* return strcmp(NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, key_get); */
+    if (NDRX_SVQ_INDEX((*conf->memptr), idx)->qid == *((int *)key_get))
+    {
+        return EXSUCCEED;
+    }
+    else
+    {
+        return EXFAIL;
+    }
 }
 
 /**
@@ -659,6 +712,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
 exprivate int position_get_qid(int qid, int oflag, int *pos, 
         int *have_value)
 {
+#if 0
     int ret=SHM_ENT_NONE;
     int try = EXFAIL;
     int start = try;
@@ -801,6 +855,25 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
                         "iterations: %d, pos: %d, have_value: %d",
                          qid, ret, iterations, *pos, *have_value);
     return ret;
+#endif
+    
+    static ndrx_lh_config_t conf;
+    static int first = EXTRUE;
+    
+    if (first)
+    {
+        conf.elmmax = M_queuesmax;
+        conf.elmsz = sizeof(ndrx_svq_map_t);
+        conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
+        conf.memptr = (void **)&(M_map_s2p.mem);
+        conf.p_key_hash=&qid_key_hash;
+        conf.p_key_debug=&qid_key_debug;
+        conf.p_val_debug=&qid_val_debug;
+        conf.p_compare=&qid_compare;
+        first = EXFALSE;
+    }
+    
+    return ndrx_lh_position_get(&conf, &qid, 0, oflag, pos, have_value, "qid");
 }
 
 
