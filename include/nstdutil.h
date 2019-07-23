@@ -179,7 +179,7 @@ typedef struct ndrx_lh_config ndrx_lh_config_t;
 struct ndrx_lh_config
 {
     /** memory pointer */
-    void *memptr;
+    void **memptr;
     
     /** Max number of elements */
     int elmmax;
