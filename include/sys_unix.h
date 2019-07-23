@@ -167,6 +167,10 @@ extern NDRX_API const char * __progname;
 #endif
  
 /******************************************************************************/
+
+#define NDRX_SV_RESTYPE_SHM     1   /**< Shared mem requested           */
+#define NDRX_SV_RESTYPE_SEM     2   /**< Semaphores requested           */
+#define NDRX_SV_RESTYPE_QUE     3   /**< Queues requested               */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
