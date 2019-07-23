@@ -462,9 +462,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
         /* test queue */
         if (!ndrx_q_exists(send_q))
         {
-            NDRX_LOG(log_error, "%s: Queue [%s] does not exists for %s", 
+            NDRX_LOG(log_error, "%s: Queue [%s] does not exists", 
                     __func__, send_q);
-            ndrx_TPset_error_fmt(TPENOENT, "%s: Queue [%s] does not exists for %s", 
+            ndrx_TPset_error_fmt(TPENOENT, "%s: Queue [%s] does not exists", 
                     __func__, send_q);
             EXFAIL_OUT(ret);
         }
