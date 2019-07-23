@@ -551,7 +551,7 @@ include(CPack)
 # put the name in the glimpse_index/.glimpse_exclude
 ################################################################################
 
-add_custom_target(index glimpseindex -H ./glimpse_index ${PROJECT_SOURCE_DIR}
+add_custom_target(index glimpseindex -n -H ./glimpse_index ${PROJECT_SOURCE_DIR}
                     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/glimpse_index/glim.cmake)
 #this also shall generate the glimp command in the current project
 
