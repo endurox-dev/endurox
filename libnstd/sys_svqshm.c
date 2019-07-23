@@ -855,8 +855,9 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
                         "iterations: %d, pos: %d, have_value: %d",
                          qid, ret, iterations, *pos, *have_value);
     return ret;
+
 #endif
-    
+
     static ndrx_lh_config_t conf;
     static int first = EXTRUE;
     
@@ -874,6 +875,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
     }
     
     return ndrx_lh_position_get(&conf, &qid, 0, oflag, pos, have_value, "qid");
+
 }
 
 

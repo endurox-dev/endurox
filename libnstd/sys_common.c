@@ -1128,10 +1128,10 @@ out:
 /**
  * Return user queues or semaphores
  * @param[out] list to init & grow
- * @param[in] Return user queues, otherwise return semaphores
+ * @param res_type [in] Return user queues, otherwise return semaphores
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
+expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
 {
     char cmd[128];
     FILE *fp=NULL;
@@ -1144,7 +1144,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
     /* init growlist */
     ndrx_growlist_init(list, 256, sizeof(int));
     
-    if (queues)
+    if (NDRX_SV_RESTYPE_QUE == res_type)
     {
         NDRX_STRCPY_SAFE(cmd, "ipcs -q");
         /* output example (LINUX):
@@ -1197,7 +1197,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         So from above we can say that MACOS/AIX/FREEBSD/HPUX have the same layout
         */
     }
-    else
+    else if (NDRX_SV_RESTYPE_SEM == res_type)
     {
         NDRX_STRCPY_SAFE(cmd, "ipcs -s");
         /* output example:
@@ -1211,6 +1211,10 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         0x0052e2c4 98307      user1      600        17          
         ...
          */
+    }
+    else if (NDRX_SV_RESTYPE_SHM == res_type)
+    {
+        NDRX_STRCPY_SAFE(cmd, "ipcs -m");
     }
 #ifdef EX_OS_LINUX
     snprintf(linematchstr, sizeof(linematchstr), "^0x[0-9a-fA-F]+\\s*[0-9]+\\s*%s\\s",
