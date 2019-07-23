@@ -270,8 +270,8 @@ expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *ref
             search_svc[0]=',';
             search_svc[1]=EXEOS;
             
-            NDRX_STRCPY_SAFE(search_svc, refresh->svcs[i].svc_nm);
-            NDRX_STRCPY_SAFE(search_svc, ",");
+            NDRX_STRCAT_S(search_svc, sizeof(search_svc), refresh->svcs[i].svc_nm);
+            NDRX_STRCAT_S(search_svc, sizeof(search_svc), ",");
             
             /*
              * If blacklist set, then filter out blacklisted services
