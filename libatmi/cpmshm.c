@@ -2,7 +2,7 @@
  * @brief Client admin shared memory handler
  *  Added to libatm so that tpadmsv can use it too.
  *
- * @file sem.c
+ * @file cpmshm.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
