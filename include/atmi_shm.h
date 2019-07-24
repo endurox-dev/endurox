@@ -46,12 +46,11 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 
 /* ATMI SHM Level */
-#define NDRX_SHM_LEV_SVC               0x01    /* Service array */
-#define NDRX_SHM_LEV_SRV               0x02    /* Server array */
-#define NDRX_SHM_LEV_BR                0x04    /* Bridge array */
+#define NDRX_SHM_LEV_SVC               0x01    /**< Service array */
+#define NDRX_SHM_LEV_SRV               0x02    /**< Server array */
+#define NDRX_SHM_LEV_BR                0x04    /**< Bridge array */
 
-    
-#define NDRX_SHM_BR_CONNECTED          0x01    /* Bridge is connected */
+#define NDRX_SHM_BR_CONNECTED          0x01    /**< Bridge is connected */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

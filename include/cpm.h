@@ -53,8 +53,23 @@ extern "C" {
 #define CPM_TAG_LEN             128
 #define CPM_SUBSECT_LEN         128
 #define CPM_KEY_LEN             (CPM_TAG_LEN+1+CPM_SUBSECT_LEN) /* including FS in middle */
+        
+#define NDRX_CPM_CMDMIN         32      /**< Min command len            */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Shared memory map of client administration
+ */
+typedef struct
+{
+    char keytag[CPM_KEY_LEN+1];     /**< key of the process to search for   */
+    pid_t pid;                      /**< Proces pid                         */
+    char cmdhint[NDRX_CPM_CMDMIN+1];/**< command hint                       */
+    short flags;                    /**< shm usage flag (used, wasused)     */
+    long padding1;                  /**< Align please                       */
+} ndrx_cpm_shm_t;
+        
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
