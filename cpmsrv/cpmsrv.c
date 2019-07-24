@@ -389,6 +389,12 @@ exprivate int cpm_callback_timer(void)
             }
             else
             {
+                
+                /* TODO: For shared memory mode, we shall handle exit
+                 * statuses here too. Because if cpmsrv reboots, it will not
+                 * be a parent of existing clients, thus change statuses here too
+                 */
+                
                 /* ignore error as not critical for system running
                  * the process might be just exited 
                  */
