@@ -123,7 +123,7 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
     SET(PS_LIB psstdlib ps)
 ENDIF()
 
-target_link_libraries (xadmin ${PS_LIB} atmi nstd ubf m ${RT_LIB} pthread)
+target_link_libraries (xadmin ${PS_LIB} atmi nstd ubf ${RT_LIB} pthread)
 
 # Install bin
 install (TARGETS 
