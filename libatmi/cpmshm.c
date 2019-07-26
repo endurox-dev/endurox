@@ -1,7 +1,8 @@
 /**
- * @brief Client Process Monitor interface
+ * @brief Client admin shared memory handler
+ *  Added to libatm so that tpadmsv can use it too.
  *
- * @file cpm.h
+ * @file cpmshm.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,54 +31,55 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#include <ndrx_config.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <errno.h>
+#include <sys/sem.h>
 
-#ifndef _CPM_H
-#define	_CPM_H
+#include <atmi.h>
+#include <atmi_shm.h>
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <ndrxd.h>
+#include <ndrxdcmn.h>
+#include <userlog.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+/* shm_* stuff, and mmap() */
+#include <sys/mman.h>
+#include <sys/types.h>
+/* exit() etc */
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/ipc.h>
 
-/*---------------------------Includes-----------------------------------*/
+#include <nstd_shm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define CPM_CMD_PC          "pc" /* Print Clients(s) */
-#define CPM_CMD_BC          "bc" /* Boot Client(s) */
-#define CPM_CMD_SC          "sc" /* Stop Client(s) */
-#define CPM_CMD_RC          "rc" /* Reload Client(s) (restart one by one) */
-    
-#define CPM_DEF_BUFFER_SZ       1024
-    
-#define CPM_OUTPUT_SIZE         256 /* Output buffer size */
-    
-#define CPM_TAG_LEN             128
-#define CPM_SUBSECT_LEN         128
-#define CPM_KEY_LEN             (CPM_TAG_LEN+1+CPM_SUBSECT_LEN) /* including FS in middle */
-        
-#define NDRX_CPM_CMDMIN         32      /**< Min command len            */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-    
-/**
- * Shared memory entry for service
- */
-typedef struct ndrx_clt_shm ndrx_clt_shm_t;
-struct ndrx_clt_shm
-{
-    char key[NDRX_MAX_Q_SIZE+1];        /**< tag<fs>subsection          */
-    pid_t pid;                          /**< System V Queue id          */
-    short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
-    char procname[64];                  /**< process name               */
-    long padding1;                      /**< ensure that struct is padded*/
-};
-
+/*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-    
-#ifdef	__cplusplus
-}
-#endif
 
-#endif	/* _CPM_H */
+/*
+ * 
+ * TODO: Func for creating the segment, attaching to segment, get the results
+ * created or attached.
+ * 
+ * get position for add
+ * get position  for reading.
+ * 
+ * TWO mapping tables: TAG/SUBSECT -> PID, PID -> TAG/SUBSECT.
+ * 
+ * Needs new global setting for size of maps: 
+ * Needs to store process name and have cpmsrv setting to validate proc name
+ *  or not.
+ * 
+ * 
+ */
 
 /* vim: set ts=4 sw=4 et smartindent: */
