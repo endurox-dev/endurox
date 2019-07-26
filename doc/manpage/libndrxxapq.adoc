@@ -126,6 +126,9 @@ NDRX_XA_LAZY_INIT=1
 LIBPQ C EXAMPLE
 ---------------
 
+This is example of programming database with libpq.
+
+File: test_expq.c
 --------------------------------------------------------------------------------
 
 #include <string.h>
@@ -135,47 +138,59 @@ LIBPQ C EXAMPLE
 #include <atmi.h>
 #include <ecpglib.h>
 
+#define FAIL -1
+#define SUCCEED 0
+
 int main(int argc, char** argv)
 {
     PGconn * conn = ECPGget_PGconn(NULL);
+    PGresult *res = NULL;
+    ExecStatusType estat;
+
     /* open connection */
     if (EXSUCCEED!=tpopen())
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to open: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
+        fprintf(stderr, "Failed to open: %s\n", tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
     }
+
+    /* start transaction */
     if (EXSUCCEED!=tpbegin(60, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
     }
+    
+    /* create some table... */
+    char *create_cmd = "CREATE TABLE extest(userid integer UNIQUE NOT NULL);"
 
     res = PQexec(conn, command);
     
-    estat =PQresultStatus(res);
-    if (PGRES_COMMAND_OK != estat && PGRES_TUPLES_OK != estat) 
+    estat = PQresultStatus(res);
+
+    if (PGRES_COMMAND_OK != estat) 
     {
         char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-        char *ok = "0000";
-        if (NULL==state)
-        {
-            state = ok;
-        }
-        
-        if (0==strstr(codes,state))
-        {
-            NDRX_LOG(log_error, "TESTERROR: Statement [%s] failed with [%s] accepted [%s]",
-                    command, state, codes);
-            EXFAIL_OUT(ret);
-        }
+        char *msg = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+
+        NDRX_LOG(log_error, "Failed to create table: state: [%s]: %s", state, msg);
+        ret = FAIL;
+        goto out;
     }
+
+    /* insert data */
 
 
     if (EXSUCCEED==tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: Commit OK, must fail!");
-        EXFAIL_OUT(ret);
+        ret = FAIL;
+        goto out;
     }
+
+out:
     tpclose();
     tpterm();
 
