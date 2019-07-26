@@ -146,4 +146,91 @@ out:
     return ret;
 }
 
+/**
+ * PSC Admin call
+ * @param p_rsp_process
+ * @return 
+ */
+expublic int ndrx_adm_psc_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len))
+{
+        int ret = EXSUCCEED;
+    command_call_t call;
+    gencall_args_t call_args[NDRXD_COM_PSC_RQ+2];
+    
+    struct mq_attr new_attr, org_attr;
+    
+    memset(&call, 0, sizeof(call));
+    
+    call_args[NDRXD_COM_PSC_RQ].ndrxd_cmd = NDRXD_COM_PSC_RQ;
+    call_args[NDRXD_COM_PSC_RQ].p_rsp_process = p_rsp_process;
+    call_args[NDRXD_COM_PSC_RQ].p_put_output = NULL;
+    call_args[NDRXD_COM_PSC_RQ].need_reply = EXTRUE;
+    
+    call_args[NDRXD_COM_PSC_RP].ndrxd_cmd = NDRXD_COM_PSC_RP;
+    call_args[NDRXD_COM_PSC_RP].p_rsp_process = NULL;
+    call_args[NDRXD_COM_PSC_RP].p_put_output = NULL;
+    call_args[NDRXD_COM_PSC_RP].need_reply = EXFALSE;
+
+    /* set queue to blocked */
+    memset(&org_attr, 0, sizeof(org_attr));
+    
+    if (EXSUCCEED!=ndrx_mq_getattr(ndrx_get_G_atmi_conf()->reply_q, 
+                &org_attr))
+    {
+        NDRX_LOG(log_error, "Failed to get attr: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    memcpy(&new_attr, &org_attr, sizeof(new_attr));
+    new_attr.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
+    
+    if (new_attr.mq_flags!=org_attr.mq_flags)
+    {
+        NDRX_LOG(log_error, "change attr to blocked");
+        if (EXSUCCEED!=ndrx_mq_setattr(ndrx_get_G_atmi_conf()->reply_q, 
+                &new_attr, NULL))
+        {
+            NDRX_LOG(log_error, "Failed to set new attr: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    /* This will scan the service list and return the machines connected */
+        /* Then get listing... */
+    ret = cmd_generic_listcall(NDRXD_COM_PSC_RQ, NDRXD_SRC_SERVER,
+                        NDRXD_CALL_TYPE_GENERIC,
+                        &call, sizeof(call),
+                        ndrx_get_G_atmi_conf()->reply_q_str,
+                        ndrx_get_G_atmi_conf()->reply_q,
+                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
+                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
+                        0, NULL,
+                        NULL,
+                        call_args,
+                        EXFALSE,
+                        0);
+    
+    /* set queue back to unblocked. */
+    if (new_attr.mq_flags!=org_attr.mq_flags)
+    {
+        NDRX_LOG(log_error, "change attr to non blocked");
+        if (EXSUCCEED!=ndrx_mq_setattr(ndrx_get_G_atmi_conf()->reply_q, 
+                &org_attr, NULL))
+        {
+            NDRX_LOG(log_error, "Failed to set old attr: %s", strerror(errno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "Failed to call `ndrxd' to collect PPM infos");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */
