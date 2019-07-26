@@ -1,5 +1,5 @@
 /**
- * @brief Event MIB compatiblity
+ * @brief Event MIB compatibility
  *
  * @file evt_mib.h
  */
