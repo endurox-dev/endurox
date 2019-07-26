@@ -57,10 +57,14 @@
 #include <sys/ipc.h>
 
 #include <nstd_shm.h>
+#include <cpm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -81,5 +85,76 @@
  * 
  * 
  */
+
+/**
+ * Get shm pos by pid
+ * @param qid
+ * @param oflag
+ * @param pos
+ * @param have_value
+ * @return 
+ */
+expublic int ndrx_cltshm_get_pid(int qid, int oflag, int *pos, int *have_value)
+{
+    return EXFAIL;
+}
+
+/**
+ * Get shm pos by key
+ * @param key
+ * @param oflag
+ * @param pos
+ * @param have_value
+ * @return 
+ */
+expublic int ndrx_cltshm_get_key(char *key, int oflag, int *pos, int *have_value)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_get_status_key(char *key)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_get_status_pid(char *key)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_set_status_key(char *key, int stat)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_attach(int attach_on_exists)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_close(void)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_remove(void)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_rlock(void)
+{
+    return EXFAIL;
+}
+
+expublic int ndrx_cltshm_runlock(void)
+{
+    return EXFAIL;
+}
+
+expublic void ndrx_cltshm_getptr(void)
+{
+    return EXFAIL;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
