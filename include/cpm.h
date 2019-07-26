@@ -55,6 +55,20 @@ extern "C" {
 #define CPM_KEY_LEN             (CPM_TAG_LEN+1+CPM_SUBSECT_LEN) /* including FS in middle */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+/**
+ * Shared memory entry for service
+ */
+typedef struct ndrx_clt_shm ndrx_clt_shm_t;
+struct ndrx_clt_shm
+{
+    char key[NDRX_MAX_Q_SIZE+1];        /**< tag<fs>subsection          */
+    pid_t pid;                          /**< System V Queue id          */
+    short flags;                        /**< See NDRX_SVQ_MAP_STAT_*    */
+    char procname[64];                  /**< process name               */
+    long padding1;                      /**< ensure that struct is padded*/
+};
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
