@@ -71,6 +71,8 @@ exprivate ndrx_adm_class_map_t M_class_map[] =
     ,{NDRX_TA_CLASS_QUEUE,      "QU",       &ndrx_adm_queue_get}
     ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get}
     ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get}
+    ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get}
+    
 };
 
 /*---------------------------Prototypes---------------------------------*/

@@ -74,6 +74,7 @@ extern "C" {
 #define NDRX_TA_CLASS_QUEUE         "T_QUEUE"       /**<  Queue class          */
 #define NDRX_TA_CLASS_SERVER        "T_SERVER"      /**<  Server class         */
 #define NDRX_TA_CLASS_SERVICE       "T_SERVICE"     /**<  Service class        */
+#define NDRX_TA_CLASS_SVCGRP        "T_SVCGRP"      /**<  Service group        */
     
 #define NDRX_TA_GET                 "GET"           /**< Get infos             */
 #define NDRX_TA_GETNEXT             "GETNEXT"       /**< Read next curs        */

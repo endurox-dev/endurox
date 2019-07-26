@@ -127,8 +127,10 @@ extern int ndrx_adm_machine_get(char *clazz, ndrx_adm_cursors_t *cursnew, long f
 extern int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 extern int ndrx_adm_server_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 extern int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern int ndrx_adm_svcgrp_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 
 extern int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
+extern int ndrx_adm_psc_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
 
 extern ndrx_adm_cursors_t* ndrx_adm_curs_get(char *cursid);
 
