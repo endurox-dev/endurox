@@ -98,7 +98,7 @@ expublic void cpm_unlock_config(void)
  */
 expublic void cpm_get_key(char *key_out, int key_outsz, char *tag, char *subsect)
 {
-    snprintf(key_out, key_outsz, "%s%c%s", tag, S_FS, subsect);
+    snprintf(key_out, key_outsz, "%s%c%s", tag, NDRX_CPM_SEP, subsect);
 }
 /**
  * Return client by tag & subsect
@@ -203,6 +203,8 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     int loop_subsectfrom;
     int loop_subsectto;
     int i, genloop;
+    char separators[] = CPM_CMDLINE_SEP;
+    int len;
     
     memset(&cltproc, 0, sizeof(cpm_process_t));
     
@@ -653,7 +655,29 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                         sizeof(p_cltproc->stat.log_stdout));
                 ndrx_str_env_subs_len(p_cltproc->stat.log_stderr, 
                         sizeof(p_cltproc->stat.log_stderr));
+                
+                /* update the process name / hint */
+                p = strpbrk (p_cltproc->stat.command_line, separators);
+                
+                if (p > 0)
+                {
+                    /* get the len */
+                    len = p - p_cltproc->stat.command_line;
+                }
+                else
+                {
+                    len = strlen(p_cltproc->stat.command_line);
+                }
 
+                
+                if (len > sizeof(p_cltproc->stat.procname)-1)
+                {
+                    len = sizeof(p_cltproc->stat.procname)-1;
+                }
+                
+                strncpy(p_cltproc->stat.procname, p_cltproc->stat.command_line, len);
+                p_cltproc->stat.procname[len] = EXEOS;
+                
                 /* add to hash list */
                 cpm_get_key(p_cltproc->key, sizeof(p_cltproc->key), 
                         p_cltproc->tag, p_cltproc->subsect);
@@ -681,6 +705,7 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                     NDRX_LOG(log_info, "Refreshing %s/%s [%s] ...", 
                             p_cltproc->tag, p_cltproc->subsect, 
                             p_cltproc->stat.command_line);
+                    
                     p_cl->is_cfg_refresh = EXTRUE;
 
 

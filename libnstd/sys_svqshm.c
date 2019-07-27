@@ -441,40 +441,55 @@ expublic int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p,
     return ndrx_G_svqshm_init;
 }
 
-
-#if 0
-int (*p_key_hash)(ndrx_lh_config_t *conf, void *key_get, size_t key_len);
-    
-/** Flags (short type) offset in element */
-int  flags_offset;
-    
-/** Key hash func   */
-void (*p_key_debug)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
-    char *dbg_out, size_t dbg_len);
-    
-/** Value debug     */
-void (*p_val_debug)(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len);
-    
-/** Compare value at index, ret 0 if equals */
-int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
-#endif
-
+/**
+ * Hash the string key
+ * @param conf hash config
+ * @param key_get key value
+ * @param key_len not used
+ * @return slot index
+ */
 exprivate int qstr_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_len)
 {
     return ndrx_hash_fn(key_get) % conf->elmmax;
 }
 
+/**
+ * Generate debug for key output
+ * @param conf hash config
+ * @param key_get key value
+ * @param key_len not used
+ * @param dbg_out debug output buffer
+ * @param dbg_len debug output buffer size
+ */
 exprivate void qstr_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
     char *dbg_out, size_t dbg_len)
 {
     NDRX_STRNCPY_SAFE(dbg_out, key_get, dbg_len);
 }
 
-exprivate void qstr_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len)
+/**
+ * Get value debug string
+ * @param conf hash config
+ * @param idx array index
+ * @param dbg_out debug output
+ * @param dbg_len debug output len
+ */
+exprivate void val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len)
 {
-    NDRX_STRNCPY_SAFE(dbg_out, NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, dbg_len);
+    snprintf(dbg_out, dbg_len, "%s/%d", 
+            NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr,
+            NDRX_SVQ_INDEX((*conf->memptr), idx)->qid);
+    
 }
 
+/**
+ * Compare the hash element key
+ * @param conf hash config
+ * @param key_get key value
+ * @param key_len key len
+ * @param idx index at which to compare
+ * @return 0 if equals
+ */
 exprivate int qstr_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx)
 {
     return strcmp(NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, key_get);
@@ -491,151 +506,6 @@ exprivate int qstr_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len
 exprivate int position_get_qstr(char *pathname, int oflag, int *pos, 
         int *have_value)
 {
-#if 0
-    int ret=SHM_ENT_NONE;
-    int try = EXFAIL;
-    int start = try;
-    int overflow = EXFALSE;
-    int iterations = 0;
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_p2s.mem;
-    
-    /*
-     * 20/10/2018 Got to loop twice!!!! 
-     * Some definitions:
-     * A - our Q
-     * B - other Q
-     * 
-     * The problem:
-     * 1) B gets installed in our cell / direct hash number
-     * 2) A gets installed in cell+1 index
-     * 3) B gets uninstalled / cell becomes as stale
-     * 4) A tries installed Q again, and it hits the cell and not the cell+1
-     * 
-     * ----
-     * Thus to solve this, we got to firstly perform "read only" lookup on the
-     * queue tables to see, is queue already present there or not. And if not,
-     * only then perform write to maps..
-     * 
-     * !!!! Needs to check with the _ndrx_shm_get_svc() wouldn't be there the
-     * same problem !!!!
-     * 
-     */
-    if (oflag & O_CREAT)
-    {
-        int try_read;
-        int read_have_value;
-        
-        if (position_get_qstr(pathname, 0, &try_read, &read_have_value)
-                && read_have_value)
-        {
-            try = try_read;
-        }
-    }
-    
-    if (EXFAIL==try)
-    {
-        try = ndrx_hash_fn(pathname) % M_queuesmax;
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Got existing record at %d", try);
-    }
-    
-    *pos=EXFAIL;
-    
-    NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p oflag: %d", 
-                                        pathname, try, svq, oflag);
-    /*
-     * So we loop over filled entries until we found empty one or
-     * one which have been initialised by this service.
-     *
-     * So if there was overflow, then loop until the start item.
-     */
-    while ((NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
-            && (!overflow || (overflow && try < start)))
-    {
-        if (0==strcmp(NDRX_SVQ_INDEX(svq, try)->qstr, pathname))
-        {
-            *pos=try;
-            
-            if (NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED)
-            {
-                ret=SHM_ENT_MATCH;
-            }
-            else
-            {
-                ret=SHM_ENT_OLD;
-            }
-            
-            break;  /* <<< Break! */
-        }
-        
-	if (oflag & O_CREAT)
-	{
-            if (!(NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED))
-            {
-                /* found used position */
-                ret=SHM_ENT_OLD;
-                break; /* <<< break! */
-            }
-	}
-
-        try++;
-        
-        /* we loop over... 
-         * Feature #139 mvitolin, 09/05/2017
-         * Fix potential overflow issues at the border... of SHM...
-         */
-        if (try>=M_queuesmax)
-        {
-            try = 0;
-            overflow=EXTRUE;
-            NDRX_LOG(log_debug, "Overflow reached for search of [%s]", pathname);
-        }
-        iterations++;
-        
-        NDRX_LOG(log_debug, "Trying %d for [%s]", try, pathname);
-    }
-    
-    *pos=try;
-    
-    switch (ret)
-    {
-        case SHM_ENT_OLD:
-            *have_value = EXFALSE;
-            ret = EXTRUE;   /* have position */
-            break;
-        case SHM_ENT_NONE:
-            
-            if (overflow)
-            {
-                *have_value = EXFALSE;
-                ret = EXFALSE;   /* no position */
-            }
-            else
-            {
-                *have_value = EXFALSE;
-                ret = EXTRUE;   /* have position */
-            }
-            
-            break;
-        case SHM_ENT_MATCH:
-            *have_value = EXTRUE;
-            ret = EXTRUE;   /* have position */
-            break;
-        default:
-            
-            NDRX_LOG(log_error, "!!! should not get here...");
-            break;
-    }
-    
-    NDRX_LOG(log_debug, "qstr_position_get [%s] - result: %d, "
-                "iterations: %d, pos: %d, have_value: %d flags: %hd [%s]",
-                pathname, ret, iterations, *pos, *have_value, 
-                NDRX_SVQ_INDEX(svq, try)->flags, NDRX_SVQ_INDEX(svq, try)->qstr);
-    
-    return ret;
-#endif
     static ndrx_lh_config_t conf;
     static int first = EXTRUE;
     
@@ -647,7 +517,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
         conf.memptr = (void **)&(M_map_p2s.mem);
         conf.p_key_hash=&qstr_key_hash;
         conf.p_key_debug=&qstr_key_debug;
-        conf.p_val_debug=&qstr_val_debug;
+        conf.p_val_debug=&val_debug;
         conf.p_compare=&qstr_compare;
         first = EXFALSE;
     }
@@ -669,11 +539,11 @@ exprivate int qid_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_len
 
 /**
  * Key debug output generator
- * @param conf
- * @param key_get
- * @param key_len
- * @param dbg_out
- * @param dbg_len
+ * @param conf hash config
+ * @param key_get key value
+ * @param key_len key len/not used
+ * @param dbg_out debug output buffer
+ * @param dbg_len debug buffer len
  */
 exprivate void qid_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
     char *dbg_out, size_t dbg_len)
@@ -681,14 +551,14 @@ exprivate void qid_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_l
     snprintf(dbg_out, dbg_len, "%d", *((int *)key_get));
 }
 
-exprivate void qid_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len)
-{
-    /*NDRX_STRNCPY_SAFE(dbg_out, NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, dbg_len);*/
-    
-    snprintf(dbg_out, dbg_len, "%d", NDRX_SVQ_INDEX((*conf->memptr), idx)->qid);
-    
-}
-
+/**
+ * Hash key compare
+ * @param conf hash config
+ * @param key_get key value
+ * @param key_len key len, not used
+ * @param idx index at which to compare
+ * @return 0 - equals, other not equals
+ */
 exprivate int qid_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx)
 {
     /* return strcmp(NDRX_SVQ_INDEX((*conf->memptr), idx)->qstr, key_get); */
@@ -712,152 +582,6 @@ exprivate int qid_compare(ndrx_lh_config_t *conf, void *key_get, size_t key_len,
 exprivate int position_get_qid(int qid, int oflag, int *pos, 
         int *have_value)
 {
-#if 0
-    int ret=SHM_ENT_NONE;
-    int try = EXFAIL;
-    int start = try;
-    int overflow = EXFALSE;
-    int iterations = 0;
-    ndrx_svq_map_t *svq = (ndrx_svq_map_t *) M_map_s2p.mem;
-    
-    /*
-     * 20/10/2018 Got to loop twice!!!! 
-     * Some definitions:
-     * A - our Q
-     * B - other Q
-     * 
-     * The problem:
-     * 1) B gets installed in our cell / direct hash number
-     * 2) A gets installed in cell+1 index
-     * 3) B gets uninstalled / cell becomes as stale
-     * 4) A tries installed Q again, and it hits the cell and not the cell+1
-     * 
-     * ----
-     * Thus to solve this, we got to firstly perform "read only" lookup on the
-     * queue tables to see, is queue already present there or not. And if not,
-     * only then perform write to maps..
-     * 
-     * !!!! Needs to check with the _ndrx_shm_get_svc() wouldn't be there the
-     * same problem !!!!
-     * 
-     */
-    if (oflag & O_CREAT)
-    {
-        int try_read;
-        int read_have_value;
-        
-        if (position_get_qid(qid, 0, &try_read, &read_have_value)
-                && read_have_value)
-        {
-            try = try_read;
-        }
-    }
-    
-    if (EXFAIL==try)
-    {
-        try = qid % M_queuesmax;
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Got existing record at %d", try);
-    }
-
-    *pos=EXFAIL;
-    *have_value = EXFALSE;
-    
-    NDRX_LOG(log_debug, "Try key qid [%d] is %d, shm is: %p oflag: %d", 
-                                        qid, try, svq, oflag);
-    /*
-     * So we loop over filled entries until we found empty one or
-     * one which have been initialised by this service.
-     *
-     * So if there was overflow, then loop until the start item.
-     */
-    while ((NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_WASUSED)
-            && (!overflow || (overflow && try < start)))
-    {
-        
-        if (NDRX_SVQ_INDEX(svq, try)->qid == qid)
-        {
-            *pos=try;
-            
-            if (NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED)
-            {
-                ret=SHM_ENT_MATCH;
-            }
-            else
-            {
-                ret=SHM_ENT_OLD;
-            }
-            
-            ret=EXTRUE;
-            break;  /* <<< Break! */
-        }
-        
-	if (oflag & O_CREAT)
-	{
-            if (!(NDRX_SVQ_INDEX(svq, try)->flags & NDRX_SVQ_MAP_ISUSED))
-            {
-                ret=SHM_ENT_OLD;
-                /* found used position */
-                break; /* <<< break! */
-            }
-	}
-
-        try++;
-        
-        /* we loop over... 
-         * Feature #139 mvitolin, 09/05/2017
-         * Fix potential overflow issues at the border... of SHM...
-         */
-        if (try>=M_queuesmax)
-        {
-            try = 0;
-            overflow=EXTRUE;
-            NDRX_LOG(log_debug, "Overflow reached for search of [%d]", qid);
-        }
-        iterations++;
-        
-        NDRX_LOG(log_debug, "Trying %d for [%d]", try, qid);
-    }
-    switch (ret)
-    {
-        case SHM_ENT_OLD:
-            *have_value = EXFALSE;
-            ret = EXTRUE;   /* have position */
-            break;
-        case SHM_ENT_NONE:
-            
-            if (overflow)
-            {
-                *have_value = EXFALSE;
-                ret = EXFALSE;   /* no position */
-            }
-            else
-            {
-                *have_value = EXFALSE;
-                ret = EXTRUE;   /* have position */
-            }
-            
-            break;
-        case SHM_ENT_MATCH:
-            *have_value = EXTRUE;
-            ret = EXTRUE;   /* have position */
-            break;
-        default:
-            
-            NDRX_LOG(log_error, "!!! should not get here...");
-            break;
-    }
-    
-    *pos=try;
-    NDRX_LOG(log_debug, "[%d] - result: %d, "
-                        "iterations: %d, pos: %d, have_value: %d",
-                         qid, ret, iterations, *pos, *have_value);
-    return ret;
-
-#endif
-
     static ndrx_lh_config_t conf;
     static int first = EXTRUE;
     
@@ -869,7 +593,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
         conf.memptr = (void **)&(M_map_s2p.mem);
         conf.p_key_hash=&qid_key_hash;
         conf.p_key_debug=&qid_key_debug;
-        conf.p_val_debug=&qid_val_debug;
+        conf.p_val_debug=&val_debug;
         conf.p_compare=&qid_compare;
         first = EXFALSE;
     }

@@ -229,10 +229,25 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrxd_sigchld_init();
 #endif
     
+    /* attach to the shared memory */
+    if (EXSUCCEED!=ndrx_cltshm_init(EXFALSE))
+    {
+        NDRX_LOG(log_error, "Failed to open client shared memory segment!");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Load initial config */
     if (EXSUCCEED!=load_config())
     {
         NDRX_LOG(log_error, "Failed to load client config!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* sync with SHM.... */
+    
+    if (EXSUCCEED!=ndrx_cpm_sync_from_shm())
+    {
+        NDRX_LOG(log_error, "Failed to sync current status with shared memory!");
         EXFAIL_OUT(ret);
     }
     
@@ -277,6 +292,10 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 #ifndef EX_CPM_NO_THREADS
     ndrxd_sigchld_uninit();
 #endif
+    
+    
+    ndrx_cltshm_detach();
+    ndrx_cltshm_remove(EXFALSE);
 
 }
 

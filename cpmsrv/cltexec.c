@@ -517,7 +517,7 @@ expublic int cpm_exec(cpm_process_t *c)
     pid_t pid;
     char cmd_str[PATH_MAX];
     char *cmd[PATH_MAX]; /* splitted pointers.. */
-    char separators[]   = " ,\t\n";
+    char separators[] = CPM_CMDLINE_SEP;
     char *token;
     int numargs = 0;
     int fd_stdout;
@@ -651,6 +651,19 @@ expublic int cpm_exec(cpm_process_t *c)
         cpm_set_cur_time(c);
         c->dyn.pid = pid;
         c->dyn.cur_state = CLT_STATE_STARTED;
+        
+        /* extract the procname from command line */
+        
+        /* updated shared memory... */
+        if (EXSUCCEED!=ndrx_cltshm_setpos(c->key, c->dyn.pid, 
+                NDRX_CPM_MAP_ISUSED|NDRX_CPM_MAP_WASUSED|NDRX_CPM_MAP_WASUSED, 
+                c->stat.procname))
+        {
+            NDRX_LOG(log_error, "Failed to register client in CPM SHM/mem full, check %s param", 
+                    CONF_NDRX_CLTMAX);
+            userlog("Failed to register client in CPM SHM/mem full, check %s param", 
+                    CONF_NDRX_CLTMAX);
+        }   
     }
     else
     {

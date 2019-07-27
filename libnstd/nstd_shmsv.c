@@ -77,6 +77,7 @@ segmap_t M_map[] = {
         ,{NDRX_SHM_BRINFO_SFX, NDRX_SHM_BRINFO_KEYOFSZ}
         ,{NDRX_SHM_P2S_SFX, NDRX_SHM_P2S_KEYOFSZ}
         ,{NDRX_SHM_S2P_SFX, NDRX_SHM_S2P_KEYOFSZ}
+        ,{NDRX_SHM_CPM_SFX, NDRX_SHM_CPM_KEYOFSZ}
         ,{NULL}
     };
 /*---------------------------Prototypes---------------------------------*/    
