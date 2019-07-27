@@ -62,9 +62,6 @@ extern "C" {
 
 #define CLT_WILDCARD                '%'         /**< regexp -> .* */
     
-#define S_FS                        0x1c /**< Field seperator */
-    
-    
 #define CLT_STATE_NOTRUN            0   /**< Not running                  */
 #define CLT_STATE_STARTING          1   /**< Starting...                  */
 #define CLT_STATE_STARTED           2   /**< Started                      */
@@ -74,11 +71,12 @@ extern "C" {
     
 /* Individual shutdown: */
 #define CLT_STEP_INTERVAL           10000 /**<  microseconds for usleep */
-#define CLT_STEP_SECOND              CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
+#define CLT_STEP_SECOND             CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
     
 /* Global shutdown: */
-#define CLT_STEP_INTERVAL_ALL          300000 /**< microseconds for usleep */
-#define CLT_STEP_SECOND_ALL            CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
+#define CLT_STEP_INTERVAL_ALL       300000 /**< microseconds for usleep */
+#define CLT_STEP_SECOND_ALL         CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
+#define CPM_CMDLINE_SEP             " ,\t\n" /**< command line seperators   */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -90,9 +88,10 @@ struct cpm_static_info
 {
     /* Static info: */
     char command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
+    char procname[NDRX_CPM_CMDMIN+1];   /**< process name               */
     char log_stdout[PATH_MAX+1];
     char log_stderr[PATH_MAX+1];
-    char wd[PATH_MAX+1]; /**< Working dir */
+    char wd[PATH_MAX+1];                /**< Working dir                */
     char env[PATH_MAX+1];
     char cctag[NDRX_CCTAG_MAX+1];
     long flags;              /**< flags of the process */
@@ -115,13 +114,13 @@ typedef struct cpm_static_info cpm_static_info_t;
 struct cpm_dynamic_info
 {
     /* Dynamic info: */
-    pid_t pid;  /* pid of the process */
-    int exit_status; /* Exit status... */
-    int consecutive_fail; /*  Number of consecutive fails */    
-    int req_state;      /* requested state */
-    int cur_state;      /* current state */
-    int was_started;    /* Was process started? */
-    time_t stattime;         /* Status change time */
+    pid_t pid;              /**< pid of the process             */
+    int exit_status;        /**< Exit status...                 */
+    int consecutive_fail;   /**< Number of consecutive fails    */    
+    int req_state;          /**< requested state                */
+    int cur_state;          /**< current state                  */
+    int was_started;        /**< Was process started?           */
+    time_t stattime;        /**< Status change time             */
 };
 typedef struct cpm_dynamic_info cpm_dynamic_info_t;
 
@@ -180,6 +179,8 @@ extern void cpm_cfg_unlock(void);
 
 extern void cpm_lock_config(void);
 extern void cpm_unlock_config(void);
+
+extern int ndrx_cpm_sync_from_shm(void);
 
 #ifdef EX_CPM_NO_THREADS
 extern void sign_chld_handler(int sig);

@@ -61,10 +61,10 @@
 #define NDRX_SVQ_MAP_ISUSED       NDRX_LH_FLAG_ISUSED
 /** Queue was used (or is used)*/
 #define NDRX_SVQ_MAP_WASUSED      NDRX_LH_FLAG_WASUSED
-#define NDRX_SVQ_MAP_EXPIRED      0x00000004  /**< Queue expired by ctime     */
-#define NDRX_SVQ_MAP_SCHEDRM      0x00000008  /**< Schedule queue removal     */
-#define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This is request address q  */
-#define NDRX_SVQ_MAP_HAVESVC      0x00000020  /**< Have service in shm        */
+#define NDRX_SVQ_MAP_EXPIRED      0x0004  /**< Queue expired by ctime     */
+#define NDRX_SVQ_MAP_SCHEDRM      0x0008  /**< Schedule queue removal     */
+#define NDRX_SVQ_MAP_RQADDR       0x0010  /**< This is request address q  */
+#define NDRX_SVQ_MAP_HAVESVC      0x0020  /**< Have service in shm        */
 
 
 #define NDRX_SVQ_MONF_SYNCFD      0x00000001  /**< Perform monitoring on FDs  */

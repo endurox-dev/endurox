@@ -396,16 +396,17 @@ typedef struct atmi_lib_conf atmi_lib_conf_t;
 struct atmi_lib_env
 {   
     /* Other global settings */
-    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX*/
-    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX*/
+    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX  */
+    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX    */
+    int     max_clts;    /**< Max number of CPMSRV clients                  */
     char    rnd_key[NDRX_MAX_KEY_SIZE];   /**< random key to be passed to all EnduroX servers in session */
-    int     msg_max;     /**< maximum number of messages in a posix queue */
-    int     msgsize_max; /**< maximum message size for a posix queue */
-    key_t   ipckey;      /**< IPC Key */
-    int     time_out;    /**< Timeout in seconds to be applied for calls */
-    int     our_nodeid;  /**< Cluster node id */
-    int     ldbal;       /**< Load balance settings */
-    int     is_clustered;/**< Will we run in cluster mode or not? */
+    int     msg_max;     /**< maximum number of messages in a posix queue   */
+    int     msgsize_max; /**< maximum message size for a posix queue        */
+    key_t   ipckey;      /**< IPC Key                                       */
+    int     time_out;    /**< Timeout in seconds to be applied for calls    */
+    int     our_nodeid;  /**< Cluster node id                               */
+    int     ldbal;       /**< Load balance settings                         */
+    int     is_clustered;/**< Will we run in cluster mode or not?           */
     
     /**
      * @defgroup xa_params XA configuration parameters
