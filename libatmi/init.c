@@ -230,6 +230,19 @@ expublic int ndrx_load_common_env(void)
         G_atmi_env.max_svcs = atoi(p);
         NDRX_LOG(log_debug, "Max services set to %d", G_atmi_env.max_servers);
     }
+    
+    /* Read MAX SVCs per server */
+    p = getenv(CONF_NDRX_CLTMAX);
+    if (NULL==p)
+    {
+        G_atmi_env.max_clts = 20000;
+    }
+    else
+    {
+        G_atmi_env.max_clts = atoi(p);
+    }
+    
+    NDRX_LOG(log_debug, "Max services set to %d", G_atmi_env.max_clts);
 
 
     p = getenv(CONF_NDRX_RNDK);

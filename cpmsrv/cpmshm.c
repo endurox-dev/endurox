@@ -1,6 +1,5 @@
 /**
- * @brief Client admin shared memory handler
- *  Added to libatm so that tpadmsv can use it too.
+ * @brief Shared memory handler
  *
  * @file cpmshm.c
  */
@@ -31,32 +30,30 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <ndrx_config.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <sys/param.h>
+#include <sys_mqueue.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <libxml/xmlreader.h>
 #include <errno.h>
-#include <sys/sem.h>
-
-#include <atmi.h>
-#include <atmi_shm.h>
-#include <ndrstandard.h>
-#include <ndebug.h>
-#include <ndrxd.h>
-#include <ndrxdcmn.h>
-#include <userlog.h>
-
-/* shm_* stuff, and mmap() */
-#include <sys/mman.h>
-#include <sys/types.h>
-/* exit() etc */
+#include <signal.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/ipc.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
-#include <nstd_shm.h>
+#include <ndrstandard.h>
+#include <userlog.h>
+#include <atmi.h>
+#include <exenvapi.h>
+#include <cpm.h>
+
+#include "cpmsrv.h"
+#include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -65,21 +62,33 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * 
- * TODO: Func for creating the segment, attaching to segment, get the results
- * created or attached.
- * 
- * get position for add
- * get position  for reading.
- * 
- * TWO mapping tables: TAG/SUBSECT -> PID, PID -> TAG/SUBSECT.
- * 
- * Needs new global setting for size of maps: 
- * Needs to store process name and have cpmsrv setting to validate proc name
- *  or not.
- * 
- * 
+/**
+ * Sync PIDs with SHM (after the boot, if crash recovery there shall be
+ * something.
+ * @return EXSUCCEED/EXFAIL
  */
+expublic int ndrx_cpm_sync_from_shm(void)
+{
+    int ret = EXSUCCEED;
+    cpm_process_t *c = NULL;
+    cpm_process_t *ct = NULL;
+    
+    EXHASH_ITER(hh, G_clt_config, c, ct)
+    {
+        /* lookup the process */
+        pid_t pid = ndrx_cltshm_getpid(c->key, c->stat.procname, 
+                sizeof(c->stat.procname), &c->dyn.stattime);
+        
+        if (EXFAIL!=pid)
+        {
+            c->dyn.cur_state=CLT_STATE_STARTED;
+            /* set current temp stamp */
+            c->dyn.pid = pid;
+        }
+    }
+    
+out:
+    return ret;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

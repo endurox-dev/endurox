@@ -2,7 +2,7 @@
  * @brief Client admin shared memory handler
  *  Added to libatm so that tpadmsv can use it too.
  *
- * @file sem.c
+ * @file cltshm.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -62,99 +62,338 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate ndrx_shm_t M_clt_shm = {.fd=EXFAIL, .path="", .mem=NULL}; /**< Shared mem block, clt */
+exprivate ndrx_sem_t M_clt_sem = {.semid=0};        /**< Protect the shared memory */
+
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * 
- * TODO: Func for creating the segment, attaching to segment, get the results
- * created or attached.
- * 
- * get position for add
- * get position  for reading.
- * 
- * TWO mapping tables: TAG/SUBSECT -> PID, PID -> TAG/SUBSECT.
- * 
- * Needs new global setting for size of maps: 
- * Needs to store process name and have cpmsrv setting to validate proc name
- *  or not.
- * 
- * 
+/**
+ * Attach to shared memory of the Client Processes
+ * @param attach_only attach only, if does not exists - fail
+ * @return EXSUCCEED/EXFAIL
  */
+expublic int ndrx_cltshm_init(int attach_only)
+{
+    int ret = EXSUCCEED;
+    
+    M_clt_shm.fd = EXFAIL;
+    M_clt_shm.key = G_atmi_env.ipckey + NDRX_SHM_CPM_KEYOFSZ;
+
+    snprintf(M_clt_shm.path, sizeof(M_clt_shm.path), NDRX_SHM_CPM, G_atmi_env.qprefix);
+    M_clt_shm.size = sizeof(ndrx_clt_shm_t)*G_atmi_env.max_clts;
+    
+    if (attach_only)
+    {
+        if (EXSUCCEED!=ndrx_shm_attach(&M_clt_shm))
+        {
+            NDRX_LOG(log_error, "Failed to attach ",
+                        M_clt_shm.path);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (EXSUCCEED!=ndrx_shm_open(&M_clt_shm, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to open shm [%s] - System V Queues cannot work",
+                    M_clt_shm.path);
+        EXFAIL_OUT(ret);
+    }
+    
+    memset(&M_clt_sem, 0, sizeof(M_clt_sem));
+    
+    /* Init the RW semaphores */
+    M_clt_sem.key = G_atmi_env.ipckey + NDRX_SEM_CPMLOCKS;
+    M_clt_sem.nrsems = 1;
+    M_clt_sem.maxreaders = NDRX_CPMSHM_MAX_READERS;
+    
+    NDRX_LOG(log_debug, "CPMSHM: Using service semaphore key: %d max readers: %d", 
+            M_clt_sem.key, M_clt_sem.maxreaders);
+    
+    /* OK, either create or attach... */
+    if (attach_only)
+    {
+        if (EXSUCCEED!=ndrx_sem_attach(&M_clt_sem))
+        {
+            NDRX_LOG(log_error, "Failed to attach semaphore for CPM "
+                    "map shared mem");
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (EXSUCCEED!=ndrx_sem_open(&M_clt_sem, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to open semaphore for CPM "
+                "map shared mem");
+        userlog("Failed to open semaphore for CPM "
+                "map shared mem");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+ out:
+    NDRX_LOG(log_debug, "returns %d", ret);
+    return ret;
+}
 
 /**
- * Get shm pos by pid
- * @param qid
- * @param oflag
- * @param pos
- * @param have_value
- * @return 
+ * Generate the hash of the cpm key
+ * @param conf hash config
+ * @param key_get key data
+ * @param key_len key len (not used)
+ * @return slot number within the array
  */
-expublic int ndrx_cltshm_get_pid(int qid, int oflag, int *pos, int *have_value)
+exprivate int cltkey_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_len)
 {
-    return EXFAIL;
+    return ndrx_hash_fn(key_get) % conf->elmmax;
+}
+
+/**
+ * Generate debug for CPM key
+ * @param conf hash config
+ * @param key_get key data
+ * @param key_len not used
+ * @param dbg_out output debug string
+ * @param dbg_len debug len
+ */
+exprivate void cltkey_key_debug(ndrx_lh_config_t *conf, void *key_get, 
+        size_t key_len, char *dbg_out, size_t dbg_len)
+{
+    NDRX_STRNCPY_SAFE(dbg_out, key_get, dbg_len);
+}
+
+/**
+ * CPM shared mem key debug value
+ * @param conf hash config
+ * @param idx index number
+ * @param dbg_out debug buffer
+ * @param dbg_len debug len
+ */
+exprivate void cltkey_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, 
+        size_t dbg_len)
+{
+    NDRX_STRNCPY_SAFE(dbg_out, NDRX_CPM_INDEX((*conf->memptr), idx)->key, dbg_len);
+}
+
+/**
+ * Compare the keys
+ * @param conf hash config
+ * @param key_get key
+ * @param key_len key len (not used)
+ * @param idx index at which to compare
+ * @return 0 = equals, others not.
+ */
+exprivate int cltkey_compare(ndrx_lh_config_t *conf, void *key_get, 
+        size_t key_len, int idx)
+{
+    return strcmp(NDRX_CPM_INDEX((*conf->memptr), idx)->key, key_get);
 }
 
 /**
  * Get shm pos by key
- * @param key
- * @param oflag
- * @param pos
- * @param have_value
- * @return 
+ * @param key client key, format "tag/subsection" ?
+ * @param oflag O_CREATE if create new rec
+ * @param[out] pos position found suitable to succeed request
+ * @param[out] have_value valid value is found? EXTRUE/EXFALSE.
+ * @return EXTRUE -> found position/ EXFALSE - no position found
  */
 expublic int ndrx_cltshm_get_key(char *key, int oflag, int *pos, int *have_value)
 {
-    return EXFAIL;
+    static ndrx_lh_config_t conf;
+    static int first = EXTRUE;
+    
+    if (first)
+    {
+        conf.elmmax = G_atmi_env.max_clts;
+        conf.elmsz = sizeof(ndrx_svq_map_t);
+        conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
+        conf.memptr = (void **)&(M_clt_shm.mem);
+        conf.p_key_hash=&cltkey_key_hash;
+        conf.p_key_debug=&cltkey_key_debug;
+        conf.p_val_debug=&cltkey_val_debug;
+        conf.p_compare=&cltkey_compare;
+        first = EXFALSE;
+    }
+    
+    return ndrx_lh_position_get(&conf, key, 0, oflag, pos, have_value, "cltkey");
+
 }
 
-expublic int ndrx_cltshm_get_status_key(char *key)
+/**
+ * Disconnect from shared memory block
+ */
+expublic void ndrx_cltshm_detach(void)
 {
-    return EXFAIL;
+    NDRX_LOG(log_debug, "cltshm detach");
+    ndrx_shm_close(&M_clt_shm);
+    ndrx_sem_close(&M_clt_sem);
 }
 
-expublic int ndrx_cltshm_get_status_pid(char *key)
+/**
+ * Remove the shared resources
+ * @return 
+ */
+expublic int ndrx_cltshm_remove(int force)
 {
-    return EXFAIL;
+    int ret = EXSUCCEED;
+    
+    NDRX_LOG(log_debug, "cltshm remove force: %d", force);
+    
+    if (M_clt_shm.fd !=EXFAIL)
+    {
+        if (EXSUCCEED!=ndrx_shm_remove(&M_clt_shm))
+        {
+            ret = EXFAIL;
+        }
+        M_clt_shm.fd = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_remove(&M_clt_sem, force))
+    {
+        ret = EXFAIL;
+    }
+    
+out:
+    return ret;
 }
 
-expublic int ndrx_cltshm_set_status_key(char *key, int stat)
+/**
+ * Get shared mem obj
+ * INIT control is up to user.
+ * @return  shm obj
+ */
+expublic ndrx_shm_t* ndrx_cltshm_mem_get(void)
 {
-    return EXFAIL;
+    return &M_clt_shm;
 }
 
-expublic int ndrx_cltshm_attach(int attach_on_exists)
+/**
+ * Get semaphore obj.
+ * INIT control is up to user.
+ * @return sem obj
+ */
+expublic ndrx_sem_t* ndrx_cltshm_sem_get(void)
 {
-    return EXFAIL;
+    return &M_clt_sem;
 }
 
-expublic int ndrx_cltshm_close(void)
+/**
+ * Find the current pid of the process
+ * @param [in] key key with <FS> seperator
+ * @param [out] procname process name hint, opt
+ * @param [in] procnamesz procname length 
+ * @param [out] p_stattime time stamp when started, opt
+ * @return pid or EXFAIL if not found
+ */
+expublic pid_t ndrx_cltshm_getpid(char *key, char *procname, 
+        size_t procnamesz, time_t *p_stattime)
 {
-    return EXFAIL;
+    pid_t ret = EXFAIL;
+    int pos;
+    int have_value;
+    /* readlock */
+    
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_clt_sem, 0, NDRX_SEM_TYP_READ))
+    {
+        goto out;
+    }
+
+    if (ndrx_cltshm_get_key(key, 0, &pos, &have_value))
+    {
+        if (have_value)
+        {
+            ndrx_clt_shm_t *el = NDRX_CPM_INDEX(M_clt_shm.mem, pos);
+            
+            /* if value is set, then we got pid */
+            ret = el->pid;
+            
+            if (NULL!=procname)
+            {
+                NDRX_STRNCPY_SAFE(procname, el->procname, procnamesz);
+            }
+            
+            if (NULL!=p_stattime)
+            {
+                memcpy(p_stattime, &el->stattime, sizeof(el->stattime));
+            }
+            
+        }
+    }
+    
+    /* unlock */
+    ndrx_sem_rwunlock(&M_clt_sem, 0, NDRX_SEM_TYP_READ);
+out:
+    return ret;
 }
 
-expublic int ndrx_cltshm_remove(void)
+/**
+ * Set position.
+ * This will check the key, if key requests, ISUSED, then new position will
+ * be tried to allocate.
+ * @param key CPM process key
+ * @param pid PID of the process (used only if setting up)
+ * @param flags see NDRX_CPM_MAP_* flags
+ * @param procname process name only if adding the cored with ISUSED
+ * @return EXSUCCEED/EXFAIL (memory full)
+ */
+expublic int ndrx_cltshm_setpos(char *key, pid_t pid, short flags, char *procname)
 {
-    return EXFAIL;
-}
+    int ret = EXFAIL;
+    int pos;
+    int have_value;
+    int oflag = 0;
+    
+    if (flags & NDRX_CPM_MAP_ISUSED)
+    {
+        oflag |=O_CREAT;
+    }
+    /* readlock */
+    
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_clt_sem, 0, NDRX_SEM_TYP_WRITE))
+    {
+        goto out;
+    }
 
-expublic int ndrx_cltshm_rlock(void)
-{
-    return EXFAIL;
-}
-
-expublic int ndrx_cltshm_runlock(void)
-{
-    return EXFAIL;
-}
-
-expublic void ndrx_cltshm_getptr(void)
-{
-    return EXFAIL;
+    if (ndrx_cltshm_get_key(key, oflag, &pos, &have_value))
+    {
+        
+        /* we got a position */
+        
+        if (oflag)
+        {
+            NDRX_CPM_INDEX(M_clt_shm.mem, pos)->pid = pid;
+            NDRX_STRCPY_SAFE(NDRX_CPM_INDEX(M_clt_shm.mem, pos)->procname, procname);
+            NDRX_CPM_INDEX(M_clt_shm.mem, pos)->flags = flags;
+            time (&(NDRX_CPM_INDEX(M_clt_shm.mem, pos)->stattime));
+        }
+        else
+        {
+            NDRX_CPM_INDEX(M_clt_shm.mem, pos)->flags = flags;
+        }
+        
+        ret = EXSUCCEED;
+    }
+    
+    /* unlock */
+    ndrx_sem_rwunlock(&M_clt_sem, 0, NDRX_SEM_TYP_WRITE);
+out:
+    
+    if (EXSUCCEED==ret)
+    {
+        if (oflag)
+        {
+            NDRX_LOG(log_info, "Process installed in CPM SHM: [%s]/%s/%d/%hd",
+                    key, procname, (int)pid, flags);
+        }
+        else
+        {
+            NDRX_LOG(log_info, "Process removed from CPM SHM: [%s]/%s/%d/%hd",
+                    key, NDRX_CPM_INDEX(M_clt_shm.mem, pos)->procname, 
+                    (int)NDRX_CPM_INDEX(M_clt_shm.mem, pos)->pid, flags);
+        }
+    }
+    
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

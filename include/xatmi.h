@@ -203,6 +203,10 @@ extern "C" {
 #define NDRX_SHM_S2P_SFX        "shm,s2p"           /**< System V to Posix             */
 #define NDRX_SHM_S2P            "%s," NDRX_SHM_S2P_SFX
 #define NDRX_SHM_S2P_KEYOFSZ    4                   /**< IPC Key offset                */
+
+#define NDRX_SHM_CPM_SFX        "shm,cpm"           /**< Client process monitor        */
+#define NDRX_SHM_CPM            "%s," NDRX_SHM_CPM_SFX
+#define NDRX_SHM_CPM_KEYOFSZ    5                   /**< IPC Key offset                */
     
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
 
@@ -240,6 +244,7 @@ extern "C" {
 #define CONF_NDRX_QPREFIX        "NDRX_QPREFIX"
 #define CONF_NDRX_SVCMAX         "NDRX_SVCMAX"
 #define CONF_NDRX_SRVMAX         "NDRX_SRVMAX"
+#define CONF_NDRX_CLTMAX         "NDRX_CLTMAX"     /**< Max number of client, cpm */
 #define CONF_NDRX_CONFIG         "NDRX_CONFIG"
 #define CONF_NDRX_QPATH          "NDRX_QPATH"
 #define CONF_NDRX_SHMPATH        "NDRX_SHMPATH"
