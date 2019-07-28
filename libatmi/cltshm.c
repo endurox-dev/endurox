@@ -467,7 +467,7 @@ expublic void ndrx_cltshm_down(int *signals, int *p_was_any)
             {
                 el = NDRX_CPM_INDEX(mem_cpy, i);
 
-                if (el->flags & NDRX_CPM_MAP_ISUSED, 
+                if (el->flags & NDRX_CPM_MAP_ISUSED && 
                         ndrx_sys_is_process_running_by_pid(el->pid))
                 {
                     /* grab the childs at first loop*/
