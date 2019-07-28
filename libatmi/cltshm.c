@@ -423,7 +423,7 @@ expublic void ndrx_cltshm_down(int *signals, int *p_was_any)
     ndrx_clt_shm_t *el;
     string_list_t* cltchildren = NULL;
     int was_kill = EXFALSE;
-    char *mem_cpy;
+    char *mem_cpy = NULL;
     size_t cpsz;
     int err;
     
@@ -431,7 +431,7 @@ expublic void ndrx_cltshm_down(int *signals, int *p_was_any)
      * shared memory shall be writable to them..
      */
     
-    if (ndrx_cltshm_init(EXTRUE))
+    if (EXSUCCEED==ndrx_cltshm_init(EXTRUE))
     {
         NDRX_LOG(log_warn, "CLTSHM processing down");
         
@@ -505,6 +505,11 @@ expublic void ndrx_cltshm_down(int *signals, int *p_was_any)
     
 out:
     *p_was_any = was_kill;
+
+    if (NULL!=mem_cpy)
+    {
+        NDRX_FREE(mem_cpy);
+    }
     return;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
