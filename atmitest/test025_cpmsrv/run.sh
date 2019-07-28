@@ -136,8 +136,14 @@ xadmin bc -t BATCH% -s% -w 15000
 
 xadmin pc
 
+# xadmin killall cpmsrv does not work, as our test name is test025_cpmsrv
+# thus it will kill the test
 echo "Kill CPMSRV, test shared memory recovery...."
-xadmin killall cpmsrv
+CPMPID=`xadmin ppm | grep cpmsrv | awk '{print $3}'`
+
+echo "CPMSRV pid to kill=$CPMPID"
+
+kill -9 $CPMPID
 xadmin ppm
 
 echo "Wait for cpmsrv reboot"
