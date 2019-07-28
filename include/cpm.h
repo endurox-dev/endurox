@@ -89,6 +89,7 @@ struct ndrx_clt_shm
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+extern NDRX_API void ndrx_cltshm_down(int *signals, int *p_was_any);
 extern NDRX_API int ndrx_cltshm_setpos(char *key, pid_t pid, short flags, 
         char *procname);
 extern NDRX_API pid_t ndrx_cltshm_getpid(char *key, char *procname, 

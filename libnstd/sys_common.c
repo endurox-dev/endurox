@@ -634,6 +634,13 @@ expublic void ndrx_proc_kill_list(string_list_t *list)
                  }
             }    
         } /* for list entry */
+        
+        if (was_any && i<max_signals-1)
+        {
+            /* wait a bit */
+            sleep(EX_KILL_SLEEP_SECS);
+        }
+        
     } /* for signals */
     
 }

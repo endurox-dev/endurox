@@ -54,7 +54,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # We do not need timeout, we will kill procs...
 export NDRX_TOUT=9999
-
+export NDRX_SILENT=Y
 #
 # Domain 1 - here client will live
 #
@@ -115,6 +115,16 @@ set_dom1;
 xadmin down -y
 xadmin shms | cut -d ':' -f 2 | xargs -i ipcrm -m {}
 xadmin start -y || go_out 1
+
+echo "Wait for CPM to boot (WAIT 10)"
+sleep 10
+xadmin pc
+xadmin killall cpmsrv
+echo "Wait for CPM to boot (WAIT 15), AFTER CPMSRV REBOOT"
+sleep 15
+xadmin pc
+echo "Continue..."
+
 
 set_dom2;
 #### Remove all shsm
