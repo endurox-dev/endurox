@@ -63,6 +63,7 @@ export NDRX_LOG=$TESTDIR/ndrx.log
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
 export NDRX_TOUT=30
+export NDRX_SILENT=Y
 # Test process count
 PROC_COUNT=100
 #
@@ -134,6 +135,18 @@ echo "Batch start"
 xadmin bc -t BATCH% -s% -w 15000
 
 xadmin pc
+
+echo "Kill CPMSRV, test shared memory recovery...."
+xadmin killall cpmsrv
+xadmin ppm
+
+echo "Wait for cpmsrv reboot"
+sleep 20
+
+xadmin ppm
+xadmin pc
+
+echo "CONTINUE..."
 
 test_proc_cnt "ndrxbatchmode.sh" "3" "30"
 

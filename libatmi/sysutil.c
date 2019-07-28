@@ -58,7 +58,7 @@
 #include <sys/msg.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
-
+#include <cpm.h>
 #include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -355,7 +355,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
 {
     int ret = EXSUCCEED;
 #define DOWN_KILL_SIG   1
-    int signals[] = {SIGTERM, SIGKILL};
+    int signals[] = {SIGTERM, SIGKILL, EXFAIL};
     int i;
     string_list_t* qlist = NULL;
     string_list_t* srvlist = NULL;
@@ -562,6 +562,9 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
             NDRX_LOG(log_error, "Failed to extract pid from: [%s]", elt->qname);
         }
     }
+    
+    /* remove the CPM/CLT SHM & clts */
+    ndrx_cltshm_down(signals, &was_any);
     
     /* 
      * kill all servers 

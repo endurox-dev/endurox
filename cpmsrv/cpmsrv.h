@@ -120,6 +120,11 @@ struct cpm_dynamic_info
     int req_state;          /**< requested state                */
     int cur_state;          /**< current state                  */
     int was_started;        /**< Was process started?           */
+    
+    /* TODO: well we could do the PID tests only after slight delay due
+     * to our signal thread is working, es extra safety net...?
+     */
+    int shm_read;           /**< Process was attached from shm  */
     time_t stattime;        /**< Status change time             */
 };
 typedef struct cpm_dynamic_info cpm_dynamic_info_t;
@@ -167,6 +172,7 @@ extern cpm_process_t * cpm_client_get(char *tag, char *subsect);
 extern void ndrxd_sigchld_init(void);
 extern void ndrxd_sigchld_uninit(void);
 
+extern void cpm_pidtest(cpm_process_t *c);
 extern int cpm_kill(cpm_process_t *c);
 extern int cpm_killall(void);
 extern cpm_process_t * cpm_start_all(void);

@@ -84,6 +84,7 @@ expublic int ndrx_cpm_sync_from_shm(void)
             c->dyn.cur_state=CLT_STATE_STARTED;
             /* set current temp stamp */
             c->dyn.pid = pid;
+            c->dyn.shm_read = EXTRUE;
         }
     }
     

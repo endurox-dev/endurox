@@ -243,14 +243,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    /* sync with SHM.... */
-    
-    if (EXSUCCEED!=ndrx_cpm_sync_from_shm())
-    {
-        NDRX_LOG(log_error, "Failed to sync current status with shared memory!");
-        EXFAIL_OUT(ret);
-    }
-    
     if (EXSUCCEED!=tpadvertise(NDRX_SVC_CPM, CPMSVC))
     {
         NDRX_LOG(log_error, "Failed to initialize CPMSVC!");
@@ -271,6 +263,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Process the timer now.... */
     cpm_start_all(); /* Mark all to be started */
+    
+    /* sync with SHM.... */
+    if (EXSUCCEED!=ndrx_cpm_sync_from_shm())
+    {
+        NDRX_LOG(log_error, "Failed to sync current status with shared memory!");
+        EXFAIL_OUT(ret);
+    }
+    
     cpm_callback_timer(); /* Start them all. */
     
 out:
@@ -345,8 +345,6 @@ exprivate int cpm_callback_timer(void)
         {
             /* Try to boot the process... */
             cpm_exec(c);
-            
-            
         }
         else if (CLT_STATE_STARTED==c->dyn.cur_state && 
                 (EXFAIL!=c->stat.rssmax || EXFAIL!=c->stat.vszmax)
@@ -422,8 +420,11 @@ exprivate int cpm_callback_timer(void)
                             (int)c->dyn.pid, c->stat.command_line);
             }
             
-        }
-    }
+        } /* started & require mem test... */
+       
+        cpm_pidtest(c);
+       
+    } /* hash loop */
     /* handle any signal 
     sign_chld_handler(SIGCHLD); */
     

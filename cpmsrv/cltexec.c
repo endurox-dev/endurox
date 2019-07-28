@@ -96,6 +96,10 @@ expublic void sign_chld_handler(int sig)
             c->dyn.exit_status = stat_loc;
             /* Set status change time */
             cpm_set_cur_time(c);
+            
+            /* update shared memory to stopped... */
+            ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
+            
         }
         else
         {
@@ -168,6 +172,10 @@ exprivate void * check_child_exit(void *arg)
             if (NULL!=c)
             {
                 c->dyn.cur_state = CLT_STATE_NOTRUN;
+
+                /* update shared memory to stopped... */
+                ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
+                
                 c->dyn.exit_status = stat_loc;
                 /* Set status change time */
                 cpm_set_cur_time(c);
@@ -286,6 +294,43 @@ out:
 }
 
 /**
+ * Perform test on PID
+ * @param c client process
+ */
+expublic void cpm_pidtest(cpm_process_t *c)
+{
+    if (CLT_STATE_STARTED==c->dyn.cur_state && c->dyn.shm_read)
+    {
+        /* check the pid status, as we might be booted with existing
+         * shared memory, thus we do not get any sig childs...
+         * if we requested the stop, assume exit ok
+         * if not requested, assume died
+         */
+        if (!ndrx_sys_is_process_running_by_pid(c->dyn.pid))
+        {
+            NDRX_LOG(log_info, "Process [%s]/%d exited by pid test",
+                    c->stat.command_line, (int)c->dyn.pid);
+            /* update shared memory to stopped... */
+            ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
+
+            if (CLT_STATE_NOTRUN==c->dyn.req_state )
+            {   
+                c->dyn.exit_status = 0;
+            }
+            else
+            {
+                c->dyn.exit_status = EXFAIL;
+            }
+
+            c->dyn.cur_state = CLT_STATE_NOTRUN;
+
+            /* Set status change time */
+            cpm_set_cur_time(c);
+        }
+    }
+}
+
+/**
  * Killall client running
  * @return SUCCEED
  */
@@ -307,6 +352,11 @@ expublic int cpm_killall(void)
 
         EXHASH_ITER(hh, G_clt_config, c, ct)
         {
+            /* 
+             * still check the pid, not? If running from shared mem blocks?
+             */
+            cpm_pidtest(c);
+            
             if (CLT_STATE_STARTED==c->dyn.cur_state)
             {
                 NDRX_LOG(log_warn, "Killing: %s/%s/%d with %s",
@@ -332,9 +382,8 @@ expublic int cpm_killall(void)
                     ndrx_string_list_free(cltchildren);
                     cltchildren=NULL;
                 }
-
-            }
-        }
+            } /* for client in hash */
+        } /* for attempt */
 
         if (i<2) /*no wait for kill... */
         {
@@ -444,6 +493,9 @@ expublic int cpm_kill(cpm_process_t *c)
         /* Process any dead child... */
         sign_chld_handler(SIGCHLD);
 #endif
+        /* if running from shared memory, do the check... */
+        
+        cpm_pidtest(c);
         /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
@@ -527,8 +579,8 @@ expublic int cpm_exec(cpm_process_t *c)
     NDRX_LOG(log_warn, "*********processing for startup %s *********", 
             c->stat.command_line);
     
-    c->dyn.was_started = EXTRUE; /* We tried to start... */
-    
+    c->dyn.was_started = EXTRUE; /* We tried to start...                */
+    c->dyn.shm_read = EXFALSE;  /* We try to boot it, not attached      */
     /* clone our self */
     pid = ndrx_fork();
 
@@ -656,7 +708,7 @@ expublic int cpm_exec(cpm_process_t *c)
         
         /* updated shared memory... */
         if (EXSUCCEED!=ndrx_cltshm_setpos(c->key, c->dyn.pid, 
-                NDRX_CPM_MAP_ISUSED|NDRX_CPM_MAP_WASUSED|NDRX_CPM_MAP_WASUSED, 
+                NDRX_CPM_MAP_ISUSED|NDRX_CPM_MAP_WASUSED|NDRX_CPM_MAP_CPMPROC, 
                 c->stat.procname))
         {
             NDRX_LOG(log_error, "Failed to register client in CPM SHM/mem full, check %s param", 
