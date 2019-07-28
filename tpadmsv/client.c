@@ -52,6 +52,7 @@
 
 #include "tpadmsv.h"
 #include "expr.h"
+#include "cpm.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -70,6 +71,10 @@ typedef struct
     long pid;                 /**< process PID                          */
     long curconv;             /**< number of conversations process into */
     long contextid;           /**< Multi-threading context id           */
+    long curtime;             /**< Current time when process started    */
+    
+    EX_hash_handle hh;         /**< makes this structure hashable   */
+    
 } ndrx_adm_client_t;
 
 /**
@@ -85,12 +90,64 @@ expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
     ,{TA_PID,           EXOFFSET(ndrx_adm_client_t, pid)}
     ,{TA_CURCONV,       EXOFFSET(ndrx_adm_client_t, curconv)}
     ,{TA_CONTEXTID,     EXOFFSET(ndrx_adm_client_t, contextid)}
+    ,{TA_CURTIME,       EXOFFSET(ndrx_adm_client_t, curtime)}
     ,{BBADFLDID}
 };
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/**
+ * Pre hash of the results to merge the queue and CPM/SHM infos
+ */
+exprivate ndrx_adm_client_t *M_prehash = NULL;
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Clean up the hash
+ */
+exprivate void ndrx_adm_client_hash_cleanup(void)
+{
+    /* TODO: Clean up the hash after cursor is filled */
+}
+
+/**
+ * Lookup and update, if exists
+ * @param [in] pid pid to search for
+ * @param [in] el element to update with (data take from)
+ * @return EXTRUE found and update, EXFALSE - not found
+ */
+exprivate int ndrx_adm_client_getupd(pid_t pid, ndrx_clt_shm_t *el)
+{
+    ndrx_adm_client_t *cltres = NULL;
+    int found = EXFALSE;
+    char *p;
+    
+    EXHASH_FIND_INT(M_prehash, pid, cltres);
+    
+    if (NULL!=el)
+    {
+        NDRX_STRCPY_SAFE(cltres->clientid, el->key);
+        /* replace FS with / */
+        p = strchr(cltres->clientid, NDRX_CPM_SEP);
+        if (NULL!=p)
+        {
+            *p = '/';
+        }
+        
+        /* set start time */
+        cltres->curtime = (long)el->stattime;
+        
+        found = EXTRUE;
+        
+    }
+    
+    return found;
+}
+
+/* TODO: FILL The hash from Q and from SHM.
+ * Transfer from HASH to Cursor
+ */
 
 /**
  * Build up the cursor
