@@ -442,6 +442,11 @@ cmd_mapping_t M_command_map[] =
     {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,              1,  1,  1,  
                 "Put ndrxd in sleep (disable activity for time period), for debug\n"
                 "\tUsage: dsleep SLEEP_SECONDS\n"
+                , NULL},
+    {"mibget",     cmd_mibget,EXFAIL,                1,  3,  1, 
+                "Dump message in cache\n"
+                "\t args: mibget -c <T_CLASS> [-l <node_id>] [-m]\n"
+                "\t\t -m\tMachine output"
                 , NULL}
 };
 

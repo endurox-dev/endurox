@@ -65,13 +65,13 @@
 expublic ndrx_adm_class_map_t ndrx_G_class_map[] =
 {  
     /* Driving of the Preparing: */
-    {NDRX_TA_CLASS_CLIENT,      "CL",       &ndrx_adm_client_get}
-    ,{NDRX_TA_CLASS_DOMAIN,     "DM",       &ndrx_adm_domain_get}
-    ,{NDRX_TA_CLASS_MACHINE,    "MA",       &ndrx_adm_machine_get}
-    ,{NDRX_TA_CLASS_QUEUE,      "QU",       &ndrx_adm_queue_get}
-    ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get}
-    ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get}
-    ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get}
+    {NDRX_TA_CLASS_CLIENT,      "CL",       &ndrx_adm_client_get, ndrx_G_client_map}
+    ,{NDRX_TA_CLASS_DOMAIN,     "DM",       &ndrx_adm_domain_get, ndrx_G_domain_map}
+    ,{NDRX_TA_CLASS_MACHINE,    "MA",       &ndrx_adm_machine_get, ndrx_G_machine_map}
+    ,{NDRX_TA_CLASS_QUEUE,      "QU",       &ndrx_adm_queue_get, ndrx_G_queue_map}
+    ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get, ndrx_G_server_map}
+    ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get, ndrx_G_service_map}
+    ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get, ndrx_G_svcgrp_map}
     ,{NULL}
 };
 
@@ -249,5 +249,24 @@ out:
     return ret;
 }
 
+/**
+ * Return class map
+ * @param clazz class name
+ * @return ptr to class descr or NULL
+ */
+expublic ndrx_adm_class_map_t *ndrx_adm_class_map_get(char *clazz)
+{
+    int i;
+    
+    for (i=0; NULL!=ndrx_G_class_map[i].clazz; i++)
+    {
+        if (0==strcmp(ndrx_G_class_map[i].clazz, clazz))
+        {
+            return &ndrx_G_class_map[i];
+        }
+    }
+    
+    return NULL;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
