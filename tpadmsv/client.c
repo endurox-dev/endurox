@@ -63,7 +63,6 @@
  */
 typedef struct 
 {
-    char key[MAXTIDENT+1];    /**< Node id / pid / context_id           */
     char clientid[78+1];      /**< myid                                 */
     char name[MAXTIDENT+1];   /**< process name                         */
     char lmid[MAXTIDENT+1];   /**< cluster node id                      */
