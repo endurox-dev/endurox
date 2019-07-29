@@ -63,6 +63,7 @@
  */
 typedef struct 
 {
+    char key[MAXTIDENT+1];    /**< Node id / pid / context_id           */
     char clientid[78+1];      /**< myid                                 */
     char name[MAXTIDENT+1];   /**< process name                         */
     char lmid[MAXTIDENT+1];   /**< cluster node id                      */
@@ -72,6 +73,7 @@ typedef struct
     long curconv;             /**< number of conversations process into */
     long contextid;           /**< Multi-threading context id           */
     long curtime;             /**< Current time when process started    */
+    int cursor_loaded;        /**< Is loaded into cursor?               */
     
     EX_hash_handle hh;         /**< makes this structure hashable   */
     
@@ -104,52 +106,6 @@ exprivate ndrx_adm_client_t *M_prehash = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Clean up the hash
- */
-exprivate void ndrx_adm_client_hash_cleanup(void)
-{
-    /* TODO: Clean up the hash after cursor is filled */
-}
-
-/**
- * Lookup and update, if exists
- * @param [in] pid pid to search for
- * @param [in] el element to update with (data take from)
- * @return EXTRUE found and update, EXFALSE - not found
- */
-exprivate int ndrx_adm_client_getupd(pid_t pid, ndrx_clt_shm_t *el)
-{
-    ndrx_adm_client_t *cltres = NULL;
-    int found = EXFALSE;
-    char *p;
-    
-    EXHASH_FIND_INT(M_prehash, pid, cltres);
-    
-    if (NULL!=el)
-    {
-        NDRX_STRCPY_SAFE(cltres->clientid, el->key);
-        /* replace FS with / */
-        p = strchr(cltres->clientid, NDRX_CPM_SEP);
-        if (NULL!=p)
-        {
-            *p = '/';
-        }
-        
-        /* set start time */
-        cltres->curtime = (long)el->stattime;
-        
-        found = EXTRUE;
-        
-    }
-    
-    return found;
-}
-
-/* TODO: FILL The hash from Q and from SHM.
- * Transfer from HASH to Cursor
- */
-
-/**
  * Build up the cursor
  * Scan the queues and add the elements
  * @param clazz class name
@@ -165,7 +121,11 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     ndrx_qdet_t qdet;
     TPMYID myid;
     ndrx_adm_client_t clt;
-    ndrx_adm_client_t *p_clt;
+    ndrx_adm_client_t *p_clt, *p_clt2, *cel, *clet;
+    int cltshm_attached = EXFALSE;
+    ndrx_sem_t *sem = NULL;
+    ndrx_shm_t *shm = NULL;
+    ndrx_clt_shm_t *el;
     
     int idx=0;
     int i;
@@ -199,10 +159,9 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         
         if (NDRX_QTYPE_CLTRPLY==typ)
         {
-            memset(&clt, 0, sizeof(clt));
-            
             if (EXSUCCEED==ndrx_qdet_parse_cltqstr(&qdet, elt->qname))
             {
+                memset(&clt, 0, sizeof(clt));
                 clt.pid = qdet.pid;
                 NDRX_STRCPY_SAFE(clt.clientid, elt->qname);
                 clt.contextid = qdet.contextid;
@@ -224,7 +183,8 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                     EXFAIL_OUT(ret);
                 }
                 
-                NDRX_LOG(log_debug, "client [%s] state %s added", clt.name, clt.state);
+                NDRX_LOG(log_debug, "client [%s] state %s added (Q)", 
+                        clt.clientid, clt.state);
                 idx++;
             }
         }
@@ -252,12 +212,132 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                         break;
                     }
                 }
+                
             } /* If q parse OK */
         } /* NDRX_CLT_QREPLY_PFX==typ */
         
     } /* LL_FOREACH(qlist,elt) */
     
+    /* open the SHM & scan for clients -> think about opening at startup?
+     * may be we could conserve some resources.
+     * On the other hand cpmsrv can live it's life and manage it's shm
+     * as it wishes?
+     */
+    
+    if (EXSUCCEED==ndrx_cltshm_init(EXTRUE))
+    {
+        char *p;
+        cltshm_attached = EXTRUE;
+        
+        sem = ndrx_cltshm_sem_get();
+        shm = ndrx_cltshm_mem_get();
+
+        /* scan for the elements */
+        if (EXSUCCEED!=ndrx_sem_rwlock(sem, 0, NDRX_SEM_TYP_READ))
+        {
+            goto out;
+        }
+        
+        NDRX_LOG(log_debug, "Build up the hash of SHM");
+        for (i=0; i<G_atmi_env.max_clts; i++)
+        {
+            el = NDRX_CPM_INDEX(shm->mem, i);
+            
+            if (el->flags & NDRX_CPM_MAP_ISUSED && 
+                        ndrx_sys_is_process_running_by_pid(el->pid))
+            {
+                int err;
+                p_clt = NDRX_CALLOC(1, sizeof(ndrx_adm_client_t));
+                
+                err = errno;
+                
+                if (NULL==p_clt)
+                {
+                    NDRX_LOG(log_error, "Failed to calloc of %d bytes failed: %s",
+                            sizeof(ndrx_adm_client_t), strerror(err));
+                    userlog("Failed to calloc of %d bytes failed: %s",
+                            sizeof(ndrx_adm_client_t), strerror(err));
+                    EXFAIL_OUT(ret);
+                }
+                
+                p_clt->pid = el->pid;
+                
+                snprintf(p_clt->clientid, sizeof(p_clt->clientid),
+                        "%ld/%s", tpgetnodeid(), el->key);
+                
+                p = strchr(p_clt->clientid, NDRX_CPM_SEP);
+                if (NULL!=p)
+                {
+                    *p = '/';
+                }
+                
+                /* set start time */
+                p_clt->curtime = (long)el->stattime;
+                snprintf(p_clt->lmid, sizeof(clt.lmid), "%ld", tpgetnodeid());
+                
+                /* set binary name */
+                NDRX_STRCPY_SAFE(p_clt->name, el->procname);
+                NDRX_STRCPY_SAFE(p_clt->state, "ACT");
+                
+                EXHASH_ADD_INT(M_prehash, pid, p_clt);
+                
+                NDRX_LOG(log_debug, "Hashed pid=%d - %s", p_clt->pid, p_clt->clientid)
+                
+            } /* if used */
+        }
+        
+        ndrx_sem_rwunlock(sem, 0, NDRX_SEM_TYP_WRITE);
+    }
+    
+    /* merge the clients.. */
+    NDRX_LOG(log_debug, "Merge clients Q + SHM");
+    
+    for (i=0; i<=cursnew->list.maxindexused; i++)
+    {
+        /* check the hash, update */
+        p_clt = (ndrx_adm_client_t *) (cursnew->list.mem + i*sizeof(ndrx_adm_client_t));
+        
+        EXHASH_FIND_INT(M_prehash, &(p_clt->pid), p_clt2);
+        
+        if (NULL!=p_clt2)
+        {
+            NDRX_LOG(log_debug, "PID %d matched with SHM", (int)p_clt->pid)
+            /* update the client */
+            snprintf(p_clt->clientid, sizeof(p_clt->clientid), "%s/%ld",
+                    p_clt2->clientid, p_clt->contextid);
+            
+            /* update startup time */
+            p_clt->curtime = p_clt2->curtime;
+            p_clt->cursor_loaded = EXTRUE;
+        }
+    }
+    
+    /* load the hash elems with out other data to cursor */
+    NDRX_LOG(log_debug, "Add HASH/SHM data");
+    EXHASH_ITER(hh, M_prehash, cel, clet)
+    {
+        if (!cel->cursor_loaded)
+        {
+            /* Add to cursor as much data as we have */
+            memcpy(&clt, cel, sizeof(clt));
+            if (EXSUCCEED!=ndrx_growlist_add(&cursnew->list, (void *)&clt, idx))
+            {
+                NDRX_LOG(log_error, "Growlist failed - out of memory?");
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG(log_debug, "client [%s] state %s added (SHM)", clt.clientid, clt.state);
+            idx++;
+        }
+    }
+    
+    
 out:
+    
+    if (cltshm_attached)
+    {
+        ndrx_cltshm_detach();
+    }
     
     if (NULL!=qlist)
     {
@@ -267,6 +347,13 @@ out:
     if (EXSUCCEED!=ret)
     {
         ndrx_growlist_free(&cursnew->list);
+    }
+
+    /* clean up the hash list */
+    EXHASH_ITER(hh, M_prehash, cel, clet)
+    {
+        EXHASH_DEL(M_prehash, cel);
+        NDRX_FREE(cel);
     }
 
     return ret;
