@@ -50,7 +50,7 @@
 #include <ubfutil.h>
 #include <sys_unix.h>
 
-#include "tpadmsv.h"
+#include <tpadmsv.h>
 #include "expr.h"
 #include "cpm.h"
 /*---------------------------Externs------------------------------------*/
@@ -84,14 +84,14 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_client_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_CLIENTID,       EXOFFSET(ndrx_adm_client_t, clientid)}
-    ,{TA_CLTNAME,       EXOFFSET(ndrx_adm_client_t, name)}
-    ,{TA_LMID,          EXOFFSET(ndrx_adm_client_t, lmid)}
-    ,{TA_STATE,         EXOFFSET(ndrx_adm_client_t, state)}
-    ,{TA_PID,           EXOFFSET(ndrx_adm_client_t, pid)}
-    ,{TA_CURCONV,       EXOFFSET(ndrx_adm_client_t, curconv)}
-    ,{TA_CONTEXTID,     EXOFFSET(ndrx_adm_client_t, contextid)}
-    ,{TA_CURTIME,       EXOFFSET(ndrx_adm_client_t, curtime)}
+    {TA_CLIENTID,       TPADM_EL(ndrx_adm_client_t, clientid)}
+    ,{TA_CLTNAME,       TPADM_EL(ndrx_adm_client_t, name)}
+    ,{TA_LMID,          TPADM_EL(ndrx_adm_client_t, lmid)}
+    ,{TA_STATE,         TPADM_EL(ndrx_adm_client_t, state)}
+    ,{TA_PID,           TPADM_EL(ndrx_adm_client_t, pid)}
+    ,{TA_CURCONV,       TPADM_EL(ndrx_adm_client_t, curconv)}
+    ,{TA_CONTEXTID,     TPADM_EL(ndrx_adm_client_t, contextid)}
+    ,{TA_CURTIME,       TPADM_EL(ndrx_adm_client_t, curtime)}
     ,{BBADFLDID}
 };
 

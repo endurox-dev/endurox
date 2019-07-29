@@ -84,19 +84,19 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_svcgrp_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_SERVICENAME,            EXOFFSET(ndrx_adm_svcgrp_t, servicename)}
-    ,{TA_SRVGRP,                EXOFFSET(ndrx_adm_svcgrp_t, srvgrp)}
-    ,{TA_STATE,                 EXOFFSET(ndrx_adm_svcgrp_t, state)}
-    ,{TA_LMID,                  EXOFFSET(ndrx_adm_svcgrp_t, lmid)}
-    ,{TA_RQADDR,                EXOFFSET(ndrx_adm_svcgrp_t, reqaddr)}
-    ,{TA_SRVID,                 EXOFFSET(ndrx_adm_svcgrp_t, srvid)}
-    ,{TA_SVCRNAM,               EXOFFSET(ndrx_adm_svcgrp_t, svcrname)}
-    ,{TA_NCOMPLETED,            EXOFFSET(ndrx_adm_svcgrp_t, ncompleted)}
-    ,{TA_TOTSUCCNUM,            EXOFFSET(ndrx_adm_svcgrp_t, totsuccnum)}
-    ,{TA_TOTSFAILNUM,           EXOFFSET(ndrx_adm_svcgrp_t, totsfailnum)}
-    ,{TA_LASTEXECTIMEUSEC,      EXOFFSET(ndrx_adm_svcgrp_t, lastexectimeusec)}
-    ,{TA_MAXEXECTIMEUSEC,       EXOFFSET(ndrx_adm_svcgrp_t, maxexectimeusec)}
-    ,{TA_MINEXECTIMEUSEC,       EXOFFSET(ndrx_adm_svcgrp_t, minexectimeusec)}
+    {TA_SERVICENAME,            TPADM_EL(ndrx_adm_svcgrp_t, servicename)}
+    ,{TA_SRVGRP,                TPADM_EL(ndrx_adm_svcgrp_t, srvgrp)}
+    ,{TA_STATE,                 TPADM_EL(ndrx_adm_svcgrp_t, state)}
+    ,{TA_LMID,                  TPADM_EL(ndrx_adm_svcgrp_t, lmid)}
+    ,{TA_RQADDR,                TPADM_EL(ndrx_adm_svcgrp_t, reqaddr)}
+    ,{TA_SRVID,                 TPADM_EL(ndrx_adm_svcgrp_t, srvid)}
+    ,{TA_SVCRNAM,               TPADM_EL(ndrx_adm_svcgrp_t, svcrname)}
+    ,{TA_NCOMPLETED,            TPADM_EL(ndrx_adm_svcgrp_t, ncompleted)}
+    ,{TA_TOTSUCCNUM,            TPADM_EL(ndrx_adm_svcgrp_t, totsuccnum)}
+    ,{TA_TOTSFAILNUM,           TPADM_EL(ndrx_adm_svcgrp_t, totsfailnum)}
+    ,{TA_LASTEXECTIMEUSEC,      TPADM_EL(ndrx_adm_svcgrp_t, lastexectimeusec)}
+    ,{TA_MAXEXECTIMEUSEC,       TPADM_EL(ndrx_adm_svcgrp_t, maxexectimeusec)}
+    ,{TA_MINEXECTIMEUSEC,       TPADM_EL(ndrx_adm_svcgrp_t, minexectimeusec)}
     ,{BBADFLDID}
 };
 
