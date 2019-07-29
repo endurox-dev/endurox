@@ -80,15 +80,15 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_server_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_SRVID,                      EXOFFSET(ndrx_adm_server_t, srvid)}
-    ,{TA_BASESRVID,                 EXOFFSET(ndrx_adm_server_t, basesrvid)}
-    ,{TA_RQADDR,                    EXOFFSET(ndrx_adm_server_t, rqaddr)}
-    ,{TA_STATE,                     EXOFFSET(ndrx_adm_server_t, state)}
-    ,{TA_LMID,                      EXOFFSET(ndrx_adm_server_t, lmid)}
-    ,{TA_TIMERESTART,               EXOFFSET(ndrx_adm_server_t, timerestart)}
-    ,{TA_PID,                       EXOFFSET(ndrx_adm_server_t, pid)}
-    ,{TA_SERVERNAME,                EXOFFSET(ndrx_adm_server_t, servername)}
-    ,{TA_CLOPT,                     EXOFFSET(ndrx_adm_server_t, clopt)}
+    {TA_SRVID,                      TPADM_EL(ndrx_adm_server_t, srvid)}
+    ,{TA_BASESRVID,                 TPADM_EL(ndrx_adm_server_t, basesrvid)}
+    ,{TA_RQADDR,                    TPADM_EL(ndrx_adm_server_t, rqaddr)}
+    ,{TA_STATE,                     TPADM_EL(ndrx_adm_server_t, state)}
+    ,{TA_LMID,                      TPADM_EL(ndrx_adm_server_t, lmid)}
+    ,{TA_TIMERESTART,               TPADM_EL(ndrx_adm_server_t, timerestart)}
+    ,{TA_PID,                       TPADM_EL(ndrx_adm_server_t, pid)}
+    ,{TA_SERVERNAME,                TPADM_EL(ndrx_adm_server_t, servername)}
+    ,{TA_CLOPT,                     TPADM_EL(ndrx_adm_server_t, clopt)}
     ,{BBADFLDID}
 };
 

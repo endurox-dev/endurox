@@ -50,11 +50,18 @@ ENDIF ($ENV{RELEASE_BUILD})
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-############################# Executables ###############################
-add_executable (tpadmsv tpadmsv.c ../libatmisrv/rawmain_integra.c
+
+############################# Libraries ########################################
+
+# Generate library from our source files
+add_library (tpadm STATIC ../libatmisrv/rawmain_integra.c
             tpadmerror.c client.c snapshoot.c client.c domain.c machine.c
             queue.c server.c service.c commons.c svcgrp.c)
-target_link_libraries (tpadmsv atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
+
+
+############################# Executables ######################################
+add_executable (tpadmsv tpadmsv.c)
+target_link_libraries (tpadmsv tpadm atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
 set_target_properties(tpadmsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

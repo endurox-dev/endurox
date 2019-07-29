@@ -59,22 +59,6 @@
 expublic ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
 /*---------------------------Statics------------------------------------*/
 
-/**
- * Mapping to from classes to their operations...
- */
-exprivate ndrx_adm_class_map_t M_class_map[] =
-{  
-    /* Driving of the Preparing: */
-    {NDRX_TA_CLASS_CLIENT,      "CL",       &ndrx_adm_client_get}
-    ,{NDRX_TA_CLASS_DOMAIN,     "DM",       &ndrx_adm_domain_get}
-    ,{NDRX_TA_CLASS_MACHINE,    "MA",       &ndrx_adm_machine_get}
-    ,{NDRX_TA_CLASS_QUEUE,      "QU",       &ndrx_adm_queue_get}
-    ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get}
-    ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get}
-    ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get}
-    
-};
-
 /*---------------------------Prototypes---------------------------------*/
 
 expublic char ndrx_G_svcnm2[MAXTIDENT+1]; /** our service name, per instance. */
@@ -88,11 +72,11 @@ exprivate ndrx_adm_class_map_t *class_map_get(char *clazz)
 {
     int i;
     
-    for (i=0; i<N_DIM(M_class_map); i++)
+    for (i=0; NULL!=ndrx_G_class_map[i].clazz; i++)
     {
-        if (0==strcmp(M_class_map[i].clazz, clazz))
+        if (0==strcmp(ndrx_G_class_map[i].clazz, clazz))
         {
-            return &M_class_map[i];
+            return &ndrx_G_class_map[i];
         }
     }
     

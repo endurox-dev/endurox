@@ -79,13 +79,13 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_domain_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_DOMAINID,               EXOFFSET(ndrx_adm_domain_t, domainid)}
-    ,{TA_MASTER,                EXOFFSET(ndrx_adm_domain_t, master)}
-    ,{TA_MODEL,                 EXOFFSET(ndrx_adm_domain_t, model)}
-    ,{TA_STATE,                 EXOFFSET(ndrx_adm_domain_t, state)}
-    ,{TA_CURQUEUES,             EXOFFSET(ndrx_adm_domain_t, curqueues)}
-    ,{TA_CURSERVERS,            EXOFFSET(ndrx_adm_domain_t, curservers)}
-    ,{TA_CURSERVICES,           EXOFFSET(ndrx_adm_domain_t, curservices)}
+    {TA_DOMAINID,               TPADM_EL(ndrx_adm_domain_t, domainid)}
+    ,{TA_MASTER,                TPADM_EL(ndrx_adm_domain_t, master)}
+    ,{TA_MODEL,                 TPADM_EL(ndrx_adm_domain_t, model)}
+    ,{TA_STATE,                 TPADM_EL(ndrx_adm_domain_t, state)}
+    ,{TA_CURQUEUES,             TPADM_EL(ndrx_adm_domain_t, curqueues)}
+    ,{TA_CURSERVERS,            TPADM_EL(ndrx_adm_domain_t, curservers)}
+    ,{TA_CURSERVICES,           TPADM_EL(ndrx_adm_domain_t, curservices)}
     ,{BBADFLDID}
 };
 

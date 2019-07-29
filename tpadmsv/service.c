@@ -73,8 +73,8 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_service_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_SERVICENAME,             EXOFFSET(ndrx_adm_service_t, service)}
-    ,{TA_STATE,                  EXOFFSET(ndrx_adm_service_t, state)}
+    {TA_SERVICENAME,             TPADM_EL(ndrx_adm_service_t, service)}
+    ,{TA_STATE,                  TPADM_EL(ndrx_adm_service_t, state)}
     ,{BBADFLDID}
 };
 
