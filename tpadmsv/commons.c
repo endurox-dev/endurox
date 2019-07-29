@@ -51,6 +51,7 @@
 #include <ubfutil.h>
 #include <sys_unix.h>
 #include <gencall.h>
+#include <tpadm.h>
 #include "tpadmsv.h"
 #include "expr.h"
 /*---------------------------Externs------------------------------------*/
@@ -58,6 +59,22 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+/**
+ * Mapping to from classes to their operations...
+ */
+expublic ndrx_adm_class_map_t ndrx_G_class_map[] =
+{  
+    /* Driving of the Preparing: */
+    {NDRX_TA_CLASS_CLIENT,      "CL",       &ndrx_adm_client_get}
+    ,{NDRX_TA_CLASS_DOMAIN,     "DM",       &ndrx_adm_domain_get}
+    ,{NDRX_TA_CLASS_MACHINE,    "MA",       &ndrx_adm_machine_get}
+    ,{NDRX_TA_CLASS_QUEUE,      "QU",       &ndrx_adm_queue_get}
+    ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get}
+    ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get}
+    ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get}
+    ,{NULL}
+};
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 /**

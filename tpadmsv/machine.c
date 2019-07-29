@@ -76,11 +76,11 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_machine_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_LMID,                   EXOFFSET(ndrx_adm_machine_t, lmid)}
-    ,{TA_CURACCESSERS,          EXOFFSET(ndrx_adm_machine_t, curaccessers)}
-    ,{TA_CURCLIENTS,            EXOFFSET(ndrx_adm_machine_t, curclients)}
-    ,{TA_CURCONV,               EXOFFSET(ndrx_adm_machine_t, curconv)}
-    ,{TA_STATE,                 EXOFFSET(ndrx_adm_machine_t, state)}
+    {TA_LMID,                   TPADM_EL(ndrx_adm_machine_t, lmid)}
+    ,{TA_CURACCESSERS,          TPADM_EL(ndrx_adm_machine_t, curaccessers)}
+    ,{TA_CURCLIENTS,            TPADM_EL(ndrx_adm_machine_t, curclients)}
+    ,{TA_CURCONV,               TPADM_EL(ndrx_adm_machine_t, curconv)}
+    ,{TA_STATE,                 TPADM_EL(ndrx_adm_machine_t, state)}
     ,{BBADFLDID}
 };
 

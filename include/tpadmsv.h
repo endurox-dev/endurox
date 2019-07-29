@@ -1,5 +1,5 @@
 /**
- *
+ * 
  * @file brdcstsv.h
  */
 /* -----------------------------------------------------------------------------
@@ -57,6 +57,8 @@ extern char ndrx_G_svcnm2[];
 #define TPADM_DEFAULT_SCANTIME          15
 /** Max number of open cursors same time */
 #define TPADM_DEFAULT_CURSORS_MAX       100
+
+#define TPADM_EL(X,Y)                   EXOFFSET(X, Y), #Y
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -76,8 +78,9 @@ typedef struct
  */
 typedef struct
 {
-    BFLDID fid;
-    int c_offset;
+    BFLDID fid;         /**< UBF Field ID                                   */
+    int c_offset;       /**< C offset                                       */
+    char *name;         /**< Field name                                     */
 } ndrx_adm_elmap_t;
 
 /**
@@ -104,13 +107,14 @@ typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
  */
 typedef struct
 {
-    char clazz[MAXTIDENT+1];                    /**< Class name               */
+    char *clazz;                                /**< Class name               */
     char clazzshort[3];                         /**< Short class name         */
     /** Get cursor   */
     int (*p_get)(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 } ndrx_adm_class_map_t;
 
 /*---------------------------Globals------------------------------------*/
+extern ndrx_adm_class_map_t ndrx_G_class_map[];
 /*---------------------------Statics------------------------------------*/
 
 extern ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
