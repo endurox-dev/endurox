@@ -459,7 +459,7 @@ expublic void ndrx_cltshm_down(int *signals, int *p_was_any)
         memcpy(mem_cpy, M_clt_shm.mem, cpsz);
         
          /* unlock */
-        ndrx_sem_rwunlock(&M_clt_sem, 0, NDRX_SEM_TYP_WRITE);        
+        ndrx_sem_rwunlock(&M_clt_sem, 0, NDRX_SEM_TYP_WRITE);
         
         for (s=0; EXFAIL!=signals[s]; s++)
         {
