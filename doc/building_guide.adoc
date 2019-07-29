@@ -172,6 +172,17 @@ cmake version 3.7.2
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ---------------------------------------------------------------------
 
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# postgresql-setup initdb
+# systemctl start postgresql
+# systemctl enable postgresql
+---------------------------------------------------------------------
+
 ==== System level dependencies - for Suse Linux Enterprise Server 12.3
 
 To install all required dependencies, you need following sets of DVDs (or
@@ -406,13 +417,13 @@ To create the user for tests, perform following
 --------------------------------------------------------------------------------
 
 $ sudo -s
-# su - posgres
+# su - postgres
 $ createuser exdbtest
 $ createdb xe
 $ psql 
 
 > alter user exdbtest with encrypted password 'exdbtest1';
-> grant all privileges on database xe to exdbtest ;
+> grant all privileges on database xe to exdbtest;
 > \q
 
 --------------------------------------------------------------------------------
@@ -422,13 +433,31 @@ greater than 0, e.g. 1000.
 
 --------------------------------------------------------------------------------
 
-$ vi /etc/postgresql/*/main/postgresql.conf
+-- for debian/ubuntu
+# vi /etc/postgresql/*/main/postgresql.conf 
+-- for RedHat
+# vi /var/lib/pgsql/data/postgresql.conf
 
-# Edit the max_prepared_transactions
+-- Edit the max_prepared_transactions
 
-$ /etc/init.d/postgresql restart
+# /etc/init.d/postgresql restart
 
 --------------------------------------------------------------------------------
+
+Network connection shall be enabled too for Posgres auth, edit the *pg_hba.conf*
+
+Add following line to the file:
+
+--------------------------------------------------------------------------------
+host all all 0.0.0.0/0 md5
+--------------------------------------------------------------------------------
+
+After that restart Postgres:
+
+--------------------------------------------------------------------------------
+# systemctl restart postgresql
+--------------------------------------------------------------------------------
+
 
 After these steps test database table shall be created. That could be done in
 following way:
