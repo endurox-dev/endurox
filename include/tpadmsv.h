@@ -107,14 +107,22 @@ typedef struct ndrx_adm_cursors ndrx_adm_cursors_t;
  */
 typedef struct
 {
-    char *clazz;                                /**< Class name               */
-    char clazzshort[3];                         /**< Short class name         */
+    char *clazz;                               /**< Class name                  */
+    char clazzshort[3];                        /**< Short class name            */
     /** Get cursor   */
     int (*p_get)(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+    ndrx_adm_elmap_t    *fields_map;           /**< field mappings              */
 } ndrx_adm_class_map_t;
 
 /*---------------------------Globals------------------------------------*/
-extern ndrx_adm_class_map_t ndrx_G_class_map[];
+extern NDRX_API ndrx_adm_class_map_t ndrx_G_class_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_client_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_domain_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_machine_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_queue_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_server_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_service_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_svcgrp_map[];
 /*---------------------------Statics------------------------------------*/
 
 extern ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
@@ -125,27 +133,28 @@ extern int ndrx_adm_error_set(UBFH *p_ub, long error_code,
         long fldid, const char *fmt, ...);
 
 /* Class types: */
-extern int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern int ndrx_adm_domain_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern int ndrx_adm_machine_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern int ndrx_adm_server_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern int ndrx_adm_svcgrp_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_domain_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_machine_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_server_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_svcgrp_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 
-extern int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
-extern int ndrx_adm_psc_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
+extern NDRX_API int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
+extern NDRX_API int ndrx_adm_psc_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len));
 
-extern ndrx_adm_cursors_t* ndrx_adm_curs_get(char *cursid);
+extern NDRX_API ndrx_adm_cursors_t* ndrx_adm_curs_get(char *cursid);
 
-extern ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t *map,
+extern NDRX_API ndrx_adm_cursors_t* ndrx_adm_curs_new(UBFH *p_ub, ndrx_adm_class_map_t *map,
         ndrx_adm_cursors_t *data);
 
-extern int ndrx_adm_curs_housekeep(void);
-extern void ndrx_adm_curs_close(ndrx_adm_cursors_t *curs);
-extern int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs,
+extern NDRX_API int ndrx_adm_curs_housekeep(void);
+extern NDRX_API void ndrx_adm_curs_close(ndrx_adm_cursors_t *curs);
+extern NDRX_API int ndrx_adm_curs_fetch(UBFH *p_ub, ndrx_adm_cursors_t *curs,
         long *ret_occurs, long *ret_more);
 
+extern NDRX_API ndrx_adm_class_map_t *ndrx_adm_class_map_get(char *clazz);
 
 #ifdef	__cplusplus
 }

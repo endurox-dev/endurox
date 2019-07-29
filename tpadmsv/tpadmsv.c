@@ -64,26 +64,6 @@ expublic ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
 expublic char ndrx_G_svcnm2[MAXTIDENT+1]; /** our service name, per instance. */
 
 /**
- * Return class map
- * @param clazz class name
- * @return ptr to class descr or NULL
- */
-exprivate ndrx_adm_class_map_t *class_map_get(char *clazz)
-{
-    int i;
-    
-    for (i=0; NULL!=ndrx_G_class_map[i].clazz; i++)
-    {
-        if (0==strcmp(ndrx_G_class_map[i].clazz, clazz))
-        {
-            return &ndrx_G_class_map[i];
-        }
-    }
-    
-    return NULL;
-}
-
-/**
  * MIB Service
  * @param p_svc
  */
@@ -202,7 +182,7 @@ void MIB (TPSVCINFO *p_svc)
 
     
     /* find class */
-    class_map = class_map_get(clazz);
+    class_map = ndrx_adm_class_map_get(clazz);
     
     if (NULL==class_map)
     {
