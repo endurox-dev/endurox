@@ -286,6 +286,9 @@ extern int cmd_dping(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
 extern int cmd_dsleep(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_dpid(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+/* TMIB: */
+extern int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 #ifdef	__cplusplus
 }
 #endif

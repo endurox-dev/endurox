@@ -47,6 +47,7 @@
 #include <Exfields.h>
 
 #include "xa_cmn.h"
+#include "tpadmsv.h"
 #include <ndrx.h>
 #include <qcommon.h>
 #include <nclopt.h>
@@ -77,6 +78,12 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     int first = EXTRUE;
     long cnt = 0;
     long rsplen;
+    short machine_fmt = EXFALSE;
+    int i, j;
+    char tmpbuf[1024];
+    BFLDLEN flen;
+    
+    ndrx_adm_class_map_t *clazz_descr;
     ncloptmap_t clopt[] =
     {
         {'c', BFLD_STRING, clazz, sizeof(clazz), 
@@ -84,6 +91,8 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                                 
         {'l', BFLD_STRING, lmid, sizeof(lmid), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Machine ID (nodeid)"},
+        {'m', BFLD_SHORT, (void *)&machine_fmt, 0, 
+                                NCLOPT_OPT | NCLOPT_TRUEBOOL, "Machine output"},
         {0}
     };
     
@@ -101,10 +110,13 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         EXFAIL_OUT(ret);
     }
     
+    /* let error to be handled by TMIB */
+    clazz_descr = ndrx_adm_class_map_get(clazz);
+    
     /* alloc 1kb.. */
     p_ub = (UBFH *)tpalloc("UBF", NULL, 0);
     
-    if (NULL!=p_ub)
+    if (NULL==p_ub)
     {
         fprintf(stderr, "Failed to allocate call buffer: %s\n", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
@@ -132,22 +144,26 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     {
         have_more = 0;
         
-        if (first)
+        if (EXFAIL==tpcall(NDRX_SVC_TMIB, (char *)p_ub, 0, 
+                (char **)&p_ub_rsp, &rsplen, 0))
         {
-            /* print headers.. for selected class ... */
-        }
-        
-        if (EXSUCCEED==tpcall(NDRX_SVC_TMIB, (char *)p_ub, 0, 
-                (char **)&p_ub_rsp, &rsplen, 0) != -1)
-        {
-            NDRX_LOG(log_error, "Failed to call [%s]: %s", NDRX_SVC_TMIB, 
-                    tpstrerror(tperrno));
-            fprintf(stderr, "Failed to call [%s]: %s\n", NDRX_SVC_TMIB, 
-                    tpstrerror(tperrno));
+            if (TPESVCFAIL==ret)
+            {
+                /* TODO: read the error fields and print details... */
+                
+            }
+            else
+            {   
+                NDRX_LOG(log_error, "Failed to call [%s]: %s", NDRX_SVC_TMIB, 
+                        tpstrerror(tperrno));
+                fprintf(stderr, "Failed to call [%s]: %s\n", NDRX_SVC_TMIB, 
+                        tpstrerror(tperrno));
+            }
+            
             EXFAIL_OUT(ret);
         }
 
-        if (EXSUCCEED!=Bget(p_ub, TA_OCCURS, 0, (char *)&cnt, NULL))
+        if (EXSUCCEED!=Bget(p_ub_rsp, TA_OCCURS, 0, (char *)&cnt, NULL))
         {
             NDRX_LOG(log_error, "Failed to get TA_OCCURS: %s", Bstrerror(Berror));
             fprintf(stderr, "Failed to get TA_OCCURS: %s\n", Bstrerror(Berror));
@@ -161,19 +177,78 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             EXFAIL_OUT(ret);
         }
         
-        if (have_more)
+        if (cnt > 0)
         {
-          /*
-           * - copy cursor off...
-          CFchg32(fb, TA_OPERATION, 0, (char *)"GETNEXT", 0, FLD_STRING);
-
-           char cursor[256];
-           CFgetString(rsp, TA_CURSOR, 0, cursor, sizeof(cursor));
-               CFchg32(fb, TA_CURSOR, 0, cursor, 0, FLD_STRING);
-           */
+            if (first)
+            {
+                /* print headers.. for selected class ... */
+                for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
+                {
+                    fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
+                }
+                fprintf(stderr, "\n");
+                first = EXFALSE;
+            }
+            
+            /* print the results on screen... */
+            for (i=0; i<cnt; i++)
+            {
+                for (j=0; BBADFLDID!=clazz_descr->fields_map[j].fid; j++)
+                {
+                    flen = sizeof(tmpbuf);
+                    
+                    if (EXSUCCEED!=CBget(p_ub_rsp, clazz_descr->fields_map[j].fid, 
+                            i, tmpbuf, &flen, BFLD_STRING))
+                    {
+                        NDRX_LOG(log_error, "Failed to get [%s] at %d occ: %s",
+                                Bfname(clazz_descr->fields_map[j].fid), i, 
+                                Bstrerror(Berror));
+                        fprintf(stderr, "Failed to get [%s] at %d occ: %s\n",
+                                Bfname(clazz_descr->fields_map[j].fid), i, 
+                                Bstrerror(Berror));
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    fprintf(stdout, "%s|", tmpbuf);
+                }
+                fprintf(stdout, "\n");
+            }
         }
         
-    }
+        if (have_more)
+        {
+            char cursid[MAXTIDENT+1];
+            
+            if (EXSUCCEED!=Bchg(p_ub, TA_OPERATION, 0, NDRX_TA_GETNEXT, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to setup UBF buffer: %s", 
+                        Bstrerror(Berror));
+                fprintf(stderr, "Failed to setup UBF buffer: %s\n", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+            
+            flen = sizeof(cursid);
+            
+            if (EXSUCCEED!=Bget(p_ub_rsp, TA_CURSOR, 0, cursid, &flen))
+            {
+                NDRX_LOG(log_error, "Failed to get TA_CURSOR: %s", 
+                        Bstrerror(Berror));
+                fprintf(stderr, "Failed to get TA_CURSOR: %s\n", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+            
+            if (EXSUCCEED!=Bchg(p_ub, TA_CURSOR, 0, cursid, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to setup TA_CURSOR: %s", 
+                        Bstrerror(Berror));
+                fprintf(stderr, "Failed to setup TA_CURSOR: %s\n", 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+        }
+    } /* while have more */
     
     
 out:
