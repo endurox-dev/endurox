@@ -121,6 +121,8 @@ IF (ENABLE_POSTGRES)
 add_subdirectory (test067_postgres)
 ENDIF()
 
+add_subdirectory (test068_tpadm)
+
 ################################################################################
 # Master test case driver
 add_executable (atmiunit1 atmiunit1.c)
