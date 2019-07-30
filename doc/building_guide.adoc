@@ -420,7 +420,7 @@ $ sudo -s
 # su - postgres
 $ createuser exdbtest
 $ createdb xe
-$ psql 
+$ psql
 
 > alter user exdbtest with encrypted password 'exdbtest1';
 > grant all privileges on database xe to exdbtest;
@@ -446,10 +446,12 @@ greater than 0, e.g. 1000.
 
 Network connection shall be enabled too for Posgres auth, edit the *pg_hba.conf*
 
-Add following line to the file:
+Ensure that it contains following lines (for password auth):
 
 --------------------------------------------------------------------------------
-host all all 0.0.0.0/0 md5
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
 --------------------------------------------------------------------------------
 
 After that restart Postgres:
