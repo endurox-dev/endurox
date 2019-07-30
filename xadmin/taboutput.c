@@ -161,7 +161,7 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table)
     ndrx_growlist_t **col_cur;
     char **val_cur;
     long *width;
-    int first = EXTRUE;
+    int first = 0;
             
     while (1)
     {
@@ -180,11 +180,25 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table)
             
             if (1==row)
             {
-                fprintf(stderr, "%-*s|", (int)*width, *val_cur);
+                if (0==first)
+                {
+                    fprintf(stderr, "%-*s ", (int)*width, *val_cur);
+                }
+                else
+                {
+                    int i;
+                    for (i=0; i<(int)*width; i++)
+                    {
+                        fprintf(stderr, "-");
+                    }
+                    fprintf(stderr, " ");
+
+                }
+                /*print footers ... */
             }
             else if (row > 1)
             {
-                fprintf(stdout, "%-*s|", (int)*width, *val_cur);
+                fprintf(stdout, "%-*s ", (int)*width, *val_cur);
             }
         }
         
@@ -197,7 +211,18 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table)
             fprintf(stdout, "\n");
         }
 
-        row++;
+        if (row==1)
+        {
+            first++;
+            if (first>1)
+            {
+                row++;
+            }
+        }
+        else
+        {
+            row++;
+        }
     }
     
     
@@ -226,8 +251,11 @@ expublic void ndrx_tab_free(ndrx_growlist_t *table)
             NDRX_FREE(*val_cur);
         }
         
+        ndrx_growlist_free(*col_cur);
         NDRX_FREE(*col_cur);
     }
+
+    ndrx_growlist_free(table);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
