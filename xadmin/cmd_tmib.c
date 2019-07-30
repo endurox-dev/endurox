@@ -52,6 +52,7 @@
 #include <qcommon.h>
 #include <nclopt.h>
 #include <tpadm.h>
+#include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -82,8 +83,12 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     int i, j;
     char tmpbuf[1024];
     BFLDLEN flen;
-    
+    char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
+    BFLDID fldid = 0;
+    long error_code = 0;
     ndrx_adm_class_map_t *clazz_descr;
+    ndrx_growlist_t table;
+
     ncloptmap_t clopt[] =
     {
         {'c', BFLD_STRING, clazz, sizeof(clazz), 
@@ -96,6 +101,9 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         {0}
     };
     
+    
+    ndrx_tab_init(&table);
+
     /* parse command line */
     if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
@@ -144,13 +152,24 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     {
         have_more = 0;
         
+        ndrx_debug_dump_UBF(log_info, ".TMIB Request buffer:", p_ub);
+        
         if (EXFAIL==tpcall(NDRX_SVC_TMIB, (char *)p_ub, 0, 
                 (char **)&p_ub_rsp, &rsplen, 0))
         {
-            if (TPESVCFAIL==ret)
+            if (TPESVCFAIL==tperrno && NULL!=p_ub_rsp)
             {
-                /* TODO: read the error fields and print details... */
                 
+                ndrx_debug_dump_UBF(log_info, ".TMIB Response (ERR) buffer:", p_ub_rsp);
+                
+                /* read the error fields and print details... */
+                Bget(p_ub_rsp, TA_ERROR, 0, (char *)&error_code, 0L);
+                Bget(p_ub_rsp, TA_STATUS, 0, msg, 0L);
+                Bget(p_ub_rsp, TA_BADFLD, 0, (char *)&fldid, 0L);
+                
+                fprintf(stderr, "TMIB failed with %ld on field %u: %s\n", 
+                        error_code, (unsigned int)fldid, msg);
+                EXFAIL_OUT(ret);
             }
             else
             {   
@@ -162,6 +181,9 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             
             EXFAIL_OUT(ret);
         }
+        
+        ndrx_debug_dump_UBF(log_info, ".TMIB Response buffer:", p_ub_rsp);
+        
 
         if (EXSUCCEED!=Bget(p_ub_rsp, TA_OCCURS, 0, (char *)&cnt, NULL))
         {
@@ -184,9 +206,26 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                 /* print headers.. for selected class ... */
                 for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
                 {
-                    fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
+                    if (machine_fmt)
+                    {
+                        fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
+                    }
+                    else
+                    {
+                        /* Load into linked list... */
+                        if (EXSUCCEED!=ndrx_tab_add_col(&table, i, 
+                                clazz_descr->fields_map[i].name))
+                        {
+                            fprintf(stderr, "Failed to prepare results\n");
+                        }
+                    }
                 }
-                fprintf(stderr, "\n");
+                
+                if (machine_fmt)
+                {
+                    fprintf(stderr, "\n");
+                }
+                
                 first = EXFALSE;
             }
             
@@ -209,9 +248,24 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                         EXFAIL_OUT(ret);
                     }
                     
-                    fprintf(stdout, "%s|", tmpbuf);
+                    if (machine_fmt)
+                    {
+                        fprintf(stdout, "%s|", tmpbuf);
+                    }
+                    else
+                    {
+                        /* Load into linked list... */
+                        if (EXSUCCEED!=ndrx_tab_add_col(&table, j, tmpbuf))
+                        {
+                            fprintf(stderr, "Failed to prepare results\n");
+                        }
+                    }
                 }
-                fprintf(stdout, "\n");
+                
+                if (machine_fmt)
+                {
+                    fprintf(stdout, "\n");
+                }
             }
         }
         
@@ -250,7 +304,11 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         }
     } /* while have more */
     
-    
+    if (!machine_fmt)
+    {
+        fprintf(stderr, "\n");
+        ndrx_tab_print(&table);
+    }
 out:
     
     if (NULL!=p_ub)
@@ -262,6 +320,10 @@ out:
     {
         tpfree((char *)p_ub_rsp);
     }
+
+    ndrx_tab_free(&table);
+
+
 
     return ret;
 }

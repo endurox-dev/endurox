@@ -340,6 +340,20 @@ if ( (PTR__ = (TYPE__ *)NDRX_CALLOC(NMEMB__, SIZE__)) == NULL) \
     EXFAIL_OUT(ret);\
 }
 
+/**
+ * Standard logging of malloc error
+ * @param X size to allocate
+ */
+#define NDRX_MALLOC_FAIL_NDRX(X) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "Failed to malloc %ld bytes: %s",\
+        (long)X, strerror(ERR__));\
+    userlog("Failed to malloc %ld bytes: %s",\
+        __func__, (long)X, strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
