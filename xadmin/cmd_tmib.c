@@ -306,7 +306,6 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     
     if (!machine_fmt)
     {
-        fprintf(stderr, "\n");
         ndrx_tab_print(&table);
     }
 out:
