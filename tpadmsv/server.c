@@ -64,7 +64,6 @@
 typedef struct 
 {
     long srvid;                 /**< Server ID                              */
-    long basesrvid;             /**< Server ID                              */
     char rqaddr[MAXTIDENT+1];   /**< Request address if any, used by SysV   */
     char state[3+1];            /**< Server state                           */
     char lmid[MAXTIDENT+1];     /**< Machine / cluster node id              */
@@ -81,7 +80,6 @@ expublic ndrx_adm_elmap_t ndrx_G_server_map[] =
 {  
     /* Driving of the Preparing: */
     {TA_SRVID,                      TPADM_EL(ndrx_adm_server_t, srvid)}
-    ,{TA_BASESRVID,                 TPADM_EL(ndrx_adm_server_t, basesrvid)}
     ,{TA_RQADDR,                    TPADM_EL(ndrx_adm_server_t, rqaddr)}
     ,{TA_STATE,                     TPADM_EL(ndrx_adm_server_t, state)}
     ,{TA_LMID,                      TPADM_EL(ndrx_adm_server_t, lmid)}
@@ -121,7 +119,6 @@ exprivate int ndrx_adm_server_proc_list(command_reply_t *reply, size_t reply_len
     ndrx_adm_server_t srv;
     memset(&srv, 0, sizeof(srv));
 
-    srv.basesrvid = ppm_info->srvid;
     srv.srvid = ppm_info->srvid;
     srv.pid = ppm_info->pid;
     NDRX_STRCPY_SAFE(srv.rqaddr, ppm_info->rqaddress);
