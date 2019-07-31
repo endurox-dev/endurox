@@ -76,11 +76,12 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_queue_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_RQADDR,                 TPADM_EL(ndrx_adm_queue_t, rqaddr)}
-    ,{TA_LMID,                  TPADM_EL(ndrx_adm_queue_t, lmid)}
-    ,{TA_SERVERNAME,            TPADM_EL(ndrx_adm_queue_t, servername)}
+     {TA_LMID,                  TPADM_EL(ndrx_adm_queue_t, lmid)}
+    ,{TA_RQADDR,                 TPADM_EL(ndrx_adm_queue_t, rqaddr)}
+    ,{TA_SERVERNAME,            TPADM_EL(ndrx_adm_queue_t, servername)} /* TODO: Parse server name */
     ,{TA_STATE,                 TPADM_EL(ndrx_adm_queue_t, state)}
     ,{TA_NQUEUED,               TPADM_EL(ndrx_adm_queue_t, nqueued)}
+    /* TODO: Add TA_RQID for System V */
     ,{BBADFLDID}
 };
 
