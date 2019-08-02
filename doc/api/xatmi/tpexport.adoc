@@ -146,7 +146,6 @@ Will be imported into following JSON
 --------------------------------------------------------------------------------
 
 
-
 For example following JSON buffer 
 
 --------------------------------------------------------------------------------
@@ -181,7 +180,7 @@ Will be imported into following JSON
 
 RETURN VALUE
 ------------
-On success, *tpacall()* return call descriptor (>0); on error, -1 is returned, 
+On success, *tpexport()* return 0; on error, -1 is returned, 
 with *tperrno* set to indicate the error.
 
 ERRORS
