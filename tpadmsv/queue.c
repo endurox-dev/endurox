@@ -59,12 +59,12 @@
 
 /**
  * Image of the queue
+ * + OID of rqaddr (q)
  */
 typedef struct 
 {
-    char rqaddr[MAXTIDENT+1];   /**< queue name (last 30 chars)             */
     char lmid[MAXTIDENT+1];     /**< node id(last 30 chars)                 */
-    char servername[78+1];      /**< full queue name                        */
+    char rqaddr[NDRX_MAX_Q_SIZE+1];/**< queue name (last 30 chars)          */
     char state[3+1];            /**< const: ACT - active machine            */
     long nqueued;               /**< Number of messages queued              */
 } ndrx_adm_queue_t;
@@ -77,11 +77,10 @@ expublic ndrx_adm_elmap_t ndrx_G_queue_map[] =
 {  
     /* Driving of the Preparing: */
      {TA_LMID,                  TPADM_EL(ndrx_adm_queue_t, lmid)}
-    ,{TA_RQADDR,                 TPADM_EL(ndrx_adm_queue_t, rqaddr)}
-    ,{TA_SERVERNAME,            TPADM_EL(ndrx_adm_queue_t, servername)} /* TODO: Parse server name */
+    ,{TA_RQADDR,                TPADM_EL(ndrx_adm_queue_t, rqaddr)}
     ,{TA_STATE,                 TPADM_EL(ndrx_adm_queue_t, state)}
     ,{TA_NQUEUED,               TPADM_EL(ndrx_adm_queue_t, nqueued)}
-    /* TODO: Add TA_RQID for System V */
+    /* TODO: Add TA_RQID for System V mapping... */
     ,{BBADFLDID}
 };
 
@@ -128,8 +127,6 @@ expublic int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long f
         }
     
         memset(&q, 0, sizeof(q));
-        
-        NDRX_STRCPY_SAFE(q.servername, elt->qname);
         
         len = strlen(elt->qname);
         

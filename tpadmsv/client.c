@@ -59,6 +59,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
+ * + OID
  * Image of the client information
  */
 typedef struct 

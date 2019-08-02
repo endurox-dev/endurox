@@ -122,7 +122,8 @@ exprivate int ndrx_adm_server_proc_list(command_reply_t *reply, size_t reply_len
     srv.srvid = ppm_info->srvid;
     srv.pid = ppm_info->pid;
     NDRX_STRCPY_SAFE(srv.rqaddr, ppm_info->rqaddress);
-    srv.timerestart = ppm_info->last_startup;
+    srv.timerestart = ppm_info->state_changed;
+    snprintf(srv.lmid, sizeof(srv.lmid), "%ld", tpgetnodeid());
 
     if (NDRXD_PM_RUNNING_OK==ppm_info->state)
     {
