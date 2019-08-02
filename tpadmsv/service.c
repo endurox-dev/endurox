@@ -60,6 +60,7 @@
 
 /**
  * Image of the queue
+ * + OID HASH.
  */
 typedef struct 
 {

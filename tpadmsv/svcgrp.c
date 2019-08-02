@@ -59,6 +59,7 @@
 /*---------------------------Typedefs-----------------------------------*/
     
 /**
+ * + OID HASH
  * Image of the service group / dynamic service info
  */
 typedef struct 
