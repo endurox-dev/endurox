@@ -441,12 +441,13 @@ cmd_mapping_t M_command_map[] =
                 , NULL},
     {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,              1,  1,  1,  
                 "Put ndrxd in sleep (disable activity for time period), for debug\n"
-                "\tUsage: dsleep SLEEP_SECONDS\n"
+                "\tUsage: dsleep SLEEP_SECONDS"
                 , NULL},
     {"mibget",     cmd_mibget,EXFAIL,                1,  3,  1, 
                 "Dump message in cache\n"
                 "\t args: mibget -c <T_CLASS> [-l <node_id>] [-m]\n"
-                "\t\t -m\tMachine output"
+                "\t\t -m\tMachine output\n"
+                "\t\t -c\tT_CLIENT|T_DOMAIN|T_MACHINE|T_QUEUE|T_SERVER|T_SERVICE|T_SVCGRP"
                 , NULL}
 };
 
