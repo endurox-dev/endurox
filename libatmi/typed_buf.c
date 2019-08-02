@@ -438,7 +438,7 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
              */
             last_call->autobuf = NULL;
         }
-            
+             
         buf_type = &G_buf_descr[elt->type_id];
         /* Remove it! */
         buf_type->pf_free(buf_type, elt->buf);

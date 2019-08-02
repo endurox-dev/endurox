@@ -86,7 +86,8 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     EXJSON_Object *data_object = NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
-
+    
+    /* how about carray ilen? */
     if (EXFAIL==(size_existing=ndrx_tptypes(ibuf, buftype, subtype)))
     {
         NDRX_LOG(log_error, "Cannot determine buffer type");
@@ -231,8 +232,8 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
             if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, 
                         strlen(serialized_string), &outlen, ostr))
             {
-                    NDRX_LOG(log_error, "Failed to convert to b64!");
-                    EXFAIL_OUT(ret);
+		NDRX_LOG(log_error, "Failed to convert to b64!");
+		EXFAIL_OUT(ret);
             }
         }
         else

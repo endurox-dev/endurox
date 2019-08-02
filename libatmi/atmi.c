@@ -1700,7 +1700,7 @@ extern int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
         ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
         EXFAIL_OUT(ret);
     }
-
+    
     ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags);
 
 out:
