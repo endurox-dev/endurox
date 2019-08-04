@@ -64,8 +64,6 @@
 typedef struct 
 {
     char domainid[MAXTIDENT+1];/**< cluster node id                            */
-    char master[MAXTIDENT+1];  /**< current accessers on machine server+clt+ctx*/
-    char model[3+1];           /**< current number of client contexts          */
     char state[3+1];           /**< current number of open conversations       */
     long curqueues;            /**< current number of queue                    */
     long curservers;           /**< number of server in domain (local)         */
@@ -80,8 +78,6 @@ expublic ndrx_adm_elmap_t ndrx_G_domain_map[] =
 {  
     /* Driving of the Preparing: */
     {TA_DOMAINID,               TPADM_EL(ndrx_adm_domain_t, domainid)}
-    ,{TA_MASTER,                TPADM_EL(ndrx_adm_domain_t, master)}
-    ,{TA_MODEL,                 TPADM_EL(ndrx_adm_domain_t, model)}
     ,{TA_STATE,                 TPADM_EL(ndrx_adm_domain_t, state)}
     ,{TA_CURQUEUES,             TPADM_EL(ndrx_adm_domain_t, curqueues)}
     ,{TA_CURSERVERS,            TPADM_EL(ndrx_adm_domain_t, curservers)}
@@ -114,9 +110,7 @@ expublic int ndrx_adm_domain_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     
     ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_domain_t));
     
-    NDRX_STRCPY_SAFE(dom.model, "SHM");
     snprintf(dom.domainid, sizeof(dom.domainid), "%ld", tpgetnodeid());
-    snprintf(dom.master, sizeof(dom.master), "%ld", tpgetnodeid());
     NDRX_STRCPY_SAFE(dom.state, "ACT");
     
     /* counter number of queues: */

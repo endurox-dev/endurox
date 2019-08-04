@@ -53,7 +53,15 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-            <server name="tpbridge">
+        
+        <server name="atmi.sv68">
+            <min>2</min>
+            <max>3</max>
+            <srvid>10</srvid>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -sTESTSV:TESTSV -N</sysopt>
+        </server>
+
+        <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>

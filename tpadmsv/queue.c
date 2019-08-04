@@ -67,6 +67,7 @@ typedef struct
     char rqaddr[NDRX_MAX_Q_SIZE+1];/**< queue name (last 30 chars)          */
     char state[3+1];            /**< const: ACT - active machine            */
     long nqueued;               /**< Number of messages queued              */
+    long rqid;                  /**< Queue ID (for System V only)           */
 } ndrx_adm_queue_t;
 
 
@@ -80,7 +81,10 @@ expublic ndrx_adm_elmap_t ndrx_G_queue_map[] =
     ,{TA_RQADDR,                TPADM_EL(ndrx_adm_queue_t, rqaddr)}
     ,{TA_STATE,                 TPADM_EL(ndrx_adm_queue_t, state)}
     ,{TA_NQUEUED,               TPADM_EL(ndrx_adm_queue_t, nqueued)}
-    /* TODO: Add TA_RQID for System V mapping... */
+    /* TA_RQID for System V mapping... 
+     * Resolve from ndrx_svqshm_get(char *qstr, mode_t mode, int oflag)
+     */
+    ,{TA_RQID,                  TPADM_EL(ndrx_adm_queue_t, rqid)}
     ,{BBADFLDID}
 };
 
@@ -100,7 +104,6 @@ expublic int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long f
     string_list_t* qlist = NULL;
     string_list_t* elt = NULL;
     ndrx_adm_queue_t q;
-    int len;
     int idx = 0;
     struct mq_attr att;
     
@@ -128,18 +131,11 @@ expublic int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long f
     
         memset(&q, 0, sizeof(q));
         
-        len = strlen(elt->qname);
+        NDRX_STRCPY_SAFE(q.rqaddr, elt->qname);
         
-        if (len > sizeof(q.rqaddr)-1)
-        {
-            /* copy only last bits... */
-            NDRX_STRCPY_SAFE(q.rqaddr, (elt->qname + len - (sizeof(q.rqaddr)-2)) );
-        }
-        else
-        {
-            NDRX_STRCPY_SAFE(q.rqaddr, elt->qname);
-        }
-
+#ifdef EX_USE_SYSVQ
+        q.rqid = ndrx_svqshm_get(q.rqaddr, 0, 0);
+#endif
         
         snprintf(q.lmid, sizeof(q.lmid), "%ld", tpgetnodeid());
         NDRX_STRCPY_SAFE(q.state, "ACT");
