@@ -434,6 +434,11 @@ processing listings across all supported OSes.
 
 - Version 6.0.25 released on 22/03/2019 (development) Feature #396
 
+- Version 6.0.26 released on 25/03/2019 (stable) Support #400
+
+- Version 6.0.27 released on 30/03/2019 (development) Feature #402
+
+- Version 6.0.28 released on 11/06/2019 (stabel) Feature #419
 
 # Build configurations
 
