@@ -249,17 +249,58 @@ if [ "X$DUMSV" == "X" ]; then
     go_out -20
 fi
 
-#
-#2|10|/dom2,srv,addr,atmi.sv68,10|ACT|23|637|atmi.sv68|atmi.sv68|1|
-#
-
 echo "*** T_SERVICE ***"
 xadmin mibget -c T_SERVICE
 xadmin mibget -c T_SERVICE -m
 
+
+# Test services:
+
+FAILSVC=`xadmin mibget -c T_SERVICE -m | egrep 'FAILSV\|ACT\|'`
+
+if [ "X$FAILSVC" == "X" ]; then
+    echo "FAILSVC not found!"
+    go_out -21
+fi
+
+MIBSVC=`xadmin mibget -c T_SERVICE -m | egrep '\.TMIB\|ACT\|'`
+
+if [ "X$MIBSVC" == "X" ]; then
+    echo "MIBSVC not found!"
+    go_out -22
+fi
+
+MIBSVC2=`xadmin mibget -c T_SERVICE -m | egrep '\.TMIB-2-401\|ACT\|'`
+
+if [ "X$MIBSVC2" == "X" ]; then
+    echo "MIBSVC2 not found!"
+    go_out -23
+fi
+
 echo "*** T_SVCGRP ***"
 xadmin mibget -c T_SVCGRP
 xadmin mibget -c T_SVCGRP -m
+
+TESTSVCG=`xadmin mibget -c T_SVCGRP -m | egrep 'TESTSV\|2/10\|ACT\|2\|10\|TESTSV\|100\|100\|0\|[0-9]+\|[0-9]+\|[0-9]+|'`
+
+if [ "X$TESTSVCG" == "X" ]; then
+    echo "TESTSVCG not found!"
+    go_out -24
+fi
+
+FAILSVG=`xadmin mibget -c T_SVCGRP -m | egrep 'FAILSV\|2/10\|ACT\|2\|10\|FAILURESV\|1\|0\|1\|[0-9]+\|[0-9]+\|[0-9]+\|'`
+
+if [ "X$FAILSVG" == "X" ]; then
+    echo "FAILSVG not found!"
+    go_out -25
+fi
+
+TESTSVC1G=`xadmin mibget -c T_SVCGRP -m | egrep 'TESTSV\|1/101\|ACT\|1\|101\|N/A\|-1\|-1\|-1\|-1\|-1\|-1\|'`
+
+if [ "X$TESTSVC1G" == "X" ]; then
+    echo "TESTSVC1G not found!"
+    go_out -26
+fi
 
 RET=$?
 

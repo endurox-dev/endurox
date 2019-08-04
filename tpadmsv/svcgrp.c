@@ -139,11 +139,31 @@ exprivate int ndrx_adm_svcgrp_proc_list(command_reply_t *reply, size_t reply_len
         svc.srvid = psc_info->srvid;
         NDRX_STRCPY_SAFE(svc.svcrname,psc_info->svcdet[i].fn_nm);
         svc.ncompleted = psc_info->svcdet[i].done+psc_info->svcdet[i].fail;
+        
+        if (svc.ncompleted < -1)
+        {
+            svc.ncompleted = -1;
+        }
         svc.totsuccnum = psc_info->svcdet[i].done;
         svc.totsfailnum = psc_info->svcdet[i].fail;
         svc.lastexectimeusec = psc_info->svcdet[i].last *1000; /* msec -> usec */
         svc.maxexectimeusec = psc_info->svcdet[i].max*1000; /* msec -> usec */
         svc.minexectimeusec = psc_info->svcdet[i].min*1000; /* msec -> usec */
+        
+        if (svc.lastexectimeusec < -1)
+        {
+            svc.lastexectimeusec = -1;
+        }
+        
+        if (svc.maxexectimeusec < -1)
+        {
+            svc.maxexectimeusec = -1;
+        }
+        
+        if (svc.minexectimeusec < -1)
+        {
+            svc.minexectimeusec = -1;
+        }
         
         if (EXSUCCEED!=ndrx_growlist_add(&M_cursnew->list, (void *)&svc, M_idx))
         {

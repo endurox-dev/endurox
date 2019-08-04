@@ -533,6 +533,13 @@ Ensure(test067_postgres)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test068_tpadm)
+{
+    int ret;
+    ret=system_dbg("test068_tpadm/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -644,6 +651,8 @@ TestSuite *atmi_test_all(void)
 #ifdef NDRX_USE_POSTGRES
     add_test(suite, test067_postgres);
 #endif
+    
+    add_test(suite, test068_tpadm);
     
     return suite;
 }
