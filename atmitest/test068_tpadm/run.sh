@@ -242,7 +242,7 @@ if [ "X$CPM" == "X" ]; then
 fi
 
 
-DUMSV=`xadmin mibget -c T_SERVER -m | egrep '2\|30\|.*\|.*|[0-9]*\|[0-9]*|dummysv|dumcmdsv|3|'`
+DUMSV=`xadmin mibget -c T_SERVER -m | egrep '2\|30\|.*\|.*\|[0-9]*\|[0-9]*\|dummysv\|dumcmdsv\|3\|'`
 
 if [ "X$DUMSV" == "X" ]; then
     echo "DUMSV not found!"
@@ -281,7 +281,7 @@ echo "*** T_SVCGRP ***"
 xadmin mibget -c T_SVCGRP
 xadmin mibget -c T_SVCGRP -m
 
-TESTSVCG=`xadmin mibget -c T_SVCGRP -m | egrep 'TESTSV\|2/10\|ACT\|2\|10\|TESTSV\|100\|100\|0\|[0-9]+\|[0-9]+\|[0-9]+|'`
+TESTSVCG=`xadmin mibget -c T_SVCGRP -m | egrep 'TESTSV\|2/10\|ACT\|2\|10\|TESTSV\|100\|100\|0\|[0-9]+\|[0-9]+\|[0-9]+\|'`
 
 if [ "X$TESTSVCG" == "X" ]; then
     echo "TESTSVCG not found!"
