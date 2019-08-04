@@ -53,11 +53,22 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
+        
         <server name="atmi.sv68">
             <min>1</min>
-            <max>1</max>
+            <max>10</max>
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r</sysopt>
+        </server>
+        
+        <!-- Have some server with different clop name -->
+        
+        <server name="dummysv">
+            <min>1</min>
+            <max>10</max>
+            <srvid>30</srvid>
+            <cmdline>dumcmdsv</cmdline>
+            <sysopt>-e ${TESTDIR}/dummysv-dom2.log -r</sysopt>
         </server>
         
         <server name="tpbridge">
@@ -65,6 +76,20 @@
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
             <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30 -P0</appopt>
+        </server>
+        
+        <!-- Disconnected member node -->
+        <server name="tpbridge">
+            <max>1</max>
+            <srvid>201</srvid>
+            <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
+            <appopt>-f -n3 -r -i 0.0.0.0 -p 11003 -tA -z30 -P0</appopt>
+        </server>
+        
+        <server name="tpadmsv">
+            <max>1</max>
+            <srvid>401</srvid>
+            <sysopt>-e ${TESTDIR}/tpadmsv-dom2.log -r</sysopt>
         </server>
         
         <server name="cpmsrv">
@@ -78,27 +103,11 @@
     
     <!-- Client section -->
     <clients>
+        
         <client cmdline="./test.sh -t ${NDRX_CLTTAG} -s ${NDRX_CLTSUBSECT}">
             <exec tag="BINARY1" subsect="1" autostart="Y" />
             <exec tag="BINARY2" subsect="2" autostart="Y" />
-        </client>
-        
-        <!-- Have atmi clients too.. -->
-        <client cmdline="atmiclt68 cpm">
-            <exec tag="CLT1" subsect="1" autostart="Y" />
-            <exec tag="CLT1" subsect="2" autostart="Y" />
-            <exec tag="CLT1" subsect="3" autostart="Y" />
-            <exec tag="CLT1" subsect="3" autostart="Y" />
-            <exec tag="CLT1" subsect="4" autostart="Y" />
-            <exec tag="CLT1" subsect="5" autostart="Y" />
-            <exec tag="CLT1" subsect="6" autostart="Y" />
-            <exec tag="CLT1" subsect="7" autostart="Y" />
-            <exec tag="CLT1" subsect="8" autostart="Y" />
-            <exec tag="CLT1" subsect="9" autostart="Y" />
-            <exec tag="CLT1" subsect="10" autostart="Y" />
-            <exec tag="CLT1" subsect="11" autostart="Y" />
-            <exec tag="CLT1" subsect="12" autostart="Y" />
-            <exec tag="CLT1" subsect="13" autostart="Y" />
+            <exec tag="BINARY3" subsect="3" autostart="Y" />
         </client>
         
     </clients>

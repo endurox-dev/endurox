@@ -68,7 +68,6 @@ typedef struct
     char srvgrp[MAXTIDENT+1];           /**< Server group                     */
     char state[3+1];                    /**< Current service state, "ACT" const */
     char lmid[MAXTIDENT+1];             /**< Node id                          */
-    char reqaddr[MAXTIDENT+1];          /**< Request address (not used)       */
     long srvid;                         /**< Server process id                */
     char svcrname[MAXTIDENT+1];         /**< Function name                    */
     long ncompleted;                    /**< Requests completed succ + fail   */
@@ -89,7 +88,6 @@ expublic ndrx_adm_elmap_t ndrx_G_svcgrp_map[] =
     ,{TA_SRVGRP,                TPADM_EL(ndrx_adm_svcgrp_t, srvgrp)}
     ,{TA_STATE,                 TPADM_EL(ndrx_adm_svcgrp_t, state)}
     ,{TA_LMID,                  TPADM_EL(ndrx_adm_svcgrp_t, lmid)}
-    ,{TA_RQADDR,                TPADM_EL(ndrx_adm_svcgrp_t, reqaddr)}
     ,{TA_SRVID,                 TPADM_EL(ndrx_adm_svcgrp_t, srvid)}
     ,{TA_SVCRNAM,               TPADM_EL(ndrx_adm_svcgrp_t, svcrname)}
     ,{TA_NCOMPLETED,            TPADM_EL(ndrx_adm_svcgrp_t, ncompleted)}
@@ -138,7 +136,6 @@ exprivate int ndrx_adm_svcgrp_proc_list(command_reply_t *reply, size_t reply_len
                 psc_info->srvid);
         NDRX_STRCPY_SAFE(svc.state, "ACT");
         snprintf(svc.lmid, sizeof(svc.lmid), "%d", psc_info->nodeid);
-        NDRX_STRCPY_SAFE(svc.reqaddr, "-"); /* not used */
         svc.srvid = psc_info->srvid;
         NDRX_STRCPY_SAFE(svc.svcrname,psc_info->svcdet[i].fn_nm);
         svc.ncompleted = psc_info->svcdet[i].done+psc_info->svcdet[i].fail;

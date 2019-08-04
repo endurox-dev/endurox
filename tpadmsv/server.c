@@ -63,14 +63,15 @@
  */
 typedef struct 
 {
+    char lmid[MAXTIDENT+1];     /**< Machine / cluster node id              */
     long srvid;                 /**< Server ID                              */
     char rqaddr[MAXTIDENT+1];   /**< Request address if any, used by SysV   */
     char state[3+1];            /**< Server state                           */
-    char lmid[MAXTIDENT+1];     /**< Machine / cluster node id              */
     long timerestart;           /**< Santiy cycles from last start          */ 
     long pid;                   /**< Server process PID                     */
     char servername[78+1];      /**< binary name                            */
     char clopt[256+1];          /**< Clopt / real name                      */
+    long generation;            /**< Number of restarts for the server proc */
 } ndrx_adm_server_t;
 
 /**
@@ -79,14 +80,15 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_server_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_SRVID,                      TPADM_EL(ndrx_adm_server_t, srvid)}
+    {TA_LMID,                      TPADM_EL(ndrx_adm_server_t, lmid)}
+    ,{TA_SRVID,                      TPADM_EL(ndrx_adm_server_t, srvid)}
     ,{TA_RQADDR,                    TPADM_EL(ndrx_adm_server_t, rqaddr)}
     ,{TA_STATE,                     TPADM_EL(ndrx_adm_server_t, state)}
-    ,{TA_LMID,                      TPADM_EL(ndrx_adm_server_t, lmid)}
     ,{TA_TIMERESTART,               TPADM_EL(ndrx_adm_server_t, timerestart)}
     ,{TA_PID,                       TPADM_EL(ndrx_adm_server_t, pid)}
     ,{TA_SERVERNAME,                TPADM_EL(ndrx_adm_server_t, servername)}
     ,{TA_CLOPT,                     TPADM_EL(ndrx_adm_server_t, clopt)}
+    ,{TA_GENERATION,                TPADM_EL(ndrx_adm_server_t, generation)}
     ,{BBADFLDID}
 };
 
@@ -123,6 +125,7 @@ exprivate int ndrx_adm_server_proc_list(command_reply_t *reply, size_t reply_len
     srv.pid = ppm_info->pid;
     NDRX_STRCPY_SAFE(srv.rqaddr, ppm_info->rqaddress);
     srv.timerestart = ppm_info->state_changed;
+    srv.generation = ppm_info->exec_seq_try + 1; /* number of consecutive restarts */
     snprintf(srv.lmid, sizeof(srv.lmid), "%ld", tpgetnodeid());
 
     if (NDRXD_PM_RUNNING_OK==ppm_info->state)

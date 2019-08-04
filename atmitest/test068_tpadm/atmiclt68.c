@@ -59,24 +59,66 @@
  */
 int main(int argc, char** argv)
 {
-
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int i;
     int ret=EXSUCCEED;
+    int cd;
+    long revent;
+    if (argc<2)
+    {
+        fprintf(stderr, "Usage: %s call|fail|conv\n", argv[0]);
+        EXFAIL_OUT(ret);
+    }
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+    if (0==strcmp(argv[1], "call"))
     {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
+        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }    
 
-    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        for (i=0; i<100; i++)
+        {
+            if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+            {
+                NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+        }
+    }
+    else if (0==strcmp(argv[1], "fail"))
     {
-        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        if (EXFAIL == tpcall("FAILSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "FAILSV failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+    }
+    else if (0==strcmp(argv[1], "conv"))
+    {
+        if (EXFAIL == (cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
+        {
+            NDRX_LOG(log_error, "FAILSV failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        if (EXFAIL==tprecv(cd, (char **)&p_ub, &rsplen, 0, &revent))
+        {
+            NDRX_LOG(log_error, "Failed to recv: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+    }
+    else
+    {
+        NDRX_LOG(log_error, "TESTERROR! invalid command [%s]", argv[1]);
     }
     
 out:

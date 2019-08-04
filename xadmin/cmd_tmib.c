@@ -239,12 +239,13 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                     if (EXSUCCEED!=CBget(p_ub_rsp, clazz_descr->fields_map[j].fid, 
                             i, tmpbuf, &flen, BFLD_STRING))
                     {
+                        
                         NDRX_LOG(log_error, "Failed to get [%s] at %d occ: %s",
                                 Bfname(clazz_descr->fields_map[j].fid), i, 
                                 Bstrerror(Berror));
-                        fprintf(stderr, "Failed to get [%s] at %d occ: %s\n",
-                                Bfname(clazz_descr->fields_map[j].fid), i, 
-                                Bstrerror(Berror));
+                        /* Bfname resets Berror! */
+                        fprintf(stderr, "Failed to get [%s] at %d occ\n",
+                                Bfname(clazz_descr->fields_map[j].fid), i);
                         EXFAIL_OUT(ret);
                     }
                     
