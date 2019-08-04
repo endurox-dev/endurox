@@ -38,6 +38,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <sys/sem.h>
+#include <signal.h>
 
 #include <atmi.h>
 #include <atmi_shm.h>
