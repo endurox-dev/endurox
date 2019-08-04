@@ -282,6 +282,7 @@ echo "There should be 1 msg in table"
 
 RET=$?
 
+# atmiclt ck1 will return 0 for succeed check of 1
 if [[ "X$RET" != "X0" ]]; then
     echo "Invalid count in table!"
     go_out $RET

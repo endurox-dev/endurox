@@ -217,7 +217,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                     p_clt = (ndrx_adm_client_t *) (cursnew->list.mem + i*sizeof(ndrx_adm_client_t));
                     
                     /* reset binary_name to common len... */
-                    myid.binary_name[MAXTIDENT];
+                    myid.binary_name[MAXTIDENT] = EXEOS;
                     if (p_clt->pid == myid.pid
                             && p_clt->contextid == myid.contextid
                             && 0==strcmp(p_clt->name, myid.binary_name)
