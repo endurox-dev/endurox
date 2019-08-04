@@ -272,9 +272,9 @@ expublic int atmisrv_build_advertise_list(void)
     DL_FOREACH_SAFE(G_server_conf.svc_list, s_el, s_tmp)
     {
         /* In this case we are only interested in aliases */
-        if (EXEOS!=s_el->svc_alias[0])
+        if (EXEOS!=s_el->svc_aliasof[0])
         {
-            svn_nm_srch=s_el->svc_alias;
+            svn_nm_srch=s_el->svc_aliasof;
             svn_nm_add=s_el->svc_nm;
         }
         else if (!G_server_conf.advertise_all)
@@ -522,7 +522,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         entry->svc_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
         NDRX_STRNCPY(entry->fn_nm, fn_nm, XATMI_SERVICE_NAME_LENGTH);
         /* At this point we need to check the convert flags... */
-        entry->xcvtflags = xcvt_lookup(entry->fn_nm);
+        entry->xcvtflags = ndrx_xcvt_lookup(entry->fn_nm);
         
         entry->fn_nm[XATMI_SERVICE_NAME_LENGTH]=EXEOS;
         entry->p_func = p_func;

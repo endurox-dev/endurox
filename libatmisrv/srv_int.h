@@ -82,7 +82,7 @@ typedef struct svc_entry svc_entry_t;
 struct svc_entry
 {
     char svc_nm[XATMI_SERVICE_NAME_LENGTH+1];
-    char svc_alias[XATMI_SERVICE_NAME_LENGTH+1];
+    char svc_aliasof[XATMI_SERVICE_NAME_LENGTH+1];
     svc_entry_t *next, *prev;
 };
 
@@ -147,6 +147,7 @@ struct srv_conf
     int log_work;
     int advertise_all;
     svc_entry_t *svc_list;
+    svc_entry_t *funcsvc_list;  /**< Function mappings to services -S */
     char q_prefix[FILENAME_MAX+1];
     
     int app_argc;/**< Arguments passed after -- */
@@ -247,7 +248,7 @@ extern NDRX_API int process_admin_req(char *buf, long len,
         int *shutdown_req);
 
 /* auto buffer convert: */
-extern NDRX_API long xcvt_lookup(char *fn_nm);
+extern NDRX_API long ndrx_xcvt_lookup(char *fn_nm);
 
 extern NDRX_API int atmisrv_build_advertise_list(void);
 extern NDRX_API int atmisrv_initialise_atmi_library(void);

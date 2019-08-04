@@ -1,7 +1,7 @@
 /**
- * @brief Added for compatiblity
+ * @brief Load the xa switch passed to _tmstartserver
  *
- * @file tmenv.h
+ * @file tms_x.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -30,28 +30,58 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#ifndef TMENV_H
-#define	TMENV_H
+#include <ndrstandard.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <atmi_int.h>
+#include <sys_mqueue.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#define __USE_GNU
+#include <dlfcn.h>
 
-/*---------------------------Includes-----------------------------------*/
+#include "atmi_shm.h"
+
+#include <xa.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define _(X)  X
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-#ifdef	__cplusplus
+/**
+ * API entry of loading the driver
+ * @param symbol
+ * @param descr
+ * @return XA switch or null
+ */
+struct xa_switch_t *ndrx_get_xa_switch(void)
+{
+    /* lookup ndrx_G_tmsvrargs */
+    
+    struct tmsvrargs_t * sargs;
+    
+    if (NULL==(sargs = (struct tmsvrargs_t * )dlsym( RTLD_DEFAULT, "ndrx_G_tmsvrargs" )))
+    {
+        NDRX_LOG(log_error, "ndrx_G_tmsvrargs symbol not found or is NULL, check "
+                "that you use libatmisrvinteg.so and that server is started with _tmstartserver(): %s", 
+                dlerror());
+        return NULL;
+    }
+    
+    if (NULL==sargs->xa_switch)
+    {
+        NDRX_LOG(log_error, "ERROR! For tmsvrargs_t xa_switch is empty, "
+                "passed to _tmstartserver()!");
+        return NULL;
+    }
+    
+    return sargs->xa_switch;
 }
-#endif
-
-#endif	/* TMENV_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
