@@ -59,12 +59,11 @@
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
- * + OID
  * Image of the client information
  */
 typedef struct 
 {
-    char clientid[78+1];      /**< myid                                 */
+    char clientid[128+1];     /**< myid                                 */
     char name[MAXTIDENT+1];   /**< process name                         */
     char lmid[MAXTIDENT+1];   /**< cluster node id                      */
     /** may be: ACT, SUS (not used), DEA - dead */
@@ -141,6 +140,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         EXFAIL_OUT(ret);
     }
      
+    /* seems we need to go over twice, because we might get conversational q first */
     LL_FOREACH(qlist,elt)
     {
         /* parse the queue..., extract clients.. */
@@ -187,8 +187,26 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                         clt.clientid, clt.state);
                 idx++;
             }
+        }        
+    } /* LL_FOREACH(qlist,elt) */
+    
+    /* scan for conv Qs and update the stats... */
+    LL_FOREACH(qlist,elt)
+    {
+        /* parse the queue..., extract clients.. */
+        
+        /* if not print all, then skip this queue */
+        if (0!=strncmp(elt->qname, 
+                G_atmi_env.qprefix_match, G_atmi_env.qprefix_match_len))
+        {
+            continue;
         }
-        else if (NDRX_QTYPE_CONVINIT==typ)
+        /* extract clients... get
+        typ = ndrx_q_type_get(elt->qname);
+        */
+        typ = ndrx_q_type_get(elt->qname);
+        
+        if (NDRX_QTYPE_CONVINIT==typ)
         {
             /* parse: NDRX_CONV_INITATOR_Q_PFX and search for client if so */
             if (EXSUCCEED==ndrx_cvnq_parse_client(elt->qname, &myid))
@@ -217,6 +235,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         } /* NDRX_CLT_QREPLY_PFX==typ */
         
     } /* LL_FOREACH(qlist,elt) */
+        
     
     /* open the SHM & scan for clients -> think about opening at startup?
      * may be we could conserve some resources.

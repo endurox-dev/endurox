@@ -50,6 +50,23 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Have some conversational server
+ * @param p_svc
+ */
+void CONVSV (TPSVCINFO *p_svc)
+{
+    sleep(99);
+}
+
+/**
+ * Generate some failure
+ * @param p_svc
+ */
+void FAILSV (TPSVCINFO *p_svc)
+{
+    tpreturn(TPFAIL, 0, NULL, 0, 0);
+}
+/**
  * Standard service entry
  */
 void TESTSV (TPSVCINFO *p_svc)
@@ -104,6 +121,19 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise TESTSV!");
         EXFAIL_OUT(ret);
     }
+    
+    if (EXSUCCEED!=tpadvertise("CONVSV", CONVSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise CONVSV!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("FAILSV", FAILSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise FAILSV!");
+        EXFAIL_OUT(ret);
+    }
+    
 out:
     return ret;
 }
