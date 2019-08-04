@@ -62,7 +62,7 @@ void CONVSV (TPSVCINFO *p_svc)
  * Generate some failure
  * @param p_svc
  */
-void FAILSV (TPSVCINFO *p_svc)
+void FAILURESV (TPSVCINFO *p_svc)
 {
     tpreturn(TPFAIL, 0, NULL, 0, 0);
 }
@@ -128,7 +128,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=tpadvertise("FAILSV", FAILSV))
+    if (EXSUCCEED!=tpadvertise("FAILSV", FAILURESV))
     {
         NDRX_LOG(log_error, "Failed to initialise FAILSV!");
         EXFAIL_OUT(ret);
