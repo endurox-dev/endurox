@@ -125,7 +125,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     ndrx_sem_t *sem = NULL;
     ndrx_shm_t *shm = NULL;
     ndrx_clt_shm_t *el;
-    
+    long l1, l2;
     int idx=0;
     int i;
     cursnew->map = ndrx_G_client_map;
@@ -298,7 +298,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                 NDRX_STRCPY_SAFE(p_clt->name, el->procname);
                 NDRX_STRCPY_SAFE(p_clt->state, "ACT");
                 
-                EXHASH_ADD_INT(M_prehash, pid, p_clt);
+                EXHASH_ADD_LONG(M_prehash, pid, p_clt);
                 
                 NDRX_LOG(log_debug, "Hashed pid=%d - %s", p_clt->pid, p_clt->clientid)
                 
@@ -316,7 +316,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         /* check the hash, update */
         p_clt = (ndrx_adm_client_t *) (cursnew->list.mem + i*sizeof(ndrx_adm_client_t));
         
-        EXHASH_FIND_INT(M_prehash, &(p_clt->pid), p_clt2);
+        EXHASH_FIND_LONG(M_prehash, &(p_clt->pid), p_clt2);
         
         if (NULL!=p_clt2)
         {
