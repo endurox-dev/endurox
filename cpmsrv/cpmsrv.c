@@ -187,7 +187,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Parse command line  */
     while ((c = getopt(argc, argv, "i:k:")) != -1)
     {
-        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+
+        if (optarg)
+        {
+            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "got %c", c);
+        }
+
         switch(c)
         {
             case 'i': 
