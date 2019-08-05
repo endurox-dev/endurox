@@ -386,7 +386,6 @@ expublic int ndrx_cltshm_setpos(char *key, pid_t pid, short flags, char *procnam
         ret = EXSUCCEED;
     }
     
-    NDRX_LOG(log_error, "YOPT LOOKUP!");
     ndrx_cltshm_get_key(key, oflag, &pos, &have_value);
     
     /* unlock */
