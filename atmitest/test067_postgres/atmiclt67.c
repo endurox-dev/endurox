@@ -501,6 +501,7 @@ int main(int argc, char** argv)
             /* clear the table */
             sql_mktab();
             
+            i=999;
             if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
             {
                 NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
@@ -523,6 +524,7 @@ int main(int argc, char** argv)
             /* clear the table */
             sql_mktab();
             
+            i=777;
             if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0))
             {
                 NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));

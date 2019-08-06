@@ -38,6 +38,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <sys/sem.h>
+#include <signal.h>
 
 #include <atmi.h>
 #include <atmi_shm.h>
@@ -385,7 +386,6 @@ expublic int ndrx_cltshm_setpos(char *key, pid_t pid, short flags, char *procnam
         ret = EXSUCCEED;
     }
     
-    NDRX_LOG(log_error, "YOPT LOOKUP!");
     ndrx_cltshm_get_key(key, oflag, &pos, &have_value);
     
     /* unlock */
