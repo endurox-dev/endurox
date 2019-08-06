@@ -39,6 +39,10 @@
 #include <unistd.h>
 #include <signal.h>
 
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
+
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
@@ -300,7 +304,7 @@ out:
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
-    char c;
+    signed char c;
     
     memset(&ndrx_G_adm_config, 0, sizeof(ndrx_G_adm_config));
     
@@ -309,7 +313,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Parse command line  */
     while ((c = getopt(argc, argv, "n:b:v:s:")) != -1)
     {
-        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        if (optarg)
+        {
+            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "got %c", c);
+        }
+
         switch(c)
         {
             case 'n':
