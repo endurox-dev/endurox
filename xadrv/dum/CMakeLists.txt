@@ -54,6 +54,9 @@ if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(ndrxxadums atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(ndrxxadums atmi ubf nstd)
+elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+    # Fixes on TLS issues: Bug #228 __tls_get_addr:..
+    target_link_libraries(ndrxxadums pthread)
 endif()
 
 

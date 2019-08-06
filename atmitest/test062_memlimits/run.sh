@@ -127,31 +127,38 @@ fi
 echo "*************************************************************************"
 echo "* Test VSZ -> get PID of atmi.sv62"
 echo "*************************************************************************"
-SPID=`xadmin ps -p -a atmi.sv62`
 
-echo "Current memory config: "
-xadmin ps -m -p -a atmi.sv62 2>/dev/null
+UNAME=`uname -s`
 
-echo "Current server PID = $SPID"
-./atmiclt62  srvvsz > ./atmiclt-dom1.log 2>&1
-RET=$?
-if [[ "X$RET" != "X0" ]]; then
-    echo "VSZ Client failed"
-    go_out 2
-fi
+if [ "X$UNAME" == "XAIX" ]; then
+	# the value des not incremenet
+	echo "VSZ tests not available for AIX"
+else
+	SPID=`xadmin ps -p -a atmi.sv62`
 
-echo "Wait for server respawn... wait 10 sec..."
-for((i=1;i<=10;i+=1)); do 
-    xadmin ps -m -p -a atmi.sv62 2>/dev/null
-    sleep 1
-done
+	echo "Current memory config: "
+	xadmin ps -m -p -a atmi.sv62 2>/dev/null
 
-NPID=`xadmin ps -p -a atmi.sv62`
+	echo "Current server PID = $SPID"
+	./atmiclt62  srvvsz > ./atmiclt-dom1.log 2>&1
+	RET=$?
+	if [[ "X$RET" != "X0" ]]; then
+    		echo "VSZ Client failed"
+    		go_out 2
+	fi
 
-if [[ "X$SPID" == "X$NPID" ]]; then
+	echo "Wait for server respawn... wait 10 sec..."
+	for((i=1;i<=10;i+=1)); do 
+            xadmin ps -m -p -a atmi.sv62 2>/dev/null
+	    sleep 1
+	done
 
-    echo "VSZ limit restarts does not work...!"
-    go_out 3
+	NPID=`xadmin ps -p -a atmi.sv62`
+
+	if [[ "X$SPID" == "X$NPID" ]]; then
+    		echo "VSZ limit restarts does not work...!"
+    		go_out 3
+	fi
 fi
 
 echo "*************************************************************************"
@@ -195,6 +202,10 @@ echo "*************************************************************************"
 echo "* Test VSZ -> client run of atmiclt62"
 echo "*************************************************************************"
 
+if [ "X$UNAME" == "XAIX" ]; then
+	echo "VSZ tests not available for AIX"
+else
+
 xadmin sc -t ATMICLT62 -s RSS
 xadmin bc -t ATMICLT62 -s VSZ
 
@@ -225,6 +236,7 @@ fi
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
     RET=-2
+fi
 fi
 
 go_out 0
