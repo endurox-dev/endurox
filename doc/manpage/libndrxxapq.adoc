@@ -112,16 +112,32 @@ application configuration (e.g. app.ini). This gives example of app.ini configur
 Sample configuration *app.ini* for CCTAG *DB1_PQ*:
 
 --------------------------------------------------------------------------------
+
 [@global/DB1_PQ]
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR={ "url":"tcp:postgresql://localhost:5432/testdb", 
+NDRX_XA_OPEN_STR={"url":"tcp:postgresql://localhost:5432/testdb", 
 	"user":"testuser", "password":"testuser1"}
 NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
 NDRX_XA_DRIVERLIB=libndrxxapq.so
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=1
+
 --------------------------------------------------------------------------------
 
+Sample configuration of transaction manager in *ndrxconfig.xml* for CCTAG *DB1_PQ*:
+
+--------------------------------------------------------------------------------
+    <servers>
+        ...
+        <server name="tmsrv">
+            <max>1</max>
+            <srvid>1650</srvid>
+            <cctag>DB1_PQ</cctag>
+            <sysopt>-e /tmp/tmsrv-dom1.log -r -- -t1 -l/tmp</sysopt>
+        </server>
+        ...
+    </servers>
+--------------------------------------------------------------------------------
 
 LIBPQ C EXAMPLE
 ---------------
@@ -130,7 +146,6 @@ This is example of programming database with libpq.
 
 File: test_expq.c
 --------------------------------------------------------------------------------
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,10 +158,142 @@ File: test_expq.c
 
 int main(int argc, char** argv)
 {
-    PGconn * conn = ECPGget_PGconn(NULL);
+    PGconn * conn;
     PGresult *res = NULL;
     ExecStatusType estat;
+    int ret = SUCCEED;
 
+    /* open connection */
+    if (EXSUCCEED!=tpopen())
+    {
+        fprintf(stderr, "Failed to open: %s\n", tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
+    }
+    
+    /* get the connection which was open by tpopen() */
+    conn = ECPGget_PGconn(NULL);
+
+    /* create some table... */
+    
+    res = PQexec(conn, "CREATE TABLE manextest(userid integer UNIQUE NOT NULL);");
+    
+    estat = PQresultStatus(res);
+
+    if (PGRES_COMMAND_OK != estat) 
+    {
+        char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+        char *msg = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+
+        fprintf(stderr, "Failed to create table: state: [%s]: %s\n", state, msg);
+	
+	if (0==strcmp(state, "42P07"))
+	{
+            fprintf(stderr, "Table already exist - ignore error\n");
+	}
+	else
+	{
+            ret = FAIL;
+            goto out;
+	}
+    }
+
+    /* start transaction */
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        fprintf(stderr, "Failed to begin: %s\n", tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
+    }
+    
+    
+    /* insert data */
+
+    PQclear(res);
+
+    res = PQexec(conn, "insert into manextest(userid) values ((select COALESCE(max(userid), 1)+1 from manextest));");
+        
+    estat =PQresultStatus(res);
+
+    if (PGRES_COMMAND_OK != estat) 
+    {
+        char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+        char *msg = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+
+        fprintf(stderr, "Failed to create table: state: [%s]: %s\n", state, msg);
+        ret = FAIL;
+        goto out;
+    }
+
+    if (SUCCEED!=tpcommit(0))
+    {
+        fprintf(stderr, "TESTERROR: Commit OK, must fail!\n");
+        ret = FAIL;
+        goto out;
+    }
+
+out:
+    if (SUCCEED!=ret)
+    {
+        tpabort(0);
+    }
+    tpclose();
+    tpterm();
+
+}
+
+--------------------------------------------------------------------------------
+
+Build the program with:
+
+--------------------------------------------------------------------------------
+
+$ cc test_expq.c -o expqtest -I/usr/include/postgresql -lpq -lecpg -latmi -lnstd -lubf -lrt
+
+--------------------------------------------------------------------------------
+
+Run and test:
+
+--------------------------------------------------------------------------------
+
+$ ./expqtest 
+Failed to create table: state: [42P07]: relation "manextest" already exists
+Table already exist - ignore error
+
+$ psql -U testuser -d testdb -h localhost
+
+testdb=> select * from manextest;
+ userid 
+--------
+      2
+(1 row)
+
+--------------------------------------------------------------------------------
+
+ECPG C EXAMPLE
+--------------
+The same code example above can be written in PosgreSQL embedded C code. Assuming
+that table is already created by previous example.
+
+File: test_exec.pgc
+--------------------------------------------------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ecpglib.h>
+
+#define FAIL -1
+#define SUCCEED 0
+
+int main(int argc, char** argv)
+{
+    int ret = SUCCEED;	
+    EXEC SQL BEGIN DECLARE SECTION;
+    long id;
+    EXEC SQL END DECLARE SECTION;
+
+     
     /* open connection */
     if (EXSUCCEED!=tpopen())
     {
@@ -158,56 +305,83 @@ int main(int argc, char** argv)
     /* start transaction */
     if (EXSUCCEED!=tpbegin(60, 0))
     {
-        NDRX_LOG(log_error, "Failed to begin: %s", tpstrerror(tperrno));
+        fprintf(stderr, "Failed to begin: %s\n", tpstrerror(tperrno));
         ret = FAIL;
         goto out;
     }
     
-    /* create some table... */
-    char *create_cmd = "CREATE TABLE extest(userid integer UNIQUE NOT NULL);"
+    EXEC SQL SELECT COALESCE(MAX(USERID), 1)+1 into :id from manextest;
 
-    res = PQexec(conn, command);
-    
-    estat = PQresultStatus(res);
-
-    if (PGRES_COMMAND_OK != estat) 
+    if ((sqlca.sqlcode < 0) || (sqlca.sqlcode == 100))
     {
-        char *state = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-        char *msg = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
 
-        NDRX_LOG(log_error, "Failed to create table: state: [%s]: %s", state, msg);
+        fprintf(stderr, "failed to get max: error code [%ld] message [%s] rows %ld, warning %c\n", 
+                    sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc, sqlca.sqlerrd[2], sqlca.sqlwarn[0]);
         ret = FAIL;
         goto out;
     }
+    
 
-    /* insert data */
+    EXEC SQL INSERT INTO manextest(USERID) VALUES (:id);
 
-
-    if (EXSUCCEED==tpcommit(0))
+    if ((sqlca.sqlcode < 0) || (sqlca.sqlcode == 100))
     {
-        NDRX_LOG(log_error, "TESTERROR: Commit OK, must fail!");
+
+        fprintf(stderr, "Failed to insert: error code [%ld] message [%s] rows %ld, warning %c\n", 
+                    sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc, sqlca.sqlerrd[2], sqlca.sqlwarn[0]);
+        ret = FAIL;
+        goto out;
+    }
+    
+    if (SUCCEED!=tpcommit(0))
+    {
+        fprintf(stderr, "TESTERROR: Commit OK, must fail!\n");
         ret = FAIL;
         goto out;
     }
 
 out:
+
+    if (SUCCEED!=ret)
+    {
+        tpabort(0);
+    }
+
     tpclose();
     tpterm();
-
 }
+
 --------------------------------------------------------------------------------
 
-Build the program with:
+Build program with:
 
-$ cc 
+--------------------------------------------------------------------------------
 
-ECPG C EXAMPLE
---------------
-...
+$ ecpg test_exec.pgc
+$ cc test_exec.c -o exectest -I/usr/include/postgresql -lecpg -latmi -lnstd -lubf -lrt
+--------------------------------------------------------------------------------
+
+Execute the test:
+
+--------------------------------------------------------------------------------
+$ ./exectest
+Failed to create table: state: [42P07]: relation "manextest" already exists
+Table already exist - ignore error
+
+$ psql -U testuser -d testdb -h localhost
+
+testdb=> select * from manextest;
+ userid 
+--------
+      2
+      3
+(1 row)
+
+
+--------------------------------------------------------------------------------
 
 For more unit tests please see 'atmitest/test067_postgres' unit test folder for
 ECPG, PQ source examples and configuration.
-
 
 BUGS
 ----
