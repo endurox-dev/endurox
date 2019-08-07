@@ -88,7 +88,8 @@ exprivate int main_loop(void *ptr)
     int ret = EXSUCCEED;
     long i;
     UBFH *p_ub = NULL;
-    UBFH *p_ub2 = NULL;
+    UBFH *p_ub2;
+    UBFH *p_free_later;
     long t;
     long tusec;
     
@@ -104,6 +105,8 @@ exprivate int main_loop(void *ptr)
     
     for (i=0; i<M_numcalls; i++)
     {
+        p_ub2 = NULL;
+        p_free_later = NULL;
         NDRX_LOG(log_debug, "into loop %ld", i);
         
         if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, Bsizeof(M_p_ub)+1024+BUFS_EXTRA)))
@@ -129,8 +132,22 @@ exprivate int main_loop(void *ptr)
         
         /* Bug #436 */
         ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&p_ub2, &olen, M_tpcall_flags);
-
-        tpfree((char *)p_ub);
+        
+        if (p_ub==p_ub2)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Buffers not reallocated!");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* check that bufs are still valid */
+        
+        if (!Bisubf(p_ub))
+        {
+            NDRX_LOG(log_error, "TESTERROR: p_ub invalid!");
+            EXFAIL_OUT(ret);
+        }
+        
+        p_free_later = p_ub;
         p_ub = p_ub2;
         
         err = tperrno;
@@ -184,7 +201,7 @@ exprivate int main_loop(void *ptr)
             NDRX_LOG(log_error, "TESTERROR: Service call failed but timestamp present!");
             EXFAIL_OUT(ret);
         }
-            
+        
         NDRX_LOG(log_info, "timestamp from service %ld.%ld local tstamp %ld.%ld",
                 t_svc, tusec_svc, t, tusec);
         
@@ -253,6 +270,10 @@ exprivate int main_loop(void *ptr)
         tpfree((char *)p_ub);
         p_ub = NULL;
         
+        tpfree((char *)p_free_later);
+        p_free_later = NULL;
+        
+        
         usleep(2000); /* sleep 2ms for new timestamp */
     }
     
@@ -261,6 +282,11 @@ out:
     if (NULL!=p_ub)
     {
         tpfree((char *)p_ub);
+    }
+
+    if (NULL!=p_free_later)
+    {
+        tpfree((char *)p_free_later);
     }
 
     if (EXSUCCEED!=ret)
