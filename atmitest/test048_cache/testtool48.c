@@ -88,6 +88,7 @@ exprivate int main_loop(void *ptr)
     int ret = EXSUCCEED;
     long i;
     UBFH *p_ub = NULL;
+    UBFH *p_ub2 = NULL;
     long t;
     long tusec;
     
@@ -126,7 +127,11 @@ exprivate int main_loop(void *ptr)
         
         ndrx_debug_dump_UBF(log_debug, "Sending buffer", p_ub);
         
-        ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&p_ub, &olen, M_tpcall_flags);
+        /* Bug #436 */
+        ret=tpcall(M_svcnm, (char *)p_ub, 0L, (char **)&p_ub2, &olen, M_tpcall_flags);
+
+        tpfree((char *)p_ub);
+        p_ub = p_ub2;
         
         err = tperrno;
                 
