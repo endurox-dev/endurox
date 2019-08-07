@@ -160,7 +160,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
         goto out;
     }
     
-    NDRX_LOG(log_error, "Field (%s) extracted: [%s]", symbol, outbuf);
+    NDRX_LOG(log_debug, "Field (%s) extracted: [%s]", symbol, outbuf);
     
 out:
 
@@ -350,13 +350,20 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
             EXFAIL_OUT(ret);
         }
         
+        /* prepare incoming of output buffer from the input buffer... */
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, idata, 
+                Bused((UBFH *)idata), (char **)odata, olen, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare incoming buffer ibuf");
+            EXFAIL_OUT(ret);
+        }
         /* reallocate place in output buffer */
         
         *olen = Bsizeof(p_ub) + exdata->atmi_buf_len + 1024;
-        if (NULL==(*odata = tprealloc(idata, *olen)))
+        if (NULL==(*odata = tprealloc(*odata, *olen)))
         {
             /* tperror will be set already */
-            
             NDRX_CACHE_ERROR("Failed to realloc input buffer %p to size: %ld: %s", 
                     idata, *olen, tpstrerror(tperrno));
             EXFAIL_OUT(ret);

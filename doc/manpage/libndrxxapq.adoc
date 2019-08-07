@@ -1,4 +1,4 @@
-LIBNDRXXAPQ(5)
+LIBNDRXXAPQ(8)
 ==============
 :doctype: manpage
 
@@ -10,6 +10,9 @@ libndrxxapq - Enduro/X PostgreSQL PQ XA Driver
 
 SYNOPSIS
 --------
+libndrxxapq.so
+libndrxxapq.dylib
+
 --------------------------------------------------------------------------------
 NDRX_XA_RES_ID=1
 NDRX_XA_OPEN_STR={"url":"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}"
