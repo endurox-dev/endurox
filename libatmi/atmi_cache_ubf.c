@@ -846,10 +846,11 @@ expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
  * @param odata
  * @param olen
  * @param flags
+ * @param [in] buf_type buffer type of processing
  * @return 
  */
 expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
-        char **odata, long *olen, long flags)
+        char **odata, long *olen, long flags, typed_buffer_descr_t *buf_type)
 {
     int ret = EXSUCCEED;
     long ibuf_bufsz;
@@ -879,6 +880,7 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
     
     if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
     {    
+#if 0
         /* if we look on replace then we need buffer size to be atleast in size
          * of reject buffer */
         if (ibuf_bufsz<rej_bufsz)
@@ -890,16 +892,26 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
                 EXFAIL_OUT(ret);
             }
         }
+#endif
         
         ndrx_debug_dump_UBF(log_debug, "Error response (replacing rsp with)", 
                 p_rej_ub);
-        
+#if 0  
         if (EXSUCCEED!=Bcpy(p_ub, p_rej_ub))
         {
             NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to preapre response buffer: %s", 
                     __func__, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
+#endif
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_rej_ub, 
+                Bused(p_rej_ub), odata, olen, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+            EXFAIL_OUT(ret);
+        }
+
         
     }
     else if (cache->flags & NDRX_TPCACHE_TPCF_MERGE)
@@ -909,6 +921,16 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
                 p_rej_ub);
         
         /* Ensure that in buffer we have enough space */
+        
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_rej_ub, 
+                Bused(p_rej_ub), odata, olen, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+            EXFAIL_OUT(ret);
+        }
+        
+        p_ub = (UBFH *)odata;
         
         if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, ibuf_bufsz+rej_bufsz+1024)))
         {
