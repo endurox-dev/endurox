@@ -922,24 +922,22 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
         
         /* Ensure that in buffer we have enough space */
         
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_rej_ub, 
-                Bused(p_rej_ub), odata, olen, flags))
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_ub, 
+                Bused(p_ub), odata, olen, flags))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
             EXFAIL_OUT(ret);
         }
         
-        p_ub = (UBFH *)odata;
-        
-        if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, ibuf_bufsz+rej_bufsz+1024)))
+        if (NULL==(*odata = tprealloc(*odata, ibuf_bufsz+rej_bufsz+1024)))
         {
             NDRX_CACHE_TPERROR(TPEINVAL, "Failed to reallocate user buffer: %s",
                         tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
 
-        if (EXSUCCEED!=Bupdate(p_ub, p_rej_ub))
+        if (EXSUCCEED!=Bupdate((UBFH *)*odata, p_rej_ub))
         {
             NDRX_CACHE_TPERROR(TPESYSTEM, 
                             "Failed to update/merge buffer: %s", 
@@ -957,8 +955,6 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
                 cache->flags);
         EXFAIL_OUT(ret);
     }
-    
-    *odata=(char *)p_ub;
     
 out:
 
