@@ -610,7 +610,7 @@ struct ndrx_tpcache_typesupp
     
     /* Reject when max reached in group */
     int (*pf_cache_maxreject)(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
-        char **odata, long *olen, long flags);
+        char **odata, long *olen, long flags, typed_buffer_descr_t *buf_type);
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -703,7 +703,8 @@ extern NDRX_API int ndrx_cache_proc_flags_ubf(ndrx_tpcallcache_t *cache,
         char *errdet, int errdetbufsz);
 
 extern NDRX_API int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, 
-        char *idata, long ilen, char **odata, long *olen, long flags);
+        char *idata, long ilen, char **odata, long *olen, long flags,
+	typed_buffer_descr_t *buf_type);
 
 extern NDRX_API int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         ndrx_tpcache_data_t *exdata,  typed_buffer_descr_t *descr, 
