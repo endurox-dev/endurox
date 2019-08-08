@@ -415,4 +415,24 @@ out:
     return ret;
 }
 
+/**
+ * Get current ATMI library flags.
+ * @return return LIBATMISRV server flags
+ */
+expublic NDRX_API long ndrx_atmisrv_get_flags(void)
+{
+    return G_libatmisrv_flags;
+}
+
+/**
+ * Set LIBATMISRV. This is very internal function. Use only when you know
+ * what are you doing.
+ * @param[in] flags combination of ATMI_SRVLIB_ flags from xatmi.h
+ */
+expublic NDRX_API void ndrx_atmisrv_set_flags(long flags)
+{
+    G_libatmisrv_flags = flags;
+    NDRX_LOG(log_warn, "ATMI Server flags set to: %lx", G_libatmisrv_flags);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
