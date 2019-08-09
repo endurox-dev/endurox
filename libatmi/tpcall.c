@@ -59,6 +59,8 @@
 #include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NOENT_ERR_SHM       1   /**< Service is not available from SHM  */
+#define NOENT_ERR_QUEUE     2   /**< Service is not available from Q    */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -410,6 +412,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     int is_bridge;
     int tpcall_cd;
     int have_shm = EXFALSE;
+    int noenterr = EXFALSE;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -448,12 +451,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
     }
     else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge, &have_shm))
     {
-        NDRX_LOG(log_error, "Service is not available %s by shm", 
-                svc);
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
-                 __func__, svc);
-        goto out;
+        NDRX_LOG(log_info, "Service is not available %s by shm", svc);
+        noenterr = NOENT_ERR_SHM;
+        /* goto out; */
     }
     
     /* In case of non shared memory mode, check that queue file exists! */
@@ -462,11 +462,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
         /* test queue */
         if (!ndrx_q_exists(send_q))
         {
-            NDRX_LOG(log_error, "%s: Queue [%s] does not exists", 
-                    __func__, send_q);
-            ndrx_TPset_error_fmt(TPENOENT, "%s: Queue [%s] does not exists", 
-                    __func__, send_q);
-            EXFAIL_OUT(ret);
+            noenterr = NOENT_ERR_QUEUE;
+            /*EXFAIL_OUT(ret); */
         }
     }
     
@@ -478,7 +475,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
                 p_cachectl->odata, p_cachectl->olen, flags, 
                 &p_cachectl->should_cache, 
                 &p_cachectl->saved_tperrno, 
-                &p_cachectl->saved_tpurcode, EXFALSE)))
+                &p_cachectl->saved_tpurcode, EXFALSE, noenterr)))
         {
             /* failed to get cache data */
             if (EXFAIL==ret)
@@ -499,10 +496,17 @@ expublic int ndrx_tpacall (char *svc, char *data,
         }
     }
     
+    /* generate eror */
+    if (noenterr)
+    {
+	ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
+	    __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Might want to remove in future... but it might be dangerous!*/
-     memset(call, 0, sizeof(tp_command_call_t));
+    memset(call, 0, sizeof(tp_command_call_t));
      
-
     if (NULL!=data)
     {
         if (NULL==(buffer_info = ndrx_find_buffer(data)))

@@ -699,13 +699,12 @@ typedef struct ndrx_qdet ndrx_qdet_t;
  */
 struct ndrx_tpcall_cache_ctl
 {
-    int should_cache;           /**< should we cache response?            */
-    int cached_rsp;             /**< data is in cache, respond with them  */
+    int should_cache;           /**< should we cache response?              */
+    int cached_rsp;             /**< data is in cache, respond with them    */
     int saved_tperrno;
     long saved_tpurcode;
     long *olen;
     char **odata;
-    /**< do not check the service existence flag if have cached value ?   */
 };
 typedef struct ndrx_tpcall_cache_ctl ndrx_tpcall_cache_ctl_t;
 
