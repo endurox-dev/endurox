@@ -353,6 +353,12 @@ CACHE FLAGS
     *tpcall(3)* must be merged with incoming data. If using *UBF* buffer type
     then for merge operation *Bupdate(3)* is used. Where destination buffer
     is buffer passed to *tpcall(3)* and source buffer is one save in cache.
+*nosvcok*::
+    If flag is set and service call is made (*tpcall(3)*) to service which is
+    not currently advertised, but cached data exists in cache, then return
+    result from cache as if the the service was advertised and working ok.
+    For such case if flag is not present, the system will respond with error
+    TPENOENT.
 *next*::
     Flag indicates that next cache (if having multiple for single service) should
     be processed, after this one. Flag is suitable for cases when current cache

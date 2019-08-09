@@ -1165,6 +1165,10 @@ expublic int ndrx_cache_init(int mode)
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_MERGE;
                     }
+                    else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_NOSVCOK))
+                    {
+                        cache->flags|=NDRX_TPCACHE_TPCF_NOSVCOK;
+                    }
                     else if (0==strcmp(p_flags, NDRX_TPCACHE_KWC_SAVEFULL))
                     {
                         cache->flags|=NDRX_TPCACHE_TPCF_SAVEFULL;

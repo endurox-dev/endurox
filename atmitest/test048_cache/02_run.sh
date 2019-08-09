@@ -117,6 +117,15 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
+(time ./testtool48 -sTESTSV02_2 -b '{"T_STRING_FLD":"KEY4","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123,"T_CHAR_FLD":"A"}' \
+    -m '{"T_STRING_FLD":"KEY4","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' \
+    -cY -n100 -fY 2>&1) >> ./02_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (1.2)"
+    go_out 101
+fi
+
 
 echo "Show cache... "
 
@@ -171,7 +180,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # DB1 is empty
-ensure_keys db02_1 0 
+ensure_keys db02_1 1
 ensure_keys db02_2 2
 
 xadmin stop -s atmi.sv48
@@ -187,6 +196,20 @@ if [ $? -ne 0 ]; then
     echo "Failed to validate tpcall error 6"
     go_out 5
 fi
+
+#
+# This still responds with cached data
+#
+(time ./testtool48 -sTESTSV02_2 -b '{"T_STRING_FLD":"KEY4","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123,"T_CHAR_FLD":"A"}' \
+    -m '{"T_STRING_FLD":"KEY4","T_FLOAT_FLD":"1.1","T_SHORT_FLD":123}' \
+    -cY -n100 -fN 2>&1) >> ./02_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "testtool48 failed (5.1)"
+    go_out 101
+
+fi
+
 
 xadmin start -s atmi.sv48
 
