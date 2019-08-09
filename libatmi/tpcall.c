@@ -484,7 +484,13 @@ expublic int ndrx_tpacall (char *svc, char *data,
             }
             else
             {
+
                 /* ignore the error (probably data not found) */
+                if (noenterr)
+                {
+                    p_cachectl->should_cache=EXFALSE;
+                }
+
                 NDRX_LOG(log_debug, "Cache lookup failed ... continue with svc call");
             }
         }
