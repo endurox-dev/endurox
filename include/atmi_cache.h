@@ -58,6 +58,11 @@ extern "C" {
 #define NDRX_TPCACHE_KWC_SAVEREG                "putrex"
 #define NDRX_TPCACHE_KWC_REPL                   "getreplace"
 #define NDRX_TPCACHE_KWC_MERGE                  "getmerge"
+/**
+ * No shm service, ok. I.e. tpcall will return cached data even service is
+ * not available in shared memory.
+ */
+#define NDRX_TPCACHE_KWC_NOSVCOK                "nosvcok"
 #define NDRX_TPCACHE_KWC_SAVEFULL               "putfull"
 #define NDRX_TPCACHE_KWC_SAVESETOF              ""
 #define NDRX_TPCACHE_KWC_NEXT                   "next"
@@ -117,38 +122,39 @@ extern "C" {
 
 /* Database flags: */
     
-#define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /* Cache recoreds expires after add */
-#define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /* limited, last recently used stays*/
-#define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /* limited, more hits, longer stay  */
-#define NDRX_TPCACHE_FLAGS_FIFO      0x00000008   /* First in, first out cache        */
-#define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /* reset cache on boot              */
-#define NDRX_TPCACHE_FLAGS_BCASTPUT  0x00000020   /* Shall we broadcast the events?   */
-#define NDRX_TPCACHE_FLAGS_BCASTDEL  0x00000040   /* Broadcast delete events?         */
-#define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /* Perfrom timsync                  */
-#define NDRX_TPCACHE_FLAGS_SCANDUP   0x00000100   /* Scan for duplicates by tpcached  */
-#define NDRX_TPCACHE_FLAGS_CLRNOSVC  0x00000200   /* Clean unadvertised svc records   */
-#define NDRX_TPCACHE_FLAGS_NOSYNC    0x00000400   /* Do not flush to disk at commit   */
-#define NDRX_TPCACHE_FLAGS_NOMETASYNC 0x00000800  /* Do not flush to disk metadata    */
+#define NDRX_TPCACHE_FLAGS_EXPIRY    0x00000001   /**< Cache recoreds expires after add */
+#define NDRX_TPCACHE_FLAGS_LRU       0x00000002   /**< limited, last recently used stays*/
+#define NDRX_TPCACHE_FLAGS_HITS      0x00000004   /**< limited, more hits, longer stay  */
+#define NDRX_TPCACHE_FLAGS_FIFO      0x00000008   /**< First in, first out cache        */
+#define NDRX_TPCACHE_FLAGS_BOOTRST   0x00000010   /**< reset cache on boot              */
+#define NDRX_TPCACHE_FLAGS_BCASTPUT  0x00000020   /**< Shall we broadcast the events?   */
+#define NDRX_TPCACHE_FLAGS_BCASTDEL  0x00000040   /**< Broadcast delete events?         */
+#define NDRX_TPCACHE_FLAGS_TIMESYNC  0x00000080   /**< Perfrom timsync                  */
+#define NDRX_TPCACHE_FLAGS_SCANDUP   0x00000100   /**< Scan for duplicates by tpcached  */
+#define NDRX_TPCACHE_FLAGS_CLRNOSVC  0x00000200   /**< Clean unadvertised svc records   */
+#define NDRX_TPCACHE_FLAGS_NOSYNC    0x00000400   /**< Do not flush to disk at commit   */
+#define NDRX_TPCACHE_FLAGS_NOMETASYNC 0x00000800  /**< Do not flush to disk metadata    */
     
 /* so in case if this is key item, then add record to keygroup
  * if removing key group, then remove all linked key items.
  */
     
-#define NDRX_TPCACHE_FLAGS_KEYGRP    0x00000800   /* Is this key group?               */
-#define NDRX_TPCACHE_FLAGS_KEYITEMS  0x00001000   /* Is this key item?                */
+#define NDRX_TPCACHE_FLAGS_KEYGRP    0x00000800   /**< Is this key group?               */
+#define NDRX_TPCACHE_FLAGS_KEYITEMS  0x00001000   /**< Is this key item?                */
     
-#define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001   /* Save record can be regexp        */
-#define NDRX_TPCACHE_TPCF_REPL       0x00000002   /* Replace buf                      */
-#define NDRX_TPCACHE_TPCF_MERGE      0x00000004   /* Merge buffers                    */
-#define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008   /* Save full buffer                 */
-#define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010   /* Save set of fields               */
-#define NDRX_TPCACHE_TPCF_INVAL      0x00000020   /* Invalidate other cache           */
-#define NDRX_TPCACHE_TPCF_NEXT       0x00000040   /* Process next rule (only for inval)*/
-#define NDRX_TPCACHE_TPCF_DELREG     0x00000080   /* Delete record can be regexp      */
-#define NDRX_TPCACHE_TPCF_DELFULL    0x00000100   /* Delete full buffer               */
-#define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200   /* Delete set of fields             */
-#define NDRX_TPCACHE_TPCF_KEYITEMS   0x00000400   /* Cache is items for group         */
-#define NDRX_TPCACHE_TPCF_INVLKEYGRP 0x00000800   /* invalidate whole group during op */
+#define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001   /**< Save record can be regexp        */
+#define NDRX_TPCACHE_TPCF_REPL       0x00000002   /**< Replace buf                      */
+#define NDRX_TPCACHE_TPCF_MERGE      0x00000004   /**< Merge buffers                    */
+#define NDRX_TPCACHE_TPCF_SAVEFULL   0x00000008   /**< Save full buffer                 */
+#define NDRX_TPCACHE_TPCF_SAVESETOF  0x00000010   /**< Save set of fields               */
+#define NDRX_TPCACHE_TPCF_INVAL      0x00000020   /**< Invalidate other cache           */
+#define NDRX_TPCACHE_TPCF_NEXT       0x00000040   /**< Process next rule (only for inval)*/
+#define NDRX_TPCACHE_TPCF_DELREG     0x00000080   /**< Delete record can be regexp      */
+#define NDRX_TPCACHE_TPCF_DELFULL    0x00000100   /**< Delete full buffer               */
+#define NDRX_TPCACHE_TPCF_DELSETOF   0x00000200   /**< Delete set of fields             */
+#define NDRX_TPCACHE_TPCF_KEYITEMS   0x00000400   /**< Cache is items for group         */
+#define NDRX_TPCACHE_TPCF_INVLKEYGRP 0x00000800   /**< invalidate whole group during op */
+#define NDRX_TPCACHE_TPCF_NOSVCOK    0x00001000   /**< No service OK, return data       */
 
 #define NDRX_TPCACH_INIT_NORMAL      0   /* Normal init (client & server)    */
 #define NDRX_TPCACH_INIT_BOOT        1   /* Boot mode init (ndrxd startst)   */
@@ -277,6 +283,8 @@ extern "C" {
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_REPL));\
     NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_MERGE,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_MERGE));\
+    NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_NOSVCOK,\
+                    !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_NOSVCOK));\
     NDRX_LOG(LEV, "flags, '%s' = [%d]", NDRX_TPCACHE_KWC_SAVEFULL,\
                     !!(TPCALLCACHE->flags &  NDRX_TPCACHE_TPCF_SAVEFULL));\
     NDRX_LOG(LEV, "flags 'inval' = [%d]", \
@@ -637,7 +645,8 @@ extern NDRX_API int ndrx_cache_save (char *svc, char *idata,
 
 extern NDRX_API int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache,
-        int *saved_tperrno, long *saved_tpurcode, int seterror_not_found);
+        int *saved_tperrno, long *saved_tpurcode, int seterror_not_found,
+        int notenterr);
 extern NDRX_API int ndrx_cache_inval_their(char *svc, ndrx_tpcallcache_t *cache, 
         char *key, char *idata, long ilen);
 

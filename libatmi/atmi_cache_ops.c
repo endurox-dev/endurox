@@ -457,11 +457,13 @@ out:
  * @param flags flags
  * @param should_cache should record be cached?
  * @param seterror_not_found should we generate error if record is not found?
+ * @param[in] noenterr is no entry error currently?
  * @return EXSUCCEED/EXFAIL (syserr)/NDRX_TPCACHE_ENOKEYDATA (cannot build key)
  */
 expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen, 
         char **odata, long *olen, long flags, int *should_cache, 
-        int *saved_tperrno, long *saved_tpurcode, int seterror_not_found)
+        int *saved_tperrno, long *saved_tpurcode, int seterror_not_found,
+        int noenterr)
 {
     int ret = EXSUCCEED;
     ndrx_tpcache_svc_t *svcc = NULL;
@@ -784,6 +786,15 @@ expublic int ndrx_cache_lookup(char *svc, char *idata, long ilen,
 #endif
     
     /* Error shall be set by func */
+    
+    /* check that we are allowed to receive data */
+    if (noenterr && !(cache->flags & NDRX_TPCACHE_TPCF_NOSVCOK))
+    {
+	ndrx_TPset_error_fmt(TPENOENT, "%s: Data found in cache but nosvcok no present", 
+	    __func__, svc);
+        *should_cache = EXFALSE;
+        EXFAIL_OUT(ret);
+    }
     
     if (EXSUCCEED!=ndrx_G_tpcache_types[buffer_info->type_id].pf_cache_get(
             cache, exdata, buf_type, idata, ilen, odata, olen, flags))
