@@ -151,7 +151,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
                         NDRX_LOG(log_info, "OP_NOP");
                         break;
                     case XA_OP_PREPARE:
-                        NDRX_LOG(log_error, "Prepare RMID %d", i+1);
+                        NDRX_LOG(log_info, "Prepare RMID %d", i+1);
                         if (EXSUCCEED!=(op_ret = tm_prepare_combined(p_xai, i+1, el->btid)))
                         {
                             op_reason = atmi_xa_get_reason();
@@ -307,7 +307,7 @@ expublic int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_
             
             if (XA_TX_STAGE_MAX_NEVER==new_txstage)
             {
-                NDRX_LOG(log_error, "Stage not switched - assume MAX COMPLETED!");
+                NDRX_LOG(log_info, "Stage not switched - assume MAX COMPLETED!");
                 new_txstage=descr->txs_max_complete;
                 /*
                 ret=TPESYSTEM;
