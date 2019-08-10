@@ -124,7 +124,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
     {
         name = (char *)exjson_object_get_name(root_object, i);
 
-        NDRX_LOG(log_error, "Name: [%s]", name);
+        NDRX_LOG(log_debug, "Name: [%s]", name);
         fid = Bfldid(name);
 
         if (BBADFLDID==fid)
