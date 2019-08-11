@@ -455,7 +455,7 @@ expublic int sv_serve_call(int *service, int *status)
         else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
                 G_atmisrv_reply_type & RETURN_TYPE_THREAD)
         {
-            NDRX_LOG(log_warn, "tpcontinue() issued from integra (no longjmp)!");
+            NDRX_LOG(log_info, "tpcontinue() issued from integra (no longjmp)!");
         }
         else
         {

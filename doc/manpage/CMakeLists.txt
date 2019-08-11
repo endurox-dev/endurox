@@ -42,7 +42,7 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            tprecover cpmsrv tmqueue cconfsrv tpbrdcstsv uvlog xmemck
            viewc buildclient buildserver exencrypt exdecrypt libcryptohost
            edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv
-           libndrxxapq)
+           libndrxxapq libndrxxawsmqs libndrxxaoras)
 # Joined lists
 #set(PDF_MAN_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv 
 #                ex_env ndrxdebug.conf ndrxconfig.xml ex_envover

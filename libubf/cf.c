@@ -51,7 +51,7 @@
 #define CARR_TEMP_BUF \
         char tmp[CF_TEMP_BUF_MAX+1]; \
         int cpy_len = in_len > CF_TEMP_BUF_MAX?CF_TEMP_BUF_MAX: in_len;\
-        UBF_LOG(log_error, "[%10.10s]", input_buf);\
+        UBF_LOG(log_debug, "[%10.10s]", input_buf);\
         NDRX_STRNCPY(tmp, input_buf, cpy_len); \
         tmp[cpy_len] = EXEOS
 
