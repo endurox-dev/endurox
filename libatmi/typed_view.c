@@ -577,7 +577,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          */
         if (outbufobj->type_id!=BUF_TYPE_VIEW || 0!=strcmp(outbufobj->subtype, subtype) )
         {
-            NDRX_LOG(log_warn, "User buffer %s/%s is different, "
+            NDRX_LOG(log_info, "User buffer %s/%s is different, "
                     "free it up and re-allocate as VIEW/%s", 
                     G_buf_descr[outbufobj->type_id].type,
                     (outbufobj->subtype==NULL?"NULL":outbufobj->subtype),

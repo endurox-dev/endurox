@@ -210,6 +210,16 @@ if [ $? -ne 0 ]; then
 
 fi
 
+#
+# We shall get error 6 for nosvcok, but no data available...
+#
+(time ./testtool48 -sTESTSV02 -b '{"T_STRING_FLD":"KEY5","T_FLOAT_FLD":"1.3","T_CHAR_FLD":"C"}' \
+    -cY -n1 -fY -e6 2>&1) >> ./02_testtool48.log
+
+if [ $? -ne 0 ]; then
+    echo "Failed to validate tpcall error 6 (5.2)"
+    go_out 102
+fi
 
 xadmin start -s atmi.sv48
 
