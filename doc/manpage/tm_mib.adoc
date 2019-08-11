@@ -1,0 +1,84 @@
+TM_MIB(5)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tm_mib - Transaction Manager Management Information Base
+
+
+SYNOPSIS
+--------
+
+Management classes:
+
+- *T_CLIENT* - Client process
+
+- *T_DOMAIN* - Domain
+
+- *T_MACHINE* - Machines in domain
+
+- *T_QUEUE* - IPC Queues
+
+- *T_SERVER* - XATMI server processes
+
+- *T_SERVICE* - XATMI service definitions
+
+- *T_SVCGRP* - XATMI service instances
+
+
+DESCRIPTION
+-----------
+...
+
+ERRORS
+------
+*0*::
+Success
+
+*-1*::
+Failure
+
+
+T_CLIENT CLASS DESCRIPTION
+--------------------------
+...
+
+T_DOMAIN CLASS DESCRIPTION
+--------------------------
+...
+
+T_MACHINE CLASS DESCRIPTION
+---------------------------
+...
+
+T_QUEUE CLASS DESCRIPTION
+-------------------------
+...
+
+T_SERVER CLASS DESCRIPTION
+--------------------------
+...
+
+T_SERVICE CLASS DESCRIPTION
+---------------------------
+...
+
+T_SVCGRP CLASS DESCRIPTION
+--------------------------
+...
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpadmsv(8)* *cpmsrv(8)* *ndrxd(8)* *xadmin(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
