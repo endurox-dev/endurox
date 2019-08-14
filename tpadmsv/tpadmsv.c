@@ -194,7 +194,7 @@ void MIB (TPSVCINFO *p_svc)
     {
         NDRX_LOG(log_error, "Unsupported class [%s]", clazz);
 
-        ndrx_adm_error_set(p_ub, TAESUPPORT, BBADFLDID, 
+        ndrx_adm_error_set(p_ub, TAESUPPORT, TA_CLASS, 
                     "Unsupported class [%s]", clazz);
         EXFAIL_OUT(ret);
     }
@@ -246,6 +246,12 @@ void MIB (TPSVCINFO *p_svc)
         is_get = EXTRUE;
         /* read cursor id */
         curs = ndrx_adm_curs_get(cursid);
+    }
+    else
+    {
+        ndrx_adm_error_set(p_ub, TAESUPPORT, TA_OPERATION, 
+                    "Unsupported operation [%s]", op);
+        EXFAIL_OUT(ret);
     }
     
     if (is_get)
