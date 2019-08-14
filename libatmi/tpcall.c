@@ -599,7 +599,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     }
     else
     {
-        NDRX_LOG(log_warn, "TPNOREPLY => cd=0");
+        NDRX_LOG(log_info, "TPNOREPLY => cd=0");
         tpcall_cd = 0;
     }
     
