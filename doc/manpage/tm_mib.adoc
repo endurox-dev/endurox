@@ -30,7 +30,31 @@ Management classes:
 
 DESCRIPTION
 -----------
-...
+This is management information interface for Enduro/X. Currently only information
+reading is available, setting or changing system characteristics via this interface
+is not possible. Basically TM MIB interface in GET mode is designed, so that
+user application can call in standard way ".TMIB" service with requesting
+the information for particular object. These object types are encoded as classes.
+Thus user requests information about some class, and TMIB service provided
+by *tpadmsv(8)* will respond with objects found in system for particular class.
+
+The information fetching is performed with standard *tpcall(3)* service invocations.
+Request and response is encoded in UBF buffer format. At request certain fields
+are filled (indicating the class and operation), at response the error fields
+are filled, object information, number of objects found and number of objects
+fetched. For each request cursor is open at particular *tpadmsv*, if objects
+fetched are less than found, then cursor_id with GETNEXT operation code shall be
+sent to .TMIB, to receive the next portion of data. When all data is fetched, the
+cursor is deleted in particular process. Cursor is valid for configured period of
+time, which is configured for *tpadmsv*.
+
+[width="15%"]
+|=======
+|1 |2 |A
+|3 |4 |B
+|5 |6 |C
+|=======
+
 
 ERRORS
 ------

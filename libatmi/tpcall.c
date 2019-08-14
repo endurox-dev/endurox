@@ -1085,9 +1085,11 @@ out:
                 G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL, EXFALSE)))
         {
             /* return error if failed to cache? */
-            
-            userlog("Failed to save service [%s] cache results: %s", svc,
-                tpstrerror(tperrno));
+            if (NDRX_TPCACHE_ENOCACHE!=ret2)
+            {
+                userlog("Failed to save service [%s] cache results: %s", svc,
+                    tpstrerror(tperrno));
+            }
         }
     }
 
