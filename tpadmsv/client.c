@@ -292,6 +292,8 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                 
                 /* set start time */
                 p_clt->curtime = (long)el->stattime;
+                p_clt->curconv = EXFAIL;
+                p_clt->contextid = EXFAIL;
                 snprintf(p_clt->lmid, sizeof(clt.lmid), "%ld", tpgetnodeid());
                 
                 /* set binary name */

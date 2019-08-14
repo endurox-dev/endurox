@@ -152,7 +152,7 @@ echo "*** T_CLIENT ***"
 xadmin mibget -c T_CLIENT
 xadmin mibget -c T_CLIENT -m
 
-HAVE_BIN3_3=`xadmin mibget -c T_CLIENT -m | egrep '2\|2/BINARY3/3\|./test.sh\|ACT\|[1-9][0-9]*\|0\|0\|[1-9][0-9]*\|'`
+HAVE_BIN3_3=`xadmin mibget -c T_CLIENT -m | egrep '2\|2/BINARY3/3\|./test.sh\|ACT\|[1-9][0-9]*\|-1\|-1\|[1-9][0-9]*\|'`
 if [ "X$HAVE_BIN3_3" == "X" ]; then
     echo "2/BINARY3/3 not found!"
     go_out -10
