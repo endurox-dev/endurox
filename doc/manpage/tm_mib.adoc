@@ -46,53 +46,227 @@ fetched. For each request cursor is open at particular *tpadmsv*, if objects
 fetched are less than found, then cursor_id with GETNEXT operation code shall be
 sent to .TMIB, to receive the next portion of data. When all data is fetched, the
 cursor is deleted in particular process. Cursor is valid for configured period of
-time, which is configured for *tpadmsv*.
-
-[width="15%"]
-|=======
-|1 |2 |A
-|3 |4 |B
-|5 |6 |C
-|=======
+time, which is configured for *tpadmsv*. The page size also is configured in *tpadmsv*
+server configuration parameters.
 
 
-ERRORS
-------
-*0*::
-Success
+REQUEST BUFFERS
+---------------
 
-*-1*::
-Failure
+To initiate request/open cursor for fetching particular class of information,
+following UBF fields shall be filled (defined in tpadm.h/Excompat.h):
+
+- *TA_OPERATION*: Currently supported modes are only *GET* and *GETNEXT*.
+
+- *TA_CLASS*: Shall be set to one of the supported class which is "T_CLIENT",
+"T_DOMAIN", "T_MACHINE", "T_QUEUE", "T_SERVER", "T_SERVICE" or "T_SVCGRP".
+
+- *TA_CURSOR*: In case of *GETNEXT* field must be present in order to fetch next
+page of the information. The *TA_CURSOR* value must be set from *GET* response
+same field *TA_CURSOR*.
+
+The filled UBF buffer must be sent to *.TMIB* service.
 
 
-T_CLIENT CLASS DESCRIPTION
---------------------------
+RESPONSE STATUS
+---------------
+General status information is encoded in following fields UBF fields:
+
+- *TA_ERROR*: Error code, or *0* for success. See section bellow for detailed
+error codes.
+
+- *TA_STATUS*: Status message, *OK* in case of success.
+
+- *TA_BADFLD*: Complementary problematic fields ID, in case if error associated
+with request data.
+
+If requests succeeds, then data paging information is encoded in following fields:
+
+- *TA_OCCURS*: Number of objects loaded in response.
+
+- *TA_MORE*: Number of objects left for fetching in other pages. I.e. if having
+greater than *0*, then *TA_CURSOR* shall be copied to UBF buffer requesting
+ *GETNEXT* command which is sent to same *.TMIB* service.
+
+
+TA_ERROR error codes
+--------------------
+List of error codes which .TMIB interface returns is:
+
+- *-3* (*TAEINVAL*): Invalid fields passed to service. For example invalid
+cursor format. Problematic field ID is returned in *TA_BADFLD* field.
+
+- *-9* (*TAEREQUIRED*): Field is required in request, but not present in UBF
+buffer. The field ID is returned in *TA_BADFLD*.
+
+- *-10* (*TAESUPPORT*): Operation or class is not supported. Field which encoded
+the identifier is set in *TA_BADFLD*.
+
+- *-11* (*TAESYSTEM*): System failure occurred during collection of information
+or setting the fields (memory error). See Enduro/X logs for more details.
+
+- *-13* (*TAELIMIT*): Number of open cursors limit reached. Limits is configured
+in *tpadmsv(8)* configuration. Basically this means that some problem exists i.e.
+requesters have made several requests for information in short period of time
+ with out fetching cursors till the end.
+
+
+T_CLIENT CLASS
+--------------
+This class returns information about client processes found in the system. Client
+processes are gathered from system in two different ways:
+
+1. XATMI client information is read and decoded from open XATMI queue names.
+
+2. Client information (including XATMI and non XATMI/generic process) is provided
+by *cpmsrv(8)* shared memory block.
+
+In case if process is started by *cpmsrv* client process monitor and it operates
+as XATMI client, the information is merged, so that identifier of process is
+copied from shared memroy (tag/subsection) rather than queue id.
+
+Object fields returned for *T_CLIENT* class are following:
+
+- Field *TA_LMID* (string..30): Cluster node ID on which client process runs. Format
+is number 0..255.
+
+- Field *TA_CLIENTID* (string..128): Client process ID. *This is object key* 
+Identifier consists of XATMI client queue, or if process is standard from Client
+t Process Monitor (cpmsrv), then client identifier is built as 
+"<Cluster Node Id>/<CPM Tag>/<CPM Sub Section>". The benefit of CPM tag id is that
+this can be used for monitoring as there are no dynamic data in the identifier. In
+opposite of queue identifier, which contains the process PID. 
+For example "/dom2,clt,reply,atmiclt68,28765,1".
+
+- Field *TA_CLTNAME* (string..30): Client process name. This is name of executable,
+if process name is longer than 30 chars, then it is cut to 30 chars from the left.
+
+- Field *TA_STATE* (string..15): Client process state. *ACT* - active, *DEA* -
+process dead.
+
+- Field *TA_PID* (long): Client process PID.
+
+,{TA_PID,           TPADM_EL(ndrx_adm_client_t, pid)}
+,{TA_CURCONV,       TPADM_EL(ndrx_adm_client_t, curconv)} ??? What about CPM? maybe -1
+,{TA_CONTEXTID,     TPADM_EL(ndrx_adm_client_t, contextid)} /* key */ if CPM only -1
+,{TA_CURTIME,       TPADM_EL(ndrx_adm_client_t, curtime)}
+
+
+
+T_DOMAIN CLASS
+--------------
 ...
 
-T_DOMAIN CLASS DESCRIPTION
---------------------------
+T_MACHINE CLASS
+---------------
 ...
 
-T_MACHINE CLASS DESCRIPTION
----------------------------
+T_QUEUE CLASS
+-------------
 ...
 
-T_QUEUE CLASS DESCRIPTION
--------------------------
+T_SERVER CLASS
+--------------
 ...
 
-T_SERVER CLASS DESCRIPTION
---------------------------
+T_SERVICE CLASS
+---------------
 ...
 
-T_SERVICE CLASS DESCRIPTION
----------------------------
+T_SVCGRP CLASS
+--------------
 ...
 
-T_SVCGRP CLASS DESCRIPTION
---------------------------
-...
+EXAMPLE SESSION OF INFORMATION FETCHING
+---------------------------------------
 
+The example test is performed with "ud" utility.
+
+*Request (initial)*:
+--------------------------------------------------------------------------------
+
+$ ud < test.ud 
+SENT pkt(1) is :
+TA_CLASS	T_SERVICE
+TA_OPERATION	GET
+
+--------------------------------------------------------------------------------
+
+*Response*:
+--------------------------------------------------------------------------------
+
+RTN pkt(1) is :
+TA_ERROR	0
+TA_MORE	8
+TA_OCCURS	10
+TA_CLASS	T_SERVICE
+TA_CURSOR	.TMIB-1-2660_SC000000001
+TA_OPERATION	GET
+TA_SERVICENAME	RETSOMEDATA
+TA_SERVICENAME	UNIX2
+TA_SERVICENAME	UNIXINFO
+TA_SERVICENAME	.TMIB-1-2660
+TA_SERVICENAME	@CPMSVC
+TA_SERVICENAME	@TM-1-1-810
+TA_SERVICENAME	@TPRECOVER
+TA_SERVICENAME	@TM-1-1-1650
+TA_SERVICENAME	ECHO
+TA_SERVICENAME	.TMIB
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATUS	OK
+
+--------------------------------------------------------------------------------
+
+*Request next (initial)*:
+--------------------------------------------------------------------------------
+
+$ ud < test.ud 
+SENT pkt(1) is :
+TA_CLASS	T_SERVICE
+TA_CURSOR	.TMIB-1-2660_SC000000001
+TA_OPERATION	GETNEXT
+
+--------------------------------------------------------------------------------
+
+*Response next (and complete)*:
+
+--------------------------------------------------------------------------------
+
+RTN pkt(1) is :
+TA_ERROR	0
+TA_MORE	0
+TA_OCCURS	8
+TA_CLASS	T_SERVICE
+TA_CURSOR	.TMIB-1-2660_SC000000001
+TA_OPERATION	GETNEXT
+TA_SERVICENAME	TIMEOUTSV
+TA_SERVICENAME	@TM-1-1
+TA_SERVICENAME	TESTSV
+TA_SERVICENAME	SLEEP20
+TA_SERVICENAME	@TM-1
+TA_SERVICENAME	@TPBRIDGE002
+TA_SERVICENAME	NULLSV
+TA_SERVICENAME	SOFTTOUT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATE	ACT
+TA_STATUS	OK
+
+--------------------------------------------------------------------------------
 
 BUGS
 ----
