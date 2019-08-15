@@ -198,15 +198,14 @@ DATABASE FLAGS
     invalidate. The F is flags, in case if is 'G', then whole group is deleted if
     record is part of the keygroup, otherwise 'F' flag (full) is sent.
 *timesync*::
-    Full path to file containing environment variable overrides.
-    see 'ex_envover(5)' for more details. This can be overridden
-    by per server basis by ENV_OVERRIDE_SRV. 
-    Both are optional settings.
+    In case if of network update received (add to cache) message, the message
+    will be added to cache with out replacing the existing record. The caller
+    will receive the latest record by time stamp.
 *scandup*::
-    Full path to file containing environment variable overrides.
-    see 'ex_envover(5)' for more details. This can be overridden
-    by per server basis by ENV_OVERRIDE_SRV. 
-    Both are optional settings.
+    In case of *timesync* mode, the database may accumulate duplicate records,
+    thus if this flag is set, the *tpcached* daemon will scan the cache records
+    and erase the older records. Note that duplicates also are removed during
+    real time data lookup.
 *clrnosvc*::
     Clear cache when service for which data is cached, is not advertised anymore
     by any XATMI server. The cleanup is performed by *tpcached*.
