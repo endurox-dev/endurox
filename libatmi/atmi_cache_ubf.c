@@ -184,6 +184,7 @@ expublic int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache,
     if (EXSUCCEED!=(ret=ndrx_str_subs_context(okey, okey_bufsz, '(', ')',
         (void *)idata, errdet, &errdetbufsz, NULL, get_key_data)))
     {
+        NDRX_STRNCPY_SAFE(errdet, "substitute failure (data extract)", errdetbufsz);
         EXFAIL_OUT(ret);
     }
     
