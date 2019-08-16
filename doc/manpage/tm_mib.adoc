@@ -136,7 +136,9 @@ t Process Monitor (cpmsrv), then client identifier is built as
 "<Cluster Node Id>/<CPM Tag>/<CPM Sub Section>". The benefit of CPM tag id is that
 this can be used for monitoring as there are no dynamic data in the identifier. In
 opposite of queue identifier, which contains the process PID. 
-For example "/dom2,clt,reply,atmiclt68,28765,1".
+For example "/dom2,clt,reply,atmiclt68,28765,3". In case if for CPM process XATMI
+queue exists, then ATMI context ID is extracted from queue and added to via slash
+context number to the id string, thus "<Cluster Node Id>/<CPM Tag>/<CPM Sub Section>/<Context ID>".
 
 - Field *TA_CLTNAME* (string..30): Client process name. This is name of executable,
 if process name is longer than 30 chars, then it is cut to 30 chars from the left.
