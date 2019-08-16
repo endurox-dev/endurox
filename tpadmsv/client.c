@@ -1,5 +1,7 @@
 /**
  * @brief This is client image grabber & mapping
+ *  TODO: XATMI client contexts start from 1. Thus avoid the 0 contexts
+ *   as we are setting them to -1. Thus the -1 we will allow to update to 1.
  *
  * @file client.c
  */
