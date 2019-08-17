@@ -161,7 +161,8 @@ if [ "X$HAVE_BIN3_3" == "X" ]; then
     go_out -10
 fi
 
-ATMICLT68=`xadmin mibget -c T_CLIENT -m | egrep '2\|\/dom2,clt,reply,atmiclt68,[^\|]*\|atmiclt68\|ACT\|[1-9][0-9]*\|1\|1\|0\|'`
+# processes run in context no 2.
+ATMICLT68=`xadmin mibget -c T_CLIENT -m | egrep '2\|\/dom2,clt,reply,atmiclt68,[^\|]*\|atmiclt68\|ACT\|[1-9][0-9]*\|1\|2\|0\|'`
 if [ "X$ATMICLT68" == "X" ]; then
     echo "ATMICLT68 not found!"
     go_out -11
