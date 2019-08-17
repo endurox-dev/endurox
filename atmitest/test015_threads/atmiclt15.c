@@ -83,7 +83,7 @@ void do_thread_work ( void *ptr )
     char test_buf_carray[68192];
     char test_buf_small[1024];
     ndrx_stopwatch_t timer;
-    int call_num = MAX_ASYNC_CALLS *2;
+    int call_num = MAX_ASYNC_CALLS *8;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);

@@ -125,20 +125,23 @@ echo "Running off client"
 
 set_dom2;
 
-# Run some calls
+
+echo "Run some calls"
 (./atmiclt68 call 2>&1) > ./atmiclt-dom2-call.log
 
-# Make some failure
+echo "Make some failure"
 (./atmiclt68 fail 2>&1) >> ./atmiclt-dom2-fail.log
 
-# open the conn
+echo "open the conn"
 (./atmiclt68 conv 2>&1) >> ./atmiclt-dom2-conv.log &
 
-# open the conn / wait in Q
-(./atmiclt68 conv 2>&1) >> ./atmiclt-dom2-conv.log &
+echo "start CONV/1 Q (wait for server)"
+xadmin bc CONV/1
+# start this from cpm..
+#(./atmiclt68 conv 2>&1) >> ./atmiclt-dom2-conv.log &
 
 
-# stop some client
+echo "stop some client"
 
 xadmin sc BINARY2/2
 

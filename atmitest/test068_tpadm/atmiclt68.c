@@ -71,6 +71,8 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    tpinit(NULL);
+    
     if (0==strcmp(argv[1], "call"))
     {
         if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
@@ -101,6 +103,14 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "conv"))
     {
+        
+        /* lets create new context !!!! to see the cpm output ...  */
+        
+        tpnewctxt(EXTRUE, EXTRUE);
+        
+        /* run some init to open the queues! */
+        tpinit(NULL);
+        
         if (EXFAIL == (cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
         {
             NDRX_LOG(log_error, "FAILSV failed: %s", tpstrerror(tperrno));

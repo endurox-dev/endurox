@@ -110,6 +110,10 @@
             <exec tag="BINARY3" subsect="3" autostart="Y" />
         </client>
         
+        <client cmdline="./atmiclt68 conv">
+            <exec tag="CONV" subsect="1" autostart="N" />
+        </client>
+        
     </clients>
     
     
