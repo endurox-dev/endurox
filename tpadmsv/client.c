@@ -331,7 +331,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
             
             /* update startup time */
             p_clt->curtime = p_clt2->curtime;
-            p_clt->cursor_loaded = EXTRUE;
+            p_clt2->cursor_loaded = EXTRUE;
         }
     }
     
