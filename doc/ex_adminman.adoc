@@ -962,6 +962,51 @@ needs to be updated, thus lock is needed, and this means that all callers will
 have to sync in that place - thus makes point of bottleneck.
 
 
+== Enduro/X Monitoring with NetXMS
+
+NetXMS monitoring tool has the agent plugin for Enduro/X. This section will
+describe the basic elements how to monitor Enduro/X with help of this tool
+
+Enduro/X exposes following list of the tables which can monitor:
+
+- *Tuxedo.Clients* - information about client processes.
+
+- *Tuxedo.Machines* - information about cluster machines.
+
+- *Tuxedo.Queues* - information about local queues.
+
+- *Tuxedo.ServerInstances* - information about XATMI server processes.
+
+- *Tuxedo.ServiceGroups* - dynamic information about XATMI services.
+
+- *Tuxedo.Services* - static information about XATMI services.
+
+To start the Enduro/X monitoring with the NetXMS, firstly the agent must be compiled
+with Enduro/X support. Thus the system has to have compiler installed and access
+to Internet must be (for fetching the sources from the github).
+
+=== Building the Agent
+..
+
+=== Checking the available parameters from server
+
+To check the list parameters that can be monitored, use following command:
+
+--------------------------------------------------------------------------------
+
+$ nxget -l 192.168.0.62  Agent.SupportedParameters 
+
+--------------------------------------------------------------------------------
+
+
+To return the values from particular table, use following command:
+
+--------------------------------------------------------------------------------
+
+$ nxget -T 192.168.0.62 Tuxedo.ServiceGroups
+
+--------------------------------------------------------------------------------
+
 :numbered!:
 
 [bibliography]
