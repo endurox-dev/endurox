@@ -84,10 +84,10 @@ typedef struct
 expublic ndrx_adm_elmap_t ndrx_G_svcgrp_map[] =
 {  
     /* Driving of the Preparing: */
-    {TA_SERVICENAME,            TPADM_EL(ndrx_adm_svcgrp_t, servicename)}
+     {TA_LMID,                  TPADM_EL(ndrx_adm_svcgrp_t, lmid)}
+    ,{TA_SERVICENAME,            TPADM_EL(ndrx_adm_svcgrp_t, servicename)}
     ,{TA_SRVGRP,                TPADM_EL(ndrx_adm_svcgrp_t, srvgrp)}
     ,{TA_STATE,                 TPADM_EL(ndrx_adm_svcgrp_t, state)}
-    ,{TA_LMID,                  TPADM_EL(ndrx_adm_svcgrp_t, lmid)}
     ,{TA_SRVID,                 TPADM_EL(ndrx_adm_svcgrp_t, srvid)}
     ,{TA_SVCRNAM,               TPADM_EL(ndrx_adm_svcgrp_t, svcrname)}
     ,{TA_NCOMPLETED,            TPADM_EL(ndrx_adm_svcgrp_t, ncompleted)}

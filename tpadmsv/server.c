@@ -65,7 +65,7 @@ typedef struct
 {
     char lmid[MAXTIDENT+1];     /**< Machine / cluster node id              */
     long srvid;                 /**< Server ID                              */
-    char rqaddr[MAXTIDENT+1];   /**< Request address if any, used by SysV   */
+    char rqaddr[128+1];   /**< Request address if any, used by SysV   */
     char state[3+1];            /**< Server state                           */
     long timerestart;           /**< Santiy cycles from last start          */ 
     long pid;                   /**< Server process PID                     */
