@@ -64,7 +64,7 @@
  */
 typedef struct 
 {
-    char service[127+1];    /**< Service name                           */
+    char service[MAXTIDENT+1];    /**< Service name                     */
     char state[3+1];        /**< Service state ACT only                 */
 } ndrx_adm_service_t;
 
