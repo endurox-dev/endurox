@@ -2,7 +2,6 @@ TM_MIB(5)
 =========
 :doctype: manpage
 
-
 NAME
 ----
 tm_mib - Transaction Manager Management Information Base
@@ -202,19 +201,115 @@ connection is not established yet.
 
 T_QUEUE CLASS
 -------------
-...
+These objects describe the IPC queues open in the system. Note as Enduro/X is
+capable of working with different kind of queues, either Posix on System V, the
+output might be different. But basically all queues within Enduro/X are represented
+as strings. For System V queues queue id is returned too.
+
+Object fields returned for *T_QUEUE* class are following:
+
+- Field *TA_LMID* (string..30): Cluster node ID.
+
+- Field *TA_RQADDR* (string..128): Queue name. For Posix Queues, this is queue
+name. For other approaches, this is Enduro/X representation of the queue.
+*This is key of object*.
+
+- Field *TA_STATE* (string..3): Queue state. *ACT* - active.
+
+- Field *TA_NQUEUED* (long): Number of messages currently enqueued.
+
+- Field *TA_RQID* (long): System V msqid, as from ipcs -q output.
+
 
 T_SERVER CLASS
 --------------
-...
+This class describes XATMI servers currently defined on current cluster node.
+
+Object fields returned for *T_SERVER* class are following:
+
+- Field *TA_LMID* (string..30): Cluster node ID.
+
+- Field *TA_SRVID* (long): Server instance id, as defined in <srvid> tag in
+ndrxconfig.xml(5) with min/max settings applied. *This is the key of object*.
+
+- Field *TA_RQADDR* (string..128): Request address queue. Used only in System V
+mode.
+
+- Field *TA_STATE* (string..3): *ACT* - Server process is working. *RES* - 
+Server process is starting. *CLE* - Server process is stopping. *DEA* - Server
+process is dead / stopped.
+
+- Field *TA_TIMERESTART* (long): *ndrxd(8)* sanity cycles from last state change.
+Thus if server *DEA*, it will be sanity cycles since *CLE* state change.
+
+- Field *TA_PID* (long): This is Unix process PID. If process is dead, then
+pid number is left from last session it was running.
+
+- Field *TA_SERVERNAME* (string..78): This is server name as defined in
+"<server>" tag in *ndrxconfig.xml(5)*.
+
+- Field *TA_CLOPT* (string..256): This is actual binary name which is booted
+for the server process. The binary name either matches the *TA_SERVERNAME* or
+is extracted from "<cmdline>" tag.
+
+- Field *TA_GENERATION* (long): This is number of consecutive restarts performed
+of the process. I.e. if processes is in dead stat, then number of attempts was
+made to boot it up till the current moment.
+
 
 T_SERVICE CLASS
 ---------------
-...
+This class describes the services defined and available in the system, 
+with out dynamic information.
+
+Object fields returned for *T_SERVICE* class are following:
+
+- Field *TA_SERVICENAME* (string..30): Service name as defined in shared memory.
+*This is object key*.
+
+- Filed *TA_STATE* (string..3): *ACT* - service is available, *INA* - service
+is not available (was advertised, but currently any server is shutdown).
+
 
 T_SVCGRP CLASS
 --------------
-...
+This class describes dynamic information currently available about the services
+in the cluster system. Information is retrieved as request from *ndrxd(8)* process
+about it's visibility and knowledge of the current system setup.
+
+
+Object fields returned for *T_SVCGRP* class are following:
+
+- Field *TA_LMID* (string..30): Cluster node ID.
+
+- Field *TA_SERVICENAME* (string..30): Service name as defined in shared memory.
+
+- Field *TA_SRVGRP* (string..30): *This is key of the object*. Format 
+*<Cluster node id>/Server id* which provides the service.
+
+- Field *TA_STATE* (string..3): *ACT* - service is available.
+
+- Field *TA_SRVID* (long): Server ID which provides the service.
+
+- Field *TA_SVCRNAM* (string..30): Service routine name (function) associated
+with service.
+
+- Field *TA_NCOMPLETED* (long): Number of requests completed. Includes succeed
+and fail.
+
+- Field *TA_TOTSUCCNUM* (long): Total number of succeed requests processed.
+
+- Field *TA_TOTSFAILNUM* (long): Total number of failed requests processed.
+
+- Field *TA_LASTEXECTIMEUSEC* (long): Number of microseconds spent for last
+service call.
+
+- Field *TA_MAXEXECTIMEUSEC* (long): Max microseconds spent for particular 
+service instance call.
+
+- Field *TA_MINEXECTIMEUSEC* (long): Minimum microseconds spent for particular 
+service instance call.
+
 
 EXAMPLE SESSION OF INFORMATION FETCHING
 ---------------------------------------
