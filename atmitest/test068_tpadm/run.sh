@@ -285,21 +285,21 @@ echo "*** T_SVCGRP ***"
 xadmin mibget -c T_SVCGRP
 xadmin mibget -c T_SVCGRP -m
 
-TESTSVCG=`xadmin mibget -c T_SVCGRP -m | egrep 'TESTSV\|2/10\|ACT\|2\|10\|TESTSV\|100\|100\|0\|[0-9]+\|[0-9]+\|[0-9]+\|'`
+TESTSVCG=`xadmin mibget -c T_SVCGRP -m | egrep '2\|TESTSV\|2/10\|ACT\|10\|TESTSV\|100\|100\|0\|[0-9]+\|[0-9]+\|[0-9]+\|'`
 
 if [ "X$TESTSVCG" == "X" ]; then
     echo "TESTSVCG not found!"
     go_out -24
 fi
 
-FAILSVG=`xadmin mibget -c T_SVCGRP -m | egrep 'FAILSV\|2/10\|ACT\|2\|10\|FAILURESV\|1\|0\|1\|[0-9]+\|[0-9]+\|[0-9]+\|'`
+FAILSVG=`xadmin mibget -c T_SVCGRP -m | egrep '2\|FAILSV\|2/10\|ACT\|10\|FAILURESV\|1\|0\|1\|[0-9]+\|[0-9]+\|[0-9]+\|'`
 
 if [ "X$FAILSVG" == "X" ]; then
     echo "FAILSVG not found!"
     go_out -25
 fi
 
-TESTSVC1G=`xadmin mibget -c T_SVCGRP -m | egrep 'TESTSV\|1/101\|ACT\|1\|101\|N/A\|-1\|-1\|-1\|-1\|-1\|-1\|'`
+TESTSVC1G=`xadmin mibget -c T_SVCGRP -m | egrep '1\|TESTSV\|1/101\|ACT\|101\|N/A\|-1\|-1\|-1\|-1\|-1\|-1\|'`
 
 if [ "X$TESTSVC1G" == "X" ]; then
     echo "TESTSVC1G not found!"
