@@ -1,0 +1,87 @@
+TPADMSV(8)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tpadmsv - Enduro/X administrative server.
+
+
+SYNOPSIS
+--------
+*tpadmsv* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+This is XATMI server which provides *tm_mib(5)* interface backend. On request,
+server process collects various system information, prepares the cursor (stored
+in memory) and provides the response back to caller. Currently only *GET* and
+*GETNEXT* operations are supported. The server process is optional for Enduro/X
+and is used only to provide a solid framework for gathering system information.
+*tpadmsv* collects information from following system parts:
+
+- *ndrxd(5)* requests the information about processes (such as xadmin ppm), services
+(such as xadmin psc).
+
+- *open queues* - reads the list of IPC queues to extract the service information.
+
+- *shared memory* - to extract the information about services, client processes
+(such as *cpmsrv(5)*)
+
+Every instance of *tmadmsv* will advertise following list of services:
+
+1. .TMIB - command load balanced service for informational services
+
+2. .TMIB-<NODE ID>-<SERVER ID> - particular instance for fetching the next window
+of cursor data.
+
+Each cursor returned from the *tmadmsv* encodes the the exact instance service
+number i.e. service 2. Thus when fetching the next portion of data, normally
+*.TMIB* service is called. If instance receive the cursor from other instance,
+the message is forwarded to exact service name.
+
+
+OPTIONS
+-------
+[*-n* 'MAX_CURSORS']::
+This is max number of cursors allowed for process to create. If number of open
+cursors is greater than this number, the *TAELIMIT* error is returned. The default
+value is *100*.
+
+[*-b* 'REPLY_BUFFER_SIZE']::
+This is buffer size in bytes in which reply data window is loaded. When data is 
+being loaded into reply buffer, cursor fetching algorithm ensures that before
+loading object into buffer, the buffer free size is object size multiplied 
+by 2 plus 1152 bytes. Default value is *4096* bytes.
+
+[*-v* 'CURSOR_VALIDITY']::
+Number of seconds to keep un-fetched cursors in memory. After this time the
+cursor is zapped. Un-fetched cursors usually appears due to user program error
+where fetch is not done till the end. The default value is *30* seconds.
+
+[*-s* 'SCAN_TIME']::
+Un-fetched cursor sanity scan time. Interval into which tests are made for
+the cursors. The default value is *15* seconds.
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ndrxconfig.xml(5)* *tm_mib(5)* *xadmin(8)* *cpmsrv(8)* *ndrxd(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
