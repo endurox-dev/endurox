@@ -49,12 +49,14 @@ for completion (commit) of the message. So that 'tmqueue' can unlock the message
 Every instance of 'tmqueue' will advertise following list of services:
 
 1. @TMQ-<Cluster Node ID>-<Server ID>
+
 2. @QSP<Queue space>
 
 For example for Queue Space 'MYSPACE', Cluster Node ID '6', Enduro/X Server ID '100'
 services will look like:
 
 1.  @TMQ-6-100
+
 2.  @QSPMYSPACE
 
 The automatic forwarder pool, ever configured time, will scan the automatic queues for non-locked messages.
