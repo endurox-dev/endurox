@@ -93,9 +93,10 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     {
         {'c', BFLD_STRING, clazz, sizeof(clazz), 
                                 NCLOPT_MAND|NCLOPT_HAVE_VALUE, "Class name"},
-                                
+        /* - currently not supported
         {'l', BFLD_STRING, lmid, sizeof(lmid), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Machine ID (nodeid)"},
+         */
         {'m', BFLD_SHORT, (void *)&machine_fmt, 0, 
                                 NCLOPT_OPT | NCLOPT_TRUEBOOL, "Machine output"},
         {0}

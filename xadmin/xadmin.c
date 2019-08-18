@@ -445,7 +445,7 @@ cmd_mapping_t M_command_map[] =
                 , NULL},
     {"mibget",     cmd_mibget,EXFAIL,                1,  3,  1, 
                 "Dump message in cache\n"
-                "\t args: mibget -c <T_CLASS> [-l <node_id>] [-m]\n"
+                "\t args: mibget -c <T_CLASS> [-m]\n"
                 "\t\t -m\tMachine output\n"
                 "\t\t -c\tT_CLIENT|T_DOMAIN|T_MACHINE|T_QUEUE|T_SERVER|T_SERVICE|T_SVCGRP"
                 , NULL}
