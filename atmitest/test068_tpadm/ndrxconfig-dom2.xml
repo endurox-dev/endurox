@@ -83,7 +83,7 @@
             <max>1</max>
             <srvid>201</srvid>
             <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n3 -r -i 0.0.0.0 -p 11003 -tA -z30 -P0</appopt>
+            <appopt>-f -n3 -r -i 0.0.0.0 -p 11003 -tP -z30 -P0</appopt>
         </server>
         
         <server name="tpadmsv">
