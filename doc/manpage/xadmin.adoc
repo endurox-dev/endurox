@@ -334,6 +334,12 @@ COMMANDS
     Put ndrxd in sleep mode, this is useful for debugging. Number of seconds to
     sleep are denoted in *SLEEP_SEC* argument.
 
+*mibget* [-c <CLASS>] [-m]::
+    This returns lists the *tm_mib(5)* objects in command line. The object classes
+    are set in -c argument, where possible values are *T_CLIENT*, *T_DOMAIN*,
+    *T_MACHINE*, *T_QUEUE*, *T_SERVER*, *T_SERVICE* and *T_SVCGRP*. The parameter
+    *-m* returns the output in machine readable format.
+
 CONFIGURATION
 -------------
 The following parameters from section *[@xadmin]* or *[@xadmin/<$NDRX_CCTAG>]*
