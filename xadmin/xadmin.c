@@ -459,6 +459,8 @@ char *M_noinit[] = {
     ,"help"
     ,"h"
     ,"killall"
+    ,"-v"
+    ,"ver"
     ,"udown"
     ,"gen"
     ,"ps"
