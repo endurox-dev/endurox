@@ -234,7 +234,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     if (NULL==tmp)
     {
         M_readersmax = MAX_READERS_DFLT;
-        NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
+        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
                 CONF_NDRX_SVQREADERSMAX, M_readersmax);
     }
     else
@@ -247,7 +247,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     if (NULL==tmp)
     {
         M_queuesmax = MAX_QUEUES_DLFT;
-        NDRX_LOG(log_error, "Missing config key %s - defaulting to %d", 
+        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
                 CONF_NDRX_MSGQUEUESMAX, M_queuesmax);
     }
     else
@@ -1111,7 +1111,7 @@ expublic int ndrx_svqshm_ctl(char *qstr, int qid, int cmd, int arg1,
             
             if (!have_value)
             {
-                NDRX_LOG(log_error, "Queue not found [%s]/%d", 
+                NDRX_LOG(log_warn, "Queue not found [%s]/%d", 
                         qstr?qstr:"NULL", qid);
                 err = ENOENT;
                 EXFAIL_OUT(ret);
