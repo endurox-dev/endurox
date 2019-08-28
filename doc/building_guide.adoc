@@ -282,7 +282,7 @@ ulimit -s 30751
 #export EX_ORA_HOST=localhost
 #export EX_ORA_USER=exdbtest
 #export EX_ORA_PASS=exdbtest1
-#export EX_ORA_PORT=1539
+#export EX_ORA_PORT=1521
 #export EX_ORA_SID=xe
 #export EX_ORA_OCILIB=/opt/oracle/product/18c/dbhomeXE/lib/libclntsh.so
 #export ORACLE_HOME=/opt/oracle/product/18c/dbhomeXE
