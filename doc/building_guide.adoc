@@ -288,7 +288,7 @@ ulimit -s 30751
 #export ORACLE_HOME=/opt/oracle/product/18c/dbhomeXE
 #export PATH=$PATH:$ORACLE_HOME/bin
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/oracle/product/18c/dbhomeXE/lib
-
+#export TNS_ADMIN=$ORACLE_HOME/network/admin
 
 ################################################################################
 # In case if building with Posgresql DB database testing support
@@ -363,8 +363,35 @@ Completed "main": 21 passes, 0 failures, 0 exceptions.
 
 If EX_ORA_ settings are loaded int the ndrx_home environment file and project
 is started with *-DENABLE_TEST47=ON* setting, then before running the tests,
-tables needs to be created for testing. Tables can be loaded in with help of
-Oracle sqlplus tool:
+user and tables needs to be created for testing. 
+
+User scheme can be created in following way (may differ if you have other
+procedures):
+
+---------------------------------------------------------------------
+
+# su - oracle
+$ sqlplus / nolog
+SQL> connect / as sysdba
+SQL> alter session set "_ORACLE_SCRIPT"=true;
+SQL> CREATE USER exdbtest IDENTIFIED BY exdbtest1;
+SQL> GRANT CONNECT, RESOURCE, DBA TO exdbtest;
+SQL> COMMIT;
+SQL> QUIT;
+
+---------------------------------------------------------------------
+
+The testing user must have access to tnsnames.ora, thus user "user1" must be
+added to "oinstall" group. On linux that can be done in this way:
+
+---------------------------------------------------------------------
+
+# gpasswd -a user1 oinstall
+
+---------------------------------------------------------------------
+
+
+Tables can be loaded in with help of Oracle sqlplus tool:
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox/atmitest/test047_oradb
