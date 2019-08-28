@@ -102,7 +102,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
 
         root_value = exjson_parse_string_with_comments(buffer);
         type = exjson_value_get_type(root_value);
-        NDRX_LOG(log_error, "Type is %d", type);
+        NDRX_LOG(log_debug, "Type is %d", type);
 
         if (exjson_value_get_type(root_value) != EXJSONObject)
         {
