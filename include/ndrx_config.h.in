@@ -90,6 +90,16 @@
 /* Semaphore API debug - tracking */
 #cmakedefine NDRX_SEM_DEBUG @NDRX_SEM_DEBUG@
 
+/* Add build env: */
+#cmakedefine NDRX_BLD_PRODUCT @NDRX_BLD_PRODUCT@
+#cmakedefine NDRX_BLD_SYSTEM @NDRX_BLD_SYSTEM@
+#cmakedefine NDRX_BLD_CONFIG @NDRX_BLD_CONFIG@
+#cmakedefine NDRX_BLD_VERSION @NDRX_BLD_VERSION@
+#cmakedefine NDRX_BLD_RELEASE @NDRX_BLD_RELEASE@
+#cmakedefine NDRX_BLD_TAG @NDRX_BLD_TAG@
+#cmakedefine NDRX_BLD_BRANCH @NDRX_BLD_BRANCH@
+#cmakedefine NDRX_BLD_FLAGS @NDRX_BLD_FLAGS@
+
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 
