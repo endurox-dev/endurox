@@ -43,7 +43,7 @@ set(RELEASE "1")
 ################################################################################
 
 if(DEFINED ENV{NDRX_BLD_VERSION})
-	IF(NOT ENV{NDRX_BLD_VERSION} MATCHES ${VERSION})
+	IF(NOT $ENV{NDRX_BLD_VERSION} MATCHES ${VERSION})
 		message( FATAL_ERROR "Invalid versions: ENV: [$ENV{NDRX_BLD_VERSION}] Code: [${VERSION}]" )
 	endif()
 endif()
