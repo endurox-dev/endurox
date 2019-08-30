@@ -42,11 +42,17 @@ set(RELEASE "1")
 # Check versions if defined, export build env
 ################################################################################
 
-if(DEFINED $ENV{NDRX_BLD_VERSION})
-	IF(NOT $ENV{NDRX_BLD_VERSION} MATCHES ${VERSION})
+if(DEFINED ENV{NDRX_BLD_VERSION})
+	IF(NOT ENV{NDRX_BLD_VERSION} MATCHES ${VERSION})
 		message( FATAL_ERROR "Invalid versions: ENV: [$ENV{NDRX_BLD_VERSION}] Code: [${VERSION}]" )
 	endif()
 endif()
+
+if(DEFINED ENV{NDRX_BLD_RELEASE})
+    set(RELEASE $ENV{NDRX_BLD_RELEASE})
+endif()
+
+message("CMake RELEASE  = ${RELEASE}")
 
 SET (NDRX_BLD_PRODUCT 	$ENV{NDRX_BLD_PRODUCT})
 SET (NDRX_BLD_SYSTEM 	$ENV{NDRX_BLD_SYSTEM})
