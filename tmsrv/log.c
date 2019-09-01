@@ -806,8 +806,16 @@ out:
 #define TOKEN_READ(X, Y)\
     if (NULL==(p = strtok(first?buf:NULL, ":")))\
     {\
-        NDRX_LOG(log_error, "Missing token: %s!", X);\
+        NDRX_LOG(log_error, "Missing token: %s.%s!", X, Y);\
         EXFAIL_OUT(ret);\
+    }\
+    if (first)\
+        first = EXFALSE;\
+        
+#define TOKEN_READ_OPT(X, Y)\
+    if (NULL==(p = strtok(first?buf:NULL, ":")))\
+    {\
+        NDRX_LOG(log_warn, "Missing token: %s.%s - optional, ignore!", X, Y);\
     }\
     if (first)\
         first = EXFALSE;\
@@ -1002,9 +1010,17 @@ exprivate int tms_parse_rmstatus(char *buf, atmi_xa_log_t *p_tl)
 
     TOKEN_READ("rmstat", "rmreason");
     rmreason = (short)atoi(p);
-   
-    TOKEN_READ("rmstat", "btid");
-    btid = atol(p);
+
+    TOKEN_READ_OPT("rmstat", "btid");
+    
+    if (NULL!=p)
+    {
+        btid = atol(p);
+    }
+    else
+    {
+        btid=0;
+    }
     
     /*
     p_tl->rmstatus[rmid-1].rmstatus = rmstatus;

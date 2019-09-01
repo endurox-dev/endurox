@@ -819,7 +819,7 @@ expublic int ndrx_tpgetrply (int *cd,
                     continue;
                 }
 
-                NDRX_LOG(log_warn, "Reply cd: %d, timestamp :%d callseq: %u from "
+                NDRX_LOG(log_info, "Reply cd: %d, timestamp :%d callseq: %u from "
                         "%s type_id: %hd (%s) - expected OK!",
                         rply->cd, rply->timestamp, rply->callseq, rply->reply_to,
                         rply->buffer_type_id, (G_buf_descr[rply->buffer_type_id].type));
