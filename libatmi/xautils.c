@@ -472,7 +472,7 @@ expublic int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms
     int len2;
     int ret = EXSUCCEED;
     
-    NDRX_LOG(log_error, "src len: %d", len);
+    NDRX_LOG(log_debug, "src len: %d", len);
     
     for (i=0; i<len; i++)
     {
