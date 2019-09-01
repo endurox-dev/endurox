@@ -986,7 +986,57 @@ with Enduro/X support. Thus the system has to have compiler installed and access
 to Internet must be (for fetching the sources from the github).
 
 === Building the Agent
-..
+To build the agent, system must have C/C++ compiler installed and "git" tool too.
+Basically if Enduro/X build dependencies are met on the host, then Netxms agent
+will build too. For more details consult with the project specific documentation.
+
+But in general, to build the agent for Enduro/X, do the following steps:
+
+--------------------------------------------------------------------------------
+
+$ git clone https://github.com/netxms/netxms
+$ cd netxms
+$ ./reconf
+$ ./configure --with-agent --prefix=/path/to/install --with-tuxedo=/usr --disable-mqtt
+$ make
+$ sudo make install
+--------------------------------------------------------------------------------
+
+If doing basic setup, then usually you need to setup the configuration file for
+agent to allow the incoming servers connections, for example:
+
+--------------------------------------------------------------------------------
+
+# cat << EOF > /etc/nxagentd.conf
+
+LogFile=/var/log/nxagentd
+
+# IP white list, can contain multiple records separated by comma.
+# CIDR notation supported for subnets.
+MasterServers=127.0.0.0/8,172.17.0.1,192.168.43.98
+
+EOF
+
+--------------------------------------------------------------------------------
+
+Once configuration is done, the *nxagentd* shall be started from Enduro/X
+environment, so that agent will be able to call *tpadmsv(8)* services. Usually
+agent is started from *cpmsrv(8)*.
+
+To start the agent manually, following commands may be used:
+
+--------------------------------------------------------------------------------
+$ cd /path/to/install/bin
+
+-- have some debug in current session:
+$ ./nxagentd -D5
+
+-- or to start as deamon:
+$ ./nxagentd -D5
+
+
+--------------------------------------------------------------------------------
+
 
 === Checking the available parameters from server
 
@@ -1016,8 +1066,7 @@ This section lists additional related documents.
 
 [bibliography]
 .Internet resources
-- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
-- [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
+
 - [[[EX_OVERVIEW]]] ex_overview(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
 - [[[EX_ENV]]] ex_env(5)
