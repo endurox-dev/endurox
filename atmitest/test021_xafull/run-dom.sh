@@ -457,6 +457,18 @@ if [[ $RET -eq 0 ]]; then
 	RET=$RET3;
 fi
 
+CNTRM1=`ls -1 ./RM1/TRN-* | wc | awk '{print $1}'`
+if [ "X$CNTRM1" != "X0" ]; then
+    echo "Transaction must be completed (RM1)!"
+    RET=-2
+fi
+
+CNTRM2=`ls -1 ./RM2/TRN-* | wc | awk '{print $1}'`
+if [ "X$CNTRM2" != "X0" ]; then
+    echo "Transaction must be completed (RM2)!"
+    RET=-2
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"

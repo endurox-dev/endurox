@@ -68,6 +68,17 @@ done
 
 ensure_tran 100
 
-
+###############################################################################
+# Finish them off
+###############################################################################
+REFS=`xadmin pt | grep 'TM ref' | cut -d ':' -f2 | cut -d ')' -f1`
+for t in $REFS
+do
+        cmd="xadmin abort $t -y" 
+        echo "Running [$cmd"]
+        eval $cmd
+done
+###############################################################################
+ensure_tran 0
 
 # vim: set ts=4 sw=4 et smartindent:
