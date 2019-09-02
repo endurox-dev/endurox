@@ -1037,6 +1037,21 @@ $ ./nxagentd -D5
 
 --------------------------------------------------------------------------------
 
+In case of CPMSRV, following can be used as configuration:
+
+--------------------------------------------------------------------------------
+...
+        <!-- Client section -->
+        <clients>
+...
+                <client cmdline="/path/to/install/bin/nxagentd -D5" log="/tmp/nxagentd.log">
+                        <exec tag="NXAGENT" autostart="Y" />
+                </client>
+...
+        </clients>
+--------------------------------------------------------------------------------
+
+
 === Checking the available parameters from server
 
 To check the list parameters that can be monitored, use following command:
