@@ -1037,14 +1037,47 @@ $ ./nxagentd -D5
 
 --------------------------------------------------------------------------------
 
-
 === Checking the available parameters from server
 
 To check the list parameters that can be monitored, use following command:
 
 --------------------------------------------------------------------------------
 
-$ nxget -l 192.168.0.62  Agent.SupportedParameters 
+$ nxget -l <agent ip addr>  Agent.SupportedParameters 
+
+
+...
+Endurox.Client.ActiveConversations(*)
+Endurox.Client.ActiveRequests(*)
+Endurox.Client.Machine(*)
+Endurox.Client.Name(*)
+Endurox.Client.State(*)
+Endurox.Domain.ID
+Endurox.Domain.Queues
+Endurox.Domain.Servers
+Endurox.Domain.Services
+Endurox.Domain.State
+Endurox.Machine.Accessers(*)
+Endurox.Machine.Clients(*)
+Endurox.Machine.Conversations(*)
+Endurox.Machine.State(*)
+Endurox.Queue.Machine(*)
+Endurox.Queue.RequestsCurrent(*)
+Endurox.Queue.State(*)
+Endurox.ServerInstance.CommandLine(*)
+Endurox.ServerInstance.Generation(*)
+Endurox.ServerInstance.Machine(*)
+Endurox.ServerInstance.Name(*)
+Endurox.ServerInstance.PID(*)
+Endurox.ServerInstance.State(*)
+Endurox.Service.State(*)
+Endurox.ServiceGroup.CompletedRequests(*)
+Endurox.ServiceGroup.FailedRequests(*)
+Endurox.ServiceGroup.LastExecutionTime(*)
+Endurox.ServiceGroup.MaxExecutionTime(*)
+Endurox.ServiceGroup.MinExecutionTime(*)
+Endurox.ServiceGroup.State(*)
+Endurox.ServiceGroup.SuccessfulRequests(*)
 
 --------------------------------------------------------------------------------
 
@@ -1053,9 +1086,55 @@ To return the values from particular table, use following command:
 
 --------------------------------------------------------------------------------
 
-$ nxget -T 192.168.0.62 Tuxedo.ServiceGroups
+$ nxget -T <agent ip> <table name e.g. Tuxedo.Clients>
 
 --------------------------------------------------------------------------------
+
+==== Monitoring list of the items
+
+In NetXMS it is possible import and monitor list of the resources. That can be
+done in the following way:
+
+Firstly in Configure Data Collection Items (DCI) for new item. For example:
+
+image:netxms_new_dci.png[caption="Figure 2: ", title="New DCI", alt="New DIC"]
+
+*NOTE*: As Enduro/X uses comma in identifiers, then in templates quotes must be
+used surrounding "'{instance}'" placeholder.
+
+Next configure agent list from which to discover the items:
+
+image:netxms_new_dci2.png[caption="Figure 3: ", title="Agent list", alt="Agent list"]
+
+Once this is configured, instances shall be discovered. On monitored node in NetXMS
+Console, press *left mouse button > Poll > Instance discovery*
+
+
+After running the instance discovery, following output may be received:
+
+--------------------------------------------------------------------------------
+
+[02.09.2019 20:57:57] **** Poll request sent to server ****
+[02.09.2019 20:57:57] Poll request accepted
+[02.09.2019 20:57:57] Starting instance discovery poll for node mypc
+[02.09.2019 20:57:57] Running DCI instance discovery
+[02.09.2019 20:57:57]    Updating instances for FileSystem.UsedPerc({instance}) [548]
+[02.09.2019 20:57:57]    Updating instances for FileSystem.FreePerc({instance}) [552]
+[02.09.2019 20:57:57]    Updating instances for Endurox.Client.State('{instance}') [627]
+[02.09.2019 20:57:57]       Creating new DCO for instance "/n00b,clt,reply,tmsrv,29321,2"
+[02.09.2019 20:57:57]       Creating new DCO for instance "/n00b,clt,reply,tmsrv,29304,2"
+[02.09.2019 20:57:57]       Creating new DCO for instance "1/NXAGENT/-/1"
+[02.09.2019 20:57:57]       Creating new DCO for instance "1/BINARY1/1"
+[02.09.2019 20:57:57]       Creating new DCO for instance "1/BINARY2/2"
+[02.09.2019 20:57:57] **** Poll completed successfully ****
+
+--------------------------------------------------------------------------------
+
+In the results in latest values new instances can be seen. In particular case
+status of clients are monitored:
+
+image:netxms_clients_list.png[caption="Figure 4: ", title="Clients list", alt="Clients list"]
+
 
 :numbered!:
 
