@@ -148,6 +148,7 @@
 #define	EX_NETTHEIRIP	((BFLDID32)167772818)	/* number: 658	 type: string */
 #define	EX_NETTHEIRPORT	((BFLDID32)33555091)	/* number: 659	 type: long */
 #define	EX_NETCONMODE	((BFLDID32)67109524)	/* number: 660	 type: char */
+#define	EX_NETRCODE	((BFLDID32)33555183)	/* number: 751	 type: long */
 #define	EX_VIEW_NAME	((BFLDID32)167772860)	/* number: 700	 type: string */
 #define	EX_VIEW_CKSUM	((BFLDID32)33555133)	/* number: 701	 type: long */
 #define	EX_VIEW_INCLFLDS	((BFLDID32)167772862)	/* number: 702	 type: string */
