@@ -29,8 +29,8 @@ class UBFTab extends WizardBase {
 	</ order=4, name = "Gen makefile", type = "yn"/> 
 	genmake = "y";
 	
-	</ order=5, name = "Target language (c/go)", type = "string"
-		depend="(::prov.genmake==\"y\")" regex="^c|go$" /> 
+	</ order=5, name = "Target language (c/go/java)", type = "string"
+		depend="(::prov.genmake==\"y\")" regex="^c|go|java$" /> 
 	makeLang = "c";
 	
 	</ order=6, name = "Go Pakcage name", type = "string", 
@@ -56,6 +56,10 @@ class UBFTab extends WizardBase {
 		else if (makeLang=="go")
 		{
 			makeFile=appHome+"/Mgolang";
+		}
+                else if (makeLang=="java")
+		{
+			makeFile=appHome+"/Mjava";
 		}
 	}
 	
@@ -125,7 +129,51 @@ $#endif
 			langMode = "1"; //It is go
 		}
 		
-		makeFileVal = @"
+                if (makeLang=="java")
+                {
+                    makeFileVal = @"
+JAVAC=javac
+SOURCEDIR=.
+SOURCES := $(wildcard *.fd)
+SOURCES += Exfields
+
+OUTPUT = $(addsuffix .java, $(basename $(SOURCES)))
+CLASS = $(addsuffix .class, $(basename $(SOURCES)))
+
+comma:= ,
+empty:=
+space:= $(empty) $(empty)
+
+export FIELDTBLS=$(subst $(space),$(comma),$(SOURCES))
+export FLDTBLDIR=$(shell pwd)
+unexport NDRX_CCONFIG
+
+$(info $$SOURCES is [${SOURCES}])
+$(info $$CLASS is [${CLASS}])
+$(info $$OUTPUT is [${OUTPUT}])
+$(info $$FIELDTBLS is [${FIELDTBLS}])
+
+PACKAGE=ubftab.jar
+
+%.java : $(SOURCES)
+	mkfldhdr -m2 $(SOURCES)
+
+%.class : %.java
+	$(JAVAC) $(basename $<).java
+
+$(PACKAGE) : $(CLASS)
+	@echo ""Manifest-Version: 1.0"" > manifest.txt
+	@echo ""Class-Path: ."" >> manifest.txt
+	jar -cmf manifest.txt ${PACKAGE} $(CLASS)
+
+.PHONY: clean
+clean:
+	- rm *.java *.class *.jar manifest.txt
+";
+                }
+                else
+                {
+                    makeFileVal = @"
 SOURCEDIR=.
 SOURCES := $(shell find $(SOURCEDIR) -name '*.fd')
 "+(genexfields=="y"?"SOURCES += Exfields":"")+@"
@@ -158,6 +206,7 @@ $(OUTPUT): $(SOURCES)
 clean:
 	- rm *"+suffix+@"
 ";
+            }
 	}
 	
 	////////////////////////////////////////////////////////////////////////
@@ -174,9 +223,11 @@ clean:
 all:
 	-$(MAKE) -f Mclang
 	-$(MAKE) -f Mgolang
+	-$(MAKE) -f Mjava
 clean:
 	-$(MAKE) -f Mclang clean
 	-$(MAKE) -f Mgolang clean
+	-$(MAKE) -f Mjava clean
 ";
 	}
 }
