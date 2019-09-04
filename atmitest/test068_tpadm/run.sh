@@ -246,7 +246,7 @@ if [ "X$CPM" == "X" ]; then
 fi
 
 
-DUMSV=`xadmin mibget -c T_SERVER -m | egrep '2\|30\|.*\|.*\|[0-9]*\|[0-9]*\|dummysv\|dumcmdsv\|3\|'`
+DUMSV=`xadmin mibget -c T_SERVER -m | egrep '2\|30\|.*\|.*\|[0-9]*\|[0-9]*\|dummysv\|dumcmdsv\|[2-9]\|'`
 
 if [ "X$DUMSV" == "X" ]; then
     echo "DUMSV not found!"
