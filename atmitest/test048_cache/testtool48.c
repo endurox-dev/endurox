@@ -365,7 +365,7 @@ int main(int argc, char** argv)
 
     while ((c = getopt (argc, argv, "s:b:t:c:n:r:e:f:lxm:dB")) != EXFAIL)
     {
-        NDRX_LOG(log_debug, "%c = [%s]", (char)c, optarg);
+        NDRX_LOG(log_debug, "got %c", (char)c);
         
         switch (c)
         {
