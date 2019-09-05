@@ -749,6 +749,15 @@ exprivate void tx_tout_check_th(void *ptr)
      * If so then initiate internal abort call
      */
     NDRX_LOG(log_dump, "Timeout check (processing...)");
+    
+    /* Do the ATMI init, if needed 
+     */
+    if (M_thread_first)
+    {
+        tm_thread_init();
+        M_thread_first = EXFALSE;
+    }
+    
     tx_list = tms_copy_hash2list(COPY_MODE_FOREGROUND | COPY_MODE_ACQLOCK);
         
     LL_FOREACH_SAFE(tx_list,el,tmp)
