@@ -134,7 +134,7 @@ public class "+classname+@" implements Server, Service {
             //else if ...
         }
 ":"")+@"
-        ctx.tpadvertise(""TESTSVC"", ""testsv"", this);
+        ctx.tpadvertise("""+svcname+@""", """+classname+@""", this);
 
         return AtmiConst.SUCCEED;
     }

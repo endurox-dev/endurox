@@ -165,6 +165,7 @@ $(PACKAGE) : $(CLASS)
 	@echo ""Manifest-Version: 1.0"" > manifest.txt
 	@echo ""Class-Path: ."" >> manifest.txt
 	jar -cmf manifest.txt ${PACKAGE} $(CLASS)
+	- rm manifest.txt
 
 .PHONY: clean
 clean:
