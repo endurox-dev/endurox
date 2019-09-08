@@ -1,12 +1,12 @@
 #!/usr/bin/pscript
 
-userlog("Generate java server");
+userlog("Generate java client");
 
 //Include wizard base.
 compilestring(getwizardbase())();
 
 //Provision class
-class JavaServer extends WizardBase {
+class JavaClient extends WizardBase {
 
     constructor()
     {
@@ -14,15 +14,12 @@ class JavaServer extends WizardBase {
     }
 
     //Configure it:
-    </ order=0, name = "Java class name of XATMI Server", type = "string", 
+    </ order=0, name = "Java class name of XATMI Client", type = "string", 
         min=1, max=512 /> 
-    classname = "Testsv";
+    classname = "Testcl";
 
     </ order=1, name = "Java package name", type = "string", min=1, max=512 /> 
-    pkgname = "testsv.jar";
-
-    </ order=2, name = "Service name", type = "path", min=1, max=30 /> 
-    svcname = "TESTSV";
+    pkgname = "testcl.jar";
 
     </ order=3, name = "Use UBF?", type = "yn"/> 
     useubf = "y";
@@ -48,7 +45,7 @@ class JavaServer extends WizardBase {
 
     </ order=9, name = "Binary name", 
             type = "path", depend="(::prov.makebin==\"y\")", min=1, max=512 /> 
-    binname = "testsv";
+    binname = "testcl";
 
     </ order=10, name = "Lib path for libjava", min=1, max=512,
             type = "string" depend="(::prov.makebin==\"y\")" /> 
@@ -58,49 +55,49 @@ class JavaServer extends WizardBase {
             type = "string" depend="(::prov.makebin==\"y\")" /> 
     libpath_jvm = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server";
 
-    serverFile = "";
+    clientFile = "";
     makeFile = "";
 
     function getOutputFiles()
     {
-        serverFile=appHome+"/"+classname+".java";
+        clientFile=appHome+"/"+classname+".java";
         makeFile=appHome+"/Makefile";
     }
 
     ////////////////////////////////////////////////////////////////////////
     //Build the ndrxconfig value
     ////////////////////////////////////////////////////////////////////////
-    serverVal = "";
-    function buildServer()
+    clientVal = "";
+    function buildClient()
     {
 	
-        serverVal = @"import org.endurox.*;
+        clientVal = @"import org.endurox.*;
 import java.util.*;
 
-public class "+classname+@" implements Server, Service {
+public class "+classname+@" {
 
     "+(config!=""?@"//ini file section for this server process
     static String PROGSECTION = """+config+"\";":"")+@"
+	
+    public void apprun(AtmiCtx ctx) {
 
-    public void tpService(AtmiCtx ctx, TpSvcInfo svcinfo) {
-
-        ctx.tplogDebug(""tpService/"+svcname+@" called"");"+(useubf=="y"?@"
-        TypedUbf ub = (TypedUbf)svcinfo.getData();
-
-        //Print the buffer to stdout
-        ub.tplogprintubf(AtmiConst.LOG_DEBUG, ""Incoming request:"");
-
-        //Resize buffer, to have some more space
-        ub.tprealloc(ub.Bused()+1024);
+        ctx.tplogDebug(""apprun called"");
+        "+(useubf=="y"?@"
+        TypedUbf ub = (TypedUbf)ctx.tpalloc(""UBF"", """", 1024);
 
         //Add test field to buffer
-        ub.Bchg(test.T_STRING_2_FLD, 0, ""Hello World from XATMI server"");":"")+@"
+        ub.Bchg(test.T_STRING_FLD, 0, ""Hello World"");
 
-        //Reply OK back
-        ctx.tpreturn(AtmiConst.TPSUCCESS, 0, svcinfo.getData(), 0);
+        try {
+            ub = (TypedUbf)ctx.tpcall(""TESTSVC"", ub, 0);
+            //Print the buffer to stdout
+            ub.tplogprintubf(AtmiConst.LOG_DEBUG, ""Got response:"");
+        } catch (AtmiException e) {
+            ctx.tplogInfo(""got exception: %s"", e.toString());
+        }":"")+@"
     }
 
-    public int tpSvrInit(AtmiCtx ctx, String [] argv) {
+    public void appinit(AtmiCtx ctx) {
         ctx.tplogDebug(""Into tpSvrInit()"");
 "+(config!=""?@"
         //Get the configuration
@@ -110,11 +107,10 @@ public class "+classname+@" implements Server, Service {
 
         u.Bchg(Exfields.EX_CC_CMD, 0, ""g"");
         u.Bchg(Exfields.EX_CC_LOOKUPSECTION, 0, 
-            String.format(""%s/%s"", PROGSECTION, System.getenv(""NDRX_CCTAG"")));
+                String.format(""%s/%s"", PROGSECTION, System.getenv(""NDRX_CCTAG"")));
 
         //Get the config...
         u = (TypedUbf)ctx.tpcall(""@CCONF"", u, 0);
-
 
         int occs = u.Boccur(Exfields.EX_CC_KEY);
 
@@ -132,31 +128,28 @@ public class "+classname+@" implements Server, Service {
                 ctx.tplogDebug(""Got [%s] = [%s] "", key, myval);
             }
             //else if ...
-        }
-":"")+@"
-        ctx.tpadvertise(""TESTSVC"", ""testsv"", this);
-
-        return AtmiConst.SUCCEED;
+        }":"")+@"
     }
-    
-    public void tpSvrDone(AtmiCtx ctx) {
-        ctx.tplogDebug(""Into tpSvrDone()"");
+
+    public void unInit(AtmiCtx ctx) {
+        ctx.tpterm();
     }
 
     public static void main(String[] args) {
 
         AtmiCtx ctx = new AtmiCtx();
 
-        "+classname+@" server = new "+classname+@"();
-
-        ctx.tprun(server);
+        "+classname+" cl = new "+classname+@"();
+        cl.appinit(ctx);
+        cl.apprun(ctx);
+        cl.unInit(ctx);        
     }
 }
 ";	
     }
 
     ////////////////////////////////////////////////////////////////////////
-    //Server END
+    //Client END
     ////////////////////////////////////////////////////////////////////////
 
 
@@ -210,7 +203,7 @@ function install()
     local root = getroottable();
 
     //Create a provision object
-    root["prov"] <- JavaServer();
+    root["prov"] <- JavaClient();
 
     if (!::prov.isDefaulted)
     {
@@ -220,9 +213,9 @@ function install()
     if (::prov.validatAndPrintConfig())
     {
         ::prov.getOutputFiles();
-        ::prov.buildServer();
+        ::prov.buildClient();
 
-        if (!::prov.writeFile(::prov.serverFile, ::prov.serverVal))
+        if (!::prov.writeFile(::prov.clientFile, ::prov.clientVal))
         {
                 return false;
         }
@@ -248,12 +241,12 @@ function install()
 
 if (::install())
 {
-    print("Server gen ok!\n");
+    print("Client gen ok!\n");
 
     return 0;
 }
 else
 {
-    print("Server gen failed!\n");
+    print("Client gen failed!\n");
     return -1;
 }
