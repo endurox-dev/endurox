@@ -7,20 +7,16 @@
 ##   WE MIGHT SET THE FLAG IN SHARED MEMORY THAT SERVICE IS NOT AVAILABLE, AND LEAVE ENQUEUED
 ##   ONES FOR PROCESSING.
 ##   But for current implementation SVCERR will be OK too, at last it is not a timeout!
-##   ---
-##   06/07/2019 test case for Bug #425. Reply to caller shall not be made if
-##   Server was invoked tpacall with TPNOREPLY, in logs we shall not get the
-##   for the second call. As first will be consumed by server and then it dies.
-##   the second call waits in queue and is discarded..
 ##
 ## @file run.sh
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 

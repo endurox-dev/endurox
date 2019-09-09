@@ -1,18 +1,19 @@
 /**
  * @brief ATMI level cache, EDB access
- *  NOTE! To have aligned data access LMDB key and data must be aligned size.
- *  For some very long keys (how long?), the rule could change. In case of
- *  UBF buffers, data is also aligned. If adding new buffer types, probably
- *  we will need to align the data size too (for strings, carrays..)
+ *   NOTE! To have aligned data access LMDB key and data must be aligned size.
+ *   For some very long keys (how long?), the rule could change. In case of
+ *   UBF buffers, data is also aligned. If adding new buffer types, probably
+ *   we will need to align the data size too (for strings, carrays..)
  *
  * @file atmi_cache_edb.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
