@@ -170,7 +170,7 @@ restart:
 
         if (tpacall("SVC38_01", (char *)p_ub, 0L, TPNOBLOCK)<=0)
         {
-            if (TPEBLOCK==tperrno || TPELIMIT==tperrno)
+            if (TPEBLOCK==tperrno)
             {
                 if (EXSUCCEED!=handle_replies(&p_ub, 0))
                 {
