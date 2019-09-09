@@ -659,3 +659,21 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
+
+                       Enduro/X Modified License
+
+As a special exception, if files written in Java programming language as
+defined by Sun Microsystems (or current owners) or Go programming language
+as defined by Google (or current owners) instantiate generics from this unit,
+or you link this unit with other object files produced by Go compiler or
+Java compiler to produce an executable, this unit does not by itself
+cause the resulting executable to be covered by the
+Affero GNU General Public License. This exception does not however
+invalidate any other reasons why the executable file might be covered
+by the Affero GNU Public License, including cases when
+Application Programming Interface (API) translators or wrappers are written on top of
+Go or Java languages for reason of exposing Program API to
+other programming languages. In such cases translator code and
+target programming language code shall be covered by
+Affero GNU Public License.
+
