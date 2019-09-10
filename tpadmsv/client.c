@@ -1,6 +1,6 @@
 /**
  * @brief This is client image grabber & mapping
- *  TODO: XATMI client contexts start from 1. Thus avoid the 0 contexts
+ *   TODO: XATMI client contexts start from 1. Thus avoid the 0 contexts
  *   as we are setting them to -1. Thus the -1 we will allow to update to 1.
  *
  * @file client.c
@@ -8,9 +8,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
