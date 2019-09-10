@@ -428,6 +428,10 @@ add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
 add_subdirectory (sampleconfig) #  For install
 
+install (FILES
+    LICENSE
+    DESTINATION share/endurox)
+
 
 ################################################################################
 # uninstall target
