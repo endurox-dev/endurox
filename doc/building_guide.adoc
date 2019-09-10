@@ -365,6 +365,8 @@ If EX_ORA_ settings are loaded int the ndrx_home environment file and project
 is started with *-DENABLE_TEST47=ON* setting, then before running the tests,
 user and tables needs to be created for testing. 
 
+TODO: /opt/oracle/product/18c/dbhomeXE/precomp/admin/pcscfg.cfg - partial parse?
+
 User scheme can be created in following way (may differ if you have other
 procedures):
 

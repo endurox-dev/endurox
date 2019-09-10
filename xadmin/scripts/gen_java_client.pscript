@@ -1,0 +1,256 @@
+#!/usr/bin/pscript
+
+userlog("Generate java client");
+
+//Include wizard base.
+compilestring(getwizardbase())();
+
+//Provision class
+class JavaClient extends WizardBase {
+
+    constructor()
+    {
+        base.constructor();
+    }
+
+    //Configure it:
+    </ order=0, name = "Java class name of XATMI Client", type = "string", 
+        min=1, max=512 /> 
+    classname = "Testcl";
+
+    </ order=1, name = "Java package name", type = "string", min=1, max=512 /> 
+    pkgname = "testcl.jar";
+
+    </ order=2, name = "Use UBF?", type = "yn"/> 
+    useubf = "y";
+
+    </ order=3, name = "Service name to cal", type = "path", min=1, max=30,
+            depend="(::prov.useubf==\"y\")" /> 
+    svcname = "TESTSV";
+
+    </ order=4, name = "UBF package name", 
+            type = "path" depend="(::prov.useubf==\"y\")" /> 
+    ubfname = "ubftab.jar";
+
+    </ order=5, name = "INI File section (optional, will read config if set)", 
+            type = "string", depend="(::prov.useubf==\"y\")", min=0/> 
+    config = "";
+
+    </ order=6, name = "Gen makefile", type = "yn"/> 
+    genmake = "y";
+
+    </ order=7, name = "Full path (incl filename) to enduroxjava.jar", 
+            type = "path", min=1, max=512, depend="(::prov.makebin==\"y\")"/> 
+    enduroxjar = "/usr/share/java/enduroxjava.jar";
+
+    </ order=8, name = "Link as binary", 
+            type = "yn", depend="(::prov.genmake==\"y\")" /> 
+    makebin = "y";
+
+    </ order=9, name = "Binary name", 
+            type = "path", depend="(::prov.makebin==\"y\")", min=1, max=512 /> 
+    binname = "testcl";
+
+    </ order=10, name = "Lib path for libjava", min=1, max=512,
+            type = "string" depend="(::prov.makebin==\"y\")" /> 
+    libpath_java = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64";
+
+    </ order=11, name = "Lib path for libjvm", min=1, max=512,
+            type = "string" depend="(::prov.makebin==\"y\")" /> 
+    libpath_jvm = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server";
+
+    clientFile = "";
+    makeFile = "";
+
+    function getOutputFiles()
+    {
+        clientFile=appHome+"/"+classname+".java";
+        makeFile=appHome+"/Makefile";
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    //Build the ndrxconfig value
+    ////////////////////////////////////////////////////////////////////////
+    clientVal = "";
+    function buildClient()
+    {
+	
+        clientVal = @"import org.endurox.*;
+import java.util.*;
+
+public class "+classname+@" {
+
+    "+(config!=""?@"//ini file section for this server process
+    static String PROGSECTION = """+config+"\";":"")+@"
+	
+    public void apprun(AtmiCtx ctx) {
+
+        ctx.tplogDebug(""apprun called"");
+        "+(useubf=="y"?@"
+        TypedUbf ub = (TypedUbf)ctx.tpalloc(""UBF"", """", 1024);
+
+        //Add test field to buffer
+        ub.Bchg(test.T_STRING_FLD, 0, ""Hello World"");
+
+        try {
+            ub = (TypedUbf)ctx.tpcall("""+svcname+@""", ub, 0);
+            //Print the buffer to stdout
+            ub.tplogprintubf(AtmiConst.LOG_DEBUG, ""Got response:"");
+        } catch (AtmiException e) {
+            ctx.tplogInfo(""got exception: %s"", e.toString());
+        }":"")+@"
+    }
+
+    public void appinit(AtmiCtx ctx) {
+        ctx.tplogDebug(""Into tpSvrInit()"");
+"+(config!=""?@"
+        //Get the configuration
+        String cctag = System.getenv(""NDRX_CCTAG"");
+
+        TypedUbf u = (TypedUbf) ctx.tpalloc(""UBF"", null, 160*1024);
+
+        u.Bchg(Exfields.EX_CC_CMD, 0, ""g"");
+        u.Bchg(Exfields.EX_CC_LOOKUPSECTION, 0, 
+                String.format(""%s/%s"", PROGSECTION, System.getenv(""NDRX_CCTAG"")));
+
+        //Get the config...
+        u = (TypedUbf)ctx.tpcall(""@CCONF"", u, 0);
+
+        int occs = u.Boccur(Exfields.EX_CC_KEY);
+
+        // Load in the config...
+        for (int occ = 0; occ < occs; occ++) {
+
+            ctx.tplogDebug(""occ %d"", occ);
+
+            String key = u.BgetString(Exfields.EX_CC_KEY, occ);
+
+            ctx.tplogDebug(""Got config field [%s]"", key);
+
+            if (key.equals(""mykey1"")) {
+                String myval = u.BgetString(Exfields.EX_CC_VALUE, occ);
+                ctx.tplogDebug(""Got [%s] = [%s] "", key, myval);
+            }
+            //else if ...
+        }":"")+@"
+    }
+
+    public void unInit(AtmiCtx ctx) {
+        ctx.tpterm();
+    }
+
+    public static void main(String[] args) {
+
+        AtmiCtx ctx = new AtmiCtx();
+
+        "+classname+" cl = new "+classname+@"();
+        cl.appinit(ctx);
+        cl.apprun(ctx);
+        cl.unInit(ctx);        
+    }
+}
+";	
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    //Client END
+    ////////////////////////////////////////////////////////////////////////
+
+
+    ////////////////////////////////////////////////////////////////////////
+    //Build makefile
+    ////////////////////////////////////////////////////////////////////////
+
+    makeFileVal = "";
+    function buildMakefile()
+    {
+	
+            makeFileVal = @"
+SOURCEDIR=.
+SOURCES := $(shell find $(SOURCEDIR) -name '*.java')
+CLASSES = $(addsuffix .class, $(basename $(SOURCES)))
+
+" + ( makebin=="y"?"BINARY="+binname:"") + @"
+PKG="+pkgname+@"
+MAINCLASS="+classname+@"
+
+%.class: %.java
+	javac -cp "+enduroxjar+@":../ubftab/"+ubfname+@" $<
+
+$(PKG): $(CLASSES)
+	@echo ""Manifest-Version: 1.0"" > manifest.txt
+	@echo ""Main-Class: $(MAINCLASS)"" >> manifest.txt
+	@echo """" >> manifest.txt
+	jar -cmf manifest.txt $(PKG) $(CLASSES)
+	- rm manifest.txt
+"+( makebin=="y"?"	exjld -n -o $(BINARY) -m '$(MAINCLASS)' -L"+libpath_java+@" -L "+libpath_jvm+@" $(PKG)":"")+@"
+
+.PHONY: clean
+clean:
+	- rm *.class manifest.txt $(BINARY) $(PKG)
+
+run:
+	LD_LIBRARY_PATH="+libpath_java+@":"+libpath_jvm+@" java -classpath "+enduroxjar+@":./$(PKG) $(MAINCLASS)
+";
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    //Build makefile, END
+    ////////////////////////////////////////////////////////////////////////
+	
+}
+	
+
+//Run the mater installer
+function install() 
+{
+    local root = getroottable();
+
+    //Create a provision object
+    root["prov"] <- JavaClient();
+
+    if (!::prov.isDefaulted)
+    {
+        ::prov.runInteractive();
+    }
+
+    if (::prov.validatAndPrintConfig())
+    {
+        ::prov.getOutputFiles();
+        ::prov.buildClient();
+
+        if (!::prov.writeFile(::prov.clientFile, ::prov.clientVal))
+        {
+                return false;
+        }
+
+        //Build makefile if needed...
+        if ("y"==::prov.genmake)
+        {
+            ::prov.buildMakefile();
+
+            if (!::prov.writeFile(::prov.makeFile, ::prov.makeFileVal))
+            {
+                return false;
+            }
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+if (::install())
+{
+    print("Client gen ok!\n");
+
+    return 0;
+}
+else
+{
+    print("Client gen failed!\n");
+    return -1;
+}

@@ -48,7 +48,7 @@ $ xadmin provision -d \
     -v installQ=n  \
     -v eventSv=n \
     -v cpmSv=n \
-    -v configSv=n 
+    -v configSv=n \
     -v bridge=n \
     -v addubf=bank.fd
 ....
