@@ -60,7 +60,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf $ENV{ORACLE_HOME}/lib)
 #
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c
     COMMAND proc iname=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.proc SQLCHECK=SYNTAX
-        MODE=ANSI IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=../../include:$ENV{ORACLE_HOME}/precomp/public
+        MODE=ANSI IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=${ENDUROX_SOURCE_DIR}/include INCLUDE=$ENV{ORACLE_HOME}/precomp/public
         ONAME=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c)
 
 add_executable (atmi.sv47 atmisv47.c ../../libatmisrv/rawmain_integra.c)
