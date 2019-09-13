@@ -86,6 +86,13 @@ expublic long ndrx_platf_stack_get_size(void)
             {
                 M_stack_size=limit.rlim_cur;
                 
+                if (M_stack_size<0)
+                {
+                    M_stack_size = NDRX_STACK_MAX;
+                    NDRX_LOG(log_warn, "Unlimited stack, setting to %ld bytes",
+                            M_stack_size);
+                }
+                
                 NDRX_LOG(log_info, "Current stack size: %ld, max: %ld", 
                         M_stack_size,  (long)limit.rlim_max);
             }
