@@ -71,6 +71,11 @@ int main(int argc, char** argv)
         cd = tpacall("TESTSV", NULL, 0L, 0);
         if (cd < 1)
         {
+            /* ignore timeout condition ...*/
+            if (TPETIME==tperrno)
+            {
+                continue;
+            }
             NDRX_LOG(log_error, "TESTERROR ! cd < 1: %s", tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
