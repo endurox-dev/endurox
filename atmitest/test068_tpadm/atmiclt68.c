@@ -66,6 +66,8 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     int cd;
     long revent;
+    TPCONTEXT_T ctx = NULL;
+
     if (argc<2)
     {
         fprintf(stderr, "Usage: %s call|fail|conv\n", argv[0]);
@@ -105,6 +107,9 @@ int main(int argc, char** argv)
     else if (0==strcmp(argv[1], "conv"))
     {
         
+        /* avoid memory leaks, just get a handler for current ATMI TLS*/
+        tpgetctxt(&ctx, 0L);
+        
         /* lets create new context !!!! to see the cpm output ...  */
         
         tpnewctxt(EXTRUE, EXTRUE);
@@ -133,12 +138,15 @@ int main(int argc, char** argv)
     }
     
 out:
+    if (NULL!=ctx)
+    {
+        tpfreectxt(ctx);
+    }
+           
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 
     return ret;
 }
-
-/* vim: set ts=4 sw=4 et smartindent: */
 
 /* vim: set ts=4 sw=4 et smartindent: */
