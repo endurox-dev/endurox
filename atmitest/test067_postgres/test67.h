@@ -58,5 +58,3 @@ extern int q_run(UBFH **pp_ub);
 #endif  /* TEST67_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
-
-/* vim: set ts=4 sw=4 et smartindent: */

@@ -48,5 +48,3 @@ extern "C" {
 #endif  /* TEST59_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
-
-/* vim: set ts=4 sw=4 et smartindent: */
