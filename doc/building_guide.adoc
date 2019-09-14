@@ -88,6 +88,7 @@ $ sudo apt-get update asciidoc-dblatex
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
+
 As some packages like `dia' does not exists in base Centos install,
 then few of them we will borrow from Fedora project via epel-release.
 Which should be installed in following way:
@@ -206,6 +207,44 @@ libxml2-devel libgpgme-devel asciidoc cmake dia rpm-build
 ---------------------------------------------------------------------
 
 
+==== System level dependencies - for Centos/RHEL/Oracle Linux 8.x
+
+To install Enduro/X build dependencies.
+
+---------------------------------------------------------------------
+
+$ su - root
+# yum install yum-utils
+# yum groupinstall 'Development Tools'
+# yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel 
+
+---------------------------------------------------------------------
+
+The PDF building (dblatex) is not available on this system, thus PDF documentation
+will not be built. Also the "dia" package is not available on this system, thus
+it will be user from Fedora Core OS:
+
+---------------------------------------------------------------------
+
+# wget http://download-ib01.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/os/Packages/l/libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# rpm -i libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# wget http://download-ib01.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/os/Packages/d/dia-0.97.3-10.fc29.x86_64.rpm
+# rpm -i --nodeps dia-0.97.3-10.fc29.x86_64.rpm
+
+---------------------------------------------------------------------
+
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# postgresql-setup initdb
+# systemctl start postgresql
+# systemctl enable postgresql
+---------------------------------------------------------------------
+
 ==== AsciiDoc Integration with Dia
 
 Also Enduro/X includes documentation in sources, thus additional config is needed
@@ -248,23 +287,23 @@ $ cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
 # Where app domain lives
-export NDRX_APPHOME=$HOME/endurox
+export NDRX_APPHOME=\$HOME/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=$HOME/endurox/dist/bin
+export NDRX_HOME=\$HOME/endurox/dist/bin
 # Debug config too
-export NDRX_DEBUG_CONF=$HOME/endurox/sampleconfig/debug.conf
+export NDRX_DEBUG_CONF=\$HOME/endurox/sampleconfig/debug.conf
 
 # NDRX config too.
-export NDRX_CONFIG=$HOME/endurox/sampleconfig/ndrxconfig.xml
+export NDRX_CONFIG=\$HOME/endurox/sampleconfig/ndrxconfig.xml
 
 # Access for binaries
-export PATH=$PATH:$HOME/endurox/dist/bin
+export PATH=\$PATH:\$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib:$HOME/endurox/dist/lib64
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$HOME/endurox/dist/lib:\$HOME/endurox/dist/lib64
 
 # UBF/FML field tables
-export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 
 #  To complete unit tests:
 export NDRX_MSGSIZEMAX=1049600
@@ -286,9 +325,9 @@ ulimit -s 30751
 #export EX_ORA_SID=xe
 #export EX_ORA_OCILIB=/opt/oracle/product/18c/dbhomeXE/lib/libclntsh.so
 #export ORACLE_HOME=/opt/oracle/product/18c/dbhomeXE
-#export PATH=$PATH:$ORACLE_HOME/bin
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/oracle/product/18c/dbhomeXE/lib
-#export TNS_ADMIN=$ORACLE_HOME/network/admin
+#export PATH=\$PATH:\$ORACLE_HOME/bin
+#export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/oracle/product/18c/dbhomeXE/lib
+#export TNS_ADMIN=\$ORACLE_HOME/network/admin
 
 ################################################################################
 # In case if building with Posgresql DB database testing support
@@ -314,6 +353,13 @@ do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
 
 
 === Building the code
+
+*NOTE:* If building with PostgreSQL support (-DENABLE_POSTGRES=ON) for 
+RHEL/OL/Centos 8.x you need to specify Postgresql include folder manually, e.g. 
+add "-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/pgsql/internal" string to cmake
+line, otherwise error "Could NOT find PostgreSQL (missing: PostgreSQL_TYPE_INCLUDE_DIR)"
+will be given at configure.
+
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
 # If you want to have install folder to /home/user1/endurox/dist
@@ -364,8 +410,6 @@ Completed "main": 21 passes, 0 failures, 0 exceptions.
 If EX_ORA_ settings are loaded int the ndrx_home environment file and project
 is started with *-DENABLE_TEST47=ON* setting, then before running the tests,
 user and tables needs to be created for testing. 
-
-TODO: /opt/oracle/product/18c/dbhomeXE/precomp/admin/pcscfg.cfg - partial parse?
 
 User scheme can be created in following way (may differ if you have other
 procedures):
@@ -469,11 +513,10 @@ greater than 0, e.g. 1000.
 
 -- Edit the max_prepared_transactions
 
-# /etc/init.d/postgresql restart
-
 --------------------------------------------------------------------------------
 
 Network connection shall be enabled too for Posgres auth, edit the *pg_hba.conf*
+(for RHEL /var/lib/pgsql/data/pg_hba.conf)
 
 Ensure that it contains following lines (for password auth):
 
@@ -483,7 +526,7 @@ host    all             all             127.0.0.1/32            md5
 host    all             all             ::1/128                 md5
 --------------------------------------------------------------------------------
 
-After that restart Postgres:
+After that restart PostgreSQL:
 
 --------------------------------------------------------------------------------
 # systemctl restart postgresql
