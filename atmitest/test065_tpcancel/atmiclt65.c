@@ -68,11 +68,13 @@ int main(int argc, char** argv)
     
     for (i=0; i<10000; i++)
     {
-        cd = tpacall("TESTSV", NULL, 0L, 0);
+        //the reply queue to client might fill up
+        //and server then might get blocked and thus we time out.
+        cd = tpacall("TESTSV", NULL, 0L, TPNOBLOCK);
         if (cd < 1)
         {
             /* ignore timeout condition ...*/
-            if (TPETIME==tperrno)
+            if (TPEBLOCK==tperrno)
             {
                 continue;
             }
