@@ -43,7 +43,6 @@
 #include "utlist.h"
 
 #include <xa.h>
-#include <ecpglib.h>
 #include <pgxa.h>
 #include <thlock.h>
 /*---------------------------Externs------------------------------------*/
