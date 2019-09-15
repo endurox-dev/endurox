@@ -465,6 +465,7 @@ char *M_noinit[] = {
     ,"udown"
     ,"gen"
     ,"ps"
+    ,"pmode"
 };
 
 /**

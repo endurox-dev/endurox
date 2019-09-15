@@ -67,7 +67,7 @@
  */
 expublic long sql_run(char **list, int ret_col_row_1, long *ret_val)
 {
-    PGconn * conn = ECPGget_PGconn(NULL);
+    PGconn * conn = tpgetconn();
     long ret = EXSUCCEED;
     char *command, *codes;
     int i;

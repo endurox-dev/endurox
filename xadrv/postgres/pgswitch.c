@@ -1,5 +1,5 @@
 /**
- * @brief Posgres C XA Switch emulation
+ * @brief Postgres C XA Switch emulation
  *
  * @file pgswitch.c
  */
@@ -192,6 +192,16 @@ exprivate void xid_list_free(void)
 }
 
 /**
+ * Get connection handler callback
+ * i.e. backend of tpconnect() for C PG/ECPG driver
+ * @return ptr to connection (for current thread)
+ */
+exprivate void *ndrx_pg_getconn(void)
+{
+    return (void *)M_conn;
+}
+
+/**
  * API entry of loading the driver
  * @param symbol
  * @param descr
@@ -205,6 +215,7 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     
     ndrx_xa_nostartxid(EXTRUE);
     ndrx_xa_setloctxabort(xa_rollback_local);
+    ndrx_xa_setgetconnn(ndrx_pg_getconn);
     
     return &ndrxpgsw;
 }
@@ -284,18 +295,8 @@ exprivate int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
     
     NDRX_LOG(log_debug, "Connection name: [%s]", ndrx_G_PG_conname);
     
-    /* OK, try to open, with out autocommit please!
-     */
-    if (!ECPGconnect (__LINE__, M_conndata.c, M_conndata.url, M_conndata.user, 
-            M_conndata.password, ndrx_G_PG_conname, EXFALSE))
-    {
-        NDRX_LOG(log_error, "ECPGconnect failed, code %ld state: [%s]: %s", 
-                (long)sqlca.sqlcode, sqlca.sqlstate, sqlca.sqlerrm.sqlerrmc);
-        ret = XAER_RMERR;
-        goto out;
-    }
+    M_conn = ndrx_pg_connect(&M_conndata, ndrx_G_PG_conname);
     
-    M_conn = ECPGget_PGconn(ndrx_G_PG_conname);
     if (NULL==M_conn)
     {
         NDRX_LOG(log_error, "Postgres error: failed to get PQ connection!");
@@ -327,10 +328,10 @@ exprivate int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lo
         NDRX_LOG(log_debug, "XA Already closed");
         goto out;
     }
-    
-    if (!ECPGdisconnect(__LINE__, ndrx_G_PG_conname))
+
+    if (EXSUCCEED!=ndrx_pg_disconnect(M_conn, ndrx_G_PG_conname))
     {
-        NDRX_LOG(log_error, "ECPGdisconnect failed: %s", 
+        NDRX_LOG(log_error, "ndrx_pg_disconnect failed: %s", 
                 PQerrorMessage(M_conn));
         return XAER_RMERR;
     }
@@ -523,7 +524,6 @@ exprivate int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long
  */
 exprivate int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
-    
     return xa_tran_entry(sw, "PREPARE TRANSACTION", "PREPARE", 
             xid, rmid, flags, EXTRUE);
 }
