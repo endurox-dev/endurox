@@ -76,7 +76,7 @@ target_link_libraries(ndrxxapq atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
 
 add_executable (pgtest
                     codestest.c)
-target_link_libraries (pgtest nstd ${RT_LIB} pthread pq ecpg)
+target_link_libraries (pgtest nstd ${RT_LIB} pthread pq)
 set_target_properties(pgtest PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 # Install bin

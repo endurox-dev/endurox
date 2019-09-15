@@ -43,9 +43,9 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 
-#include <exparson.h>
+#include <libpq-fe.h>
 
-#include <ecpglib.h>
+/*#include <ecpglib.h>*/
 
 
 /*------------------------------Externs---------------------------------------*/
@@ -120,9 +120,9 @@ int main(int argc, char **argv)
 
     int i;
     
+    /*
     sqlca.sqlcode = 0;
-    
-    
+
     if (!ECPGconnect (__LINE__, 0, "unix:postgresql://localhost/template1", "postgres", 
             "", "local", EXFALSE))
     {
@@ -133,11 +133,23 @@ int main(int argc, char **argv)
     }
     
     conn = ECPGget_PGconn("local");
+
     if (NULL==conn)
     {
         NDRX_LOG(log_error, "Postgres error: failed to get PQ connection!");
         return EXFAIL;
     }
+    */
+
+    conn = PQconnectdb("postgresql://exdbtest:exdbtest1@localhost/xe");
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        NDRX_LOG(log_error, "ERROR: Connection to database failed: %s",
+            PQerrorMessage(conn));
+        PQfinish(conn);
+        return EXFAIL;
+    }
+
     
     while (tests_nok[i])
     {
