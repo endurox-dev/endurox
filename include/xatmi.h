@@ -746,6 +746,7 @@ extern NDRX_API int tptoutset(int tout);
 extern NDRX_API int tptoutget(void);
 extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
 extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API void* tpgetconn(void);
 
 extern NDRX_API char *tuxgetenv(char *envname);
 

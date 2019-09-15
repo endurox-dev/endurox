@@ -52,13 +52,26 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 link_directories(${PostgreSQL_LIBRARY_DIRS})
 
 add_library (ndrxxapq SHARED
+                    pgswitch.c
+                    pgconfig.c
+                    pgxid.c
+                    pq.c
+   	        )
+
+IF(NOT DEFINED DISABLE_ECPG)
+
+    add_library (ndrxxaecpg SHARED
                         pgswitch.c
                         pgconfig.c
                         pgxid.c
-   	        )
+                        ecpg.c
+                    )
+
+    target_link_libraries(ndrxxaecpg atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
+
+ENDIF()
 
 target_link_libraries(ndrxxapq atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
-
 
 
 add_executable (pgtest
@@ -66,10 +79,20 @@ add_executable (pgtest
 target_link_libraries (pgtest nstd ${RT_LIB} pthread pq ecpg)
 set_target_properties(pgtest PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
-
 # Install bin
 install (TARGETS 
     ndrxxapq
     DESTINATION "${INSTALL_LIB_DIR}"
     )
+
+IF(NOT DEFINED DISABLE_ECPG)
+
+    # Install bin
+    install (TARGETS 
+        ndrxxaecpg
+        DESTINATION "${INSTALL_LIB_DIR}"
+        )
+
+ENDIF()
+
 # vim: set ts=4 sw=4 et smartindent:

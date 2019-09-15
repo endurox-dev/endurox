@@ -1928,4 +1928,16 @@ expublic void ndrx_xa_setloctxabort(int (*pf_xa_loctxabort)(XID *xid, long flags
     NDRX_LOG(log_debug, "xa_loctxabort set to %p", G_atmi_env.pf_xa_loctxabort);
 }
 
+
+/**
+ * Set function for returning current connection object.
+ * This might be used for custom XA Switches
+ * @param pf_xa_getconn Callback for requesting the connection object
+ */
+expublic void ndrx_xa_setgetconnn(void *(*pf_xa_getconn)(void))
+{
+    G_atmi_env.pf_getconn= pf_xa_getconn;
+    NDRX_LOG(log_debug, "pf_getconn set to %p", G_atmi_env.pf_getconn);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -55,6 +55,13 @@ export PATH=$PATH:$TESTDIR
 
 export NDRX_TOUT=10
 
+export NDRX_LIBEXT="so"
+
+if [ "$(uname)" == "Darwin" ]; then
+    export NDRX_XA_RMLIB=libndrxxaqdisk.dylib
+    export NDRX_LIBEXT="dylib"
+fi
+
 #
 # Domain 1 - here client will live
 #
@@ -68,23 +75,23 @@ set_dom1() {
 
     # XA SECTION
     export NDRX_XA_RES_ID=1
+    
+if [ -f atmisv67.c ]; then
+    echo "ecpg mode"
     export NDRX_XA_OPEN_STR="{ \"url\":\"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}\", \"user\":\"${EX_PG_USER}\", \"password\":\"${EX_PG_PASS}\"}"
+    export NDRX_XA_DRIVERLIB=libndrxxaecpg.$NDRX_LIBEXT
+else
+    echo "pq mode"
+    export NDRX_XA_OPEN_STR="{ \"url\":\"postgresql://${EX_PG_USER}:${EX_PG_PASS}@${EX_PG_HOST}/${EX_PG_DB}\"}"
+    export NDRX_XA_DRIVERLIB=libndrxxapq.$NDRX_LIBEXT
+fi
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
-    export NDRX_XA_DRIVERLIB=libndrxxapq.so
     export NDRX_XA_RMLIB=-
     export NDRX_XA_LAZY_INIT=1
-    # TODO: Add both test modes... 
+
     #export NDRX_XA_FLAGS="NOJOIN"
     # XA SECTION, END
-
 }
-
-export NDRX_LIBEXT="so"
-
-if [ "$(uname)" == "Darwin" ]; then
-    export NDRX_XA_RMLIB=libndrxxaqdisk.dylib
-    export NDRX_LIBEXT="dylib"
-fi
 
 #
 # Generic exit function

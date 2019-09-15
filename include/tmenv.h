@@ -89,6 +89,7 @@ extern NDRX_API void ndrx_xa_noapisusp(int val);
 extern NDRX_API void ndrx_xa_nojoin(int val);
 extern NDRX_API void ndrx_xa_nostartxid(int val);
 extern NDRX_API void ndrx_xa_setloctxabort(int (*pf_xa_loctxabort)(XID *xid, long flags));
+extern NDRX_API void ndrx_xa_setgetconnn(void *(*pf_xa_getconn)(void));
 
 extern NDRX_API long ndrx_atmisrv_get_flags(void);
 extern NDRX_API void ndrx_atmisrv_set_flags(long flags);

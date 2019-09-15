@@ -483,3 +483,7 @@ on for SPARC cpus.
 use '-DDEFINE_SANITIZE=1'
 
 - To enable PostgreSQL XA Driver build use '-DENABLE_POSTGRES=ON'
+
+- To disable PostgreSQL ECPG Driver build use '-DDISABLE_ECPG=ON' (for certain
+Operating systems ECPG, postgres-devel package is missing, thus let only pq
+driver to build)

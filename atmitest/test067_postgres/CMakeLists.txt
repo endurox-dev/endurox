@@ -53,27 +53,50 @@ ELSE ($ENV{RELEASE_BUILD})
 ENDIF ($ENV{RELEASE_BUILD})
 
 
-set( PGSQL_CMD "ecpg" )
-set( PGSQL_ARG "atmisv67.pgc" )
+# Build ecpg binary only if running in ecpg mode...
+# else use pq mode...
+IF(NOT DEFINED DISABLE_ECPG)
 
-add_custom_command( OUTPUT atmisv67.c
-                    COMMAND ${PGSQL_CMD} ${PGSQL_ARG}
-                    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${PGSQL_ARG}
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+    set( PGSQL_CMD "ecpg" )
+    set( PGSQL_ARG "atmisv67.pgc" )
+
+    add_custom_command( OUTPUT atmisv67.c
+                        COMMAND ${PGSQL_CMD} ${PGSQL_ARG}
+                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${PGSQL_ARG}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+
+ENDIF()
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmi.sv67 atmisv67.c ../../libatmisrv/rawmain_integra.c)
+IF(NOT DEFINED DISABLE_ECPG)
+    add_executable (atmi.sv67 atmisv67.c ../../libatmisrv/rawmain_integra.c)
+ELSE()
+    add_executable (atmi.sv67 atmisv67_2.c ../../libatmisrv/rawmain_integra.c)
+ENDIF()
+
 add_executable (atmiclt67 atmiclt67.c cltqtest67.c)
 ################################################################################
 ############################# Test - executables ###############################
-# Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB}
-                    ecpg ${PostgreSQL_LIBRARIES})
-target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB}
-                    ecpg ${PostgreSQL_LIBRARIES})
+
+IF(NOT DEFINED DISABLE_ECPG)
+
+    # Link the executable to the ATMI library & others...
+    target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB}
+                        ecpg ${PostgreSQL_LIBRARIES})
+    target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB}
+                        ecpg ${PostgreSQL_LIBRARIES})
+ELSE()
+
+    # Link the executable to the ATMI library & others...
+    target_link_libraries (atmi.sv67 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB}
+                        ${PostgreSQL_LIBRARIES})
+    target_link_libraries (atmiclt67 atmiclt atmi ubf nstd m pthread ${RT_LIB}
+                        ${PostgreSQL_LIBRARIES})
+
+ENDIF()
 
 set_target_properties(atmi.sv67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt67 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
