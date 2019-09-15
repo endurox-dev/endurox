@@ -57,6 +57,7 @@ add_library (ndrxxapq SHARED
                     pgxid.c
                     pq.c
    	        )
+target_link_libraries(ndrxxapq atmi ubf nstd ${PostgreSQL_LIBRARIES})
 
 IF(NOT DEFINED DISABLE_ECPG)
 
@@ -70,9 +71,6 @@ IF(NOT DEFINED DISABLE_ECPG)
     target_link_libraries(ndrxxaecpg atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
 
 ENDIF()
-
-target_link_libraries(ndrxxapq atmi ubf nstd ecpg ${PostgreSQL_LIBRARIES})
-
 
 add_executable (pgtest
                     codestest.c)
