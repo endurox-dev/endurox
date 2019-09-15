@@ -1809,4 +1809,32 @@ expublic int tpappthrterm(void)
     return tpterm();
 }
 
+/**
+ * Get connection object of custom XA Switch
+ * @return NULL in case of connection not open or no custom xa switch used
+ *  otherwise it is ptr to connection object
+ */
+expublic void* tpgetconn(void)
+{
+    void *ptr = NULL;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        goto out;
+    }
+    
+    if (NULL==G_atmi_env.pf_getconn)
+    {
+        ndrx_TPset_error_msg(TPENOENT, "getconn callback is not set by driver");
+    }
+    
+    ptr = G_atmi_env.pf_getconn();
+    
+out:
+    
+    return ptr;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

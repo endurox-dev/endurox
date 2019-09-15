@@ -429,6 +429,8 @@ struct atmi_lib_env
     
     int (*pf_xa_loctxabort)(XID *xid, long flags); /**< Local abort function  */
     
+    void* (*pf_getconn)(void);  /**< Return connection object  */
+    
     /**@}*/
     
     int     nrsems; /**< number of sempahores for poll() mode of service mem */
