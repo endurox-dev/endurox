@@ -314,6 +314,9 @@ ENDIF()
 # Output the project version
 set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
 
+# avoid configure warnings of not being used
+# as they are used.
+set(ignoreWarning "${DISABLE_ECPG} ${PostgreSQL_TYPE_INCLUDE_DIR}")
 ################################################################################
 # Install dir config
 ################################################################################
