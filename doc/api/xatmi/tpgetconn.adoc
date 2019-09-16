@@ -1,0 +1,71 @@
+TPGETCONN(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpgetconn - Get XA Driver database/resource connection
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void* tpgetconn(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used to return XA driver specific connection data. By default this
+function without specific XA driver use will return NULL with error set to *TPENOENT*,
+as callback for Enduro/X ATMI library is not known.
+
+If callback is installed, the function would return pointer to driver specific
+connection handler object. The pointer shall be interpreted according to driver
+specification. For example Enduro/X PostgreSQL drivers would return (PGconn *)
+pointer.
+
+In case if driver specific callback is installed and driver specific data is *NULL*,
+no *tperrno* is set.
+
+RETURN VALUE
+------------
+On success, *tpgetconn()* executes the XA Driver specific callback for getting
+connection object. The result could be pointer or NULL, *tperrno* is set to 0.
+In case if callback is not installed, the *tperrno* is set to indicate this.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
+
+*TPENOENT* Callback is not installed by XA driver.
+
+*TPESYSTEM* System failure occurred during serving.
+See logs i.e. user log, or debugs for more info.
+
+*TPEOS* System failure occurred during serving.
+See logs i.e. user log, or debugs for more info.
+
+*TPENOENT* Callback from XA driver is not installed.
+
+EXAMPLE
+-------
+See *atmitest/test067_postgres/atmiclt67.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpini(3)* *libndrxxapq(8)* *libndrxxaecpg(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

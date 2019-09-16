@@ -158,7 +158,7 @@ int main(int argc, char** argv)
     }
     
     /* get the connection which was open by tpopen() */
-    conn = tpgetconn();
+    conn = (PGconn *)tpgetconn();
 
     /* create some table... */
     
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 
     res = PQexec(conn, "insert into manextest(userid) values ((select COALESCE(max(userid), 1)+1 from manextest));");
         
-    estat =PQresultStatus(res);
+    estat = PQresultStatus(res);
 
     if (PGRES_COMMAND_OK != estat) 
     {
@@ -223,6 +223,7 @@ out:
     {
         tpabort(0);
     }
+
     tpclose();
     tpterm();
 
