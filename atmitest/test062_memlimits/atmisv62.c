@@ -58,7 +58,7 @@ void RSSALLOC (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     static char *buf = NULL;
-    int i;
+    int i, chk=0;
     
     if (NULL==buf)
     {
@@ -79,6 +79,14 @@ void RSSALLOC (TPSVCINFO *p_svc)
         buf[i] = i/3;
     }
     
+    for (i=0; i<RSS_BLOCK; i++)
+    {
+        chk+=(char)buf[i];
+    }
+    
+    /* avoid optimizations ... */
+    printf("chk %d\n", chk);
+
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
