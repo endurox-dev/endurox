@@ -126,9 +126,10 @@ if [[ "X$SPID" == "X$NPID" ]]; then
 fi
 
 echo "*************************************************************************"
-echo "* Test VSZ -> get PID of atmi.sv62"
+echo "* Test VSZ -> get PID of atmi.sv62 (wait 5 for service start...)"
 echo "*************************************************************************"
 
+sleep 5
 UNAME=`uname -s`
 
 if [ "X$UNAME" == "XAIX" ]; then

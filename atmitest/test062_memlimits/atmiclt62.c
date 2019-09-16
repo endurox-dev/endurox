@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     long rsplen;
     int ret=EXSUCCEED;
     static char *buf = NULL;
-    int i;
+    int i, chk=0;
         
     if (argc < 2)
     {
@@ -115,6 +115,14 @@ int main(int argc, char** argv)
         {
             buf[i] = i/3;
         }
+	
+        for (i=0; i<RSS_BLOCK; i++)
+        {
+            chk = chk+buf[i];
+        }
+
+	printf("chk: %d\n", chk);
+
         sleep(9999);
     }
     else if (0==strcmp("cltvsz", argv[1]))
