@@ -1,17 +1,17 @@
-LIBNDRXXAPQ(8)
-==============
+LIBNDRXXAECPG(8)
+================
 :doctype: manpage
 
 
 NAME
 ----
-libndrxxapq - Enduro/X PostgreSQL PQ XA Driver
+libndrxxaecpg - Enduro/X PostgreSQL ECPG XA Driver
 
 
 SYNOPSIS
 --------
-libndrxxapq.so
-libndrxxapq.dylib
+libndrxxaecpg.so
+libndrxxaecpg.dylib
 
 --------------------------------------------------------------------------------
 NDRX_XA_RES_ID=1
@@ -68,11 +68,16 @@ rolls back the prepared transaction.
 5. When tpabort is executed, the xa_end() within tpabort() process performs
 abort with out executing prepare.
 
+The driver can be used for standard libpq programming and for using ECPG
+precompiler. Internally the libndrxxaecpg driver manages connection by help of
+ECPG routines. But thanks to their API, the connection handler can be extracted
+to used by libPQ.
+
 The connection details are encoded in JSON based string which contains the
 database URL, user name and password.
 
-To get connection handler, used *tpgetconn(3)* function. Which is available
-for this driver.
+To get connection handler for PG sessions, used *tpgetconn(3)* function. 
+Which is available for this driver.
 
 CONNECTION PARAMETERS
 ---------------------
@@ -80,6 +85,18 @@ CONNECTION PARAMETERS
     This is standard PostgreSQL connection URL. Typically it contains database
     host, port and database name. The Enduro/X standard environment variable
     substitution is used here.
+
+*user*::
+    This is  PosgreSQL connection user name. Enduro/X standard environment
+    substitution applies. Used where applies.
+    
+*password*::
+    Password used for establishing connection. Enduro/X standard environment
+    substitution applies. Used where applies.
+
+*compat*::
+    Compatibility mode. The default is *PGSQL*. Other options are *INFORMIX*
+    and *INFORMIX_SE*.
     
 EXTERNAL SYMBOLS
 ----------------
@@ -90,8 +107,8 @@ EXTERNAL SYMBOLS
 
 CONFIGURATION EXAMPLE
 ---------------------
-When starting to use Enduro/X PQ XA Driver, ensure that PosgreSQL LIBPQ 
-is installed.
+When starting to use Enduro/X PQ XA Driver, ensure that PosgreSQL PQ and ECPG
+libraries are installed. Particularity *libecpg* and *libpq* must be installed.
 
 The typical configuration is done as a standard Enduro/X XA resource configuration,
 which can be set directly in environment variables or in *[@global]* section in
@@ -103,9 +120,10 @@ Sample configuration *app.ini* for CCTAG *DB1_PQ*:
 
 [@global/DB1_PQ]
 NDRX_XA_RES_ID=1
-NDRX_XA_OPEN_STR={"url":"postgresql://testuser:testuser1@localhost:5432/testdb"}
+NDRX_XA_OPEN_STR={"url":"tcp:postgresql://localhost:5432/testdb", 
+	"user":"testuser", "password":"testuser1"}
 NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
-NDRX_XA_DRIVERLIB=libndrxxapq.so
+NDRX_XA_DRIVERLIB=libndrxxaecpg.so
 NDRX_XA_RMLIB=-
 NDRX_XA_LAZY_INIT=1
 
@@ -136,6 +154,7 @@ File: test_expq.c
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <atmi.h>
 #include <libpq-fe.h>
 
@@ -234,7 +253,7 @@ Build the program with:
 
 --------------------------------------------------------------------------------
 
-$ cc test_expq.c -o expqtest -I/usr/include/postgresql -lpq -latmi -lnstd -lubf -lrt
+$ cc test_expq.c -o expqtest -I/usr/include/postgresql -lpq -lecpg -latmi -lnstd -lubf -lrt
 
 --------------------------------------------------------------------------------
 
@@ -256,8 +275,118 @@ testdb=> select * from manextest;
 
 --------------------------------------------------------------------------------
 
+ECPG C EXAMPLE
+--------------
+The same code example above can be written in PosgreSQL embedded C code. Assuming
+that table is already created by previous example.
+
+File: test_exec.pgc
+--------------------------------------------------------------------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ecpglib.h>
+
+#define FAIL -1
+#define SUCCEED 0
+
+int main(int argc, char** argv)
+{
+    int ret = SUCCEED;	
+    EXEC SQL BEGIN DECLARE SECTION;
+    long id;
+    EXEC SQL END DECLARE SECTION;
+
+     
+    /* open connection */
+    if (EXSUCCEED!=tpopen())
+    {
+        fprintf(stderr, "Failed to open: %s\n", tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
+    }
+
+    /* start transaction */
+    if (EXSUCCEED!=tpbegin(60, 0))
+    {
+        fprintf(stderr, "Failed to begin: %s\n", tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
+    }
+    
+    EXEC SQL SELECT COALESCE(MAX(USERID), 1)+1 into :id from manextest;
+
+    if ((sqlca.sqlcode < 0) || (sqlca.sqlcode == 100))
+    {
+
+        fprintf(stderr, "failed to get max: error code [%ld] message [%s] rows %ld, warning %c\n", 
+                    sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc, sqlca.sqlerrd[2], sqlca.sqlwarn[0]);
+        ret = FAIL;
+        goto out;
+    }
+    
+
+    EXEC SQL INSERT INTO manextest(USERID) VALUES (:id);
+
+    if ((sqlca.sqlcode < 0) || (sqlca.sqlcode == 100))
+    {
+
+        fprintf(stderr, "Failed to insert: error code [%ld] message [%s] rows %ld, warning %c\n", 
+                    sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc, sqlca.sqlerrd[2], sqlca.sqlwarn[0]);
+        ret = FAIL;
+        goto out;
+    }
+    
+    if (SUCCEED!=tpcommit(0))
+    {
+        fprintf(stderr, "TESTERROR: Commit OK, must fail!\n");
+        ret = FAIL;
+        goto out;
+    }
+
+out:
+
+    if (SUCCEED!=ret)
+    {
+        tpabort(0);
+    }
+
+    tpclose();
+    tpterm();
+}
+
+--------------------------------------------------------------------------------
+
+Build program with:
+
+--------------------------------------------------------------------------------
+
+$ ecpg test_exec.pgc
+$ cc test_exec.c -o exectest -I/usr/include/postgresql -lecpg -latmi -lnstd -lubf -lrt
+--------------------------------------------------------------------------------
+
+Execute the test:
+
+--------------------------------------------------------------------------------
+$ ./exectest
+Failed to create table: state: [42P07]: relation "manextest" already exists
+Table already exist - ignore error
+
+$ psql -U testuser -d testdb -h localhost
+
+testdb=> select * from manextest;
+ userid 
+--------
+      2
+      3
+(1 row)
+
+
+--------------------------------------------------------------------------------
+
 For more unit tests please see 'atmitest/test067_postgres' unit test folder for
-PQ source examples and configuration.
+ECPG, PQ source examples and configuration.
 
 BUGS
 ----
@@ -265,7 +394,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*libndrxxaecpg(8)* *ndrxconfig.xml(5)* *tmsrv(8)* *libndrxxawsmqs(8)* *libndrxxaoras(8)*
+*libndrxxpq(8)* *ndrxconfig.xml(5)* *tmsrv(8)* *libndrxxawsmqs(8)* *libndrxxaoras(8)*
 *tpgetconn(3)*
 
 COPYING
