@@ -106,7 +106,6 @@ int main(int argc, char** argv)
     }
     else if (0==strcmp(argv[1], "conv"))
     {
-        
         /* avoid memory leaks, just get a handler for current ATMI TLS*/
         tpgetctxt(&ctx, 0L);
         
@@ -138,12 +137,15 @@ int main(int argc, char** argv)
     }
     
 out:
+
+    tpterm();
+
     if (NULL!=ctx)
     {
+        tpsetctxt(ctx, 0L);
+        tpterm();
         tpfreectxt(ctx);
     }
-           
-    tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 
     return ret;
