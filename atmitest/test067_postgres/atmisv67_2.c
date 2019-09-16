@@ -72,7 +72,7 @@ int shared_svc_func(TPSVCINFO *p_svc)
         EXFAIL_OUT(ret);
     }
     
-    conn = tpgetconn();
+    conn = (PGconn *)tpgetconn();
     
     if (NULL==conn)
     {

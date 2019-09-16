@@ -177,7 +177,7 @@ int main(int argc, char** argv)
     }
     
     /* get the connection which was open by tpopen() */
-    conn = tpgetconn();
+    conn = (PGconn *)tpgetconn();
 
     /* create some table... */
     
