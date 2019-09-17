@@ -63,7 +63,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpini(3)* *libndrxxapq(8)* *libndrxxaecpg(8)*
+*tpinit(3)* *libndrxxapq(8)* *libndrxxaecpg(8)*
 
 COPYING
 -------
