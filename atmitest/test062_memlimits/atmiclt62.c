@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     else if (0==strcmp("cltrss", argv[1]))
     {
         /* let system to pick up the pid */
-        sleep(20);
+        sleep(10);
         if (NULL==buf)
         {
             buf = NDRX_MALLOC(RSS_BLOCK);
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
     else if (0==strcmp("cltvsz", argv[1]))
     {
         /* let system to pick up the pid */
-        sleep(20);
+        sleep(10);
         buf = NDRX_MALLOC(VSZ_BLOCK);
         if (NULL==buf)
         {
