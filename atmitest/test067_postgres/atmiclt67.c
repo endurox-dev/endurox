@@ -743,7 +743,7 @@ int main(int argc, char** argv)
     }
     
     /* tmsrv must rollback in this time */
-    sleep(7);
+    sleep(10);
     
     if (EXSUCCEED==tpcommit(0))
     {
