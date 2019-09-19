@@ -612,10 +612,10 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count,
 
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
-            fprintf(stderr, "DECLARE CURSOR failed: %s", PQerrorMessage(M_conn));
+            NDRX_LOG(log_error, "DECLARE CURSOR failed: %s", PQerrorMessage(M_conn));
             PQclear(res);
             ret = XAER_RMERR;
-         goto out;
+            goto out;
         }
 
         PQclear(res);
@@ -623,13 +623,15 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count,
         res = PQexec(M_conn, "FETCH ALL in ndrx_pq_list_xids;");
         if (PQresultStatus(res) != PGRES_TUPLES_OK)
         {
-            fprintf(stderr, "FETCH ALL failed: %s", PQerrorMessage(M_conn));
+            NDRX_LOG(log_error, "FETCH ALL failed: %s", PQerrorMessage(M_conn));
             PQclear(res);
+            ret = XAER_RMERR;
+            goto out;
         }
 
         /* Read xids into linked list? */
         nrtx = PQntuples(res);
-        
+
         NDRX_LOG(log_info, "Recovered %d transactions", nrtx);
         for (i = 0; i < nrtx; i++)
         {
@@ -646,9 +648,11 @@ exprivate int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count,
             if (EXSUCCEED!=xid_list_add(&xid_fetch))
             {
                 NDRX_LOG(log_error, "Failed to add BTID to list!");
+                PQclear(res);
                 EXFAIL_OUT(ret);
             }
         }
+        PQclear(res);
         
         /* close the scan */
         res = PQexec(M_conn, "CLOSE ndrx_pq_list_xids;");
