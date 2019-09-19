@@ -135,7 +135,6 @@ xadmin start -y || go_out 1
 xadmin recoverlocal -p
 xadmin abortlocal -y
 
-
 RET=0
 
 xadmin psc
@@ -222,7 +221,7 @@ CNT=`xadmin recoverlocal | wc | awk '{print $1}'`
 if [ "X$CNT" != "X1" ]; then
 
     echo "Expected 1 transaction, got: $CNT"
-    goto_out -10
+    go_out -10
 
 fi
 
