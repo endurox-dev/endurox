@@ -82,6 +82,7 @@ struct err_msg
     {NDRXD_ERROR(NDRXD_EABORT)},
     {NDRXD_ERROR(NDRXD_EENVFAIL)},
     {NDRXD_ERROR(NDRXD_EINVAL)},
+    {NDRXD_ERROR(NDRXD_ENORMAL)},
     
     {NDRXD_ERROR(NDRXD_EMAXVAL)}	/* maximum error message */
 };
