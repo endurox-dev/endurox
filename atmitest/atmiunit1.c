@@ -393,6 +393,13 @@ Ensure(test046_twopasscfg)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test047_oradb)
+{
+    int ret;
+    ret=system_dbg("test047_oradb/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 Ensure(test048_cache)
 {
     int ret;
@@ -620,6 +627,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test044_ping);
     add_test(suite,test045_tpcallnoblock);
     add_test(suite,test046_twopasscfg);
+#ifdef NDRX_ENABLE_TEST47
+    add_test(suite,test047_oradb);
+#endif
     add_test(suite,test048_cache);
     add_test(suite,test049_masksvc);
     add_test(suite,test050_ubfdb);
