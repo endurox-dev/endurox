@@ -75,6 +75,9 @@
 /* Defined if pscript is off */
 #cmakedefine NDRX_DISABLEPSCRIPT @NDRX_DISABLEPSCRIPT@
 
+/* Defined test048 on */
+#cmakedefine NDRX_ENABLE_TEST47 @NDRX_ENABLE_TEST47@
+
 /* Is address sanitizer enabled */
 #cmakedefine NDRX_SANITIZE @NDRX_SANITIZE@
 
