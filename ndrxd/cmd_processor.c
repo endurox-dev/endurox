@@ -490,17 +490,18 @@ expublic int command_wait_and_run(int *finished, int *abort)
             
             p = strtok_r(NULL, ",", &savePtr);
         }
-        
-        /* TODO: set different error...
+	
         if (is_normal_only)
         {
-            
-        }*/
-        
-        NDRXD_set_error_fmt(NDRXD_ECONTEXT, "Invalid ndrxd mode. Current is "
-                "'%s' but required '%s'", get_ctx_string(G_command_state.context), 
-                tmp_out);
-        
+            NDRXD_set_error_fmt(NDRXD_ENORMAL, "Invalid ndrxd mode. Current is "
+                "'%s' but required '%s'", get_ctx_string(G_command_state.context), tmp_out);
+        }
+        else
+        {
+            NDRXD_set_error_fmt(NDRXD_ECONTEXT, "Invalid ndrxd mode. Current is "
+                "'%s' but required '%s'", get_ctx_string(G_command_state.context), tmp_out);
+        }
+
         if (EXSUCCEED!=simple_command_reply(call, EXFAIL, 0L, NULL, NULL, 0L, 0, NULL))
         {
             userlog("Failed to send reply back to [%s]", call->reply_queue);
