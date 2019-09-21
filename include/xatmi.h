@@ -294,6 +294,12 @@ extern "C" {
 #define CONF_NDRX_SVPPID         "NDRX_SVPPID" 
 /** Server ID */
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
+/** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
+ * state required by command
+ */
+#define CONF_NDRX_NORMWAITMAX    "NDRX_NORMWAITMAX"
+/** Default for  NDRX_NORMWAITMAX */    
+#define CONF_NDRX_NORMWAITMAX_DLFT    60
 
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

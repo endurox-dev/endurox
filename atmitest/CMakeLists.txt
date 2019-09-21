@@ -123,6 +123,7 @@ add_subdirectory (test067_postgres)
 ENDIF()
 
 add_subdirectory (test068_tpadm)
+add_subdirectory (test069_wnormal)
 
 ################################################################################
 # Master test case driver
