@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     long l;
-    char *rsp;
+    char *rsp=NULL;
     char tmp[51];
     long bal;
     int ret=EXSUCCEED;
