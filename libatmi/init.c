@@ -421,6 +421,21 @@ expublic int ndrx_load_common_env(void)
                             G_atmi_env.ndrxd_pidfile);
     }
     
+    /* wait for ndrxd to enter in normal context... */
+    p = getenv(CONF_NDRX_NORMWAITMAX);
+    
+    if (NULL!=p)
+    {
+        G_atmi_env.max_normwait = atoi(p);
+    }
+    else
+    {
+        G_atmi_env.max_normwait = CONF_NDRX_NORMWAITMAX_DLFT;
+    }
+    
+    NDRX_LOG(log_debug, "ndrxd normal wait set to: %d attempts", 
+                G_atmi_env.max_normwait);
+    
     /* <XA Protocol configuration - currently optional...> */
     
     /* resource id: */

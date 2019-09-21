@@ -69,14 +69,28 @@ COMMANDS
     Start application domain. If config not loaded, it loads
     configuration automatically. '-y' means do not ask for confirmation. '-s' means
     ATMI servers binary name to be started, instead of whole application domain.
-    '-i' means start specific server instance.
+    '-i' means start specific server instance. In case if *ndrxd(8)* was busy
+    with other session tasks (other terminal start/stop or internal server reload
+    on limited memory use), the xadmin will re-attempt to send message to *ndrxd*
+    before giving up. The number of attempts are configured in *NDRX_NORMWAITMAX*
+    environment variable (default is 60), between attempts 1 second sleep is done.
+    see *ex_env(5)*.
 *psc*::
     Print services
-*stop* [-y] [-s <server>] [-i <srvid>] [-k]::
+*stop* [-y] [-s <server>] [-i <srvid>] [-k] [-f]::
     Stop application domain. '-y' means do not ask for confirmation. '-s' means
     ATMI servers binary name to be stopped, instead of whole application domain.
     '-i' means stop specific server instance. '-k' flag will keep 'ndrxd' running,
-    and protected servers will not be shutdown.
+    and protected servers will not be shutdown. In case if *ndrxd(8)* process
+    is doing start or stop for other xadmin session (or doing internal server
+    reloads in case if memory limits reached), then command will perform several
+    re-attempts for executing the command. The attempts are configured in 
+    *NDRX_NORMWAITMAX* environment variable. Between attempts, 1 second sleep is
+    done. In case if *stop* command was unable to send message to *ndrxd*, command
+    will exit with failure, and will not wait for *ndrxd* termination.
+    In case if '-f' force flag is set, the xadmin will wait indefinitely until
+    *ndrxd* will not be found in the system. No matter message was sent to ndrxd
+    or not. see *ex_env(5)*.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
     Reload application domain - restart server instance by instance.
     Configuration be loaded prior.
@@ -380,7 +394,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxd(8)*, *q.conf(5)*, *tmqueue(8)* *cpmsrv(8)*
+*ndrxd(8)*, *q.conf(5)*, *tmqueue(8)* *cpmsrv(8)* *ex_env(5)*
 
 COPYING
 -------
