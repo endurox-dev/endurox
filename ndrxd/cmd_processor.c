@@ -273,6 +273,20 @@ expublic int get_cmdq_attr(struct mq_attr *attr)
     
     return ret;
 }
+
+/**
+ * Return context string
+ * @param ctx context number
+ * @return static context string
+ */
+exprivate char * get_ctx_string(int ctx)
+{
+    /* must match NDRXD_CTX* constants, array index = ctx+1 */
+    static char* ctx_str[] = {"any", "normal", "starting", "stopping"};
+    
+    return ctx_str[ctx+1];
+}
+
 /**
  * Wait for commands and process the one by one...
  * @param finished
@@ -442,13 +456,57 @@ expublic int command_wait_and_run(int *finished, int *abort)
     /* Check the running context if not in context & not any. */
     if (NULL==strstr(cmd->contexts, context_check) && NULL==strstr(cmd->contexts, ",-1,"))
     {
-        NDRXD_set_error_fmt(NDRXD_ECONTEXT, "Invalid context for command. Current:"
-                " [%s] supported: [%s]", context_check, cmd->contexts);
+        char tmp_modes[128]="";
+        char tmp_out[128]="";
+        char *p;
+        char *savePtr;
+        int is_normal_only = EXFALSE;
         
+        /* loop over the contexts and build the string */
+        NDRX_STRCPY_SAFE(tmp_modes, cmd->contexts);
+        
+        /* perform strrtok_r */
+        p = strtok_r(tmp_modes, ",", &savePtr);
+        while (p != NULL)
+        {
+            int ct = atoi(p);
+            
+            if (EXEOS==tmp_out[0])
+            {
+                NDRX_STRCPY_SAFE(tmp_out, get_ctx_string(ct));
+                
+                if (NDRXD_CTX_ZERO==ct)
+                {
+                    is_normal_only=EXTRUE;
+                }
+            }
+            else
+            {
+                NDRX_STRCAT_S(tmp_out, sizeof(tmp_out), ", ");
+                NDRX_STRCAT_S(tmp_out, sizeof(tmp_out), get_ctx_string(ct));
+                
+                is_normal_only=EXFALSE;
+            }
+            
+            p = strtok_r(NULL, ",", &savePtr);
+        }
+	
+        if (is_normal_only)
+        {
+            NDRXD_set_error_fmt(NDRXD_ENORMAL, "Invalid ndrxd mode. Current is "
+                "'%s' but required '%s'", get_ctx_string(G_command_state.context), tmp_out);
+        }
+        else
+        {
+            NDRXD_set_error_fmt(NDRXD_ECONTEXT, "Invalid ndrxd mode. Current is "
+                "'%s' but required '%s'", get_ctx_string(G_command_state.context), tmp_out);
+        }
+
         if (EXSUCCEED!=simple_command_reply(call, EXFAIL, 0L, NULL, NULL, 0L, 0, NULL))
         {
             userlog("Failed to send reply back to [%s]", call->reply_queue);
         }
+        
         goto out;
     }
 
