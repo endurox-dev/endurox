@@ -433,17 +433,15 @@ struct atmi_lib_env
     
     /**@}*/
     
-    int     nrsems; /**< number of sempahores for poll() mode of service mem */
-    
-    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode) */
-    
-    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!) */
-    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
+    int     nrsems; /**< number of sempahores for poll() mode of service mem    */
+    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode)     */
+    int     max_normwait; /**< Max number of attempts for busy context of ndrxd */
+    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!)    */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end*/
     int     qprefix_match_len;              /**< Includes number bytes to match */
-    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
-    char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                   */
-    
-    ndrx_env_priv_t integpriv;    /**< integration  private data               */
+    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!)               */
+    char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
+    ndrx_env_priv_t integpriv;    /**< integration  private data                */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;

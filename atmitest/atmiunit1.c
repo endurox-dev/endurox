@@ -548,6 +548,13 @@ Ensure(test068_tpadm)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test069_wnormal)
+{
+    int ret;
+    ret=system_dbg("test069_wnormal/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -664,6 +671,7 @@ TestSuite *atmi_test_all(void)
 #endif
     
     add_test(suite, test068_tpadm);
+    add_test(suite, test069_wnormal);
     
     return suite;
 }
