@@ -514,7 +514,9 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     char    msg_buffer_max[NDRX_MSGSIZEMAX];
     
     long  reply_len;
-
+    int attempts = 1;
+    
+restart:
     NDRX_LOG(log_debug, "gencall command: %d, reply_only=%d, need_reply=%d "
             "call flags=0x%x, getcall flags=%d",
             ndrxd_cmd, reply_only, need_reply, (NULL!=call?call->flags:0), flags);
@@ -688,13 +690,34 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         else
         {
             char buf[2048];
-            snprintf(buf, sizeof(buf), "fail, code: %d: %s", 
-                    reply->error_code, reply->error_msg);
+            
+            attempts++;
+            
+            if (NDRXD_ENORMAL==reply->error_code && attempts < G_atmi_env.max_normwait)
+            {
+                snprintf(buf, sizeof(buf), "%s. Attempt %d/%d", 
+                        reply->error_msg, attempts, G_atmi_env.max_normwait);
+                
+                NDRX_LOG(log_warn, "%s", buf);
+
+                if (NULL!=p_put_output)
+                    p_put_output(buf);
+                
+                sleep(1);
+                
+                goto restart;
+            }
+            else
+            {
+                snprintf(buf, sizeof(buf), "fail, code: %d: %s", 
+                        reply->error_code, reply->error_msg);
+            }
+            
             NDRX_LOG(log_warn, "%s", buf);
 
             if (NULL!=p_put_output)
                     p_put_output(buf);
-
+            
             ret = reply->status;
             goto out;
         }

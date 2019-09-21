@@ -352,7 +352,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                     EXFALSE,
                     G_config.listcall_flags);
     
-    if (call.complete_shutdown)
+    /* Do not wait in case if sending was not successful */
+    if (call.complete_shutdown && (EXSUCCEED==ret || force_off))
     {
         NDRX_LOG(log_debug, "About to un-init after shutdown");
         un_init(EXTRUE);
@@ -373,6 +374,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                 /* have some usleep */
                 usleep(100000);
             }
+            /* shutdown is ok */
+            ret = EXSUCCEED;
         }
         else
         {
