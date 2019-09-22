@@ -579,11 +579,14 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
         
+    /* set larger timeout, as in slow machines we might get timeout here...*/
+    tptoutset(90);
     if (EXSUCCEED!=tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+    tptoutset(10);
     
     if (900!=(ret=(int)sql_count()))
     {
