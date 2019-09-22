@@ -659,7 +659,10 @@ TestSuite *atmi_test_all(void)
  * test cases, thus cannot test...
  */
 #ifndef NDRX_SANITIZE
+/* seems like we get incorrect vms readings ... */
+#ifndef EX_OS_DARWIN
     add_test(suite, test062_memlimits);
+#endif
 #endif
     add_test(suite, test063_cpmrange);
     add_test(suite, test064_bufswitch);
