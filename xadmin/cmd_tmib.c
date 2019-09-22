@@ -142,7 +142,7 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     if (EXFAIL==Bchg(p_ub, TA_OPERATION, 0, NDRX_TA_GET, 0L)
                 || EXFAIL==Bchg(p_ub, TA_CLASS, 0, clazz, 0)
                 ||  EXFAIL==Bchg(p_ub, TA_FLAGS, 0, (char *)&flags, 0)
-                ||  EXEOS!=lmid[0] && EXFAIL==Bchg(p_ub, TA_LMID, 0, lmid, 0)
+                ||  (EXEOS!=lmid[0] && EXFAIL==Bchg(p_ub, TA_LMID, 0, lmid, 0))
                 )
     {
         NDRX_LOG(log_error, "Failed to setup UBF buffer: %s", Bstrerror(Berror));
