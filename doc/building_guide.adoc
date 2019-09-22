@@ -330,7 +330,7 @@ ulimit -s 30751
 #export TNS_ADMIN=\$ORACLE_HOME/network/admin
 
 ################################################################################
-# In case if building with Posgresql DB database testing support
+# In case if building with Postgresql DB database testing support
 # or building endurox-java with Oracle DB tests (03_xapostgres), then
 # configure bellow setting (demo values provided):
 # If so - uncomment bellow
@@ -512,6 +512,8 @@ greater than 0, e.g. 1000.
 # vi /var/lib/pgsql/data/postgresql.conf
 
 -- Edit the max_prepared_transactions
+
+max_prepared_transactions = 1000                # zero disables the feature
 
 --------------------------------------------------------------------------------
 
