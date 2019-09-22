@@ -125,10 +125,105 @@ for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpss
 	echo $f
 done
 
+
+################################################################################
+# In case if building with Postgresql DB database testing support
+# or building endurox-java with Oracle DB tests (03_xapostgres), then
+# configure bellow setting (demo values provided):
+# If so - uncomment bellow
+################################################################################
+#export EX_PG_HOST=localhost
+#export EX_PG_USER=exdbtest
+#export EX_PG_PASS=exdbtest1
+# currently uses default port
+#export EX_PG_PORT=5432
+#export EX_PG_DB=xe
+
 EOF
 
 $ chmod +x $HOME/ndrx_home
+
 ---------------------------------------------------------------------
+
+=== Configuring PostgreSQL
+
+If Enduro/X PostgreSQL driver is needed to be build for MacOS, the PostgreSQL
+needs to be installed for build and test purposes. For installation purposes 'brew'
+is used.
+
+--------------------------------------------------------------------------------
+
+$ su - user1
+$ brew update
+$ brew install postgresql
+
+--------------------------------------------------------------------------------
+
+Once PostgreSQL is installed, update the configuration and create the database.
+Also needs to ensure that *user1* has write permissions to 'var' folder:
+
+--------------------------------------------------------------------------------
+
+--- Add user to admin groups so that it has access to /usr/local/var
+sudo dseditgroup -o edit -a user1 -t user admin
+sudo dseditgroup -o edit -a user1 -t user wheel
+
+-- ensure that user1 has write permissions:
+$ sudo chmod g+w /usr/local/var/
+
+-- Create the DB for postgres. If installing Postgresql from other user, then
+-- folder needs to be removed.
+$ initdb /usr/local/var/postgres
+
+$ pg_ctl -D /usr/local/var/postgres -l logfile start
+
+$ createuser exdbtest
+
+$ createdb xe
+
+$ psql -d template1
+
+> alter user exdbtest with encrypted password 'exdbtest1';
+> grant all privileges on database xe to exdbtest;
+> \q
+
+--------------------------------------------------------------------------------
+
+Configuration files needs to be updated for authentication and distributed
+transactions must be enabled too.
+
+Edit */usr/local/var/postgres/postgresql.conf*, set "max_prepared_transactions"
+to 1000.
+
+--------------------------------------------------------------------------------
+max_prepared_transactions = 1000                # zero disables the feature
+--------------------------------------------------------------------------------
+
+For access permissions and network configuration, update 
+*/usr/local/var/postgres/pg_hba.conf*, so that it contains following:
+
+--------------------------------------------------------------------------------
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+--------------------------------------------------------------------------------
+
+
+Restart PostgreSQL:
+--------------------------------------------------------------------------------
+$ pg_ctl -D /usr/local/var/postgres stop
+$ pg_ctl -D /usr/local/var/postgres start
+--------------------------------------------------------------------------------
+
+To add PostgreSQL to system startup, execute:
+
+--------------------------------------------------------------------------------
+
+$ brew services start postgresql
+
+--------------------------------------------------------------------------------
+
+*NOTE:* Auto startup adding works only in case if brew was installed from 'user1'.
 
 === Building the code
 
@@ -140,6 +235,7 @@ $ cmake -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:P
 $ make 
 $ make install
 ---------------------------------------------------------------------
+
 
 == Unit Testing
 
