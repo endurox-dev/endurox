@@ -96,7 +96,8 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm, short parse)
         memset(&xid, 0, sizeof(xid));
 
         sz = sizeof(xid);
-        if (NULL==ndrx_xa_base64_decode(tmxid, strlen(tmxid), &sz, (char *)&xid))
+        if (NULL==ndrx_xa_base64_decode((unsigned char *)tmxid, strlen(tmxid),
+                &sz, (char *)&xid))
         {
             NDRX_LOG(log_warn, "Failed to parse XID -> Corrupted base64?");
         }
