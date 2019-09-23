@@ -40,6 +40,19 @@
 #include <ubf.h>
 #include <test.fd.h>
 
+/**
+ * Support #457 - test for timeout
+ */
+void TOUTSV (TPSVCINFO *p_svc)
+{
+    sleep(30);
+    tpreturn(  TPFAIL,
+                0L,
+                NULL,
+                0L,
+                0L);
+} 
+
 void CONVSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
@@ -131,7 +144,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
         ret=EXFAIL;
     }
-    
+
+    if (EXSUCCEED!=tpadvertise("TOUTSV", TOUTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TOUTSV!");
+        ret=EXFAIL;
+    }
     
     return ret;
 }
