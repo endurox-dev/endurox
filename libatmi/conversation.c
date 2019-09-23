@@ -164,7 +164,6 @@ expublic int accept_connection(void)
     int ret=EXSUCCEED;
     tp_conversation_control_t *conv;
     long revent;
-    int q_opened=EXFALSE;
     char their_qstr[NDRX_MAX_Q_SIZE+1];
     ATMI_TLS_ENTRY;
     
@@ -200,7 +199,6 @@ expublic int accept_connection(void)
         ret=EXFAIL;
         goto out;
     }
-    q_opened=EXTRUE;
 
     /* 2. Connect to their reply queue */
     NDRX_STRCPY_SAFE(conv->reply_q_str, G_atmi_tls->G_last_call.reply_to);
@@ -266,12 +264,14 @@ expublic int accept_connection(void)
 out:
 
     /* Close down the queue if we fail but queue was opened! */
-    if (EXSUCCEED!=ret && q_opened)
+    if (EXSUCCEED!=ret)
     {
-        if (EXFAIL==ndrx_mq_close(conv->my_listen_q))
+        if ((mqd_t)EXFAIL!=conv->my_listen_q && 
+            EXFAIL==ndrx_mq_close(conv->my_listen_q))
         {
             NDRX_LOG(log_warn, "Failed to close %s:%s",
                         conv->my_listen_q_str, strerror(errno));
+            conv->my_listen_q=(mqd_t)EXFAIL;
         }
     }
 
@@ -328,8 +328,9 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     int ret=EXSUCCEED;
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s: %s: Closing [%s] killq=%d",  __func__, dbgmsg, 
-            conv->my_listen_q_str, killq);
+    NDRX_LOG(log_debug, "%s: %s: Closing [%s] killq=%d cd=%d my_listen_q=%p reply_q=%p",
+		 __func__, dbgmsg, conv->my_listen_q_str, killq, conv->cd,
+		(void *)conv->my_listen_q, (void*)conv->reply_q);
 
     /* close down the queue */
     if ((mqd_t)EXFAIL!=conv->my_listen_q && EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
@@ -393,6 +394,8 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     rcv_hash_delall(conv); /* Remove all buffers if left... */
     
     memset(conv, 0, sizeof(*conv));
+    conv->my_listen_q = (mqd_t)EXFAIL;
+    conv->reply_q = (mqd_t)EXFAIL;
     
 out:
     return ret;
