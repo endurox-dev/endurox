@@ -129,7 +129,7 @@ xadmin psc
 
 # Run the client test...
 echo "Will issue client calls:"
-(./atmiclt3 2>&1) > ./atmiclt-dom1.log
+(./atmiclt3 normal 2>&1) > ./atmiclt-dom1.log
 RET=$?
 
 echo "PSVC DOM 1 (AFTER RUN)"

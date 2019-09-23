@@ -190,6 +190,7 @@ expublic int accept_connection(void)
                     /* In accepted connection we put their id */
                     G_atmi_tls->G_atmi_conf.my_id
                     );
+    conv->reply_q = (mqd_t)EXFAIL;
     
     /* TODO: Firstly we should open the queue on which to listen right? */
     if ((mqd_t)EXFAIL==(conv->my_listen_q =
@@ -331,7 +332,7 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
             conv->my_listen_q_str, killq);
 
     /* close down the queue */
-    if (EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
+    if ((mqd_t)EXFAIL!=conv->my_listen_q && EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
     {
         NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
                                          conv->my_listen_q_str, strerror(errno));
@@ -357,7 +358,7 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     NDRX_LOG(log_debug, "Closing [%s]",  conv->reply_q_str);
 
     /* close down the queue */
-    if (EXSUCCEED!=ndrx_mq_close(conv->reply_q))
+    if ((mqd_t)EXFAIL!=conv->reply_q && EXSUCCEED!=ndrx_mq_close(conv->reply_q))
     {
         NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
                                         conv->reply_q_str, strerror(errno));
@@ -388,7 +389,6 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
          */
         atmi_xa_cd_unreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), conv->cd);
     }
-    
     
     rcv_hash_delall(conv); /* Remove all buffers if left... */
     
@@ -687,6 +687,9 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     conv = &G_atmi_tls->G_tp_conversation_status[cd];
     /* Hmm setup cd? */
     conv->cd = cd;
+    /* reset queues... */
+    conv->my_listen_q = (mqd_t)EXFAIL;
+    conv->reply_q = (mqd_t)EXFAIL;
     
     memset(call, 0, sizeof(*call));
 
