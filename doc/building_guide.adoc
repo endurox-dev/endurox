@@ -206,6 +206,12 @@ installation of packages:
 libxml2-devel libgpgme-devel asciidoc cmake dia rpm-build
 ---------------------------------------------------------------------
 
+PostgreSQL can be installed in following way:
+
+---------------------------------------------------------------------
+# zypper install postgresql postgresql-devel postgresql-server postgresql-contrib
+---------------------------------------------------------------------
+
 
 ==== System level dependencies - for Centos/RHEL/Oracle Linux 8.x
 
