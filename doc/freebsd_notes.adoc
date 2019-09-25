@@ -124,6 +124,51 @@ EOF
 $ chmod +x $HOME/ndrx_home
 ---------------------------------------------------------------------
 
+=== Configuring PostgreSQL
+
+If Enduro/X PostgreSQL driver is needed to be build for FreeBSD, the PostgreSQL
+needs to be installed for build and test purposes. To install database on this
+system, use following commands:
+
+--------------------------------------------------------------------------------
+
+$ sudo pkg install postgresql96-server postgresql96-client
+
+-- Add postgres to startup:
+$ sudo sysrc postgresql_enable=yes
+
+--------------------------------------------------------------------------------
+
+Once PostgreSQL is installed, update the configuration and create the database.
+Create database first and start the server:
+
+--------------------------------------------------------------------------------
+
+$ sudo service postgresql initdb
+$ sudo service postgresql start
+
+--------------------------------------------------------------------------------
+
+Now create the database for Enduro/X tests:
+
+--------------------------------------------------------------------------------
+$ sudo -s
+
+$ su - postgres
+
+$ createuser exdbtest
+
+$ createdb xe
+
+$ psql -d template1
+
+> alter user exdbtest with encrypted password 'exdbtest1';
+> grant all privileges on database xe to exdbtest;
+> \q
+
+--------------------------------------------------------------------------------
+
+
 === Building the code
 
 ---------------------------------------------------------------------
