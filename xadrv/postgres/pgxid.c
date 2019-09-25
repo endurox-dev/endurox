@@ -76,7 +76,7 @@ expublic int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz)
     curpos = strlen(buf);
             
     outsz = bufsz - curpos;
-    if (NULL==ndrx_base64_encode(xid->data,
+    if (NULL==ndrx_base64_encode((unsigned char *)xid->data,
                     xid->gtrid_length,
                     &outsz,
                     buf + curpos))
@@ -94,7 +94,7 @@ expublic int ndrx_pg_xid_to_db(XID *xid, char *buf, int bufsz)
     
     /* build up the bqual part */
     outsz = bufsz - curpos;
-    if (NULL==ndrx_base64_encode(xid->data + xid->gtrid_length,
+    if (NULL==ndrx_base64_encode((unsigned char *)xid->data + xid->gtrid_length,
                     xid->bqual_length,
                     &outsz,
                     buf + curpos))
