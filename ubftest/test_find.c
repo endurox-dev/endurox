@@ -428,7 +428,7 @@ Ensure(test_cbfindocc)
     /* Test as char */
     c=88;
     assert_equal(CBfindocc(p_ub, T_SHORT_FLD, (char *)&c, 0, BFLD_CHAR), 0);
-    c=251;
+    c=(char)251;
     assert_equal(CBfindocc(p_ub, T_LONG_FLD, (char *)&c, 0, BFLD_CHAR), 100);
     c=99;
     assert_equal(CBfindocc(p_ub, T_CHAR_FLD, (char *)&c, 0, BFLD_CHAR), 0);
