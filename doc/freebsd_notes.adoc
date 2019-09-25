@@ -147,7 +147,7 @@ system, use following commands:
 
 --------------------------------------------------------------------------------
 
-$ sudo pkg install postgresql96-server postgresql96-client
+$ sudo pkg install postgresql96-server postgresql96-client postgresql96-contrib
 
 -- Add postgres to startup:
 $ sudo sysrc postgresql_enable=yes
