@@ -1,8 +1,8 @@
 /*
     see copyright notice in pscript.h
 */
-#include "pspcheader.h"
 #include <math.h>
+#include "pspcheader.h"
 #include <stdlib.h>
 #include "psopcodes.h"
 #include "psvm.h"
