@@ -236,7 +236,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
 #ifndef EX_CPM_NO_THREADS
-    ndrxd_sigchld_init();
+    cpm_sigchld_init();
 #endif
     
     /* attach to the shared memory */
@@ -300,9 +300,8 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     cpm_killall();
     
 #ifndef EX_CPM_NO_THREADS
-    ndrxd_sigchld_uninit();
+    cpm_sigchld_uninit();
 #endif
-    
     
     ndrx_cltshm_detach();
     ndrx_cltshm_remove(EXFALSE);

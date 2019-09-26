@@ -56,13 +56,26 @@
 #include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/**
+ * Support #459 
+ * locked debug use signal-thread
+ * Fact is if we forking, we might get lock on localtime_r
+ * by signal thread, and the forked process will try to debug
+ * but will be unable because there will be left over lock on localtime_r
+ * from the signal thread which no more exists after the fork.
+ */
+#define LOCKED_DEBUG(lev, fmt, ...) MUTEX_LOCK_V(M_forklock);\
+                                    NDRX_LOG(lev, fmt, ##__VA_ARGS__);\
+                                    MUTEX_UNLOCK_V(M_forklock);
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
-
+MUTEX_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
 /*---------------------------Prototypes---------------------------------*/
 
 #if EX_CPM_NO_THREADS
@@ -134,11 +147,11 @@ exprivate void * check_child_exit(void *arg)
 
     if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
     {
-        NDRX_LOG(log_always, "%s: pthread_sigmask failed (thread): %s",
+        LOCKED_DEBUG(log_always, "%s: pthread_sigmask failed (thread): %s",
             __func__, strerror(errno));
     }
     
-    NDRX_LOG(log_debug, "check_child_exit - enter...");
+    LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     for (;;)
     {
         int got_something = 0;
@@ -147,15 +160,15 @@ exprivate void * check_child_exit(void *arg)
  * if we do not have any childs, then sleep for 1 sec.
  */
 #ifndef EX_OS_DARWIN
-        NDRX_LOG(log_debug, "about to sigwait()");
+        LOCKED_DEBUG(log_debug, "about to sigwait()");
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
-            NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
+            LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
 #endif
         
-        NDRX_LOG(log_debug, "about to wait()");
+        LOCKED_DEBUG(log_debug, "about to wait()");
         /*
         while ((chldpid = wait(&stat_loc)) >= 0)
          */  
@@ -173,13 +186,20 @@ exprivate void * check_child_exit(void *arg)
             if (NULL!=c)
             {
                 c->dyn.cur_state = CLT_STATE_NOTRUN;
-
+                
+                
+                /* these bellow use some debug and time funcs
+                 * thus lock all
+                 */
+                MUTEX_LOCK_V(M_forklock);
                 /* update shared memory to stopped... */
                 ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
                 
                 c->dyn.exit_status = stat_loc;
                 /* Set status change time */
+                /* have some lock due to time use... */
                 cpm_set_cur_time(c);
+                MUTEX_UNLOCK_V(M_forklock);
             }
             
             cpm_unlock_config(); /* we are done... */
@@ -187,7 +207,7 @@ exprivate void * check_child_exit(void *arg)
         }
 
 #if EX_OS_DARWIN
-        NDRX_LOG(6, "wait: %s", strerror(errno));
+        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
         if (!got_something)
         {
             sleep(1);
@@ -207,7 +227,7 @@ exprivate void * check_child_exit(void *arg)
  * not thread safe.
  * @return
  */
-expublic void ndrxd_sigchld_init(void)
+expublic void cpm_sigchld_init(void)
 {
     pthread_attr_t pthread_custom_attr;
     pthread_attr_t pthread_custom_attr_dog;
@@ -247,7 +267,7 @@ expublic void ndrxd_sigchld_init(void)
  * Un-initialize sigchild monitor thread
  * @return
  */
-expublic void ndrxd_sigchld_uninit(void)
+expublic void cpm_sigchld_uninit(void)
 {
     char *fn = "ndrxd_sigchld_uninit";
 
