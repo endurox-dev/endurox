@@ -603,7 +603,9 @@ expublic int cpm_exec(cpm_process_t *c)
     c->dyn.was_started = EXTRUE; /* We tried to start...                */
     c->dyn.shm_read = EXFALSE;  /* We try to boot it, not attached      */
     /* clone our self */
+    MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
+    MUTEX_UNLOCK_V(M_forklock);
 
     if( pid == 0)
     {
