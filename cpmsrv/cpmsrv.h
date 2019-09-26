@@ -170,8 +170,8 @@ extern cpm_process_t * cpm_get_client_by_pid(pid_t pid);
 extern cpm_process_t * cpm_client_get(char *tag, char *subsect);
 /* extern void sign_chld_handler(int sig); */
 
-extern void ndrxd_sigchld_init(void);
-extern void ndrxd_sigchld_uninit(void);
+extern void cpm_sigchld_init(void);
+extern void cpm_sigchld_uninit(void);
 
 extern void cpm_pidtest(cpm_process_t *c);
 extern int cpm_kill(cpm_process_t *c);
