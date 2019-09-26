@@ -149,9 +149,9 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_USE_EPOLL "1")
     ENDIF()
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
-# Configure the compiler, we support XLC too..
-
+        # Configure the compiler, we support XLC too..
         message("No threads mode for CPM - bit slower child process exit status check...")
+        SET ( CMAKE_CXX_FLAGS "-O2 -qtls -q64 -b64" CACHE STRING "compile flags" FORCE)
         # Seems aix 7.1 does not like threads mixed with fork...
         set(EX_CPM_NO_THREADS "1")
         set(NDRX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
