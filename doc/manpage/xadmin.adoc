@@ -354,6 +354,10 @@ COMMANDS
     *T_MACHINE*, *T_QUEUE*, *T_SERVER*, *T_SERVICE* and *T_SVCGRP*. The parameter
     *-m* returns the output in machine readable format.
 
+*udown* [-y]::
+    Remove all System V resources used by user. This includes any of: queues,
+    shared memory and semaphores. '-y' is used for confirmation.
+
 CONFIGURATION
 -------------
 The following parameters from section *[@xadmin]* or *[@xadmin/<$NDRX_CCTAG>]*
