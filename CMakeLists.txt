@@ -149,8 +149,7 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_USE_EPOLL "1")
     ENDIF()
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
-# Configure the compiler, we support XLC too..
-
+        # Configure the compiler, we support XLC too..
         message("No threads mode for CPM - bit slower child process exit status check...")
         # Seems aix 7.1 does not like threads mixed with fork...
         set(EX_CPM_NO_THREADS "1")
@@ -161,6 +160,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
             set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
             message("XL compiler")
+            SET ( CMAKE_CXX_FLAGS "-O2 -qtls -q64 -b64 -qsuppress=1500-030" CACHE STRING "compile flags" FORCE)
             set ( CMAKE_C_FLAGS " -D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE ")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qwarn64 -qpic -bexpfull -b64")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -brtl -qtls -q64 -qlanglvl=extc99")
