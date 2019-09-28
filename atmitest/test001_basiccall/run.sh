@@ -53,6 +53,7 @@ export PATH=$PATH:$TESTDIR
 
 # client timeout
 export NDRX_TOUT=2
+export NDRX_SILENT=Y
 export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
 
 set | grep NDRX_
@@ -76,6 +77,20 @@ fi
 
 xadmin killall atmi.sv1 2>/dev/null
 xadmin killall atmiclt1 2>/dev/null
+
+#
+# Have some test for udown
+#
+echo "Test udown..."
+
+xadmin udown -y
+
+OUT=`xadmin shms`
+
+if [ "X$OUT" != "X" ]; then
+	echo "udown not working [$OUT]"
+	RET=-99
+fi
 
 popd 2>/dev/null
 
