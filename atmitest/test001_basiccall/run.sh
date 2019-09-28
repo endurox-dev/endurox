@@ -78,25 +78,6 @@ fi
 xadmin killall atmi.sv1 2>/dev/null
 xadmin killall atmiclt1 2>/dev/null
 
-#
-# Have some test for udown
-#
-echo "Test udown..."
-
-echo "before"
-xadmin shms
-echo "udown.."
-xadmin udown -y
-echo "after.."
-xadmin shms
-
-OUT=`xadmin shms`
-
-if [ "X$OUT" != "X" ]; then
-	echo "udown not working [$OUT]"
-	RET=-99
-fi
-
 popd 2>/dev/null
 
 exit $RET
