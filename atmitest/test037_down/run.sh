@@ -420,7 +420,7 @@ SHMS=`xadmin shms`
 echo "After udown [$SHMS]"
 
 if [ "X$SHMS" != "X" ]; then
-        echo "Test not ready.."
+        echo "udown failed to remove resources"
     go_out -101
 fi
 
