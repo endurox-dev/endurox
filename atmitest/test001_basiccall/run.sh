@@ -83,7 +83,12 @@ xadmin killall atmiclt1 2>/dev/null
 #
 echo "Test udown..."
 
+echo "before"
+xadmin shms
+echo "udown.."
 xadmin udown -y
+echo "after.."
+xadmin shms
 
 OUT=`xadmin shms`
 
