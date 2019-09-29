@@ -125,6 +125,10 @@ for f in libthpool libexuuid libcgreen libubf libnstd libnetproto libatmi libpss
 	echo $f
 done
 
+# Increase stack size
+# if not increased, in endurox-go and/or endurox-connect
+# might get "unexpected return pc for runtime.gopark called from ..." or similar panics
+ulimit -s 30751
 
 ################################################################################
 # In case if building with Postgresql DB database testing support
