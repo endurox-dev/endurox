@@ -38,11 +38,11 @@ find_program(DBLATEX "dblatex")
 
 set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide 
                        getting_started_tutorial persistent_message_queues_overview
-                        osx_notes aix_notes solaris_notes freebsd_notes
+                        macos_notes aix_notes solaris_notes freebsd_notes
 						benchmark)
 set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide
                        getting_started_tutorial persistent_message_queues_overview
-                        osx_notes aix_notes solaris_notes freebsd_notes
+                        macos_notes aix_notes solaris_notes freebsd_notes
 						benchmark)
 
 # Generate PDFs...
