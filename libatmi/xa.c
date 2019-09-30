@@ -167,10 +167,10 @@ expublic int atmi_xa_init(void)
 
         if ((error = dlerror()) != NULL) 
         {
-            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch': %s", 
+            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
                 G_atmi_env.xa_driverlib, error);
 
-            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch': %s", 
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
                 G_atmi_env.xa_driverlib, error);
             EXFAIL_OUT(ret);
         }
