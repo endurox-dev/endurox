@@ -184,7 +184,7 @@ $ su - root
 # systemctl enable postgresql
 ---------------------------------------------------------------------
 
-==== System level dependencies - for Suse Linux Enterprise Server 12.3
+==== System level dependencies - for Suse Linux Enterprise Server 12.3, 15
 
 To install all required dependencies, you need following sets of DVDs (or
 other sources), or later
@@ -210,6 +210,10 @@ PostgreSQL can be installed in following way:
 
 ---------------------------------------------------------------------
 # zypper install postgresql postgresql-devel postgresql-server postgresql-contrib
+# systemctl start postgresql
+# systemctl enable postgresql
+# systemctl status postgresql
+
 ---------------------------------------------------------------------
 
 
@@ -514,7 +518,7 @@ greater than 0, e.g. 1000.
 
 -- for debian/ubuntu
 # vi /etc/postgresql/*/main/postgresql.conf 
--- for RedHat
+-- for RedHat, SLES
 # vi /var/lib/pgsql/data/postgresql.conf
 
 -- Edit the max_prepared_transactions
@@ -524,7 +528,7 @@ max_prepared_transactions = 1000                # zero disables the feature
 --------------------------------------------------------------------------------
 
 Network connection shall be enabled too for Posgres auth, edit the *pg_hba.conf*
-(for RHEL /var/lib/pgsql/data/pg_hba.conf)
+(for RHEL, SLES /var/lib/pgsql/data/pg_hba.conf)
 
 Ensure that it contains following lines (for password auth):
 
@@ -534,7 +538,7 @@ host    all             all             127.0.0.1/32            md5
 host    all             all             ::1/128                 md5
 --------------------------------------------------------------------------------
 
-After that restart PostgreSQL:
+After that restart PostgreSQL (according to OS):
 
 --------------------------------------------------------------------------------
 # systemctl restart postgresql

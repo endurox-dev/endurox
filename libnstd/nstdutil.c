@@ -34,6 +34,7 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
+#define _GNU_SOURCE
 #include <ndrstandard.h>
 #include <time.h>
 #include <sys/time.h>

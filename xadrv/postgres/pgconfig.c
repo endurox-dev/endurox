@@ -106,10 +106,10 @@ expublic int ndrx_pg_xa_cfgparse(char *buffer, ndrx_pgconnect_t *conndata)
         name = (char *)exjson_object_get_name(root_object, i);
 
         if (
-                (param=CONF_URL) && 0==strcmp(name, "url") ||
-                (param=CONF_USER) && 0==strcmp(name, "user") ||
-                (param=CONF_PASS) && 0==strcmp(name, "password") ||
-                (param=CONF_COMPAT) && 0==strcmp(name, "compat")
+                ((param=CONF_URL) && 0==strcmp(name, "url")) ||
+                ((param=CONF_USER) && 0==strcmp(name, "user")) ||
+                ((param=CONF_PASS) && 0==strcmp(name, "password")) ||
+                ((param=CONF_COMPAT) && 0==strcmp(name, "compat"))
             )
         {
             

@@ -53,6 +53,7 @@ export PATH=$PATH:$TESTDIR
 
 # client timeout
 export NDRX_TOUT=2
+export NDRX_SILENT=Y
 export NDRX_DEBUG_CONF=`pwd`/debug-dom1.conf
 
 set | grep NDRX_
