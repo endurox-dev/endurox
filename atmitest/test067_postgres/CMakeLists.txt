@@ -42,8 +42,6 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/libnstd
 					 ${ENDUROX_SOURCE_DIR}/ubftest
                                          ${PostgreSQL_INCLUDE_DIRS})
-
-
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -68,7 +66,9 @@ IF(NOT DEFINED DISABLE_ECPG)
 ENDIF()
 
 # Make sure the linker can find the UBF library once it is built.
-link_directories (${ENDUROX_BINARY_DIR}/libubf) 
+link_directories (${ENDUROX_BINARY_DIR}/libubf
+		# freebsd ecpg path...
+		/usr/local/lib) 
 
 ############################# Test - executables ###############################
 IF(NOT DEFINED DISABLE_ECPG)
