@@ -396,6 +396,34 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-go_out $RET
+################################################################################
+echo "Test udown"
+################################################################################
+./atmiclt37 &
+sleep 1
+xadmin killall atmiclt37
+echo "There must be some shared mem.."
+
+SHMS=`xadmin shms`
+
+echo "Before udown [$SHMS]"
+
+if [ "X$SHMS" == "X" ]; then
+    echo "Test not ready.."
+    go_out -100
+fi
+
+xadmin udown -y
+
+SHMS=`xadmin shms`
+
+echo "After udown [$SHMS]"
+
+if [ "X$SHMS" != "X" ]; then
+        echo "udown failed to remove resources"
+    go_out -101
+fi
+
+go_out 0
 
 # vim: set ts=4 sw=4 et smartindent:

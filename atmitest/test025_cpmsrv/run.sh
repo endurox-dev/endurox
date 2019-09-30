@@ -104,6 +104,12 @@ function test_proc_cnt {
     XPROC_COUNT=$cnt
     echo ">>> $PSCMD procs: $CNT"
     if [[ "X$CNT" != "X$XPROC_COUNT" ]]; then 
+        echo "****** grep"
+        $PSCMD | grep $proc | grep -v grep
+        echo "****** wc"
+        $PSCMD | grep $proc | grep -v grep | wc
+        echo "******"
+
         echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
         go_out $go
     fi
