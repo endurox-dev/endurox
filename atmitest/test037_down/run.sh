@@ -355,7 +355,7 @@ ipcs | grep $NDRX_IPCKEY
 CNT=`ipcs | grep $NDRX_IPCKEY | wc | awk '{print $1}'`
 echo "DOM1 Semaphores (guessed): $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
-    echo "TESTERROR! The semaphore with key [$IPCKEY] must be removed!!"
+    echo "TESTERROR! The semaphore with key [$NDRX_IPCKEY] must be removed!!"
     go_out 19
 fi
 
