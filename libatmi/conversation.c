@@ -330,7 +330,7 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     
     NDRX_LOG(log_debug, "%s: %s: Closing [%s] killq=%d cd=%d my_listen_q=%p reply_q=%p",
 		 __func__, dbgmsg, conv->my_listen_q_str, killq, conv->cd,
-		(void *)conv->my_listen_q, (void*)conv->reply_q);
+		(void *)(long)conv->my_listen_q, (void*)(long)conv->reply_q);
 
     /* close down the queue */
     if ((mqd_t)EXFAIL!=conv->my_listen_q && EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))

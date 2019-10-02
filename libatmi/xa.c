@@ -165,13 +165,14 @@ expublic int atmi_xa_init(void)
 
         func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
 
-        if ((error = dlerror()) != NULL) 
+        if (!func) 
         {
-            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch': %s", 
-                G_atmi_env.xa_driverlib, error);
+            error = dlerror();
+            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+                G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
 
-            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch': %s", 
-                G_atmi_env.xa_driverlib, error);
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+                G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
             EXFAIL_OUT(ret);
         }
 
