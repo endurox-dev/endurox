@@ -351,7 +351,12 @@ fi
 #
 # Test for system v semaphore to be removed...
 #
+echo "**** IPCS ALL ****"
+ipcs
+echo "**** IPCS $NDRX_IPCKEY ****"
 ipcs | grep $NDRX_IPCKEY
+echo "**** IPCS END ****"
+
 CNT=`ipcs | grep $NDRX_IPCKEY | wc | awk '{print $1}'`
 echo "DOM1 Semaphores (guessed): $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
