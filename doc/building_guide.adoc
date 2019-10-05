@@ -111,6 +111,17 @@ Now install system depenencies
 $
 ---------------------------------------------------------------------
 
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# service postgresql initdb
+# chkconfig postgresql on
+# service postgresql start
+---------------------------------------------------------------------
+
 ==== System level dependencies - for Centos/RHEL/Oracle Linux 7.x
 
 Now install system dependencies  
@@ -544,6 +555,7 @@ After that restart PostgreSQL (according to OS):
 # systemctl restart postgresql
 --------------------------------------------------------------------------------
 
+If Postgresql does not boot, then try "trust" for the "local/all".
 
 After these steps test database table shall be created. That could be done in
 following way:
