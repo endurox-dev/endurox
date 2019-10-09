@@ -229,7 +229,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Letting domains to sync..."
-sleep 1
+sleep 5
 
 echo "DOM 1 testing"
 xadmin cs k@db18_1
@@ -316,7 +316,7 @@ ensure_keys g@db18_1 0
 ensure_keys db18_2 0
 
 
-sleep 1
+sleep 5
 echo "DOM 2 testing"
 
 set_dom2;
