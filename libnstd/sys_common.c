@@ -1171,7 +1171,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
         T        ID     KEY        MODE       OWNER    GROUP
         Semaphores:
         s   2097152 0x58002281 --ra-ra-ra-     root   system
-        s         1 0x44002281 --ra-ra-ra-     root   system
+        s         1 0x20002281 --ra-ra-ra-     root   system
         s   1048578 0x7a0c584a --ra-------   zabbix   zabbix
         s         3 0x620000a3 --ra-r--r--     root   system
         
