@@ -176,7 +176,7 @@ if [ $? -ne 0 ]; then
     go_out 1
 fi
 
-sleep 1
+sleep 5
 
 echo "Running off client on domain 2"
 set_dom2;
