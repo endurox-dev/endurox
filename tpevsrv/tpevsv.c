@@ -288,7 +288,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                         last_call->user3, last_call->user4)))
                 {
                     NDRX_LOG(log_error, "Call bridge %d: [%s]: %s",
-                                    nodeid, EV_TPEVDOPOST,  tpstrerror(tperrno));
+                                    nodeid, tmpsvc,  tpstrerror(tperrno));
                 }
                 else
                 {
