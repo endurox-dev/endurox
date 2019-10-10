@@ -61,7 +61,7 @@
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30</appopt>
+            <appopt>-f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30</appopt>
         </server>
         
 	</servers>
