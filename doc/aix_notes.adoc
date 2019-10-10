@@ -165,10 +165,41 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
 
+################################################################################
+# In case if building with Postgresql DB database testing support
+# or building endurox-java with Oracle DB tests (03_xapostgres), then
+# configure bellow setting (demo values provided):
+# If so - uncomment bellow
+################################################################################
+#export EX_PG_HOST=localhost
+#export EX_PG_USER=exdbtest
+#export EX_PG_PASS=exdbtest1
+# currently uses default port
+#export EX_PG_PORT=5432
+#export EX_PG_DB=xe
+
+
 EOF
 
 $ chmod +x $HOME/ndrx_home
 ---------------------------------------------------------------------
+
+=== Configuring PostgreSQL
+
+If Enduro/X PostgreSQL driver is needed to be build for AIX, the PostgreSQL
+needs to be installed for build and test purposes. To install database on this
+system, use following commands. Installation is based on AIX 7.1 with assuming
+that *yum* functionality is available:
+
+--------------------------------------------------------------------------------
+
+$ su - root
+
+# yum install postgresql.ppc  postgresql-devel.ppc  postgresql-libs.ppc  \
+ postgresql-server.ppc postgresql-contrib.ppc
+
+--------------------------------------------------------------------------------
+TODO:
 
 === Building the code with xlC
 
