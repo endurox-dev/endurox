@@ -137,6 +137,8 @@
 #define	EX_IF_RSPCHTTPONLY	((BFLDID32)167772776)	/* number: 616	 type: string */
 #define	EX_IF_REQFORMN	((BFLDID32)167772780)	/* number: 620	 type: string */
 #define	EX_IF_REQFORMV	((BFLDID32)167772781)	/* number: 621	 type: string */
+#define	EX_IF_REQQUERYN	((BFLDID32)167772782)	/* number: 622	 type: string */
+#define	EX_IF_REQQYERTV	((BFLDID32)167772783)	/* number: 623	 type: string */
 #define	EX_IF_URCODE	((BFLDID32)33555062)	/* number: 630	 type: long */
 #define	EX_IF_REQDATA	((BFLDID32)201327223)	/* number: 631	 type: carray */
 #define	EX_IF_RSPDATA	((BFLDID32)201327224)	/* number: 632	 type: carray */
