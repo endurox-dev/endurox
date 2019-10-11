@@ -206,6 +206,9 @@ EX_IF_REQFORMV              521         string -        Request Form Value
 # Service user return code
 EX_IF_URCODE                530         long  -         User return code
 
+EX_IF_REQDATA               531         carray -        Request data / body
+EX_IF_RSPDATA               532         carray -        Response data / body
+
 ################################################################################
 # TCP Inter-connecting
 ################################################################################
