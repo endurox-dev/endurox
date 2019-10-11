@@ -204,7 +204,7 @@ EX_IF_REQFORMN              520         string -        Request Form Name
 EX_IF_REQFORMV              521         string -        Request Form Value
 
 EX_IF_REQQUERYN             522         string -        URL request Query field Name
-EX_IF_REQQYERYV             523         string -        URL request Query field value
+EX_IF_REQQUERYV             523         string -        URL request Query field value
 
 # Service user return code
 EX_IF_URCODE                530         long  -         User return code
