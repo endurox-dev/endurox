@@ -138,6 +138,8 @@
 #define	EX_IF_REQFORMN	((BFLDID32)167772780)	/* number: 620	 type: string */
 #define	EX_IF_REQFORMV	((BFLDID32)167772781)	/* number: 621	 type: string */
 #define	EX_IF_URCODE	((BFLDID32)33555062)	/* number: 630	 type: long */
+#define	EX_IF_REQDATA	((BFLDID32)201327223)	/* number: 631	 type: carray */
+#define	EX_IF_RSPDATA	((BFLDID32)201327224)	/* number: 632	 type: carray */
 #define	EX_NETDATA	((BFLDID32)201327242)	/* number: 650	 type: carray */
 #define	EX_NETGATEWAY	((BFLDID32)167772811)	/* number: 651	 type: string */
 #define	EX_NETCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
