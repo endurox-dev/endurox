@@ -300,6 +300,8 @@ if [ "X$FAILSVG" == "X" ]; then
     go_out -25
 fi
 
+xadmin psc
+
 TESTSVC1G=`xadmin mibget -c T_SVCGRP -m | egrep '1\|TESTSV\|1/101\|ACT\|101\|N/A\|-1\|-1\|-1\|-1\|-1\|-1\|'`
 
 if [ "X$TESTSVC1G" == "X" ]; then
