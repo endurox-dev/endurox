@@ -526,6 +526,13 @@ Ensure(test_Bchg_carray_org)
     len=sizeof(carray);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, carray, sizeof(carray)), 0);
+
+    /* test empty carray */
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)carray, 0, BFLD_CARRAY), EXSUCCEED);
+    len=sizeof(carray);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
+    assert_equal(len, 0);
+
     do_dummy_data_test(p_ub);
 
     /* Special test for hadling large strings & carrays */
