@@ -570,6 +570,13 @@ if(APTPROG)
 	set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
 endif()
 
+#
+# Fix arch for AIX
+#
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
+	set(CPACK_RPM_PACKAGE_ARCHITECTURE "ppc")
+ENDIF()
+
 set(CPACK_PACKAGE_CONTACT "madars.vitolins@gmail.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
 #set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2,openssl,libgpgme11")
