@@ -95,12 +95,15 @@ Which should be installed in following way:
 Download the latest epel-release rpm from (e.g. epel-release-6-8.noarch.rpm or later)
 http://dl.fedoraproject.org/pub/epel/6/x86_64/
 Install epel-release rpm:
+
 ---------------------------------------------------------------------
 $ su - root
 # wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 # rpm -Uvh epel-release*rpm
 ---------------------------------------------------------------------
+
 Now install system depenencies  
+
 ---------------------------------------------------------------------
 # yum update
 # yum groupinstall 'Development Tools'
@@ -112,7 +115,10 @@ $
 ---------------------------------------------------------------------
 
 If running unit tests with PostgreSQL, then following additional package shall
-be installed:
+be installed. Note that default PostgreSQL version 8.x have issues with ECPG
+transactions - transaction management in ECPG works incorrectly. ECPG tries
+to perform auto-commit (even instructed not to do so). Thus only PQ mode
+driver is released.
 
 ---------------------------------------------------------------------
 $ su - root
