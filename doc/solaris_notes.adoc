@@ -232,7 +232,24 @@ $ cd /export/home/user1/endurox
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON .
 ---------------------------------------------------------------------
 
+In case if errors like
+
+---------------------------------------------------------------------
+ld: fatal: file /usr/lib/values-xpg6.o: wrong ELF class: ELFCLASS32
+---------------------------------------------------------------------
+
+appears, temporary solution is to replace that particular file with 64bit version.
+It appears that Solaris Studio compiler ignores the "-m64" architecture flags
+and does not use "/usr/lib/amd64/values-xpg6.o" where it requires.
+
+---------------------------------------------------------------------
+# su - root
+# mv /usr/lib/values-xpg6.o /usr/lib/values-xpg6.o.OLD
+# ln -s /usr/lib/amd64/values-xpg6.o /usr/lib/values-xpg6.o
+---------------------------------------------------------------------
+
 === Solaris 10 (NOT SUPPORTED)
+
 This assumes that GCC is installed, and "ar" from gcc will be used.
 
 ---------------------------------------------------------------------
