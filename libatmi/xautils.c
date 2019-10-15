@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -40,6 +41,7 @@
 
 #include <atmi.h>
 #include <atmi_shm.h>
+#include <atmi_int.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <ndrxd.h>
@@ -80,32 +82,60 @@
 
 /**
  * Extract info from xid.
- * @param xid xid
- * @param p_nodeid return nodeid
- * @param p_srvid return serverid
+ * @param[in] xid binary xid
+ * @param[out] p_nodeid cluster node id on which tran started
+ * @param[out] p_srvid server which started xid
+ * @param[out] p_rmid_start resource manager id which started tran
+ * @param[out] p_rmid_cur current database RM ID
+ * @param[out] p_btid current branch id
  */
-expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid)
+expublic void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid)
 {
     
-    memcpy((char *)p_nodeid, xid->data + sizeof(exuuid_t) + sizeof(unsigned char), 
-            sizeof(short));
+    memcpy((char *)p_rmid_start, xid->data + NDRX_XID_TRID_LEN, sizeof(unsigned char));
+
+    memcpy((char *)(p_nodeid), xid->data+NDRX_XID_TRID_LEN+sizeof(unsigned char)
+            ,sizeof(short));
     
-    memcpy((char *)p_srvid, xid->data + sizeof(exuuid_t) 
-            +sizeof(unsigned char) + sizeof(short), sizeof(short));
+    memcpy((char *)(p_srvid), xid->data+NDRX_XID_TRID_LEN+sizeof(unsigned char)
+            +sizeof(short)
+            ,sizeof(short));
+    
+    memcpy(p_rmid_cur, xid->data + xid->gtrid_length - 
+            sizeof(long) - sizeof(char), sizeof(unsigned char));
+        
+    memcpy(p_btid, xid->data + xid->gtrid_length - 
+            sizeof(long), sizeof(long));
+    
+    *p_nodeid = (short) ntohs(*p_nodeid);
+    *p_srvid = (short) ntohs(*p_srvid);
+    *p_btid = (long)ntohll(*p_btid);
+    
+    NDRX_LOG(log_debug, "%hd/%hd/%hd/%ld",
+            (short)*p_rmid_start, *p_srvid, (short)*p_rmid_cur, *p_btid);
+    
 }
 
 
 /**
  * Return XID info for XID string
- * @param xid_str
- * @param p_nodeid
- * @param p_srvid
+ * @param[in] xid_str
+ * @param[out] p_nodeid cluster node id on which tran started
+ * @param[out] p_srvid server which started xid
+ * @param[out] p_rmid_start resource manager id which started tran
+ * @param[out] p_rmid_cur current database RM ID
+ * @param[out] p_btid current branch id
  */
-expublic void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid)
+expublic void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid)
 {
     XID xid;
     memset(&xid, 0, sizeof(xid));
-    atmi_xa_xid_get_info(atmi_xa_deserialize_xid((unsigned char *)xid_str, &xid), p_nodeid, p_srvid);
+    atmi_xa_xid_get_info(atmi_xa_deserialize_xid((unsigned char *)xid_str, &xid), 
+        p_nodeid, p_srvid, p_rmid_start, p_rmid_cur, p_btid);
 }
 
 /**
@@ -118,7 +148,6 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     int ret=EXSUCCEED;
     unsigned char tmp[XIDDATASIZE+64];
     int tot_len;
-    int data_len = xid->gtrid_length+xid->bqual_length;
     size_t out_len = 0;
     /* we should serialize stuff in platform independent format... */
     
@@ -138,9 +167,12 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     tmp[5] = (unsigned char)xid->bqual_length;
     tot_len+=1;
     
-    /* copy off the data: TODO - is data in uid endianness agnostic? */
-    memcpy(tmp+6, xid->data, data_len);
-    tot_len+=data_len;
+    /* copy off the data portions: TODO - is data in uid endianness agnostic? */
+    memcpy(tmp+6, xid->data, NDRX_XID_TRID_LEN);
+    tot_len+=NDRX_XID_TRID_LEN;
+    
+    memcpy(tmp+6+NDRX_XID_TRID_LEN, xid->data+NDRX_XID_TRID_LEN, NDRX_XID_BQUAL_LEN);
+    tot_len+=NDRX_XID_BQUAL_LEN;
     
     NDRX_DUMP(log_debug, "Original XID", xid, sizeof(*xid));
     
@@ -148,7 +180,7 @@ expublic char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out)
     NDRX_DUMP(log_debug, "XID data for serialization", tmp, tot_len);
     
     ndrx_xa_base64_encode(tmp, tot_len, &out_len, xid_str_out);
-    xid_str_out[out_len] = EXEOS;
+    /* xid_str_out[out_len] = EXEOS; */
     
     NDRX_LOG(log_debug, "Serialized xid: [%s]", xid_str_out);    
     
@@ -198,7 +230,9 @@ expublic XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out)
     /* restore bqual_length */
     xid_out->bqual_length = tmp[5];
     
-    memcpy(xid_out->data, tmp+6, tot_len - 6);
+    /* restore the id */
+    memcpy(xid_out->data, tmp+6, NDRX_XID_TRID_LEN+NDRX_XID_BQUAL_LEN);
+    memcpy(xid_out->data+MAXGTRIDSIZE, tmp+6, NDRX_XID_TRID_LEN+NDRX_XID_BQUAL_LEN);
  
     NDRX_DUMP(log_debug, "Original XID restored ", xid_out, sizeof(*xid_out));
     
@@ -229,10 +263,11 @@ expublic atmi_xa_tx_info_t * atmi_xa_curtx_get(char *tmxid)
  * @param tmrmid
  * @param tmnodeid
  * @param tmsrvid
+ * @param[in] btid branch tid
  * @return ptr to entry or NULL
  */
 expublic atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
-        short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms)
+        short tmrmid, short tmnodeid, short tmsrvid, char *tmknownrms, long btid)
 {
     atmi_xa_tx_info_t * tmp = NDRX_CALLOC(1, sizeof(atmi_xa_tx_info_t));
     ATMI_TLS_ENTRY;
@@ -247,6 +282,7 @@ expublic atmi_xa_tx_info_t * atmi_xa_curtx_add(char *tmxid,
     tmp->tmrmid = tmrmid;
     tmp->tmnodeid = tmnodeid;
     tmp->tmsrvid = tmsrvid;
+    tmp->btid = btid;
     NDRX_STRCPY_SAFE(tmp->tmknownrms, tmknownrms);
     
     EXHASH_ADD_STR( G_atmi_tls->G_atmi_xa_curtx.tx_tab, tmxid, tmp );
@@ -274,26 +310,6 @@ expublic void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo)
     return;
 }
 
-/**
- * Convert call structure to xai
- * @param p_xai
- * @param call
- * @return 
- */
-expublic atmi_xa_tx_info_t * atmi_xa_curtx_from_call(tp_command_call_t *call)
-{
-    atmi_xa_tx_info_t * ret = NULL;
-    /* Firstly we should do the lookup (maybe already registered?)
-     * If not then register the handle and return ptr
-     */
-    if (NULL==(ret = atmi_xa_curtx_get(call->tmxid)))
-    {
-     ret = atmi_xa_curtx_add(call->tmxid, call->tmrmid, 
-             call->tmnodeid, call->tmsrvid, call->tmknownrms);
-    }
-    
-    return ret;
-}
 #if 0
 /**
  * Convert call to xai (only data copy, does not register)
@@ -312,13 +328,11 @@ expublic void atmi_xa_xai_from_call(atmi_xa_tx_info_t * p_xai, tp_command_call_t
 /*************************** Transaction info manipulation ********************/
 
 /**
- * Load into bisubf buffer info about new transaction created.
+ * Load into UBF buffer info about new transaction created.
+ * WARNING ! THIS DOES NOT SET TMTXBTID!
  * @param p_ub
- * @param tmxid
- * @param tmrmid
- * @param tmnodeid
- * @param tmsrvid
- * @return 
+ * @param[out] p_xai global incl local btid transaction descriptor
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
 {
@@ -346,9 +360,11 @@ out:
  * Read transaction info received from TM
  * @param p_ub
  * @param p_xai
+ * @param[in] flags see atmi_xa_read_tx_info_flags group
  * @return 
  */
-expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
+expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai,
+                    int flags)
 {
     int ret = EXSUCCEED;
     
@@ -359,9 +375,18 @@ expublic int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai)
             EXSUCCEED!=Bget(p_ub, TMKNOWNRMS, 0, (char *)p_xai->tmknownrms, 0L)
             )
     {
-        NDRX_LOG(log_error, "Failed to setup TMXID/TMRMID/TMNODEID/"
+        NDRX_LOG(log_error, "Failed to get TMXID/TMRMID/TMNODEID/"
                 "TMSRVID/TMKNOWNRMS! - %s", Bstrerror(Berror));
         EXFAIL_OUT(ret);
+    }
+
+    if (!(flags & XA_TXINFO_NOBTID))
+    {
+        if (EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&p_xai->btid, 0L))
+        {
+            NDRX_LOG(log_error, "Failed to get TMTXBTID! - %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
@@ -389,16 +414,18 @@ expublic void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms)
     int i;
     int cnt = strlen(tmknownrms);
     char tmp[128]={EXEOS};
+    int len;
     
     for (i=0; i<cnt; i++)
     {
+        len = strlen(tmp);
         if (i<cnt-1)
         {
-            sprintf(tmp+strlen(tmp), "%hd ", (short)tmknownrms[i]);
+            snprintf(tmp+len, sizeof(tmp)-len, "%hd ", (short)tmknownrms[i]);
         }
         else
         {
-            sprintf(tmp+strlen(tmp), "%hd", (short)tmknownrms[i]);
+            snprintf(tmp+len, sizeof(tmp)-len, "%hd", (short)tmknownrms[i]);
         }
     }
     NDRX_LOG(dbglev, "%s: %s", msg, tmp);
@@ -446,7 +473,7 @@ expublic int atmi_xa_update_known_rms(char *dst_tmknownrms, char *src_tmknownrms
     int len2;
     int ret = EXSUCCEED;
     
-    NDRX_LOG(log_error, "src len: %d", len);
+    NDRX_LOG(log_debug, "src len: %d", len);
     
     for (i=0; i<len; i++)
     {
@@ -473,39 +500,6 @@ out:
 }
 
 /**
- * Update known RMs, with info from xai
- * @param p_xai
- */
-expublic int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai)
-{
-    int ret = EXSUCCEED;
-    int cnt;
-    ATMI_TLS_ENTRY;
-    
-    if (NULL==strchr(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
-            (unsigned char)p_xai->tmrmid))
-    {
-        /* Updated known RMs */
-        if ((cnt=strlen(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms)) > NDRX_MAX_RMS)
-        {
-            NDRX_LOG(log_error, "Maximum Resource Manager reached (%d)", 
-                    NDRX_MAX_RMS);
-            userlog("Maximum Resource Manager reached (%d) - Cannot join process "
-                    "to XA transaction", NDRX_MAX_RMS);
-            ret=EXFAIL;
-            goto out;
-        }
-        
-        G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms[cnt] = (unsigned char)p_xai->tmrmid;
-    }
-    
-    atmi_xa_print_knownrms(log_info, "Known RMs", 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms);
-out:
-
-    return ret;
-}
-/**
  * Set current thread info from xai + updates known RMs..
  * We should search the hash list of the current transaction and make the ptr 
  * as current. If not found, then we shall register
@@ -523,7 +517,7 @@ expublic int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
     if (NULL==(G_atmi_tls->G_atmi_xa_curtx.txinfo = atmi_xa_curtx_get(p_xai->tmxid)) &&
          NULL==(G_atmi_tls->G_atmi_xa_curtx.txinfo = 
             atmi_xa_curtx_add(p_xai->tmxid, p_xai->tmrmid, 
-            p_xai->tmnodeid, p_xai->tmsrvid, p_xai->tmknownrms)))
+            p_xai->tmnodeid, p_xai->tmsrvid, p_xai->tmknownrms, p_xai->btid)))
             
     {
         NDRX_LOG(log_error, "Set current transaction failed!");
@@ -533,34 +527,6 @@ expublic int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai)
     
 out:
         return ret;
-}
-
-/**
- * Set current tx info from tx buffer.
- * @param p_ub
- * @param p_xai
- * @return 
- */
-expublic int atmi_xa_set_curtx_from_tm(UBFH *p_ub)
-{
-    int ret = EXSUCCEED;
-    atmi_xa_tx_info_t xai;
-    
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    /* transfer stuff to current context */
-    if (EXSUCCEED!=atmi_xa_set_curtx_from_xai(&xai))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-    
-out:
-    return ret;
 }
 
 /**
@@ -642,6 +608,50 @@ out:
 }
 
 /**
+ * Call Transaction Manager, report status of BTID
+ * @param p_xai transaction info block
+ * @param rmstatus status to report
+ * @return NULL on 
+ */
+expublic UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rmstatus)
+{
+    UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_RMSTATUS);
+    
+    
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "Failed to allocate %c command buffer", ATMI_XA_RMSTATUS);
+        goto out;
+    }
+    
+    /* Set BTID */
+    if (EXSUCCEED!=Bchg(p_ub, TMTXBTID, 0, (char *)&(p_xai->btid), 0L))
+    {
+        tpfree((char *)p_ub);
+        ndrx_TPset_error_fmt(TPESYSTEM,  
+                "Failed to set TMTXBTID %d:[%s]", 
+                Berror, Bstrerror(Berror));
+        goto out;
+    }
+    
+    /* Set RM status */
+    if (EXSUCCEED!=Bchg(p_ub, TMTXRMSTATUS, 0, (char *)&rmstatus, 0L))
+    {
+        tpfree((char *)p_ub);
+        ndrx_TPset_error_fmt(TMTXRMSTATUS,  
+                "Failed to set TMTXBTID %d:[%s]", 
+                Berror, Bstrerror(Berror));
+        goto out;
+    }
+    /* finally call the TMSRV */
+    p_ub=atmi_xa_call_tm_generic_fb(ATMI_XA_RMSTATUS, NULL, EXFALSE, EXFAIL, p_xai, p_ub);
+    
+out:    
+    return p_ub;
+    
+}
+
+/**
  * Generic transaction manager call
  * @param cmd - TM command
  * @param call_any - should we call any our RMID
@@ -649,15 +659,25 @@ out:
  * @param p_xai
  * @param [in] flags shared system flags and user transaction flags
  *     see 
+ * @param [in] btid branch tid
  * @return 
  */
 expublic UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid, 
-        atmi_xa_tx_info_t *p_xai, long flags)
+        atmi_xa_tx_info_t *p_xai, long flags, long btid)
 {
     UBFH *p_ub = atmi_xa_alloc_tm_call(cmd);
     
     if (NULL!=p_ub)
     {
+        if (EXFAIL!=btid && EXSUCCEED!=Bchg(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
+        {
+            tpfree((char *)p_ub);
+            ndrx_TPset_error_fmt(TPESYSTEM,  
+                    "Failed to set TMTXBTID %d:[%s]", 
+                    Berror, Bstrerror(Berror));
+            goto out;
+        }
+        
         if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&flags, 0L))
         {
             tpfree((char *)p_ub);
@@ -792,12 +812,16 @@ out:
 /**
  * Return current transactions XID in context of the branch.
  * We should deserialize & replace branch id
+ * Branch details are added to each part of the XID at the end.
  * TODO: add cache.
+ * @param[in] btid branch tid which is part of xid
  * @return 
  */
-expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
+expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid)
 {
     unsigned char rmid = (unsigned char)G_atmi_env.xa_rmid; /* max 255...! */
+    long btidh = htonll(btid);
+    
     ATMI_TLS_ENTRY;
     
     memset(&G_atmi_tls->xid, 0, sizeof(G_atmi_tls->xid));
@@ -806,8 +830,39 @@ expublic XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai)
     /* set current branch id - do we need this actually? 
      * How about byte order?
      */
-    memcpy(G_atmi_tls->xid.data + sizeof(exuuid_t), 
-            &rmid, sizeof(unsigned char));
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length - 
+            sizeof(long) - 
+            sizeof(char), 
+            &rmid, 
+            sizeof(unsigned char));
+    
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length + 
+            G_atmi_tls->xid.bqual_length - 
+            sizeof(long) - 
+            sizeof(char),
+            &rmid, 
+            sizeof(unsigned char));
+    
+    /* Add Branch TID: */
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length - 
+            sizeof(long),
+            &btidh, 
+            sizeof(btidh));
+    
+    memcpy(G_atmi_tls->xid.data + 
+            G_atmi_tls->xid.gtrid_length + 
+            G_atmi_tls->xid.bqual_length - 
+            sizeof(long),
+            &btidh, 
+            sizeof(btidh));
+    
+    /* Dump the branch XID */
+    
+    NDRX_LOG(log_debug, "BTID=%ld/%ld rmid=%d", btid, btidh, (int)rmid);
+    NDRX_DUMP(log_debug, "Branch XID", &G_atmi_tls->xid, sizeof(G_atmi_tls->xid));
     
     return &G_atmi_tls->xid;
 }   

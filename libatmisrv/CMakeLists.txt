@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -75,7 +76,7 @@ add_library (atmisrvnomain SHARED
                 nomain.c
    	    )
 # Integration library
-add_library (atmisrvinteg SHARED
+add_library (objatmisrvinteg OBJECT
                 svqdispatch.c
                 init.c
                 serverapi.c
@@ -91,6 +92,12 @@ add_library (atmisrvinteg SHARED
 
 add_library (atmisrvdum SHARED
 		dum.c)
+
+# shared libraries need PIC
+set_property(TARGET objatmisrvinteg PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(atmisrvinteg SHARED $<TARGET_OBJECTS:objatmisrvinteg>)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmisrvdum nstd) # just for cywing build, anyway we need to use integration mode...

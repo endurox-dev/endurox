@@ -9,9 +9,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -60,6 +61,7 @@
 #include <tperror.h>
 #include <atmi_tls.h>
 #include "Exfields.h"
+#include "sys_test.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -163,13 +165,14 @@ expublic int atmi_xa_init(void)
 
         func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
 
-        if ((error = dlerror()) != NULL) 
+        if (!func) 
         {
-            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch': %s", 
-                G_atmi_env.xa_driverlib, error);
+            error = dlerror();
+            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+                G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
 
-            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch': %s", 
-                G_atmi_env.xa_driverlib, error);
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+                G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
             EXFAIL_OUT(ret);
         }
 
@@ -188,6 +191,12 @@ expublic int atmi_xa_init(void)
         
         NDRX_LOG(log_info, "Using XA %s", 
                 (G_atmi_env.xa_sw->flags&TMREGISTER)?"dynamic registration":"static registration");
+        
+        if (G_atmi_env.xa_sw->flags & TMNOMIGRATE)
+        {
+            NDRX_LOG(log_warn, "XA Switch has TMNOMIGRATE flag -> fallback to nojoin");
+            ndrx_xa_nojoin(EXTRUE);
+        }
         
         /* Parse the flags... and store the config 
          * This is done for Feature #160. Customer have an issue with xa_start
@@ -300,7 +309,18 @@ expublic int atmi_xa_init(void)
                             G_atmi_env.xa_recon_retcodes, 
                             G_atmi_env.xa_recon_times, 
                             G_atmi_env.xa_recon_usleep);
-                } /* If tag is RECON */
+                } /* If tag is NOJOIN */
+                else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOJOIN))
+                {
+                    NDRX_LOG(log_warn, "NOJOIN flag found");
+                    ndrx_xa_nojoin(EXTRUE);
+                }
+                else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSTARTXID))
+                {
+                    NDRX_LOG(log_warn, "NOSTARTXID flag found");
+                    ndrx_xa_nostartxid(EXTRUE);
+                }
+                
             } /* for tag.. */
         } /* if xa_flags set */
         
@@ -480,10 +500,11 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
         {
             for (tries=1; tries<G_atmi_env.xa_recon_times; tries++)
             {
-                NDRX_LOG(log_warn, "RECON: Attempt %d, sleeping %ld micro-sec", 
-                        tries, G_atmi_env.xa_recon_usleep);
-                usleep(G_atmi_env.xa_recon_usleep);
+                NDRX_LOG(log_warn, "RECON: Attempt %d/%d, sleeping %ld micro-sec", 
+                        tries, G_atmi_env.xa_recon_times, 
+                        G_atmi_env.xa_recon_usleep);
                 
+                usleep(G_atmi_env.xa_recon_usleep);
                 
                 NDRX_LOG(log_warn, "RECON: Retrying...");
                 
@@ -512,6 +533,9 @@ expublic int atmi_xa_start_entry(XID *xid, long flags, int ping_try)
                             "fail: %d [%s]", 
                     __func__, tries, ret, atmi_xa_geterrstr(ret));
                 }
+                
+                NDRX_LOG(log_debug, "tries %d / times %d", tries, 
+                        G_atmi_env.xa_recon_times);
             } /* for tries */
         } /* if retry supported. */
         
@@ -547,18 +571,25 @@ out:
  * Disassociate current thread from transaction
  * @param xid
  * @param flags
+ * @param[in] aborting if set to EXTRUE, we know that abort will follow.
+ *  used by posgresql to not to do xa_prepare at the end when rollback will
+ *  follow
  * @return 
  */
-expublic int atmi_xa_end_entry(XID *xid)
+expublic int atmi_xa_end_entry(XID *xid, long flags, int aborting)
 {
     int ret = EXSUCCEED;
+    char stat;
+    UBFH *p_ub = NULL;
+    int local_rb = EXFALSE;
+        
     XA_API_ENTRY(EXTRUE);
     
-    NDRX_LOG(log_debug, "atmi_xa_end_entry");
+    NDRX_LOG(log_debug, "atmi_xa_end_entry flags %ld", flags);
     
     /* we do always success (as TX intiator decides commit or abort...! */
     if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_end_entry(xid, 
-                                    G_atmi_env.xa_rmid, TMSUCCESS)))
+                                    G_atmi_env.xa_rmid, flags)))
     {
         NDRX_LOG(log_error, "xa_end_entry - fail: %d [%s]", 
                 ret, atmi_xa_geterrstr(ret));
@@ -567,7 +598,100 @@ expublic int atmi_xa_end_entry(XID *xid)
         goto out;
     }
     
+    /* If having no start xid, then we must call prepare! (for postgresql) */
+
+    if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
+    {
+        
+        NDRX_LOG(log_debug, "NOSTARTXID - preparing at end!");
+        if (aborting && G_atmi_env.pf_xa_loctxabort)
+        {
+            NDRX_LOG(log_info, "Aborting using local rollback func");
+            local_rb = EXTRUE;
+            ret = G_atmi_env.pf_xa_loctxabort(xid, TMNOFLAGS);
+            
+            if (XA_OK!=ret)
+            {
+                NDRX_LOG(log_error, "Failed to disconnect from transaction: %d", ret);
+                userlog("Failed to disconnect from transaction: %d", ret);
+            }
+        }
+        else if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_prepare_entry(xid, 
+                                        G_atmi_env.xa_rmid, TMNOFLAGS)))
+        {
+            if (XA_RDONLY!=ret)
+            {
+                NDRX_LOG(log_error, "xa_prepare_entry - fail: %d [%s]", 
+                    ret, atmi_xa_geterrstr(ret));
+                
+                ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, 
+                        "xa_prepare_entry - fail: %d [%s]", 
+                        ret, atmi_xa_geterrstr(ret));
+                goto out;
+            }
+            else
+            {
+                ret = XA_OK;
+            }
+        }
+        
+        /* test of transaction automatic rollback */
+        if ((XA_OK==ret || XA_RDONLY == ret) &&
+                NDRX_SYSTEST_ENBLD && ndrx_systest_case(NDRX_SYSTEST_ENDPREPFAIL))
+        {
+            NDRX_LOG(log_error, "SYSTEST! Generating end-fail error");
+            atmi_xa_rollback_entry(xid, 0L);
+            ret = XAER_RMERR;
+        }
+        
+        /* Report status to TMSRV that we performed prepare
+         * and report the results back...
+         * If there is failure with TMSRV, then rollback prepared transaction
+         */
+        if (local_rb)
+        {
+            stat = XA_RM_STATUS_ABORTED;
+        }
+        else if (XA_OK==ret)
+        {
+            stat = XA_RM_STATUS_PREP;
+        }
+        else if (XA_RDONLY==ret)
+        {
+            stat = XA_RM_STATUS_COMMITTED_RO;
+        }
+        else
+        {
+            /* this is rollback */
+            stat = XA_RM_STATUS_ABORTED;
+        }
+        
+        /* call tmsrv */
+        
+        /*
+         * if call failed due to transaction not found or status unknown
+         * then we rollback the transaction
+         */
+        
+        NDRX_LOG(log_debug, "Reporting branch transaction status: %c", stat);
+        p_ub = atmi_xa_call_tm_rmstatus(G_atmi_tls->G_atmi_xa_curtx.txinfo, stat);
+        
+        /* if there is matching error, then we abort the  */
+        if (TPEMATCH==tperrno)
+        {
+            NDRX_LOG(log_error, "Got matching error! Abort transaction");
+            atmi_xa_rollback_entry(xid, 0L);
+        }
+        
+    }
+    
+    
 out:
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+                                
     return ret;
 }
 
@@ -579,7 +703,7 @@ out:
  */
 expublic int atmi_xa_rollback_entry(XID *xid, long flags)
 {
-int ret = EXSUCCEED;
+    int ret = EXSUCCEED;
     XA_API_ENTRY(EXTRUE);
     
     NDRX_LOG(log_debug, "atmi_xa_rollback_entry");
@@ -624,6 +748,34 @@ int ret = EXSUCCEED;
 out:
     return ret;
 }
+
+/**
+ * Forget RM known transaction
+ * @param xid
+ * @param flags
+ * @return XA error code
+ */
+expublic int atmi_xa_forget_entry(XID *xid, long flags)
+{
+    int ret = EXSUCCEED;
+    XA_API_ENTRY(EXTRUE);
+    
+    NDRX_LOG(log_debug, "atmi_xa_forget_entry");
+     
+    if (XA_OK!=(ret = G_atmi_env.xa_sw->xa_forget_entry(xid, 
+                                    G_atmi_env.xa_rmid, flags)))
+    {
+        NDRX_LOG(log_error, "xa_forget_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+        ndrx_TPset_error_fmt_rsn(TPERMERR,  ret, "xa_forget_entry - fail: %d [%s]", 
+                ret, atmi_xa_geterrstr(ret));
+        goto out;
+    }
+    
+out:
+    return ret;
+}
+
 
 /**
  * Prepare for commit current transaction on local resource manager.
@@ -801,6 +953,11 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
         tmflags|=TMTXFLAGS_DYNAMIC_REG;
     }
     
+    if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
+    {
+        tmflags|=TMTXFLAGS_TPNOSTARTXID;
+    }
+    
     if (EXSUCCEED!=Bchg(p_ub, TMTXFLAGS, 0, (char *)&tmflags, 0L))
     {
         ndrx_TPset_error_fmt(TPESYSTEM,  "tpbegin: - failed to fill FB - set TMTXFLAGS!");
@@ -822,7 +979,7 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     
     /* Load tx info... */
     
-    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai))
+    if (EXSUCCEED!=atmi_xa_read_tx_info(p_ub, &xai, 0))
     {
         NDRX_LOG(log_error, "tpbegin: - failed to read TM response");
         ndrx_TPset_error_msg(TPEPROTO,  "tpbegin: - failed to read TM response");
@@ -843,7 +1000,8 @@ expublic int ndrx_tpbegin(unsigned long timeout, long flags)
     /* OK... now join the transaction (if we are static...) (only if static) */
     if (!XA_IS_DYNAMIC_REG)
     {
-        if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai), TMJOIN, EXFALSE))
+        if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(&xai, xai.btid), 
+                TMNOFLAGS, EXFALSE))
         {
             /* TODO: Unset current transaction */
             atmi_xa_reset_curtx();
@@ -871,7 +1029,6 @@ out:
     /* TODO: We need remove curren transaction from HASH! */
     if (NULL!=p_ub)
     {
-        
         /* save errors */
         atmi_error_t err;
         
@@ -1028,8 +1185,8 @@ expublic int ndrx_tpcommit(long flags)
     if (!XA_IS_DYNAMIC_REG || 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
-        if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+        if (EXSUCCEED!= (ret=atmi_xa_end_entry(atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1043,7 +1200,7 @@ expublic int ndrx_tpcommit(long flags)
     
     /* TODO: pass flags to call struct! */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPCOMMIT, EXFALSE, EXFAIL, 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo, flags)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, flags, EXFAIL)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPCOMMIT);
@@ -1123,7 +1280,8 @@ expublic int ndrx_tpabort(long flags)
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXTRUE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1135,7 +1293,7 @@ expublic int ndrx_tpabort(long flags)
     NDRX_LOG(log_debug, "About to call TM");
     /* OK, we should call the server, request for transaction...  */
     if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TPABORT, EXFALSE, EXFAIL, 
-            G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L)))
+            G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L, EXFAIL)))
     {
         NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
                     ATMI_XA_TPBEGIN);
@@ -1212,6 +1370,10 @@ out:
  * NODE: we might get additional error code:TPERMERR when xa_end fails.
  * @param tranid
  * @param flags
+ * @param[in] is_contexting are we doing context swtching? 
+ *  and if driver flags sys that no api suspend needed, then do not call the xa-commands
+ *  particulary this is needed for java api for which transaction state is kept in
+ *  java object and not in C TLS.
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
@@ -1270,12 +1432,31 @@ expublic int ndrx_tpsuspend (TPTRANID *tranid, long flags, int is_contexting)
     XA_TX_COPY(tranid, G_atmi_tls->G_atmi_xa_curtx.txinfo);
     tranid->is_tx_initiator = G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator;
     
+    
+    /* TODO: if join is not supported, then we terminate current transaction/BTID
+     * and that shall be removed from list.
+     * That is done by atmi_xa_reset_curtx.
+     * Thus at this point we just end our journey wit this BTID
+     */
+    
     /* Disassoc from transaction! */
     if (!XA_IS_DYNAMIC_REG || 
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
+        /*
+	 * causes ORA-24775 error
+        long xaflags = TMSUSPEND;
+        
+        if (!(G_atmi_env.xa_sw->flags & TMNOMIGRATE))
+        {
+            NDRX_LOG(log_debug, "Setting migrate flag for suspend");
+            xaflags|=TMMIGRATE;
+        }
+        */
+        
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1370,7 +1551,8 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
         goto out;
     }
     
-    if (EXSUCCEED!=_tp_srv_join_or_new(G_atmi_tls->G_atmi_xa_curtx.txinfo, EXTRUE, &was_join))
+    if (EXSUCCEED!=_tp_srv_join_or_new(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
+            EXTRUE, &was_join))
     {
         ret = TMER_TMERR;
         goto out;
@@ -1381,7 +1563,8 @@ expublic int ax_reg(int rmid, XID *xid, long flags)
         ret = TM_JOIN;
     }
     
-    memcpy(xid, atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo), sizeof(*xid));
+    memcpy(xid, atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo, 
+            G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), sizeof(*xid));
     
     G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called = EXTRUE;
   
@@ -1446,6 +1629,11 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         {
             NDRX_LOG(log_debug, "Dynamic reg + process start "
                                 "just remember the transaction");
+            
+            /* OK, but how BTID is filled?,
+             * BTID is set on second pass by bellow common source
+             */
+            
             if (EXSUCCEED!=atmi_xa_set_curtx_from_xai(p_xai))
             {
                 EXFAIL_OUT(ret);
@@ -1464,16 +1652,21 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         EXFAIL_OUT(ret);
     }
     
-    if (atmi_xa_is_current_rm_known(p_xai->tmknownrms))
+    if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN) &&
+            atmi_xa_is_current_rm_known(p_xai->tmknownrms))
     {    
         *p_is_known=EXTRUE;
         
+        /* use default btid as in join mode */
+        G_atmi_tls->G_atmi_xa_curtx.txinfo->btid = 0;
+        
         if (XA_IS_DYNAMIC_REG)
         {
-                NDRX_LOG(log_debug, "Dynamic reg - no start/join!");
+            NDRX_LOG(log_debug, "Dynamic reg - no start/join!");
         }
         /* Continue with static ...  ok it is known, then just join the transaction */
-        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), 
+        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, 
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), 
                 TMJOIN, EXFALSE))
         {
             NDRX_LOG(log_error, "Failed to join transaction!");
@@ -1486,14 +1679,29 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
     }
     else
     {
+        long btid = EXFAIL;
         NDRX_LOG(log_info, "RM not aware of this transaction");
+        
+        /* - if have JOIN, then we use default BTID 0
+         * - if no JOIN, then ATMI_XA_TMREGISTER will give new TID
+         */
+        if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN))
+        {
+            btid = 0;
+        }
+        
+        if (G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOSTARTXID)
+        {
+            tmflags|=TMTXFLAGS_TPNOSTARTXID;
+        }
+
         
         /* register new tx branch/rm */
         if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMREGISTER, 
-                EXFALSE, EXFAIL, p_xai, 0L)))
+                EXFALSE, EXFAIL, p_xai, tmflags, btid)))
         {
             NDRX_LOG(log_error, "Failed to execute TM command [%c]", 
-                        ATMI_XA_TPBEGIN);   
+                        ATMI_XA_TMREGISTER);   
             EXFAIL_OUT(ret);
         }
 
@@ -1508,15 +1716,28 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         {
             *p_is_known = EXTRUE;
         }
+        else
+        {
+            if (EXSUCCEED!=Bget(p_ub, TMTXBTID, 0, (char *)&btid, 0L))
+            {
+                NDRX_LOG(log_error, "Failed to read TMTXBTID!");   
+
+                EXFAIL_OUT(ret);
+            }
+        }
         
+        G_atmi_tls->G_atmi_xa_curtx.txinfo->btid = btid;
+
         if (XA_IS_DYNAMIC_REG)
         {
+            /* really? how RM knows about our XID? */
             NDRX_LOG(log_debug, "Dynamic reg - no new tx start!");
         }
         /* Continue with static... */
         else if (*p_is_known)
         {
-            if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
+            if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, btid), 
+                    TMJOIN, EXFALSE))
             {
                 NDRX_LOG(log_error, "Failed to join transaction!");
                 EXFAIL_OUT(ret);
@@ -1527,7 +1748,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
             }
         }
         /* Open new transaction in branch */
-        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMNOFLAGS, EXFALSE))
+        else if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, btid), 
+                TMNOFLAGS, EXFALSE))
         {
             reason=atmi_xa_get_reason();
             NDRX_LOG(log_error, "Failed to create new tx under local RM (reason: %hd)!", 
@@ -1537,7 +1759,8 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
                 /* It is already known... then join... */
                 *p_is_known=EXTRUE;
                 
-                if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai), TMJOIN, EXFALSE))
+                if (EXSUCCEED!=atmi_xa_start_entry(atmi_xa_get_branch_xid(p_xai, btid), 
+                        TMJOIN, EXFALSE))
                 {
                     NDRX_LOG(log_error, "Failed to join transaction!");
                     EXFAIL_OUT(ret);
@@ -1555,12 +1778,14 @@ expublic int _tp_srv_join_or_new(atmi_xa_tx_info_t *p_xai,
         new_rm = EXTRUE;
     }
         
-    if (new_rm)
+    
+    if (!(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOJOIN) && new_rm)
     {
         src_tmknownrms[0] = G_atmi_env.xa_rmid;
         src_tmknownrms[1] = EXEOS;
         
-        if (EXSUCCEED!=atmi_xa_update_known_rms(G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
+        if (EXSUCCEED!=atmi_xa_update_known_rms(
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->tmknownrms, 
                 src_tmknownrms))
         {
             EXFAIL_OUT(ret);
@@ -1604,7 +1829,8 @@ expublic int _tp_srv_disassoc_tx(void)
             G_atmi_tls->G_atmi_xa_curtx.txinfo->is_ax_reg_called)
     {
         if (EXSUCCEED!= (ret=atmi_xa_end_entry(
-                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo))))
+                atmi_xa_get_branch_xid(G_atmi_tls->G_atmi_xa_curtx.txinfo,
+                G_atmi_tls->G_atmi_xa_curtx.txinfo->btid), TMSUCCESS, EXFALSE)))
         {
             NDRX_LOG(log_error, "Failed to end XA api: %d [%s]", 
                     ret, atmi_xa_geterrstr(ret));
@@ -1636,4 +1862,83 @@ expublic int _tp_srv_tell_tx_fail(void)
 out:
     return ret;
 }
+
+/**
+ * Disable suspend at context switching
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_noapisusp(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "No Context tran suspend");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOAPISUSP;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOAPISUSP;
+    }
+}
+
+/**
+ * XA Driver does not support join call
+ * Such us Mysql/Posgresql
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_nojoin(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA No JOIN");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOJOIN;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOJOIN;
+    }
+}
+
+/**
+ * XA Driver does not mark the transaction at start, thus no start XID
+ * Thus in this case before process calls "end", the prepare statement will be
+ * issued. Also when we request the new BTID, we shall report, that branch
+ * is in prepared state...
+ * @param val EXTRUE/EXFALSE
+ */
+expublic void ndrx_xa_nostartxid(int val)
+{
+    if (val)
+    {
+        NDRX_LOG(log_debug, "XA No STAR XID");
+        G_atmi_env.xa_flags_sys|=NDRX_XA_FLAG_SYS_NOSTARTXID;
+    }
+    else
+    {
+        G_atmi_env.xa_flags_sys=G_atmi_env.xa_flags_sys & ~NDRX_XA_FLAG_SYS_NOSTARTXID;
+    }
+}
+
+/**
+ * Set local abort function. Recommended for NOSTARTXID to avoid prepare before
+ * abort. Set by XA Driver.
+ * @param pf_xa_loctxabort NULL or ptr to local transaction abort function.
+ */
+expublic void ndrx_xa_setloctxabort(int (*pf_xa_loctxabort)(XID *xid, long flags))
+{
+    G_atmi_env.pf_xa_loctxabort = pf_xa_loctxabort;
+    NDRX_LOG(log_debug, "xa_loctxabort set to %p", G_atmi_env.pf_xa_loctxabort);
+}
+
+
+/**
+ * Set function for returning current connection object.
+ * This might be used for custom XA Switches
+ * @param pf_xa_getconn Callback for requesting the connection object
+ */
+expublic void ndrx_xa_setgetconnn(void *(*pf_xa_getconn)(void))
+{
+    G_atmi_env.pf_getconn= pf_xa_getconn;
+    NDRX_LOG(log_debug, "pf_getconn set to %p", G_atmi_env.pf_getconn);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

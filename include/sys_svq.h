@@ -8,9 +8,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -39,6 +40,7 @@
 /*------------------------------Includes--------------------------------------*/
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/ipc.h>
 #include <sys/signal.h>
 #include <time.h>
 #include <sys_primitives.h>
@@ -56,12 +58,14 @@
 
 #define NDRX_SVQ_SIG SIGUSR2    /**< Signal used for timeout wakeups    */
 
-#define NDRX_SVQ_MAP_ISUSED       0x00000001  /**< Queue is used              */
-#define NDRX_SVQ_MAP_WASUSED      0x00000002  /**< Queue was used (or is used)*/
-#define NDRX_SVQ_MAP_EXPIRED      0x00000004  /**< Queue expired by ctime     */
-#define NDRX_SVQ_MAP_SCHEDRM      0x00000008  /**< Schedule queue removal     */
-#define NDRX_SVQ_MAP_RQADDR       0x00000010  /**< This is request address q  */
-#define NDRX_SVQ_MAP_HAVESVC      0x00000020  /**< Have service in shm        */
+/** Queue is used              */
+#define NDRX_SVQ_MAP_ISUSED       NDRX_LH_FLAG_ISUSED
+/** Queue was used (or is used)*/
+#define NDRX_SVQ_MAP_WASUSED      NDRX_LH_FLAG_WASUSED
+#define NDRX_SVQ_MAP_EXPIRED      0x0004  /**< Queue expired by ctime     */
+#define NDRX_SVQ_MAP_SCHEDRM      0x0008  /**< Schedule queue removal     */
+#define NDRX_SVQ_MAP_RQADDR       0x0010  /**< This is request address q  */
+#define NDRX_SVQ_MAP_HAVESVC      0x0020  /**< Have service in shm        */
 
 
 #define NDRX_SVQ_MONF_SYNCFD      0x00000001  /**< Perform monitoring on FDs  */

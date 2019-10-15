@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -455,7 +456,7 @@ expublic int sv_serve_call(int *service, int *status)
         else if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
                 G_atmisrv_reply_type & RETURN_TYPE_THREAD)
         {
-            NDRX_LOG(log_warn, "tpcontinue() issued from integra (no longjmp)!");
+            NDRX_LOG(log_info, "tpcontinue() issued from integra (no longjmp)!");
         }
         else
         {
@@ -979,7 +980,10 @@ expublic int sv_server_request(char *buf, int len)
             _tp_srv_tell_tx_fail();
         }
         
-        /* If we were in global tx, then we have to disassociate us from tx...*/
+        /* If we were in global tx, then we have to disassociate us from tx...
+         * this is done in return/forward stmt.
+         * but check again if we did return with out return?
+         */
         if (ndrx_get_G_atmi_xa_curtx()->txinfo)
         {
             _tp_srv_disassoc_tx();
@@ -1324,6 +1328,12 @@ expublic int sv_wait_for_request(void)
                     }
                     
                     /* Save on the big message copy... */
+                    /* in case of MINDISPATCHTHREADS, buf needs to be dynamic
+                     * allocated (and re-used if one threaded used)
+                     * if using > 1 thread, then sv_server_request shall be
+                     * processed by thread_pool and reset the msg_buf to NULL
+                     * so that we allocate new one.
+                     */
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
                     

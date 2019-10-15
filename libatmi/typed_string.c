@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -111,10 +112,10 @@ expublic int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
    
     
     /* Figure out the passed in buffer */
-    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
+    if (NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
-                                        "with tpalloc()!", odata);
+                                        "with tpalloc()!", *odata);
         ret=EXFAIL;
         goto out;
     }
@@ -126,9 +127,10 @@ expublic int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
         if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_STRING)
         {
             /* Raise error! */
-            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
-                                        G_buf_descr[BUF_TYPE_STRING],
-                                        G_buf_descr[outbufobj->type_id]);
+            ndrx_TPset_error_fmt(TPEOTYPE, "Receiver expects %s but got %s buffer",
+                                        G_buf_descr[BUF_TYPE_NULL].type,
+                                        G_buf_descr[outbufobj->type_id].type
+                                        );
             ret=EXFAIL;
             goto out;
         }
@@ -138,7 +140,7 @@ expublic int STRING_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_dat
          */
         if (outbufobj->type_id!=BUF_TYPE_STRING)
         {
-            NDRX_LOG(log_warn, "User buffer %d is different, "
+            NDRX_LOG(log_info, "User buffer %d is different, "
                     "free it up and re-allocate as STRING", G_buf_descr[outbufobj->type_id]);
             ndrx_tpfree(*odata, outbufobj);
             *odata=NULL;
@@ -216,7 +218,7 @@ expublic char * STRING_tpalloc (typed_buffer_descr_t *descr, char *subtype, long
 {
     char *ret;
 
-    if (0==*len)
+    if (STRING_DEFAULT_SIZE > *len)
     {
         *len = STRING_DEFAULT_SIZE;
     }

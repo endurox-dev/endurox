@@ -11,9 +11,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -1909,4 +1910,132 @@ expublic BFLDOCC ndrx_Bnum(UBFH *p_ub)
 
     return fldcount;
 }
+
+/**
+ * Allocates buffer & do the initialisation
+ * Assuming that using GLIBC which returns already aligned.
+ * @param f - number of fields
+ * @param v - field size
+ * @param len_set directly allocate from given bytes
+ * @return ptr to UBF buffer or NULL
+ */
+expublic UBFH * ndrx_Balloc (BFLDOCC f, BFLDLEN v, long len_set)
+{
+    UBFH *p_ub=NULL;
+    long alloc_size;
+    
+    if (EXFAIL!=len_set)
+    {
+        alloc_size = len_set;
+    }
+    else
+    {
+        /* Bug #394 */
+        alloc_size = ndrx_Bneeded(f, v);
+    }
+    
+    if ( alloc_size > MAXUBFLEN)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
+                alloc_size, MAXUBFLEN);
+    }
+    else
+    {
+        p_ub=NDRX_MALLOC(alloc_size);
+        if (NULL==p_ub)
+        {
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+        }
+        else
+        {
+            if (EXSUCCEED!=Binit(p_ub, alloc_size))
+            {
+                NDRX_FREE(p_ub); /* Free up allocated memory! */
+                p_ub=NULL;
+                UBF_LOG(log_error, "Balloc failed - abort Balloc!");
+            }
+        }
+    }
+    
+    UBF_LOG(log_debug, "Balloc: Returning %p!", p_ub);
+    
+    return p_ub;
+}
+
+
+/**
+ * Reallocate the memory
+ * Assuming that using GLIBC which is already aligned
+ * 
+ * @param p_Fb
+ * @param f
+ * @param v
+ * @param[in] len_set preferred length 
+ * @return reallocated UBF buffer or NULL on failure
+ */
+expublic UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set)
+{
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
+    long alloc_size;
+    
+    UBF_LOG(log_debug, "Brealloc: enter p_ub=%p f=%d v=%d len_set=%ld", 
+        p_ub, (int)f, (int)v, len_set);
+    
+    if (EXFAIL!=len_set)
+    {
+        alloc_size = len_set;
+    }
+    else
+    {
+        alloc_size = ndrx_Bneeded(f, v);
+    }
+
+    /*
+     * New buffer size should not be smaller that used.
+     */
+    if ( alloc_size < hdr->bytes_used || alloc_size > MAXUBFLEN)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
+                alloc_size, hdr->buf_len+1, MAXUBFLEN);
+        Bfree(p_ub);
+        p_ub=NULL;
+    }
+    else
+    {
+        p_ub=NDRX_REALLOC(p_ub, alloc_size);
+        if (NULL==p_ub)
+        {
+            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
+            p_ub=NULL;
+        }
+        else
+        {
+            long reset_size;
+            char * p=(char *)p_ub;
+            /* reset the header pointer */
+            hdr = (UBF_header_t *)p_ub;
+            reset_size = alloc_size-hdr->buf_len;
+#if 0
+            if (reset_size>0)
+            {
+                /* Now we need to set buffer ending to 0
+                 * and we should increase
+                 */
+                UBF_LOG(log_debug, "Resetting reallocated memory to 0. "
+                                    "From %p %d bytes",
+                                    p+hdr->buf_len, reset_size);
+
+                memset(p+hdr->buf_len, 0, reset_size);
+            }
+#endif
+            /* Update FB to new size. */
+            hdr->buf_len+=reset_size;
+        }
+    }
+    
+    UBF_LOG(log_debug, "Brealloc: Returning %p!", p_ub);
+
+    return p_ub;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

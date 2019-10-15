@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -170,8 +171,9 @@ restart:
 
         if (tpacall("SVC38_01", (char *)p_ub, 0L, TPNOBLOCK)<=0)
         {
-            if (TPEBLOCK==tperrno)
+            if (TPEBLOCK==tperrno || TPELIMIT==tperrno)
             {
+                NDRX_LOG(log_error, "Additional handle_replies %d", tperrno);
                 if (EXSUCCEED!=handle_replies(&p_ub, 0))
                 {
                     NDRX_LOG(log_error, "handle_replies() failed");
@@ -190,16 +192,19 @@ restart:
 
         M_calls_made++;
 
+restart2:
         if (tpacall("SVC38_02", (char *)p_ub, 0L, 0L)<=0)
         {
             /* try to receive something if we got limit... */
             if (TPELIMIT==tperrno)
             {
+                NDRX_LOG(log_error, "Additional handle_replies %d", tperrno);
                 if (EXSUCCEED!=handle_replies(&p_ub, 0))
                 {
                     NDRX_LOG(log_error, "handle_replies() failed");
                     EXFAIL_OUT(ret);
                 }
+                goto restart2;
             }
             else
             {
@@ -223,7 +228,7 @@ restart:
     while (i<1000000 && (M_replies_got < M_calls_made || M_notifs_got < M_calls_made))
     {
         /* Let all replies come in... */
-        NDRX_LOG(log_info, "Waiting for replies...");
+        NDRX_LOG(log_warn, "Waiting for replies...");
         usleep(1000); /* 0.01 sec */
         if (EXSUCCEED!=handle_replies(&p_ub,  0))
         {

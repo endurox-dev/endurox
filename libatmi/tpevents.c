@@ -9,9 +9,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -62,7 +63,7 @@ expublic long ndrx_tpsubscribe(char *eventexpr, char *filter, TPEVCTL *ctl, long
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
-    char *ret_buf;
+    char *ret_buf = NULL;
     long ret_len;
     short nodeid = (short)tpgetnodeid();
     char tmpsvc[MAXTIDENT+1];
@@ -178,7 +179,7 @@ expublic long ndrx_tpunsubscribe(long subscription, long flags)
 {
     long ret=EXSUCCEED;
     UBFH *p_ub = NULL;
-    char *ret_buf;
+    char *ret_buf = NULL;
     long ret_len;
     short nodeid = (short)tpgetnodeid();
     char tmpsvc[MAXTIDENT+1];
@@ -246,7 +247,7 @@ expublic int ndrx_tppost(char *eventname, char *data, long len, long flags,
             int user1, long user2, int user3, long user4)
 {
     int ret=EXSUCCEED;
-    char *ret_buf;
+    char *ret_buf = NULL; /* This works as tpalloc'd NULL buffer! */
     long ret_len;
     short nodeid = (short)tpgetnodeid();
     char tmpsvc[MAXTIDENT+1];

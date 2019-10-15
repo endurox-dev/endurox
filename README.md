@@ -7,8 +7,8 @@
 | AIX 7.1 |  [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-aix7_1)](http://www.silodev.com:9090/jenkins/job/endurox-aix7_1/) |Centos 6|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-centos6)](http://www.silodev.com:9090/jenkins/job/endurox-centos6/)|FreeBSD 11|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-freebsd11)](http://www.silodev.com:9090/jenkins/job/endurox-freebsd11/)|
 |Oracle Linux 7|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol7)](http://www.silodev.com:9090/jenkins/job/endurox-ol7/)|OSX 11.4|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-osx11_4)](http://www.silodev.com:9090/jenkins/job/endurox-osx11_4/)|raspbian8-arv7l|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-raspbian8-arv7l)](http://www.silodev.com:9090/jenkins/job/endurox-raspbian8-arv7l/)|
 |SLES 12|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles12)](http://www.silodev.com:9090/jenkins/job/endurox-sles12/)|SLES 15|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-sles15)](http://www.silodev.com:9090/jenkins/job/endurox-sles15/)|Solaris 10|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris10-sparc)](http://www.silodev.com:9090/jenkins/job/endurox-solaris10-sparc/)|
-|Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 16.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu16)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu16/)|
-|Ubuntu 18.04|[![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
+|Solaris 11| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-solaris11_x86)](http://www.silodev.com:9090/jenkins/job/endurox-solaris11_x86/)|Ubuntu 14.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu14)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu14/)|Ubuntu 18.04| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ubuntu18)](http://www.silodev.com:9090/jenkins/job/endurox-ubuntu18/)|
+|RHEL/Oracle Linux 8| [![Build Status](http://www.silodev.com:9090/jenkins/buildStatus/icon?job=endurox-ol8)](http://www.silodev.com:9090/jenkins/job/endurox-ol8/)|||||
 
 ## Overview
 
@@ -481,3 +481,9 @@ on for SPARC cpus.
 
 - To enable address sanitizer for GCC/Clang on supported hardware platforms,
 use '-DDEFINE_SANITIZE=1'
+
+- To enable PostgreSQL XA Driver build use '-DENABLE_POSTGRES=ON'
+
+- To disable PostgreSQL ECPG Driver build use '-DDISABLE_ECPG=ON' (for certain
+Operating systems ECPG, postgres-devel package is missing, thus let only pq
+driver to build)

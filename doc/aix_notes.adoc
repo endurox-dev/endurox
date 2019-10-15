@@ -160,10 +160,24 @@ export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
 export PATH=$PATH:/$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=:$HOME/endurox/dist/lib64
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
 
 # UBF/FML field tables
 export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+
+################################################################################
+# In case if building with Postgresql DB database testing support
+# or building endurox-java with Oracle DB tests (03_xapostgres), then
+# configure bellow setting (demo values provided):
+# If so - uncomment bellow
+################################################################################
+#export EX_PG_HOST=localhost
+#export EX_PG_USER=exdbtest
+#export EX_PG_PASS=exdbtest1
+# currently uses default port
+#export EX_PG_PORT=5432
+#export EX_PG_DB=xe
+
 
 EOF
 

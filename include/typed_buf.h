@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -71,11 +72,11 @@ extern "C" {
 
 /* others: VIEW X_COMMON X_C_TYPE X_OCTET FML32 VIEW32 - not supported currently */
 /* see G_buf_descr */
-#define BUF_IS_TYPEID_VALID(X) (0<=X && X <= 6)
+#define BUF_IS_TYPEID_VALID(X) (BUF_TYPE_MIN<=X && X <= BUF_TYPE_MAX)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-extern NDRX_API buffer_obj_t *G_buffers;
+extern NDRX_API buffer_obj_t *ndrx_G_buffers;
 extern NDRX_API typed_buffer_descr_t G_buf_descr[];
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -105,6 +106,11 @@ extern NDRX_API void TPINIT_tpfree(typed_buffer_descr_t *descr, char *buf);
 /* Type null buffer */
 extern NDRX_API char * TPNULL_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *len);
 extern NDRX_API void TPNULL_tpfree(typed_buffer_descr_t *descr, char *buf);
+extern NDRX_API int TPNULL_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, long ilen, 
+                    char *obuf, long *olen, long flags);
+
+extern NDRX_API int TPNULL_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data, 
+                        long rcv_len, char **odata, long *olen, long flags);
 
 /* Automatic buffer convert: */
 extern NDRX_API int typed_xcvt(buffer_obj_t **buffer, long xcvtflags, int is_reverse);

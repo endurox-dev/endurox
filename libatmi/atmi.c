@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -287,8 +288,16 @@ expublic int tpgetrply (int *cd, char **data, long *len, long flags)
         ret=EXFAIL;
         goto out;
     }
+    else if (*cd >= MAX_ASYNC_CALLS )
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "*cd >= %d", MAX_ASYNC_CALLS);
+        ret=EXFAIL;
+        goto out;
+    }
     else
+    {
         ret=ndrx_tpgetrply (cd, *cd, data, len, flags, NULL);
+    }
         
 out:
     return ret;
@@ -871,13 +880,15 @@ expublic long tptypes (char *ptr, char *type, char *subtype)
         ret=EXFAIL;
         goto out;
     }
-    
+   /* 
+    * we allow to get infos for null, the type will be NULL
     if (ptr==NULL)
     {
         ndrx_TPset_error_msg(TPEINVAL, "ptr cannot be null");
         ret=EXFAIL;
         goto out;
     }
+    */
 
     ret=ndrx_tptypes(ptr, type, subtype);
 
@@ -1690,7 +1701,7 @@ extern int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
         ndrx_TPset_error_msg(TPEINVAL, "ostr cannot be null");
         EXFAIL_OUT(ret);
     }
-
+    
     ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags);
 
 out:
@@ -1796,6 +1807,34 @@ expublic int tpappthrinit(TPINIT *tpinfo)
 expublic int tpappthrterm(void)
 {
     return tpterm();
+}
+
+/**
+ * Get connection object of custom XA Switch
+ * @return NULL in case of connection not open or no custom xa switch used
+ *  otherwise it is ptr to connection object
+ */
+expublic void* tpgetconn(void)
+{
+    void *ptr = NULL;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        goto out;
+    }
+    
+    if (NULL==G_atmi_env.pf_getconn)
+    {
+        ndrx_TPset_error_msg(TPENOENT, "getconn callback is not set by driver");
+    }
+    
+    ptr = G_atmi_env.pf_getconn();
+    
+out:
+    
+    return ptr;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

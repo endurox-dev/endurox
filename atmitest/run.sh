@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -50,7 +51,7 @@ fi
 . ../sampleconfig/setndrx
 
 # start memcheck
-xmemck -v20 -d30 -s60 -t95 -n 'atmiunit1|tpbridge|tmsrv|convsv21' -m atmi -d70 -m tpbridge -m tmsrv 2>./memck.log 1>./memck.out & 
+xmemck -v20 -d30 -s60 -t95 -n 'atmiunit1|tpbridge|tmsrv|convsv21|tmqueue' -m atmi -d70 -m tpbridge -m tmsrv 2>./memck.log 1>./memck.out & 
 
 MEMCK_PID=$!
 echo "Memck pid = $MEMCK_PID"

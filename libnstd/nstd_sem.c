@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -179,11 +180,11 @@ expublic int ndrx_sem_lock(ndrx_sem_t *sem, const char *msg, int sem_num)
     
     if (EXSUCCEED==ret)
     {
-        NDRX_LOG(log_warn, "%s/%d/%d: semaphore locked... ", msg, sem->semid, sem_num);
+        NDRX_LOG(log_info, "%s/%d/%d: semaphore locked... ", msg, sem->semid, sem_num);
     }
     else
     {
-        NDRX_LOG(log_warn, "%s/%d/%d: failed to lock (%d): %s", msg, sem->semid, 
+        NDRX_LOG(log_info, "%s/%d/%d: failed to lock (%d): %s", msg, sem->semid, 
                 sem_num, errno_int,
                 strerror(errno_int));
     }

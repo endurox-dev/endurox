@@ -6,9 +6,10 @@ $ */
 $/* -----------------------------------------------------------------------------
 $ * Enduro/X Middleware Platform for Distributed Transaction Processing
 $ * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-$ * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+$ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 $ * This software is released under one of the following licenses:
-$ * AGPL or Mavimax's license for commercial use.
+$ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+$ * See LICENSE file for full text.
 $ * -----------------------------------------------------------------------------
 $ * AGPL license:
 $ * 
@@ -79,6 +80,7 @@ TMTXRMREASON    58       short   M       Reason code associated with RM
 TMTXTRYCNT      59       long    -       Transaction try count
 TMTXTRYMAXCNT   60       long    -       Transaction try count, max
 TMTXFLAGS       61       long    -       Various TM flags...
+TMTXBTID        62       long    -       Branch Transaction ID
 
 ################################################################################
 # Client process manager
@@ -197,6 +199,19 @@ EX_IF_RSPCMAXAGE            514         string -        Response Cookie MaxAge
 EX_IF_RSPCSECURE            515         string -        Response Cookie Secure
 EX_IF_RSPCHTTPONLY          516         string -        Response Cookie HttpOnly
 
+# Process form data in raw mode.
+EX_IF_REQFORMN              520         string -        Request Form Name
+EX_IF_REQFORMV              521         string -        Request Form Value
+
+EX_IF_REQQUERYN             522         string -        URL request Query field Name
+EX_IF_REQQUERYV             523         string -        URL request Query field value
+
+# Service user return code
+EX_IF_URCODE                530         long  -         User return code
+
+EX_IF_REQDATA               531         carray -        Request data / body
+EX_IF_RSPDATA               532         carray -        Response data / body
+
 ################################################################################
 # TCP Inter-connecting
 ################################################################################
@@ -216,6 +231,7 @@ EX_NETTHEIRPORT             559         long    -       Their client/server port
 # P - we are server (Passive, wait for incoming call)
 #
 EX_NETCONMODE               560         char    -       Connection mode (A - act/P - passive)
+EX_NETRCODE                 651         long    -       Network related error code (e.g. http status)
 
 ################################################################################
 # View processing

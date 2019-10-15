@@ -141,7 +141,6 @@ extern ""C"" {
 #endif  /* TEST"+::prov.testid+@"_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
-
 "))
         {
             return false;
@@ -240,7 +239,6 @@ out:
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
-
 "))
 		{
 			return false;
@@ -346,14 +344,16 @@ out:
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, ""tpsvrinit called"");
 
     if (EXSUCCEED!=tpadvertise(""TESTSV"", TESTSV))
     {
         NDRX_LOG(log_error, ""Failed to initialise TESTSV!"");
+        EXFAIL_OUT(ret);
     }
-    
-    return EXSUCCEED;
+out:
+    return ret;
 }
 
 /**
@@ -365,7 +365,6 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
-
 "))
 		{
 			return false;
@@ -575,8 +574,6 @@ go_out $RET
         <checkpm>5</checkpm>
         <!--  <sanity> timer, end -->
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-        <!-- Do dead process restart every X seconds -->
-        <respawncheck>10</respawncheck>
         <!-- Do process reset after 1 sec -->
         <restart_min>1</restart_min>
         <!-- If restart fails, then boot after +5 sec of previous wait time -->
@@ -619,7 +616,7 @@ go_out $RET
     </defaults>
     <servers>
     " +("n"==::prov.dom2?
-@"      <server name=""atmi.sv"+::prov.testid+@""">
+@"        <server name=""atmi.sv"+::prov.testid+@""">
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
@@ -627,11 +624,11 @@ go_out $RET
         </server>
          ":""
         )+ 
-@"      <server name=""tpbridge"">
+@"        <server name=""tpbridge"">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 44003 -tA -z30 -P0</appopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
         </server>
     </servers>
 </endurox>
@@ -661,8 +658,6 @@ go_out $RET
         <!--  <sanity> timer, end -->
 
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-        <!-- Do dead process restart every X seconds -->
-        <respawncheck>10</respawncheck>
         <!-- Do process reset after 1 sec -->
         <restart_min>1</restart_min>
         <!-- If restart fails, then boot after +5 sec of previous wait time -->
@@ -713,7 +708,7 @@ go_out $RET
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n1 -r -i 0.0.0.0 -p 44003 -tP -z30 -P0</appopt>
+            <appopt>-f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0</appopt>
         </server>
     </servers>
 </endurox>

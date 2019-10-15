@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -295,24 +296,27 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"startfail"* ]]; then
 	(./atmiclt21-startfail $TEST160_FLAG 2>&1) > ./atmiclt-startfail-dom1.log
 	RET=$?
 
+        echo "Wait 25 sec for abort..."
+        sleep 25
 	#
 	# If all ok, test for transaction files.
 	#
 	if [ $RET == 0 ]; then
 	
-		# test for transaction to be aborted..
-		# there should be no TRN- files at top level
+            # test for transaction to be aborted..
+            # there should be no TRN- files at top level
 
-		if [ -f ./RM1/TRN-* ]; then
-			echo "Transaction must be completed!"
-			RET=-2
-		fi
-		
-		#if [ ! -f ./RM1/aborted/* ]; then
-		#	echo "Transaction must be aborted!"
-		#	RET=-3
-		#fi
-		
+            logfiles=(./RM1/TRN-*)
+            if [[ -f ${logfiles[0]} ]]; then
+                    echo "Transaction must be completed!"
+                    RET=-2
+            fi
+
+            #if [ ! -f ./RM1/aborted/* ]; then
+            #	echo "Transaction must be aborted!"
+            #	RET=-3
+            #fi
+
 	fi
 
 	go_out $RET
@@ -452,6 +456,18 @@ fi
 
 if [[ $RET -eq 0 ]]; then
 	RET=$RET3;
+fi
+
+CNTRM1=`ls -1 ./RM1/TRN-* | wc | awk '{print $1}'`
+if [ "X$CNTRM1" != "X0" ]; then
+    echo "Transaction must be completed (RM1)!"
+    RET=-2
+fi
+
+CNTRM2=`ls -1 ./RM2/TRN-* | wc | awk '{print $1}'`
+if [ "X$CNTRM2" != "X0" ]; then
+    echo "Transaction must be completed (RM2)!"
+    RET=-2
 fi
 
 # Catch is there is test error!!!

@@ -59,7 +59,13 @@ ERRORS
 Note that *tpstrerror()* for last calls returns generic error message plus 
 custom message with debug info from last call.
 
-*TPEINVAL* Invalid parameter is given to function. Particularly pointer parameters are NULL.
+*TPEBLOCK* *TPENOBLOCK* was specified in flags and no message is in queue.
+
+*TPEINVAL* Invalid parameter is given to function. Particularly pointer 
+parameters are NULL.
+
+*TPEBADDESC* 'cd' parameter points to not issued or canceled call descriptor
+and *TPGETANY* flag was not specified.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT' time). 
 

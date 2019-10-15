@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -136,6 +137,11 @@ extern BFLDOCC ndrx_Bnum(UBFH *p_ub);
 
 extern int ndrx_Bjoin(UBFH *dest, UBFH *src);
 extern int ndrx_Bojoin(UBFH *dest, UBFH *src);
+
+extern UBFH * ndrx_Balloc (BFLDOCC f, BFLDLEN v, long len_set);
+extern UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set);
+
+extern long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize);
 
 #ifdef	__cplusplus
 }

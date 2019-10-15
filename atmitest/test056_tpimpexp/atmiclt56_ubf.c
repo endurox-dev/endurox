@@ -1,14 +1,15 @@
-/* 
- * tpimport()/tpexport() function tests - client
+/**
+ * @brief tpimport()/tpexport() function tests - client
  *
  * @file atmiclt56_ubf.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -61,7 +62,7 @@
  * 
  * @return 
  */
-expublic int test_impexp_ubf()
+expublic int test_impexp_ubf(void)
 {
     int ret = EXSUCCEED;
     int i;
@@ -139,7 +140,10 @@ expublic int test_impexp_ubf()
 
     /* testing with base64 flag*/
     NDRX_LOG(log_debug, "convert to b64");
-    if (NULL==ndrx_base64_encode((unsigned char *)json_ubf_in, strlen(json_ubf_in), &len_b64, json_ubf_in_b64))
+    
+    len_b64 = sizeof(json_ubf_in_b64);
+    if (NULL==ndrx_base64_encode((unsigned char *)json_ubf_in, strlen(json_ubf_in), 
+            &len_b64, json_ubf_in_b64))
     {
             NDRX_LOG(log_error, "Failed to convert to b64!");
             EXFAIL_OUT(ret);
@@ -214,3 +218,4 @@ out:
 
     return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

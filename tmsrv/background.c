@@ -8,9 +8,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -99,7 +100,7 @@ expublic int background_read_log(void)
 {
     int ret=EXSUCCEED;
     struct dirent **namelist = NULL;
-    int n;
+    int n, cnt;
     int len;
     char tranmask[256];
     char fnamefull[PATH_MAX+1];
@@ -109,17 +110,17 @@ expublic int background_read_log(void)
             G_atmi_env.xa_rmid, G_server_conf.srv_id);
     len = strlen(tranmask);
     /* List the files here. */
-    n = scandir(G_tmsrv_cfg.tlog_dir, &namelist, 0, alphasort);
-    if (n < 0)
+    cnt = scandir(G_tmsrv_cfg.tlog_dir, &namelist, 0, alphasort);
+    if (cnt < 0)
     {
-       NDRX_LOG(log_error, "Transaction directory [%s: %s", 
+       NDRX_LOG(log_error, "Failed to scan [%s]: %s", 
                G_tmsrv_cfg.tlog_dir, strerror(errno));
        ret=EXFAIL;
        goto out;
     }
     else 
     {
-       while (n--)
+       for (n=0; n<cnt; n++)
        {
            if (0==strcmp(namelist[n]->d_name, ".") || 
                        0==strcmp(namelist[n]->d_name, ".."))
@@ -142,17 +143,22 @@ expublic int background_read_log(void)
                        namelist[n]->d_name);
                NDRX_LOG(log_warn, "Resuming transaction: [%s]", 
                        fnamefull);
+               
                if (EXSUCCEED!=tms_load_logfile(fnamefull, 
                        namelist[n]->d_name+len, &pp_tl))
                {
-                   NDRX_LOG(log_warn, "Faled to resume transaction: [%s]", 
+                   NDRX_LOG(log_error, "Failed to resume transaction: [%s]", 
                        fnamefull);
                    NDRX_FREE(namelist[n]); /* mem leak fixes */
-                   EXFAIL_OUT(ret);
+                   ret=EXFAIL;
+                   continue;
                }
+               
            }
+           
            NDRX_FREE(namelist[n]);
        }
+       
        NDRX_FREE(namelist);
        namelist = NULL;
     }
@@ -246,7 +252,7 @@ expublic int background_loop(void)
             }
             
             /* Now try to get transaction for real (with a lock!) */
-            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid)))
+            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
             {
                 p_tl->trycount++;
                 

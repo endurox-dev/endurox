@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -337,6 +338,20 @@ if ( (PTR__ = (TYPE__ *)NDRX_CALLOC(NMEMB__, SIZE__)) == NULL) \
         __func__, (long)(NMEMB__ *SIZE__), strerror(ERR__));\
     userlog("%s: Failed to mallocate %ld bytes: %s",\
         __func__, (long)(NMEMB__ *SIZE__), strerror(ERR__));\
+    EXFAIL_OUT(ret);\
+}
+
+/**
+ * Standard logging of malloc error
+ * @param X size to allocate
+ */
+#define NDRX_MALLOC_FAIL_NDRX(X) \
+{\
+    int ERR__ = errno;\
+    NDRX_LOG(log_error, "Failed to malloc %ld bytes: %s",\
+        (long)X, strerror(ERR__));\
+    userlog("Failed to malloc %ld bytes: %s",\
+        __func__, (long)X, strerror(ERR__));\
     EXFAIL_OUT(ret);\
 }
 

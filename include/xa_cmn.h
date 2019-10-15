@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -51,60 +52,70 @@ extern "C" {
 
 /* Internal XA commands */
 /* buffer usage: */
-#define ATMI_XA_TPBEGIN             'b' /* Begin global transaction             */
-#define ATMI_XA_TPCOMMIT            'c' /* Commit global transaction            */
-#define ATMI_XA_TPABORT             'a' /* Abort global transaction             */
+#define ATMI_XA_TPBEGIN             'b' /**< Begin global transaction           */
+#define ATMI_XA_TPCOMMIT            'c' /**< Commit global transaction          */
+#define ATMI_XA_TPABORT             'a' /**< Abort global transaction           */
     
-#define ATMI_XA_TPJOIN              'j' /* Process is joining to txn, under new RM
+#define ATMI_XA_TPJOIN              'j' /**< Process is joining to txn, under new RM
                                         or process doesn't know that resorce is involed */
-#define ATMI_XA_PRINTTRANS          'p' /* Print transactions to admin pt       */
-#define ATMI_XA_ABORTTRANS          'r' /* Abo[r]t transaction, admin util      */
-#define ATMI_XA_COMMITTRANS         'm' /* Co[m]mit transaction, admin util     */
-#define ATMI_XA_STATUS              's' /* Return transaction status            */
+#define ATMI_XA_PRINTTRANS          'p' /**< Print transactions to admin pt     */
+#define ATMI_XA_ABORTTRANS          'r' /**< Abo[r]t transaction, admin util    */
+#define ATMI_XA_COMMITTRANS         'm' /**< Co[m]mit transaction, admin util   */
+#define ATMI_XA_STATUS              's' /**< Return transaction status          */
     
+    
+#define ATMI_XA_RECOVERLOCAL        'l' /**< Recover local transactions         */
+#define ATMI_XA_COMMITLOCAL         'o' /**< Commit local transaction           */
+#define ATMI_XA_ABORTLOCAL          't' /**< Abort local transactions           */
+#define ATMI_XA_FORGETLOCAL         'f' /**< Forget local transactions          */
+
+
 /* Register new resource handler - remote process sends us info about working under same TXN */
-#define ATMI_XA_TMREGISTER          'R' /* Register new resource under txn...   */
-#define ATMI_XA_TMPREPARE           'P' /* Sends prepare statement to slave RM  */    
-#define ATMI_XA_TMCOMMIT            'C' /* Sends commit to remove RM            */
-#define ATMI_XA_TMABORT             'A' /* Master TM sends us Abort local tx    */
+#define ATMI_XA_TMREGISTER          'R' /**< Register new resource under txn... */
+#define ATMI_XA_TMPREPARE           'P' /**< Sends prepare statement to slave RM*/    
+#define ATMI_XA_TMCOMMIT            'C' /**< Sends commit to remove RM          */
+#define ATMI_XA_TMABORT             'A' /**< Master TM sends us Abort local tx  */
+#define ATMI_XA_RMSTATUS            'S' /**< Member is sending it actual status */
     
 /* Transaction status per RM */
-#define XA_RM_STATUS_NULL           0  /* NULL                                  */
-#define XA_RM_STATUS_NONE           'n' /* Non transaction                      */
-#define XA_RM_STATUS_IDLE           'i' /* Idle state, according to book        */
-#define XA_RM_STATUS_ACTIVE         'j' /* RM is in joined state, book: atctive */
-#define XA_RM_STATUS_PREP           'p' /* RM is in prepared state              */
-#define XA_RM_STATUS_ABORTED        'a' /* RM is in abort state                 */
-#define XA_RM_STATUS_ABORT_HEURIS   'b' /* Aborted houristically                */
-#define XA_RM_STATUS_ABORT_HAZARD   'd' /* Aborted, hazard                      */
-#define XA_RM_STATUS_COMMITTED      'c' /* Committed                            */
-#define XA_RM_STATUS_COMMITTED_RO   'r' /* Committed, was read only             */
-#define XA_RM_STATUS_COMMIT_HEURIS  'h' /* Committed, Heuristically             */
-#define XA_RM_STATUS_COMMIT_HAZARD  'z' /* Hazrad, committed or aborted         */
+#define XA_RM_STATUS_NULL           0   /**< NULL                               */
+#define XA_RM_STATUS_NONE           'n' /**< Non transaction                    */
+#define XA_RM_STATUS_IDLE           'i' /**< Idle state, according to book      */
+#define XA_RM_STATUS_ACTIVE         'j' /**< RM is in joined state, book: atctive*/
+#define XA_RM_STATUS_PREP           'p' /**< RM is in prepared state            */
+#define XA_RM_STATUS_ABORTED        'a' /**< RM is in abort state               */
+/** For Postgres probably we need unknown which at commit prepare leads to abort*/
+#define XA_RM_STATUS_UNKOWN         'u' /**< RM has unknown status              */
+#define XA_RM_STATUS_ABORT_HEURIS   'b' /**< Aborted houristically              */
+#define XA_RM_STATUS_ABORT_HAZARD   'd' /**< Aborted, hazard                    */
+#define XA_RM_STATUS_COMMITTED      'c' /**< Committed                          */
+#define XA_RM_STATUS_COMMITTED_RO   'r' /**< Committed, was read only           */
+#define XA_RM_STATUS_COMMIT_HEURIS  'h' /**< Committed, Heuristically           */
+#define XA_RM_STATUS_COMMIT_HAZARD  'z' /**< Hazrad, committed or aborted       */
     
 /* Transaction Stages */
 /* The lowest number of RM outcomes, denotes the more exact Result */
-#define XA_TX_STAGE_NULL                     0   /* Transaction does not exists */
-#define XA_TX_STAGE_ACTIVE                   5   /* Transaction is in active processing */
+#define XA_TX_STAGE_NULL                     0   /**< Transaction does not exists */
+#define XA_TX_STAGE_ACTIVE                   5   /**< Transaction is in active processing */
 /* Abort base: */
-#define XA_TX_STAGE_ABORTING                 20   /* Aborting                   */
-#define XA_TX_STAGE_ABORTED_HAZARD           25   /* Abort, Hazard              */
-#define XA_TX_STAGE_ABORTED_HEURIS           30   /* Aborted, Heuristically     */
-#define XA_TX_STAGE_ABORTED                  35   /* Finished ok                */
+#define XA_TX_STAGE_ABORTING                 20   /**< Aborting                 */
+#define XA_TX_STAGE_ABORTED_HAZARD           25   /**< Abort, Hazard            */
+#define XA_TX_STAGE_ABORTED_HEURIS           30   /**< Aborted, Heuristically   */
+#define XA_TX_STAGE_ABORTED                  35   /**< Finished ok              */
 
 /* Entered in preparing stage, with possiblity to fall back to Abort... */
-#define XA_TX_STAGE_PREPARING                40   /* Doing prepare              */
+#define XA_TX_STAGE_PREPARING                40   /**< Doing prepare            */
     
 /* Commit base 
  * TODO: Might think, if first commit fails (with no TX), then we still migth roll back
  * all the stuff.
  */
-#define XA_TX_STAGE_COMMITTING               50   /* Prepared                   */
-#define XA_TX_STAGE_COMMITTED_HAZARD         55   /* Commit, hazard             */
-#define XA_TX_STAGE_COMMITTED_HEURIS         65   /* Commit Heuristically       */
-#define XA_TX_STAGE_COMMITTED                70   /* Commit OK                  */
+#define XA_TX_STAGE_COMMITTING               50   /**< Prepared                 */
+#define XA_TX_STAGE_COMMITTED_HAZARD         55   /**< Commit, hazard           */
+#define XA_TX_STAGE_COMMITTED_HEURIS         65   /**< Commit Heuristically     */
+#define XA_TX_STAGE_COMMITTED                70   /**< Commit OK                */
     
-#define XA_TX_STAGE_MAX_NEVER                100  /* Upper never stage          */
+#define XA_TX_STAGE_MAX_NEVER                100  /**< Upper never stage        */
 
 #define XA_TX_COPY(X,Y)\
     X->tmtxflags = Y->tmtxflags;\
@@ -122,10 +133,11 @@ extern "C" {
     X->tmsrvid = 0;\
     X->tmknownrms[0] = EXEOS;
     
-/* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!! */
+/* WARNING! these are the same flags used by xatmi.h, TPTX* flags!!!            */
 #define TMTXFLAGS_DYNAMIC_REG      0x00000001  /**< TX initiator uses dyanmic reg */
-#define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered       */
-#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged        */
+#define TMTXFLAGS_RMIDKNOWN        0x00000002  /**< RMID already registered     */
+#define TMTXFLAGS_TPTXCOMMITDLOG   0x00000004  /**< Commit decision logged      */
+#define TMTXFLAGS_TPNOSTARTXID     0x00000010  /**< internal, end makes prepare */
 
 #define XA_OP_NOP                       0
 #define XA_OP_START                     1
@@ -138,6 +150,14 @@ extern "C" {
 #define XA_OP_RECOVER                   8
 #define XA_OP_CLOSE                     9
     
+/**
+ * Flags passed to atmi_xa_read_tx_info
+ * @defgroup atmi_xa_read_tx_info_flags
+ * @{
+ */
+#define XA_TXINFO_NOBTID                0x00000001  /**< no BTID extract */
+/** @} */ /* end of atmi_xa_read_tx_info_flags */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -151,21 +171,24 @@ struct atmi_xa_tx_cd
 };
 
 typedef struct atmi_xa_tx_cd atmi_xa_tx_cd_t;
-    
+
+/**
+ * Why this hash is needed?
+ */
 struct atmi_xa_tx_info
 {
     ATMI_XA_TX_INFO_FIELDS;
     
-    
-    int is_tx_suspended; /* Is current transaction suspended?   */
-    int is_tx_initiator; /* Are current process transaction intiator? */
-    int is_ax_reg_called; /* Have work done, needs xa_end()! */
+    long btid;           /**< Branch TID, used locally only atmi procs      */
+    int is_tx_suspended; /* Is current transaction suspended?               */
+    int is_tx_initiator; /* Are current process transaction intiator?       */
+    int is_ax_reg_called; /* Have work done, needs xa_end()!                */
     
     atmi_xa_tx_cd_t *call_cds;  /* hash list of call descriptors involved in tx 
-                                 * (checked for commit/abort/tpreturn) */
-    atmi_xa_tx_cd_t *conv_cds;  /* hash list of conversation open */
+                                 * (checked for commit/abort/tpreturn)      */
+    atmi_xa_tx_cd_t *conv_cds;  /* hash list of conversation open           */
     
-    EX_hash_handle hh;         /* makes this structure hashable */
+    EX_hash_handle hh;         /* makes this structure hashable             */
 };
 typedef struct atmi_xa_tx_info atmi_xa_tx_info_t;
 
@@ -188,13 +211,43 @@ struct atmi_xa_curtx
 typedef struct atmi_xa_curtx atmi_xa_curtx_t;
 
 /**
+ * Transaction entry (mysql, postgresql for each connect session requires
+ * new TID)
+ */
+struct atmi_xa_rm_status_btid
+{
+    char rmstatus;  /**< RM=1 index is 0                            */
+    int  rmerrorcode;/**< ATMI error code                           */
+    short rmreason; /**< Reason code of RM                          */
+    long btid;      /**< Transaction ID in branch                   */
+    short rmid;     /**< Resource manager ID (starting from 1)      */
+    
+    EX_hash_handle hh;         /**< makes this structure hashable   */
+};
+typedef struct atmi_xa_rm_status_btid atmi_xa_rm_status_btid_t;
+
+/**
  * Resource monitor status during the prepare-commit phase
  */
 struct atmi_xa_rm_status
 {
+#if 0
     char rmstatus; /* RM=1 index is 0 */
     int  rmerrorcode; /* ATMI error code */
     short  rmreason; /* Reason code of RM */
+#endif
+    /* TODO:
+     * - Have a TID counter here 
+     * - add linked list or hash list? Seems like linked list should
+     *   be enough. We could use DL list here, so that we can quickly
+     *   find the last position to which add. But if we read the logs
+     *   we need to update RM statuses, and that access will be done
+     *   on per transaction basis. Thus EXHASH is needed here.
+     */
+    
+    atmi_xa_rm_status_btid_t *btid_hash; /**<  Branch TID Hash */
+    
+    long tidcounter;   /**< TID counter*/
 };
 typedef struct atmi_xa_rm_status atmi_xa_rm_status_t;
 
@@ -221,6 +274,13 @@ struct atmi_xa_log
     
     /* the list of RMs (the ID is index) statuses.
      * 0x0 indicates that RM is not in use.
+     * TODO: Under "rmstatus" we need an array of branch xids.
+     * To cope with Postgresql and Mysql - as for these
+     * there is no JOIN, thus any processing unit is new
+     * transaction, even under the same resource manager.
+     * This we need status for each of the branches and these
+     * branches will drive the final status. At RM level we
+     * just need to know that we are involved.
      */
     atmi_xa_rm_status_t rmstatus[NDRX_MAX_RMS]; /* RM=1 index is 0 */
     
@@ -312,21 +372,29 @@ extern NDRX_API void atmi_xa_uninit(void);
 extern NDRX_API int atmi_xa_open_entry(void);
 extern NDRX_API int atmi_xa_close_entry(void);
 extern NDRX_API int atmi_xa_start_entry(XID *xid, long flags, int ping_try);
-extern NDRX_API int atmi_xa_end_entry(XID *xid);
-extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_end_entry(XID *xid, long flags, int aborting);
 extern NDRX_API int atmi_xa_prepare_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_commit_entry(XID *xid, long flags);
+extern NDRX_API int atmi_xa_rollback_entry(XID *xid, long flags);
 extern NDRX_API int atmi_xa_recover_entry(XID *xids, long count, int rmid, long flags);
+extern NDRX_API int atmi_xa_forget_entry(XID *xid, long flags);
 
 extern NDRX_API UBFH* atmi_xa_call_tm_generic(char cmd, int call_any, short rmid,
-                    atmi_xa_tx_info_t *p_xai, long flags);
+                    atmi_xa_tx_info_t *p_xai, long flags, long btid);
 extern NDRX_API UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_any, short rmid, 
         atmi_xa_tx_info_t *p_xai, UBFH *p_ub);
+extern NDRX_API UBFH* atmi_xa_call_tm_rmstatus(atmi_xa_tx_info_t *p_xai, char rmstatus);
 
 /* interface to ATMI lib/utils */
 extern NDRX_API char * atmi_xa_serialize_xid(XID *xid, char *xid_str_out);
-extern NDRX_API void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, short *p_srvid);
-extern NDRX_API void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, short *p_srvid);
+extern NDRX_API void atmi_xa_xid_str_get_info(char *xid_str, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid);
+
+extern NDRX_API void atmi_xa_xid_get_info(XID *xid, short *p_nodeid, 
+        short *p_srvid, unsigned char *p_rmid_start, 
+        unsigned char *p_rmid_cur, long *p_btid);
+
 extern NDRX_API XID* atmi_xa_deserialize_xid(unsigned char *xid_str, XID *xid_out);
 extern NDRX_API int atmi_xa_load_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
 extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
@@ -335,13 +403,11 @@ extern NDRX_API int atmi_xa_is_current_rm_known(char *tmknownrms);
 extern NDRX_API void atmi_xa_curtx_del(atmi_xa_tx_info_t *p_txinfo);
 
 extern NDRX_API UBFH * atmi_xa_alloc_tm_call(char cmd);
-extern NDRX_API int atmi_xa_set_curtx_from_tm(UBFH *p_ub);
 extern NDRX_API int atmi_xa_set_curtx_from_xai(atmi_xa_tx_info_t *p_xai);
-extern NDRX_API int atmi_xa_curtx_set_cur_rmid(atmi_xa_tx_info_t *p_xai);
 extern NDRX_API void atmi_xa_reset_curtx(void);
 extern NDRX_API void atmi_xa_print_knownrms(int dbglev, char *msg, char *tmknownrms);
-extern NDRX_API int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern NDRX_API XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai);
+extern NDRX_API int atmi_xa_read_tx_info(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, int flags);
+extern NDRX_API XID* atmi_xa_get_branch_xid(atmi_xa_tx_info_t *p_xai, long btid);
 extern NDRX_API void atmi_xa_cpy_xai_to_call(tp_command_call_t *call, atmi_xa_tx_info_t *p_xai);
 
 /* CD registration with transaction: */

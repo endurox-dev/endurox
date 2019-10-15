@@ -9,9 +9,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -270,8 +271,8 @@ expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *ref
             search_svc[0]=',';
             search_svc[1]=EXEOS;
             
-            strcat(search_svc, refresh->svcs[i].svc_nm);
-            strcat(search_svc, ",");
+            NDRX_STRCAT_S(search_svc, sizeof(search_svc), refresh->svcs[i].svc_nm);
+            NDRX_STRCAT_S(search_svc, sizeof(search_svc), ",");
             
             /*
              * If blacklist set, then filter out blacklisted services
@@ -463,7 +464,7 @@ expublic int brd_del_svc_from_hash_g(bridgedef_svcs_t ** svcs, char *svc, int di
                 goto out;
             }
             r->count=-1; /* should be 1 */
-            strcpy(r->svc_nm, svc);
+            NDRX_STRCPY_SAFE(r->svc_nm, svc);
             EXHASH_ADD_STR( *svcs, svc_nm, r );
         }
         else
@@ -633,7 +634,7 @@ expublic int brd_add_svc_brhash(bridgedef_t *cur, char *svc, int count)
             ret=EXFAIL;
             goto out;
         }
-        strcpy(r->svc_nm, svc);
+        NDRX_STRCPY_SAFE(r->svc_nm, svc);
         r->count = count;
         EXHASH_ADD_STR( cur->theyr_services, svc_nm, r );
     }
@@ -758,7 +759,8 @@ expublic void brd_end_diff(void)
             /* First time, build the diff message */
             if (first)
             {
-                memset(buf, 0, sizeof(buf));
+                memset(buf, 0, sizeof(bridge_refresh_t));
+
                 brd_build_refresh_msg(G_bridge_svc_diff, refresh, 
                         BRIDGE_REFRESH_MODE_DIFF);
                 first=EXFALSE;

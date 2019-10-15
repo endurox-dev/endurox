@@ -9,9 +9,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -317,6 +318,8 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
     long add_flags = 0;
     SET_TOUT_CONF;
 
+    NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld", len);
+    
     /* Set nonblock flag to system, if provided to EnduroX */
     if (flags & TPNOBLOCK)
     {
@@ -458,6 +461,7 @@ restart:
     }
     
 out:
+    NDRX_LOG(log_debug, "ndrx_generic_q_receive: %ld", ret);
     return ret;
 }
 
@@ -468,12 +472,12 @@ out:
 expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, char *reply_q)
 {
-        call->command = ndrxd_cmd;
-        call->magic = NDRX_MAGIC;
-        call->msg_src = msg_src;
-        call->msg_type = msg_type;
-        NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
-        call->caller_nodeid = G_atmi_env.our_nodeid;
+    call->command = ndrxd_cmd;
+    call->magic = NDRX_MAGIC;
+    call->msg_src = msg_src;
+    call->msg_type = msg_type;
+    NDRX_STRCPY_SAFE(call->reply_queue, reply_q);
+    call->caller_nodeid = G_atmi_env.our_nodeid;
 }
 
 /**
@@ -510,7 +514,9 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     char    msg_buffer_max[NDRX_MSGSIZEMAX];
     
     long  reply_len;
-
+    int attempts = 1;
+    
+restart:
     NDRX_LOG(log_debug, "gencall command: %d, reply_only=%d, need_reply=%d "
             "call flags=0x%x, getcall flags=%d",
             ndrxd_cmd, reply_only, need_reply, (NULL!=call?call->flags:0), flags);
@@ -684,13 +690,34 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
         else
         {
             char buf[2048];
-            snprintf(buf, sizeof(buf), "fail, code: %d: %s", 
-                    reply->error_code, reply->error_msg);
+            
+            attempts++;
+            
+            if (NDRXD_ENORMAL==reply->error_code && attempts < G_atmi_env.max_normwait)
+            {
+                snprintf(buf, sizeof(buf), "%s. Attempt %d/%d", 
+                        reply->error_msg, attempts, G_atmi_env.max_normwait);
+                
+                NDRX_LOG(log_warn, "%s", buf);
+
+                if (NULL!=p_put_output)
+                    p_put_output(buf);
+                
+                sleep(1);
+                
+                goto restart;
+            }
+            else
+            {
+                snprintf(buf, sizeof(buf), "fail, code: %d: %s", 
+                        reply->error_code, reply->error_msg);
+            }
+            
             NDRX_LOG(log_warn, "%s", buf);
 
             if (NULL!=p_put_output)
                     p_put_output(buf);
-
+            
             ret = reply->status;
             goto out;
         }

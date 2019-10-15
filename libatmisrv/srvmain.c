@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -598,13 +599,13 @@ int ndrx_main(int argc, char** argv)
         
         if (NULL==p)
         {
-            NDRX_LOG(log_error, "%s: argc/argv are empty an %s/%s env vars not "
+            NDRX_LOG(log_error, "%s: argc/argv are empty and %s/%s env vars not "
                     "present - missing server params", __func__, 
                     CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
-            userlog("%s: argc/argv are empty an %s/%s env vars not "
+            userlog("%s: argc/argv are empty and %s/%s env vars not "
                     "present - missing server params", __func__, 
                     CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
-            ndrx_TPset_error_fmt(TPEINVAL, "%s: argc/argv are empty an %s/%s env vars not "
+            ndrx_TPset_error_fmt(TPEINVAL, "%s: argc/argv are empty and %s/%s env vars not "
                     "present - missing server params", __func__, 
                     CONF_NDRX_SVPROCNAME, CONF_NDRX_SVCLOPT);
             EXFAIL_OUT(ret);

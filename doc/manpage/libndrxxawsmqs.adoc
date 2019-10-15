@@ -1,0 +1,43 @@
+LIBNDRXXAWSMQS(8)
+=================
+:doctype: manpage
+
+
+NAME
+----
+libndrxxawsmqs - IBM WebSphere MQ XA Driver loader for Enduro/X, static reg
+libndrxxawsmqd - IBM WebSphere MQ XA Driver loader for Enduro/X, dynamic reg
+
+
+SYNOPSIS
+--------
+libndrxxawsmqs.so
+libndrxxawsmqd.so
+
+--------------------------------------------------------------------------------
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=<OPEN_STRING>
+NDRX_XA_CLOSE_STR=<CLOSE_STRING>
+NDRX_XA_DRIVERLIB=libndrxxawsmqs.so
+NDRX_XA_RMLIB=libmqmxa64_r.so
+NDRX_XA_LAZY_INIT=1
+--------------------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+This is IBM WebSphere MQ XA Driver. As RM library shall be used libmqmxa64_r.so,
+which is multi-threaded version suitable for Enduro/X middleware.
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*libndrxxapq(8)* *libndrxxaoras(8)* *ndrxconfig.xml(5)* *tmsrv(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

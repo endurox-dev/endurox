@@ -5,9 +5,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -53,7 +54,8 @@ void CONVSV (TPSVCINFO *p_svc)
     /* Just print the buffer */
     Bprint(p_ub);
 
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 6000))) /* allocate some stuff for more data to put in  */
+    /* allocate some stuff for more data to put in  */
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 6000)))
     {
         ret=EXFAIL;
         goto out;
@@ -61,7 +63,7 @@ void CONVSV (TPSVCINFO *p_svc)
 
     for (i=0; i<1; i++)
     {
-        sprintf(tmp, "SRV SND: %d", i);
+        snprintf(tmp, sizeof(tmp), "SRV SND: %d", i);
         Bchg(p_ub, T_STRING_FLD, 0, (char *)tmp, 0);
 
         if (p_svc->flags & TPSENDONLY)

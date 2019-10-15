@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -73,7 +74,7 @@ add_library (ndrxxaqdiskd SHARED
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
                         ../libatmisrv/rawmain_integra.c)
 target_link_libraries (tmqueue ndrxxaqdisk atmisrvinteg atmi ubf
-                        exthpool nstd exuuid ${RT_LIB} pthread m)
+                        exthpool nstd exuuid ${RT_LIB} pthread)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries (ndrxxaqdisk nstd atmi ubf)

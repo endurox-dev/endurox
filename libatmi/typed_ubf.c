@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -43,6 +44,7 @@
 #include <typed_buf.h>
 #include <ndebug.h>
 #include <fdatatype.h>
+#include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define UBF_DEFAULT_SIZE    1024
@@ -121,12 +123,14 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         ret=EXFAIL;
         goto out;
     }
+    /* Needs to add trailer bytes space */
+    rcv_buf_size+=FF_USED_BYTES;
 
     /* Figure out the passed in buffer */
-    if (NULL!=*odata && NULL==(outbufobj=ndrx_find_buffer(*odata)))
+    if (NULL==(outbufobj=ndrx_find_buffer(*odata)))
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Output buffer %p is not allocated "
-                                        "with tpalloc()!", odata);
+                                        "with tpalloc()!", *odata);
         ret=EXFAIL;
         goto out;
     }
@@ -138,9 +142,10 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         if (flags & TPNOCHANGE && outbufobj->type_id!=BUF_TYPE_UBF)
         {
             /* Raise error! */
-            ndrx_TPset_error_fmt(TPEINVAL, "Receiver expects %s but got %s buffer",
-                                        G_buf_descr[BUF_TYPE_UBF],
-                                        G_buf_descr[outbufobj->type_id]);
+            ndrx_TPset_error_fmt(TPEOTYPE, "Receiver expects %s but got %s buffer",
+                                        G_buf_descr[BUF_TYPE_NULL].type,
+                                        G_buf_descr[outbufobj->type_id].type
+                                        );
             ret=EXFAIL;
             goto out;
         }
@@ -150,7 +155,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
          */
         if (outbufobj->type_id!=BUF_TYPE_UBF)
         {
-            NDRX_LOG(log_warn, "User buffer %d is different, "
+            NDRX_LOG(log_info, "User buffer %d is different, "
                     "free it up and re-allocate as UBF", G_buf_descr[outbufobj->type_id]);
             ndrx_tpfree(*odata, outbufobj);
             *odata=NULL;
@@ -238,13 +243,13 @@ expublic char * UBF_tpalloc (typed_buffer_descr_t *descr, char *subtype, long *l
 {
     char *ret=NULL;
 
-    if (0==*len)
+    if (UBF_DEFAULT_SIZE > *len)
     {
         *len = UBF_DEFAULT_SIZE;
     }
 
     /* Allocate UBF buffer */
-    ret=(char *)Balloc(1, *len);
+    ret=(char *)ndrx_Balloc(0, 0, *len);
 
     if (NULL==ret)
     {
@@ -259,6 +264,8 @@ out:
 
 /**
  * Re-allocate UBF buffer. Firstly we will find it in the list.
+ * TODO: Fix the realloc to bytes, instead of fields, set by Brealloc!!!
+ * 
  * @param ptr
  * @param size
  * @return
@@ -269,13 +276,13 @@ expublic char * UBF_tprealloc(typed_buffer_descr_t *descr, char *cur_ptr, long l
     UBFH *p_ub = (UBFH *)cur_ptr;
     char fn[] = "UBF_tprealloc";
 
-    if (0==len)
+    if (UBF_DEFAULT_SIZE > len)
     {
         len = UBF_DEFAULT_SIZE;
     }
 
     /* Allocate UBF buffer */
-    ret=(char *)Brealloc(p_ub, 1, len);
+    ret=(char *)ndrx_Brealloc(p_ub, 0, 0, len);
 
     if (NULL==ret)
     {

@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -243,6 +244,158 @@ Ensure(test_nstd_args)
 }
 
 /**
+ * Test environment substitute routines
+ * Bug #452
+ */
+Ensure(test_nstd_env_subs)
+{
+    char testbuf[32+1];
+    
+    /* value is changed : (value longer than env var)*/
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "DEBUG_MEGA_LONG_TESTZZZ", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "DB1_JDBC/DEBUG_MEGA_LONG_TESTZZZ");
+    
+    /* value longer and no space */
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "DEBUG_MEGA_LONG_TESTZZZZ", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    
+    /* value shorter than env var */
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "DEBUG", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "DB1_JDBC/DEBUG");
+    
+    /* value equals in len.. */
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "AAAAAAAAAAAAAAAA", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "DB1_JDBC/AAAAAAAAAAAAAAAA");
+    
+    /* value longer than var, two vars */
+    NDRX_STRCPY_SAFE(testbuf, "A${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "THIS_HELLO", EXTRUE);
+    setenv("NDRX_TC", "THIS_WORLD", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "ATHIS_HELLOBTHIS_WORLDZ");
+    
+    /* value shorter */
+    NDRX_STRCPY_SAFE(testbuf, "A${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "HELLO", EXTRUE);
+    setenv("NDRX_TC", "WORLD", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "AHELLOBWORLDZ");
+    
+    /* check escapes.. */
+    NDRX_STRCPY_SAFE(testbuf, "A\\${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "HELLO", EXTRUE);
+    setenv("NDRX_TC", "WORLD", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "A${NDRX_TX}BWORLDZ");
+    
+    NDRX_STRCPY_SAFE(testbuf, "A\\\\${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "HELLO", EXTRUE);
+    setenv("NDRX_TC", "WORLD", EXTRUE);
+    ndrx_str_env_subs_len(testbuf, sizeof(testbuf));
+    assert_string_equal(testbuf, "A\\HELLOBWORLDZ");
+    
+    
+}
+
+/**
+ * Just get the env.
+ * @param data1
+ * @param data2
+ * @param data3
+ * @param data4
+ * @param symbol
+ * @param outbuf
+ * @param outbufsz
+ * @return 
+ */
+int test_get_env(void *data1, void *data2, void *data3, void *data4,
+            char *symbol, char *outbuf, long outbufsz)
+{
+    NDRX_STRNCPY(outbuf, getenv(symbol), outbufsz);
+    
+    return EXSUCCEED;
+}
+/**
+ * Test environment substitute routines, context
+ * Bug #452
+ */
+Ensure(test_nstd_env_subs_ctx)
+{
+    char testbuf[32+1];
+    
+    /* value is changed : (value longer than env var)*/
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "DEBUG_MEGA_LONG_TESTZZZ", EXTRUE);
+    
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    
+    assert_string_equal(testbuf, "DB1_JDBC/DEBUG_MEGA_LONG_TESTZZZ");
+    
+    /* value longer and no space */
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "DEBUG_MEGA_LONG_TESTZZZZ", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    
+    /* value shorter than env var */
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "DEBUG", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "DB1_JDBC/DEBUG");
+    
+    /* value equals in len.. */
+    NDRX_STRCPY_SAFE(testbuf, "DB1_JDBC/${NDRX_TESTXXXX}");
+    setenv("NDRX_TESTXXXX", "AAAAAAAAAAAAAAAA", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "DB1_JDBC/AAAAAAAAAAAAAAAA");
+    
+    /* value longer than var, two vars */
+    NDRX_STRCPY_SAFE(testbuf, "A${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "THIS_HELLO", EXTRUE);
+    setenv("NDRX_TC", "THIS_WORLD", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "ATHIS_HELLOBTHIS_WORLDZ");
+    
+    /* value shorter */
+    NDRX_STRCPY_SAFE(testbuf, "A${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "HELLO", EXTRUE);
+    setenv("NDRX_TC", "WORLD", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "AHELLOBWORLDZ");
+    
+    /* check escapes.. */
+    NDRX_STRCPY_SAFE(testbuf, "A\\${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "HELLO", EXTRUE);
+    setenv("NDRX_TC", "WORLD", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "A${NDRX_TX}BWORLDZ");
+    
+    NDRX_STRCPY_SAFE(testbuf, "A\\\\${NDRX_TX}B${NDRX_TC}Z");
+    setenv("NDRX_TX", "HELLO", EXTRUE);
+    setenv("NDRX_TC", "WORLD", EXTRUE);
+    ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
+                    test_get_env);
+    assert_string_equal(testbuf, "A\\HELLOBWORLDZ");
+    
+    
+}
+
+/**
  * Standard library tests
  * @return
  */
@@ -252,6 +405,8 @@ TestSuite *ubf_nstd_util(void)
 
     add_test(suite, test_nstd_strsep);
     add_test(suite, test_nstd_args);
+    add_test(suite, test_nstd_env_subs);
+    add_test(suite, test_nstd_env_subs_ctx);
     
     return suite;
 }

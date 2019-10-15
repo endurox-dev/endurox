@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -93,6 +94,7 @@ add_subdirectory (test046_twopasscfg)
 IF (ENABLE_TEST47)
 add_subdirectory (test047_oradb)
 ENDIF()
+
 add_subdirectory (test048_cache)
 add_subdirectory (test049_masksvc)
 add_subdirectory (test050_ubfdb)
@@ -112,7 +114,16 @@ add_subdirectory (test059_pq)
 add_subdirectory (test060_ndxdfork)
 add_subdirectory (test062_memlimits)
 add_subdirectory (test063_cpmrange)
+add_subdirectory (test064_bufswitch)
+add_subdirectory (test065_tpcancel)
 add_subdirectory (test066_tmstartserver)
+
+IF (ENABLE_POSTGRES)
+add_subdirectory (test067_postgres)
+ENDIF()
+
+add_subdirectory (test068_tpadm)
+add_subdirectory (test069_wnormal)
 
 ################################################################################
 # Master test case driver

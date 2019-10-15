@@ -7,9 +7,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -33,6 +34,7 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
+#define _GNU_SOURCE
 #include <ndrstandard.h>
 #include <time.h>
 #include <sys/time.h>
@@ -350,7 +352,7 @@ expublic char *ndrx_str_replace(char *orig, char *rep, char *with) {
  * Substitute environment 
  * TODO: Implement $[<func>:data] substitution. Currently available functions:
  * $[dec:<encrypted base64 string>] or just will copy to new function
- * 
+ * Bug #452
  * @param str
  * @param buf_len buffer len for overrun checks
  * @return 
@@ -472,8 +474,6 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                     
                 } /* if data > 0 */
             } /* if is function instead of env variable */
-            
-
 
             envlen = strlen(out);
             
@@ -482,33 +482,36 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
             {
                 memcpy(p, out, envlen);
             }
-            else if (cpylen+3 > envlen)
+            else if (cpylen+3 < envlen)
             {
-                /* if buf_len == 0, skip the checks. */
+                int missing;
+                
+                /* if buf_len == 0, skip the checks. */           
                 if (buf_size > 0 && 
-                        strlen(str) + (cpylen+3 - envlen) > buf_size-1 /*incl EOS*/)
+                        strlen(str) - (cpylen+3) + envlen > buf_size-1 /*incl EOS*/)
                 {
                     if (NULL!=tempbuf)
                     {
                         NDRX_FREE(tempbuf);
                     }
                     /* cannot continue it is buffer overrun! */
+                    
                     return str;
                 }
                 
+                missing = envlen - (cpylen+2);
+                
+                /* we have to stretch that stuff and then copy in, including eos */
+                memmove(close+missing, close+1, strlen(close+1)+1);
+                memcpy(p, out, envlen);
+            }
+            else if (cpylen+3 > envlen)
+            {
                 /*int overleft = cpylen+2 - envlen; */
                 /* copy there, and reduce total len */
                 memcpy(p, out, envlen);
                 /* copy left overs after } at the end of the env, including eos */
                 memmove(p+envlen, close+1, strlen(close+1)+1);
-            }
-            else if (cpylen+3 < envlen)
-            {
-                int missing = envlen - (cpylen+2);
-                
-                /* we have to stretch that stuff and then copy in, including eos */
-                memmove(close+missing, close+1, strlen(close+1)+1);
-                memcpy(p, out, envlen);
             }
             
             /* free-up if temp buffer allocated. */
@@ -622,12 +625,13 @@ expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char
             {
                 memcpy(p, outbuf, envlen);
             }
-            else if (cpylen+3 > envlen)
+            else if (cpylen+3 < envlen)
             {
                 int totlen;
+                int missing;
                 /* if buf_len == 0, skip the checks. */
                 if (buf_size > 0 && 
-                        (totlen=(strlen(str) + (cpylen+3 - envlen))) > buf_size-1 /*incl EOS*/)
+                        (totlen=(strlen(str) - (cpylen+3) + envlen)) > buf_size-1 /*incl EOS*/)
                 {
                     if (NULL!=tempbuf)
                     {
@@ -638,20 +642,21 @@ expublic int ndrx_str_subs_context(char * str, int buf_size, char opensymb, char
                             "formatting totlen=%d, bufsz-1=%d", totlen, buf_size-1);
                     EXFAIL_OUT(ret);
                 }
+                missing = envlen - (cpylen+2);
                 
+                /* we have to stretch that stuff and then copy in, including eos */
+                memmove(close+missing, close+1, strlen(close+1)+1);
+                memcpy(p, outbuf, envlen);
+                
+            }
+            else if (cpylen+3 > envlen)
+            {
                 /*int overleft = cpylen+2 - envlen; */
                 /* copy there, and reduce total len */
                 memcpy(p, outbuf, envlen);
                 /* copy left overs after } at the end of the env, including eos */
                 memmove(p+envlen, close+1, strlen(close+1)+1);
-            }
-            else if (cpylen+3 < envlen)
-            {
-                int missing = envlen - (cpylen+2);
                 
-                /* we have to stretch that stuff and then copy in, including eos */
-                memmove(close+missing, close+1, strlen(close+1)+1);
-                memcpy(p, outbuf, envlen);
             }
             
             /* free-up if temp buffer allocated. */
@@ -1819,6 +1824,28 @@ expublic void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz)
     snprintf(outbuf, outbufsz, "%.3lf%c", left_over, suffix);
     
 }
+
+/**
+ * Replace one character to another
+ * @param str string to change
+ * @param from_char find & replace this char
+ * @param to_char replace with this change
+ * @return input string
+ */
+expublic char *ndrx_strchr_repl (char *str, char from_char, char to_char) 
+{
+    
+    char *p = str;
+    
+    while ((p = strchr (p, from_char)) != NULL)
+    {
+        *p = to_char;
+        p++;
+    }
+    
+    return str;
+}
+
 
 
 /* vim: set ts=4 sw=4 et smartindent: */

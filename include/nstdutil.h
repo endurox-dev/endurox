@@ -7,9 +7,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -42,6 +43,7 @@ extern "C" {
 #include <stdint.h>
 #include <unistd.h>
 #include <exhash.h>
+#include <arpa/inet.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -75,6 +77,35 @@ extern "C" {
     
 #define NDRX_STOR_KBYTE                 1024    /**< number of bytes in KB    */
 
+#if __BIG_ENDIAN__
+
+#ifndef htonll
+# define htonll(x) (x)
+#endif
+
+#ifndef ntohll
+# define ntohll(x) (x)
+#endif
+
+#else
+#ifndef htonll
+# define htonll(x) (((uint64_t)htonl( (x) & 0xFFFFFFFF) << 32) | htonl( (x) >> 32))
+#endif
+#ifndef ntohll
+# define ntohll(x) (((uint64_t)ntohl( (x) & 0xFFFFFFFF) << 32) | ntohl( (x) >> 32))
+#endif
+#endif
+
+
+/**
+ * Linear hashing flags, used for short data type
+ * @defgroup linhash Linear hashing value flags
+ * @{
+ */    
+#define NDRX_LH_FLAG_ISUSED         0x0001  /**< Entry is used              */
+#define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry is used              */
+/** @} */ /* end of linhash */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -148,11 +179,50 @@ struct ndrx_args_loader
 
 typedef struct ndrx_args_loader ndrx_args_loader_t;
 
+
+/**
+ * Linear memory hash
+ */
+typedef struct ndrx_lh_config ndrx_lh_config_t;
+
+/**
+ * Linear hashing config
+ */
+struct ndrx_lh_config
+{
+    /** memory pointer */
+    void **memptr;
+    
+    /** Max number of elements */
+    int elmmax;
+    
+    /** Element size */
+    size_t elmsz;
+    
+    /** Key hash func */
+    int (*p_key_hash)(ndrx_lh_config_t *conf, void *key_get, size_t key_len);
+    
+    /** Flags (short type) offset in element */
+    int  flags_offset;
+    
+    /** Key hash func   */
+    void (*p_key_debug)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
+        char *dbg_out, size_t dbg_len);
+    
+    /** Value debug     */
+    void (*p_val_debug)(ndrx_lh_config_t *conf, int idx, char *dbg_out, size_t dbg_len);
+    
+    /** Compare value at index, ret 0 if equals */
+    int (*p_compare)(ndrx_lh_config_t *conf, void *key_get, size_t key_len, int idx);
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+extern NDRX_API int ndrx_string_list_splitadd(string_list_t**list, char *string, char *sep);
 extern NDRX_API int ndrx_string_list_add(string_list_t**list, char *string);
+extern NDRX_API void ndrx_string_list_free(string_list_t* list);
 
 extern NDRX_API void ndrx_growlist_init(ndrx_growlist_t *list, int step, size_t size);
 extern NDRX_API int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index);
@@ -174,6 +244,7 @@ extern NDRX_API int ndrx_str_subs_context(char * str, int buf_size, char opensym
         int (*pf_get_data) (void *data1, void *data2, void *data3, void *data4,
             char *symbol, char *outbuf, long outbufsz));
 extern NDRX_API char *ndrx_str_replace(char *orig, char *rep, char *with);
+extern NDRX_API char *ndrx_strchr_repl (char *str, char from_char, char to_char);
 extern NDRX_API void ndrx_utc_tstamp2(long *t, long *tusec);
 extern NDRX_API int ndrx_utc_cmp(long *t1, long *tusec1, long *t2, long *tusec2);
 extern NDRX_API char * ndrx_get_strtstamp2(int slot, long t, long tusec);
@@ -252,6 +323,10 @@ extern NDRX_API int ndrx_file_gen_embed(char *in_fname, char *out_fname,
 
 extern NDRX_API int ndrx_storage_decode(char *bytesenc, long *outnrbytes);
 extern NDRX_API void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz);
+
+extern NDRX_API int ndrx_lh_position_get(ndrx_lh_config_t *conf, 
+        void *key_get, size_t key_len, 
+        int oflag, int *pos, int *have_value, char *key_typ);
 
 #ifdef	__cplusplus
 }

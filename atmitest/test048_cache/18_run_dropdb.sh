@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -228,7 +229,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Letting domains to sync..."
-sleep 1
+sleep 5
 
 echo "DOM 1 testing"
 xadmin cs k@db18_1
@@ -315,7 +316,7 @@ ensure_keys g@db18_1 0
 ensure_keys db18_2 0
 
 
-sleep 1
+sleep 5
 echo "DOM 2 testing"
 
 set_dom2;

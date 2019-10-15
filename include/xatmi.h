@@ -36,6 +36,8 @@ extern "C" {
 #define TPSENDONLY	0x00000800
 #define TPRECVONLY	0x00001000
 #define TPACK		0x00002000
+/** Software raised service error, any   */
+#define TPSOFTERR	0x00020000
 /** Suspend current transaction          */
 #define TPTRANSUSPEND	0x00040000
 /** Soft timout condition -> ret TPETIME */
@@ -111,7 +113,9 @@ extern "C" {
 #define NDRX_SVC_BRIDGE           "@TPBRIDGE%03d"        /**< Bridge service format           */
 #define NDRX_SVC_QBRDIGE          "%s,svc,@TPBRIDGE%03d" /**< Bridge service Q format         */
     
-#define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher */
+#define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher       */
+#define NDRX_SVC_TMIB     ".TMIB"               /**< Tp Management information base           */
+#define NDRX_SVC_TMIBNODE ".TMIB-%ld-%d"        /**< Tp Management information base, node, server */
 
 #define NDRX_SVC_RM       "@TM-%d"              /**< resource_id */
 #define NDRX_SVC_TM       "@TM-%d-%d"           /**< Node_idresource_id */
@@ -199,6 +203,10 @@ extern "C" {
 #define NDRX_SHM_S2P_SFX        "shm,s2p"           /**< System V to Posix             */
 #define NDRX_SHM_S2P            "%s," NDRX_SHM_S2P_SFX
 #define NDRX_SHM_S2P_KEYOFSZ    4                   /**< IPC Key offset                */
+
+#define NDRX_SHM_CPM_SFX        "shm,cpm"           /**< Client process monitor        */
+#define NDRX_SHM_CPM            "%s," NDRX_SHM_CPM_SFX
+#define NDRX_SHM_CPM_KEYOFSZ    5                   /**< IPC Key offset                */
     
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
 
@@ -236,6 +244,7 @@ extern "C" {
 #define CONF_NDRX_QPREFIX        "NDRX_QPREFIX"
 #define CONF_NDRX_SVCMAX         "NDRX_SVCMAX"
 #define CONF_NDRX_SRVMAX         "NDRX_SRVMAX"
+#define CONF_NDRX_CLTMAX         "NDRX_CLTMAX"     /**< Max number of client, cpm */
 #define CONF_NDRX_CONFIG         "NDRX_CONFIG"
 #define CONF_NDRX_QPATH          "NDRX_QPATH"
 #define CONF_NDRX_SHMPATH        "NDRX_SHMPATH"
@@ -285,6 +294,12 @@ extern "C" {
 #define CONF_NDRX_SVPPID         "NDRX_SVPPID" 
 /** Server ID */
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
+/** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
+ * state required by command
+ */
+#define CONF_NDRX_NORMWAITMAX    "NDRX_NORMWAITMAX"
+/** Default for  NDRX_NORMWAITMAX */    
+#define CONF_NDRX_NORMWAITMAX_DLFT    60
 
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())
@@ -455,7 +470,7 @@ extern "C" {
 #define	TPQGETBYMSGIDOLD 0x00008	/**< RFU, deprecated */		
 #define	TPQMSGID	0x00010		/**< get msgid of enq/deq message */		
 #define	TPQPRIORITY	0x00020		/**< set/get message priority */		
-#define	TPQTOP		0x00040		/**< RFU, enqueue at queue top */		
+#define	TPQTOP		0x00040		/**< RFU, enqueue at queue top */
 #define	TPQWAIT		0x00080		/**< RFU, wait for dequeuing */		
 #define	TPQREPLYQ	0x00100		/**< set/get reply queue */		
 #define	TPQTIME_ABS	0x00200		/**< RFU, set absolute time */		
@@ -636,7 +651,6 @@ struct tpmyid_t
 
 typedef struct tpmyid_t TPMYID;
 
-
 /* Integration mode API, used by libatmisrvinteg.so: */
 
 /**
@@ -738,6 +752,7 @@ extern NDRX_API int tptoutset(int tout);
 extern NDRX_API int tptoutget(void);
 extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags);
 extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API void* tpgetconn(void);
 
 extern NDRX_API char *tuxgetenv(char *envname);
 
@@ -808,6 +823,7 @@ extern NDRX_API pid_t ndrx_fork(void);
 extern NDRX_API void ndrx_atfork_child(void);
 extern NDRX_API void ndrx_atfork_parent(void);
 extern NDRX_API void ndrx_atfork_prepare(void);
+
 
 #if defined(__cplusplus)
 }

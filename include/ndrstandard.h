@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -111,12 +112,20 @@ extern "C" {
 #define NDRX_ATMI_MSG_MAX_SIZE   65536 /* internal */
     
 #define NDRX_STACK_MSG_FACTOR        30 /* max number of messages in stack */
-    
+
+/** See HARD_MSGSIZEMAX for linux */
+#define NDRX_STACK_MAX (NDRX_STACK_MSG_FACTOR*16777216)
 /* Feature #127 
  * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
  */
 extern NDRX_API long ndrx_msgsizemax (void);
 #define NDRX_MSGSIZEMAX          ndrx_msgsizemax()
+
+/**
+ * Overhead applied to max buffer size used during the trasnport / 
+ * encapuslation structures.
+ */
+#define NDRX_MSGSIZEMAX_OVERHD   200
 
 #define NDRX_PADDING_MAX         16 /* Max compiled padding in struct (assumed) */
 
@@ -265,6 +274,10 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_UNLIKELY(x)    (x)
 
 #endif
+
+
+
+
 
 #ifdef	__cplusplus
 }

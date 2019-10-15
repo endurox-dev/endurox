@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -38,6 +39,19 @@
 #include <ndrstandard.h>
 #include <ubf.h>
 #include <test.fd.h>
+
+/**
+ * Support #457 - test for timeout
+ */
+void TOUTSV (TPSVCINFO *p_svc)
+{
+    sleep(30);
+    tpreturn(  TPFAIL,
+                0L,
+                NULL,
+                0L,
+                0L);
+} 
 
 void CONVSV (TPSVCINFO *p_svc)
 {
@@ -130,7 +144,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialize CONVSV!");
         ret=EXFAIL;
     }
-    
+
+    if (EXSUCCEED!=tpadvertise("TOUTSV", TOUTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize TOUTSV!");
+        ret=EXFAIL;
+    }
     
     return ret;
 }

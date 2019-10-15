@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -60,7 +61,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf $ENV{ORACLE_HOME}/lib)
 #
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c
     COMMAND proc iname=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.proc SQLCHECK=SYNTAX
-        MODE=ANSI IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=../../include
+        MODE=ANSI IRECLEN=255 ORECLEN=255 PARSE=PARTIAL INCLUDE=${ENDUROX_SOURCE_DIR}/include INCLUDE=$ENV{ORACLE_HOME}/precomp/public
         ONAME=${CMAKE_CURRENT_SOURCE_DIR}/atmisv47.c)
 
 add_executable (atmi.sv47 atmisv47.c ../../libatmisrv/rawmain_integra.c)

@@ -13,8 +13,6 @@
 		<!--  <sanity> timer, end -->
 
 		<!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-		<!-- Do dead process restart every X seconds -->
-		<respawncheck>10</respawncheck>
 		<!-- Do process reset after 1 sec -->
 		<restart_min>1</restart_min>
 		<!-- If restart fails, then boot after +5 sec of previous wait time -->
@@ -62,7 +60,7 @@
             <max>1</max>
             <srvid>102</srvid>
             <sysopt>-e /tmp/bridgeN2-dom3.log -r</sysopt>
-            <appopt>-f -n2 -r -i 0.0.0.0 -p 44002 -tP -z30</appopt>
+            <appopt>-f -n2 -r -i 0.0.0.0 -p 22002 -tP -z30</appopt>
         </server>
 	</servers>
 </endurox>

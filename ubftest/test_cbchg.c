@@ -5,9 +5,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -525,6 +526,13 @@ Ensure(test_Bchg_carray_org)
     len=sizeof(carray);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
     assert_equal(strncmp(test_val, carray, sizeof(carray)), 0);
+
+    /* test empty carray */
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)carray, 0, BFLD_CARRAY), EXSUCCEED);
+    len=sizeof(carray);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, &len), EXSUCCEED);
+    assert_equal(len, 0);
+
     do_dummy_data_test(p_ub);
 
     /* Special test for hadling large strings & carrays */

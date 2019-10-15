@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -62,6 +63,7 @@
 #define	TMTXTRYCNT	((BFLDID32)33554591)	/* number: 159	 type: long */
 #define	TMTXTRYMAXCNT	((BFLDID32)33554592)	/* number: 160	 type: long */
 #define	TMTXFLAGS	((BFLDID32)33554593)	/* number: 161	 type: long */
+#define	TMTXBTID	((BFLDID32)33554594)	/* number: 162	 type: long */
 #define	EX_CPMCOMMAND	((BFLDID32)167772360)	/* number: 200	 type: string */
 #define	EX_CPMOUTPUT	((BFLDID32)167772361)	/* number: 201	 type: string */
 #define	EX_CPMTAG	((BFLDID32)167772362)	/* number: 202	 type: string */
@@ -133,6 +135,13 @@
 #define	EX_IF_RSPCMAXAGE	((BFLDID32)167772774)	/* number: 614	 type: string */
 #define	EX_IF_RSPCSECURE	((BFLDID32)167772775)	/* number: 615	 type: string */
 #define	EX_IF_RSPCHTTPONLY	((BFLDID32)167772776)	/* number: 616	 type: string */
+#define	EX_IF_REQFORMN	((BFLDID32)167772780)	/* number: 620	 type: string */
+#define	EX_IF_REQFORMV	((BFLDID32)167772781)	/* number: 621	 type: string */
+#define	EX_IF_REQQUERYN	((BFLDID32)167772782)	/* number: 622	 type: string */
+#define	EX_IF_REQQUERYV	((BFLDID32)167772783)	/* number: 623	 type: string */
+#define	EX_IF_URCODE	((BFLDID32)33555062)	/* number: 630	 type: long */
+#define	EX_IF_REQDATA	((BFLDID32)201327223)	/* number: 631	 type: carray */
+#define	EX_IF_RSPDATA	((BFLDID32)201327224)	/* number: 632	 type: carray */
 #define	EX_NETDATA	((BFLDID32)201327242)	/* number: 650	 type: carray */
 #define	EX_NETGATEWAY	((BFLDID32)167772811)	/* number: 651	 type: string */
 #define	EX_NETCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
@@ -144,6 +153,7 @@
 #define	EX_NETTHEIRIP	((BFLDID32)167772818)	/* number: 658	 type: string */
 #define	EX_NETTHEIRPORT	((BFLDID32)33555091)	/* number: 659	 type: long */
 #define	EX_NETCONMODE	((BFLDID32)67109524)	/* number: 660	 type: char */
+#define	EX_NETRCODE	((BFLDID32)33555183)	/* number: 751	 type: long */
 #define	EX_VIEW_NAME	((BFLDID32)167772860)	/* number: 700	 type: string */
 #define	EX_VIEW_CKSUM	((BFLDID32)33555133)	/* number: 701	 type: long */
 #define	EX_VIEW_INCLFLDS	((BFLDID32)167772862)	/* number: 702	 type: string */

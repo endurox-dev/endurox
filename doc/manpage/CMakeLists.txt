@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -36,12 +37,13 @@ find_program(A2X_EXECUTABLE NAMES a2x)
 find_program(DBLATEX "dblatex")
 
 set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf
-                viewfile tpcache.ini ubfdb.ini)
+                viewfile tpcache.ini ubfdb.ini tm_mib)
 
 set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            tprecover cpmsrv tmqueue cconfsrv tpbrdcstsv uvlog xmemck
            viewc buildclient buildserver exencrypt exdecrypt libcryptohost
-           edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv)
+           edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv
+           libndrxxapq libndrxxaecpg libndrxxawsmqs libndrxxaoras tpadmsv)
 # Joined lists
 #set(PDF_MAN_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv 
 #                ex_env ndrxdebug.conf ndrxconfig.xml ex_envover

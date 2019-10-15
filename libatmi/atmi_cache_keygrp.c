@@ -10,9 +10,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -261,7 +262,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
 
             /* generate response...  this shall be done via type selector */
             if (EXSUCCEED!=ndrx_G_tpcache_types[cache->buf_type->type_id].pf_cache_maxreject(
-                    cache, idata, ilen, odata, olen, flags))
+                    cache, idata, ilen, odata, olen, flags, buf_type))
             {
                 NDRX_LOG(log_error, "%s: Failed to reject user buffer!", __func__);
                 EXFAIL_OUT(ret);

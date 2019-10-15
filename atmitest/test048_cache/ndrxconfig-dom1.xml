@@ -75,7 +75,7 @@
             <max>1</max>
             <cctag></cctag>
             <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv48-dom1.log -sTESTSV02/TESTSV03/TESTSV04/TESTSV05/TESTSV06:OKSVC -sTESTSV07:FAILSVC -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv48-dom1.log -sTESTSV02/TESTSV02_2/TESTSV03/TESTSV04/TESTSV05/TESTSV06:OKSVC -sTESTSV07:FAILSVC -r</sysopt>
         </server>
         <server name="atmi.sv48">
             <max>1</max>
@@ -106,13 +106,13 @@
             <max>1</max>
             <srvid>9000</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1_2.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 44001 -tA -z30</appopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20001 -tA -z30</appopt>
         </server>
         <server name="tpbridge">
             <max>1</max>
             <srvid>9100</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1_3.log -r</sysopt>
-            <appopt>-f -n3 -r -i 127.0.0.1 -p 44002 -tA -z30</appopt>
+            <appopt>-f -n3 -r -i 127.0.0.1 -p 22002 -tA -z30</appopt>
         </server>
         <server name="cpmsrv">
             <max>1</max>

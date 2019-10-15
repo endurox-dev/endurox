@@ -1,14 +1,15 @@
-/* 
- * tpimport()/tpexport() function tests - client
+/**
+ * @brief tpimport()/tpexport() function tests - client
  *
  * @file atmiclt56_view.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -61,17 +62,14 @@
  * 
  * @return 
  */
-expublic int test_impexp_view()
+expublic int test_impexp_view(void)
 {
     int ret = EXSUCCEED;
-    char type[16+1]={EXEOS};
-    char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     long rsplen, olen;
     char json_view_in_b64[CARR_BUFFSIZE_B64+1];
     char json_view_out_b64[CARR_BUFFSIZE_B64+1];
     size_t len_b64;
     int i;
-    char *obuf=NULL;
     char *json_view_in = 
         "{"
             "\"buftype\":\"VIEW\","
@@ -179,7 +177,9 @@ expublic int test_impexp_view()
 
     /* testing with base64 flag*/
     NDRX_LOG(log_debug, "convert to b64");
-    if (NULL==ndrx_base64_encode((unsigned char *)json_view_in, strlen(json_view_in), &len_b64, json_view_in_b64))
+    len_b64 = sizeof(json_view_in_b64);
+    if (NULL==ndrx_base64_encode((unsigned char *)json_view_in, strlen(json_view_in), 
+            &len_b64, json_view_in_b64))
     {
             NDRX_LOG(log_error, "Failed to convert to b64!");
             EXFAIL_OUT(ret);
@@ -255,7 +255,8 @@ expublic int test_impexp_view()
             EXFAIL_OUT(ret);
         }
 
-        if (NULL==ndrx_base64_decode(json_view_out_b64, strlen(json_view_out_b64), &bufsz, istrtemp))
+        if (NULL==ndrx_base64_decode(json_view_out_b64, strlen(json_view_out_b64), 
+                &bufsz, istrtemp))
         {
             NDRX_LOG(log_error, "Failed to decode CARRAY");
             EXFAIL_OUT(ret);
@@ -285,3 +286,4 @@ out:
 
 return ret;
 }
+/* vim: set ts=4 sw=4 et smartindent: */

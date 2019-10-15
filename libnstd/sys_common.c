@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -194,20 +195,90 @@ expublic int ndrx_string_list_add(string_list_t**list, char *string)
     }
     
     /* Alloc the string down there */
-    if (NULL==(tmp->qname = NDRX_MALLOC(strlen(string)+1)))
+    if (NULL==(tmp->qname = NDRX_STRDUP(string)))
     {
-        NDRX_LOG(log_error, "alloc of string_list_t qname (%d) failed: %s", 
+        NDRX_LOG(log_error, "Failed to strdup len (%d): %s", 
                strlen(string)+1, strerror(errno));
         NDRX_FREE(tmp);
         EXFAIL_OUT(ret);
     }
     
-    strcpy(tmp->qname, string);
-    
     /*  Add the string to list finally */
     LL_APPEND(*list, tmp);
     
  out:
+    return ret;
+}
+
+/**
+ * Split the string by separator. Strip whitespace from start and end of each
+ * token. Add each token to the string list
+ * @param list string list to fill
+ * @param string string to split
+ * @param sep separator to split by
+ * @return EXSUCCEED/EXFAIL(out of mem)
+ */
+expublic int ndrx_string_list_splitadd(string_list_t**list, char *string, char *sep)
+{
+    int ret = EXSUCCEED;
+    string_list_t* tmp = NULL;
+    char *temps = NULL;
+    char *tag;
+    char *value_ptr;
+    char *tag_first;
+    char *ent;
+    
+    temps = NDRX_STRDUP(string);
+    if (NULL==temps)
+    {
+        NDRX_LOG(log_error, "Failed to strdup: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    tag_first = temps;
+    
+    NDRX_LOG(log_debug, "About token: [%s] by [%s]", tag_first, sep);
+    
+    while ((tag = strtok_r(tag_first, sep, &value_ptr)))
+    {
+        if (NULL!=tag_first)
+        {
+            tag_first = NULL; /* now loop over the string */
+        }
+        
+        /* get the start */
+        ent = ndrx_str_lstrip_ptr(tag, " \t");
+        /* strip off trailing */
+        ndrx_str_rstrip(ent, " \t");
+        
+        /* Add to string list */
+        if (NULL==(tmp = NDRX_CALLOC(1, sizeof(string_list_t))))
+        {
+            NDRX_LOG(log_error, "calloc of string_list_t (%d) failed", 
+                    sizeof(string_list_t));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL==(tmp->qname = NDRX_STRDUP(ent)))
+        {
+            NDRX_LOG(log_error, "Failed to strdup len (%d): %s", 
+                   strlen(ent)+1, strerror(errno));
+            NDRX_FREE(tmp);
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_debug, "Adding [%s]", tmp->qname);
+        /*  Add the string to list finally */
+        LL_APPEND(*list, tmp);
+    }
+    
+ out:
+    
+    if (NULL!=temps)
+    {
+        NDRX_FREE(temps);
+    }
+ 
     return ret;
 }
 
@@ -564,6 +635,13 @@ expublic void ndrx_proc_kill_list(string_list_t *list)
                  }
             }    
         } /* for list entry */
+        
+        if (was_any && i<max_signals-1)
+        {
+            /* wait a bit */
+            sleep(EX_KILL_SLEEP_SECS);
+        }
+        
     } /* for signals */
     
 }
@@ -1058,10 +1136,10 @@ out:
 /**
  * Return user queues or semaphores
  * @param[out] list to init & grow
- * @param[in] Return user queues, otherwise return semaphores
+ * @param res_type [in] Return user queues, otherwise return semaphores
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
+expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
 {
     char cmd[128];
     FILE *fp=NULL;
@@ -1074,7 +1152,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
     /* init growlist */
     ndrx_growlist_init(list, 256, sizeof(int));
     
-    if (queues)
+    if (NDRX_SV_RESTYPE_QUE == res_type)
     {
         NDRX_STRCPY_SAFE(cmd, "ipcs -q");
         /* output example (LINUX):
@@ -1093,7 +1171,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         T        ID     KEY        MODE       OWNER    GROUP
         Semaphores:
         s   2097152 0x58002281 --ra-ra-ra-     root   system
-        s         1 0x44002281 --ra-ra-ra-     root   system
+        s         1 0x20002281 --ra-ra-ra-     root   system
         s   1048578 0x7a0c584a --ra-------   zabbix   zabbix
         s         3 0x620000a3 --ra-r--r--     root   system
         
@@ -1127,7 +1205,7 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         So from above we can say that MACOS/AIX/FREEBSD/HPUX have the same layout
         */
     }
-    else
+    else if (NDRX_SV_RESTYPE_SEM == res_type)
     {
         NDRX_STRCPY_SAFE(cmd, "ipcs -s");
         /* output example:
@@ -1142,11 +1220,15 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int queues)
         ...
          */
     }
+    else if (NDRX_SV_RESTYPE_SHM == res_type)
+    {
+        NDRX_STRCPY_SAFE(cmd, "ipcs -m");
+    }
 #ifdef EX_OS_LINUX
     snprintf(linematchstr, sizeof(linematchstr), "^0x[0-9a-fA-F]+\\s*[0-9]+\\s*%s\\s",
             ndrx_sys_get_cur_username());
 #else
-    snprintf(linematchstr, sizeof(linematchstr), "^.[ \\t\\r\\n\\v\\f]+[0-9]+[ \\t\\r\\n\\v\\f]+0[x0-9a-fA-F]*[ \\t\\r\\n\\v\\f]+.{11}[ \\t\\r\\n\\v\\f]+%s[ \\t\\r\\n\\v\\f]",
+    snprintf(linematchstr, sizeof(linematchstr), "^.[ \\t\\r\\n\\v\\f]+[0-9]+[ \\t\\r\\n\\v\\f]+[x0-9a-fA-F]*[ \\t\\r\\n\\v\\f]+.{11}[ \\t\\r\\n\\v\\f]+%s[ \\t\\r\\n\\v\\f]",
             ndrx_sys_get_cur_username());
 #endif
     

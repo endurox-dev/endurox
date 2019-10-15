@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -46,12 +47,11 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 
 /* ATMI SHM Level */
-#define NDRX_SHM_LEV_SVC               0x01    /* Service array */
-#define NDRX_SHM_LEV_SRV               0x02    /* Server array */
-#define NDRX_SHM_LEV_BR                0x04    /* Bridge array */
+#define NDRX_SHM_LEV_SVC               0x01    /**< Service array */
+#define NDRX_SHM_LEV_SRV               0x02    /**< Server array */
+#define NDRX_SHM_LEV_BR                0x04    /**< Bridge array */
 
-    
-#define NDRX_SHM_BR_CONNECTED          0x01    /* Bridge is connected */
+#define NDRX_SHM_BR_CONNECTED          0x01    /**< Bridge is connected */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -71,6 +71,7 @@ extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge,
 extern NDRX_API int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len); /* poll() only */
 extern NDRX_API int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, 
 				      int *p_install_cmd);
+extern NDRX_API int ndrx_shm_get_svc_count(void);
 extern NDRX_API int ndrx_shm_install_svc(char *svc, int flags, int resid);
 extern NDRX_API int ndrx_shm_install_svc_br(char *svc, int flags, 
                 int is_bridge, int nodeid, int count, char mode, int resid);

@@ -1,15 +1,16 @@
 /**
  * @brief Distributed Transaction Processing:
- *      The TX (Transaction Demarcation) Specification implementation X/Open
+ *   The TX (Transaction Demarcation) Specification implementation X/Open
  *
  * @file tx.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -258,7 +259,7 @@ expublic int tx_info(TXINFO * txinfo)
         {
             /* check with TM, what actually status we have? */
             if (NULL==(p_ub=atmi_xa_call_tm_generic(ATMI_XA_STATUS, EXFALSE, EXFAIL, 
-                G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L)))
+                G_atmi_tls->G_atmi_xa_curtx.txinfo, 0L, EXFAIL)))
             {
                 int tperr = tperrno;
                 NDRX_LOG(log_error, "Tran info failed with: %d", tperr);

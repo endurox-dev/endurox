@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -63,7 +64,7 @@ int main(int argc, char** argv)
     long rsplen;
     int ret=EXSUCCEED;
     static char *buf = NULL;
-    int i;
+    int i, chk=0;
         
     if (argc < 2)
     {
@@ -95,7 +96,7 @@ int main(int argc, char** argv)
     else if (0==strcmp("cltrss", argv[1]))
     {
         /* let system to pick up the pid */
-        sleep(20);
+        sleep(10);
         if (NULL==buf)
         {
             buf = NDRX_MALLOC(RSS_BLOCK);
@@ -114,12 +115,20 @@ int main(int argc, char** argv)
         {
             buf[i] = i/3;
         }
+	
+        for (i=0; i<RSS_BLOCK; i++)
+        {
+            chk = chk+buf[i];
+        }
+
+	printf("chk: %d\n", chk);
+
         sleep(9999);
     }
     else if (0==strcmp("cltvsz", argv[1]))
     {
         /* let system to pick up the pid */
-        sleep(20);
+        sleep(10);
         buf = NDRX_MALLOC(VSZ_BLOCK);
         if (NULL==buf)
         {
@@ -142,4 +151,3 @@ out:
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
-

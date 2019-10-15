@@ -13,9 +13,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -124,7 +125,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         memcpy(ubf_h->magic, UBF_MAGIC, sizeof(UBF_MAGIC)-1);
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
-        ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES; /* so this is not used.. */
+        ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES;
     }
     
     return ret;
@@ -1286,124 +1287,6 @@ expublic int Bfree (UBFH *p_ub)
     }
     
     return ret;
-}
-
-/**
- * Allocates buffer & do the initialisation
- * Assuming that using GLIBC which returns already aligned.
- * @param f - number of fields
- * @param v - field size
- * @return
- */
-expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
-{
-    UBFH *p_ub=NULL;
-    /* Warning! not according to spec, v here is size for all fields, not for 
-     * the single field. Consider to use Bneeded approach... */
-    long alloc_size;
-    API_ENTRY;
-    
-    /* Bug #394 */
-    alloc_size = ndrx_Bneeded(f, v);
-    
-    if ( alloc_size > MAXUBFLEN)
-    {
-        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is 1 and max is %ld bytes",
-                alloc_size, MAXUBFLEN);
-    }
-    else
-    {
-        p_ub=NDRX_MALLOC(alloc_size);
-        if (NULL==p_ub)
-        {
-            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
-        }
-        else
-        {
-            if (EXSUCCEED!=Binit(p_ub, alloc_size))
-            {
-                NDRX_FREE(p_ub); /* Free up allocated memory! */
-                p_ub=NULL;
-                UBF_LOG(log_error, "Balloc failed - abort Balloc!");
-            }
-        }
-    }
-    
-    UBF_LOG(log_debug, "Balloc: Returning %p!", p_ub);
-    
-    return p_ub;
-}
-
-/**
- * Reallocate the memory
- * Assuming that using GLIBC which is already aligned
- * 
- * @param p_Fb
- * @param f
- * @param v
- * @return 
- */
-expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
-{
-    UBF_header_t *hdr = (UBF_header_t *)p_ub;
-    long alloc_size;
-    API_ENTRY;
-
-    alloc_size = ndrx_Bneeded(f, v);
-
-    UBF_LOG(log_debug, "Brealloc: enter p_ub=%p!", p_ub);
-    
-    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
-    {
-        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
-        p_ub=NULL;
-    }
-
-    /*
-     * New buffer size should not be smaller that used.
-     */
-    if ( alloc_size < hdr->bytes_used || alloc_size > MAXUBFLEN)
-    {
-        ndrx_Bset_error_fmt(BEINVAL, "Requesting %ld, but min is %ld and max is %ld bytes",
-                alloc_size, hdr->buf_len+1, MAXUBFLEN);
-        p_ub=NULL;
-    }
-    else
-    {
-        p_ub=NDRX_REALLOC(p_ub, alloc_size);
-        if (NULL==p_ub)
-        {
-            ndrx_Bset_error_fmt(BMALLOC, "Failed to alloc %ld bytes", alloc_size);
-            p_ub=NULL;
-        }
-        else
-        {
-            long reset_size;
-            char * p=(char *)p_ub;
-            /* reset the header pointer */
-            hdr = (UBF_header_t *)p_ub;
-            reset_size = alloc_size-hdr->buf_len;
-#if 0
-            if (reset_size>0)
-            {
-                /* Now we need to set buffer ending to 0
-                 * and we should increase
-                 */
-                UBF_LOG(log_debug, "Resetting reallocated memory to 0. "
-                                    "From %p %d bytes",
-                                    p+hdr->buf_len, reset_size);
-
-                memset(p+hdr->buf_len, 0, reset_size);
-            }
-#endif
-            /* Update FB to new size. */
-            hdr->buf_len+=reset_size;
-        }
-    }
-    
-    UBF_LOG(log_debug, "Brealloc: Returning %p!", p_ub);
-
-    return p_ub;
 }
 
 /**
@@ -3233,5 +3116,42 @@ expublic long Bneeded(BFLDOCC nrfields, BFLDLEN totsize)
 out:
     return ret;
 }
+
+/**
+ * Reallocate UBF block
+ * @param p_Fb
+ * @param f number of fields
+ * @param v field length in bytes
+ * @return reallocated UBF buffer or NULL on failure
+ */
+expublic UBFH * Balloc (BFLDOCC f, BFLDLEN v)
+{
+    API_ENTRY;
+    
+    return ndrx_Balloc (f, v, EXFAIL);
+}
+
+/**
+ * Reallocate UBF block
+ * @param p_Fb
+ * @param f number of fields
+ * @param v field length in bytes
+ * @return reallocated UBF buffer or NULL on failure
+ */
+expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
+{
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "%s: arguments fail!", __func__);
+        p_ub=NULL;
+    }
+    
+    
+    return ndrx_Brealloc (p_ub, f, v, EXFAIL);
+}
+
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

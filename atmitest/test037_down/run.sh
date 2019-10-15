@@ -8,9 +8,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -54,7 +55,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # We do not need timeout, we will kill procs...
 export NDRX_TOUT=9999
-
+export NDRX_SILENT=Y
 #
 # Domain 1 - here client will live
 #
@@ -115,6 +116,16 @@ set_dom1;
 xadmin down -y
 xadmin shms | cut -d ':' -f 2 | xargs -i ipcrm -m {}
 xadmin start -y || go_out 1
+
+echo "Wait for CPM to boot (WAIT 10)"
+sleep 10
+xadmin pc
+xadmin killall cpmsrv
+echo "Wait for CPM to boot (WAIT 15), AFTER CPMSRV REBOOT"
+sleep 15
+xadmin pc
+echo "Continue..."
+
 
 set_dom2;
 #### Remove all shsm
@@ -340,11 +351,16 @@ fi
 #
 # Test for system v semaphore to be removed...
 #
+echo "**** IPCS ALL ****"
+ipcs
+echo "**** IPCS $NDRX_IPCKEY ****"
 ipcs | grep $NDRX_IPCKEY
+echo "**** IPCS END ****"
+
 CNT=`ipcs | grep $NDRX_IPCKEY | wc | awk '{print $1}'`
 echo "DOM1 Semaphores (guessed): $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
-    echo "TESTERROR! The semaphore with key [$IPCKEY] must be removed!!"
+    echo "TESTERROR! The semaphore with key [$NDRX_IPCKEY] must be removed!!"
     go_out 19
 fi
 
@@ -385,6 +401,34 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	RET=-2
 fi
 
-go_out $RET
+################################################################################
+echo "Test udown"
+################################################################################
+./atmiclt37 &
+sleep 1
+xadmin killall atmiclt37
+echo "There must be some shared mem.."
+
+SHMS=`xadmin shms`
+
+echo "Before udown [$SHMS]"
+
+if [ "X$SHMS" == "X" ]; then
+    echo "Test not ready.."
+    go_out -100
+fi
+
+xadmin udown -y
+
+SHMS=`xadmin shms`
+
+echo "After udown [$SHMS]"
+
+if [ "X$SHMS" != "X" ]; then
+        echo "udown failed to remove resources"
+    go_out -101
+fi
+
+go_out 0
 
 # vim: set ts=4 sw=4 et smartindent:

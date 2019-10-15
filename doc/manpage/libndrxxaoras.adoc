@@ -1,0 +1,57 @@
+LIBNDRXXAORAS(8)
+================
+:doctype: manpage
+
+
+NAME
+----
+libndrxxaoras - Oracle DB XA Driver loder, static reg
+libndrxxaorad - Oracle DB XA Driver loder, dynamic reg
+
+
+SYNOPSIS
+--------
+libndrxxaoras.so
+libndrxxaorad.so
+
+--------------------------------------------------------------------------------
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=<OPEN_STRING>
+NDRX_XA_CLOSE_STR=<CLOSE_STRING>
+NDRX_XA_DRIVERLIB=libndrxxaoras.so
+NDRX_XA_RMLIB=libclntsh.so
+NDRX_XA_LAZY_INIT=1
+--------------------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+This is Oracle DB Switch loader for Enduro/X. Note that Enduro/X operates in
+multi-threaded mode, thus corresponding configuration is required, i.e. 
+"+Threads=true" threads flags open/close strings.
+
+
+CONFIGURATION EXAMPLE
+---------------------
+
+--------------------------------------------------------------------------------
+export NDRX_XA_RES_ID=1
+export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true"
+export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+export NDRX_XA_DRIVERLIB=libndrxxaoras.so
+export NDRX_XA_RMLIB=libclntsh.so
+export NDRX_XA_LAZY_INIT=1
+--------------------------------------------------------------------------------
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*libndrxxapq(8)* *libndrxxawsmqs(8)* *ndrxconfig.xml(5)* *tmsrv(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

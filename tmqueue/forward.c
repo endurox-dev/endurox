@@ -10,9 +10,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -280,6 +281,16 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     {
         tperr = tperrno;
         NDRX_LOG(log_error, "%s failed: %s", qconf.svcnm, tpstrerror(tperr));
+        
+        /* Bug #421 if called in transaction, then abort current one
+         * because need to increment the counters in new transaction
+         */
+        if (tpgetlev())
+        {
+            NDRX_LOG(log_error, "Abort current transaction for counter increment");
+            tpabort(0L);
+        }
+            
         EXFAIL_OUT(ret);
     }
     

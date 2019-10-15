@@ -9,9 +9,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -163,7 +164,6 @@ expublic int accept_connection(void)
     int ret=EXSUCCEED;
     tp_conversation_control_t *conv;
     long revent;
-    int q_opened=EXFALSE;
     char their_qstr[NDRX_MAX_Q_SIZE+1];
     ATMI_TLS_ENTRY;
     
@@ -189,6 +189,7 @@ expublic int accept_connection(void)
                     /* In accepted connection we put their id */
                     G_atmi_tls->G_atmi_conf.my_id
                     );
+    conv->reply_q = (mqd_t)EXFAIL;
     
     /* TODO: Firstly we should open the queue on which to listen right? */
     if ((mqd_t)EXFAIL==(conv->my_listen_q =
@@ -198,7 +199,6 @@ expublic int accept_connection(void)
         ret=EXFAIL;
         goto out;
     }
-    q_opened=EXTRUE;
 
     /* 2. Connect to their reply queue */
     NDRX_STRCPY_SAFE(conv->reply_q_str, G_atmi_tls->G_last_call.reply_to);
@@ -264,12 +264,14 @@ expublic int accept_connection(void)
 out:
 
     /* Close down the queue if we fail but queue was opened! */
-    if (EXSUCCEED!=ret && q_opened)
+    if (EXSUCCEED!=ret)
     {
-        if (EXFAIL==ndrx_mq_close(conv->my_listen_q))
+        if ((mqd_t)EXFAIL!=conv->my_listen_q && 
+            EXFAIL==ndrx_mq_close(conv->my_listen_q))
         {
             NDRX_LOG(log_warn, "Failed to close %s:%s",
                         conv->my_listen_q_str, strerror(errno));
+            conv->my_listen_q=(mqd_t)EXFAIL;
         }
     }
 
@@ -317,18 +319,21 @@ expublic tp_conversation_control_t*  get_current_connection(int cd)
 
 /**
  * Close connection (Normally!)
+ * @param [in] dbgmsg debug message
  * @return SUCCEED/FAIL
  */
-expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int killq)
+expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int killq,
+        char *dbgmsg)
 {
     int ret=EXSUCCEED;
-    char fn[] = "normal_connection_shutdown";
     ATMI_TLS_ENTRY;
     
-    NDRX_LOG(log_debug, "%s: Closing [%s]",  __func__, conv->my_listen_q_str);
+    NDRX_LOG(log_debug, "%s: %s: Closing [%s] killq=%d cd=%d my_listen_q=%p reply_q=%p",
+		 __func__, dbgmsg, conv->my_listen_q_str, killq, conv->cd,
+		(void *)(long)conv->my_listen_q, (void*)(long)conv->reply_q);
 
     /* close down the queue */
-    if (EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
+    if ((mqd_t)EXFAIL!=conv->my_listen_q && EXSUCCEED!=ndrx_mq_close(conv->my_listen_q))
     {
         NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
                                          conv->my_listen_q_str, strerror(errno));
@@ -354,7 +359,7 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
     NDRX_LOG(log_debug, "Closing [%s]",  conv->reply_q_str);
 
     /* close down the queue */
-    if (EXSUCCEED!=ndrx_mq_close(conv->reply_q))
+    if ((mqd_t)EXFAIL!=conv->reply_q && EXSUCCEED!=ndrx_mq_close(conv->reply_q))
     {
         NDRX_LOG(log_warn, "Failed to ndrx_mq_close [%s]: %s",
                                         conv->reply_q_str, strerror(errno));
@@ -386,10 +391,11 @@ expublic int normal_connection_shutdown(tp_conversation_control_t *conv, int kil
         atmi_xa_cd_unreg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), conv->cd);
     }
     
-    
     rcv_hash_delall(conv); /* Remove all buffers if left... */
     
     memset(conv, 0, sizeof(*conv));
+    conv->my_listen_q = (mqd_t)EXFAIL;
+    conv->reply_q = (mqd_t)EXFAIL;
     
 out:
     return ret;
@@ -684,6 +690,9 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     conv = &G_atmi_tls->G_tp_conversation_status[cd];
     /* Hmm setup cd? */
     conv->cd = cd;
+    /* reset queues... */
+    conv->my_listen_q = (mqd_t)EXFAIL;
+    conv->reply_q = (mqd_t)EXFAIL;
     
     memset(call, 0, sizeof(*call));
 
@@ -816,10 +825,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 
     /* So now, we shall receive back handshake, by receving private queue 
      * id on which we can reach the server!
-     * TODO: We might want to move to dynamic memory..?
      */
-    memset(buf, 0, sizeof(buf));
-
     if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
         /* We should have */
@@ -831,7 +837,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
             goto out;
         }
     }
-    
+    /* EOS is already included, where q name is set by ndrx_tpsend() */ 
     NDRX_STRCPY_SAFE(conv->reply_q_str, buf);
     if (is_bridge)
     {
@@ -980,7 +986,7 @@ expublic int ndrx_tprecv (int cd, char **data,
     long rply_len;
     unsigned prio;
     size_t rply_bufsz;
-    char *rply_buf; /* Allocate dynamically! */
+    char *rply_buf = NULL; /* Allocate dynamically! */
     tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
@@ -1139,7 +1145,8 @@ inject_message:
             else if (ATMI_COMMAND_DISCONN==rply->command_id)
             {
                 conv->revent = *revent=TPEV_DISCONIMM;
-                if (EXFAIL==normal_connection_shutdown(conv, EXFALSE))
+                if (EXFAIL==normal_connection_shutdown(conv, EXFALSE, 
+                        "tprecv got ATMI_COMMAND_DISCONN"))
                 {
                     NDRX_LOG(log_error, "Failed to close conversation");
                     ret=EXFAIL;
@@ -1159,22 +1166,20 @@ inject_message:
             else
             {
                 NDRX_LOG(log_debug, "Buffer type id: %d", rply->buffer_type_id);
-                if (rply->data_len > 0)
-                {
-                    call_type = &G_buf_descr[rply->buffer_type_id];
+                
+                call_type = &G_buf_descr[rply->buffer_type_id];
 
-                    ret=call_type->pf_prepare_incoming(call_type,
-                                    rply->data,
-                                    rply->data_len,
-                                    data,
-                                    len,
-                                    flags);
-                    
-                    /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
-                    if (ret==EXFAIL)
-                    {
-                        goto out;
-                    }
+                ret=call_type->pf_prepare_incoming(call_type,
+                                rply->data,
+                                rply->data_len,
+                                data,
+                                len,
+                                flags);
+
+                /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
+                if (ret==EXFAIL)
+                {
+                    goto out;
                 }
                 
 #if 0
@@ -1209,7 +1214,8 @@ inject_message:
                     /*
                      * Gracefully shutdown the connection
                      */
-                    if (EXSUCCEED!=normal_connection_shutdown(conv, EXTRUE))
+                    if (EXSUCCEED!=normal_connection_shutdown(conv, EXTRUE, 
+                            "tprecv got TPREPLY"))
                     {
                         ret=EXFAIL;
                         goto out;
@@ -1272,7 +1278,11 @@ out:
         }   
     }
 
-    NDRX_FREE(rply_buf);
+    /* Bug #389 */
+    if (NULL!=rply_buf)
+    {
+        NDRX_FREE(rply_buf);
+    }
     
     return ret;
 }
@@ -1387,7 +1397,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
                                 "cd %d. Returning event %ld", cd, *revent);
 
         /* close our listening queue */
-        normal_connection_shutdown(conv, EXFALSE);
+        normal_connection_shutdown(conv, EXFALSE, "tpsend got closed conversation");
         ret=EXFAIL;
         ndrx_TPset_error(TPEEVENT); /* Set that we have event for caller! */
         goto out;
@@ -1396,29 +1406,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     /*
      * Prepare some data if have something to prepare
      */
-    if (NULL!=data)
-    {
-        /* fill up the details */
-        if (NULL==(buffer_info = ndrx_find_buffer(data)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
-            ret=EXFAIL;
-            goto out;
-        }
-
-        descr = &G_buf_descr[buffer_info->type_id];
-
-        /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
-        {
-            /* not good - error should be already set */
-            ret=EXFAIL;
-            goto out;
-        }
-
-        call->buffer_type_id = buffer_info->type_id;
-    }
-    else if (ATMI_COMMAND_CONNRPLY==command_id)
+    if (ATMI_COMMAND_CONNRPLY==command_id)
     {
         /* We send them conversion related Q 
         strcpy(call->conv_related_q_str, conv->my_listen_q_str);
@@ -1430,7 +1418,25 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     }
     else
     {
-        data_len=0; /* no data */
+        /* fill up the details */
+        if (NULL==(buffer_info = ndrx_find_buffer(data)))
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", data);
+            ret=EXFAIL;
+            goto out;
+        }
+
+        descr = &G_buf_descr[buffer_info->type_id];
+
+        /* prepare buffer for call */
+        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
+                &data_len, flags))
+        {
+            /* not good - error should be already set */
+            EXFAIL_OUT(ret);
+        }
+
+        call->buffer_type_id = buffer_info->type_id;
     }
     /* OK, now fill up the details */
     call->data_len = data_len;
@@ -1547,7 +1553,10 @@ expublic int ndrx_tpdiscon (int cd)
 
     /* Close down then connection (We close down this only if we are server!)*/
     
-    if (EXFAIL==normal_connection_shutdown(conv, EXTRUE))
+    /* default to disconn...? */
+    
+    conv->revent =TPEV_DISCONIMM;
+    if (EXFAIL==normal_connection_shutdown(conv, EXTRUE, "tpdiscon called"))
     {
         ret=EXFAIL;
         goto out;

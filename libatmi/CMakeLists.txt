@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -48,7 +49,7 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 include_directories (/opt/freeware/include) 
 # Create a library called "ATMI" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
-add_library (atmi SHARED
+add_library (objatmi OBJECT
                 atmi.c
                 tperror.c
                 tpcall.c
@@ -97,7 +98,14 @@ add_library (atmi SHARED
                 tpimport.c
                 tpexport.c
                 tx.c
+                cltshm.c
             )
+
+# shared libraries need PIC
+set_property(TARGET objatmi PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(atmi SHARED $<TARGET_OBJECTS:objatmi>)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmi ubf nstd dl)

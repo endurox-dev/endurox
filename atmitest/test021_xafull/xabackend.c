@@ -16,9 +16,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -56,7 +57,7 @@
 
 #include <xa.h>
 #include <atmi_int.h>
-#include <xa_cmn.h>
+#include <xa_cmn.h>  
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -321,7 +322,11 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
     
     if (!M_is_open)
     {
-        NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() - XA not open!");
+        /* do not generate  */
+        if (&ndrxstatsw_startfail != sw)
+        {
+            NDRX_LOG(log_error, "TESTERROR!!! xa_start_entry() - XA not open!");
+        }
         return XAER_RMERR;
     }
     
@@ -611,6 +616,7 @@ expublic int xa_prepare_entry_stat105(XID *xid, int rmid, long flags)
     int ret =  xa_prepare_entry(&ndrxstatsw, xid, rmid, flags);
     
     /* seems have issues with freebsd ... abort();*/
+    NDRX_LOG(log_error, "105 - simulating failure at prepare!");
     exit(EXFAIL);
 }
 

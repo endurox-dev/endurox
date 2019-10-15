@@ -62,7 +62,7 @@
                 <max>1</max>
                 <srvid>1</srvid>
                 <sysopt>-e ${TESTDIR}/bridge-dom3.log -r</sysopt>
-                <appopt>-f -n1 -r -i 0.0.0.0 -p 44002 -tP -z30</appopt>
+                <appopt>-f -n1 -r -i 0.0.0.0 -p 22002 -tP -z30</appopt>
             </server>
             <server name="atmisv4_1ST">
                 <srvid>50</srvid>

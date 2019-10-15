@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -45,24 +46,48 @@ else
 fi;
 
 
+#
+# Generic exit function
+#
+function go_out {
+    echo "Test exiting with: $1"
+
+    # If some alive stuff left...
+    xadmin killall atmiclt3 atmisv3
+
+    popd 2>/dev/null
+    exit $1
+}
+
 . ../testenv.sh
 
 (./atmisv3 -i 123 2>&1) > ./atmisv3.log &
 sleep 1
-(./atmiclt3 2>&1) > ./atmiclt3.log
-
+(./atmiclt3 normal 2>&1) > ./atmiclt3.log
 RET=$?
 
-# Catch is there is test error!!!
-if [ "X`grep TESTERROR *.log`" != "X" ]; then
-	echo "Test error detected!"
-	RET=-2
+if [ "X$RET" !=  "X0" ]; then
+    echo "Timeout case failed"
+    go_out -2
 fi
 
 xadmin killall atmisv3 2>/dev/null
 
-popd 2>/dev/null
+(./atmiclt3 timeout 2>&1) >> ./atmiclt3.log
+RET=$?
 
-exit $RET
+if [ "X$RET" !=  "X0" ]; then
+    echo "Timeout case failed"
+    go_out -3
+fi
+
+# Catch is there is test error!!!
+if [ "X`grep TESTERROR *.log`" != "X" ]; then
+    echo "Test error detected!"
+    go_out -4
+fi
+
+
+go_out 0
 
 # vim: set ts=4 sw=4 et smartindent:

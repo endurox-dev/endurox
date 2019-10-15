@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -51,6 +52,7 @@ extern "C" {
 #include <userlog.h>
 #include <tperror.h>
 #include <exparson.h>
+#include <tmenv.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -147,6 +149,8 @@ extern "C" {
 
     
 #define NDRX_XID_FORMAT_ID  0x6194f7a1L    /**< Enduro/X XID format id        */
+#define NDRX_XID_TRID_LEN   sizeof(exuuid_t)
+#define NDRX_XID_BQUAL_LEN  sizeof(unsigned char) + sizeof(short) + sizeof(short)
 
 /* Helpers: */    
 #define XA_IS_DYNAMIC_REG       (G_atmi_env.xa_sw->flags & TMREGISTER)
@@ -221,11 +225,24 @@ extern "C" {
     
 
 #define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
-#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio     */
+#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */
 
-#define NDRX_XA_FLAG_RECON  "RECON"  /* Reconnect on tpbegin(), xa_start() if fails */
-#define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /* Test the line */
-#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /* List of error codes for retry */
+#define NDRX_XA_FLAG_NOJOIN  "NOJOIN"  /**< XA Switch does not support TMJOIN mode  */
+#define NDRX_XA_FLAG_NOSTARTXID  "NOSTARTXID"  /**< No XID in start call to RM  */
+#define NDRX_XA_FLAG_RECON  "RECON"    /**< Reconnect on tpbegin(), xa_start() if fails */
+#define NDRX_XA_FLAG_RECON_TEST  "RECON:"  /**< Test the line                       */
+#define NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ  32 /**< List of error codes for retry   */
+    
+/**
+ * Internal system flags
+ * @defgroup xa_flags_sys
+ * @{
+ */
+#define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting */
+#define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported          */
+#define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No XID given in start      */
+
+/** @} */ /* xa_flags_sys */
     
 #define NDRX_BANNER \
     fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, \
@@ -234,7 +251,7 @@ extern "C" {
     fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
     fprintf(stderr, "Copyright (C) 2017-2019 Mavimax Ltd. All Rights Reserved.\n\n");\
     fprintf(stderr, "This software is released under one of the following licenses:\n");\
-    fprintf(stderr, "AGPLv3 or Mavimax license for commercial use.\n\n");
+    fprintf(stderr, "AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.\n\n");
     
     
     
@@ -380,17 +397,17 @@ typedef struct atmi_lib_conf atmi_lib_conf_t;
 struct atmi_lib_env
 {   
     /* Other global settings */
-    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX*/
-    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX*/
+    int     max_servers; /**< Max server instance count - CONF_NDRX_SRVMAX  */
+    int     max_svcs;    /**< Max services per server - CONF_NDRX_SVCMAX    */
+    int     max_clts;    /**< Max number of CPMSRV clients                  */
     char    rnd_key[NDRX_MAX_KEY_SIZE];   /**< random key to be passed to all EnduroX servers in session */
-    int     msg_max;     /**< maximum number of messages in a posix queue */
-    int     msgsize_max; /**< maximum message size for a posix queue */
-    key_t   ipckey;      /**< IPC Key */
-    int     time_out;    /**< Timeout in seconds to be applied for calls */
-    int     our_nodeid;  /**< Cluster node id */
-    int     ldbal;       /**< Load balance settings */
-    int     is_clustered;/**< Will we run in cluster mode or not? */
-    int     testmode; 	 /**< Do we run in test mode? */
+    int     msg_max;     /**< maximum number of messages in a posix queue   */
+    int     msgsize_max; /**< maximum message size for a posix queue        */
+    key_t   ipckey;      /**< IPC Key                                       */
+    int     time_out;    /**< Timeout in seconds to be applied for calls    */
+    int     our_nodeid;  /**< Cluster node id                               */
+    int     ldbal;       /**< Load balance settings                         */
+    int     is_clustered;/**< Will we run in cluster mode or not?           */
     
     /**
      * @defgroup xa_params XA configuration parameters
@@ -403,23 +420,28 @@ struct atmi_lib_env
     char xa_rmlib[PATH_MAX];    /**< RM library               */
     int  xa_lazy_init;          /**< Should we  init lately?  */
     char xa_flags[PATH_MAX];    /**< Specific flags for XA    */
+    long xa_flags_sys;          /**< Internal driver specfic flags */
     struct xa_switch_t * xa_sw; /**< handler to XA switch     */
     
     char xa_recon_retcodes[NDRX_XA_FLAGS_RECON_RETCODES_BUFSZ];
     int xa_recon_times;         /**< Number of times to retry the recon    */
     long xa_recon_usleep;       /**< Microseconds to sleep between retries */
     
+    int (*pf_xa_loctxabort)(XID *xid, long flags); /**< Local abort function  */
+    
+    void* (*pf_getconn)(void);  /**< Return connection object  */
+    
     /**@}*/
     
-    int     nrsems; /**< number of sempahores for poll() mode of service mem */
-    
-    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode) */
-    
-    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!) */
-    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end */
+    int     nrsems; /**< number of sempahores for poll() mode of service mem    */
+    int     maxsvcsrvs; /**< Max servers per service (only for poll() mode)     */
+    int     max_normwait; /**< Max number of attempts for busy context of ndrxd */
+    char    qprefix[NDRX_MAX_Q_SIZE+1]; /**< Queue prefix (common, finally!)    */
+    char    qprefix_match[NDRX_MAX_Q_SIZE+1]; /**< Includes separator at the end*/
     int     qprefix_match_len;              /**< Includes number bytes to match */
-    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!) */
-    char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                   */
+    char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!)               */
+    char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
+    ndrx_env_priv_t integpriv;    /**< integration  private data                */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
@@ -668,8 +690,6 @@ struct ndrx_qdet
 
 typedef struct ndrx_qdet ndrx_qdet_t;
 
-
-
 /**
  * tpcall() cache control structure - additional data to tpacall for providing
  * results back if cache lookup is done (i.e. service is present and 
@@ -680,8 +700,8 @@ typedef struct ndrx_qdet ndrx_qdet_t;
  */
 struct ndrx_tpcall_cache_ctl
 {
-    int should_cache;           /* should we cache response?            */
-    int cached_rsp;             /* data is in cache, respond with them  */
+    int should_cache;           /**< should we cache response?              */
+    int cached_rsp;             /**< data is in cache, respond with them    */
     int saved_tperrno;
     long saved_tpurcode;
     long *olen;
@@ -810,7 +830,8 @@ extern NDRX_API void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
 extern NDRX_API int accept_connection(void);
 extern NDRX_API int svc_fail_to_start(void);
-extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, int killq);
+extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, 
+        int killq, char *dbgmsg);
 extern NDRX_API int close_open_client_connections(void);
 extern NDRX_API int have_open_connection(void);
 extern NDRX_API int ndrx_get_ack(tp_conversation_control_t *conv, long flags);

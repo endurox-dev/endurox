@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -110,7 +111,6 @@ expublic int simple_command_reply(command_call_t * call,
     /* Do reply with ATMI helper function */
     ret = ndrx_generic_q_send_2(call->reply_queue, 
             (char *)reply, send_size, 0, REPLY_DEAD_TIMEOUT, 0);
-    
     if (EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "Marking reply queue as dead!");

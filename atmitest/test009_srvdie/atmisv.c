@@ -5,9 +5,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -74,19 +75,40 @@ out:
                 0L);
 }
 
+/**
+ * Perform exit of server after few seconds..
+ * @param p_svc
+ */
+void EXITSVC(TPSVCINFO *p_svc)
+{
+    
+    sleep(4);
+    
+    /* lets die */
+    exit(1);
+}
+
 /*
  * Do initialization
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
+    int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
         
     if (EXSUCCEED!=tpadvertise("TESTSVFN", TESTSVFN))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to initialize TESTSV (first)!");
+        EXFAIL_OUT(ret);
+    }
+    else if (EXSUCCEED!=tpadvertise("EXITSVC", EXITSVC))
+    {
+        NDRX_LOG(log_error, "Failed to initialize EXITSVC!");
+        EXFAIL_OUT(ret);
     }
     
-    return EXSUCCEED;
+out:
+    return ret;
 }
 
 /**
