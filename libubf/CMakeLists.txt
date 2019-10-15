@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -56,7 +57,7 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 
 # Create a library called "UBF" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
-add_library (ubf SHARED
+add_library (objubf OBJECT
 		ubf_impl.c
 		ubf.c
 		fproj_impl.c
@@ -83,6 +84,12 @@ add_library (ubf SHARED
                 bcmp.c
                 fielddb.c
 	)
+
+# shared libraries need PIC
+set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(ubf SHARED $<TARGET_OBJECTS:objubf>)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(ubf nstd)

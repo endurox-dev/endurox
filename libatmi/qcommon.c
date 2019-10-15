@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -68,7 +69,7 @@ static ubf_c_map_t M_tpqctl_map[] =
     {EX_QPRIORITY,      0, OFSZ(TPQCTL, priority),      BFLD_LONG}, /* 2 */
     {EX_QDIAGNOSTIC,    0, OFSZ(TPQCTL, diagnostic),    BFLD_LONG}, /* 3 */
     {EX_QMSGID,         0, OFSZ(TPQCTL, msgid),         BFLD_CARRAY}, /* 4 */
-    {EX_QCORRID,        0, OFSZ(TPQCTL, corrid),        BFLD_STRING}, /* 5 */
+    {EX_QCORRID,        0, OFSZ(TPQCTL, corrid),        BFLD_CARRAY}, /* 5 */
     {EX_QREPLYQUEUE,    0, OFSZ(TPQCTL, replyqueue),    BFLD_STRING}, /* 6 */
     {EX_QFAILUREQUEUE,  0, OFSZ(TPQCTL, failurequeue),  BFLD_STRING}, /* 7 */
     {EX_CLTID,          0, OFSZ(TPQCTL, cltid),         BFLD_STRING}, /* 8 */
@@ -302,13 +303,14 @@ expublic int tmq_tpqctl_from_ubf_deqrsp(UBFH *p_ub, TPQCTL *ctl)
  */
 expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
 {
-    size_t out_len;
+    size_t out_len = 0;
     
     NDRX_DUMP(log_debug, "Original MSGID", msgid_in, TMMSGIDLEN);
     
-    ndrx_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, msgid_str_out);
+    ndrx_xa_base64_encode((unsigned char *)msgid_in, TMMSGIDLEN, &out_len, 
+            msgid_str_out);
 
-    msgid_str_out[out_len] = EXEOS;
+    /* msgid_str_out[out_len] = EXEOS; */
     
     NDRX_LOG(log_debug, "MSGID after serialize: [%s]", msgid_str_out);
     
@@ -323,13 +325,14 @@ expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
  */
 expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
 {
-    size_t tot_len;
+    size_t tot_len = EXFAIL;
     
     NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
     
     memset(msgid_out, 0, TMMSGIDLEN);
         
-    ndrx_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), &tot_len, msgid_out);
+    ndrx_xa_base64_decode((unsigned char *)msgid_str_in, strlen(msgid_str_in), 
+            &tot_len, msgid_out);
     
     NDRX_DUMP(log_debug, "Deserialized MSGID", msgid_out, TMMSGIDLEN);
     
@@ -367,11 +370,14 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     
     memset(&errbuf, 0, sizeof(errbuf));
     
+    /*
+     * Support #403
     if (NULL==data)
     {
         ndrx_TPset_error_fmt(TPEINVAL,  "%s: data is null!", __func__);
         EXFAIL_OUT(ret);
     }
+    */
     
     if (NULL==qspace || (EXEOS==*qspace && !nodeid && !srvid))
     {
@@ -514,10 +520,14 @@ out:
 
     if (NULL!=p_ub)
     {
+        atmi_error_t err;
+        /* save any error here... */
+        ndrx_TPsave_error(&err);
         tpfree((char *)p_ub);
+        ndrx_TPrestore_error(&err);
     }
 
-        /* restore the error if have */
+    /* restore the error if have */
     if (errbuf.atmi_error)
     {
         if (ctl->diagnostic)
@@ -691,7 +701,7 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
         
         if (!BUF_IS_TYPEID_VALID(buftyp))
         {
-            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: inalid buffer type id recieved %hd", 
+            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: invalid buffer type id received %hd", 
                     __func__, buftyp);
             EXFAIL_OUT(ret);
         }
@@ -728,7 +738,11 @@ out:
 
     if (NULL!=p_ub)
     {
+        atmi_error_t err;
+        /* save any error here... */
+        ndrx_TPsave_error(&err);
         tpfree((char *)p_ub);
+        ndrx_TPrestore_error(&err);
     }
 
     /* restore the error if have */

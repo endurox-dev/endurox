@@ -74,7 +74,7 @@ these are regular expressions.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* 
+On success, *tpbroadcast()* return zero; on error, -1 is returned, with *tperrno* 
 set to indicate the error.
 
 ERRORS

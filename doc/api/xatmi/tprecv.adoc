@@ -21,36 +21,48 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Receive message from open conversation, which is opened by *tpconnect()*. The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or service failure (*TPEV_SVCFAIL*), then global transaction if one in progress is aborted.
+Receive message from open conversation, which is opened by *tpconnect()*. 
+The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation 
+receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or 
+service failure (*TPEV_SVCFAIL*), then global transaction if one in progress is aborted.
 
 *Valid flags*
 
-*TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. This affects only underlying mq_* function calls.
+*TPSIGRSTRT* Restart the system call in progress if interrupted by signal 
+handler. This affects only underlying mq_* function calls.
 
-*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). Wait for reply for infinitely.
+*TPNOTIME* Ignore timeout setting (*NDRX_TOUT* env variable). 
+Wait for reply for infinitely.
 
-*TPNOBLOCK* Do not block on empty queue, if not messages present, the function returns immediately.
+*TPNOBLOCK* Do not block on empty queue, if not messages present, 
+the function returns immediately.
 
 RETURN VALUE
 ------------
-On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpcall()* return zero; on error, -1 is returned, 
+with *tperrno* set to indicate the error. In case of event received, the
+error code is set to *TPEEVENT*.
 
 *'revent' return values*
 
-*TPEV_DISCONIMM* Disconnect received from other conversation end, by issuing *tpdiscon()*. The global transaction in progress is aborted in this case.
+*TPEV_DISCONIMM* Disconnect received from other conversation end, 
+by issuing *tpdiscon()*. The global transaction in progress is aborted in this case.
 
-*TPEV_SENDONLY* The sender program issued *tpsend()* with flag *TPEV_SENDONLY*, meaning that we become senders.
+*TPEV_SENDONLY* The sender program issued *tpsend()* with 
+flag *TPEV_SENDONLY*, meaning that we become senders.
 
 *TPEV_SVCERR* Server died and queue was removed.
 
 *TPEV_SVCFAIL* Server returned *TPFAIL* with *tpreturn()*
 
-*TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*.
+*TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*, connection is closed
+automatically after this event.
 
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus 
+custom message with debug info from last function call.
 
 *TPEINVAL* Invalid call descriptor 'cd' passed in.
 
@@ -58,11 +70,14 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPEEVENT* Event received and it is installed into 'revent' field.
 
-*TPEPROTO* System level service failure. Server died during the message presence in service queue.
+*TPEPROTO* System level service failure. Server died during the message 
+presence in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
 
 EXAMPLE

@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -102,7 +103,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
 
         root_value = exjson_parse_string_with_comments(buffer);
         type = exjson_value_get_type(root_value);
-        NDRX_LOG(log_error, "Type is %d", type);
+        NDRX_LOG(log_debug, "Type is %d", type);
 
         if (exjson_value_get_type(root_value) != EXJSONObject)
         {
@@ -124,7 +125,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
     {
         name = (char *)exjson_object_get_name(root_object, i);
 
-        NDRX_LOG(log_error, "Name: [%s]", name);
+        NDRX_LOG(log_debug, "Name: [%s]", name);
         fid = Bfldid(name);
 
         if (BBADFLDID==fid)
@@ -144,7 +145,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 /* If it is carray - parse hex... */
                 if (IS_BIN(fid))
                 {
-                    size_t st_len;
+                    size_t st_len = sizeof(bin_buf);
                     NDRX_LOG(log_debug, "Field is binary..."
                             " convert from b64...");
 
@@ -257,7 +258,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                             /* If it is carray - parse hex... */
                             if (IS_BIN(fid))
                             {
-                                size_t st_len;
+                                size_t st_len = sizeof(bin_buf);
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
@@ -480,7 +481,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             /* If it is carray, then convert to hex... */
             if (IS_BIN(fldid))
             {
-                size_t outlen;
+                size_t outlen = sizeof(b64_buf);
                 NDRX_LOG(log_debug, "Field is binary... convert to b64");
 
                 if (NULL==ndrx_base64_encode((unsigned char *)strval, flen, 
@@ -492,7 +493,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     
                     EXFAIL_OUT(ret);
                 }
-                b64_buf[outlen] = EXEOS;
+                /* b64_buf[outlen] = EXEOS; */
                 s_ptr = b64_buf;
 
             }

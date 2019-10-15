@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -214,6 +215,11 @@ extern int cmd_pt(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 extern int cmd_abort(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
+extern int cmd_recoverlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_commitlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_abortlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_forgetlocal(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
 
 /* env: */
 extern int cmd_pe(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
@@ -280,6 +286,16 @@ extern int appconfig_rsp_process(command_reply_t *reply, size_t reply_len);
 extern int cmd_dping(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_dsleep(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int cmd_dpid(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+/* TMIB: */
+extern int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+
+
+extern void ndrx_tab_init(ndrx_growlist_t *table);
+extern int ndrx_tab_add_col(ndrx_growlist_t *table, int col_nr, char *str);
+extern void ndrx_tab_print(ndrx_growlist_t *table);
+extern void ndrx_tab_free(ndrx_growlist_t *table);
+
 
 #ifdef	__cplusplus
 }

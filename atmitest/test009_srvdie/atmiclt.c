@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -57,6 +58,46 @@ int main(int argc, char** argv) {
     long rsplen;
     int ret=EXSUCCEED;
     int tpcall_err;
+    int cd;
+    if (argc > 1 && 0==strcmp(argv[1], "tpacall_norply"))
+    {
+        /* this one is called and server processes it for 4 sec and then die */
+        ret = tpacall("EXITSVC", (char *)p_ub, 0L, TPNOREPLY);
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR first tpacall got %d: %s",
+                ret, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* we make next calls */
+        ret = tpacall("EXITSVC", (char *)p_ub, 0L, TPNOREPLY);
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "TESTERROR second tpacall got %d: %s",
+                ret, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_error, "Wait 10 for dead + sanity check...");
+        sleep(10);
+        
+        if (EXSUCCEED==(ret = tpgetrply(&cd, (char **)&p_ub, &rsplen, 
+                TPNOBLOCK | TPGETANY)))
+        {
+            NDRX_LOG(log_error, "TESTERROR There must be TPEBLOCK error set!");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (TPEBLOCK!=tperrno)
+        {
+            NDRX_LOG(log_error, "TESTERROR: tperrno must be TPEBLOCK but is: %d: %s",
+                    tperrno, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        return 0;
+    }
     
     if (EXFAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {

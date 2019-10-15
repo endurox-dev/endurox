@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -101,7 +102,7 @@ exprivate void ppm_progress(command_call_t * call, pm_node_t *pm)
     int ret=EXSUCCEED;
     mod_param_t params;
 
-    NDRX_LOG(log_debug, "startup_progress enter");
+    NDRX_LOG(log_debug, "ppm_progress enter");
     memset(&params, 0, sizeof(mod_param_t));
 
     /* pass to reply process model node */
@@ -114,7 +115,7 @@ exprivate void ppm_progress(command_call_t * call, pm_node_t *pm)
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
 
-    NDRX_LOG(log_debug, "startup_progress exit");
+    NDRX_LOG(log_debug, "ppm_progress exit");
 }
 
 /**

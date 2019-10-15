@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -41,15 +42,52 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <Excompat.h>
 #include <ubf.h>
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define MIB_LOCAL   0x00001
+    
+/** Error codes for Admin API 
+ * @defgroup MIB_ERRORS MIB API error codes
+ * @{
+ */
+#define TAEAPP          -1   /**< Other componets failure                */
+#define TAECONFIG       -2   /**< Configuration file failure             */    
+#define TAEINVAL        -3   /**< Invalid argument, see TA_BADFLD        */    
+#define TAEOS           -4   /**< Operating system error, see TA_STATUS  */    
+#define TAEPERM         -6   /**< No permissions for operation           */
+#define TAEPREIMAGE     -7   /**< Set failed due to invalid image        */
+#define TAEPROTO        -8   /**< Protocol error                         */
+#define TAEREQUIRED     -9   /**< Required field missing see TA_BADFLD   */
+#define TAESUPPORT      -10  /**< Admin call not support in current ver  */
+#define TAESYSTEM       -11  /**< System (Enduro/X) error occurred       */
+#define TAEUNIQ         -12  /**< Object for update not identified       */
+#define TAELIMIT        -13  /**< Cursor limit reached-wait for houskeep */
+    
+#define TAOK            0    /**< Request succeed, no up-updates         */
+#define TAUPDATED       1    /**< Succeed, updates made                  */
+#define TAPARTIAL       2    /**< Partial succeed, have updates          */
+/** @}*/
+
+#define NDRX_TA_CLASS_CLIENT        "T_CLIENT"      /**<  Client process class */
+#define NDRX_TA_CLASS_DOMAIN        "T_DOMAIN"      /**<  Domain class         */
+#define NDRX_TA_CLASS_MACHINE       "T_MACHINE"     /**<  Machine class        */
+#define NDRX_TA_CLASS_QUEUE         "T_QUEUE"       /**<  Queue class          */
+#define NDRX_TA_CLASS_SERVER        "T_SERVER"      /**<  Server class         */
+#define NDRX_TA_CLASS_SERVICE       "T_SERVICE"     /**<  Service class        */
+#define NDRX_TA_CLASS_SVCGRP        "T_SVCGRP"      /**<  Service group        */
+    
+#define NDRX_TA_GET                 "GET"           /**< Get infos             */
+#define NDRX_TA_GETNEXT             "GETNEXT"       /**< Read next curs        */
+
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags);
-
+extern NDRX_API int ndrx_buffer_list(ndrx_growlist_t *list);
 
 #ifdef	__cplusplus
 }

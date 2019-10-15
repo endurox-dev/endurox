@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -89,7 +90,11 @@ expublic void * ndrx_atmi_tls_get(long priv_flags)
                      __func__, tls->G_atmi_xa_curtx.txinfo);
 #endif
         
-        if (priv_flags & CTXT_PRIV_TRAN)
+        /* well for java we do not need to suspend the transaction,,
+         * do we?
+         */
+        if (priv_flags & CTXT_PRIV_TRAN && 
+                !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOAPISUSP))
         {
             tls->global_tx_suspended = EXFALSE;
             
@@ -168,7 +173,8 @@ expublic int ndrx_atmi_tls_set(void *data, int flags, long priv_flags)
          * For Object API some of the operations do not request transaction to
          * be open.
          */
-        if (priv_flags & CTXT_PRIV_TRAN)
+        if (priv_flags & CTXT_PRIV_TRAN && 
+                !(G_atmi_env.xa_flags_sys & NDRX_XA_FLAG_SYS_NOAPISUSP))
         {
             if(tls->global_tx_suspended)
             {   
@@ -208,7 +214,7 @@ out:
  * @return 
  */
 expublic void ndrx_atmi_tls_free(void *data)
-{
+{   
     if (NULL!=data)
     {
         if (data == G_atmi_tls)
@@ -305,6 +311,8 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->tx_transaction_control = TX_UNCHAINED;
     tls->tx_transaction_timeout = 0;
     
+    memset(&tls->integpriv, 0, sizeof(tls->integpriv));
+    
     pthread_mutex_init(&tls->mutex, NULL);
     
     /* set callback, when thread dies, we need to get the destructor 
@@ -330,6 +338,7 @@ out:
     if (EXSUCCEED!=ret && NULL!=tls)
     {
         ndrx_atmi_tls_free((char *)tls);
+        tls = NULL;
     }
 
     return (void *)tls;
@@ -386,8 +395,11 @@ expublic int ndrx_tpsetctxt(TPCONTEXT_T context, long flags, long priv_flags)
     NDRX_LOG(log_debug, "ENTRY: %s enter, context: %p, current: %p",  __func__, 
             context, G_atmi_tls);
     
-    NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
-        ((atmi_tls_t *)context)->is_associated_with_thread);
+    if (NULL!=context)
+    {
+        NDRX_LOG(log_debug, "ENTRY: is_associated_with_thread = %d", 
+            ((atmi_tls_t *)context)->is_associated_with_thread);
+    }
 
     NDRX_LOG(log_debug, "ENTRY: CTXT_PRIV_NSTD = %d", 
         (priv_flags) & CTXT_PRIV_NSTD );
@@ -509,6 +521,23 @@ out:
 }
 
 /**
+ * Return data from context
+ * This assumes that ATMI Context currently IS set!
+ * @param[out] data output data where to store the result
+ */
+expublic ndrx_ctx_priv_t* ndrx_ctx_priv_get(void)
+{
+    if (NULL==G_atmi_tls)
+    {
+        return NULL;
+    }
+    else
+    {
+        return &G_atmi_tls->integpriv;
+    }
+}
+
+/**
  * Internal version of get full context
  * This disconnects current thread from TLS.
  * @param flags
@@ -598,4 +627,15 @@ out:
 
     return ret;
 }
+
+/**
+ * Reconfigure context.
+ * Current context must be set.
+ * @param is_auto TRUE -> automatic dealloc, FALSE -> manual context dealloc
+ */
+expublic void ndrx_ctx_auto(int is_auto)
+{
+    G_atmi_tls->is_auto = is_auto;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

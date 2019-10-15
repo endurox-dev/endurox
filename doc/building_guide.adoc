@@ -57,12 +57,21 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04
+
 ---------------------------------------------------------------------
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++-dev \
 	libgpgme11-dev libxml2-dev libxml2-utils git
+---------------------------------------------------------------------
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ sudo apt-get install  postgresql postgresql-client libecpg-dev \
+ libpq-dev postgresql-server-dev-all
 ---------------------------------------------------------------------
 
 For Linux Mint Mate 19+ additional packages are required (or you get
@@ -79,18 +88,22 @@ $ sudo apt-get update asciidoc-dblatex
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
+
 As some packages like `dia' does not exists in base Centos install,
 then few of them we will borrow from Fedora project via epel-release.
 Which should be installed in following way:
 Download the latest epel-release rpm from (e.g. epel-release-6-8.noarch.rpm or later)
 http://dl.fedoraproject.org/pub/epel/6/x86_64/
 Install epel-release rpm:
+
 ---------------------------------------------------------------------
 $ su - root
 # wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 # rpm -Uvh epel-release*rpm
 ---------------------------------------------------------------------
+
 Now install system depenencies  
+
 ---------------------------------------------------------------------
 # yum update
 # yum groupinstall 'Development Tools'
@@ -99,6 +112,20 @@ Now install system depenencies
 	gpgme-devel dia libxml2-devel
 # exit
 $
+---------------------------------------------------------------------
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed. Note that default PostgreSQL version 8.x have issues with ECPG
+transactions - transaction management in ECPG works incorrectly. ECPG tries
+to perform auto-commit (even instructed not to do so). Thus only PQ mode
+driver is released.
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# service postgresql initdb
+# chkconfig postgresql on
+# service postgresql start
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos/RHEL/Oracle Linux 7.x
@@ -163,7 +190,18 @@ cmake version 3.7.2
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ---------------------------------------------------------------------
 
-==== System level dependencies - for Suse Linux Enterprise Server 12.3
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# postgresql-setup initdb
+# systemctl start postgresql
+# systemctl enable postgresql
+---------------------------------------------------------------------
+
+==== System level dependencies - for Suse Linux Enterprise Server 12.3, 15
 
 To install all required dependencies, you need following sets of DVDs (or
 other sources), or later
@@ -185,6 +223,54 @@ installation of packages:
 libxml2-devel libgpgme-devel asciidoc cmake dia rpm-build
 ---------------------------------------------------------------------
 
+PostgreSQL can be installed in following way:
+
+---------------------------------------------------------------------
+# zypper install postgresql postgresql-devel postgresql-server postgresql-contrib
+# systemctl start postgresql
+# systemctl enable postgresql
+# systemctl status postgresql
+
+---------------------------------------------------------------------
+
+
+==== System level dependencies - for Centos/RHEL/Oracle Linux 8.x
+
+To install Enduro/X build dependencies.
+
+---------------------------------------------------------------------
+
+$ su - root
+# yum install yum-utils
+# yum groupinstall 'Development Tools'
+# yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel 
+
+---------------------------------------------------------------------
+
+The PDF building (dblatex) is not available on this system, thus PDF documentation
+will not be built. Also the "dia" package is not available on this system, thus
+it will be user from Fedora Core OS:
+
+---------------------------------------------------------------------
+
+# wget http://download-ib01.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/os/Packages/l/libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# rpm -i libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# wget http://download-ib01.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/os/Packages/d/dia-0.97.3-10.fc29.x86_64.rpm
+# rpm -i --nodeps dia-0.97.3-10.fc29.x86_64.rpm
+
+---------------------------------------------------------------------
+
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install  postgresql postgresql-devel postgresql-server postgresql-contrib
+# postgresql-setup initdb
+# systemctl start postgresql
+# systemctl enable postgresql
+---------------------------------------------------------------------
 
 ==== AsciiDoc Integration with Dia
 
@@ -228,29 +314,61 @@ $ cat << EOF > $HOME/ndrx_home
 #!/bin/bash
 
 # Where app domain lives
-export NDRX_APPHOME=$HOME/endurox
+export NDRX_APPHOME=\$HOME/endurox
 # Where NDRX runtime lives
-export NDRX_HOME=$HOME/endurox/dist/bin
+export NDRX_HOME=\$HOME/endurox/dist/bin
 # Debug config too
-export NDRX_DEBUG_CONF=$HOME/endurox/sampleconfig/debug.conf
+export NDRX_DEBUG_CONF=\$HOME/endurox/sampleconfig/debug.conf
 
 # NDRX config too.
-export NDRX_CONFIG=$HOME/endurox/sampleconfig/ndrxconfig.xml
+export NDRX_CONFIG=\$HOME/endurox/sampleconfig/ndrxconfig.xml
 
 # Access for binaries
-export PATH=$PATH:$HOME/endurox/dist/bin
+export PATH=\$PATH:\$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib:$HOME/endurox/dist/lib64
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$HOME/endurox/dist/lib:\$HOME/endurox/dist/lib64
 
 # UBF/FML field tables
-export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 
 #  To complete unit tests:
 export NDRX_MSGSIZEMAX=1049600
 
 # Increase stack size
 ulimit -s 30751
+
+################################################################################
+# In case if building with Oracle DB database testing support
+# i.e. having flag -DENABLE_TEST47=ON
+# or building endurox-java with Oracle DB tests (02_xaoracle), then
+# configure bellow setting (demo values provided):
+# If so - uncomment bellow
+################################################################################
+#export EX_ORA_HOST=localhost
+#export EX_ORA_USER=exdbtest
+#export EX_ORA_PASS=exdbtest1
+#export EX_ORA_PORT=1521
+#export EX_ORA_SID=xe
+#export EX_ORA_OCILIB=/opt/oracle/product/18c/dbhomeXE/lib/libclntsh.so
+#export ORACLE_HOME=/opt/oracle/product/18c/dbhomeXE
+#export PATH=\$PATH:\$ORACLE_HOME/bin
+#export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/oracle/product/18c/dbhomeXE/lib
+#export TNS_ADMIN=\$ORACLE_HOME/network/admin
+
+################################################################################
+# In case if building with Postgresql DB database testing support
+# or building endurox-java with Oracle DB tests (03_xapostgres), then
+# configure bellow setting (demo values provided):
+# If so - uncomment bellow
+################################################################################
+#export EX_PG_HOST=localhost
+#export EX_PG_USER=exdbtest
+#export EX_PG_PASS=exdbtest1
+# currently uses default port
+#export EX_PG_PORT=5432
+#export EX_PG_DB=xe
+
 
 EOF
 
@@ -262,6 +380,13 @@ do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
 
 
 === Building the code
+
+*NOTE:* If building with PostgreSQL support (-DENABLE_POSTGRES=ON) for 
+RHEL/OL/Centos 8.x you need to specify Postgresql include folder manually, e.g. 
+add "-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/pgsql/internal" string to cmake
+line, otherwise error "Could NOT find PostgreSQL (missing: PostgreSQL_TYPE_INCLUDE_DIR)"
+will be given at configure.
+
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
 # If you want to have install folder to /home/user1/endurox/dist
@@ -307,8 +432,153 @@ Running "main"...
 Completed "main": 21 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
+=== Testing Oracle DB
+
+If EX_ORA_ settings are loaded int the ndrx_home environment file and project
+is started with *-DENABLE_TEST47=ON* setting, then before running the tests,
+user and tables needs to be created for testing. 
+
+User scheme can be created in following way (may differ if you have other
+procedures):
+
+---------------------------------------------------------------------
+
+# su - oracle
+$ sqlplus / nolog
+SQL> connect / as sysdba
+SQL> alter session set "_ORACLE_SCRIPT"=true;
+SQL> CREATE USER exdbtest IDENTIFIED BY exdbtest1;
+SQL> GRANT CONNECT, RESOURCE, DBA TO exdbtest;
+SQL> COMMIT;
+SQL> QUIT;
+
+---------------------------------------------------------------------
+
+The testing user must have access to tnsnames.ora, thus user "user1" must be
+added to "oinstall" group. On linux that can be done in this way:
+
+---------------------------------------------------------------------
+
+# gpasswd -a user1 oinstall
+
+---------------------------------------------------------------------
+
+
+Tables can be loaded in with help of Oracle sqlplus tool:
+
+---------------------------------------------------------------------
+$ cd /home/user1/endurox/atmitest/test047_oradb
+$ ./sqlplus.run 
+
+SQL*Plus: Release 18.0.0.0.0 - Production on Sun May 26 16:46:53 2019
+Version 18.4.0.0.0
+
+Copyright (c) 1982, 2018, Oracle.  All rights reserved.
+
+Last Successful login time: Sun May 26 2019 16:42:36 +03:00
+
+Connected to:
+Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Version 18.4.0.0.0
+
+SQL> @tables.sql
+
+Table created.
+
+SQL> quit
+
+---------------------------------------------------------------------
+
+Once this is done, the test shall execute with out the problems.
+
+
+=== Testing PostgreSQL
+
+Enduro/X supports PosgreSQL Two Phase commit mode. In general PosgreSQL have
+'light' version of two phase commit. I.e. only that session which did work
+can leave the work in prepared state with some 'id'. Thus to working in XA mode
+when process calls xa_end(), it needs to prepare the transaction. As Enduro/X
+writes the transaction manager logs at start of every active transaction, thus
+tmsrv will know about this transaction, thus it will be able to reverse it in
+case of crashes. There is slight chance that this might slip in case if 
+transaction times out, tmsrv reverts it (no XID found, thus assume committed/reverted),
+but after a while process performs the xa_end()/xa_prepare(). In that case
+transaction will be left in prepare state. These cases can be resolved manually
+by performing `xadmin recoverlocal' and perform `xadmin abortlocal' on these.
+
+To configure PosgreSQL, for tests, following need to be done:
+
+1. Create user / password / database
+
+2. Enable prepared transactions
+
+To create the user for tests, perform following
+
+--------------------------------------------------------------------------------
+
+$ sudo -s
+# su - postgres
+$ createuser exdbtest
+$ createdb xe
+$ psql
+
+> alter user exdbtest with encrypted password 'exdbtest1';
+> grant all privileges on database xe to exdbtest;
+> \q
+
+--------------------------------------------------------------------------------
+
+To enable prepared transactions, edit postgresql.conf and set `max_prepared_transactions'
+greater than 0, e.g. 1000.
+
+--------------------------------------------------------------------------------
+
+-- for debian/ubuntu
+# vi /etc/postgresql/*/main/postgresql.conf 
+-- for RedHat, SLES
+# vi /var/lib/pgsql/data/postgresql.conf
+
+-- Edit the max_prepared_transactions
+
+max_prepared_transactions = 1000                # zero disables the feature
+
+--------------------------------------------------------------------------------
+
+Network connection shall be enabled too for Posgres auth, edit the *pg_hba.conf*
+(for RHEL, SLES /var/lib/pgsql/data/pg_hba.conf)
+
+Ensure that it contains following lines (for password auth):
+
+--------------------------------------------------------------------------------
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+--------------------------------------------------------------------------------
+
+After that restart PostgreSQL (according to OS):
+
+--------------------------------------------------------------------------------
+# systemctl restart postgresql
+--------------------------------------------------------------------------------
+
+If Postgresql does not boot, then try "trust" for the "local/all".
+
+After these steps test database table shall be created. That could be done in
+following way:
+
+---------------------------------------------------------------------
+$ source ~/ndrx_home
+$ cd /home/user1/endurox/atmitest/test067_postgres
+$ cat tables.sql | ./psql.run 
+CREATE TABLE
+
+---------------------------------------------------------------------
+
+Now PostgreSQL is ready for Enduro/X testing.
+
 
 == Conclusions
+
 At finish you have a configured system which is read to process the transactions
 by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
 to other same architecture machine and run it there with out need of building.

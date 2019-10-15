@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -86,6 +87,18 @@
             exit(1);\
         }
 
+/**
+ * Support #459 
+ * locked debug use signal-thread
+ * Fact is if we forking, we might get lock on localtime_r
+ * by signal thread, and the forked process will try to debug
+ * but will be unable because there will be left over lock on localtime_r
+ * from the signal thread which no more exists after the fork.
+ */
+#define LOCKED_DEBUG(lev, fmt, ...) MUTEX_LOCK_V(M_forklock);\
+                                    NDRX_LOG(lev, fmt, ##__VA_ARGS__);\
+                                    MUTEX_UNLOCK_V(M_forklock);
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -93,7 +106,7 @@ exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
 exprivate volatile int M_shutdown = EXFALSE; /**< Doing shutdown    */
 
-EX_SPIN_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
+MUTEX_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -146,13 +159,13 @@ expublic int self_notify(srv_status_t *status, int block)
     int ret=EXSUCCEED;
     size_t  send_size = sizeof(srv_status_t);
 
-    NDRX_LOG(log_debug, "About to send: %d bytes/%d svcs",
+    LOCKED_DEBUG(log_debug, "About to send: %d bytes/%d svcs",
                         send_size, status->svc_count);
     
-    EX_SPIN_LOCK_V(M_forklock);
     /* we want new q/open + close here,
      * so that we do not interference with our main queue blocked/non blocked flags.
      */
+    MUTEX_LOCK_V(M_forklock);
     ret=cmd_generic_callfl(NDRXD_COM_PMNTIFY_RQ, NDRXD_SRC_NDRXD,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)status, send_size,
@@ -166,7 +179,7 @@ expublic int self_notify(srv_status_t *status, int block)
                         NULL,
                         NULL,
                         EXFALSE, TPNOBLOCK);
-    EX_SPIN_UNLOCK_V(M_forklock);
+    MUTEX_UNLOCK_V(M_forklock);
     
 out:
     return ret;
@@ -185,28 +198,28 @@ exprivate void handle_child(pid_t chldpid, int stat_loc)
     
     if (chldpid>0)
     {
-        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
+        LOCKED_DEBUG(log_warn, "sigchld: PID: %d exit status: %d",
                                            chldpid, stat_loc);
         if (WIFSTOPPED(stat_loc))
         {
-            NDRX_LOG(log_warn, "Process is stopped - ignore..");
+            LOCKED_DEBUG(log_warn, "Process is stopped - ignore..");
             return;
         }
         status.srvinfo.pid = chldpid;
 
         if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
         {
-            NDRX_LOG(log_error, "Process normal shutdown!");
+            LOCKED_DEBUG(log_error, "Process normal shutdown!");
             status.srvinfo.state = NDRXD_PM_EXIT;
         }
         else if (WIFEXITED(stat_loc) && TPEXIT_ENOENT == WEXITSTATUS(stat_loc))
         {
-            NDRX_LOG(log_error, "Binary not found!");
+            LOCKED_DEBUG(log_error, "Binary not found!");
             status.srvinfo.state = NDRXD_PM_ENOENT;
         }
         else
         {
-            NDRX_LOG(log_error, "Process abnormal shutdown!");
+            LOCKED_DEBUG(log_error, "Process abnormal shutdown!");
             status.srvinfo.state = NDRXD_PM_DIED;
         }
         /* NDRX_LOG(log_warn, "Sending notification"); */
@@ -230,7 +243,7 @@ exprivate void * check_child_exit(void *arg)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
-    NDRX_LOG(log_debug, "check_child_exit - enter...");
+    LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     while (!M_shutdown)
     {
 	int got_something = 0;
@@ -239,12 +252,12 @@ exprivate void * check_child_exit(void *arg)
  * if we do not have any childs, then sleep for 1 sec.
  */
 #ifndef EX_OS_DARWIN
-        NDRX_LOG(log_debug, "about to sigwait()");
+        LOCKED_DEBUG(log_debug, "about to sigwait()");
         
         /* Wait for notification signal */
         if (EXSUCCEED!=sigwait(&blockMask, &sig))
         {
-            NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
+            LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
 #endif
@@ -255,7 +268,7 @@ exprivate void * check_child_exit(void *arg)
             
         }
         
-        NDRX_LOG(log_debug, "about to wait()");
+        LOCKED_DEBUG(log_debug, "about to wait()");
         
         while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
@@ -264,7 +277,7 @@ exprivate void * check_child_exit(void *arg)
         }
         
 #if EX_OS_DARWIN
-        NDRX_LOG(6, "wait: %s", strerror(errno));
+        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
         if (!got_something)
         {
             sleep(1);
@@ -272,7 +285,7 @@ exprivate void * check_child_exit(void *arg)
 #endif
     }
    
-    NDRX_LOG(log_debug, "check_child_exit terminated");
+    LOCKED_DEBUG(log_debug, "check_child_exit terminated");
     
     return NULL;
 }
@@ -307,9 +320,9 @@ expublic int thread_check_child_exit(void)
  */
 exprivate void *sigthread_enter(void *arg)
 {
-    NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
+    LOCKED_DEBUG(log_error, "***********SIGNAL THREAD START***********");
     thread_check_child_exit();
-    NDRX_LOG(log_error, "***********SIGNAL THREAD EXIT***********");
+    LOCKED_DEBUG(log_error, "***********SIGNAL THREAD EXIT***********");
     
     return NULL;
 }
@@ -912,9 +925,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
      * During the fork, no queue ops shall be done! This can cause
      * System V event thread corruption.
      */
-    EX_SPIN_LOCK_V(M_forklock);
+    MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
-    EX_SPIN_UNLOCK_V(M_forklock);
+    MUTEX_UNLOCK_V(M_forklock);
     
     if( pid == 0)
     {

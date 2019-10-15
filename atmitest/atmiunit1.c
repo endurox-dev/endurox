@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -392,6 +393,13 @@ Ensure(test046_twopasscfg)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test047_oradb)
+{
+    int ret;
+    ret=system_dbg("test047_oradb/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 Ensure(test048_cache)
 {
     int ret;
@@ -505,10 +513,45 @@ Ensure(test063_cpmrange)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test064_bufswitch)
+{
+    int ret;
+    ret=system_dbg("test064_bufswitch/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test065_tpcancel)
+{
+    int ret;
+    ret=system_dbg("test065_tpcancel/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 Ensure(test066_tmstartserver)
 {
     int ret;
     ret=system_dbg("test066_tmstartserver/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test067_postgres)
+{
+    int ret;
+    ret=system_dbg("test067_postgres/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test068_tpadm)
+{
+    int ret;
+    ret=system_dbg("test068_tpadm/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test069_wnormal)
+{
+    int ret;
+    ret=system_dbg("test069_wnormal/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
@@ -581,7 +624,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test040_typedview_dom);
 
 #ifdef SYS64BIT
-#if defined(EX_OS_LINUX) || defined(EX_OS_FREEBSD)
+#if defined(EX_OS_LINUX)
     add_test(suite, test041_bigmsg);
     add_test(suite,test042_bignet);
 #endif
@@ -591,6 +634,9 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test044_ping);
     add_test(suite,test045_tpcallnoblock);
     add_test(suite,test046_twopasscfg);
+#ifdef NDRX_ENABLE_TEST47
+    add_test(suite,test047_oradb);
+#endif
     add_test(suite,test048_cache);
     add_test(suite,test049_masksvc);
     add_test(suite,test050_ubfdb);
@@ -613,10 +659,22 @@ TestSuite *atmi_test_all(void)
  * test cases, thus cannot test...
  */
 #ifndef NDRX_SANITIZE
+/* seems like we get incorrect vms readings ... */
+#ifndef EX_OS_DARWIN
     add_test(suite, test062_memlimits);
 #endif
+#endif
     add_test(suite, test063_cpmrange);
+    add_test(suite, test064_bufswitch);
+    add_test(suite, test065_tpcancel);
     add_test(suite, test066_tmstartserver);
+    
+#ifdef NDRX_USE_POSTGRES
+    add_test(suite, test067_postgres);
+#endif
+    
+    add_test(suite, test068_tpadm);
+    add_test(suite, test069_wnormal);
     
     return suite;
 }

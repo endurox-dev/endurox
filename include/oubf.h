@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -123,6 +124,8 @@ extern NDRX_API int OBjoin(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
 extern NDRX_API int OBojoin(TPCONTEXT_T *p_ctxt, UBFH *dest, UBFH *src);
 extern NDRX_API int OBcmp(TPCONTEXT_T *p_ctxt, UBFH *p_ubf1, UBFH *p_ubf2);
 extern NDRX_API int OBsubset(TPCONTEXT_T *p_ctxt, UBFH *p_ubf1, UBFH *p_ubf2);
+extern NDRX_API BFLDOCC OBnum(TPCONTEXT_T *p_ctxt, UBFH * p_ub);
+extern NDRX_API long OBneeded(TPCONTEXT_T *p_ctxt, BFLDOCC nrfields, BFLDLEN totsize);
 extern NDRX_API int OBvnull(TPCONTEXT_T *p_ctxt, char *cstruct, char *cname, BFLDOCC occ, char *view);
 extern NDRX_API int OBvselinit(TPCONTEXT_T *p_ctxt, char *cstruct, char *cname, char *view);
 extern NDRX_API int OBvsinit(TPCONTEXT_T *p_ctxt, char *cstruct, char *view);

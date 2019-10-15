@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -63,6 +64,7 @@ extern NDRX_API int Otprecv(TPCONTEXT_T *p_ctxt, int cd, char **data, long *len,
 extern NDRX_API int Otpsend(TPCONTEXT_T *p_ctxt, int cd, char *data, long len, long flags, long *revent);
 extern NDRX_API long Otptypes(TPCONTEXT_T *p_ctxt, char *ptr, char *type, char *subtype);
 extern NDRX_API int Otpabort(TPCONTEXT_T *p_ctxt, long flags);
+extern NDRX_API int Otpscmt(TPCONTEXT_T *p_ctxt, long flags);
 extern NDRX_API int Otpbegin(TPCONTEXT_T *p_ctxt, unsigned long timeout, long flags);
 extern NDRX_API int Otpcommit(TPCONTEXT_T *p_ctxt, long flags);
 extern NDRX_API int Otpconvert(TPCONTEXT_T *p_ctxt, char *str, char *bin, long flags);
@@ -72,6 +74,8 @@ extern NDRX_API int Otpopen(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpclose(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpgetlev(TPCONTEXT_T *p_ctxt);
 extern NDRX_API char * Otpstrerror(TPCONTEXT_T *p_ctxt, int err);
+extern NDRX_API int Otperrordetail(TPCONTEXT_T *p_ctxt, long flags);
+extern NDRX_API char * Otpstrerrordetail(TPCONTEXT_T *p_ctxt, int err, long flags);
 extern NDRX_API char * Otpecodestr(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API long Otpgetnodeid(TPCONTEXT_T *p_ctxt);
 extern NDRX_API long Otpsubscribe(TPCONTEXT_T *p_ctxt, char *eventexpr, char *filter, TPEVCTL *ctl, long flags);
@@ -80,6 +84,7 @@ extern NDRX_API int Otppost(TPCONTEXT_T *p_ctxt, char *eventname, char *data, lo
 extern NDRX_API int * O_exget_tperrno_addr(TPCONTEXT_T *p_ctxt);
 extern NDRX_API long * O_exget_tpurcode_addr(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo);
+extern NDRX_API int Otpappthrinit(TPCONTEXT_T *p_ctxt, TPINIT *tpinfo);
 extern NDRX_API int Otpchkauth(TPCONTEXT_T *p_ctxt);
 extern NDRX_API void (*Otpsetunsol (TPCONTEXT_T *p_ctxt, void (*disp) (char *data, long len, long flags))) (char *data, long len, long flags);
 extern NDRX_API int Otpnotify(TPCONTEXT_T *p_ctxt, CLIENTID *clientid, char *data, long len, long flags);
@@ -87,7 +92,11 @@ extern NDRX_API int Otpbroadcast(TPCONTEXT_T *p_ctxt, char *lmid, char *usrname,
 extern NDRX_API int Otpchkunsol(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otptoutset(TPCONTEXT_T *p_ctxt, int tout);
 extern NDRX_API int Otptoutget(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpimport(TPCONTEXT_T *p_ctxt, char *istr, long ilen, char **obuf, long *olen, long flags);
+extern NDRX_API int Otpexport(TPCONTEXT_T *p_ctxt, char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API char * Otuxgetenv(TPCONTEXT_T *p_ctxt, char *envname);
 extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
+extern NDRX_API int Otpappthrterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpjsontoubf(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer);
 extern NDRX_API int Otpubftojson(TPCONTEXT_T *p_ctxt, UBFH *p_ub, char *buffer, int bufsize);
 extern NDRX_API int Otpviewtojson(TPCONTEXT_T *p_ctxt, char *cstruct, char *view, char *buffer,  int bufsize, long flags);
@@ -105,6 +114,10 @@ extern NDRX_API int Otploggetbufreqfile(TPCONTEXT_T *p_ctxt, char *data, char *f
 extern NDRX_API int Otplogdelbufreqfile(TPCONTEXT_T *p_ctxt, char *data);
 extern NDRX_API void Otplogprintubf(TPCONTEXT_T *p_ctxt, int lev, char *title, UBFH *p_ub);
 extern NDRX_API void Ondrx_ndrx_tmunsolerr_handler(TPCONTEXT_T *p_ctxt, char *data, long len, long flags);
+extern NDRX_API pid_t Ondrx_fork(TPCONTEXT_T *p_ctxt);
+extern NDRX_API void Ondrx_atfork_child(TPCONTEXT_T *p_ctxt);
+extern NDRX_API void Ondrx_atfork_parent(TPCONTEXT_T *p_ctxt);
+extern NDRX_API void Ondrx_atfork_prepare(TPCONTEXT_T *p_ctxt);
 #endif  /* __OATMI_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */

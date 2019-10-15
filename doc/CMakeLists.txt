@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -37,11 +38,11 @@ find_program(DBLATEX "dblatex")
 
 set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide 
                        getting_started_tutorial persistent_message_queues_overview
-                        osx_notes aix_notes solaris_notes freebsd_notes
+                        macos_notes aix_notes solaris_notes freebsd_notes
 						benchmark)
 set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide
                        getting_started_tutorial persistent_message_queues_overview
-                        osx_notes aix_notes solaris_notes freebsd_notes
+                        macos_notes aix_notes solaris_notes freebsd_notes
 						benchmark)
 
 # Generate PDFs...
@@ -93,7 +94,7 @@ add_custom_target(html ALL DEPENDS ${HTML_FILES})
 
 add_subdirectory (manpage)
 add_subdirectory (api)
-add_subdirectory (doxygen)
+#add_subdirectory (doxygen)
 # end.
 
 

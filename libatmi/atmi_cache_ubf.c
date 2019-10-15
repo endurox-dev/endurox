@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -160,7 +161,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
         goto out;
     }
     
-    NDRX_LOG(log_error, "Field (%s) extracted: [%s]", symbol, outbuf);
+    NDRX_LOG(log_debug, "Field (%s) extracted: [%s]", symbol, outbuf);
     
 out:
 
@@ -184,6 +185,7 @@ expublic int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache,
     if (EXSUCCEED!=(ret=ndrx_str_subs_context(okey, okey_bufsz, '(', ')',
         (void *)idata, errdet, &errdetbufsz, NULL, get_key_data)))
     {
+        NDRX_STRNCPY_SAFE(errdet, "substitute failure (data extract)", errdetbufsz);
         EXFAIL_OUT(ret);
     }
     
@@ -350,13 +352,20 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
             EXFAIL_OUT(ret);
         }
         
+        /* prepare incoming of output buffer from the input buffer... */
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, idata, 
+                Bused((UBFH *)idata), (char **)odata, olen, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare incoming buffer ibuf");
+            EXFAIL_OUT(ret);
+        }
         /* reallocate place in output buffer */
         
         *olen = Bsizeof(p_ub) + exdata->atmi_buf_len + 1024;
-        if (NULL==(*odata = tprealloc(idata, *olen)))
+        if (NULL==(*odata = tprealloc(*odata, *olen)))
         {
             /* tperror will be set already */
-            
             NDRX_CACHE_ERROR("Failed to realloc input buffer %p to size: %ld: %s", 
                     idata, *olen, tpstrerror(tperrno));
             EXFAIL_OUT(ret);
@@ -839,10 +848,11 @@ expublic int ndrx_cache_delete_ubf(ndrx_tpcallcache_t *cache)
  * @param odata
  * @param olen
  * @param flags
+ * @param [in] buf_type buffer type of processing
  * @return 
  */
 expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
-        char **odata, long *olen, long flags)
+        char **odata, long *olen, long flags, typed_buffer_descr_t *buf_type)
 {
     int ret = EXSUCCEED;
     long ibuf_bufsz;
@@ -872,6 +882,7 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
     
     if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
     {    
+#if 0
         /* if we look on replace then we need buffer size to be atleast in size
          * of reject buffer */
         if (ibuf_bufsz<rej_bufsz)
@@ -883,16 +894,26 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
                 EXFAIL_OUT(ret);
             }
         }
+#endif
         
         ndrx_debug_dump_UBF(log_debug, "Error response (replacing rsp with)", 
                 p_rej_ub);
-        
+#if 0  
         if (EXSUCCEED!=Bcpy(p_ub, p_rej_ub))
         {
             NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to preapre response buffer: %s", 
                     __func__, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
+#endif
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_rej_ub, 
+                Bused(p_rej_ub), odata, olen, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+            EXFAIL_OUT(ret);
+        }
+
         
     }
     else if (cache->flags & NDRX_TPCACHE_TPCF_MERGE)
@@ -903,14 +924,22 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
         
         /* Ensure that in buffer we have enough space */
         
-        if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, ibuf_bufsz+rej_bufsz+1024)))
+        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_ub, 
+                Bused(p_ub), odata, olen, flags))
+        {
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL==(*odata = tprealloc(*odata, ibuf_bufsz+rej_bufsz+1024)))
         {
             NDRX_CACHE_TPERROR(TPEINVAL, "Failed to reallocate user buffer: %s",
                         tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
 
-        if (EXSUCCEED!=Bupdate(p_ub, p_rej_ub))
+        if (EXSUCCEED!=Bupdate((UBFH *)*odata, p_rej_ub))
         {
             NDRX_CACHE_TPERROR(TPESYSTEM, 
                             "Failed to update/merge buffer: %s", 
@@ -928,8 +957,6 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
                 cache->flags);
         EXFAIL_OUT(ret);
     }
-    
-    *odata=(char *)p_ub;
     
 out:
 

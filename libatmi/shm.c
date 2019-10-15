@@ -13,9 +13,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -596,6 +597,38 @@ not_locked:
     NDRX_LOG(log_debug, "ndrx_shm_get_srvs: srvlist %p, ret %d, len %d",
         *srvlist, ret, *len);
 
+    return ret;
+}
+
+/**
+ * return number of service active in system
+ * @return nr_services / EXFAIL
+ */
+expublic int ndrx_shm_get_svc_count(void)
+{
+    int ret = 0;
+    shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
+    int i;
+    
+    if (!ndrx_shm_is_attached(&G_svcinfo))
+    {
+        /* no SHM infos */
+        NDRX_LOG(log_debug, "SHM not attached -> no service count");
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    for (i=0; i< G_max_svcs; i++)
+    {
+        shm_svcinfo_t* ent = SHM_SVCINFO_INDEX(svcinfo, i);
+        
+        if (ent->flags & NDRXD_SVCINFO_INIT 
+                && ent->srvs > 0)
+        {
+            ret++;
+        }
+    }
+out:
     return ret;
 }
 

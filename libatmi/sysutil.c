@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -57,7 +58,8 @@
 #include <exregex.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
-
+#include <sys/shm.h>
+#include <cpm.h>
 #include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -289,7 +291,7 @@ expublic void ndrx_down_userres(void)
 
     NDRX_LOG(log_warn, "Remove user specific resources - System V queues");
     memset(&g, 0, sizeof(g));
-    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXTRUE))
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_QUE))
     {
         sysvres = (int *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
@@ -307,13 +309,31 @@ expublic void ndrx_down_userres(void)
 
     NDRX_LOG(log_warn, "Remove user specific resources - System V semaphores");
     memset(&g, 0, sizeof(g));
-    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, EXFALSE))
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_SEM))
     {
         sysvres = (int *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
         {
             NDRX_LOG(log_warn, "Removing SEM ID=%d", sysvres[i]);
             if (EXSUCCEED!=semctl(sysvres[i], 0, IPC_RMID))
+            {
+                NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
+                        sysvres[i], strerror(errno));
+            }
+        }
+        ndrx_growlist_free(&g);
+    }
+    
+    
+    NDRX_LOG(log_warn, "Remove user specific resources - System V shard mem");
+    memset(&g, 0, sizeof(g));
+    if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_SHM))
+    {
+        sysvres = (int *)g.mem;
+        for (i=0; i<=g.maxindexused; i++)
+        {
+            NDRX_LOG(log_warn, "Removing SHM ID=%d", sysvres[i]);
+            if (EXSUCCEED!=shmctl(sysvres[i], IPC_RMID, NULL))
             {
                 NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
                         sysvres[i], strerror(errno));
@@ -336,7 +356,7 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
 {
     int ret = EXSUCCEED;
 #define DOWN_KILL_SIG   1
-    int signals[] = {SIGTERM, SIGKILL};
+    int signals[] = {SIGTERM, SIGKILL, EXFAIL};
     int i;
     string_list_t* qlist = NULL;
     string_list_t* srvlist = NULL;
@@ -543,6 +563,9 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
             NDRX_LOG(log_error, "Failed to extract pid from: [%s]", elt->qname);
         }
     }
+    
+    /* remove the CPM/CLT SHM & clts */
+    ndrx_cltshm_down(signals, &was_any);
     
     /* 
      * kill all servers 

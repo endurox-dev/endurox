@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -83,7 +84,7 @@ void do_thread_work ( void *ptr )
     char test_buf_carray[68192];
     char test_buf_small[1024];
     ndrx_stopwatch_t timer;
-    int call_num = MAX_ASYNC_CALLS *2;
+    int call_num = MAX_ASYNC_CALLS *8;
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
@@ -229,6 +230,16 @@ warmed_up:
         goto out;
     }
 
+    /* Support #386 p_ub now have become NULL, thus allocate it again  */
+        
+    p_ub = (UBFH *)tpalloc("UBF", NULL, 156000);
+
+    if (NULL==p_ub)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to alloc ubf: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
 
     for (i=0; i<MAX_ASYNC_CALLS+2000; i++) /* Test the cd loop */
     {
@@ -275,7 +286,7 @@ warmed_up:
         /*
         * Test the case when some data should be returned
         */
-        if (EXFAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
             ret=EXFAIL;
@@ -314,7 +325,7 @@ warmed_up:
         /*
         * Test the case when some data should be returned
         */
-        if (EXFAIL==tpcall("ECHO", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        if (EXFAIL==tpcall("ECHO", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
         {
             NDRX_LOG(log_error, "TESTERROR: ECHO failed: %s", tpstrerror(tperrno));
             ret=EXFAIL;

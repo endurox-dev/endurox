@@ -5,9 +5,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -93,8 +94,6 @@ void RETSOMEDATA(TPSVCINFO *p_svc)
  */
 void ECHO(TPSVCINFO *p_svc)
 {
-    int first=1;
-
     UBFH *p_ub = (UBFH *)p_svc->data;
     
     /* Return OK */

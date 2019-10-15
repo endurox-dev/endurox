@@ -211,7 +211,7 @@ class Provision extends WizardBase {
 	////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////
 	
-	</ order=55, name = "Additional UBFTAB files (comma seperated), can be empty", type="string", min=0 /> 
+	</ order=55, name = "Additional UBFTAB files (comma separated), can be empty", type="string", min=0 /> 
 	addubf = "";
 
 	</ order=56, name = "Max IPC message size", 
@@ -221,6 +221,27 @@ class Provision extends WizardBase {
 	</ order=57, name = "Max IPC messages in queue", 
 			type="number", min=1 /> 
 	msgmax = "100";
+
+	////////////////////////////////////////////////////////////////////////
+        //Views
+	////////////////////////////////////////////////////////////////////////
+
+        </ order=70, name = "Configure views", type = "yn"/> 
+	viewInstall = "n";
+
+        </ order=71, name = "View definitions sub-folder of Apphome", 
+                        type = "path", depend="(::prov.viewInstall==\"y\")"/> 
+        viewDir = "views";
+
+        </ order=72, name = "View files to active", type="string", min=1,
+                        depend="(::prov.viewInstall==\"y\")"/> 
+        viewFiles = "";
+
+        ////////////////////////////////////////////////////////////////////////
+        // Shared libraries and etc paths..
+	////////////////////////////////////////////////////////////////////////
+        </ order=80, name = "Additional shared libraries path", type="string", min=0 /> 
+        shLibs = "";
 	
 	//Install handler
 	install = null;
@@ -228,7 +249,6 @@ class Provision extends WizardBase {
 	mk_mq_dev = false;
 	
 
-	
 	//Get the output files to write to
 	//So we will need following:
 	//1. ndrxconfig.xml
@@ -549,9 +569,14 @@ NDRX_SRVMAX=10000
 NDRX_SVCMAX=20000
 NDRX_TOUT="+timeout+@"
 NDRX_UBFMAXFLDS=16000
+NDRX_LIBEXT="+shared_lib_pfx+@"
 NDRX_ULOG=${NDRX_APPHOME}/"+logDir+@"
 FIELDTBLS=Exfields"+(addubf!=""?(","+addubf):"")+@"
-FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+@"
+FLDTBLDIR=${NDRX_APPHOME}/"+ubfDir+
+(::prov.viewInstall=="y"?@"
+VIEWDIR=${NDRX_APPHOME}/"+viewDir+@"
+VIEWFILES="+viewFiles:"")+
+@"
 ";
 
 		//Configure queue XA driver
@@ -608,6 +633,22 @@ ndrxd= ndrx="+ndrxlev+@" ubf="+ubflev+@" tp="+tplev+@" file=${NDRX_APPHOME}/"+lo
 	setfileVal = "";
 	function buildSetfile()
 	{
+                local shlibstr = "";
+                if (::prov.shLibs!="")
+                {
+                    switch (getosname())
+                    {
+                        case "AIX":
+                            shlibstr = "export LIBPATH=$LIBPATH:"+::prov.shLibs;
+                        break;
+                        case "DARWIN":
+                            shlibstr = "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:"+::prov.shLibs;
+                        break;
+                        default:
+                            shlibstr = "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"+::prov.shLibs;
+                        break;
+                    }
+                }
 		setfileVal=setfileVal+@"#/bin/bash
 #
 # @(#) Load this script in environment
@@ -616,7 +657,8 @@ export NDRX_APPHOME="+appHome+@"
 export NDRX_CCONFIG=$NDRX_APPHOME/"+confDir+@"
 export PATH=$PATH:$NDRX_APPHOME/"+binDir+@"
 export CDPATH=$CDPATH:.:$NDRX_APPHOME
-";
+"+shlibstr+"\n";
+
 		//create posix queue folder, if needed.
 		if (mk_mq_dev)
 		{
@@ -674,6 +716,12 @@ fi
 				userlog(format("Creating: [%s]", appHome+"/"+qdata));
 				mkdir (appHome+"/"+qdata);
 			}
+
+                        if (viewInstall=="y")
+			{
+				userlog(format("Creating: [%s]", appHome+"/"+viewDir));
+				mkdir (appHome+"/"+viewDir);
+                        }
 		}
 		catch (ex)
 		{

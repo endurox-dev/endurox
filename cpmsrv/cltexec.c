@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -55,13 +56,26 @@
 #include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/**
+ * Support #459 
+ * locked debug use signal-thread
+ * Fact is if we forking, we might get lock on localtime_r
+ * by signal thread, and the forked process will try to debug
+ * but will be unable because there will be left over lock on localtime_r
+ * from the signal thread which no more exists after the fork.
+ */
+#define LOCKED_DEBUG(lev, fmt, ...) MUTEX_LOCK_V(M_forklock);\
+                                    NDRX_LOG(lev, fmt, ##__VA_ARGS__);\
+                                    MUTEX_UNLOCK_V(M_forklock);
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
-
+MUTEX_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
 /*---------------------------Prototypes---------------------------------*/
 
 #if EX_CPM_NO_THREADS
@@ -96,6 +110,10 @@ expublic void sign_chld_handler(int sig)
             c->dyn.exit_status = stat_loc;
             /* Set status change time */
             cpm_set_cur_time(c);
+            
+            /* update shared memory to stopped... */
+            ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
+            
         }
         else
         {
@@ -129,11 +147,11 @@ exprivate void * check_child_exit(void *arg)
 
     if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
     {
-        NDRX_LOG(log_always, "%s: pthread_sigmask failed (thread): %s",
+        LOCKED_DEBUG(log_always, "%s: pthread_sigmask failed (thread): %s",
             __func__, strerror(errno));
     }
     
-    NDRX_LOG(log_debug, "check_child_exit - enter...");
+    LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     for (;;)
     {
         int got_something = 0;
@@ -142,15 +160,15 @@ exprivate void * check_child_exit(void *arg)
  * if we do not have any childs, then sleep for 1 sec.
  */
 #ifndef EX_OS_DARWIN
-        NDRX_LOG(log_debug, "about to sigwait()");
+        LOCKED_DEBUG(log_debug, "about to sigwait()");
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
-            NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
+            LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
 #endif
         
-        NDRX_LOG(log_debug, "about to wait()");
+        LOCKED_DEBUG(log_debug, "about to wait()");
         /*
         while ((chldpid = wait(&stat_loc)) >= 0)
          */  
@@ -168,9 +186,20 @@ exprivate void * check_child_exit(void *arg)
             if (NULL!=c)
             {
                 c->dyn.cur_state = CLT_STATE_NOTRUN;
+                
+                
+                /* these bellow use some debug and time funcs
+                 * thus lock all
+                 */
+                MUTEX_LOCK_V(M_forklock);
+                /* update shared memory to stopped... */
+                ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
+                
                 c->dyn.exit_status = stat_loc;
                 /* Set status change time */
+                /* have some lock due to time use... */
                 cpm_set_cur_time(c);
+                MUTEX_UNLOCK_V(M_forklock);
             }
             
             cpm_unlock_config(); /* we are done... */
@@ -178,7 +207,7 @@ exprivate void * check_child_exit(void *arg)
         }
 
 #if EX_OS_DARWIN
-        NDRX_LOG(6, "wait: %s", strerror(errno));
+        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
         if (!got_something)
         {
             sleep(1);
@@ -198,7 +227,7 @@ exprivate void * check_child_exit(void *arg)
  * not thread safe.
  * @return
  */
-expublic void ndrxd_sigchld_init(void)
+expublic void cpm_sigchld_init(void)
 {
     pthread_attr_t pthread_custom_attr;
     pthread_attr_t pthread_custom_attr_dog;
@@ -238,7 +267,7 @@ expublic void ndrxd_sigchld_init(void)
  * Un-initialize sigchild monitor thread
  * @return
  */
-expublic void ndrxd_sigchld_uninit(void)
+expublic void cpm_sigchld_uninit(void)
 {
     char *fn = "ndrxd_sigchld_uninit";
 
@@ -286,6 +315,43 @@ out:
 }
 
 /**
+ * Perform test on PID
+ * @param c client process
+ */
+expublic void cpm_pidtest(cpm_process_t *c)
+{
+    if (CLT_STATE_STARTED==c->dyn.cur_state && c->dyn.shm_read)
+    {
+        /* check the pid status, as we might be booted with existing
+         * shared memory, thus we do not get any sig childs...
+         * if we requested the stop, assume exit ok
+         * if not requested, assume died
+         */
+        if (!ndrx_sys_is_process_running_by_pid(c->dyn.pid))
+        {
+            NDRX_LOG(log_info, "Process [%s]/%d exited by pid test",
+                    c->stat.command_line, (int)c->dyn.pid);
+            /* update shared memory to stopped... */
+            ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
+
+            if (CLT_STATE_NOTRUN==c->dyn.req_state )
+            {   
+                c->dyn.exit_status = 0;
+            }
+            else
+            {
+                c->dyn.exit_status = EXFAIL;
+            }
+
+            c->dyn.cur_state = CLT_STATE_NOTRUN;
+
+            /* Set status change time */
+            cpm_set_cur_time(c);
+        }
+    }
+}
+
+/**
  * Killall client running
  * @return SUCCEED
  */
@@ -307,6 +373,11 @@ expublic int cpm_killall(void)
 
         EXHASH_ITER(hh, G_clt_config, c, ct)
         {
+            /* 
+             * still check the pid, not? If running from shared mem blocks?
+             */
+            cpm_pidtest(c);
+            
             if (CLT_STATE_STARTED==c->dyn.cur_state)
             {
                 NDRX_LOG(log_warn, "Killing: %s/%s/%d with %s",
@@ -332,9 +403,8 @@ expublic int cpm_killall(void)
                     ndrx_string_list_free(cltchildren);
                     cltchildren=NULL;
                 }
-
-            }
-        }
+            } /* for client in hash */
+        } /* for attempt */
 
         if (i<2) /*no wait for kill... */
         {
@@ -444,6 +514,9 @@ expublic int cpm_kill(cpm_process_t *c)
         /* Process any dead child... */
         sign_chld_handler(SIGCHLD);
 #endif
+        /* if running from shared memory, do the check... */
+        
+        cpm_pidtest(c);
         /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
@@ -517,7 +590,7 @@ expublic int cpm_exec(cpm_process_t *c)
     pid_t pid;
     char cmd_str[PATH_MAX];
     char *cmd[PATH_MAX]; /* splitted pointers.. */
-    char separators[]   = " ,\t\n";
+    char separators[] = CPM_CMDLINE_SEP;
     char *token;
     int numargs = 0;
     int fd_stdout;
@@ -527,10 +600,12 @@ expublic int cpm_exec(cpm_process_t *c)
     NDRX_LOG(log_warn, "*********processing for startup %s *********", 
             c->stat.command_line);
     
-    c->dyn.was_started = EXTRUE; /* We tried to start... */
-    
+    c->dyn.was_started = EXTRUE; /* We tried to start...                */
+    c->dyn.shm_read = EXFALSE;  /* We try to boot it, not attached      */
     /* clone our self */
+    MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
+    MUTEX_UNLOCK_V(M_forklock);
 
     if( pid == 0)
     {
@@ -651,6 +726,19 @@ expublic int cpm_exec(cpm_process_t *c)
         cpm_set_cur_time(c);
         c->dyn.pid = pid;
         c->dyn.cur_state = CLT_STATE_STARTED;
+        
+        /* extract the procname from command line */
+        
+        /* updated shared memory... */
+        if (EXSUCCEED!=ndrx_cltshm_setpos(c->key, c->dyn.pid, 
+                NDRX_CPM_MAP_ISUSED|NDRX_CPM_MAP_WASUSED|NDRX_CPM_MAP_CPMPROC, 
+                c->stat.procname))
+        {
+            NDRX_LOG(log_error, "Failed to register client in CPM SHM/mem full, check %s param", 
+                    CONF_NDRX_CLTMAX);
+            userlog("Failed to register client in CPM SHM/mem full, check %s param", 
+                    CONF_NDRX_CLTMAX);
+        }   
     }
     else
     {

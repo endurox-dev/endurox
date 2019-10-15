@@ -9,9 +9,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -177,6 +178,8 @@ expublic int ndrx_load_common_env(void)
         exit(EXFAIL);
     }
     
+    memset(&G_atmi_env.integpriv, 0, sizeof(G_atmi_env.integpriv));
+
     /* Read MAX servers */
     p = getenv(CONF_NDRX_SRVMAX);
     
@@ -228,6 +231,19 @@ expublic int ndrx_load_common_env(void)
         G_atmi_env.max_svcs = atoi(p);
         NDRX_LOG(log_debug, "Max services set to %d", G_atmi_env.max_servers);
     }
+    
+    /* Read MAX SVCs per server */
+    p = getenv(CONF_NDRX_CLTMAX);
+    if (NULL==p)
+    {
+        G_atmi_env.max_clts = 20000;
+    }
+    else
+    {
+        G_atmi_env.max_clts = atoi(p);
+    }
+    
+    NDRX_LOG(log_debug, "Max services set to %d", G_atmi_env.max_clts);
 
 
     p = getenv(CONF_NDRX_RNDK);
@@ -275,15 +291,7 @@ expublic int ndrx_load_common_env(void)
         G_atmi_env.msgsize_max = atoi(p);
         NDRX_LOG(log_debug, "Posix queue msgsize_max set to: [%d]",
                             G_atmi_env.msgsize_max);
-    }
-
-    p = getenv(CONF_NDRX_TESTMODE);
-    if (NULL!=p)
-    {
-        G_atmi_env.testmode = atoi(p);
-        NDRX_LOG(log_debug, "Test mode set to: %d", G_atmi_env.testmode);
-    }
-    
+    }    
     p = getenv(CONF_NDRX_QPREFIX);
     if (NULL==p)
     {
@@ -413,6 +421,21 @@ expublic int ndrx_load_common_env(void)
                             G_atmi_env.ndrxd_pidfile);
     }
     
+    /* wait for ndrxd to enter in normal context... */
+    p = getenv(CONF_NDRX_NORMWAITMAX);
+    
+    if (NULL!=p)
+    {
+        G_atmi_env.max_normwait = atoi(p);
+    }
+    else
+    {
+        G_atmi_env.max_normwait = CONF_NDRX_NORMWAITMAX_DLFT;
+    }
+    
+    NDRX_LOG(log_debug, "ndrxd normal wait set to: %d attempts", 
+                G_atmi_env.max_normwait);
+    
     /* <XA Protocol configuration - currently optional...> */
     
     /* resource id: */
@@ -483,6 +506,9 @@ expublic int ndrx_load_common_env(void)
         G_atmi_env.xa_lazy_init = atoi(p);
     }
     
+    /* no flags set */
+    G_atmi_env.xa_flags_sys = 0;
+    
     NDRX_LOG(log_debug, "[%s]: Lazy XA Init: %s", 
                 CONF_NDRX_XA_LAZY_INIT,
                 G_atmi_env.xa_lazy_init?"TRUE":"FALSE");
@@ -521,7 +547,6 @@ expublic int ndrx_load_common_env(void)
     }
     
     /* </XA Protocol configuration> */
-    
     
     /* <poll() mode configuration> */
     
@@ -616,7 +641,7 @@ expublic int ndrx_tpterm (void)
         ndrx_TPset_error_msg(TPEPROTO, "tpterm called from server!");
         goto out;
     }
-
+    
     /* Close client connections */
     if (EXSUCCEED!=close_open_client_connections())
     {
@@ -624,6 +649,9 @@ expublic int ndrx_tpterm (void)
         ndrx_TPset_error_msg(TPESYSTEM, "Failed to close conversations!");
         goto out;
     }
+    
+    /* Close XA  */
+    atmi_xa_uninit();
 
     /* Shutdown client queues */
     if (0!=G_atmi_tls->G_atmi_conf.reply_q)
@@ -666,8 +694,6 @@ expublic int ndrx_tpterm (void)
     G_atmi_tls->G_atmi_is_init = EXFALSE;
     NDRX_LOG(log_debug, "%s: ATMI library un-initialized", fn);
     
-    /* close also  */
-    atmi_xa_uninit();
 
 out:
     NDRX_LOG(log_debug, "%s returns %d", fn, ret);
@@ -989,4 +1015,14 @@ expublic void tp_thread_shutdown(void *ptr, int *p_finish_off)
     
     *p_finish_off = EXTRUE;
 }
+
+/**
+ * Return ENV data pointer
+ * @return pointer to private env storage
+ */
+expublic ndrx_env_priv_t* ndrx_env_priv_get(void)
+{
+    return &G_atmi_env.integpriv;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

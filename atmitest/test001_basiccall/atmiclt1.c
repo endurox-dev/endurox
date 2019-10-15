@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -116,7 +117,7 @@ int main(int argc, char** argv) {
     for (i=0; i<50; i++)
     {
         char tmp[128];
-        sprintf(tmp, "HELLO FROM CLIENT %d abc", i);
+        snprintf(tmp, sizeof(tmp), "HELLO FROM CLIENT %d abc", i);
         if (EXFAIL==CBchg(p_ub, T_CARRAY_FLD, i, tmp, 0, BFLD_STRING))
             {
                 NDRX_LOG(log_debug, "Failed to get T_CARRAY_FLD[%d]", i);
@@ -212,7 +213,7 @@ int main(int argc, char** argv) {
         }
 
         /*
-         * We should be able to call serices with out passing buffer to call.
+         * We should be able to call services with out passing buffer to call.
          */
         if (EXFAIL==tpcall("NULLSV", NULL, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
         {
@@ -220,7 +221,17 @@ int main(int argc, char** argv) {
             ret=EXFAIL;
             goto out;
         }
-
+        
+        /* Support #386 p_ub now have become NULL, thus allocate it again  */
+        
+        p_ub = (UBFH *)tpalloc("UBF", NULL, 156000);
+        
+        if (NULL==p_ub)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to alloc ubf: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
 
         for (i=0; i<MAX_ASYNC_CALLS+2000; i++) /* Test the cd loop */
         {
@@ -260,7 +271,8 @@ int main(int argc, char** argv) {
 
         if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_FLD, 0, test_buf_small, sizeof(test_buf_small)))
         {
-            NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD");
+            NDRX_LOG(log_error, "TESTERROR: Failed to set T_CARRAY_FLD: %s", 
+                    Bstrerror(Berror));
             ret=EXFAIL;
             goto out;
         }

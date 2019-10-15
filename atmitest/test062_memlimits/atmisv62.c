@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -57,7 +58,7 @@ void RSSALLOC (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
     static char *buf = NULL;
-    int i;
+    int i, chk=0;
     
     if (NULL==buf)
     {
@@ -78,6 +79,14 @@ void RSSALLOC (TPSVCINFO *p_svc)
         buf[i] = i/3;
     }
     
+    for (i=0; i<RSS_BLOCK; i++)
+    {
+        chk+=(char)buf[i];
+    }
+    
+    /* avoid optimizations ... */
+    printf("chk %d\n", chk);
+
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
@@ -145,4 +154,3 @@ void NDRX_INTEGRA(tpsvrdone)(void)
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
-

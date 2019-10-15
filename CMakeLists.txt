@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -33,10 +34,35 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "6.0.28")
+set(VERSION "7.0.5")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
+
+################################################################################
+# Check versions if defined, export build env
+################################################################################
+
+if(DEFINED ENV{NDRX_BLD_VERSION})
+	IF(NOT $ENV{NDRX_BLD_VERSION} MATCHES ${VERSION})
+		message( FATAL_ERROR "Invalid versions: ENV: [$ENV{NDRX_BLD_VERSION}] Code: [${VERSION}]" )
+	endif()
+endif()
+
+if(DEFINED ENV{NDRX_BLD_RELEASE})
+    set(RELEASE $ENV{NDRX_BLD_RELEASE})
+endif()
+
+message("CMake RELEASE  = ${RELEASE}")
+
+SET (NDRX_BLD_PRODUCT 	$ENV{NDRX_BLD_PRODUCT})
+SET (NDRX_BLD_SYSTEM 	$ENV{NDRX_BLD_SYSTEM})
+SET (NDRX_BLD_CONFIG 	$ENV{NDRX_BLD_CONFIG})
+SET (NDRX_BLD_VERSION 	$ENV{NDRX_BLD_VERSION})
+SET (NDRX_BLD_RELEASE 	$ENV{NDRX_BLD_RELEASE})
+SET (NDRX_BLD_TAG 	$ENV{NDRX_BLD_TAG})
+SET (NDRX_BLD_BRANCH 	$ENV{NDRX_BLD_BRANCH})
+SET (NDRX_BLD_FLAGS 	$ENV{NDRX_BLD_FLAGS})
 
 ################################################################################
 # OS Configuration
@@ -123,8 +149,7 @@ if( ${CMAKE_OS_NAME} STREQUAL "LINUX" )
         set(EX_USE_EPOLL "1")
     ENDIF()
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
-# Configure the compiler, we support XLC too..
-
+        # Configure the compiler, we support XLC too..
         message("No threads mode for CPM - bit slower child process exit status check...")
         # Seems aix 7.1 does not like threads mixed with fork...
         set(EX_CPM_NO_THREADS "1")
@@ -135,6 +160,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
             set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
             message("XL compiler")
+            SET ( CMAKE_CXX_FLAGS "-O2 -qtls -q64 -b64 -qsuppress=1500-030" CACHE STRING "compile flags" FORCE)
             set ( CMAKE_C_FLAGS " -D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE ")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qwarn64 -qpic -bexpfull -b64")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -brtl -qtls -q64 -qlanglvl=extc99")
@@ -217,6 +243,11 @@ IF (DEFINE_ALIGNMENT_FORCE)
     set(EX_ALIGNMENT_FORCE "1")
 ENDIF()
 
+# Enable oracle test to run
+IF (ENABLE_TEST47)
+    set(NDRX_ENABLE_TEST47 "1")
+ENDIF()
+
 IF(EX_USE_SYSVQ)
     set(EX_POLLER_STR   "SystemV")
 ELSEIF(EX_USE_FDPOLL)
@@ -281,9 +312,16 @@ IF (DEFINE_SANITIZE)
     set(NDRX_SANITIZE "1")
 ENDIF()
 
+IF (ENABLE_POSTGRES)
+    set(NDRX_USE_POSTGRES "1")
+ENDIF()
+
 # Output the project version
 set(NDRX_VERSION_STR "${PROJ_NAME} ${VERSION}")
 
+# avoid configure warnings of not being used
+# as they are used.
+set(ignoreWarning "${DISABLE_ECPG} ${PostgreSQL_TYPE_INCLUDE_DIR}")
 ################################################################################
 # Install dir config
 ################################################################################
@@ -295,6 +333,8 @@ if(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     set(LIB_SUFFIX "")
 # Seems like BSD does not use lib64 folder
 elseif ("${CMAKE_OS_NAME}" STREQUAL "FREEBSD")
+    set(LIB_SUFFIX "")
+elseif ("${CMAKE_OS_NAME}" STREQUAL "AIX")
     set(LIB_SUFFIX "")
 elseif ("${LIB64}" STREQUAL "TRUE")
     set(LIB_SUFFIX 64)
@@ -350,6 +390,7 @@ add_subdirectory (mkfldhdr)
 add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
+#add_subdirectory (libtux) #  ATMI client library 
 add_subdirectory (libexnet)
 add_subdirectory (libexmemck)
 add_subdirectory (libndrxconf)
@@ -373,6 +414,7 @@ ENDIF()
 
 add_subdirectory (viewc) # View compiler
 add_subdirectory (ndrxd) # Enduro X daemon
+add_subdirectory (tpadmsv) # Enduro/X Admin API Server
 add_subdirectory (xadmin) # Enduro X command line interface
 add_subdirectory (lmdb_util) # LMDB/EXDB Admin utilities
 add_subdirectory (xmemck) # Enduro X memcory checking tool
@@ -395,6 +437,10 @@ ENDIF (DEFINE_DISABLEDOC)
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
 add_subdirectory (sampleconfig) #  For install
+
+install (FILES
+    LICENSE
+    DESTINATION share/endurox)
 
 
 ################################################################################
@@ -524,6 +570,13 @@ if(APTPROG)
 	set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
 endif()
 
+#
+# Fix arch for AIX
+#
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "^powerpc")
+	set(CPACK_RPM_PACKAGE_ARCHITECTURE "ppc")
+ENDIF()
+
 set(CPACK_PACKAGE_CONTACT "madars.vitolins@gmail.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
 #set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2,openssl,libgpgme11")
@@ -535,6 +588,7 @@ message("CPack:Debug: CPACK_PACKAGE_FILE_NAME = ${CPACK_PACKAGE_FILE_NAME}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Enduro/X Middleware Platform")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION  ${CPACK_PACKAGE_DESCRIPTION})
 set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
+set(CPACK_RPM_PACKAGE_AUTOREQ "0")
 #set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/Debian/postinst")
 
 include(CPack)
@@ -545,7 +599,7 @@ include(CPack)
 # put the name in the glimpse_index/.glimpse_exclude
 ################################################################################
 
-add_custom_target(index glimpseindex -H ./glimpse_index ${PROJECT_SOURCE_DIR}
+add_custom_target(index glimpseindex -n -H ./glimpse_index ${PROJECT_SOURCE_DIR}
                     COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/glimpse_index/glim.cmake)
 #this also shall generate the glimp command in the current project
 

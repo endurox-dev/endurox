@@ -8,9 +8,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -59,6 +60,8 @@
 #include <atmi_cache.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NOENT_ERR_SHM       1   /**< Service is not available from SHM  */
+#define NOENT_ERR_QUEUE     2   /**< Service is not available from Q    */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -410,6 +413,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     int is_bridge;
     int tpcall_cd;
     int have_shm = EXFALSE;
+    int noenterr = EXFALSE;
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
@@ -448,12 +452,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
     }
     else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge, &have_shm))
     {
-        NDRX_LOG(log_error, "Service is not available %s by shm", 
-                svc);
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
-                 __func__, svc);
-        goto out;
+        NDRX_LOG(log_info, "Service is not available %s by shm", svc);
+        noenterr = NOENT_ERR_SHM;
+        /* goto out; */
     }
     
     /* In case of non shared memory mode, check that queue file exists! */
@@ -462,11 +463,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
         /* test queue */
         if (!ndrx_q_exists(send_q))
         {
-            NDRX_LOG(log_error, "%s: Queue [%s] does not exists for %s", 
-                    __func__, send_q);
-            ndrx_TPset_error_fmt(TPENOENT, "%s: Queue [%s] does not exists for %s", 
-                    __func__, send_q);
-            EXFAIL_OUT(ret);
+            noenterr = NOENT_ERR_QUEUE;
+            /*EXFAIL_OUT(ret); */
         }
     }
     
@@ -478,7 +476,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
                 p_cachectl->odata, p_cachectl->olen, flags, 
                 &p_cachectl->should_cache, 
                 &p_cachectl->saved_tperrno, 
-                &p_cachectl->saved_tpurcode, EXFALSE)))
+                &p_cachectl->saved_tpurcode, EXFALSE, noenterr)))
         {
             /* failed to get cache data */
             if (EXFAIL==ret)
@@ -487,7 +485,13 @@ expublic int ndrx_tpacall (char *svc, char *data,
             }
             else
             {
+
                 /* ignore the error (probably data not found) */
+                if (noenterr)
+                {
+                    p_cachectl->should_cache=EXFALSE;
+                }
+
                 NDRX_LOG(log_debug, "Cache lookup failed ... continue with svc call");
             }
         }
@@ -499,10 +503,17 @@ expublic int ndrx_tpacall (char *svc, char *data,
         }
     }
     
+    /* generate eror */
+    if (noenterr)
+    {
+	ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
+	    __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Might want to remove in future... but it might be dangerous!*/
-     memset(call, 0, sizeof(tp_command_call_t));
+    memset(call, 0, sizeof(tp_command_call_t));
      
-
     if (NULL!=data)
     {
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
@@ -589,7 +600,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     }
     else
     {
-        NDRX_LOG(log_warn, "TPNOREPLY => cd=0");
+        NDRX_LOG(log_info, "TPNOREPLY => cd=0");
         tpcall_cd = 0;
     }
     
@@ -644,15 +655,15 @@ out:
 
 /**
  * Internal version of tpgetrply.
- * @param cd
- * @param data
- * @param len
- * @param flags
- * @return
+ * @param cd call descriptor
+ * @param data data buffer into which return value
+ * @param len data len
+ * @param flags flags
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_tpgetrply (int *cd,
                        int cd_exp,
-                       char * *data ,
+                       char **data ,
                        long *len, long flags,
                        TPTRANID *p_tranid)
 {
@@ -670,10 +681,21 @@ expublic int ndrx_tpgetrply (int *cd,
     /* Allocate the buffer, dynamically... */
     NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
 
-    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p", __func__, flags, pbuf);
+    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p cd_exp %d", __func__, 
+            flags, pbuf, cd_exp);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
+    
+    if (!(flags & TPGETANY) && 
+            CALL_WAITING_FOR_ANS!=G_atmi_tls->G_call_state[cd_exp].status)
+    {
+        ndrx_TPset_error_fmt(TPEBADDESC, "Call descriptor %d is %s", 
+                cd_exp, 
+                CALL_NOT_ISSUED==G_atmi_tls->G_call_state[*cd].status?"not issued":"canceled");
+        EXFAIL_OUT(ret);
+    }
+    
     /**
      * We will drop any answers not registered for this call
      */
@@ -798,8 +820,10 @@ expublic int ndrx_tpgetrply (int *cd,
                     continue;
                 }
 
-                NDRX_LOG(log_warn, "Reply cd: %d, timestamp :%d callseq: %u from %s - expected OK!",
-                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
+                NDRX_LOG(log_info, "Reply cd: %d, timestamp :%d callseq: %u from "
+                        "%s type_id: %hd (%s) - expected OK!",
+                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to,
+                        rply->buffer_type_id, (G_buf_descr[rply->buffer_type_id].type));
                 answ_ok=EXTRUE;
                 /* Free up call descriptor!! */
                 unlock_call_descriptor(rply->cd, CALL_NOT_ISSUED);
@@ -831,18 +855,17 @@ expublic int ndrx_tpgetrply (int *cd,
             }
             else
             {
-                /* Convert only if we have data */
-                if (rply->data_len > 0)
-                {
-                    call_type = &G_buf_descr[rply->buffer_type_id];
+                /* Convert all, including NULL buffers  */
+                
+                call_type = &G_buf_descr[rply->buffer_type_id];
 
-                    ret=call_type->pf_prepare_incoming(call_type,
-                                    rply->data,
-                                    rply->data_len,
-                                    data,
-                                    len,
-                                    flags);
-                }
+                ret=call_type->pf_prepare_incoming(call_type,
+                                rply->data,
+                                rply->data_len,
+                                data,
+                                len,
+                                flags);
+                
                 /* put rcode in global */
                 G_atmi_tls->M_svc_return_code = rply->rcode;
 
@@ -869,11 +892,31 @@ out:
     /* Restore transaction if was suspended. */
     if (flags & TPTRANSUSPEND && p_tranid && p_tranid->tmxid[0])
     {
+        /* Save error... (if any...) 
+         * Bug #417
+         */
+        atmi_error_t err;
+        int err_saved = EXFALSE;
+        
+        if (0!=tperrno)
+        {
+            ndrx_TPsave_error(&err);
+            err_saved = EXTRUE;
+        }
+        
         /* resume the transaction */
         if (EXSUCCEED!=ndrx_tpresume(p_tranid, 0) && EXSUCCEED==ret)
         {
             ret=EXFAIL;
         }
+        
+        /* Restore error if was saved.. */
+        
+        if (err_saved)
+        {
+            ndrx_TPrestore_error(&err);
+        }
+        
     }
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo && 
@@ -1043,9 +1086,11 @@ out:
                 G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL, EXFALSE)))
         {
             /* return error if failed to cache? */
-            
-            userlog("Failed to save service [%s] cache results: %s", svc,
-                tpstrerror(tperrno));
+            if (NDRX_TPCACHE_ENOCACHE!=ret2)
+            {
+                userlog("Failed to save service [%s] cache results: %s", svc,
+                    tpstrerror(tperrno));
+            }
         }
     }
 

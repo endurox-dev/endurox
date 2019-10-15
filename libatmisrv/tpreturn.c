@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -160,8 +161,10 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         XA_TX_COPY(call, ndrx_get_G_atmi_xa_curtx()->txinfo);
     }
     
+    /* will override later */
+    call->rcode = rcode;
     /* prepare reply buffer */
-    if ((TPFAIL==rval || TPSUCCESS==rval) && NULL!=data)
+    if (TPFAIL==rval || TPSUCCESS==rval)
     {
         /* try convert the data */
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
@@ -232,7 +235,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->data_len = 0;
     }
     call->rval = rval;
-    call->rcode = rcode;
 
     data_len = sizeof(tp_command_call_t)+call->data_len;
     call->command_id = ATMI_COMMAND_TPREPLY;
@@ -253,6 +255,13 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->rcode = TPENOENT;
         ret=EXFAIL;
     }
+    else if (flags & TPSOFTERR)
+    {
+        NDRX_LOG(log_error, "TPSOFTERR present -> returning service "
+                "error code: %dl", call->rcode);
+        call->sysflags |=SYS_FLAG_REPLY_ERROR;
+        ret=EXFAIL;
+    }
     
     /* keep the timer from last call. */
     call->timer = last_call->timer;
@@ -271,6 +280,15 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     if (CONV_IN_CONVERSATION==p_accept_conn->status)
     {
         call->sysflags |=SYS_CONVERSATION;
+    }
+    
+    /* well if we are in global TX we shall disconnect/end here
+     * otherwise tmsrv might get locked txn..
+     */
+
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
+    {
+        _tp_srv_disassoc_tx();
     }
     
     /* send the reply back actually */
@@ -295,7 +313,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         ndrx_get_ack(p_accept_conn, flags);
 
         /* If this is conversation, then we should release conversation queue */
-        normal_connection_shutdown(p_accept_conn, EXFALSE);
+        normal_connection_shutdown(p_accept_conn, EXFALSE, "tpreturn on open conversation");
     }
 
 return_to_main:
@@ -304,6 +322,12 @@ return_to_main:
      * - well mvitolin 16/01/2017 - only auto buffers & this one.
      * Not sure how with Tuxedo multi-threading?
      * - mvitolin 03/03/2017 - will make free any buffer
+     * 
+     * - mvitolin 01/07/2019 - with NULL buffers (which are real NULLs we have
+     * an issue). Because for those there are is no pointer descriptor object.
+     * thus if prepare incoming NULL did de-reallocate the object, then we
+     * never know it. Thus in this case all prepare incomings if doing buffer
+     * free, shall check the last call and reset the auto buf.
      */
     if (NULL!=data)
     {
@@ -343,10 +367,6 @@ return_to_main:
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
-        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
-        {
-            _tp_srv_disassoc_tx();
-        }
     }
 
     return;
@@ -505,6 +525,12 @@ expublic void _tpforward (char *svc, char *data,
         reply_with_failure(flags, last_call, NULL, NULL, TPESVCERR);
         goto out;
     }
+    
+    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
+    {
+        _tp_srv_disassoc_tx();
+    }
+
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
                     call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
         
@@ -577,10 +603,6 @@ out:
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
-        if (ndrx_get_G_atmi_xa_curtx()->txinfo)
-        {
-            _tp_srv_disassoc_tx();
-        }
     }
     
     return;

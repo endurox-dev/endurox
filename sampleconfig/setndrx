@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -72,7 +73,7 @@ export NDRX_LEV=5
 
 # UBFTAB
 #export FLDTBLDIR=$NDRX_APPHOME/ubftest/ubftab
-export FIELDTBLS=Exfields,test.fd
+export FIELDTBLS=Excompat,Exfields,test.fd
 
 # Load dynamically....!
 . ~/ndrx_home
@@ -89,6 +90,19 @@ export FIELDTBLS=Exfields,test.fd
 #export NDRX_XA_DRIVERLIB=/usr/lib/libndrxxaoras.so
 #export NDRX_XA_DRIVERLIB=/home/mvitolin/projects/endurox/dist/lib/libndrxxaorad.so
 #export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
+#export NDRX_XA_LAZY_INIT=1
+
+export NDRX_XA_RES_ID=1
+export NDRX_XA_OPEN_STR="{\"url\":\"tcp:postgresql://${EX_PG_HOST}/${EX_PG_DB}\"\
+        ,\"user\":\"${EX_PG_USER}\"\
+        ,\"password\":\"${EX_PG_PASS}\"\
+        ,\"compat\":\"PGSQL\"\
+        }"
+export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+export NDRX_XA_DRIVERLIB=libndrxxapq.so
+export NDRX_XA_RMLIB=-
 export NDRX_XA_LAZY_INIT=1
+
+
 # XA SECTION, END
 # vim: set ts=4 sw=4 et smartindent:

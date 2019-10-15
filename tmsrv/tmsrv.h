@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -55,6 +56,10 @@ extern int G_bacground_req_shutdown;    /* Is shutdown request? */
 #define COPY_MODE_FOREGROUND        0x1       /* Copy foreground elements   */
 #define COPY_MODE_BACKGROUND        0x2       /* Copy background elements   */
 #define COPY_MODE_ACQLOCK           0x4       /* Should we do locking?      */
+
+
+#define NDRX_LOCK_WAIT_TIME         5000    /**< lock wait time b4 give up */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -101,43 +106,44 @@ extern tmsrv_cfg_t G_tmsrv_cfg;
 extern void atmi_xa_new_xid(XID *xid);
 
 extern int tms_unlock_entry(atmi_xa_log_t *p_tl);
-extern atmi_xa_log_t * tms_log_get_entry(char *tmxid);
-extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags);
-extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged);
+extern atmi_xa_log_t * tms_log_get_entry(char *tmxid, int dowait);
+extern int tms_log_start(atmi_xa_tx_info_t *xai, int txtout, long tmflags, long *btid);
+extern int tms_log_addrm(atmi_xa_tx_info_t *xai, short rmid, int *p_is_already_logged, 
+        long *btid, long flags);
+extern int tms_log_chrmstat(atmi_xa_tx_info_t *xai, short rmid, 
+        long btid, char rmstatus, UBFH *p_ub);
 extern int tms_open_logfile(atmi_xa_log_t *p_tl, char *mode);
 extern int tms_is_logfile_open(atmi_xa_log_t *p_tl);
 extern void tms_close_logfile(atmi_xa_log_t *p_tl);
 extern void tms_remove_logfile(atmi_xa_log_t *p_tl);
 extern int tms_log_info(atmi_xa_log_t *p_tl);
 extern int tms_log_stage(atmi_xa_log_t *p_tl, short stage);
-extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, short rmid, 
-        char rmstatus, int  rmerrorcode, short  rmreason);
+extern int tms_log_rmstatus(atmi_xa_log_t *p_tl, atmi_xa_rm_status_btid_t *bt, 
+        char rmstatus, int rmerrorcode, short rmreason);
 extern int tms_load_logfile(char *logfile, char *tmxid, atmi_xa_log_t **pp_tl);
 extern int tm_chk_tx_status(atmi_xa_log_t *p_tl);
 extern atmi_xa_log_list_t* tms_copy_hash2list(int copy_mode);
 extern void tms_tx_hash_lock(void);
 extern void tms_tx_hash_unlock(void);
-extern int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl);
+extern int tms_log_cpy_info_to_fb(UBFH *p_ub, atmi_xa_log_t *p_tl, int inc_rm_stat);
         
-extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-
 extern int tm_drive(atmi_xa_tx_info_t *p_xai, atmi_xa_log_t *p_tl, int master_op,
                         short rmid, long flags);
 
 /* Prepare API */
-extern int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid);
-extern int tm_prepare_combined(atmi_xa_tx_info_t *p_xai, short rmid);
+extern int tm_prepare_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_prepare_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
 /* Rollback API */
-extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid);
-extern int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid);
+extern int tm_rollback_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_rollback_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_rollback_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
 /* Commit API */
-extern int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai);
-extern int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid);
-extern int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid);
+extern int tm_commit_local(UBFH *p_ub, atmi_xa_tx_info_t *p_xai, long btid);
+extern int tm_commit_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
+extern int tm_commit_combined(atmi_xa_tx_info_t *p_xai, short rmid, long btid);
 
 extern int tm_tpbegin(UBFH *p_ub);
 extern int tm_tpcommit(UBFH *p_ub);
@@ -147,6 +153,7 @@ extern int tm_tmprepare(UBFH *p_ub);
 extern int tm_tmcommit(UBFH *p_ub);
 extern int tm_tmabort(UBFH *p_ub);
 extern int tm_tmregister(UBFH *p_ub);
+extern int tm_rmstatus(UBFH *p_ub);
 
 /* Background API */
 extern int background_read_log(void);
@@ -160,6 +167,22 @@ extern int tm_tpprinttrans(UBFH *p_ub, int cd);
 extern int tm_aborttrans(UBFH *p_ub);
 extern int tm_status(UBFH *p_ub);
 extern int tm_committrans(UBFH *p_ub);
+extern int tm_recoverlocal(UBFH *p_ub, int cd);
+extern int tm_proclocal(char cmd, UBFH *p_ub, int cd);
+
+/* Branch TID manipulations */
+extern long tms_btid_gettid(atmi_xa_log_t *p_tl, short rmid);
+
+
+extern atmi_xa_rm_status_btid_t *tms_btid_find(atmi_xa_log_t *p_tl, 
+        short rmid, long btid);
+extern int tms_btid_add(atmi_xa_log_t *p_tl, short rmid, 
+            long btid, char rmstatus, int  rmerrorcode, short rmreason,
+            atmi_xa_rm_status_btid_t **bt);
+extern int tms_btid_addupd(atmi_xa_log_t *p_tl, short rmid, 
+            long *btid, char rmstatus, int  rmerrorcode, short rmreason, int *exists,
+            atmi_xa_rm_status_btid_t **bt);
+
 
 #ifdef	__cplusplus
 }

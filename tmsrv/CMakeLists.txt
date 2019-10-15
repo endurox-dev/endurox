@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -52,8 +53,16 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ######################################
-add_executable (tmsrv tmsrv.c xasrvutil.c log.c local.c background.c tmapi.c
-                    statedrv.c ../libatmisrv/rawmain_integra.c)
+add_executable (tmsrv 
+                    tmsrv.c 
+                    xasrvutil.c 
+                    log.c 
+                    local.c 
+                    background.c 
+                    tmapi.c
+                    btid.c
+                    statedrv.c 
+                    ../libatmisrv/rawmain_integra.c)
 target_link_libraries (tmsrv atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

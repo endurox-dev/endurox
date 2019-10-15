@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -64,10 +65,10 @@ expublic longstrmap_t M_txstatemap[] =
     {XA_TX_STAGE_PREPARING, "PREPARING"},
     {XA_TX_STAGE_ABORTING,  "ABORTING"},
     {XA_TX_STAGE_ABORTED,   "ABORTED"},
-    {XA_TX_STAGE_COMMITTING,  "COMMITTING"},
-    {XA_TX_STAGE_COMMITTED , "COMMITTED"},
+    {XA_TX_STAGE_COMMITTING,"COMMITTING"},
+    {XA_TX_STAGE_COMMITTED ,"COMMITTED"},
     {XA_RM_STATUS_COMMIT_HEURIS , "COMMITTED, HEURISTIC"},
-    {EXFAIL,                  "?"}
+    {EXFAIL,                "?"}
 };
 
 /**
@@ -108,6 +109,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
     char tmtxrmstatus;
     long tmtxrmerrcode;
     short tmtxrmreason;
+    long tmtxrmbtid;
     int i;
     int occ;
     long trycount, max_tries;
@@ -149,7 +151,8 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
                 EXSUCCEED!=Bget(p_ub, TMTXRMID, i, (char *)&tmtxrmid, 0L) ||
                 EXSUCCEED!=Bget(p_ub, TMTXRMSTATUS, i, (char *)&tmtxrmstatus, 0L) ||
                 EXSUCCEED!=Bget(p_ub, TMTXRMERRCODE, i, (char *)&tmtxrmerrcode, 0L) ||
-                EXSUCCEED!=Bget(p_ub, TMTXRMREASON, i, (char *)&tmtxrmreason, 0L)
+                EXSUCCEED!=Bget(p_ub, TMTXRMREASON, i, (char *)&tmtxrmreason, 0L) ||
+                EXSUCCEED!=Bget(p_ub, TMTXBTID, i, (char *)&tmtxrmbtid, 0L)
                 )
         {
             /* TODO: need RM status human-readable version */
@@ -160,8 +163,9 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
         }
         else
         {
-            printf("\tgrpno: %hd, status: %c-%s, errorcode: %ld, reason: %hd\n",
-                    tmtxrmid, tmtxrmstatus, ndrx_docharstrgmap(M_rmstatus, tmtxrmstatus, 0), 
+            printf("\tgrpno: %hd, btid: %ld status: %c-%s, errorcode: %ld, reason: %hd\n",
+                    tmtxrmid, tmtxrmbtid, tmtxrmstatus, 
+                    ndrx_docharstrgmap(M_rmstatus, tmtxrmstatus, 0), 
                     tmtxrmerrcode, tmtxrmreason);
         }
     }
@@ -176,7 +180,7 @@ out:
  * This basically tests the normal case when all have been finished OK!
  * @return
  */
-int call_tm(char *svcnm)
+exprivate int call_tm(char *svcnm)
 {
   UBFH *p_ub = atmi_xa_alloc_tm_call(ATMI_XA_PRINTTRANS);
     int ret=EXSUCCEED;

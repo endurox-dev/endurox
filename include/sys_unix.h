@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -167,6 +168,10 @@ extern NDRX_API const char * __progname;
 #endif
  
 /******************************************************************************/
+
+#define NDRX_SV_RESTYPE_SHM     1   /**< Shared mem requested           */
+#define NDRX_SV_RESTYPE_SEM     2   /**< Semaphores requested           */
+#define NDRX_SV_RESTYPE_QUE     3   /**< Queues requested               */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -291,7 +296,6 @@ extern NDRX_API int ndrx_epoll_shallopenq(int idx);
 extern NDRX_API mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits);
 
 /* string generics: */
-extern NDRX_API void ndrx_string_list_free(string_list_t* list);
 
 extern NDRX_API void ndrx_string_hash_free(string_hash_t *h);
 extern NDRX_API int ndrx_string_hash_add(string_hash_t **h, char *str);

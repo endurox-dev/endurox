@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -84,6 +85,13 @@ expublic long ndrx_platf_stack_get_size(void)
             else
             {
                 M_stack_size=limit.rlim_cur;
+                
+                if (M_stack_size<0)
+                {
+                    M_stack_size = NDRX_STACK_MAX;
+                    NDRX_LOG(log_warn, "Unlimited stack, setting to %ld bytes",
+                            M_stack_size);
+                }
                 
                 NDRX_LOG(log_info, "Current stack size: %ld, max: %ld", 
                         M_stack_size,  (long)limit.rlim_max);

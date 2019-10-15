@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -38,6 +39,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_SHM_PATH_MAX     128        /**< Max shared memory file name len           */
@@ -45,6 +47,7 @@ extern "C" {
 #define NDRX_SEM_SVC_OPS             0   /**< Semaphore for shared memory management    */
 #define NDRX_SEM_SVC_GLOBAL_NUM      0   /**< Semaphore array for global svc managmenet */
 #define NDRX_SEM_SV5LOCKS            1   /**< System V message queue lockings           */
+#define NDRX_SEM_CPMLOCKS            2   /**< Client process monitor shm lock           */
     
 #define NDRX_SEM_TYP_READ            0   /**< RW Lock - Read                */
 #define NDRX_SEM_TYP_WRITE           1   /**< RW Lock - Write               */

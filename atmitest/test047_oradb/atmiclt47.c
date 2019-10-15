@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -73,7 +74,7 @@ int check_balance(char *accnum, long *balance)
         goto out;
     }
 
-    if (EXFAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (EXFAIL == tpcall("BALANCE", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND|TPNOABORT))
     {
         NDRX_LOG(log_error, "BALANCE failed: %s", tpstrerror(tperrno));
         ret=EXFAIL;
@@ -104,7 +105,7 @@ int main(int argc, char** argv)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     long l;
-    char *rsp;
+    char *rsp=NULL;
     char tmp[51];
     long bal;
     int ret=EXSUCCEED;
@@ -130,10 +131,24 @@ int main(int argc, char** argv)
         goto out;
     }
     
+    if (EXSUCCEED != tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "tpbegin failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+    check_balance(tmp, &bal);
+    
+    if (EXSUCCEED != tpcommit(0))
+    {
+        NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
     for (l=0; l<100; l++)
     {
-        
-        
         snprintf(tmp, sizeof(tmp), "ACC%03ld", l);
         
         /* make an account, but abort... */
@@ -220,6 +235,73 @@ int main(int argc, char** argv)
             goto out;
         }
     }
+
+    
+    if (EXSUCCEED != tpbegin(60, 0))
+    {
+        NDRX_LOG(log_error, "tpbegin failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+        
+    /* Check multi commit... */
+    for (l=200; l<300; l++)
+    {
+        snprintf(tmp, sizeof(tmp), "ACC%03ld", l);
+        
+        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, tmp, 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }    
+        
+        if (EXFAIL==CBchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0, BFLD_LONG))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_LONG_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }    
+        
+        /* TPTRANSUSPEND must be present, otherwise other RMID must be defined
+         * as two binaries cannot operate on the same transaction
+         */
+        if (EXFAIL == tpcall("ACCOPEN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPTRANSUSPEND))
+        {
+            NDRX_LOG(log_error, "ACCOPEN failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+    }
+    
+    if (EXSUCCEED != tpcommit(0))
+    {
+        NDRX_LOG(log_error, "tpcommit failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* Check balance... */
+    for (l=200; l<300; l++)
+    {
+        snprintf(tmp, sizeof(tmp), "ACC%03ld", l);
+        
+        if (EXSUCCEED!=check_balance(tmp, &bal))
+        {
+            NDRX_LOG(log_error, "Account [%s] NOT found!", tmp);
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        if (bal!=l)
+        {
+            NDRX_LOG(log_error, "Invalid balance expected: %ld, but got: %ld", 
+                    l, bal);
+            ret=EXFAIL;
+            goto out;
+        }
+    }
+
     
 out:
 

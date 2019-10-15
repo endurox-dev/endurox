@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -125,33 +126,41 @@ if [[ "X$SPID" == "X$NPID" ]]; then
 fi
 
 echo "*************************************************************************"
-echo "* Test VSZ -> get PID of atmi.sv62"
+echo "* Test VSZ -> get PID of atmi.sv62 (wait 5 for service start...)"
 echo "*************************************************************************"
-SPID=`xadmin ps -p -a atmi.sv62`
 
-echo "Current memory config: "
-xadmin ps -m -p -a atmi.sv62 2>/dev/null
+sleep 5
+UNAME=`uname -s`
 
-echo "Current server PID = $SPID"
-./atmiclt62  srvvsz > ./atmiclt-dom1.log 2>&1
-RET=$?
-if [[ "X$RET" != "X0" ]]; then
-    echo "VSZ Client failed"
-    go_out 2
-fi
+if [ "X$UNAME" == "XAIX" ]; then
+    # the value des not incremenet
+    echo "VSZ tests not available for AIX"
+else
+    SPID=`xadmin ps -p -a atmi.sv62`
 
-echo "Wait for server respawn... wait 10 sec..."
-for((i=1;i<=10;i+=1)); do 
+    echo "Current memory config: "
     xadmin ps -m -p -a atmi.sv62 2>/dev/null
-    sleep 1
-done
 
-NPID=`xadmin ps -p -a atmi.sv62`
+    echo "Current server PID = $SPID"
+    ./atmiclt62  srvvsz > ./atmiclt-dom1.log 2>&1
+    RET=$?
+    if [[ "X$RET" != "X0" ]]; then
+        echo "VSZ Client failed"
+        go_out 2
+    fi
 
-if [[ "X$SPID" == "X$NPID" ]]; then
+    echo "Wait for server respawn... wait 10 sec..."
+    for((i=1;i<=10;i+=1)); do 
+        xadmin ps -m -p -a atmi.sv62 2>/dev/null
+        sleep 1
+    done
 
-    echo "VSZ limit restarts does not work...!"
-    go_out 3
+    NPID=`xadmin ps -p -a atmi.sv62`
+
+    if [[ "X$SPID" == "X$NPID" ]]; then
+        echo "VSZ limit restarts does not work...!"
+        go_out 3
+    fi
 fi
 
 echo "*************************************************************************"
@@ -195,36 +204,41 @@ echo "*************************************************************************"
 echo "* Test VSZ -> client run of atmiclt62"
 echo "*************************************************************************"
 
-xadmin sc -t ATMICLT62 -s RSS
-xadmin bc -t ATMICLT62 -s VSZ
+if [ "X$UNAME" == "XAIX" ]; then
+	echo "VSZ tests not available for AIX"
+else
 
-echo "Let client to boot"
-sleep 10
-echo "**** XADMIN PC *****"
-xadmin pc
-echo "**** XADMIN PC, END *****"
+    xadmin sc -t ATMICLT62 -s RSS
+    xadmin bc -t ATMICLT62 -s VSZ
 
-echo "Grab the PID..."
-SPID=`xadmin ps -p -a cltvsz -b atmiclt62`
-echo "Wait 30 sec... to see the results (client is sleeping for us to take pid and then cpm... to restart)"
+    echo "Let client to boot"
+    sleep 10
+    echo "**** XADMIN PC *****"
+    xadmin pc
+    echo "**** XADMIN PC, END *****"
 
-for((i=1;i<=30;i+=1)); do 
-    xadmin ps -m -p -a cltvsz -b atmiclt62 2>/dev/null
-    sleep 1
-done
+    echo "Grab the PID..."
+    SPID=`xadmin ps -p -a cltvsz -b atmiclt62`
+    echo "Wait 30 sec... to see the results (client is sleeping for us to take pid and then cpm... to restart)"
 
-NPID=`xadmin ps -p -a cltvsz -b atmiclt62`
+    for((i=1;i<=30;i+=1)); do 
+        xadmin ps -m -p -a cltvsz -b atmiclt62 2>/dev/null
+        sleep 1
+    done
 
-if [[ "X$SPID" == "X$NPID" ]]; then
+    NPID=`xadmin ps -p -a cltvsz -b atmiclt62`
 
-    echo "VSZ limit restarts does not work for cpmsrv...!"
-    go_out 5
-fi
+    if [[ "X$SPID" == "X$NPID" ]]; then
 
-# Catch is there is test error!!!
-if [ "X`grep TESTERROR *.log`" != "X" ]; then
-    echo "Test error detected!"
-    RET=-2
+        echo "VSZ limit restarts does not work for cpmsrv...!"
+        go_out 5
+    fi
+
+    # Catch is there is test error!!!
+    if [ "X`grep TESTERROR *.log`" != "X" ]; then
+        echo "Test error detected!"
+        RET=-2
+    fi
 fi
 
 go_out 0

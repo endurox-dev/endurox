@@ -1,14 +1,15 @@
-/* 
- * ATMI tpexport function implementation (Common version)
+/**
+ * @brief ATMI tpexport function implementation (Common version)
  *
  * @file tpexport.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -86,7 +87,8 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     EXJSON_Object *data_object = NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
-
+    
+    /* how about carray ilen? */
     if (EXFAIL==(size_existing=ndrx_tptypes(ibuf, buftype, subtype)))
     {
         NDRX_LOG(log_error, "Cannot determine buffer type");
@@ -164,7 +166,8 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
             NDRX_LOG(log_error, "Failed to init data_object");
             EXFAIL_OUT(ret);
         }
-        if (EXSUCCEED!=ndrx_tpviewtojson((char *)ibuf, subtype, NULL, 0L, BVACCESS_NOTNULL, data_object))
+        if (EXSUCCEED!=ndrx_tpviewtojson((char *)ibuf, subtype, NULL, 0L, 
+                BVACCESS_NOTNULL, data_object))
         {
             NDRX_LOG(log_error, "Failed to build data object from VIEW!!!!");
             EXFAIL_OUT(ret);
@@ -178,12 +181,16 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     else if ( 0 == strcmp(BUF_TYPE_CARRAY_STR, buftype))
     {
         NDRX_LOG(log_debug, "ibuf is binary... convert to b64");
-        if (NULL==ndrx_base64_encode((unsigned char *)ibuf, size_existing, &outlen, b64_buf))
+        outlen = sizeof(b64_buf);
+        if (NULL==ndrx_base64_encode((unsigned char *)ibuf, size_existing, 
+                &outlen, b64_buf))
         {
                 NDRX_LOG(log_error, "Failed to convert to b64!");
                 EXFAIL_OUT(ret);
         }
 
+        /* TODO: Where is EOS??? */
+        
         if (EXJSONSuccess!=exjson_object_set_string(root_object, "data", b64_buf))
         {
             NDRX_LOG(log_error, "Failed to set carray data=[%s]", b64_buf);
@@ -218,14 +225,17 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     if (strlen(serialized_string) <= *olen)
     {
         NDRX_LOG(log_debug, "Return JSON: [%s]", serialized_string);
-    if ( TPEX_STRING == flags )
-    {
-            NDRX_LOG(log_debug, "convert to b64");
-            if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, strlen(serialized_string), &outlen, ostr))
+        
+        if ( TPEX_STRING == flags )
         {
-                NDRX_LOG(log_error, "Failed to convert to b64!");
-                EXFAIL_OUT(ret);
-        }
+            NDRX_LOG(log_debug, "convert to b64");
+            outlen = *olen;
+            if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, 
+                        strlen(serialized_string), &outlen, ostr))
+            {
+		NDRX_LOG(log_error, "Failed to convert to b64!");
+		EXFAIL_OUT(ret);
+            }
         }
         else
         {
@@ -233,12 +243,12 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
             *olen = strlen(serialized_string);
         }
     }
-        else
-        {
-            NDRX_LOG(log_error, "olen too short: ostr size: [%d] olen size: [%d]", 
-                    strlen(serialized_string), *olen);
-            EXFAIL_OUT(ret);
-        }
+    else
+    {
+        NDRX_LOG(log_error, "olen too short: ostr size: [%d] olen size: [%d]", 
+                strlen(serialized_string), *olen);
+        EXFAIL_OUT(ret);
+    }
 
     out:
 
@@ -249,7 +259,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
         exjson_free_serialized_string(serialized_string);
     }
 
-if (NULL!=root_value)
+    if (NULL!=root_value)
     {
         exjson_value_free(root_value);
     }

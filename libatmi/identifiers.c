@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -144,7 +145,6 @@ out:
     
     return ret;
 }
-
 
 /**
  * Step forward number of separators
@@ -681,7 +681,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
 {
     int ret = EXSUCCEED;
     CLIENTID *cltid;
-    size_t out_len;
+    size_t out_len = 0;
     
     if (flags & TPTOSTRING)
     {
@@ -700,7 +700,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
              * but currently do not see reason for this
              */
             ndrx_xa_base64_encode((unsigned char *)bin, sizeof(TPTRANID), &out_len, str);
-            str[out_len] = EXEOS;
+            /* str[out_len] = EXEOS; */
         }
         else if (flags & TPCONVXID)
         {

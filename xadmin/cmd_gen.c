@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -71,6 +72,9 @@ extern const char ndrx_G_resource_gen_c_client[];
 extern const char ndrx_G_resource_gen_c_server[];
 extern const char ndrx_G_resource_gen_ubf_tab[];
 extern const char ndrx_G_resource_gen_test_local[];
+
+extern const char ndrx_G_resource_gen_java_server[];
+extern const char ndrx_G_resource_gen_java_client[];
 
 /*---------------------------Macros-------------------------------------*/
 /* #define GEN_DEBUG 1 */
@@ -208,6 +212,8 @@ expublic int cmd_gen_load_scripts(void)
         || EXSUCCEED!=reg_cmd("go client", ndrx_G_resource_gen_go_client, NULL)
         || EXSUCCEED!=reg_cmd("c server", ndrx_G_resource_gen_c_server, NULL)
         || EXSUCCEED!=reg_cmd("c client", ndrx_G_resource_gen_c_client, NULL)
+        || EXSUCCEED!=reg_cmd("java server", ndrx_G_resource_gen_java_server, NULL)
+        || EXSUCCEED!=reg_cmd("java client", ndrx_G_resource_gen_java_client, NULL)    
         || EXSUCCEED!=reg_cmd("ubf tab", ndrx_G_resource_gen_ubf_tab, NULL)
         || EXSUCCEED!=reg_cmd("test local", ndrx_G_resource_gen_test_local, NULL)
        )

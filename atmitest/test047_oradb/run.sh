@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -50,7 +51,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
-export NDRX_TOUT=10
+export NDRX_TOUT=20
 
 #
 # Domain 1 - here client will live
@@ -67,11 +68,13 @@ set_dom1() {
 
     # XA SECTION
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=./+nolocal=f+Threads=true"
+    export NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=$EX_ORA_SID+ACC=P/$EX_ORA_USER/$EX_ORA_PASS+SesTM=180+LogDir=./+nolocal=f+Threads=true"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_DRIVERLIB=libndrxxaoras.so
-    export NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so
+    export NDRX_XA_RMLIB=$EX_ORA_OCILIB
     export NDRX_XA_LAZY_INIT=1
+    # TODO: Add both test modes... 
+    #export NDRX_XA_FLAGS="NOJOIN"
     # XA SECTION, END
 }
 
@@ -107,6 +110,11 @@ RET=0
 xadmin psc
 xadmin ppm
 echo "Running off client"
+
+xadmin forgetlocal -y
+xadmin abortlocal -y
+#xadmin abortlocal -y -s "@TM-1-1-50" -x "ofeUYQAAAABAAAAAAAAAAEAAAAAAAAAAabeXTKBVRgyQ+BS8gtZygwEAAQAyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAwWm3l0ygVUYMkPgUvILWcoMBAAEAMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAME="
+xadmin recoverlocal
 
 set_dom1;
 (./atmiclt47 2>&1) > ./atmiclt-dom1.log

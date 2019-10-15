@@ -13,9 +13,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -112,6 +113,26 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
 	go_out 4
 fi
+
+echo "Test of Bug #425 - tpacall + TPNOREPLY, second call no reply generate"
+
+xadmin stop -y
+xadmin start -y
+
+(./atmiclt_$TESTNO tpacall_norply 2>&1) >> ./atmiclt.log
+
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    go_out $RET
+fi
+
+if [ "X`grep 'Dropping' *.log`" != "X" ]; then
+	echo "There must be no [Dropping unsolicited reply]!"
+	go_out 5
+fi
+
 
 go_out 0
 

@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -105,7 +106,7 @@ exprivate unsigned char *b64_decode(unsigned char *data,
 expublic char * ndrx_xa_base64_encode(unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
-                    char *encoded_data) 
+                    char *encoded_data)
 {
     return b64_encode(data, input_length, output_length, 
             encoded_data, encoding_table_xa);
@@ -190,11 +191,25 @@ exprivate char * b64_encode(const unsigned char *data,
 {
     int i;
     int j;
-    *output_length = 4 * ((input_length + 2) / 3);
+    size_t tmp_len;
+    
+    /* Ensure position for EOS */
+    tmp_len = 4 * ((input_length + 2) / 3);
+    
+    if (*output_length > 0 && *output_length < (tmp_len+1) /*  +1 for EOS */ )
+    {
+        NDRX_LOG(log_error, "Failed to encode data len incl EOS %d but buffer sz %d",
+                (int)(tmp_len+1), (int)*output_length);
+        return NULL;
+    }
+    
+    *output_length = tmp_len;
 
     /*
     char *encoded_data = NDRX_MALLOC(*output_length);
     if (encoded_data == NULL) return NULL;*/
+    
+    /* TODO: Check output buffer size!!!! */
 
     for (i = 0, j = 0; i < input_length;) 
     {
@@ -214,6 +229,8 @@ exprivate char * b64_encode(const unsigned char *data,
     for (i = 0; i < mod_table[input_length % 3]; i++)
         encoded_data[*output_length - 1 - i] = '=';
 
+    encoded_data[*output_length] = EXEOS;
+            
     return encoded_data;
 }
 
@@ -234,13 +251,35 @@ exprivate unsigned char *b64_decode(unsigned char *data,
 
     int i;
     int j;
+    size_t tmp_len;
 
-    if (input_length % 4 != 0) return NULL;
+    if (input_length % 4 != 0) 
+    {
+        NDRX_LOG(log_error, "Invalid input_length: %d!", input_length);
+        return NULL;
+    }
+    
+    if (input_length <= 0)
+    {
+        NDRX_LOG(log_error, "Invalid input length %d <= 0!", input_length);
+        return NULL;
+    }
 
-    *output_length = input_length / 4 * 3;
-    if (data[input_length - 1] == '=') (*output_length)--;
-    if (data[input_length - 2] == '=') (*output_length)--;
+    tmp_len = input_length / 4 * 3;
+    
+    /* strip off padding if any.. */
+    if (data[input_length - 1] == '=') tmp_len--;
+    if (data[input_length - 2] == '=') tmp_len--;
+    
+    if (*output_length > 0 && *output_length < tmp_len)
+    {
+        NDRX_LOG(log_error, "Output buffer too short: Output buffer size: %d, "
+                "but data output size: %d", (int)*output_length, (int)tmp_len);
+        return NULL;
+    }
 
+    *output_length = tmp_len;
+    
     /*
     unsigned char *decoded_data = NDRX_MALLOC(*output_length);
     if (decoded_data == NULL) return NULL;

@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -68,6 +69,7 @@ extern NDRX_API void ndrx_TPset_error_fmt(int error_code, const char *fmt, ...);
 extern NDRX_API void ndrx_TPset_error_fmt_rsn(int error_code, short reason, const char *fmt, ...);
 extern NDRX_API void ndrx_TPset_error_fmt_rsn_silent(int error_code, 
         short reason, const char *fmt, ...);
+extern NDRX_API void ndrx_TPset_error_ubf(UBFH *p_ub);
 extern NDRX_API void ndrx_TPunset_error(void);
 extern NDRX_API int ndrx_TPis_error(void);
 extern NDRX_API void ndrx_TPappend_error_msg(char *msg);

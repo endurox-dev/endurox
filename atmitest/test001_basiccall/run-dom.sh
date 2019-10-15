@@ -7,9 +7,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -35,6 +36,7 @@
 export TESTNO="001"
 export TESTNAME_SHORT="basiccall"
 export TESTNAME="test${TESTNO}_${TESTNAME_SHORT}"
+export NDRX_SILENT=Y
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
@@ -178,13 +180,16 @@ xadmin start -s tpbridge
 echo "Now continue with standard tests.."
 ###############################################################################
 sleep 20
+echo "PRINT DOMAINS"
 print_domains;
 set_dom1;
+xadmin ppm
 
 # check that services are blacklisted (others will be tested by tpcalls)
 
 # UNIXINFO and UNIX2 must be missing
 
+echo "DOM1 PSC"
 xadmin psc 
 
 if [ "X`xadmin psc | grep UNIXINFO`" != "X" ]; then

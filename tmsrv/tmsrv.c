@@ -17,9 +17,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -71,6 +72,7 @@
 #include <xa_cmn.h>
 #include <exthpool.h>
 #include <ubfutil.h>
+#include <sys_test.h>
 /*---------------------------Externs------------------------------------*/
 extern int optind, optopt, opterr;
 extern char *optarg;
@@ -147,7 +149,7 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     thread_server_t *thread_data = (thread_server_t *)ptr;
     char cmd = EXEOS;
     int cd;
-    
+    long allocsz;
     /**************************************************************************/
     /*                        THREAD CONTEXT RESTORE                          */
     /**************************************************************************/
@@ -180,10 +182,18 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
     NDRX_FREE(thread_data);
     /**************************************************************************/
     
-    /* get some more stuff! */
+    /* get some more space! 
+     */
     if (Bunused (p_ub) < 4096)
     {
-        p_ub = (UBFH *)tprealloc ((char *)p_ub, Bsizeof (p_ub) + 4096);
+        p_ub = (UBFH *)tprealloc ((char *)p_ub, allocsz=(Bsizeof (p_ub) + 4096));
+        
+        if (NULL==p_ub)
+        {
+            NDRX_LOG(log_error, "Failed realloc UBF to %d bytes: %s", 
+                    allocsz, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
     }
     
     ndrx_debug_dump_UBF(log_info, "TPTMSRV call buffer:", p_ub);
@@ -228,7 +238,20 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
             break;
         case ATMI_XA_PRINTTRANS:
             
-            /* request for printing active transactions */
+            /* request for printing active transactions 
+             * we shall allocate the buffer to max possible size
+             */
+            
+            p_ub = (UBFH *)tprealloc ((char *)p_ub, allocsz=
+                    (NDRX_MSGSIZEMAX-NDRX_MSGSIZEMAX_OVERHD));
+        
+            if (NULL==p_ub)
+            {
+                NDRX_LOG(log_error, "Failed realloc UBF to %d bytes: %s", 
+                        allocsz, tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+
             if (EXSUCCEED!=tm_tpprinttrans(p_ub, cd))
             {
                 ret=EXFAIL;
@@ -297,6 +320,33 @@ void TPTMSRV_TH (void *ptr, int *p_finish_off)
                 ret=EXFAIL;
                 goto out;
             }
+            break;
+        case ATMI_XA_RMSTATUS:
+            /* Report the status of resource manager involvement in transaction
+             */
+            if (EXSUCCEED!=tm_rmstatus(p_ub))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
+        case ATMI_XA_RECOVERLOCAL:
+            if (EXSUCCEED!=tm_recoverlocal(p_ub, cd))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            break;
+        case ATMI_XA_COMMITLOCAL:
+        case ATMI_XA_ABORTLOCAL:
+        case ATMI_XA_FORGETLOCAL:
+            
+            if (EXSUCCEED!=tm_proclocal(cmd, p_ub, cd))
+            {
+                ret=EXFAIL;
+                goto out;
+            }
+            
             break;
         default:
             NDRX_LOG(log_error, "Unsupported command code: [%c]", cmd);
@@ -431,7 +481,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Parse command line  */
     while ((c = getopt(argc, argv, "P:t:s:l:c:m:p:r:R")) != -1)
     {
-        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+
+	if (optarg)
+        {
+            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "got %c", c);
+        }
+
         switch(c)
         {
             case 't': 
@@ -691,6 +750,15 @@ exprivate void tx_tout_check_th(void *ptr)
      * If so then initiate internal abort call
      */
     NDRX_LOG(log_dump, "Timeout check (processing...)");
+    
+    /* Do the ATMI init, if needed 
+     */
+    if (M_thread_first)
+    {
+        tm_thread_init();
+        M_thread_first = EXFALSE;
+    }
+    
     tx_list = tms_copy_hash2list(COPY_MODE_FOREGROUND | COPY_MODE_ACQLOCK);
         
     LL_FOREACH_SAFE(tx_list,el,tmp)
@@ -709,7 +777,7 @@ exprivate void tx_tout_check_th(void *ptr)
                     el->p_tl.tmxid, tspent, 
                     el->p_tl.txtout);
             
-            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid)))
+            if (NULL!=(p_tl = tms_log_get_entry(el->p_tl.tmxid, 0)))
             {
                 XA_TX_COPY((&xai), p_tl);
 
@@ -795,7 +863,7 @@ expublic void tm_ping_db(void *ptr, int *p_finish_off)
         else
         {
             /* for tests needs higher debug level to reduce space */
-            NDRX_LOG(G_atmi_env.testmode?log_error:log_debug,
+            NDRX_LOG(NDRX_SYSTEST_ENBLD?log_error:log_debug,
 		"RMID %hd TID: %lu: PING OK %d", 
                 G_atmi_env.xa_rmid, tid, ret);
         }

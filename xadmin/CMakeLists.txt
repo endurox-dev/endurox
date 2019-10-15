@@ -6,9 +6,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -86,6 +87,16 @@ add_custom_command(
   DEPENDS scripts/gen_c_server.pscript)
 
 add_custom_command(
+  OUTPUT gen_java_client.c
+  COMMAND exembedfile scripts/gen_java_client.pscript gen_java_client
+  DEPENDS scripts/gen_java_client.pscript)
+
+add_custom_command(
+  OUTPUT gen_java_server.c
+  COMMAND exembedfile scripts/gen_java_server.pscript gen_java_server
+  DEPENDS scripts/gen_java_server.pscript)
+
+add_custom_command(
   OUTPUT gen_test_local.c
   COMMAND exembedfile scripts/gen_test_local.pscript gen_test_local
   DEPENDS scripts/gen_test_local.pscript)
@@ -112,7 +123,8 @@ add_executable (xadmin xadmin.c exec.c config.c
                 gen_ubf_tab.c gen_go_client.c gen_c_client.c gen_c_server.c
                 gen_test_local cmd_cs.c cmd_cd.c cmd_ci.c
                 cmd_pubfdb.c ${SOURCE1} cmd_svids.c ndrx_config.c cmd_util.c
-                cmd_appconfig.c cmd_dping.c)
+                cmd_appconfig.c cmd_dping.c linenoise.c cmd_tranlocal.c
+                cmd_tmib.c taboutput.c gen_java_client.c gen_java_server.c)
 
 set_target_properties(xadmin PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
@@ -123,7 +135,7 @@ IF (NOT DEFINE_DISABLEPSCRIPT)
     SET(PS_LIB psstdlib ps)
 ENDIF()
 
-target_link_libraries (xadmin ${PS_LIB} atmi nstd ubf m ${RT_LIB} pthread)
+target_link_libraries (xadmin tpadm ${PS_LIB} atmi nstd ubf ${RT_LIB} pthread m)
 
 # Install bin
 install (TARGETS 

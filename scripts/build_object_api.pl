@@ -941,6 +941,7 @@ NEXT: while( my $line = <$info>)
             if ($line =~ m/G_tpsvrinit__/
                 || $line =~ m/G_tpsvrdone__/ 
                 || $func_name =~ m/ndrx_main$/
+                || $func_name =~ m/_tmstartserver$/
                 || $func_name =~ m/ndrx_main_integra/ 
                 || $func_name =~ m/ndrx_atmi_tls_get/
                 || $func_name =~ m/ndrx_atmi_tls_set/
@@ -1117,4 +1118,4 @@ close $info;
 close_h();
 close_c();
 
-
+# vim: set ts=4 sw=4 et smartindent:

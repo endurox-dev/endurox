@@ -11,9 +11,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -77,6 +78,7 @@ segmap_t M_map[] = {
         ,{NDRX_SHM_BRINFO_SFX, NDRX_SHM_BRINFO_KEYOFSZ}
         ,{NDRX_SHM_P2S_SFX, NDRX_SHM_P2S_KEYOFSZ}
         ,{NDRX_SHM_S2P_SFX, NDRX_SHM_S2P_KEYOFSZ}
+        ,{NDRX_SHM_CPM_SFX, NDRX_SHM_CPM_KEYOFSZ}
         ,{NULL}
     };
 /*---------------------------Prototypes---------------------------------*/    
@@ -388,7 +390,7 @@ expublic string_list_t * ndrx_shm_shms_list(key_t ipckey)
         if (EXFAIL!=(fd = shmget(key, 0, S_IRWXU | S_IRWXG)))
         {
             snprintf(segment, sizeof(segment), "%x:%d:%s", 
-                    key, fd, M_map[i].suffix);
+                    (unsigned int)key, fd, M_map[i].suffix);
             if (EXSUCCEED!=ndrx_string_list_add(&ret, segment))
             {
                 NDRX_LOG(log_error, "Failed to add shm segment to list");

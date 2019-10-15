@@ -28,7 +28,7 @@ class CClient extends WizardBase {
 	</ order=0, name = "XATMI Server Name (binary)", type = "string", min=1, max=512 /> 
 	srvname = "testsv";
 	
-	</ order=1, name = "Service name", type = "string", min=1, max=32/> 
+	</ order=1, name = "Service name", type = "string", min=1, max=30/> 
 	svcnm = "TESTSV";
 	
 	</ order=2, name = "Use UBF?", type = "yn"/> 

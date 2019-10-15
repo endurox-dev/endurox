@@ -33,9 +33,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -290,7 +291,7 @@ exprivate char *get_file_name_final(char *fname)
 {
     static __thread char buf[PATH_MAX+1];
     
-    sprintf(buf, "%s/%s", M_folder_committed, fname);
+    snprintf(buf, sizeof(buf), "%s/%s", M_folder_committed, fname);
     NDRX_LOG(log_debug, "Filename built: %s", buf);
     
     return buf;
@@ -746,7 +747,7 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
 
     set_filename_base(xid, rmid);
     names_max = get_filenames_max();
-    
+
     for (i=names_max; i>=1; i--)
     {
         if (EXSUCCEED!=file_move(i, M_folder_active, M_folder_prepared))

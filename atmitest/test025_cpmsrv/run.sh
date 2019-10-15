@@ -12,9 +12,10 @@
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL or Mavimax's license for commercial use.
+## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -63,6 +64,7 @@ export NDRX_LOG=$TESTDIR/ndrx.log
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 # Override timeout!
 export NDRX_TOUT=30
+export NDRX_SILENT=Y
 # Test process count
 PROC_COUNT=100
 #
@@ -102,6 +104,12 @@ function test_proc_cnt {
     XPROC_COUNT=$cnt
     echo ">>> $PSCMD procs: $CNT"
     if [[ "X$CNT" != "X$XPROC_COUNT" ]]; then 
+        echo "****** grep"
+        $PSCMD | grep $proc | grep -v grep
+        echo "****** wc"
+        $PSCMD | grep $proc | grep -v grep | wc
+        echo "******"
+
         echo "TESTERROR! $XPROC_COUNT $proc not booted (according to $PSCMD )!"
         go_out $go
     fi
@@ -135,6 +143,24 @@ xadmin bc -t BATCH% -s% -w 15000
 
 xadmin pc
 
+# xadmin killall cpmsrv does not work, as our test name is test025_cpmsrv
+# thus it will kill the test
+echo "Kill CPMSRV, test shared memory recovery...."
+CPMPID=`xadmin ppm | grep cpmsrv | awk '{print $3}'`
+
+echo "CPMSRV pid to kill=$CPMPID"
+
+kill -9 $CPMPID
+xadmin ppm
+
+echo "Wait for cpmsrv reboot"
+sleep 20
+
+xadmin ppm
+xadmin pc
+
+echo "CONTINUE..."
+
 test_proc_cnt "ndrxbatchmode.sh" "3" "30"
 
 echo "Batch stop (no subsect)"
@@ -157,6 +183,9 @@ echo "Testing batch reload"
 OUT1=`xadmin pc`
 
 echo "Before reload [$OUT1]"
+
+# shall pass on w/out problem...
+xadmin rc NOT_EXISTS_TEST
 
 xadmin rc -t BATCH% -s% -w 15000
 

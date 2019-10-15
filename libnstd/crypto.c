@@ -13,9 +13,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -356,10 +357,10 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
     }
     
     /* encode to base64... */
-    
+    b64len = (size_t)olen;
     ndrx_base64_encode((unsigned char *)buf, bufsz, &b64len, output);
     
-    output[b64len] = EXEOS;
+    /* output[b64len] = EXEOS; */
     
 #ifdef CRYPTODEBUG
     
@@ -416,11 +417,11 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     /* convert base64 to bin */
     if (NULL==ndrx_base64_decode(input, len, &bufsz, buf))
     {
-        _Nset_error_fmt(NEFORMAT, "%s, ndrx_base64_decode failed (input len: %ld", 
-                __func__, len);
-        NDRX_LOG_EARLY(log_error, "%s, ndrx_base64_decode failed (input len: %ld", 
-                __func__, len);
-        userlog("%s, ndrx_base64_decode failed (input len: %ld", 
+        _Nset_error_fmt(NEFORMAT, "%s, ndrx_base64_decode failed (input len: %ld) input: [%s]", 
+                __func__, len, input);
+        NDRX_LOG_EARLY(log_error, "%s, ndrx_base64_decode failed (input len: %ld) input: [%s]", 
+                __func__, len, input);
+        userlog("%s, ndrx_base64_decode failed (input len: %ld)", 
                 __func__, len);
         EXFAIL_OUT(ret);
     }

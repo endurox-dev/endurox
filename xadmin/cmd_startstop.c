@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -351,7 +352,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                     EXFALSE,
                     G_config.listcall_flags);
     
-    if (call.complete_shutdown)
+    /* Do not wait in case if sending was not successful */
+    if (call.complete_shutdown && (EXSUCCEED==ret || force_off))
     {
         NDRX_LOG(log_debug, "About to un-init after shutdown");
         un_init(EXTRUE);
@@ -372,6 +374,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                 /* have some usleep */
                 usleep(100000);
             }
+            /* shutdown is ok */
+            ret = EXSUCCEED;
         }
         else
         {

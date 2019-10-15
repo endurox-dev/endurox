@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -126,9 +127,9 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
     
     if (NULL==(name = (char *)exjson_object_get_name(root_object, 0)))
     {
-	NDRX_LOG(log_error, "exjson: Invalid json no root VIEW object");
-	ndrx_TPset_error_msg(TPEINVAL, "exjson: Invalid json no root VIEW object");
-	EXFAIL_OUT(ret);
+        NDRX_LOG(log_error, "exjson: Invalid json no root VIEW object");
+        ndrx_TPset_error_msg(TPEINVAL, "exjson: Invalid json no root VIEW object");
+        EXFAIL_OUT(ret);
     }
     
     vsize = Bvsizeof(name);
@@ -205,7 +206,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                 /* If it is carray - parse hex... */
                 if (IS_BIN(cnametyp))
                 {
-                    size_t st_len;
+                    size_t st_len = sizeof(bin_buf);
                     NDRX_LOG(log_debug, "Field is binary..."
                             " convert from b64...");
 
@@ -322,7 +323,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                             /* If it is carray - parse hex... */
                             if (IS_BIN(cnametyp))
                             {
-                                size_t st_len;
+                                size_t st_len = sizeof(bin_buf);
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
@@ -606,7 +607,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 /* If it is carray, then convert to hex... */
                 if (IS_BIN(fldtype))
                 {
-                    size_t outlen;
+                    size_t outlen = sizeof(b64_buf);
                     NDRX_LOG(log_debug, "Field is binary... convert to b64");
 
                     if (NULL==ndrx_base64_encode((unsigned char *)strval, flen, 
@@ -618,7 +619,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
 
                         EXFAIL_OUT(ret);
                     }
-                    b64_buf[outlen] = EXEOS;
+                    /* b64_buf[outlen] = EXEOS; */
                     s_ptr = b64_buf;
 
                 }

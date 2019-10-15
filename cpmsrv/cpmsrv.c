@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -187,7 +188,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Parse command line  */
     while ((c = getopt(argc, argv, "i:k:")) != -1)
     {
-        NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+
+        if (optarg)
+        {
+            NDRX_LOG(log_debug, "%c = [%s]", c, optarg);
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "got %c", c);
+        }
+
         switch(c)
         {
             case 'i': 
@@ -226,8 +236,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 
 #ifndef EX_CPM_NO_THREADS
-    ndrxd_sigchld_init();
+    cpm_sigchld_init();
 #endif
+    
+    /* attach to the shared memory */
+    if (EXSUCCEED!=ndrx_cltshm_init(EXFALSE))
+    {
+        NDRX_LOG(log_error, "Failed to open client shared memory segment!");
+        EXFAIL_OUT(ret);
+    }
     
     /* Load initial config */
     if (EXSUCCEED!=load_config())
@@ -256,6 +273,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Process the timer now.... */
     cpm_start_all(); /* Mark all to be started */
+    
+    /* sync with SHM.... */
+    if (EXSUCCEED!=ndrx_cpm_sync_from_shm())
+    {
+        NDRX_LOG(log_error, "Failed to sync current status with shared memory!");
+        EXFAIL_OUT(ret);
+    }
+    
     cpm_callback_timer(); /* Start them all. */
     
 out:
@@ -275,8 +300,11 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     cpm_killall();
     
 #ifndef EX_CPM_NO_THREADS
-    ndrxd_sigchld_uninit();
+    cpm_sigchld_uninit();
 #endif
+    
+    ndrx_cltshm_detach();
+    ndrx_cltshm_remove(EXFALSE);
 
 }
 
@@ -326,8 +354,6 @@ exprivate int cpm_callback_timer(void)
         {
             /* Try to boot the process... */
             cpm_exec(c);
-            
-            
         }
         else if (CLT_STATE_STARTED==c->dyn.cur_state && 
                 (EXFAIL!=c->stat.rssmax || EXFAIL!=c->stat.vszmax)
@@ -389,6 +415,12 @@ exprivate int cpm_callback_timer(void)
             }
             else
             {
+                
+                /* TODO: For shared memory mode, we shall handle exit
+                 * statuses here too. Because if cpmsrv reboots, it will not
+                 * be a parent of existing clients, thus change statuses here too
+                 */
+                
                 /* ignore error as not critical for system running
                  * the process might be just exited 
                  */
@@ -397,8 +429,11 @@ exprivate int cpm_callback_timer(void)
                             (int)c->dyn.pid, c->stat.command_line);
             }
             
-        }
-    }
+        } /* started & require mem test... */
+       
+        cpm_pidtest(c);
+       
+    } /* hash loop */
     /* handle any signal 
     sign_chld_handler(SIGCHLD); */
     
@@ -667,10 +702,21 @@ exprivate int cpm_bcscrc(UBFH *p_ub, int cd,
     if (NULL==strchr(tag,CLT_WILDCARD) && NULL==strchr(subsect, CLT_WILDCARD))
     {
         c = cpm_client_get(tag, subsect);
-        if (EXSUCCEED!=(p_func(p_ub, cd, tag, subsect, c, &nr_proc)))
+        /* Bug #428 */
+        if (NULL!=c)
         {
-            NDRX_LOG(log_error, "%s: cpm_bc_obj failed", __func__);
-            EXFAIL_OUT(ret);
+            if (EXSUCCEED!=(p_func(p_ub, cd, tag, subsect, c, &nr_proc)))
+            {
+                NDRX_LOG(log_error, "%s: cpm_bc_obj failed", __func__);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+        
+            snprintf(msg, sizeof(msg), "Client process %s/%s not found",
+                    tag, subsect);
+            cpm_send_msg(p_ub, cd, msg);
         }
     }
     else

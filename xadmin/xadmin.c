@@ -6,9 +6,10 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
  * 
@@ -49,6 +50,7 @@
 #include <sys_unix.h>
 #include <inicfg.h>
 #include <utlist.h>
+#include <linenoise.h>
 /*---------------------------Externs------------------------------------*/
 extern const char ndrx_G_resource_ndrx_config[];
 /*---------------------------Macros-------------------------------------*/
@@ -239,6 +241,34 @@ cmd_mapping_t M_command_map[] =
     {"committrans",cmd_commit,EXFAIL,            3,  4,  1, 
                 "Alias for `commit'"
                 , NULL},
+    {"recoverlocal",cmd_recoverlocal,EXFAIL,         1,  3,  1, 
+                "Print local local in-doubt transactions\n"
+                "\t args: recoverlocal [-s <TM SERVICE>] [-p]\n"
+                "\t -s - TMSRV which to query for transactions\n"
+                "\t -p - Parse XID and print details"
+                , NULL},
+    {"commitlocal",cmd_commitlocal,EXFAIL,         1,  5,  1, 
+                "Commit local in-doubt transaction\n"
+                "\t args: commitlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
+                "\t -s - TMSRV which serves transaction\n"
+                "\t -x - particular XID\n"
+                "\t -y - confirm\n"
+                "\t -p - Parse XID and print details"
+                , NULL},
+    {"abortlocal",cmd_abortlocal,EXFAIL,         1,  5,  1, 
+                "Abort local in-doubt transaction\n"
+                "\t args: abortlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
+                "\t -x - particular XID\n"
+                "\t -y - confirm\n"
+                "\t -p - Parse XID and print details"
+                , NULL},
+    {"forgetlocal",cmd_forgetlocal,EXFAIL,         1,  5,  1, 
+                "Abort local in-doubt transaction\n"
+                "\t args: forgetlocal [-s <TM SERVICE> [-x <XID>]] [-y] [-p]\n"
+                "\t -x - particular XID\n"
+                "\t -y - confirm\n"
+                "\t -p - Parse XID and print details"
+                , NULL},
     {"pe",        cmd_pe,NDRXD_COM_PE_RQ,        1,  1,  1, 
                 "Print env (from ndrxd)"
                 , NULL},
@@ -412,7 +442,13 @@ cmd_mapping_t M_command_map[] =
                 , NULL},
     {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,              1,  1,  1,  
                 "Put ndrxd in sleep (disable activity for time period), for debug\n"
-                "\tUsage: dsleep SLEEP_SECONDS\n"
+                "\tUsage: dsleep SLEEP_SECONDS"
+                , NULL},
+    {"mibget",     cmd_mibget,EXFAIL,                1,  3,  1, 
+                "Dump message in cache\n"
+                "\t args: mibget -c <T_CLASS> [-m]\n"
+                "\t\t -m\tMachine output\n"
+                "\t\t -c\tT_CLIENT|T_DOMAIN|T_MACHINE|T_QUEUE|T_SERVER|T_SERVICE|T_SVCGRP"
                 , NULL}
 };
 
@@ -424,9 +460,12 @@ char *M_noinit[] = {
     ,"help"
     ,"h"
     ,"killall"
+    ,"-v"
+    ,"ver"
     ,"udown"
     ,"gen"
     ,"ps"
+    ,"pmode"
 };
 
 /**
@@ -554,6 +593,43 @@ exprivate int cmd_help(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     }
     return EXSUCCEED;
 }
+
+/**
+ * Generate completion list
+ * @param buf buffer with keys request
+ * @param lc list to fill
+ */
+exprivate void completion_handler(const char *buf, linenoiseCompletions *lc) 
+{
+    int i;
+    char tmp[128];
+    int len;
+    
+    if (0==strncmp(buf, "help", 4))
+    {
+        for (i=0; i<N_DIM(M_command_map); i++)
+        {
+            snprintf(tmp, sizeof(tmp), "help %s", M_command_map[i].cmd);
+        
+            len = strlen(buf);
+            if (0==strncmp(tmp, buf, len))
+            {
+                linenoiseAddCompletion(lc,tmp);
+            }
+            
+        }
+    }
+    else for (i=0; i<N_DIM(M_command_map); i++)
+    {
+        len = strlen(buf);
+        
+        if (0==strncmp(M_command_map[i].cmd, buf, len))
+        {
+            linenoiseAddCompletion(lc,M_command_map[i].cmd);
+        }
+    }
+}
+
 
 /**
  * Start idle instance (if backend does not exists!)
@@ -756,27 +832,50 @@ exprivate int get_cmd(int *p_have_next)
     else /* Operate with stdin. */
     {
         char *p;
+        int len;
         memset(M_buffer, 0, sizeof(M_buffer));
 
         /* Welcome only if it is terminal */
         if (is_tty())
-            printf("NDRX %s> ", ndrx_xadmin_nodeid());
-
-        /* We should get something! */
-        while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
         {
-            /* if we do not have tty, then exit */
-            if (!is_tty())
+            /* in this case it is interactive session 
+             * also we shall save the history file
+             * to home folder?
+             */
+            char *line;
+            char banner[128];
+            
+            snprintf(banner, sizeof(banner), "NDRX %s> ", ndrx_xadmin_nodeid());
+
+            line = linenoise(banner);
+            
+            if (NULL!=line)
             {
-                /* do not have next */
-                *p_have_next = EXFALSE;
-                goto out;
+                NDRX_STRCPY_SAFE(M_buffer, line);
+                linenoiseHistoryAdd(line);
+            }
+            
+            NDRX_FREE(line);
+        }
+        else
+        {
+            /* We should get something! */
+            while (NULL==fgets(M_buffer, sizeof(M_buffer), stdin))
+            {
+                /* if we do not have tty, then exit */
+                if (!is_tty())
+                {
+                    /* do not have next */
+                    *p_have_next = EXFALSE;
+                    goto out;
+                }
             }
         }
 
         /* strip off trailing newline */
-        if ('\n'==M_buffer[strlen(M_buffer)-1])
-            M_buffer[strlen(M_buffer)-1] = EXEOS;
+        len = strlen(M_buffer);
+        if (len > 0 && '\n'==M_buffer[len-1])
+            M_buffer[len-1] = EXEOS;
         
         /* Allow repeated commands */
         if (is_tty())
@@ -980,6 +1079,7 @@ expublic int ndrx_init(int need_init)
     int i;
     ndrx_inicfg_t *cfg = NULL;
     
+    
 #ifdef EX_USE_EMQ
     /* We need to get lock in */
     emq_set_lock_timeout(10);
@@ -1066,6 +1166,16 @@ expublic int ndrx_init(int need_init)
     {
         NDRX_LOG(log_error, "Failed to load gen scripts");
         EXFAIL_OUT(ret);    
+    }
+    
+    /* setup console handler */
+    
+    linenoiseSetCompletionCallback(completion_handler);
+    if (!linenoiseHistorySetMaxLen(100))
+    {
+        NDRX_LOG(log_error, "Failed to setup Console input history: %s", 
+                strerror(errno));
+        EXFAIL_OUT(ret);
     }
     
 out:
