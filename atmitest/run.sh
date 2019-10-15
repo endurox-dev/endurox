@@ -83,6 +83,7 @@ fi
 #
 grep with test.out
 
+echo "atmitest/run.sh Terminates with: $RET"
 exit $RET
 
 # vim: set ts=4 sw=4 et smartindent:
