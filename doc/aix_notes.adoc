@@ -184,6 +184,33 @@ EOF
 $ chmod +x $HOME/ndrx_home
 ---------------------------------------------------------------------
 
+=== Configuring PostgreSQL
+
+If Enduro/X PostgreSQL driver is needed to be build for AIX, the PostgreSQL
+needs to be installed for build and test purposes. Installation will be done 
+by using "yum" tool. It is assumed that it is configured for given OS.
+To install database on this system, use following commands:
+
+--------------------------------------------------------------------------------
+
+$ su - root
+# yum update
+# yum install postgresql postgresql-contrib postgresql-devel postgresql-libs postgresql-server
+--------------------------------------------------------------------------------
+
+Once installed, database needs to be created:
+
+--------------------------------------------------------------------------------
+
+# su - postgres
+
+$ initdb -D /var/lib/postgresql/data
+-- and start it up...
+$ pg_ctl -D /var/lib/postgresql/data -l logfile start
+
+--------------------------------------------------------------------------------
+
+
 === Building the code with xlC
 
 It is assumed that xlC is default compiler on the system, thus following 
