@@ -668,7 +668,7 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
         }
         iterations++;
         
-        NDRX_LOG(log_dump, "Trying %d for [%s]", try, qid);
+        NDRX_LOG(log_dump, "Trying %d for [%d]", try, qid);
     }
     switch (ret)
     {
