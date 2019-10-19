@@ -43,8 +43,28 @@ The same goes on Raspbian (Raspberry Pi OS)
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
-	libssl-dev libcrypto++9 libcrypto++-dev \
+	libssl-dev libcrypto++-dev \
 	libgpgme11-dev libxml2-dev git
+---------------------------------------------------------------------
+
+Note if having issues like:
+
+---------------------------------------------------------------------
+dpkg: error processing package tex-common (--configure)
+---------------------------------------------------------------------
+
+Then you may skip the "dblatex" installation. This is optional, used for
+generating PDF documentation.
+
+If running unit tests with PostgreSQL, then following additional package shall
+be installed:
+
+---------------------------------------------------------------------
+$ sudo apt-get install  postgresql postgresql-client libecpg-dev \
+ libpq-dev postgresql-server-dev-all
+
+$ sudo systemctl enable postgresql
+$ sudo systemctl start postgresql
 ---------------------------------------------------------------------
 	
 ==== System level dependencies - for Ubuntu 14.04
@@ -294,8 +314,8 @@ template::[image-blockmacro]
 EOF
 ---------------------------------------------------------------------
 
-
 === Getting the Source code
+
 ---------------------------------------------------------------------
 # useradd -m user1
 # su - user1
