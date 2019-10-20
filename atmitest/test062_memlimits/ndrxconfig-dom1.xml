@@ -62,7 +62,7 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
             <!-- this inherits rss from defaults -->
-            <vszmax>900M</vszmax>
+            <vszmax>400M</vszmax>
         </server>
           
         <server name="cpmsrv">
@@ -77,7 +77,7 @@
             <exec tag="ATMICLT62" subsect="RSS" rssmax="45M" autostart="N" />
         </client>
         
-        <client cmdline="atmiclt62 cltvsz" vszmax="900M">
+        <client cmdline="atmiclt62 cltvsz" vszmax="400M">
             <exec tag="ATMICLT62" subsect="VSZ" autostart="N" />
         </client>
         
