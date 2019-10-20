@@ -77,6 +77,14 @@ extern "C" {
     
 #define NDRX_STOR_KBYTE                 1024    /**< number of bytes in KB    */
 
+
+#if EX_SIZEOF_LONG==4 && EX_SIZEOF_INT==4
+
+# define htonll(x) htonl(x)
+# define ntohll(x) ntohl(x)
+
+#else
+
 #if __BIG_ENDIAN__
 
 #ifndef htonll
@@ -94,6 +102,8 @@ extern "C" {
 #ifndef ntohll
 # define ntohll(x) (((uint64_t)ntohl( (x) & 0xFFFFFFFF) << 32) | ntohl( (x) >> 32))
 #endif
+#endif
+
 #endif
 
 
