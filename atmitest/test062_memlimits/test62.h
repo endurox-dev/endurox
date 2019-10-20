@@ -39,7 +39,8 @@ extern "C" {
 #endif
     
 #define RSS_BLOCK   50 * 1024 * 1024
-#define VSZ_BLOCK   1 * 1024 * 1024 * 1024
+/* #define VSZ_BLOCK   1 * 1024 * 1024 * 1024 */
+#define VSZ_BLOCK   500 * 1024 * 1024
 
 #ifdef  __cplusplus
 }
