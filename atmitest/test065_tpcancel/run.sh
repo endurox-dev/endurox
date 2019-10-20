@@ -71,7 +71,8 @@ function go_out {
 rm *.log
 
 (./atmi.sv65 -i123 2>&1) > ./atmisv65.log &
-sleep 1
+echo "Let server to boot..."
+sleep 5
 (./atmiclt65 2>&1) > ./atmiclt65.log
 
 RET=$?
