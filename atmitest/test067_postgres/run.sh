@@ -53,7 +53,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
-export NDRX_TOUT=10
+export NDRX_TOUT=15
 
 export NDRX_LIBEXT="so"
 
