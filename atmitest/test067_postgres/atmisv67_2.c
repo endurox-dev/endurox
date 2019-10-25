@@ -125,7 +125,7 @@ void TOUTSV (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
-    sleep(15);
+    sleep(20);
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
