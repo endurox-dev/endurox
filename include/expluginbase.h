@@ -33,11 +33,9 @@
  */
 #ifndef EXPLUGINBASE_H_
 #define EXPLUGINBASE_H_
-
-#include "ndrx_config.h"
-
-
 /*------------------------------Includes--------------------------------------*/
+#include "ndrx_config.h"
+#include <stdio.h>
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
 
@@ -47,17 +45,20 @@
 /**
  * Function: provides ndrx_plugin_crypto_getkey  
  */
-#define NDRX_PLUGIN_FUNC_ENCKEY             0x00000001
+#define NDRX_PLUGIN_FUNC_ENCKEY                     0x00000001
+#define NDRX_PLUGIN_FUNC_TPLOGPRINTUBFMASK          0x00000002
 
 
 /* symbols: */
-#define NDRX_PLUGIN_INIT_SYMB               "ndrx_plugin_init"
-#define NDRX_PLUGIN_CRYPTO_GETKEY_SYMB      "ndrx_plugin_crypto_getkey"
+#define NDRX_PLUGIN_INIT_SYMB                   "ndrx_plugin_init"
+
+/** Cryptography key functionality available: */
+#define NDRX_PLUGIN_CRYPTO_GETKEY_SYMB          "ndrx_plugin_crypto_getkey"
+
+/** Load masking functionality expoed */
+#define NDRX_PLUGIN_TPLOGPRINTUBFMASK_SYMB      "ndrx_plugin_tplogprintubf_mask"
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
-
-double (*cosine)(double);
-
 
 /**
  * Init plugin function
@@ -71,14 +72,35 @@ typedef long (*ndrx_plugin_init_t)(char *provider_name, int provider_name_bufsz)
  */
 typedef int (*ndrx_plugin_crypto_getkey_t)(char *keybuf, int keybuf_bufsz);
 
+/**
+ * Plugin for field printing to debug file of the UBF buffer
+ * @param [in,out] buffer buffer which contains <field_name>\t<print_data>\n
+ *  the buffer may be reallocated (the invoker does free)
+ * @param [in] string length including EOS
+ * @param [in] dataptr1 RFU
+ * @param [in] do_write if set to TRUE, will print the given buffer in log file
+ * @param [in] outf output file stream currently set
+ * @param [in] fid UBF buffer field id
+ * @return EXSUCCEED/EXFAIL
+ */
+typedef int (*ndrx_plugin_tplogprintubf_mask_t)(char **buffer, long datalen, void *dataptr1, 
+        int *do_write, FILE * outf, int fid);
+
 
 /* Have some global variable with pointer to callbacks */
 
 struct ndrx_pluginbase {
     int plugins_loaded;
-    /* pointer to get encryption key function */
+    
+    /** pointer to get encryption key function */
     ndrx_plugin_crypto_getkey_t p_ndrx_crypto_getkey;
+    /** provider string of crypto */
     char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+    
+    /** UBF buffer dump to log file pre-processing function */
+    ndrx_plugin_tplogprintubf_mask_t p_ndrx_tplogprintubf_mask;
+    /** Provider string for the UBF dump pre-processing */
+    char ndrx_tplogprintubf_mask_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;
@@ -91,5 +113,6 @@ extern ndrx_pluginbase_t ndrx_G_plugins;
 
 extern NDRX_API int ndrx_plugins_load(void);
 
-#endif /* EXPROTO_H_ */
+#endif /* EXPLUGINBASE_H_ */
+
 /* vim: set ts=4 sw=4 et smartindent: */

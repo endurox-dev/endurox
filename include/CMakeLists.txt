@@ -82,6 +82,7 @@ install (FILES
     tmenv.h
     tx.h
     Uunix.h
+    expluginbase.h
     DESTINATION include)
 
 install (FILES
