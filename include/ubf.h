@@ -42,6 +42,7 @@ extern "C" {
 #include <stdio.h>
 #include <ndrx_config.h>
 #include <exdb.h>
+#include <expluginbase.h>   /**<for log printing masking  */
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -95,18 +96,18 @@ extern "C" {
 #define BBADACM             20 /**< Reserved for future use */
 #define BNOCNAME            21 /**< Structure field not found for VIEW */
 #define BEBADOP             22 /**< Reserved for future use */
-#define BMAXVAL             22 /* max error */
+#define BMAXVAL             22 /**< max error */
     
 /* Bvopt options: */
-#define B_FTOS              1 /* flag S, one way UBF->Struct */
-#define B_STOF              2 /* flag F, one way Struct->UBF */
-#define B_OFF               3 /* Zero way mapping, N */
-#define B_BOTH              4 /* both F & S */
+#define B_FTOS              1 /**< flag S, one way UBF->Struct */
+#define B_STOF              2 /**< flag F, one way Struct->UBF */
+#define B_OFF               3 /**< Zero way mapping, N */
+#define B_BOTH              4 /**< both F & S */
 
-#define BUPDATE             1   /* Update buffer */
-#define BOJOIN              2   /* outer joing buffers, RFU */
-#define BJOIN               3   /* join buffers, RFU */
-#define BCONCAT             4   /* contact buffers */
+#define BUPDATE             1   /**< Update buffer */
+#define BOJOIN              2   /**< outer joing buffers, RFU */
+#define BJOIN               3   /**< join buffers, RFU */
+#define BCONCAT             4   /**< contact buffers */
     
 /* Configuration: */
 #define CONF_NDRX_UBFMAXFLDS     "NDRX_UBFMAXFLDS"
@@ -216,8 +217,7 @@ extern NDRX_API int Bgetlast (UBFH *p_ub, BFLDID bfldid,
                         BFLDOCC *occ, char *buf, BFLDLEN *len);
 extern NDRX_API int Bprint (UBFH *p_ub);
 extern NDRX_API int Bfprint (UBFH *p_ub, FILE * outf);
-extern NDRX_API int Bfprintcb (UBFH *p_ub, 
-        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
+extern NDRX_API int Bfprintcb (UBFH *p_ub, ndrx_plugin_tplogprintubf_mask_t p_writef, void *dataptr1);
 extern NDRX_API char * Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
 extern NDRX_API int Bextread (UBFH * p_ub, FILE *inf);

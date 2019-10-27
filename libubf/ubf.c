@@ -59,6 +59,8 @@
 #include <typed_view.h>
 #include <ubfdb.h>
 #include <ubfutil.h>
+
+#include "expluginbase.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -1594,11 +1596,12 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
  * @param p_writef callback function for data output. Note that 'buffer' argument
  *  is allocated and deallocated by Bfprintcb it self. The string is zero byte
  *  terminated. The dataptr1 passed to function is forwarded to callback func.
- *  *datalen* includes the EOS byte.
+ *  *datalen* includes the EOS byte. if do_write is set to TRUE, the data in buffer
+ *  is written to output file.
  * @return EXSUCCEED/EXFAIL
  */
 expublic int Bfprintcb (UBFH *p_ub, 
-        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+        ndrx_plugin_tplogprintubf_mask_t p_writef, void *dataptr1)
 {
     API_ENTRY;
 
@@ -1637,6 +1640,33 @@ expublic int Bprint (UBFH *p_ub)
     }
 
     return ndrx_Bfprint (p_ub, stdout, NULL, NULL);
+}
+
+/**
+ * Print UBF buffer to logger
+ * @param lev logging level to start print at
+ * @param title title of the dump
+ * @param p_ub UBF buffer
+ */
+expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
+{
+    API_ENTRY;
+    ndrx_debug_t * dbg = debug_get_tp_ptr();
+    
+    if (dbg->level>=lev)
+    {
+        TP_LOG(lev, "%s", title);
+        /* Do standard validation */
+        if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+        {
+            UBF_LOG(log_warn, "arguments fail - nothing to log");
+        }
+        else
+        {
+            /* use plugin callback */
+            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_mask, NULL);
+        }
+    }
 }
 
 /**

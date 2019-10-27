@@ -1,15 +1,14 @@
 ##
-## @brief Cryptohost (use hostname as encryption key) providers/plugin
+## @brief Test tplogprintubf masking plugin func - server
 ##
-## @file CMakeLists.txt
+## @file atmisv70.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
 ## Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
-## Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
+## Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
 ## This software is released under one of the following licenses:
-## AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
-## See LICENSE file for full text.
+## AGPL or Mavimax's license for commercial use.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
 ## 
@@ -32,8 +31,14 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set minimum version
 cmake_minimum_required(VERSION 2.8)
+
+# Make sure the compiler can find include files from UBF library
+include_directories (${ENDUROX_SOURCE_DIR}/libubf
+					 ${ENDUROX_SOURCE_DIR}/include
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
+
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
@@ -43,23 +48,29 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-# Make sure the compiler can find include files from our UBF library.
-include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
+# Make sure the linker can find the UBF library once it is built.
+link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-add_library (cryptohost SHARED
-                        cryptohost.c
-   	        )
+############################# Test - executables ###############################
+add_executable (atmiclt70 atmiclt70.c)
+
+add_library (ubfmasktest SHARED
+                        maskplugin.c
+                )
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmiclt70 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+
+set_target_properties(atmiclt70 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(cryptohost nstd)
+    target_link_libraries(ubfmasktest nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(cryptohost nstd)
+    target_link_libraries(ubfmasktest nstd)
 endif()
 
 
-# Install bin
-install (TARGETS 
-    cryptohost
-    DESTINATION "${INSTALL_LIB_DIR}"
-    )
+################################################################################
+
 # vim: set ts=4 sw=4 et smartindent:
