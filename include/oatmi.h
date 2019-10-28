@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -94,6 +94,7 @@ extern NDRX_API int Otptoutset(TPCONTEXT_T *p_ctxt, int tout);
 extern NDRX_API int Otptoutget(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpimport(TPCONTEXT_T *p_ctxt, char *istr, long ilen, char **obuf, long *olen, long flags);
 extern NDRX_API int Otpexport(TPCONTEXT_T *p_ctxt, char *ibuf, long ilen, char *ostr, long *olen, long flags);
+extern NDRX_API void* Otpgetconn(TPCONTEXT_T *p_ctxt);
 extern NDRX_API char * Otuxgetenv(TPCONTEXT_T *p_ctxt, char *envname);
 extern NDRX_API int Otpterm(TPCONTEXT_T *p_ctxt);
 extern NDRX_API int Otpappthrterm(TPCONTEXT_T *p_ctxt);

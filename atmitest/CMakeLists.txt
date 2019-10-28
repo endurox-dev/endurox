@@ -13,7 +13,7 @@
 ## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
-## 
+##
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU Affero General Public License, version 3 as published
 ## by the Free Software Foundation;
@@ -24,7 +24,7 @@
 ## for more details.
 ##
 ## You should have received a copy of the GNU Affero General Public License along 
-## with this program; if not, write to the Free Software Foundation, Inc., 
+## with this program; if not, write to the Free Software Foundation, Inc.,
 ## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
@@ -124,6 +124,7 @@ ENDIF()
 
 add_subdirectory (test068_tpadm)
 add_subdirectory (test069_wnormal)
+add_subdirectory (test070_ubfhook)
 
 ################################################################################
 # Master test case driver
