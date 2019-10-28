@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## @brief Test tplogprintubf masking plugin func - test launcher
+## @brief Test tplogprintubf hooking plugin func - test launcher
 ##
 ## @file run.sh
 ##
@@ -32,7 +32,7 @@
 ## -----------------------------------------------------------------------------
 ##
 
-TESTNAME="test070_ubfmask"
+TESTNAME="test070_ubfhook"
 
 PWD=`pwd`
 if [ `echo $PWD | grep $TESTNAME ` ]; then
@@ -42,7 +42,7 @@ else
 	# started from parent folder
 	pushd .
 	echo "Doing cd"
-	cd test070_ubfmask
+	cd test070_ubfhook
 fi;
 
 . ../testenv.sh
@@ -58,24 +58,24 @@ UNAME=`uname -s`
 case $UNAME in
 
   Darwin)
-    export NDRX_PLUGINS=libubfmasktest.dylib
+    export NDRX_PLUGINS=libubfhooktest.dylib
     export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$TESTDIR
     ;;
 
   AIX)
-    export NDRX_PLUGINS=libubfmasktest.so
+    export NDRX_PLUGINS=libubfhooktest.so
     export LIBPATH=$LIBPATH:$TESTDIR
     ;;
 
   *)
-    export NDRX_PLUGINS=libubfmasktest.so
+    export NDRX_PLUGINS=libubfhooktest.so
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TESTDIR
     ;;
 esac
 
 if [ "$(uname)" == "Darwin" ]; then
         echo "Darwin host"
-        export NDRX_PLUGINS=libubfmasktest.dylib
+        export NDRX_PLUGINS=libubfhooktest.dylib
 fi
 
 xadmin killall atmiclt70 2>/dev/null

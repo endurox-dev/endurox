@@ -555,10 +555,10 @@ Ensure(test069_wnormal)
     assert_equal(ret, EXSUCCEED);
 }
 
-Ensure(test070_ubfmask)
+Ensure(test070_ubfhook)
 {
     int ret;
-    ret=system_dbg("test070_ubfmask/run.sh");
+    ret=system_dbg("test070_ubfhook/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
@@ -682,7 +682,7 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test068_tpadm);
     add_test(suite, test069_wnormal);
-    add_test(suite, test070_ubfmask);
+    add_test(suite, test070_ubfhook);
     
     return suite;
 }

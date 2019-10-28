@@ -97,7 +97,7 @@ extern NDRX_API char * OBfindlast(TPCONTEXT_T *p_ctxt, UBFH * p_ub, BFLDID bfldi
 extern NDRX_API int OBgetlast(TPCONTEXT_T *p_ctxt, UBFH *p_ub, BFLDID bfldid,BFLDOCC *occ, char *buf, BFLDLEN *len);
 extern NDRX_API int OBprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub);
 extern NDRX_API int OBfprint(TPCONTEXT_T *p_ctxt, UBFH *p_ub, FILE * outf);
-extern NDRX_API int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, ndrx_plugin_tplogprintubf_mask_t p_writef, void *dataptr1);
+extern NDRX_API int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1);
 extern NDRX_API char * OBtypcvt(TPCONTEXT_T *p_ctxt, BFLDLEN * to_len, int to_type,char *from_buf, int from_type, BFLDLEN from_len);
 extern NDRX_API int OBextread(TPCONTEXT_T *p_ctxt, UBFH * p_ub, FILE *inf);
 extern NDRX_API int OBextreadcb(TPCONTEXT_T *p_ctxt, UBFH * p_ub, long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);

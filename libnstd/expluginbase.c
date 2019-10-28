@@ -85,9 +85,9 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
     ,.p_ndrx_crypto_getkey = ndrx_crypto_getkey_std
     ,.ndrx_crypto_getkey_provider = "built in"
     
-    /* UBF log print masking */
-    ,.p_ndrx_tplogprintubf_mask = NULL
-    ,.ndrx_tplogprintubf_mask_provider = "none"
+    /* UBF log print hooking */
+    ,.p_ndrx_tplogprintubf_hook = NULL
+    ,.ndrx_tplogprintubf_hook_provider = "none"
     };
 
 /*---------------------------Statics------------------------------------*/
@@ -98,7 +98,7 @@ expublic ndrx_pluginbase_t ndrx_G_plugins = {
 exprivate plugin_loader_map_t M_map_driver[] =
 {  
      {NDRX_PLUGIN_CRYPTO_GETKEY_SYMB,      OFSZ(crypto_getkey),        NDRX_PLUGIN_FUNC_ENCKEY}
-    ,{NDRX_PLUGIN_TPLOGPRINTUBFMASK_SYMB,  OFSZ(tplogprintubf_mask),   NDRX_PLUGIN_FUNC_TPLOGPRINTUBFMASK}
+    ,{NDRX_PLUGIN_TPLOGPRINTUBF_HOOK_SYMB, OFSZ(tplogprintubf_hook),   NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK}
     ,{NULL}
 };
 

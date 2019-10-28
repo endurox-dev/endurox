@@ -1,5 +1,5 @@
 ##
-## @brief Test tplogprintubf masking plugin func - server
+## @brief Test tplogprintubf hooking plugin func - server
 ##
 ## @file atmisv70.c
 ##
@@ -54,8 +54,8 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 ############################# Test - executables ###############################
 add_executable (atmiclt70 atmiclt70.c)
 
-add_library (ubfmasktest SHARED
-                        maskplugin.c
+add_library (ubfhooktest SHARED
+                        hookplugin.c
                 )
 ################################################################################
 ############################# Test - executables ###############################
@@ -65,9 +65,9 @@ target_link_libraries (atmiclt70 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 set_target_properties(atmiclt70 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(ubfmasktest nstd)
+    target_link_libraries(ubfhooktest nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(ubfmasktest nstd)
+    target_link_libraries(ubfhooktest nstd)
 endif()
 
 

@@ -1,7 +1,7 @@
 /**
- * @brief Test tplogprintubf masking plugin func - common header
+ * @brief Test tplogprintubf hooking plugin func - common header
  *
- * @file testtest070_ubfmask.h
+ * @file testtest070_ubfhook.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
