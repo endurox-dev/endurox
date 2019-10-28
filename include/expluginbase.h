@@ -46,7 +46,7 @@
  * Function: provides ndrx_plugin_crypto_getkey  
  */
 #define NDRX_PLUGIN_FUNC_ENCKEY                     0x00000001
-#define NDRX_PLUGIN_FUNC_TPLOGPRINTUBFMASK          0x00000002
+#define NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK         0x00000002
 
 
 /* symbols: */
@@ -55,8 +55,8 @@
 /** Cryptography key functionality available: */
 #define NDRX_PLUGIN_CRYPTO_GETKEY_SYMB          "ndrx_plugin_crypto_getkey"
 
-/** Load masking functionality expoed */
-#define NDRX_PLUGIN_TPLOGPRINTUBFMASK_SYMB      "ndrx_plugin_tplogprintubf_mask"
+/** Load hooking functionality expoed */
+#define NDRX_PLUGIN_TPLOGPRINTUBF_HOOK_SYMB     "ndrx_plugin_tplogprintubf_hook"
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 
@@ -83,7 +83,7 @@ typedef int (*ndrx_plugin_crypto_getkey_t)(char *keybuf, int keybuf_bufsz);
  * @param [in] fid UBF buffer field id
  * @return EXSUCCEED/EXFAIL
  */
-typedef int (*ndrx_plugin_tplogprintubf_mask_t)(char **buffer, long datalen, void *dataptr1, 
+typedef int (*ndrx_plugin_tplogprintubf_hook_t)(char **buffer, long datalen, void *dataptr1, 
         int *do_write, FILE * outf, int fid);
 
 
@@ -98,9 +98,9 @@ struct ndrx_pluginbase {
     char ndrx_crypto_getkey_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
     
     /** UBF buffer dump to log file pre-processing function */
-    ndrx_plugin_tplogprintubf_mask_t p_ndrx_tplogprintubf_mask;
+    ndrx_plugin_tplogprintubf_hook_t p_ndrx_tplogprintubf_hook;
     /** Provider string for the UBF dump pre-processing */
-    char ndrx_tplogprintubf_mask_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+    char ndrx_tplogprintubf_hook_provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
 };
 
 typedef struct ndrx_pluginbase ndrx_pluginbase_t;

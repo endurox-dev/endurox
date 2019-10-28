@@ -1601,7 +1601,7 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
  * @return EXSUCCEED/EXFAIL
  */
 expublic int Bfprintcb (UBFH *p_ub, 
-        ndrx_plugin_tplogprintubf_mask_t p_writef, void *dataptr1)
+        ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1)
 {
     API_ENTRY;
 
@@ -1664,7 +1664,7 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
         else
         {
             /* use plugin callback */
-            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_mask, NULL);
+            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL);
         }
     }
 }

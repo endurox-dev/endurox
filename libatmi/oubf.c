@@ -3885,7 +3885,7 @@ out:
 /**
  * Object-API wrapper for Bfprintcb() - Auto generated.
  */
-expublic int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, ndrx_plugin_tplogprintubf_mask_t p_writef, void *dataptr1) 
+expublic int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1) 
 {
     int ret = EXSUCCEED;
     int did_set = EXFALSE;

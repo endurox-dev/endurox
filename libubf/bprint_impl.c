@@ -78,7 +78,7 @@
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
-          ndrx_plugin_tplogprintubf_mask_t p_writef, void *dataptr1)
+          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1)
 {
     int ret=EXSUCCEED;
     BFLDID bfldid;

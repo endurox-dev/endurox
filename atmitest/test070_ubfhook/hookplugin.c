@@ -1,7 +1,7 @@
 /**
- * @brief Test UBF masking functionality
+ * @brief Test UBF hooking functionality
  *
- * @file maskplugin.c
+ * @file hookplugin.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -58,16 +58,16 @@
  */
 expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
 {
-    snprintf(provider_name, provider_name_bufsz, "UBF Masking test");
+    snprintf(provider_name, provider_name_bufsz, "UBF Hooking test");
     
     NDRX_LOG_EARLY(log_info, "plugin init...");
     
     /* we provide encryption key function */
-    return NDRX_PLUGIN_FUNC_TPLOGPRINTUBFMASK;
+    return NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK;
 }
 
 /**
- * Perform the log file masking.
+ * Perform the log file hooking.
  * @param buffer buffer where output ubf buffer string is located (one row field\tvalue\n
  * @param datalen output buffer len incl EOS
  * @param dataptr1 RFU
@@ -76,7 +76,7 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
  * @param fid field id
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_plugin_tplogprintubf_mask(char **buffer, long datalen, void *dataptr1,
+expublic int ndrx_plugin_tplogprintubf_hook(char **buffer, long datalen, void *dataptr1,
         int *do_write, FILE * outf, int fid)
 {
     char *p;
