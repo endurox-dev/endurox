@@ -1,5 +1,5 @@
 /**
- * @brief Test tplogprintubf masking plugin func - client
+ * @brief Test tplogprintubf hooking plugin func - client
  *
  * @file atmiclt70.c
  */
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (EXFAIL==CBchg(p_ub, T_STRING_8_FLD, 0, "NONMASKFLD", 0, BFLD_STRING))
+    if (EXFAIL==CBchg(p_ub, T_STRING_8_FLD, 0, "NONHOOKFLD", 0, BFLD_STRING))
     {
         NDRX_LOG(log_debug, "Failed to set T_STRING_8_FLD[0]: %s", Bstrerror(Berror));
         ret=EXFAIL;
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
     for (i=0; i<200; i++)
     {
         /* print the log file message... */
-        tplogprintubf(log_debug, "MASKED DEBUG OUTPUT", p_ub);
+        tplogprintubf(log_debug, "HOOKED DEBUG OUTPUT", p_ub);
     }
     
 out:

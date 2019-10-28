@@ -124,7 +124,7 @@ ENDIF()
 
 add_subdirectory (test068_tpadm)
 add_subdirectory (test069_wnormal)
-add_subdirectory (test070_ubfmask)
+add_subdirectory (test070_ubfhook)
 
 ################################################################################
 # Master test case driver
