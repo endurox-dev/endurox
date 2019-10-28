@@ -1,6 +1,7 @@
 /**
  * @brief UBF Object API code (auto-generated)
  *   oubf.c
+ *   /
  *
  * @file oubf.c
  */
@@ -13,7 +14,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -24,7 +25,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -3888,7 +3889,7 @@ out:
 /**
  * Object-API wrapper for Bfprintcb() - Auto generated.
  */
-expublic int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1) 
+expublic int OBfprintcb(TPCONTEXT_T *p_ctxt, UBFH *p_ub, ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1) 
 {
     int ret = EXSUCCEED;
     int did_set = EXFALSE;
