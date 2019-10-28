@@ -1,5 +1,5 @@
 /**
- *  Standard library error handler
+ * @brief Standard library error handler
  *
  * @file onerror.h
  */
@@ -22,13 +22,13 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along
+ * You should have received a copy of the GNU Affero General Public License along 
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
  * A commercial use license is available from Mavimax, Ltd
- * contact.com
+ * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
 #ifndef __ONERROR_H
@@ -53,3 +53,4 @@ extern NDRX_API char * ONstrerror(TPCONTEXT_T *p_ctxt, int err);
 extern NDRX_API int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt);
 #endif  /* __ONERROR_H */
 
+/* vim: set ts=4 sw=4 et smartindent: */
