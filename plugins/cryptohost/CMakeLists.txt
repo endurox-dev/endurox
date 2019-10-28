@@ -12,7 +12,7 @@
 ## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
-## 
+##
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU Affero General Public License, version 3 as published
 ## by the Free Software Foundation;
@@ -23,7 +23,7 @@
 ## for more details.
 ##
 ## You should have received a copy of the GNU Affero General Public License along 
-## with this program; if not, write to the Free Software Foundation, Inc., 
+## with this program; if not, write to the Free Software Foundation, Inc.,
 ## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
@@ -52,9 +52,7 @@ add_library (cryptohost SHARED
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(cryptohost nstd)
-    target_link_libraries(cryptohost nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(cryptohost nstd)
     target_link_libraries(cryptohost nstd)
 endif()
 

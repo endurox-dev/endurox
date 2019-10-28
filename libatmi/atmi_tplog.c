@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -85,22 +85,6 @@ exprivate int tplog_compare_set_file(char *new_file)
     }
     
     return changed;
-}
-
-/**
- * Print UBF buffer to logger
- * @param lev logging level to start print at
- * @param title title of the dump
- * @param p_ub UBF buffer
- */
-expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
-{
-    ndrx_debug_t * dbg = debug_get_tp_ptr();
-    if (dbg->level>=lev)
-    {
-        TP_LOG(lev, "%s", title);
-        Bfprint(p_ub, dbg->dbg_f_ptr);
-    }
 }
 
 /**

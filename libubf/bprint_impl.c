@@ -13,7 +13,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -24,7 +24,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -72,11 +72,13 @@
  * @param outf - file descriptor to print to
  * @param p_writef callback function which overrides outf (i.e. it can be set to
  *  NULL for particular case). Then for data output callback is used.
+ *  if do_write is set, the data in buffer will be written to output.
+ *  'buffer' may be reallocated.
  * @param dataptr1 optional argument to p_writef if callback present
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
-           int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1)
+          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1)
 {
     int ret=EXSUCCEED;
     BFLDID bfldid;
@@ -185,6 +187,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             {
                 char *tmp;
                 long tmp_len;
+                int do_write = EXFALSE;
                 
                 NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
                 
@@ -197,13 +200,19 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                 
                 tmp_len++;
                 
-                if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
+                if (EXSUCCEED!=(ret=p_writef(&tmp, tmp_len, dataptr1, &do_write, 
+                        outf, bfldid)))
                 {
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
                             "failed with %d for [%s]", 
                             __func__, ret, tmp);
                     NDRX_FREE(tmp);
                     EXFAIL_OUT(ret);
+                }
+                
+                if (do_write)
+                {
+                    fprintf(outf, "%s", tmp);
                 }
                         
                 NDRX_FREE(tmp);
@@ -222,6 +231,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             {
                 char *tmp;
                 long tmp_len;
+                int do_write = EXFALSE;
                 
                 NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
                 
@@ -234,7 +244,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                 
                 tmp_len++;
                 
-                if (EXSUCCEED!=(ret=p_writef(tmp, tmp_len, dataptr1)))
+                if (EXSUCCEED!=(ret=p_writef(&tmp, tmp_len, dataptr1, &do_write, outf,
+                        bfldid)))
                 {
                     ndrx_Bset_error_fmt(BEINVAL, "%s: p_writef user function "
                             "failed with %d for [%s] 2", 
@@ -242,14 +253,19 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                     NDRX_FREE(tmp);
                     EXFAIL_OUT(ret);
                 }
-                        
+                
+                if (do_write)
+                {
+                    fprintf(outf, "%s", tmp);
+                }
+                
                 NDRX_FREE(tmp);
             }
             else
             {
                 fprintf(outf, OUTPUT_FORMAT_NDATA);
             }
-    
+   
         }
         
         if (NULL!=outf && ferror(outf))

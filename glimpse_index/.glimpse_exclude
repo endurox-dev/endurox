@@ -15,3 +15,4 @@ ULOG.
 cmake_install.cmake
 *.log
 *.out
+_CPack_Packages
