@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ extern char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
                     char *from_buf, int from_type, BFLDLEN from_len);
 
 extern int ndrx_Bfprint (UBFH *p_ub, FILE * outf, 
-        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
+        ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1);
 
 extern int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                                 BFLDOCC *occ, char *buf, BFLDLEN *len,

@@ -1847,6 +1847,8 @@ There are certain criteria to which plugins must correspond. This chapter will
 provide the plugin API definition. Also it will list the functionality which
 can be defined by plugin. Plugins shall be written in thread safe manner.
 
+Plugin interface if provided via *expluginbase.h* header.
+
 === Plugin Initialization
 
 Plugins are registered in 'NDRX_PLUGINS' environment variable, as semicolon separated
@@ -1883,7 +1885,9 @@ functionality which is being exported.
 
 Currently following flags are available:
 
-. NDRX_PLUGIN_FUNC_ENCKEY - plugin provides cryptography key function
+. NDRX_PLUGIN_FUNC_ENCKEY (0x00000001) - plugin provides cryptography key function
+
+. NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK (0x00000002) - hook for tplogprintubf() func
 
 
 During the Initialization, only early logging (mem buffered logs) are available,
@@ -1907,6 +1911,34 @@ must be zero (0x00) terminated C string. 'keybuf_bufsz' denotes the max buffer
 size (with 0x00 byte). In case of success function shall return 0. In case of 
 failure, function shall return -1. For this function only *EARLY* logging is
 available (NDRX_LOG_EARLY/UBF_LOG_EARLY/TP_LOG_EARLY).
+
+
+=== NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK functions
+
+If plugin exports this flag, then library loader will search for following
+symbol in the shared library:
+
+--------------------------------------------------------------------------------
+
+int ndrx_plugin_tplogprintubf_hook(char **buffer, long datalen, void *dataptr1, 
+        int *do_write, FILE * outf, int fid);
+
+--------------------------------------------------------------------------------
+
+Function is used to catch the moment when *tplogprintubf(3)* prints the UBF buffer
+in log file, line by line. For every line the function is called. The 'buffer'
+receives the pointer to dynamically allocated string where current output data
+is formatted. The format of the line is following "<field_name>\t<any_data>\n".
+Total buffer length is passed in 'datalen' field. 'dataptr1' is reserved for
+future use. 'do_write' by default is set to FALSE - *0*, if set to TRUE *1*, the
+line will be logged to the logging device. 'outf' is current output stream.
+'fid' is UBF buffer field id currently being printed out.
+
+The plugin function can capture the output, or it can replace the data in 'buffer',
+user is allowed to reallocate the 'buffer'. Enduro/X does free() call on the
+'buffer' after the invocation.
+
+See atmitest/test070_ubfhook/hookplugin.c for sample code.
 
 
 == Starting Enduro/X XATMI server from other thread than main
