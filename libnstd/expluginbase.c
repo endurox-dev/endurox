@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -48,8 +48,24 @@
 /*---------------------------Macros-------------------------------------*/
 /* same as xatmi.h" CONF_NDRX_PLUGINS */
 #define NDRX_PLUGINS_ENV "NDRX_PLUGINS"
+
+/** Offset definition for the function */
+#define OFSZ(e)   EXOFFSET(ndrx_pluginbase_t,p_ndrx_##e), EXOFFSET(ndrx_pluginbase_t,ndrx_##e##_provider)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Plugin loader mapping
+ */
+struct plugin_loader_map
+{
+    char *symb;
+    int func_off;
+    int provider_off;
+    long flags;
+};
+typedef struct plugin_loader_map plugin_loader_map_t;
+
 /*---------------------------Globals------------------------------------*/
 
 /**
@@ -63,14 +79,29 @@
 expublic ndrx_pluginbase_t ndrx_G_plugins = {
 
     /* Is plugins loaded? */
-    .plugins_loaded = EXFALSE,
+    .plugins_loaded = EXFALSE
     
     /* Standard encryption encryption key function: */
-    .p_ndrx_crypto_getkey = ndrx_crypto_getkey_std,
-    .ndrx_crypto_getkey_provider = "built in"
-            
+    ,.p_ndrx_crypto_getkey = ndrx_crypto_getkey_std
+    ,.ndrx_crypto_getkey_provider = "built in"
+    
+    /* UBF log print hooking */
+    ,.p_ndrx_tplogprintubf_hook = NULL
+    ,.ndrx_tplogprintubf_hook_provider = "none"
     };
+
 /*---------------------------Statics------------------------------------*/
+
+/**
+ * Mapping driver
+ */
+exprivate plugin_loader_map_t M_map_driver[] =
+{  
+     {NDRX_PLUGIN_CRYPTO_GETKEY_SYMB,      OFSZ(crypto_getkey),        NDRX_PLUGIN_FUNC_ENCKEY}
+    ,{NDRX_PLUGIN_TPLOGPRINTUBF_HOOK_SYMB, OFSZ(tplogprintubf_hook),   NDRX_PLUGIN_FUNC_TPLOGPRINTUBF_HOOK}
+    ,{NULL}
+};
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -86,6 +117,9 @@ expublic int ndrx_plugins_loadone(char *fname)
     ndrx_plugin_crypto_getkey_t crypto;
     long flags;
     char provider[NDRX_PLUGIN_PROVIDERSTR_BUFSZ];
+    
+    plugin_loader_map_t *p = M_map_driver;
+    
     
     handle = dlopen(fname, RTLD_LOCAL | RTLD_LAZY);
     
@@ -122,28 +156,34 @@ expublic int ndrx_plugins_loadone(char *fname)
     
     NDRX_LOG_EARLY(log_info, "[%s] flags %lx", fname, flags);
     
-    
-    if (flags & NDRX_PLUGIN_FUNC_ENCKEY)
+    while (NULL!=p->symb)
     {
-        crypto = (ndrx_plugin_crypto_getkey_t)dlsym(handle, NDRX_PLUGIN_CRYPTO_GETKEY_SYMB);
-    
-        if (NULL==init)
+        if (flags & p->flags)
         {
-            NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] - symbol [%s] not "
-                    "found (flags " PRIx64 "): %s",
-                    fname, NDRX_PLUGIN_FUNC_ENCKEY, flags, dlerror());
-            userlog("Invalid plugin [%s] - symbol [%s] not "
-                    "found (flags " PRIx64 "): %s",
-                    fname, NDRX_PLUGIN_FUNC_ENCKEY, flags, dlerror());
-            EXFAIL_OUT(ret);
+            void *fptr = dlsym(handle, p->symb);
+            void **func_ptr = (void *)(((char *)&ndrx_G_plugins) + p->func_off);
+            char *prov_ptr = ((char *)&ndrx_G_plugins) + p->provider_off;
+            
+            if (NULL==fptr)
+            {
+                NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] - symbol [%s] not "
+                        "found (flags " PRIx64 "): %s",
+                        fname, p->flags, flags, dlerror());
+                userlog("Invalid plugin [%s] - symbol [%s] not "
+                        "found (flags " PRIx64 "): %s",
+                        fname, p->flags, flags, dlerror());
+                EXFAIL_OUT(ret);
+            }
+
+            NDRX_LOG_EARLY(log_info, "Plugin [%s] provides [%s] function",
+                    provider, p->symb);
+
+            *func_ptr = fptr;
+            NDRX_STRNCPY_SAFE(prov_ptr, provider, NDRX_PLUGIN_PROVIDERSTR_BUFSZ);
+            
         }
         
-        NDRX_LOG_EARLY(log_info, "Plugin [%s] provides crypto key function",
-                provider);
-        
-        ndrx_G_plugins.p_ndrx_crypto_getkey = crypto;
-        NDRX_STRCPY_SAFE(ndrx_G_plugins.ndrx_crypto_getkey_provider, provider);
-        
+        p++;
     }
     
 out:

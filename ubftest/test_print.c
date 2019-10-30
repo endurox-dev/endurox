@@ -11,7 +11,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -22,7 +22,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -224,18 +224,22 @@ struct bfprintcb_data
 
 /**
  * Write callback, this will fill in passed array
- * @param buffer
- * @param datalen
- * @param dataptr1
+ * @param buffer, we may realloc
+ * @param datalen output data len
+ * @param dataptr1 custom pointer
+ * @param do_write shall the Enduro/X wirte to output log..
+ * @param outf output stream currencly used
+ * @param fid field it processing
  * @return 
  */
-exprivate int test_bfprintcb_writef(char *buffer, long datalen, void *dataptr1)
+exprivate int test_bfprintcb_writef(char **buffer, long datalen, void *dataptr1, 
+        int *do_write, FILE *outf, BFLDID fid)
 {
     bfprintcb_data_t *data = (bfprintcb_data_t *)dataptr1;
     
-    assert_equal(strlen(buffer)+1, datalen);
+    assert_equal(strlen(*buffer)+1, datalen);
     
-    NDRX_STRCPY_SAFE(data->lines[data->nrlines], buffer);
+    NDRX_STRCPY_SAFE(data->lines[data->nrlines], *buffer);
     data->nrlines++;
     return EXSUCCEED;
 }
