@@ -92,6 +92,15 @@ static ndrx_args_loader_t M_args_test_map[] =
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Check that file exists
+ */
+Ensure(test_nstd_file_exists)
+{
+    assert_equal(ndrx_file_exists("ubftab_test/test1.fd"), EXTRUE);
+    assert_equal(ndrx_file_exists("ubftab_test/hello/test2.fd"), EXFALSE);
+}
+
+/**
  * Enduro/X version of strsep...
  */
 Ensure(test_nstd_strsep)
@@ -407,6 +416,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_args);
     add_test(suite, test_nstd_env_subs);
     add_test(suite, test_nstd_env_subs_ctx);
+    add_test(suite, test_nstd_file_exists);
     
     return suite;
 }
