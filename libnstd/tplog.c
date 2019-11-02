@@ -222,7 +222,7 @@ exprivate int logfile_change_name(int logger, char *filename)
         /* log to stderr. */
         l->dbg_f_ptr = stderr;
     }
-    else if (NULL==(l->dbg_f_ptr = NDRX_FOPEN(l->filename, "a")))
+    else if (NULL==(l->dbg_f_ptr = ndrx_dbg_fopen_mkdir(l, l->filename, "a")))
     {
         int err = errno;
         userlog("Failed to open %s: %s",l->filename, strerror(err));
