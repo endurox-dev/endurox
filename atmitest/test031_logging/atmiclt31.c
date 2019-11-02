@@ -309,6 +309,7 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    tplogconfig(LOG_FACILITY_TP, EXFAIL, "file=./clt-tp.log tp=6", "TEST", NULL);
 out:
 
     tplog(1, "Finishing off");
