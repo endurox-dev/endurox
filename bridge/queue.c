@@ -149,12 +149,14 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     
     ndrx_stopwatch_reset(&msg->trytime);
     
+    /* Bug #465 moved  after the adding to Q */
+    NDRX_LOG(log_warn, "Message %p/%d [%s] added to in-mem queue "
+            "for late delivery...", msg->buffer, msg->len, msg->destqstr);
+    
     MUTEX_LOCK_V(M_in_q_lock);
     DL_APPEND(M_in_q, msg);
     MUTEX_UNLOCK_V(M_in_q_lock);
     
-    NDRX_LOG(log_warn, "Message %p/%d [%s] added to in-mem queue "
-            "for late delivery...", msg->buffer, msg->len, msg->destqstr);
 out:
 
     if (NULL==msg->buffer && NULL!=msg)
