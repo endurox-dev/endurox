@@ -499,7 +499,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         NDRX_LOG(log_warn, "xa_open_entry() - already open!");
         return XA_OK;
     }
-#define DIR_PERM 0755
+
     M_is_open = EXTRUE;
     M_rmid = rmid;
     
@@ -512,18 +512,18 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
     /* The xa_info is directory, where to store the data...*/
     NDRX_STRNCPY(M_folder_active, xa_info, sizeof(M_folder_active)-8);
     M_folder_active[sizeof(M_folder_active)-7] = EXEOS;
-    strcat(M_folder_active, "/active");
+    NDRX_STRCAT_S(M_folder_active, sizeof(M_folder_active), "/active");
     
     NDRX_STRNCPY(M_folder_prepared, xa_info, sizeof(M_folder_prepared)-10);
     M_folder_prepared[sizeof(M_folder_prepared)-9] = EXEOS;
-    strcat(M_folder_prepared, "/prepared");
+    NDRX_STRCAT_S(M_folder_prepared, sizeof(M_folder_prepared), "/prepared");
     
     NDRX_STRNCPY(M_folder_committed, xa_info, sizeof(M_folder_committed)-11);
     M_folder_committed[sizeof(M_folder_committed)-10] = EXEOS;
-    strcat(M_folder_committed, "/committed");
+    NDRX_STRCAT_S(M_folder_committed, sizeof(M_folder_committed), "/committed");
     
     /* Test the directories */
-    if (EXSUCCEED!=(ret=mkdir(M_folder, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -537,7 +537,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         }
     }
     
-    if (EXSUCCEED!=(ret=mkdir(M_folder_active, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder_active, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -551,7 +551,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         }
     }
     
-    if (EXSUCCEED!=(ret=mkdir(M_folder_prepared, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder_prepared, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -565,7 +565,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         }
     }
     
-    if (EXSUCCEED!=(ret=mkdir(M_folder_committed, DIR_PERM)) && ret!=EEXIST )
+    if (EXSUCCEED!=(ret=mkdir(M_folder_committed, NDRX_DIR_PERM)) && ret!=EEXIST )
     {
         int err = errno;
         NDRX_LOG(log_error, "xa_open_entry() Q driver: failed to create directory "
@@ -949,13 +949,13 @@ exprivate int read_tx_block(FILE *f, char *block, int len)
     
     if (len!=(act_read=fread(block, 1, len, f)))
     {
-        int err = errno;
+        int err = ferror(f);
         
         NDRX_LOG(log_error, "ERROR! Failed to read tx file: req_read=%d, read=%d: %s",
                 len, act_read, strerror(err));
         
         userlog("ERROR! Failed to read tx file: req_read=%d, read=%d: %s",
-                len, act_read, strerror(err));
+            len, act_read, strerror(err));
         EXFAIL_OUT(ret);
     }
     

@@ -129,7 +129,8 @@ int test_request_file(void)
             EXFAIL_OUT(ret);
         }
         
-        sprintf(testfname_should_be, "./logs/request_%d.log", i+1);
+        snprintf(testfname_should_be, sizeof(testfname_should_be), 
+                "./logs/request_%d.log", i+1);
         
         TP_LOG(log_debug, "Request file should be [%s] got [%s]", 
                 testfname_should_be, testfname);
@@ -206,6 +207,7 @@ out:
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
+    int i;
     
     pthread_t thread1, thread2;  /* thread variables */
     
@@ -252,6 +254,62 @@ int main(int argc, char** argv)
         tplog(5, "TESTERROR: test_request_file() failed!");
     }
     
+#define NO_DIR_LOG "./non_exist/folder/is/missing/test.log"
+    
+    /* we do not have permissions to root */
+#define MKFAIL_DIR_LOG "./non_write/folder/is/missing/test.log"
+    /* open new log file in non existing folder */
+    
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP, EXFAIL, NULL, 
+            "TEST", NO_DIR_LOG))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to open log to missing folder: %s", 
+                Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+
+    tplog(1, "Hello to missing folder");
+
+    /* check that file exists */
+    if (ndrx_file_exists(NO_DIR_LOG))
+    {
+        NDRX_LOG(log_error, "TESTERROR! [%s] must be missing!", NO_DIR_LOG);
+        EXFAIL_OUT(ret);
+    }
+
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP, EXFAIL, "tp=6 mkdir=y",
+            "TEST", NO_DIR_LOG))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to open log to missing folder: %s", 
+                Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
+    }
+
+    tplog(1, "Hello to missing folder");
+
+    /* check that file exists */
+    if (!ndrx_file_exists(NO_DIR_LOG))
+    {
+        NDRX_LOG(log_error, "TESTERROR! [%s] must be present!", NO_DIR_LOG);
+        EXFAIL_OUT(ret);
+    }
+
+    /* check that fails to open log file */
+    if (EXSUCCEED!=tplogconfig(LOG_FACILITY_TP, EXFAIL, "tp=6 mkdir=y",
+            "TEST", MKFAIL_DIR_LOG))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to open log to non-write folder: %s [%s]", 
+                Nstrerror(Nerror), MKFAIL_DIR_LOG);
+        EXFAIL_OUT(ret);
+    }
+
+    if (ndrx_file_exists(MKFAIL_DIR_LOG))
+    {
+        NDRX_LOG(log_error, "TESTERROR! [%s] must be missing!", MKFAIL_DIR_LOG);
+        EXFAIL_OUT(ret);
+    }
+    
+    tplogconfig(LOG_FACILITY_TP, EXFAIL, "file=./clt-tp.log tp=6", "TEST", NULL);
 out:
 
     tplog(1, "Finishing off");

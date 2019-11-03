@@ -77,6 +77,7 @@ typedef struct
     char code; /* code of the logger */
     char iflags[16]; /* integration flags */
     int is_threaded; /* are we separating logs by threads? */
+    int is_mkdir;   /**< shall we create directory if we get ENOFILE err */
     unsigned threadnr; /* thread number to which we are logging */
     long flags;         /* logger code initially */
     ndrx_memlogger_t *memlog;
