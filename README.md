@@ -440,6 +440,8 @@ processing listings across all supported OSes.
 
 - Version 6.0.28 released on 11/06/2019 (stabel) Feature #419
 
+- Version 7.0.10 released on 13/11/2019 (stabel) Release notes are here: https://www.endurox.org/news/18
+
 # Build configurations
 
 ## Configure make with: 
