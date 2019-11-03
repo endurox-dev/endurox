@@ -53,6 +53,12 @@ rm *.log
 # Clean up log dir
 rm -rf ./logs
 mkdir ./logs
+rm -rf ./non_exist
+rm -rf ./non_write
+mkdir non_write
+
+# no write for others..
+chmod 555 non_write
 
 (./atmisv31FIRST -t 4 -i 1 2>&1) > ./atmisv31FIRST.log &
 (./atmisv31SECOND -i 1 2>&1) > ./atmisv31SECOND.log &
