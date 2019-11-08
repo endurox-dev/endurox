@@ -222,7 +222,7 @@ expublic int ndrx_sem_unlock(ndrx_sem_t *sem, const   char *msg, int sem_num)
         return EXFAIL;
     }
     
-    NDRX_LOG(log_warn, "%s/%d/%d semaphore un-locked", 
+    NDRX_LOG(log_debug, "%s/%d/%d semaphore un-locked", 
             msg, sem->semid, sem_num);
     
 #ifdef NDRX_SEM_DEBUG
