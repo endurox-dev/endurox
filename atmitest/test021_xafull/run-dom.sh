@@ -57,6 +57,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 # Override timeout!
 export NDRX_TOUT=20
+export NDRX_ULOG=$TESTDIR
 
 rm -rf $TESTDIR/RM1
 rm -rf $TESTDIR/RM2
@@ -171,6 +172,7 @@ function print_domains {
 
 
 rm *.log
+rm ULOG.*
 
 set_dom1;
 xadmin down -y
