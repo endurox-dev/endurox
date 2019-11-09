@@ -629,7 +629,7 @@ expublic int tmq_mqlc(UBFH *p_ub, int cd)
             
             if (is_default)
             {
-                strcat(flags, "D");
+                NDRX_STRCAT_S(flags, sizeof(flags), "D");
             }
             
 
