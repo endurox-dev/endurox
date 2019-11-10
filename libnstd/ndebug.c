@@ -511,6 +511,26 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ndrx_debug.is_threaded = val;
                 }
             }
+            else if (0==strncmp("mkdir", tok, cmplen))
+            {
+                int val = EXFALSE;
+                
+                if (*(p+1) == 'Y' || *(p+1) == 'y')
+                {
+                    val = EXTRUE;
+                }
+                
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->is_mkdir = val;
+                }
+                else
+                {
+                    G_tp_debug.is_mkdir = val;
+                    G_ubf_debug.is_mkdir = val;
+                    G_ndrx_debug.is_mkdir = val;
+                }
+            }
             
             tok=strtok_r (NULL,"\t ", &saveptr);
         }
@@ -579,6 +599,89 @@ out:
         free(tok2);
     }
     
+    return ret;
+}
+
+/**
+ * Open file for debug, if enabled mkdir and we get NOENT error,
+ * try to recursively create the directory
+ * @param[in] dbg_ptr debug information
+ * @param[in] filename debug file name
+ * @param[in] mode mode string for fopen
+ * @return ptr to FILE or NULL and errno set
+ */
+expublic FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char *mode)
+{
+    FILE *ret = NULL;
+    int got_dir = EXFALSE;
+    int fallbacks = 0;
+    
+    ret = NDRX_FOPEN(filename, mode);
+    
+    if (!dbg_ptr->is_mkdir)
+    {
+        goto out;
+    }
+    
+    /* do some recursive mkdir... */
+    if (NULL==ret && errno==ENOENT)
+    {
+        /* loop over the path and try to make it... */
+        char tmp[PATH_MAX+1];
+        char *p;
+        
+        NDRX_STRCPY_SAFE(tmp, filename);
+        
+        /*
+         * Try to create folder in reverse order from longest path to shortest
+         */
+        while (p=strrchr(tmp, '/'))
+        {
+            *p = EXEOS;
+            
+            /* try to create folder */
+            if (EXSUCCEED!=mkdir(tmp, NDRX_DIR_PERM))
+            {
+                if (ENOENT!=errno)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                got_dir = EXTRUE;
+                break;
+            }
+            
+            fallbacks++;
+        }
+        
+        if (!got_dir)
+        {
+            goto out;
+        }
+        
+        /*
+         * Now if we fall back more that one folder, we need to create the
+         * upper ones.
+         */
+        while (fallbacks > 0)
+        {
+            tmp[strlen(tmp)]='/';
+            
+            if (EXSUCCEED!=mkdir(tmp, NDRX_DIR_PERM))
+            {
+                /* the next will fail fore sure */
+                goto out;
+            }
+            
+            fallbacks--;
+        }
+        
+        ret = NDRX_FOPEN(filename, "a");
+    }
+    
+out:
     return ret;
 }
 
@@ -702,9 +805,10 @@ expublic void ndrx_init_debug(void)
     {        
         ndrx_str_env_subs_len(G_ndrx_debug.filename, sizeof(G_ndrx_debug.filename));
         /* Opens the file descriptors */
-        if (!(G_ndrx_debug.dbg_f_ptr = fopen(G_ndrx_debug.filename, "a")))
+        if (!(G_ndrx_debug.dbg_f_ptr = ndrx_dbg_fopen_mkdir(&G_ndrx_debug, 
+                G_ndrx_debug.filename, "a")))
         {
-            fprintf(stderr,"Failed to open %s\n",G_ndrx_debug.filename);
+            fprintf(stderr,"Failed to open [%s]: %s\n",G_ndrx_debug.filename, strerror(errno));
             G_tp_debug.dbg_f_ptr = G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr=stderr;
         }
         else
