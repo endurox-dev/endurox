@@ -77,6 +77,10 @@ exprivate pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
 
 
+exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check msgs to fwd */
+exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list... */
+    
+
 MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
 /*---------------------------Statics------------------------------------*/
@@ -129,6 +133,23 @@ expublic void forward_shutdown_wake(void)
 }
 
 /**
+ * Remove forward queue list before next lookup or at un-init
+ */
+exprivate void fwd_q_list_rm(void)
+{
+    fwd_qlist_t *elt, *tmp;
+    /* Deallocate the previous DL */
+    if (NULL!=M_next_fwd_q_list)
+    {
+        DL_FOREACH_SAFE(M_next_fwd_q_list,elt,tmp)
+        {
+            DL_DELETE(M_next_fwd_q_list,elt);
+            NDRX_FREE(elt);
+        }
+    }
+}
+
+/**
  * Get next message to forward
  * So basically we iterate over the all Qs, then regenerate the Q list and
  * and iterate over again.
@@ -138,38 +159,27 @@ expublic void forward_shutdown_wake(void)
 exprivate tmq_msg_t * get_next_msg(void)
 {
     tmq_msg_t * ret = NULL;
-    static __thread fwd_qlist_t *list = NULL;     /* Single threaded but anyway */
-    static __thread fwd_qlist_t *cur = NULL;     /* Single threaded but anyway */
-    fwd_qlist_t *elt, *tmp;
     
-    if (NULL==list || NULL == cur)
+    if (NULL==M_next_fwd_q_list || NULL == M_next_fwd_q_cur)
     {
-        /* Deallocate the previous DL */
-        if (NULL!=list)
-        {
-            DL_FOREACH_SAFE(list,elt,tmp) 
-            {
-                DL_DELETE(list,elt);
-                NDRX_FREE(elt);
-            }
-        }
+        fwd_q_list_rm();
         
         /* Generate new list */
-        list = tmq_get_qlist(EXTRUE, EXFALSE);
+        M_next_fwd_q_list = tmq_get_qlist(EXTRUE, EXFALSE);
         
-        if (NULL!=list)
+        if (NULL!=M_next_fwd_q_list)
         {
-            cur = list;
+            M_next_fwd_q_cur = M_next_fwd_q_list;
         }
     }
     
     /*
      * get the message
      */
-    while (NULL!=cur)
+    while (NULL!=M_next_fwd_q_cur)
     {
         /* OK, so we peek for a message */
-        if (NULL==(ret=tmq_msg_dequeue(cur->qname, 0, EXTRUE)))
+        if (NULL==(ret=tmq_msg_dequeue(M_next_fwd_q_cur->qname, 0, EXTRUE)))
         {
             NDRX_LOG(log_debug, "Not messages for dequeue");
         }
@@ -178,7 +188,7 @@ exprivate tmq_msg_t * get_next_msg(void)
             NDRX_LOG(log_debug, "Dequeued message");
             goto out;
         }
-        cur = cur->next;
+        M_next_fwd_q_cur = M_next_fwd_q_cur->next;
     }
     
 out:
@@ -467,6 +477,9 @@ expublic int forward_loop(void)
                 thread_sleep(G_tmqueue_cfg.scan_time);
         }
     }
+    
+    /* remove any allocated memory... */
+    fwd_q_list_rm();
     
 out:
     return ret;

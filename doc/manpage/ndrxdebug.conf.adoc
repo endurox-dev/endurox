@@ -10,7 +10,7 @@ ndrxdebug.conf - Enduro/X Runtime Debug configuration
 
 SYNOPSIS
 --------
-BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] file=[LOG_FILE] [iflags=INTEGRATION_FLAGS]
+BINARY_NAME [ndrx=NDRX_DEBUG_LEVEL] [ubf=UBF_DEBUG_LEVEL] [tp=TP_DEBUG_LEVEL]  [bufsz=DEBUG_BUFFER_SIZE] [threaded=THREADED] [mkdir=MKDIR] file=[LOG_FILE] [iflags=INTEGRATION_FLAGS]
 
 
 DESCRIPTION
@@ -26,20 +26,20 @@ DEBUG CONFIGURATION FILE SYNTAX
 -------------------------------
 
 *BINARY_NAME*::
-	Binary name is either executable name or *. In case of * it is applied to
-	default configuration. It is recommended to put it in start of the file. Any
-	binary afterwards in file will override defaults.
+    Binary name is either executable name or *. In case of * it is applied to
+    default configuration. It is recommended to put it in start of the file. Any
+    binary afterwards in file will override defaults.
 *NDRX_DEBUG_LEVEL*::
-	ATMI debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
-	5=Program detail.
+    ATMI debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
+    5=Program detail.
 *UBF_DEBUG_LEVEL*::
-	UBF debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
-	5=Program detail.
+    UBF debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
+    5=Program detail.
 *TP_DEBUG_LEVEL*::
-	This is tplog(3) user logging level. 0..5. 0=No loging.
+    This is tplog(3) user logging level. 0..5. 0=No loging.
     1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
 *DEBUG_BUFFER_SIZE*::
-	Number of lines to buffer before writing out to disk.
+    Number of lines to buffer before writing out to disk.
 *THREADED*::
     Value is can be set to "Y" or "N". The default is "N". In case of "N" then 
     logging of the process debug output is sent to the 'LOG_FILE'. All threads
@@ -48,8 +48,17 @@ DEBUG CONFIGURATION FILE SYNTAX
     approach: Say 'LOG_FILE' = *TEST.LOG*, then new thread log will go to
     *TEST.X.LOG* (.e.g *TEST.1.LOG*). If 'LOG_FILE' = *TEST_LOG*, then new thread
     will perform logging to "TEST_LOG.1".
+*MKDIR*::
+    Value is can be set to "Y" or "N". The default is "N". In case of "Y", if
+    Enduro/X logger attempts to open log file and the output directory is missing
+    i.e. fopen() gives *ENOENT* error, the logger will attempt to create the
+    missing folders below recursively. This functionality might be helpful if
+    system is running in active-active mode with out shared disk volume and
+    using request file logging in different folders. Thus if call is routed
+    to other cluster node, it can create the exact file name locally with
+    performing log file switching.
 *LOG_FILE*::
-	Log file. If empty then 'stderr' will be used.
+    Log file. If empty then 'stderr' will be used.
 *COMMENTS*::
     Commented lines starts with '#'. Empty lines are ignored.
 *INTEGRATION_FLAGS*::
