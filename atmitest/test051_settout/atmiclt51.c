@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     
     /* invoke now with full wait */
     
-    if (EXSUCCEED!=tptoutset(4))
+    if (EXSUCCEED!=tptoutset(6))
     {
         NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 5: %s", 
                 tpstrerror(tperrno));
