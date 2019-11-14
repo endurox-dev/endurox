@@ -215,7 +215,7 @@ struct xa_switch_t ndrxdynsw =
  */
 exprivate char *get_file_name(XID *xid, int rmid, char *folder)
 {
-    static char buf[2048];
+    __thread static char buf[2048]; /**< this must be per thread! */
     char xid_str[128];
     static int first = EXTRUE;
     static char test_root[FILENAME_MAX+1] = {EXEOS};
