@@ -62,7 +62,25 @@ SET (NDRX_BLD_VERSION 	$ENV{NDRX_BLD_VERSION})
 SET (NDRX_BLD_RELEASE 	$ENV{NDRX_BLD_RELEASE})
 SET (NDRX_BLD_TAG 	$ENV{NDRX_BLD_TAG})
 SET (NDRX_BLD_BRANCH 	$ENV{NDRX_BLD_BRANCH})
+SET (NDRX_BLD_COMMIT 	$ENV{NDRX_BLD_COMMIT})
 SET (NDRX_BLD_FLAGS 	$ENV{NDRX_BLD_FLAGS})
+
+
+#
+# Get the git version (the version which is
+#
+execute_process(
+	COMMAND
+		git rev-parse HEAD
+	RESULT_VARIABLE
+		gitres
+	OUTPUT_VARIABLE
+		NDRX_BLD_HASH
+	)
+
+if (NOT gitres EQUAL 0)
+		SET (NDRX_BLD_HASH 	"unknown")
+endif ()
 
 ################################################################################
 # OS Configuration

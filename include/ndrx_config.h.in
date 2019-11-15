@@ -102,6 +102,8 @@
 #cmakedefine NDRX_BLD_TAG @NDRX_BLD_TAG@
 #cmakedefine NDRX_BLD_BRANCH @NDRX_BLD_BRANCH@
 #cmakedefine NDRX_BLD_FLAGS @NDRX_BLD_FLAGS@
+#cmakedefine NDRX_BLD_COMMIT @NDRX_BLD_COMMIT@
+#cmakedefine NDRX_BLD_HASH @NDRX_BLD_HASH@
 
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
