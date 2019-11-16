@@ -56,6 +56,18 @@
 #define API_ENTRY {_Nunset_error();}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Debug mapping for req log open/close
+ */
+typedef struct
+{
+    ndrx_debug_t *req;  /**< request logging settings               */
+    ndrx_debug_t *th;   /**< thread logging settings                */
+    ndrx_debug_t *base; /**< base logging settings (non TLS)        */
+    char code;          /**< Logger code                            */
+} debug_map_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -214,6 +226,7 @@ exprivate int logfile_change_name(int logger, char *filename)
     if (l->dbg_f_ptr)
     {
         logfile_close(l->dbg_f_ptr);
+        l->dbg_f_ptr=NULL;
     }
 
     /* open the file */
@@ -251,36 +264,54 @@ out:
  * 2. tploggetreqfile(fname (out)) return TRUE/FALSE if we have, and string with the value of fname
  * 3. tplogclosereqfile(); close thre request logging.
  * File will be set to EX_REQLOG = <Full path to request log file>
+ * Feature #470 This now applies TP/NDRX/UBF facilities.
  * @param filename file name to log to
  */
 expublic void tplogsetreqfile_direct(char *filename)
 {
     API_ENTRY; /* set TLS too */
     
-    /* Level not set, then there was no init */
-    if (EXFAIL==G_nstd_tls->requestlog_tp.level)
+    debug_map_t map[] = {
+        {&G_nstd_tls->requestlog_tp, &G_nstd_tls->threadlog_tp, &G_tp_debug,        LOG_CODE_TP_REQUEST}
+        ,{&G_nstd_tls->requestlog_ndrx, &G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, LOG_CODE_NDRX_REQUEST}
+        ,{&G_nstd_tls->requestlog_ubf, &G_nstd_tls->threadlog_ubf, &G_ubf_debug,    LOG_CODE_UBF_REQUEST}
+    };
+    int i;
+    
+    for (i=0; i<N_DIM(map); i++)
     {
-        /* file is null, we want to copy off the settings  */
-        if (NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
+        /* Level not set, then there was no init */
+        if (EXFAIL==map[i].req->level)
         {
-            memcpy(&G_nstd_tls->requestlog_tp, 
-                    &G_nstd_tls->threadlog_tp, sizeof(G_nstd_tls->threadlog_tp));
+            /* file is null, we want to copy off the settings  */
+            if (NULL!=map[i].th->dbg_f_ptr)
+            {
+                memcpy(map[i].req, map[i].th, sizeof(*map[i].req));
+            }
+            else
+            {
+                /* Copy from TPlog */
+                memcpy(map[i].req, map[i].base, sizeof(*map[i].req));
+            }
+            map[i].req->code = map[i].code;
         }
-        else
-        {
-            /* Copy from TPlog */
-            memcpy(&G_nstd_tls->requestlog_tp, &G_tp_debug, sizeof(G_tp_debug));
-        }
-        G_nstd_tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
     }
     
     /* ok now open then file */
     logfile_change_name(LOG_FACILITY_TP_REQUEST, filename);
     
+    /* copy off the pointers, use the same file pointer... */
+    for (i=1; i<3; i++)
+    {
+        map[i].req->dbg_f_ptr = map[0].req->dbg_f_ptr;
+        NDRX_STRCPY_SAFE(map[i].req->filename, map[0].req->filename);
+    }
+    
 }
 
 /**
  * Close the request file (back to other loggers)
+ * This applies to all TP/NDRX/UBF facilities.
  * @param filename
  */
 expublic void tplogclosereqfile(void)
@@ -288,15 +319,26 @@ expublic void tplogclosereqfile(void)
     /* Only if we have a TLS... */
     if (G_nstd_tls)
     {
-        if (G_nstd_tls->requestlog_tp.dbg_f_ptr)
+        debug_map_t map[] = {
+            {&G_nstd_tls->requestlog_tp}
+            ,{&G_nstd_tls->requestlog_ndrx}
+            ,{&G_nstd_tls->requestlog_ubf}
+        };
+        
+        int i;
+        
+        for (i=0; i<N_DIM(map); i++)
         {
-            logfile_close(G_nstd_tls->requestlog_tp.dbg_f_ptr);
+            if (map[i].req->dbg_f_ptr)
+            {
+                logfile_close(map[i].req->dbg_f_ptr);
+                map[i].req->dbg_f_ptr = NULL;
+            }
+            map[i].req->filename[0] = EXEOS;
+            
         }
-        G_nstd_tls->requestlog_tp.filename[0] = EXEOS;
-        G_nstd_tls->requestlog_tp.dbg_f_ptr = NULL;
     }
 }
-
 
 /**
  * Reconfigure loggers.

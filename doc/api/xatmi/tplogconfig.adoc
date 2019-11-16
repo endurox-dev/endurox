@@ -11,6 +11,7 @@ tplogconfig - Configure logger facilities
 SYNOPSIS
 --------
 #include <ndebug.h>
+
 #include <nerror.h>
 
 int tplogconfig(int 'logger', int 'lev', char *'debug_string', char *'module', char *'new_file');

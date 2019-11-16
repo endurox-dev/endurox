@@ -179,6 +179,9 @@ int test_request_file(void)
         
         tplog(log_warn, "back from TEST31_1ST call!");     
         
+        NDRX_LOG(log_always, "THIS IS NDRX IN REQLOG!");
+        UBF_LOG(0, "THIS IS UBF IN REQLOG!");
+        
         tplogprintubf(log_info, "Buffer before cleanup", p_ub);
         
         /* delete the request file from buffer */
@@ -196,6 +199,11 @@ out:
      * Now sutff should go to endurox and tp
      */
     tplogclosereqfile();
+
+    NDRX_LOG(log_always, "THIS IS NDRX IN PROCLOG!");
+    UBF_LOG(0, "THIS IS UBF IN PROCLOG!");
+    TP_LOG(0, "THIS IS TP IN PROCLOG!");
+        
 
     return ret;
     

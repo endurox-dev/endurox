@@ -85,6 +85,22 @@ if [ "X`grep 'Hello from NDRX' clt-endurox.log`" == "X" ]; then
 	RET=-2
 fi
 
+if [ "X`grep 'THIS IS NDRX IN PROCLOG' clt-endurox.log`" == "X" ]; then
+        echo "error in clt-endurox.log missing 'THIS IS NDRX IN PROCLOG'!"
+	RET=-2
+fi
+
+if [ "X`grep 'THIS IS UBF IN PROCLOG' clt-endurox.log`" == "X" ]; then
+        echo "error in clt-endurox.log missing 'THIS IS UBF IN PROCLOG'!"
+	RET=-2
+fi
+
+# Feature #470
+if [ "X`grep 'THIS IS TP IN PROCLOG' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log missing 'THIS IS TP IN PROCLOG'!"
+	RET=-2
+fi
+
 if [ "X`grep 'Hello from tp' clt-tp.log`" == "X" ]; then
         echo "error in clt-tp.log!"
 	RET=-2
@@ -150,6 +166,18 @@ echo "Testing sequence: $i"
             echo "Missing 'Hello from TEST31_2ND' file $i"
             RET=-2
     fi
+
+    # Feature #470
+    if [ "X`grep 'THIS IS NDRX IN REQLOG' ./logs/request_$i.log`" == "X" ]; then
+            echo "Missing 'THIS IS NDRX IN REQLOG' file $i"
+            RET=-2
+    fi
+
+    if [ "X`grep 'THIS IS UBF IN REQLOG' ./logs/request_$i.log`" == "X" ]; then
+            echo "Missing 'THIS IS UBF IN REQLOG' file $i"
+            RET=-2
+    fi
+
 done
 
 if [ "X`grep 'Finishing off' ./clt-tp.log`" == "X" ]; then
