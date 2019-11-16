@@ -20,8 +20,10 @@ Link with '-lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Function opens *LOG_FACILITY_TP_REQUEST* facility for logging. The logging is performed to specified 'filename' file.
-If it fails to set the log file, the logger will write the logs to *stderr*. No error is returned.
+Function opens *LOG_FACILITY_TP_REQUEST*, *LOG_FACILITY_NDRX_REQUEST* 
+and *LOG_FACILITY_UBF_REQUEST* facility for logging. The logging 
+is performed to specified 'filename' file. If it fails to set the log file, 
+the logger will write the logs to *stderr*. No error is returned.
 
 RETURN VALUE
 ------------
