@@ -19,18 +19,21 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Remove request logging file name from UBF buffer. This basically removes *EX_NREQLOGFILE* field from buffer, if present.
+Remove request logging file name from UBF buffer. This basically removes 
+*EX_NREQLOGFILE* field from buffer, if present.
 
 
 RETURN VALUE
 ------------
-On success, *tplogdelbufreqfile()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tplogdelbufreqfile()* return zero; on error, -1 is returned, 
+with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom 
+message with debug info from last function call.
 
-*TPENOENT* Filed not present or failed to remove from UBF.
+*TPENOENT* Field not present or failed to remove from UBF.
 
 *TPEINVAL* Not UBF buffer or buffer NULL.
 
@@ -45,7 +48,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplogsetreqfile(3)* *tplogsetreqfile_direct(3)* *tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)*
+*tplogsetreqfile(3)* *tplogsetreqfile_direct(3)* *tplogconfig(3)* *tplogdump(3)* 
+*tplogdumpdiff(3)* *tplog(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)*
 
 COPYING
 -------

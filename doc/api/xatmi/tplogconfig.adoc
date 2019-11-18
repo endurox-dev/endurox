@@ -64,11 +64,11 @@ accepts optional parameter 'debug_string', which  is Enduro/X standard debug
 string. If field not set then it might be NULL or empty (EOS). If set, then it
 contains the configuration settings described in *ndrxdebug.conf(5)* or 
 see *ex_devguide(guides)*. One special note here is that, with debug string 
-you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *NDRX* and 
-*UBF* log levels will affect the per-process common settings, i.e. 
-they are common for thread and request logging. However *TP* will change the 
-level of the given logger facility, per process (*LOG_FACILITY_TP*), per thread 
-(*LOG_FACILITY_TP_THREAD*) or per request (*LOG_FACILITY_TP_REQUEST*).
+you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *ndrx* and 
+*ubf* and "tp" log levels will affect the given logger settings (process/thread/request).
+For example *tp* will change the level of the given logger facility, per process 
+(*LOG_FACILITY_TP*), per thread  (*LOG_FACILITY_TP_THREAD*) or 
+per request (*LOG_FACILITY_TP_REQUEST*).
 
 If the 'lev' parameter is present and it will override the given loggers 
 settings from 'debug_string'. The same applies if 'debug_string'
@@ -79,6 +79,12 @@ present in 'debug_string'.
 'module' module indicates the module code string which is plotted in each 
 logged line. This is valid only for *TP* loggers for
 *NDRX* and *UBF* it is ignored.
+
+As the all logging functions checks the early log level set in process level
+(due to fact that at that point TLS might not be initialized), thus by changing
+thread or request log levels, may only reduce the log level.
+So system might be configured so that, in config process level logs are higher,
+and then threads or requests might request to make the level lower.
 
 
 RETURN VALUE

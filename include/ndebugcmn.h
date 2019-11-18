@@ -71,15 +71,15 @@ typedef struct
     unsigned long hostnamecrc32;
     int buf_lines; 
     int buffer_size;
-    int lines_written;
-    char module[4+1]; /* 4 symbols of the module  */
-    int is_user; /* set to 1 if we run in user log mode, 2 if request file */
-    char code; /* code of the logger */
-    char iflags[16]; /* integration flags */
-    int is_threaded; /* are we separating logs by threads? */
-    int is_mkdir;   /**< shall we create directory if we get ENOFILE err */
-    unsigned threadnr; /* thread number to which we are logging */
-    long flags;         /* logger code initially */
+    int lines_written;      
+    char module[4+1];       /**< 4 symbols of the module                    */
+    int is_user;            /**< set to 1 if we run in user log mode, 2 if request file */
+    char code;              /**< code of the logger                         */
+    char iflags[16];        /**< integration flags                          */
+    int is_threaded;        /**< are we separating logs by threads?         */
+    int is_mkdir;           /**< shall we create directory if we get ENOFILE err */
+    unsigned threadnr;      /**< thread number to which we are logging      */
+    long flags;             /**< logger code initially                      */
     ndrx_memlogger_t *memlog;
 } ndrx_debug_t;
 

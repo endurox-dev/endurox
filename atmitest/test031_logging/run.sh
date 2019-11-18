@@ -102,7 +102,7 @@ if [ "X`grep 'THIS IS TP IN PROCLOG' clt-tp.log`" == "X" ]; then
 fi
 
 if [ "X`grep 'Hello from tp' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log!"
+        echo "error in clt-tp.log (Hello from tp not found)!"
 	RET=-2
 fi
 
@@ -117,7 +117,7 @@ if [ "X`grep 'hello from thread 2' clt-tp-th2.log`" == "X" ]; then
 fi
 
 if [ "X`grep 'hello from main thread' clt-tp.log`" == "X" ]; then
-        echo "error in clt-tp.log!"
+        echo "error in clt-tp.log (hello from main thread not found)!"
 	RET=-2
 fi
 
