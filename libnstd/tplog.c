@@ -151,6 +151,40 @@ expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
     
 }
 
+
+/**
+ * Prepare for log file change
+ * Only if it is not request file
+ * @param l logger
+ */
+exprivate void logfile_change_prepare(ndrx_debug_t *l)
+{
+	if (    (l->flags & LOG_FACILITY_NDRX) ||
+		(l->flags & LOG_FACILITY_UBF) ||
+		(l->flags & LOG_FACILITY_TP)
+		)
+	{
+		ndrx_dbg_lock();
+		G_ndrx_debug_first=EXTRUE;
+		/* TODO: move to logger config... */
+		sleep(2);
+	}
+}
+/**
+ * Return logging back to the systems
+ */
+exprivate void logfile_change_done(ndrx_debug_t *l)
+{
+	if ((l->flags & LOG_FACILITY_NDRX) ||
+		(l->flags & LOG_FACILITY_UBF) ||
+		(l->flags & LOG_FACILITY_TP)
+		)
+	{
+		G_ndrx_debug_first=EXFALSE;
+		ndrx_dbg_unlock();
+	}
+}
+
 /**
  * Set the thread based log file
  * TODO: Later we need a wrapper to set file from buffer.
@@ -220,6 +254,11 @@ exprivate int logfile_change_name(int logger, char *filename)
         NDRX_LOG(log_debug, "Logger = %d change name to: [%s]", logger, l->filename);
     }
     
+    /* Prepare for logger change 
+     * LOG LOCKED SEGMENT!
+     */
+    logfile_change_prepare(l);
+    
     /* name already changed no need to compare 
      * the caller must decide that.
      */
@@ -251,6 +290,11 @@ exprivate int logfile_change_name(int logger, char *filename)
         setvbuf(l->dbg_f_ptr, NULL, _IOFBF, l->buffer_size);
     }
      
+   /* Prepare for logger change 
+    * LOG LOCKED SEGMENT END!
+    */
+   logfile_change_done(l);
+   
 out:
     NDRX_LOG(log_debug, "Logger = %d logging to: [%s]", logger, l->filename);
     return ret;
@@ -282,7 +326,9 @@ expublic void tplogsetreqfile_direct(char *filename)
     {
         /* Level not set, then there was no init */
         if (EXFAIL==map[i].req->level)
-        {
+        {	
+	    char code = map[i].req->code;
+            long flags = map[i].req->flags;
             /* file is null, we want to copy off the settings  */
             if (NULL!=map[i].th->dbg_f_ptr)
             {
@@ -293,7 +339,10 @@ expublic void tplogsetreqfile_direct(char *filename)
                 /* Copy from TPlog */
                 memcpy(map[i].req, map[i].base, sizeof(*map[i].req));
             }
-            map[i].req->code = map[i].code;
+
+            /* restore the fields... */
+	    map[i].req->code = code;
+	    map[i].req->flags = flags;
         }
     }
     
@@ -342,7 +391,7 @@ expublic void tplogclosereqfile(void)
 
 /**
  * Reconfigure loggers.
- * 
+ * TODO: Add fallback re-initialozator the sameway as done in tplogsetreqfile_direct()
  * @param logger See LOG_FACILITY_*
  * @param lev 0..5 (if -1 (FAIL) then ignored)
  * @param config_line ndrx config line (if NULL/empty then ignored)
@@ -393,6 +442,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             {
                 memcpy(&G_nstd_tls->threadlog_tp, &G_tp_debug, sizeof(G_tp_debug));
                 G_nstd_tls->threadlog_tp.code = LOG_CODE_TP_THREAD;
+                G_nstd_tls->threadlog_tp.flags = LOG_FACILITY_TP_THREAD;
             }
             l = &G_nstd_tls->threadlog_tp;
         }
@@ -402,6 +452,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             {
                 memcpy(&G_nstd_tls->requestlog_tp, &G_tp_debug, sizeof(G_tp_debug));
                 G_nstd_tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
+		G_nstd_tls->requestlog_tp.flags = LOG_FACILITY_TP_REQUEST;
             }
             
             l = &G_nstd_tls->requestlog_tp;
@@ -413,7 +464,8 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (EXFAIL==G_nstd_tls->threadlog_ndrx.level)
             {
                 memcpy(&G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
-                G_nstd_tls->threadlog_ndrx.code = LOG_FACILITY_NDRX_THREAD;
+                G_nstd_tls->threadlog_ndrx.code = LOG_CODE_NDRX_THREAD;
+                G_nstd_tls->threadlog_ndrx.flags = LOG_FACILITY_NDRX_THREAD;
             }
             l = &G_nstd_tls->threadlog_ndrx;
         }
@@ -423,6 +475,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             {
                 memcpy(&G_nstd_tls->requestlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
                 G_nstd_tls->requestlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
+                G_nstd_tls->requestlog_ndrx.flags = LOG_FACILITY_NDRX_REQUEST;
             }
             
             l = &G_nstd_tls->requestlog_ndrx;
@@ -435,6 +488,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             {
                 memcpy(&G_nstd_tls->threadlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
                 G_nstd_tls->threadlog_ubf.code = LOG_CODE_UBF_THREAD;
+                G_nstd_tls->threadlog_ubf.flags = LOG_FACILITY_UBF_THREAD;
             }
             l = &G_nstd_tls->threadlog_ubf;
         }
@@ -444,6 +498,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             {
                 memcpy(&G_nstd_tls->requestlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
                 G_nstd_tls->requestlog_ubf.code = LOG_CODE_UBF_REQUEST;
+                G_nstd_tls->requestlog_ubf.flags = LOG_FACILITY_UBF_REQUEST;
             }
             
             l = &G_nstd_tls->requestlog_ubf;
