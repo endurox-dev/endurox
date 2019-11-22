@@ -1,7 +1,8 @@
 /**
  * @brief NDR Debug library routines
  *   Enduro Execution system platform library
- *
+ *   TODO: We might want to switch the tplogconfig() to rwlocks
+ *   
  * @file ndebug.c
  */
 /* -----------------------------------------------------------------------------
@@ -104,7 +105,8 @@
     .threadnr=0,\
     .flags=FLAGS,\
     .memlog=NULL,\
-    .hostnamecrc32=0x0\
+    .hostnamecrc32=0x0,\
+    .swait=NDRX_LOG_SWAIT_DEFAULT\
 }
 
 /*---------------------------Enums--------------------------------------*/
@@ -557,6 +559,21 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 if (NULL!=dbg_ptr)
                 {
                     dbg_ptr->is_mkdir = val;
+                }
+                else
+                {
+                    G_tp_debug.is_mkdir = val;
+                    G_ubf_debug.is_mkdir = val;
+                    G_ndrx_debug.is_mkdir = val;
+                }
+            }
+            else if (0==strncmp("swait", tok, cmplen))
+            {
+                int val = atoi(p+1);
+                
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->swait = atoi(p+1);
                 }
                 else
                 {
