@@ -98,6 +98,15 @@ xadmin ppm
 (./atmiclt34 2>&1) > ./atmiclt.log
 RET=$?
 
+if [ "X$RET" != "X0" ]; then
+
+    echo "*** PSVC ***"
+    xadmin psvc
+
+    echo "***PSC***"
+    xadmin psc
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
