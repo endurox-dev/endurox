@@ -675,6 +675,8 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
     if (EXFAIL==try)
     {
         try = ndrx_hash_fn(svc) % G_max_svcs;
+        /* Bug #475 Fix */
+        start = try;
     }
     else
     {
@@ -712,14 +714,14 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
          * But to save the space and we install new service and the cell was used
          * but is serving 0 services, then we write off new service here.
          */
-	if (_NDRX_SVCINSTALL_DO==doing_install)
-	{
+        if (_NDRX_SVCINSTALL_DO==doing_install)
+        {
             if (SHM_SVCINFO_INDEX(svcinfo, try)->srvs == 0)
             {
                 *p_install_cmd=_NDRX_SVCINSTALL_OVERWRITE;
                 break; /* <<< break! */
             }
-	}
+        }
 
         try++;
         
