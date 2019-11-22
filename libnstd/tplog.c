@@ -54,6 +54,42 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define API_ENTRY {_Nunset_error();}
+
+/**
+ * Get logger mapping,
+ * used in source code to perform inits
+ */
+#define LOGGER_MAP { \
+        {&G_nstd_tls->requestlog_tp, &G_nstd_tls->threadlog_tp, &G_tp_debug} \
+        ,{&G_nstd_tls->requestlog_ndrx, &G_nstd_tls->threadlog_ndrx, &G_ndrx_debug} \
+        ,{&G_nstd_tls->requestlog_ubf, &G_nstd_tls->threadlog_ubf, &G_ubf_debug} \
+    }
+
+
+/**
+ * Define save fields for module init
+ */
+#define LOGGER_SAVE_FIELDS_DEF \
+    char sav_code; \
+    long sav_flags; \
+    char sav_module[NDRX_LOG_MODULE_LEN+1];
+    
+/**
+ * Do save op
+ */
+#define LOGGER_SAVE_FIELDS(LOGGERPTR) \
+    sav_code = LOGGERPTR->code; \
+    sav_flags = LOGGERPTR->flags; \
+    NDRX_STRCPY_SAFE(sav_module, LOGGERPTR->module);
+    
+/**
+ * Do field restore op
+ */
+#define LOGGER_RESTORE_FIELDS(LOGGERPTR) \
+    LOGGERPTR->code = sav_code; \
+    LOGGERPTR->flags = sav_flags; \
+    NDRX_STRCPY_SAFE(LOGGERPTR->module, sav_module);
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -64,19 +100,23 @@ typedef struct
 {
     ndrx_debug_t *req;  /**< request logging settings               */
     ndrx_debug_t *th;   /**< thread logging settings                */
-    ndrx_debug_t *base; /**< base logging settings (non TLS)        */
-    char code;          /**< Logger code                            */
+    ndrx_debug_t *proc; /**< base logging settings (non TLS)        */
 } debug_map_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
+exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger);
 /**
  * Close the file if only one logger is using that
+ * Well, we close all the files for from visibility of
+ * one thread. If several threads reference save base logger file
+ * pointer, then we might close it, and we can cause corruption in other threads.
+ * 
+ * WARNING ! This requires locks to other threads to get closed fptr!
  * @param p
  */
-exprivate void logfile_close(FILE *p)
+exprivate void logfile_close(FILE **p)
 {
     ndrx_debug_t *fd_arr[9];
     int i;
@@ -84,7 +124,7 @@ exprivate void logfile_close(FILE *p)
     int num;
     /*API_ENTRY;  set TLS too work with out context... */
     
-    if (p == stdout || p == stderr)
+    if (*p == stdout || *p == stderr)
     {
         return; /* nothing todo. */
     }
@@ -110,7 +150,7 @@ exprivate void logfile_close(FILE *p)
     
     for (i=0; i<num; i++)
     {
-        if (fd_arr[i]->dbg_f_ptr == p)
+        if (fd_arr[i]->dbg_f_ptr == *p)
         {
             cnt++;
         }
@@ -118,8 +158,11 @@ exprivate void logfile_close(FILE *p)
     
     if (cnt<2)
     {
-        NDRX_FCLOSE(p);
+        NDRX_FCLOSE(*p);
     }
+    
+    *p = NULL;
+    
 }
 
 /**
@@ -159,16 +202,20 @@ expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
  */
 exprivate void logfile_change_prepare(ndrx_debug_t *l)
 {
-	if (    (l->flags & LOG_FACILITY_NDRX) ||
-		(l->flags & LOG_FACILITY_UBF) ||
-		(l->flags & LOG_FACILITY_TP)
-		)
-	{
-		ndrx_dbg_lock();
-		G_ndrx_debug_first=EXTRUE;
-		/* TODO: move to logger config... */
-		sleep(2);
-	}
+    if (    ((l->flags & LOG_FACILITY_NDRX) ||
+            (l->flags & LOG_FACILITY_UBF) ||
+            (l->flags & LOG_FACILITY_TP))
+            )
+    {
+        ndrx_dbg_lock();
+        G_ndrx_debug_first=EXTRUE;
+        /* move to logger config... 
+         * !!!! NOTE: In future we might want to move to RW locks
+         * - so that when we write to log we get read lock.
+         * - when we are doing log file change, we get read lock
+         */
+        usleep(l->swait*1000);
+    }
 }
 /**
  * Return logging back to the systems
@@ -188,58 +235,26 @@ exprivate void logfile_change_done(ndrx_debug_t *l)
 /**
  * Set the thread based log file
  * TODO: Later we need a wrapper to set file from buffer.
- * @param logger logging sub-system
+ * NOTE: changed file name must be different from base logger.
+ * So that threads or requests does not switch to process log files.
+ * Otherwise if process log files are changed, we might get leave
+ * other threads with dead pointers to closed process files,
+ * due to same file name usage during their configuration.
+ * 
+ * @param l logging sub-system/facility
  * @param file full path to file (optional) if present, does compare
  * @return 
  */
-exprivate int logfile_change_name(int logger, char *filename)
+exprivate int logfile_change_name(ndrx_debug_t *l, char *filename)
 {
-    ndrx_debug_t *l;
     int ret = EXSUCCEED;
     
     API_ENTRY; /* set TLS too */
     
-    switch (logger)
-    {
-        case LOG_FACILITY_NDRX:
-            l = &G_ndrx_debug;
-            break;
-        case LOG_FACILITY_UBF:
-            l = &G_ubf_debug;
-            break;
-        case LOG_FACILITY_TP:
-            l = &G_tp_debug;
-            break;
-        case LOG_FACILITY_TP_THREAD:
-            l = &G_nstd_tls->threadlog_tp;
-            break;
-        case LOG_FACILITY_TP_REQUEST:
-            /* set request file shall do th thread init/init level.. */
-            l = &G_nstd_tls->requestlog_tp;
-            break;    
-        case LOG_FACILITY_NDRX_THREAD:
-            l = &G_nstd_tls->threadlog_ndrx;
-            break;
-        case LOG_FACILITY_NDRX_REQUEST:
-            /* set request file shall do th thread init/init level.. */
-            l = &G_nstd_tls->requestlog_ndrx;
-            break;
-        case LOG_FACILITY_UBF_THREAD:
-            l = &G_nstd_tls->threadlog_ubf;
-            break;
-        case LOG_FACILITY_UBF_REQUEST:
-            /* set request file shall do th thread init/init level.. */
-            l = &G_nstd_tls->requestlog_ubf;
-            break;
-        default:
-            _Nset_error_fmt(NEINVAL, "tplogfileset: Invalid logger: %d", logger);
-            EXFAIL_OUT(ret);
-            break;
-    }
-    
     if (NULL!=filename)
     {
-        NDRX_LOG(log_debug, "Logger = %d change name to: [%s]", logger, filename);
+        NDRX_LOG(log_debug, "Logger = %c/%s change name to: [%s]", l->code, 
+                l->module, filename);
         if (0==strcmp(l->filename, filename))
         {
             goto out;
@@ -251,7 +266,8 @@ exprivate int logfile_change_name(int logger, char *filename)
     }
     else
     {
-        NDRX_LOG(log_debug, "Logger = %d change name to: [%s]", logger, l->filename);
+        NDRX_LOG(log_debug, "Logger = %c/%s change name to: [%s]", l->code, 
+                l->module, l->filename);
     }
     
     /* Prepare for logger change 
@@ -264,8 +280,7 @@ exprivate int logfile_change_name(int logger, char *filename)
      */
     if (l->dbg_f_ptr)
     {
-        logfile_close(l->dbg_f_ptr);
-        l->dbg_f_ptr=NULL;
+        logfile_close(&l->dbg_f_ptr);
     }
 
     /* open the file */
@@ -296,13 +311,14 @@ exprivate int logfile_change_name(int logger, char *filename)
    logfile_change_done(l);
    
 out:
-    NDRX_LOG(log_debug, "Logger = %d logging to: [%s]", logger, l->filename);
+    NDRX_LOG(log_debug, "Logger = %c/%s logging to: [%s]", 
+        l->code, l->module, l->filename);
     return ret;
     
 }
 
 /**
- * Setup the request logging file.
+ * Setup the request logging file.  
  * NOTE that we need: 
  * 1. tplogsetreqfile(<buffer>, <filename> (optional, not needed if name already in buffer))
  * 2. tploggetreqfile(fname (out)) return TRUE/FALSE if we have, and string with the value of fname
@@ -314,48 +330,110 @@ out:
 expublic void tplogsetreqfile_direct(char *filename)
 {
     API_ENTRY; /* set TLS too */
-    
-    debug_map_t map[] = {
-        {&G_nstd_tls->requestlog_tp, &G_nstd_tls->threadlog_tp, &G_tp_debug,        LOG_CODE_TP_REQUEST}
-        ,{&G_nstd_tls->requestlog_ndrx, &G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, LOG_CODE_NDRX_REQUEST}
-        ,{&G_nstd_tls->requestlog_ubf, &G_nstd_tls->threadlog_ubf, &G_ubf_debug,    LOG_CODE_UBF_REQUEST}
-    };
+    /* have a scope: */
+    do 
+    {
+        debug_map_t map[] = LOGGER_MAP;
+        int i;
+        LOGGER_SAVE_FIELDS_DEF;
+
+        for (i=0; i<N_DIM(map); i++)
+        {
+            /* Level not set, then there was no init */
+            if (EXFAIL==map[i].req->level)
+            {	
+                LOGGER_SAVE_FIELDS(map[i].req);
+
+                /* file is null, we want to copy off the settings  */
+                if (NULL!=map[i].th->dbg_f_ptr)
+                {
+                    memcpy(map[i].req, map[i].th, sizeof(ndrx_debug_t));
+                }
+                else
+                {
+                    /* Copy from TPlog */
+                    memcpy(map[i].req, map[i].proc, sizeof(ndrx_debug_t));
+                }
+
+                /* restore the fields... */
+                LOGGER_RESTORE_FIELDS(map[i].req);
+            }
+        }
+
+        /* ok now open then file */
+        logfile_change_name(&G_nstd_tls->requestlog_tp, filename);
+
+        /* copy off the pointers, use the same file pointer... */
+        for (i=1; i<3; i++)
+        {
+            /* Well, this needs to be locked too, not? */
+            map[i].req->dbg_f_ptr = map[0].req->dbg_f_ptr;
+            NDRX_STRCPY_SAFE(map[i].req->filename, map[0].req->filename);
+        }
+    } while(0);
+}
+
+/**
+ * Loop over the loggers and get the request one with full initialization
+ * if required
+ * @param logger code
+ * @return logger found or NULL if invalid flag
+ */
+exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger)
+{
     int i;
+    ndrx_debug_t *ret = NULL;
+    debug_map_t map[] = LOGGER_MAP;
+    LOGGER_SAVE_FIELDS_DEF;
     
     for (i=0; i<N_DIM(map); i++)
     {
-        /* Level not set, then there was no init */
-        if (EXFAIL==map[i].req->level)
-        {	
-	    char code = map[i].req->code;
-            long flags = map[i].req->flags;
-            /* file is null, we want to copy off the settings  */
-            if (NULL!=map[i].th->dbg_f_ptr)
+        if (logger & map[i].proc->flags)
+        {
+            ret = map[i].proc;
+            break;
+        }
+        else if (logger & map[i].th->flags)
+        {
+            if (EXFAIL==map[i].th->level)
             {
-                memcpy(map[i].req, map[i].th, sizeof(*map[i].req));
-            }
-            else
-            {
-                /* Copy from TPlog */
-                memcpy(map[i].req, map[i].base, sizeof(*map[i].req));
-            }
+                LOGGER_SAVE_FIELDS(map[i].th);
 
-            /* restore the fields... */
-	    map[i].req->code = code;
-	    map[i].req->flags = flags;
+                /* thread logger inherits from base */
+                memcpy(map[i].th, map[i].proc, sizeof(ndrx_debug_t));
+
+                LOGGER_RESTORE_FIELDS(map[i].th);
+            }
+            ret = map[i].th;
+            break;
+        }
+        else if (logger & map[i].req->flags)
+        {
+            if (EXFAIL==map[i].req->level)
+            {
+                LOGGER_SAVE_FIELDS(map[i].req);
+
+                /* request logger inherits from thread
+                 * or from base - witch one is closer
+                 */
+                if (NULL!=map[i].th->dbg_f_ptr)
+                {
+                    memcpy(map[i].req, map[i].th, sizeof(ndrx_debug_t));
+                }
+                else
+                {
+                    memcpy(map[i].req, map[i].proc, sizeof(ndrx_debug_t));
+                }
+
+                LOGGER_RESTORE_FIELDS(map[i].req);
+            }
+            ret = map[i].req;
+            break;
         }
     }
     
-    /* ok now open then file */
-    logfile_change_name(LOG_FACILITY_TP_REQUEST, filename);
-    
-    /* copy off the pointers, use the same file pointer... */
-    for (i=1; i<3; i++)
-    {
-        map[i].req->dbg_f_ptr = map[0].req->dbg_f_ptr;
-        NDRX_STRCPY_SAFE(map[i].req->filename, map[0].req->filename);
-    }
-    
+out:
+    return ret;
 }
 
 /**
@@ -380,18 +458,16 @@ expublic void tplogclosereqfile(void)
         {
             if (map[i].req->dbg_f_ptr)
             {
-                logfile_close(map[i].req->dbg_f_ptr);
-                map[i].req->dbg_f_ptr = NULL;
+                logfile_close(&map[i].req->dbg_f_ptr);
             }
             map[i].req->filename[0] = EXEOS;
-            
         }
     }
 }
 
 /**
  * Reconfigure loggers.
- * TODO: Add fallback re-initialozator the sameway as done in tplogsetreqfile_direct()
+ * TODO: Add fallback re-initialize the same way as done in tplogsetreqfile_direct()
  * @param logger See LOG_FACILITY_*
  * @param lev 0..5 (if -1 (FAIL) then ignored)
  * @param config_line ndrx config line (if NULL/empty then ignored)
@@ -419,91 +495,19 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
     
     API_ENTRY; /* set TLS too */
     NDRX_DBG_INIT_ENTRY; /* Do the debug entry (so that we load defaults...) */
-    
+ 
     for (i=0; i<N_DIM(loggers); i++)
     {
-        if (loggers[i] == LOG_FACILITY_NDRX && (logger & LOG_FACILITY_NDRX))
+        int curlogger = logger & loggers[i];
+
+        if (!curlogger)
         {
-            l = &G_ndrx_debug;
+            continue;
         }
-        else if (loggers[i] == LOG_FACILITY_UBF && (logger & LOG_FACILITY_UBF))
-        {
-            l = &G_ubf_debug;
-        }
-        else if (loggers[i] == LOG_FACILITY_TP && (logger & LOG_FACILITY_TP))
-        {
-            l = &G_tp_debug;
-        }
-        else if (loggers[i] == LOG_FACILITY_TP_THREAD && (logger & LOG_FACILITY_TP_THREAD))
-        {
-            /* if thread was not set, then inherit the all stuff from tp
-             */
-            if (EXFAIL==G_nstd_tls->threadlog_tp.level)
-            {
-                memcpy(&G_nstd_tls->threadlog_tp, &G_tp_debug, sizeof(G_tp_debug));
-                G_nstd_tls->threadlog_tp.code = LOG_CODE_TP_THREAD;
-                G_nstd_tls->threadlog_tp.flags = LOG_FACILITY_TP_THREAD;
-            }
-            l = &G_nstd_tls->threadlog_tp;
-        }
-        else if (loggers[i] == LOG_FACILITY_TP_REQUEST && logger & (LOG_FACILITY_TP_REQUEST))
-        {
-            if (EXFAIL==G_nstd_tls->requestlog_tp.level)
-            {
-                memcpy(&G_nstd_tls->requestlog_tp, &G_tp_debug, sizeof(G_tp_debug));
-                G_nstd_tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
-		G_nstd_tls->requestlog_tp.flags = LOG_FACILITY_TP_REQUEST;
-            }
             
-            l = &G_nstd_tls->requestlog_tp;
-        }
-        else if (loggers[i] == LOG_FACILITY_NDRX_THREAD && (logger & LOG_FACILITY_NDRX_THREAD))
-        {
-            /* if thread was not set, then inherit the all stuff from tp
-             */
-            if (EXFAIL==G_nstd_tls->threadlog_ndrx.level)
-            {
-                memcpy(&G_nstd_tls->threadlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
-                G_nstd_tls->threadlog_ndrx.code = LOG_CODE_NDRX_THREAD;
-                G_nstd_tls->threadlog_ndrx.flags = LOG_FACILITY_NDRX_THREAD;
-            }
-            l = &G_nstd_tls->threadlog_ndrx;
-        }
-        else if (loggers[i] == LOG_FACILITY_NDRX_REQUEST && logger & (LOG_FACILITY_NDRX_REQUEST))
-        {
-            if (EXFAIL==G_nstd_tls->requestlog_ndrx.level)
-            {
-                memcpy(&G_nstd_tls->requestlog_ndrx, &G_ndrx_debug, sizeof(G_ndrx_debug));
-                G_nstd_tls->requestlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
-                G_nstd_tls->requestlog_ndrx.flags = LOG_FACILITY_NDRX_REQUEST;
-            }
-            
-            l = &G_nstd_tls->requestlog_ndrx;
-        }
-        else if (loggers[i] == LOG_FACILITY_UBF_THREAD && (logger & LOG_FACILITY_UBF_THREAD))
-        {
-            /* if thread was not set, then inherit the all stuff from tp
-             */
-            if (EXFAIL==G_nstd_tls->threadlog_ubf.level)
-            {
-                memcpy(&G_nstd_tls->threadlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
-                G_nstd_tls->threadlog_ubf.code = LOG_CODE_UBF_THREAD;
-                G_nstd_tls->threadlog_ubf.flags = LOG_FACILITY_UBF_THREAD;
-            }
-            l = &G_nstd_tls->threadlog_ubf;
-        }
-        else if (loggers[i] == LOG_FACILITY_UBF_REQUEST && logger & (LOG_FACILITY_UBF_REQUEST))
-        {
-            if (EXFAIL==G_nstd_tls->requestlog_ubf.level)
-            {
-                memcpy(&G_nstd_tls->requestlog_ubf, &G_ubf_debug, sizeof(G_ubf_debug));
-                G_nstd_tls->requestlog_ubf.code = LOG_CODE_UBF_REQUEST;
-                G_nstd_tls->requestlog_ubf.flags = LOG_FACILITY_UBF_REQUEST;
-            }
-            
-            l = &G_nstd_tls->requestlog_ubf;
-        }
-        else
+        l = ndrx_tplog_getlogger(curlogger);
+
+        if (NULL==l)
         {
             /*
             _Nset_error_fmt(NEINVAL, "tplogconfig: Invalid logger: %d", logger);
@@ -543,7 +547,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
                     (NULL==new_file || EXEOS==new_file[0]))
             {
                 /* open new log file... (to what ever level we run...) */
-                if (EXSUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
+                if (EXSUCCEED!=(ret = logfile_change_name(l, NULL)))
                 {
                     _Nset_error_msg(NESYSTEM, "Failed to change log name");
                     EXFAIL_OUT(ret);
@@ -561,7 +565,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
         {            
             /* open new log file... (to what ever level we run...) */
             NDRX_STRCPY_SAFE(l->filename, new_file);
-            if (EXSUCCEED!=(ret = logfile_change_name(loggers[i], NULL)))
+            if (EXSUCCEED!=(ret = logfile_change_name(l, NULL)))
             {
                 _Nset_error_msg(NESYSTEM, "Failed to change log name");
                 EXFAIL_OUT(ret);
@@ -582,7 +586,7 @@ expublic void tplogclosethread(void)
 {
     if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
     {
-        logfile_close(G_nstd_tls->threadlog_tp.dbg_f_ptr);
+        logfile_close(&G_nstd_tls->threadlog_tp.dbg_f_ptr);
         G_nstd_tls->threadlog_tp.level = EXFAIL;
         G_nstd_tls->threadlog_tp.filename[0] = EXEOS;
         G_nstd_tls->threadlog_tp.dbg_f_ptr = NULL;

@@ -45,6 +45,7 @@ extern "C" {
 #include <unistd.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NDRX_LOG_MODULE_LEN     4   /**< Module name field length       */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -72,7 +73,7 @@ typedef struct
     int buf_lines; 
     int buffer_size;
     int lines_written;      
-    char module[4+1];       /**< 4 symbols of the module                    */
+    char module[NDRX_LOG_MODULE_LEN+1]; /**< 4 symbols of the module        */
     int is_user;            /**< set to 1 if we run in user log mode, 2 if request file */
     char code;              /**< code of the logger                         */
     char iflags[16];        /**< integration flags                          */
@@ -80,6 +81,7 @@ typedef struct
     int is_mkdir;           /**< shall we create directory if we get ENOFILE err */
     unsigned threadnr;      /**< thread number to which we are logging      */
     long flags;             /**< logger code initially                      */
+    long swait;             /**< sync wait for close log files, ms          */
     ndrx_memlogger_t *memlog;
 } ndrx_debug_t;
 

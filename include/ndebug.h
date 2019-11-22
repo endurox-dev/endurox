@@ -126,7 +126,15 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 
 #define LOG_CODE_UBF_THREAD         'u'
 #define LOG_CODE_UBF_REQUEST        'v'
-    
+
+
+/**
+ * Wait two seconds to let other threads to finish with
+ * logging before closing & re-opening debug logger
+ * This logic might be changed in future to introduce RW locks.
+ */
+#define NDRX_LOG_SWAIT_DEFAULT      2000
+
 #define NDRX_DBG_MAX_LEV log_dump
 /* Have double check on G_ndrx_debug_first, as on after getting first mutex, object
  * might be already initialized
