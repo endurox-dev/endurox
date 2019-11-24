@@ -308,6 +308,9 @@ extern NDRX_API string_list_t * ndrx_sys_ps_list(char *filter1, char *filter2,
 extern NDRX_API string_list_t * ndrx_sys_ps_getchilds(pid_t ppid);
 extern NDRX_API string_list_t* ndrx_sys_folder_list(char *path, int *return_status);
 
+extern NDRX_API int ndrx_sys_ps_list2hash(string_list_t *plist, ndrx_intmap_t **hash);
+extern NDRX_API int ndrx_sys_ps_hash2parents(ndrx_intmap_t **pshash, int pid, ndrx_intmap_t **parents);
+
 extern NDRX_API int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid);
 extern NDRX_API int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid);
 

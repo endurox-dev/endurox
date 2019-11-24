@@ -1846,6 +1846,60 @@ expublic char *ndrx_strchr_repl (char *str, char from_char, char to_char)
     return str;
 }
 
+/**
+ * Find entry in hash 
+ * @param hash hash object
+ * @param key key to find
+ * @return result or NULL not found
+ */
+expublic ndrx_intmap_t *ndrx_intmap_find (ndrx_intmap_t ** hash, int key)
+{
+    ndrx_intmap_t *ret = NULL;
+    EXHASH_FIND_INT( (*hash), &key, ret);
+    return ret;
+}
 
+/**
+ * Add key to hash
+ * @param hash hash object
+ * @param key key to add
+ * @param value value to add
+ * @return object created/add or NULL on OOM
+ */
+expublic ndrx_intmap_t * ndrx_intmap_add (ndrx_intmap_t ** hash, int key, int value)
+{
+    ndrx_intmap_t * el;
+    el = NDRX_CALLOC(1, sizeof(ndrx_intmap_t));
+    
+    if (NULL==el)
+    {
+        userlog("intmap: Failed to alloc %d bytes: %s", sizeof(ndrx_intmap_t), 
+                strerror(errno));
+    }
+    else
+    {
+        el->key = key;
+        el->value = value;
+        EXHASH_ADD_INT((*hash), key, el);   
+    }
+    
+    return el;
+}
+
+/**
+ * Delete all from hash
+ * @param hash has object
+ */
+expublic void ndrx_intmap_remove (ndrx_intmap_t ** hash)
+{
+    ndrx_intmap_t *e=NULL, *et=NULL;
+    
+    EXHASH_ITER(hh, (*hash), e, et)
+    {
+        EXHASH_DEL((*hash), e);
+        NDRX_FREE(e);
+    }
+    
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

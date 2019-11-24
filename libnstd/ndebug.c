@@ -686,7 +686,7 @@ expublic FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char 
         /*
          * Try to create folder in reverse order from longest path to shortest
          */
-        while (p=strrchr(tmp, '/'))
+        while (NULL!=(p=strrchr(tmp, '/')))
         {
             *p = EXEOS;
             
