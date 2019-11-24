@@ -112,9 +112,9 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", LOG_FACILITY_UBF);
-ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", LOG_FACILITY_NDRX);
-ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER(LOG_CODE_TP, "USER", LOG_FACILITY_TP);
+ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", (LOG_FACILITY_UBF|LOG_FACILITY_PROCESS));
+ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", (LOG_FACILITY_NDRX|LOG_FACILITY_PROCESS));
+ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER(LOG_CODE_TP, "USER", (LOG_FACILITY_TP|LOG_FACILITY_PROCESS));
 
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
@@ -577,9 +577,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 }
                 else
                 {
-                    G_tp_debug.is_mkdir = val;
-                    G_ubf_debug.is_mkdir = val;
-                    G_ndrx_debug.is_mkdir = val;
+                    G_tp_debug.swait = val;
+                    G_ubf_debug.swait = val;
+                    G_ndrx_debug.swait = val;
                 }
             }
             
@@ -1166,7 +1166,7 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
     /* And print the final ASCII bit. */
     sprintf (print_line + strlen(print_line), "  %s", buf);
     BUFFERED_PRINT_LINE(dbg_ptr, print_line);
-    print_line[0] = 0;    
+    print_line[0] = 0;
 }
 
 /**

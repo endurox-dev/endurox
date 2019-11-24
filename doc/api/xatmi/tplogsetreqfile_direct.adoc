@@ -25,6 +25,14 @@ and *LOG_FACILITY_UBF_REQUEST* facility for logging. The logging
 is performed to specified 'filename' file. If it fails to set the log file, 
 the logger will write the logs to *stderr*. No error is returned.
 
+Special care shall be taken when working in multi-threaded environment (this
+includes single thread apps running built in Enduro/X 'emq', 'poll' and 'SystemV'
+modes where auxiliary threads are used. In mulit-threaded mode, the output
+file name shall differ for process logging file name. Otherwise the output file
+pointer is re-used from process logger. Thus If other thread changes process
+loggers, this process request logger file pointer might become broken (and
+thus cause segmentation faults). See more on thread safety section in *tplogconfig(3)*.
+
 RETURN VALUE
 ------------
 N/A
@@ -39,7 +47,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *ex_devguide(guides)* ndrxdebug.conf(5)
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* 
+*tplogsetreqfile(3)* *ex_devguide(guides)* ndrxdebug.conf(5)
 
 COPYING
 -------

@@ -61,6 +61,13 @@ name from UBF buffer (field *EX_NREQLOGFILE*);
 
 Function applies to all Enduro/X logging facilities: *TP*, *NDRX* and *UBF*.
 
+Special care shall be taken when working in multi-threaded environment (this
+includes single thread apps running built in Enduro/X 'emq', 'poll' and 'SystemV'
+modes where auxiliary threads are used. In mulit-threaded mode, the output
+file name shall differ for process logging file name. Otherwise the output file
+pointer is re-used from process logger. Thus If other thread changes process
+loggers, this process request logger file pointer might become broken (and
+thus cause segmentation faults). See more on thread safety section in *tplogconfig(3)*.
 
 RETURN VALUE
 ------------

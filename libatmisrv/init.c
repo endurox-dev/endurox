@@ -561,12 +561,22 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
             }
             else
             {
-                    /* register the function */
-                    NDRX_LOG(log_debug, "Service [%s] "
-                                            "(function: [%s]:%p) successfully "
-                                            "acknowledged",
-                                            entry->svc_nm, entry->fn_nm, entry->p_func);
-                    DL_APPEND(G_server_conf.service_raw_list, entry);
+                if (G_server_conf.service_raw_list_count+1 > MAX_SVC_PER_SVR - ATMI_SRV_Q_ADJUST)
+                {
+                    ndrx_TPset_error_fmt(TPELIMIT, "Service limit per process %d reached on [%s]!", 
+                            MAX_SVC_PER_SVR-ATMI_SRV_Q_ADJUST, entry->svc_nm);
+                    
+                    NDRX_FREE(entry);
+                    EXFAIL_OUT(ret);
+                }
+                
+                /* register the function */
+                NDRX_LOG(log_debug, "Service [%s] "
+                                        "(function: [%s]:%p) successfully "
+                                        "acknowledged",
+                                        entry->svc_nm, entry->fn_nm, entry->p_func);
+                DL_APPEND(G_server_conf.service_raw_list, entry);
+                G_server_conf.service_raw_list_count++;
             }
         }
         else
@@ -627,6 +637,8 @@ expublic int tpunadvertise(char *svcname)
         {
             NDRX_LOG(log_debug, "in server init stage - simply remove from array service");
             DL_DELETE(G_server_conf.service_raw_list, existing);
+            NDRX_FREE(existing);
+            G_server_conf.service_raw_list_count--;
         }
         else
         {

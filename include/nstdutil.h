@@ -113,7 +113,7 @@ extern "C" {
  * @{
  */    
 #define NDRX_LH_FLAG_ISUSED         0x0001  /**< Entry is used              */
-#define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry is used              */
+#define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry was used but now free*/
 /** @} */ /* end of linhash */
     
 /*---------------------------Enums--------------------------------------*/
