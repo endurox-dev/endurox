@@ -53,15 +53,23 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Test - executables ###############################
 add_executable (atmiclt34 atmiclt34.c)
+add_executable (atmiclt34_2 atmiclt34_2.c)
 add_executable (atmisv34 atmisv34.c)
+add_executable (atmisv34_2 atmisv34_2.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmiclt34 m ubf nstd atmi atmiclt ${RT_LIB} pthread)
+target_link_libraries (atmiclt34 atmiclt atmi ubf nstd ${RT_LIB} pthread)
 set_target_properties(atmiclt34 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
+target_link_libraries (atmiclt34_2 atmiclt atmi ubf nstd ${RT_LIB} pthread)
+set_target_properties(atmiclt34_2 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
-target_link_libraries (atmisv34 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmisv34 atmisrvinteg atmi ubf nstd pthread ${RT_LIB})
 set_target_properties(atmisv34 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
+target_link_libraries (atmisv34_2 atmisrvinteg atmi ubf nstd pthread ${RT_LIB})
+set_target_properties(atmisv34_2 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+
 ################################################################################
 # vim: set ts=4 sw=4 et smartindent:

@@ -223,8 +223,8 @@ expublic void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
     tls->requestlog_tp.code = LOG_CODE_TP_REQUEST;
     tls->threadlog_ndrx.code = LOG_CODE_NDRX_THREAD;
     tls->requestlog_ndrx.code = LOG_CODE_NDRX_REQUEST;
-    tls->threadlog_ndrx.code = LOG_CODE_UBF_THREAD;
-    tls->requestlog_ndrx.code = LOG_CODE_UBF_REQUEST;
+    tls->threadlog_ubf.code = LOG_CODE_UBF_THREAD;
+    tls->requestlog_ubf.code = LOG_CODE_UBF_REQUEST;
     
     NDRX_STRCPY_SAFE(tls->threadlog_ubf.module, "UBF ");
     NDRX_STRCPY_SAFE(tls->threadlog_ndrx.module, "NDRX");

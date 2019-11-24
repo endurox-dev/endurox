@@ -57,6 +57,12 @@ extern "C" {
     {G_atmi_tls=(atmi_tls_t *)ndrx_atmi_tls_new(NULL, EXTRUE, EXTRUE);};
     
 #define NDRX_NDRXD_PING_SEQ_MAX         32000 /**< max ping sequence to reset */
+    
+/* Feature #139 mvitolin, 09/05/2017 */
+#define NDRX_SVCINSTALL_NOT		0 /**< Not doing service install      */
+#define NDRX_SVCINSTALL_DO		1 /**< Installing new service to SHM  */
+#define NDRX_SVCINSTALL_OVERWRITE	2 /**< Overwrite the already installed data */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     

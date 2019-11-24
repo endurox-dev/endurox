@@ -21,22 +21,30 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-Function enables request logging with advanced configuration. With this function you may do following:
+Function enables request logging with advanced configuration. With this function 
+you may do following:
 
-- Take the log file name from UBF buffer (sent in 'data' field) and use it as request logging facility output;
+- Take the log file name from UBF buffer (sent in 'data' field) and use it as 
+request logging facility output;
 
-- Initialise the UBF buffer with request logging field name from 'filename' parameter and user 'filename' as output for logging;
+- Initialize the UBF buffer with request logging field name from 'filename' 
+parameter and user 'filename' as output for logging;
 
-- If field is not present in 'data' and not present in 'filename', then call 'filesvc' (if set, not NULL and not EOS), XATMI service  with 'data' buffer,
-receive the value in UBF buffer and use it as logging output. It is assumed that target 'filesvc' service will
-call this function on incoming buffer with 'filename' set. So basically concept is that you may develop in system
-special XATMI server which classify the incoming requests and assigns them corresponding request logging files.
+- If field is not present in 'data' and not present in 'filename', then call 
+'filesvc' (if set, not NULL and not EOS), XATMI service  with 'data' buffer, 
+receive the value in UBF buffer and use it as logging output. It is assumed that 
+target 'filesvc' service will call this function on incoming buffer with 
+'filename' set. So basically concept is that you may develop in system
+special XATMI server which classify the incoming requests and assigns 
+them corresponding request logging files.
 
 
-All function parameters are conditional. If every field will be NULL or EOS, then function will return error. The order 
+All function parameters are conditional. If every field will be NULL or EOS, 
+then function will return error. The order 
 of the parameter usage is following:
 
-1. If 'data' is present and it is UBF buffer, then it tries to use field name from UBF buffer (field *EX_NREQLOGFILE*);
+1. If 'data' is present and it is UBF buffer, then it tries to use field 
+name from UBF buffer (field *EX_NREQLOGFILE*);
 
 2. If EX_NREQLOGFILE is not in the UBF buffer, then use 'filename';
 
@@ -51,13 +59,25 @@ of the parameter usage is following:
 7. If 'filename' is not set, then fail with error.
 
 
+Function applies to all Enduro/X logging facilities: *TP*, *NDRX* and *UBF*.
+
+Special care shall be taken when working in multi-threaded environment (this
+includes single thread apps running built in Enduro/X 'emq', 'poll' and 'SystemV'
+modes where auxiliary threads are used. In mulit-threaded mode, the output
+file name shall differ for process logging file name. Otherwise the output file
+pointer is re-used from process logger. Thus If other thread changes process
+loggers, this process request logger file pointer might become broken (and
+thus cause segmentation faults). See more on thread safety section in *tplogconfig(3)*.
+
 RETURN VALUE
 ------------
-On success, *tplogsetreqfile()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tplogsetreqfile()* return zero; on error, -1 is returned, 
+with *tperrno* set to indicate the error.
 
 ERRORS
 ------
-Note that *tpstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
 *TPEINVAL* Missing file name in parameters (invalid parameter combination).
 
@@ -67,11 +87,14 @@ Note that *tpstrerror()* returns generic error message plus custom message with 
 
 *TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
 
-*TPESVCERR* System level service failure. Server died during the message presence in service queue.
+*TPESVCERR* System level service failure. Server died during the message 
+presence in service queue.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
-*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+*TPEOS* System failure occurred during serving. See logs i.e. user log, 
+or debugs for more info.
 
 
 EXAMPLE
@@ -84,7 +107,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tploggetreqfile(3)* *tploggetbufreqfile(3)* *tplogconfig(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *ex_devguide(guides)*
+*tploggetreqfile(3)* *tploggetbufreqfile(3)* *tplogconfig(3)* *tplogdump(3)*
+*tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* *ex_devguide(guides)*
 
 COPYING
 -------

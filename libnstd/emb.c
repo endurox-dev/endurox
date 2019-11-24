@@ -87,7 +87,7 @@ expublic int ndrx_file_gen_embed(char *in_fname, char *out_fname, char *out_suff
     /* write header */
     
     fprintf(out, "#include <stdlib.h>\n");
-    fprintf(out, "const unsigned char ndrx_G_resource_%s[] = {\n", out_fname);
+    fprintf(out, "const char ndrx_G_resource_%s[] = {\n", out_fname);
     
     /* read  & write */
     while (EOF!=(c=(fgetc(in))))
