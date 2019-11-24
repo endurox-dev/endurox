@@ -841,13 +841,29 @@ expublic int ndrx_killall(char *mask)
     string_list_t* plist = NULL;
     string_list_t* elt = NULL;
     int signals[] = {SIGTERM, SIGKILL};
-    pid_t pid;
+    pid_t pid, curprocpid;
     int was_any = EXFALSE;
     int i;
-    
+    ndrx_intmap_t *pshash = NULL, *parentshash = NULL;
     int ret = EXFAIL;
     
+    /* list the searched values... */
     plist = ndrx_sys_ps_list(mask, "", "", "", "");
+    
+    /* build ps hash */
+    if (EXSUCCEED!=ndrx_sys_ps_list2hash(plist, &pshash))
+    {
+        NDRX_LOG(log_error, "Failed to build pslist hash! Out of memory?");
+        EXFAIL_OUT(ret);
+    }
+    
+    curprocpid=getpid();
+    /* build parents hash of current process, to protect it from suicide... */
+    if (EXSUCCEED!=ndrx_sys_ps_hash2parents(&pshash, curprocpid, &parentshash))
+    {
+        NDRX_LOG(log_error, "Failed to build parents hash! Out of memory?");
+        EXFAIL_OUT(ret);
+    }
     
     for (i=0; i<2; i++)
     {
@@ -857,18 +873,25 @@ expublic int ndrx_killall(char *mask)
             NDRX_LOG(log_warn, "processing proc: [%s]", elt->qname);
             
             if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) && 
-                    pid!=getpid() && pid!=0)
+                    pid!=0)
             {
-                 NDRX_LOG(log_error, "! killing  sig=%d "
-                         "pid=[%d]", signals[i], pid);
-                 
-                 if (EXSUCCEED!=kill(pid, signals[i]))
-                 {
-                     NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
-                             signals[i], pid, strerror(errno));
-                 }
-                 was_any = EXTRUE;
-                 ret = EXSUCCEED;
+                if (NULL==ndrx_intmap_find(&parentshash, pid) && pid!=curprocpid)
+                {
+                    NDRX_LOG(log_error, "! killing  sig=%d "
+                            "pid=[%d]", signals[i], pid);
+
+                    if (EXSUCCEED!=kill(pid, signals[i]))
+                    {
+                        NDRX_LOG(log_error, "failed to kill with signal %d pid %d: %s",
+                                signals[i], pid, strerror(errno));
+                    }
+                    was_any = EXTRUE;
+                    ret = EXSUCCEED;
+                }
+                else
+                {
+                    NDRX_LOG(log_warn, "No suicide pid=%d", pid);
+                }
             }
         }
         if (0==i && was_any)
@@ -877,7 +900,11 @@ expublic int ndrx_killall(char *mask)
         }
     }
     
+out:
+    ndrx_intmap_remove (&pshash);
+    ndrx_intmap_remove (&parentshash);
     ndrx_string_list_free(plist);
+
     
     return ret;
 }

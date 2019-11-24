@@ -173,6 +173,17 @@ struct string_hash
 };
 
 /**
+ * Enduro/X integer mapping table
+ */
+typedef struct ndrx_intmap ndrx_intmap_t;
+struct ndrx_intmap
+{
+    int key;
+    int value;
+    EX_hash_handle hh;
+};
+
+/**
  * This is arguments parser and loader for mapped structures
  */
 struct ndrx_args_loader
@@ -337,6 +348,10 @@ extern NDRX_API void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz)
 extern NDRX_API int ndrx_lh_position_get(ndrx_lh_config_t *conf, 
         void *key_get, size_t key_len, 
         int oflag, int *pos, int *have_value, char *key_typ);
+
+extern NDRX_API ndrx_intmap_t *ndrx_intmap_find (ndrx_intmap_t ** hash, int key);
+extern NDRX_API ndrx_intmap_t * ndrx_intmap_add (ndrx_intmap_t ** hash, int key, int value);
+extern NDRX_API void ndrx_intmap_remove (ndrx_intmap_t ** hash);
 
 #ifdef	__cplusplus
 }
