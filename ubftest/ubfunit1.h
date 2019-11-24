@@ -108,7 +108,7 @@ extern TestSuite *test_nstd_macros(void);
 extern TestSuite * ubf_nstd_debug(void);
 extern TestSuite * ubf_nstd_standard(void);
 extern TestSuite *ubf_nstd_util(void);
-
+extern TestSuite *ubf_nstd_lh(void);
 #ifdef	__cplusplus
 }
 #endif

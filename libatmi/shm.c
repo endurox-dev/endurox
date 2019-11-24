@@ -64,11 +64,6 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
-/* Feature #139 mvitolin, 09/05/2017 */
-#define _NDRX_SVCINSTALL_NOT		0 /* Not doing service install		  */
-#define _NDRX_SVCINSTALL_DO		1 /* Installing new service to SHM	  */
-#define _NDRX_SVCINSTALL_OVERWRITE	2 /* Overwrite the already installed data */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -303,7 +298,7 @@ expublic int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge, int *have
     }
     
     /* Get the service entry */
-    if (!_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
+    if (!_ndrx_shm_get_svc(svc, &pos, NDRX_SVCINSTALL_NOT, NULL))
     {
         NDRX_LOG(log_error, "Service %s not found in shm", svc);
         EXFAIL_OUT(ret);
@@ -557,7 +552,7 @@ expublic int ndrx_shm_get_srvs(char *svc, ndrx_shm_resid_t **srvlist, int *len)
     }
     
     /* Get the service entry */
-    if (!_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
+    if (!_ndrx_shm_get_svc(svc, &pos, NDRX_SVCINSTALL_NOT, NULL))
     {
         NDRX_LOG(log_error, "Service %s not found in shm", svc);
         EXFAIL_OUT(ret);
@@ -639,12 +634,13 @@ out:
  * @param pos - store the last position
  * @param doing_install - we are doing service install, 
  *	thus we can return empty positions.
- *      In value: _NDRX_SVCINSTALL_NOT
- *      In value: _NDRX_SVCINSTALL_DO
- *      Out value: _NDRX_SVCINSTALL_OVERWRITE
+ *      In value: NDRX_SVCINSTALL_NOT
+ *      In value: NDRX_SVCINSTALL_DO
  * @param p_install_cmd - Return command of installation process
  *	see values of _NDRX_SVCINSTALL_*
- * @return TRUE/FALSE
+ *      Out value: NDRX_SVCINSTALL_OVERWRITE -> we got position for write (may be old or new)
+ *      the caller is responsible for resetting to 0 this param value before call
+ * @return TRUE/FALSE found existing value
  */
 expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_install_cmd)
 {
@@ -662,11 +658,11 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
      * thus firstly for writes we need to perform recursive read only lookup
      * and maybe we could re-use that existing index!
      */
-    if (_NDRX_SVCINSTALL_DO==doing_install)
+    if (NDRX_SVCINSTALL_DO==doing_install)
     {
         int try_read = EXFAIL;
         
-        if (_ndrx_shm_get_svc(svc, &try_read, EXFALSE, NULL))
+        if (_ndrx_shm_get_svc(svc, &try_read, NDRX_SVCINSTALL_NOT, NULL))
         {
             try = try_read;
         }
@@ -681,7 +677,9 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
         NDRX_LOG(log_debug, "Read only existing service [%s] found at [%d]", 
                 svc, try);
     }
-
+    
+    /* Bug #475 Fix */
+    start = try;
     *pos=EXFAIL;
     
     NDRX_LOG(log_debug, "Key for [%s] is %d, shm is: %p", 
@@ -712,14 +710,14 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
          * But to save the space and we install new service and the cell was used
          * but is serving 0 services, then we write off new service here.
          */
-	if (_NDRX_SVCINSTALL_DO==doing_install)
-	{
+        if (NDRX_SVCINSTALL_DO==doing_install)
+        {
             if (SHM_SVCINFO_INDEX(svcinfo, try)->srvs == 0)
             {
-                *p_install_cmd=_NDRX_SVCINSTALL_OVERWRITE;
+                *p_install_cmd=NDRX_SVCINSTALL_OVERWRITE;
                 break; /* <<< break! */
             }
-	}
+        }
 
         try++;
         
@@ -738,11 +736,23 @@ expublic int _ndrx_shm_get_svc(char *svc, int *pos, int doing_install, int *p_in
         NDRX_LOG(log_debug, "Trying %d for [%s]", try, svc);
     }
     
+    /* 
+     * In case if doing install 
+     * and memory cell found is not initialized
+     * then we can use it.
+     */
+    if (NDRX_SVCINSTALL_DO==doing_install &&
+            *p_install_cmd!=NDRX_SVCINSTALL_OVERWRITE &&
+            !(SHM_SVCINFO_INDEX(svcinfo, try)->flags & NDRXD_SVCINFO_INIT))
+    {
+        *p_install_cmd=NDRX_SVCINSTALL_OVERWRITE;
+    }
+    
     *pos=try;
     NDRX_LOG(log_debug, "ndrx_shm_get_svc [%s] - result: %d, "
                             "iterations: %d, pos: %d, install: %d",
                              svc, ret, iterations, *pos, 
-                             (doing_install?*p_install_cmd:_NDRX_SVCINSTALL_NOT));
+                             (doing_install?*p_install_cmd:NDRX_SVCINSTALL_NOT));
     return ret;
 }
 
@@ -763,7 +773,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     shm_svcinfo_t *svcinfo = (shm_svcinfo_t *) G_svcinfo.mem;
     int i;
     int is_new;
-    int shm_install_cmd = _NDRX_SVCINSTALL_NOT;
+    int shm_install_cmd = NDRX_SVCINSTALL_NOT;
     shm_svcinfo_t* el;
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
@@ -775,7 +785,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
     }
 #endif
     
-    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_DO, &shm_install_cmd))
+    if (_ndrx_shm_get_svc(svc, &pos, NDRX_SVCINSTALL_DO, &shm_install_cmd))
     {
         NDRX_LOG(log_debug, "Updating flags for [%s] from %d to %d",
                 svc, SHM_SVCINFO_INDEX(svcinfo, pos)->flags, flags);
@@ -847,8 +857,7 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
         }
     }
     /* It is OK, if there is no entry, we just start from scratch! */
-    else if (!(SHM_SVCINFO_INDEX(svcinfo, pos)->flags & NDRXD_SVCINFO_INIT) ||
-	    _NDRX_SVCINSTALL_OVERWRITE==shm_install_cmd)
+    else if (NDRX_SVCINSTALL_OVERWRITE==shm_install_cmd)
     {
         el = SHM_SVCINFO_INDEX(svcinfo, pos);
         is_new=EXTRUE;
@@ -892,8 +901,10 @@ expublic int ndrx_shm_install_svc_br(char *svc, int flags,
         NDRX_LOG(log_debug, "Cannot install [%s]!! There is no "
                 "space in SHM! Try to increase %s",
                  svc, CONF_NDRX_SVCMAX);
-        ret=EXFAIL;
-        goto out;
+        userlog("Cannot install [%s]!! There is no "
+                "space in SHM! Try to increase %s",
+                 svc, CONF_NDRX_SVCMAX);
+        EXFAIL_OUT(ret);
     }
     
     /* we are ok & extra bridge processing */
@@ -1041,7 +1052,7 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
 #endif
     
     *last=EXFALSE;
-    if (_ndrx_shm_get_svc(svc, &pos, _NDRX_SVCINSTALL_NOT, NULL))
+    if (_ndrx_shm_get_svc(svc, &pos, NDRX_SVCINSTALL_NOT, NULL))
     {
         el = SHM_SVCINFO_INDEX(svcinfo, pos);
         if (el->srvs>1)
@@ -1126,8 +1137,8 @@ expublic void ndrxd_shm_uninstall_svc(char *svc, int *last, int resid)
     }
     else
     {
-            NDRX_LOG(log_debug, "Service [%s] not present in shm", svc);
-            *last=EXTRUE;
+        NDRX_LOG(log_debug, "Service [%s] not present in shm", svc);
+        *last=EXTRUE;
     }
     
 #if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)

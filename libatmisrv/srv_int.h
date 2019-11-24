@@ -154,10 +154,11 @@ struct srv_conf
     int app_argc;/**< Arguments passed after -- */
     char **app_argv;
     
-    /*<THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>*/
-    svc_entry_fn_t *service_raw_list; /**< As from initialization */
-    svc_entry_fn_t **service_array; /**< Direct array of items */
-    /*</THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>*/
+    /*<THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>      */
+    svc_entry_fn_t *service_raw_list; /**< As from initialization           */
+    int service_raw_list_count; /**< Number of services in raw list         */
+    svc_entry_fn_t **service_array; /**< Direct array of items              */
+    /*</THESE LISTS ARE USED ONLY TILL SERVER GOES ONLINE, STATIC INIT>     */
     
     svc_entry_fn_t *service_list; /**< Final list used for processing */
     

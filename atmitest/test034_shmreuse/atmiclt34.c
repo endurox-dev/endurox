@@ -72,20 +72,20 @@
  */
 int init(int argc, char** argv)
 {
-	int ret = SUCCEED;
+    int ret = SUCCEED;
 
-	TP_LOG(log_info, "Initialising...");
+    TP_LOG(log_info, "Initialising...");
 
-	if (SUCCEED!=tpinit(NULL))
-	{
-		TP_LOG(log_error, "Failed to Initialise: %s", 
-			tpstrerror(tperrno));
-		ret = FAIL;
-		goto out;
-	}
+    if (SUCCEED!=tpinit(NULL))
+    {
+        TP_LOG(log_error, "Failed to Initialise: %s", 
+                tpstrerror(tperrno));
+        ret = FAIL;
+        goto out;
+    }
 
 out:
-	return ret;
+    return ret;
 }
 
 /**
@@ -93,13 +93,13 @@ out:
  */
 int uninit(int status)
 {
-	int ret = SUCCEED;
-	
-	TP_LOG(log_info, "Uninitialising...");
-	
-	ret = tpterm();
-	
-	return ret;
+    int ret = SUCCEED;
+
+    TP_LOG(log_info, "Uninitialising...");
+
+    ret = tpterm();
+
+    return ret;
 }
 
 /**
@@ -108,93 +108,218 @@ int uninit(int status)
  */
 int process (void)
 {
-	int ret = SUCCEED;
-	long i;
-	UBFH *p_ub = NULL;
-	long rsplen;
-	BFLDLEN sz;
-	char svcnm[MAXTIDENT+1];
-	char svcnm_ret[MAXTIDENT+1];
-	
-	
-	TP_LOG(log_info, "Processing...");
+    int ret = SUCCEED;
+    long i;
+    UBFH *p_ub = NULL;
+    long rsplen;
+    BFLDLEN sz;
+    char svcnm[MAXTIDENT+1];
+    char svcnm_ret[MAXTIDENT+1];
 
 
-	/* Call sample server... */
-	
-	for (i=0; i<24000; i++)
-	{
-		if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
-		{
-			TP_LOG(log_error, "Failed to tpalloc: %s",  tpstrerror(tperrno));
-			ret=FAIL;
-			goto out;
-		}
+    TP_LOG(log_info, "Processing...");
 
-		if (SUCCEED!=Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0L))
-		{
-			TP_LOG(log_error, "Failed to set T_LONG_FLD: %s",  
-			      Bstrerror(Berror));
-			ret=FAIL;
-			goto out;
-		}
 
-		if (FAIL==tpcall("GETNEXT", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
-		{
-			TP_LOG(log_error, "TESTERROR: Failed to call GETNEXT: %s",
-				tpstrerror(tperrno));
-			ret=FAIL;
-			goto out;
-		}
+    /* Call sample server... */
 
-		tplogprintubf(log_debug, "Got response from test server...", p_ub);
-		
-		/* Get the service number to advertise */
-		sprintf(svcnm, "SVC%06ld", i);
-		
-		NDRX_LOG(log_info, "About to call service: [%s] - must be advertised",
-				svcnm);
+    for (i=0; i<24000; i++)
+    {
+        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+        {
+            TP_LOG(log_error, "Failed to tpalloc: %s",  tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
 
-		if (FAIL==tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
-		{
-			TP_LOG(log_error, "TESTERROR: Failed to call %s: %s",
-				svcnm, tpstrerror(tperrno));
-			ret=FAIL;
-			goto out;
-		}
+        if (SUCCEED!=Bchg(p_ub, T_LONG_FLD, 0, (char *)&i, 0L))
+        {
+            TP_LOG(log_error, "Failed to set T_LONG_FLD: %s",  
+                  Bstrerror(Berror));
+            ret=FAIL;
+            goto out;
+        }
 
-		if (SUCCEED!=Bget(p_ub, T_STRING_2_FLD, 0, svcnm_ret, 0))
-		{
-			TP_LOG(log_error, "Failed to set T_STRING_2_FLD: %s",  
-			      Bstrerror(Berror));
-			ret=FAIL;
-			goto out;
-		}
-		
-		TP_LOG(log_info, "Response called [%s], returned [%s]", 
-			 svcnm, svcnm_ret);
-		
-		if (0!=strcmp(svcnm, svcnm_ret))
-		{
-			TP_LOG(log_error, "TESTERROR!!!, expected service [%s], "
-				"but got [%s]", 
-				svcnm, svcnm_ret);
-			ret=FAIL;
-			goto out;
-		}
-	}
+        if (FAIL==tpcall("GETNEXT", (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        {
+            TP_LOG(log_error, "TESTERROR: Failed to call GETNEXT: %s",
+                    tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+
+        tplogprintubf(log_debug, "Got response from test server...", p_ub);
+
+        /* Get the service number to advertise */
+        snprintf(svcnm, sizeof(svcnm), "SVC%06ld", i);
+
+        NDRX_LOG(log_info, "About to call service: [%s] - must be advertised",
+                        svcnm);
+
+        if (FAIL==tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        {
+            TP_LOG(log_error, "TESTERROR: Failed to call %s: %s",
+                    svcnm, tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+
+        if (SUCCEED!=Bget(p_ub, T_STRING_2_FLD, 0, svcnm_ret, 0))
+        {
+            TP_LOG(log_error, "Failed to set T_STRING_2_FLD: %s",  
+                  Bstrerror(Berror));
+            ret=FAIL;
+            goto out;
+        }
+
+        TP_LOG(log_info, "Response called [%s], returned [%s]", 
+                 svcnm, svcnm_ret);
+
+        if (0!=strcmp(svcnm, svcnm_ret))
+        {
+            TP_LOG(log_error, "TESTERROR!!!, expected service [%s], "
+                    "but got [%s]", 
+                    svcnm, svcnm_ret);
+            ret=FAIL;
+            goto out;
+        }
+    }
 	
 out:
 
 
-	/* free up config data... */
-	if (NULL!=p_ub)
-	{
-		tpfree((char *)p_ub);
-	}
-	
-	return ret;
+    /* free up config data... */
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    return ret;
 }
+
+
+/**
+ * Call 19' dynamic service
+ * @return SUCCEED/FAIL
+ */
+int call19 (void)
+{
+    int ret = SUCCEED;
+    long i;
+    UBFH *p_ub = NULL;
+    long rsplen;
+    BFLDLEN sz;
+    char svcnm[MAXTIDENT+1] = "ZZZ000019";
+    char svcnm_ret[MAXTIDENT+1];
+
+    TP_LOG(log_info, "Call19...");
+
+    /* Call sample server... */
+
+    for (i=0; i<24000; i++)
+    {
+        if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+        {
+            TP_LOG(log_error, "Failed to tpalloc: %s",  tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+
+        if (FAIL==tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen, TPNOTIME))
+        {
+            TP_LOG(log_error, "TESTERROR: Failed to call %s: %s",
+                    svcnm, tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+
+        if (SUCCEED!=Bget(p_ub, T_STRING_2_FLD, 0, svcnm_ret, 0))
+        {
+            TP_LOG(log_error, "Failed to set T_STRING_2_FLD: %s",  
+                  Bstrerror(Berror));
+            ret=FAIL;
+            goto out;
+        }
+
+        TP_LOG(log_info, "Response called [%s], returned [%s]", 
+                 svcnm, svcnm_ret);
+
+        if (0!=strcmp(svcnm, svcnm_ret))
+        {
+            TP_LOG(log_error, "TESTERROR!!!, expected service [%s], "
+                    "but got [%s]", 
+                    svcnm, svcnm_ret);
+            ret=FAIL;
+            goto out;
+        }
+    }
+	
+out:
+
+    /* free up config data... */
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    return ret;
+}
+
+/**
+ * Advertise full shm and free up...
+ * and do it again...
+ * @param limit - how much services to test. If shm is less than 50, then we test
+ *  shm limit, shm is above, then we can test per server service count limit.
+ * @return SUCCEED/FAIL
+ */
+int chkfull (long limit)
+{
+    int ret = SUCCEED;
+    long i;
+    UBFH *p_ub = NULL;
+    long rsplen;
+
+    TP_LOG(log_info, "chkfull...");
+
+    /* Call sample server... */
+    if (NULL==(p_ub = (UBFH *)tpalloc("UBF", NULL, 1024)))
+    {
+        TP_LOG(log_error, "Failed to tpalloc: %s",  tpstrerror(tperrno));
+        ret=FAIL;
+        goto out;
+    }
+    
+    if (SUCCEED!=Bchg(p_ub, T_LONG_FLD, 0, (char *)&limit, 0L))
+    {
+        TP_LOG(log_error, "Failed to set T_LONG_FLD: %s",  
+              Bstrerror(Berror));
+        ret=FAIL;
+        goto out;
+    }
+    
+    for (i=0; i<10; i++)
+    {
+        if (FAIL==tpcall("CHKFULL", (char *)p_ub, 0L, (char **)&p_ub, 
+                &rsplen, TPNOTIME))
+        {
+            TP_LOG(log_error, "TESTERROR: Failed to call CHKFULL: %s",
+                    tpstrerror(tperrno));
+            ret=FAIL;
+            goto out;
+        }
+    }
+	
+out:
+
+
+    /* free up config data... */
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    return ret;
+}
+
 
 /**
  * Main entry of th program
@@ -204,27 +329,67 @@ out:
  */
 int main(int argc, char** argv)
 {
-	int ret = SUCCEED;
+    int ret = SUCCEED;
 
-	if (SUCCEED!=init(argc, argv))
-	{
-		TP_LOG(log_error, "Failed to Initialize!");
-		ret=FAIL;
-		goto out;
-	}
-	
-	
-	if (SUCCEED!=process())
-	{
-		TP_LOG(log_error, "Process failed!");
-		ret=FAIL;
-		goto out;
-	}
+    if (argc < 2)
+    {
+        fprintf(stderr, "usage: %s readv|chkfull|call19 [limit for chkfull]", argv[0]);
+        return -1;
+    }
+    
+    if (SUCCEED!=init(argc, argv))
+    {
+        TP_LOG(log_error, "Failed to Initialize!");
+        ret=FAIL;
+        goto out;
+    }
+
+    if (0==strcmp(argv[1], "readv"))
+    {
+        if (SUCCEED!=process())
+        {
+            TP_LOG(log_error, "Process failed!");
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (0==strcmp(argv[1], "chkfull"))
+    {
+        long limit;
+        if (argc<3)
+        {
+            fprintf(stderr, "Expected limit at arg 3\n");
+            EXFAIL_OUT(ret);
+        }
+        
+        limit = atoi(argv[2]);
+        
+        if (SUCCEED!=chkfull(limit))
+        {
+            TP_LOG(log_error, "ckfull failed!");
+            ret=FAIL;
+            goto out;
+        }
+    }
+    else if (0==strcmp(argv[1], "call19"))
+    {
+        if (SUCCEED!=call19())
+        {
+            TP_LOG(log_error, "call19 failed!");
+            ret=FAIL;
+            goto out;
+        }
+    }
+    else
+    {
+        TP_LOG(log_error, "Invalid function [%s]!", argv[1]);
+        ret=FAIL;
+        goto out;
+    }
     
 out:
-	uninit(ret);
+    uninit(ret);
 
-	return ret;
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

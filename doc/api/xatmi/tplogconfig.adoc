@@ -11,6 +11,7 @@ tplogconfig - Configure logger facilities
 SYNOPSIS
 --------
 #include <ndebug.h>
+
 #include <nerror.h>
 
 int tplogconfig(int 'logger', int 'lev', char *'debug_string', char *'module', char *'new_file');
@@ -37,9 +38,9 @@ for multiple facilities with bitwise OR. Th facilities defined are following:
 
 -------------------------------------------------------------------------------
 
-#define LOG_FACILITY_NDRX       0x00001 /* settings for ATMI logging             */
-#define LOG_FACILITY_UBF        0x00002 /* settings for UBF logging              */
-#define LOG_FACILITY_TP         0x00004 /* settings for TP logging               */
+#define LOG_FACILITY_NDRX       0x00001 /* settings for ATMI logging, process    */
+#define LOG_FACILITY_UBF        0x00002 /* settings for UBF logging, process     */
+#define LOG_FACILITY_TP         0x00004 /* settings for TP logging, process      */
 #define LOG_FACILITY_TP_THREAD  0x00008 /* settings for TP, thread based logging */
 #define LOG_FACILITY_TP_REQUEST 0x00010 /* Request logging, thread based         */
 
@@ -63,11 +64,11 @@ accepts optional parameter 'debug_string', which  is Enduro/X standard debug
 string. If field not set then it might be NULL or empty (EOS). If set, then it
 contains the configuration settings described in *ndrxdebug.conf(5)* or 
 see *ex_devguide(guides)*. One special note here is that, with debug string 
-you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *NDRX* and 
-*UBF* log levels will affect the per-process common settings, i.e. 
-they are common for thread and request logging. However *TP* will change the 
-level of the given logger facility, per process (*LOG_FACILITY_TP*), per thread 
-(*LOG_FACILITY_TP_THREAD*) or per request (*LOG_FACILITY_TP_REQUEST*).
+you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *ndrx* and 
+*ubf* and "tp" log levels will affect the given logger settings (process/thread/request).
+For example *tp* will change the level of the given logger facility, per process 
+(*LOG_FACILITY_TP*), per thread  (*LOG_FACILITY_TP_THREAD*) or 
+per request (*LOG_FACILITY_TP_REQUEST*).
 
 If the 'lev' parameter is present and it will override the given loggers 
 settings from 'debug_string'. The same applies if 'debug_string'
@@ -79,6 +80,47 @@ present in 'debug_string'.
 logged line. This is valid only for *TP* loggers for
 *NDRX* and *UBF* it is ignored.
 
+As the all logging functions checks the early log level set in process level
+(due to fact that at that point TLS might not be initialized), thus by changing
+thread or request log levels, may only reduce the log level.
+So system might be configured so that, in config process level logs are higher,
+and then threads or requests might request to make the level lower.
+
+THREAD SAFETY
+-------------
+Thread safety must be considered carefully with this function:
+
+. When configuring thread or request logger, the initial setup including open
+file pointers and file names are copied to configured logger.
+
+. If output log file name is not changed, the file pointer is re-used. It could
+copy of process logger file pointer.
+
+. If there are two threads, first configures thread or request logger with process
+file name, and second thread changes process file name, the first thread will
+get closed file pointer which might cause segmentation faults. Thus it is
+recommended that thread and request logger never use process logger file names.
+Or if used, then process level output log file names shall not be changed during
+the process life cycle. This applies to multi-threaded apps. Note that in 'SystemV', 
+'poll' and 'emq' mode Enduro/X builds uses auxiliary threads. Thus even thought
+that app is single threaded, it is multi-threaded.
+
+. To ensure that program does not crash during the change of process logger 
+file pointers (output file name changes), 
+the ndrxdebug.conf(5) introduced *swait* flag which indicates
+the time to wait for other threads to finish their logging. Thus tplogconfig()
+will init-lock the loggers, wait the *swait* time for other threads to finish
+their activity on logging (i.e. using process level file pointers) and then
+process level log pointers are changed. Afterwards logger is unlocked. *NOTE*
+this will lock the whole application. This safety applies to process loggers
+only, but once locked, all loggers will wait.
+
+. If logfile name changing is required, it is better to design multi-threaded
+app to use thread or request logger facilities.
+
+. The above pointers are subject of changes in future Enduro/X versions. It is
+possible that mutex locks, rwlocks or spinlock counters will be used to protect
+the logger.
 
 RETURN VALUE
 ------------

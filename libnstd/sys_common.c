@@ -482,6 +482,73 @@ out:
 }
 
 /**
+ * Transfer pid (as key) and ppid (as value)
+ * to hashmap
+ * @param plist process list (ps output)
+ * @param hash hash to build (might be NULL at input)
+ * @return EXSUCCEED/EXFAIL (OOM)
+ */
+expublic int ndrx_sys_ps_list2hash(string_list_t *plist, ndrx_intmap_t **hash)
+{
+    string_list_t* elt = NULL;
+    pid_t pid;
+    pid_t ppid;
+    int ret = EXSUCCEED;
+    
+    LL_FOREACH(plist,elt)
+    {
+        if (EXSUCCEED==ndrx_proc_pid_get_from_ps(elt->qname, &pid) &&
+                EXSUCCEED==ndrx_proc_ppid_get_from_ps(elt->qname, &ppid) &&
+                0!=pid &&
+                0!=ppid)
+        {
+            if (NULL==ndrx_intmap_add(hash, (int)pid, (int)ppid))
+            {
+                EXFAIL_OUT(ret);
+            }
+        }
+            
+    }
+    
+out:
+    
+    if (EXSUCCEED!=ret)
+    {
+        ndrx_intmap_remove (hash);
+    }
+
+    return ret;
+}
+
+/**
+ * Search parents for given pid.
+ * Search until the dead end (0 of init / no parent).
+ * @param pshash psout hash
+ * @param pid to search parents for
+ * @param parents add parents to this hash. In this hash only pids are stored
+ * @return EXSUCCEED/EXFAIL (OOM)
+ */
+expublic int ndrx_sys_ps_hash2parents(ndrx_intmap_t **pshash, int pid, ndrx_intmap_t **parents)
+{
+    int ret = EXSUCCEED;    
+    ndrx_intmap_t *cur = ndrx_intmap_find (pshash, pid);
+    
+    while (NULL!=cur)
+    {
+        if (NULL==ndrx_intmap_add (parents, cur->value, 0))
+        {
+            EXFAIL_OUT(ret);
+        }
+        
+        /* search next. Note that in ps hash value stores parents */
+        cur = ndrx_intmap_find (pshash, cur->value);
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Get current system username
  */
 expublic char *ndrx_sys_get_cur_username(void)

@@ -163,6 +163,17 @@ if [[ $CNT -gt 5 ]]; then
     go_out 3
 fi
 
+#
+# The return from this must be 0, as we are not doing sucicide anymore
+#
+xadmin killall xadmin
+XRET=$?
+
+if [ "X$XRET" != "X0" ]; then
+    echo "xadmin killall failed with: $XRET"
+    go_out 4
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"

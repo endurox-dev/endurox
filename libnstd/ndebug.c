@@ -1,7 +1,8 @@
 /**
  * @brief NDR Debug library routines
  *   Enduro Execution system platform library
- *
+ *   TODO: We might want to switch the tplogconfig() to rwlocks
+ *   
  * @file ndebug.c
  */
 /* -----------------------------------------------------------------------------
@@ -104,15 +105,16 @@
     .threadnr=0,\
     .flags=FLAGS,\
     .memlog=NULL,\
-    .hostnamecrc32=0x0\
+    .hostnamecrc32=0x0,\
+    .swait=NDRX_LOG_SWAIT_DEFAULT\
 }
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", LOG_FACILITY_UBF);
-ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", LOG_FACILITY_NDRX);
-ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER(LOG_CODE_TP, "USER", LOG_FACILITY_TP);
+ndrx_debug_t G_ubf_debug = DEBUG_INITIALIZER(LOG_CODE_UBF, "UBF ", (LOG_FACILITY_UBF|LOG_FACILITY_PROCESS));
+ndrx_debug_t G_ndrx_debug = DEBUG_INITIALIZER(LOG_CODE_NDRX, "NDRX", (LOG_FACILITY_NDRX|LOG_FACILITY_PROCESS));
+ndrx_debug_t G_tp_debug = DEBUG_INITIALIZER(LOG_CODE_TP, "USER", (LOG_FACILITY_TP|LOG_FACILITY_PROCESS));
 
 ndrx_debug_t G_stdout_debug;
 /*---------------------------Statics------------------------------------*/
@@ -407,11 +409,40 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
 
             if (0==strncmp("ndrx", tok, cmplen))
             {
-                G_ndrx_debug.level = atoi(p+1);
+                int lev = atoi(p+1);
+            
+                if (NULL!=dbg_ptr)
+                {
+                    if ( (dbg_ptr->flags & LOG_FACILITY_NDRX) ||
+                            (dbg_ptr->flags & LOG_FACILITY_NDRX_THREAD) ||
+                            (dbg_ptr->flags & LOG_FACILITY_NDRX_REQUEST) )
+                    {
+                        dbg_ptr->level = lev;
+                    }
+                }
+                else
+                {
+                    G_ndrx_debug.level = lev;
+                }
             }
             else if (0==strncmp("ubf", tok, cmplen))
             {
-                G_ubf_debug.level = atoi(p+1);
+                int lev = atoi(p+1);
+            
+                if (NULL!=dbg_ptr)
+                {
+                    if ( (dbg_ptr->flags & LOG_FACILITY_UBF) ||
+                            (dbg_ptr->flags & LOG_FACILITY_UBF_THREAD) ||
+                            (dbg_ptr->flags & LOG_FACILITY_UBF_REQUEST) )
+                    {
+                        dbg_ptr->level = lev;
+                    }
+                }
+                else
+                {
+                    G_ubf_debug.level = lev;
+                }
+                
             }
             else if (0==strncmp("tp", tok, cmplen))
             {
@@ -419,7 +450,12 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             
                 if (NULL!=dbg_ptr)
                 {
-                    dbg_ptr->level = lev;
+                    if ( (dbg_ptr->flags & LOG_FACILITY_TP) ||
+                            (dbg_ptr->flags & LOG_FACILITY_TP_THREAD) ||
+                            (dbg_ptr->flags & LOG_FACILITY_TP_REQUEST) )
+                    {
+                        dbg_ptr->level = lev;
+                    }
                 }
                 else
                 {
@@ -531,6 +567,21 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ndrx_debug.is_mkdir = val;
                 }
             }
+            else if (0==strncmp("swait", tok, cmplen))
+            {
+                int val = atoi(p+1);
+                
+                if (NULL!=dbg_ptr)
+                {
+                    dbg_ptr->swait = atoi(p+1);
+                }
+                else
+                {
+                    G_tp_debug.swait = val;
+                    G_ubf_debug.swait = val;
+                    G_ndrx_debug.swait = val;
+                }
+            }
             
             tok=strtok_r (NULL,"\t ", &saveptr);
         }
@@ -635,7 +686,7 @@ expublic FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char 
         /*
          * Try to create folder in reverse order from longest path to shortest
          */
-        while (p=strrchr(tmp, '/'))
+        while (NULL!=(p=strrchr(tmp, '/')))
         {
             *p = EXEOS;
             
@@ -1115,7 +1166,7 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
     /* And print the final ASCII bit. */
     sprintf (print_line + strlen(print_line), "  %s", buf);
     BUFFERED_PRINT_LINE(dbg_ptr, print_line);
-    print_line[0] = 0;    
+    print_line[0] = 0;
 }
 
 /**
@@ -1138,7 +1189,6 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     char *line_print;
     char *func_last;
     int len;
-    ndrx_debug_t *org_ptr = dbg_ptr;
     long  thread_nr = 0;
     static __thread uint64_t ostid = 0;
     static __thread int first = EXTRUE;
@@ -1190,7 +1240,7 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     
     snprintf(line_start, sizeof(line_start), 
         "%c:%s:%d:%08x:%5d:%08llx:%03ld:%08ld:%06ld%03d:%-12.12s:%-8.8s:%04ld:",
-        dbg_ptr->code, org_ptr->module, lev, (unsigned int)dbg_ptr->hostnamecrc32, 
+        dbg_ptr->code, dbg_ptr->module, lev, (unsigned int)dbg_ptr->hostnamecrc32, 
             (int)dbg_ptr->pid, (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec/1000), func_last, line_print, line);
     

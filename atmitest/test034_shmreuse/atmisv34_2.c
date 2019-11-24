@@ -1,9 +1,7 @@
 /**
- * @brief Feature #139 mvitolin, 09/05/2017
- *   Test the shared memory service registry reuse - when unique service names
- *   in app session overflows the NDRX_SVCMAX
+ * @brief Testing Bug #475 boot time advertise limits
  *
- * @file atmisv34.c
+ * @file atmisv34_2.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -47,6 +45,7 @@
 #include <Exfields.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+#include <ndrxdcmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -93,33 +92,36 @@ void DYNFUNC(TPSVCINFO *p_svc)
 }
 
 /**
- * Check that when service table becomes full...
- * Afterwards remove all un-needed.
- * This shall be run first, we have 100 places in service table.
- * 2 is already used by this in GETNEXT
+ * Initialize the application
+ * Check static limits.
+ * Shell test the environment when we have less SHM.
+ * Currently it wont stop from booting as SHM limits are found only after
+ * the init phase.
+ * Currently it will silently ignore the system SHM limits and let binary to boot.
+ * ndrxd and psc will see the queues. But thy will not be visible to shared
+ * memory. Thus ndrxd psvc will not show them.
+ * @param argc	argument count
+ * @param argv	argument values
  * @return SUCCEED/FAIL
  */
-void CHKFULL (TPSVCINFO *p_svc)
+int init(int argc, char** argv)
 {
     int ret = EXSUCCEED;
+    int i;
     char svcnm[MAXTIDENT+1];
-    long i, service_slots;
-    long fill_max;
-    UBFH *p_ub = (UBFH *)p_svc->data;
     
-    if (EXFAIL==Bget(p_ub, T_LONG_FLD, 0, (char *)&service_slots, 0L))
+    TP_LOG(log_info, "Initialising...");
+
+    /* try to hit the limit? On 50 we shall get the system error
+     * Once we try to boot with more than have in shm
+     * we shall get some failure too..
+     */
+    
+    /* check the test case... now... */
+    NDRX_LOG(log_error, "Advertise max per service");
+    for (i=0; i<MAX_SVC_PER_SVR-2 /* for adjust for admin/reply */ ; i++)
     {
-        NDRX_LOG(log_error, "Failed to get T_LONG_FLD: %s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
-    }
-    
-    NDRX_LOG(log_debug, "Fill all");
-    fill_max = service_slots-USED_SERVICES;
-    
-    for (i=0; i<fill_max; i++)
-    {
-        snprintf(svcnm, sizeof(svcnm), "FULL%06ld", i);
-        
+        snprintf(svcnm, sizeof(svcnm), "ZZZ%06d", i);
         if (EXSUCCEED!=tpadvertise(svcnm, DYNFUNC))
         {
             NDRX_LOG(log_error, "TESTERROR! Failed to advertise [%s]: %s", 
@@ -128,27 +130,42 @@ void CHKFULL (TPSVCINFO *p_svc)
         }
     }
     
-    snprintf(svcnm, sizeof(svcnm), "FULL%06ld", i+1);
-    /* that's it, all is full! */
+    NDRX_LOG(log_error, "Check limit, shall fail:");
+    /* Check for next failure.. */
+    snprintf(svcnm, sizeof(svcnm), "ZZZ%06d", i+1);
     if (EXSUCCEED==tpadvertise(svcnm, DYNFUNC))
     {
-        NDRX_LOG(log_error, "TESTERROR! We shall fail to advertise!");
+        NDRX_LOG(log_error, "TESTERROR! Must fail to advertise but got OK!!! [%s]: %s", 
+                 svcnm, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     
+    /* check error */
     if (TPELIMIT!=tperrno)
     {
-        NDRX_LOG(log_error, "TESTERROR: Invalid error expected TPELIMIT got %d: %s", 
-                tperrno, tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR! must be TPELIMIT, but got %d: %s", 
+                 tperrno, tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
-
-    /* clean up the stuff.. */
-    for (i=0; i<service_slots-USED_SERVICES; i++)
+    
+    NDRX_LOG(log_error, "Static unadvertise: ");
+    /* remove all, check for leaks... */
+    for (i=0; i<MAX_SVC_PER_SVR-2 /* for adjust for admin/reply */ ; i++)
     {
-        snprintf(svcnm, sizeof(svcnm), "FULL%06ld", i);
-        
+        snprintf(svcnm, sizeof(svcnm), "ZZZ%06d", i);
         if (EXSUCCEED!=tpunadvertise(svcnm))
+        {
+            NDRX_LOG(log_error, "TESTERROR! Failed to unadvertise [%s]: %s", 
+                     svcnm, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /* ok do it again... */
+    for (i=0; i<MAX_SVC_PER_SVR-2 /* for adjust for admin/reply */ ; i++)
+    {
+         snprintf(svcnm, sizeof(svcnm), "ZZZ%06d", i);
+        if (EXSUCCEED!=tpadvertise(svcnm, DYNFUNC))
         {
             NDRX_LOG(log_error, "TESTERROR! Failed to advertise [%s]: %s", 
                      svcnm, tpstrerror(tperrno));
@@ -156,118 +173,8 @@ void CHKFULL (TPSVCINFO *p_svc)
         }
     }
     
-out:
 
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
-            0L,
-            (char *)p_ub,
-            0L,
-            0L);
-}
-
-/**
- * Service entry
- * @return SUCCEED/FAIL
- */
-void GETNEXT (TPSVCINFO *p_svc)
-{
-    int ret = EXSUCCEED;
-    long svcNr;
-    static int first = EXTRUE;
-    UBFH *p_ub = (UBFH *)p_svc->data;
-    char svcnm[MAXTIDENT+1];
-    char svcnm_prev[MAXTIDENT+1];
-
-    tplogprintubf(log_info, "Got request", p_ub);
-
-
-    if (EXFAIL==Bget(p_ub, T_LONG_FLD, 0, (char *)&svcNr, 0L))
-    {
-        EXFAIL_OUT(ret);
-    }
-
-    /* Get the service number to advertise */
-    snprintf(svcnm, sizeof(svcnm), "SVC%06ld", svcNr);
-    snprintf(svcnm_prev, sizeof(svcnm_prev), "SVC%06ld", svcNr-1);
-    
-    NDRX_LOG(log_info, "Got service name: [%s], prev: [%s]", svcnm, svcnm_prev);
-    
-    if (first)
-    {
-        first = EXFALSE;
-    }
-    else
-    {
-        /* Unadvertise service... */
-        if (EXSUCCEED!=tpunadvertise(svcnm_prev))
-        {
-            NDRX_LOG(log_error, "TESTERROR! Failed to unadvertise [%s]: %s", 
-                     svcnm_prev, tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-    }
-
-    while (EXSUCCEED!=tpadvertise(svcnm, DYNFUNC))
-    {
-        if (TPELIMIT==tperrno)
-        {
-            /* wait for ndrxd to catch up... */
-            usleep(1000);
-        }
-        else
-        {
-            NDRX_LOG(log_error, "TESTERROR! Failed to advertise [%s]: %s", 
-                 svcnm, tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-    }
-out:
-
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
-            0L,
-            (char *)p_ub,
-            0L,
-            0L);
-}
-
-/**
- * Initialize the application
- * @param argc	argument count
- * @param argv	argument values
- * @return SUCCEED/FAIL
- */
-int init(int argc, char** argv)
-{
-    int ret = EXSUCCEED;
-    
-    TP_LOG(log_info, "Initialising...");
-
-    if (EXSUCCEED!=tpinit(NULL))
-    {
-        TP_LOG(log_error, "Failed to Initialise: %s", 
-                tpstrerror(tperrno));
-        ret = EXFAIL;
-        goto out;
-    }
-
-    /* Advertise our service */
-    if (EXSUCCEED!=tpadvertise("GETNEXT", GETNEXT))
-    {
-        TP_LOG(log_error, "Failed to initialise GETNEXT!");
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (EXSUCCEED!=tpadvertise("CHKFULL", CHKFULL))
-    {
-        TP_LOG(log_error, "Failed to initialise CHKFULL!");
-        ret=EXFAIL;
-        goto out;
-    }
-    
-out:
-
-	
+out:	
     return ret;
 }
 

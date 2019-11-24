@@ -342,10 +342,11 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     /* Check the service count already in system! */
     if (G_server_conf.adv_service_count+1>MAX_SVC_PER_SVR)
     {
-        ndrx_TPset_error_fmt(TPELIMIT, "Servce limit %d reached!", MAX_SVC_PER_SVR);
-        ret=EXFAIL;
-        goto out;
+        ndrx_TPset_error_fmt(TPELIMIT, "Service limit per process %d reached!", 
+                MAX_SVC_PER_SVR-ATMI_SRV_Q_ADJUST);
+        EXFAIL_OUT(ret);
     }
+    
     /* This will be the current, note that count is already lass then 1, 
      * and suites ok as index
      */
@@ -421,15 +422,23 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     if (G_shm_srv)
     {
 #ifdef EX_USE_SYSVQ
-        ndrx_shm_install_svc(entry_new->svc_nm, 0, ndrx_epoll_resid_get());
+        ret=ndrx_shm_install_svc(entry_new->svc_nm, 0, ndrx_epoll_resid_get());
 #else
-        ndrx_shm_install_svc(entry_new->svc_nm, 0, G_server_conf.srv_id);
+        ret=ndrx_shm_install_svc(entry_new->svc_nm, 0, G_server_conf.srv_id);
 #endif
     }
     
     /* Release semaphore! */
     if (G_shm_srv) ndrx_unlock_svc_op(__func__);
     /* ###################### CRITICAL SECTION, END ########################## */
+    
+    /* leftover from  ndrx_shm_install_svc() failure... */
+    if (EXSUCCEED!=ret)
+    {
+        ndrx_TPset_error_fmt(TPELIMIT, "Service shared memory is full. "
+                "Try to increase NDRX_SVCMAX");
+        EXFAIL_OUT(ret);
+    }
     
     /* Save the time when stuff is open! */
     ndrx_stopwatch_reset(&entry_new->qopen_time);

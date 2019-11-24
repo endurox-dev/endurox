@@ -113,7 +113,7 @@ extern "C" {
  * @{
  */    
 #define NDRX_LH_FLAG_ISUSED         0x0001  /**< Entry is used              */
-#define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry is used              */
+#define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry was used but now free*/
 /** @} */ /* end of linhash */
     
 /*---------------------------Enums--------------------------------------*/
@@ -169,6 +169,17 @@ typedef struct string_hash string_hash_t;
 struct string_hash
 {
     char *str;
+    EX_hash_handle hh;
+};
+
+/**
+ * Enduro/X integer mapping table
+ */
+typedef struct ndrx_intmap ndrx_intmap_t;
+struct ndrx_intmap
+{
+    int key;
+    int value;
     EX_hash_handle hh;
 };
 
@@ -337,6 +348,10 @@ extern NDRX_API void ndrx_storage_encode(long bytes, char *outbuf, int outbufsz)
 extern NDRX_API int ndrx_lh_position_get(ndrx_lh_config_t *conf, 
         void *key_get, size_t key_len, 
         int oflag, int *pos, int *have_value, char *key_typ);
+
+extern NDRX_API ndrx_intmap_t *ndrx_intmap_find (ndrx_intmap_t ** hash, int key);
+extern NDRX_API ndrx_intmap_t * ndrx_intmap_add (ndrx_intmap_t ** hash, int key, int value);
+extern NDRX_API void ndrx_intmap_remove (ndrx_intmap_t ** hash);
 
 #ifdef	__cplusplus
 }

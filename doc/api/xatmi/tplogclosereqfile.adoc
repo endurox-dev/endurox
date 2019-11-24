@@ -18,9 +18,14 @@ Link with '-lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Close currently open request logging facility. It is not a problem to call a function twice. If request logger is closed
-nothing will happen. With this function logger will be degraded to thread logging facility (if was open) or to process
-based logging.
+Close currently open request logging facility. It is not a problem to call 
+a function twice. If request logger is closed nothing will happen. With this 
+function logger will be degraded to thread logging facility (if was open) or 
+to process based logging.
+
+Function applies to all Enduro/X logging facilities: *TP*, *NDRX* and *UBF*,
+thus when request logging is closed, any facility is degraded thread or process
+logging.
 
 
 RETURN VALUE
@@ -41,7 +46,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplogclosethread(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* *tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogconfig(3)* *ex_devguide(guides)*
+*tplogclosethread(3)* *tplogsetreqfile_direct(3)* *tplogsetreqfile(3)* 
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogconfig(3)* *ex_devguide(guides)*
 
 COPYING
 -------

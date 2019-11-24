@@ -55,10 +55,29 @@ xadmin down -y
 xadmin qrmall test000
 rm *.log 2>/dev/null
 
+# cleanup any running clients...
+xadmin killall atmisv0 2>/dev/null
+xadmin killall atmiclt0 2>/dev/null
+xadmin killall atmiclt0_ 2>/dev/null
+
+RET=0
+
+# check locking..
+./atmiclt0_locks &
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start ./atmiclt0_locks"
+    RET=-1
+fi
+
 # Post the event
 (./atmiclt0 2>&1) > ./atmiclt0.log
 
-RET=$?
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start ./atmiclt0"
+    RET=-2
+fi
 
 # run queue tests...
 ./atmiclt0_mqsv &
@@ -85,7 +104,6 @@ fi
 
 xadmin killall atmisv0 2>/dev/null
 xadmin killall atmiclt0 2>/dev/null
-# kill both client & server
 xadmin killall atmiclt0_ 2>/dev/null
 
 popd 2>/dev/null
