@@ -61,9 +61,9 @@ void* t1(void *arg)
 
 void* t2(void *arg)
 {   
-        M_ptrs[2] = &M_field;
-	sleep(1);
-	return NULL;
+    M_ptrs[2] = &M_field;
+    sleep(1);
+    return NULL;
 }
 
 int main( int argc , char **argv )

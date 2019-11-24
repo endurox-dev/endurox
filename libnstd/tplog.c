@@ -202,10 +202,7 @@ expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
  */
 exprivate void logfile_change_prepare(ndrx_debug_t *l)
 {
-    if (    ((l->flags & LOG_FACILITY_NDRX) ||
-            (l->flags & LOG_FACILITY_UBF) ||
-            (l->flags & LOG_FACILITY_TP))
-            )
+    if ( l->swait > 0 && (l->flags & LOG_FACILITY_PROCESS) )
     {
         ndrx_dbg_lock();
         G_ndrx_debug_first=EXTRUE;
@@ -222,10 +219,7 @@ exprivate void logfile_change_prepare(ndrx_debug_t *l)
  */
 exprivate void logfile_change_done(ndrx_debug_t *l)
 {
-	if ((l->flags & LOG_FACILITY_NDRX) ||
-		(l->flags & LOG_FACILITY_UBF) ||
-		(l->flags & LOG_FACILITY_TP)
-		)
+	if ( l->swait > 0 && (l->flags & LOG_FACILITY_PROCESS) )
 	{
 		G_ndrx_debug_first=EXFALSE;
 		ndrx_dbg_unlock();

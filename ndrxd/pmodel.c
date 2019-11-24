@@ -808,7 +808,8 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
     }
     
     brd_begin_diff();
-    /* Delete the stuff out */
+    /* Delete the stuff out !!! Warning ! if server did add to shm but did not notify us
+     * there is chance that some services will be left hanging in SHM */
     DL_FOREACH_SAFE(p_pm->svcs,elt,tmp)
     {
         int last;

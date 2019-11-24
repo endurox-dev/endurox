@@ -186,15 +186,21 @@ expublic int sv_open_queue(void)
         if (use_sem)
         {
 #ifdef EX_USE_SYSVQ
-            ndrx_shm_install_svc(entry->svc_nm, 0, ndrx_epoll_resid_get());
+            ret=ndrx_shm_install_svc(entry->svc_nm, 0, ndrx_epoll_resid_get());
 #else
-            ndrx_shm_install_svc(entry->svc_nm, 0, G_server_conf.srv_id);
+            ret=ndrx_shm_install_svc(entry->svc_nm, 0, G_server_conf.srv_id);
 #endif
         }
 
         /* Release semaphore! */
         if (G_shm_srv && EXEOS!=entry->svc_nm[0]) ndrx_unlock_svc_op(__func__);
         /* ###################### CRITICAL SECTION, END ########################## */
+        
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Service shared memory full - currently ignore error!");
+            ret=EXSUCCEED;
+        }
         
         /* Save the time when stuff is open! */
         ndrx_stopwatch_reset(&entry->qopen_time);
@@ -259,7 +265,6 @@ expublic int sv_serve_call(int *service, int *status)
     tp_command_call_t * last_call;
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
-    atmi_lib_env_t * env = ndrx_get_G_atmi_env();
     
     call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
 

@@ -148,6 +148,7 @@ expublic int ndrx_lh_position_get(ndrx_lh_config_t *conf,
         NDRX_LOG(log_debug, "Got existing record at %d", try);
     }
     
+    start=try;
     *pos=EXFAIL;
     
     NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p oflag: %d", 
@@ -215,16 +216,20 @@ expublic int ndrx_lh_position_get(ndrx_lh_config_t *conf,
             break;
         case NDRX_LH_ENT_NONE:
             
-            if (overflow)
-            {
-                *have_value = EXFALSE;
-                ret = EXFALSE;   /* no position */
-            }
-            else
-            {
-                *have_value = EXFALSE;
-                ret = EXTRUE;   /* have position */
-            }
+                /* if last one is not used, either we hit it first on empty hash
+                 * or we started somewhere at the end, overflowed and hit
+                 * an empty cell..
+                 *  */
+                if (!(flags & NDRX_LH_FLAG_WASUSED))
+                {
+                    *have_value = EXFALSE;
+                    ret = EXTRUE;   /* has position */
+                }
+                else
+                {
+                    *have_value = EXFALSE;
+                    ret = EXFALSE;   /* no position */
+                }
             
             break;
         case NDRX_LH_ENT_MATCH:
