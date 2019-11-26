@@ -444,6 +444,8 @@ processing listings across all supported OSes.
 
 - Version 7.0.12 released on 13/11/2019 (stabel) Fixes on Bug #466
 
+- Version 7.0.14 released on 13/11/2019 (stabel) Fixes on Feature #470, Support #471, Support #473, Support #475
+
 # Build configurations
 
 ## Configure make with: 
