@@ -109,7 +109,7 @@ exprivate void lhtest_key_debug(ndrx_lh_config_t *conf, void *key_get,
 exprivate void lhtest_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, 
         size_t dbg_len)
 {
-    int val = TEST_INDEX(conf->memptr, idx)->some_val;
+    int val = TEST_INDEX(*conf->memptr, idx)->some_val;
     
     snprintf(dbg_out, dbg_len, "%d", val);
 }

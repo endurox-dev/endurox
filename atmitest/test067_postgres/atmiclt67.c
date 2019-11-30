@@ -461,7 +461,7 @@ int main(int argc, char** argv)
         }
         else if (0==strcmp("tout", argv[1]))
         {
-            if (EXSUCCEED!=tpbegin(60, 0))
+            if (EXSUCCEED!=tpbegin(80, 0))
             {
                 NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", 
                         tpstrerror(tperrno));
@@ -580,13 +580,11 @@ int main(int argc, char** argv)
     }
         
     /* set larger timeout, as in slow machines we might get timeout here...*/
-    tptoutset(90);
     if (EXSUCCEED!=tpcommit(0))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to commit: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
-    tptoutset(10);
     
     if (900!=(ret=(int)sql_count()))
     {
