@@ -53,7 +53,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 
-export NDRX_TOUT=15
+export NDRX_TOUT=55
 
 export NDRX_LIBEXT="so"
 
@@ -339,8 +339,8 @@ if [ "X$OUT" == "X" ]; then
     go_out 100
 fi
 
-echo "Wait 15 to finish Q off"
-sleep 15
+echo "Wait 45 to finish Q off"
+sleep 45
 
 echo "There should be 0 msg in table"
 (./atmiclt67 ck0 2>&1) >> ./atmiclt-dom1.log
