@@ -78,7 +78,7 @@ expublic int q_run(UBFH **pp_ub)
         sql_mktab();
         
         /* start tran... */
-        if (EXSUCCEED!=tpbegin(15, 0))
+        if (EXSUCCEED!=tpbegin(60, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: Failed to begin: %s", tpstrerror(tperrno));
             EXFAIL_OUT(ret);
@@ -116,7 +116,8 @@ expublic int q_run(UBFH **pp_ub)
         {
             if (2==i)
             {
-                sleep(20);
+                /* test the timeout of transaction / zapping by tmsrv ... */
+                sleep(70);
                 
                 if (EXSUCCEED==tpcommit(0L))
                 {

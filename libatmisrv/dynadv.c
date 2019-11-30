@@ -117,6 +117,7 @@ expublic int dynamic_readvertise(char *svcname)
     sleep(READVERTISE_SLEEP_SRV+mod);
     
     /* Now advertise back on! */
+    entry->q_descr = (mqd_t)EXFAIL;
     if (EXSUCCEED!=dynamic_advertise(entry, svcname, entry->p_func, entry->fn_nm))
     {
         NDRX_LOG(log_error, "Failed to advertise: [%s]", svcname);
@@ -474,6 +475,7 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     if (EXFAIL==ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
                             entry_new->q_descr, &ev))
     {
+        G_server_conf.adv_service_count--;
         ndrx_TPset_error_fmt(TPEOS, "ndrx_epoll_ctl failed: %s", 
                 ndrx_poll_strerror(ndrx_epoll_errno()));
         ret=EXFAIL;
@@ -492,6 +494,21 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
     }
 
 out:
+    
+    if (EXSUCCEED!=ret && (mqd_t)EXFAIL!=entry_new->q_descr)
+    {
+        /* we remove from poller, have it added there or not
+         * ignore error */
+        ndrx_epoll_ctl_mq(G_server_conf.epollfd, EX_EPOLL_CTL_DEL, 
+                entry_new->q_descr, NULL);
+        
+        /* close the queue, if needed to open. */
+        if (ndrx_epoll_shallopenq(ATMI_SRV_Q_ADJUST+G_server_conf.adv_service_count))
+        {
+            ndrx_mq_close(entry_new->q_descr);
+        }
+        
+    }
     return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

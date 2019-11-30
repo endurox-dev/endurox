@@ -336,7 +336,7 @@ exprivate int generate_files(void)
     int ret=EXSUCCEED;
     char *fname;
     FILE *inf=NULL, *outf=NULL;
-    char out_f_name[FILENAME_MAX+1];
+    char out_f_name[FILENAME_MAX+1]={EXEOS};
 
     _ubf_loader_init();
 
