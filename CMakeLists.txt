@@ -456,10 +456,20 @@ add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
 add_subdirectory (sampleconfig) #  For install
 
+#
+# Install license files
+#
 install (FILES
     LICENSE
     DESTINATION share/endurox)
 
+#
+# Install third party licenses
+#
+install (FILES
+    doc/third_party_licences.adoc
+    DESTINATION share/endurox
+    RENAME THIRD_PARTY_LICENCES)
 
 ################################################################################
 # uninstall target
