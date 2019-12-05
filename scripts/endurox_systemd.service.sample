@@ -1,0 +1,25 @@
+[Unit]
+Description=Enduro/X Service
+After=network.target
+
+[Service]
+Type=forking
+User=user1
+ExecStart=/bin/bash -c "source /home/user1/endurox/sampleconfig/setndrx; xadmin start -y"
+ExecStop=/bin/bash -c "source /home/user1/endurox/sampleconfig/setndrx; xadmin stop -y"
+#
+# configure tprecover to reboot ndrxd in recovery mode.
+# otherwise we may get corrupted system with several ndrxd's
+#
+Restart=no
+# stack size in bytes shall match the ulimit in setndrx (or little higher)
+# note that scripts sets ulimit in kbytes
+LimitSTACK=314890240
+LimitMSGQUEUE=infinity
+#
+# pid of ndrxd, see [@global]/NDRX_DPID setting of the app.ini
+#
+PIDFile=/tmp/ndrxd.pid
+
+[Install]
+WantedBy=multi-user.target
