@@ -53,6 +53,7 @@ export PATH=$PATH:$TESTDIR
 
 xadmin killall atmi.sv65 2>/dev/null
 xadmin killall atmiclt65 2>/dev/null
+xadmin down -y
 
 # client timeout
 export NDRX_TOUT=10
