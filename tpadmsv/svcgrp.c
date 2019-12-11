@@ -124,7 +124,7 @@ exprivate int ndrx_adm_svcgrp_proc_list(command_reply_t *reply, size_t reply_len
         goto out;
     }
     
-    NDRX_LOG(log_debug, "psc out srvid: [%dd]", psc_info->srvid);
+    NDRX_LOG(log_debug, "psc out srvid: [%d]", psc_info->srvid);
     
     for (i=0; i<psc_info->svc_count; i++)
     {
