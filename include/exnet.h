@@ -129,7 +129,7 @@ extern int exnet_close_shut(exnetcon_t *net);
 extern int exnet_set_timeout(exnetcon_t *net, int timeout);
 extern void exnet_reset_struct(exnetcon_t *net);
 extern int exnet_net_init(exnetcon_t *net);
-extern int exnet_configure_client_sock(exnetcon_t *net);
+extern int exnet_configure_setopts(exnetcon_t *net);
 extern int exnet_bind(exnetcon_t *net);
 
 extern void exnet_rwlock_read(exnetcon_t *net);

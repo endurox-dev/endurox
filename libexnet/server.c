@@ -143,7 +143,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     client->port = ntohs(clt_address.sin_port);\
     NDRX_LOG(log_warn, "Got call from: %s:%u", client->addr, client->port);\
     \
-    if (EXSUCCEED!=exnet_configure_client_sock(client))\
+    if (EXSUCCEED!=exnet_configure_setopts(client))\
     {\
         NDRX_LOG(log_error, "Failed to configure client socket");\
         ret=EXFAIL;\
@@ -293,7 +293,6 @@ expublic int exnet_bind(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
     char *fn = "exnet_bind";
-    int enable = EXTRUE;
     
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -303,10 +302,10 @@ expublic int exnet_bind(exnetcon_t *net)
                                 strerror(errno));
         EXFAIL_OUT(ret);
     }
-
-    if (setsockopt(net->sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    
+    if (EXSUCCEED!=exnet_configure_setopts(net))
     {
-        NDRX_LOG(log_error, "Failed to set SO_REUSEADDR: %s", strerror(errno));
+        NDRX_LOG(log_error, "Failed to set socket opts!");
         EXFAIL_OUT(ret);
     }
     

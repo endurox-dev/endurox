@@ -720,25 +720,33 @@ out:
 }
 
 /**
- * Configure socket
- * @param net
- * @return 
+ * Configure socket / set standard options
+ * @param net client/server handler (including listener)
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int exnet_configure_client_sock(exnetcon_t *net)
+expublic int exnet_configure_setopts(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
     struct timeval tv;
     int flag = 1;
     int result;
-    
+    struct linger l;
+    int enable = EXTRUE;
+
     /* We want to poll the stuff */
     if (EXFAIL==fcntl(net->sock, F_SETFL, O_NONBLOCK))
     {
         NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
                                 strerror(errno));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
+    
+    if (setsockopt(net->sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    {
+        NDRX_LOG(log_error, "Failed to set SO_REUSEADDR: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
 
     if (EXFAIL==(result = setsockopt(net->sock,            /* socket affected */
                             IPPROTO_TCP,     /* set option at TCP level */
@@ -750,9 +758,18 @@ expublic int exnet_configure_client_sock(exnetcon_t *net)
 
         NDRX_LOG(log_error, "Failed set socket non blocking!: %s",
                                 strerror(errno));
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
+    
+    /* set no linger */
+    l.l_onoff=0;
+    l.l_linger=0;
+    if(setsockopt(net->sock, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) < 0)
+    {
+        NDRX_LOG(log_error, "Failed to set SO_LINGER: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
 
 /* this is not workin on solaris 10... */
 #if EX_OS_SUNOS && EX_LSB_RELEASE_VER_MAJOR == 5 && EX_LSB_RELEASE_VER_MINOR == 10
@@ -795,7 +812,7 @@ exprivate int open_socket(exnetcon_t *net)
     }
     
     /* Configure socket */
-    if (EXSUCCEED!=exnet_configure_client_sock(net))
+    if (EXSUCCEED!=exnet_configure_setopts(net))
     {
         EXFAIL_OUT(ret);
     }
