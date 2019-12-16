@@ -957,7 +957,7 @@ open, then other writes will not be able to process it in meantime. While read
 only transactions are processed, while some other process holds write transaction.
 Also if process which is holding the lock is crashed (e.g. segfaul, kill, etc..),
 then lock is automatically made free. Thus for example is using *hits* or *lru*
-limitation caches, then this automatically means that during the tpcall() chaches
+limitation caches, then this automatically means that during the tpcall() caches
 needs to be updated, thus lock is needed, and this means that all callers will
 have to sync in that place - thus makes point of bottleneck.
 
@@ -969,23 +969,24 @@ describe the basic elements how to monitor Enduro/X with help of this tool
 
 Enduro/X exposes following list of the tables which can monitor:
 
-- *Tuxedo.Clients* - information about client processes.
+- *Endurox.Clients* - information about client processes.
 
-- *Tuxedo.Machines* - information about cluster machines.
+- *Endurox.Machines* - information about cluster machines.
 
-- *Tuxedo.Queues* - information about local queues.
+- *Endurox.Queues* - information about local queues.
 
-- *Tuxedo.ServerInstances* - information about XATMI server processes.
+- *Endurox.ServerInstances* - information about XATMI server processes.
 
-- *Tuxedo.ServiceGroups* - dynamic information about XATMI services.
+- *Endurox.ServiceGroups* - dynamic information about XATMI services.
 
-- *Tuxedo.Services* - static information about XATMI services.
+- *Endurox.Services* - static information about XATMI services.
 
 To start the Enduro/X monitoring with the NetXMS, firstly the agent must be compiled
 with Enduro/X support. Thus the system has to have compiler installed and access
 to Internet must be (for fetching the sources from the github).
 
 === Building the Agent
+
 To build the agent, system must have C/C++ compiler installed and "git" tool too.
 Basically if Enduro/X build dependencies are met on the host, then Netxms agent
 will build too. For more details consult with the project specific documentation.
@@ -1014,6 +1015,8 @@ LogFile=/var/log/nxagentd
 # IP white list, can contain multiple records separated by comma.
 # CIDR notation supported for subnets.
 MasterServers=127.0.0.0/8,172.17.0.1,192.168.43.98
+ServerConnection=192.168.43.98
+SubAgent=tuxedo.nsm
 
 EOF
 
@@ -1044,7 +1047,7 @@ In case of CPMSRV, following can be used as configuration:
         <!-- Client section -->
         <clients>
 ...
-                <client cmdline="/path/to/install/bin/nxagentd -D5" log="/tmp/nxagentd.log">
+                <client cmdline="/path/to/install/bin/nxagentd -D5 -c/etc/nxagentd.conf" log="/tmp/nxagentd.log">
                         <exec tag="NXAGENT" autostart="Y" />
                 </client>
 ...
@@ -1101,7 +1104,7 @@ To return the values from particular table, use following command:
 
 --------------------------------------------------------------------------------
 
-$ nxget -T <agent ip> <table name e.g. Tuxedo.Clients>
+$ nxget -T <agent ip> <table name e.g. Endurox.Clients>
 
 --------------------------------------------------------------------------------
 
