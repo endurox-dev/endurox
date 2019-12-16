@@ -257,7 +257,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         /* scan for the elements */
         if (EXSUCCEED!=ndrx_sem_rwlock(sem, 0, NDRX_SEM_TYP_READ))
         {
-            goto out;
+            EXFAIL_OUT(ret);
         }
         
         NDRX_LOG(log_debug, "Build up the hash of SHM");
@@ -279,6 +279,10 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                             sizeof(ndrx_adm_client_t), strerror(err));
                     userlog("Failed to calloc of %d bytes failed: %s",
                             sizeof(ndrx_adm_client_t), strerror(err));
+
+                    /* Have unlock Support #443 */
+                    ndrx_sem_rwunlock(sem, 0, NDRX_SEM_TYP_READ);
+
                     EXFAIL_OUT(ret);
                 }
                 
@@ -309,8 +313,9 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                 
             } /* if used */
         }
-        
-        ndrx_sem_rwunlock(sem, 0, NDRX_SEM_TYP_WRITE);
+
+        /* Bug #443, use correct operation type... */
+        ndrx_sem_rwunlock(sem, 0, NDRX_SEM_TYP_READ);
     }
     
     /* merge the clients.. */

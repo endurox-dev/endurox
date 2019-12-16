@@ -119,7 +119,7 @@ expublic int userlog (char *data, ...)
         fopened=1;
     }
     
-    snprintf(pre, sizeof(pre), "%5ld:%08ld:%06ld%02ld:%-12.12s:",
+    snprintf(pre, sizeof(pre), "%05lu:%08ld:%06ld%02ld:%-12.12s:",
             (long)pid, ldate, ltime,
                     (long)time_val.tv_usec/10000, EX_PROGNAME);
 
