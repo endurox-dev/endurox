@@ -17,7 +17,7 @@ https://github.com/benhoyt/inih
 #include <ndebug.h>
 #include <ndrstandard.h>
 
-#include "ini.h"
+#include "ndrx_ini.h"
 #include "userlog.h"
 
 #if !INI_USE_STACK
@@ -76,7 +76,7 @@ static char* strncpy0(char* dest, const char* src, size_t size)
  * mvitolin: TODO: Add support for multi-line value for single call of the handler
  * Needs to do some buffering...
  */
-int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
+int ndrx_ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
                      void* user, void *user2, void *user3)
 {
     /* Uses a fair bit of stack (use heap instead if you need to) */
@@ -274,14 +274,14 @@ line_buffered:
 }
 
 /* See documentation in header file. */
-int ini_parse_file(FILE* file, ini_handler handler, void* user, void *user2, 
+int ndrx_ini_parse_file(FILE* file, ini_handler handler, void* user, void *user2, 
         void *user3)
 {
-    return ini_parse_stream((ini_reader)fgets, file, handler, user, user2, user3);
+    return ndrx_ini_parse_stream((ini_reader)fgets, file, handler, user, user2, user3);
 }
 
 /* See documentation in header file. */
-int ini_parse(const char* filename, ini_handler handler, void* user, 
+int ndrx_ini_parse(const char* filename, ini_handler handler, void* user, 
         void *user2, void *user3)
 {
     FILE* file;
@@ -290,7 +290,7 @@ int ini_parse(const char* filename, ini_handler handler, void* user,
     file = NDRX_FOPEN(filename, "r");
     if (!file)
         return -1;
-    error = ini_parse_file(file, handler, user, user2, user3);
+    error = ndrx_ini_parse_file(file, handler, user, user2, user3);
     NDRX_FCLOSE(file);
     return error;
 }
