@@ -499,7 +499,11 @@ exprivate int get_data_carr (struct dtype_str *t, char *fb, char *buf, int *len)
     {
         /* copy the data */
         memcpy(buf, carr->carr, carr->dlen);
-        *len=carr->dlen;
+        /* Bug #495 */
+        if (NULL!=len)
+        {
+            *len=carr->dlen;
+        }
     }
 out:
     return ret;
