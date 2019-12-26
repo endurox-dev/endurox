@@ -24,7 +24,7 @@ class JavaClient extends WizardBase {
     </ order=2, name = "Use UBF?", type = "yn"/> 
     useubf = "y";
 
-    </ order=3, name = "Service name to cal", type = "path", min=1, max=30,
+    </ order=3, name = "Service name to call", type = "path", min=1, max=30,
             depend="(::prov.useubf==\"y\")" /> 
     svcname = "TESTSV";
 
