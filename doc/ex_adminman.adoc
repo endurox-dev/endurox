@@ -1118,7 +1118,12 @@ Firstly in Configure Data Collection Items (DCI) for new item. For example:
 image:netxms_new_dci.png[caption="Figure 2: ", title="New DCI", alt="New DIC"]
 
 *NOTE*: As Enduro/X uses comma in identifiers, then in templates quotes must be
-used surrounding "'{instance}'" placeholder.
+used surrounding "'{instance}'" placeholder. For following classes quotes are needed:
+
+- Endurox.Queue
+
+- Endurox.Clients
+
 
 Next configure agent list from which to discover the items:
 
