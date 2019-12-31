@@ -1195,20 +1195,19 @@ variable is available (i.e. script will be executed for some node/server monitor
 --------------------------------------------------------------------------------
 
 //Convert Enduro/X parameter state to number
-//@param node is server node (i.e. $node) on which script is exectued
 //@param parameter is parameter name like "EnduroX.Client.State('2/TXUPLD/RUN7/1')"
 // which is being monitored
 //@return 0 - parameter not found or not ACT, 1 - Parameter found and is ACT
-sub NdrxState2Num(node, parameter)
+sub NdrxState2Num(parameter)
 {
-    v = AgentReadParameter($node, parameter);
+   v = AgentReadParameter($node, parameter);
 
-    if (null==v)
+   if (null==v)
 	{
 		return 0;
 	}
 
-    if (v=="ACT")
+   if (v=="ACT")
 	{
 		return 1;
 	}
@@ -1216,12 +1215,29 @@ sub NdrxState2Num(node, parameter)
     return 0;
 }
 
+
+//If called from DCI...
+//return NdrxState2Num($1);
+
 --------------------------------------------------------------------------------
 
 To register script, it NetXMS Management Console, go to *Configuration > Script Library*
 and in the window press left mouse button "New..." to create a new script. The
 name may be the same 'NdrxState2Num'. Copy the contents there in the window and
 save.
+
+To call the *NdrxState2Num()* from DCI, create a wrapper script like this and save
+with name *NdrxState2NumDci* under the Script Library.
+
+--------------------------------------------------------------------------------
+
+use NdrxState2Num;
+
+//Wrapper for DCI
+return NdrxState2Num($1);
+
+--------------------------------------------------------------------------------
+
 
 To have status monitor indicators, next step is to create a business service. 
 For example we want to monitor following 7 processes (IDs for clients, get by 
@@ -1452,31 +1468,93 @@ sub NdrxGet(tableName, keyColName, keyExpr, aggrFunc, aggrCol)
 	return ret;
 }
 
+//To test:
 //return NdrxGet("Endurox.ServiceGroups", "SVCNAME", "^DEBIT$", "sum", "COMPLETED");
 //return NdrxGet("Endurox.ServiceGroups", "SVCNAME", "^DEBIT$", "avg", "COMPLETED");
 //return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "min", "COMPLETED");
 //return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "max", "COMPLETED");
-return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "avg", "COMPLETED");
+//return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "avg", "COMPLETED");
+
+//To start the script from DCI, we need to actually call it:
+//return NdrxGet($1, $2, $3, $4, $5);
 
 --------------------------------------------------------------------------------
 
 Store the script in library as "NdrxGet".
 
+To run "NdrxGet" from DCI, lets create a wrapper script and save it as *NdrxGetDci*
+in script library.
+
+--------------------------------------------------------------------------------
+use NdrxGet;
+
+//Call this from DCI, pass the arguments
+//as: NdrxGet("Endurox.ServiceGroups","SVCNAME","HANDLER","sum","FAILED")
+return NdrxGet($1, $2, $3, $4, $5);
+--------------------------------------------------------------------------------
+
 To create Some Data Collection Items based on these script, for hosts, DCI items
-can be created. For demo purposes following DCI items will be created:
+can be created. Document shows how to create following data collection items:
 
-- Total processed items to see the system TPS;
+==== Average response time over several servers for one service;
 
-- Total successful transactions for some service;
+The average response time here is measured for service named "HANDLER".
 
-- Total failed transaction for some service;
+- DCI Origin: Script;
 
-- Total number of servers for some service;
+- Parameter: NdrxGetDci("Endurox.ServiceGroups","SVCNAME","HANDLER","avg","EXECTIME_LAST");
 
-To create *DCI*, find the host in *Objects* navigator, in Context menu chose
-*Data Collection Configuration* and press *New parameter* (either in Context menu
-or on right top side):
+- Data Type: Float
 
+
+image:netxms_avg_rsp.png[caption="Figure 6: ", title="Average response time"]
+
+
+==== Number of successful processed messages for one service with several servers;
+
+Number of successful messages processed here are measured for "HANDLER" service.
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.ServiceGroups","SVCNAME","HANDLER","sum","SUCCESSFUL")
+
+- Data Type: Integer
+
+image:netxms_succ.png[caption="Figure 7: ", title="Successful requests processed by service copies"]
+
+
+==== Cumulative number of messages waiting in queues (for all services);
+
+This indicator usually shall be very small like 0..1..2, if it grows higher, then
+this indicates that system is unable to cope with the workload. This value is recommended
+to be monitored.
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.Queues","NAME",".*","sum","RQ_CURRENT");
+
+- Data Type: Integer
+
+image:netxms_qsize.png[caption="Figure 8: ", title="Number of messages in queue"]
+
+
+==== TPS for one service with several servers;
+
+Also it is useful to monitor the number system throughput. This shall be done
+one some 'main' service which handles all the incoming traffic. In this case
+service "HANDLER" is monitored.
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.ServiceGroups","SVCNAME","HANDLER","sum","COMPLETED");
+
+- Data Type: Integer
+
+- Transformation: Average delta per second
+
+image:netxms_tps.png[caption="Figure 9: ", title="TPS Configuration"]
+
+image:netxms_tps_transf.png[caption="Figure 10: ", title="TPS transformation"]
 
 
 :numbered!:
