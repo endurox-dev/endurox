@@ -334,8 +334,6 @@ out:
 expublic int ndrx_init(int argc, char** argv)
 {
     int ret=EXSUCCEED;
-    extern char *optarg;
-    extern int optind, optopt, opterr;
     int c;
     int dbglev;
     char *p;

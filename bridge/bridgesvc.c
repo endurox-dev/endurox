@@ -52,10 +52,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
+#include <unistd.h>    /* for getopt */
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -71,8 +68,6 @@
 #include "bridge.h"
 #include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
