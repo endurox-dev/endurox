@@ -449,6 +449,8 @@ processing listings across all supported OSes.
 
 - Version 7.0.16 released on 16/11/2019 (stabel) Fixes on Support #443, Support #493
 
+- Version 7.0.16 released on 01/01/2020 (stabel) Fixes on Bug #412
+
 # Build configurations
 
 ## Configure make with: 
