@@ -99,6 +99,9 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
 * Starting with version 5.2 Enduro/X provides configuration data encryption feature, 
         so that software which is built on top of Enduro/X may comply with 
         Payment Card Industry Data Security Standard (PCI/DSS).
+* Application monitoring with TM_MIB interface. For example NetXMS.
+* XA Driver for PostgreSQL.
+      
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
