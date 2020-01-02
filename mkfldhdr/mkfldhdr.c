@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <atmi.h>
+#include <unistd.h>    /* for getopt */
 
 #include <ubf.h>
 #include <ferror.h>
@@ -52,7 +53,6 @@
 #include <ndebug.h>
 #include "mkfldhdr.h"
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
