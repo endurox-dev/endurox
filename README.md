@@ -177,6 +177,14 @@ without service interruption. This is achieved by following scheme:
 
 ![Alt text](doc/rt-patching.png?raw=true "Enduro/X real time patching")
 
+# Monitoring
+
+Enduro/X provides TM_MIB API for information reading. Out of the box NetXMS 
+monitoring suite uses this API to monitor application. Thus full featured
+monitoring is possible.
+
+[![Enduro/X monitoring with NetXMS](https://img.youtube.com/vi/ubJk27bjKGE/0.jpg)](https://www.youtube.com/watch?v=ubJk27bjKGE)
+
 # Performance
 
 Due to fact that Enduro/X uses memory based queues, performance numbers are 
