@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <signal.h>
+#include <unistd.h>    /* for getopt */
 
 #include <atmi.h>
 #include <atmi_int.h>
@@ -48,10 +49,6 @@
 #include <ubf.h>
 #include <ubf_int.h>
 #include <ndebug.h>
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #include <atmi_cache.h>
 #include "tpcached.h"

@@ -48,6 +48,7 @@ Source project or Commercial license Acquired from Mavimax Ltd
 
 EnduroX have bindings for:
 - Golang (client & server)
+- Java (client & server)
 - PHP (client)
 - Perl (client & server)
 - Python (client & server)
@@ -447,6 +448,8 @@ processing listings across all supported OSes.
 - Version 7.0.14 released on 13/11/2019 (stabel) Fixes on Feature #470, Support #471, Support #473, Support #475
 
 - Version 7.0.16 released on 16/11/2019 (stabel) Fixes on Support #443, Support #493
+
+- Version 7.0.16 released on 01/01/2020 (stabel) Fixes on Bug #412
 
 # Build configurations
 

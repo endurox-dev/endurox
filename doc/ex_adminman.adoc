@@ -1118,7 +1118,12 @@ Firstly in Configure Data Collection Items (DCI) for new item. For example:
 image:netxms_new_dci.png[caption="Figure 2: ", title="New DCI", alt="New DIC"]
 
 *NOTE*: As Enduro/X uses comma in identifiers, then in templates quotes must be
-used surrounding "'{instance}'" placeholder.
+used surrounding "'{instance}'" placeholder. For following classes quotes are needed:
+
+- Endurox.Queue
+
+- Endurox.Clients
+
 
 Next configure agent list from which to discover the items:
 
@@ -1152,6 +1157,404 @@ In the results in latest values new instances can be seen. In particular case
 status of clients are monitored:
 
 image:netxms_clients_list.png[caption="Figure 4: ", title="Clients list", alt="Clients list"]
+
+
+=== Configuration recipes for monitoring
+
+This chapter will give some recipes how to efficiently configure the NetXMS monitoring
+system, to show following items on the dashboard:
+
+- Show the single client process status (dead or running).
+
+- Show the status for the group of processes or services (get the number of
+running instances) and show the last response times in the group of services.
+
+- Show the total number of processed messages for some services and calculate the
+TPS. Also calculate the total failed messages.
+
+The solution is based on NetXMS 3.1 version (2019), where status indicator is only
+available for Nodes and business services. This tutorial will use business services
+for status indicators. Data for monitoring can be gathered in two ways, one is
+by using DCI (GetDCIValues() (with last 60 seconds visibility to not to see removed DCIs) and 
+other is by direct parameter readings (AgentReadTable() and AgentReadParameter()).
+
+This tutorial will use AgentRead functions.
+
+=== Client status monitoring
+
+For XATMI status monitoring, script will be created which will check the presence
+for particular parameter and check that value matches 'ACT' constant. If it matches,
+then script returns value *1*, if it does not matches or parameter is not present,
+then script returns value *0*.
+
+Further this script can be used for building business service or for building
+new DCI, to get numeric value for client process status. This assumes that $node
+variable is available (i.e. script will be executed for some node/server monitored).
+
+
+--------------------------------------------------------------------------------
+
+//Convert Enduro/X parameter state to number
+//@param parameter is parameter name like "EnduroX.Client.State('2/TXUPLD/RUN7/1')"
+// which is being monitored
+//@return 0 - parameter not found or not ACT, 1 - Parameter found and is ACT
+sub NdrxState2Num(parameter)
+{
+   v = AgentReadParameter($node, parameter);
+
+   if (null==v)
+	{
+		return 0;
+	}
+
+   if (v=="ACT")
+	{
+		return 1;
+	}
+
+    return 0;
+}
+
+
+//If called from DCI...
+//return NdrxState2Num($1);
+
+--------------------------------------------------------------------------------
+
+To register script, it NetXMS Management Console, go to *Configuration > Script Library*
+and in the window press left mouse button "New..." to create a new script. The
+name may be the same 'NdrxState2Num'. Copy the contents there in the window and
+save.
+
+To call the *NdrxState2Num()* from DCI, create a wrapper script like this and save
+with name *NdrxState2NumDci* under the Script Library.
+
+--------------------------------------------------------------------------------
+
+use NdrxState2Num;
+
+//Wrapper for DCI
+return NdrxState2Num($1);
+
+--------------------------------------------------------------------------------
+
+
+To have status monitor indicators, next step is to create a business service. 
+For example we want to monitor following 7 processes (IDs for clients, get by 
+'$ nxget -T 127.0.0.1 Endurox.Clients' or '$ xadmin mibget -c T_CLIENT'):
+
+- 2/TXUPLD/RUN1/1
+
+- 2/TXUPLD/RUN2/1
+
+- 2/TXUPLD/RUN3/1
+
+- 2/TXUPLD/RUN4/1
+
+To do this, in left menu under the "Business Services", new "Business Service"
+needs to be created under which "Node link" must be added only then "Service check..."
+shall be added. In other combination it wont work, and you will see question marks
+in the icon tree of NetXMS console.
+
+To use NdrxState2Num() script for process checking in business service, following
+script can be used:
+
+--------------------------------------------------------------------------------
+//Use script library
+use NdrxState2Num;
+
+if (0==NdrxState2Num("EnduroX.Client.State('2/TXUPLD/RUN1/1')"))
+{
+	return FAIL;	
+}
+
+return OK;
+--------------------------------------------------------------------------------
+
+image:netxms_service_chk.png[caption="Figure 5: ", title="Business Service for status indicator"]
+
+
+=== Getting the number of servers, response times, etc. for the XATMI services
+
+To get the number of service providers (XATMI servers advertising the service) and other aggregated 
+data, analysis will be done on Agent tables, for example "Endurox.ServiceGroups".
+
+Script function will be created which provides following aggregation options:
+
+- min - return min value found for the group;
+
+- max - return max value found in the group;
+
+- avg - return average value of all matched items;
+
+- sum - sum of the matched items.
+
+- cnt - count of the items matched.
+
+Function shall accept following arguments:
+
+- Table name;
+
+- Key column name;
+
+- Key value name;
+
+- Aggregation column name;
+
+So firstly to see the columns available for data analysis, you may use following script
+(execute server script on the Node, i.e. Shift+Alt+S):
+
+--------------------------------------------------------------------------------
+t = AgentReadTable($node, "Endurox.ServiceGroups");
+
+if (null==t)
+{
+	return "Table is not found? Is Agent configured for Enduro/X?";
+
+}
+
+for (c : t->columns) {
+	print(c->name . " | ");
+}
+
+println("");
+
+for (row : t->rows) {
+	for(cell : row->values) {
+		print(cell . " | ");
+	}
+
+	println("");
+}
+--------------------------------------------------------------------------------
+
+Sample output could be:
+
+--------------------------------------------------------------------------------
+*** FINISHED ***
+
+Result: (null)
+
+SVCNAME | SRVGROUP | LMID | GROUPNO | RQADDR | STATE | RT_NAME | LOAD | PRIO | COMPLETED | QUEUED | SUCCESSFUL | FAILED | EXECTIME_LAST | EXECTIME_MAX | EXECTIME_MIN | 
+@CCONF | 2/1 | 2 | 0 |  | ACT |  | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+@CCONF | 2/2 | 2 | 0 |  | ACT |  | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 
+.TMIB | 2/10 | 2 | 0 |  | ACT |  | 0 | 0 | 1094 | 0 | 1094 | 0 | 0 | 4000 | 0 | 
+.TMIB-2-10 | 2/10 | 2 | 0 |  | ACT |  | 0 | 0 | 9 | 0 | 9 | 0 | 0 | 0 | 0 | 
+.TMIB | 2/11 | 2 | 0 |  | ACT |  | 0 | 0 | 31 | 0 | 31 | 0 | 0 | 2000 | 0 | 
+.TMIB-2-11 | 2/11 | 2 | 0 |  | ACT |  | 0 | 0 | 5 | 0 | 5 | 0 | 0 | 0 | 0 | 
+DEBIT | 2/80 | 2 | 0 |  | ACT |  | 0 | 0 | 83649 | 0 | 83649 | 0 | 29000 | 35000 | 0 | 
+DEBIT | 2/81 | 2 | 0 |  | ACT |  | 0 | 0 | 83629 | 0 | 83629 | 0 | 24000 | 32000 | 0 | 
+CREDIT | 2/140 | 2 | 0 |  | ACT |  | 0 | 0 | 163463 | 0 | 163463 | 0 | 0 | 6000 | 0 | 
+CREDIT | 2/141 | 2 | 0 |  | ACT |  | 0 | 0 | 3788 | 0 | 3788 | 0 | 0 | 4000 | 0 | 
+CREDIT | 2/142 | 2 | 0 |  | ACT |  | 0 | 0 | 27 | 0 | 27 | 0 | 0 | 1000 | 0 | 
+HANDLER | 2/240 | 2 | 0 |  | ACT |  | 0 | 0 | 55878 | 0 | 55878 | 0 | 36000 | 56000 | 0 | 
+HANDLER | 2/241 | 2 | 0 |  | ACT |  | 0 | 0 | 55647 | 0 | 55647 | 0 | 29000 | 58000 | 0 | 
+HANDLER | 2/242 | 2 | 0 |  | ACT |  | 0 | 0 | 55753 | 0 | 55753 | 0 | 32000 | 57000 | 0 | 
+@CPMSVC | 2/9999 | 2 | 0 |  | ACT |  | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 
+--------------------------------------------------------------------------------
+
+Thus following script function, can be written to get the count of the services
+advertised:
+
+--------------------------------------------------------------------------------
+
+//Match the table entry, get the count
+//@param tableName e.g. "Endurox.ServiceGroups"
+//@param keyColName to on which perform testings, to count on, .e.g "SVCNAME"
+//@param keyExpr regular expression to match given name, e.g. "^@CCONF$"
+//@param aggrFunc aggregation function name - min, max, sum, avg, cnt
+//@param aggrCol aggregation column used for min, max, sum and avg.
+//@return aggregated value
+sub NdrxGet(tableName, keyColName, keyExpr, aggrFunc, aggrCol)
+{
+	ret = 0;
+	t = AgentReadTable($node, tableName);
+	
+	if (null==t)
+	{
+	    return null;
+	}
+	
+	key_col = -1;
+	agg_col = -1;
+	
+	for(i = 0; i < t->columnCount; i++)
+	{
+	    if (t->getColumnName(i) == keyColName)
+	    {
+				chk_col=i;
+	    }
+	    else if (t->getColumnName(i) == aggrCol)
+	    {
+	        agg_col=i;
+	    }
+	
+	}
+	
+	//No column found..
+	if (-1==chk_col)
+	{
+		print("ERROR! Key column not found: ".keyColName."\n");
+		return null;
+	}
+	
+	if (-1==agg_col && (aggrFunc=="min" || aggrFunc=="max" || aggrFunc=="sum" || aggrFunc=="avg"))
+	{
+		print("ERROR! Aggregation column not found: ".aggrCol."\n");
+	   return null;
+	}
+	
+	match_rows = 0;
+	// Process the data...
+	for(i = 0; i < t->rowCount; i++)
+	{
+	    keycolvalue = t->get(i, chk_col);
+	
+	    if (keycolvalue ~= keyExpr)
+	    {
+	    	match_rows++;
+	    
+	    	if (aggrFunc=="cnt")
+	    	{
+	    		ret++;
+	    	}
+	    	else
+	    	{
+				data = t->get(i, agg_col);
+				
+				//print("AGG: ".data."\n");
+				
+		    	if (aggrFunc=="sum" || aggrFunc=="avg")
+		    	{
+		    		ret+=data;
+		    	}
+		    	else if (aggrFunc=="min")
+		    	{
+					if (1==match_rows)
+					{
+						ret = data;
+					}
+					else if( data < ret )
+					{
+						 ret = data;
+					}
+		    	}
+		    	else if (aggrFunc=="max")
+		    	{
+					if (1==match_rows)
+					{
+						ret = data;
+					}
+					else if( data > ret )
+					{
+						ret = data;
+					}
+		    	}
+
+		    	first=0;
+	    	}
+	    }
+	}
+	
+	if (0==match_rows && (aggrFunc=="min" || aggrFunc=="max" || aggrFunc=="sum" || aggrFunc=="avg"))
+	{
+		ret = null;
+	}
+	else if (aggrFunc=="avg")
+	{
+		ret = ret/match_rows;
+	}
+	
+	return ret;
+}
+
+//To test:
+//return NdrxGet("Endurox.ServiceGroups", "SVCNAME", "^DEBIT$", "sum", "COMPLETED");
+//return NdrxGet("Endurox.ServiceGroups", "SVCNAME", "^DEBIT$", "avg", "COMPLETED");
+//return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "min", "COMPLETED");
+//return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "max", "COMPLETED");
+//return NdrxGet("Endurox.ServiceGroups", "SVCNAME", ".TMIB", "avg", "COMPLETED");
+
+//To start the script from DCI, we need to actually call it:
+//return NdrxGet($1, $2, $3, $4, $5);
+
+--------------------------------------------------------------------------------
+
+Store the script in library as "NdrxGet".
+
+To run "NdrxGet" from DCI, lets create a wrapper script and save it as *NdrxGetDci*
+in script library.
+
+--------------------------------------------------------------------------------
+use NdrxGet;
+
+//Call this from DCI, pass the arguments
+//as: NdrxGet("Endurox.ServiceGroups","SVCNAME","HANDLER","sum","FAILED")
+return NdrxGet($1, $2, $3, $4, $5);
+--------------------------------------------------------------------------------
+
+To create Some Data Collection Items based on these script, for hosts, DCI items
+can be created. Document shows how to create following data collection items.
+
+==== DCI: Average response time over several servers for one service
+
+The average response time here is measured for service named "HANDLER".
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.ServiceGroups","SVCNAME","HANDLER","avg","EXECTIME_LAST");
+
+- Data Type: Float
+
+
+image:netxms_avg_rsp.png[caption="Figure 6: ", title="Average response time"]
+
+
+==== DCI: Number of successful processed messages for one service with several servers
+
+Number of successful messages processed here are measured for "HANDLER" service.
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.ServiceGroups","SVCNAME","HANDLER","sum","SUCCESSFUL")
+
+- Data Type: Integer
+
+image:netxms_succ.png[caption="Figure 7: ", title="Successful requests processed by service copies"]
+
+
+==== DCI: Cumulative number of messages waiting in queues (for all services)
+
+This indicator usually shall be very small like 0..1..2, if it grows higher, then
+this indicates that system is unable to cope with the workload. This value is recommended
+to be monitored.
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.Queues","NAME",".*","sum","RQ_CURRENT");
+
+- Data Type: Integer
+
+image:netxms_qsize.png[caption="Figure 8: ", title="Number of messages in queue"]
+
+
+==== DCI: TPS for one service with several servers
+
+Also it is useful to monitor the number system throughput. This shall be done
+one some 'main' service which handles all the incoming traffic. In this case
+service "HANDLER" is monitored.
+
+- DCI Origin: Script;
+
+- Parameter: NdrxGetDci("Endurox.ServiceGroups","SVCNAME","HANDLER","sum","COMPLETED");
+
+- Data Type: Integer
+
+- Transformation: Average delta per second
+
+image:netxms_tps.png[caption="Figure 9: ", title="TPS Configuration"]
+
+image:netxms_tps_transf.png[caption="Figure 10: ", title="TPS transformation"]
 
 
 :numbered!:
