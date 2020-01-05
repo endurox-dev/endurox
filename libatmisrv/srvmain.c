@@ -178,10 +178,10 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
         /* allocate memory for entry */
         if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
         {
-                ndrx_TPset_error_fmt(TPMINVAL, 
-                        "Failed to allocate %d bytes while parsing -s",
-                        sizeof(svc_entry_t));
-                return EXFAIL; /* <<< return FAIL! */
+            ndrx_TPset_error_fmt(TPMINVAL, 
+                    "Failed to allocate %d bytes while parsing -s",
+                    sizeof(svc_entry_t));
+            return EXFAIL; /* <<< return FAIL! */
         }
 
         NDRX_STRNCPY(entry->svc_nm, p, XATMI_SERVICE_NAME_LENGTH);
@@ -300,9 +300,9 @@ int ndrx_parse_xcvt_arg(char *arg)
         /* allocate memory for entry */
         if ( (entry = (xbufcvt_entry_t*)NDRX_MALLOC(sizeof(xbufcvt_entry_t))) == NULL)
         {
-                ndrx_TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
-                                    sizeof(svc_entry_t));
-                return EXFAIL; /* <<< return FAIL! */
+            ndrx_TPset_error_fmt(TPMINVAL, "Failed to allocate %d bytes while parsing -s",
+                                sizeof(svc_entry_t));
+            return EXFAIL; /* <<< return FAIL! */
         }
 
         NDRX_STRNCPY(entry->fn_nm, p, XATMI_SERVICE_NAME_LENGTH);

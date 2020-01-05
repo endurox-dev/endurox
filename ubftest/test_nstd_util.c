@@ -98,6 +98,8 @@ Ensure(test_nstd_file_exists)
 {
     assert_equal(ndrx_file_exists("ubftab_test/test1.fd"), EXTRUE);
     assert_equal(ndrx_file_exists("ubftab_test/hello/test2.fd"), EXFALSE);
+    assert_equal(ndrx_file_exists("ubftab_test"), EXTRUE);
+    assert_equal(ndrx_file_exists("ubftab_test_non_exist"), EXFALSE);
 }
 
 /**

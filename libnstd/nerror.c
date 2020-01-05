@@ -74,7 +74,7 @@ struct err_msg
     {STDE(NEINVALINI),    "Invalid INI file"}, /* 1 */
     {STDE(NEMALLOC),      "Malloc failed"},    /* 2 */
     {STDE(NEUNIX),        "Unix system call failed"},    /* 3 */
-    {STDE(NEINVAL),       "Invalid paramter passed to function"}, /* 4 */
+    {STDE(NEINVAL),       "Invalid parameter passed to function"}, /* 4 */
     {STDE(NESYSTEM),      "System failure"}, /* 5 */
     {STDE(NEMANDATORY),   "Mandatory key/field missing"}, /* 6 */
     {STDE(NEFORMAT),      "Invalid format"}, /* 7 */
@@ -83,7 +83,10 @@ struct err_msg
     {STDE(NELIMIT),       "Limit reached"}, /* 10 */
     {STDE(NEPLUGIN),      "Plugin error"}, /* 11 */
     {STDE(NENOSPACE),     "No space to store output buffer"}, /* 12 */
-    {STDE(NEINVALKEY),    "Probably invalid encryption key"} /* 13 */
+    {STDE(NEINVALKEY),    "Probably invalid encryption key"}, /* 13 */
+    {STDE(NENOENT),       "No such file or directory"}, /* 14 */
+    {STDE(NEWRITE),       "Failed to opten/write to file"}, /* 15 */
+    {STDE(NEEXEC),        "Failed to execute"} /* 16 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
@@ -132,6 +135,30 @@ expublic char * Nstrerror (int err)
                                 err,
                                 NSTD_ERROR_DESCRIPTION(err),
                                 G_nstd_tls->M_nstd_error,
+                                G_nstd_tls->M_nstd_error_msg_buf);
+    }
+    else
+    {
+        snprintf(G_nstd_tls->errbuf, sizeof(G_nstd_tls->errbuf), "%d:%s",
+                            err, NSTD_ERROR_DESCRIPTION(err));
+    }
+
+    return G_nstd_tls->errbuf;
+}
+
+/**
+ * Print only error detail, if have one
+ * @param error_code
+ */
+expublic char * ndrx_Nstrerror2 (int err)
+{
+    NSTD_TLS_ENTRY;
+
+    if (EXEOS!=G_nstd_tls->M_nstd_error_msg_buf[0])
+    {
+        snprintf(G_nstd_tls->errbuf, sizeof(G_nstd_tls->errbuf), 
+                                "%d:%s ",
+                                err,
                                 G_nstd_tls->M_nstd_error_msg_buf);
     }
     else
