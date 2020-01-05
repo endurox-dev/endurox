@@ -300,6 +300,12 @@ extern "C" {
 #define CONF_NDRX_NORMWAITMAX    "NDRX_NORMWAITMAX"
 /** Default for  NDRX_NORMWAITMAX */    
 #define CONF_NDRX_NORMWAITMAX_DLFT    60
+    
+/** resource manager override file*/
+#define CONF_NDRX_RMFILE        "NDRX_RMFILE"
+    
+/** Enduro/X MW home               */
+#define CONF_NDRX_HOME          "NDRX_HOME"
 
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

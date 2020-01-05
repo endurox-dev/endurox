@@ -43,21 +43,24 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
 #define MAX_ERROR_LEN   1024
 
-#define NMINVAL             0 /* min error */
-#define NEINVALINI          1 /* Invalid INI file */
-#define NEMALLOC            2 /* Malloc failed */
-#define NEUNIX              3 /* Unix error occurred */
-#define NEINVAL             4 /* Invalid value passed to function */
-#define NESYSTEM            5 /* System failure */
-#define NEMANDATORY         6 /* Mandatory field is missing */
-#define NEFORMAT            7 /* Format error */
-#define NETOUT              8 /* Time-out condition */
-#define NENOCONN            9 /* Connection not found */
-#define NELIMIT            10 /* Limit reached */
-#define NEPLUGIN           11 /* Plugin error */
-#define NENOSPACE          12 /* No space */
-#define NEINVALKEY         13 /* Invalid key (probably) */
-#define NMAXVAL            13 /* max error */
+#define NMINVAL             0 /**< min error */
+#define NEINVALINI          1 /**< Invalid INI file */
+#define NEMALLOC            2 /**< Malloc failed */
+#define NEUNIX              3 /**< Unix error occurred */
+#define NEINVAL             4 /**< Invalid value passed to function */
+#define NESYSTEM            5 /**< System failure */
+#define NEMANDATORY         6 /**< Mandatory field is missing */
+#define NEFORMAT            7 /**< Format error */
+#define NETOUT              8 /**< Time-out condition */
+#define NENOCONN            9 /**< Connection not found */
+#define NELIMIT            10 /**< Limit reached */
+#define NEPLUGIN           11 /**< Plugin error */
+#define NENOSPACE          12 /**< No space */
+#define NEINVALKEY         13 /**< Invalid key (probably) */
+#define NENOENT            14 /**< No such file or directory */
+#define NEWRITE            15 /**< Failed to open/write */
+#define NEEXEC             16 /**< Failed to execute */
+#define NMAXVAL            16 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 
@@ -70,6 +73,7 @@ extern "C" {
 extern NDRX_API char * ndrx_Necodestr(int err);
 extern NDRX_API void _Nset_error(int error_code);
 extern NDRX_API char * Nstrerror (int err);
+extern NDRX_API char * ndrx_Nstrerror2 (int err);
 extern NDRX_API void _Nset_error_msg(int error_code, char *msg);
 extern NDRX_API void _Nset_error_fmt(int error_code, const char *fmt, ...);
 /* Is error already set?  */

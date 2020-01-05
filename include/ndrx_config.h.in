@@ -122,6 +122,9 @@
 
 #define NDRX_LD_LIBRARY_PATH "@NDRX_LD_LIBRARY_PATH@"
 
+/** Runtime libraries required for given platform (used for build) */
+#define NDRX_RT_LIB	"@RT_LIB@"
+
 /* PThread mode for Solaris */
 #ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS
