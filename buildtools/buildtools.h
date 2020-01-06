@@ -50,10 +50,10 @@
 typedef struct bs_svcnm_lst bs_svcnm_lst_t;
 struct bs_svcnm_lst
 {
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
-    char funcnm[128+1];
-    int is_new_funcnm;
-    EX_hash_handle hh; /* makes this structure hashable        */
+    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];    /**< service name       */
+    char funcnm[128+1]; /**< function name                              */
+    int funcreg;        /**< register function with out the name        */
+    EX_hash_handle hh; /**< makes this structure hashable               */
 };
 
 /**

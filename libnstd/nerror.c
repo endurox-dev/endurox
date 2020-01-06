@@ -86,7 +86,8 @@ struct err_msg
     {STDE(NEINVALKEY),    "Probably invalid encryption key"}, /* 13 */
     {STDE(NENOENT),       "No such file or directory"}, /* 14 */
     {STDE(NEWRITE),       "Failed to opten/write to file"}, /* 15 */
-    {STDE(NEEXEC),        "Failed to execute"} /* 16 */
+    {STDE(NEEXEC),        "Failed to execute"}, /* 16 */
+    {STDE(NESUPPORT),     "Command not supported"} /* 17 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**
