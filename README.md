@@ -99,6 +99,9 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
 * Starting with version 5.2 Enduro/X provides configuration data encryption feature, 
         so that software which is built on top of Enduro/X may comply with 
         Payment Card Industry Data Security Standard (PCI/DSS).
+* Application monitoring with TM_MIB interface. For example NetXMS.
+* XA Driver for PostgreSQL.
+      
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
@@ -176,6 +179,14 @@ It is possible to patch the Enduro/X system (update stateless XATMI servers)
 without service interruption. This is achieved by following scheme:
 
 ![Alt text](doc/rt-patching.png?raw=true "Enduro/X real time patching")
+
+# Monitoring
+
+Enduro/X provides TM_MIB API for information reading. Out of the box NetXMS 
+monitoring suite uses this API to monitor application. Thus full featured
+monitoring is possible. Presentation here (video):
+
+[![Enduro/X monitoring with NetXMS](https://img.youtube.com/vi/ubJk27bjKGE/0.jpg)](https://www.youtube.com/watch?v=ubJk27bjKGE)
 
 # Performance
 
