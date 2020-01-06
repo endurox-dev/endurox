@@ -88,10 +88,12 @@ out:
 
 /**
  * Check function name in list. If found then skip
- * @param svcnm - Service name to check
+ * @param funcnm function name
+ * @param funcreg if set to EXTRUE, it will be registered in service 
+ *  table with out name
  * @return EXSUCCEED(found & skip)/EXFAIL
  */
-exprivate int chk_listed_funcnm(char *funcnm)
+exprivate int chk_listed_funcnm(char *funcnm, int funcreg)
 {
     bs_svcnm_lst_t * ret = NULL;
 
@@ -101,6 +103,11 @@ exprivate int chk_listed_funcnm(char *funcnm)
     {
         NDRX_LOG(log_debug, "Function name [%s] not in list", funcnm);
         goto out;
+    }
+
+    if (funcreg && !ret->funcreg)
+    {
+        ret->funcreg = EXTRUE;
     }
 
 out:
@@ -151,11 +158,12 @@ out:
 
 /**
  * Add add FUNCNM to list
- * @param svcnm - Service name add to cache
  * @param funcnm - Function name add to cache
+ * @param funcreg if set to EXTRUE, it will be registered in service 
+ *  table with out name
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int add_listed_funcnm(char *funcnm)
+exprivate int add_listed_funcnm(char *funcnm, int funcreg)
 {
     bs_svcnm_lst_t * ret = NDRX_CALLOC(1, sizeof(bs_svcnm_lst_t));
     
@@ -169,7 +177,7 @@ exprivate int add_listed_funcnm(char *funcnm)
     }
     
     NDRX_STRCPY_SAFE(ret->funcnm, funcnm);
-    
+    ret->funcreg = EXTRUE;
     EXHASH_ADD_STR( M_bs_funcnm_lst, funcnm, ret );
     
 out:
@@ -211,19 +219,16 @@ exprivate int parse_s_string(char *p_string)
         NDRX_STRCPY_SAFE(funcnm, f+1);
         *f = EXEOS; /* terminate the parsing string here.. */
     }
-    
-    p = strtok_r(p_string, ",", &str);
 
     /* In case when not provided SVCNM 
      * If : was in start of the string.. the pointer matches
      */
-    if (NULL != f && p==f)
+    if (NULL != f && p_string==f)
     {
         NDRX_LOG(log_debug, "FUNCNM=[%s] Only", funcnm);
         
-        if (EXSUCCEED != chk_listed_funcnm(funcnm) && 
-                /* TODO: Generate error on adding: */
-                EXSUCCEED!=add_listed_funcnm(funcnm))
+        if (EXSUCCEED != chk_listed_funcnm(funcnm, EXTRUE) && 
+                EXSUCCEED!=add_listed_funcnm(funcnm, EXTRUE))
         {
             EXFAIL_OUT(ret);
         }
@@ -232,7 +237,7 @@ exprivate int parse_s_string(char *p_string)
     }
     
     /* lets continue to parse -s A,B,C with */
-    while (p != NULL )
+    for (p = strtok_r(p_string, ",", &str);p != NULL; p = strtok_r(NULL, ",", &str))
     {
         /* Function name is provided */
         if (NULL != f)
@@ -249,6 +254,14 @@ exprivate int parse_s_string(char *p_string)
 
         NDRX_LOG(log_debug, "SVCNM=[%s] FUNCNM=[%s]\n", svcnm, funcnm);
         
+        /* Add function */
+        if (EXSUCCEED != chk_listed_funcnm(funcnm, EXFALSE) && 
+                EXSUCCEED!=add_listed_funcnm(funcnm, EXFALSE))
+        {
+            NDRX_LOG(log_error, "Failed to list the function name");
+            EXFAIL_OUT(ret);
+        }
+        
         if (EXSUCCEED == chk_listed_svcnm(svcnm))
         {
             NDRX_LOG(log_debug, 
@@ -262,13 +275,36 @@ exprivate int parse_s_string(char *p_string)
             NDRX_LOG(log_error, "Failed to add service [%s]", svcnm);
             EXFAIL_OUT(ret);
         }
-
-        p = strtok_r(NULL, ",", &str);
     }
    
 
 out:
     return ret;
+}
+
+/**
+ * print help for the command
+ * @param name name of the program, argv[0]
+ */
+exprivate void print_help(char *name)
+{
+    fprintf(stderr, "Usage: %s [options]\n", name);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -n               Do not generate main() entry\n");
+    fprintf(stderr, "  -C               COBOL code (RFU)\n");
+    fprintf(stderr, "  -s {@filename|svc1,svc2,...:func|:func}\n");
+    fprintf(stderr, "                   Services to be advertised. In case of @filename. \n");
+    fprintf(stderr, "                   Each line in file shall contain the {svc1,svc2,...:func|:func} expression.\n");
+    fprintf(stderr, "                   Lines starting with # are ignored\n");
+    fprintf(stderr, "  -o <filename>    Output compiled file name, default is SERVER\n");
+    fprintf(stderr, "  -f <firstfiles>  File names to be passed to compiler, on left side before Enduro/X libraries\n");
+    fprintf(stderr, "  -l <lastfiles>   File names to be passed to compiler, on right side after Enduro/X libraries\n");
+    fprintf(stderr, "  -r <RM_NAME>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM\n");
+    fprintf(stderr, "  -g <RM_NAME>     Same as -r\n");
+    fprintf(stderr, "  -k               Keep generated source file\n");
+    fprintf(stderr, "  -t               Program is built for threaded mode\n");
+    fprintf(stderr, "  -v               Verbose mode (print build command)\n");
+    fprintf(stderr, "  -h               Print this help\n");   
 }
 
 /**
@@ -349,18 +385,23 @@ int main(int argc, char **argv)
     
     memset(&rmdef, 0, sizeof(rmdef));
 
-    while ((c = getopt (argc, argv, "Cktvrgs:o:f:l:n")) != -1)
+    while ((c = getopt (argc, argv, "Cktvrgs:o:f:l:nh")) != -1)
     {
         switch (c)
         {
+            case 'h':
+                print_help(argv[0]);
+                return 0; /*<<<< RETURN ! */
+                break;
             case 'n':
                 /* No main... */
                 NDRX_LOG(log_debug, "Not generating main...");
                 nomain=EXTRUE;
-                
                 break;
             case 'C':
-                NDRX_LOG(log_warn, "Ignoring option C for COBOL");
+                NDRX_LOG(log_warn, "COBOL mode not yet supported");
+                _Nset_error_fmt(NESUPPORT, "COBOL mode not yet supported");
+                EXFAIL_OUT(ret);
                 break;
             case 's':
                 s_value= optarg;
@@ -445,12 +486,12 @@ int main(int argc, char **argv)
                 NDRX_LOG(log_debug, "running in verbose mode");
                 verbose = EXTRUE;
                 break;
+            
             case '?':
-                EXFAIL_OUT(ret);
             default:
-                NDRX_LOG(log_error, "Default case...");
-                _Nset_error_fmt(NEINVAL, "Unsupported argument: %c", c);
-                EXFAIL_OUT(ret);
+            
+                print_help(argv[0]);
+                return EXFAIL; /*<<<< RETURN ! */
         }
     }
     

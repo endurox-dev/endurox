@@ -60,7 +60,8 @@ extern "C" {
 #define NENOENT            14 /**< No such file or directory */
 #define NEWRITE            15 /**< Failed to open/write */
 #define NEEXEC             16 /**< Failed to execute */
-#define NMAXVAL            16 /**< max error */
+#define NESUPPORT          17 /**< Command not supported */
+#define NMAXVAL            17 /**< max error */
 
 #define Nerror  (*_Nget_Nerror_addr())
 

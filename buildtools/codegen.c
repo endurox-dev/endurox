@@ -108,12 +108,9 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
         fprintf(f, "extern struct xa_switch_t %s;\n", p_rmdef->structname);
     }
     
-    if (NULL != p_funcnm_lst)
+    EXHASH_ITER(hh, p_funcnm_lst, bs, bst)
     {
-        EXHASH_ITER(hh, p_funcnm_lst, bs, bst)
-        {
-            fprintf(f, "extern void %s (TPSVCINFO *);\n", bs->funcnm);
-        }
+        fprintf(f, "extern void %s (TPSVCINFO *);\n", bs->funcnm);
     }
     
     fprintf(f, "/*---------------------------Macros-------------------------------------*/\n");
@@ -123,14 +120,23 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
     fprintf(f, "/*---------------------------Statics------------------------------------*/\n");
     fprintf(f, "/* Auto generated system advertise table */\n");
     fprintf(f, "expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {\n");
-    if (NULL != p_svcnm_lst)
+    
+    EXHASH_ITER(hh, p_svcnm_lst, bs, bst)
     {
-        EXHASH_ITER(hh, p_svcnm_lst, bs, bst)
+        fprintf(f, "    {\"%s\",\"%s\",(void (*)(TPSVCINFO *)) %s, 0, 0 },\n", 
+                                bs->svcnm, bs->funcnm, bs->funcnm);
+    }
+        
+    /* list empty functions */
+    EXHASH_ITER(hh, p_funcnm_lst, bs, bst)
+    {
+        if (bs->funcreg)
         {
             fprintf(f, "    {\"%s\",\"%s\",(void (*)(TPSVCINFO *)) %s, 0, 0 },\n", 
                                     bs->svcnm, bs->funcnm, bs->funcnm);
         }
     }
+    
     fprintf(f, "    { NULL, NULL, NULL, 0, 0 }\n");
     fprintf(f, "};\n");
 
@@ -159,7 +165,7 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
         fprintf(f, "    };\n");
         fprintf(f, "#ifdef TMMAINEXIT\n");
         fprintf(f, "#include \"mainexit.h\"\n");
-        fprintf(f, "#endif\n;");
+        fprintf(f, "#endif\n");
         fprintf(f, "    return( _tmstartserver( argc, argv, &tmsvrargs ));\n");
         fprintf(f, "}\n");
     }
