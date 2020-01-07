@@ -1,7 +1,7 @@
 /**
- * @brief Generate code
+ * @brief Generate code for C lang
  *
- * @file codegen.c
+ * @file codegen_c.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -105,7 +105,7 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
     /* Generate definitions */
     if (EXEOS!=p_rmdef->structname[0])
     {
-        fprintf(f, "extern struct xa_switch_t %s;\n", p_rmdef->structname);
+        fprintf(f, "extern struct xa_switch_t *%s;\n", p_rmdef->structname);
     }
     
     EXHASH_ITER(hh, p_funcnm_lst, bs, bst)
@@ -151,7 +151,7 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
         fprintf(f, "{\n");
         fprintf(f, "    _tmbuilt_with_thread_option=%d;\n",thread_option);
         fprintf(f, "    struct tmsvrargs_t tmsvrargs =\n");
-        fprintf(f, "    {\n"); /* TODO: add & for switch symb */
+        fprintf(f, "    {\n");
         fprintf(f, "        %s,\n", (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"NULL"));
         fprintf(f, "        &ndrx_G_tmdsptchtbl[0],\n");
         fprintf(f, "        0,\n");
@@ -184,10 +184,10 @@ out:
 /**
  * Generate build client C code
  * @param cfile Auto generated buildclient main code
- * @param p_xaswitch xa switch name
+ * @param p_rmdef resource manager definition
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_buildclient_generate_code(char *cfile, char *p_xaswitch)
+expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
 {
     int ret = EXSUCCEED;
     FILE *f = NULL;
@@ -207,11 +207,15 @@ expublic int ndrx_buildclient_generate_code(char *cfile, char *p_xaswitch)
     fprintf(f, "#include <atmi.h>\n");
     fprintf(f, "#include <xa.h>\n");
     
-    fprintf(f, "extern struct xa_switch_t *%s;\n", p_xaswitch);
+    /* Generate definitions */
+    if (EXEOS!=p_rmdef->structname[0])
+    {
+        fprintf(f, "extern struct xa_switch_t *%s;\n", p_rmdef->structname);
+    }
 
     fprintf(f, "expublic struct tmsvrargs_t ndrx_G_tmsvrargs_stat = "
                 "{%s, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};\n",
-                p_xaswitch);
+                (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"NULL");
     fprintf(f, "expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = &ndrx_G_tmsvrargs_stat;\n");
 
     NDRX_FCLOSE(f);
