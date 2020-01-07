@@ -385,7 +385,7 @@ int main(int argc, char **argv)
     
     memset(&rmdef, 0, sizeof(rmdef));
 
-    while ((c = getopt (argc, argv, "Cktvrgs:o:f:l:nh")) != -1)
+    while ((c = getopt (argc, argv, "Cktvr:g:s:o:f:l:nh")) != -1)
     {
         switch (c)
         {
