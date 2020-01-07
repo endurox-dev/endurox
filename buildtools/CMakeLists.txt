@@ -43,7 +43,7 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 # Exectuables
-add_executable (buildserver buildserver.c codegen.c compile_c.c getrm.c)
+add_executable (buildserver buildserver.c codegen_c.c compile_c.c getrm.c)
 #add_executable (buildclient buildclient.c golang.c codegen.c compile_c.c)
 #add_executable (buildtms buildtms.c golang.c codegen.c compile_c.c)
 
