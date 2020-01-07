@@ -177,7 +177,7 @@ exprivate int add_listed_funcnm(char *funcnm, int funcreg)
     }
     
     NDRX_STRCPY_SAFE(ret->funcnm, funcnm);
-    ret->funcreg = EXTRUE;
+    ret->funcreg = funcreg;
     EXHASH_ADD_STR( M_bs_funcnm_lst, funcnm, ret );
     
 out:
@@ -544,7 +544,7 @@ out:
         }
         
         /* print error */
-        fprintf(stderr, "%s\n", ndrx_Nstrerror2(Nerror));
+        fprintf(stderr, "%s: %s\n", argv[0], ndrx_Nstrerror2(Nerror));
     }
 
     if (EXFALSE == keep_buildserver_main)
