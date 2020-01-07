@@ -74,7 +74,7 @@ exprivate int parse_rm_string(char *buf, ndrx_rm_def_t *p_rmdef)
     
     p = strtok_r (buf, ":", &saveptr1);
     
-    for (i=0; i<3 && NULL!=p; p++, p = strtok_r (NULL, ":", &saveptr1))
+    for (i=0; i<3 && NULL!=p; i++, p = strtok_r (NULL, ":", &saveptr1))
     {
         args[i]=p;
     }
@@ -169,6 +169,7 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
         {
             NDRX_LOG(log_info, "rm_name=[%s] found in file [%s] on line [%s]", 
                     rm_name, config, buf);
+            ret=EXTRUE;
             break;
         }
     }

@@ -151,7 +151,7 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
         fprintf(f, "{\n");
         fprintf(f, "    _tmbuilt_with_thread_option=%d;\n",thread_option);
         fprintf(f, "    struct tmsvrargs_t tmsvrargs =\n");
-        fprintf(f, "    {\n");
+        fprintf(f, "    {\n"); /* TODO: add & for switch symb */
         fprintf(f, "        %s,\n", (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"NULL"));
         fprintf(f, "        &ndrx_G_tmdsptchtbl[0],\n");
         fprintf(f, "        0,\n");
