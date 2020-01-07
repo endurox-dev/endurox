@@ -180,7 +180,7 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     if (EXEOS!=lastfiles[0])
     {
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " ");
-        NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), firstfiles);
+        NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), lastfiles);
     }
     
     NDRX_LOG(log_debug, "build_cmd: [%s]", build_cmd);
