@@ -6,12 +6,13 @@
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
  * Copyright (C) 2009-2016, ATR Baltic, Ltd. All Rights Reserved.
- * Copyright (C) 2017-2018, Mavimax, Ltd. All Rights Reserved.
+ * Copyright (C) 2017-2019, Mavimax, Ltd. All Rights Reserved.
  * This software is released under one of the following licenses:
- * AGPL or Mavimax's license for commercial use.
+ * AGPL (with Java and Go exceptions) or Mavimax's license for commercial use.
+ * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -22,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -59,8 +60,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate bs_svcnm_lst_t *M_bs_svcnm_lst = NULL;  /* buildserver cache  */
-exprivate bs_svcnm_lst_t *M_bs_funcnm_lst = NULL; /* buildserver cache  */
+exprivate bs_svcnm_lst_t *M_bs_svcnm_lst = NULL;  /**< list of services  */
+exprivate bs_svcnm_lst_t *M_bs_funcnm_lst = NULL; /**< list of functions */
 
 /**
  * Check service name in list. If found then skip
@@ -369,7 +370,7 @@ int main(int argc, char **argv)
     char cfile[PATH_MAX+1]="ndrx_bs_XXXXXX.c";
     char *s_value=NULL;
     int thread_option=EXFALSE;
-    int keep_buildserver_main=EXFALSE;
+    int keep_main=EXFALSE;
     char firstfiles[PATH_MAX+1] = {EXEOS};
     char lastfiles[PATH_MAX+1] = {EXEOS};
     int nomain = EXFALSE;
@@ -477,7 +478,7 @@ int main(int argc, char **argv)
 
                 break;
             case 'k':
-                keep_buildserver_main=EXTRUE;
+                keep_main=EXTRUE;
                 break;
             case 't':
                 thread_option = EXTRUE;
@@ -547,7 +548,7 @@ out:
         fprintf(stderr, "%s: %s\n", argv[0], ndrx_Nstrerror2(Nerror));
     }
 
-    if (EXFALSE == keep_buildserver_main)
+    if (EXFALSE == keep_main)
     {
         unlink(cfile);
     }

@@ -154,6 +154,10 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     {   
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -latmisrvinteg -latmi -lubf -lnstd");
     }
+    else if (COMPILE_CLT == buildmode)
+    {
+        NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -latmiclt -latmi -lubf -lnstd");
+    }
     
     /* add any platform specific library */
     NDRX_STRCPY_SAFE(tmp, NDRX_RT_LIB);
