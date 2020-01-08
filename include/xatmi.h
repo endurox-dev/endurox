@@ -694,6 +694,7 @@ extern NDRX_API int (*G_tpsvrinit__)(int, char **);
 extern NDRX_API void (*G_tpsvrdone__)(void);
 /** For compatibility: */
 extern NDRX_API int _tmbuilt_with_thread_option;
+extern NDRX_API struct xa_switch_t tmnull_switch; /**< null switch            */
 /*---------------------------Prototypes---------------------------------*/
 
 /*

@@ -1,5 +1,6 @@
 /**
  * @brief Generate code for C lang
+ * TODO use: "tmnull_switch" when XA switch is not available for compatilibty..
  *
  * @file codegen_c.c
  */
@@ -105,7 +106,7 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
     /* Generate definitions */
     if (EXEOS!=p_rmdef->structname[0])
     {
-        fprintf(f, "extern struct xa_switch_t *%s;\n", p_rmdef->structname);
+        fprintf(f, "extern struct xa_switch_t %s;\n", p_rmdef->structname);
     }
     
     EXHASH_ITER(hh, p_funcnm_lst, bs, bst)
@@ -152,7 +153,7 @@ expublic int ndrx_buildsrv_generate_code(char *cfile, int thread_option,
         fprintf(f, "    _tmbuilt_with_thread_option=%d;\n",thread_option);
         fprintf(f, "    struct tmsvrargs_t tmsvrargs =\n");
         fprintf(f, "    {\n");
-        fprintf(f, "        %s,\n", (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"NULL"));
+        fprintf(f, "        &%s,\n", (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:""));
         fprintf(f, "        &ndrx_G_tmdsptchtbl[0],\n");
         fprintf(f, "        0,\n");
         fprintf(f, "        tpsvrinit,\n");
@@ -210,12 +211,12 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
     /* Generate definitions */
     if (EXEOS!=p_rmdef->structname[0])
     {
-        fprintf(f, "extern struct xa_switch_t *%s;\n", p_rmdef->structname);
+        fprintf(f, "extern struct xa_switch_t %s;\n", p_rmdef->structname);
     }
 
     fprintf(f, "expublic struct tmsvrargs_t ndrx_G_tmsvrargs_stat = "
-                "{%s, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};\n",
-                (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"NULL");
+                "{&%s, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};\n",
+                (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"tmnull_switch"));
     fprintf(f, "expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = &ndrx_G_tmsvrargs_stat;\n");
 
     NDRX_FCLOSE(f);

@@ -1,5 +1,5 @@
 ##
-## @brief Build the Dum XA/enduro driver libs
+## @brief Null/tmnull_switch driver
 ##
 ## @file CMakeLists.txt
 ##
@@ -46,24 +46,23 @@ ENDIF ($ENV{RELEASE_BUILD})
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
 
-add_library (ndrxxadums SHARED
-                        dum_s.c
-                        dum_common.c
+add_library (ndrxxanulls SHARED
+                        nulls.c
    	        )
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(ndrxxadums atmi ubf nstd)
+    target_link_libraries(ndrxxanulls atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(ndrxxadums atmi ubf nstd)
+    target_link_libraries(ndrxxanulls atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
     # Fixes on TLS issues: Bug #228 __tls_get_addr:..
-    target_link_libraries(ndrxxadums pthread)
+    target_link_libraries(ndrxxanulls pthread)
 endif()
 
 
 # Install bin
 install (TARGETS 
-    ndrxxadums
+    ndrxxanulls
     DESTINATION "${INSTALL_LIB_DIR}"
     )
 # vim: set ts=4 sw=4 et smartindent:

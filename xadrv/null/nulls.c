@@ -1,7 +1,7 @@
 /**
- * @brief Common handler
+ * @brief Load oracle drivers - static version
  *
- * @file dum_common.h
+ * @file oracle_s.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,16 +31,11 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#ifndef DUM_COMMON_H
-#define	DUM_COMMON_H
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <xa.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -48,12 +43,16 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-struct xa_switch_t *ndrx_get_xa_switch_int(char *symbol, char *descr);
 
-#ifdef	__cplusplus
+/**
+ * Return Enduro/X null switch
+ * @param symbol
+ * @param descr
+ * @return XA switch or null
+ */
+struct xa_switch_t *ndrx_get_xa_switch(void)
+{
+    return &tmnull_switch;
 }
-#endif
-
-#endif	/* DUM_COMMON_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */
