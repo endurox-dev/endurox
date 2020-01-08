@@ -1,7 +1,7 @@
 /**
- * @brief Load dum drivers - static version
+ * @brief Load null driver - static version
  *
- * @file dum_s.c
+ * @file tmnull_switch.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -38,13 +38,8 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <atmi.h>
-#include <atmi_int.h>
-#include <sys_mqueue.h>
-
-#include "atmi_shm.h"
 
 #include <xa.h>
-#include "dum_common.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -79,9 +74,9 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-struct xa_switch_t ndrxdumssw = 
+struct xa_switch_t tmnull_switch = 
 { 
-    .name = "ndrxdumssw",
+    .name = "tmnull_switch",
     .flags = TMNOFLAGS,
     .version = 0,
     .xa_open_entry = xa_open_entry_stat,
@@ -295,57 +290,46 @@ expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval,
 /* Static entries */
 expublic int xa_open_entry_stat( char *xa_info, int rmid, long flags)
 {
-    return xa_open_entry(&ndrxdumssw, xa_info, rmid, flags);
+    return xa_open_entry(&tmnull_switch, xa_info, rmid, flags);
 }
 expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags)
 {
-    return xa_close_entry(&ndrxdumssw, xa_info, rmid, flags);
+    return xa_close_entry(&tmnull_switch, xa_info, rmid, flags);
 }
 expublic int xa_start_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_start_entry(&ndrxdumssw, xid, rmid, flags);
+    return xa_start_entry(&tmnull_switch, xid, rmid, flags);
 }
 
 expublic int xa_end_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_end_entry(&ndrxdumssw, xid, rmid, flags);
+    return xa_end_entry(&tmnull_switch, xid, rmid, flags);
 }
 expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_rollback_entry(&ndrxdumssw, xid, rmid, flags);
+    return xa_rollback_entry(&tmnull_switch, xid, rmid, flags);
 }
 expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_prepare_entry(&ndrxdumssw, xid, rmid, flags);
+    return xa_prepare_entry(&tmnull_switch, xid, rmid, flags);
 }
 
 expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_commit_entry(&ndrxdumssw, xid, rmid, flags);
+    return xa_commit_entry(&tmnull_switch, xid, rmid, flags);
 }
 
 expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
 {
-    return xa_recover_entry(&ndrxdumssw, xid, count, rmid, flags);
+    return xa_recover_entry(&tmnull_switch, xid, count, rmid, flags);
 }
 expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_forget_entry(&ndrxdumssw, xid, rmid, flags);
+    return xa_forget_entry(&tmnull_switch, xid, rmid, flags);
 }
 expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
 {
-    return xa_complete_entry(&ndrxdumssw, handle, retval, rmid, flags);
-}
-
-/**
- * API entry of loading the driver
- * @param symbol
- * @param descr
- * @return XA switch or null
- */
-struct xa_switch_t *ndrx_get_xa_switch(void)
-{
-    return &ndrxdumssw;
+    return xa_complete_entry(&tmnull_switch, handle, retval, rmid, flags);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

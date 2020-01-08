@@ -37,7 +37,7 @@ cmake_minimum_required(VERSION 2.8)
 add_subdirectory (oracle)
 add_subdirectory (db2)
 add_subdirectory (wsmq)
-add_subdirectory (dum)
+add_subdirectory (null)
 add_subdirectory (tms)
 
 #

@@ -99,6 +99,7 @@ add_library (objatmi OBJECT
                 tpexport.c
                 tx.c
                 cltshm.c
+                tmnull_switch.c
             )
 
 # shared libraries need PIC

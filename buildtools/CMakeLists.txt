@@ -49,6 +49,7 @@ add_executable (buildclient buildclient.c codegen_c.c compile_c.c getrm.c)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (buildserver atmiclt atmi ubf m nstd ${RT_LIB} pthread)
+target_link_libraries (buildclient atmiclt atmi ubf m nstd ${RT_LIB} pthread)
 
 install (TARGETS 
     buildserver 
