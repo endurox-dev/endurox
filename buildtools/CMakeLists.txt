@@ -53,5 +53,6 @@ target_link_libraries (buildclient atmiclt atmi ubf m nstd ${RT_LIB} pthread)
 
 install (TARGETS 
     buildserver 
+    buildclient
     DESTINATION bin)
 # vim: set ts=4 sw=4 et smartindent:

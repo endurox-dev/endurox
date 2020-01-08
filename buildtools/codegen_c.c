@@ -207,7 +207,7 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
     fprintf(f, "/*---------------------------Includes-----------------------------------*/\n");
     fprintf(f, "#include <atmi.h>\n");
     fprintf(f, "#include <xa.h>\n");
-    
+
     /* Generate definitions */
     if (EXEOS!=p_rmdef->structname[0])
     {
