@@ -43,7 +43,7 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-extern struct tmsvrargs_t *ndrx_G_tmsvrargs;
+extern struct xa_switch_t *ndrx_G_p_xaswitch; /**< XA Switch built in...*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -53,11 +53,11 @@ extern struct tmsvrargs_t *ndrx_G_tmsvrargs;
 /**
  * Dummy function to pull in the globals (avoid remove from linking)
  * when buildclient is created.
- * @return EXTRUE server args available, EXFALSE it is NULL
+ * @return EXTRUE switch is set, EXFALSE switch is NULL.
  */
 expublic int ndrx_bld_sym_pull(void)
 {
-    if (NULL!=ndrx_G_tmsvrargs)
+    if (NULL!=ndrx_G_p_xaswitch)
     {
         return EXTRUE;
     }

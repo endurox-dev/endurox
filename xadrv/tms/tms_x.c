@@ -63,26 +63,25 @@
  */
 struct xa_switch_t *ndrx_get_xa_switch(void)
 {
-    /* lookup ndrx_G_tmsvrargs */
+    struct xa_switch_t ** sargs;
     
-    struct tmsvrargs_t * sargs;
-    
-    if (NULL==(sargs = (struct tmsvrargs_t * )dlsym( RTLD_DEFAULT, "ndrx_G_tmsvrargs" )))
+    if (NULL==(sargs = (struct xa_switch_t ** )dlsym( RTLD_DEFAULT, "ndrx_G_p_xaswitch" )))
     {
-        NDRX_LOG(log_error, "ndrx_G_tmsvrargs symbol not found or is NULL, check "
-                "that you use libatmisrvinteg.so and that server is started with _tmstartserver(): %s", 
-                dlerror());
+        NDRX_LOG(log_error, "ndrx_G_p_xaswitch symbol not found - did you use "
+                "buildserver/buildclient/buildtms?: %s", dlerror());
         return NULL;
     }
     
-    if (NULL==sargs->xa_switch)
+    if (NULL==*sargs)
     {
-        NDRX_LOG(log_error, "ERROR! For tmsvrargs_t xa_switch is empty, "
-                "passed to _tmstartserver()!");
+        NDRX_LOG(log_error, "ERROR! For ndrx_G_p_xaswitch is NULL "
+                "(integra mode custom main()? -> buildtools fills it...)");
         return NULL;
     }
     
-    return sargs->xa_switch;
+    NDRX_LOG(log_debug, "XA Switch [%s] resolved", (*sargs)->name);
+    
+    return *sargs;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

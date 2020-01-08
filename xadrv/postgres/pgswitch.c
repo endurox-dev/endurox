@@ -40,6 +40,7 @@
 #include <atmi.h>
 
 #include "atmi_shm.h"
+#include <atmi_int.h>
 #include "utlist.h"
 
 #include <xa.h>
@@ -106,7 +107,7 @@ exprivate int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval
 
 exprivate int xa_rollback_local(XID *xid, long flags);
 
-struct xa_switch_t ndrxpgsw = 
+expublic NDRX_API_EXPORT struct xa_switch_t ndrxpgsw = 
 { 
     .name = "ndrxpgsw",
     .flags = TMNOMIGRATE,

@@ -53,7 +53,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Executables ######################################
-add_executable (tmsrv 
+add_library (objtms OBJECT
                     tmsrv.c 
                     xasrvutil.c 
                     log.c 
@@ -61,14 +61,43 @@ add_executable (tmsrv
                     background.c 
                     tmapi.c
                     btid.c
-                    statedrv.c 
-                    ../libatmisrv/rawmain_integra.c)
-target_link_libraries (tmsrv atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
-set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-################################################################################
+                    statedrv.c)
+
+# shared libraries need PIC
+set_property(TARGET objtms PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(tms SHARED $<TARGET_OBJECTS:objtms>)
+
+if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+    target_link_libraries(tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
+elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+    target_link_libraries(tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
+elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+    # 
+    # linking lib against pthread for XL C on aix, otherwise we get error like: 
+    #  ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
+    #        The branch at address 0x154 is not followed by a rec
+    # Or
+    # ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
+    #   The branch at address 0x154 is not followed by a rec
+    target_link_libraries(tms pthread)
+endif()
 
 # Install bin
-install (TARGETS 
-    tmsrv
-    DESTINATION bin)
+#install (TARGETS 
+#    tms
+#    DESTINATION bin)
+
+#
+# Run off the build server, use NULL server in default build
+#
+
+install (TARGETS
+    tms 
+    DESTINATION "${INSTALL_LIB_DIR}"
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries)
+
+
 # vim: set ts=4 sw=4 et smartindent:

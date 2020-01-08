@@ -63,8 +63,10 @@ expublic void (*G_tpsvrdone__)(void) = NULL;
 /** No jump please (default for integra) */
 expublic long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP; 
 
-/** Server boot structure */
-expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
+/** Server boot structure           */
+expublic NDRX_API_EXPORT struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
+/** XA Switch passed to server      */
+expublic NDRX_API_EXPORT struct xa_switch_t *ndrx_G_p_xaswitch = NULL;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

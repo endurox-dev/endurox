@@ -1,5 +1,5 @@
 ##
-## @brief EnduroX Network Library
+## @brief EnduroX UUID generate lib
 ##
 ## @file CMakeLists.txt
 ##
@@ -61,4 +61,11 @@ add_library (exuuid STATIC
     unpack.c
     unparse.c
     )
+
+install (TARGETS
+    exuuid 
+    DESTINATION "${INSTALL_LIB_DIR}"
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+    COMPONENT libraries)
+
 # vim: set ts=4 sw=4 et smartindent:
