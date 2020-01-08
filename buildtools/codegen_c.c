@@ -192,7 +192,6 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
 {
     int ret = EXSUCCEED;
     FILE *f = NULL;
-    bs_svcnm_lst_t *bs, *bst;
 
     NDRX_LOG(log_info, "C-Code to compile: [%s]", cfile);
 
@@ -207,6 +206,13 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
     fprintf(f, "/*---------------------------Includes-----------------------------------*/\n");
     fprintf(f, "#include <atmi.h>\n");
     fprintf(f, "#include <xa.h>\n");
+    
+    /* we shall export the "ndrx_G_tmsvrargs" in case if running on windows... */
+    fprintf(f, "#if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)\n");
+    fprintf(f, "#define NDRX_API_EXPORT __declspec(dllexport)\n");
+    fprintf(f, "#else\n");
+    fprintf(f, "#define NDRX_API_EXPORT\n");
+    fprintf(f, "#endif\n");
 
     /* Generate definitions */
     if (EXEOS!=p_rmdef->structname[0])
@@ -217,7 +223,7 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
     fprintf(f, "expublic struct tmsvrargs_t ndrx_G_tmsvrargs_stat = "
                 "{&%s, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};\n",
                 (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"tmnull_switch"));
-    fprintf(f, "expublic struct tmsvrargs_t *ndrx_G_tmsvrargs = &ndrx_G_tmsvrargs_stat;\n");
+    fprintf(f, "expublic NDRX_API_EXPORT extern struct xa_switch_t *ndrx_G_p_xaswitch;\n");
 
     NDRX_FCLOSE(f);
     f = NULL;

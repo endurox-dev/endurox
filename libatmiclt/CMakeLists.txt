@@ -1,5 +1,5 @@
 ##
-## @brief Enduro Execution platform's client library
+## @brief Enduro/X Execution platform's client library
 ##
 ## @file CMakeLists.txt
 ##
@@ -49,17 +49,25 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 # Create a library called "ATMICLT" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
 add_library (atmiclt SHARED
-					 cltlib.c
+            cltlib.c
+	)
+
+add_library (atmicltbld SHARED
+            cltlib.c
+            sympull.c
 	)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries(atmiclt atmi ubf nstd)
+    target_link_libraries(atmicltbld atmi ubf nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(atmiclt atmi ubf nstd)
+    target_link_libraries(atmicltbld atmi ubf nstd)
 endif()
 
 install (TARGETS 
     atmiclt 
+    atmicltbld
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries
