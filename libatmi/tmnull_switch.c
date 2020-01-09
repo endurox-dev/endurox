@@ -52,43 +52,43 @@ exprivate __thread int M_rmid = EXFAIL;
 /*---------------------------Prototypes---------------------------------*/
 
 
-expublic int xa_open_entry_stat(char *xa_info, int rmid, long flags);
-expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags);
-expublic int xa_start_entry_stat(XID *xid, int rmid, long flags);
-expublic int xa_end_entry_stat(XID *xid, int rmid, long flags);
-expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags);
-expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags);
-expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags);
-expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
-expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags);
-expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags);
+expublic int ndrx_nul_xa_open_entry_stat(char *xa_info, int rmid, long flags);
+expublic int ndrx_nul_xa_close_entry_stat(char *xa_info, int rmid, long flags);
+expublic int ndrx_nul_xa_start_entry_stat(XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_end_entry_stat(XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_rollback_entry_stat(XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_prepare_entry_stat(XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_commit_entry_stat(XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_recover_entry_stat(XID *xid, long count, int rmid, long flags);
+expublic int ndrx_nul_xa_forget_entry_stat(XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags);
 
-expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
-expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
-expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
-expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
-expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
+expublic int ndrx_nul_xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
+expublic int ndrx_nul_xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags);
+expublic int ndrx_nul_xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags);
+expublic int ndrx_nul_xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
+expublic int ndrx_nul_xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
 struct xa_switch_t tmnull_switch = 
 { 
     .name = "tmnull_switch",
     .flags = TMNOFLAGS,
     .version = 0,
-    .xa_open_entry = xa_open_entry_stat,
-    .xa_close_entry = xa_close_entry_stat,
-    .xa_start_entry = xa_start_entry_stat,
-    .xa_end_entry = xa_end_entry_stat,
-    .xa_rollback_entry = xa_rollback_entry_stat,
-    .xa_prepare_entry = xa_prepare_entry_stat,
-    .xa_commit_entry = xa_commit_entry_stat,
-    .xa_recover_entry = xa_recover_entry_stat,
-    .xa_forget_entry = xa_forget_entry_stat,
-    .xa_complete_entry = xa_complete_entry_stat
+    .xa_open_entry = ndrx_nul_xa_open_entry_stat,
+    .xa_close_entry = ndrx_nul_xa_close_entry_stat,
+    .xa_start_entry = ndrx_nul_xa_start_entry_stat,
+    .xa_end_entry = ndrx_nul_xa_end_entry_stat,
+    .xa_rollback_entry = ndrx_nul_xa_rollback_entry_stat,
+    .xa_prepare_entry = ndrx_nul_xa_prepare_entry_stat,
+    .xa_commit_entry = ndrx_nul_xa_commit_entry_stat,
+    .xa_recover_entry = ndrx_nul_xa_recover_entry_stat,
+    .xa_forget_entry = ndrx_nul_xa_forget_entry_stat,
+    .xa_complete_entry = ndrx_nul_xa_complete_entry_stat
 };
 
 /**
@@ -99,7 +99,7 @@ struct xa_switch_t tmnull_switch =
  * @param flags
  * @return 
  */
-expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int ndrx_nul_xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     if (M_is_open)
     {
@@ -119,7 +119,7 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
  * @param flags
  * @return 
  */
-expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int ndrx_nul_xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
 {
     NDRX_LOG(log_error, "xa_close_entry() called");
     
@@ -136,7 +136,7 @@ expublic int xa_close_entry(struct xa_switch_t *sw, char *xa_info, int rmid, lon
  * @param flags
  * @return 
  */
-expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -155,7 +155,7 @@ expublic int xa_start_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fla
  * @param flags
  * @return 
  */
-expublic int xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_end_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -176,7 +176,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -195,7 +195,7 @@ expublic int xa_rollback_entry(struct xa_switch_t *sw, XID *xid, int rmid, long 
  * @param flags
  * @return 
  */
-expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -214,7 +214,7 @@ expublic int xa_prepare_entry(struct xa_switch_t *sw, XID *xid, int rmid, long f
  * @param flags
  * @return 
  */
-expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -234,7 +234,7 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
  * @param flags
  * @return 
  */
-expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
+expublic int ndrx_nul_xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -253,7 +253,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
  * @param flags
  * @return 
  */
-expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags)
 {
    if (!M_is_open)
     {
@@ -274,7 +274,7 @@ expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
  * @param flags
  * @return 
  */
-expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
+expublic int ndrx_nul_xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags)
 {
     if (!M_is_open)
     {
@@ -288,48 +288,48 @@ expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval,
 
 
 /* Static entries */
-expublic int xa_open_entry_stat( char *xa_info, int rmid, long flags)
+expublic int ndrx_nul_xa_open_entry_stat( char *xa_info, int rmid, long flags)
 {
-    return xa_open_entry(&tmnull_switch, xa_info, rmid, flags);
+    return ndrx_nul_xa_open_entry(&tmnull_switch, xa_info, rmid, flags);
 }
-expublic int xa_close_entry_stat(char *xa_info, int rmid, long flags)
+expublic int ndrx_nul_xa_close_entry_stat(char *xa_info, int rmid, long flags)
 {
-    return xa_close_entry(&tmnull_switch, xa_info, rmid, flags);
+    return ndrx_nul_xa_close_entry(&tmnull_switch, xa_info, rmid, flags);
 }
-expublic int xa_start_entry_stat(XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_start_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_start_entry(&tmnull_switch, xid, rmid, flags);
-}
-
-expublic int xa_end_entry_stat(XID *xid, int rmid, long flags)
-{
-    return xa_end_entry(&tmnull_switch, xid, rmid, flags);
-}
-expublic int xa_rollback_entry_stat(XID *xid, int rmid, long flags)
-{
-    return xa_rollback_entry(&tmnull_switch, xid, rmid, flags);
-}
-expublic int xa_prepare_entry_stat(XID *xid, int rmid, long flags)
-{
-    return xa_prepare_entry(&tmnull_switch, xid, rmid, flags);
+    return ndrx_nul_xa_start_entry(&tmnull_switch, xid, rmid, flags);
 }
 
-expublic int xa_commit_entry_stat(XID *xid, int rmid, long flags)
+expublic int ndrx_nul_xa_end_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_commit_entry(&tmnull_switch, xid, rmid, flags);
+    return ndrx_nul_xa_end_entry(&tmnull_switch, xid, rmid, flags);
+}
+expublic int ndrx_nul_xa_rollback_entry_stat(XID *xid, int rmid, long flags)
+{
+    return ndrx_nul_xa_rollback_entry(&tmnull_switch, xid, rmid, flags);
+}
+expublic int ndrx_nul_xa_prepare_entry_stat(XID *xid, int rmid, long flags)
+{
+    return ndrx_nul_xa_prepare_entry(&tmnull_switch, xid, rmid, flags);
 }
 
-expublic int xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
+expublic int ndrx_nul_xa_commit_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_recover_entry(&tmnull_switch, xid, count, rmid, flags);
+    return ndrx_nul_xa_commit_entry(&tmnull_switch, xid, rmid, flags);
 }
-expublic int xa_forget_entry_stat(XID *xid, int rmid, long flags)
+
+expublic int ndrx_nul_xa_recover_entry_stat(XID *xid, long count, int rmid, long flags)
 {
-    return xa_forget_entry(&tmnull_switch, xid, rmid, flags);
+    return ndrx_nul_xa_recover_entry(&tmnull_switch, xid, count, rmid, flags);
 }
-expublic int xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
+expublic int ndrx_nul_xa_forget_entry_stat(XID *xid, int rmid, long flags)
 {
-    return xa_complete_entry(&tmnull_switch, handle, retval, rmid, flags);
+    return ndrx_nul_xa_forget_entry(&tmnull_switch, xid, rmid, flags);
+}
+expublic int ndrx_nul_xa_complete_entry_stat(int *handle, int *retval, int rmid, long flags)
+{
+    return ndrx_nul_xa_complete_entry(&tmnull_switch, handle, retval, rmid, flags);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
