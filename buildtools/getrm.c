@@ -158,6 +158,8 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
         
         ndrx_str_rstrip(buf," \t\n\r");
         
+        /* todo strip from the left too... */
+        
         /* try to parse rm switch */
         
         if (EXSUCCEED!=parse_rm_string(buf, p_rmdef))

@@ -1,0 +1,6 @@
+#
+# This is test file of the switches
+#
+
+nullsw:tmnull_switch:
+TestSw:ndrxstatsw: -L ../test021_xafull -l xadrv
