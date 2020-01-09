@@ -300,8 +300,9 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -o <filename>    Output compiled file name, default is SERVER\n");
     fprintf(stderr, "  -f <firstfiles>  File names to be passed to compiler, on left side before Enduro/X libraries\n");
     fprintf(stderr, "  -l <lastfiles>   File names to be passed to compiler, on right side after Enduro/X libraries\n");
-    fprintf(stderr, "  -r <RM_NAME>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM\n");
-    fprintf(stderr, "  -g <RM_NAME>     Same as -r\n");
+    fprintf(stderr, "  -r <rm_name>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM.\n");
+    fprintf(stderr, "                   If not set, null switch is used.\n");
+    fprintf(stderr, "  -g <rm_name>     Same as -r\n");
     fprintf(stderr, "  -k               Keep generated source file\n");
     fprintf(stderr, "  -t               Program is built for threaded mode\n");
     fprintf(stderr, "  -v               Verbose mode (print build command)\n");
@@ -376,6 +377,7 @@ int main(int argc, char **argv)
     int nomain = EXFALSE;
     int verbose = EXFALSE;
     ndrx_rm_def_t rmdef;
+    bs_svcnm_lst_t *el, *elt;
     
     NDRX_BANNER;
     
@@ -469,7 +471,7 @@ int main(int argc, char **argv)
                     NDRX_LOG(log_error, 
                          "Resource manager not defined: [%s], check -r", optarg);
                     /* set error */
-                    _Nset_error_fmt(NEINVAL, "Resourc manager [%s] not found "
+                    _Nset_error_fmt(NEINVAL, "Resource manager [%s] not found "
                             "in udataobj/RM files", optarg);
                     EXFAIL_OUT(ret);
                 }
@@ -551,6 +553,19 @@ out:
     if (EXFALSE == keep_main)
     {
         unlink(cfile);
+    }
+
+    /* do some cleanup... */
+    EXHASH_ITER(hh, M_bs_svcnm_lst, el, elt)
+    {
+        EXHASH_DEL(M_bs_svcnm_lst, el);
+        NDRX_FREE(el);
+    }
+    
+    EXHASH_ITER(hh, M_bs_funcnm_lst, el, elt)
+    {
+        EXHASH_DEL(M_bs_svcnm_lst, el);
+        NDRX_FREE(el);
     }
 
     return ret;

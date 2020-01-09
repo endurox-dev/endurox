@@ -158,6 +158,11 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     {
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -latmiclt -latmi -lubf -lnstd");
     }
+    else if (COMPILE_TMS == buildmode)
+    {        
+        NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), 
+                " -ltms -latmisrvinteg -latmi -lubf -lexuuid -lexthpool -lnstd");
+    }
     
     /* add any platform specific library */
     NDRX_STRCPY_SAFE(tmp, NDRX_RT_LIB);

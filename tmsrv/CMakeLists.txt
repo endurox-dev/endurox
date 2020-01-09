@@ -1,5 +1,5 @@
 ##
-## @brief Transaction Monitor server
+## @brief Transaction Monitor server default tmsrv & library
 ##
 ## @file CMakeLists.txt
 ##
@@ -52,7 +52,7 @@ ENDIF ($ENV{RELEASE_BUILD})
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-############################# Executables ######################################
+############################# Libs #############################################
 add_library (objtms OBJECT
                     tmsrv.c 
                     xasrvutil.c 
@@ -62,6 +62,8 @@ add_library (objtms OBJECT
                     tmapi.c
                     btid.c
                     statedrv.c)
+
+
 
 # shared libraries need PIC
 set_property(TARGET objtms PROPERTY POSITION_INDEPENDENT_CODE 1)
@@ -84,20 +86,27 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
     target_link_libraries(tms pthread)
 endif()
 
-# Install bin
-#install (TARGETS 
-#    tms
-#    DESTINATION bin)
+
+############################# Executables ######################################
+add_executable (tmsrv 
+                tmsrvmain.c
+                )
+target_link_libraries (tmsrv tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
+set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+################################################################################
 
 #
 # Run off the build server, use NULL server in default build
 #
-
 install (TARGETS
     tms 
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries)
 
+# Install bin
+install (TARGETS 
+    tmsrv
+    DESTINATION bin)
 
 # vim: set ts=4 sw=4 et smartindent:
