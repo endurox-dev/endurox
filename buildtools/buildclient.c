@@ -73,7 +73,8 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -o <filename>    Output compiled file name, default is a.out\n");
     fprintf(stderr, "  -f <firstfiles>  File names to be passed to compiler, on left side before Enduro/X libraries\n");
     fprintf(stderr, "  -l <lastfiles>   File names to be passed to compiler, on right side after Enduro/X libraries\n");
-    fprintf(stderr, "  -r <RM_NAME>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM\n");
+    fprintf(stderr, "  -r <RM_NAME>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM.\n");
+    fprintf(stderr, "                   If not set, null switch is used.\n");
     fprintf(stderr, "  -k               Keep generated source file\n");
     fprintf(stderr, "  -v               Verbose mode (print build command)\n");
     fprintf(stderr, "  -h               Print this help\n");   

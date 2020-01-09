@@ -42,17 +42,19 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-# Exectuables
+# Executables
 add_executable (buildserver buildserver.c codegen_c.c compile_c.c getrm.c)
 add_executable (buildclient buildclient.c codegen_c.c compile_c.c getrm.c)
-#add_executable (buildtms buildtms.c golang.c codegen.c compile_c.c)
+add_executable (buildtms buildtms.c codegen_c.c compile_c.c getrm.c)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (buildserver atmiclt atmi ubf m nstd ${RT_LIB} pthread)
 target_link_libraries (buildclient atmiclt atmi ubf m nstd ${RT_LIB} pthread)
+target_link_libraries (buildtms atmiclt atmi ubf m nstd ${RT_LIB} pthread)
 
 install (TARGETS 
     buildserver 
     buildclient
+    buildtms
     DESTINATION bin)
 # vim: set ts=4 sw=4 et smartindent:
