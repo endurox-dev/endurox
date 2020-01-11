@@ -87,7 +87,7 @@ function go_out {
 echo "Firstly lets build the processes"
 ###############################################################################
 
-#export NDRX_SILENT=Y
+export NDRX_SILENT=Y
 export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools

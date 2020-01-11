@@ -157,7 +157,7 @@ int main(int argc, char **argv)
                     NDRX_LOG(log_error, 
                          "Resource manager not defined: [%s], check -r", optarg);
                     /* set error */
-                    _Nset_error_fmt(NEINVAL, "Resourc manager [%s] not found "
+                    _Nset_error_fmt(NEINVAL, "Resource manager [%s] not found "
                             "in udataobj/RM files", optarg);
                     EXFAIL_OUT(ret);
                 }
