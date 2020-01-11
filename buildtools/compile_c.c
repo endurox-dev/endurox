@@ -203,9 +203,9 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     /* exec shell ... */
     if (EXSUCCEED!=(ret=system(build_cmd)))
     {
-        _Nset_error_fmt(NEEXEC, "Failed to execute build command [%s]: %d", 
+        _Nset_error_fmt(NEEXEC, "Failed to execute compiler [%s]: %d", 
                 build_cmd, ret);
-        NDRX_LOG(log_error, "Failed to execute build command [%s]: %d", 
+        NDRX_LOG(log_error, "Failed to execute compiler [%s]: %d", 
                 build_cmd, ret);
         ret = EXFAIL;
     }

@@ -156,6 +156,8 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
      /* process line by line */
     while (NULL!=fgets(buf, sizeof(buf), fp))
     {
+        char *stripped;
+        
         if ('#'==buf[0] || '\n'==buf[0])
         {
             /* skip comments */
@@ -163,12 +165,10 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
         }
         
         ndrx_str_rstrip(buf," \t\n\r");
-        
-        /* todo strip from the left too... */
+        stripped = ndrx_str_lstrip_ptr(buf," \t\n\r");
         
         /* try to parse rm switch */
-        
-        if (EXSUCCEED!=parse_rm_string(buf, p_rmdef))
+        if (EXSUCCEED!=parse_rm_string(stripped, p_rmdef))
         {
             EXFAIL_OUT(ret);
         }

@@ -906,8 +906,7 @@ expublic char *ndrx_str_strip(char *haystack, char *needle)
  * @return same s string
  */
 expublic char* ndrx_str_rstrip(char* s, char *needle)
-{
-    int i;    
+{ 
     char* p = s + strlen(s);
     while (p > s)
     {
@@ -927,7 +926,7 @@ expublic char* ndrx_str_rstrip(char* s, char *needle)
 }
 
 /**
- * Return pointer to data where first non-matched char starts
+ * Return pointer to data where first non-matched char starts (strip from left)
  * @param s string to process
  * @param needle char to strip off
  * @return ptr to start non matched char

@@ -53,18 +53,21 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-            <server name="atmi.sv71">
+        
+        <server name="tmstest">
+            <srvid>10</srvid>
             <min>1</min>
             <max>1</max>
-            <srvid>10</srvid>
+            <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1 -m20 -r2 ${TESTPING_DOM2}</sysopt>
+        </server>
+        
+        <server name="atmi.sv71">
+            <min>1</min>
+            <max>1</max>
+            <srvid>100</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
         </server>
-                 <server name="tpbridge">
-            <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
-        </server>
+        
     </servers>
 </endurox>
 
