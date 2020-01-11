@@ -66,7 +66,6 @@ set_dom1() {
 }
 
 
-
 #
 # Generic exit function
 #
@@ -76,8 +75,6 @@ function go_out {
     set_dom1;
     xadmin stop -y
     xadmin down -y
-
-
 
     # If some alive stuff left...
     xadmin killall atmiclt71
@@ -90,8 +87,11 @@ function go_out {
 echo "Firstly lets build the processes"
 ###############################################################################
 
-export NDRX_HOME=./
+#export NDRX_SILENT=Y
+export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
+export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools
+export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd"
 
 
 echo "Building tms..."
@@ -99,9 +99,56 @@ buildtms -o tmstest -rTestSw
 
 RET=$?
 
-if [ "X$RET" != "0" ]; then
+if [ "X$RET" != "X0" ]; then
     echo "Failed to build tmstest: $RET"
     go_out 1
+fi
+
+echo "Build server..."
+buildserver -o atmi.sv71 -rTestSw -f atmisv71_1.c -l atmisv71_2.c -v \
+    -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmisv71: $RET"
+    go_out 2
+fi
+
+unset CFLAGS
+
+echo "Build client..., No switch..."
+buildclient -o atmiclt71err -rerrorsw -f atmiclt71_1.c -l atmiclt71_2.c -v \
+    -l atmiclt71_3.c -f atmiclt71_4.c \
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
+RET=$?
+
+if [ "X$RET" == "X0" ]; then
+    echo "Build atmiclt71err shall fail, but was OK"
+    go_out 2
+fi
+
+echo "Build client..., Build OK"
+buildclient -o atmiclt71 -rnullsw -f atmiclt71_1.c -l atmiclt71_2.c -v \
+    -l atmiclt71_3.c -f atmiclt71_4.c \
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmiclt71: $RET"
+    go_out 2
+fi
+
+
+echo "Build client default sw..., Build OK"
+buildclient -o atmiclt71 -f atmiclt71_1.c -l atmiclt71_2.c -v \
+    -l atmiclt71_3.c -f atmiclt71_4.c \
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmiclt71: $RET"
+    go_out 2
 fi
 
 

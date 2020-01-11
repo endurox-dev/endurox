@@ -379,9 +379,7 @@ int main(int argc, char **argv)
     ndrx_rm_def_t rmdef;
     bs_svcnm_lst_t *el, *elt;
     
-    NDRX_BANNER;
-    
-    fprintf(stderr, "BUILDSERVER Compiler\n\n");
+    NDRX_BANNER("BUILDSERVER Compiler");
     
     /* clear any error... */
     _Nunset_error();
@@ -564,7 +562,7 @@ out:
     
     EXHASH_ITER(hh, M_bs_funcnm_lst, el, elt)
     {
-        EXHASH_DEL(M_bs_svcnm_lst, el);
+        EXHASH_DEL(M_bs_funcnm_lst, el);
         NDRX_FREE(el);
     }
 

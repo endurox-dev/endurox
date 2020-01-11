@@ -1,7 +1,7 @@
 /**
  * @brief Test buildserver, buildclient and buildtms - server
  *
- * @file atmisv71.c
+ * @file atmisv71_3.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -61,9 +61,14 @@ void TESTSV (TPSVCINFO *p_svc)
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
-
-    /* Just print the buffer */
-    Bprint(p_ub);
+    
+    /* Allocate some stuff... */
+    if (NULL==(p_ub=(UBFH *)tpalloc("UBF", NULL, 1024)))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to allocate 1024 bytes: %s",
+                                        tpstrerror(tperrno));
+        tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
+    }
     
     if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
     {
@@ -73,13 +78,21 @@ void TESTSV (TPSVCINFO *p_svc)
         goto out;
     }
     
-    if (EXUSCCEED!=__write_to_tx_file(testbuf)) /* symbol from xa switch lib */
+    if (EXSUCCEED!=__write_to_tx_file(testbuf)) /* symbol from xa switch lib */
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to write to transaction: %s", 
                  Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
-    }    
+    }
+    
+    if (EXFAIL==Bchg(p_ub, T_STRING_3_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_3_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -87,46 +100,6 @@ out:
                 (char *)p_ub,
                 0L,
                 0L);
-}
-
-/**
- * Do initialisation
- */
-int tpsvrinit(int argc, char **argv)
-{
-    int ret = EXSUCCEED;
-    NDRX_LOG(log_debug, "tpsvrinit called");
-    
-    if (EXSUCCEED!=tpopen())
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
-                                            tperrno, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
-
-    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
-    {
-        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
-        EXFAIL_OUT(ret);
-    }
-out:
-    return ret;
-}
-
-/**
- * Do de-initialization
- */
-void tpsvrdone(void)
-{
-    NDRX_LOG(log_debug, "tpsvrdone called");
-    
-    if (EXSUCCEED!=tpclose())
-    {
-        NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
-                                            tperrno, tpstrerror(tperrno));
-    }
-    
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -1,10 +1,7 @@
 /**
- * @brief Test buildserver, buildclient and buildtms - client
- *  This will run with default switch.
- *  - tms will be built with TestSw
- *  - atmisv71 will be built with TestSw too.
+ * @brief Test buildserver, buildclient and buildtms - server
  *
- * @file atmiclt71.c
+ * @file atmisv71_4.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -34,23 +31,19 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <math.h>
-
-#include <atmi.h>
-#include <ubf.h>
 #include <ndebug.h>
-#include <test.fd.h>
+#include <atmi.h>
 #include <ndrstandard.h>
-#include <nstopwatch.h>
-#include <fcntl.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
 #include <unistd.h>
-#include <nstdutil.h>
 #include "test71.h"
+
 /*---------------------------Externs------------------------------------*/
+extern int __write_to_tx_file(char *buf);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -59,66 +52,46 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do the test call to the server
+ * This will give some echo back...
  */
-int main(int argc, char** argv)
+void ECHOSV (TPSVCINFO *p_svc)
 {
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
-    long i;
     int ret=EXSUCCEED;
+    char testbuf[1024];
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
     
-    /***************************************************************************/
-    NDRX_LOG(log_debug, "Testing normal tx processing - commit() ...");
-    /***************************************************************************/
-    
-    /* open the XA */
-    if (EXSUCCEED!=tpopen())
+    /* Allocate some stuff... */
+    if (NULL==(p_ub=(UBFH *)tpalloc("UBF", NULL, 1024)))
     {
-        NDRX_LOG(log_error, "TESTERROR: tpopen() fail: %d:[%s]", 
-                                            tperrno, tpstrerror(tperrno));
+        NDRX_LOG(log_error, "TESTERROR: Failed to allocate 1024 bytes: %s",
+                                        tpstrerror(tperrno));
+        tpreturn (TPFAIL, 0L, NULL, 0L, 0L);
+    }
+    
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    /* echo back the field */
+    if (EXFAIL==Bchg(p_ub, T_STRING_2_FLD, 0, testbuf, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_2_FLD: %s", 
+                 Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
     
-    for (i=0; i<1000; i++)
-    {
-        if (EXSUCCEED!=tpbegin(5, 0))
-        {
-            NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
-                                                tperrno, tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
-        }
-
-        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, (char *)&i, 0, BFLD_LONG))
-        {
-            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-            ret=EXFAIL;
-            goto out;
-        }    
-
-        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-        {
-            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
-        }
-
-        if (EXSUCCEED!=(ret=tpcommit(0)))
-        {
-            NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
-                                                ret, tperrno, tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
-        }
-    }
-    
 out:
-    tpterm();
-    fprintf(stderr, "Exit with %d\n", ret);
-
-    return ret;
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

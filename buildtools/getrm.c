@@ -62,7 +62,7 @@
  * format: res_mgr_logical_name:xa_switch_name:build_libraries_last_names
  * 
  * @param buf parsed buffer from udataobj/RM text file
- * @param p_rmdef resource manager define
+ * @param p_rmdef resource manager define, shall be set to 0 (memset)
  * @return EXUSCCEED/EXFAIL
  */
 exprivate int parse_rm_string(char *buf, ndrx_rm_def_t *p_rmdef)
@@ -74,12 +74,14 @@ exprivate int parse_rm_string(char *buf, ndrx_rm_def_t *p_rmdef)
     
     p = strtok_r (buf, ":", &saveptr1);
     
+    NDRX_LOG(log_debug, "Parsing define: [%s]", buf);
+    
     for (i=0; i<3 && NULL!=p; i++, p = strtok_r (NULL, ":", &saveptr1))
     {
         args[i]=p;
     }
     
-    if (i!=3)
+    if (i<2)
     {
         _Nset_error_fmt(NEFORMAT, "Invalid resource manager define: [%s]", buf);
         EXFAIL_OUT(ret);
@@ -87,7 +89,11 @@ exprivate int parse_rm_string(char *buf, ndrx_rm_def_t *p_rmdef)
     
     NDRX_STRCPY_SAFE(p_rmdef->rmname, args[0]);
     NDRX_STRCPY_SAFE(p_rmdef->structname, args[1]);
-    NDRX_STRCPY_SAFE(p_rmdef->libnames, args[2]);
+    
+    if (args[2])
+    {
+        NDRX_STRCPY_SAFE(p_rmdef->libnames, args[2]);
+    }
     
     NDRX_LOG(log_debug, "Got rmname=[%s] structname=[%s] libnames[%s]", 
             p_rmdef->rmname, p_rmdef->structname, p_rmdef->libnames);

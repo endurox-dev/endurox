@@ -1226,9 +1226,9 @@ int main(int argc, char** argv) {
     signal(SIGCHLD, sign_chld_handler);
     
     /* Print the copyright notice: */
-    if (is_tty() && NULL==getenv(CONF_NDRX_SILENT))
+    if (is_tty())
     {
-        NDRX_BANNER;
+        NDRX_BANNER("");
     }
 
     /* Main command loop */
