@@ -69,7 +69,7 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
     if (NULL==(sargs = (struct xa_switch_t ** )dlsym( RTLD_DEFAULT, "ndrx_G_p_xaswitch" )))
     {
         NDRX_LOG(log_warn, "ndrx_G_p_xaswitch symbol not found");
-        ret=NULL;
+        goto out;
     }
     
     if (NULL==*sargs)

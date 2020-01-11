@@ -194,6 +194,7 @@ int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
     }
     
     ndrx_G_tmsvrargs = tmsvrargs;
+    ndrx_G_p_xaswitch = tmsvrargs->xa_switch;
     G_libatmisrv_flags = 0;
     
     G_tpsvrinit__ =  tmsvrargs->p_tpsvrinit;
