@@ -111,6 +111,7 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     
     if (NULL!=env_cflags)
     {
+        NDRX_LOG(log_debug, "CFLAGS=[%s]", env_cflags);
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " ");
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), env_cflags);
     }

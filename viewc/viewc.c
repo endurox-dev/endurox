@@ -96,9 +96,7 @@ int main(int argc, char **argv)
     char tmp[PATH_MAX];
     opterr = 0;
     
-    NDRX_BANNER;
-    
-    fprintf(stderr, "VIEW File Compiler\n\n");
+    NDRX_BANNER("VIEW File Compiler");
 
     while ((c = getopt (argc, argv, "nd:Chm:b:L:")) != -1)
     {

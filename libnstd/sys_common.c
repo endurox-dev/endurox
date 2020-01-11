@@ -1073,7 +1073,7 @@ expublic int ndrx_sys_cmdout_test(char *fmt, pid_t pid, regex_t *p_re)
  */
 expublic void ndrx_sys_banner(void)
 {
-    NDRX_BANNER;
+    NDRX_BANNER("");
 }
 
 /**

@@ -97,9 +97,7 @@ int main(int argc, char **argv)
     int verbose = EXFALSE;
     ndrx_rm_def_t rmdef;
     
-    NDRX_BANNER;
-    
-    fprintf(stderr, "BUILDCLIENT Compiler\n\n");
+    NDRX_BANNER("BUILDCLIENT Compiler");
     
     /* clear any error... */
     _Nunset_error();

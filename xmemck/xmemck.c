@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     
     if (!had_mask)
     {
-        NDRX_BANNER;
+        NDRX_BANNER("");
         
         fprintf(stderr, "Enduro/X memory check usage:\n");
         fprintf(stderr, "%s [-p period in sec, default 1] [-d allow_increase_delta_percent, default 5] \\\n"
