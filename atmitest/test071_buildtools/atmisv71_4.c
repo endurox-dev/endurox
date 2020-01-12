@@ -63,7 +63,7 @@ void ECHOSV (TPSVCINFO *p_svc)
     NDRX_LOG(log_debug, "%s got call", __func__);
     
     /* Allocate some stuff... */
-    if (NULL==(p_ub=(UBFH *)tpalloc("UBF", NULL, 1024)))
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096)))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to allocate 1024 bytes: %s",
                                         tpstrerror(tperrno));
@@ -93,5 +93,22 @@ out:
                 0L,
                 0L);
 }
+
+/**
+ * Another service func..
+ */
+void ECHO2SV (TPSVCINFO *p_svc)
+{
+    return ECHOSV(p_svc);
+}
+
+/**
+ * Another service func..
+ */
+void SERV (TPSVCINFO *p_svc)
+{
+    return ECHOSV(p_svc);
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

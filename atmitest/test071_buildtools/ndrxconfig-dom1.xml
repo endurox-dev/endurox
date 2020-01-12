@@ -51,14 +51,30 @@
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
         <killtime>20</killtime>
+
     </defaults>
     <servers>
         
-        <server name="tmstest">
+        <!-- null group's - 1 -->
+        <server name="tmsrv">
             <srvid>10</srvid>
             <min>1</min>
             <max>1</max>
-            <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1 -m20 -r2 ${TESTPING_DOM2}</sysopt>
+            <envs>
+                <env name="NDRX_XA_RES_ID">1</env>
+            </envs>
+            <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1 </sysopt>
+        </server>
+        
+        <!-- TestSw - 2 -->
+        <server name="tmstest">
+            <srvid>20</srvid>
+            <min>1</min>
+            <max>1</max>
+            <sysopt>-e ${TESTDIR}/TM2.log -r -- -t1 -l${TESTDIR}/RM2 </sysopt>
+            <envs>
+                <env name="NDRX_XA_RES_ID">2</env>
+            </envs>
         </server>
         
         <server name="atmi.sv71">
@@ -66,6 +82,9 @@
             <max>1</max>
             <srvid>100</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+            <envs>
+                <env name="NDRX_XA_RES_ID">2</env>
+            </envs>
         </server>
         
     </servers>

@@ -63,7 +63,7 @@ void TESTSV (TPSVCINFO *p_svc)
     NDRX_LOG(log_debug, "%s got call", __func__);
     
     /* Allocate some stuff... */
-    if (NULL==(p_ub=(UBFH *)tpalloc("UBF", NULL, 1024)))
+    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 4096)))
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to allocate 1024 bytes: %s",
                                         tpstrerror(tperrno));
@@ -78,17 +78,20 @@ void TESTSV (TPSVCINFO *p_svc)
         goto out;
     }
     
-    if (EXSUCCEED!=__write_to_tx_file(testbuf)) /* symbol from xa switch lib */
+    if (EXFAIL==Bchg(p_ub, T_STRING_3_FLD, 0, testbuf, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to write to transaction: %s", 
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_3_FLD: %s", 
                  Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
     
-    if (EXFAIL==Bchg(p_ub, T_STRING_3_FLD, 0, testbuf, 0))
+    NDRX_STRCPY_SAFE(testbuf, " ");
+    NDRX_STRCPY_SAFE(testbuf, p_svc->name);
+    
+    if (EXSUCCEED!=__write_to_tx_file(testbuf)) /* symbol from xa switch lib */
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_3_FLD: %s", 
+        NDRX_LOG(log_error, "TESTERROR: Failed to write to transaction: %s", 
                  Bstrerror(Berror));
         ret=EXFAIL;
         goto out;

@@ -1,0 +1,11 @@
+ #
+ # This file exports some functions for test purposes
+ #
+ #
+
+FI1,FI2:ECHOSV
+ECHO2SV
+# spaces are parsed from the front..
+# this shall be duplicate won't affect anything
+ ECHO2SV
+:SERV

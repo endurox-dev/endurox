@@ -72,6 +72,7 @@ exprivate void print_help(char *name)
     fprintf(stderr, "  -C               COBOL code (RFU)\n");
     fprintf(stderr, "  -o <filename>    Output compiled file name, default is a.out\n");
     fprintf(stderr, "  -f <firstfiles>  File names to be passed to compiler, on left side before Enduro/X libraries\n");
+    fprintf(stderr, "  -a <firstfiles>  Alias of -f\n");
     fprintf(stderr, "  -l <lastfiles>   File names to be passed to compiler, on right side after Enduro/X libraries\n");
     fprintf(stderr, "  -r <RM_NAME>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM.\n");
     fprintf(stderr, "                   If not set, null switch is used.\n");
@@ -104,7 +105,7 @@ int main(int argc, char **argv)
     
     memset(&rmdef, 0, sizeof(rmdef));
 
-    while ((c = getopt (argc, argv, "vwr:o:f:l:Ck")) != -1)
+    while ((c = getopt (argc, argv, "vwr:o:f:l:Cka:")) != -1)
     {
         switch (c)
         {
@@ -121,6 +122,7 @@ int main(int argc, char **argv)
                 NDRX_STRCPY_SAFE(ofile, optarg);
                 NDRX_LOG(log_debug, "ofile: [%s]", ofile);
                 break;
+            case 'a':
             case 'f':
                 if (EXEOS==firstfiles[0])
                 {

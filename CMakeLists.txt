@@ -472,6 +472,13 @@ install (FILES
     DESTINATION share/endurox
     RENAME THIRD_PARTY_LICENCES)
 
+#
+# Install stock RM file
+#
+install (FILES
+    scripts/RM
+    DESTINATION udataobj)
+
 ################################################################################
 # uninstall target
 ################################################################################

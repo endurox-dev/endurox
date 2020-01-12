@@ -217,9 +217,9 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryfail"* ]]; then
         # there should be no TRN- files at top level
 
         if [ ! -f ./RM1/TRN-* ]; then
-                echo "Transaction must NOT be completed - thus \
-                        intermediate file must exist!"
-                RET=-2
+            echo "Transaction must NOT be completed - thus \
+                    intermediate file must exist!"
+            RET=-2
         fi
 
         # try to manually commit with xadmin, 11 times, then it will approve
@@ -237,13 +237,13 @@ if [[ $NDRX_XA_DRIVERLIB_FILENAME == *"tryfail"* ]]; then
         eval $cmd || exit -10
 
         if [ -f ./RM1/TRN-* ]; then
-                echo "Transaction must be completed!"
-                RET=-3
+            echo "Transaction must be completed!"
+            RET=-3
         fi
 
         if [ ! -f ./RM1/committed/* ]; then
-                echo "Transaction must be committed!"
-                RET=-4
+            echo "Transaction must be committed!"
+            RET=-4
         fi
 
     fi

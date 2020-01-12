@@ -38,6 +38,7 @@ install (FILES
     userlog.h
     fml.h
     fml32.h
+    fml1632.h
     ubf.h
     ubfutil.h
     atmi.h

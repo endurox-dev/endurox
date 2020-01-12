@@ -3,4 +3,4 @@
 #
 
 nullsw:tmnull_switch:
-TestSw:ndrxstatsw: -L ../test021_xafull -l xadrv
+ TestSw:ndrxstatsw:-L ../test021_xafull -l xadrv

@@ -128,6 +128,10 @@ extern "C" {
 #define FBFR32 UBFH
 #endif
 
+/* Added for compatibility */    
+#define F32to16 B32to16
+#define F16to32 B16to32
+
 #define FLDLEN32 BFLDLEN
 #define FLDOCC32 BFLDOCC
 /*---------------------------Enums--------------------------------------*/

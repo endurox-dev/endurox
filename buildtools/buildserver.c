@@ -299,6 +299,7 @@ exprivate void print_help(char *name)
     fprintf(stderr, "                   Lines starting with # are ignored\n");
     fprintf(stderr, "  -o <filename>    Output compiled file name, default is SERVER\n");
     fprintf(stderr, "  -f <firstfiles>  File names to be passed to compiler, on left side before Enduro/X libraries\n");
+    fprintf(stderr, "  -a <firstfiles>  Alias of -f\n");
     fprintf(stderr, "  -l <lastfiles>   File names to be passed to compiler, on right side after Enduro/X libraries\n");
     fprintf(stderr, "  -r <rm_name>     Resource manager name to be searched in $NDRX_HOME/udataobj/RM.\n");
     fprintf(stderr, "                   If not set, null switch is used.\n");
@@ -335,14 +336,16 @@ exprivate int parse_s_file(char *infile)
 
     while (NULL!=fgets(buf, sizeof(buf), fp))
     {
+        char *stripped;
         ndrx_str_rstrip(buf," \t\n\r");
+        stripped = ndrx_str_lstrip_ptr(buf," \t\n\r");
         
-        if ('#'==buf[0] || EXEOS==buf[0])
+        if (EXEOS==stripped[0] || '#'==stripped[0])
         {
             continue;
         }
         
-        if ( EXSUCCEED!= parse_s_string(buf) )
+        if ( EXSUCCEED!= parse_s_string(stripped) )
         {
             EXFAIL_OUT(ret);
         }
@@ -386,7 +389,7 @@ int main(int argc, char **argv)
     
     memset(&rmdef, 0, sizeof(rmdef));
 
-    while ((c = getopt (argc, argv, "Cktvr:g:s:o:f:l:nh")) != -1)
+    while ((c = getopt (argc, argv, "Cktvr:g:s:o:f:l:nha:")) != -1)
     {
         switch (c)
         {
@@ -409,7 +412,7 @@ int main(int argc, char **argv)
                 NDRX_LOG(log_debug, "s_value: [%s]", s_value);
                 if ( '@'==s_value[0] )
                 {
-                    if (EXSUCCEED != parse_s_file(s_value) )
+                    if (EXSUCCEED != parse_s_file(s_value+1) )
                     {
                         NDRX_LOG(log_warn, 
                              "Failed to read Service/Function from [%s]", 
@@ -432,6 +435,7 @@ int main(int argc, char **argv)
                 NDRX_STRCPY_SAFE(ofile, optarg);
                 NDRX_LOG(log_debug, "ofile: [%s]", ofile);
                 break;
+            case 'a':
             case 'f':
                 if (EXEOS==firstfiles[0])
                 {

@@ -298,6 +298,8 @@ extern NDRX_API int Bflddbdel(EDB_txn *txn, BFLDID bfldid);
 extern NDRX_API int Bflddbadd(EDB_txn *txn, short fldtype, BFLDID bfldno, 
         char *fldname);
 
+extern NDRX_API int B32to16(UBFH *dest, UBFH *src);
+extern NDRX_API int B16to32(UBFH *dest, UBFH *src);
 
 #if defined(__cplusplus)
 }

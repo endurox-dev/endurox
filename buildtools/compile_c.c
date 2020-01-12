@@ -124,7 +124,6 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " ");
     NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), cfile);
     
-    /* TODO: At the end ... try to sub-env-subs... */
     if (EXEOS!=ndrx_inc[0])
     {
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " ");

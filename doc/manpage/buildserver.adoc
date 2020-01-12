@@ -5,7 +5,7 @@ BUILDSERVER(8)
 
 NAME
 ----
-buildserver - Build XATMI server
+buildserver - Build XATMI server executable
 
 
 SYNOPSIS
@@ -15,42 +15,77 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Build client is Perl script which is used for building XATMI server process.
-buildserver script was added to Enduro/X for better compatibility with competitor
-software. It is not mandatory to use the buildserver. The Enduro/X server
-processes can be built as a standard C/C++ binaries. Buildclient script basically
-invokes C compiler, with specified output binary name and list of object files to
-include in the link. The link process is appended with standard Enduro/X dynamic
-libraries which are intended for server use.
+Build server is a binary which generates main() entry point for the server process.
+Also server processes can be configured at build stage to statically 
+advertise services, passed to command line. Once the main entry point and advertise
+tables are generate, the C compiler is invoked to which generated and user files are passed.
 
-By comparing to the Oracle (R) Tuxedo (R) *buildclient* version, Enduro/X does
-not process the '-s' paramter. Meaning that automatic service advertises are
-not performed. Thus to migrate from Tuxedo to Enduro/X the *tpadvertise(3)* 
-must be used, e.g.
+It is possible to override the functionality of the generated main() function by
+enabling *TMMAINEXIT* macro for build. If macro is set, then after generated variable
+definition "mainexit.h" header is included, which may contain custom code.
+
+The generated server entry point looks like:
 
 --------------------------------------------------------------------------------
-void SOMESVC (TPSVCINFO *p_svc)
-{
-   ...
-}
 
-int tpsvrinit(int argc, char **argv)
-{
+/* Buildserver auto-generated code */
+/*---------------------------Includes-----------------------------------*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <string.h>
+#include <unistd.h>
+#include <xa.h>
+/*---------------------------Externs------------------------------------*/
+/* Buildserver auto generated extern service list */
+extern void TESTFUNC (TPSVCINFO *);
+/*---------------------------Macros-------------------------------------*/
+/*---------------------------Enums--------------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Globals------------------------------------*/
+/*---------------------------Statics------------------------------------*/
+/* Auto generated system advertise table */
+expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
+    {"TESTSVC","TESTFUNC",(void (*)(TPSVCINFO *)) JOPT, 0, 0 },
+    { NULL, NULL, NULL, 0, 0 }
+};
+/*---------------------------Prototypes---------------------------------*/
 
-    /* advertises service in init instead of -s argument. */
-    if (0!=tpadvertise("SOMESVC", SOMESVC))
+/* Buildserver main  */
+int main( int argc, char** argv )
+{
+    _tmbuilt_with_thread_option=0;
+    struct tmsvrargs_t tmsvrargs =
     {
-        ...
-    }
-}
-
-
-void tpsvrdone(void)
-{
-    ...
+        &tmnull_switch,
+        &ndrx_G_tmdsptchtbl[0],
+        0,
+        tpsvrinit,
+        tpsvrdone,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    };
+#ifdef TMMAINEXIT
+#include "mainexit.h"
+#endif
+    return( _tmstartserver( argc, argv, &tmsvrargs ));
 }
 
 --------------------------------------------------------------------------------
+
+The command line template, how C compiler is invoked, is following:
+
+--------------------------------------------------------------------------------
+<CC> [$CFLAGS] -o <binary_name> <generated_source>.c [-I<$NDRX_HOME>/include 
+-L<NDRX_HOME>/{lib|lib64}] [<first_files>] [<RM_libs>] -latmisrvinteg -latmi -lubf -lnstd [<last_files>]
+--------------------------------------------------------------------------------
+
 
 ENVIRONMENT
 -----------
@@ -63,25 +98,138 @@ Optional C flags to be passed to C compiler during the *cc* execution.
 
 [*NDRX_HOME*]::
 Optional environment variable indicating the Enduro/X installation home. If variable
-is set then, "-I$NDRX_HOME/include" is added to *cc* command line for including
-Enduro/X headers.
+is set then, "-I$NDRX_HOME/include" and "-L$NDRX_HOME/lib" (or lib64) is added 
+to the *cc* command line.
 
 OPTIONS
 -------
-*-o* 'OUTPUT_BINARY'::
-Output binary name passed to *cc*.
 
-*-f* 'INTPUT_FILES']::
-List of input files (must be passed in quotes, space separated) to the C compiler.
-The files might be .o or .c extensions.
+[*-C*]::
+COBOL mode. Reserved for future use.
+
+[*-o* filename]::
+Output file name for compiler. If not specified, then default is *SERVER*.
+
+[*-f* firstfiles]::
+Arguments to be passed to compiler command line. Typically here source file names, object
+file names or library settings are passed. These names are included in compilation command
+before Enduro/X libraries (from left to right).
 
 [*-a*]::
-Additional flags to be passed to *cc*. This must be quoted string. Similar to the
-*CFLAGS* environment flag, except that it is passed in command lien for *buildserver*.
+Alias to '-f'.
 
-[*-s*]::
-This flag is ignored. The logic might change in future and advertise from CLI
-might become available.
+[*-l* lastfiles]::
+Arguments to be passed to compiler command line. Typically here source file names, object
+file names or library settings are passed. These names are included in compilation command
+after Enduro/X libraries (from left to right).
+
+[*-r* rm_name]::
+This is resource manager name. The resource manager according the specified name
+shall be configured in *$NDRX_RMFILE* (first periority) or *$NDRX_HOME/udataobj/RM* file.
+The file format is following 'rm_name:xa_switch_name:<compiler libraries>'. If 
+specified, then 'xa_switch_name' is included in the process. Thus later *libndrxxatmsx.so(5)*
+XA driver can be used (set in *NDRX_XA_DRIVERLIB* env var, see *ex_env(5)*), 
+so that driver resolves built in symbols. Compiler libraries from resource manager 
+are passed in command line after the first files. If switch name is not specified,
+then default null switch 'tmnull_switch' is reference (present in libatmi.so).
+File format is described bellow.
+
+[*-s* '{@filename|svc1,svc2,...:func|:func}']::
+Service definition which shall be added. This argument can be repeated multiple
+times in command line. Syntax modes are following '-s ASVC,BSVC', will advertise
+two services for which functions ASVC() and BSVC() is expected to be present 
+in artifacts passed to '-f' or '-l' flags (source/object files). If passing 
+'-sCSVC,ZSVC:SOMEFUNC', then it is expected, that the extern function is SOMEFUNC()
+which also must be present in '-f' or '-l' included artifacts. It is also possible
+to register the function in service tables (currently not used by Enduro/X) via
+'-s:SOMEFUNC' parameter. The services may be advertised via specified 
+file, in such case '@filename' is specified. See section bellow for include file format.
+
+[*-g* rm_name]::
+'-g' is alias to '-r'.
+
+[*-k*]::
+Keep the the generate source code with the main function. If not set, the file
+is deleted when *buildserver* finishes.
+
+[*-t*]::
+Server is multi-threaded. Indicates that server can be started/configured in
+multi-threaded mode. This flag is reserved for future use. Currently this
+indication is built in the binary, but not used in any other way. Will be used
+once Enduro/X will support multi-threaded service dispatching. Do not confuse
+this flag with current Enduro/X threading model, as user threads are fully
+supported.
+
+[*-v*]::
+Verbose mode. This will print the build command to stderr.
+
+[*-h*]::
+Print the help.
+
+SERVICE FILE FORMAT
+-------------------
+The file format for service advertise is basically the same as '-s' parameter.
+Each line shall contain either 'SOMESVC[,OTHERSVC]:SOMEFUNC' or 'SOMESVC' or ':SOMEFUNC'.
+File format ignores lines starting with '#' or empty (white space filled) lines.
+
+Sample file ('advertise_file.txt', included by -s @advertise_file.txt to buildserver):
+--------------------------------------------------------------------------------
+#
+# This file exports some functions for test purposes
+#
+
+FI1,FI2:ECHOSV
+ECHO2SV
+ECHO2SV
+:SERV
+
+--------------------------------------------------------------------------------
+
+
+RM FILE FORMAT
+--------------
+Resource manager file format accepts '#' as comments, and parser ignores 
+whitespace/empty lines. The format is '<rm_name>:<switch_name>:<libraries>'
+
+Sample definitions:
+--------------------------------------------------------------------------------
+#
+# This is test file of the switches
+#
+
+nullsw:tmnull_switch:
+TestSw:ndrxstatsw: -L ../test021_xafull -l xadrv
+#
+# Oracle static registration switch:
+#
+Oracle_XA:xaosw:-L$(ORACLE_HOME)/lib -lclntsh
+--------------------------------------------------------------------------------
+
+
+EXAMPLE
+-------
+See *atmitest/test071_buildtools/run.sh* for samples. Some of them:
+
+--------------------------------------------------------------------------------
+$ export CC=cc
+$ export CFLAGS="-g -I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd"
+
+$ buildserver -o atmi.sv71 -rTestSw -a atmisv71_1.c -l atmisv71_2.c -v \
+    -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c \
+    -s @advertise_file.txt
+
+--------------------------------------------------------------------------------
+
+That would result in following compilation unit:
+
+--------------------------------------------------------------------------------
+
+$ cc -g -I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv \
+-L../../libexuuid -L../../libexthpool -L../../libnstd -o atmi.sv71 ndrx_bs_xw4wIZ.c \
+-I./include -L./lib atmisv71_1.c atmisv71_3.c -L ../test021_xafull -l xadrv -latmisrvinteg \
+-latmi -lubf -lnstd -lrt -ldl -lm -lc -lpthread atmisv71_2.c atmisv71_4.c
+
+--------------------------------------------------------------------------------
 
 
 EXIT STATUS
@@ -98,7 +246,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*viewfile(5)* *buildclient(8)*
+*buildclient(8)* *buildtms(8)* *ex_env(5)*
 
 COPYING
 -------

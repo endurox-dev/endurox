@@ -84,7 +84,7 @@ int run_tran_services(void)
     
     for (j=0; NULL!=transervices[j]; j++)
     {
-        for (i=0; i<1000; i++)
+        for (i=0; i<200; i++)
         {
             long testval;
             
@@ -136,6 +136,7 @@ int run_tran_services(void)
     
 out:
     
+    tpabort(0); /* just in case */
     tpclose();
 
     return ret;
