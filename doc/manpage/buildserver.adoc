@@ -49,7 +49,7 @@ extern void TESTFUNC (TPSVCINFO *);
 /*---------------------------Statics------------------------------------*/
 /* Auto generated system advertise table */
 expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
-    {"TESTSVC","TESTFUNC",(void (*)(TPSVCINFO *)) JOPT, 0, 0 },
+    {"TESTSVC","TESTFUNC",(void (*)(TPSVCINFO *)) TESTFUNC, 0, 0 },
     { NULL, NULL, NULL, 0, 0 }
 };
 /*---------------------------Prototypes---------------------------------*/
