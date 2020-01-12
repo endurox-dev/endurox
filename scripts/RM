@@ -1,0 +1,11 @@
+#
+# This is Enduro/X stock resource manager definition file
+# Append as needed.
+# format is: <rm_name(logical)>:<xa_switch_name>:<compiler_flags e.g. libs and paths>
+#
+
+nullsw:tmnull_switch:
+#
+# Oracle static registration switch:
+#
+Oracle_XA:xaosw:-L$(ORACLE_HOME)/lib -lclntsh

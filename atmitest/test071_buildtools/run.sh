@@ -72,6 +72,7 @@ set_dom1() {
 
     # Configure XA Driver
     # Driver library will be 
+    # this will be default 1 group...
     export NDRX_XA_RES_ID=1
     export NDRX_XA_OPEN_STR="+"
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
@@ -102,6 +103,8 @@ function go_out {
     exit $1
 }
 
+rm *.log 2>/dev/null
+
 ###############################################################################
 echo "Firstly lets build the processes"
 ###############################################################################
@@ -110,7 +113,7 @@ export NDRX_SILENT=Y
 export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools
-export CFLAGS="-g -I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd"
+export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd"
 
 
 echo "Building tms..."
@@ -124,8 +127,9 @@ if [ "X$RET" != "X0" ]; then
 fi
 
 echo "Build server..."
-buildserver -o atmi.sv71 -rTestSw -f atmisv71_1.c -l atmisv71_2.c -v \
-    -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c
+buildserver -o atmi.sv71 -rTestSw -a atmisv71_1.c -l atmisv71_2.c -v \
+    -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c \
+    -s @advertise_file.txt
 
 RET=$?
 
@@ -160,11 +164,13 @@ if [ "X$RET" == "X0" ]; then
 fi
 
 export CC=$CC_SAVED
-
-export CFLAGS="-g"
+export CFLAGS=""
+unset NDRX_HOME
+# test the other option...
+export NDRX_RMFILE=./udataobj/RM
 
 echo "Build client..., No switch..."
-buildclient -o atmiclt71err -rerrorsw -f atmiclt71_1.c -l atmiclt71_2.c -v \
+buildclient -o atmiclt71err -rerrorsw -a atmiclt71_1.c -l atmiclt71_2.c -v \
     -l atmiclt71_3.c -f atmiclt71_4.c \
     -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
 RET=$?
@@ -227,14 +233,21 @@ esac
 
 # prepare folders
 rm -rf $TESTDIR/RM1 2>/dev/null
-mkdir $TESTDIR/RM1
-mkdir $TESTDIR/RM1/active
-mkdir $TESTDIR/RM1/prepared
-mkdir $TESTDIR/RM1/committed
-mkdir $TESTDIR/RM1/aborted
-export NDRX_TEST_RM_DIR=$TESTDIR/RM1
+rm -rf $TESTDIR/RM2 2>/dev/null
 
-rm *dom*.log
+#
+# Note RM1 is NULL group
+# RM2 is test switch
+#
+
+mkdir $TESTDIR/RM1
+mkdir $TESTDIR/RM2
+
+mkdir $TESTDIR/RM2/active
+mkdir $TESTDIR/RM2/prepared
+mkdir $TESTDIR/RM2/committed
+mkdir $TESTDIR/RM2/aborted
+export NDRX_TEST_RM_DIR=$TESTDIR/RM2
 
 set_dom1;
 xadmin down -y
@@ -244,6 +257,14 @@ RET=0
 
 xadmin psc
 xadmin ppm
+
+CNT=`xadmin psc | grep ECHO2SV | wc | awk '{print $1}'`
+if [ $CNT -ne 1 ]; then
+    echo "Too many ECHO2SV!: $CNT"
+    go_out -10
+fi
+
+echo Run off binaries...""
 
 (./atmiclt71 2>&1) > ./atmiclt-dom1.log
 RET=$?
@@ -261,12 +282,25 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "Checking the committed record count..."
+
+CNT=`ls -1 RM2/committed/ | wc | awk '{print $1}'`
+
+if [ $CNT -ne 1600 ]; then
+    echo "1600 transactions must be committed, but got: $CNT"
+    go_out -10
+fi
+
+if [ -f ./RM2/TRN-* ]; then
+    echo "Transaction must be completed!"
+    go_out -11
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
-    RET=-2
+    RET=-20
 fi
-
 
 go_out $RET
 

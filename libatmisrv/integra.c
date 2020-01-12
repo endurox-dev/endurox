@@ -71,6 +71,17 @@ expublic NDRX_API_EXPORT struct xa_switch_t *ndrx_G_p_xaswitch = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Dummy for build compatibility
+ * @param 
+ * @return 
+ */
+expublic int _tmrunserver(int arg1)
+{
+    
+  return 0;
+}
+
+/**
  * System init, advertise by table.
  * TODO: This shall use -N flag. Also new param -S shall be introduced
  * which would allow to advertise by function names from CLI. Probably parsed
@@ -194,7 +205,10 @@ int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
     }
     
     ndrx_G_tmsvrargs = tmsvrargs;
-    ndrx_G_p_xaswitch = tmsvrargs->xa_switch;
+    if (NULL!=tmsvrargs)
+    {
+        ndrx_G_p_xaswitch = tmsvrargs->xa_switch;
+    }
     G_libatmisrv_flags = 0;
     
     G_tpsvrinit__ =  tmsvrargs->p_tpsvrinit;

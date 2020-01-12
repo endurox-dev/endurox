@@ -461,6 +461,10 @@ extern "C" {
 
 #define NDRX_INTEGRA(X)		__##X##__ /* integration mode*/
 
+#ifndef _
+#define _(X)  X
+#endif
+
 /********************** Queue support  *****************************************/
 #define TMQNAMELEN	15
 #define TMMSGIDLEN	32
@@ -800,7 +804,10 @@ extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnoma
 extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
             void (*in_tpsvrdone)(void), long flags);
 
+/* for build compatibility: */
 extern NDRX_API int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs);
+extern NDRX_API int _tmrunserver(int arg1);
+extern NDRX_API struct tmsvrargs_t * _tmgetsvrargs(void);
 
 /* Contexting/switching TLS for all libs */
 extern NDRX_API int tpgetctxt(TPCONTEXT_T *context, long flags);

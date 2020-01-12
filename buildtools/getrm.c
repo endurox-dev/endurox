@@ -158,14 +158,14 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
     {
         char *stripped;
         
-        if ('#'==buf[0] || '\n'==buf[0])
+        ndrx_str_rstrip(buf," \t\n\r");
+        stripped = ndrx_str_lstrip_ptr(buf," \t\n\r");
+        
+        if (EXEOS==stripped[0] || '#'==stripped[0])
         {
             /* skip comments */
             continue;
         }
-        
-        ndrx_str_rstrip(buf," \t\n\r");
-        stripped = ndrx_str_lstrip_ptr(buf," \t\n\r");
         
         /* try to parse rm switch */
         if (EXSUCCEED!=parse_rm_string(stripped, p_rmdef))

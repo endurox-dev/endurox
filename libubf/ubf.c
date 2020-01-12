@@ -3182,6 +3182,26 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     return ndrx_Brealloc (p_ub, f, v, EXFAIL);
 }
 
+/**
+ * Dummy functions. Enduro/X all buffers are 32bit
+ * @param dest dest buffer
+ * @param src source buffer
+ * @return EXSUCCEED
+ */
+expublic int B32to16(UBFH *dest, UBFH *src)
+{
+    return EXSUCCEED;
+}
 
+/**
+ * Dummy functions. Enduro/X all buffers are 32bit
+ * @param dest dest buffer
+ * @param src source buffer
+ * @return EXSUCCEED
+ */
+expublic int B16to32(UBFH *dest, UBFH *src)
+{
+    return EXSUCCEED;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -64,7 +64,7 @@
 int run_echo_services(int argc, char** argv)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    char *echoservices[] = {"Z", "ECHOSV", NULL};
+    char *echoservices[] = {"Z", "ECHOSV", "FI1", "FI2", "ECHO2SV", NULL};
     long rsplen;
     long i, j;
     int ret=EXSUCCEED;
