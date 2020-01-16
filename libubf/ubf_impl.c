@@ -157,7 +157,14 @@ expublic int ubf_cache_update(UBFH *p_ub)
         }
         p_bfldid = (BFLDID *)p;
         
-        typenext = (*p_bfldid>>EFFECTIVE_BITS);
+        if (UBF_EOF(hdr, p_bfldid))
+        {
+            typenext=EXFAIL;
+        }
+        else
+        {
+            typenext = (*p_bfldid>>EFFECTIVE_BITS);
+        }
         
 #ifdef BIN_SEARCH_DEBUG
         UBF_LOG(log_debug, "%s: Next field: [%d], type %d", fn, *p_bfldid, typenext);
@@ -1059,9 +1066,9 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
     /* Seek position where we should insert the data... */
     while (!UBF_EOF(hdr, p_bfldid) && bfldid >= *p_bfldid)
     {
-	dtype_str_t *dtype;
+        dtype_str_t *dtype;
         int step;
-	int type;
+        int type;
 	
         /*
          * Save the point from which we can continue (suitable for Bconcat)
@@ -1137,8 +1144,8 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
     
     if (NULL!=next_fld)
     {
-	/* so mark as next by data size */
-	next_fld->last_checked = (BFLDID *)(p + new_dat_size);
+        /* so mark as next by data size */
+        next_fld->last_checked = (BFLDID *)(p + new_dat_size);
     }
     
 out:
@@ -1669,7 +1676,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         
         /* Move to next */
         state->p_cur_bfldid = (BFLDID *)p;
-        if (prev_fld==*state->p_cur_bfldid)
+        if (!UBF_EOF(hdr, state->p_cur_bfldid) && prev_fld==*state->p_cur_bfldid)
         {
             state->cur_occ++;
         }

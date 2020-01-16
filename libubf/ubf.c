@@ -1655,6 +1655,22 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
     
     if (dbg->level>=lev)
     {
+
+#ifdef UBF_API_DEBUG
+        UBF_header_t *buf = (UBF_header_t *)p_ub;
+        UBF_LOG(lev, "buffer_type = [%x]", (unsigned)buf->buffer_type);
+        UBF_LOG(lev, "version = [%x]", (unsigned)buf->buffer_type);
+        UBF_LOG(lev, "magic = [%c%c%c%c]", buf->magic[0], buf->magic[1], buf->magic[2], buf->magic[3]);
+        UBF_LOG(lev, "cache_long_off = [%x]", buf->cache_long_off);
+        UBF_LOG(lev, "cache_char_off = [%x]", buf->cache_char_off);
+        UBF_LOG(lev, "cache_float_off = [%x]", buf->cache_float_off);
+        UBF_LOG(lev, "cache_double_off = [%x]", buf->cache_double_off);
+        UBF_LOG(lev, "cache_string_off = [%x]", buf->cache_string_off);
+        UBF_LOG(lev, "buf_len = [%x]", buf->buf_len);
+        UBF_LOG(lev, "bytes_used = [%x]", buf->bytes_used);
+        UBF_LOG(lev, "bfldid = [%x]", buf->bfldid);
+#endif
+
         TP_LOG(lev, "%s", title);
         /* Do standard validation */
         if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
