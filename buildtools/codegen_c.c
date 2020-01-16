@@ -1,6 +1,6 @@
 /**
  * @brief Generate code for C lang
- * TODO use: "tmnull_switch" when XA switch is not available for compatilibty..
+ * Using "tmnull_switch" when XA switch is not available for compatilibty..
  *
  * @file codegen_c.c
  */
@@ -192,9 +192,7 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
 {
     int ret = EXSUCCEED;
     FILE *f = NULL;
-
-    NDRX_LOG(log_info, "C-Code to compile: [%s]", cfile);
-
+    
     if (NULL==(f=NDRX_FOPEN(cfile, "w")))
     {
         NDRX_LOG(log_error, "Failed to open for write [%s]: %s", 
@@ -219,11 +217,17 @@ expublic int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef)
     {
         fprintf(f, "extern struct xa_switch_t %s;\n", p_rmdef->structname);
     }
+    /* from libatmibld library */
+    fprintf(f, "extern struct xa_switch_t * ndrx_xa_builtin_get(void);\n");
 
-    fprintf(f, "expublic struct tmsvrargs_t ndrx_G_tmsvrargs_stat = "
-                "{&%s, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};\n",
+    fprintf(f, "expublic NDRX_API_EXPORT struct xa_switch_t *ndrx_G_p_xaswitch = &%s;\n",
                 (EXEOS!=p_rmdef->structname[0]?p_rmdef->structname:"tmnull_switch"));
-    fprintf(f, "expublic NDRX_API_EXPORT extern struct xa_switch_t *ndrx_G_p_xaswitch;\n");
+    
+    fprintf(f, "struct xa_switch_t * ndrx_switch_pull(void)\n");
+    fprintf(f, "{\n");
+    fprintf(f, "    return ndrx_xa_builtin_get();\n");
+    fprintf(f, "}\n");
+
 
     NDRX_FCLOSE(f);
     f = NULL;

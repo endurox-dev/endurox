@@ -925,6 +925,9 @@ extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long i
 extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
 
+/* export the symbol */
+extern NDRX_API struct xa_switch_t * ndrx_xa_builtin_get(void);
+
 #ifdef	__cplusplus
 }
 #endif
