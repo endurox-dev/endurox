@@ -156,7 +156,7 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     }
     else if (COMPILE_CLT == buildmode)
     {
-        NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -latmiclt -latmi -lubf -lnstd");
+        NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -latmicltbld -latmi -lubf -lnstd");
     }
     else if (COMPILE_TMS == buildmode)
     {        

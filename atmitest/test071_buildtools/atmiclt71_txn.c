@@ -1,7 +1,7 @@
 /**
- * @brief Load the xa switch passed to _tmstartserver or return null switch
+ * @brief This is transactional client
  *
- * @file tms_x.c
+ * @file atmiclt71_txn.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -34,65 +34,88 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
+#include <math.h>
 
-#include <ndrstandard.h>
-#include <ndebug.h>
 #include <atmi.h>
-#include <atmi_int.h>
-#include <sys_mqueue.h>
+#include <ubf.h>
+#include <ndebug.h>
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test71.h"
 
 #define __USE_GNU
 #include <dlfcn.h>
 
-#include "atmi_shm.h"
-
-#include <xa.h>
 /*---------------------------Externs------------------------------------*/
+extern int __write_to_tx_file(char *buf);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-typedef  struct xa_switch_t * (*p_func_t)(void);
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * API entry of loading the driver
- * @param symbol
- * @param descr
- * @return XA switch or null
+ * Do the test call to the server
  */
-struct xa_switch_t *ndrx_get_xa_switch(void)
+int main(int argc, char** argv)
 {
-    struct xa_switch_t *ret = NULL;
+    int ret = EXSUCCEED;
+    int i;
+    char buf[64];
     
-    p_func_t f;
-    
-    if (NULL==(f = (p_func_t)dlsym( RTLD_DEFAULT, "ndrx_xa_builtin_get" )))
+    if (EXSUCCEED!=tpinit(NULL))
     {
-        NDRX_LOG(log_warn, "ndrx_xa_builtin_get symbol not found");
-        goto out;
-    }
-    /* get the switch */
-    ret = f();
-    
-    if (NULL==ret)
-    {
-        NDRX_LOG(log_error, "Null result!");
-        return NULL;
+        NDRX_LOG(log_error, "TESTERROR: failed to init: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG(log_debug, "XA Switch [%s] resolved", ret->name);
+    if (EXSUCCEED!=tpopen())
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to tpopen: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
+    for (i=0; i<33; i++)
+    {
+        if (EXSUCCEED!=tpbegin(10, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to begin: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        snprintf(buf, sizeof(buf), "CLT %d", i);
+        NDRX_LOG(log_debug, "TRA: %s", buf);
+        
+        if (EXSUCCEED!=__write_to_tx_file(buf)) /* symbol from xa switch lib */
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to write to transaction: %s", 
+                     Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=tpcommit(0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to commit: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+    }
+    
 out:
-    
-    if (NULL==ret)
-    {
-        NDRX_LOG(log_info, "Using NULL switch");
-        ret = &tmnull_switch;
-    }
-    
+
+    /* close anyway.. */
+    tpabort(0);
+    tpclose();
+    tpterm();
+
     return ret;
+        
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

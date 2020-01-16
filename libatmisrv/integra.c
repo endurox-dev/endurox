@@ -71,6 +71,15 @@ expublic NDRX_API_EXPORT struct xa_switch_t *ndrx_G_p_xaswitch = NULL;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Return built in switch
+ * @return 
+ */
+expublic struct xa_switch_t * ndrx_xa_builtin_get(void)
+{
+    return ndrx_G_p_xaswitch;
+}
+
+/**
  * Dummy for build compatibility
  * @param 
  * @return 

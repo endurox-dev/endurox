@@ -74,10 +74,10 @@ set_dom1() {
     # Driver library will be 
     # this will be default 1 group...
     export NDRX_XA_RES_ID=1
-    export NDRX_XA_OPEN_STR="+"
+    export NDRX_XA_OPEN_STR=-
     export NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
     export NDRX_XA_DRIVERLIB=../../xadrv/tms/libndrxxatmsx.$NDRX_EXT
-    export NDRX_XA_RMLIB=../test021_xafull/libxadrv.$NDRX_EXT
+    export NDRX_XA_RMLIB=-
 
     echo "Driver: $NDRX_XA_DRIVERLIB"
     echo "RM: $NDRX_XA_RMLIB"
@@ -172,7 +172,7 @@ export NDRX_RMFILE=./udataobj/RM
 echo "Build client..., No switch..."
 buildclient -o atmiclt71err -rerrorsw -a atmiclt71_1.c -l atmiclt71_2.c -v \
     -l atmiclt71_3.c -f atmiclt71_4.c \
-    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libnstd"
 RET=$?
 
 if [ "X$RET" == "X0" ]; then
@@ -183,19 +183,18 @@ fi
 echo "Build client..., Build OK"
 buildclient -o atmiclt71 -rnullsw -f atmiclt71_1.c -l atmiclt71_2.c -v \
     -l atmiclt71_3.c -f atmiclt71_4.c \
-    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libnstd"
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
     echo "Failed to build atmiclt71: $RET"
     go_out 2
 fi
-
 
 echo "Build client default sw..., Build OK"
 buildclient -o atmiclt71dflt -f atmiclt71_1.c -l atmiclt71_2.c -v \
     -l atmiclt71_3.c -f atmiclt71_4.c \
-    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd -L ../../libatmiclt"
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../libnstd -L ../../libatmiclt"
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
@@ -203,6 +202,15 @@ if [ "X$RET" != "X0" ]; then
     go_out 2
 fi
 
+echo "Build client, working switch, Build OK"
+buildclient -o atmiclt71_txn -a atmiclt71_txn.c -v -r TestSw -k \
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../libnstd -L ../../libatmiclt"
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmiclt71_txn: $RET"
+    go_out 2
+fi
 
 ###############################################################################
 echo "Now execute them..."
@@ -282,13 +290,31 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
-echo "Checking the committed record count..."
+echo "Execute atmiclt71_txn..."
 
+# start in 2nd group
+(NDRX_XA_RES_ID=2 ./atmiclt71_txn 2>&1) > ./atmiclt71_txn.log
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run atmiclt71_txn: $RET"
+    go_out $RET
+fi
+
+echo "Checking the committed record count..."
 CNT=`ls -1 RM2/committed/ | wc | awk '{print $1}'`
 
-if [ $CNT -ne 1600 ]; then
-    echo "1600 transactions must be committed, but got: $CNT"
+if [ $CNT -ne 1633 ]; then
+    echo "1633 transactions must be committed, but got: $CNT"
     go_out -10
+fi
+
+# 33 of them shall be clients...
+CNT=`grep 'CLT' RM2/committed/* | wc | awk '{print $1}'`
+
+if [ $CNT -ne 33 ]; then
+    echo "CLT 33 not found: $CNT"
+    go_out -1
 fi
 
 if [ -f ./RM2/TRN-* ]; then
