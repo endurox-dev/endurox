@@ -119,6 +119,18 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     }
     else
     {
+#ifdef UBF_API_DEBUG
+        /* randomize memory... */
+        int i;
+        char *buf = (char *)p_ub;
+
+        srand ( time(NULL) );
+        for (i=0; i<len; i++)
+        {
+            buf[i] = (char)(rand() % 255);
+        }
+
+#endif
         /* Initialise buffer */
         /* the last element bfldid is set to zero */
         memset((char *)p_ub, 0, sizeof(UBF_header_t)); /* Do we need all to be set to 0? */
@@ -128,6 +140,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
         ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES;
+	
     }
     
     return ret;
