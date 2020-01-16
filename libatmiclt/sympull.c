@@ -52,17 +52,13 @@ extern struct xa_switch_t *ndrx_G_p_xaswitch; /**< XA Switch built in...*/
 
 /**
  * Dummy function to pull in the globals (avoid remove from linking)
+ * TODO: add extern header
  * when buildclient is created.
  * @return EXTRUE switch is set, EXFALSE switch is NULL.
  */
-expublic int ndrx_bld_sym_pull(void)
+expublic struct xa_switch_t * ndrx_xa_builtin_get(void)
 {
-    if (NULL!=ndrx_G_p_xaswitch)
-    {
-        return EXTRUE;
-    }
-
-    return EXFALSE;
+    return ndrx_G_p_xaswitch;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
