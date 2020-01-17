@@ -50,6 +50,11 @@ Ensure(test_readwrite)
     UBFH *p_ub = (UBFH *)fb;
     char fb2[1024];
     UBFH *p_ub2 = (UBFH *)fb2;
+
+    /* needs to set padding to some known value */
+    memset(fb, 7, sizeof(fb));
+    memset(fb, 7, sizeof(fb2));
+
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
@@ -82,6 +87,10 @@ Ensure(test_readwrite_err_space)
     UBFH *p_ub = (UBFH *)fb;
     char fb2[128];
     UBFH *p_ub2 = (UBFH *)fb2;
+
+    memset(fb, 7, sizeof(fb));
+    memset(fb, 7, sizeof(fb2));
+
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
@@ -110,6 +119,10 @@ Ensure(test_readwrite_invalid_descr)
     UBFH *p_ub = (UBFH *)fb;
     char fb2[128];
     UBFH *p_ub2 = (UBFH *)fb2;
+
+    memset(fb, 7, sizeof(fb));
+    memset(fb, 7, sizeof(fb2));
+
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
