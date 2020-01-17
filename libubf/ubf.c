@@ -119,6 +119,18 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
     }
     else
     {
+#ifdef UBF_API_DEBUG
+        /* randomize memory... */
+        int i;
+        char *buf = (char *)p_ub;
+
+        srand ( time(NULL) );
+        for (i=0; i<len; i++)
+        {
+            buf[i] = (char)(rand() % 255);
+        }
+
+#endif
         /* Initialise buffer */
         /* the last element bfldid is set to zero */
         memset((char *)p_ub, 0, sizeof(UBF_header_t)); /* Do we need all to be set to 0? */
@@ -128,6 +140,7 @@ expublic int Binit (UBFH * p_ub, BFLDLEN len)
         ubf_h->buf_len = len;
         ubf_h->opts = 0; 
         ubf_h->bytes_used = sizeof(UBF_header_t) - FF_USED_BYTES;
+	
     }
     
     return ret;
@@ -1655,6 +1668,22 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
     
     if (dbg->level>=lev)
     {
+
+#ifdef UBF_API_DEBUG
+        UBF_header_t *buf = (UBF_header_t *)p_ub;
+        UBF_LOG(lev, "buffer_type = [%x]", (unsigned)buf->buffer_type);
+        UBF_LOG(lev, "version = [%x]", (unsigned)buf->buffer_type);
+        UBF_LOG(lev, "magic = [%c%c%c%c]", buf->magic[0], buf->magic[1], buf->magic[2], buf->magic[3]);
+        UBF_LOG(lev, "cache_long_off = [%x]", buf->cache_long_off);
+        UBF_LOG(lev, "cache_char_off = [%x]", buf->cache_char_off);
+        UBF_LOG(lev, "cache_float_off = [%x]", buf->cache_float_off);
+        UBF_LOG(lev, "cache_double_off = [%x]", buf->cache_double_off);
+        UBF_LOG(lev, "cache_string_off = [%x]", buf->cache_string_off);
+        UBF_LOG(lev, "buf_len = [%x]", buf->buf_len);
+        UBF_LOG(lev, "bytes_used = [%x]", buf->bytes_used);
+        UBF_LOG(lev, "bfldid = [%x]", buf->bfldid);
+#endif
+
         TP_LOG(lev, "%s", title);
         /* Do standard validation */
         if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
@@ -3182,6 +3211,26 @@ expublic UBFH * Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v)
     return ndrx_Brealloc (p_ub, f, v, EXFAIL);
 }
 
+/**
+ * Dummy functions. Enduro/X all buffers are 32bit
+ * @param dest dest buffer
+ * @param src source buffer
+ * @return EXSUCCEED
+ */
+expublic int B32to16(UBFH *dest, UBFH *src)
+{
+    return EXSUCCEED;
+}
 
+/**
+ * Dummy functions. Enduro/X all buffers are 32bit
+ * @param dest dest buffer
+ * @param src source buffer
+ * @return EXSUCCEED
+ */
+expublic int B16to32(UBFH *dest, UBFH *src)
+{
+    return EXSUCCEED;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
