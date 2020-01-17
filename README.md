@@ -460,7 +460,7 @@ processing listings across all supported OSes.
 
 - Version 7.0.16 released on 16/11/2019 (stabel) Fixes on Support #443, Support #493
 
-- Version 7.0.16 released on 01/01/2020 (stabel) Fixes on Bug #412
+- Version 7.0.18 released on 17/01/2020 (stabel) Fixes on Bug #412, Support #505
 
 # Build configurations
 
