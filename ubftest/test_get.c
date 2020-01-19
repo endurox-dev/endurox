@@ -336,6 +336,8 @@ Ensure(test_bgetalloc)
     char test17[BGETALLOC_TEST_17]; /* have some random memory data. */
     BFLDLEN len=0;
 
+    randomize_test_data(test17, sizeof(test17));
+
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_get_test_data(p_ub);
 
