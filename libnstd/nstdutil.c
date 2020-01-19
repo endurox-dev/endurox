@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <time.h>
+#include <fcntl.h>
 #include <nstd_tls.h>
 
 #include "nstdutil.h"
