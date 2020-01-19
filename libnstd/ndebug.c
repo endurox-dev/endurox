@@ -468,9 +468,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 
                 /* Feature #312 apply to all facilities, as during integration
                  * these might be used too */
-                NDRX_STRNCPY_SAFE(G_ndrx_debug.iflags, p+1, sizeof(G_ndrx_debug.iflags)-1);
-                NDRX_STRNCPY_SAFE(G_ubf_debug.iflags, p+1, sizeof(G_ubf_debug.iflags)-1);
-                NDRX_STRNCPY_SAFE(G_tp_debug.iflags, p+1, sizeof(G_tp_debug.iflags)-1);
+                NDRX_STRCPY_SAFE(G_ndrx_debug.iflags, p+1);
+                NDRX_STRCPY_SAFE(G_ubf_debug.iflags, p+1);
+                NDRX_STRCPY_SAFE(G_tp_debug.iflags, p+1);
             }
             else if (0==strncmp("lines", tok, cmplen))
             {

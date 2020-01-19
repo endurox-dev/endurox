@@ -605,7 +605,7 @@ expublic int ndrx_ubfdb_Bflddbget(EDB_val *data,
     *p_bfldno = (*p_bfldid) & EFFECTIVE_BITS_MASK;
     *p_fldtype = (*p_bfldid) >> EFFECTIVE_BITS;
     
-    NDRX_STRNCPY_SAFE(fldname, entry->fldname, fldname_bufsz);
+    NDRX_STRCPY_SAFE_DST(fldname, entry->fldname, fldname_bufsz);
     
     UBF_LOG(log_debug, "%s: fldno=%d fldid=%d fldtype=%d fldname=[%s]",
                 __func__, *p_bfldno, *p_bfldid, *p_fldtype, fldname);

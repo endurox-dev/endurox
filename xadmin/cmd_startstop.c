@@ -192,8 +192,7 @@ expublic int cmd_start(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRNCPY(srvnm, argv[1], MAXTIDENT);
-	srvnm[MAXTIDENT] = 0;
+	NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -281,8 +280,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRNCPY(srvnm, argv[1], MAXTIDENT);
-	srvnm[MAXTIDENT] = 0;
+	NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -422,8 +420,7 @@ expublic int cmd_r(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRNCPY(srvnm, argv[1], MAXTIDENT);
-	srvnm[MAXTIDENT] = 0;
+	NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {
@@ -556,8 +553,7 @@ expublic int cmd_sreload(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p
         
     if (argc>=2 && '-'!=argv[1][0])
     {
-	NDRX_STRNCPY(srvnm, argv[1], MAXTIDENT);
-	srvnm[MAXTIDENT] = 0;
+	NDRX_STRCPY_SAFE(srvnm, argv[1]);
     }
     else
     {

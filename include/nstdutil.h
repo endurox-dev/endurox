@@ -116,6 +116,12 @@ extern "C" {
 #define NDRX_LH_FLAG_WASUSED        0x0002  /**< Entry was used but now free*/
 /** @} */ /* end of linhash */
     
+    
+/**
+ * Test mode is used...
+ */
+#define NDRX_STDF_TEST              0x00000001  /**< This is test mode      */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -352,6 +358,8 @@ extern NDRX_API int ndrx_lh_position_get(ndrx_lh_config_t *conf,
 extern NDRX_API ndrx_intmap_t *ndrx_intmap_find (ndrx_intmap_t ** hash, int key);
 extern NDRX_API ndrx_intmap_t * ndrx_intmap_add (ndrx_intmap_t ** hash, int key, int value);
 extern NDRX_API void ndrx_intmap_remove (ndrx_intmap_t ** hash);
+
+extern NDRX_API FILE* ndrx_mkstemps(char *filetempl, int suffixlen, long flags);
 
 #ifdef	__cplusplus
 }

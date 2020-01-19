@@ -179,7 +179,7 @@ expublic int ndrx_plugins_loadone(char *fname)
                     provider, p->symb);
 
             *func_ptr = fptr;
-            NDRX_STRNCPY_SAFE(prov_ptr, provider, NDRX_PLUGIN_PROVIDERSTR_BUFSZ);
+            NDRX_STRCPY_SAFE_DST(prov_ptr, provider, NDRX_PLUGIN_PROVIDERSTR_BUFSZ);
             
         }
         

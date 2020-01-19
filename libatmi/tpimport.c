@@ -218,7 +218,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
             EXFAIL_OUT(ret);
         }
         size_used = (long)strlen(data)+1;
-        NDRX_STRNCPY_SAFE(obuftemp, data, size_used);
+        NDRX_STRCPY_SAFE_DST(obuftemp, data, NDRX_MSGSIZEMAX);
     }
     else if ( 0 == strcmp(BUF_TYPE_UBF_STR, buftype))
     {
@@ -299,7 +299,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
         }
         serialized_data = exjson_serialize_to_string(data_value);
         size_used = (long)strlen(serialized_data)+1;
-        NDRX_STRNCPY_SAFE(obuftemp, serialized_data, size_used);
+        NDRX_STRCPY_SAFE_DST(obuftemp, serialized_data, NDRX_MSGSIZEMAX);
     }
     else
     {

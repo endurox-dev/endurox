@@ -416,7 +416,7 @@ exprivate long bextreadcb_readf(char *buffer, long bufsz, void *dataptr1)
     
     if (NULL!=data_buffers[*idx])
     {
-        NDRX_STRNCPY_SAFE(buffer, data_buffers[*idx], bufsz);
+        NDRX_STRCPY_SAFE_DST(buffer, data_buffers[*idx], bufsz);
         
         (*idx)++;
         return strlen(buffer)+1;

@@ -608,12 +608,11 @@ expublic int tploggetreqfile(char *filename, int bufsize)
     {
         if (bufsize>0)
         {
-            NDRX_STRNCPY(filename, G_nstd_tls->requestlog_tp.filename, bufsize-1);
-            filename[bufsize-1] = EXEOS;
+            NDRX_STRCPY_SAFE_DST(filename, G_nstd_tls->requestlog_tp.filename, bufsize);
         }
         else
         {
-            NDRX_STRNCPY_SAFE(filename, G_nstd_tls->requestlog_tp.filename, bufsize);
+            strcpy(filename, G_nstd_tls->requestlog_tp.filename);
         }
     }
     

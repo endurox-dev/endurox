@@ -557,8 +557,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     call->command_id = ATMI_COMMAND_TPCALL;
     
     
-    NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
-    call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
+    NDRX_STRCPY_SAFE(call->name, svc);
     call->flags = flags;
     
     if (NULL!=extradata)

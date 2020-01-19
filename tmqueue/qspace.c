@@ -197,8 +197,7 @@ exprivate int load_param(tmq_qconfig_t * qconf, char *key, char *value)
     else  */
     if (0==strcmp(key, TMQ_QC_SVCNM))
     {
-        NDRX_STRNCPY(qconf->svcnm, value, sizeof(qconf->svcnm)-1);
-        qconf->svcnm[sizeof(qconf->svcnm)-1] = EXEOS;
+        NDRX_STRCPY_SAFE(qconf->svcnm, value);
     }
     else if (0==strcmp(key, TMQ_QC_TRIES))
     {
@@ -578,8 +577,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
     if (NULL!=p)
     {
         NDRX_LOG(log_info, "Got token: [%s]", p);
-        NDRX_STRNCPY(buf, p, sizeof(qconf->qname)-1);
-        buf[sizeof(qconf->qname)-1] = EXEOS;
+        NDRX_STRCPY_SAFE(buf, p);
         
         NDRX_LOG(log_debug, "Q name: [%s]", buf);
         
@@ -624,8 +622,7 @@ expublic int tmq_qconf_addupd(char *qconfstr, char *name)
     {
         NDRX_LOG(log_info, "Got pair [%s]", p);
         
-        NDRX_STRNCPY(buf, p, sizeof(buf)-1);
-        buf[sizeof(buf)-1] = EXEOS;
+        NDRX_STRCPY_SAFE(buf, p);
         
         p2 = strchr(buf, '=');
         

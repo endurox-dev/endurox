@@ -822,7 +822,7 @@ exprivate int get_cmd(int *p_have_next)
                 G_cmd_argc_logical = 1;
             
             /* Migrate to raw format: */
-            NDRX_STRNCPY_SAFE(G_cmd_argv[i-1], M_argv[i], MAX_ARG_LEN);
+            NDRX_STRCPY_SAFE_DST(G_cmd_argv[i-1], M_argv[i], MAX_ARG_LEN);
             G_cmd_argc_raw++;
         }
         
@@ -900,7 +900,7 @@ exprivate int get_cmd(int *p_have_next)
             if (!G_cmd_argc_logical)
                 G_cmd_argc_logical = 1;
             
-            NDRX_STRNCPY_SAFE(G_cmd_argv[G_cmd_argc_raw], p, MAX_ARG_LEN);
+            NDRX_STRCPY_SAFE_DST(G_cmd_argv[G_cmd_argc_raw], p, MAX_ARG_LEN);
             G_cmd_argc_raw++;
             
             p = strtok (NULL, ARG_DEILIM);
@@ -1058,8 +1058,7 @@ exprivate int get_file(char *buf, size_t size, char *path1, char *path2)
     else if (NULL!=path1)
     {
         /* snprintf(buf, size, "%s", path1); */
-        NDRX_STRNCPY(buf, path1, size);
-        buf[size-1] = EXEOS;
+        NDRX_STRCPY_SAFE_DST(buf, path1, size);
     }
     else
     {

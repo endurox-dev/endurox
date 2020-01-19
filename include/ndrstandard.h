@@ -129,16 +129,6 @@ extern NDRX_API long ndrx_msgsizemax (void);
 
 #define NDRX_PADDING_MAX         16 /* Max compiled padding in struct (assumed) */
 
-#if 0
-/*These are slow! */
-#define NDRX_STRCPY_SAFE(X, Y) {strncpy(X, Y, sizeof(X)-1);\
-                          X[sizeof(X)-1]=EXEOS;}
-	
-#define NDRX_STRNCPY_SAFE(X, Y, N) {strncpy(X, Y, N-1);\
-                          X[N]=EXEOS;}
-	
-#endif
-
 #ifdef HAVE_STRNLEN
 
 #define NDRX_STRNLEN strnlen
@@ -154,13 +144,12 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #ifdef HAVE_STRLCPY
 #define NDRX_STRCPY_SAFE(X, Y) strlcpy(X, Y, sizeof(X));
 	
-#define NDRX_STRNCPY_SAFE(X, Y, N) strlcpy(X, Y, N);
+#define NDRX_STRCPY_SAFE_DST(X, Y, N) strlcpy(X, Y, N);
     
 #else
     
 /**
  * Copies string to maximum of target buffer size
- * TODO: switch to STRLCPY if  
  * @param X destination buffer (must be static char array with size sizeof available)
  * @param Y string to copy from
  */
@@ -173,7 +162,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	}\
 	memcpy(X, Y, ndrx_I5SmWDM_len);\
 	X[ndrx_I5SmWDM_len]=0;\
-	}
+	} while(0)
     
 /**
  * Safe copy to target buffer (not overflowing it...)
@@ -183,7 +172,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  * @param Y source buffer
  * @param N dest buffer size
  */	
-#define NDRX_STRNCPY_SAFE(X, Y, N) {\
+#define NDRX_STRCPY_SAFE_DST(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y);\
 	int ndrx_XgCmDEk_bufzs = (N)-1;\
 	if (ndrx_I5SmWDM_len > ndrx_XgCmDEk_bufzs)\
@@ -192,21 +181,44 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 	}\
 	memcpy((X), (Y), ndrx_I5SmWDM_len);\
 	(X)[ndrx_I5SmWDM_len]=0;\
-	}
+	} while(0)
 #endif
 
 /**
- * in case if dest buffer allows, we copy EOS too
- * This is compatible with strncpy
+ * This is compatible with strncpy()
+ * Ensure that dest buffer does not go over. Does not ensure for EOS. If
+ * possible it copies the EOS from source buffer.
+ * @param X dest buffer
+ * @param Y source buffer
+ * @param N number of bytes in dest buffer.
  */
 #define NDRX_STRNCPY(X, Y, N) {\
 	int ndrx_I5SmWDM_len = strlen(Y)+1;\
 	if (ndrx_I5SmWDM_len > (N))\
 	{\
-		ndrx_I5SmWDM_len = (N);\
+            ndrx_I5SmWDM_len = (N);\
 	}\
 	memcpy((X), (Y), ndrx_I5SmWDM_len);\
-	}
+	} while(0)
+
+/**
+ * Copy number of chars, ensure that string is terminated with EOS
+ * Ensure that dest buffer does not go over. Ensure for EOS
+ * @param X dest buffer
+ * @param Y source buffer
+ * @param N number chars to copy
+ * @param S dest buffer size
+ */
+#define NDRX_STRNCPY_EOS(X, Y, N, S) {\
+	int ndrx_I5SmWDM_len = strlen(Y);\
+	if (ndrx_I5SmWDM_len > (N))\
+	{\
+            ndrx_I5SmWDM_len = (N);\
+	}\
+        if (ndrx_I5SmWDM_len>=(S)) ndrx_I5SmWDM_len=(S)-1;\
+	memcpy((X), (Y), ndrx_I5SmWDM_len);\
+        (X)[ndrx_I5SmWDM_len]=EXEOS;\
+	} while(0)
 
 /**
  * Copy the maxing at source buffer, not checking the dest
@@ -216,7 +228,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_STRNCPY_SRC(X, Y, N) {\
         int ndrx_I5SmWDM_len = NDRX_STRNLEN((Y), (N));\
         memcpy((X), (Y), ndrx_I5SmWDM_len);\
-	}
+	} while(0)
 
 /**
  * Copy last NRLAST_ chars from SRC_ to DEST_
@@ -232,13 +244,14 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
         } else {\
             NDRX_STRCPY_SAFE((DEST_), (SRC_));\
         }\
-	}
+	} while(0)
 
 #ifdef EX_HAVE_STRCAT_S
 
 #define NDRX_STRCAT_S(DEST_, DEST_SIZE_, SRC_) strcat_s(DEST_, DEST_SIZE_, SRC_)
 
 #else
+
 /**
  * Cat string at the end. Dest size of the string is given
  * @param DEST_ dest buffer
@@ -247,8 +260,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  */
 #define NDRX_STRCAT_S(DEST_, DEST_SIZE_, SRC_) {\
         int ndrx_VeIlgbK9tx_len = strlen(DEST_);\
-        NDRX_STRNCPY_SAFE( (DEST_+ndrx_VeIlgbK9tx_len), SRC_, (DEST_SIZE_ - ndrx_VeIlgbK9tx_len));\
-}
+        NDRX_STRCPY_SAFE_DST( (DEST_+ndrx_VeIlgbK9tx_len), SRC_, (DEST_SIZE_ - ndrx_VeIlgbK9tx_len));\
+} while(0)
 #endif
 
 /*

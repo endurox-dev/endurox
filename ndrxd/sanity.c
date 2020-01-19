@@ -294,7 +294,7 @@ exprivate void parse_q(char *qname, int is_server, char *process, int processsz,
     /* Fix up with process name */
     p=strrchr(buf, NDRX_FMT_SEP);
             
-    NDRX_STRNCPY_SAFE(process, p+1, processsz);
+    NDRX_STRCPY_SAFE_DST(process, p+1, processsz);
     
     NDRX_LOG(6, "got process: pid: %d name: [%s]", 
                         *p_pid, process);

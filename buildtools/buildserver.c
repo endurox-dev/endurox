@@ -379,6 +379,7 @@ int main(int argc, char **argv)
     char lastfiles[PATH_MAX+1] = {EXEOS};
     int nomain = EXFALSE;
     int verbose = EXFALSE;
+    FILE *out_fptr = NULL;
     ndrx_rm_def_t rmdef;
     bs_svcnm_lst_t *el, *elt;
     
@@ -503,7 +504,7 @@ int main(int argc, char **argv)
     /* Plot the the header */
     if (HDR_C_LANG==lang_mode)
     {
-        if ( EXFAIL==mkstemps(cfile,2) )
+        if ( NULL==(out_fptr=ndrx_mkstemps(cfile,2, 0) ))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed with error %s", strerror(err));
@@ -512,7 +513,7 @@ int main(int argc, char **argv)
             EXFAIL_OUT(ret);
         }
         
-        if (EXSUCCEED!=ndrx_buildsrv_generate_code(cfile, thread_option, 
+        if (EXSUCCEED!=ndrx_buildsrv_generate_code(&out_fptr, cfile, thread_option, 
                                                    M_bs_svcnm_lst, 
                                                    M_bs_funcnm_lst,
                                                    &rmdef, nomain))
@@ -550,6 +551,11 @@ out:
         
         /* print error */
         fprintf(stderr, "%s: %s\n", argv[0], ndrx_Nstrerror2(Nerror));
+    }
+
+    if (NULL!=out_fptr)
+    {
+        NDRX_FCLOSE(out_fptr);
     }
 
     if (EXFALSE == keep_main)

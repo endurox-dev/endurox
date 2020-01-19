@@ -859,7 +859,7 @@ expublic int ndrx_cache_keygrp_getkey_from_data(ndrx_tpcallcache_t* cache,
     
     /* get the key */
     
-    NDRX_STRNCPY_SAFE(keyout, cache->keygrpfmt, keyout_bufsz);
+    NDRX_STRCPY_SAFE_DST(keyout, cache->keygrpfmt, keyout_bufsz);
     
     if (EXSUCCEED!=(ret = ndrx_G_tpcache_types[cache->buf_type->type_id].pf_get_key(
                 cache, buf, rsplen, keyout, keyout_bufsz, errdet, sizeof(errdet))))

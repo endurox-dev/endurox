@@ -166,8 +166,7 @@ expublic int cmd_unset(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     
     if (argc>=2)
     {
-        NDRX_STRNCPY(call.env, argv[1], EX_ENV_MAX-1);
-        call.env[EX_ENV_MAX-1]=EXEOS;
+        NDRX_STRCPY_SAFE(call.env, argv[1]);
         if (NULL!=strchr(call.env, '='))
         {
                 fprintf(stderr, "Invalid format\n");

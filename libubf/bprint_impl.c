@@ -447,8 +447,8 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         /* now read field number + value */
         cpylen = (tok-p);
         /* Copy off field name */
-        NDRX_STRNCPY(fldnm, p, cpylen);
-        fldnm[cpylen]=EXEOS;
+        NDRX_STRNCPY_EOS(fldnm, p, cpylen, sizeof(fldnm));
+        
         /* Copy off value */
         NDRX_STRCPY_SAFE(value, tok+1);
         UBF_LOG(log_debug, "Got [%s]:[%s]", fldnm, value);

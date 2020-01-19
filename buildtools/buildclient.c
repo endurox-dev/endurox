@@ -94,9 +94,9 @@ int main(int argc, char **argv)
     int keep_main=EXFALSE;
     char firstfiles[PATH_MAX+1] = {EXEOS};
     char lastfiles[PATH_MAX+1] = {EXEOS};
-    int nomain = EXFALSE;
     int verbose = EXFALSE;
     ndrx_rm_def_t rmdef;
+    FILE *out_fptr = NULL;
     
     NDRX_BANNER("BUILDCLIENT Compiler");
     
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
     /* Plot the the header */
     if (HDR_C_LANG==lang_mode)
     {
-        if ( EXFAIL==mkstemps(cfile,2) )
+        if ( NULL==(out_fptr=ndrx_mkstemps(cfile,2, 0) ))
         {
             int err = errno;
             NDRX_LOG(log_error, "Failed with error %s", strerror(err));
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
             EXFAIL_OUT(ret);
         }
         
-        if (EXSUCCEED!=ndrx_buildclt_generate_code(cfile, &rmdef))
+        if (EXSUCCEED!=ndrx_buildclt_generate_code(&out_fptr, cfile, &rmdef))
         {
             NDRX_LOG(log_error, "Failed to generate code!");
             EXFAIL_OUT(ret);
@@ -229,6 +229,11 @@ out:
         
         /* print error */
         fprintf(stderr, "%s: %s\n", argv[0], ndrx_Nstrerror2(Nerror));
+    }
+
+    if (NULL!=out_fptr)
+    {
+        NDRX_FCLOSE(out_fptr);
     }
 
     if (EXFALSE == keep_main)
