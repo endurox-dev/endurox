@@ -465,7 +465,7 @@ exprivate int qstr_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_le
 exprivate void qstr_key_debug(ndrx_lh_config_t *conf, void *key_get, size_t key_len, 
     char *dbg_out, size_t dbg_len)
 {
-    NDRX_STRCPY_SAFE(dbg_out, key_get, dbg_len);
+    NDRX_STRCPY_SAFE_DST(dbg_out, key_get, dbg_len);
 }
 
 /**
@@ -738,7 +738,7 @@ expublic int ndrx_svqshm_get_qid(int in_qid, char *out_qstr, int out_qstr_len)
     if (have_value_2)
     {
         sm = NDRX_SVQ_INDEX(svq2, pos_2);
-        NDRX_STRCPY_SAFE(out_qstr, sm->qstr, out_qstr_len);
+        NDRX_STRCPY_SAFE_DST(out_qstr, sm->qstr, out_qstr_len);
     }
     else
     {
