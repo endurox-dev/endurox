@@ -41,7 +41,22 @@
 #include "ubfunit1.h"
 #include "ndebug.h"
 #include <fdatatype.h>
+#include <time.h>
 
+/**
+ * Init the memory, so that valgrind does not barg on padding bytes
+ * as un-initialized
+ */
+void randomize_test_data(char *ptr, int size)
+{
+    int i;
+    srand(time(NULL)); /* randomize seed */
+
+    for (i=0; i<size; i++)
+    {
+        ptr[i]=(char)(rand() % 255);
+    }
+}
 void test_proj_data_1(UBFH *p_ub)
 {
     short s;
@@ -281,6 +296,11 @@ Ensure(test_projcpy)
         BBADFLDID
     };
 
+    /* fill padded un-init memory: */
+    memset(fb_src, 3, sizeof(fb_src));
+    memset(fb_src2, 3, sizeof(fb_src2));
+    memset(fb_dst, 3, sizeof(fb_dst));
+
     assert_equal(Binit(p_ub_src, sizeof(fb_src)), EXSUCCEED);
     assert_equal(Binit(p_ub_src2, sizeof(fb_src2)), EXSUCCEED);
     assert_equal(Binit(p_ub_dst, sizeof(fb_dst)), EXSUCCEED);
@@ -290,8 +310,9 @@ Ensure(test_projcpy)
     assert_equal(Bprojcpy(p_ub_dst, p_ub_src, proj), EXSUCCEED);
     /* Projection */
     assert_equal(Bproj(p_ub_src, proj), EXSUCCEED);
+    assert_equal(Bused(p_ub_src), Bused(p_ub_dst));
     /* Compare the buffer to one what we get from proj */
-    assert_equal(memcmp(p_ub_dst, p_ub_src, Bused(p_ub_dst)), EXSUCCEED);
+    assert_equal(memcmp(p_ub_dst, p_ub_src, Bused(p_ub_src)), EXSUCCEED);
     
     /* OK now test that all data have been copied! */
     load_proj_test_data(p_ub_src);
