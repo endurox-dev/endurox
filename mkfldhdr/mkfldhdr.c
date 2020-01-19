@@ -258,8 +258,7 @@ int main(int argc, char **argv)
                 M_renderer = &M_renderer_tab[G_langmode];
                 break;
             case 'p':
-                NDRX_STRNCPY(G_privdata, optarg, FILENAME_MAX);
-                G_privdata[FILENAME_MAX] = EXEOS;
+                NDRX_STRCPY_SAFE(G_privdata, optarg);
                 break;
         }
     }
@@ -308,8 +307,7 @@ char *get_file_name(char *fname)
 {
     static char fname_conv[FILENAME_MAX+1];
     char *p;
-
-
+    
     p = strrchr(fname, '/');
     
     if (NULL==p)
@@ -319,10 +317,7 @@ char *get_file_name(char *fname)
     }
     else
     {
-        int len = strlen(p+1);
-        NDRX_STRNCPY(fname_conv, p+1, len);
-        fname_conv[len] = EXEOS;
-
+        NDRX_STRCPY_SAFE(fname_conv, p+1);
         return fname_conv;
     }
 }

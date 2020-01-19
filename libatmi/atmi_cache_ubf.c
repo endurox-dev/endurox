@@ -103,7 +103,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
                     "find closing bracket ']'", tmpsymbol);
             snprintf(tmp, sizeof(tmp), "Invalid field id (%s): cannot "
                     "find closing bracket ']'", tmpsymbol);
-            NDRX_STRNCPY_SAFE(((char *)data2), tmp, *p_errdetbufsz);
+            NDRX_STRCPY_SAFE_DST(((char *)data2), tmp, *p_errdetbufsz);
             EXFAIL_OUT(ret);
         }
         
@@ -113,7 +113,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
                     tmpsymbol);
             snprintf(tmp, sizeof(tmp), "Invalid/empty field (%s) brackets", 
                     tmpsymbol);
-            NDRX_STRNCPY_SAFE(((char *)data2), tmp, *p_errdetbufsz);
+            NDRX_STRCPY_SAFE_DST(((char *)data2), tmp, *p_errdetbufsz);
             EXFAIL_OUT(ret);
         }
         
@@ -133,7 +133,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
     {
         NDRX_LOG(log_error, "Failed to resolve field [%s] id: %s", 
                 tmpsymbol, Bstrerror(Berror));
-        NDRX_STRNCPY_SAFE(((char *)data2), Bstrerror(Berror), *p_errdetbufsz);
+        NDRX_STRCPY_SAFE_DST(((char *)data2), Bstrerror(Berror), *p_errdetbufsz);
         EXFAIL_OUT(ret);
     }
 
@@ -185,7 +185,7 @@ expublic int ndrx_cache_keyget_ubf (ndrx_tpcallcache_t *cache,
     if (EXSUCCEED!=(ret=ndrx_str_subs_context(okey, okey_bufsz, '(', ')',
         (void *)idata, errdet, &errdetbufsz, NULL, get_key_data)))
     {
-        NDRX_STRNCPY_SAFE(errdet, "substitute failure (data extract)", errdetbufsz);
+        NDRX_STRCPY_SAFE_DST(errdet, "substitute failure (data extract)", errdetbufsz);
         EXFAIL_OUT(ret);
     }
     

@@ -91,7 +91,7 @@ expublic int ndrx_plugin_crypto_getkey(char *keybuf, int keybuf_bufsz)
         M_hostname_first = EXTRUE;
     }
     
-    NDRX_STRNCPY(keybuf, M_hostname, keybuf_bufsz);
+    NDRX_STRCPY_SAFE_DST(keybuf, M_hostname, keybuf_bufsz);
     
 out:
     return ret;

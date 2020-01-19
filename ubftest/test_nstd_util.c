@@ -330,7 +330,7 @@ Ensure(test_nstd_env_subs)
 int test_get_env(void *data1, void *data2, void *data3, void *data4,
             char *symbol, char *outbuf, long outbufsz)
 {
-    NDRX_STRNCPY(outbuf, getenv(symbol), outbufsz);
+    NDRX_STRCPY_SAFE_DST(outbuf, getenv(symbol), outbufsz);
     
     return EXSUCCEED;
 }
@@ -401,8 +401,57 @@ Ensure(test_nstd_env_subs_ctx)
     setenv("NDRX_TC", "WORLD", EXTRUE);
     ndrx_str_subs_context(testbuf, sizeof(testbuf), '{', '}', NULL, NULL, NULL, NULL,
                     test_get_env);
-    assert_string_equal(testbuf, "A\\HELLOBWORLDZ");
+    assert_string_equal(testbuf, "A\\HELLOBWORLDZ");   
+}
+
+/**
+ * Check the random file name generator
+ */
+Ensure(test_nstd_ndrx_mkstemps)
+{
+    FILE *f;
+    char templ[128];
+    char tmp[128];
     
+    NDRX_STRCPY_SAFE(templ, "XXXXXX");
+    assert_equal(ndrx_mkstemps(templ, 1, 0), NULL);
+    assert_equal(errno, EINVAL);
+    
+    assert_not_equal((f=ndrx_mkstemps(templ, 0, 0)), NULL);
+    
+    assert_string_not_equal(templ, "XXXXXX");
+    ndrx_file_exists(templ);
+    /* try write */
+    assert_equal(fprintf(f, "HELLO TEST"), 10);
+    fclose(f);
+    assert_equal(unlink(templ), EXSUCCEED);
+    
+    /* try file file with some extension */
+    NDRX_STRCPY_SAFE(templ, "temp_compile_XXXXXX.c");
+    NDRX_LOG(log_info, "0 Got name: [%s]", templ);
+    assert_not_equal((f=ndrx_mkstemps(templ, 2, 0)), NULL);
+    
+    NDRX_LOG(log_info, "Got name: [%s]", templ);
+    
+    /* file open ok */
+    assert_string_not_equal(templ, "temp_compile_XXXXXX.c");
+    assert_equal(strlen(templ), strlen("temp_compile_XXXXXX.c"));
+    /* check the positions... that other parts are OK */
+    NDRX_LOG(log_debug, "Got templ: [%s]", templ);
+    NDRX_STRNCPY_EOS(tmp, templ, 13, sizeof(tmp));
+    assert_string_equal(tmp, "temp_compile_");
+    
+    
+    NDRX_LOG(log_debug, "Got templ+12: [%s]", templ+19);
+    
+    NDRX_STRNCPY_EOS(tmp, templ+19, 2, sizeof(tmp));
+    assert_string_equal(tmp, ".c");
+    fclose(f);
+    assert_equal(unlink(templ), EXSUCCEED);
+    
+    /* check file exists error */
+    assert_equal((f=ndrx_mkstemps("README", 0, NDRX_STDF_TEST)), NULL);
+    assert_equal(errno, EEXIST);
     
 }
 
@@ -419,6 +468,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_env_subs);
     add_test(suite, test_nstd_env_subs_ctx);
     add_test(suite, test_nstd_file_exists);
+    add_test(suite, test_nstd_ndrx_mkstemps);
     
     return suite;
 }

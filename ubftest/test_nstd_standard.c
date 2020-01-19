@@ -122,6 +122,202 @@ Ensure(test_ndrx_string_list_splitadd)
     ndrx_string_list_free(list);
 }
 
+
+/*
+ * Ensure(test_nstd_ndrx_strcpy_s)
+ * - NDRX_STRCPY_SAFE
+ * - NDRX_STRCPY_SAFE_DST
+ * - NDRX_STRNCPY
+ * - NDRX_STRNCPY_EOS
+ * - NDRX_STRNCPY_SRC
+ * - NDRX_STRCPY_LAST_SAFE
+ */
+
+/**
+ * Copy to test dest string with using target size as sizeof(DST)
+ */
+Ensure(test_nstd_NDRX_STRCPY_SAFE)
+{
+    char dst[6];
+    
+    /* check normal copy */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_SAFE(dst, "ABCD");
+    assert_string_equal(dst, "ABCD");
+    
+    /* check full copy */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_SAFE(dst, "ABCDE");
+    assert_string_equal(dst, "ABCDE");
+    
+    /* check truncate copy */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_SAFE(dst, "HELLO WORLD");
+    assert_string_equal(dst, "HELLO");
+    
+}
+
+/**
+ * The dest buffer space is given then parameter..
+ * used for pointer buffers
+ */
+Ensure(test_nstd_NDRX_STRCPY_SAFE_DST)
+{
+    char dst[6];
+    char *p = dst;
+    
+    /* check normal copy */
+    memset(p, 1, sizeof(dst));
+    NDRX_STRCPY_SAFE_DST(p, "ABCD", 6);
+    assert_string_equal(p, "ABCD");
+    assert_string_equal(dst, "ABCD");
+    
+    /* check full copy */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_SAFE_DST(dst, "ABCDE", 6);
+    assert_string_equal(p, "ABCDE");
+    assert_string_equal(dst, "ABCDE");
+    
+    /* check truncate copy */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_SAFE_DST(dst, "HELLO WORLD", 6);
+    assert_string_equal(p, "HELLO");
+    assert_string_equal(dst, "HELLO");
+}
+
+/**
+ * This is same as strncpy, but instead it does not fill the non-copied
+ * left overs with zeros..
+ * Generally this is not safe, but faster version.
+ */
+Ensure(test_nstd_NDRX_STRNCPY)
+{
+    char dst[7];
+    
+    /* zero is copied from src.. */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY(dst, "ABCD", 6);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 'D');
+    assert_equal(dst[4], 0);
+    assert_equal(dst[5], 1);
+    assert_equal(dst[6], 1);
+    
+    /* full copied, no zero space */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY(dst, "ABCDEF", 6);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 'D');
+    assert_equal(dst[4], 'E');
+    assert_equal(dst[5], 'F');
+    assert_equal(dst[6], 1);
+    
+    /* check truncate copy */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY(dst, "ABCDEF", 3);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 1);
+    assert_equal(dst[4], 1);
+    assert_equal(dst[5], 1);
+    assert_equal(dst[6], 1);
+}
+
+/**
+ * This is same as NDRX_STRNCPY, but ensure that string is terminated.
+ * Thus we give dest buffer size + how much to copy.
+ */
+Ensure(test_nstd_NDRX_STRNCPY_EOS)
+{
+    char dst[7];
+    
+    /* zero is copied from src.. */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY_EOS(dst, "ABCD", 4, 6);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 'D');
+    assert_equal(dst[4], 0);
+    assert_equal(dst[5], 1);
+    assert_equal(dst[6], 1);
+    
+    /* try copy som more */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY_EOS(dst, "ABCDE", 6, 6);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 'D');
+    assert_equal(dst[4], 'E');
+    assert_equal(dst[5], 0);
+    assert_equal(dst[6], 1);
+    
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY_EOS(dst, "ABCDEG", 6, 4);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 0);
+    assert_equal(dst[4], 1);
+    assert_equal(dst[5], 1);
+    assert_equal(dst[6], 1);
+    
+    /* just full */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRNCPY_EOS(dst, "ABCDEG", 3, 4);
+    assert_equal(dst[0], 'A');
+    assert_equal(dst[1], 'B');
+    assert_equal(dst[2], 'C');
+    assert_equal(dst[3], 0);
+    assert_equal(dst[4], 1);
+    assert_equal(dst[5], 1);
+    assert_equal(dst[6], 1);
+}
+
+/**
+ * Do not check the dest buffer, but check source indead.
+ * This will ensure that strlen does not go into unknown memories
+ */
+Ensure(test_nstd_NDRX_STRNCPY_SRC)
+{
+    char src[6]={1, 2, 3, 4, 5, 6};
+    char dst[6]={6, 7, 8, 9, 10, 11};
+    char result[6]={1, 2, 3, 9, 10, 11};
+    
+    NDRX_STRNCPY_SRC(dst, src, 3);
+    assert_equal(memcmp(dst, result, 6), 0);
+}
+
+/**
+ * Copy last bytes from dest to source.
+ * This is SAFE, thus target buffer must be static sized.
+ * EOS is placed in result string.
+ */
+Ensure(test_nstd_NDRX_STRCPY_LAST_SAFE)
+{
+    char dst[7];
+    
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_LAST_SAFE(dst, "ABCFFFFFABC", 3);
+    assert_string_equal(dst, "ABC");
+    
+    /* last 10, trunc to 6 for EOS */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_LAST_SAFE(dst, "ABCFFFFFABC", 10);
+    assert_string_equal(dst, "BCFFFF");
+    
+    /* full size */
+    memset(dst, 1, sizeof(dst));
+    NDRX_STRCPY_LAST_SAFE(dst, "ABCDEF", 6);
+    assert_string_equal(dst, "ABCDEF");
+}
+
 /**
  * Standard header tests
  * @return
@@ -132,7 +328,13 @@ TestSuite *ubf_nstd_standard(void)
 
     add_test(suite, test_nstd_ndrx_strcpy_s);
     add_test(suite, test_nstd_ndrx_asprintf);
-            
+    add_test(suite, test_nstd_NDRX_STRCPY_SAFE);
+    add_test(suite, test_nstd_NDRX_STRCPY_SAFE_DST);
+    add_test(suite, test_nstd_NDRX_STRNCPY);
+    add_test(suite, test_nstd_NDRX_STRNCPY_EOS);
+    add_test(suite, test_nstd_NDRX_STRNCPY_SRC);
+    add_test(suite, test_nstd_NDRX_STRCPY_LAST_SAFE);
+    
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

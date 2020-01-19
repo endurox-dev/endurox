@@ -69,12 +69,12 @@ struct ndrx_rm_def
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
-extern int ndrx_buildsrv_generate_code(char *cfile, int thread_option, 
+extern int ndrx_buildsrv_generate_code(FILE **f, char *cfile, int thread_option, 
                                        bs_svcnm_lst_t *p_svcnm_lst, 
                                        bs_svcnm_lst_t *p_funcnm_lst,
                                        ndrx_rm_def_t *p_rmdef, int nomain);
 
-extern int ndrx_buildclt_generate_code(char *cfile, ndrx_rm_def_t *p_rmdef);
+extern int ndrx_buildclt_generate_code(FILE **f, char *cfile, ndrx_rm_def_t *p_rmdef);
 
 extern int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile, 
         char *firstfiles, char *lastfiles, ndrx_rm_def_t *p_rmdef);

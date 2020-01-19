@@ -692,7 +692,7 @@ expublic int ndrx_tpconvert(char *str, char *bin, long flags)
         {
             /* client id is already string... */
             cltid = (CLIENTID *)bin;
-            NDRX_STRNCPY_SAFE(str, cltid->clientdata, TPCONVMAXSTR);
+            NDRX_STRCPY_SAFE_DST(str, cltid->clientdata, TPCONVMAXSTR);
         }
         else if (flags & TPCONVTRANID)
         {

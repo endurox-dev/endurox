@@ -564,7 +564,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, len+1);
             
-            NDRX_STRNCPY_SAFE((proto_buf+(*proto_buf_offset)), c_buf_in, 
+            NDRX_STRCPY_SAFE_DST((proto_buf+(*proto_buf_offset)), c_buf_in, 
                     (proto_bufsz - (*proto_buf_offset)) );
             
             *proto_buf_offset += len;
@@ -573,7 +573,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                NDRX_STRNCPY_SAFE(debug_buf, c_buf_in, debug_bufsz);
+                NDRX_STRCPY_SAFE_DST(debug_buf, c_buf_in, debug_bufsz);
             }
         }
             break;
@@ -651,11 +651,11 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     {
         if (conv_bcd)
         {
-            NDRX_STRNCPY_SAFE(debug_buf, numbuf, debug_bufsz);
+            NDRX_STRCPY_SAFE_DST(debug_buf, numbuf, debug_bufsz);
         }
         else if (EXF_CARRAY!=fld->fld_type)
         {
-            NDRX_STRNCPY_SAFE(debug_buf, proto_buf + (*proto_buf_offset), debug_bufsz);
+            NDRX_STRCPY_SAFE_DST(debug_buf, proto_buf + (*proto_buf_offset), debug_bufsz);
         }
     }
     /* else should be set up already by carray func! */
@@ -688,8 +688,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         
         for (j=0; j<bcd_tmp_len; j+=2)
         {
-            NDRX_STRNCPY(tmp_char_buf, bcd_tmp+j, 2);
-            tmp_char_buf[2] = EXEOS;
+            NDRX_STRCPY_SAFE(tmp_char_buf, bcd_tmp+j);
             sscanf(tmp_char_buf, "%x", &hex_dec);
             
             /*NDRX_LOG(6, "got hex 0x%x", hex_dec);*/
@@ -894,7 +893,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             if (debug_get_ndrx_level() >= log_debug)
             {
-                NDRX_STRNCPY(debug_buf, c_buf_out, debug_len);
+                NDRX_STRCPY_SAFE_DST(debug_buf, c_buf_out, debug_len);
             }
         }
             break;
@@ -964,8 +963,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             CHECK_EX_BUFSZ_SIMPLE(ret, c_bufsz, sizeof(ndrx_stopwatch_t));
             
-            NDRX_STRNCPY(timer_buf, bcd_buf, 20);
-            timer_buf[20] = EXEOS;
+            NDRX_STRCPY_SAFE(timer_buf, bcd_buf);
             
             p = timer_buf;
             while ('0'==*p) p++;
@@ -975,8 +973,7 @@ exprivate int x_nettoc(cproto_t *fld,
             
             
             
-            NDRX_STRNCPY(timer_buf, bcd_buf+20, 20);
-            timer_buf[20] = EXEOS;
+            NDRX_STRCPY_SAFE(timer_buf, bcd_buf+20);
             p = timer_buf;
             while ('0'==*p) p++;
             

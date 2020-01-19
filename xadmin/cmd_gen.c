@@ -133,8 +133,7 @@ exprivate int reg_cmd(char *command, const char *stock, const char *fname)
         EXFAIL_OUT(ret);
     }
     
-    NDRX_STRNCPY(gen->command, command, sizeof(gen->command));
-    gen->command[sizeof(gen->command)-1] = EXEOS;
+    NDRX_STRCPY_SAFE(gen->command, command);
     
     if (stock)
     {
@@ -239,9 +238,7 @@ expublic int cmd_gen_load_scripts(void)
                         /* name shall match gen_<lang>_<type>.pscript */
                     )
                 {
-                    NDRX_STRNCPY(tmp, elt->qname, sizeof(tmp));
-                    tmp[sizeof(tmp)-1] = EXEOS;
-                    
+                    NDRX_STRCPY_SAFE(tmp, elt->qname);
                     
                     start = strstr(tmp, "gen_");
                     

@@ -44,6 +44,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <time.h>
 #include <nstd_tls.h>
 
 #include "nstdutil.h"
@@ -55,6 +56,7 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define _MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define NDRX_TEMP_ATTEMPTS  1000 /**< Number of attempts for looking for tmp file */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -1900,5 +1902,93 @@ expublic void ndrx_intmap_remove (ndrx_intmap_t ** hash)
     }
     
 }
+
+#define TEMP_MAKS_LEN 6
+/**
+ * Generate temporary file name. Cross platform. Seem Solaris 10 does not have
+ *  this, also AIX has some extra lib deps. Thu having own version.
+ * Last 6 chars before suffix are replaced with random values
+ * @param filetempl this is string show last 6 characters will be randomly filled
+ *  to get unique file name
+ * @param suffixlen chars from the end that shall not be filled (left uninit)
+ * @param flags NDRX_STDF_TEST test flag, do not set random names -> return
+ *  file exists.
+ * @return file pointer or NULL in case of error. EEXIST - all attempts exceeded
+ *  EINVAL - filetempl strlen is shorter than 6 + suffix len.
+ */
+expublic FILE* ndrx_mkstemps(char *filetempl, int suffixlen, long flags)
+{
+    FILE *ret = NULL;
+    int i, j, len, fd, err;
+    char letters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    int chk_size = sizeof(letters) -1; /* strip off EOS */
+    
+    srand(time(NULL)); /* randomize seed */
+    
+    /*
+    fd = open(tmpname, O_EXCL | O_CREAT, 0600);
+    */
+    
+    len = strlen(filetempl);
+    
+    if (len < TEMP_MAKS_LEN + suffixlen)
+    {
+        errno = EINVAL;
+        goto out;
+    }
+    
+    for (i=0; i<NDRX_TEMP_ATTEMPTS; i++)
+    {
+        if (!(flags & NDRX_STDF_TEST))
+        {
+            for (j=len-suffixlen-TEMP_MAKS_LEN; j<len-suffixlen; j++)
+            {
+                filetempl[j] = letters[rand() % chk_size];
+            }
+        }
+        
+        fd = open(filetempl, O_EXCL | O_CREAT | O_WRONLY, 0600);
+
+        if (EXFAIL==fd)
+        {
+            if (EEXIST!=errno)
+            {
+                err = errno;
+                
+                NDRX_LOG(log_error, "Failed to create temp name [%s]: %s", 
+                        filetempl, strerror(err));
+                
+                errno = err; /* log write may reset... */
+                goto out;
+            } /* else try next */
+        }
+        else
+        {
+            /* OK file is open, if open ok, the fclose() will close the FD too */
+            ret = fdopen(fd, "w");
+            if (NULL==ret)
+            {
+                err = errno;
+                
+                NDRX_LOG(log_error, "Failed to fdopen: %s", strerror(err));
+                close(fd);
+                errno = err; /* log write may reset... */
+                goto out;
+            }
+            break;
+        }
+    }
+    
+    if (NULL==ret)
+    {
+        NDRX_LOG(log_error, "%d attempts exceeded, no free file found: [%s] (last templ)", 
+                NDRX_TEMP_ATTEMPTS, filetempl);
+        errno = EEXIST;
+    }
+    
+out:
+    return ret;
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

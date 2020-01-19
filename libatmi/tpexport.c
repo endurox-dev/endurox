@@ -222,7 +222,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     }
 
     serialized_string = exjson_serialize_to_string(root_value);
-    if (strlen(serialized_string) <= *olen)
+    if (strlen(serialized_string) < *olen)
     {
         NDRX_LOG(log_debug, "Return JSON: [%s]", serialized_string);
         
@@ -233,20 +233,20 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
             if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, 
                         strlen(serialized_string), &outlen, ostr))
             {
-		NDRX_LOG(log_error, "Failed to convert to b64!");
-		EXFAIL_OUT(ret);
+                NDRX_LOG(log_error, "Failed to convert to b64!");
+                EXFAIL_OUT(ret);
             }
         }
         else
         {
-            NDRX_STRNCPY_SAFE(ostr, serialized_string, (*olen-1));
-            *olen = strlen(serialized_string);
+            NDRX_STRCPY_SAFE_DST(ostr, serialized_string, *olen);
+            *olen = strlen(ostr)+1;
         }
     }
     else
     {
         NDRX_LOG(log_error, "olen too short: ostr size: [%d] olen size: [%d]", 
-                strlen(serialized_string), *olen);
+                strlen(serialized_string)+1, *olen);
         EXFAIL_OUT(ret);
     }
 

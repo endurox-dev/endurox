@@ -168,7 +168,7 @@ exprivate int cltkey_key_hash(ndrx_lh_config_t *conf, void *key_get, size_t key_
 exprivate void cltkey_key_debug(ndrx_lh_config_t *conf, void *key_get, 
         size_t key_len, char *dbg_out, size_t dbg_len)
 {
-    NDRX_STRNCPY_SAFE(dbg_out, key_get, dbg_len);
+    NDRX_STRCPY_SAFE_DST(dbg_out, key_get, dbg_len);
 }
 
 /**
@@ -181,7 +181,7 @@ exprivate void cltkey_key_debug(ndrx_lh_config_t *conf, void *key_get,
 exprivate void cltkey_val_debug(ndrx_lh_config_t *conf, int idx, char *dbg_out, 
         size_t dbg_len)
 {
-    NDRX_STRNCPY_SAFE(dbg_out, NDRX_CPM_INDEX((*conf->memptr), idx)->key, dbg_len);
+    NDRX_STRCPY_SAFE_DST(dbg_out, NDRX_CPM_INDEX((*conf->memptr), idx)->key, dbg_len);
 }
 
 /**
@@ -320,7 +320,7 @@ expublic pid_t ndrx_cltshm_getpid(char *key, char *procname,
             
             if (NULL!=procname)
             {
-                NDRX_STRNCPY_SAFE(procname, el->procname, procnamesz);
+                NDRX_STRCPY_SAFE_DST(procname, el->procname, procnamesz);
             }
             
             if (NULL!=p_stattime)

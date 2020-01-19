@@ -712,19 +712,19 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     {
         serialized_string = exjson_serialize_to_string(root_value);
 
-        if (strlen(serialized_string) <= bufsize )
+        if (strlen(serialized_string) < bufsize ) /* have space for EOS */
         {
 
-        NDRX_STRNCPY_SAFE(buffer, serialized_string, bufsize-1);
+            NDRX_STRCPY_SAFE_DST(buffer, serialized_string, bufsize);
             NDRX_LOG(log_debug, "Got JSON: [%s]", buffer);
         }
         else
         {
             NDRX_LOG(log_error, "Buffer too short: Got json size: [%d] buffer size: [%d]", 
-                    strlen(serialized_string), bufsize);
+                    strlen(serialized_string)+1, bufsize);
 
             ndrx_TPset_error_fmt(TPEOS, "Buffer too short: Got json size: "
-                    "[%d] buffer size: [%d]",  strlen(serialized_string), bufsize);
+                    "[%d] buffer size: [%d]",  strlen(serialized_string)+1, bufsize);
 
             EXFAIL_OUT(ret);
         }

@@ -755,8 +755,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 
     call->command_id = ATMI_COMMAND_CONNECT;
 
-    NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
-    call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
+    NDRX_STRCPY_SAFE(call->name, svc);
+    
     call->flags = flags | TPCONV; /* This is conversational call... */
     /* Prepare role flags */
     

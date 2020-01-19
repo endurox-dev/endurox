@@ -171,7 +171,7 @@ static char *get_path(const char *path, char *bufout, size_t bufoutsz)
     strcat(G_nstd_tls->emq_x, path);
     
 */
-    NDRX_STRNCPY_SAFE(bufout, q_path, bufoutsz);
+    NDRX_STRCPY_SAFE(bufout, q_path, bufoutsz);
     NDRX_STRCAT_S(bufout, bufoutsz, path);
 
     return bufout;
