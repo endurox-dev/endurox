@@ -99,7 +99,7 @@ specified, then 'xa_switch_name' is included in the process. Thus later *libndrx
 XA driver can be used (set in *NDRX_XA_DRIVERLIB* env var, see *ex_env(5)*), 
 so that driver resolves built in symbols. Compiler libraries from resource manager 
 are passed in command line after the first files. If switch name is not specified,
-then default null switch 'tmnull_switch' is reference (present in libatmi.so).
+then default null switch 'tmnull_switch' is reference (present in *libatmi*).
 Full format example can be seen in *buildserver(8)* manpage.
 
 [*-k*]::
