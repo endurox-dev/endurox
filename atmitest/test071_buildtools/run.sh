@@ -117,7 +117,7 @@ export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L..
 
 
 echo "Building tms..."
-buildtms -o tmstest -rTestSw
+buildtms -o tmstest -rTestSw -v
 
 RET=$?
 

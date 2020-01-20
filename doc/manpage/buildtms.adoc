@@ -1,0 +1,127 @@
+BUILDTMS(8)
+===========
+:doctype: manpage
+
+
+NAME
+----
+buildtms - Build transaction manager server
+
+
+SYNOPSIS
+--------
+*buildtms* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+This binary is used for building transaction manager which has the linked in XA
+switch variable name. Otherwise the binary is the same as the *tmsrv(8)*. Also
+the Enduro/X XA init procedure is standard one, and XA init procedure starts with
+loading shared library loading from the *NDRX_XA_DRIVERLIB* env variable (see *ex_env(5)*).
+
+Thus for this kind of built-in XA switches, *libndrxxatmsx(8)* driver must be used.
+
+To link-in the XA switch, the output server is main is generated and compiled
+during the buildtms run.
+
+The command line template, how C compiler is invoked, is following:
+
+--------------------------------------------------------------------------------
+<CC> [$CFLAGS] -o <binary_name> <generated_source>.c [-I<$NDRX_HOME>/include 
+-L<NDRX_HOME>/{lib|lib64}] [<RM_libs>] -latmisrvinteg -latmi -lubf -lnstd
+--------------------------------------------------------------------------------
+
+ENVIRONMENT
+-----------
+[*CC*]::
+Optional environment variable indicating which C compiler to use. If parameter is
+not set, the *cc* command is used.
+
+[*CFLAGS*]::
+Optional C flags to be passed to C compiler during the *cc* execution.
+
+[*NDRX_HOME*]::
+Optional environment variable indicating the Enduro/X installation home. If variable
+is set then, "-I$NDRX_HOME/include" and "-L$NDRX_HOME/lib" (or lib64) is added 
+to the *cc* command line.
+
+OPTIONS
+-------
+
+[*-C*]::
+COBOL mode. Reserved for future use.
+
+*-o* filename::
+Output file name for compiler. If not specified, then default is *SERVER*.
+
+[*-l* lastfiles]::
+Arguments to be passed to compiler command line. Typically here source file names, object
+file names or library settings are passed. These names are included in compilation command
+after Enduro/X libraries (from left to right).
+
+[*-r* rm_name]::
+This is resource manager name. The resource manager according the specified name
+shall be configured in *$NDRX_RMFILE* (first periority) or *$NDRX_HOME/udataobj/RM* file.
+The file format is following 'rm_name:xa_switch_name:<compiler libraries>'. If 
+specified, then 'xa_switch_name' is included in the process. Thus later *libndrxxatmsx(8)*
+XA driver can be used (set in *NDRX_XA_DRIVERLIB* env var, see *ex_env(5)*), 
+so that driver resolves built in symbols. Compiler libraries from resource manager 
+are passed in command line after the first files. If switch name is not specified,
+then default null switch 'tmnull_switch' is reference (present in *libatmi*).
+File format is described in *buildserver(8)* manpage.
+
+[*-k*]::
+Keep the the generate source code with the main function. If not set, the file
+is deleted when *buildserver* finishes.
+
+[*-v*]::
+Verbose mode. This will print the build command to stderr.
+
+[*-h*]::
+Print the help.
+
+EXAMPLE
+-------
+See *atmitest/test071_buildtools/run.sh* for samples. Some of them:
+
+--------------------------------------------------------------------------------
+$ export CC=cc
+$ export CFLAGS="-g -I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd"
+
+$ buildtms -k -o tmstest -rTestSw -v
+
+--------------------------------------------------------------------------------
+
+That would result in following compilation unit:
+
+--------------------------------------------------------------------------------
+
+$ cc -I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv \
+ -L../../libexuuid -L../../libexthpool -L../../libnstd -o tmstest ndrx_tms_YJPUnv.c \
+ -I./include -L./lib -L ../test021_xafull -l xadrv -ltms -latmisrvinteg -latmi \
+ -lubf -lexuuid -lexthpool -lnstd -lrt -ldl -lm -lc -lpthread
+
+--------------------------------------------------------------------------------
+
+
+EXIT STATUS
+-----------
+*0*::
+Success
+
+*1*::
+Failure
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)* *buildclient(8)* *buildserver(8)* *tmsrv(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
