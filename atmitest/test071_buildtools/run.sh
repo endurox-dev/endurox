@@ -51,7 +51,7 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
+export CC=gcc
 export NDRX_TOUT=10
 
 #
@@ -105,6 +105,44 @@ function go_out {
 
 rm *.log 2>/dev/null
 
+UNAME=`uname -s`
+
+###############################################################################
+echo "Configure environment..."
+###############################################################################
+
+# must have flags
+COMPFLAGS=""
+
+# Additional, application specific
+ADDFLAGS=""
+#
+# export the library path.
+#
+case $UNAME in
+
+  AIX)
+    # check compiler, we have a set of things required for each compiler to actually build the binary
+    $CC -qversion 2>/dev/null
+    RET=$?
+
+    if [ "X$RET" == "X0" ]; then
+	echo "Xlc compiler..."
+        COMPFLAGS="-brtl"
+        ADDFLAGS="-qtls -q64"
+    else
+	echo "Default to gcc..."
+        COMPFLAGS="-Wl,-brtl -maix64"
+    fi
+
+    ;;
+
+  *)
+    # default..
+    ;;
+esac
+
+
 ###############################################################################
 echo "Firstly lets build the processes"
 ###############################################################################
@@ -113,10 +151,13 @@ export NDRX_SILENT=Y
 export NDRX_DEBUG_CONF=$TESTDIR/debug-dom1.conf
 export NDRX_HOME=.
 export PATH=$PATH:$PWD/../../buildtools
-export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd"
+export CFLAGS="-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libexuuid -L../../libexthpool -L../../libnstd $COMPFLAGS"
 
 
-echo "Building tms..."
+echo ""
+echo "************************************************************************"
+echo "Building tms... (CC: $CC)"
+echo "************************************************************************"
 buildtms -o tmstest -rTestSw -v
 
 RET=$?
@@ -126,8 +167,23 @@ if [ "X$RET" != "X0" ]; then
     go_out 1
 fi
 
+echo "Build server dummy..."
+buildserver -o atmi.sv71_dum -rTestSw -v -f atmisv71_dum.c
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmi.sv71_dum: $RET"
+    go_out 2
+fi
+
+
+echo ""
+echo "************************************************************************"
 echo "Build server..."
-buildserver -o atmi.sv71 -rTestSw -a atmisv71_1.c -l atmisv71_2.c -v \
+echo "************************************************************************"
+
+buildserver -o atmi.sv71 -rTestSw -a atmisv71_1.c -l atmisv71_2.c -v -f "$ADDFLAGS" \
     -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c \
     -s @advertise_file.txt
 
@@ -138,8 +194,11 @@ if [ "X$RET" != "X0" ]; then
     go_out 2
 fi
 
+echo ""
+echo "************************************************************************"
 echo "Build server... (compile fail)"
-buildserver -o atmi.sv71err -rTestSw -f atmisv71_X.c -l atmisv71_2.c -v \
+echo "************************************************************************"
+buildserver -o atmi.sv71err -rTestSw -f atmisv71_X.c -l atmisv71_2.c -v -f "$ADDFLAGS" \
     -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c
 
 RET=$?
@@ -150,10 +209,13 @@ if [ "X$RET" == "X0" ]; then
 fi
 
 
+echo ""
+echo "************************************************************************"
 echo "Build server... (invalid compiler)"
+echo "************************************************************************"
 CC_SAVED=$CC
 export CC=no_such_compiler
-buildserver -o atmi.sv71err2 -rTestSw -f atmisv71_1.c -l atmisv71_2.c -v \
+buildserver -o atmi.sv71err2 -rTestSw -f atmisv71_1.c -l atmisv71_2.c -v -f "$ADDFLAGS" \
     -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c
 
 RET=$?
@@ -169,8 +231,11 @@ unset NDRX_HOME
 # test the other option...
 export NDRX_RMFILE=./udataobj/RM
 
+echo ""
+echo "************************************************************************"
 echo "Build client..., No switch..."
-buildclient -o atmiclt71err -rerrorsw -a atmiclt71_1.c -l atmiclt71_2.c -v \
+echo "************************************************************************"
+buildclient -o atmiclt71err -rerrorsw -a atmiclt71_1.c -l atmiclt71_2.c -v -f "$COMPFLAGS $ADDFLAGS" \
     -l atmiclt71_3.c -f atmiclt71_4.c \
     -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libnstd"
 RET=$?
@@ -180,10 +245,13 @@ if [ "X$RET" == "X0" ]; then
     go_out 2
 fi
 
+echo ""
+echo "************************************************************************"
 echo "Build client..., Build OK"
-buildclient -o atmiclt71 -rnullsw -f atmiclt71_1.c -l atmiclt71_2.c -v \
+echo "************************************************************************"
+buildclient -o atmiclt71 -rnullsw -f atmiclt71_1.c -l atmiclt71_2.c -v -f "$COMPFLAGS $ADDFLAGS" \
     -l atmiclt71_3.c -f atmiclt71_4.c \
-    -f "-I../../include -L../../libatmi -L../../libubf -L../../tmsrv -L../../libatmisrv -L../../libnstd"
+    -f "-I../../include -L../../libatmi -L../../libubf -L../../libatmiclt -L../../libnstd"
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
@@ -191,8 +259,11 @@ if [ "X$RET" != "X0" ]; then
     go_out 2
 fi
 
+echo ""
+echo "************************************************************************"
 echo "Build client default sw..., Build OK"
-buildclient -o atmiclt71dflt -f atmiclt71_1.c -l atmiclt71_2.c -v \
+echo "************************************************************************"
+buildclient -o atmiclt71dflt -f atmiclt71_1.c -l atmiclt71_2.c -v -f "$COMPFLAGS $ADDFLAGS" \
     -l atmiclt71_3.c -f atmiclt71_4.c \
     -f "-I../../include -L../../libatmi -L../../libubf -L../../libnstd -L ../../libatmiclt"
 RET=$?
@@ -202,8 +273,11 @@ if [ "X$RET" != "X0" ]; then
     go_out 2
 fi
 
+echo ""
+echo "************************************************************************"
 echo "Build client, working switch, Build OK"
-buildclient -o atmiclt71_txn -a atmiclt71_txn.c -v -r TestSw -k \
+echo "************************************************************************"
+buildclient -o atmiclt71_txn -a atmiclt71_txn.c -v -r TestSw -f "$COMPFLAGS $ADDFLAGS" \
     -f "-I../../include -L../../libatmi -L../../libubf -L../../libnstd -L ../../libatmiclt"
 RET=$?
 
@@ -216,8 +290,7 @@ fi
 echo "Now execute them..."
 ###############################################################################
 
-SETLIBPATH="$PWD/../../libatmi:$PWD/../../libubf:$PWD/../../tmsrv:$PWD/../../libatmisrv:$PWD/../../libnstd:$PWD/../../libatmiclt:$PWD/../test021_xafull"
-UNAME=`uname -s`
+SETLIBPATH="$PWD/../../libatmi:$PWD/../../libubf:$PWD/../../tmsrv:$PWD/../../libatmisrv:$PWD/../../libnstd:$PWD/../../libatmiclt:$PWD/../test021_xafull:$PWD/../../libps:$PWD/../../libpsstdlib"
 
 #
 # export the library path.

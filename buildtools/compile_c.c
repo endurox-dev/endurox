@@ -182,6 +182,10 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
         
         p=strtok_r(NULL, ";", &saveptr1);
     }
+
+#ifdef EX_OS_AIX
+    NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -lbsd");
+#endif
     
     NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), " -lm -lc -lpthread");
     
