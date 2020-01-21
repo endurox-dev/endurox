@@ -114,6 +114,11 @@ install only two of them:
 # rpm -i mktemp-1.7-1.aix5.1.ppc.rpm
 ---------------------------------------------------------------------
 
+*NOTE:* Seems that Official IBM AIX toolbox cmake tool ships as broken. 
+It changes the way how shared libraries are built. For Enduro/X all libs are
+expected to be built as System V Shared Objects (.so), but toolbox version changes
+these rules. Thus keep third party builds or compile from Kitware CMake sources.
+
 === Getting the source code
 For test purposes we will prepare new user for which Enduro/X will built 
 (this adds the in the path the /opt/freeware/bin and xlC version 13 compiler. 
