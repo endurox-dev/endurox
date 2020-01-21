@@ -62,6 +62,10 @@ add_library (exuuid STATIC
     unparse.c
     )
 
+if(CMAKE_OS_NAME STREQUAL "AIX")
+    target_link_libraries(exuuid bsd)
+endif()
+
 install (TARGETS
     exuuid 
     DESTINATION "${INSTALL_LIB_DIR}"

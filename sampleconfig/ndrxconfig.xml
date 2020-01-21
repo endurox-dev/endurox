@@ -88,11 +88,11 @@
 			<sysopt>-e /tmp/TPEVSRV -r -N -s@TPEVPOST </sysopt>
 		</server>
                 <!-- Default RM1 -->
-		<server name="tmsrv">
+		<server name="tpadmsv">
 			<srvid>310</srvid>
 			<min>1</min>
 			<max>1</max>
-			<sysopt>-e /tmp/TM1 -r -- -t10 -l/tmp</sysopt>
+			<sysopt>-e /tmp/AD -r</sysopt>
 		</server>
 		<server name="atmi.sv1">
 			<srvid>1400</srvid>

@@ -31,7 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
@@ -43,11 +43,11 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
+IF (ENV{RELEASE_BUILD})
 	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
+ELSE (ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+ENDIF (ENV{RELEASE_BUILD})
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
@@ -71,11 +71,11 @@ set_property(TARGET objtms PROPERTY POSITION_INDEPENDENT_CODE 1)
 # shared and static libraries built from the same object files
 add_library(tms SHARED $<TARGET_OBJECTS:objtms>)
 
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
     target_link_libraries(tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
-elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
     # 
     # linking lib against pthread for XL C on aix, otherwise we get error like: 
     #  ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:

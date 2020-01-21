@@ -33,15 +33,15 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
+IF (ENV{RELEASE_BUILD})
 	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
+ELSE (ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+ENDIF (ENV{RELEASE_BUILD})
 
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
@@ -99,20 +99,21 @@ set_property(TARGET objatmisrvinteg PROPERTY POSITION_INDEPENDENT_CODE 1)
 # shared and static libraries built from the same object files
 add_library(atmisrvinteg SHARED $<TARGET_OBJECTS:objatmisrvinteg>)
 
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(atmisrvdum nstd) # just for cywing build, anyway we need to use integration mode...
     target_link_libraries(atmisrv atmisrvdum atmi ubf nstd)
     target_link_libraries(atmisrvnomain atmisrvdum atmi ubf nstd)
     target_link_libraries(atmisrvinteg atmi ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
     target_link_libraries(atmisrvdum nstd) # just for cywing build, anyway we need to use integration mode...
     target_link_libraries(atmisrv atmisrvdum atmi ubf nstd)
     target_link_libraries(atmisrvnomain atmisrvdum atmi ubf nstd)
     target_link_libraries(atmisrvinteg atmi ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
-    target_link_libraries(atmisrv pthread)
-    target_link_libraries(atmisrvnomain pthread)
-    target_link_libraries(atmisrvinteg pthread)
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
+    target_link_libraries(atmisrv atmi ubf nstd pthread)
+    target_link_libraries(atmisrvnomain atmi ubf nstd pthread)
+    target_link_libraries(atmisrvinteg atmi ubf nstd pthread)
+    target_link_libraries(atmisrvdum atmi ubf nstd pthread)
 endif()
 
 install (TARGETS 
