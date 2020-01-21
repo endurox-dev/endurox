@@ -82,10 +82,8 @@ expublic int ndrx_buildsrv_generate_code(FILE **f, char *cfile, int thread_optio
     fprintf(*f, "/*---------------------------Includes-----------------------------------*/\n");
     fprintf(*f, "#include <stdio.h>\n");
     fprintf(*f, "#include <stdlib.h>\n");
-    fprintf(*f, "#include <ndebug.h>\n");
     fprintf(*f, "#include <atmi.h>\n");
     fprintf(*f, "#include <ndrstandard.h>\n");
-    fprintf(*f, "#include <ubf.h>\n");
     fprintf(*f, "#include <string.h>\n");
     fprintf(*f, "#include <unistd.h>\n");
     fprintf(*f, "#include <xa.h>\n");

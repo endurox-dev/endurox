@@ -34,7 +34,7 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.1)
 
 # Make sure the compiler can find include files from our Hello library. 
 include_directories (. ../include)
@@ -68,23 +68,23 @@ IF(DEFINE_FORCEEMQ)
 ENDIF()
 
 # Select the OS specifics:
-if (${CMAKE_OS_NAME} STREQUAL "LINUX")
+if (CMAKE_OS_NAME STREQUAL "LINUX")
     SET(NSTD_SYS "sys_linux.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
-elseif (${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+elseif (CMAKE_OS_NAME STREQUAL "CYGWIN")
     SET(NSTD_SYS "sys_linux.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
-elseif (${CMAKE_OS_NAME} STREQUAL "SUNOS")
+elseif (CMAKE_OS_NAME STREQUAL "SUNOS")
     SET(NSTD_SYS "sys_solaris.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
-elseif (${CMAKE_OS_NAME} STREQUAL "AIX")
+elseif (CMAKE_OS_NAME STREQUAL "AIX")
     SET(NSTD_SYS "sys_aix.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
-elseif (${CMAKE_OS_NAME} STREQUAL "FREEBSD")
+elseif (CMAKE_OS_NAME STREQUAL "FREEBSD")
     SET(NSTD_SYS "sys_freebsd.c")
     SET(NSTD_SYS_2 "sys_posixq.c")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
-elseif (${CMAKE_OS_NAME} STREQUAL "DARWIN")
+elseif (CMAKE_OS_NAME STREQUAL "DARWIN")
     SET(NSTD_SYS "sys_darwin.c")
     SET(NSTD_SYS_2 "sys_emqueue.c")
     SET(NSTD_SYS_3 "fmemopen-funopen.c")
@@ -112,7 +112,7 @@ set_property(TARGET objnstd PROPERTY POSITION_INDEPENDENT_CODE 1)
 # shared and static libraries built from the same object files
 add_library(nstd SHARED $<TARGET_OBJECTS:objnstd>)
 
-if(${CMAKE_OS_NAME} STREQUAL "AIX")
+if(CMAKE_OS_NAME STREQUAL "AIX")
     # for tls support
     target_link_libraries(nstd pthread)
 endif()

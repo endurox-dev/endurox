@@ -33,15 +33,15 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
+IF (ENV{RELEASE_BUILD})
 	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
+ELSE (ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+ENDIF (ENV{RELEASE_BUILD})
 
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd
@@ -49,7 +49,7 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 include_directories (/opt/freeware/include) 
 # Create a library called "ATMI" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
-add_library (objatmi OBJECT
+add_library (atmi SHARED
                 atmi.c
                 tperror.c
                 tpcall.c
@@ -103,16 +103,16 @@ add_library (objatmi OBJECT
             )
 
 # shared libraries need PIC
-set_property(TARGET objatmi PROPERTY POSITION_INDEPENDENT_CODE 1)
+#set_property(TARGET objatmi PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 # shared and static libraries built from the same object files
-add_library(atmi SHARED $<TARGET_OBJECTS:objatmi>)
+#add_library(atmi SHARED $<TARGET_OBJECTS:objatmi>)
 
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(atmi ubf nstd dl)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
     target_link_libraries(atmi ubf nstd dl)
-elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
     # 
     # linking lib against pthread for XL C on aix, otherwise we get error like: 
     #  ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
@@ -120,7 +120,7 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
     # Or
     # ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
     #   The branch at address 0x154 is not followed by a rec
-    target_link_libraries(atmi pthread)
+    target_link_libraries(atmi ubf nstd pthread)
 endif()
 
 install (TARGETS 

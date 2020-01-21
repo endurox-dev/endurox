@@ -45,11 +45,11 @@ include_directories (${ENDUROX_SOURCE_DIR}/libubf
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
+IF (ENV{RELEASE_BUILD})
 	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
+ELSE (ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+ENDIF (ENV{RELEASE_BUILD})
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
@@ -80,7 +80,7 @@ ELSE (DEFINE_DISABLEGPGME)
 	SET(EX_LIB_GPGME "gpgme")
 ENDIF (DEFINE_DISABLEGPGME)
 
-IF (${CMAKE_OS_NAME} STREQUAL "SUNOS")
+IF (CMAKE_OS_NAME STREQUAL "SUNOS")
 	SET(EX_LIB_NET "socket")
 ENDIF()
 

@@ -33,15 +33,15 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
+IF (ENV{RELEASE_BUILD})
 	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
+ELSE (ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+ENDIF (ENV{RELEASE_BUILD})
 
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
@@ -51,9 +51,11 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 add_library (netproto SHARED
    	        proto.c)
 
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(netproto nstd ubf)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
+    target_link_libraries(netproto nstd ubf)
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
     target_link_libraries(netproto nstd ubf)
 endif()
 

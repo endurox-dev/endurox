@@ -34,10 +34,13 @@
 ##
 
 # Set minimum version
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.1)
 
 find_package(BISON)
 find_package(FLEX)
+
+set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")          # .so
+set_property(GLOBAL PROPERTY TARGET_ARCHIVES_MAY_BE_SHARED_LIBS 1)
 
 BISON_TARGET(EXPRPARSER expr.y ${CMAKE_CURRENT_BINARY_DIR}/expr.tab.c)
 FLEX_TARGET(EXPRSCANNER expr.l ${CMAKE_CURRENT_BINARY_DIR}/expr.lex.c)
@@ -46,18 +49,18 @@ FLEX_TARGET(EXPRSCANNER expr.l ${CMAKE_CURRENT_BINARY_DIR}/expr.lex.c)
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF ($ENV{RELEASE_BUILD})
+IF (ENV{RELEASE_BUILD})
 	# do nothing
-ELSE ($ENV{RELEASE_BUILD})
+ELSE (ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D UBF_DEBUG")
-ENDIF ($ENV{RELEASE_BUILD})
+ENDIF (ENV{RELEASE_BUILD})
 
 # Make sure the compiler can find include files from our UBF library.
 include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libnstd)
 
 # Create a library called "UBF" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
-add_library (objubf OBJECT
+add_library (ubf SHARED
 		ubf_impl.c
 		ubf.c
 		fproj_impl.c
@@ -85,19 +88,15 @@ add_library (objubf OBJECT
                 fielddb.c
 	)
 
-# shared libraries need PIC
-set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)
+set_target_properties(ubf PROPERTIES ENABLE_EXPORTS 1)
 
-# shared and static libraries built from the same object files
-add_library(ubf SHARED $<TARGET_OBJECTS:objubf>)
-
-if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
     target_link_libraries(ubf nstd)
-elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
     # for XL tls
-    target_link_libraries(ubf pthread)
+    target_link_libraries(ubf nstd pthread)
 endif()
 
 install (TARGETS 
