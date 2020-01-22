@@ -45,7 +45,7 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
     
 #define BR_QRETRIES_DEFAULT             3 /**< Default number of retries    */
-#define BR_DEFAULT_THPOOL_SIZE          5 /**< Default threadpool size      */
+#define BR_DEFAULT_THPOOL_SIZE          2 /**< Default threadpool size      */
 #define BR_THREAD_ENTRY if (!G_thread_init) \
          { \
                 if (EXSUCCEED==tpinit(NULL))\
@@ -74,7 +74,10 @@ typedef struct
     char gpg_signer[33];          /**< PGP Encryption signer */
     int qretries;                 /**< Queue Resubmit retries */
     int threadpoolsize;           /**< Thread pool size */
-    threadpool thpool;            /**< Thread pool by it self */
+    threadpool thpool_tonet;      /**< Thread pool by it self */
+    /* Support #502, we get deadlock when both nodes all threads attempt to send
+     * and there is no one who performs receive, all sockets become full */
+    threadpool thpool_fromnet;    /**< Thread pool by it self */
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;
