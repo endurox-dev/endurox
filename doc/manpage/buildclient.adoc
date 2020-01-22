@@ -62,7 +62,10 @@ Optional environment variable indicating which C compiler to use. If parameter i
 not set, the *cc* command is used.
 
 [*CFLAGS*]::
-Optional C flags to be passed to C compiler during the *cc* execution.
+Optional C flags to be passed to C compiler during the *cc* execution. There
+is set of compiler flags that are required for certain platforms and compilers. 
+see "PLATFORM SPECIFIC COMPILER FLAGS" section in *buildserver(8)* program
+manpage for these requirements.
 
 [*NDRX_HOME*]::
 Optional environment variable indicating the Enduro/X installation home. If variable

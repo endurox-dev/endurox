@@ -94,7 +94,9 @@ Optional environment variable indicating which C compiler to use. If parameter i
 not set, the *cc* command is used.
 
 [*CFLAGS*]::
-Optional C flags to be passed to C compiler during the *cc* execution.
+Optional C flags to be passed to C compiler during the *cc* execution. There
+is set of compiler flags that are required for certain platforms. See section
+bellow.
 
 [*NDRX_HOME*]::
 Optional environment variable indicating the Enduro/X installation home. If variable
@@ -185,7 +187,6 @@ ECHO2SV
 
 --------------------------------------------------------------------------------
 
-
 RM FILE FORMAT
 --------------
 Resource manager file format accepts '#' as comments, and parser ignores 
@@ -204,6 +205,24 @@ TestSw:ndrxstatsw: -L ../test021_xafull -l xadrv
 #
 Oracle_XA:xaosw:-L$(ORACLE_HOME)/lib -lclntsh
 --------------------------------------------------------------------------------
+
+PLATFORM SPECIFIC COMPILER FLAGS
+--------------------------------
+
+There are certain flags which must be passed to the compilers, in order to get
+binaries successfully linked.
+
+*AIX OS - xlC Compiler*:  
+
+. '-brtl': Enable runtime linking. Mandatory only for ATMI Clients, to allow
+runtime XA switch symbol resolve from lib to binary.
+
+*AIX OS - GCC Compiler*:
+
+. '-maix64': AIX 64 bit flag must be passed to compiler.
+
+. '-Wl,-brtl': Enable runtime linking. Mandatory only for ATMI Clients, to allow
+runtime XA switch symbol resolve from lib to binary.
 
 
 EXAMPLE
