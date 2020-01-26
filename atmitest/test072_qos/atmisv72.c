@@ -1,7 +1,7 @@
 /**
- * @brief Thread synchronization routines. Mutexes & Spinlocks.
+ * @brief Both sites max send, avoid deadlock of full sockets - server
  *
- * @file thlock.h
+ * @file atmisv72.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,82 +31,78 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef THLOCK_H
-#define	THLOCK_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <ndebug.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include "test72.h"
 
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <pthread.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
-
-/* *** PTHREAD MUTEX *** */
-    
-#define MUTEX_VAR(X)        pthread_mutex_t X
-#define MUTEX_VAR_INIT(X)   pthread_mutex_init(&X, NULL)
-    
-#define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
-
-#define MUTEX_LOCK_V(X) pthread_mutex_lock(&X)
-
-#define MUTEX_UNLOCK_V(X) pthread_mutex_unlock(&X)
-    
-#define MUTEX_TRYLOCK_V(X) pthread_mutex_trylock(&X)
-
-#define MUTEX_LOCK \
-		MUTEX_LOCKDECL(__mutexlock);\
-		MUTEX_LOCK_V(__mutexlock);
-
-#define MUTEX_UNLOCK MUTEX_UNLOCK_V(__mutexlock);
-
-/* *** EX_SPIN LOCKS *** */
-#define EX_SPIN_VAR(X)        pthread_spinlock_t X
-#define EX_SPIN_VAR_INIT(X)   if ( EXSUCCEED!=pthread_spin_init ( &X, 0 ) ) \
-                    {\
-                        userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
-                        exit ( 1 );\
-                    }
-    
-#define EX_SPIN_LOCKDECL(X) static pthread_spinlock_t X;\
-        MUTEX_LOCKDECL(X##__initlock__);\
-        static int volatile X##__first__ = EXTRUE;
-
-#define EX_SPIN_LOCK_V(X)\
-    if (X##__first__)\
-    {\
-        MUTEX_LOCK_V(X##__initlock__);\
-        if (X##__first__)\
-        {\
-            EX_SPIN_VAR_INIT(X);\
-            X##__first__=EXFALSE;\
-        }\
-        MUTEX_UNLOCK_V(X##__initlock__);\
-    }\
-    pthread_spin_lock(&X);
-
-#define EX_SPIN_UNLOCK_V(X) pthread_spin_unlock(&X);
-
-#define EX_SPIN_LOCK \
-		EX_SPIN_LOCKDECL(__spinlock);\
-		EX_SPIN_LOCK_V(__spinlock);
-
-#define EX_SPIN_UNLOCK EX_SPIN_UNLOCK_V(__spinlock);
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate long M_count = 0; /**< number of calls received */
 /*---------------------------Prototypes---------------------------------*/
 
-#ifdef	__cplusplus
-}
-#endif
+/**
+ * Standard service entry
+ */
+void TESTSV (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
 
-#endif	/* THLOCK_H */
+    NDRX_LOG(log_debug, "%s got call", __func__);
+    
+    p_ub = (UBFH *)tprealloc((char *)p_ub, 1024);
+
+    if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&M_count, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    M_count++;
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialisation
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret = EXSUCCEED;
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
+}
+
+/**
+ * Do de-initialisation
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

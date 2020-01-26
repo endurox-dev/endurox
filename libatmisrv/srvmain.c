@@ -524,8 +524,8 @@ expublic int ndrx_init(int argc, char** argv)
 
     G_srv_id = G_server_conf.srv_id;
     
-    /* Defaut number of events supported by e-poll */
-    G_server_conf.max_events = 1;
+    /* Default number of events supported by e-poll */
+    G_server_conf.max_events = 5;
     
     /* format the request queue */
     if (EXEOS==rqaddress[0])
