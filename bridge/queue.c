@@ -444,7 +444,7 @@ expublic int br_got_message_from_q(char *buf, int len, char msg_type)
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
+    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool_tonet, 
             (void*)br_got_message_from_q_th, 
             (void *)thread_data))
     {

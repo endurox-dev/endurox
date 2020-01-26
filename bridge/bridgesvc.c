@@ -221,7 +221,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
     int periodic_zero = 0; /* send zero length messages periodically */
-    
+    int thpoolcfg = 0;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     G_bridge_cfg.nodeid = EXFAIL;
@@ -287,7 +287,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 					G_bridge_cfg.gpg_signer);
                 break;
             case 'P': 
-                G_bridge_cfg.threadpoolsize = atol(optarg);
+                /* half is used for download, and other half for upload */
+                thpoolcfg = atol(optarg);
+                G_bridge_cfg.threadpoolsize = thpoolcfg / 2;
                 break;
             case 'R': 
                 G_bridge_cfg.qretries = atoi(optarg);
@@ -317,11 +319,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
                 "(%d) defaulting to %d", 
-                G_bridge_cfg.threadpoolsize, BR_DEFAULT_THPOOL_SIZE);
+                thpoolcfg, BR_DEFAULT_THPOOL_SIZE*2);
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
     }
     
-    NDRX_LOG(log_info, "Threadpool size set to: %d", G_bridge_cfg.threadpoolsize);
+    NDRX_LOG(log_warn, "Threadpool size set to: from-net=%d to-net=%d (cfg=%d)",
+            G_bridge_cfg.threadpoolsize, G_bridge_cfg.threadpoolsize, thpoolcfg);
     
     /* Check configuration */
     if (EXFAIL==G_bridge_cfg.nodeid)
@@ -402,9 +405,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
     
-    if (NULL==(G_bridge_cfg.thpool = thpool_init(G_bridge_cfg.threadpoolsize)))
+    if (NULL==(G_bridge_cfg.thpool_tonet = thpool_init(G_bridge_cfg.threadpoolsize)))
     {
-        NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
+        NDRX_LOG(log_error, "Failed to initialize to-net thread pool (cnt: %d)!", 
+                G_bridge_cfg.threadpoolsize);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(G_bridge_cfg.thpool_fromnet = thpool_init(G_bridge_cfg.threadpoolsize)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize from-net thread pool (cnt: %d)!",
                 G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
@@ -449,13 +459,23 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         /* Terminate the threads */
         for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
         {
-            NDRX_LOG(log_info, "Terminating threadpool, thread #%d", i);
-            thpool_add_work(G_bridge_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+            NDRX_LOG(log_info, "Terminating to-net threadpool, thread #%d", i);
+            thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)tp_thread_shutdown, NULL);
+        }
+        
+        /* Terminate the threads */
+        for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
+        {
+            NDRX_LOG(log_info, "Terminating from-net threadpool, thread #%d", i);
+            thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)tp_thread_shutdown, NULL);
         }
         
         /* Wait for threads to finish */
-        thpool_wait(G_bridge_cfg.thpool);
-        thpool_destroy(G_bridge_cfg.thpool);
+        thpool_wait(G_bridge_cfg.thpool_tonet);
+        thpool_destroy(G_bridge_cfg.thpool_tonet);
+        
+        thpool_wait(G_bridge_cfg.thpool_fromnet);
+        thpool_destroy(G_bridge_cfg.thpool_fromnet);
     }
     
     /* close if not server connection...  */
