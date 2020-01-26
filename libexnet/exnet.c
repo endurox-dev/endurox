@@ -397,7 +397,7 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
     }
     
     /* Lock the stuff... */
-    MUTEX_LOCK_V(net->rcvlock)
+    MUTEX_LOCK_V(net->rcvlock);
     while (EXSUCCEED==ret)
     {
         /* Either we will timeout, or return by cut_out_msg! */
@@ -434,7 +434,7 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                 /* Copy msg out there & cut the buffer */
                 ret=cut_out_msg(net, full_msg, buf, len, appflags);
                 
-                MUTEX_UNLOCK_V(net->rcvlock)
+                MUTEX_UNLOCK_V(net->rcvlock);
                 return ret;
             }
         }
@@ -455,7 +455,7 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
             net->dl+=got_len;
         }
     }
-    MUTEX_UNLOCK_V(net->rcvlock)
+    MUTEX_UNLOCK_V(net->rcvlock);
     
     /* We should fail anyway, because no message received, yet! */
     ret=EXFAIL;

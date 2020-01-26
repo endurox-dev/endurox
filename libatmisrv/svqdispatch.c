@@ -1242,10 +1242,16 @@ expublic int sv_wait_for_request(void)
             is_mq_only = G_server_conf.events[n].is_mqd;
 #endif
 
-            NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, "
+            NDRX_LOG(log_error, "Receiving %d, user data: %d, fd: %d, evmqd: %d, "
                     "is_mq_only: %d, G_pollext=%p",
                     n, G_server_conf.events[n].data.u32, evfd, evmqd, 
                     is_mq_only, G_pollext);
+            
+            if (0==evfd && 0==evmqd)
+            {
+                /* not sure why epoll returns these 0 */
+                continue;
+            }
             
             /* Check poller extension */
             if (NULL!=G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
