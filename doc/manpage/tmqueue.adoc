@@ -80,10 +80,14 @@ OPTIONS
 *-m* 'QUEUE_SPACE'::
 The name of the queue space.
 
-*-q* 'QUEUE_CONFIG'::
+[*-q* 'QUEUE_CONFIG']::
 This either full or relative path to the queue definition file (see 'q.conf(5)' for more info on syntax.
 When changes are done in this file, it is possible to reload the configuration during the runtime, with
-'xadmin mqrc' command. Note that queues are not removed, but changed or added.
+'xadmin mqrc' command. Note that queues are not removed, but changed or added. If flag is not set,
+then data is searched in *[@queue]* ini section. And uses *<cctag>* for
+sub-section search, if multiple Q-spaces are defined. Firstly it attempts to load form this flag
+specified configuration file, afterwards attempt is made to load from CConfig if
+available.
 
 [*-s* 'SCAN_TIME']::
 This time in seconds used by main forwarder thread to scan for any automatic messages to be submitted
@@ -128,7 +132,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)* *q.conf(5)*
+*xadmin(8)* *q.conf(5)* *ex_env(5)*
 
 COPYING
 -------

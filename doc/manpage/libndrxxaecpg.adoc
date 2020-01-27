@@ -277,6 +277,7 @@ testdb=> select * from manextest;
 
 ECPG C EXAMPLE
 --------------
+
 The same code example above can be written in PosgreSQL embedded C code. Assuming
 that table is already created by previous example.
 
