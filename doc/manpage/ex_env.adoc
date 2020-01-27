@@ -116,7 +116,7 @@ Mandatory Env. Variables
     executable startup.
 *NDRX_XA_FLAGS*='XADMIN_XA_FLAGS'::
     Special for XA sub-system. It is semicolon separated tags with values.
-    currently tag 'RECON' is defined.
+    currently tags 'RECON', 'NOJOIN' and 'NOSTARTXID' are defined.
     'RECON' tag defines the number of attempts
     of xa_close()/xa_open() and doing xa_start() again in case if original
     xa_start() failed (the ATMI call tpbegin()) - for example firewall have been 
@@ -125,6 +125,10 @@ Mandatory Env. Variables
     of attempts>:<sleep between attempts milli-sec>'
     example: 'RECON:*:3:100', meaning reconnect on any xa_start error, do the
     3x attempts, sleep 100 milliseconds between attempts.
+    With 'NOJOIN' indicates that XA Switch does not support 'TMJOIN' mode.
+    With 'NOSTARTXID' indicates that transaction session does not start with
+    identifier, but only when process disconnects from transaction, it is possible
+    to give transaction id for work which has been done to database.
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
     Number of semaphores used for protecting shared memory, when Enduro/X 
     running in 'poll()' mode. The minimum is recommended something about 7. 
@@ -366,17 +370,13 @@ NDRX_CONFIG=/enduro/tst1/conf/ndrxconfig.xml
 #
 [@global/RM2]
 # XA 2PC SECTION, ORACLE DB
-ORACLE_SID=ROCKY
-ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
-PATH=$PATH:ORACLE_HOME/bin
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ORACLE_HOME/lib
 NDRX_XA_RES_ID=1
 NDRX_XA_OPEN_STR="ORACLE_XA+SqlNet=ROCKY+ACC=P/endurotest/endurotest1+SesTM=180+LogDir=/tmp/xa+nolocal=f+Threads=true"
-NDRX_XA_CLOSE_STR=$NDRX_XA_OPEN_STR
+NDRX_XA_CLOSE_STR=${NDRX_XA_OPEN_STR}
 # XA Static registration driver
-NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaoras.so
+NDRX_XA_DRIVERLIB=${NDRX_HOME}/lib/libndrxxaoras.so
 # XA Dynamic registration driver
-#NDRX_XA_DRIVERLIB=$NDRX_HOME/lib/libndrxxaorad.so
+#NDRX_XA_DRIVERLIB=${NDRX_HOME}/lib/libndrxxaorad.so
 NDRX_XA_RMLIB=/u01/app/oracle/product/11.2.0/dbhome_1/lib/libclntsh.so.11.1
 NDRX_XA_LAZY_INIT=1
 # XA SECTION, END
