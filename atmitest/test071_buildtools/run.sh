@@ -302,12 +302,13 @@ case $UNAME in
     ;;
 
   AIX)
-    export LIBPATH=$LIBPATH:$SETLIBPATH
+    #export LIBPATH=$LIBPATH:$SETLIBPATH?
     # check compiler, we have a set of things required for each compiler to actually build the binary
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SETLIBPATH
     ;;
 
   *)
-    export LD_LIBRARY_PATH=$SETLIBPATH
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SETLIBPATH
     echo "LIBPATH: [$LD_LIBRARY_PATH]"
     ;;
 esac
