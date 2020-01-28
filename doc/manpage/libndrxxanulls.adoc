@@ -1,0 +1,43 @@
+LIBNDRXXANULLS(8)
+==============
+:doctype: manpage
+
+
+NAME
+----
+libndrxxanulls - Enduro/X Null Switch resolver
+
+
+SYNOPSIS
+--------
+libndrxxanulls.so
+libndrxxanulls.dylib
+
+--------------------------------------------------------------------------------
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR=-
+NDRX_XA_CLOSE_STR=-
+NDRX_XA_DRIVERLIB=libndrxxanulls.so
+NDRX_XA_RMLIB=-
+NDRX_XA_LAZY_INIT=1
+--------------------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+This XA Switch loader driver resolves XA Null switch from *libatmi*. The NULL
+XA Switch provides OK status all XA related operations. Thus this switch may be
+used for binaries which may want to orchestrate the two-phase commit transactions,
+but does not actually do any resource manager (e.g. database) related work.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)* *buildserver(8)* *buildclient(8)* *buildtms(8)* *libndrxxatmsx(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
