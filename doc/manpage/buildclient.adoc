@@ -96,7 +96,7 @@ after Enduro/X libraries (from left to right).
 
 [*-r* rm_name]::
 This is resource manager name. The resource manager according the specified name
-shall be configured in *$NDRX_RMFILE* (first periority) or *$NDRX_HOME/udataobj/RM* file.
+shall be configured in *$NDRX_RMFILE* (first priority) or *$NDRX_HOME/udataobj/RM* file.
 The file format is following 'rm_name:xa_switch_name:<compiler libraries>'. If 
 specified, then 'xa_switch_name' is included in the process. Thus later *libndrxxatmsx(8)*
 XA driver can be used (set in *NDRX_XA_DRIVERLIB* env var, see *ex_env(5)*), 

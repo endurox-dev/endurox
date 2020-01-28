@@ -1,0 +1,57 @@
+LIBNDRXXATMSX(8)
+==============
+:doctype: manpage
+
+
+NAME
+----
+libndrxxatmsx - Enduro/X built-in XA Switch resolver
+
+
+SYNOPSIS
+--------
+libndrxxatmsx.so
+libndrxxatmsx.dylib
+
+--------------------------------------------------------------------------------
+NDRX_XA_RES_ID=1
+NDRX_XA_OPEN_STR="open string"
+NDRX_XA_CLOSE_STR="close string"
+NDRX_XA_DRIVERLIB=libndrxxatmsx.so
+NDRX_XA_RMLIB=-
+NDRX_XA_LAZY_INIT=1
+--------------------------------------------------------------------------------
+
+DESCRIPTION
+-----------
+This library may be used with Enduro/X in case if binaries are built with 
+build commands such as *buildserver(8)*, *buildclient(8)* or *buildtms(8)* 
+and XA Switch is build with the binary. The XA Switch symbol name is configured 
+in *$NDRX_RMFILE* (first priority) or *$NDRX_HOME/udataobj/RM* and then by name
+set for build commands.
+
+As Enduro/X uses dynamic load libraries to resolve XA configuration with help
+of the adapter loaders, to use the buil-in symbol, a loader library is needed.
+Thus libndrxxatmsx provides this interface, and if configured for transaction
+group, will resolve XA switch which was compiled with the build commands.
+
+In case if libndrxxatmsx driver is used with binaries which haven't built with
+build commands, the NULL switch ('tmnull_switch' is used, which is dummy XA switch
+it says OK for all XA commands). In case if for servers *libatmisrvinteg* is
+used and switch name is not passed to _tmstartserver(), the loader will raise
+error, instead of using null switch. In that case, *libndrxxanulls(8)* loader
+shall be used.
+
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*ex_env(5)* *buildserver(8)* *buildclient(8)* *buildtms(8)* *libndrxxanulls(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

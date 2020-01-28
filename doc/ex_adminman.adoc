@@ -994,7 +994,7 @@ from library set in *NDRX_XA_RMLIB* env variable.
 Loads Oracle DB Resource Manager. Resource manager driver is loaded 
 from library set in *NDRX_XA_RMLIB* env variable.
 
-. *libndrxxanulls* - null switch ("tmnull_switch"). This basically allows processes to participate
+. *libndrxxanulls(8)* - null switch ('tmnull_switch'). This basically allows processes to participate
 in global transaction, but with out any linkage to any real resource managers.
 The *NDRX_XA_RMLIB* parameter shall be set to "-" (indicate that value is empty).
 
@@ -1020,7 +1020,7 @@ Different configuration of transaction groups:
 image:transaction_groups.png[caption="Figure 2: ", title="Transaction group configurations"]
 
 Transaction groups are configured in environment variables. Enduro/X stores configuration
-files in ini files in section "[@global]". Subsections are used to define different
+files in ini files in section *[@global]*. Subsections are used to define different
 groups. These sub-sections then via *NDRX_CCTAG* env variable (or CCTAG in *ndrxconfig.xml(5)*)
 can be assigned to different processes. The full list of env variables and their function
 can be seen in ex_env(5) man page.
@@ -1355,7 +1355,7 @@ done in the following way:
 
 Firstly in Configure Data Collection Items (DCI) for new item. For example:
 
-image:netxms_new_dci.png[caption="Figure 2: ", title="New DCI", alt="New DIC"]
+image:netxms_new_dci.png[caption="Figure 3: ", title="New DCI", alt="New DIC"]
 
 *NOTE*: As Enduro/X uses comma in identifiers, then in templates quotes must be
 used surrounding "'{instance}'" placeholder. For following classes quotes are needed:
@@ -1367,7 +1367,7 @@ used surrounding "'{instance}'" placeholder. For following classes quotes are ne
 
 Next configure agent list from which to discover the items:
 
-image:netxms_new_dci2.png[caption="Figure 3: ", title="Agent list", alt="Agent list"]
+image:netxms_new_dci2.png[caption="Figure 4: ", title="Agent list", alt="Agent list"]
 
 Once this is configured, instances shall be discovered. On monitored node in NetXMS
 Console, press *left mouse button > Poll > Instance discovery*
@@ -1396,7 +1396,7 @@ After running the instance discovery, following output may be received:
 In the results in latest values new instances can be seen. In particular case
 status of clients are monitored:
 
-image:netxms_clients_list.png[caption="Figure 4: ", title="Clients list", alt="Clients list"]
+image:netxms_clients_list.png[caption="Figure 5: ", title="Clients list", alt="Clients list"]
 
 
 === Configuration recipes for monitoring
@@ -1511,7 +1511,7 @@ if (0==NdrxState2Num("EnduroX.Client.State('2/TXUPLD/RUN1/1')"))
 return OK;
 --------------------------------------------------------------------------------
 
-image:netxms_service_chk.png[caption="Figure 5: ", title="Business Service for status indicator"]
+image:netxms_service_chk.png[caption="Figure 6: ", title="Business Service for status indicator"]
 
 
 === Getting the number of servers, response times, etc. for the XATMI services
@@ -1747,7 +1747,7 @@ The average response time here is measured for service named "HANDLER".
 - Data Type: Float
 
 
-image:netxms_avg_rsp.png[caption="Figure 6: ", title="Average response time"]
+image:netxms_avg_rsp.png[caption="Figure 7: ", title="Average response time"]
 
 
 ==== DCI: Number of successful processed messages for one service with several servers
@@ -1760,7 +1760,7 @@ Number of successful messages processed here are measured for "HANDLER" service.
 
 - Data Type: Integer
 
-image:netxms_succ.png[caption="Figure 7: ", title="Successful requests processed by service copies"]
+image:netxms_succ.png[caption="Figure 8: ", title="Successful requests processed by service copies"]
 
 
 ==== DCI: Cumulative number of messages waiting in queues (for all services)
@@ -1775,7 +1775,7 @@ to be monitored.
 
 - Data Type: Integer
 
-image:netxms_qsize.png[caption="Figure 8: ", title="Number of messages in queue"]
+image:netxms_qsize.png[caption="Figure 9: ", title="Number of messages in queue"]
 
 
 ==== DCI: TPS for one service with several servers
@@ -1792,9 +1792,9 @@ service "HANDLER" is monitored.
 
 - Transformation: Average delta per second
 
-image:netxms_tps.png[caption="Figure 9: ", title="TPS Configuration"]
+image:netxms_tps.png[caption="Figure 10: ", title="TPS Configuration"]
 
-image:netxms_tps_transf.png[caption="Figure 10: ", title="TPS transformation"]
+image:netxms_tps_transf.png[caption="Figure 11: ", title="TPS transformation"]
 
 
 :numbered!:
