@@ -70,89 +70,89 @@ int main(int argc, char** argv) {
         goto out;
     }
 
-for (j=0; j<1000; j++)
-{
-    if (EXSUCCEED!=tpbegin(10, 0))
+    for (j=0; j<1000; j++)
     {
-        NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
-                                            tperrno, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
-    }
+        if (EXSUCCEED!=tpbegin(10, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
+                                                tperrno, tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
 
-    if (EXFAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
-    {
+        if (EXFAIL==(cd=tpconnect("CONVSV", (char *)p_ub, 0L, TPRECVONLY)))
+        {
             NDRX_LOG(log_error, "TESTSV connect failed!: %s",
                                     tpstrerror(tperrno));
             ret=EXFAIL;
             goto out;
-    }
+        }
 
-    /* Recieve the stuff back */
-    NDRX_LOG(log_debug, "About to tprecv!");
+        /* Receive the stuff back */
+        NDRX_LOG(log_debug, "About to tprecv!");
 
-    while (EXSUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
-    {
-        NDRX_LOG(log_debug, "MSG RECEIVED OK!");
-    }
-    
-
-    /* If we have event, we would like to become recievers if so */
-    if (TPEEVENT==tperrno)
-    {
-        if (TPEV_SENDONLY==revent)
+        while (EXSUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
         {
-            int i=0;
-            /* Start the sending stuff now! */
-            for (i=0; i<1 && EXSUCCEED==ret; i++)
+            NDRX_LOG(log_debug, "MSG RECEIVED OK!");
+        }
+
+
+        /* If we have event, we would like to become receivers if so */
+        if (TPEEVENT==tperrno)
+        {
+            if (TPEV_SENDONLY==revent)
             {
-        	snprintf(tmp, sizeof(tmp), "CLT: %d\n", i);
-	        Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L);
-                ret=tpsend(cd, (char *)p_ub, 0L, 0L, &revent);
+                int i=0;
+                /* Start the sending stuff now! */
+                for (i=0; i<1 && EXSUCCEED==ret; i++)
+                {
+                    snprintf(tmp, sizeof(tmp), "CLT: %d\n", i);
+                    Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L);
+                    ret=tpsend(cd, (char *)p_ub, 0L, 0L, &revent);
+                }
             }
         }
-    }
 
-    /* Now give the control to the server, so that he could finish up */
-    if (EXFAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
-    {
-        NDRX_LOG(log_debug, "Failed to give server control!!");
-        ret=EXFAIL;
-        goto out;
-    }
-
-    NDRX_LOG(log_debug, "Get response from tprecv!");
-    Bfprint(p_ub, stderr);
-
-    /* Wait for return from server */
-    ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
-    NDRX_LOG(log_error, "tprecv failed with revent=%ld", revent);
-
-    if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
-    {
-        NDRX_LOG(log_error, "Service finished with TPEV_SVCSUCC!");
-	if (EXSUCCEED!=(ret=tpcommit(0)))
+        /* Now give the control to the server, so that he could finish up */
+        if (EXFAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
         {
-            NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
-                                                ret, tperrno, tpstrerror(tperrno));
+            NDRX_LOG(log_debug, "Failed to give server control!!");
             ret=EXFAIL;
             goto out;
         }
-        ret=EXSUCCEED;
-    }
-    else
-    {
-	if (EXSUCCEED!=(ret=tpabort(0)))
+
+        NDRX_LOG(log_debug, "Get response from tprecv!");
+        Bfprint(p_ub, stderr);
+
+        /* Wait for return from server */
+        ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
+        NDRX_LOG(log_error, "tprecv failed with revent=%ld", revent);
+
+        if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
         {
-            NDRX_LOG(log_error, "TESTERROR: tpabort()==%d fail: %d:[%s]", 
-                                                ret, tperrno, tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
+            NDRX_LOG(log_error, "Service finished with TPEV_SVCSUCC!");
+            if (EXSUCCEED!=(ret=tpcommit(0)))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpcommit()==%d fail: %d:[%s]", 
+                                                    ret, tperrno, tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+            ret=EXSUCCEED;
         }
+        else
+        {
+            if (EXSUCCEED!=(ret=tpabort(0)))
+            {
+                NDRX_LOG(log_error, "TESTERROR: tpabort()==%d fail: %d:[%s]", 
+                                                    ret, tperrno, tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+        }
+        /* close conv... */
+        tpdiscon(cd);
     }
-    /* close conv... */
-    tpdiscon(cd);
-}
     
 out:
 
