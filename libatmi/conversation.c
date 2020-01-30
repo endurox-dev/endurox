@@ -147,7 +147,7 @@ expublic int have_open_connection(void)
         }
     }
 
-    NDRX_LOG(log_debug, "We % open connections!",
+    NDRX_LOG(log_debug, "We %s open connections!",
                             ret?"have":"do not have");
 
     return ret;
