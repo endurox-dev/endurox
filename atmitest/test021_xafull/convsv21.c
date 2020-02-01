@@ -61,7 +61,7 @@ void CONVSV (TPSVCINFO *p_svc)
         goto out;
     }
 
-    for (i=0; i<1; i++)
+    for (i=0; i<100; i++)
     {
         snprintf(tmp, sizeof(tmp), "SRV SND: %d", i);
         Bchg(p_ub, T_STRING_FLD, 0, (char *)tmp, 0);
