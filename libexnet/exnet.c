@@ -81,7 +81,7 @@
 
 #if defined(EX_USE_EPOLL)
 
-#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+#define POLL_FLAGS (EPOLLIN | EPOLLHUP)
 
 #elif defined(EX_USE_KQUEUE)
 
