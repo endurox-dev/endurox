@@ -93,7 +93,7 @@ for (j=0; j<1000; j++)
 
     while (EXSUCCEED==tprecv(cd, (char **)&p_ub, 0L, 0L, &revent))
     {
-        NDRX_LOG(log_debug, "MSG RECEIVED OK!");
+        NDRX_LOG(log_info, "MSG RECEIVED OK %ld!", revent);
     }
     
 
