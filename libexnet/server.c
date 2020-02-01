@@ -72,7 +72,11 @@
 
 #if defined(EX_USE_EPOLL)
 
-#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+/* EPOLLET Support #506 causes two packets to go on socket in the same time
+ * after that the first packet is processed, but second is not, because
+ * level is not changed
+ */
+#define POLL_FLAGS (EPOLLIN | EPOLLHUP)
 
 #elif defined (EX_USE_KQUEUE)
 
