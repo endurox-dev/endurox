@@ -54,8 +54,7 @@
  */
 int main(int argc, char** argv) {
 
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
-    long rsplen;
+    UBFH *p_ub = NULL;
     int i, j;
     int ret=EXSUCCEED;
     int cd;
@@ -72,7 +71,9 @@ int main(int argc, char** argv) {
 
     for (j=0; j<1000; j++)
     {
-        if (EXSUCCEED!=tpbegin(10, 0))
+        p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+        
+        if (EXSUCCEED!=tpbegin(40, 0))
         {
             NDRX_LOG(log_error, "TESTERROR: tpbegin() fail: %d:[%s]", 
                                                 tperrno, tpstrerror(tperrno));
@@ -103,7 +104,7 @@ int main(int argc, char** argv) {
             {
                 int i=0;
                 /* Start the sending stuff now! */
-                for (i=0; i<1 && EXSUCCEED==ret; i++)
+                for (i=0; i<10 && EXSUCCEED==ret; i++)
                 {
                     snprintf(tmp, sizeof(tmp), "CLT: %d\n", i);
                     Bchg(p_ub, T_STRING_FLD, 0, tmp, 0L);
@@ -113,7 +114,7 @@ int main(int argc, char** argv) {
         }
 
         /* Now give the control to the server, so that he could finish up */
-        if (EXFAIL==tpsend(cd, NULL, 0L, TPRECVONLY, &revent))
+        if (EXFAIL==tpsend(cd, (char *)p_ub, 0L, TPRECVONLY, &revent))
         {
             NDRX_LOG(log_debug, "Failed to give server control!!");
             ret=EXFAIL;
@@ -125,7 +126,8 @@ int main(int argc, char** argv) {
 
         /* Wait for return from server */
         ret=tprecv(cd, (char **)&p_ub, 0L, 0L, &revent);
-        NDRX_LOG(log_error, "tprecv failed with revent=%ld", revent);
+        NDRX_LOG(log_error, "tprecv failed with ret=%d errno=%d revent=%ld", 
+                ret, tperrno, revent);
 
         if (EXFAIL==ret && TPEEVENT==tperrno && TPEV_SVCSUCC==revent)
         {
@@ -151,6 +153,12 @@ int main(int argc, char** argv) {
         }
         /* close conv... */
         tpdiscon(cd);
+        
+        if (NULL!=p_ub)
+        {
+            tpfree((char *)p_ub);
+            p_ub = NULL;
+        }
     }
     
 out:
@@ -166,7 +174,12 @@ out:
         NDRX_LOG(log_error, "tpterm failed with: %s", tpstrerror(tperrno));
         ret=EXFAIL;
     }
-    
+
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
     return ret;
 }
 

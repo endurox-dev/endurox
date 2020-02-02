@@ -1196,7 +1196,7 @@ inject_message:
                     /* Basically we close the connection (normally)
                      * This means we also needs to close & unlink queues
                      */
-                    NDRX_LOG(log_debug, "Server did tpreturn - closing conversation!");
+                    NDRX_LOG(log_info, "Server did tpreturn - closing conversation!");
 
                     /* Save the rcode returned. */
                     G_atmi_tls->M_svc_return_code = rply->rcode;
@@ -1248,8 +1248,8 @@ out:
         if (TPEV_DISCONIMM == *revent ||  TPEV_SVCERR == *revent ||  
                 TPEV_SVCFAIL == *revent)
         {
-             NDRX_LOG(log_warn, "tprcv error - mark "
-                     "transaction as abort only!");    
+             NDRX_LOG(log_warn, "tprcv error (revent=%ld) - mark "
+                     "transaction as abort only!", *revent);
             /* later should be handled by transaction initiator! */
             G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
         }
