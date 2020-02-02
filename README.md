@@ -464,6 +464,10 @@ processing listings across all supported OSes.
 
 - Version 7.0.20 released on 22/01/2020 (stabel) Fixes on Support #502
 
+- Version 7.0.22 released on 31/01/2020 (stabel) Feature #509
+
+- Version 7.0.24 released on 01/01/2020 (stabel) Support #506
+
 # Build configurations
 
 ## Configure make with: 
