@@ -91,7 +91,7 @@ void CONVSV (TPSVCINFO *p_svc)
 	/* write off transaction */
 	__write_to_tx_file(tmp);
 	
-        NDRX_LOG(log_debug, "Recevied MSG OK!");
+        NDRX_LOG(log_debug, "Received MSG OK!");
     }
 
     /* Dump the buffer */
@@ -113,7 +113,7 @@ void CONVSV (TPSVCINFO *p_svc)
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
-                (char *)p_ub,
+                (char *)p_ub,   /* Note ! we might return NULL buffer here! */
                 0L,
                 0L);
 }
