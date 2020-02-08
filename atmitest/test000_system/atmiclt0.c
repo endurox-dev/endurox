@@ -37,6 +37,10 @@
 #include <memory.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <ndrstandard.h>
+#include <errno.h>
+
+#include <sys_unix.h>
 
 #include "test000.h"
 
@@ -46,6 +50,9 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+/* for osx tests: */
+exprivate pthread_mutex_t M_mut = PTHREAD_MUTEX_INITIALIZER;
+exprivate pthread_cond_t M_cond = PTHREAD_COND_INITIALIZER;
 /*---------------------------Prototypes---------------------------------*/
 
 __thread int M_field;
@@ -66,6 +73,61 @@ void* t2(void *arg)
     return NULL;
 }
 
+#ifdef EX_OS_DARWIN
+
+/**
+ * Check that we have access to cond variable internals...
+ * and it still works as in 08/02/2020.
+ * @return EXSUCCED / EXFAIL
+ */
+int osx_chk_cond_work_around(void)
+{
+    int ret = EXSUCCEED;
+    struct timespec timeToWait;
+    struct timeval now;
+    ndrx_osx_pthread_cond *p_cond;
+    
+    p_cond = (ndrx_osx_pthread_cond *)&cond;
+    
+    gettimeofday(&now,NULL);
+    timeToWait.tv_sec = now.tv_sec+2;
+    timeToWait.tv_nsec = now.tv_usec*1000UL;
+    p_cond->busy = NULL;
+    
+    pthread_mutex_lock(&mut);
+    ret = pthread_cond_timedwait(&cond, &mut, &timeToWait);
+    
+    if (EXSUCCEED==ret)
+    {
+        pthread_mutex_unlock(&mut);
+    }
+    
+    if (ETIMEDOUT!=ret)
+    {
+        fprintf(stderr, "No timeout for pthread_cond_timedwait %d: %s\n", 
+                ret, strerror(ret));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if ((char *)p_cond->busy != (char *)&mut)
+    {
+        /* check for https://github.com/apple/darwin-libpthread/blob/master/src/pthread_cond.c updates
+         * and fix for given OSX version, needs to add some macros...
+         */
+        fprintf(stderr, "Cannot access busy field of Darwin pthread library for cond var: %p vs %p\n", 
+                p_cond->busy, &mut);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret = EXSUCCEED;
+    
+out:
+    return ret;    
+}
+#endif
+
 int main( int argc , char **argv )
 {
     pthread_t pth1={0}, pth2={0};
@@ -74,6 +136,17 @@ int main( int argc , char **argv )
     pthread_attr_init(&pthrat);
     pthread_attr_setstacksize(&pthrat, 1<<20);
     unsigned int n_pth=0;
+    
+    
+#ifdef EX_OS_DARWIN
+    
+    if (EXSUCCEED!=osx_chk_cond_work_around())
+    {
+        fprintf(stderr, "OSX PTHREAD_PROCESS_SHARED Cond variable work-a-round does not work!\n");
+        return EXFAIL;
+    }
+    
+#endif
 
     M_ptrs[0] = &M_field;
 
