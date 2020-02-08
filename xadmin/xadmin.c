@@ -1078,12 +1078,6 @@ expublic int ndrx_init(int need_init)
     int ret=EXSUCCEED;
     int i;
     ndrx_inicfg_t *cfg = NULL;
-    
-    
-#ifdef EX_USE_EMQ
-    /* We need to get lock in */
-    emq_set_lock_timeout(10);
-#endif
 
     if (need_init)
     {
