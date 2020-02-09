@@ -160,7 +160,7 @@ expublic int ndrx_pthread_cond_wait(pthread_cond_t *restrict cond,
         }
         
         p->busy = NULL;
-        ret = ndrx_pthread_cond_wait(cond, mutex);
+        ret = pthread_cond_wait(cond, mutex);
         
         attempt++;
         
