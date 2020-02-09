@@ -41,8 +41,23 @@
     typedef unsigned short mode_t;
 #endif
 
+    
+#define  LOCK_Q if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)\
+    {\
+        if (EBUSY!=n)\
+        {\
+            errno = n;\
+            return(-1);\
+        }\
+        else\
+        {\
+            NDRX_LOG(log_error, "lock was busy!");\
+        }\
+    }
+    
+    
 #define MAX_TRIES   10
-struct mq_attr defattr = { 0, 128, 1024, 0 };
+exprivate  struct mq_attr defattr = { 0, 128, 1024, 0 };
 
 
 struct qd_hash
@@ -52,10 +67,10 @@ struct qd_hash
 };
 typedef struct qd_hash qd_hash_t;
 
-
 MUTEX_LOCKDECL(M_lock);
-qd_hash_t *M_qd_hash = NULL;
+exprivate qd_hash_t *M_qd_hash = NULL;
 
+exprivate  int M_first = EXTRUE; /**< Had random init? */
 
 
 /*
@@ -94,17 +109,17 @@ expublic int ndrx_pthread_cond_timedwait(pthread_cond_t *restrict cond,
         const struct timespec *restrict abstime)
 {
     int attempt = 0;
-    static int first = EXTRUE;
+    
     int ret;
     ndrx_osx_pthread_cond_t *p = (ndrx_osx_pthread_cond_t *)cond;
     do
     {
         if (attempt > 0)
         {
-            if (first)
+            if (M_first)
             {
-                srand(time(NULL)); // randomize seed
-                first = EXFALSE;
+                srand(time(NULL));
+                M_first = EXFALSE;
             }
             /* max sleep 0.001 sec... */
             usleep(rand() % 1000);
@@ -129,24 +144,23 @@ expublic int ndrx_pthread_cond_wait(pthread_cond_t *restrict cond,
         pthread_mutex_t *restrict mutex)
 {
     int attempt = 0;
-    static int first = EXTRUE;
     int ret;
     ndrx_osx_pthread_cond_t *p = (ndrx_osx_pthread_cond_t *)cond;
     do
     {
         if (attempt > 0)
         {
-            if (first)
+            if (M_first)
             {
-                srand(time(NULL)); // randomize seed
-                first = EXFALSE;
+                srand(time(NULL));
+                M_first = EXFALSE;
             }
             /* max sleep 0.001 sec... */
             usleep(rand() % 1000);
         }
         
         p->busy = NULL;
-        ret = pthread_cond_wait(cond, mutex);
+        ret = ndrx_pthread_cond_wait(cond, mutex);
         
         attempt++;
         
@@ -351,11 +365,8 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     }
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)
-    {
-        errno = n;
-        return(-1);
-    }
+    
+    LOCK_Q;
 
     emqstat->mq_flags = emqinfo->emqi_flags;   /* per-open */
     emqstat->mq_maxmsg = attr->mq_maxmsg;    /* remaining three per-queue */
@@ -367,6 +378,12 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     return(0);
 }
 
+/**
+ * Confiugre notification
+ * @param emqd
+ * @param notification
+ * @return 
+ */
 expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
 {
 #if !defined(WIN32)
@@ -387,10 +404,8 @@ expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
         return(-1);
     }
     emqhdr = emqinfo->emqi_hdr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0) {
-        errno = n;
-        return(-1);
-    }
+    
+    LOCK_Q;
 
     pid = getpid();
     if (notification == NULL) {
@@ -419,6 +434,13 @@ err:
 #endif
 }
 
+/**
+ * Open queue
+ * @param pathname
+ * @param oflag
+ * @param ...
+ * @return 
+ */
 expublic mqd_t emq_open(const char *pathname, int oflag, ...)
 {
     int                  i, fd, nonblock, created, save_errno;
@@ -431,7 +453,7 @@ expublic mqd_t emq_open(const char *pathname, int oflag, ...)
     struct msg_hdr      *msghdr;
     struct mq_attr      *attr;
     struct emq_info      *emqinfo;
-    char emq_x[PATH_MAX];
+    char emq_x[PATH_MAX+1];
     pthread_mutexattr_t  mattr;
     pthread_condattr_t   cattr;
 #if defined(WIN32)
@@ -520,7 +542,8 @@ again:
             emqhdr->emqh_head = 0;
             index = sizeof(struct emq_hdr);
             emqhdr->emqh_free = index;
-            for (i = 0; i < attr->mq_maxmsg - 1; i++) {
+            for (i = 0; i < attr->mq_maxmsg - 1; i++)
+            {
                 msghdr = (struct msg_hdr *) &mptr[index];
                 index += sizeof(struct msg_hdr) + msgsize;
                 msghdr->msg_next = index;
@@ -637,12 +660,24 @@ err:
     if (emqinfo != NULL)
         NDRX_FREE(emqinfo);
     close(fd);
-    errno = save_errno;
+    
     NDRX_LOG(log_dump, "into: emq_open ret -1");
+    
+    errno = save_errno;
     return((mqd_t) -1);
 }
 
-
+/**
+ * Send timed message.
+ * Basically we operate on locked queue and unlock at the end (or error)
+ * if not lock is received, direct error is returned.
+ * @param emqd q descr
+ * @param ptr msg ptr
+ * @param maxlen max len
+ * @param priop priority (not used)
+ * @param __abs_timeout timeout
+ * @return bytes received or error
+ */
 expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec *__abs_timeout)
 {
@@ -673,11 +708,7 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     mptr = (char *) emqhdr;          /* byte pointer */
     attr = &emqhdr->emqh_attr;
     
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)
-    {
-        errno = n;
-        return(-1);
-    }
+    LOCK_Q;
 
     if (maxlen < (size_t)attr->mq_msgsize)
     {
@@ -703,6 +734,23 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
                 if (EXSUCCEED!=(n=ndrx_pthread_cond_wait(&emqhdr->emqh_wait, 
                         &emqhdr->emqh_lock)))
                 {
+                    int tmp;
+                    /* set nwait atomically... */
+                    if ( (tmp = pthread_mutex_lock(&emqhdr->emqh_lock)) != EXSUCCEED)
+                    {
+                        NDRX_LOG(log_error, "Failed to get pthread_mutex_lock: %s", 
+                                strerror(tmp));
+
+                        userlog("%s: pthread_mutex_lock failed %d: %s", 
+                            __func__, tmp, strerror(tmp));
+
+                        /* no lock */
+                        errno = tmp;
+                        return(-1);
+                    }
+                    
+                    /* have lock */
+                    emqhdr->emqh_nwait--;
                     NDRX_LOG(log_error, "%s: pthread_cond_wait failed %d: %s", 
                             __func__, n, strerror(n));
                     userlog("%s: pthread_cond_wait failed %d: %s", 
@@ -715,20 +763,43 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
             {
                 /* wait some time...  */
                 NDRX_LOG(log_dump, "timed wait...");
-                /* On osx this can do early returns...*/
+                
+                /* On osx this can do early returns...
+                 * Also... we might get time-outs due to broadcasts...
+                 * then we need to reduce the waiting time...
+                 */
                 if (EXSUCCEED!=(n=ndrx_pthread_cond_timedwait(&emqhdr->emqh_wait, 
                         &emqhdr->emqh_lock, __abs_timeout)))
-                {
-                    errno = n;
+                { 
                     
                     if (n!=ETIMEDOUT)
                     {
+                        int tmp;
+                        /* set nwait atomically... */
+                        if ( (tmp = pthread_mutex_lock(&emqhdr->emqh_lock)) != EXSUCCEED)
+                        {
+                            NDRX_LOG(log_error, "Failed to get pthread_mutex_lock: %s", 
+                                    strerror(tmp));
+                            
+                            userlog("%s: pthread_mutex_lock failed %d: %s", 
+                                __func__, tmp, strerror(tmp));
+                            
+                            /* no lock */
+                            errno = tmp;
+                            return(-1);
+                        }
+                        
+                        /* have lock */
+                        emqhdr->emqh_nwait--;
                         NDRX_LOG(log_error, "%s: ndrx_pthread_cond_timedwait failed %d: %s", 
                             __func__, n, strerror(n));
                         userlog("%s: ndrx_pthread_cond_timedwait failed %d: %s", 
                                 __func__, n, strerror(n));
+                        errno = n;
+                        return -1;
                     }
                     
+                    errno = n;
                     goto err;
                 }
             }
@@ -753,12 +824,11 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     msghdr->msg_next = emqhdr->emqh_free;
     emqhdr->emqh_free = index;
 
-    /* wake up anyone blocked in emq_send waiting for room */
-    if (attr->mq_curmsgs == attr->mq_maxmsg)
-    {
-        pthread_cond_signal(&emqhdr->emqh_wait); 
-        /* pthread_cond_broadcast(&emqhdr->emqh_wait); */
-    }
+    /* if configuration of queues are changed, then wake up any one who 
+     * is waiting, if not none waiting - no problem
+     */
+    pthread_cond_signal(&emqhdr->emqh_wait);
+    
     attr->mq_curmsgs--;
 
     pthread_mutex_unlock(&emqhdr->emqh_lock);
@@ -768,19 +838,21 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
 
 err:
     pthread_mutex_unlock(&emqhdr->emqh_lock);
-
-    NDRX_LOG(log_dump, "emq_timedreceive - failed");
+    n = errno;
+    NDRX_LOG(log_dump, "emq_timedreceive - failed: %s", strerror(errno));
+    errno = n;
+    
     return(-1);
 }
 
 /**
- * Send message on queue
- * @param emqd
- * @param ptr
- * @param len
- * @param prio
- * @param __abs_timeout
- * @return 
+ * Send message on queue.
+ * @param emqd q descr
+ * @param ptr msg ptr
+ * @param len msg len
+ * @param prio not used
+ * @param __abs_timeout timeout
+ * @return EXSUCCEED or EXFAIL + errno set.
  */
 expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int prio, 
         const struct timespec *__abs_timeout)
@@ -813,11 +885,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     mptr = (char *) emqhdr;          /* byte pointer */
     attr = &emqhdr->emqh_attr;
     
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)
-    {
-        errno = n;
-        return(-1);
-    }
+    LOCK_Q;
 
     if (len > (size_t)attr->mq_msgsize)
     {
@@ -862,8 +930,10 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
                             __func__, n, strerror(n));
                     userlog("%s: pthread_cond_wait failed %d: %s", 
                             __func__, n, strerror(n));
+                    
+                    /* no lock */
                     errno = n;
-                    goto err;
+                    return -1;
                 }
             }
             else
@@ -874,16 +944,18 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
                 if (EXSUCCEED!=(n=ndrx_pthread_cond_timedwait(&emqhdr->emqh_wait, 
                         &emqhdr->emqh_lock, __abs_timeout)))
                 {
-                    errno = n;
-                    
                     if (n!=ETIMEDOUT)
                     {
                         NDRX_LOG(log_error, "%s: ndrx_pthread_cond_timedwait failed %d: %s", 
                             __func__, n, strerror(n));
                         userlog("%s: ndrx_pthread_cond_timedwait failed %d: %s", 
                                 __func__, n, strerror(n));
+                        errno = n;
+                        return -1;
                     }
                     
+                    /* we have lock... */
+                    errno = n;
                     goto err;
                 }
             }
@@ -923,21 +995,24 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
         pmsghdr->msg_next = freeindex;
         nmsghdr->msg_next = 0;
     }
-    /* wake up anyone blocked in emq_receive waiting for a message */ 
-    if (attr->mq_curmsgs == 0)
-    {
-        pthread_cond_signal(&emqhdr->emqh_wait); 
-        /* pthread_cond_broadcast(&emqhdr->emqh_wait); */
-    }
+    
+    
+    /* if configuration of queues are changed, then wake up any one who 
+     * is waiting, if not none waiting - no problem
+     */
+    pthread_cond_signal(&emqhdr->emqh_wait);
     attr->mq_curmsgs++;
-
+    
     pthread_mutex_unlock(&emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_timedsend - return 0");
     return(0);
 
 err:
     pthread_mutex_unlock(&emqhdr->emqh_lock);
-    NDRX_LOG(log_dump, "into: emq_timedsend - return -1");
+
+    n = errno;
+    NDRX_LOG(log_dump, "into: emq_timedsend - return -1: %s", strerror(n));
+    errno = n;
     return(-1);
 }
 
@@ -998,11 +1073,8 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
     }
     emqhdr = emqinfo->emqi_hdr;
     attr = &emqhdr->emqh_attr;
-    if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)
-    {
-        errno = n;
-        return(-1);
-    }
+    
+    LOCK_Q;
 
     if (oemqstat != NULL)
     {
@@ -1031,6 +1103,7 @@ expublic int emq_unlink(const char *pathname)
 {
     char emq_x[PATH_MAX+1];
     NDRX_LOG(log_dump, "into: emq_unlink");
+    
     if (unlink(get_path(pathname, emq_x, sizeof(emq_x))) == -1)
     {
         NDRX_LOG(log_dump, "into: emq_unlink ret -1");
