@@ -39,7 +39,9 @@
 #include <unistd.h>
 #include <ndrstandard.h>
 #include <errno.h>
+#include <sys/time.h>
 
+#include <ndebug.h>
 #include <sys_unix.h>
 
 #include "test000.h"
@@ -75,6 +77,54 @@ void* t2(void *arg)
 
 #ifdef EX_OS_DARWIN
 
+void tim(void)
+{
+ time_t timer;
+    char buffer[26];
+    struct tm* tm_info;
+
+    timer = time(NULL);
+    tm_info = localtime(&timer);
+
+    strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+	fprintf(stderr, "%s\n", buffer);
+
+}
+
+/**
+ * Check the busy field..
+ * ptrs shall match..
+ */
+void* osx_chk_thread(void *arg)
+{
+    ndrx_osx_pthread_cond_t *p_cond;
+    p_cond = (ndrx_osx_pthread_cond_t *)&M_cond;
+
+    /* wait on thread */
+    pthread_mutex_lock(&M_mut);
+
+    /*let other thread to set the fields.. inside of pthread_cond_wait() */
+    sleep(1);
+    if ((char *)p_cond->busy != (char *)&M_mut)
+    {
+        /* check for https://github.com/apple/darwin-libpthread/blob/master/src/pthread_cond.c updates
+         * and fix for given OSX version, needs to add some macros...
+         */
+        fprintf(stderr, "Cannot access busy field of Darwin pthread library for cond var: %p vs %p\n",
+                p_cond->busy, &M_mut);
+        exit(-1);
+    }
+    else
+    {
+        fprintf(stderr, "Cond var: %p vs %p OK\n", p_cond->busy, &M_mut);
+    }
+    
+    pthread_cond_signal( &M_cond ); 
+    pthread_mutex_unlock( &M_mut );
+
+    return NULL;
+}
+
 /**
  * Check that we have access to cond variable internals...
  * and it still works as in 08/02/2020.
@@ -83,48 +133,38 @@ void* t2(void *arg)
 int osx_chk_cond_work_around(void)
 {
     int ret = EXSUCCEED;
-    struct timespec timeToWait;
-    struct timeval now;
-    ndrx_osx_pthread_cond *p_cond;
+    ndrx_osx_pthread_cond_t *p_cond;
     
-    p_cond = (ndrx_osx_pthread_cond *)&cond;
-    
-    gettimeofday(&now,NULL);
-    timeToWait.tv_sec = now.tv_sec+2;
-    timeToWait.tv_nsec = now.tv_usec*1000UL;
+    pthread_t valth={0};
+    p_cond = (ndrx_osx_pthread_cond_t *)&M_cond;
+
+    pthread_mutex_lock(&M_mut);
+
+    if( (ret=pthread_create( &valth, NULL, osx_chk_thread, NULL)) != 0)
+    {
+        fprintf(stderr, "Failed to create thread: %d", ret);
+        return EXFAIL;
+    }
+
     p_cond->busy = NULL;
-    
-    pthread_mutex_lock(&mut);
-    ret = pthread_cond_timedwait(&cond, &mut, &timeToWait);
-    
-    if (EXSUCCEED==ret)
+    ret = pthread_cond_wait(&M_cond, &M_mut);
+    fprintf(stderr, "pthread_cond_wait 2: ret=%d (%s) mut=%p\n", ret, strerror(ret), &M_mut);
+
+    if (EXSUCCEED!=ret)
     {
-        pthread_mutex_unlock(&mut);
+        fprintf(stderr, "ret=%d Expected 0\n", ret);
+        return EXFAIL;
     }
+
+    pthread_mutex_unlock(&M_mut);
     
-    if (ETIMEDOUT!=ret)
-    {
-        fprintf(stderr, "No timeout for pthread_cond_timedwait %d: %s\n", 
-                ret, strerror(ret));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if ((char *)p_cond->busy != (char *)&mut)
-    {
-        /* check for https://github.com/apple/darwin-libpthread/blob/master/src/pthread_cond.c updates
-         * and fix for given OSX version, needs to add some macros...
-         */
-        fprintf(stderr, "Cannot access busy field of Darwin pthread library for cond var: %p vs %p\n", 
-                p_cond->busy, &mut);
-        ret=EXFAIL;
-        goto out;
-    }
+    pthread_join( valth, NULL );
     
     ret = EXSUCCEED;
     
 out:
     return ret;    
+
 }
 #endif
 

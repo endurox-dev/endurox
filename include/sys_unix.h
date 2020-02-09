@@ -228,7 +228,7 @@ typedef struct {
     uint32_t lock;
     uint32_t unused;
     char *busy;
-} ndrx_osx_pthread_cond;
+} ndrx_osx_pthread_cond_t;
 
 #endif
 /*---------------------------Globals------------------------------------*/
