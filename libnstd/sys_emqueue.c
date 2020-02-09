@@ -96,7 +96,7 @@ expublic int ndrx_pthread_cond_timedwait(pthread_cond_t *restrict cond,
     int attempt = 0;
     static int first = EXTRUE;
     int ret;
-    ndrx_osx_pthread_cond *p = (ndrx_osx_pthread_cond *)cond;
+    ndrx_osx_pthread_cond_t *p = (ndrx_osx_pthread_cond_t *)cond;
     do
     {
         if (attempt > 0)
@@ -131,7 +131,7 @@ expublic int ndrx_pthread_cond_wait(pthread_cond_t *restrict cond,
     int attempt = 0;
     static int first = EXTRUE;
     int ret;
-    ndrx_osx_pthread_cond *p = (ndrx_osx_pthread_cond *)cond;
+    ndrx_osx_pthread_cond_t *p = (ndrx_osx_pthread_cond_t *)cond;
     do
     {
         if (attempt > 0)
