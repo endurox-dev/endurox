@@ -78,6 +78,9 @@ execute_process(
 		NDRX_BLD_HASH
 	)
 
+string(REGEX REPLACE "\n$" "" NDRX_BLD_HASH "${NDRX_BLD_HASH}")
+
+
 if (NOT gitres EQUAL 0)
 		SET (NDRX_BLD_HASH 	"unknown")
 endif ()
