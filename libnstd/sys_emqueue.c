@@ -978,7 +978,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
                     goto err;
                 }
             }
-            NDRX_LOG(log_warn, "%p - accessed ok", emqd);
+            NDRX_LOG(log_info, "%p - accessed ok", emqd);
         }
     }
     /* nmsghdr will point to new message */
