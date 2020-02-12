@@ -408,13 +408,19 @@ expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
     LOCK_Q;
 
     pid = getpid();
-    if (notification == NULL) {
-        if (emqhdr->emqh_pid == pid) {
+    if (notification == NULL)
+    {
+        if (emqhdr->emqh_pid == pid)
+        {
             emqhdr->emqh_pid = 0;     /* unregister calling process */
         }                           /* no error if c aller not registered */
-    } else {
-        if (emqhdr->emqh_pid != 0) {
-            if (kill(emqhdr->emqh_pid, 0) != -1 || errno != ESRCH) {
+    } 
+    else 
+    {
+        if (emqhdr->emqh_pid != 0)
+        {
+            if (kill(emqhdr->emqh_pid, 0) != -1 || errno != ESRCH)
+            {
                 errno = EBUSY;
                 goto err;
             }
@@ -471,7 +477,8 @@ expublic mqd_t emq_open(const char *pathname, int oflag, ...)
 
 
 again:
-    if (oflag & O_CREAT) {
+    if (oflag & O_CREAT)
+    {
         va_start(ap, oflag); /* init ap to final named argument */
 
         /*mode = va_arg(ap, mode_t) & ~S_IXUSR; - gives promition to int warning on osx */
@@ -481,120 +488,129 @@ again:
 
         /* open and specify O_EXCL and user-execute */
         fd = open(get_path(pathname, emq_x, sizeof(emq_x)), oflag | O_EXCL | O_RDWR, mode | S_IXUSR);
-        if (fd < 0) {
+        if (fd < 0)
+        {
             if (errno == EEXIST && (oflag & O_EXCL) == 0)
                 goto exists;            /* already exists, OK */
             else
                 return((mqd_t) -1);
-            }
-            created = 1;
-                        /* first one to create the file initializes it */
-            if (attr == NULL)
-                attr = &defattr;
-            else {
-                if (attr->mq_maxmsg <= 0 || attr->mq_msgsize <= 0) {
-                    errno = EINVAL;
-                    goto err;
-                }
-            }
-            /* calculate and set the file size */
-            msgsize = MSGSIZE(attr->mq_msgsize);
-            filesize = sizeof(struct emq_hdr) + (attr->mq_maxmsg *
-                               (sizeof(struct msg_hdr) + msgsize));
-            if (lseek(fd, filesize - 1, SEEK_SET) == -1)
-                goto err;
-            if (write(fd, "", 1) == -1)
-                goto err;
-
-            /* memory map the file */
-#if defined(WIN32)
-            fmap = CreateFileMapping((HANDLE)_get_osfhandle(fd), NULL, 
-                                     PAGE_READWRITE, 0, 0, NULL);
-            if (fmap == NULL)
-                goto err;
-            mptr = MapViewOfFile(fmap, FILE_MAP_WRITE, 0, 0, filesize);
-            if (mptr == NULL)
-#else
-            mptr = mmap(NULL, filesize, PROT_READ | PROT_WRITE,
-                                        MAP_SHARED, fd, 0);
-            if (mptr == MAP_FAILED)
-#endif
-                goto err;
-
-            /* allocate one emq_info{} for the queue */
-            if ( (emqinfo = NDRX_MALLOC(sizeof(struct emq_info))) == NULL)
-                goto err;
-#if defined(WIN32)
-            emqinfo->emqi_fmap = fmap;
-#endif
-            emqinfo->emqi_hdr = emqhdr = (struct emq_hdr *) mptr;
-            emqinfo->emqi_magic = EMQI_MAGIC;
-            emqinfo->emqi_flags = nonblock;
-
-            /* initialize header at beginning of file */
-            /* create free list with all messages on it */
-            emqhdr->emqh_attr.mq_flags = 0;
-            emqhdr->emqh_attr.mq_maxmsg = attr->mq_maxmsg;
-            emqhdr->emqh_attr.mq_msgsize = attr->mq_msgsize;
-            emqhdr->emqh_attr.mq_curmsgs = 0;
-            emqhdr->emqh_nwait = 0;
-            emqhdr->emqh_pid = 0;
-            emqhdr->emqh_head = 0;
-            index = sizeof(struct emq_hdr);
-            emqhdr->emqh_free = index;
-            for (i = 0; i < attr->mq_maxmsg - 1; i++)
+        }
+        created = 1;
+                    /* first one to create the file initializes it */
+        if (attr == NULL)
+            attr = &defattr;
+        else 
+        {
+            if (attr->mq_maxmsg <= 0 || attr->mq_msgsize <= 0) 
             {
-                msghdr = (struct msg_hdr *) &mptr[index];
-                index += sizeof(struct msg_hdr) + msgsize;
-                msghdr->msg_next = index;
-            }
-            msghdr = (struct msg_hdr *) &mptr[index];
-            msghdr->msg_next = 0;           /* end of free list */
-
-            /* initialize mutex & condition variable */
-            if ( (i = pthread_mutexattr_init(&mattr)) != 0)
-                goto pthreaderr;
-            pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
-            i = pthread_mutex_init(&emqhdr->emqh_lock, &mattr);
-            pthread_mutexattr_destroy(&mattr);      /* be sure to destroy */
-            if (i != 0)
-                goto pthreaderr;
-
-            if ( (i = pthread_condattr_init(&cattr)) != 0)
-                goto pthreaderr;
-            pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
-            i = pthread_cond_init(&emqhdr->emqh_wait, &cattr);
-            pthread_condattr_destroy(&cattr);       /* be sure to destroy */
-            if (i != 0)
-                goto pthreaderr;
-
-            /* initialization complete, turn off user-execute bit */
-#if defined(WIN32)
-            if (chmod(get_path(pathname, emq_x, sizeof(emq_x)), mode) == -1)
-#else
-            if (fchmod(fd, mode) == -1)
-#endif
+                errno = EINVAL;
                 goto err;
-            close(fd);
-            if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
-                NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
-                errno = ENOMEM;
             }
-            NDRX_LOG(log_dump, "into: emq_open ret ok");
-            return((mqd_t) emqinfo);
+        }
+        /* calculate and set the file size */
+        msgsize = MSGSIZE(attr->mq_msgsize);
+        filesize = sizeof(struct emq_hdr) + (attr->mq_maxmsg *
+                           (sizeof(struct msg_hdr) + msgsize));
+        if (lseek(fd, filesize - 1, SEEK_SET) == -1)
+            goto err;
+        if (write(fd, "", 1) == -1)
+            goto err;
+
+        /* memory map the file */
+#if defined(WIN32)
+        fmap = CreateFileMapping((HANDLE)_get_osfhandle(fd), NULL, 
+                                 PAGE_READWRITE, 0, 0, NULL);
+        if (fmap == NULL)
+            goto err;
+        mptr = MapViewOfFile(fmap, FILE_MAP_WRITE, 0, 0, filesize);
+        if (mptr == NULL)
+#else
+        mptr = mmap(NULL, filesize, PROT_READ | PROT_WRITE,
+                                    MAP_SHARED, fd, 0);
+        if (mptr == MAP_FAILED)
+#endif
+            goto err;
+
+        /* allocate one emq_info{} for the queue */
+        if ( (emqinfo = NDRX_MALLOC(sizeof(struct emq_info))) == NULL)
+            goto err;
+#if defined(WIN32)
+        emqinfo->emqi_fmap = fmap;
+#endif
+        emqinfo->emqi_hdr = emqhdr = (struct emq_hdr *) mptr;
+        emqinfo->emqi_magic = EMQI_MAGIC;
+        emqinfo->emqi_flags = nonblock;
+
+        /* initialize header at beginning of file */
+        /* create free list with all messages on it */
+        emqhdr->emqh_attr.mq_flags = 0;
+        emqhdr->emqh_attr.mq_maxmsg = attr->mq_maxmsg;
+        emqhdr->emqh_attr.mq_msgsize = attr->mq_msgsize;
+        emqhdr->emqh_attr.mq_curmsgs = 0;
+        emqhdr->emqh_nwait = 0;
+        emqhdr->emqh_pid = 0;
+        emqhdr->emqh_head = 0;
+        index = sizeof(struct emq_hdr);
+        emqhdr->emqh_free = index;
+        for (i = 0; i < attr->mq_maxmsg - 1; i++)
+        {
+            msghdr = (struct msg_hdr *) &mptr[index];
+            index += sizeof(struct msg_hdr) + msgsize;
+            msghdr->msg_next = index;
+        }
+        msghdr = (struct msg_hdr *) &mptr[index];
+        msghdr->msg_next = 0;           /* end of free list */
+
+        /* initialize mutex & condition variable */
+        if ( (i = pthread_mutexattr_init(&mattr)) != 0)
+            goto pthreaderr;
+        pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+        i = pthread_mutex_init(&emqhdr->emqh_lock, &mattr);
+        pthread_mutexattr_destroy(&mattr);      /* be sure to destroy */
+        if (i != 0)
+            goto pthreaderr;
+
+        if ( (i = pthread_condattr_init(&cattr)) != 0)
+            goto pthreaderr;
+        pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
+        i = pthread_cond_init(&emqhdr->emqh_wait, &cattr);
+        pthread_condattr_destroy(&cattr);       /* be sure to destroy */
+        if (i != 0)
+            goto pthreaderr;
+
+        /* initialization complete, turn off user-execute bit */
+#if defined(WIN32)
+        if (chmod(get_path(pathname, emq_x, sizeof(emq_x)), mode) == -1)
+#else
+        if (fchmod(fd, mode) == -1)
+#endif
+            goto err;
+        
+        close(fd);
+        if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo))
+        {
+            NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
+            errno = ENOMEM;
+        }
+        NDRX_LOG(log_dump, "into: emq_open ret ok");
+        return((mqd_t) emqinfo);
     }
 exists:
     /* open the file then memory map */
-    if ( (fd = open(get_path(pathname, emq_x, sizeof(emq_x)), O_RDWR)) < 0) {
+    if ( (fd = open(get_path(pathname, emq_x, sizeof(emq_x)), O_RDWR)) < 0)
+    {
         if (errno == ENOENT && (oflag & O_CREAT))
             goto again;
         goto err;
     }
 
     /* make certain initialization is complete */
-    for (i = 0; i < MAX_TRIES; i++) {
-        if (stat(get_path(pathname, emq_x, sizeof(emq_x)), &statbuff) == -1) {
-            if (errno == ENOENT && (oflag & O_CREAT)) {
+    for (i = 0; i < MAX_TRIES; i++)
+    {
+        if (stat(get_path(pathname, emq_x, sizeof(emq_x)), &statbuff) == -1)
+        {
+            if (errno == ENOENT && (oflag & O_CREAT))
+            {
                 close(fd);
                 goto again;
             }
@@ -605,7 +621,8 @@ exists:
         sleep(1);
 	/*usleep(1000000);*/
     }
-    if (i == MAX_TRIES) {
+    if (i == MAX_TRIES)
+    {
         errno = ETIMEDOUT;
         goto err;
     }
@@ -632,7 +649,8 @@ exists:
     emqinfo->emqi_magic = EMQI_MAGIC;
     emqinfo->emqi_flags = nonblock;
     
-    if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo)) {
+    if (EXSUCCEED!=qd_exhash_add((mqd_t) emqinfo))
+    {
         NDRX_LOG(log_error, "Failed to add mqd_t to hash!");
         errno = ENOMEM;
     }
@@ -700,7 +718,8 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     }
 
     emqinfo = emqd;
-    if (emqinfo->emqi_magic != EMQI_MAGIC) {
+    if (emqinfo->emqi_magic != EMQI_MAGIC)
+    {
         errno = EBADF;
         return(-1);
     }
@@ -959,7 +978,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
                     goto err;
                 }
             }
-            NDRX_LOG(log_warn, "%p - accessed ok", emqd);
+            NDRX_LOG(log_info, "%p - accessed ok", emqd);
         }
     }
     /* nmsghdr will point to new message */
