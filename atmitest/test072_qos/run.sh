@@ -115,7 +115,7 @@ xadmin start -y || go_out 2
 
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 10
+sleep 20
 RET=0
 
 xadmin psc

@@ -38,12 +38,12 @@
         <!--
         Ping server in every X sanity units
         -->
-        <pingtime>9</pingtime>
+        <pingtime>1</pingtime>
         <!--
         Max number of sanity units in which server must respond.
         The granularity is sanity time.
         -->
-        <ping_max>40</ping_max>
+        <ping_max>60</ping_max>
         <!--
         Max time to wait until process should exit on shutdown
         -->
