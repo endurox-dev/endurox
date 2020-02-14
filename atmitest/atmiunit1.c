@@ -696,11 +696,8 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test068_tpadm);
     add_test(suite, test069_wnormal);
     add_test(suite, test070_ubfhook);
-<<<<<<< HEAD
     add_test(suite, test071_buildtools);
-=======
     add_test(suite, test072_qos);
->>>>>>> master
     
     return suite;
 }

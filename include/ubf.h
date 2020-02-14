@@ -66,7 +66,11 @@ extern "C" {
 #define BFLD_CARRAY	6
 #define BFLD_MAX	6
 	
-#define BFLD_INT        7  /* Used for view access */
+#define BFLD_INT        7   /**< Used for view access                       */
+#define BFLD_RFU0       8   /**< Reserved for future use                    */
+#define BFLD_PTR        9   /**< pointer to a buffer                        */
+#define BFLD_UBF        10  /**< embedded FML32 buffer                      */
+#define BFLD_VIEW       11  /**< embedded VIEW32 buffer                     */
 
 /* invalid field id - returned from functions where field id not found */
 #define BBADFLDID (BFLDID)0
