@@ -383,6 +383,7 @@ out:
  * check some advanced flags..
  * On error we can close connection directly, because receive is done by main 
  * thread.
+ * @return EXSUCCEED full msg recieved, EXFAIL no full msg 
  */
 expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int appflags)
 {
@@ -450,7 +451,7 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
         if (net->dl < net->len_pfx)
         {
             /* read some length + msg bytes... */
-            download_size = NDRX_NET_MIN_SIZE;
+            download_size = net->len_pfx - net->dl;
         }
         else
         {
@@ -536,6 +537,8 @@ expublic int exnet_b4_poll_cb(void)
             continue;
         }
         
+#if 0
+poll will give a singal, not need to receive before...
         if (net->dl>0)
         {
             NDRX_LOG(6, "exnet_b4_poll_cb - dl: %d", net->dl);
@@ -545,6 +548,7 @@ expublic int exnet_b4_poll_cb(void)
                 ret = net->p_process_msg(net, buf, len);
             }
         }
+#endif
     }
 
 out:
@@ -649,7 +653,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         if (net->periodic_zero && 
                 ndrx_stopwatch_get_delta_sec(&net->last_zero) > net->periodic_zero)
         {
-            NDRX_LOG(log_debug, "About to issue zero length "
+            NDRX_LOG(log_info, "About to issue zero length "
                     "message on fd %d", net->sock);
             if (EXSUCCEED!=exnet_send_sync(net, NULL, 0, 0, 0))
             {
@@ -677,19 +681,20 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         
 #endif
     {
-        /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); */
-        while(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
+        /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); 
+        while(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))*/
+        if(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
         {
             /* We got the message - do the callback op */
             ret = net->p_process_msg(net, buf, buflen);
             buflen = DATA_BUF_MAX;
             /* NDRX_LOG(6, "events & EPOLLIN => loop call"); */
-            /*on raspi seems we stuck here... thus if nothing to do, then terminate... */
+            /*on raspi seems we stuck here... thus if nothing to do, then terminate... 
             if (0 == net->dl)
             {
                 NDRX_LOG(6, "events & EPOLLIN => dl=0, terminate loop");
                 break;
-            }
+            }*/
         }
     }
 
