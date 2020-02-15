@@ -204,7 +204,8 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             if (EAGAIN==err || EWOULDBLOCK==err)
             {
                 int spent = ndrx_stopwatch_get_delta_sec(&w);
-                NDRX_LOG(log_warn, "Socket full: %s - retry, time spent: %d, max: %d", 
+                NDRX_LOG(log_warn, "Socket full: %s - retry, "
+                        "time spent: %d, max: %d - reset connection", 
                         strerror(err), spent, net->rcvtimeout);
                 usleep(100000); /* sleep 0.1 sec on retry... */
 
@@ -215,10 +216,12 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
                         strerror(err), spent, net->rcvtimeout);
                     
                     userlog("ERROR! Failed to send, socket full: %s "
-                            "time spent: %d, max: %d", 
+                            "time spent: %d, max: %d - reset connection", 
                         strerror(err), spent, net->rcvtimeout);
                     
-                    break;
+                    net->schedule_close = EXTRUE;
+                    ret=EXFAIL;
+                    goto out_unlock;
                 }
                 
                 retry = EXTRUE;
@@ -253,7 +256,8 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
         }
         
     } while (EXSUCCEED==ret && sent < size_to_send);
-    
+
+out_unlock:
     MUTEX_UNLOCK_V(net->sendlock);
 
 out:
