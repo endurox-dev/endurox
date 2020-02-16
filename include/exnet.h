@@ -59,6 +59,14 @@ extern int G_recv_tout;				/* Was there timeout on receive? */
 #define APPFLAGS_MASK			0x0001	/* Mask the content in prod mode */
 #define APPFLAGS_TOUT_OK		0x0002	/* Timeout is OK		 */
 
+/**
+ * Mark connection as open
+ */
+#define EXNET_CONNECTED(X)  (X)->schedule_close = EXFALSE;\
+    (X)->is_connected = EXTRUE;\
+    ndrx_stopwatch_reset(&(X)->last_rcv);\
+    ndrx_stopwatch_reset(&(X)->last_snd);
+
 /*------------------------------Enums-----------------------------------------*/
 /*------------------------------Typedefs--------------------------------------*/
 
@@ -70,41 +78,46 @@ typedef struct exnetcon exnetcon_t;
 struct exnetcon
 {
     /* General config: */
-    u_short port;                 /* user specified port number             */
-    char addr[EXNET_ADDR_LEN];    /* will be a pointer to the address 	  */
-    struct sockaddr_in address;   /* the libc network address data structure*/
-    int sock;              /* file descriptor for the network socket */    
-    int is_connected;     /* Connection state...                    */
-    int is_server;          /* Are we server or client? */
-    int is_incoming;        /* Is connection incoming? */
-    int schedule_close;      /* Schedule connection close... */
+    u_short port;                 /**< user specified port number             */
+    char addr[EXNET_ADDR_LEN];    /**< will be a pointer to the address       */
+    struct sockaddr_in address;   /**< the libc network address data structure*/
+    int sock;                     /**< file descriptor for the network socket */    
+    int is_connected;             /**< Connection state...                    */
+    int is_server;                /**< Are we server or client?               */
+    int is_incoming;              /**< Is connection incoming?                */
+    int schedule_close;           /**< Schedule connection close...           */
     
     /* Client properties */
-    exnetcon_t *my_server;  /* Pointer to listener structure, used by server, 
-                             * in case if this was incomming connection */
-    int rcvtimeout;             /* Receive timeout                        */
-    char *d;                    /* Data buffer                            */
-    int  dl;                    /* Data left in databuffer                */
-    int len_pfx;                /* Length prefix                          */
-    ndrx_stopwatch_t rcv_timer;         /* Receive timer...  */
-    ndrx_stopwatch_t connect_time;      /* Time of connection in transit..... */
-    int periodic_zero;                  /* send zero length message in seconds*/
-    ndrx_stopwatch_t last_zero;         /* Last time send zero length message */
+    exnetcon_t *my_server;  /**< Pointer to listener structure, used by server, 
+                             * in case if this was incoming connection */
+    int rcvtimeout;             /**< Receive timeout                        */
+    char *d;                    /**< Data buffer                            */
+    int  dl;                    /**< Data left in databuffer                */
+    int len_pfx;                /**< Length prefix                          */
+    ndrx_stopwatch_t rcv_timer;     /**< Receive timer...  */
+    ndrx_stopwatch_t connect_time;  /**< Time of connection in transit..... */
+    int periodic_zero;              /**< send zero length message in seconds*/
+    int recv_activity_timeout;      /**< max time into which we must rcv something */
     
-    pthread_rwlock_t rwlock;            /* Needs lock for closing...          */
+    ndrx_stopwatch_t last_rcv;      /**< Stop watch from last receive from soc */
+    ndrx_stopwatch_t last_snd;      /**< Stop watch from last send to soc */
     
-    MUTEX_VAR(rcvlock);                /* Receive lock                        */
-    MUTEX_VAR(sendlock);               /* Send lock                           */
+    pthread_rwlock_t rwlock;        /**< Needs lock for closing...         */
+    
+    MUTEX_VAR(rcvlock);             /**< Receive lock                       */
+    MUTEX_VAR(sendlock);            /**< Send lock                          */
+    MUTEX_VAR(flagslock);           /**< Some flags locking (send/rcv timers) */
     
     /* Server settings */
-    int backlog;            /* Incomming connection queue len (backlog) */
-    int max_cons;           /* Max number of connections we will handle */
-    int incomming_cons;     /* Current number of incomming connections */
+    int backlog;                    /**< Incoming connection queue len (backlog) */
+    int max_cons;                   /**< Max number of connections we will handle*/
+    int incomming_cons;             /**< Current number of incoming connections  */
 
     /* Have some callbacks... */
-    int (*p_process_msg)(exnetcon_t *net, char *buf, int len); /* Callback when msg recived  */
-    int (*p_connected)(exnetcon_t *net); 	/* Callback on even when we are connected */
-    int (*p_disconnected)(exnetcon_t *net); 	/* Callback on even when we are disconnected */
+    int (*p_process_msg)(exnetcon_t *net, char *buf, int len); /**< Callback when msg recived  */
+    int (*p_connected)(exnetcon_t *net); 	/**< Callback on even when we are connected */
+    int (*p_disconnected)(exnetcon_t *net); 	/**< Callback on even when we are disconnected */
+    int (*p_snd_zero_len)(exnetcon_t *net); 	/**< Callback for sending zero len msg */
     
     /* Stuff for linked list... */
     exnetcon_t *next, *prev;
@@ -123,9 +136,13 @@ extern int exnet_periodic(void);
 /* </Callback functions will be invoked by ndrxd extensions> */
 
 extern int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
-		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net));
+		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
+                int (*p_snd_zero_len)(exnetcon_t *net));
+
 extern int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
-        int len_pfx, int is_server, int backlog, int max_cons, int periodic_zero);
+        int len_pfx, int is_server, int backlog, int max_cons, 
+        int periodic_zero, int recv_activity_timeout);
+
 extern int exnet_is_connected(exnetcon_t *net);
 extern int exnet_close_shut(exnetcon_t *net);
 extern int exnet_set_timeout(exnetcon_t *net, int timeout);
@@ -139,6 +156,9 @@ extern void exnet_rwlock_write(exnetcon_t *net);
 extern void exnet_rwlock_unlock(exnetcon_t *net);
 extern void exnet_rwlock_mainth_write(exnetcon_t *net);
 extern void exnet_rwlock_mainth_read(exnetcon_t *net);
+
+extern long exnet_stopwatch_get_delta_sec(exnetcon_t *net, ndrx_stopwatch_t *w);
+extern void exnet_stopwatch_reset(exnetcon_t *net, ndrx_stopwatch_t *w);
 
 
 /* Connection tracking: */

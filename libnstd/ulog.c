@@ -72,7 +72,7 @@ expublic int userlog (char *data, ...)
     char full_name[FILENAME_MAX] = {EXEOS};
     long ldate, ltime, lusec;
     int print_label = 0;
-    pid_t pid;
+    pid_t pid = getpid();
     va_list ap;
     /* No need for contexting... */
 
@@ -88,8 +88,6 @@ expublic int userlog (char *data, ...)
             out_f=out_f_dflt;
         }
 
-        /* get pid */
-        pid = getpid();
         first = 0;
     }
 

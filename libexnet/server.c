@@ -128,8 +128,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
     /* COMMON SETUP between new connection and existing... */
 #define CLT_COMMON_SETUP client->sock = client_fd;\
-    client->schedule_close = EXFALSE;\
-    client->is_connected = EXTRUE;\
+    EXNET_CONNECTED(client);\
     \
     /* We could get IP address & port of the call save in client struct \
      * & dump do log. \
@@ -212,7 +211,6 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
         client->is_server=EXFALSE;
         client->is_incoming = EXTRUE;
         client->my_server = srv;
-        client->is_connected = EXTRUE;
         
         memcpy(&client->address, &clt_address, sizeof(clt_address));
         
