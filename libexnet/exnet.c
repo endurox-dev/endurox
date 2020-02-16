@@ -5,6 +5,10 @@
  *   - main thread always have read lock
  *   - sender thread read lock only when doing send
  *   - when main thread wants some changes in net object, it waits for write lock
+ *   - when scheduling the connection close, there is not need to write lock
+ *     because that read thread sets only EXTRUE (close). The actual close and
+ *     new socket open will be handled by write lock, thus it shall prevent from
+ *     accidental setting back to EXTRUE.
  *   - the connection object once created will always live in DL list even with
  *   with disconnected status. Once new conn arrives, it will re-use the conn obj.
  *
@@ -109,6 +113,40 @@ exprivate ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n,
 
 exprivate int exnet_schedule_run(exnetcon_t *net);
 
+
+/**
+ * Get delta time when stopwatch was set
+ * @param net network connection, used for locking
+ * @param w stop watch to extract value from
+ * @return stop watch reading
+ */
+expublic long exnet_stopwatch_get_delta_sec(exnetcon_t *net, ndrx_stopwatch_t *w)
+{
+    long ret;
+    
+    MUTEX_LOCK_V(net->flagslock);
+    
+    ret = ndrx_stopwatch_get_delta_sec(w);
+    
+    MUTEX_UNLOCK_V(net->flagslock);
+    
+    return ret;
+}
+
+/**
+ * Reset the stopwatch in locked way
+ * @param net network which contains the flags lock
+ * @param w stopwatch to reset
+ */
+expublic void exnet_stopwatch_reset(exnetcon_t *net, ndrx_stopwatch_t *w)
+{
+    MUTEX_LOCK_V(net->flagslock);
+    
+    ndrx_stopwatch_reset(w);
+    
+    MUTEX_UNLOCK_V(net->flagslock);
+}   
+
 /**
  * Send single message, put length in front
  * We will send all stuff required, do that in loop!
@@ -200,6 +238,11 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             {
                 err = errno;
             }
+            else
+            {
+                /* something is sent..., thus reset sent stopwatch */
+                exnet_stopwatch_reset(net, &net->last_snd);
+            }
             
             if (EAGAIN==err || EWOULDBLOCK==err)
             {
@@ -280,9 +323,6 @@ exprivate  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flag
     {
         NDRX_LOG(log_error, "Disconnect received - schedule close!");
         
-        /*
-        close_socket(net);
-         */
         net->schedule_close = EXTRUE;
         ret=EXFAIL;
         goto out;
@@ -297,12 +337,17 @@ exprivate  ssize_t recv_wrap (exnetcon_t *net, void *__buf, size_t __n, int flag
         {
             NDRX_LOG(log_error, "recv failure: %s - schedule close", 
                     strerror(errno));
-            /* close_socket(net); */
+            
             net->schedule_close = EXTRUE;
         }
 
         ret=EXFAIL;
         goto out;
+    }
+    else
+    {
+        /* msg received */
+        exnet_stopwatch_reset(net, &net->last_rcv);
     }
     
 out:
@@ -396,14 +441,15 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
     int full_msg;
     int download_size;
     
+    /* Lock the stuff... */
+    MUTEX_LOCK_V(net->rcvlock);
+    
     if (0==net->dl)
     {
         /* This is new message */
         ndrx_stopwatch_reset(&net->rcv_timer);
     }
     
-    /* Lock the stuff... */
-    MUTEX_LOCK_V(net->rcvlock);
     while (EXSUCCEED==ret)
     {
         /* Either we will timeout, or return by cut_out_msg! */
@@ -416,7 +462,6 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                 NDRX_LOG(log_error, "ERROR ! received len %d < 0 - closing socket!", 
                         full_msg);
                 userlog("ERROR ! received len %d < 0! - schedule close socket!", full_msg);
-                /* close_socket(net); */
                 net->schedule_close = EXTRUE;
                 ret=EXFAIL;
                 break;
@@ -482,6 +527,11 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                     "than buffer left: %d > %d", download_size, (DBUF_SZ));
             userlog("ERROR ! Expected download size bigger "
                     "than buffer left: %d > %d", download_size, (DBUF_SZ));
+            
+            /* write lock? maybe not, as schedule_close will be set to EXFALSE
+             * only after connection rest. Thus some race condition on setting
+             * to EXTRUE, wont cause a problem.
+             */
             net->schedule_close = EXTRUE;
             ret=EXFAIL;
             break;
@@ -503,21 +553,23 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
             net->dl+=got_len;
         }
     }
-    MUTEX_UNLOCK_V(net->rcvlock);
     
-    /* We should fail anyway, because no message received, yet! */
-    ret=EXFAIL;
-out:
-
     /* If message is not complete & there is timeout condition, 
      * then close conn & fail
      */
+    /* well shouldn't this be write locked? */
     if (!net->schedule_close && 
             ndrx_stopwatch_get_delta_sec(&net->rcv_timer) >=net->rcvtimeout )
     {
         NDRX_LOG(log_error, "This is time-out => schedule close socket !");
         net->schedule_close = EXTRUE;
     }
+    
+    MUTEX_UNLOCK_V(net->rcvlock);
+    
+    /* We should fail anyway, because no message received, yet! */
+    ret=EXFAIL;
+out:
 
     return ret;
 }
@@ -529,8 +581,6 @@ out:
 expublic int exnet_b4_poll_cb(void)
 {
     int ret=EXSUCCEED;
-    char buf[DATA_BUF_MAX];
-    int len = DATA_BUF_MAX;
     exnetcon_t *head = extnet_get_con_head();
     exnetcon_t *net, *tmp;
     
@@ -540,19 +590,6 @@ expublic int exnet_b4_poll_cb(void)
         {
             continue;
         }
-        
-#if 0
-poll will give a singal, not need to receive before...
-        if (net->dl>0)
-        {
-            NDRX_LOG(6, "exnet_b4_poll_cb - dl: %d", net->dl);
-            if (EXSUCCEED == exnet_recv_sync(net, buf, &len, 0, 0))
-            {
-                /* We got the message - do the callback op */
-                ret = net->p_process_msg(net, buf, len);
-            }
-        }
-#endif
     }
 
 out:
@@ -597,7 +634,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         /* RW Lock! */
         
         exnet_rwlock_mainth_write(net);
-        net->is_connected = EXTRUE;
+        EXNET_CONNECTED(net);
         exnet_rwlock_mainth_read(net);
         
         NDRX_LOG(log_warn, "Connection is now open!");
@@ -618,11 +655,8 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     {
         NDRX_LOG(log_error, "Cannot establish connection to server in "
                 "time: %ld secs", ndrx_stopwatch_get_delta_sec(&net->connect_time));
-        /*close_socket(net);*/
         
-        exnet_rwlock_mainth_write(net);
         net->schedule_close = EXTRUE;
-        exnet_rwlock_mainth_read(net);
         
         goto out;
     }
@@ -641,11 +675,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
 
         if (EINPROGRESS!=errno)
         {
-            /* close_socket(net); */
-        
-            exnet_rwlock_mainth_write(net);
             net->schedule_close = EXTRUE;
-            exnet_rwlock_mainth_read(net);
             
             /* Do not send fail to NDRX */
             goto out;
@@ -653,20 +683,33 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     }
     else if (net->is_connected)
     {
-        /* We are connected, send zero length message, ok */
+        long rcvt;
+        /* We are connected, send zero length message, ok 
+         * Firstly: sending shall be done by worker thread
+         * Secondly: send only in case if there was no data sent over the socket
+         * - We need timer for incoming data, in case if data not received
+         *  for twice of "periodic_zero" period, the connection shall be reset.
+         */
         if (net->periodic_zero && 
-                ndrx_stopwatch_get_delta_sec(&net->last_zero) > net->periodic_zero)
+                exnet_stopwatch_get_delta_sec(net, &net->last_snd) > net->periodic_zero)
         {
             NDRX_LOG(log_info, "About to issue zero length "
                     "message on fd %d", net->sock);
-            if (EXSUCCEED!=exnet_send_sync(net, NULL, 0, 0, 0))
-            {
-                NDRX_LOG(log_debug, "Failed to send zero length message!");
-            }
-            else
-            {
-                ndrx_stopwatch_reset(&net->last_zero);
-            }
+
+            /* Submit the job for sending to sender thread,
+             * so that we do not lock-up the dispatching thread..
+             */
+            net->p_snd_zero_len(net);
+        }
+        
+        if (net->recv_activity_timeout && 
+                (rcvt=exnet_stopwatch_get_delta_sec(net, &net->last_rcv)) > net->recv_activity_timeout)
+        {
+            NDRX_LOG(log_error, "No data received in %ld sec (max with out data: %d) "
+                    "reset soc/fd=%d", rcvt, net->recv_activity_timeout, net->sock);
+            userlog("No data received in %ld sec (max with out data: %d) "
+                    "reset soc/fd=%d", rcvt, net->recv_activity_timeout, net->sock);
+            net->schedule_close = EXTRUE;
         }
     }
 
@@ -690,15 +733,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         if(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
         {
             /* We got the message - do the callback op */
-            ret = net->p_process_msg(net, buf, buflen);
-            buflen = DATA_BUF_MAX;
-            /* NDRX_LOG(6, "events & EPOLLIN => loop call"); */
-            /*on raspi seems we stuck here... thus if nothing to do, then terminate... 
-            if (0 == net->dl)
-            {
-                NDRX_LOG(6, "events & EPOLLIN => dl=0, terminate loop");
-                break;
-            }*/
+            net->p_process_msg(net, buf, buflen);
         }
     }
 
@@ -708,6 +743,7 @@ out:
 
 /**
  * Close socket
+ * This shall be called in write lock mode!
  */
 exprivate int close_socket(exnetcon_t *net)
 {
@@ -976,18 +1012,23 @@ out:
 
 /**
  * Set incoming message processing callback
- * @p_process_msg 	callback on message received.
- * @p_connected	called when we are connected
- * @p_disconnected	called when we are disconnected
- */
+ * @param p_process_msg 	callback on message received.
+ * @param p_connected	called when we are connected
+ * @param p_disconnected	called when we are disconnected
+ * @param p_send_zero_len callback func for zero length msg sending
+ *  (normally via thread pool)
+ * @return EXSUCCEED 
+*/
 expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
-		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net))
+		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
+                int (*p_snd_zero_len)(exnetcon_t *net))
 {
     int ret=EXSUCCEED;
 
     net->p_process_msg = p_process_msg;
     net->p_connected = p_connected;
     net->p_disconnected = p_disconnected;
+    net->p_snd_zero_len = p_snd_zero_len;
 
 out:
     return ret;
@@ -995,9 +1036,15 @@ out:
 
 /**
  * Configure the library
+ * @param periodic_zero send periodic zero msg in case of no send activity
+ *  is found on socket.
+ * @param recv_activity_timeout number of seconds in which some socket receive 
+ *  activity must exist (i.e. some bytes received).
+ * 
  */
 expublic int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
-        int len_pfx, int is_server, int backlog, int max_cons, int periodic_zero)
+        int len_pfx, int is_server, int backlog, int max_cons, int periodic_zero,
+        int recv_activity_timeout)
 {
     int ret=EXSUCCEED;
 
@@ -1013,6 +1060,7 @@ expublic int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short 
     net->backlog = backlog;
     net->max_cons = max_cons;
     net->periodic_zero = periodic_zero;
+    net->recv_activity_timeout =recv_activity_timeout;
     
     if (!is_server)
     {
@@ -1099,8 +1147,6 @@ expublic void exnet_rwlock_mainth_read(exnetcon_t *net)
     exnet_rwlock_unlock(net);
     exnet_rwlock_read(net); /* lock back to read */
 }
-
-
 
 /**
  * Check are we connected?
@@ -1194,6 +1240,7 @@ expublic int exnet_net_init(exnetcon_t *net)
     
     MUTEX_VAR_INIT(net->sendlock);
     MUTEX_VAR_INIT(net->rcvlock);
+    MUTEX_VAR_INIT(net->flagslock);
     
     /* acquire read lock */
     if (EXSUCCEED!=(err=pthread_rwlock_rdlock(&(net->rwlock))))

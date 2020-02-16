@@ -804,6 +804,7 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
         /* Remove bridge related flags. */
         p_pm->flags&=~SRV_KEY_FLAGS_BRIDGE;
         p_pm->flags&=~SRV_KEY_FLAGS_SENDREFERSH;
+        p_pm->flags&=~SRV_KEY_FLAGS_CONNECTED;
         p_pm->nodeid = 0;
     }
     
