@@ -375,7 +375,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_warn, "Threadpool size set to: from-net=%d to-net=%d (cfg=%d)",
             G_bridge_cfg.threadpoolsize, G_bridge_cfg.threadpoolsize, thpoolcfg);
     
-    NDRX_LOG(log_error, "Periodic zero: %d sec, reset on no received: %d sec",
+    NDRX_LOG(log_warn, "Periodic zero: %d sec, reset on no received: %d sec",
             periodic_zero, recv_activity_timeout);
     
     /* Check configuration */
