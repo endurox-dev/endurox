@@ -93,7 +93,7 @@
 
 #else
 
-#define POLL_FLAGS POLLIN
+#define POLL_FLAGS (POLLIN)
 
 #endif
 
@@ -247,16 +247,24 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             if (EAGAIN==err || EWOULDBLOCK==err)
             {
                 int spent = ndrx_stopwatch_get_delta_sec(&w);
-                NDRX_LOG(log_warn, "Socket full: %s - retry, "
-                        "time spent: %d, max: %d - reset connection", 
-                        strerror(err), spent, net->rcvtimeout);
-                usleep(100000); /* sleep 0.1 sec on retry... */
+		int rcvtim = net->rcvtimeout - spent;
+		struct pollfd ufd;
 
-                if (spent>=net->rcvtimeout)
-                {
+                spent = ndrx_stopwatch_get_delta_sec(&w);
+		memset(&ufd, 0, sizeof ufd);
+
+                NDRX_LOG(log_warn, "Socket full: %s - retry, "
+                        "time spent: %d, max: %d - POLLOUT (rcvtim=%d) sent: %d tot: %d",
+                        strerror(err), spent, net->rcvtimeout, rcvtim, sent, size_to_send);
+
+		ufd.fd = net->sock; /* poll the read fd after the write fd is closed */
+		ufd.events = POLLOUT;
+
+		if (rcvtim < 1 || poll(&ufd, 1, rcvtim * 1000) < 0 || ufd.revents & POLLERR)
+		{
                     NDRX_LOG(log_error, "ERROR! Failed to send, socket full: %s "
-                            "time spent: %d, max: %d", 
-                        strerror(err), spent, net->rcvtimeout);
+                            "time spent: %d, max: %d short: %hd rcvtim: %d", 
+                        strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim);
                     
                     userlog("ERROR! Failed to send, socket full: %s "
                             "time spent: %d, max: %d - reset connection", 
@@ -723,13 +731,11 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     if (1) /* Process all events... of Kqueue */
         
 #else
-        
     if (events & POLLIN)
-        
 #endif
     {
-        /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); 
-        while(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))*/
+        /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); */
+/*        while(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))*/
         if(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
         {
             /* We got the message - do the callback op */
