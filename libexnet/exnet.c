@@ -267,8 +267,8 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
                         strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim);
                     
                     userlog("ERROR! Failed to send, socket full: %s "
-                            "time spent: %d, max: %d - reset connection", 
-                        strerror(err), spent, net->rcvtimeout);
+                            "time spent: %d, max: %d short: %hd rcvtim: %d",
+                        strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim);
                     
                     net->schedule_close = EXTRUE;
                     ret=EXFAIL;
