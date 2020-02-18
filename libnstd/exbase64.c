@@ -81,14 +81,14 @@ exprivate char * build_decoding_table(char *encoding_table);
 
 /* private void base64_cleanup(void); */
 
-exprivate char * b64_encode(const unsigned char *data,
+exprivate char * ndrx_b64encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data, 
                     char *encoding_table);
 
 
-exprivate unsigned char *b64_decode(unsigned char *data,
+exprivate unsigned char *ndrx_b64decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
@@ -108,7 +108,7 @@ expublic char * ndrx_xa_base64_encode(unsigned char *data,
                     size_t *output_length,
                     char *encoded_data)
 {
-    return b64_encode(data, input_length, output_length, 
+    return ndrx_b64encode(data, input_length, output_length, 
             encoded_data, encoding_table_xa);
 }
 
@@ -130,7 +130,7 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
         decoding_table_xa =  build_decoding_table(encoding_table_xa);
     }
     
-    return b64_decode((unsigned char *)data, input_length, output_length, 
+    return ndrx_b64decode((unsigned char *)data, input_length, output_length, 
             decoded_data, decoding_table_xa);
 }
 
@@ -149,7 +149,7 @@ char * ndrx_base64_encode(unsigned char *data,
                     size_t *output_length,
                     char *encoded_data) 
 {
-    return b64_encode(data, input_length, output_length, 
+    return ndrx_b64encode(data, input_length, output_length, 
             encoded_data, encoding_table_normal);
 }
 
@@ -171,7 +171,7 @@ unsigned char *ndrx_base64_decode(const char *data,
         decoding_table_normal =  build_decoding_table(encoding_table_normal);
     }
     
-    return b64_decode((unsigned char *)data, input_length, output_length, 
+    return ndrx_b64decode((unsigned char *)data, input_length, output_length, 
             decoded_data, decoding_table_normal);
 }
 
@@ -183,7 +183,7 @@ unsigned char *ndrx_base64_decode(const char *data,
  * @param output_length
  * @return 
  */
-exprivate char * b64_encode(const unsigned char *data,
+exprivate char * ndrx_b64encode(const unsigned char *data,
                     size_t input_length,
                     size_t *output_length,
                     char *encoded_data, 
@@ -242,7 +242,7 @@ exprivate char * b64_encode(const unsigned char *data,
  * @param output_length
  * @return 
  */
-exprivate unsigned char *b64_decode(unsigned char *data,
+exprivate unsigned char *ndrx_b64decode(unsigned char *data,
                              size_t input_length,
                              size_t *output_length,
                              char *decoded_data,
