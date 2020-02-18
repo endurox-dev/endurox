@@ -68,6 +68,10 @@ and install open source packages to local machine:
 and pkg.oracle.com.key.pem pkg.oracle.com.certificate.pem from Oracle
 to server.
 
+Installation shows process for 12.4 version, but any later available should
+be installed. Also note that *.profile* and *$HOME/ndrx_home* later needs to 
+match the path, for example */opt/developerstudio12.6*.
+
 ---------------------------------------------------------------------
 # mkdir -m 0775 -p /var/pkg/ssl
 # cp -i download-directory/pkg.oracle.com.key.pem /var/pkg/ssl
@@ -128,8 +132,8 @@ default it is 256 which is too low for unit testing.
 ---------------------------------------------------------------------
 # useradd -m user1
 # passwd user1
-# projadd -K "process.max-file-descriptor=(basic,10000,deny)" proj.files 
-# usermod -K "project=proj.files" user1
+# projadd -K "process.max-file-descriptor=(basic,10000,deny)" enduroxproject
+# usermod -K "project=enduroxproject" user1
 # su - user1
 ---------------------------------------------------------------------
 
@@ -158,6 +162,7 @@ $ git config http.sslVerify "false"
 ---------------------------------------------------------------------
 
 === Enduro/X basic Environment configuration for HOME directory
+
 This code bellow creates 'ndrx_home' executable file which loads basic environment, 
 so that you can use sample configuration provided by Enduro/X in 'sampleconfig' directory. 
 This also assumes that you are going to install to '$HOME/endurox/dist' folder.
