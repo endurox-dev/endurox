@@ -5,7 +5,7 @@
  *	BerkeleyDB API, but much simplified.
  */
 /*
- * Copyright 2011-2017 Howard Chu, Symas Corp.
+ * Copyright 2011-2020 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,29 +48,35 @@
  * the full size. These APIs are defined in <wdm.h> and <ntifs.h>
  * but those headers are meant for driver-level development and
  * conflict with the regular user-level headers, so we explicitly
- * declare them here. Using these APIs also means we must link to
- * ntdll.dll, which is not linked by default in user code.
+ * declare them here. We get pointers to these functions from
+ * NTDLL.DLL at runtime, to avoid buildtime dependencies on any
+ * NTDLL import libraries.
  */
-NTSTATUS WINAPI
-NtCreateSection(OUT PHANDLE sh, IN ACCESS_MASK acc,
+typedef NTSTATUS (WINAPI NtCreateSectionFunc)
+  (OUT PHANDLE sh, IN ACCESS_MASK acc,
   IN void * oa OPTIONAL,
   IN PLARGE_INTEGER ms OPTIONAL,
   IN ULONG pp, IN ULONG aa, IN HANDLE fh OPTIONAL);
+
+static NtCreateSectionFunc *NtCreateSection;
 
 typedef enum _SECTION_INHERIT {
 	ViewShare = 1,
 	ViewUnmap = 2
 } SECTION_INHERIT;
 
-NTSTATUS WINAPI
-NtMapViewOfSection(IN PHANDLE sh, IN HANDLE ph,
+typedef NTSTATUS (WINAPI NtMapViewOfSectionFunc)
+  (IN PHANDLE sh, IN HANDLE ph,
   IN OUT PVOID *addr, IN ULONG_PTR zbits,
   IN SIZE_T cs, IN OUT PLARGE_INTEGER off OPTIONAL,
   IN OUT PSIZE_T vs, IN SECTION_INHERIT ih,
   IN ULONG at, IN ULONG pp);
 
-NTSTATUS WINAPI
-NtClose(HANDLE h);
+static NtMapViewOfSectionFunc *NtMapViewOfSection;
+
+typedef NTSTATUS (WINAPI NtCloseFunc)(HANDLE h);
+
+static NtCloseFunc *NtClose;
 
 /** getpid() returns int; MinGW defines pid_t but MinGW64 typedefs it
  *  as int64 which is wrong. MSVC doesn't define it at all, so just
@@ -141,15 +147,13 @@ typedef SSIZE_T	ssize_t;
 #include <unistd.h>
 #endif
 
-#if defined(__sun) || defined(ANDROID)
+#if defined(__sun) || defined(__ANDROID__)
 /* Most platforms have posix_memalign, older may only have memalign */
 #define HAVE_MEMALIGN	1
 #include <malloc.h>
 /* On Solaris, we need the POSIX sigwait function */
 #if defined (__sun)
-#ifndef _POSIX_PTHREAD_SEMANTICS
 # define _POSIX_PTHREAD_SEMANTICS	1
-#endif
 #endif
 #endif
 
@@ -163,7 +167,7 @@ typedef SSIZE_T	ssize_t;
 # define EDB_USE_SYSV_SEM	1
 # endif
 # define EDB_FDATASYNC		fsync
-#elif defined(ANDROID)
+#elif defined(__ANDROID__)
 # define EDB_FDATASYNC		fsync
 #endif
 
@@ -309,7 +313,7 @@ union semun {
  */
 #ifndef EDB_USE_ROBUST
 /* Android currently lacks Robust Mutex support. So does glibc < 2.4. */
-# if defined(EDB_USE_POSIX_MUTEX) && (defined(ANDROID) || \
+# if defined(EDB_USE_POSIX_MUTEX) && (defined(__ANDROID__) || \
 	(defined(__GLIBC__) && GLIBC_VER < 0x020004))
 #  define EDB_USE_ROBUST	0
 # else
@@ -3349,9 +3353,9 @@ edb_txn_end(EDB_txn *txn, unsigned mode)
 			txn->mt_parent->mt_flags &= ~EDB_TXN_HAS_CHILD;
 			env->me_pgstate = ((EDB_ntxn *)txn)->mnt_pgstate;
 			edb_eidl_free(txn->mt_free_pgs);
-			edb_eidl_free(txn->mt_spill_pgs);
 			free(txn->mt_u.dirty_list);
 		}
+		edb_eidl_free(txn->mt_spill_pgs);
 
 		edb_eidl_free(pghead);
 	}
@@ -3443,10 +3447,41 @@ edb_freelist_save(EDB_txn *txn)
 		 * we may be unable to return them to me_pghead.
 		 */
 		EDB_page *mp = txn->mt_loose_pgs;
+		EDB_ID2 *dl = txn->mt_u.dirty_list;
+		unsigned x;
 		if ((rc = edb_eidl_need(&txn->mt_free_pgs, txn->mt_loose_count)) != 0)
 			return rc;
-		for (; mp; mp = NEXT_LOOSE_PAGE(mp))
+		for (; mp; mp = NEXT_LOOSE_PAGE(mp)) {
 			edb_eidl_xappend(txn->mt_free_pgs, mp->mp_pgno);
+			/* must also remove from dirty list */
+			if (txn->mt_flags & EDB_TXN_WRITEMAP) {
+				for (x=1; x<=dl[0].mid; x++)
+					if (dl[x].mid == mp->mp_pgno)
+						break;
+				edb_tassert(txn, x <= dl[0].mid);
+			} else {
+				x = edb_mid2l_search(dl, mp->mp_pgno);
+				edb_tassert(txn, dl[x].mid == mp->mp_pgno);
+				edb_dpage_free(env, mp);
+			}
+			dl[x].mptr = NULL;
+		}
+		{
+			/* squash freed slots out of the dirty list */
+			unsigned y;
+			for (y=1; dl[y].mptr && y <= dl[0].mid; y++);
+			if (y <= dl[0].mid) {
+				for(x=y, y++;;) {
+					while (!dl[y].mptr && y <= dl[0].mid) y++;
+					if (y > dl[0].mid) break;
+					dl[x++] = dl[y++];
+				}
+				dl[0].mid = x-1;
+			} else {
+				/* all slots freed */
+				dl[0].mid = 0;
+			}
+		}
 		txn->mt_loose_pgs = NULL;
 		txn->mt_loose_count = 0;
 	}
@@ -3761,6 +3796,8 @@ done:
 	return EDB_SUCCESS;
 }
 
+static int ESECT edb_env_share_locks(EDB_env *env, int *excl);
+
 int
 edb_txn_commit(EDB_txn *txn)
 {
@@ -3983,6 +4020,15 @@ edb_txn_commit(EDB_txn *txn)
 	if ((rc = edb_env_write_meta(txn)))
 		goto fail;
 	end_mode = EDB_END_COMMITTED|EDB_END_UPDATE;
+	if (env->me_flags & EDB_PREVSNAPSHOT) {
+		if (!(env->me_flags & EDB_NOLOCK)) {
+			int excl;
+			rc = edb_env_share_locks(env, &excl);
+			if (rc)
+				goto fail;
+		}
+		env->me_flags ^= EDB_PREVSNAPSHOT;
+	}
 
 done:
 	edb_txn_end(txn, end_mode);
@@ -4264,7 +4310,8 @@ static EDB_meta *
 edb_env_pick_meta(const EDB_env *env)
 {
 	EDB_meta *const *metas = env->me_metas;
-	return metas[ metas[0]->mm_txnid < metas[1]->mm_txnid ];
+	return metas[ (metas[0]->mm_txnid < metas[1]->mm_txnid) ^
+		((env->me_flags & EDB_PREVSNAPSHOT) != 0) ];
 }
 
 int ESECT
@@ -4352,22 +4399,27 @@ edb_env_map(EDB_env *env, void *addr)
 		return edb_nt2win32(rc);
 	env->me_map = map;
 #else
+	int mmap_flags = MAP_SHARED;
+	int prot = PROT_READ;
+#ifdef MAP_NOSYNC	/* Used on FreeBSD */
+	if (flags & EDB_NOSYNC)
+		mmap_flags |= MAP_NOSYNC;
+#endif
 #ifdef EDB_VL32
 	(void) flags;
-	env->me_map = mmap(addr, NUM_METAS * env->me_psize, PROT_READ, MAP_SHARED,
+	env->me_map = mmap(addr, NUM_METAS * env->me_psize, prot, mmap_flags,
 		env->me_fd, 0);
 	if (env->me_map == MAP_FAILED) {
 		env->me_map = NULL;
 		return ErrCode();
 	}
 #else
-	int prot = PROT_READ;
 	if (flags & EDB_WRITEMAP) {
 		prot |= PROT_WRITE;
 		if (ftruncate(env->me_fd, env->me_mapsize) < 0)
 			return ErrCode();
 	}
-	env->me_map = mmap(addr, env->me_mapsize, prot, MAP_SHARED,
+	env->me_map = mmap(addr, env->me_mapsize, prot, mmap_flags,
 		env->me_fd, 0);
 	if (env->me_map == MAP_FAILED) {
 		env->me_map = NULL;
@@ -4699,6 +4751,21 @@ edb_env_open2(EDB_env *env, int prev)
 		env->me_pidquery = EDB_PROCESS_QUERY_LIMITED_INFORMATION;
 	else
 		env->me_pidquery = PROCESS_QUERY_INFORMATION;
+	/* Grab functions we need from NTDLL */
+	if (!NtCreateSection) {
+		HMODULE h = GetModuleHandleW(L"NTDLL.DLL");
+		if (!h)
+			return EDB_PROBLEM;
+		NtClose = (NtCloseFunc *)GetProcAddress(h, "NtClose");
+		if (!NtClose)
+			return EDB_PROBLEM;
+		NtMapViewOfSection = (NtMapViewOfSectionFunc *)GetProcAddress(h, "NtMapViewOfSection");
+		if (!NtMapViewOfSection)
+			return EDB_PROBLEM;
+		NtCreateSection = (NtCreateSectionFunc *)GetProcAddress(h, "NtCreateSection");
+		if (!NtCreateSection)
+			return EDB_PROBLEM;
+	}
 #endif /* _WIN32 */
 
 #ifdef BROKEN_FDATASYNC
@@ -4831,6 +4898,9 @@ edb_env_open2(EDB_env *env, int prev)
 #endif
 	env->me_maxpg = env->me_mapsize / env->me_psize;
 
+	if (env->me_txns)
+		env->me_txns->mti_txnid = meta.mm_txnid;
+
 #if EDB_DEBUG
 	{
 		EDB_meta *meta = edb_env_pick_meta(env);
@@ -4930,9 +5000,6 @@ static int ESECT
 edb_env_share_locks(EDB_env *env, int *excl)
 {
 	int rc = 0;
-	EDB_meta *meta = edb_env_pick_meta(env);
-
-	env->me_txns->mti_txnid = meta->mm_txnid;
 
 #ifdef _WIN32
 	{
@@ -5400,7 +5467,7 @@ fail:
 	 */
 #define	CHANGEABLE	(EDB_NOSYNC|EDB_NOMETASYNC|EDB_MAPASYNC|EDB_NOMEMINIT)
 #define	CHANGELESS	(EDB_FIXEDMAP|EDB_NOSUBDIR|EDB_RDONLY| \
-	EDB_WRITEMAP|EDB_NOTLS|EDB_NOLOCK|EDB_NORDAHEAD|EDB_PREVMETA)
+	EDB_WRITEMAP|EDB_NOTLS|EDB_NOLOCK|EDB_NORDAHEAD|EDB_PREVSNAPSHOT)
 
 #if VALID_FLAGS & PERSISTENT_FLAGS & (CHANGEABLE|CHANGELESS)
 # error "Persistent DB flags & env flags overlap, but both go in mm_flags"
@@ -5500,6 +5567,11 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 				__func__, rc);
 			goto leave;
 		}
+
+		if ((flags & EDB_PREVSNAPSHOT) && !excl) {
+			rc = EAGAIN;
+			goto leave;
+		}
 	}
 
 	rc = edb_fopen(env, &fname,
@@ -5517,7 +5589,7 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 		}
 	}
 
-	if ((rc = edb_env_open2(env, flags & EDB_PREVMETA)) == EDB_SUCCESS) {
+	if ((rc = edb_env_open2(env, flags & EDB_PREVSNAPSHOT)) == EDB_SUCCESS) {
 		if (!(flags & (EDB_RDONLY|EDB_WRITEMAP))) {
 			/* Synchronous fd for meta writes. Needed even with
 			 * EDB_NOSYNC/EDB_NOMETASYNC, in case these get reset.
@@ -5530,7 +5602,7 @@ edb_env_open(EDB_env *env, const char *path, unsigned int flags, edb_mode_t mode
 			}
 		}
 		DPRINTF(("opened dbenv %p", (void *) env));
-		if (excl > 0) {
+		if (excl > 0 && !(flags & EDB_PREVSNAPSHOT)) {
 			rc = edb_env_share_locks(env, &excl);
 			if (rc)
 				goto leave;
@@ -5636,7 +5708,7 @@ edb_env_close0(EDB_env *env, int excl)
 	if (env->me_fd != INVALID_HANDLE_VALUE)
 		(void) close(env->me_fd);
 	if (env->me_txns) {
-		EDB_PID_T pid = env->me_pid;
+		EDB_PID_T pid = getpid();
 		/* Clearing readers is done in this function because
 		 * me_txkey with its destructor must be disabled first.
 		 *
@@ -7487,7 +7559,7 @@ edb_cursor_put(EDB_cursor *mc, EDB_val *key, EDB_val *data,
 
 	dkey.mv_size = 0;
 
-	if (flags == EDB_CURRENT) {
+	if (flags & EDB_CURRENT) {
 		if (!(mc->mc_flags & C_INITIALIZED))
 			return EINVAL;
 		rc = EDB_SUCCESS;
@@ -7681,7 +7753,7 @@ more:
 						offset *= 4; /* space for 4 more */
 						break;
 					}
-					/* FALLTHRU: Big enough EDB_DUPFIXED sub-page */
+					/* FALLTHRU */ /* Big enough EDB_DUPFIXED sub-page */
 				case EDB_CURRENT:
 					fp->mp_flags |= P_DIRTY;
 					COPY_PGNO(fp->mp_pgno, mp->mp_pgno);
@@ -7731,8 +7803,9 @@ prep_subDB:
 				} else {
 					memcpy((char *)mp + mp->mp_upper + PAGEBASE, (char *)fp + fp->mp_upper + PAGEBASE,
 						olddata.mv_size - fp->mp_upper - PAGEBASE);
+					memcpy((char *)(&mp->mp_ptrs), (char *)(&fp->mp_ptrs), NUMKEYS(fp) * sizeof(mp->mp_ptrs[0]));
 					for (i=0; i<NUMKEYS(fp); i++)
-						mp->mp_ptrs[i] = fp->mp_ptrs[i] + offset;
+						mp->mp_ptrs[i] += offset;
 				}
 			}
 
@@ -7879,7 +7952,7 @@ put_sub:
 			xdata.mv_size = 0;
 			xdata.mv_data = "";
 			leaf = NODEPTR(mc->mc_pg[mc->mc_top], mc->mc_ki[mc->mc_top]);
-			if (flags & EDB_CURRENT) {
+			if (flags == EDB_CURRENT) {
 				xflags = EDB_CURRENT|EDB_NOSPILL;
 			} else {
 				edb_xcursor_init1(mc, leaf);
@@ -9655,7 +9728,7 @@ edb_page_split(EDB_cursor *mc, EDB_val *newkey, EDB_val *newdata, pgno_t newpgno
 			 * the split so the new page is emptier than the old page.
 			 * This yields better packing during sequential inserts.
 			 */
-			if (nkeys < 20 || nsize > pmax/16 || newindx >= nkeys) {
+			if (nkeys < 32 || nsize > pmax/16 || newindx >= nkeys) {
 				/* Find split point */
 				psize = 0;
 				if (newindx <= split_indx || newindx >= nkeys) {
