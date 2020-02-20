@@ -68,8 +68,18 @@
  */
 exprivate void atmi_reject(UBFH *p_ub, long in_tperrno, char *in_msg)
 {
-    Bchg(p_ub, EX_TPERRNO, 0, (char *)&in_tperrno, 0L);
-    Bchg(p_ub, EX_TPSTRERROR, 0, in_msg, 0L);
+    if (0!=in_tperrno)
+    {
+        Bchg(p_ub, EX_TPERRNO, 0, (char *)&in_tperrno, 0L);
+        Bchg(p_ub, EX_TPSTRERROR, 0, in_msg, 0L);
+    }
+    else
+    {
+        in_tperrno = TPESYSTEM;
+        Bchg(p_ub, EX_TPERRNO, 0, (char *)&in_tperrno, 0L);
+        Bchg(p_ub, EX_TPSTRERROR, 0, "System error occurred, see logs", 0L);
+
+    }
 }
 
 /**
