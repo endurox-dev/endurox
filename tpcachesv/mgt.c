@@ -590,6 +590,11 @@ void CACHEMG (TPSVCINFO *p_svc)
     
 out:
 
+    if (EXSUCCEED!=ret && !Bpres(p_ub, EX_TPERRNO, 0))
+    {
+        REJECT(p_ub, TPESYSTEM, "Operation failed, see logs");
+    }
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
         0L,
         (char *)p_ub,
@@ -597,4 +602,5 @@ out:
         0L);
 
 }
+
 /* vim: set ts=4 sw=4 et smartindent: */
