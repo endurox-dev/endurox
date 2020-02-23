@@ -526,6 +526,7 @@ xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
 
 # client timeout
 export NDRX_TOUT=10
+export NDRX_ULOG=$TESTDIR
 export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 function go_out {
