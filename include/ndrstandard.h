@@ -234,6 +234,11 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
         }\
 	}
 
+#ifdef EX_HAVE_STRCAT_S
+
+#define NDRX_STRCAT_S(DEST_, DEST_SIZE_, SRC_) strcat_s(DEST_, DEST_SIZE_, SRC_)
+
+#else
 /**
  * Cat string at the end. Dest size of the string is given
  * @param DEST_ dest buffer
@@ -244,6 +249,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
         int ndrx_VeIlgbK9tx_len = strlen(DEST_);\
         NDRX_STRNCPY_SAFE( (DEST_+ndrx_VeIlgbK9tx_len), SRC_, (DEST_SIZE_ - ndrx_VeIlgbK9tx_len));\
 }
+#endif
 
 /*
  * So we use these two macros where we need know that more times they will be

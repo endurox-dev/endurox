@@ -313,6 +313,7 @@ CHECK_C_SOURCE_COMPILES("int main() { int X = 0; __sync_bool_compare_and_swap(&X
 CHECK_C_SOURCE_COMPILES("#include <stdio.h> \n int main() {char buf[128]; size_t len; getline(buf, &len, stdin);}" HAVE_GETLINE)
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char dest[1]; char src[1]; strlcpy(dest, src, 1);}" HAVE_STRLCPY)
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {strnlen(\"ABC\", 1);}" HAVE_STRNLEN)
+CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char tmp[8]={0x0}; strcat_s(tmp, sizeof(tmp), \"abc\");}" EX_HAVE_STRCAT_S)
 CHECK_C_SOURCE_COMPILES("#include <string.h> \n int main() {char *tmp; asprintf(&tmp, \"HELLO\");}" EX_HAVE_ASPRINTF)
 
 # To check for an include file you do this: 
