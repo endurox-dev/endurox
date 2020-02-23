@@ -139,18 +139,22 @@ exprivate int cmp_carray (struct dtype_ext1 *t, char *val1, BFLDLEN len1,
  */
 expublic dtype_str_t G_dtype_str_map[] =
 {
-/* str type   typeid       default size align elm fb size       put data in fb   get data size   get data from fb */
-{"short",	BFLD_SHORT,  BFLD_SHORT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 0 */
-{"long",	BFLD_LONG,   BFLD_LONG_SIZE,   8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 1 */
-{"char",	BFLD_CHAR,   BFLD_CHAR_SIZE,   4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 2 */
-{"float",	BFLD_FLOAT,  BFLD_FLOAT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 3 */
-{"double",	BFLD_DOUBLE, BFLD_DOUBLE_SIZE, 8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 4 */
-{"string",	BFLD_STRING, BFLD_STRING_SIZE, 4, get_fb_string_size, put_data_string,  get_d_size_string, get_data_str}, /* 5 */
-{"carray",	BFLD_CARRAY, BFLD_CARRAY_SIZE, 4, get_fb_carray_size, put_data_carray, get_d_size_carray, get_data_carr}, /* 6 */
-{"int",		BFLD_INT,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 7 */
+/* str type,altnm typeid       default size align elm fb size       put data in fb   get data size   get data from fb */
+{"short", NULL,	BFLD_SHORT,  BFLD_SHORT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 0 */
+{"long", NULL,	BFLD_LONG,   BFLD_LONG_SIZE,   8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 1 */
+{"char", NULL,	BFLD_CHAR,   BFLD_CHAR_SIZE,   4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 2 */
+{"float", NULL,	BFLD_FLOAT,  BFLD_FLOAT_SIZE,  4, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 3 */
+{"double",NULL,	BFLD_DOUBLE, BFLD_DOUBLE_SIZE, 8, get_fb_dftl_size,  put_data_dflt,  get_d_size_dftl, get_data_dflt},     /* 4 */
+{"string",NULL,	BFLD_STRING, BFLD_STRING_SIZE, 4, get_fb_string_size, put_data_string,  get_d_size_string, get_data_str}, /* 5 */
+{"carray",NULL,	BFLD_CARRAY, BFLD_CARRAY_SIZE, 4, get_fb_carray_size, put_data_carray, get_d_size_carray, get_data_carr}, /* 6 */
+{"int",NULL,	BFLD_INT,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 7 */
+/* TODO - create support functions: */
+{"rfu0",NULL,   BFLD_RFU0,   BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 8 */
+{"ptr",	NULL,   BFLD_PTR,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 9 */
+{"UBF", "FML32",BFLD_UBF,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 10 */
+{"VIEW","VIEW32",BFLD_VIEW,  BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 11 */
 {""}
 };
-
 
 #define DAO EX_ALIGNMENT_BYTES
 #define DAC EX_ALIGNMENT_BYTES+4 /* for carray having some extra... */
@@ -168,7 +172,13 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 {BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,DAO, tbuf_double,tallocdlft, cmp_double},    /* 4 */
 {BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,DAO, tbuf_string,tallocdlft, cmp_string},    /* 5 */
 {BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,DAC, tbuf_carray,tallocdlft, cmp_carray},    /* 6 */
-{BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 1 */
+{BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 7 */
+/* TODO - create support functions: */
+{BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},      /* 8 */
+{BFLD_PTR,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 9 */
+{BFLD_UBF,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 10 */
+{BFLD_VIEW,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},      /* 11 */
+
 {-1}
 };
 /*********************** Basic data type operations ***************************/

@@ -566,6 +566,12 @@ Ensure(test071_buildtools)
 {
     int ret;
     ret=system_dbg("test071_buildtools/run.sh");
+}
+
+Ensure(test072_qos)
+{
+    int ret;
+    ret=system_dbg("test072_qos/run.sh");
     assert_equal(ret, EXSUCCEED);
 }
 
@@ -691,6 +697,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test069_wnormal);
     add_test(suite, test070_ubfhook);
     add_test(suite, test071_buildtools);
+    add_test(suite, test072_qos);
     
     return suite;
 }

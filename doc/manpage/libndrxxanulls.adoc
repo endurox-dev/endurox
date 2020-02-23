@@ -1,5 +1,5 @@
 LIBNDRXXANULLS(8)
-==============
+=================
 :doctype: manpage
 
 

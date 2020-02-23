@@ -1269,6 +1269,7 @@ out:
 
 /**
  * Admin call interface, not yet supported.
+ * TODO: Implement admin call at the current version
  * @param inbuf
  * @param outbuf
  * @param flags
@@ -1293,7 +1294,57 @@ out:
 }
 
 /**
- * STUB for tpchkauth()
+ * Call info
+ * @param msg buffer to measure
+ * @param obuf field container
+ * @param flags RFU
+ * @return EXFAIL
+ */
+expublic int tpgetcallinfo(const char *msg, UBFH **obuf, long flags)
+{
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }   
+    ndrx_TPset_error_msg(TPENOENT, "TODO: tpgetcallinfo: Not yet implemented.");
+    ret = EXFAIL;
+
+out:
+    return ret;
+}
+
+/**
+ * Attach headers infos to the call
+ * @param msg message to which attach meta data
+ * @param obuf meta data storage
+ * @param flags RFU
+ * @return EXFAIL
+ */
+expublic int tpsetcallinfo(const char *msg, UBFH *obuf, long flags)
+{
+    long ret=EXSUCCEED;
+    int entry_status=EXSUCCEED;
+    API_ENTRY;
+
+    if (EXSUCCEED!=entry_status)
+    {
+        ret=EXFAIL;
+        goto out;
+    }   
+    ndrx_TPset_error_msg(TPENOENT, "TODO: tpsetcallinfo: Not yet implemented.");
+    ret = EXFAIL;
+
+out:
+    return ret;
+}
+
+/**
+ * We do not work in auth mode.
  * @return FAIL
  */
 expublic int tpchkauth(void)
@@ -1307,8 +1358,8 @@ expublic int tpchkauth(void)
         ret=EXFAIL;
         goto out;
     }   
-    ndrx_TPset_error_msg(TPENOENT, "TODO: tpchkauth: Not yet implemented.");
-    ret = EXFAIL;
+    
+    ret = TPNOAUTH;
 
 out:
     return ret;

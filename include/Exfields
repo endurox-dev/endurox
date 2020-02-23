@@ -211,6 +211,7 @@ EX_IF_URCODE                530         long  -         User return code
 
 EX_IF_REQDATA               531         carray -        Request data / body
 EX_IF_RSPDATA               532         carray -        Response data / body
+EX_IF_METHOD                540         string -        HTTP method
 
 ################################################################################
 # TCP Inter-connecting
