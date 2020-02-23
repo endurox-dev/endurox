@@ -60,8 +60,12 @@ Ensure(test_nstd_ndrx_strcpy_s)
     assert_string_equal(tmp, "HELLO WORLD");
     
     NDRX_STRCAT_S(tmp, sizeof(tmp), " THIS");
-    /* last goes as EOS... */
-    assert_string_equal(tmp, "HELLO WORLD THI");
+
+    /* on C11 / solaris 11.4 this might be stripped to empty */
+    if (EXEOS!=tmp[0])
+    {
+        assert_string_equal(tmp, "HELLO WORLD THI");
+    }
 }
 
 /**
