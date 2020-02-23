@@ -226,6 +226,25 @@ needs to be installed for build and test purposes. On Solaris 10, PostgreSQL
 comes with the operating system, thus only access rights and users needs to be
 configured.
 
+Note if you plan to use ECPG mode, then ecpg pre-compiler needs to know where
+the ecpg libraries live. Thus LD_LIBRARY_PATH must be set during the build time.
+
+It can be done in following way:
+
+--------------------------------------------------------------------------------
+
+# su - user1
+$ cat << EOF >> .profile
+export LD_LIBRARY_PATH=/opt/csw/lib/amd64
+EOF
+
+--------------------------------------------------------------------------------
+
+after this login and log out from user1 to apply the .profile settings.
+
+Also to active the PostgreSQL inclusion to the build, add *-DENABLE_POSTGRES=ON*
+flag to cmake command line (later in build section).
+
 For Solaris 11 it needs to be installed:
 
 --------------------------------------------------------------------------------
