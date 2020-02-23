@@ -134,6 +134,10 @@ extern "C" {
 
 #define FLDLEN32 BFLDLEN
 #define FLDOCC32 BFLDOCC
+    
+#define FLD_FML32         BFLD_UBF    /**< embedded FML buffer          */
+#define FLD_VIEW32        BFLD_VIEW   /**< embedded VIEW buffer         */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

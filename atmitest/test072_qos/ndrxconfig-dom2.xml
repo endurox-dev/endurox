@@ -39,11 +39,11 @@
         <!--
         Ping server in every X sanity checks
         -->
-        <pingtime>9</pingtime>
+        <pingtime>1</pingtime>
         <!--
         Max number of sanity units in which server must respond.
         -->
-        <ping_max>40</ping_max>
+        <ping_max>5</ping_max>
         <!--
         Max time to wait until process should exit on shutdown
         -->

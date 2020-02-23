@@ -81,7 +81,7 @@
 
 #if defined(EX_USE_EPOLL)
 
-#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+#define POLL_FLAGS (EPOLLIN | EPOLLHUP)
 
 #elif defined(EX_USE_KQUEUE)
 
@@ -389,7 +389,8 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
     int ret=EXSUCCEED;
     int got_len;
     int full_msg;
-
+    int download_size;
+    
     if (0==net->dl)
     {
         /* This is new message */
@@ -440,7 +441,49 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
         }
 
         NDRX_LOG(log_debug, "Data needs to be received, dl=%d", net->dl);
-        if (EXFAIL==(got_len=recv_wrap(net, net->d+net->dl, DBUF_SZ, flags, appflags)))
+        
+        /* well, lets receive only the message bytes,
+         * and try to not receive any buffered stuff,
+         * that would cause lots of memmove for large downloaded messages...
+         */
+        
+        if (net->dl < net->len_pfx)
+        {
+            /* read some length + msg bytes... */
+            download_size = NDRX_NET_MIN_SIZE;
+        }
+        else
+        {
+            /* OK we have full_msg, thus calculate the download size... */
+            download_size = full_msg - net->dl;
+        }
+        
+        /* we shall not get the  download_size < 0, this means data is buffered
+         * but for some reason we are not processing them...
+         * also download_size shall bigger than DBUF_SZ
+         */
+        
+        if (download_size < 0)
+        {
+            NDRX_LOG(log_error, "ERROR ! Expected download size < 0 (%d)", download_size);
+            userlog("ERROR ! Expected download size < 0 (%d)", download_size);
+            net->schedule_close = EXTRUE;
+            ret=EXFAIL;
+            break;
+        }
+        else if (download_size > DBUF_SZ)
+        {
+            NDRX_LOG(log_error, "ERROR ! Expected download size bigger "
+                    "than buffer left: %d > %d", download_size, (DBUF_SZ));
+            userlog("ERROR ! Expected download size bigger "
+                    "than buffer left: %d > %d", download_size, (DBUF_SZ));
+            net->schedule_close = EXTRUE;
+            ret=EXFAIL;
+            break;
+        }
+        
+        if (EXFAIL==(got_len=recv_wrap(net, net->d+net->dl, download_size, 
+                flags, appflags)))
         {
             /* NDRX_LOG(log_error, "Failed to get data");*/
             ret=EXFAIL;

@@ -112,6 +112,8 @@ extern "C" {
 #define TIMER_ABSTIME -1
 #define CLOCK_REALTIME CALENDAR_CLOCK
 #define CLOCK_MONOTONIC SYSTEM_CLOCK
+    
+#define NDRX_OSX_COND_FIX_ATTEMPTS      100 /**< to avoid race condition */
 
 #endif
     
@@ -215,6 +217,19 @@ struct ndrx_proc_info
 
 #ifdef EX_OS_DARWIN
 typedef int clockid_t;
+
+
+/**
+ * See https://www.endurox.org/issues/512
+ * dirty access to busy field, due to macos pthread lib bug 
+ */
+typedef struct {
+    long sig;
+    uint32_t lock;
+    uint32_t unused;
+    char *busy;
+} ndrx_osx_pthread_cond_t;
+
 #endif
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

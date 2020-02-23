@@ -79,7 +79,12 @@ int main(int argc, char** argv)
     
     ndrx_stopwatch_reset(&w);
     
+    /* have shorter test on RPI/32bit sys */
+#if EX_SIZEOF_LONG==4
+    while (ndrx_stopwatch_get_delta_sec(&w) < 5)
+#else
     while (ndrx_stopwatch_get_delta_sec(&w) < 20)
+#endif
     {
         if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
         {

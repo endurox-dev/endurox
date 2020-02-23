@@ -402,7 +402,8 @@ expublic int ndrx_view_load_file(char *fname, int is_compiled)
             dtyp = G_dtype_str_map;
             while(EXEOS!=dtyp->fldname[0])
             {
-                if (0==strcmp(dtyp->fldname, tok))
+                if (0==strcmp(dtyp->fldname, tok) || 
+                        dtyp->altname && 0==strcmp(dtyp->altname, tok))
                 {
                     typ = dtyp->fld_type;
                     break;

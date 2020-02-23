@@ -56,7 +56,10 @@ extern "C" {
 #define FLD_STRING BFLD_STRING
 #define FLD_CARRAY BFLD_CARRAY
 #define FLD_MAX BFLD_MAX
-#define FLD_PTR         9
+    
+#define FLD_PTR         BFLD_PTR    /**< pointer to a buffer            */
+#define FLD_FML         BFLD_UBF    /**< embedded FML buffer          */
+#define FLD_VIEW        BFLD_VIEW   /**< embedded VIEW buffer         */
 
 #define BADFLDID BBADFLDID
 #define FIRSTFLDID BFIRSTFLDID

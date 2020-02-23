@@ -48,8 +48,10 @@
 /*------------------------------Externs---------------------------------------*/
 extern int G_recv_tout;				/* Was there timeout on receive? */
 /*------------------------------Macros----------------------------------------*/
-#define	EXNET_ADDR_LEN		32		/* Max len for address          */
-#define NET_LEN_PFX_LEN         4               /* Len bytes */
+#define	EXNET_ADDR_LEN		32		/**< Max len for address    */
+#define NET_LEN_PFX_LEN         4               /**< Len bytes              */
+
+#define NDRX_NET_MIN_SIZE       4096            /**< Min net read...        */
 
 /* Buffer size + netlen */
 #define DATA_BUF_MAX                    NDRX_MSGSIZEMAX+NET_LEN_PFX_LEN 

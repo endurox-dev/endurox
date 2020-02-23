@@ -63,7 +63,8 @@ extern "C" {
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct dtype_str {
-    char *fldname;
+    char *fldname;  /**< field type name                    */
+    char *altname;  /**< alternate field type name          */
     _UBF_SHORT fld_type;
     size_t size;
     int aligned_size;
