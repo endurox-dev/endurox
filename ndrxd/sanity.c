@@ -325,12 +325,21 @@ exprivate int unlink_dead_queue(char *qname)
     if (EXSUCCEED!=ndrx_mq_unlink(p))
     {
         int err = errno;
-        NDRX_LOG(log_error, "Failed to unlink dead queue [%s]: %s", 
-                p, strerror(err));
-        /* Feature #237 */
-        userlog("Failed to unlink dead queue [%s]: %s", 
-                p, strerror(err));
-        ret=EXFAIL;
+        
+        if (ENOENT!=err)
+        {
+            NDRX_LOG(log_error, "Failed to unlink dead queue [%s]: %s", 
+                    p, strerror(err));
+            /* Feature #237 */
+            userlog("Failed to unlink dead queue [%s]: %s", 
+                    p, strerror(err));
+            ret=EXFAIL;
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Queue already does not exists [%s]: %s", 
+                    p, strerror(err));
+        }
     }
     
     return ret;
@@ -460,7 +469,13 @@ exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
     static int first = EXTRUE;
     static char prev_process[NDRX_MAX_Q_SIZE+1];
     static pid_t prev_pid;
-    static int prev_was_unlink=EXFALSE;
+    
+    /*
+     * EXTRUE - running OK
+     * EXFALSE - exit OK
+     * EXFAIL - failed 
+     */
+    static int prev_stat=EXTRUE;
     
     if (first)
     {
@@ -476,10 +491,28 @@ exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
     {
         NDRX_LOG(6, "Multi-threaded process [%s]/%d already checked "
                         "at this sanity check", process, pid);
-        if (prev_was_unlink)
+        
+        if (EXTRUE > prev_stat && ndrx_q_exists(qname))
         {
-            NDRX_LOG(log_warn, "Previous same process (different "
-                    "thread was unlink) - unlink this q [%s] too ", qname);
+            /* if prev was died - already logged to ulog */
+            if (EXFAIL==prev_stat)
+            {
+                NDRX_LOG(log_warn, "Previous same process (different "
+                        "thread was unlink) - unlink this q [%s] too ", qname);
+            }
+            else
+            {
+                /* main thread was term OK, but have some left overs.. thus warn */
+                NDRX_LOG(log_error, "Client process [%s], pid %d (other "
+                        "thread unclean shutdown q: [%s])", 
+                        process, pid, qname);
+                userlog("Client process [%s], pid %d (other "
+                        "thread unclean shutdown q: [%s])", 
+                        process, pid, qname);
+                
+                /* mark as failed, next thread do not return ulogs.. */
+                prev_stat=EXFAIL;
+            }
             unlink_dead_queue(qname);
         }
         goto out;
@@ -492,17 +525,25 @@ exprivate int check_client(char *qname, int is_xadmin, unsigned sanity_cycle)
     
     if (!ndrx_sys_is_process_running(pid, process))
     {
-        userlog("Client process [%s], pid %d died", process, pid);
-        
-        unlink_dead_queue(qname);
-        prev_was_unlink = EXTRUE;
-        
+        /* check the queue... once again... */
+        if (ndrx_q_exists(qname))
+        {
+            NDRX_LOG(log_error, "Client process [%s], pid %d died", process, pid);
+            userlog("Client process [%s], pid %d died", process, pid);
+            unlink_dead_queue(qname);
+            prev_stat = EXFAIL;
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Client process [%s], pid %d terminated normally", 
+                    process, pid);
+            prev_stat = EXFALSE;
+        }
         /* Remove any conv queues... */
-        
     }
     else
     {
-        prev_was_unlink = EXFALSE;
+        prev_stat = EXTRUE;
     }
     
 out:

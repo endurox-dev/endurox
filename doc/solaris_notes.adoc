@@ -49,6 +49,7 @@ The following operations will be done from root user. This will download
 and install open source packages to local machine:
 
 ---------------------------------------------------------------------
+$ su - root
 # pkgadd -d http://get.opencsw.org/now
 # /opt/csw/bin/pkgutil -U
 # /opt/csw/bin/pkgutil -y -i git libxml2_dev flex bison cmake gmake
@@ -57,6 +58,7 @@ and install open source packages to local machine:
 === If installing GCC...
 
 ---------------------------------------------------------------------
+$ su - root
 # /opt/csw/bin/pkgutil -y -i gcc4core gcc4g++
 ---------------------------------------------------------------------
 
@@ -73,6 +75,7 @@ be installed. Also note that *.profile* and *$HOME/ndrx_home* later needs to
 match the path, for example */opt/developerstudio12.6*.
 
 ---------------------------------------------------------------------
+$ su - root
 # mkdir -m 0775 -p /var/pkg/ssl
 # cp -i download-directory/pkg.oracle.com.key.pem /var/pkg/ssl
 # cp -i download-directory/pkg.oracle.com.certificate.pem /var/pkg/ssl
@@ -88,6 +91,8 @@ match the path, for example */opt/developerstudio12.6*.
 
 # pkg install solarisstudio-124
 ---------------------------------------------------------------------
+
+If plan to run 
 
 === If installing Sun Studio (on Solaris 10)...
 
@@ -130,6 +135,7 @@ We add the user "user1" and also set the open file limit to 4096, by
 default it is 256 which is too low for unit testing.
 
 ---------------------------------------------------------------------
+$ su - root
 # useradd -m user1
 # passwd user1
 # projadd -K "process.max-file-descriptor=(basic,10000,deny)" enduroxproject
@@ -140,9 +146,11 @@ default it is 256 which is too low for unit testing.
 === Adding user on Solaris 10
 
 ---------------------------------------------------------------------
+$ su - root
 # useradd -d \$HOME -m -s /usr/bin/bash -c "User1 User1" user1
 # mkdir \$HOME
 # chown user1:staff \$HOME
+# su - user1
 ---------------------------------------------------------------------
 
 === Preparing the user environment
@@ -187,9 +195,6 @@ export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 export PATH=/usr/bin:/usr/sbin:/opt/csw/bin:/opt/solarisstudio12.4/bin:/opt/csw/bin:\$HOME/endurox/dist/bin
 export LD_LIBRARY_PATH=/usr/lib/sparcv9:\$HOME/endurox/dist/lib64:/opt/solarisstudio12.4/lib:/usr/lib64:/opt/csw/lib/64
 
-# Solaris message queues live in tmp:
-export NDRX_QPATH=/tmp
-
 ################################################################################
 # In case if building with Postgresql DB database testing support
 # or building endurox-java with Oracle DB tests (03_xapostgres), then
@@ -202,6 +207,11 @@ export NDRX_QPATH=/tmp
 # currently uses default port
 #export EX_PG_PORT=5432
 #export EX_PG_DB=xe
+
+#
+# If using PostgreSQL for Solaris 11 uncomment:
+#
+#export PATH=$PATH:/opt/csw/libexec/postgresql/93
 
 
 EOF
@@ -219,7 +229,38 @@ configured.
 For Solaris 11 it needs to be installed:
 
 --------------------------------------------------------------------------------
-TODO:
+
+$ su - root
+
+-- Install with:
+# /opt/csw/bin/pkgutil -y -i postgresql93
+
+-- Install dev
+# /opt/csw/bin/pkgutil -y -i postgresql_dev
+
+-- enable for auto start
+# svcadm enable cswpostgresql-93
+
+# su - postgres
+
+-- Create profile entry to have path to postgres binaries
+
+$ cat << EOF > ~/.profile
+
+#!/bin/bash
+
+export PATH=$PATH:/opt/csw/libexec/postgresql/93/
+
+EOF
+
+$ chmod +x ~/.profile
+
+-- Start postgres from Postgres user
+$ /opt/csw/bin/pg_ctl-93 -D /var/opt/csw/postgresql/93 -l logfile start
+server starting 
+
+
+
 --------------------------------------------------------------------------------
 
 For Solaris 10, just enable it:
@@ -256,6 +297,8 @@ to 1000.
 
 Solaris 10: */var/postgres/8.2/data/postgresql.conf*
 
+Solaris 11(.4): */var/opt/csw/postgresql/93/postgresql.conf*
+
 --------------------------------------------------------------------------------
 
 max_prepared_transactions = 1000                # zero disables the feature
@@ -266,6 +309,8 @@ For access permissions and network configuration, update
 *pg_hba.conf*, so that it contains following:
 
 Solaris 10: */var/postgres/8.2/data/pg_hba.conf*
+
+Solaris 11: */var/opt/csw/postgresql/93/pg_hba.conf*
 
 --------------------------------------------------------------------------------
 
@@ -279,11 +324,17 @@ Restart PostgreSQL, Solaris 10:
 
 --------------------------------------------------------------------------------
 
-svcadm restart svc:/application/database/postgresql:version_82
+# svcadm restart svc:/application/database/postgresql:version_82
 
 --------------------------------------------------------------------------------
 
+Restart PostgreSQL, Solaris 11:
 
+--------------------------------------------------------------------------------
+
+# svcadm restart cswpostgresql-93
+
+--------------------------------------------------------------------------------
 
 == Building the code with GCC
 
@@ -295,7 +346,7 @@ thus following cmake will pick up gcc by default:
 ---------------------------------------------------------------------
 $ cd \$HOME/endurox
 $ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc\
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/csw/lib/amd64 .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -379,7 +430,6 @@ $ make install
 
 This will produce binaries in '\$HOME/endurox/dist' folder.
 
-
 == Unit Testing
 
 Enduro/X basically consists of two parts:
@@ -431,7 +481,24 @@ Completed "atmi_test_all": 28 passes, 0 failures, 0 exceptions.
 Completed "main": 28 passes, 0 failures, 0 exceptions.
 ---------------------------------------------------------------------
 
+== Troubleshooting
+
+This section lists some notes about fixing most common problems with Solaris build.
+
+=== Problems with library modes
+
+If having issues with linking particular library version, for example building
+in 64bit mode, but for some reason CMake is linking with 32bit libs (for example
+with PostgreSQL), then following flag may be applied *CMAKE_LIBRARY_PATH* to
+point to correct path for libraries. For example:
+
+---------------------------------------------------------------------
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEDOC=ON\
+    -DENABLE_POSTGRES=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_LIBRARY_PATH=/opt/csw/lib/amd64 .
+---------------------------------------------------------------------
+
 == Conclusions
+
 At finish you have a configured system which is read to process the transactions
 by Enduro/X runtime. It is possible to copy the binary version ('dist') folder
 to other same architecture machines and run it there with out need of building.
