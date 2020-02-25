@@ -63,6 +63,7 @@
 exprivate void die_thread_fun(void *ptr)
 {
     tpinit(NULL);
+    sleep(9999);
 }
 
 /**
