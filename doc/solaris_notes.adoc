@@ -159,7 +159,9 @@ $ su - root
 
 $ bash
 $ cat << EOF >> .profile
-export PATH=$PATH:/opt/csw/bin:/opt/solarisstudio12.4/bin
+export PATH=\$PATH:/opt/csw/bin:/opt/solarisstudio12.4/bin
+# Needed if building with postgres...
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/csw/lib/64
 EOF
 $ chmod +x .profile
 $ source .profile
