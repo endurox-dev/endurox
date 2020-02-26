@@ -350,7 +350,7 @@ exprivate int enq_q_test(char *q1, char *q2, char *q3)
     
     UBFH *buf = (UBFH *)tpalloc("UBF", "", 8192);
     
-    if (EXSUCCEED!=tpbegin(90, 0))
+    if (EXSUCCEED!=tpbegin(180, 0))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
         EXFAIL_OUT(ret);
@@ -426,7 +426,7 @@ exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
     int i, j;
     long len;
     UBFH *buf = NULL;
-    if (EXSUCCEED!=tpbegin(90, 0))
+    if (EXSUCCEED!=tpbegin(180, 0))
     {
         NDRX_LOG(log_error, "TESTERROR! Failed to start transaction!");
         EXFAIL_OUT(ret);
@@ -451,8 +451,8 @@ exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
         buf = (UBFH *)tpalloc("UBF", "", 100);
         if (EXSUCCEED!=tpdequeue("MYSPACE", q1, &qc, (char **)&buf, &len, 0))
         {
-            NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s", 
-                    tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
+            NDRX_LOG(log_error, "TESTERROR: tpdequeue() %d failed %s diag: %d:%s", 
+                    i, tpstrerror(tperrno), qc.diagnostic, qc.diagmsg);
             EXFAIL_OUT(ret);
         }
         

@@ -73,8 +73,14 @@ add_library (ndrxxaqdiskd SHARED
 ############################# Executables ######################################
 add_executable (tmqueue tmqueue.c qspace.c tmqutil.c forward.c tmqapi.c
                         ../libatmisrv/rawmain_integra.c)
+
+SET (TMQUEUE_ADD_DEP "")
+if(${CMAKE_OS_NAME} STREQUAL "AIX")
+    SET (TMQUEUE_ADD_DEP "bsd")
+endif()
+
 target_link_libraries (tmqueue ndrxxaqdisk atmisrvinteg atmi ubf
-                        exthpool nstd exuuid ${RT_LIB} pthread)
+                        exthpool nstd exuuid ${TMQUEUE_ADD_DEP} ${RT_LIB} pthread)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries (ndrxxaqdisk nstd atmi ubf)
