@@ -138,7 +138,7 @@ xadmin down -y
 xadmin start -y || go_out 1
 
 echo "Let clients to boot & links to establish..."
-sleep 80
+sleep 30
 
 RET=0
 
