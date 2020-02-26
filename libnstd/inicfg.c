@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <utlist.h>
 #include <nstdutil.h>
-#include <ini.h>
+#include <ndrx_ini.h>
 #include <inicfg.h>
 #include <nerror.h>
 #include <sys_unix.h>
@@ -434,7 +434,7 @@ exprivate int _ndrx_inicfg_load_single_file(ndrx_inicfg_t *cfg,
 #endif
 
     /* start to parse the file by inih */
-    if (EXSUCCEED!=(ret=ini_parse(fullname, handler, (void *)cf, 
+    if (EXSUCCEED!=(ret=ndrx_ini_parse(fullname, handler, (void *)cf, 
             (void *)section_start_with, (void *)cfg)))
     {
         _Nset_error_fmt(NEINVALINI, "%s: Invalid ini file: [%s] error on line: %d", 

@@ -48,6 +48,7 @@ Source project or Commercial license Acquired from Mavimax Ltd
 
 EnduroX have bindings for:
 - Golang (client & server)
+- Java (client & server)
 - PHP (client)
 - Perl (client & server)
 - Python (client & server)
@@ -98,6 +99,9 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
 * Starting with version 5.2 Enduro/X provides configuration data encryption feature, 
         so that software which is built on top of Enduro/X may comply with 
         Payment Card Industry Data Security Standard (PCI/DSS).
+* Application monitoring with TM_MIB interface. For example NetXMS.
+* XA Driver for PostgreSQL.
+      
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
@@ -175,6 +179,14 @@ It is possible to patch the Enduro/X system (update stateless XATMI servers)
 without service interruption. This is achieved by following scheme:
 
 ![Alt text](doc/rt-patching.png?raw=true "Enduro/X real time patching")
+
+# Monitoring
+
+Enduro/X provides TM_MIB API for information reading. Out of the box NetXMS 
+monitoring suite uses this API to monitor application. Thus full featured
+monitoring is possible. Presentation here (video):
+
+[![Enduro/X monitoring with NetXMS](https://img.youtube.com/vi/ubJk27bjKGE/0.jpg)](https://www.youtube.com/watch?v=ubJk27bjKGE)
 
 # Performance
 
@@ -445,6 +457,16 @@ processing listings across all supported OSes.
 - Version 7.0.12 released on 13/11/2019 (stabel) Fixes on Bug #466
 
 - Version 7.0.14 released on 13/11/2019 (stabel) Fixes on Feature #470, Support #471, Support #473, Support #475
+
+- Version 7.0.16 released on 16/11/2019 (stabel) Fixes on Support #443, Support #493
+
+- Version 7.0.18 released on 17/01/2020 (stabel) Fixes on Bug #412, Support #505
+
+- Version 7.0.20 released on 22/01/2020 (stabel) Fixes on Support #502
+
+- Version 7.0.22 released on 31/01/2020 (stabel) Feature #509
+
+- Version 7.0.24 released on 01/01/2020 (stabel) Support #506
 
 # Build configurations
 

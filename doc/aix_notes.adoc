@@ -326,7 +326,8 @@ $ export CC=gcc
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON \
+    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make
 $ make install
 ---------------------------------------------------------------------
@@ -408,6 +409,9 @@ with system provided file. That could be done in following way:
 # ln -s /usr/ccs/lib/libxml2.a .
 ---------------------------------------------------------------------
 
+Other way around this is to use *-DCMAKE_LIBRARY_PATH=/opt/freeware/lib* parameter
+for CMake, so that build links against freeware libraries.
+
 
 === Rebuilding with other compiler
 
@@ -425,7 +429,8 @@ compilation terminated.
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON\
+    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 -- The C compiler identification is GNU 4.8.3
 -- The CXX compiler identification is GNU 4.8.3
 -- Check for working C compiler: /usr/bin/gcc

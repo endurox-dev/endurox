@@ -88,7 +88,5 @@ extern int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int p
 
 extern  ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned int *priop,
         const struct timespec * __abs_timeout);
-
-extern void emq_set_lock_timeout(int secs);
         
 #endif

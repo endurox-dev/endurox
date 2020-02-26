@@ -7,8 +7,8 @@ https://github.com/benhoyt/inih
 
 */
 
-#ifndef __INI_H__
-#define __INI_H__
+#ifndef __NDRX_INI_H__
+#define __NDRX_INI_H__
 
 /* Make this header file easier to include in C++ code */
 #ifdef __cplusplus
@@ -37,17 +37,17 @@ typedef char* (*ini_reader)(char* str, int num, void* stream);
    stop on first error), -1 on file open error, or -2 on memory allocation
    error (only when INI_USE_STACK is zero).
 */
-int ini_parse(const char* filename, ini_handler handler, void* user,
+int ndrx_ini_parse(const char* filename, ini_handler handler, void* user,
         void *user2, void *user3);
 
 /* Same as ini_parse(), but takes a FILE* instead of filename. This doesn't
    close the file when it's finished -- the caller must do that. */
-int ini_parse_file(FILE* file, ini_handler handler, void* user,
+int ndrx_ini_parse_file(FILE* file, ini_handler handler, void* user,
         void *user2, void *user3);
 
 /* Same as ini_parse(), but takes an ini_reader function pointer instead of
    filename. Used for implementing custom or string-based I/O. */
-int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
+int ndrx_ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
                      void* user, void *user2, void *user3);
 
 /* Nonzero to allow multi-line value parsing, in the style of Python's
@@ -95,4 +95,4 @@ int ini_parse_stream(ini_reader reader, void* stream, ini_handler handler,
 }
 #endif
 
-#endif /* __INI_H__ */
+#endif /* __NDRX_INI_H__ */

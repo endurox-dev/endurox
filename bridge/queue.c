@@ -71,7 +71,10 @@
 /*---------------------------Globals------------------------------------*/
 exprivate in_msg_t *M_in_q = NULL;  /**< Linked list with incoming message in Q */
 MUTEX_LOCKDECL(M_in_q_lock);        /**< Queue lock the queue cache             */
-
+exprivate int M_qrun_issued = EXFALSE;/**< Indicate the that there is q runner job in
+                                     * progress, because periodic timer then could
+                                     * submit job several times
+                                     */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -79,18 +82,35 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off);
 exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q, 
         int pack_type, char *destqstr);
 
+
 /**
- * Perform periodic run of the queue
+ * Run queue from thread.
+ * This is started from main thread periodic runner.
+ * The special flag is used to indicate if run job was in queue
+ * @param ptr not used
+ * @param p_finish_off not used
+ * @return EXSUCCEED;
  */
-expublic void br_run_q(void)
+exprivate int br_run_q_th(void *ptr, int *p_finish_off)
 {
-    int ret;
+    int ret = EXSUCCEED;
     in_msg_t *el, *elt;
     
+    /**
+     * Possible dead lock if service puts back in queue/ 
+     * do the unlock in the middle to allow adding msg?
+     * 
+     * If delete is allowed only from this thread, then we should sync only
+     * on adding..
+     * 
+     */
     MUTEX_LOCK_V(M_in_q_lock);
     
+    /* loop runs in locked mode.. */
     DL_FOREACH_SAFE(M_in_q, el, elt)
     {
+        MUTEX_UNLOCK_V(M_in_q_lock);
+        
         el->tries++;
         NDRX_LOG(log_warn, "Processing late delivery of %p/%d [%s] try %d/%d", 
                 el->buffer, el->len, el->destqstr, el->tries, G_bridge_cfg.qretries);
@@ -105,10 +125,13 @@ expublic void br_run_q(void)
             }
             else
             {
+                /* locking here needed.. */
+                MUTEX_LOCK_V(M_in_q_lock);
                 /* remove from Q - ok */
                 DL_DELETE(M_in_q, el);
                 NDRX_FREE(el->buffer);
                 NDRX_FREE(el);
+                MUTEX_UNLOCK_V(M_in_q_lock);
             }
         }
         else
@@ -116,9 +139,44 @@ expublic void br_run_q(void)
             br_process_error((char *)el->buffer, 
                     el->len, EXFAIL, el, PACK_TYPE_TOSVC, el->destqstr);
         }
+        
+        MUTEX_LOCK_V(M_in_q_lock);
     }
     
     MUTEX_UNLOCK_V(M_in_q_lock);
+    
+    M_qrun_issued = EXFALSE;
+    
+    return ret;
+}
+
+/**
+ * Perform periodic run of the queue
+ */
+expublic void br_run_q(void)
+{
+    
+    /* check if there is something is in q & not locked, then submit to
+     * incoming worker thread to finish this off...
+     */
+    
+    /* try lock, not cannot lock, then already in progress... 
+     * Also the locking would mean that other worker thread would lock up
+     * if trying to add to runner Q.
+     * So better would be to do lock for each message.
+     */
+    if (EXSUCCEED==MUTEX_TRYLOCK_V(M_in_q_lock))
+    {
+        if (!M_qrun_issued && NULL!=M_in_q)
+        {
+            /* submit the job... */
+            M_qrun_issued = EXTRUE;
+            
+            thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
+        }
+        
+        MUTEX_UNLOCK_V(M_in_q_lock);
+    }
 }
 
 /**
@@ -257,10 +315,12 @@ exprivate int br_process_error(char *buf, int len, int err,
         
         if (EAGAIN!=err && NULL!=from_q)
         {
+            MUTEX_LOCK_V(M_in_q_lock);
             /* Generate error reply */
             DL_DELETE(M_in_q, from_q);
             NDRX_FREE(from_q->buffer);
             NDRX_FREE(from_q);
+            MUTEX_LOCK_V(M_in_q_lock);
         }
     }
     
@@ -311,7 +371,7 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len)
     NDRX_LOG(log_debug, "Calling service: %s", svc_q);
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
-        NDRX_LOG(log_error, "Failed to send message to ndrxd!");
+        NDRX_LOG(log_error, "Failed to send message to local ATMI service!");
         br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, svc_q);
     }
     /* TODO: Check the result, if called failed, then reply back with error? */
@@ -444,7 +504,7 @@ expublic int br_got_message_from_q(char *buf, int len, char msg_type)
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool, 
+    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool_tonet, 
             (void*)br_got_message_from_q_th, 
             (void *)thread_data))
     {

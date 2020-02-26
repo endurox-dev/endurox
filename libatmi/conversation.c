@@ -147,7 +147,7 @@ expublic int have_open_connection(void)
         }
     }
 
-    NDRX_LOG(log_debug, "We % open connections!",
+    NDRX_LOG(log_debug, "We %s open connections!",
                             ret?"have":"do not have");
 
     return ret;
@@ -823,7 +823,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
         
     }
 
-    /* So now, we shall receive back handshake, by receving private queue 
+    /* So now, we shall receive back handshake, by receiving private queue 
      * id on which we can reach the server!
      */
     if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
@@ -1028,7 +1028,7 @@ expublic int ndrx_tprecv (int cd, char **data,
     /* Check the message in hash?! */
     if (NULL!=(rply_buf = rcv_hash_ck(conv, conv->msgseqin)))
     {
-        NDRX_LOG(log_debug, "Message with sequence already in memory: %hu - injecting",
+        NDRX_LOG(log_info, "Message with sequence already in memory: %hu - injecting",
                 conv->msgseqin);
         rply = (tp_command_call_t *)rply_buf;
         goto inject_message;
@@ -1072,7 +1072,7 @@ expublic int ndrx_tprecv (int cd, char **data,
         else if (EXFAIL==rply_len)
         {
             /* we have failed */
-            NDRX_LOG(log_debug, "%s failed to receive answer", __func__);
+            NDRX_LOG(log_error, "%s failed to receive answer", __func__);
             ret=EXFAIL;
             goto out;
         }
@@ -1081,7 +1081,6 @@ expublic int ndrx_tprecv (int cd, char **data,
             /* if answer is not expected, then we receive again! */
             if (conv->cd!=rply->cd)
             {
-
                 NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
                         "expected cd: %d, cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
                         conv->cd, rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
@@ -1197,7 +1196,7 @@ inject_message:
                     /* Basically we close the connection (normally)
                      * This means we also needs to close & unlink queues
                      */
-                    NDRX_LOG(log_debug, "Server did tpreturn - closing conversation!");
+                    NDRX_LOG(log_info, "Server did tpreturn - closing conversation!");
 
                     /* Save the rcode returned. */
                     G_atmi_tls->M_svc_return_code = rply->rcode;
@@ -1249,8 +1248,8 @@ out:
         if (TPEV_DISCONIMM == *revent ||  TPEV_SVCERR == *revent ||  
                 TPEV_SVCFAIL == *revent)
         {
-             NDRX_LOG(log_warn, "tprcv error - mark "
-                     "transaction as abort only!");    
+             NDRX_LOG(log_warn, "tprcv error (revent=%ld) - mark "
+                     "transaction as abort only!", *revent);
             /* later should be handled by transaction initiator! */
             G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
         }
@@ -1273,7 +1272,7 @@ out:
                         rply->tmknownrms))
             {
                 G_atmi_tls->G_atmi_xa_curtx.txinfo->tmtxflags |= TMTXFLAGS_IS_ABORT_ONLY;
-                EXFAIL_OUT(ret);
+                ret=EXFAIL;
             }
         }   
     }

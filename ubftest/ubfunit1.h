@@ -59,8 +59,9 @@ extern FILE *M_test_temp_file;
 
 /* Common functions */
 extern void load_field_table(void);
-void set_up_dummy_data(UBFH *p_ub);
-void do_dummy_data_test(UBFH *p_ub);
+extern void set_up_dummy_data(UBFH *p_ub);
+extern void do_dummy_data_test(UBFH *p_ub);
+extern void randomize_test_data(char *ptr, int size);
 
 extern void open_test_temp(char *mode);
 extern void open_test_temp_for_read(char *mode);
@@ -103,6 +104,7 @@ extern TestSuite *ubf_nstd_mtest3(void);
 extern TestSuite *ubf_nstd_mtest4(void);
 extern TestSuite *ubf_nstd_mtest5(void);
 extern TestSuite *ubf_nstd_mtest6_dupcursor(void);
+extern TestSuite *ubf_nstd_mtest6(void);
 extern TestSuite *test_nstd_macros(void);
 
 extern TestSuite * ubf_nstd_debug(void);

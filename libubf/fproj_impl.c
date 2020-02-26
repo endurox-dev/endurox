@@ -691,7 +691,8 @@ expublic int ndrx_Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
         }
 
         /* If last field was Bad field, then still we need to delete the stuff out! */
-        if (NULL!=cpy_bfldid_start && *cpy_bfldid_start != *p_bfldid_src)
+        /* fix for un-init memory usage... */
+        if (NULL!=cpy_bfldid_start && (UBF_EOF(hdr_src, p_bfldid_src) || *cpy_bfldid_start != *p_bfldid_src))
         {
 
             ret=copy_buffer_data(p_ub_dst,

@@ -9,7 +9,7 @@ edb_load - LMDB/EXDB environment import tool
 
 SYNOPSIS
 --------
-*edb_load* [*-V*] [*-f* 'file'] [*-n*] [*-s* 'subdb'] [*-N*] [*-T*]  'envpath'
+*edb_load* [*-a*] [*-V*] [*-f* 'file'] [*-n*] [*-s* 'subdb'] [*-N*] [*-T*]  'envpath'
 
 
 DESCRIPTION
@@ -23,6 +23,14 @@ utility  or  as specified by the *-T* option below.
 
 OPTIONS
 -------
+
+[*-a*]::     
+Append  all  records  in  the order they appear in the input. The input is 
+assumed to already be in correctly sorted order and no sorting or checking for 
+redundant values will be performed.  This option must be used to
+reload data that was produced by running edb_dump on a 
+database that uses custom compare functions.
+
 [*-V*]::
 Write the library version number to the standard output, and exit.
 

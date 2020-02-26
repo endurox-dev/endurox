@@ -52,7 +52,6 @@
 #include "atmi_cache.h"
 
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_Q_TRYLOCK_TIME 10  /* time in which we must get the q lock */
 /*---------------------------Enums--------------------------------------*/

@@ -35,13 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>    /* for getopt */
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -64,8 +61,6 @@
 #include "cconfig.h"
 #include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

@@ -2264,7 +2264,7 @@ wrapper for server boot.
       <max>1</max>
       <sysopt>-e /tmp/MYSERVER -r</sysopt>
       <appopt>-c10</appopt>
-      <cmdline>valgrind --tool=massif --pages-as-heap=yes ${NDRX_SVPROCNAME} ${NDRX_SVCLOPT}</cmdline>
+      <cmdline>valgrind --leak-check=yes --log-file=/tmp/valg.log ${NDRX_SVPROCNAME} ${NDRX_SVCLOPT}</cmdline>
  </server>
 --------------------------------------------------------------------------------
 

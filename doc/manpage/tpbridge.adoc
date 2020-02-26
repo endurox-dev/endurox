@@ -5,7 +5,7 @@ TPBRIDGE(8)
 
 NAME
 ----
-tpbridge - EnduroX Bridge Server.
+tpbridge - Enduro/X Bridge Server.
 
 
 SYNOPSIS
@@ -35,7 +35,7 @@ Meaning that the logical message can be split over the multiple packets or
 within one packed can be carried multiple logical messages - 'tpbridge' will
 solve that.
 
-When connection is estableshed, clock diff and service lists are exchanged,
+When connection is established, clock diff and service lists are exchanged,
 then 'bridge' is used to serve ATMI actions over the machines. I.e. 'tpcall()',
 'tpforward()', conversations, etc.
 
@@ -43,16 +43,16 @@ When connection is stopped. This is reported to 'ndrxd' daemon which
 removes services from shared memory accordingly.
 
 tpbridge supports two network message formats. First format is native format
-which sends over the network directly internetal (C lang) structures. This format
+which sends over the network directly internal (C lang) structures. This format
 will work faster, but cannot be used between different type of computers.
 I.e. in this case it is not possible to mix for example x86_64 with x86. Or
 x86 with RISC/ARM 32bit.
-If mixing is necessary, then use EnduroX Network Protocol option, activated by
+If mixing is necessary, then use Enduro/X Network Protocol option, activated by
 flag '-f' on both nodes. In this case standard common TLV data format is used
 for data exchange between nodes. This might be slower than native format.
 
 tpbridge supports traffic encryption & signing by GNU PGP keys. In this case
-for Enduro/X user keys must be setup and exchanged with receipient. Bridge
+for Enduro/X user keys must be setup and exchanged with recipient. Bridge
 process needs to know sender (for signing) and recipient (for encryption) references.
 
 OPTIONS
@@ -81,7 +81,9 @@ Parameter indicates time-out value for packet receive in seconds. This is
 socket option. Receive is initiate when it either there is poll even on socket
 or incomplete logical message is received and then next 'recv()' is called.
 If the message part is not received in time, then socket is closed and connection
-is restarted.
+is restarted. This parameter also is used in case if target socket to which msg
+is being sent is full for this given time period. If msg is not fully sent
+and time out is reached, the connection is restarted, outgoing msg is being dropped.
 
 [*-b* 'BACKLOG_NR']::
 Number of backlog entries. This is server's (passive mode) connection queue, before
@@ -96,10 +98,18 @@ Interval in seconds between which zero length message is wrote to socket.
 This is useful to keep the connection option over the firewalls, etc.
 OPTIONAL parameter. Default value 0 (Do not send).
 
+[*-a* 'INCOMING_RECV_ACTIVITY_SEC']::
+If set, then this is maximum time into which some packet from network must be
+received. If no receive activity on socket is done, the connection is reset.
+The *0* value disables this functionality. The default value is '-z'
+multiplied by 2. Note that checks are performed with '-c' interval.
+intervals. Usually this is used with '-z', so that it is guaranteed that during
+that there will be any traffic.
+
 [*-f*]::
-Use 'EnduroX Standard Network TLV Protocol' instead of native data structures
-for sending data over the network. This also ensure some backwards compatiblity
-between EnduroX versions. But cases for backwards compatility must be checked
+Use 'Enduro/X Standard Network TLV Protocol' instead of native data structures
+for sending data over the network. This also ensure some backwards compatibility
+between Enduro/X versions. But cases for backwards compatibility must be checked
 individually.
 
 [*-g* 'PGP_RECIPIENT']::
@@ -111,7 +121,10 @@ Signer reference for GNU PGP scheme. Signer works if '-g' is enabled.
 
 [*-P* 'THREAD_POOL_SIZE']::
 This is number of worker threads for sending and receiving messages
-for/to network. The default size is 5.
+for/to network. 50% of the threads are used for upload and other 50% are
+used for network download. Thus number is divided by 2 and two thread pools
+are created. If divided value is less than 1, then default is used.
+The default size is *4*.
 
 [*-R* 'QUEUE_RETRIES']::
 Number of attempts to send message to local queue, if on pervious attempt queue
