@@ -706,7 +706,10 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test070_ubfhook);
     add_test(suite, test072_qos);
     add_test(suite, test073_netact);
+
+#ifndef EX_OS_DARWIN
     add_test(suite, test074_sanitulog);
+#endif
     
     return suite;
 }

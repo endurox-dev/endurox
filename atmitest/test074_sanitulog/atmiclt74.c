@@ -111,12 +111,7 @@ int main(int argc, char** argv)
     
     while (ndrx_stopwatch_get_delta_sec(&w) < 120)
     {
-#ifdef EX_OS_DARWIN
-        /* seems macos has low system resources.. */
-        for (i=0; i<25; i++)
-#else
         for (i=0; i<100; i++)
-#endif
         {
             /* run some fork... */
             if (0==fork())
