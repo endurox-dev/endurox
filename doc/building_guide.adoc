@@ -280,7 +280,6 @@ it will be user from Fedora Core OS:
 
 ---------------------------------------------------------------------
 
-
 If running unit tests with PostgreSQL, then following additional package shall
 be installed:
 
@@ -290,6 +289,14 @@ $ su - root
 # postgresql-setup initdb
 # systemctl start postgresql
 # systemctl enable postgresql
+---------------------------------------------------------------------
+
+In case if additional repositories are configured in the system such es EPEL,
+then gpgme-devel can be installed too:
+
+---------------------------------------------------------------------
+$ su - root
+# yum install gpgme-devel
 ---------------------------------------------------------------------
 
 ==== AsciiDoc Integration with Dia
@@ -398,7 +405,6 @@ $ chmod +x $HOME/ndrx_home
 NOTE: If you develop in Gnome (e.g. Mate) session, then 
 do `export DESKTOP_SESSION=gnome' before run IDE (e.g. NetBeans).
 
-
 === Building the code
 
 *NOTE:* If building with PostgreSQL support (-DENABLE_POSTGRES=ON) for 
@@ -406,6 +412,9 @@ RHEL/OL/Centos 8.x you need to specify Postgresql include folder manually, e.g.
 add "-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/pgsql/internal" string to cmake
 line, otherwise error "Could NOT find PostgreSQL (missing: PostgreSQL_TYPE_INCLUDE_DIR)"
 will be given at configure.
+
+If *gpgme-devel* was not installed, then "-DDEFINE_DISABLEGPGME=ON" string must
+be passed to cmake, to disable GPG-ME usage.
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox

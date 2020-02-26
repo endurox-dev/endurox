@@ -52,10 +52,7 @@
 #include <errno.h>
 #include <regex.h>
 #include <utlist.h>
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
+#include <unistd.h>    /* for getopt */
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -71,8 +68,6 @@
 #include "bridge.h"
 #include "../libatmisrv/srv_int.h"
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -153,6 +148,44 @@ expublic int br_disconnected(exnetcon_t *net)
 }
 
 /**
+ * Send zero length message to socket, to keep some activity
+ * Processed by sender worker thread
+ * @param ptr ptr to network structure
+ * @param p_finish_off not used
+ * @return EXSUCCEED
+ */
+exprivate int br_snd_zero_len_th(void *ptr, int *p_finish_off)
+{
+    exnetcon_t *net = (exnetcon_t *)ptr;
+    
+    /* Lock to network */
+    exnet_rwlock_read(net);
+
+    if (exnet_is_connected(net))
+    {
+        if (EXSUCCEED!=exnet_send_sync(net, NULL, 0, 0, 0))
+        {
+            NDRX_LOG(log_debug, "Failed to send zero length message!");
+        }
+    }
+
+    /* unlock the network */
+    exnet_rwlock_unlock(net); 
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Processed by main thread / dispatch to worker pool
+ * @return EXUSCCEED
+ */
+exprivate int br_snd_zero_len(exnetcon_t *net)
+{
+    thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, (void *)net);
+    return EXSUCCEED;
+}
+
+/**
  * Report status to ndrxd by callback, so that when ndrxd is being restarted
  * we get back correct bridge state.
  * @return SUCCEED/FAIL
@@ -226,7 +259,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
     int periodic_zero = 0; /* send zero length messages periodically */
-    
+    int recv_activity_timeout = EXFAIL;
+    int thpoolcfg = 0;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     G_bridge_cfg.nodeid = EXFAIL;
@@ -234,7 +268,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
@@ -277,6 +311,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "periodic_zero (-z): %d", 
                                 periodic_zero);
                 break;
+            case 'a':
+                recv_activity_timeout = atoi(optarg);
+                NDRX_LOG(log_debug, "recv_activity_timeout (-a): %d", 
+                                recv_activity_timeout);
+                break;
             case 'f':
                 G_bridge_cfg.common_format = EXTRUE;
                 NDRX_LOG(log_debug, "Using common network protocol.");
@@ -292,7 +331,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 					G_bridge_cfg.gpg_signer);
                 break;
             case 'P': 
-                G_bridge_cfg.threadpoolsize = atol(optarg);
+                /* half is used for download, and other half for upload */
+                thpoolcfg = atol(optarg);
+                G_bridge_cfg.threadpoolsize = thpoolcfg / 2;
                 break;
             case 'R': 
                 G_bridge_cfg.qretries = atoi(optarg);
@@ -318,15 +359,24 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
+    if (0>recv_activity_timeout)
+    {
+        recv_activity_timeout = periodic_zero*2;
+    }
+    
     if (G_bridge_cfg.threadpoolsize < 1)
     {
         NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
                 "(%d) defaulting to %d", 
-                G_bridge_cfg.threadpoolsize, BR_DEFAULT_THPOOL_SIZE);
+                thpoolcfg, BR_DEFAULT_THPOOL_SIZE*2);
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
     }
     
-    NDRX_LOG(log_info, "Threadpool size set to: %d", G_bridge_cfg.threadpoolsize);
+    NDRX_LOG(log_warn, "Threadpool size set to: from-net=%d to-net=%d (cfg=%d)",
+            G_bridge_cfg.threadpoolsize, G_bridge_cfg.threadpoolsize, thpoolcfg);
+    
+    NDRX_LOG(log_warn, "Periodic zero: %d sec, reset on no received: %d sec",
+            periodic_zero, recv_activity_timeout);
     
     /* Check configuration */
     if (EXFAIL==G_bridge_cfg.nodeid)
@@ -364,13 +414,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
         
     /* Install call-backs */
-    exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, br_disconnected);
+    exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, 
+            br_disconnected, br_snd_zero_len);
     
     ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
     
     /* Then configure the lib - we will have only one client session! */
     if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
-        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero))
+        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero,
+            recv_activity_timeout))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
         EXFAIL_OUT(ret);
@@ -407,9 +459,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
     
-    if (NULL==(G_bridge_cfg.thpool = thpool_init(G_bridge_cfg.threadpoolsize)))
+    if (NULL==(G_bridge_cfg.thpool_tonet = thpool_init(G_bridge_cfg.threadpoolsize)))
     {
-        NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
+        NDRX_LOG(log_error, "Failed to initialize to-net thread pool (cnt: %d)!", 
+                G_bridge_cfg.threadpoolsize);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==(G_bridge_cfg.thpool_fromnet = thpool_init(G_bridge_cfg.threadpoolsize)))
+    {
+        NDRX_LOG(log_error, "Failed to initialize from-net thread pool (cnt: %d)!",
                 G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
@@ -454,13 +513,23 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         /* Terminate the threads */
         for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
         {
-            NDRX_LOG(log_info, "Terminating threadpool, thread #%d", i);
-            thpool_add_work(G_bridge_cfg.thpool, (void *)tp_thread_shutdown, NULL);
+            NDRX_LOG(log_info, "Terminating to-net threadpool, thread #%d", i);
+            thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)tp_thread_shutdown, NULL);
+        }
+        
+        /* Terminate the threads */
+        for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
+        {
+            NDRX_LOG(log_info, "Terminating from-net threadpool, thread #%d", i);
+            thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)tp_thread_shutdown, NULL);
         }
         
         /* Wait for threads to finish */
-        thpool_wait(G_bridge_cfg.thpool);
-        thpool_destroy(G_bridge_cfg.thpool);
+        thpool_wait(G_bridge_cfg.thpool_tonet);
+        thpool_destroy(G_bridge_cfg.thpool_tonet);
+        
+        thpool_wait(G_bridge_cfg.thpool_fromnet);
+        thpool_destroy(G_bridge_cfg.thpool_fromnet);
     }
     
     /* close if not server connection...  */

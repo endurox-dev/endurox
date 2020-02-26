@@ -52,9 +52,11 @@ extern "C" {
     
 #define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
 
-#define MUTEX_LOCK_V(X) pthread_mutex_lock(&X);
+#define MUTEX_LOCK_V(X) pthread_mutex_lock(&X)
 
-#define MUTEX_UNLOCK_V(X) pthread_mutex_unlock(&X);
+#define MUTEX_UNLOCK_V(X) pthread_mutex_unlock(&X)
+    
+#define MUTEX_TRYLOCK_V(X) pthread_mutex_trylock(&X)
 
 #define MUTEX_LOCK \
 		MUTEX_LOCKDECL(__mutexlock);\

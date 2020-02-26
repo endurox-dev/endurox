@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <utlist.h>
 #include <nstdutil.h>
-#include <ini.h>
+#include <ndrx_ini.h>
 #include <inicfg.h>
 #include <nerror.h>
 #include <ndebug.h>

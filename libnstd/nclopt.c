@@ -39,21 +39,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-/* Missing on AIX */
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
+#include <unistd.h>
 #include <nstdutil.h>
 #include <nclopt.h>
 #include <ndebug.h>
 
+
 #include <ubf.h>
 
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

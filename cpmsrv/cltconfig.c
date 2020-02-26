@@ -76,7 +76,7 @@ MUTEX_LOCKDECL(M_config_lock)
  */
 expublic void cpm_lock_config(void)
 {
-    MUTEX_LOCK_V(M_config_lock)
+    MUTEX_LOCK_V(M_config_lock);
 }
 
 
@@ -85,7 +85,7 @@ expublic void cpm_lock_config(void)
  */
 expublic void cpm_unlock_config(void)
 {
-    MUTEX_UNLOCK_V(M_config_lock)
+    MUTEX_UNLOCK_V(M_config_lock);
 }
 
 

@@ -36,10 +36,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <signal.h>
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
+#include <unistd.h>    /* for getopt */
 
 #include <atmi.h>
 #include <atmi_int.h>

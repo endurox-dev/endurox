@@ -486,6 +486,11 @@ Ensure(test_Bchg_carray_org)
     assert_equal(strncmp(test_val,  "22321", 5), 0);
     assert_equal(len, 5);
     do_dummy_data_test(p_ub);
+    
+    /* Bug #495 - no length passed */
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)test_val, NULL), EXSUCCEED);
+    assert_equal(strncmp(test_val,  "22321", 5), 0);
+    
     /* long-to-carray */
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
     len=sizeof(carray);

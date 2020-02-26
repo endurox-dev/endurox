@@ -34,7 +34,7 @@
 
 cmake_minimum_required (VERSION 2.6) 
 project (ENDUROX) 
-set(VERSION "7.0.14")
+set(VERSION "7.0.24")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -77,6 +77,9 @@ execute_process(
 	OUTPUT_VARIABLE
 		NDRX_BLD_HASH
 	)
+
+string(REGEX REPLACE "\n$" "" NDRX_BLD_HASH "${NDRX_BLD_HASH}")
+
 
 if (NOT gitres EQUAL 0)
 		SET (NDRX_BLD_HASH 	"unknown")
@@ -224,6 +227,9 @@ elseif(${CMAKE_OS_NAME} STREQUAL "SUNOS")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_BAD_PTR_INT_COMBINATION")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=SEC_UNINITIALIZED_MEM_READ")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_INIT_DOES_NOT_FIT")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=SEC_ARR_OUTSIDE_BOUND_READ")
 
         # Add Sun Studio C runtime
         SET(RT_LIB ${RT_LIB} Crun)
@@ -456,10 +462,20 @@ add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
 add_subdirectory (sampleconfig) #  For install
 
+#
+# Install license files
+#
 install (FILES
     LICENSE
     DESTINATION share/endurox)
 
+#
+# Install third party licenses
+#
+install (FILES
+    doc/third_party_licences.adoc
+    DESTINATION share/endurox
+    RENAME THIRD_PARTY_LICENCES)
 
 ################################################################################
 # uninstall target
@@ -505,7 +521,7 @@ elseif (EXISTS /etc/os-release)
         string(REPLACE " " "_" LSB_RELEASE_OUTPUT_OS ${LSB_RELEASE_OUTPUT_OS})
 
         # fixes for CentOs 7.1810, having something like "7 (Core)" in output.
-        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d ' ' -f1 | cut -d '\"' -f2"
+        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d '=' -f2 | cut -d ' ' -f1 | cut -d '\"' -f2"
                 OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})

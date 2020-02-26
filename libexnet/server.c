@@ -72,7 +72,11 @@
 
 #if defined(EX_USE_EPOLL)
 
-#define POLL_FLAGS (EPOLLET | EPOLLIN | EPOLLHUP)
+/* EPOLLET Support #506 causes two packets to go on socket in the same time
+ * after that the first packet is processed, but second is not, because
+ * level is not changed
+ */
+#define POLL_FLAGS (EPOLLIN | EPOLLHUP)
 
 #elif defined (EX_USE_KQUEUE)
 
@@ -124,8 +128,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     
     /* COMMON SETUP between new connection and existing... */
 #define CLT_COMMON_SETUP client->sock = client_fd;\
-    client->schedule_close = EXFALSE;\
-    client->is_connected = EXTRUE;\
+    EXNET_CONNECTED(client);\
     \
     /* We could get IP address & port of the call save in client struct \
      * & dump do log. \
@@ -143,7 +146,7 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
     client->port = ntohs(clt_address.sin_port);\
     NDRX_LOG(log_warn, "Got call from: %s:%u", client->addr, client->port);\
     \
-    if (EXSUCCEED!=exnet_configure_client_sock(client))\
+    if (EXSUCCEED!=exnet_configure_setopts(client))\
     {\
         NDRX_LOG(log_error, "Failed to configure client socket");\
         ret=EXFAIL;\
@@ -208,7 +211,6 @@ expublic int exnetsvpollevent(int fd, uint32_t events, void *ptr1)
         client->is_server=EXFALSE;
         client->is_incoming = EXTRUE;
         client->my_server = srv;
-        client->is_connected = EXTRUE;
         
         memcpy(&client->address, &clt_address, sizeof(clt_address));
         
@@ -293,7 +295,6 @@ expublic int exnet_bind(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
     char *fn = "exnet_bind";
-    int enable = EXTRUE;
     
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -303,10 +304,10 @@ expublic int exnet_bind(exnetcon_t *net)
                                 strerror(errno));
         EXFAIL_OUT(ret);
     }
-
-    if (setsockopt(net->sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    
+    if (EXSUCCEED!=exnet_configure_setopts(net))
     {
-        NDRX_LOG(log_error, "Failed to set SO_REUSEADDR: %s", strerror(errno));
+        NDRX_LOG(log_error, "Failed to set socket opts!");
         EXFAIL_OUT(ret);
     }
     

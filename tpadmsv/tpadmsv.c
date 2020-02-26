@@ -40,10 +40,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
 #include <ndebug.h>
 #include <atmi.h>
 #include <atmi_int.h>
@@ -57,8 +53,6 @@
 
 #include "tpadmsv.h"
 /*---------------------------Externs------------------------------------*/
-extern int optind, optopt, opterr;
-extern char *optarg;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

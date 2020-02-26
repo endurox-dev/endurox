@@ -133,7 +133,7 @@ xadmin down -y
 xadmin start -y || go_out 2
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 30
+sleep 60
 RET=0
 MAX_CALLS=1000 # Same as in atmiclt39.c constant...
 
