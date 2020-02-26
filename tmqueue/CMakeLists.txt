@@ -80,7 +80,7 @@ if(${CMAKE_OS_NAME} STREQUAL "AIX")
 endif()
 
 target_link_libraries (tmqueue ndrxxaqdisk atmisrvinteg atmi ubf
-                        exthpool nstd exuuid ${TMSRV_ADD_DEP} ${RT_LIB} pthread)
+                        exthpool nstd exuuid ${TMQUEUE_ADD_DEP} ${RT_LIB} pthread)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
     target_link_libraries (ndrxxaqdisk nstd atmi ubf)
