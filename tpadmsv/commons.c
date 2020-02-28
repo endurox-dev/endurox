@@ -118,7 +118,7 @@ expublic int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size
     
     if (new_attr.mq_flags!=org_attr.mq_flags)
     {
-        NDRX_LOG(log_error, "change attr to blocked");
+        NDRX_LOG(log_debug, "change attr to blocked");
         if (EXSUCCEED!=ndrx_mq_setattr(ndrx_get_G_atmi_conf()->reply_q, 
                 &new_attr, NULL))
         {
@@ -145,7 +145,7 @@ expublic int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size
     /* set queue back to unblocked. */
     if (new_attr.mq_flags!=org_attr.mq_flags)
     {
-        NDRX_LOG(log_error, "change attr to non blocked");
+        NDRX_LOG(log_debug, "change attr to non blocked");
         if (EXSUCCEED!=ndrx_mq_setattr(ndrx_get_G_atmi_conf()->reply_q, 
                 &org_attr, NULL))
         {
