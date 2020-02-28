@@ -63,7 +63,13 @@ add_executable (tmsrv
                     btid.c
                     statedrv.c 
                     ../libatmisrv/rawmain_integra.c)
-target_link_libraries (tmsrv atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
+
+SET (TMSRV_ADD_DEP "")
+if(${CMAKE_OS_NAME} STREQUAL "AIX")
+    SET (TMSRV_ADD_DEP "bsd")
+endif()
+
+target_link_libraries (tmsrv atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} ${TMSRV_ADD_DEP} pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

@@ -112,7 +112,7 @@ OPTION(DEFINE_SANITIZE "Enable GCC/Clang Address Sanitizer (for debug)" OFF)
 
 SET (EX_ALIGNMENT_BYTES "4")
 
-SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
+SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
 
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
@@ -120,12 +120,19 @@ if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
     SET(CMAKE_C_FLAGS "-Wno-stringop-overflow -Wno-format-truncation -Wformat-overflow=0 ${CMAKE_C_FLAGS}")
 endif()
 
+SET (STACK_PROTECTOR "-fstack-protector")
+
+if(${CMAKE_OS_NAME} STREQUAL "AIX")
+    # not for aix, on gcc 9 does not build
+    SET (STACK_PROTECTOR "")
+endif()
+
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF (DEFINE_RELEASEBUILD)
 	MESSAGE( RELEASE_BUILD )
 	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "-fstack-protector -O2 ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_C_FLAGS}")
 ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
@@ -135,7 +142,7 @@ ELSE ()
     IF (DEFINE_SANITIZE)
         SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
     ELSE ()
-        SET(CMAKE_C_FLAGS "-fstack-protector -O2 -ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 -ggdb ${CMAKE_C_FLAGS}")
     ENDIF()
 ENDIF ()
 
@@ -178,14 +185,15 @@ elseif(${CMAKE_OS_NAME} STREQUAL "AIX")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
             message("GNU compiler")
-            set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
+            set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 -Wl,-brtl ${CMAKE_C_FLAGS}")
+            set ( CMAKE_CXX_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 -Wl,-brtl ${CMAKE_CXX_FLAGS}")
 	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
             message("XL compiler")
             SET ( CMAKE_CXX_FLAGS "-O2 -qtls -q64 -b64 -qsuppress=1500-030" CACHE STRING "compile flags" FORCE)
             set ( CMAKE_C_FLAGS " -D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE ")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qwarn64 -qpic -bexpfull -b64")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -brtl -qtls -q64 -qlanglvl=extc99")
-            set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
+            set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-997 -qprocimported=setjmp")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-747")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-742")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-743")
