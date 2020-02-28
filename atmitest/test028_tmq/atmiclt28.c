@@ -502,7 +502,7 @@ exprivate int deq_q_test(int do_commit, int lifo, char *q1, char *q2, char *q3)
 
             if (EXSUCCEED!=tpdequeue("MYSPACE", q3, &qc, (char **)&buf, &len, 0))
             {
-                NDRX_LOG(log_error, "TESTERROR: tpenqueue() failed %s diag: %d:%s i=%d j=%d", 
+                NDRX_LOG(log_error, "TESTERROR: tpdequeue() failed %s diag: %d:%s i=%d j=%d", 
                         tpstrerror(tperrno), qc.diagnostic, qc.diagmsg, i, j);
                 EXFAIL_OUT(ret);
             }
