@@ -52,9 +52,7 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
 export NDRX_TOUT=55
-
 export NDRX_LIBEXT="so"
 
 if [ "$(uname)" == "Darwin" ]; then
