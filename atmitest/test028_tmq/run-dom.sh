@@ -55,6 +55,7 @@ export PATH=$PATH:$TESTDIR
 # Override timeout!
 export NDRX_TOUT=90
 export NDRX_LIBEXT="so"
+export NDRX_ULOG=$TESTDIR
 
 #
 # Domain 1 - here client will live
