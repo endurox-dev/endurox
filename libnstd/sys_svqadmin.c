@@ -1,11 +1,8 @@
 /**
  * @brief System V XATMI service administrative message dispatching
  *   to System V main thread via queue and including a wakeup call.
- *   This could be done when admin queue is removed from polling - or polling
- *   is closed, we could send shutdown notification to this queue waiter...
- *   or we could just cancel the thread?
- *   we could allow to cancel the thread during the msgrcv.
- *   Also we should put the pthread_cleanup_push() to unlock the resources.
+ *   When main process needs to terminate the admin thread, it just sends
+ *   specially coded command, so that msgrcv() gets it and exists cleanly.
  *
  * @file sys_svqadmin.c
  */
@@ -179,18 +176,6 @@ expublic int ndrx_svqadmin_deinit(void)
     
 out:
     return ret;
-}
-
-/**
- * Free up resource
- * @param arg
- */
-exprivate void cleanup_handler(void *arg)
-{
-    if (NULL!=M_buf)
-    {
-        NDRX_FREE(M_buf);
-    }
 }
 
 /**
