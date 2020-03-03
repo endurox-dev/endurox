@@ -62,6 +62,17 @@
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Send internal shutdown message.
+ * If changing, see command_reply_t.
+ */
+typedef struct
+{
+    long mtype; /**< mandatory for System V queues                  */
+    short command_id; /**< must be the same as for command_reply_t  */
+} ndrx_thstop_command_call_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
@@ -147,11 +158,17 @@ out:
 expublic int ndrx_svqadmin_deinit(void)
 {
     int ret = EXSUCCEED;
+    ndrx_thstop_command_call_t thstop;
     
-    if (EXSUCCEED!=(ret=pthread_cancel(M_evthread)))
+    thstop.mtype =1;
+    thstop.command_id=NDRX_COM_SVQ_PRIV;
+    
+    NDRX_LOG(log_debug, "Requesting admin thread shutdown...");
+    if (EXSUCCEED!=msgsnd(M_adminq->qid, &thstop, NDRX_SVQ_INLEN(sizeof(ndrx_thstop_command_call_t)), 0))
     {
-        NDRX_LOG(log_error, "Failed to cancel thread: %s", strerror(ret));
-        userlog("Failed to cancel thread: %s", strerror(ret));
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to send term msg: %s", strerror(err));
+        userlog("Failed to send term msg: %s", strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -188,43 +205,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int qid;
     int sz, len;
     int err;
-    sigset_t set;
-    
-    if (EXSUCCEED!=sigfillset(&set))
-    {
-        err = errno;
-        NDRX_LOG(log_error, "Failed to fill signal array: %s", strerror(err));
-        userlog("Failed to fill signal array: %s", strerror(err));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=sigdelset(&set, NDRX_SVQ_SIG))
-    {
-        err = errno;
-        NDRX_LOG(log_error, "Failed to delete signal %d: %s", 
-                NDRX_SVQ_SIG, strerror(err));
-        userlog("Failed to delete signal %d: %s", 
-                NDRX_SVQ_SIG, strerror(err));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=pthread_sigmask(SIG_BLOCK, &set, NULL))
-    {
-        err = errno;
-        NDRX_LOG(log_error, "Failed to block all signals but %d for admin thread: %s", 
-                NDRX_SVQ_SIG, strerror(err));
-        userlog("Failed to block all signals but %d for even thread: %s", 
-                NDRX_SVQ_SIG, strerror(err));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
-    {
-        NDRX_LOG(log_error, "Failed to disable thread cancel: %s", strerror(ret));
-        userlog("Failed to disable thread cancel: %s", strerror(ret));
-        EXFAIL_OUT(ret);
-    }
-    
+    ndrx_thstop_command_call_t *p_cmd;
     /* Wait for message to arrive
      * and post to main thread if have any..
      */
@@ -243,18 +224,8 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             EXFAIL_OUT(ret);
         }
         
-        pthread_cleanup_push(cleanup_handler, NULL);
-        
-        if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)))
-        {
-            NDRX_LOG(log_error, "Failed to enable thread cancel: %s", strerror(ret));
-            userlog("Failed to enable thread cancel: %s", strerror(ret));
-            EXFAIL_OUT(ret);
-        }
-        
-        
         NDRX_LOG(log_debug, "About to wait for service admin message qid=%d", qid);
-        
+       
         /* read the message, well we could read it directly from MQD 
          * then we do not need any locks..
          */
@@ -262,13 +233,6 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         err = errno;
         
         NDRX_LOG(log_debug, "Admin msgrcv: qid=%d len=%d", qid, len);
-        
-        if (EXSUCCEED!=(ret=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL)))
-        {
-            NDRX_LOG(log_error, "Failed to disable thread cancel: %s", strerror(ret));
-            userlog("Failed to disable thread cancel: %s", strerror(ret));
-            EXFAIL_OUT(ret);
-        } 
         
         if (EXFAIL==len)
         {
@@ -291,43 +255,53 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         }
         else
         {
-            /* push admin queue event... */
-            ndrx_svq_ev_t *ev = NDRX_MALLOC(sizeof(ndrx_svq_ev_t));
             
-            if (NULL==ev)
+            p_cmd = (ndrx_thstop_command_call_t *)M_buf;
+            
+            if (NDRX_SVQ_OUTLEN(len) == sizeof(ndrx_thstop_command_call_t)
+                    && NDRX_COM_SVQ_PRIV==p_cmd->command_id)
             {
-                err = errno;
-                NDRX_LOG(log_error, "Failed to malloc event %d bytes: %s",
-                        sizeof(ndrx_svq_ev_t), strerror(err));
-                userlog("Failed to malloc event %d bytes: %s",
-                        sizeof(ndrx_svq_ev_t), strerror(err));
-                EXFAIL_OUT(ret);
+                NDRX_LOG(log_info, "Admin thread shutdown requested...");
+                break;
             }
-            
-            ev->data = M_buf;
-            ev->datalen = NDRX_SVQ_OUTLEN(len);
-            ev->ev = NDRX_SVQ_EV_DATA;
-            ev->next = NULL;       
-            ev->prev = NULL;
-            NDRX_LOG(log_debug, "Putting admin event...");
-            
-            if (EXSUCCEED!=ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), ev))
+            else
             {
-                NDRX_LOG(log_error, "Failed to put admin event");
-                userlog("Failed to put admin event");
-                EXFAIL_OUT(ret);
+                /* push admin queue event... */
+                ndrx_svq_ev_t *ev = NDRX_MALLOC(sizeof(ndrx_svq_ev_t));
+
+                if (NULL==ev)
+                {
+                    err = errno;
+                    NDRX_LOG(log_error, "Failed to malloc event %d bytes: %s",
+                            sizeof(ndrx_svq_ev_t), strerror(err));
+                    userlog("Failed to malloc event %d bytes: %s",
+                            sizeof(ndrx_svq_ev_t), strerror(err));
+                    EXFAIL_OUT(ret);
+                }
+
+                ev->data = M_buf;
+                ev->datalen = NDRX_SVQ_OUTLEN(len);
+                ev->ev = NDRX_SVQ_EV_DATA;
+                ev->next = NULL;
+                ev->prev = NULL;
+                NDRX_LOG(log_debug, "Putting admin event...");
+
+                if (EXSUCCEED!=ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), ev))
+                {
+                    NDRX_LOG(log_error, "Failed to put admin event");
+                    userlog("Failed to put admin event");
+                    EXFAIL_OUT(ret);
+                }
+
+                /* Release pointer, as it was delivered to poller..
+                 * so that we do not memory leaks at shutdown...
+                 */
+                M_buf = NULL;
+
+                NDRX_LOG(log_debug, "After admin event...");
             }
-            
-            /* Release pointer, as it was delivered to poller.. 
-             * so that we do not memory leaks at shutdown...
-             */
-            M_buf = NULL;
-            
-            NDRX_LOG(log_debug, "After admin event...");
             
         }
-        
-        pthread_cleanup_pop(1);
     }
 out:
     if (EXSUCCEED!=ret)
