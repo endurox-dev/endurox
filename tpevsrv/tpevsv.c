@@ -297,7 +297,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                 
                 if (EXFAIL==(tpcallex (tmpsvc, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
-                        0, last_call->extradata, nodeid, TPCALL_BRCALL, 
+                        flags, last_call->extradata, nodeid, TPCALL_BRCALL, 
                         /* we re-use for requests rval as user1 and rcode as user2 */
                         last_call->rval, last_call->rcode,
                         last_call->user3, last_call->user4)))
