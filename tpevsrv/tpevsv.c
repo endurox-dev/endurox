@@ -124,6 +124,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     char buf_type[9];
     char buf_subtype[17];
     long buf_len;
+    long flags;
     tp_command_call_t * last_call;
     
     /* Support #279 */
@@ -192,22 +193,32 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                         continue; /* <<<<<<<<<<<<<<< CONTINUE! */
                     }
                     
-                    NDRX_LOG(log_debug, "Calling service %s/%s in async mode (2)",
-                                                    elt->name1, elt->my_id);
+                    flags = p_svc->flags | TPNOREPLY;
+                    NDRX_LOG(log_debug, "Calling service %s/%s in async mode flags: 0x%lx (2)",
+                                                    elt->name1, elt->my_id, flags);
                     
                     if (EXFAIL==(err=tpacallex (elt->name1, p_svc->data, p_svc->len, 
-                                    elt->flags | TPNOREPLY, last_call->extradata, 
+                                    flags, last_call->extradata, 
                                     EXFAIL, EXTRUE,
                                     /* Pass user data in request via these rsp fields */
                                     last_call->rval, last_call->rcode, 
                                     last_call->user3, last_call->user4)))
                     {
-                        NDRX_LOG(log_error, "Failed to call service [%s/%s]: %s"
-                                " - unsubscribing %ld",
-                                elt->name1, elt->my_id, 
-                                tpstrerror(tperrno), elt->subscriberNr);
-                        /* IF NO ENT, THEN UNSUBSCIRBE!!! */
-                        remove_by_my_id(elt->subscriberNr, NULL);
+                        if (tperrno!=TPEBLOCK)
+                        {
+                            NDRX_LOG(log_error, "Failed to call service [%s/%s]: %s"
+                                    " - unsubscribing %ld",
+                                    elt->name1, elt->my_id, 
+                                    tpstrerror(tperrno), elt->subscriberNr);
+                            /* IF NO ENT, THEN UNSUBSCIRBE!!! */
+                            remove_by_my_id(elt->subscriberNr, NULL);
+                        }
+                        else
+                        {
+                            NDRX_LOG(log_error, "TPEBLOCK during call "
+                                    "of service [%s/%s] subscr: %ld - skip",
+                                    elt->name1, elt->my_id, elt->subscriberNr);
+                        }
                     }
                     else
                     {
@@ -280,6 +291,10 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                 /* make dopost service */
                 snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SYS_SVC_PFX EV_TPEVDOPOST, 
                         (short)nodeid);
+                
+                /* we want some reply back... - Support #527*/
+                flags = (p_svc->flags & ~TPNOREPLY);
+                
                 if (EXFAIL==(tpcallex (tmpsvc, p_svc->data, p_svc->len,  
                         &tmp_data, &olen,
                         0, last_call->extradata, nodeid, TPCALL_BRCALL, 
