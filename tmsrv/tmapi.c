@@ -745,12 +745,6 @@ expublic int tm_status(UBFH *p_ub)
     char tmxid[NDRX_XID_SERIAL_BUFSIZE+1];
     short tmrmid = EXFAIL;
     
-    /* We should try to abort transaction
-     Thus basically we need to lock the transaction on which we work on.
-     Otherwise, we can conflict with background.
-     */
-    background_lock();
-    
     if (EXSUCCEED!=Bget(p_ub, TMXID, 0, tmxid, 0L))
     {
         NDRX_LOG(log_error, "Failed to read TMXID: %s", 
@@ -783,8 +777,6 @@ out:
     {
         tms_unlock_entry(p_tl);
     }
-        
-    background_unlock();
 
     return ret;
 }

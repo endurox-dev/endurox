@@ -57,7 +57,7 @@
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -sTEST2:TESTSV </sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -sTEST2:TESTSV -sGETINFOS2:GETINFOS</sysopt>
         </server>
         <server name="tpbridge">
             <max>1</max>

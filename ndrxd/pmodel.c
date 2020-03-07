@@ -882,7 +882,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
             int no_wait,
-            int *abort)
+            int *doabort)
 {
     int ret=EXSUCCEED;
     pid_t pid;
@@ -1130,10 +1130,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             {
                 NDRX_LOG(log_debug, "Waiting for response from srv...");
                 /* do command processing for now */
-                command_wait_and_run(&finished, abort);
+                command_wait_and_run(&finished, doabort);
                 /* check the status? */
             } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
-                            NDRXD_PM_STARTING==p_pm->state && !(*abort));
+                            NDRXD_PM_STARTING==p_pm->state && !(*doabort));
             
             if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
             {
@@ -1143,7 +1143,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 do
                 {
                     NDRX_LOG(log_debug, "In process after start sleep...");
-                    command_wait_and_run(&finished, abort);
+                    command_wait_and_run(&finished, doabort);
                 } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
                 
             }
