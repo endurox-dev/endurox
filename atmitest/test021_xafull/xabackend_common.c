@@ -31,6 +31,10 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +48,7 @@
 #include "atmi_shm.h"
 
 #include <xa.h>
-#define __USE_GNU
+
 #include <dlfcn.h>
 #include "xabackend_common.h"
 /*---------------------------Externs------------------------------------*/
@@ -101,7 +105,4 @@ out:
     return sw;
 }
 
-
-
-#undef __USE_GNU
 /* vim: set ts=4 sw=4 et smartindent: */

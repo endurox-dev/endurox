@@ -49,6 +49,7 @@ fi;
 . ../testenv.sh
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
+export NDRX_ULOG=$TESTDIR
 
 # clean up the env for processing...
 xadmin down -y
