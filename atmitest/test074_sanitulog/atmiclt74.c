@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     int thread_die = EXFALSE;
     int main_thread_die = EXFALSE;
     struct sigaction sa;
-    sa.sa_handler = SIG_IGN; //handle signal by ignoring
+    sa.sa_handler = SIG_IGN; /* handle signal by ignoring */
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     if (sigaction(SIGCHLD, &sa, 0) == -1) {
@@ -127,6 +127,7 @@ int main(int argc, char** argv)
                     */
                     pthread_attr_t pthread_custom_attr;
                     pthread_attr_init(&pthread_custom_attr);
+                    ndrx_platf_stack_set(&pthread_custom_attr);
 
 
                     /* create threads 1 and 2 */    
