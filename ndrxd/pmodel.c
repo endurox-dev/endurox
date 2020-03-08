@@ -929,7 +929,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
      */
     MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
-    MUTEX_UNLOCK_V(M_forklock);
     
     if( pid == 0)
     {
@@ -1100,6 +1099,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     {
         ndrx_stopwatch_t timer;
         int finished = EXFALSE;
+        
+        /* parent unlock */
+        MUTEX_UNLOCK_V(M_forklock);
+        
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
         /* currently assume they are the same */
@@ -1169,6 +1172,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     else
     {
+        /* parent unlock */
+        MUTEX_UNLOCK_V(M_forklock);
+        
         NDRXD_set_error_fmt(NDRXD_EOS, "Fork failed: %s", strerror(errno));
         p_pm->state = NDRXD_PM_DIED;
         p_pm->state_changed = SANITY_CNT_START;

@@ -515,3 +515,6 @@ use '-DDEFINE_SANITIZE=1'
 - To disable PostgreSQL ECPG Driver build use '-DDISABLE_ECPG=ON' (for certain
 Operating systems ECPG, postgres-devel package is missing, thus let only pq
 driver to build)
+
+- To enable strict mutex checking on GNU platform, use '-DMUTEX_DEBUG=ON' (for
+GNU platforms only)
