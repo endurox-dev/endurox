@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ndebug.h>
+#include <sys_unix.h>
 #include <atmi.h>
 #include <ndrstandard.h>
 #include <ubf.h>
