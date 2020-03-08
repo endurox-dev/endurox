@@ -52,9 +52,13 @@ extern "C" {
     
 #define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
 
-#define MUTEX_LOCK_V(X) do {if (0!=pthread_mutex_lock(&X)) {abort();} } while (0)
+#define MUTEX_LOCK_V(X) do {int ndrx_mut_ret; if (0!=(ndrx_mut_ret=pthread_mutex_lock(&X)))\
+     {userlog("Mutex lock failed: %d/%s at %s - aborting", \
+        ndrx_mut_ret, strerror(ndrx_mut_ret), __func__); abort();} } while (0)
 
-#define MUTEX_UNLOCK_V(X) do {if (0!=pthread_mutex_unlock(&X)) {abort();} } while (0)
+#define MUTEX_UNLOCK_V(X) do {int ndrx_mut_ret; if (0!=(ndrx_mut_ret=pthread_mutex_unlock(&X)))\
+     {userlog("Mutex unlock failed: %d/%s at %s - aborting", \
+        ndrx_mut_ret, strerror(ndrx_mut_ret), __func__); abort();} } while (0)
     
 #define MUTEX_TRYLOCK_V(X) pthread_mutex_trylock(&X)
 
