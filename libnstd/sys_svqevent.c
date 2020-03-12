@@ -133,7 +133,7 @@ exprivate ndrx_svq_evmon_t M_mon = {.evpipe[0]=EXFAIL,
                                     .evpipe[1]=EXFAIL};
 exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
-exprivate int __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
+exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
 exprivate mqd_t M_delref = NULL;         /**< this is delete reference    */
 EX_SPIN_LOCKDECL(M_delreflock);          /**< delete reference lock       */
@@ -725,10 +725,13 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
         /* Seems that main thread is doing something within send/receive block
          * unlock our friend, so that it can step forward
          */
+        /*
+         * from above if (0==l1) we know that this is else it is not 0.
         if (0==l1)
         {
             pthread_spin_unlock(&(mqd->rcvlockb4));
         }
+        */
 
         if (0==l2)
         {
@@ -738,6 +741,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
         /* reseync on Q lock so that we know that main thread is close
          * to send/receive blocked state
          */
+        /* rcvlockb4 is locked here! and next step for the main thread is lock qlock! */
         pthread_mutex_lock(&(mqd->qlock));
         pthread_mutex_unlock(&(mqd->qlock));
 
@@ -799,9 +803,8 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
         }
     }
 
-    pthread_mutex_unlock(&(mqd->barrier));
-    
 out:
+    pthread_mutex_unlock(&(mqd->barrier));
     
     return ret;        
 }
@@ -818,9 +821,7 @@ exprivate void ndrx_svq_signal_action(int sig)
 {
     /* nothing todo, just ignore  
     NDRX_LOG(log_debug, "Signal action");
-     * !!!! Bug #530 Signal handler might be interrupted as we send several
-     * pthread_kill notification. And that can cause locking on
-     * already locked printf locks if we are already in signal_action..
+     * !!!! Bug #530 Signal handler - not safe functions used.
      * */
     M_signalled = EXTRUE;
     return;
@@ -1076,6 +1077,15 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                                 ret = EXFAIL;
                             }
 
+                            
+                            /* But admin works for main q
+                             * which is closed at the un-init...
+                             * and before that admin thread is terminated.
+                            pthread_mutex_lock(&cmd.mqd->barrier);
+                            pthread_mutex_unlock(&cmd.mqd->barrier);
+                            */
+                            
+                            /* ok finish off */
                             pthread_spin_destroy(&cmd.mqd->rcvlock);
                             pthread_spin_destroy(&cmd.mqd->rcvlockb4);
                             pthread_mutex_destroy(&cmd.mqd->barrier);
