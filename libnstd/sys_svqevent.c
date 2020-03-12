@@ -816,8 +816,12 @@ out:
  */
 exprivate void ndrx_svq_signal_action(int sig)
 {
-    /* nothing todo, just ignore  */
+    /* nothing todo, just ignore  
     NDRX_LOG(log_debug, "Signal action");
+     * !!!! Bug #530 Signal handler might be interrupted as we send several
+     * pthread_kill notification. And that can cause locking on
+     * already locked printf locks if we are already in signal_action..
+     * */
     M_signalled = EXTRUE;
     return;
 }
