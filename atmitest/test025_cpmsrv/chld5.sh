@@ -8,7 +8,12 @@ trap 'echo Ignoring SIGTERM' SIGTERM
 # Run off some child
 chld6.sh
 
-while [[ 1 == 1 ]]; do
-        sleep 1
-done
+#while [[ 1 == 1 ]]; do
+#        sleep 1
+#done
+
+#
+# Forkless sleep
+#
+read < ./test25_sleep.fifo
 
