@@ -15,5 +15,7 @@ chld6.sh
 #
 # Forkless sleep
 #
-read < ./test25_sleep.fifo
+while [[ 1 == 1 ]]; do
+	read < ./test25_sleep.fifo
+done
 
