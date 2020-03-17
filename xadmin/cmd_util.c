@@ -112,7 +112,7 @@ expublic int cmd_ps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
     
     if (mems && !pid_only)
     {
-        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "-m can be used only with -p!\n");
+        fprintf(stderr, NDRX_XADMIN_ERR_FMT_PFX "-m can be used only with -p!\n");
         EXFAIL_OUT(ret);
     }
     
