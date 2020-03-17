@@ -121,7 +121,7 @@ support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
 - Support forum: http://www.endurox.org/projects/endurox/boards
 
 - Binary builds (RPMs & DEBs) for various platforms are here: 
-http://www.endurox.org/projects/endurox/files
+https://www.mavimax.com/downloads
 
 - Documentation available here: http://www.endurox.org/dokuwiki/doku.php
 
