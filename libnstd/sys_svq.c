@@ -183,12 +183,14 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     /* Allocate queue object */
     mqd_t mq = (mqd_t)EXFAIL;
     int ret = EXSUCCEED;
+    int errno_save;
     
     NDRX_LOG(log_debug, "enter");
     mq = NDRX_CALLOC(1, sizeof(struct ndrx_svq_info));
     
     if (NULL==mq)
     {
+        errno_save=errno;
         NDRX_LOG(log_error, "Failed to malloc %d bytes queue descriptor", 
                 (int)sizeof(struct ndrx_svq_info));
         userlog("%s: Failed to malloc %d bytes queue descriptor", 
@@ -203,6 +205,7 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
      */
     if (EXFAIL==(mq->qid = ndrx_svqshm_get((char *)pathname, mode, oflag)))
     {
+        errno_save=errno;
         EXFAIL_OUT(ret);
     }
     
@@ -240,6 +243,8 @@ out:
     }
 
     NDRX_LOG(log_debug, "return %p/%ld", mq, (long)mq);
+    
+    errno=errno_save;
     return mq;
 }
 

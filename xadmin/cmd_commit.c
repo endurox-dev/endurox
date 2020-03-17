@@ -150,7 +150,7 @@ expublic int cmd_commit(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     /* call the transaction manager */
     if (EXSUCCEED!=call_tm(srvcnm, tmxid))
     {
-        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "%s\n", tpstrerror(tperrno));
+        fprintf(stderr, NDRX_XADMIN_ERR_FMT_PFX "%s\n", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     

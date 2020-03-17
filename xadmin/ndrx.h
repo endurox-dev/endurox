@@ -91,8 +91,6 @@ extern char *G_cmd_argv[MAX_ARGS];
         }
 
 #define XADMIN_INVALID_OPTIONS_MSG      "Invalid options, see `help'.\n"
-
-#define XADMIN_ERROR_FORMAT_PFX         "ERROR ! "
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
