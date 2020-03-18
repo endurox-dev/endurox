@@ -273,9 +273,9 @@ it will be user from Fedora Core OS:
 
 ---------------------------------------------------------------------
 
-# wget http://download-ib01.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/os/Packages/l/libart_lgpl-2.3.21-20.fc29.x86_64.rpm
+# wget https://www.mavimax.com/sites/default/files/libart_lgpl-2.3.21-20.fc29.x86_64.rpm
 # rpm -i libart_lgpl-2.3.21-20.fc29.x86_64.rpm
-# wget http://download-ib01.fedoraproject.org/pub/fedora/linux/releases/29/Everything/x86_64/os/Packages/d/dia-0.97.3-10.fc29.x86_64.rpm
+# wget https://www.mavimax.com/sites/default/files/dia-0.97.3-10.fc29.x86_64.rpm
 # rpm -i --nodeps dia-0.97.3-10.fc29.x86_64.rpm
 
 ---------------------------------------------------------------------
@@ -291,13 +291,18 @@ $ su - root
 # systemctl enable postgresql
 ---------------------------------------------------------------------
 
-In case if additional repositories are configured in the system such es EPEL,
-then gpgme-devel can be installed too:
+In case if additional repositories are configured in the system such es 
+EPEL (e.g. CentOS 8 Package Management), then gpgme-devel can be installed too:
 
 ---------------------------------------------------------------------
 $ su - root
+# yum install dnf-plugins-core
+# yum config-manager --set-enabled PowerTools
+# yum update
 # yum install gpgme-devel
 ---------------------------------------------------------------------
+
+if not configured, then build with *-DDEFINE_DISABLEGPGME=ON*.
 
 ==== AsciiDoc Integration with Dia
 
