@@ -593,6 +593,8 @@ expublic long ndrx_cache_inval_by_expr(char *cachedbnm, char *keyexpr, short nod
             }
             if (EXSUCCEED!=ndrx_cache_edb_delfullkey (db, txn, &keydb, NULL))
             {
+                NDRX_CACHE_TPERRORNOU(TPESYSTEM, "%s: Failure where deleting record! Some one already deleted it?",
+                    __func__);
                 NDRX_LOG(log_debug, "Failed to delete record by key [%s]", 
                         keydb.mv_data);
                 EXFAIL_OUT(ret);

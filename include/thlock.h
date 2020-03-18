@@ -34,7 +34,6 @@
 #ifndef THLOCK_H
 #define	THLOCK_H
 
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -50,11 +49,22 @@ extern "C" {
 #define MUTEX_VAR(X)        pthread_mutex_t X
 #define MUTEX_VAR_INIT(X)   pthread_mutex_init(&X, NULL)
     
+/*
+ Have custom error checks...
+ */
+#if NDRX_MUTEX_DEBUG
+#define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+#else 
 #define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
+#endif
+    
+#define MUTEX_LOCK_V(X) do {int ndrx_mut_ret; if (0!=(ndrx_mut_ret=pthread_mutex_lock(&X)))\
+     {userlog("Mutex lock failed: %d/%s at %s:%u %s() - aborting", \
+        ndrx_mut_ret, strerror(ndrx_mut_ret), __FILE__, __LINE__, __func__); abort();} } while (0)
 
-#define MUTEX_LOCK_V(X) pthread_mutex_lock(&X)
-
-#define MUTEX_UNLOCK_V(X) pthread_mutex_unlock(&X)
+#define MUTEX_UNLOCK_V(X) do {int ndrx_mut_ret; if (0!=(ndrx_mut_ret=pthread_mutex_unlock(&X)))\
+     {userlog("Mutex unlock failed: %d/%s at %s:%u %s() - aborting", \
+        ndrx_mut_ret, strerror(ndrx_mut_ret), __FILE__, __LINE__, __func__); abort();} } while (0)
     
 #define MUTEX_TRYLOCK_V(X) pthread_mutex_trylock(&X)
 

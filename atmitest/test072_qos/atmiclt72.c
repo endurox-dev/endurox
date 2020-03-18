@@ -63,10 +63,10 @@ int main(int argc, char** argv)
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
-    int i;
     int ret=EXSUCCEED;
     long sent=0;
-    long sentread;
+    long sentread=0;
+    long t;
     ndrx_stopwatch_t w;
     
     /* send msg for 5 min.... */
@@ -102,26 +102,38 @@ int main(int argc, char** argv)
         sent++;
     }
     
+    
     /* wait for leftover from queue, if service was unable to cope with the traffic */
-    fprintf(stderr, "Waiting 30 for queues to flush at bridges...\n");
-    sleep(60);
+    ndrx_stopwatch_reset(&w);
     
-    if (EXFAIL == tpcall(argv[1], (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
+    /* wait 300 sec... , tout is 310...*/
+    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 300)
     {
-        NDRX_LOG(log_error, "%s failed: %s", argv[1], tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
-    
-    /* read the value */
-    if (EXSUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&sentread, 0L))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", Bstrerror(Berror));
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_warn, "Waiting sent=%ld got=%ld for queues to flush at bridges... (spent: %lds)",
+                sentread, sent, t);
+        
+        /* maybe call different service ... 
+         * an few minutes to get the right number, before give up?
+         */
+        if (EXFAIL == tpcall(argv[2], (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
+        {
+            NDRX_LOG(log_error, "%s failed: %s", argv[2], tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* read the value */
+        if (EXSUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&sentread, 0L))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        sleep(1);
     }
     
     if (sentread!=sent)
     {
-        NDRX_LOG(log_error, "TESTERROR: sent: %d but server have seen: %d", 
+        NDRX_LOG(log_error, "TESTERROR: sent: %ld but server have seen: %ld", 
                 sent, sentread);
         EXFAIL_OUT(ret);
     }

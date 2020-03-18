@@ -257,9 +257,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Register callback timer */
     if (EXSUCCEED!=tpext_addperiodcb(G_config.chk_interval, cpm_callback_timer))
     {
-            ret=EXFAIL;
-            NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
-                            tpstrerror(tperrno));
+        ret=EXFAIL;
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
     }
     
     NDRX_LOG(log_info, "Config file: [%s]", G_config.config_file );
@@ -287,8 +287,6 @@ out:
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
-    cpm_process_t *c = NULL;
-    cpm_process_t *ct = NULL;
     
     NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
     

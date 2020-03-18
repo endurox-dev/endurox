@@ -917,6 +917,7 @@ expublic int tpinit (TPINIT * init_data)
     if (EXSUCCEED!=ndrx_load_common_env())
     {
         NDRX_LOG(log_error, "Failed to load common env");
+        ndrx_TPset_error_msg(TPEINVAL, "Failed to load common env");
         ret=EXFAIL;
         goto out;
     }
@@ -998,7 +999,11 @@ expublic int tpinit (TPINIT * init_data)
         memcpy(&G_atmi_tls->client_init_data, init_data, sizeof(*init_data));
     }
     /* do the library initialisation */
-    ret=tp_internal_init(&conf);
+    if (EXSUCCEED!=tp_internal_init(&conf))
+    {
+        ndrx_TPset_error_msg(TPESYSTEM, "Failed to configure internals (caches, etc..), see logs");
+        EXFAIL_OUT(ret);
+    }
     
 out:
     return ret;

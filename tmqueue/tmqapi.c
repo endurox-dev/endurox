@@ -220,9 +220,9 @@ expublic int tmq_enqueue(UBFH *p_ub)
         t_usec = p_msg->msgtstamp_usec;
         t_cntr = 0;
     }
+    p_msg->msgtstamp_cntr = t_cntr;
     MUTEX_UNLOCK_V(M_tstamp_lock);
     
-    p_msg->msgtstamp_cntr = t_cntr;
     p_msg->status = TMQ_STATUS_ACTIVE;
     
     NDRX_LOG(log_info, "Messag prepared ok, about to enqueue to [%s] Q...",

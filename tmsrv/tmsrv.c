@@ -79,7 +79,7 @@ expublic tmsrv_cfg_t G_tmsrv_cfg;
 /*---------------------------Statics------------------------------------*/
 exprivate int M_init_ok = EXFALSE;
 /* Wait for one free thread: */
-pthread_mutex_t M_wait_th_mutex = PTHREAD_MUTEX_INITIALIZER;
+MUTEX_LOCKDECL(M_wait_th_mutex);
 pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
 /*

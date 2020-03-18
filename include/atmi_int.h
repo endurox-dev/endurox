@@ -266,10 +266,24 @@ extern "C" {
         fprintf(stderr, "AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.\n\n");\
     }
     
-    
-/* Used by NDRX_SYSFLAGS env variable */
-#define NDRX_PRC_SYSFLAGS_FULLSTART     0x00000001      /* Full application start */
 
+/** Used by NDRX_SYSFLAGS env variable, Full application start */
+#define NDRX_PRC_SYSFLAGS_FULLSTART     0x00000001
+
+/** xadmin error format */
+#define NDRX_XADMIN_ERR_FMT_PFX         "ERROR ! "
+
+/** EINVAL on queues: */
+#define NDRX_QERR_MSG_EINVAL NDRX_XADMIN_ERR_FMT_PFX \
+    "Invalid queue config, see \"Enduro/X Administration Manual\", chapter 2."
+    
+/** ENOSPC on queues: */
+#define NDRX_QERR_MSG_ENOSPC NDRX_XADMIN_ERR_FMT_PFX \
+    "Insufficient space for the creation of a new message queue"
+    
+/** Generic queue error */
+#define NDRX_QERR_MSG_SYSERR NDRX_XADMIN_ERR_FMT_PFX \
+    "Queue error, check logs"
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**

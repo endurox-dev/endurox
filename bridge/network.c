@@ -533,7 +533,6 @@ out:
 /**
  * Send message to other bridge.
  * Might want to use async call, as there Net stack could be full & blocked.
- * It is safe to assume that 
  * @param buf
  * @param len
  * @return 

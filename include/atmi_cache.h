@@ -140,8 +140,8 @@ extern "C" {
  * if removing key group, then remove all linked key items.
  */
     
-#define NDRX_TPCACHE_FLAGS_KEYGRP    0x00000800   /**< Is this key group?               */
-#define NDRX_TPCACHE_FLAGS_KEYITEMS  0x00001000   /**< Is this key item?                */
+#define NDRX_TPCACHE_FLAGS_KEYGRP    0x00001000   /**< Is this key group?               */
+#define NDRX_TPCACHE_FLAGS_KEYITEMS  0x00002000   /**< Is this key item?                */
     
 #define NDRX_TPCACHE_TPCF_SAVEREG    0x00000001   /**< Save record can be regexp        */
 #define NDRX_TPCACHE_TPCF_REPL       0x00000002   /**< Replace buf                      */
@@ -621,6 +621,7 @@ struct ndrx_tpcache_typesupp
     int (*pf_cache_maxreject)(ndrx_tpcallcache_t *cache, char *idata, long ilen, 
         char **odata, long *olen, long flags, typed_buffer_descr_t *buf_type);
 };
+
 
 /*---------------------------Globals------------------------------------*/
 

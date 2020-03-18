@@ -81,6 +81,9 @@
 /* Is address sanitizer enabled */
 #cmakedefine NDRX_SANITIZE @NDRX_SANITIZE@
 
+/* Is mutex debug enabled */
+#cmakedefine NDRX_MUTEX_DEBUG @NDRX_MUTEX_DEBUG@
+
 /** Build for postgresql */
 #cmakedefine NDRX_USE_POSTGRES @NDRX_USE_POSTGRES@
 

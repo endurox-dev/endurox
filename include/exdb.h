@@ -136,7 +136,7 @@
  *
  *	@author	Howard Chu, Symas Corporation.
  *
- *	@copyright Copyright 2011-2017 Howard Chu, Symas Corp. All rights reserved.
+ *	@copyright Copyright 2011-2020 Howard Chu, Symas Corp. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted only as authorized by the OpenLDAP
@@ -332,8 +332,8 @@ typedef void (EDB_rel_func)(EDB_val *item, void *oldptr, void *newptr, void *rel
 #define EDB_NORDAHEAD	0x800000
 	/** don't initialize malloc'd memory before writing to datafile */
 #define EDB_NOMEMINIT	0x1000000
-	/** use the previous meta page rather than the latest one */
-#define EDB_PREVMETA	0x2000000
+	/** use the previous snapshot rather than the latest one */
+#define EDB_PREVSNAPSHOT	0x2000000
 /** @} */
 
 /**	@defgroup	edb_dbi_open	Database Flags
@@ -402,7 +402,7 @@ typedef enum EDB_cursor_op {
 	EDB_GET_BOTH,			/**< Position at key/data pair. Only for #EDB_DUPSORT */
 	EDB_GET_BOTH_RANGE,		/**< position at key, nearest data. Only for #EDB_DUPSORT */
 	EDB_GET_CURRENT,		/**< Return key/data at current cursor position */
-	EDB_GET_MULTIPLE,		/**< Return key and up to a page of duplicate data items
+	EDB_GET_MULTIPLE,		/**< Return up to a page of duplicate data items
 								from current cursor position. Move cursor to prepare
 								for #EDB_NEXT_MULTIPLE. Only for #EDB_DUPFIXED */
 	EDB_LAST,				/**< Position at last key/data item */
@@ -411,7 +411,7 @@ typedef enum EDB_cursor_op {
 	EDB_NEXT,				/**< Position at next data item */
 	EDB_NEXT_DUP,			/**< Position at next data item of current key.
 								Only for #EDB_DUPSORT */
-	EDB_NEXT_MULTIPLE,		/**< Return key and up to a page of duplicate data items
+	EDB_NEXT_MULTIPLE,		/**< Return up to a page of duplicate data items
 								from next cursor position. Move cursor to prepare
 								for #EDB_NEXT_MULTIPLE. Only for #EDB_DUPFIXED */
 	EDB_NEXT_NODUP,			/**< Position at first data item of next key */
@@ -422,7 +422,7 @@ typedef enum EDB_cursor_op {
 	EDB_SET,				/**< Position at specified key */
 	EDB_SET_KEY,			/**< Position at specified key, return key + data */
 	EDB_SET_RANGE,			/**< Position at first key greater than or equal to specified key. */
-	EDB_PREV_MULTIPLE		/**< Position at previous page and return key and up to
+	EDB_PREV_MULTIPLE		/**< Position at previous page and return up to
 								a page of duplicate data items. Only for #EDB_DUPFIXED */
 } EDB_cursor_op;
 
@@ -648,10 +648,12 @@ int  edb_env_create(EDB_env **env);
 	 *		caller is expected to overwrite all of the memory that was
 	 *		reserved in that case.
 	 *		This flag may be changed at any time using #edb_env_set_flags().
-	 *	<li>#EDB_PREVMETA
-	 *		Open the environment with the previous meta page rather than the latest
+	 *	<li>#EDB_PREVSNAPSHOT
+	 *		Open the environment with the previous snapshot rather than the latest
 	 *		one. This loses the latest transaction, but may help work around some
-	 *		types of corruption.
+	 *		types of corruption. If opened with write access, this must be the
+	 *		only process using the environment. This flag is automatically reset
+	 *		after a write transaction is successfully committed.
 	 * </ul>
 	 * @param[in] mode The UNIX permissions to set on created files and semaphores.
 	 * This parameter is ignored on Windows.
@@ -1553,6 +1555,10 @@ int  edb_cursor_put(EDB_cursor *cursor, EDB_val *key, EDB_val *data,
 	/** @brief Delete current key/data pair
 	 *
 	 * This function deletes the key/data pair to which the cursor refers.
+	 * This does not invalidate the cursor, so operations such as EDB_NEXT
+	 * can still be used on it.
+	 * Both EDB_NEXT and EDB_GET_CURRENT will return the same record after
+	 * this operation.
 	 * @param[in] cursor A cursor handle returned by #edb_cursor_open()
 	 * @param[in] flags Options for this operation. This parameter
 	 * must be set to 0 or one of the values described here.

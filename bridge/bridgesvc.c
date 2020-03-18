@@ -148,6 +148,44 @@ expublic int br_disconnected(exnetcon_t *net)
 }
 
 /**
+ * Send zero length message to socket, to keep some activity
+ * Processed by sender worker thread
+ * @param ptr ptr to network structure
+ * @param p_finish_off not used
+ * @return EXSUCCEED
+ */
+exprivate int br_snd_zero_len_th(void *ptr, int *p_finish_off)
+{
+    exnetcon_t *net = (exnetcon_t *)ptr;
+    
+    /* Lock to network */
+    exnet_rwlock_read(net);
+
+    if (exnet_is_connected(net))
+    {
+        if (EXSUCCEED!=exnet_send_sync(net, NULL, 0, 0, 0))
+        {
+            NDRX_LOG(log_debug, "Failed to send zero length message!");
+        }
+    }
+
+    /* unlock the network */
+    exnet_rwlock_unlock(net); 
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Processed by main thread / dispatch to worker pool
+ * @return EXUSCCEED
+ */
+exprivate int br_snd_zero_len(exnetcon_t *net)
+{
+    thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, (void *)net);
+    return EXSUCCEED;
+}
+
+/**
  * Report status to ndrxd by callback, so that when ndrxd is being restarted
  * we get back correct bridge state.
  * @return SUCCEED/FAIL
@@ -221,6 +259,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
     int periodic_zero = 0; /* send zero length messages periodically */
+    int recv_activity_timeout = EXFAIL;
     int thpoolcfg = 0;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
@@ -229,7 +268,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
@@ -271,6 +310,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 periodic_zero = atoi(optarg);
                 NDRX_LOG(log_debug, "periodic_zero (-z): %d", 
                                 periodic_zero);
+                break;
+            case 'a':
+                recv_activity_timeout = atoi(optarg);
+                NDRX_LOG(log_debug, "recv_activity_timeout (-a): %d", 
+                                recv_activity_timeout);
                 break;
             case 'f':
                 G_bridge_cfg.common_format = EXTRUE;
@@ -315,6 +359,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
+    if (0>recv_activity_timeout)
+    {
+        recv_activity_timeout = periodic_zero*2;
+    }
+    
     if (G_bridge_cfg.threadpoolsize < 1)
     {
         NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
@@ -325,6 +374,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     NDRX_LOG(log_warn, "Threadpool size set to: from-net=%d to-net=%d (cfg=%d)",
             G_bridge_cfg.threadpoolsize, G_bridge_cfg.threadpoolsize, thpoolcfg);
+    
+    NDRX_LOG(log_warn, "Periodic zero: %d sec, reset on no received: %d sec",
+            periodic_zero, recv_activity_timeout);
     
     /* Check configuration */
     if (EXFAIL==G_bridge_cfg.nodeid)
@@ -362,13 +414,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
         
     /* Install call-backs */
-    exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, br_disconnected);
+    exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, 
+            br_disconnected, br_snd_zero_len);
     
     ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
     
     /* Then configure the lib - we will have only one client session! */
     if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
-        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero))
+        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero,
+            recv_activity_timeout))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
         EXFAIL_OUT(ret);

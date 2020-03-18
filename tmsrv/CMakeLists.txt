@@ -71,6 +71,8 @@ set_property(TARGET objtms PROPERTY POSITION_INDEPENDENT_CODE 1)
 # shared and static libraries built from the same object files
 add_library(tms SHARED $<TARGET_OBJECTS:objtms>)
 
+SET (TMSRV_ADD_DEP "")
+
 if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
 elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
@@ -83,7 +85,8 @@ elseif(CMAKE_OS_NAME STREQUAL "AIX")
     # Or
     # ld: 0711-768 WARNING: Object CMakeFiles/ubf.dir/ferror.c.o, section 1, function .__tls_get_addr:
     #   The branch at address 0x154 is not followed by a rec
-    target_link_libraries(tms pthread)
+    target_link_libraries(tms bsd pthread)
+    SET (TMSRV_ADD_DEP "bsd")
 endif()
 
 
@@ -91,7 +94,7 @@ endif()
 add_executable (tmsrv 
                 tmsrvmain.c
                 )
-target_link_libraries (tmsrv tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} pthread)
+target_link_libraries (tmsrv tms atmisrvinteg atmi ubf exuuid exthpool nstd ${RT_LIB} ${TMSRV_ADD_DEP} pthread)
 set_target_properties(tmsrv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 

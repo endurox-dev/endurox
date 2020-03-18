@@ -34,7 +34,7 @@
 
 cmake_minimum_required (VERSION 3.1) 
 project (ENDUROX) 
-set(VERSION "7.0.24")
+set(VERSION "7.0.28")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -112,7 +112,7 @@ OPTION(DEFINE_SANITIZE "Enable GCC/Clang Address Sanitizer (for debug)" OFF)
 
 SET (EX_ALIGNMENT_BYTES "4")
 
-SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti" CACHE STRING "compile flags" FORCE)
+SET ( CMAKE_CXX_FLAGS "-O2 -fno-exceptions -fno-rtti ${CMAKE_CXX_FLAGS}" CACHE STRING "compile flags" FORCE)
 
 # Support #310 Ubuntu 18.04 prints lot of unneeded warnings...
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
@@ -120,12 +120,19 @@ if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
     SET(CMAKE_C_FLAGS "-Wno-stringop-overflow -Wno-format-truncation -Wformat-overflow=0 ${CMAKE_C_FLAGS}")
 endif()
 
+SET (STACK_PROTECTOR "-fstack-protector")
+
+if(${CMAKE_OS_NAME} STREQUAL "AIX")
+    # not for aix, on gcc 9 does not build
+    SET (STACK_PROTECTOR "")
+endif()
+
 # Enable release only if specified.
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF (DEFINE_RELEASEBUILD)
 	MESSAGE( RELEASE_BUILD )
 	SET(CMAKE_BUILD_TYPE release)
-        SET(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 ${CMAKE_C_FLAGS}")
 ELSE ()
 	MESSAGE( DEBUG_BUILD )
 	SET(CMAKE_BUILD_TYPE debug)
@@ -135,9 +142,14 @@ ELSE ()
     IF (DEFINE_SANITIZE)
         SET(CMAKE_C_FLAGS "-fsanitize=address -fno-omit-frame-pointer -O1 -ggdb ${CMAKE_C_FLAGS}")
     ELSE ()
-        SET(CMAKE_C_FLAGS "-O2 -ggdb ${CMAKE_C_FLAGS}")
+        SET(CMAKE_C_FLAGS "${STACK_PROTECTOR} -O2 -ggdb ${CMAKE_C_FLAGS}")
     ENDIF()
 ENDIF ()
+
+IF (MUTEX_DEBUG)
+    SET(CMAKE_C_FLAGS "-D_GNU_SOURCE ${CMAKE_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "-D_GNU_SOURCE ${CMAKE_CXX_FLAGS}")
+ENDIF()
 
 # -pthread needed for System V pthread_atfork()
 SET(RT_LIB rt dl)
@@ -178,15 +190,15 @@ elseif(CMAKE_OS_NAME STREQUAL "AIX")
 
 	if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
             message("GNU compiler")
-            set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 ${CMAKE_C_FLAGS}")
-            set ( CMAKE_CXX_FLAGS "-pthread -maix64 ${CMAKE_C_FLAGS}")
-	elseif (CMAKE_C_COMPILER_ID STREQUAL "XL")
+            set ( CMAKE_C_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 -Wl,-brtl ${CMAKE_C_FLAGS}")
+            set ( CMAKE_CXX_FLAGS "-D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE -pthread -maix64 -Wl,-brtl ${CMAKE_CXX_FLAGS}")
+	elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "XL")
             message("XL compiler")
             SET ( CMAKE_CXX_FLAGS "-O2 -qtls -q64 -b64 -qsuppress=1500-030" CACHE STRING "compile flags" FORCE)
             set ( CMAKE_C_FLAGS " -D_SEM_SEMUN_UNDEFINED -D_THREAD_SAFE ")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qwarn64 -qpic -bexpfull -b64")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -brtl -qtls -q64 -qlanglvl=extc99")
-            set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-997 -qprocimported=setjmp -lbsd")
+            set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-997 -qprocimported=setjmp")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-747")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-742")
             set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qsuppress=1506-743")
@@ -229,6 +241,9 @@ elseif(CMAKE_OS_NAME STREQUAL "SUNOS")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_EMPTY_DECLARATION -erroff=E_ARGUEMENT_MISMATCH -erroff=E_ZERO_OR_NEGATIVE_SUBSCRIPT")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_ARG_INCOMPATIBLE_WITH_ARG_L")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_BAD_PTR_INT_COMBINATION")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=SEC_UNINITIALIZED_MEM_READ")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=E_INIT_DOES_NOT_FIT")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -erroff=SEC_ARR_OUTSIDE_BOUND_READ")
 
         # Add Sun Studio C runtime
         SET(RT_LIB ${RT_LIB} Crun)
@@ -333,6 +348,10 @@ ENDIF()
 
 IF (DEFINE_SANITIZE)
     set(NDRX_SANITIZE "1")
+ENDIF()
+
+IF (MUTEX_DEBUG)
+    set(NDRX_MUTEX_DEBUG "1")
 ENDIF()
 
 IF (ENABLE_POSTGRES)
@@ -528,7 +547,7 @@ elseif (EXISTS /etc/os-release)
         string(REPLACE " " "_" LSB_RELEASE_OUTPUT_OS ${LSB_RELEASE_OUTPUT_OS})
 
         # fixes for CentOs 7.1810, having something like "7 (Core)" in output.
-        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d ' ' -f1 | cut -d '\"' -f2"
+        execute_process(COMMAND bash -c "cat /etc/os-release | egrep '^VERSION=' | cut -d '=' -f2 | cut -d ' ' -f1 | cut -d '\"' -f2"
                 OUTPUT_VARIABLE _TMP_LSB_RELEASE_OUTPUT_VER
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(REPLACE "." "_" LSB_RELEASE_OUTPUT_VER ${_TMP_LSB_RELEASE_OUTPUT_VER})

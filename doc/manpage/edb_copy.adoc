@@ -9,7 +9,7 @@ edb_copy - LMDB/EXDB environment copy tool
 
 SYNOPSIS
 --------
-*edb_copy* [*-V*] [*-c*] [*-n*] *srcpath* [*dstpath*]
+*edb_copy* [*-V*] [*-c*] [*-n*] [*-v*] *srcpath* [*dstpath*]
 
 
 DESCRIPTION
@@ -37,10 +37,22 @@ Currently it fails if the environment has suffered a page leak.
 [*-n*]::
 Open LDMB environment(s) which do not use subdirectories.
 
+[*-v*]::
+Use the previous environment state instead of the latest state.
+This may be useful if the latest state has been corrupted.
+
+
+
 EXIT STATUS
 -----------
 Exit status is zero if no errors occur. Errors result in a non-zero exit 
 status and a diagnostic message being written to standard error.
+
+CAVEATS
+-------
+       This utility can trigger significant file size growth if run in parallel 
+with write transactions, because pages which they free during copying cannot be 
+reused until the copy is done.
 
 BUGS
 ----

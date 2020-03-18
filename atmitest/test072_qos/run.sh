@@ -51,7 +51,7 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
-export NDRX_TOUT=100
+export NDRX_TOUT=310
 
 #
 # Domain 1 - here client will live
@@ -123,12 +123,12 @@ xadmin ppm
 echo "Running off client - dom2 background"
 
 set_dom2;
-(./atmiclt72 TEST1 2>&1) > ./atmiclt-dom2.log &
+(./atmiclt72 TEST1 GETINFOS1 2>&1) > ./atmiclt-dom2.log &
 
 echo "Running off client - dom1 foreground"
 
 set_dom1;
-(./atmiclt72 TEST2 2>&1) > ./atmiclt-dom1.log
+(./atmiclt72 TEST2 GETINFOS2 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
 
