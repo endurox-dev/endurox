@@ -263,7 +263,7 @@ extern "C" {
 
 /** EINVAL on queues: */
 #define NDRX_QERR_MSG_EINVAL NDRX_XADMIN_ERR_FMT_PFX \
-    "Invalid queue config, see \"Enduro/X Administration Manual\", chapter 2."
+    "Invalid queue config, see \"Enduro/X Administration Manual\" (ex_adminman), chapter 2."
     
 /** ENOSPC on queues: */
 #define NDRX_QERR_MSG_ENOSPC NDRX_XADMIN_ERR_FMT_PFX \
