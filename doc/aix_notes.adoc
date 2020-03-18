@@ -162,13 +162,13 @@ export NDRX_DEBUG_CONF=/home/user1/endurox/sampleconfig/debug.conf
 export NDRX_CONFIG=/home/user1/endurox/sampleconfig/ndrxconfig.xml
 
 # Access for binaries
-export PATH=$PATH:/$HOME/endurox/dist/bin
+export PATH=\$PATH:/\$HOME/endurox/dist/bin
 
 # LIBPATH for .so 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/endurox/dist/lib
+export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/freeware/lib:\$HOME/endurox/dist/lib
 
 # UBF/FML field tables
-export FLDTBLDIR=$HOME/endurox/ubftest/ubftab
+export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 
 ################################################################################
 # In case if building with Postgresql DB database testing support
@@ -310,7 +310,7 @@ $ export CC=xlc
 $ export CXX=xlC
 $ cd /home/user1/endurox
 $ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON\
-      -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+      -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -318,6 +318,12 @@ $ make install
 Note that we use in above snippet a exported compiler variables (CC, CXX), 
 this is due to bug in CMake 3.9 where xlC is not detected correctly. 
 See: https://www.ibm.com/developerworks/aix/library/au-aix-install-config-apache-subversions/index.html
+
+*-DCMAKE_LIBRARY_PATH=/opt/freeware/lib* is only needed in case if building for
+PostgreSQL support. Otherwise system libs functions fine. Also if running
+Enduro/X standard test set with PostgreSQL, the */opt/freeware/lib* must be
+present in *LD_LIBRARY_PATH*.
+
 
 === Building the code with GCC
 
@@ -331,7 +337,8 @@ $ export CC=gcc
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON \
+    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make
 $ make install
 ---------------------------------------------------------------------
@@ -413,6 +420,9 @@ with system provided file. That could be done in following way:
 # ln -s /usr/ccs/lib/libxml2.a .
 ---------------------------------------------------------------------
 
+Other way around this is to use *-DCMAKE_LIBRARY_PATH=/opt/freeware/lib* parameter
+for CMake, so that build links against freeware libraries.
+
 
 === Rebuilding with other compiler
 
@@ -430,7 +440,8 @@ compilation terminated.
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON\
+    -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 -- The C compiler identification is GNU 4.8.3
 -- The CXX compiler identification is GNU 4.8.3
 -- Check for working C compiler: /usr/bin/gcc

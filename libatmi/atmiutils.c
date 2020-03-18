@@ -205,6 +205,7 @@ expublic mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode,
     struct mq_attr attr_int;
     struct mq_attr * p_at;
     mqd_t ret;
+    int errno_save;
 
     if (NULL==attr)
     {
@@ -223,10 +224,11 @@ expublic mqd_t ndrx_mq_open_at(char *name, int oflag, mode_t mode,
         p_at->mq_msgsize = G_atmi_env.msgsize_max;
 
     ret=ndrx_mq_open(name, oflag, mode, p_at);
-
+    errno_save=errno;
+    
     NDRX_LOG(6, "ndrx_mq_open_at(name=%s) returns 0x%lx (mq_maxmsg: %d mq_msgsize: %d)",
 	name, (long int) ret, p_at->mq_maxmsg, p_at->mq_msgsize);
-
+    errno=errno_save;
     return ret;
 }
 
@@ -547,7 +549,16 @@ restart:
                 NDRX_LOG(log_error, "Failed to send msg to ndrxd!");
 
                 if (NULL!=p_put_output)
-                    p_put_output("Failed to send msg to ndrxd!");
+                {
+                    if (EINVAL==ret)
+                    {
+                        p_put_output(NDRX_QERR_MSG_EINVAL);
+                    }
+                    else
+                    {
+                        p_put_output(NDRX_XADMIN_ERR_FMT_PFX "Failed to send msg to ndrxd!");
+                    }
+                }
 
                 goto out;
             }
@@ -560,7 +571,16 @@ restart:
                     (char *)call, call_size, flags, 0)))
             {
                 if (NULL!=p_put_output)
-                    p_put_output("Failed to send msg to ndrxd!");
+                {
+                    if (EINVAL==ret)
+                    {
+                        p_put_output(NDRX_QERR_MSG_EINVAL);
+                    }
+                    else
+                    {
+                        p_put_output(NDRX_XADMIN_ERR_FMT_PFX "Failed to send msg to ndrxd!");
+                    }
+                }
 
                 ret=EXFAIL;
                 goto out;

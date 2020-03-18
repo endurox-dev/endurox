@@ -31,6 +31,10 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +52,7 @@
 #include <nstdutil.h>
 #include "test71.h"
 
-#define __USE_GNU
+
 #include <dlfcn.h>
 
 /*---------------------------Externs------------------------------------*/
@@ -108,7 +112,6 @@ int main(int argc, char** argv)
     }
     
 out:
-
     /* close anyway.. */
     tpabort(0);
     tpclose();
@@ -117,5 +120,4 @@ out:
     return ret;
         
 }
-
 /* vim: set ts=4 sw=4 et smartindent: */

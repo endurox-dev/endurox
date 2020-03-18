@@ -121,7 +121,7 @@ support is added. Supported compilers: gcc, LLVM clang, IBM xlC.
 - Support forum: http://www.endurox.org/projects/endurox/boards
 
 - Binary builds (RPMs & DEBs) for various platforms are here: 
-http://www.endurox.org/projects/endurox/files
+https://www.mavimax.com/downloads
 
 - Documentation available here: http://www.endurox.org/dokuwiki/doku.php
 
@@ -468,6 +468,11 @@ processing listings across all supported OSes.
 
 - Version 7.0.24 released on 01/01/2020 (stabel) Support #506
 
+- Version 7.0.26 released on 09/03/2020 (stabel) Support #528, Support, #527, Support #524,
+Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
+
+- Version 7.0.28 released on 12/03/2020 (stabel, staging) Bug #530, Feature #313
+
 # Build configurations
 
 ## Configure make with: 
@@ -515,3 +520,6 @@ use '-DDEFINE_SANITIZE=1'
 - To disable PostgreSQL ECPG Driver build use '-DDISABLE_ECPG=ON' (for certain
 Operating systems ECPG, postgres-devel package is missing, thus let only pq
 driver to build)
+
+- To enable strict mutex checking on GNU platform, use '-DMUTEX_DEBUG=ON' (for
+GNU platforms only)

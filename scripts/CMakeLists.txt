@@ -45,6 +45,7 @@ install (PROGRAMS
 install (PROGRAMS
     init-d-rhel-endurox-user
     endurox-sys-env.sh
+    endurox_systemd.service.sample
     DESTINATION share/endurox/config)
 
 # vim: set ts=4 sw=4 et smartindent:

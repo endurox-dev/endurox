@@ -81,6 +81,15 @@ out:
 expublic int ndrx_xadmin_open_rply_q(void)
 {
     int ret = EXSUCCEED;
+    int err;
+    int erri;   /**< error index */
+#define NDRX_EIDX_EINVAL            0
+#define NDRX_EIDX_ENOSPC            1
+#define NDRX_EIDX_SYSERR            2
+    
+    char *reason[]={NDRX_QERR_MSG_EINVAL
+                NDRX_QERR_MSG_ENOSPC,
+                NDRX_QERR_MSG_SYSERR};
     
     NDRX_LOG(log_debug, "About to open xadmin's reply queue");
     /* Open new queue... */
@@ -90,10 +99,29 @@ expublic int ndrx_xadmin_open_rply_q(void)
                                             O_RDWR | O_CREAT,
                                             S_IWUSR | S_IRUSR, NULL)))
         {
-            NDRX_LOG(log_error, "Failed to open queue: [%s] err: %s",
-                                            G_config.reply_queue_str, strerror(errno));
-            userlog("Failed to open queue: [%s] err: %s",
-                                            G_config.reply_queue_str, strerror(errno));
+            err = errno;
+            switch (err)
+            {
+                case EINVAL:
+                    erri = NDRX_EIDX_EINVAL;
+                    break;
+                case ENOSPC:
+                    erri = NDRX_EIDX_ENOSPC;
+                    break;
+                default:
+                    erri = NDRX_EIDX_SYSERR;
+                    break;
+            }
+
+            NDRX_LOG(log_error, "Failed to open queue: [%s] - %s err: %s",
+                                            G_config.reply_queue_str, 
+                                            reason[erri], strerror(errno));
+            userlog("Failed to open queue: [%s] - %s err: %s",
+                                            G_config.reply_queue_str, 
+                                            reason[erri], strerror(errno));
+            
+            fprintf(stderr, "ERROR: %s\n", reason[erri]);
+
             ret=EXFAIL;
             goto out;
         }
@@ -101,7 +129,7 @@ expublic int ndrx_xadmin_open_rply_q(void)
         NDRX_LOG(log_error, "Reply queue [%s] opened!", G_config.reply_queue_str);
         /* Just give some warning for System */
         fprintf(stderr, "* Shared resources opened...\n");
-        
+
         M_is_reply_q_open=EXTRUE;
         
     }

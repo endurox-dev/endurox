@@ -162,6 +162,9 @@ extern "C" {
 #define NDRXD_COM_DSLEEP_RP         71   /**< tprecover ndrxd ping, req, int    */
 
 #define NDRXD_COM_MAX               71
+    
+/** This is sqv admin thread shutdown priv */
+#define NDRXD_COM_SVQADMIN_PRIV     NDRX_COM_SVQ_PRIV
 
 /* Command contexts */
 #define NDRXD_CTX_ANY               -1   /**< Any context...                    */
@@ -481,6 +484,7 @@ typedef struct
 
 /**
  * Generic command reply structure
+ * If changing, see ndrx_thstop_command_call_t. The command_id must match.
  */
 typedef struct
 {

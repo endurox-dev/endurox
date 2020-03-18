@@ -66,7 +66,7 @@ expublic int appconfig_rsp_process(command_reply_t *reply, size_t reply_len)
     
     if (cfg->rply.error_code)
     {
-        fprintf(stderr, XADMIN_ERROR_FORMAT_PFX "%s\n", cfg->rply.error_msg);
+        fprintf(stderr, NDRX_XADMIN_ERR_FMT_PFX "%s\n", cfg->rply.error_msg);
         return cfg->rply.error_code;
     }
     else

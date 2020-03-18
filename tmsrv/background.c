@@ -66,8 +66,7 @@
 expublic pthread_t G_bacground_thread;
 expublic int G_bacground_req_shutdown = EXFALSE;    /* Is shutdown request? */
 
-
-exprivate pthread_mutex_t M_wait_mutex = PTHREAD_MUTEX_INITIALIZER;
+MUTEX_LOCKDECL(M_wait_mutex);
 exprivate pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
 

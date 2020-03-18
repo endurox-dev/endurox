@@ -49,11 +49,11 @@
 
 int system_dbg(char *cmd)
 {
-	int ret;
-	fprintf(stderr, "************ RUNNING TEST: [%s] *********************\n", cmd);
-	ret=system(cmd);
-	fprintf(stderr, "************ FINISHED TEST: [%s] with %d ************\n", cmd, ret);
-	return ret;
+    int ret;
+    fprintf(stderr, "************ RUNNING TEST: [%s] *********************\n", cmd);
+    ret=system(cmd);
+    fprintf(stderr, "************ FINISHED TEST: [%s] with %d ************\n", cmd, ret);
+    return ret;
 }
 
 Ensure(test000_system)
@@ -575,6 +575,20 @@ Ensure(test072_qos)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test073_netact)
+{
+    int ret;
+    ret=system_dbg("test073_netact/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test074_sanitulog)
+{
+    int ret;
+    ret=system_dbg("test074_sanitulog/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -698,6 +712,11 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test070_ubfhook);
     add_test(suite, test071_buildtools);
     add_test(suite, test072_qos);
+    add_test(suite, test073_netact);
+
+#ifndef EX_OS_DARWIN
+    add_test(suite, test074_sanitulog);
+#endif
     
     return suite;
 }

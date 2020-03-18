@@ -147,7 +147,7 @@ expublic int xa_recover_entry(struct xa_switch_t *sw, XID *xid, long count, int 
 expublic int xa_forget_entry(struct xa_switch_t *sw, XID *xid, int rmid, long flags);
 expublic int xa_complete_entry(struct xa_switch_t *sw, int *handle, int *retval, int rmid, long flags);
 
-exprivate int read_tx_block(FILE *f, char *block, int len);
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg);
 exprivate int read_tx_from_file(char *fname, char *block, int len);
 
 struct xa_switch_t ndrxqstatsw = 
@@ -839,7 +839,8 @@ expublic int xa_commit_entry(struct xa_switch_t *sw, XID *xid, int rmid, long fl
                 goto xa_err;
             }
             
-            if (EXSUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd)))
+            if (EXSUCCEED!=read_tx_block(f, (char *)&msg_to_upd, sizeof(msg_to_upd), 
+                    fname_msg, "xa_commit_entry"))
             {
                 NDRX_LOG(log_error, "ERROR! xa_commit_entry() - failed to read data block!");
                 goto xa_err;
@@ -940,9 +941,11 @@ xa_err:
  * Reads the header block
  * @param block
  * @param p_len
- * @return 
+ * @param fname name for debug
+ * @param dbg_msg debug message
+ * @return EXSUCCEED/EXFAIL
  */
-exprivate int read_tx_block(FILE *f, char *block, int len)
+exprivate int read_tx_block(FILE *f, char *block, int len, char *fname, char *dbg_msg)
 {
     int act_read;
     int ret = EXSUCCEED;
@@ -951,11 +954,11 @@ exprivate int read_tx_block(FILE *f, char *block, int len)
     {
         int err = ferror(f);
         
-        NDRX_LOG(log_error, "ERROR! Failed to read tx file: req_read=%d, read=%d: %s",
-                len, act_read, strerror(err));
+        NDRX_LOG(log_error, "ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",
+                dbg_msg, fname, len, act_read, strerror(err));
         
-        userlog("ERROR! Failed to read tx file: req_read=%d, read=%d: %s",
-            len, act_read, strerror(err));
+        userlog("ERROR! Failed to read tx file (%s: %s): req_read=%d, read=%d: %s",
+            dbg_msg, fname, len, act_read, strerror(err));
         EXFAIL_OUT(ret);
     }
     
@@ -986,7 +989,7 @@ exprivate int read_tx_from_file(char *fname, char *block, int len)
         EXFAIL_OUT(ret);
     }
     
-    ret = read_tx_block(f, block, len);
+    ret = read_tx_block(f, block, len, fname, "read_tx_from_file");
     
 out:
 
@@ -1240,7 +1243,8 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 EXFAIL_OUT(ret);
             }
 
-            if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block)))
+            if (EXSUCCEED!=read_tx_block(f, (char *)p_block, sizeof(*p_block), 
+                    filename, "tmq_storage_get_blocks"))
             {
                 NDRX_LOG(log_error, "Failed to read [%s]: %s", 
                    filename, strerror(errno));
@@ -1295,7 +1299,7 @@ expublic int tmq_storage_get_blocks(int (*process_block)(union tmq_block **p_blo
                 {
                     if (EXSUCCEED!=read_tx_block(f, 
                             p_block->msg.msg+bytes_extra, 
-                            bytes_to_read))
+                            bytes_to_read, filename, "tmq_storage_get_blocks 2"))
                     {
                         NDRX_LOG(log_error, "Failed to read [%s]: %s", 
                            filename, strerror(errno));

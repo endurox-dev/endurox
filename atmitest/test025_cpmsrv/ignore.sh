@@ -6,6 +6,7 @@ trap 'echo Ignoring SIGINT' SIGINT
 trap 'echo Ignoring SIGTERM' SIGTERM
 
 while [[ 1 == 1 ]]; do
-        sleep 1
+	# restart at interrupts
+	read < ./test25_sleep.fifo
 done
 

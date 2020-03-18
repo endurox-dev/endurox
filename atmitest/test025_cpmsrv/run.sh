@@ -68,9 +68,10 @@ export NDRX_SILENT=Y
 # Test process count
 PROC_COUNT=100
 #
-# Having some bash forks...
+# Having some bash forks... (now with read from pipe - no forks... - thus the count must be exact...)
+# when all bins have started...
 #
-PROC_COUNT_DIFFALLOW=103
+PROC_COUNT_DIFFALLOW=100
 
 PSCMD="ps -ef"
 if [ "$(uname)" == "FreeBSD" ]; then
@@ -85,6 +86,7 @@ function go_out {
     xadmin stop -y
     xadmin down -y
     xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh
+    rm test25_sleep.fifo
 
     popd 2>/dev/null
     exit $1
@@ -124,6 +126,8 @@ rm *.log
 # Kill the children test processes if any
 #
 xadmin killall chld1.sh chld2.sh chld3.sh chld4.sh chld5.sh chld6.sh ndrxbatchmode whileproc.sh
+rm test25_sleep.fifo 2>/dev/null
+mkfifo test25_sleep.fifo || exit 99
 
 xadmin down -y
 xadmin start -y || go_out 1

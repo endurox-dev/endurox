@@ -81,7 +81,9 @@ Parameter indicates time-out value for packet receive in seconds. This is
 socket option. Receive is initiate when it either there is poll even on socket
 or incomplete logical message is received and then next 'recv()' is called.
 If the message part is not received in time, then socket is closed and connection
-is restarted.
+is restarted. This parameter also is used in case if target socket to which msg
+is being sent is full for this given time period. If msg is not fully sent
+and time out is reached, the connection is restarted, outgoing msg is being dropped.
 
 [*-b* 'BACKLOG_NR']::
 Number of backlog entries. This is server's (passive mode) connection queue, before
@@ -96,10 +98,18 @@ Interval in seconds between which zero length message is wrote to socket.
 This is useful to keep the connection option over the firewalls, etc.
 OPTIONAL parameter. Default value 0 (Do not send).
 
+[*-a* 'INCOMING_RECV_ACTIVITY_SEC']::
+If set, then this is maximum time into which some packet from network must be
+received. If no receive activity on socket is done, the connection is reset.
+The *0* value disables this functionality. The default value is '-z'
+multiplied by 2. Note that checks are performed with '-c' interval.
+intervals. Usually this is used with '-z', so that it is guaranteed that during
+that there will be any traffic.
+
 [*-f*]::
-Use 'EnduroX Standard Network TLV Protocol' instead of native data structures
-for sending data over the network. This also ensure some backwards compatiblity
-between EnduroX versions. But cases for backwards compatility must be checked
+Use 'Enduro/X Standard Network TLV Protocol' instead of native data structures
+for sending data over the network. This also ensure some backwards compatibility
+between Enduro/X versions. But cases for backwards compatibility must be checked
 individually.
 
 [*-g* 'PGP_RECIPIENT']::

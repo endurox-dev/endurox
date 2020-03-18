@@ -605,8 +605,10 @@ expublic int cpm_exec(cpm_process_t *c)
     /* clone our self */
     MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
-    MUTEX_UNLOCK_V(M_forklock);
 
+    /* MUTEX_UNLOCK_V(M_forklock); mutex is not valid for child...
+     * thus unlock bellow...
+    */
     if( pid == 0)
     {
         /* close parent resources... Bug #176 
@@ -723,6 +725,7 @@ expublic int cpm_exec(cpm_process_t *c)
     }
     else if (EXFAIL!=pid)
     {
+        MUTEX_UNLOCK_V(M_forklock);
         cpm_set_cur_time(c);
         c->dyn.pid = pid;
         c->dyn.cur_state = CLT_STATE_STARTED;
@@ -742,6 +745,7 @@ expublic int cpm_exec(cpm_process_t *c)
     }
     else
     {
+        MUTEX_UNLOCK_V(M_forklock);
         userlog("Failed to fork: %s", strerror(errno));
     }
     

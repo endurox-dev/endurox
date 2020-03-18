@@ -138,7 +138,7 @@ xadmin down -y
 xadmin start -y || go_out 1
 
 echo "Let clients to boot & links to establish..."
-sleep 80
+sleep 30
 
 RET=0
 
@@ -267,8 +267,8 @@ ensure_field g@db15 SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV158 0
 ensure_field g@db15 SV15KEY1 EX_CACHE_OPEXPR SV15KEY1-SV159 0
 
 xadmin bc -t CACHED
-echo "Sleep 410, to wait for some free slot..."
-sleep 410
+echo "Sleep 102, to wait for some free slot..."
+sleep 102
 
 
 (time ./testtool48 -sTESTSV15 -b '{"T_STRING_FLD":"KEY1","T_STRING_2_FLD":"DOM1","T_SHORT_FLD":"8"}' \

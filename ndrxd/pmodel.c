@@ -804,6 +804,7 @@ expublic int remove_startfail_process(pm_node_t *p_pm, char *svcnm,
         /* Remove bridge related flags. */
         p_pm->flags&=~SRV_KEY_FLAGS_BRIDGE;
         p_pm->flags&=~SRV_KEY_FLAGS_SENDREFERSH;
+        p_pm->flags&=~SRV_KEY_FLAGS_CONNECTED;
         p_pm->nodeid = 0;
     }
     
@@ -881,7 +882,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             void (*p_startup_progress)(command_startstop_t *call, pm_node_t *p_pm, int calltype),
             long *p_processes_started,
             int no_wait,
-            int *abort)
+            int *doabort)
 {
     int ret=EXSUCCEED;
     pid_t pid;
@@ -928,7 +929,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
      */
     MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
-    MUTEX_UNLOCK_V(M_forklock);
     
     if( pid == 0)
     {
@@ -1099,6 +1099,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     {
         ndrx_stopwatch_t timer;
         int finished = EXFALSE;
+        
+        /* parent unlock */
+        MUTEX_UNLOCK_V(M_forklock);
+        
         /* Add stuff to PIDhash */
         p_pm->pid = pid;
         /* currently assume they are the same */
@@ -1129,10 +1133,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             {
                 NDRX_LOG(log_debug, "Waiting for response from srv...");
                 /* do command processing for now */
-                command_wait_and_run(&finished, abort);
+                command_wait_and_run(&finished, doabort);
                 /* check the status? */
             } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstartwait && 
-                            NDRXD_PM_STARTING==p_pm->state && !(*abort));
+                            NDRXD_PM_STARTING==p_pm->state && !(*doabort));
             
             if (NDRXD_PM_RUNNING_OK==p_pm->state && p_pm->conf->sleep_after)
             {
@@ -1142,7 +1146,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 do
                 {
                     NDRX_LOG(log_debug, "In process after start sleep...");
-                    command_wait_and_run(&finished, abort);
+                    command_wait_and_run(&finished, doabort);
                 } while (ndrx_stopwatch_get_delta_sec(&sleep_timer) < p_pm->conf->sleep_after);
                 
             }
@@ -1168,6 +1172,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     }
     else
     {
+        /* parent unlock */
+        MUTEX_UNLOCK_V(M_forklock);
+        
         NDRXD_set_error_fmt(NDRXD_EOS, "Fork failed: %s", strerror(errno));
         p_pm->state = NDRXD_PM_DIED;
         p_pm->state_changed = SANITY_CNT_START;

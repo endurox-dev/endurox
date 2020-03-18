@@ -31,6 +31,10 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +45,6 @@
 #include <atmi_int.h>
 #include <sys_mqueue.h>
 
-#define __USE_GNU
 #include <dlfcn.h>
 
 #include "atmi_shm.h"
