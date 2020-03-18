@@ -87,7 +87,7 @@ expublic int ndrx_xadmin_open_rply_q(void)
 #define NDRX_EIDX_ENOSPC            1
 #define NDRX_EIDX_SYSERR            2
     
-    char *reason[]={NDRX_QERR_MSG_EINVAL
+    char *reason[]={NDRX_QERR_MSG_EINVAL,
                 NDRX_QERR_MSG_ENOSPC,
                 NDRX_QERR_MSG_SYSERR};
     
@@ -120,7 +120,7 @@ expublic int ndrx_xadmin_open_rply_q(void)
                                             G_config.reply_queue_str, 
                                             reason[erri], strerror(errno));
             
-            fprintf(stderr, "ERROR: %s\n", reason[erri]);
+            fprintf(stderr, "%s\n", reason[erri]);
 
             ret=EXFAIL;
             goto out;
