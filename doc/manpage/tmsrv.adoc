@@ -160,6 +160,20 @@ grant execute on dbms_system to <database_user>;  (If using Oracle 10.2)
 grant execute on dbms_xa to <database_user>; (If using Oracle 10.2)
 --------------------------------------------------------------------------------
 
+
+ORACLE RAC SETTINGS
+-------------------
+If planing to use Oracle RAC, the to successfully process distributed transaction
+across binaries which are connected to different RAC nodes, Oracle RAC DTP Service
+must be configured. If this is not possible, then other option is to configured
+particular DTP binaries to connect only to one RAC node (which gives less fault
+tolerance).
+
+If this above is not configured and say two binaries are working with same XA
+transaction, one binary is connected to first RAC node and other binary with second RAC node,
+the transaction will not work, as XA API will not see the transaction on other
+node than where it was started.
+
 EXIT STATUS
 -----------
 *0*::
