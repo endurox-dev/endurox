@@ -150,7 +150,9 @@ expublic int ndrx_buildsrv_generate_code(FILE **f, char *cfile, int thread_optio
         fprintf(*f, "        NULL,\n");
         fprintf(*f, "        NULL,\n");
         fprintf(*f, "        NULL,\n");
-        fprintf(*f, "        NULL\n");
+        fprintf(*f, "        NULL,\n");
+        fprintf(*f, "        tpsvrthrinit,\n");
+        fprintf(*f, "        tpsvrthrdone\n");
         fprintf(*f, "    };\n");
         fprintf(*f, "#ifdef TMMAINEXIT\n");
         fprintf(*f, "#include \"mainexit.h\"\n");

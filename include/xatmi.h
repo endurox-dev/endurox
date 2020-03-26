@@ -691,6 +691,8 @@ struct tmsvrargs_t
   void * reserved2;                 /**< Reserved for future use              */
   void * reserved3;                 /**< Reserved for future use              */
   void * reserved4;                 /**< Reserved for future use              */
+  int (*p_tpsvrthrinit)(int, char **); /**< thread init func                  */
+  void (*p_tpsvrthrdone)(void);        /**< thread done func                  */
 };
 
 /*---------------------------Globals------------------------------------*/
@@ -771,6 +773,9 @@ extern NDRX_API int tpsetcallinfo(const char *msg, UBFH *obuf, long flags);
 /* in external application: */
 extern NDRX_API void tpsvrdone(void);
 extern NDRX_API int tpsvrinit (int argc, char **argv);
+
+extern NDRX_API int tpsvrthrinit(int argc, char **argv);
+extern NDRX_API void tpsvrthrdone (void);
 
 /* Poller & timer extension: */
 extern NDRX_API int tpext_addpollerfd(int fd, uint32_t events, 
