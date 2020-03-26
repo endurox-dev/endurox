@@ -45,6 +45,7 @@
 
 #include "srv_int.h"
 #include <atmi_int.h>
+#include <tx.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -183,7 +184,7 @@ out:
 /**
  * Forward the call to NDRX
  */
-int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
+expublic int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
             void (*in_tpsvrdone)(void), long flags) 
 {
 
@@ -202,7 +203,7 @@ int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **),
  * @param tmsvrargs server startup info
  * @return EXSUCCEED/EXFAIL
  */
-int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
+expublic int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
 {
     int ret = EXSUCCEED;
     
@@ -214,6 +215,7 @@ int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
     }
     
     ndrx_G_tmsvrargs = tmsvrargs;
+    
     if (NULL!=tmsvrargs)
     {
         ndrx_G_p_xaswitch = tmsvrargs->xa_switch;
@@ -229,5 +231,85 @@ int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs)
 out:
     return ndrx_main(argc, argv);
 }
+
+/**
+ * Default thread init
+ * @param argc
+ * @param argv
+ * @return 
+ */
+expublic int tpsvrthrinit(int argc, char **argv)
+{
+    NDRX_LOG(log_info, "Default tpsvrthrinit()");
+    tx_open();
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Default version of server init as required in API standard.
+ * 
+ * @param argc command line argument count
+ * @param argv array of cli arguments
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpsvrinit(int argc, char **argv)
+{
+    NDRX_LOG(log_info, "Default tpsvrinit()");
+    
+    /*
+     * Only if not multi-threaded
+     */
+    if (!_tmbuilt_with_thread_option)
+    {
+        if (NULL!=ndrx_G_tmsvrargs->p_tpsvrthrinit)
+        {
+            return ndrx_G_tmsvrargs->p_tpsvrthrinit(argc, argv);
+        }
+        else
+        {
+            userlog("tpsvrthrinit() not set");
+        }
+    }
+}
+
+/**
+ * Default function for server thread done
+ */
+expublic void tpsvrthrdone(void)
+{
+    NDRX_LOG(log_info, "Default tpsvrthrdone()");
+    tx_close();
+}
+
+/**
+ * Server done, default version
+ */
+expublic void tpsvrdone(void)
+{
+    
+    NDRX_LOG(log_info, "Default tpsvrdone()");
+    
+    /* only for single threaded */
+    if (!_tmbuilt_with_thread_option)
+    {
+        /* if calling from older version with direct binary upgrade
+         * then the only chance it is not backwards compatible is in case
+         * if default tpsrvinit and done is used.
+         * all other versions may directly upgrade as, these fields are not
+         * used else where
+         * (exept in MT mode)
+         */
+        if (NULL!=ndrx_G_tmsvrargs->p_tpsvrthrdone)
+        {
+            ndrx_G_tmsvrargs->p_tpsvrthrdone();
+        }
+        else
+        {
+            userlog("tpsvrthrdone() not set");
+        }
+    }
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
