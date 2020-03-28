@@ -779,6 +779,11 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         /* Remove fd from set->fdtab & from hash */
         EXHASH_DEL(set->mqds, tmp);
         NDRX_FREE((char *)tmp);
+        
+         /* resize/realloc events list, add fd */
+        set->nrfmqds--;
+        
+        NDRX_LOG(log_info, "set nrfmqds decrement to %d", set->nrfmqds);
     }
     else
     {

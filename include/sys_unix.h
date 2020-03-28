@@ -56,10 +56,12 @@ extern "C" {
     
 #include <sys_mqueue.h>
     
-#if defined(EX_USE_SYSVQ) 
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
+    
 /* Feature #281 */
 #include <sys_svq.h>
 #include <poll.h>
+
 #elif defined(EX_USE_EPOLL)
 #include <sys/epoll.h>
 #elif defined(EX_USE_KQUEUE)
@@ -71,7 +73,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if defined(EX_USE_SYSVQ)
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
     
 #define EX_EPOLL_CTL_ADD        1
 #define EX_EPOLL_CTL_DEL        2
@@ -231,6 +233,42 @@ typedef struct {
 } ndrx_osx_pthread_cond_t;
 
 #endif
+
+#ifdef EX_USE_SVAPOLL
+
+#ifndef EX_OS_AIX
+
+/**
+ * Use for linux dev build only...
+ * not functional, to simulate aix
+ */
+struct  ndrx_pollmsg
+{
+    int       msgid;      /**< message queue id */
+    short     reqevents;  /**< requested events */
+    short     rtnevents;  /**< returned events  */
+};
+
+/**
+ * Use for linux dev build only...
+ * not functional, to simulate aix
+ */
+struct  ndrx_pollfd
+{
+    int    fd;          /**< file descriptor */
+    short  events;      /**< requested events */
+    short  revents;     /**< returned events */
+};
+
+#else
+
+/* in aix just use direct defines */
+#define ndrx_pollmsg pollmsg
+#define ndrx_pollfd pollfd
+
+#endif
+
+#endif
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -363,7 +401,7 @@ extern NDRX_API string_list_t* ndrx_sys_mqueue_list_make_emq(char *qpath, int *r
  */
 extern NDRX_API int ndrx_sys_env_test(pid_t pid, regex_t *p_re);
 
-#ifdef EX_USE_SYSVQ
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
 
 #define ndrx_sys_mqueue_list_make ndrx_sys_mqueue_list_make_svq
 

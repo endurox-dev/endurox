@@ -523,3 +523,7 @@ driver to build)
 
 - To enable strict mutex checking on GNU platform, use '-DMUTEX_DEBUG=ON' (for
 GNU platforms only)
+
+- To force use AIX System V Polling on Linux (for dev build only, non functional),
+add '-DDEFINE_SVAPOLL=ON'. Default on AIX.
+

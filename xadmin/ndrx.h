@@ -266,7 +266,7 @@ extern int cmd_ci(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_n
 extern int cmd_pubfdb(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 /* System V specifics */
-#ifdef EX_USE_SYSVQ
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
 extern int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 #endif
 

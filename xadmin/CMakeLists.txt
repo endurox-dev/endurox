@@ -106,7 +106,7 @@ add_custom_command(
   COMMAND exembedfile ../include/ndrx_config.h ndrx_config
   DEPENDS scripts/gen_test_local.pscript)
 
-if(DEFINED EX_USE_SYSVQ)
+if(DEFINED EX_USE_SYSVQ OR DEFINED EX_USE_SVAPOLL)
     SET(SOURCE1 "cmd_svmaps.c")
 endif()
 
