@@ -54,6 +54,7 @@
 #include <atmi.h>   /**< little bit mess with dependencies as we are at nstd... */
 #include "nstd_shm.h"
 #include <sys_svq.h>
+#include <ndrx_config.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -367,6 +368,7 @@ expublic int ndrx_svqshm_init(int attach_only)
         EXFAIL_OUT(ret);
     }
     
+#ifdef EX_USE_SYSVQ
     /* init the support thread */
     if (!attach_only && EXSUCCEED!=ndrx_svq_event_init())
     {
@@ -374,6 +376,7 @@ expublic int ndrx_svqshm_init(int attach_only)
         userlog("Failed to init System V queue monitoring thread!");
         EXFAIL_OUT(ret);
     }
+#endif
             
     ndrx_G_svqshm_init = EXTRUE;
 out:

@@ -41,11 +41,19 @@
 
 /*---------------------------Includes-----------------------------------*/
 
+#include <ndrx_config.h>
+
+#ifdef EX_OS_AIX
+/* This is for aix to active extended poll */
+#define _MSGQSUPPORT
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/time.h>
 
 #include <ndrstandard.h>
 
@@ -54,6 +62,9 @@
 #include <exhash.h>
 #include <ndebug.h>
 #include <sys_svq.h>
+
+
+#include "sys_unix.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -71,8 +82,11 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * For SystemV:
  * Close queue. Basically we remove the dynamic data associated with queue
  * the queue id by it self continues to live on... until it is unlinked
+ * 
+ * For svapoll: just remove the allocated block.
  * @param mqd queue descriptor
  * @return EXSUCCEED/EXFAIL
  */
@@ -80,6 +94,7 @@ expublic int ndrx_svq_close(mqd_t mqd)
 {
     NDRX_LOG(log_debug, "close %p mqd", mqd);
     
+#ifdef EX_USE_SYSVQ
     if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
     {   
         /* close the queue 
@@ -110,6 +125,11 @@ expublic int ndrx_svq_close(mqd_t mqd)
         errno = EBADF;
         return EXFAIL;
     }
+#endif
+    
+#ifdef EX_USE_SVAPOLL
+    NDRX_FREE(mqd);
+#endif
 }
 
 /**
@@ -223,13 +243,14 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
             NDRX_LOG(log_debug, "Opening in non blocked mode");
         }
     }
-
+#ifdef EX_USE_SYSVQ
     /* Init mutexes... */
     pthread_spin_init(&mq->rcvlock, PTHREAD_PROCESS_PRIVATE);
     pthread_spin_init(&mq->rcvlockb4, PTHREAD_PROCESS_PRIVATE);
     pthread_spin_init(&mq->stamplock, PTHREAD_PROCESS_PRIVATE);
     pthread_mutex_init(&mq->barrier, NULL);
     pthread_mutex_init(&mq->qlock, NULL);
+#endif
     
 out:
     
@@ -257,9 +278,12 @@ out:
  * @param __abs_timeout absolute time out according to mq_timedreceive(3)
  * @return data len received
  */
+
 expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen, 
         unsigned int *priop, const struct timespec *__abs_timeout)
 {
+    
+#ifdef EX_USE_SYSVQ
     ssize_t ret = maxlen;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
@@ -312,7 +336,142 @@ out:
     
     errno = err;
     return ret;
+#endif
+    
+#ifdef EX_USE_SVAPOLL
+    /* in case of SVAPOLL
+     * in loop while time left wait for even in poll
+     * once we get something we try to receive,
+     * if noting to receive, go to sleep (if time left)
+     * if no time left, just return TPETIME.
+     * In the same way if poll gives timeout, just return TPETIME.
+     */
+    
+    int wait_left;
+    struct timeval  timeval;
+    int ret;
+    int err;
+    long *l;
+    
+    VALIDATE_MQD;
+    
+    NDRX_LOG(log_debug, "receiving msg mqd=%p, ptr=%p, maxlen=%d flags: %ld qid: %d",
+                mqd, ptr, (int)maxlen, mqd->attr.mq_flags, mqd->qid);
+    
+    if (maxlen<sizeof(long))
+    {
+        NDRX_LOG(log_error, "Invalid message size, the minimum is %d but got %d", 
+                (int)sizeof(long), (int)maxlen);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+    
+    l = (long *)ptr;    
+    *l = 1;
+    
+    ret=msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT);
+    
+    /* if blocked mode is requested... */
+    if (ret == EXFAIL && (ENOMSG!=errno || mqd->attr.mq_flags & O_NONBLOCK))
+    {
+        /* if no msg, then continue with bellow */
+        err = errno;
+        NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
+        
+        /* translate to posix */
+        if (ENOMSG==err)
+        {
+            err = EAGAIN;
+        }
+        
+        errno = err;
+        
+                    
+        goto out;
+    }
+    else 
+    {
+        /* got result */
+        goto out;
+    }
+    
+    gettimeofday (&timeval, NULL);
+    wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
+    
+    /* wait for message...
+     * firstly attempt to send, if NO MSG, then wait on POLL
+     */
+    while (wait_left>0)
+    {
+        /* do poll on queue.. */
+        struct ndrx_pollmsg msgs[1];
+        
+        msgs[0].msgid=mqd->qid;
+        msgs[0].rtnevents = POLLIN;
+        msgs[0].reqevents = 0;
+        
+        ret = poll((void *)&msgs, (1<<16)|(0), wait_left);
+        
+        if (ret>0)
+        {
+            /* OK, can try to receive something */
+            if (EXFAIL==(ret = msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT)))
+            {
+                err = errno;
+                /* translate the error codes */
+                if (ENOMSG==err)
+                {
+                    NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
+                    /* OK try again, some else downloaded msg.. */
+                    errno = EAGAIN;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
+                    errno = err;
+                    
+                    /* termiante the process.. */
+                    break;
+                }
+            }
+            else if (0==ret)
+            {
+                errno = ETIMEDOUT;
+                break;
+            }
+            else
+            {
+                err = errno;
+                
+                /* this is poll error */
+                NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid, 
+                        wait_left, strerror(err));
+                errno = err;
+
+                /* terminate the receive */
+                break;
+            }
+
+            gettimeofday (&timeval, NULL);
+            wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
+        }
+    }
+
+out:    
+    if (ret>=0)
+    {
+        ret=NDRX_SVQ_OUTLEN(ret);
+    }
+    
+    return ret;
+    
+#endif
+    
 }
+
 
 /**
  * Sned message with timeout option
@@ -327,6 +486,8 @@ out:
 expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len, 
         unsigned int prio, const struct timespec *__abs_timeout)
 {
+    
+#ifdef EX_USE_SYSVQ
     ssize_t ret = len;
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
@@ -382,6 +543,130 @@ out:
     
     errno = err;
     return ret;
+    
+#endif
+    
+#ifdef EX_USE_SVAPOLL
+    
+    /* Try to send, if queue full, wait on poll
+     * if poll says ok, try to send,.. again if full, wait on poll
+     * until is sent or process times out..
+     */
+    
+    int wait_left;
+    struct timeval  timeval;
+    int ret;
+    int err;
+    long *l;
+    
+    VALIDATE_MQD;
+    
+    if (len<sizeof(long))
+    {
+        NDRX_LOG(log_error, "Invalid message size, the minimum is %d but got %d", 
+                (int)sizeof(long), (int)len);
+        errno = EINVAL;
+        EXFAIL_OUT(ret);
+    }
+    
+    l = (long *)ptr;    
+    *l = 1;
+    
+    ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT);
+    
+    /* so if other error, or we get blocking condition when not requested */
+    if (ret == EXFAIL && (EAGAIN!=errno || mqd->attr.mq_flags & O_NONBLOCK))
+    {
+        /* if no msg, then continue with bellow */
+        err = errno;
+        NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
+        errno = err;
+                    
+        goto out;
+    }
+    else 
+    {
+        /* got result */
+        goto out;
+    }
+    
+    gettimeofday (&timeval, NULL);
+    wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
+    
+    /* wait for message...
+     * firstly attempt to send, if NO MSG, then wait on POLL
+     */
+    while (wait_left>0)
+    {
+        /* do poll on queue.. */
+        struct ndrx_pollmsg msgs[1];
+        
+        msgs[0].msgid=mqd->qid;
+        msgs[0].rtnevents = POLLOUT;
+        msgs[0].reqevents = 0;
+        
+        ret = poll((void *)&msgs, (1<<16)|(0), wait_left);
+        
+        if (ret>0)
+        {
+            /* OK, can try to receive something */
+            if (EXFAIL==(ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT)))
+            {
+                err=errno;
+                
+                /* translate the error codes */
+                if (EAGAIN==err)
+                {
+                    NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
+                    /* OK try again, some else downloaded msg.. */
+                    errno = err;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
+                    errno = err;
+                    
+                    /* termiante the process.. */
+                    break;
+                }
+            }
+            else if (0==ret)
+            {
+                errno = ETIMEDOUT;
+                break;
+            }
+            else
+            {
+                err = errno;
+                
+                /* this is poll error */
+                NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid, 
+                        wait_left, strerror(err));
+                errno = err;
+
+                /* termiante the receive */
+                break;
+            }
+
+            gettimeofday (&timeval, NULL);
+            wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
+        }
+    }
+
+out:    
+    /* in case of error, errno is set! */
+    
+    if (ret>=0)
+    {
+        ret=NDRX_SVQ_OUTLEN(ret);
+    }
+    
+    return ret;
+    
+#endif
 }
 
 /**

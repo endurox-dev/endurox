@@ -133,7 +133,6 @@ expublic cpm_process_t * cpm_client_get(char *tag, char *subsect)
  */
 expublic cpm_process_t * cpm_get_client_by_pid(pid_t pid)
 {
-    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     
@@ -156,7 +155,6 @@ expublic cpm_process_t * cpm_get_client_by_pid(pid_t pid)
  */
 expublic cpm_process_t * cpm_start_all(void)
 {
-    int ret = EXSUCCEED;
     cpm_process_t *c = NULL;
     cpm_process_t *ct = NULL;
     

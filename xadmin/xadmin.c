@@ -370,7 +370,7 @@ cmd_mapping_t M_command_map[] =
     {"cacheinval",cmd_ci,EXFAIL,                2,  4,  1, 
                 "Alias for `ci' "
                 , NULL},
-#ifdef EX_USE_SYSVQ
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
     {"svmaps",    cmd_svmaps,EXFAIL,            1,  6,  0, 
                 "Print System V Queue mapping tables\n"
                 "\tUsage: svmaps [OPTION]...\n"

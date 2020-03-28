@@ -157,6 +157,12 @@ struct ndrx_svq_info
 {
     char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string               */
     int qid;                    /**< System V Queue ID                      */
+    
+    mode_t mode;                /**< permissions on new queue               */
+    struct mq_attr attr;        /**< attributes for the queue, if creating  */
+    
+#ifdef EX_USE_SYSVQ
+    
     /* Locks for synchronous or other event wakeup */
     
     /* Using spinlocks for better performance  */
@@ -175,9 +181,6 @@ struct ndrx_svq_info
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
     
-    mode_t mode;                /**< permissions on new queue               */
-    struct mq_attr attr;        /**< attributes for the queue, if creating  */
-    
     /**
      * thread operating with queue... 
      * Also note that one thread might operate with multiple queues.
@@ -187,6 +190,7 @@ struct ndrx_svq_info
      * in high level, Object API modes.
      */
     pthread_t thread;
+#endif
     
     char *self;                /**< ptr to self for hash                    */
     EX_hash_handle hh;         /**< delete hash                             */

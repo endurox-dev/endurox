@@ -134,7 +134,7 @@ expublic int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew, long f
         
         NDRX_STRCPY_SAFE(q.rqaddr, elt->qname);
         
-#ifdef EX_USE_SYSVQ
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
         q.rqid = ndrx_svqshm_get(q.rqaddr, 0, 0);
 #endif
         

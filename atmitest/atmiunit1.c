@@ -683,6 +683,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite,test057_invlcmd);
     
 #ifdef EX_USE_SYSVQ
+    /* for SVAPOLL not needed, as no rqaddr principle */
     add_test(suite, test058_systemv);
 #endif
     

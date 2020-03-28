@@ -40,9 +40,9 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
 
-#if 1==EX_USE_SYSVQ
+#if defined(EX_USE_SYSVQ) || defined(EX_USE_SVAPOLL)
 #include <sys_svq.h>
-#elif 1==EX_USE_EMQ
+#elif defined(EX_USE_EMQ)
 /* use queue emulation: */
 #include <sys_emqueue.h>
 #else
@@ -52,7 +52,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#if 1==EX_USE_SYSVQ
+#if 1==EX_USE_SYSVQ ||1==EX_USE_SVAPOLL
     
 /* Feature #281 */
 #define  ndrx_mq_timedreceive ndrx_svq_timedreceive
@@ -105,7 +105,7 @@ extern "C" {
 
 #endif
     
-#if 1==EX_USE_SYSVQ
+#if 1==EX_USE_SYSVQ || 1==EX_USE_SVAPOLL
 
 /* Feature #281 */
 #define  ndrx_mq_open         ndrx_svq_open

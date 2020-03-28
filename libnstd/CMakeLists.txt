@@ -58,6 +58,11 @@ elseif(DEFINED EX_USE_FDPOLL)
     SET(NSTD_POLLER "sys_fdpoll.c")
 elseif(DEFINED EX_USE_EPOLL)
     SET(NSTD_POLLER "sys_epoll.c")
+elseif(DEFINED EX_USE_SVAPOLL)
+    # AIX Poll - directly on systemv queues
+    SET(NSTD_POLLER "sys_svapoll.c")
+    SET(NSTD_POLLER_2 "sys_svq.c")
+    SET(NSTD_POLLER_3 "sys_svqshm.c")
 endif()
 
 message("CMake CMAKE_OS_NAME  = ${CMAKE_OS_NAME}")
