@@ -151,10 +151,11 @@ struct ndrx_epoll_set
     
     ndrx_epoll_fds_t *fds;  /**< hash of file descriptors for monitoring    */
     ndrx_epoll_mqds_t *mqds;/**< hash of message queues for monitoring      */
+    ndrx_epoll_mqds_t *mqds_qid;/**< hash of message queues for monitoring  */
     
     int nrfds;              /**< number of FDs in poll                      */
     int nrfmqds;            /** Number of queues polled                     */
-    void *polltab;           /**< poll() structure, pre-allocated            */
+    void *polltab;           /**< poll() structure, pre-allocated           */
     
     EX_hash_handle hh;      /**< makes this structure hashable              */
 };
@@ -482,7 +483,7 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         EXHASH_ADD_MQD(set->mqds, mqd, tmp);
         
         /* add QID */
-        EXHASH_ADD_QID(set->mqds, qid, tmp);
+        EXHASH_ADD_QID(set->mqds_qid, qid, tmp);
         
         /* resize/realloc events list, add fd */
         set->nrfmqds++;
@@ -515,7 +516,7 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         
         /* Remove fd from set->restab & from hash */
         EXHASH_DEL(set->mqds, tmp);
-        EXHASH_DEL_QID(set->mqds, tmp);
+        EXHASH_DEL_QID(set->mqds_qid, tmp);
         NDRX_FREE((char *)tmp);
         
         /* resize/realloc events list, add fd */
@@ -739,7 +740,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         if (pmq[i].rtnevents)
         {
             ndrx_epoll_mqds_t*ret = NULL;
-            EXHASH_FIND_MQD( set->mqds, &pmq[i].msgid, ret);
+            EXHASH_FIND_QID( set->mqds_qid, &pmq[i].msgid, ret);
             
             NDRX_LOG(log_debug, "event no: %d revents: %d mqd: %p (qid %d)", 
                     numevents, (int)pmq[i].rtnevents, ret->mqd, pmq[i].msgid);
