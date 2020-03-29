@@ -680,7 +680,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     int numevents = 0;
     ndrx_epoll_set_t* set = NULL;
     char *fn = "ndrx_epoll_wait";
-    int i;
+    int i, err=0;
     int retpoll;
     struct ndrx_pollfd *pfd;
     struct ndrx_pollmsg *pmq;
@@ -710,18 +710,30 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     
     NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - "
-                    "about to poll(nrfds=%d ndrmqds=%d)",
-                    fn, epfd, events, maxevents, timeout, set->nrfds, set->nrfmqds);
+                    "about to poll(nrfds=%d ndrmqds=%d) polltab=%p",
+                    fn, epfd, events, maxevents, timeout, set->nrfds, set->nrfmqds,
+                    set->polltab);
     
     /* run the poll finally... */
     nfdmsgs=(set->nrfmqds<<16)|(set->nrfds);
     retpoll = poll( set->polltab, nfdmsgs, timeout);
+    err=errno;
+
+    if (retpoll<0)
+    {
+         NDRX_LOG(log_error, "Poll failure: %s", strerror(err));
+         goto out;
+    }
+    else if (0==retpoll)
+    {
+         goto out;
+    }
     
     pfd = NDRX_PFD_GET(set, 0);
     pmq = NDRX_PMQ_GET(set, 0);
      
     /* return file events.. */
-    for (i=0; i < NFDS(set->nrfds) && numevents < maxevents; i++, numevents++)
+    for (i=0; i < NFDS(retpoll) && numevents < maxevents; i++, numevents++)
     {
         if (pfd[i].revents)
         {
@@ -735,7 +747,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     
     /* return queue events */
-    for (i=0; i < NMSGS(set->nrfmqds) && numevents < maxevents; i++, numevents++)
+    for (i=0; i < NMSGS(retpoll) && numevents < maxevents; i++, numevents++)
     {
         if (pmq[i].rtnevents)
         {
@@ -753,6 +765,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
 out:
 
     NDRX_LOG(log_info, "%s ret=%d numevents=%d", fn, ret, numevents);
+    ndrx_poll_strerror(err);
 
     if (EXSUCCEED==ret)
     {
