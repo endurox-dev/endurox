@@ -260,16 +260,16 @@ struct  ndrx_pollfd
     short  revents;     /**< returned events */
 };
 
+/* just for build */
+#define NFDS(x)         0
+#define NMSGS(x)        0
+
 #else
 
 /* in aix just use direct defines */
 #define ndrx_pollmsg pollmsg
 #define ndrx_pollfd pollfd
 
-
-/* just for build */
-#define NFDS(x)         0
-#define NMSGS(x)        0
 
 #endif
 
