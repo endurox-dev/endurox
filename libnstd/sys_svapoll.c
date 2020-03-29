@@ -38,7 +38,7 @@
 
 #ifdef EX_OS_AIX
 /* This is for aix to active extended poll */
-#define _MSGQSUPPORT
+#define _MSGQSUPPORT 1
 #endif
 
 #include <stdio.h>
@@ -56,6 +56,7 @@
 #include <string.h>
 #include <poll.h>
 #include <fcntl.h>
+#include <sys/select.h>
 
 #include <sys/time.h>                   /* purely for dbg_timer()       */
 #include <sys/stat.h>
@@ -318,7 +319,7 @@ expublic int ndrx_polltab_sync(ndrx_epoll_set_t* set)
     {
         struct ndrx_pollmsg * mfd = NDRX_PMQ_GET(set, i);
         
-        mfd->rtnevents=mel->event.events;
+        mfd->reqevents=mel->event.events;
         mfd->msgid=mel->mqd->qid;
         i++;
     }
@@ -680,6 +681,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     int retpoll;
     struct ndrx_pollfd *pfd;
     struct ndrx_pollmsg *pmq;
+    unsigned long nfdmsgs;
     
     EX_EPOLL_API_ENTRY;
     
@@ -709,13 +711,14 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     fn, epfd, events, maxevents, timeout, set->nrfds, set->nrfmqds);
     
     /* run the poll finally... */
-    retpoll = poll( set->polltab, (set->nrfmqds<<16)|(set->nrfds), timeout);
+    nfdmsgs=(set->nrfmqds<<16)|(set->nrfds);
+    retpoll = poll( set->polltab, nfdmsgs, timeout);
     
     pfd = NDRX_PFD_GET(set, 0);
     pmq = NDRX_PMQ_GET(set, 0);
      
     /* return file events.. */
-    for (i=0; i < set->nrfds && numevents < maxevents; i++, numevents++)
+    for (i=0; i < NFDS(set->nrfds) && numevents < maxevents; i++, numevents++)
     {
         if (pfd[i].revents)
         {
@@ -729,7 +732,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     
     /* return queue events */
-    for (i=0; i < set->nrfmqds && numevents < maxevents; i++, numevents++)
+    for (i=0; i < NMSGS(set->nrfmqds) && numevents < maxevents; i++, numevents++)
     {
         if (pmq[i].rtnevents)
         {

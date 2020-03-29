@@ -286,7 +286,7 @@ int local_test_receive(char *pfx)
 
         if (ETIMEDOUT!=err)
         {
-            NDRX_LOG(log_error, "Expected %d (EAGAIN) error but got %d", ETIMEDOUT, err);
+            NDRX_LOG(log_error, "Expected %d (ETIMEDOUT) error but got %d", ETIMEDOUT, err);
             EXFAIL_OUT(ret);
         }
 
@@ -442,11 +442,11 @@ int local_test_send(char *pfx)
         NDRX_LOG(log_debug, ">>> send: timed + blocked - ok (first msg)");
 
         ndrx_stopwatch_reset(&t);
-        /* receive the message 
+        /* send the message 
          * Maybe have some timed receive
          */
         clock_gettime(CLOCK_REALTIME, &tm);
-        tm.tv_sec += 2;  /* Set for 20 seconds */
+        tm.tv_sec += 2;  /* Set for 2 seconds */
 
         if (EXSUCCEED!=ndrx_mq_timedsend(mq, buffer, 
                 TEST_REPLY_SIZE, 0, &tm))

@@ -45,7 +45,7 @@
 
 #ifdef EX_OS_AIX
 /* This is for aix to active extended poll */
-#define _MSGQSUPPORT
+#define _MSGQSUPPORT 1
 #endif
 
 #include <stdlib.h>
@@ -94,9 +94,9 @@ expublic int ndrx_svq_close(mqd_t mqd)
 {
     NDRX_LOG(log_debug, "close %p mqd", mqd);
     
-#ifdef EX_USE_SYSVQ
     if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
     {   
+#ifdef EX_USE_SYSVQ
         /* close the queue 
          * we will put the Q in hash locally so while it is in pipe
          * (in kernel space), the address sanitizer might see it as leaked
@@ -116,6 +116,11 @@ expublic int ndrx_svq_close(mqd_t mqd)
          * free will be done by backend thread..
         NDRX_FREE(mqd);
          */
+#endif
+
+#ifdef EX_USE_SVAPOLL
+        NDRX_FREE(mqd);
+#endif
         
         return EXSUCCEED;
     }
@@ -125,11 +130,6 @@ expublic int ndrx_svq_close(mqd_t mqd)
         errno = EBADF;
         return EXFAIL;
     }
-#endif
-    
-#ifdef EX_USE_SVAPOLL
-    NDRX_FREE(mqd);
-#endif
 }
 
 /**
@@ -372,23 +372,25 @@ out:
     ret=msgrcv(mqd->qid, ptr, NDRX_SVQ_INLEN(maxlen), 0, IPC_NOWAIT);
     
     /* if blocked mode is requested... */
-    if (ret == EXFAIL && (ENOMSG!=errno || mqd->attr.mq_flags & O_NONBLOCK))
+    if (EXFAIL==ret)
     {
-        /* if no msg, then continue with bellow */
-        err = errno;
-        NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+        if (ENOMSG!=errno || mqd->attr.mq_flags & O_NONBLOCK)
+        {
+            /* if no msg, then continue with bellow */
+            err = errno;
+            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
         
-        /* translate to posix */
-        if (ENOMSG==err)
-        {
-            err = EAGAIN;
+            /* translate to posix */
+            if (ENOMSG==err)
+            {
+                err = EAGAIN;
+            }
+        
+            errno = err;
+            goto out;
         }
-        
-        errno = err;
-        
-                    
-        goto out;
+        /* if got ENOMSG... so wait */
     }
     else 
     {
@@ -397,22 +399,26 @@ out:
     }
     
     gettimeofday (&timeval, NULL);
-    wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
+    /* TODO: Move to ms granularity ... */
+    wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
     
-    /* wait for message...
-     * firstly attempt to send, if NO MSG, then wait on POLL
-     */
+    /* prepare for timed out */ 
+    errno=ETIMEDOUT;
+    ret=EXFAIL;
+    /* wait for message...  */
     while (wait_left>0)
     {
         /* do poll on queue.. */
-        struct ndrx_pollmsg msgs[1];
+        struct ndrx_pollmsg msgs;
+	unsigned long nfd = 1 << 16;
         
-        msgs[0].msgid=mqd->qid;
-        msgs[0].rtnevents = POLLIN;
-        msgs[0].reqevents = 0;
+        msgs.msgid=mqd->qid;
+        msgs.reqevents = POLLIN;
+        msgs.rtnevents = 0;
         
-        ret = poll((void *)&msgs, (1<<16)|(0), wait_left);
-        
+        NDRX_LOG(log_debug, "wait: %d qid: %d", wait_left, mqd->qid);
+        ret = poll((void *)&msgs, nfd, wait_left);
+        NDRX_LOG(log_debug, "poll ret=%d", ret);
         if (ret>0)
         {
             /* OK, can try to receive something */
@@ -422,42 +428,65 @@ out:
                 /* translate the error codes */
                 if (ENOMSG==err)
                 {
-                    NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
-                        strerror(err));
+                    /*NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));*/
+                    /* wait 1 ms, this could be the case that message is too big, but there is small space
+                     * in queue. thus it poll gives OK, but we still cannot send
+                     */
+                    usleep(1000);
                     /* OK try again, some else downloaded msg.. */
-                    errno = EAGAIN;
                 }
                 else
                 {
                     NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
                     errno = err;
-                    
-                    /* termiante the process.. */
+                    /* terminate the process.. */
                     break;
                 }
-            }
-            else if (0==ret)
-            {
-                errno = ETIMEDOUT;
-                break;
-            }
-            else
-            {
-                err = errno;
-                
-                /* this is poll error */
-                NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid, 
-                        wait_left, strerror(err));
-                errno = err;
-
-                /* terminate the receive */
-                break;
             }
 
             gettimeofday (&timeval, NULL);
             wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
         }
+        else if (0==ret)
+        {
+            struct mq_attr attr;
+            memset(&attr, 0, sizeof(attr));
+            if (EXSUCCEED==ndrx_svq_getattr(mqd, &attr))
+            {
+                NDRX_LOG(log_error, "YOPT in q: %d", attr.mq_curmsgs);
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to get stats for %p: %d", mqd, strerror(errno));
+            }
+
+            errno = ETIMEDOUT;
+            ret=EXFAIL;
+            break;
+        }
+        else
+        {
+            err = errno;
+
+            /* this is poll error */
+            NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+                wait_left, strerror(err));
+            
+            userlog("poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+                wait_left, strerror(err));
+            errno = err;
+
+            /* terminate the receive */
+            break;
+        }
+
+        gettimeofday (&timeval, NULL);
+        wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000; 
+        /* prepare for timeout if we do not go second loop */
+        errno=ETIMEDOUT;
+        ret=EXFAIL;
     }
 
 out:    
@@ -575,15 +604,17 @@ out:
     ret = msgsnd(mqd->qid, ptr, NDRX_SVQ_INLEN(len), IPC_NOWAIT);
     
     /* so if other error, or we get blocking condition when not requested */
-    if (ret == EXFAIL && (EAGAIN!=errno || mqd->attr.mq_flags & O_NONBLOCK))
+    if (EXFAIL == ret)
     {
-        /* if no msg, then continue with bellow */
-        err = errno;
-        NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+        if (EAGAIN!=errno || mqd->attr.mq_flags & O_NONBLOCK)
+        {
+            /* if no msg, then continue with bellow */
+            err = errno;
+            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
-        errno = err;
-                    
-        goto out;
+            errno = err;
+            goto out;
+        }
     }
     else 
     {
@@ -592,21 +623,27 @@ out:
     }
     
     gettimeofday (&timeval, NULL);
-    wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
+    wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
     
+    /* prepare for timeout ... */
+    errno=ETIMEDOUT;
+    ret=EXFAIL;
     /* wait for message...
      * firstly attempt to send, if NO MSG, then wait on POLL
      */
     while (wait_left>0)
     {
         /* do poll on queue.. */
-        struct ndrx_pollmsg msgs[1];
+        struct ndrx_pollmsg msgs;
+        unsigned long nfd = 1 << 16;
         
-        msgs[0].msgid=mqd->qid;
-        msgs[0].rtnevents = POLLOUT;
-        msgs[0].reqevents = 0;
+        msgs.msgid=mqd->qid;
+        msgs.reqevents = POLLOUT;
+        msgs.rtnevents = 0;
         
-        ret = poll((void *)&msgs, (1<<16)|(0), wait_left);
+        NDRX_LOG(log_debug, "wait: %d qid: %d", wait_left, mqd->qid);
+        ret = poll((void *)&msgs, nfd, wait_left);
+        NDRX_LOG(log_debug, "poll ret=%d", ret);
         
         if (ret>0)
         {
@@ -618,10 +655,9 @@ out:
                 /* translate the error codes */
                 if (EAGAIN==err)
                 {
-                    NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                    NDRX_LOG(log_debug, "msgsnd(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
                     /* OK try again, some else downloaded msg.. */
-                    errno = err;
                 }
                 else
                 {
@@ -633,36 +669,38 @@ out:
                     break;
                 }
             }
-            else if (0==ret)
-            {
-                errno = ETIMEDOUT;
-                break;
-            }
-            else
-            {
-                err = errno;
-                
-                /* this is poll error */
-                NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid, 
-                        wait_left, strerror(err));
-                errno = err;
-
-                /* termiante the receive */
-                break;
-            }
-
-            gettimeofday (&timeval, NULL);
-            wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
         }
+        else if (0==ret)
+        {
+            errno = ETIMEDOUT;
+            ret=EXFAIL;
+            break;
+        }
+        else
+        {
+            err = errno;
+
+            /* this is poll error */
+            NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+                wait_left, strerror(err));
+
+            userlog("poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+                wait_left, strerror(err));
+            errno = err;
+
+            /* terminate the receive */
+            break;
+        }
+
+        gettimeofday (&timeval, NULL);
+        wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
+        /* prepare for timeout ... */
+        errno=ETIMEDOUT;
+        ret=EXFAIL;
     }
 
 out:    
-    /* in case of error, errno is set! */
-    
-    if (ret>=0)
-    {
-        ret=NDRX_SVQ_OUTLEN(ret);
-    }
+    /* in case of error, errno is loaded */
     
     return ret;
     
