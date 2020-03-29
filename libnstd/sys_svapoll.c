@@ -592,7 +592,6 @@ expublic int ndrx_epoll_create(int size)
     }
     
     /* add finally to hash */
-    set->nrfds = 1; /* initially only pipe wait */
     set->fd = i; /* assign the FD num */
     EXHASH_ADD_INT(M_psets, fd, set);
     NDRX_LOG(log_info, "ndrx_epoll_create succeed, fd=%d", i);
