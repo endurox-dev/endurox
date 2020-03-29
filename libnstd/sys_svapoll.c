@@ -448,7 +448,7 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
     
     if (NULL==(set = pset_find(epfd, EXTRUE)))
     {
-        ndrx_epoll_set_err(ENOSYS, "ndrx_epoll set %d not found", epfd);
+        ndrx_epoll_set_err(ENOENT, "ndrx_epoll set %d not found", epfd);
         NDRX_LOG(log_error, "ndrx_epoll set %d not found", epfd);
         
         EXFAIL_OUT(ret);
@@ -591,6 +591,8 @@ expublic int ndrx_epoll_create(int size)
     }
     
     /* add finally to hash */
+    set->nrfds = 1; /* initially only pipe wait */
+    set->fd = i; /* assign the FD num */
     EXHASH_ADD_INT(M_psets, fd, set);
     NDRX_LOG(log_info, "ndrx_epoll_create succeed, fd=%d", i);
     

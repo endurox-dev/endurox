@@ -403,7 +403,7 @@ out:
     /* enduro/X uses full seconds... */
     gettimeofday (&timeval, NULL);
     tout = (__abs_timeout->tv_sec - timeval.tv_sec);    
-    ndrx_stopwatch_timer_set(&w, tout);
+    ndrx_stopwatch_timer_set(&w, tout*1000);
     wait_left = ndrx_stopwatch_get_delta(&w) * -1;
     
     /* prepare for timed out */ 
@@ -444,6 +444,11 @@ out:
                     /* terminate the process.. */
                     break;
                 }
+            }
+            else
+            {
+                /* message is received -> terminate... */
+                break;
             }
         }
         else if (0==ret)
@@ -623,7 +628,7 @@ out:
     /* enduro/X uses full seconds... */
     gettimeofday (&timeval, NULL);
     tout = (__abs_timeout->tv_sec - timeval.tv_sec);    
-    ndrx_stopwatch_timer_set(&w, tout);
+    ndrx_stopwatch_timer_set(&w, tout*1000);
     wait_left = ndrx_stopwatch_get_delta(&w) * -1;
     
     /* prepare for timeout ... */
@@ -677,6 +682,11 @@ out:
                     /* termiante the process.. */
                     break;
                 }
+            }
+            else
+            {
+                /* sent OK, terminate */
+                break;
             }
         }
         else if (0==ret)
