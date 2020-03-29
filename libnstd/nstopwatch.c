@@ -168,6 +168,33 @@ expublic void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer)
 }
 
 /**
+ * Set timer.
+ * The stopwatch will ring when ndrx_stopwatch_get_delta() will be>=0
+ * 
+ * @param timer usual stopwatch...
+ * @param tout timeout in millis
+ */
+expublic void ndrx_stopwatch_timer_set(ndrx_stopwatch_t *timer, int tout)
+{
+    int left_over;
+    clock_gettime(CLOCK_MONOTONIC, &timer->t);
+    
+    timer->t.tv_sec += tout/1000;
+    
+    left_over = tout % 1000;
+    
+    timer->t.tv_nsec + left_over;
+    
+#define NDRX_NANO_SEC 999999999
+    
+    if (timer->t.tv_nsec > NDRX_NANO_SEC)
+    {
+        timer->t.tv_sec+=1;
+        timer->t.tv_nsec-=NDRX_NANO_SEC;
+    }
+}
+
+/**
  * return diff in milliseconds of two timers.
  * @param timer1
  * @param timer2
