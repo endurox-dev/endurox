@@ -44,6 +44,7 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "xatmi.h"
+#include "nstopwatch.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -455,6 +456,35 @@ Ensure(test_nstd_ndrx_mkstemps)
     
 }
 
+
+/**
+ * Check Enduro/X Stop watch
+ */
+Ensure(test_nstd_stopwatch)
+{
+    ndrx_stopwatch_t w1;
+    ndrx_stopwatch_t w2;
+    
+    ndrx_stopwatch_reset(&w1);
+    
+    /* so set to 5 sec... it will give the seconds T-X milis or seconds */
+    ndrx_stopwatch_timer_set(&w2, 5000);
+    
+    while (ndrx_stopwatch_get_delta_sec(&w1) < 5)
+    {
+        assert_true(ndrx_stopwatch_get_delta(&w2) < 0);
+        NDRX_LOG(log_error, "Stopwatch: %ld", ndrx_stopwatch_get_delta(&w2));
+        sleep(1);
+    }
+    /* wait to complete... the timer */
+    sleep(1);
+    
+    NDRX_LOG(log_error, "Stopwatch: %ld", ndrx_stopwatch_get_delta(&w2));
+    
+    assert_true(ndrx_stopwatch_get_delta(&w2) > 0);
+    
+}
+
 /**
  * Standard library tests
  * @return
@@ -469,6 +499,7 @@ TestSuite *ubf_nstd_util(void)
     add_test(suite, test_nstd_env_subs_ctx);
     add_test(suite, test_nstd_file_exists);
     add_test(suite, test_nstd_ndrx_mkstemps);
+    add_test(suite, test_nstd_stopwatch);
     
     return suite;
 }

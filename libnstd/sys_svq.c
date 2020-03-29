@@ -347,11 +347,12 @@ out:
      * In the same way if poll gives timeout, just return TPETIME.
      */
     
-    int wait_left;
+    int wait_left, tout;
     ndrx_stopwatch_t w;
     int ret;
     int err;
     long *l;
+    struct timeval timeval;
     
     VALIDATE_MQD;
     
@@ -399,11 +400,10 @@ out:
     }
     
     
-    /*
+    /* enduro/X uses full seconds... */
     gettimeofday (&timeval, NULL);
-    wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
-    */
-    
+    tout = (__abs_timeout->tv_sec - timeval.tv_sec);    
+    ndrx_stopwatch_timer_set(&w, tout);
     wait_left = ndrx_stopwatch_get_delta(&w) * -1;
     
     /* prepare for timed out */ 
@@ -580,9 +580,11 @@ out:
     
     ndrx_stopwatch_t w;
     int wait_left;
+    int tout;
     int ret;
     int err;
     long *l;
+    struct timeval timeval;
     
     VALIDATE_MQD;
     
@@ -618,18 +620,10 @@ out:
         goto out;
     }
     
-    /*
+    /* enduro/X uses full seconds... */
     gettimeofday (&timeval, NULL);
-    wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000 + 
-     * 
-     */
-    
-    /* setup the watch.. */
-    w.t = *__abs_timeout;
-    
-    /* this read current time. Thus if we have wait time
-     * it will negative. Thus invert
-     */
+    tout = (__abs_timeout->tv_sec - timeval.tv_sec);    
+    ndrx_stopwatch_timer_set(&w, tout);
     wait_left = ndrx_stopwatch_get_delta(&w) * -1;
     
     /* prepare for timeout ... */

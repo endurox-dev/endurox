@@ -62,6 +62,7 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer);
+extern NDRX_API void ndrx_stopwatch_timer_set(ndrx_stopwatch_t *timer, int tout);
 extern NDRX_API long ndrx_stopwatch_get_delta(ndrx_stopwatch_t *timer);
 extern NDRX_API long ndrx_stopwatch_get_delta_sec(ndrx_stopwatch_t *timer);
 extern NDRX_API char *ndrx_decode_msec(long t, int slot, int level, int levels);
