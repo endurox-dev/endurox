@@ -348,7 +348,7 @@ out:
      */
     
     int wait_left;
-    struct timeval  timeval;
+    ndrx_stopwatch_t w;
     int ret;
     int err;
     long *l;
@@ -398,9 +398,13 @@ out:
         goto out;
     }
     
+    
+    /*
     gettimeofday (&timeval, NULL);
-    /* TODO: Move to ms granularity ... */
     wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
+    */
+    
+    wait_left = ndrx_stopwatch_get_delta(&w) * -1;
     
     /* prepare for timed out */ 
     errno=ETIMEDOUT;
@@ -428,12 +432,8 @@ out:
                 /* translate the error codes */
                 if (ENOMSG==err)
                 {
-                    /*NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
-                        strerror(err));*/
-                    /* wait 1 ms, this could be the case that message is too big, but there is small space
-                     * in queue. thus it poll gives OK, but we still cannot send
-                     */
-                    usleep(1000);
+                    NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+                        strerror(err));
                     /* OK try again, some else downloaded msg.. */
                 }
                 else
@@ -445,9 +445,6 @@ out:
                     break;
                 }
             }
-
-            gettimeofday (&timeval, NULL);
-            wait_left = __abs_timeout->tv_sec - timeval.tv_sec;    
         }
         else if (0==ret)
         {
@@ -482,8 +479,7 @@ out:
             break;
         }
 
-        gettimeofday (&timeval, NULL);
-        wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000; 
+        wait_left = ndrx_stopwatch_get_delta(&w) * -1;
         /* prepare for timeout if we do not go second loop */
         errno=ETIMEDOUT;
         ret=EXFAIL;
@@ -582,8 +578,8 @@ out:
      * until is sent or process times out..
      */
     
+    ndrx_stopwatch_t w;
     int wait_left;
-    struct timeval  timeval;
     int ret;
     int err;
     long *l;
@@ -622,8 +618,19 @@ out:
         goto out;
     }
     
+    /*
     gettimeofday (&timeval, NULL);
-    wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
+    wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000 + 
+     * 
+     */
+    
+    /* setup the watch.. */
+    w.t = *__abs_timeout;
+    
+    /* this read current time. Thus if we have wait time
+     * it will negative. Thus invert
+     */
+    wait_left = ndrx_stopwatch_get_delta(&w) * -1;
     
     /* prepare for timeout ... */
     errno=ETIMEDOUT;
@@ -655,8 +662,16 @@ out:
                 /* translate the error codes */
                 if (EAGAIN==err)
                 {
+                    /*
                     NDRX_LOG(log_debug, "msgsnd(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
+                     */
+                    
+                    /* wait 1 ms, this could be the case that message is too big, but there is small space
+                     * in queue. thus it poll gives OK, but we still cannot send
+                     */
+                    usleep(1000);
+                    
                     /* OK try again, some else downloaded msg.. */
                 }
                 else
@@ -692,8 +707,7 @@ out:
             break;
         }
 
-        gettimeofday (&timeval, NULL);
-        wait_left = (__abs_timeout->tv_sec - timeval.tv_sec)*1000;
+        wait_left = ndrx_stopwatch_get_delta(&w) * -1;
         /* prepare for timeout ... */
         errno=ETIMEDOUT;
         ret=EXFAIL;
