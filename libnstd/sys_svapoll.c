@@ -480,6 +480,7 @@ expublic int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t mqd, struct ndrx_epoll_ev
         
         tmp->mqd = mqd;
         tmp->qid = mqd->qid;
+        tmp->event = *event;
         EXHASH_ADD_MQD(set->mqds, mqd, tmp);
         
         /* add QID */
@@ -697,7 +698,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         EXFAIL_OUT(ret);
     }
     
-    /* reset revents... */
+#if 0
+    /* reset revents... - seems not needed. */
     for (i=0; i<set->nrfds; i++)
     {
         NDRX_PFD_GET(set, i)->revents = 0;
@@ -707,14 +709,15 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     {
         NDRX_PMQ_GET(set, i)->rtnevents = 0;
     }
+#endif
     
+    nfdmsgs=(set->nrfmqds<<16)|(set->nrfds);
     NDRX_LOG(log_debug, "%s: epfd=%d, events=%p, maxevents=%d, timeout=%d - "
-                    "about to poll(nrfds=%d ndrmqds=%d) polltab=%p",
+                    "about to poll(nrfds=%d ndrmqds=%d) polltab=%p nfdmsgs=%lu",
                     fn, epfd, events, maxevents, timeout, set->nrfds, set->nrfmqds,
-                    set->polltab);
+                    set->polltab, nfdmsgs);
     
     /* run the poll finally... */
-    nfdmsgs=(set->nrfmqds<<16)|(set->nrfds);
     retpoll = poll( set->polltab, nfdmsgs, timeout);
     err=errno;
 
@@ -728,36 +731,38 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
          goto out;
     }
     
-    pfd = NDRX_PFD_GET(set, 0);
-    pmq = NDRX_PMQ_GET(set, 0);
-     
     /* return file events.. */
-    for (i=0; i < NFDS(retpoll) && numevents < maxevents; i++, numevents++)
+    for (i=0; NFDS(retpoll) > 0 && i < set->nrfds && numevents < maxevents; i++)
     {
-        if (pfd[i].revents)
+        pfd = NDRX_PFD_GET(set, i);
+        if (pfd->revents)
         {
             /* fill up the event block */
             NDRX_LOG(log_debug, "event no: %d revents: %d fd: %d", 
-                    numevents, (int)pfd[i].revents, pfd[i].fd);
-            events[numevents].data.fd = pfd[i].fd;
-            events[numevents].events = pfd[i].revents;
+                    numevents, (int)pfd->revents, pfd->fd);
+            events[numevents].data.fd = pfd->fd;
+            events[numevents].events = pfd->revents;
             events[numevents].is_mqd = EXFALSE;
+            numevents++;
         }
     }
     
     /* return queue events */
-    for (i=0; i < NMSGS(retpoll) && numevents < maxevents; i++, numevents++)
+    for (i=0; NMSGS(retpoll) > 0 && i < set->nrfmqds && numevents < maxevents; i++)
     {
-        if (pmq[i].rtnevents)
+        pmq = NDRX_PMQ_GET(set, i);
+        if (pmq->rtnevents)
         {
-            ndrx_epoll_mqds_t*ret = NULL;
-            EXHASH_FIND_QID( set->mqds_qid, &pmq[i].msgid, ret);
+            ndrx_epoll_mqds_t *tmqd = NULL;
+            EXHASH_FIND_QID( set->mqds_qid, &(pmq->msgid), tmqd);
             
             NDRX_LOG(log_debug, "event no: %d revents: %d mqd: %p (qid %d)", 
-                    numevents, (int)pmq[i].rtnevents, ret->mqd, pmq[i].msgid);
-            events[numevents].data.mqd = ret->mqd;
-            events[numevents].events = pmq[i].rtnevents;
+                    numevents, (int)pmq->rtnevents, tmqd->mqd, pmq->msgid);
+
+            events[numevents].data.mqd = tmqd->mqd;
+            events[numevents].events = pmq->rtnevents;
             events[numevents].is_mqd = EXTRUE;
+            numevents++;
         }
     }
     
@@ -865,7 +870,7 @@ expublic void ndrx_epoll_mainq_set(char *qstr)
  */
 expublic int ndrx_epoll_down(int force)
 {
-    return EXSUCCEED;
+    return ndrx_svqshm_down(force);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

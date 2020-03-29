@@ -135,6 +135,7 @@ expublic int ndrx_svqshm_down(int force)
      */
     INIT_ENTRY(ret);
     
+#ifdef EX_USE_SYSVQ
     /* Terminate polling threads... if any... */
     ndrx_atfork_prepare();
     
@@ -143,6 +144,7 @@ expublic int ndrx_svqshm_down(int force)
      * how to avoid that.
      */
     ndrx_atfork_child();
+#endif
     
     if (force)
     {

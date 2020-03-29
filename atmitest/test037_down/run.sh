@@ -334,7 +334,7 @@ SHMS=`xadmin shms | wc | awk '{print $1}'`
 
 echo "DOM1 Shared memories: $SHMS"
 
-if [[ `xadmin poller` == "SystemV" ]]; then
+if [ `xadmin poller` == "SystemV" ] || [ `xadmin poller` == "svapoll" ]; then
 
     if [[ "$SHMS" -ne "2" ]]; then 
         echo "TESTERROR! There must be 2 shared memory objs for dom1 after kill!"

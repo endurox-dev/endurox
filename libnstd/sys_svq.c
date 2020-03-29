@@ -453,17 +453,6 @@ out:
         }
         else if (0==ret)
         {
-            struct mq_attr attr;
-            memset(&attr, 0, sizeof(attr));
-            if (EXSUCCEED==ndrx_svq_getattr(mqd, &attr))
-            {
-                NDRX_LOG(log_error, "YOPT in q: %d", attr.mq_curmsgs);
-            }
-            else
-            {
-                NDRX_LOG(log_error, "Failed to get stats for %p: %d", mqd, strerror(errno));
-            }
-
             errno = ETIMEDOUT;
             ret=EXFAIL;
             break;
