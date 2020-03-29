@@ -266,6 +266,11 @@ struct  ndrx_pollfd
 #define ndrx_pollmsg pollmsg
 #define ndrx_pollfd pollfd
 
+
+/* just for build */
+#define NFDS(x)         0
+#define NMSGS(x)        0
+
 #endif
 
 #endif
