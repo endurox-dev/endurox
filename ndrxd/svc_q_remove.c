@@ -154,20 +154,24 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
 
     }
     
-    /* for System V queue is unlinked as part of the sanity checks 
+    /* for System V queue is unlinked as part of the sanity checks
      * also System V queues cannot be unlinked while other processes are connected
-     * in such scenario they will 
+     * in such scenario they will. For SVAPOLL do this after messages are processed
+     * hecause that will make qid as invalid arg.
+     * do this for posix early, because this means that there is less chance
+     * for race condition to occurr, that someone got the queue and is sending
+     * and we are removing.
      */
-#ifndef EX_USE_SYSVQ
-    /* Unlink the queue, the actual queue will live out through next session! 
+#if !defined(EX_USE_SYSVQ) && !defined(EX_USE_SVAPOLL)
+    /* Unlink the queue, the actual queue will live out through next session!
      * i.e. all users should close it to dispose it! As by manpage! */
     if (EXSUCCEED!=ndrx_mq_unlink(q_str))
     {
-        NDRX_LOG(log_error, "Failed to unlink q [%s]: %s", 
+        NDRX_LOG(log_error, "Failed to unlink q [%s]: %s",
                 q_str, strerror(errno));
     }
 #endif
-    
+
     /* Read all messages from Q & reply with dummy/FAIL stuff back! */
     while ((len=ndrx_mq_receive (qd,
         (char *)msg_buf, sizeof(msg_buf), &prio)) > 0)
@@ -200,7 +204,21 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
             NDRX_LOG(log_warn, "Skipping command: %d", gen_command->command_id);
         }
     }
-    
+
+    /* For SVAPOLL: we could move this to later stage after content zap
+     * as svapoll uses systemv queues, and they become invalid after zap.
+     * any processes waiting on this msg, shall get the error because
+     * waiting on remove queue descriptor.
+     */
+#ifdef EX_USE_SVAPOLL
+    if (EXSUCCEED!=ndrx_mq_unlink(q_str))
+    {
+        NDRX_LOG(log_error, "Failed to unlink q [%s]: %s",
+                q_str, strerror(errno));
+    }
+#endif
+   
+
     NDRX_LOG(log_debug, "Done receive...");
     
 out:
