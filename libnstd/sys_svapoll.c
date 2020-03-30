@@ -842,6 +842,8 @@ expublic mqd_t ndrx_epoll_service_add(char *svcnm, int idx, mqd_t mq_exits)
  */
 expublic int ndrx_epoll_shmdetach(void)
 {
+    /* detach resources */
+    ndrx_svqshm_detach();
     return EXSUCCEED;
 }
 
