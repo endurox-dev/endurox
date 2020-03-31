@@ -125,7 +125,7 @@ function test_empty_qspace {
     clean_logs;
 }
 
-rm *dom*.log
+#rm *dom*.log
 
 # Where to store TM logs
 rm -rf ./RM1
@@ -141,7 +141,6 @@ mkdir QSPACE1
 cp q.conf.tpl q.conf
 
 set_dom1;
-xadmin stop -y
 # clean up anything left from prevoius tests...
 xadmin down -y
 # let ndrxd to finish

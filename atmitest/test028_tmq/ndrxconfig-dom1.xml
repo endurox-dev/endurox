@@ -57,7 +57,7 @@
                 <env name="NDRX_XA_RES_ID">2</env>
                 <env name="NDRX_XA_OPEN_STR">-</env>
                 <env name="NDRX_XA_CLOSE_STR">-</env>
-                <env name="NDRX_XA_DRIVERLIB">libndrxxadums.${NDRX_LIBEXT}</env>
+                <env name="NDRX_XA_DRIVERLIB">libndrxxanulls.${NDRX_LIBEXT}</env>
                 <env name="NDRX_XA_RMLIB">-</env>
                 <env name="NDRX_XA_LAZY_INIT">0</env>
             </envs>
