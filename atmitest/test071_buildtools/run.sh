@@ -190,7 +190,21 @@ buildserver -o atmi.sv71 -rTestSw -a atmisv71_1.c -l atmisv71_2.c -v -f "$ADDFLA
 RET=$?
 
 if [ "X$RET" != "X0" ]; then
-    echo "Failed to build atmisv71: $RET"
+    echo "Failed to build atmi.sv71: $RET"
+    go_out 2
+fi
+
+echo ""
+echo "************************************************************************"
+echo "Build server, default tpsrvinit(), default tpsrvdone()..."
+echo "************************************************************************"
+
+buildserver -o atmi.sv71def -rTestSw -v -f "$ADDFLAGS" -sXX:ECHOSV -f atmisv71_4.c
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmi.sv71def: $RET"
     go_out 2
 fi
 
@@ -396,6 +410,31 @@ if [ -f ./RM2/TRN-* ]; then
     echo "Transaction must be completed!"
     go_out -11
 fi
+
+
+#
+# that that TX interface was processed correctly as specification says
+# open and close.
+#
+xadmin stop -s atmi.sv71def
+
+
+# the api must be open
+TXRES=`grep "tx_open: TX_OK" atmi.sv71def-dom1.log`
+
+if [ "X$TXRES" == "X" ]; then
+    echo "'tx_open: TX_OK' not found in atmi.sv71def-dom1.log"
+    go_out -12
+fi
+
+# the api must be closed
+TXRES=`grep "tx_close: TX_OK" atmi.sv71def-dom1.log`
+
+if [ "X$TXRES" == "X" ]; then
+    echo "'tx_close: TX_OK' not found in atmi.sv71def-dom1.log"
+    go_out -12
+fi
+
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
