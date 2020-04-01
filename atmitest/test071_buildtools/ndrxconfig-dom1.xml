@@ -87,6 +87,17 @@
             </envs>
         </server>
         
+        <!-- default tpsrvinit and done... -->
+        <server name="atmi.sv71def">
+            <min>1</min>
+            <max>1</max>
+            <srvid>200</srvid>
+            <sysopt>-e ${TESTDIR}/atmi.sv71def-dom1.log -r -N -sXX</sysopt>
+            <envs>
+                <env name="NDRX_XA_RES_ID">2</env>
+            </envs>
+        </server>
+        
     </servers>
 </endurox>
 
