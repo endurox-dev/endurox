@@ -371,8 +371,8 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
             {
                 /* have some usleep -> for aix needs to check sigchilds... */
                 usleep(100000);
-                /* zap any childs..*/
-                sign_chld_handler(0);
+                /* zap any childs..
+                sign_chld_handler(0);*/
             }
             /* shutdown is ok */
             ret = EXSUCCEED;

@@ -1216,7 +1216,16 @@ int main(int argc, char** argv) {
         EXFAIL_OUT(ret);
     }
 
-    signal(SIGCHLD, sign_chld_handler);
+    /* signal(SIGCHLD, sign_chld_handler);
+     * there is no need to handle child signal.
+     * Firstly if we are not parent of ndrxd
+     * we will never receive it.
+     * Secondly even if we are parent, we make
+     * status checks at certain moments
+     * and these monoments involve direct process
+     * testing - we do not rely on signal.
+     * */
+    signal(SIGCHLD, SIG_IGN);
     
     /* Print the copyright notice: */
     if (is_tty())
