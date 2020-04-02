@@ -443,7 +443,7 @@ add_subdirectory (mkfldhdr)
 add_subdirectory (libatmi) # General Purpose ATMI library
 add_subdirectory (libatmisrv) #  ATMI server library 
 add_subdirectory (libatmiclt) #  ATMI client library 
-#add_subdirectory (libtux) #  ATMI client library 
+add_subdirectory (libtux) #  Tux lib emulation
 add_subdirectory (libexnet)
 add_subdirectory (libexmemck)
 add_subdirectory (libndrxconf)
