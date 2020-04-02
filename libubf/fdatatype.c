@@ -151,8 +151,8 @@ expublic dtype_str_t G_dtype_str_map[] =
 /* TODO - create support functions: */
 {"rfu0",NULL,   BFLD_RFU0,   BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 8 */
 {"ptr",	NULL,   BFLD_PTR,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 9 */
-{"UBF", "FML32",BFLD_UBF,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 10 */
-{"VIEW","VIEW32",BFLD_VIEW,  BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 11 */
+{"ubf", "fml32",BFLD_UBF,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 10 */
+{"view","view32",BFLD_VIEW,  BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 11 */
 {""}
 };
 
