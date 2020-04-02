@@ -45,8 +45,11 @@ extern "C" {
 /*---------------------------Macros-------------------------------------*/
     
 #define MAXFBLEN MAXUBFLEN
-#define F_LENGTH BF_LENGTH
 
+
+/* fixes for Support #519 shared section, include once: */
+#ifndef FML32_H
+#define F_LENGTH BF_LENGTH
 #define FLD_MIN BFLD_MIN
 #define FLD_SHORT BFLD_SHORT
 #define FLD_LONG BFLD_LONG
@@ -56,7 +59,6 @@ extern "C" {
 #define FLD_STRING BFLD_STRING
 #define FLD_CARRAY BFLD_CARRAY
 #define FLD_MAX BFLD_MAX
-    
 #define FLD_PTR         BFLD_PTR    /**< pointer to a buffer            */
 #define FLD_FML         BFLD_UBF    /**< embedded FML buffer          */
 #define FLD_VIEW        BFLD_VIEW   /**< embedded VIEW buffer         */
@@ -90,16 +92,6 @@ extern "C" {
 #define FEBADOP BEBADOP
 #define FMAXVAL  BMAXVAL
     
-#define Ferror Berror
-#define FLDID32 BFLDID32
-
-#define FLDID BFLDID
-#define FLDLEN BFLDLEN
-#define FLDOCC BFLDOCC
-
-#define Fbfr Ubfh
-#define FBFR UBFH
-    
 #define F_FTOS B_FTOS
 #define F_STOF B_STOF
 #define F_OFF B_OFF
@@ -107,8 +99,23 @@ extern "C" {
     
 #define Fnext_state Bnext_state 
 #define Fnext_state_t Bnext_state_t
-    
-/* capability for functions */
+
+/* Added for compatibility */
+#define F32to16 B32to16
+#define F16to32 B16to32
+
+/* end of shared once */
+#endif
+
+/* capability for functions 16 bit compat: */
+#define MAXFBLEN MAXUBFLEN
+#define Fbfr Ubfh
+#define FBFR UBFH
+#define Ferror Berror
+#define FLDID BFLDID
+#define FLDLEN BFLDLEN
+#define FLDOCC BFLDOCC
+
 #define Fread Bread
 #define Fwrite Bwrite
 #define Fjoin Bjoin
