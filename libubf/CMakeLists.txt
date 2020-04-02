@@ -60,7 +60,7 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 
 # Create a library called "UBF" which includes the source files.
 # The extension is already found. Any number of sources could be listed here. 
-add_library (ubf SHARED
+add_library (objubf OBJECT
 		ubf_impl.c
 		ubf.c
 		fproj_impl.c
@@ -88,7 +88,10 @@ add_library (ubf SHARED
                 fielddb.c
 	)
 
-set_target_properties(ubf PROPERTIES ENABLE_EXPORTS 1)
+set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# shared and static libraries built from the same object files
+add_library(ubf SHARED $<TARGET_OBJECTS:objubf>)
 
 if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(ubf nstd)
