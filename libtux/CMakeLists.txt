@@ -51,16 +51,20 @@ add_library(tux SHARED $<TARGET_OBJECTS:objnstd>
 target_link_libraries(tux ${RT_LIB} pthread)
 
 
+#FML Emul
+add_library (fml SHARED 
+                    dum.c
+                        )
+
 #FML32 Emul
 add_library (fml32 SHARED 
                     dum.c
                         )
-
 #
 # Also needs to provide dummy fml32 library for NetXMS Build
 #
 install (TARGETS 
-    tux fml32
+    tux fml fml32
     DESTINATION "${INSTALL_LIB_DIR}"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     COMPONENT libraries
