@@ -40,9 +40,80 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <ubf.h>
-#include <fml.h> /* Fallback to FML */
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/* fixes for Support #519 shared section, include once: */
+#ifndef FML_H
+#define F_LENGTH BF_LENGTH
+#define FLD_MIN BFLD_MIN
+#define FLD_SHORT BFLD_SHORT
+#define FLD_LONG BFLD_LONG
+#define FLD_CHAR BFLD_CHAR
+#define FLD_FLOAT BFLD_FLOAT
+#define FLD_DOUBLE BFLD_DOUBLE
+#define FLD_STRING BFLD_STRING
+#define FLD_CARRAY BFLD_CARRAY
+#define FLD_MAX BFLD_MAX
+#define FLD_PTR         BFLD_PTR    /**< pointer to a buffer            */
+#define FLD_FML         BFLD_UBF    /**< embedded FML buffer          */
+#define FLD_VIEW        BFLD_VIEW   /**< embedded VIEW buffer         */
+
+#define BADFLDID BBADFLDID
+#define FIRSTFLDID BFIRSTFLDID
+
+#define FSTDXINT  16
+    
+/* capabiltiy for error codes */
+#define FMINVAL BMINVAL
+#define FALIGNERR BALIGNERR
+#define FNOTFLD BNOTFLD
+#define FNOSPACE BNOSPACE
+#define FNOTPRES BNOTPRES
+#define FBADFLD BBADFLD
+#define FTYPERR BTYPERR
+#define FEUNIX BEUNIX
+#define FBADNAME BBADNAME
+#define FMALLOC BMALLOC
+#define FSYNTAX BSYNTAX
+#define FFTOPEN BFTOPEN
+#define FFTSYNTAX BFTSYNTAX
+#define FEINVAL BEINVAL
+#define FBADTBL BBADTBL
+#define FBADVIEW BBADVIEW
+#define FVFSYNTAX BVFSYNTAX
+#define FVFOPEN BVFOPEN
+#define FBADACM BBADACM
+#define FNOCNAME BNOCNAME
+#define FEBADOP BEBADOP
+#define FMAXVAL  BMAXVAL
+    
+#define F_FTOS B_FTOS
+#define F_STOF B_STOF
+#define F_OFF B_OFF
+#define F_BOTH B_BOTH
+    
+#define Fnext_state Bnext_state 
+#define Fnext_state_t Bnext_state_t
+
+/* Added for compatibility */
+#define F32to16 B32to16
+#define F16to32 B16to32
+
+/* end of shared once */
+#endif
+
+/* capability for functions 16 bit compat: */
+#define MAXFBLEN32 MAXUBFLEN
+#define Fbfr32 Ubfh
+#define FBFR32 UBFH
+#define Ferror32 Berror
+#define FLDID32 BFLDID
+#define FLDLEN32 BFLDLEN
+#define FLDOCC32 BFLDOCC
+#define FLD_FML32         BFLD_UBF    /**< embedded FML buffer          */
+#define FLD_VIEW32        BFLD_VIEW   /**< embedded VIEW buffer         */
+
 /* capability for functions */
 #define Fread32 Bread
 #define Fwrite32 Bwrite
