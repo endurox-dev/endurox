@@ -1,9 +1,5 @@
 Enduro/X Administration Manual
 ==============================
-Madars Vitolins
-v1.1, 2018-11:
-	Initial draft
-:doctype: book
 
 == How to configure Enduro/X
 
@@ -29,6 +25,16 @@ most preferred transport mechanism when available. True on queue multiple
 servers mechanism is supported for different services across different XATMI
 server binaries (transport code "epoll" for GNU/Linux and "kqueue" for FreeBSD).
 
+- SVAPOLL - This mode is almost equivalent to EPOLL mode, except that System V
+queues are used. This mode is suitable only for IBM AIX, for which poll() system
+call accepts System V Queue IDs for polling. What comes with this mode are two
+additional shared memory mapping tables where where SystemV msgid is mapped to
+queue string name. And reverse mapping where queue string name is mapped back to
+msgid. Queue string names are used internally by Enduro/X. In this mode operations
+and configuration at the Enduro/X level is the same as with epoll mode. Each binary
+may advertise arbitrary number of services, where each service is shared queue,
+that may be shared between several other processes which advertise that service.
+
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
 available via Request Address option (rqaddr) for XATMI server. The limitation is that
@@ -44,17 +50,17 @@ for message delivery to load balanced servers. One additional thread is used
 for server process to monitor queues (transport code "poll").
 
 - The forth option is emulated message queue which uses shared memory and process
-shared Posix locks to emulate the mssage queue (transport code "emq").
+shared Posix locks to emulate the message queue (transport code "emq").
 
 .Enduro/X IPC transport sub-systems
-[width="80%",cols="^2,^2,^2,^2,^2,^2",options="header"]
+[width="80%",cols="^2,^2,^2,^2,^2,^2, ^2",options="header"]
 |=========================================================
-|Operating System/IPC Transport|epoll |kqueue |systemv |poll |emq 
-|GNU/Linux|R |X |R |S |S 
-|FreeBSD|X |R |S |S |S 
-|IBM AIX|X |X |R |S |S 
-|Oracle Solaris|X |X |R |S |S
-|MacOS|X |X |X |X |R 
+|Operating System/IPC Transport|epoll |kqueue |systemv |poll |emq |svapoll
+|GNU/Linux|R |X |R |S |S |X
+|FreeBSD|X |R |S |S |S |X
+|IBM AIX|X |X |S |S |S |R
+|Oracle Solaris|X |X |R |S |S |X
+|MacOS|X |X |X |X |R |X
 |=========================================================
 
 Legend:
@@ -1797,15 +1803,14 @@ image:netxms_tps.png[caption="Figure 10: ", title="TPS Configuration"]
 image:netxms_tps_transf.png[caption="Figure 11: ", title="TPS transformation"]
 
 
-:numbered!:
-
 [bibliography]
-Additional documentation 
-------------------------
+
+== Additional documentation 
+
 This section lists additional related documents.
 
 [bibliography]
-.Internet resources
+.Related documents
 
 - [[[EX_OVERVIEW]]] ex_overview(guides)
 - [[[MQ_OVERVIEW]]] 'man 7 mq_overview'
@@ -1816,9 +1821,10 @@ This section lists additional related documents.
 - [[[TPBRIDGE]]] tpbridge(8)
 
 [glossary]
-Glossary
---------
-This section lists
+
+== Glossary
+
+This section lists specific keywords used in document.
 
 [glossary]
 ATMI::
