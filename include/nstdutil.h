@@ -360,6 +360,7 @@ extern NDRX_API ndrx_intmap_t * ndrx_intmap_add (ndrx_intmap_t ** hash, int key,
 extern NDRX_API void ndrx_intmap_remove (ndrx_intmap_t ** hash);
 
 extern NDRX_API FILE* ndrx_mkstemps(char *filetempl, int suffixlen, long flags);
+extern NDRX_API int ndrx_is_numberic(char *str);
 
 #ifdef	__cplusplus
 }

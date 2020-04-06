@@ -306,6 +306,9 @@ extern "C" {
     
 /** Enduro/X MW home               */
 #define CONF_NDRX_HOME          "NDRX_HOME"
+    
+/** Feedback pool allocator options */
+#define CONF_NDRX_FPAOPTS          "NDRX_FPAOPTS"
 
 #define tperrno	(*_exget_tperrno_addr())
 #define tpurcode (*_exget_tpurcode_addr())

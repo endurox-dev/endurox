@@ -1993,5 +1993,24 @@ out:
     return ret;
 }
 
+/**
+ * Check is given string buffer numeric
+ * @param str buffer to test
+ * @return EXTRUE/EXFALSE
+ */
+expublic int ndrx_is_numberic(char *str)
+{
+    while(*str != EXEOS)
+    {
+        if(*str < '0' || *str > '9')
+        {
+            return EXFALSE;
+        }
+        
+        str++;
+    }
+    
+    return EXTRUE;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
