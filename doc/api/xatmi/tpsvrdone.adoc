@@ -5,7 +5,7 @@ TPSVRDONE(3)
 
 NAME
 ----
-tpsvrdone - Template server done tunction signature
+tpsvrdone - Template server done function signature
 
 
 SYNOPSIS
@@ -21,15 +21,36 @@ For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lub
 
 DESCRIPTION
 -----------
-This is XATMI server un-initialization function. It is called when Enduro/X application server is being shutdown or when process is being shutdown separately by *xadmin stop*. Depending on the version for which *atmisrv* library XATMI server is being linked, the form of function that should be exported by application changes.
+This is XATMI server un-initialization function. It is called when Enduro/X 
+application server is being shutdown or when process is being shutdown 
+separately by *xadmin stop*. Depending on the version for which *atmisrv* 
+library XATMI server is being linked, the form of function that should be 
+exported by application changes.
 
-1. If server binary is linked with '-latmisrv', then server must contain public (non static) function of *tpsvrdone()*.
+1. If server binary is linked with '-latmisrv', then server must contain 
+public (non static) function of *tpsvrdone()*.
 
-2. If server binary is linked with '-latmisrvnomain', then above (1) rule still applies. But in this case the caller's *main()* must invoke *ndrx_main()* function.
+2. If server binary is linked with '-latmisrvnomain', then above (1) rule still 
+applies. But in this case the caller's *main()* must invoke *ndrx_main()* function.
 
-3. If server binary is linked with '-latmisrvinteg', then functions *tpsvrinit()* and tpsvrdone()* must be passed to *ndrx_main_integra()* function.
+3. If server binary is linked with '-latmisrvinteg', then functions *tpsvrinit()* 
+and tpsvrdone()* must be passed to *ndrx_main_integra()* function.
+Or if starting server by *_tmstartserver()* - built by *buildserver(8)*, 
+function must pointer must be present in 'tmsvrargs_t'.
 
-During the execution of *tpsvrdone()* the library is still initialised and is valid for doing XATMI calls. Normally with this function, then user code shall close any XA resource managers open with *tpopen()*
+During the execution of *tpsvrdone()* the library is still initialized and is 
+valid for doing XATMI calls. Normally with this function, then user code 
+shall close any XA resource managers open with *tpopen()*
+
+Library 'atmisrvinteg' provides built in version of *tpsvrdone()* function. Function
+may be used only if starting server with *_tmstartserver(3)* (or was built by
+*buildserver(8)*). The default *tpsvrdone()* function, in case if application was
+not built for multi-threading (extern variable '_tmbuilt_with_thread_option' set to 0 
+or buildserver '-t' not set), 
+calls *tpsvrthrdone(3)* from the 'tmsvrargs_t'.
+In case there were no *tpsvrthrdone(3)* provided, the default *tpsvrthrdone()* is
+used also from 'atmisrvinteg' library. The default version of *tpsvrthrdone(3)* calls
+*tx_close(3)*.
 
 This only applies to XATMI servers.
 

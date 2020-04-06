@@ -264,7 +264,10 @@ expublic int tpsvrinit(int argc, char **argv)
     {
         if (NULL!=ndrx_G_tmsvrargs->p_tpsvrthrinit)
         {
-            return ndrx_G_tmsvrargs->p_tpsvrthrinit(argc, argv);
+            if (EXSUCCEED==ndrx_G_tmsvrargs->p_tpsvrthrinit(argc, argv))
+            {
+                userlog("Server started successfully");
+            }
         }
         else
         {
