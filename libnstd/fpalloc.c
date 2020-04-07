@@ -46,6 +46,8 @@
 #include <errno.h>
 #include <nstdutil.h>
 #include <userlog.h>
+
+#include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -67,17 +69,17 @@
 /**
  * List of malloc pools with different sizes and min/max settings
  */
-exprivate volatile ndrx_fpastack_t M_fpa_stacks[NDRX_FPA_MAX] =
+exprivate volatile ndrx_fpapool_t M_fpa_pools[NDRX_FPA_MAX] =
 {  
     /* size                 bmin   bmax  flags          */
-    {1*1024,                10,     20,  NDRX_FPA_FNOFLAG}      /* 1 */
-    ,{2*1024,               10,     20,  NDRX_FPA_FNOFLAG}      /* 2 */
-    ,{4*1024,               10,     20,  NDRX_FPA_FNOFLAG}      /* 3 */
-    ,{8*1024,               10,     20,  NDRX_FPA_FNOFLAG}      /* 4 */
-    ,{16*1024,              10,     20,  NDRX_FPA_FNOFLAG}      /* 5 */
-    ,{32*1024,              10,     20,  NDRX_FPA_FNOFLAG}      /* 6 */
-    ,{64*1024,              10,     20,  NDRX_FPA_FNOFLAG}      /* 7 */
-    ,{NDRX_FP_SIZE_SYSBUF,  10,     20,  NDRX_FPA_FSYSBUF}      /* 8 */
+    {1*1024,                10,     20,  NDRX_FPNOFLAG}      /* 1 */
+    ,{2*1024,               10,     20,  NDRX_FPNOFLAG}      /* 2 */
+    ,{4*1024,               10,     20,  NDRX_FPNOFLAG}      /* 3 */
+    ,{8*1024,               10,     20,  NDRX_FPNOFLAG}      /* 4 */
+    ,{16*1024,              10,     20,  NDRX_FPNOFLAG}      /* 5 */
+    ,{32*1024,              10,     20,  NDRX_FPNOFLAG}      /* 6 */
+    ,{64*1024,              10,     20,  NDRX_FPNOFLAG}      /* 7 */
+    ,{NDRX_FP_SIZE_SYSBUF,  10,     20,  NDRX_FPSYSBUF}      /* 8 */
 };
 
 /*---------------------------Statics------------------------------------*/
@@ -99,12 +101,12 @@ exprivate int ndrx_finit(void)
     char settings[1024];
     char *bconf, *bopt, *saveptr1, *saveptr2;
     /* load defaults */
-    for (i=0; i<N_DIM(M_fpa_stacks); i++)
+    for (i=0; i<N_DIM(M_fpa_pools); i++)
     {
-        M_fpa_stacks[i].blocks = 0;
-        M_fpa_stacks[i].hits = 0;
-        M_fpa_stacks[i].stack = NULL;
-        pthread_spin_init(&M_fpa_stacks[i].spinlock, 0);
+        M_fpa_pools[i].blocks = 0;
+        M_fpa_pools[i].max_hits = 0;
+        M_fpa_pools[i].stack = NULL;
+        pthread_spin_init(&M_fpa_pools[i].spinlock, 0);
     }
     
     /* setup the options if any... */
@@ -226,32 +228,32 @@ exprivate int ndrx_finit(void)
             
             /* not the best search, but only once for startup */
             found=EXFAIL;
-            for (i=0; i<N_DIM(M_fpa_stacks); i++)
+            for (i=0; i<N_DIM(M_fpa_pools); i++)
             {
                 if (NDRX_FP_SIZE_DEFAULT==blocksz || 
-                        blocksz==M_fpa_stacks[i].bsize)
+                        blocksz==M_fpa_pools[i].bsize)
                 {
                     /* Setup the block */
                     if (NDRX_FP_USEMALLOC==state)
                     {
-                        M_fpa_stacks[i].flags|=NDRX_FPA_FNOPOOL;
+                        M_fpa_pools[i].flags|=NDRX_FPNOPOOL;
                         found=EXTRUE;
                     }
                     else 
                     {
                         if (EXFAIL!=bmin)
                         {
-                            M_fpa_stacks[i].bmin=bmin;
+                            M_fpa_pools[i].bmin=bmin;
                         }
                         
                         if (EXFAIL!=bmax)
                         {
-                            M_fpa_stacks[i].bmax=bmax;
+                            M_fpa_pools[i].bmax=bmax;
                         }
                         
                         if (EXFAIL!=hits)
                         {
-                            M_fpa_stacks[i].hits=hits;
+                            M_fpa_pools[i].max_hits=hits;
                         }
                         
                         found=EXTRUE;
@@ -268,9 +270,9 @@ exprivate int ndrx_finit(void)
         
         /* check if all default -> set global flag to default malloc. */
         M_malloc_all = EXTRUE;
-        for (i=0; i<N_DIM(M_fpa_stacks); i++)
+        for (i=0; i<N_DIM(M_fpa_pools); i++)
         {
-            if (!(M_fpa_stacks[i].flags & NDRX_FPA_FNOPOOL))
+            if (!(M_fpa_pools[i].flags & NDRX_FPNOPOOL))
             {
                 M_malloc_all = EXFALSE;
                 break;
@@ -293,7 +295,8 @@ out:
  */
 expublic NDRX_API void *ndrx_fmalloc(size_t size, int flags)
 {
-    void *ret = NULL;
+    ndrx_fpablock_t *ret = NULL;
+    int poolno=EXFAIL;
     
     /* do the init. */
     if (!M_init_first)
@@ -318,17 +321,154 @@ expublic NDRX_API void *ndrx_fmalloc(size_t size, int flags)
     }
     
     /* bin search... for the descriptor */
+    if (flags & NDRX_FPSYSBUF)
+    {
+        poolno = NDRX_FPA_MAX-1;
+    }
+    else
+    {
+        /* get the pool size */
+        int low=0, mid, high=NDRX_FPA_DYN_MAX-1;
+        
+        while(low <= high)
+        {
+            mid = (low + high) / 2;
+             
+            if (size < M_fpa_pools[mid].bsize)
+            {
+                high = mid - 1;
+            }
+            else if (size < M_fpa_pools[mid].bsize)
+            {
+                low = mid + 1;
+            }
+            else
+            {
+                poolno = mid;
+            }
+        }
+        
+        if (EXFAIL==poolno && high < NDRX_FPA_DYN_MAX-2)
+        {
+            /* select next size */
+            poolno = high+1;
+        }
+    }
+    
+    if (EXFAIL==poolno)
+    {
+        /* do malloc.. */
+        ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
+        if (NULL==ret)
+        {
+            goto out;
+        }
+        ret->flags=NDRX_FPABRSIZE;
+        ret->magic = NDRX_FPA_MAGIC;
+        ret->next = NULL;
+        ret->poolno = EXFAIL;
+    }
+    else
+    {
+        /* get from stack alloc if needed */
+        pthread_spin_lock(&M_fpa_pools[poolno].spinlock);
+        
+        if (NULL!=M_fpa_pools[poolno].stack)
+        {
+            ret = M_fpa_pools[poolno].stack;
+            
+            M_fpa_pools[poolno].stack=M_fpa_pools[poolno].stack->next;
+            
+            /* set the feedback */
+            if (M_fpa_pools[poolno].blocks>M_fpa_pools[poolno].bmin)
+            {
+                if (M_fpa_pools[poolno].cur_hits < NDRX_FPA_HITS_MAX)
+                {
+                    M_fpa_pools[poolno].cur_hits++;
+                }
+            }
+            else if (M_fpa_pools[poolno].cur_hits>0)
+            {
+                /* set hits to 0 as we took from min */
+                M_fpa_pools[poolno].cur_hits=0;
+            }
+            /* reduce the block count */
+            M_fpa_pools[poolno].blocks--;
+        }
+        
+        pthread_spin_unlock(&M_fpa_pools[poolno].spinlock);
+        
+        if (NULL==ret)
+        {
+            /* do malloc.. */
+            ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
+            if (NULL==ret)
+            {
+                goto out;
+            }
+            ret->flags=NDRX_FPABRSIZE;
+            ret->magic = NDRX_FPA_MAGIC;
+            ret->next = NULL;
+            ret->poolno = poolno;
+        }
+    }
     
 out:
                         
-    return ret;
-    
+    return (void *)ret;
 }
 
-expublic NDRX_API void *ndrx_ffree(void *ptr)
+/**
+ * Free up the Feedback Pool Allocator memory block
+ * @param ptr ptr alloc'd by ndrx_fmalloc
+ */
+expublic NDRX_API void ndrx_ffree(void *ptr)
 {
+    ndrx_fpablock_t *ret = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
+    int poolno;
+    int action_free = EXFALSE;
     
+    if (ret->magic!=NDRX_FPA_MAGIC)
+    {
+        /* TODO: log the msg and abort... */
+    }
+    
+    /* remove arb size */
+    if (ret->flags & NDRX_FPABRSIZE)
+    {
+        NDRX_FREE(ret);
+        goto out;
+    }
+    
+    /* decide the feedback, at hits level we free up the buffer */
+    poolno = ret->poolno;
+    
+    pthread_spin_lock(&M_fpa_pools[poolno].spinlock);
+    
+    /* we free up the given block if blocks in pool>min and cur_hits>max_hits 
+     * Here we measure hits counted in malloc, the malloc
+     * calculations will indicate what we shall do here.
+     */
+    if (M_fpa_pools[poolno].cur_hits>M_fpa_pools[poolno].max_hits)
+    {
+        action_free = EXTRUE;
+        M_fpa_pools[poolno].cur_hits=0; /**< reset hits back .... */
+    }
+    else
+    {
+        /* add block to stack */
+        ret->next = M_fpa_pools[poolno].stack;
+        M_fpa_pools[poolno].stack = ret;
+    }
+    
+    pthread_spin_unlock(&M_fpa_pools[poolno].spinlock);
+    
+    if (action_free)
+    {
+        NDRX_FREE(ret);
+    }
+out:    
+    return;
 }
-
 
 /* vim: set ts=4 sw=4 et smartindent: */

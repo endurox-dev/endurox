@@ -73,18 +73,20 @@ extern "C" {
 #define NDRX_FPA_MAGIC          0xFEEDBCA1  /**< FPA Block magic            */
     
 /* FPA FLAGS: */
-#define NDRX_FPA_FNOFLAG         0           /**< No special flags           */
-#define NDRX_FPA_FNOPOOL         0x0001      /**< do not use alloc pool      */
-#define NDRX_FPA_FSYSBUF         0x0002      /**< use NDRX_MSGSIZEMAX        */
-#define NDRX_FPA_FABRSIZE        0x0004      /**< arbtirary size buf, free   */
+#define NDRX_FPNOFLAG         0           /**< No special flags             */
+#define NDRX_FPNOPOOL         0x0001      /**< do not use alloc pool        */
+#define NDRX_FPSYSBUF         0x0002      /**< use NDRX_MSGSIZEMAX          */
+#define NDRX_FPABRSIZE        0x0004      /**< arbtirary size buf, free     */
+    
+#define NDRX_FPA_HITS_MAX     1000000     /**< max feedback size 1M         */
 
 /**
  * max number of sizes    
  * Note that dynamic range will be
  * NDRX_FPA_MAX - 1, as the last entry is SYSBUF
  */
-#define NDRX_FPA_MAX            8
-#define NDRX_FPA_DYN_MAX        (NDRX_FPA_MAX-1)    /**< dynamic range      */
+#define NDRX_FPA_MAX            8                   /**< NDRX_MSGSIZEMAX pool no*/
+#define NDRX_FPA_DYN_MAX        (NDRX_FPA_MAX-1)    /**< dynamic range          */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -95,24 +97,26 @@ typedef struct ndrx_fpablock ndrx_fpablock_t;
 struct  ndrx_fpablock
 {
     int magic;              /**< magic constant                             */
-    int slot;               /**< slot number to which block belongs         */
+    int poolno;               /**< slot number to which block belongs         */
+    int flags;              /**< flags for given alloc block                */
     ndrx_fpablock_t *next;  /**< Next free block                            */
 };
 
 /**
  * One size stack for allocator
  */
-typedef struct ndrx_fpastack ndrx_fpastack_t;
+typedef struct ndrx_fpastack ndrx_fpapool_t;
 struct  ndrx_fpastack
 {
-    int bsize;           /**< this does not include header size          */
+    int bsize;              /**< this does not include header size          */
     int bmin;               /**< min number of blocks int given size range  */
     int bmax;               /**< max number of blocks int given size range  */
     int flags;              /**< flags for given entry                      */
     int blocks;             /**< Number of blocks allocated                 */
     ndrx_fpablock_t *stack; /**< stack head                                 */
     pthread_spinlock_t spinlock;    /**< spinlock for protecting given size */
-    int hits;               /**< number of pool hits when goes over the min */
+    int max_hits;           /**< number of pool hits when goes over the min */
+    int cur_hits;           /**< current hits (i.e. number of times use over min*/    
 };
 
 /*---------------------------Globals------------------------------------*/
