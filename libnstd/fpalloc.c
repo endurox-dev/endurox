@@ -401,7 +401,15 @@ expublic NDRX_API void *ndrx_fmalloc(size_t size, int flags)
         if (NULL==ret)
         {
             /* do malloc.. */
-            ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
+            if (NDRX_FP_SIZE_SYSBUF==M_fpa_pools[poolno].bsize)
+            {
+                /* size must be correctly passed in */
+                ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
+            }
+            else
+            {
+                ret = (ndrx_fpablock_t *)NDRX_MALLOC(M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
+            }
             if (NULL==ret)
             {
                 goto out;
@@ -430,7 +438,16 @@ expublic NDRX_API void ndrx_ffree(void *ptr)
     
     if (ret->magic!=NDRX_FPA_MAGIC)
     {
-        /* TODO: log the msg and abort... */
+        ssize_t wret;
+        /* signal safe error msg */
+#define ERR_MSG1    "***************************************************\n"
+#define ERR_MSG2    "* INVALID FPA FREE: Invalid magic                 *\n"
+#define ERR_MSG3    "***************************************************\n"
+        
+        wret=write(STDERR_FILENO, ERR_MSG1, strlen(ERR_MSG1));
+        wret=write(STDERR_FILENO, ERR_MSG2, strlen(ERR_MSG2));
+        wret=write(STDERR_FILENO, ERR_MSG3, strlen(ERR_MSG3));
+        abort();
     }
     
     /* remove arb size */
@@ -445,11 +462,12 @@ expublic NDRX_API void ndrx_ffree(void *ptr)
     
     pthread_spin_lock(&M_fpa_pools[poolno].spinlock);
     
-    /* we free up the given block if blocks in pool>min and cur_hits>max_hits 
+    /* we free up the given block if blocks in blocks in pool>= max blocks or cur_hits>max_hits 
      * Here we measure hits counted in malloc, the malloc
      * calculations will indicate what we shall do here.
      */
-    if (M_fpa_pools[poolno].cur_hits>M_fpa_pools[poolno].max_hits)
+    if (M_fpa_pools[poolno].blocks >= M_fpa_pools[poolno].bmax ||
+            M_fpa_pools[poolno].cur_hits>M_fpa_pools[poolno].max_hits)
     {
         action_free = EXTRUE;
         M_fpa_pools[poolno].cur_hits=0; /**< reset hits back .... */
