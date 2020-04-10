@@ -656,6 +656,7 @@ int main(int argc, char** argv)
     /*
      * NSTD Library tests
      */
+    add_suite(suite, ubf_nstd_fpa());
     add_suite(suite, ubf_nstd_standard());
     add_suite(suite, ubf_nstd_util());
     add_suite(suite, ubf_nstd_debug());
