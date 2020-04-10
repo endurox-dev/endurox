@@ -273,11 +273,6 @@ out:
 
     if (EXSUCCEED!=ret && client)
     {
-        if (NULL!=client->d)
-        {
-            NDRX_FREE(client->d);
-        }
-        
         NDRX_FREE(client);
     }
 

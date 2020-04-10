@@ -288,7 +288,7 @@ out:
  * @param len
  * @return 
  */
-exprivate int get_bridges_rply_request(char *buf, long len)
+exprivate int get_bridges_rply_request(char **buf, long len)
 {
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry = G_server_conf.service_array[ATMI_SRV_ADMIN_Q];

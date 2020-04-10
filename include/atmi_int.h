@@ -163,36 +163,14 @@ extern "C" {
 #define NDRX_CONF_MSGSEQ_START       65530   /* Have a high number for wrap test */    
     
 /* Memory allocation helpers */
-    
-/**
- * Allocate buffer, if fail set ATMI error, and goto out
- */
-#define NDRX_SYSBUF_ALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
-{\
-    int __buf_size__ = NDRX_MSGSIZEMAX;\
-    __buf = NDRX_CALLOC(1, __buf_size__);\
-    if (NULL==__buf)\
-    {\
-        int err = errno;\
-        ndrx_TPset_error_fmt(TPEOS, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
-        NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
-        userlog("%s: failed to allocate sysbuf: %s", __func__, strerror(errno));\
-        errno = err;\
-        EXFAIL_OUT(__ret);\
-    }\
-    if (NULL!=__p_bufsz)\
-    {\
-        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
-    }\
-}
-    
+
  /**
  * Allocate buffer, if fail set ATMI error, and goto out
  */
 #define NDRX_SYSBUF_MALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
 {\
     int __buf_size__ = NDRX_MSGSIZEMAX;\
-    __buf = NDRX_MALLOC(__buf_size__);\
+    __buf = NDRX_FPMALLOC(__buf_size__, NDRX_FPSYSBUF);\
     if (NULL==__buf)\
     {\
         int err = errno;\
@@ -214,7 +192,7 @@ extern "C" {
 #define NDRX_SYSBUF_MALLOC_OUT(__buf, __p_bufsz, __ret)\
 {\
     int __buf_size__ = NDRX_MSGSIZEMAX;\
-    __buf = NDRX_MALLOC(__buf_size__);\
+    __buf = NDRX_FPMALLOC(__buf_size__, NDRX_FPSYSBUF);\
     if (NULL==__buf)\
     {\
         int err = errno;\
@@ -229,7 +207,11 @@ extern "C" {
     }\
 }
     
-
+/**
+ * Free up resources
+ */
+#define NDRX_SYSBUF_FREE(__buf) NDRX_FPFREE(__buf)
+    
 #define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
 #define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */
 
@@ -878,7 +860,7 @@ extern NDRX_API int ndrx_tppost(char *eventname, char *data, long len, long flag
         int user1, long user2, int user3, long user4);
 
 extern NDRX_API void	tpext_configbrige 
-    (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type));
+    (int nodeid, int flags, int (*p_qmsg)(char **buf, int len, char msg_type));
 
 extern NDRX_API int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_object);
 extern NDRX_API int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Object *data_object);

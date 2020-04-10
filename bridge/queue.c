@@ -129,8 +129,8 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
                 MUTEX_LOCK_V(M_in_q_lock);
                 /* remove from Q - ok */
                 DL_DELETE(M_in_q, el);
-                NDRX_FREE(el->buffer);
-                NDRX_FREE(el);
+                NDRX_SYSBUF_FREE(el->buffer);
+                NDRX_FPFREE(el);
                 MUTEX_UNLOCK_V(M_in_q_lock);
             }
         }
@@ -191,7 +191,7 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     int ret=EXSUCCEED;
     in_msg_t *msg;
     
-    if (NULL==(msg=NDRX_CALLOC(1, sizeof(in_msg_t))))
+    if (NULL==(msg=NDRX_FPMALLOC(sizeof(in_msg_t), 0)))
     {
         NDRX_ERR_MALLOC(sizeof(in_msg_t));
         EXFAIL_OUT(ret);
@@ -219,7 +219,7 @@ out:
 
     if (NULL==msg->buffer && NULL!=msg)
     {
-        NDRX_FREE(msg);
+        NDRX_FPFREE(msg);
     }
 
     return ret;
@@ -318,8 +318,8 @@ exprivate int br_process_error(char *buf, int len, int err,
             MUTEX_LOCK_V(M_in_q_lock);
             /* Generate error reply */
             DL_DELETE(M_in_q, from_q);
-            NDRX_FREE(from_q->buffer);
-            NDRX_FREE(from_q);
+            NDRX_SYSBUF_FREE(from_q->buffer);
+            NDRX_FPFREE(from_q);
             MUTEX_LOCK_V(M_in_q_lock);
         }
     }
@@ -459,30 +459,17 @@ out:
 /**
  * Thread entry wrapper...
  * Sending message to network
- * @param buf
+ * @param buf double ptr to dispatch msg
  * @param len
  * @param msg_type
  * @return 
  */
-expublic int br_got_message_from_q(char *buf, int len, char msg_type)
+expublic int br_got_message_from_q(char **buf, int len, char msg_type)
 {
     int ret = EXSUCCEED;
     xatmi_brmessage_t *thread_data;
     int finish_off = EXFALSE;
     char *fn = "br_got_message_from_q";
-    
-    if (0==G_bridge_cfg.threadpoolsize)
-    {
-        xatmi_brmessage_t thread_data_stat;
-        
-        NDRX_LOG(log_debug, "%s: single thread mode", fn);
-        thread_data_stat.threaded=EXFALSE;
-        thread_data_stat.buf = buf;
-        thread_data_stat.len = len;
-        thread_data_stat.msg_type = msg_type;
-        
-        return br_got_message_from_q_th((void *)&thread_data_stat, &finish_off);  /* <<<< RETURN!!!! */
-    }
     
     NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker", fn);
     
@@ -499,8 +486,8 @@ expublic int br_got_message_from_q(char *buf, int len, char msg_type)
         EXFAIL_OUT(ret);
     }
     
-    thread_data->buf = ndrx_memdup(buf, len);
-    thread_data->threaded=EXTRUE;
+    thread_data->buf = *buf;
+    *buf = NULL;
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
@@ -644,11 +631,8 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
     }
 out:
                 
-    if (p_xatmimsg->threaded)
-    {
-        NDRX_FREE(p_xatmimsg->buf);
-        NDRX_FREE(p_xatmimsg);
-    }
+    NDRX_SYSBUF_FREE(p_xatmimsg->buf);
+    NDRX_FREE(p_xatmimsg);
     
     return ret;
 }

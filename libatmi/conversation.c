@@ -892,7 +892,7 @@ exprivate int rcv_hash_add(tp_conversation_control_t *conv,
     
     int ret = EXSUCCEED;
     char *tmp;
-    tpconv_buffer_t * el = NDRX_CALLOC(1, sizeof(tpconv_buffer_t));
+    tpconv_buffer_t * el = NDRX_FPMALLOC(sizeof(tpconv_buffer_t), 0);
     
     if (NULL!=(tmp=rcv_hash_ck(conv, msgseq)))
     {
@@ -911,7 +911,7 @@ exprivate int rcv_hash_add(tp_conversation_control_t *conv,
                 __func__, strerror(errno));
         EXFAIL_OUT(ret);
     }
-    
+    el->size=0;
     el->msgseq = (int)msgseq;
     el->buf = buf;
     
@@ -940,7 +940,7 @@ exprivate char * rcv_hash_ck(tp_conversation_control_t *conv, unsigned short msg
     {
         ret = el->buf;
         EXHASH_DEL(conv->out_of_order_msgs, el);
-        NDRX_FREE(el);
+        NDRX_FPFREE(el);
     }
     
     return ret;
@@ -960,9 +960,9 @@ exprivate void rcv_hash_delall(tp_conversation_control_t *conv)
     /* Iterate over the hash! */
     EXHASH_ITER(hh, conv->out_of_order_msgs, el, elt)
     {
-         EXHASH_DEL(conv->out_of_order_msgs, el);
-         NDRX_FREE(el->buf); /* dealloc system buffer */
-         NDRX_FREE(el); /* free hash item */
+        EXHASH_DEL(conv->out_of_order_msgs, el);
+        NDRX_SYSBUF_FREE(el->buf); /* dealloc system buffer */
+        NDRX_FPFREE(el); /* free hash item */
     }
     
 }
@@ -1035,7 +1035,7 @@ expublic int ndrx_tprecv (int cd, char **data,
     }
 
     /* Allocate Enduro/X system buffer */
-    NDRX_SYSBUF_ALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
+    NDRX_SYSBUF_MALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
     rply = (tp_command_call_t *)rply_buf;
     
     /* TODO: If we keep linked list with call descriptors and if there is
@@ -1108,7 +1108,7 @@ inject_message:
                 }
                 
                 /* Realloc system buffer */
-                NDRX_SYSBUF_ALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
+                NDRX_SYSBUF_MALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
                 /* switch the ptrs... */
                 rply = (tp_command_call_t *)rply_buf;
                 
@@ -1280,7 +1280,7 @@ out:
     /* Bug #389 */
     if (NULL!=rply_buf)
     {
-        NDRX_FREE(rply_buf);
+        NDRX_SYSBUF_FREE(rply_buf);
     }
     
     return ret;

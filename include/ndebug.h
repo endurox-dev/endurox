@@ -47,7 +47,7 @@ extern "C" {
 #include <nstd_tls.h>
 #include <userlog.h>
 #include <errno.h>
-    
+#include <fpalloc.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API ndrx_debug_t G_ubf_debug;
 extern NDRX_API ndrx_debug_t G_tp_debug;
@@ -282,6 +282,9 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_CALLOC(nmemb, size) calloc(nmemb, size)
 #define NDRX_REALLOC(ptr, size) realloc(ptr, size)
 #define NDRX_STRDUP(ptr) strdup(ptr)
+
+#define NDRX_FPMALLOC(size, flags) ndrx_fpmalloc(size, flags)
+#define NDRX_FPFREE(ptr) ndrx_fpfree(ptr)
 
 #define NDRX_FOPEN(path, mode) fopen(path, mode)
 #define NDRX_FCLOSE(fp) fclose(fp)

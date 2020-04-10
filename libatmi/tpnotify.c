@@ -437,7 +437,7 @@ expublic int ndrx_tpchkunsol(void)
         {
             NDRX_LOG(log_info, "got non unsol command - enqueue");
 
-            if (NULL==(tmp = NDRX_CALLOC(1, sizeof(tpmemq_t))))
+            if (NULL==(tmp = NDRX_FPMALLOC(sizeof(tpmemq_t), 0)))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
@@ -449,6 +449,8 @@ expublic int ndrx_tpchkunsol(void)
 	    pbuf = NULL; /* save the buffer... */
             tmp->len = pbuf_len;
             tmp->data_len = rply_len;
+            tmp->prev = NULL;
+            tmp->next = NULL;
 
             DL_APPEND(G_atmi_tls->memq, tmp); 
         }
@@ -458,7 +460,7 @@ out:
 
     if (NULL!=pbuf)
     {
-        NDRX_FREE(pbuf);
+        NDRX_SYSBUF_FREE(pbuf);
     }
 
     NDRX_LOG(log_debug, "%s returns %d (applied msgs: %d)", __func__, 

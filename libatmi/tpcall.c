@@ -709,7 +709,7 @@ expublic int ndrx_tpgetrply (int *cd,
             tpmemq_t * tmp;
             NDRX_LOG(log_info, "Got message from memq...");
             /* grab the buffer of mem linked list */
-            NDRX_FREE(pbuf);
+            NDRX_SYSBUF_FREE(pbuf);
             
             /* the buffer is allocated already by sysalloc, thus
              * continue to use this buffer and free up our working buf.
@@ -721,7 +721,7 @@ expublic int ndrx_tpgetrply (int *cd,
             /* delete first elem in the list */
             tmp = G_atmi_tls->memq;
             DL_DELETE(G_atmi_tls->memq, tmp);
-            NDRX_FREE(tmp);
+            NDRX_FPFREE(tmp);
             
             /* Switch to received buffer... */
             rply  = (tp_command_call_t *)pbuf;
@@ -941,7 +941,7 @@ out:
     /* free up the system buffer */
     if (NULL!=pbuf)
     {
-        NDRX_FREE(pbuf);
+        NDRX_SYSBUF_FREE(pbuf);
     }
                 
     NDRX_LOG(log_debug, "%s return %d tpurcode=%ld tperror=%d", 
