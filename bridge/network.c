@@ -177,17 +177,17 @@ out:
 /**
  * Process message from network (wrapper) for dispatching to thread.
  * @param net
- * @param buf
+ * @param buf NOTE! we reset the incoming to NULL, as we forward data to thread
  * @param len
  * @return 
  */
-expublic int br_process_msg(exnetcon_t *net, char *buf, int len)
+expublic int br_process_msg(exnetcon_t *net, char **buf, int len)
 {
     int ret = EXSUCCEED;
     net_brmessage_t *thread_data;
     char *fn = "br_process_msg";
     
-    thread_data = NDRX_MALLOC(sizeof(net_brmessage_t));
+    thread_data = NDRX_FPMALLOC(sizeof(net_brmessage_t), 0);
     
     if (NULL==thread_data)
     {
@@ -202,8 +202,8 @@ expublic int br_process_msg(exnetcon_t *net, char *buf, int len)
     
     NDRX_LOG(log_debug, "%s: multi thread mode - dispatching to worker", fn);
     
-    thread_data->buf_malloced = EXTRUE;
-    thread_data->buf = ndrx_memdup(buf, len);
+    thread_data->buf = *buf;
+    *buf = NULL;/* indicate the we finish off the data buffer */
     
     thread_data->len = len;
     thread_data->net = net;
@@ -221,9 +221,9 @@ out:
         {
             if (NULL!=thread_data->buf)
             {
-                NDRX_FREE(thread_data->buf);
+                NDRX_SYSBUF_FREE(thread_data->buf);
             }
-            NDRX_FREE(thread_data);
+            NDRX_FPFREE(thread_data);
         }
     }
 
@@ -370,7 +370,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
 	}
 	
         /* So this was buffer by memdup.. */
-        NDRX_FREE(p_netmsg->buf);
+        NDRX_SYSBUF_FREE(p_netmsg->buf);
         p_netmsg->buf = tmp_clr;
 
         p_netmsg->len = clr_len;
@@ -395,11 +395,10 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
         }
         
         /* If allocated previously  */
-        NDRX_FREE(p_netmsg->buf);
+        NDRX_SYSBUF_FREE(p_netmsg->buf);
         
         p_netmsg->buf = tmp;
         p_netmsg->len = tmp_len;
-        p_netmsg->buf_malloced = EXTRUE;
         
         /* Switch ptr to converted one.! */
         p_netmsg->call = (cmd_br_net_call_t *)tmp;
@@ -522,10 +521,10 @@ out:
               
     if (NULL!=p_netmsg->buf)
     {
-        NDRX_FREE(p_netmsg->buf);
+        NDRX_SYSBUF_FREE(p_netmsg->buf);
     }
 
-    NDRX_FREE(p_netmsg);
+    NDRX_FPFREE(p_netmsg);
 
     return ret;
 }
@@ -575,6 +574,8 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         
         EXFAIL_OUT(ret);
     }
+    
+    /* get away from this memcpy somehow? */
     memcpy(call->buf, buf, len);
     
     snd = tmp;

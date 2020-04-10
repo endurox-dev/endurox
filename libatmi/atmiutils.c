@@ -507,15 +507,15 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             int flags,
         /* TODO Might want to add checks before calling rply_request func...
          * for magic and command code. */
-                            int (*p_rply_request)(char *buf, long len)
+                            int (*p_rply_request)(char **buf, long len)
         )
 {
     int ret=EXSUCCEED;
     command_reply_t *reply;
     unsigned prio = 0;
-    char    msg_buffer_max[NDRX_MSGSIZEMAX];
-    
-    long  reply_len;
+    /* char    msg_buffer_max[NDRX_MSGSIZEMAX];*/
+    char    *msg_buffer_max= NULL;
+    size_t  reply_len;
     int attempts = 1;
     
 restart:
@@ -604,14 +604,22 @@ restart:
 
     do
     {
-        command_call_t *test_call = (command_call_t *)msg_buffer_max;
+        command_call_t *test_call;
         
+        if (NULL==msg_buffer_max)
+        {
+            NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buffer_max, NULL, ret);
+        }
+        
+        reply_len = NDRX_MSGSIZEMAX;
+        
+        test_call = (command_call_t *)msg_buffer_max;
         
         /* TODO: have an selector for ptr functions for CAT operations! */
         
         /* Error could be also -2..! */
         if (0>(reply_len=ndrx_generic_q_receive(reply_queue, NULL, NULL,
-                msg_buffer_max, sizeof(msg_buffer_max), &prio, flags)))
+                msg_buffer_max, reply_len, &prio, flags)))
         {
             NDRX_LOG(log_error, "Failed to receive reply from ndrxd!");
 
@@ -626,7 +634,7 @@ restart:
         } /* even's are requests... */
         else if (test_call->command % 2 == 0 && NULL!=p_rply_request)
         {
-            if (EXSUCCEED!=p_rply_request(msg_buffer_max, reply_len))
+            if (EXSUCCEED!=p_rply_request(&msg_buffer_max, reply_len))
             {
                 NDRX_LOG(log_error, "Failed to process request!");
                 ret=EXFAIL;
@@ -640,7 +648,7 @@ restart:
         }
         else if (reply_len < sizeof(command_reply_t))
         {
-            NDRX_LOG(log_error, "Reply size %ld, expected atleast %ld!",
+            NDRX_LOG(log_error, "Reply size %zd, expected atleast %zu!",
                                 reply_len, sizeof(command_reply_t));
 
             if (NULL!=p_put_output)
@@ -745,6 +753,13 @@ restart:
     } while((reply->flags & NDRXD_CALL_FLAGS_RSPHAVE_MORE));
 
 out:
+
+    /* might be take by some double ptr internals */
+    if (NULL!=msg_buffer_max)
+    {
+        NDRX_SYSBUF_FREE(msg_buffer_max);
+    }
+
     return ret;
 }
 
@@ -832,7 +847,7 @@ expublic int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
                             char *rply_buf_out,             /* might be a null  */
                             int *rply_buf_out_len,          /* if above is set, then must not be null */
                             int flags,
-                            int (*p_rply_request)(char *buf, long len)
+                            int (*p_rply_request)(char **buf, long len)
         )
 {
     return cmd_generic_call_2(ndrxd_cmd, msg_src, msg_type,

@@ -250,7 +250,7 @@ expublic int tpext_delb4pollcb(void)
  * @param flags
  */
 expublic void tpext_configbrige 
-    (int nodeid, int flags, int (*p_qmsg)(char *buf, int len, char msg_type))
+    (int nodeid, int flags, int (*p_qmsg)(char **buf, int len, char msg_type))
 {
     
     ndrx_TPunset_error();

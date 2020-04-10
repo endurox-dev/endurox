@@ -386,6 +386,7 @@ exprivate int get_full_len(exnetcon_t *net)
     return msg_len;
 }
 
+#if 0
 /**
  *  Cut the message from buffer & return it to caller!
  */
@@ -430,6 +431,7 @@ exprivate int cut_out_msg(exnetcon_t *net, int full_msg, char *buf, int *len, in
 out:
     return ret;
 }
+#endif
 
 /**
  * Receive single message with prefixed length.
@@ -474,12 +476,12 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                 ret=EXFAIL;
                 break;
             }
-            else if (full_msg > NDRX_MSGSIZEMAX)
+            else if (full_msg > DBUF_SZ)
             {
                 NDRX_LOG(log_error, "ERROR ! received len %d > max buf %ld! - "
-                        "closing socket!", full_msg, NDRX_MSGSIZEMAX);
+                        "closing socket!", full_msg, DBUF_SZ);
                 userlog("ERROR ! received len %d > max buf %ld! - "
-                        "closing socket!", full_msg, NDRX_MSGSIZEMAX);
+                        "closing socket!", full_msg, DBUF_SZ);
                 net->schedule_close = EXTRUE;
                 ret=EXFAIL;
                 break;
@@ -491,7 +493,27 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
             if (net->dl >= full_msg)
             {
                 /* Copy msg out there & cut the buffer */
+                /*
                 ret=cut_out_msg(net, full_msg, buf, len, appflags);
+                 * 
+                 */
+                /* return the msg */
+                *len = full_msg-net->len_pfx;
+                net->dl -= full_msg;
+                
+                /* should be 0! */
+                
+                if (0!=net->dl)
+                {
+                    NDRX_LOG(log_error, "Expected left over 0 but got %d", net->dl);
+                    userlog("Expected left over 0 but got %d", net->dl);
+                    abort();
+                }
+                
+                if (!(appflags & APPFLAGS_MASK))
+                {
+                    NDRX_DUMP(log_debug, "Got message: ", buf, *len);
+                }
                 
                 MUTEX_UNLOCK_V(net->rcvlock);
                 return ret;
@@ -545,21 +567,47 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
             break;
         }
         
-        if (EXFAIL==(got_len=recv_wrap(net, net->d+net->dl, download_size, 
-                flags, appflags)))
+        /* 
+         * select target buffer, either prefix receiving buf
+         * our data receiving buf from the caller - to avoid extra memcopy....
+         */
+        if (net->dl < net->len_pfx)
         {
-            /* NDRX_LOG(log_error, "Failed to get data");*/
-            ret=EXFAIL;
+            if (EXFAIL==(got_len=recv_wrap(net, net->d+net->dl, download_size, 
+                    flags, appflags)))
+            {
+                /* NDRX_LOG(log_error, "Failed to get data");*/
+                ret=EXFAIL;
+            }
+            else
+            {
+                if (!(appflags&APPFLAGS_MASK))
+                {
+                    NDRX_DUMP(log_debug, "Got packet: ",
+                            net->d+net->dl, got_len);
+                }
+                net->dl+=got_len;
+            }
         }
         else
         {
-            if (!(appflags&APPFLAGS_MASK))
+            if (EXFAIL==(got_len=recv_wrap(net, buf+net->dl-net->len_pfx, download_size, 
+                    flags, appflags)))
             {
-                NDRX_DUMP(log_debug, "Got packet: ",
-                        net->d+net->dl, got_len);
+                /* NDRX_LOG(log_error, "Failed to get data");*/
+                ret=EXFAIL;
             }
-            net->dl+=got_len;
+            else
+            {
+                if (!(appflags&APPFLAGS_MASK))
+                {
+                    NDRX_DUMP(log_debug, "Got packet: ",
+                            buf+net->dl-net->len_pfx, got_len);
+                }
+                net->dl+=got_len;
+            }
         }
+        
     }
     
     /* If message is not complete & there is timeout condition, 
@@ -613,14 +661,18 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     int so_error=0;
     socklen_t len = sizeof so_error;
     exnetcon_t *net = (exnetcon_t *)ptr1;   /* Get the connection ptr... */
-    char buf[DATA_BUF_MAX];
+    /* char buf[DATA_BUF_MAX]; */
     int buflen = DATA_BUF_MAX;
+    char *buf = NULL;
     
     /* check schedule... */
     if (exnet_schedule_run(net))
     {
         goto out;
     }
+    
+    /* sysbuf alloc */
+    NDRX_SYSBUF_MALLOC_OUT(buf, NULL, ret);
 
     /* Receive the event of the socket */
     if (EXSUCCEED!=getsockopt(net->sock, SOL_SOCKET, SO_ERROR, &so_error, &len))
@@ -739,11 +791,18 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         if(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
         {
             /* We got the message - do the callback op */
-            net->p_process_msg(net, buf, buflen);
+            net->p_process_msg(net, &buf, buflen);
         }
     }
 
 out:
+
+    /* remove the buffer if haven't already zapped by threads */
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     return EXSUCCEED;
 }
 
@@ -1025,7 +1084,7 @@ out:
  *  (normally via thread pool)
  * @return EXSUCCEED 
 */
-expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
+expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char **buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
                 int (*p_snd_zero_len)(exnetcon_t *net))
 {
@@ -1219,21 +1278,6 @@ expublic int exnet_net_init(exnetcon_t *net)
 {
     int ret = EXSUCCEED;
     int err;
-    
-    net->d = NDRX_MALLOC(DATA_BUF_MAX);
-    
-    if (NULL==net->d)
-    {
-        int err = errno;
-        
-        userlog("Failed to allocate client structure! %s", 
-                strerror(err));
-        
-        NDRX_LOG(log_error, "Failed to allocate data block for client! %s", 
-                strerror(err));
-        
-        EXFAIL_OUT(ret);
-    }
     
     memset(&(net->rwlock), 0, sizeof(net->rwlock));
 

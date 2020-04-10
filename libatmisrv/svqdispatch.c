@@ -743,7 +743,7 @@ out:
  * @param len
  * @return
  */
-expublic int sv_server_request(char *buf, int len)
+expublic int sv_server_request(char **buf, int len)
 {
     int ret=EXSUCCEED;
     tp_command_generic_t *gen_command = (tp_command_generic_t *)G_server_conf.last_call.buf_ptr;
@@ -916,7 +916,7 @@ expublic int sv_server_request(char *buf, int len)
             NDRX_LOG(log_error, "Unknown command ID: %hd", gen_command->command_id);
             
             /* Dump the message to log... */
-            NDRX_DUMP(log_error, "Command content", buf,  len);
+            NDRX_DUMP(log_error, "Command content", *buf,  len);
             
             EXFAIL_OUT(ret);
             break;
@@ -1006,13 +1006,13 @@ out:
  * @param shutdown_req
  * @return SUCCEED/FAIL
  */
-expublic int process_admin_req(char *buf, long len, int *shutdown_req)
+expublic int process_admin_req(char **buf, long len, int *shutdown_req)
 {
     int ret=EXSUCCEED;
     tp_command_generic_t shut_msg; /* shutdown msg */
     int i;
 
-    command_call_t * call = (command_call_t *)buf;
+    command_call_t * call = (command_call_t *)*buf;
 
     /* So what, do shutdown, right? */
     if (NDRXD_COM_SRVSTOP_RQ==call->command)
@@ -1119,7 +1119,6 @@ expublic int sv_wait_for_request(void)
     int ret=EXSUCCEED;
     int nfds, n, len, j;
     unsigned prio;
-    char msg_buf[NDRX_MSGSIZEMAX];
     int again;
     int tout;
     pollextension_rec_t *ext;
@@ -1127,6 +1126,10 @@ expublic int sv_wait_for_request(void)
     mqd_t evmqd;
     ndrx_stopwatch_t   dbg_time;   /* Generally this is used for debug. */
     ndrx_stopwatch_t   periodic_cb;
+    char *msg_buf = NULL;
+    size_t msgsize_max = NDRX_MSGSIZEMAX;
+    
+    /* char msg_buf[NDRX_MSGSIZEMAX]; ALLOC IF NEEDED */
     
     if (G_server_conf.periodcb_sec)
     {
@@ -1182,7 +1185,14 @@ expublic int sv_wait_for_request(void)
          *  by the service name in the message and then we return then
          *  we will events correspondingly.
          */
-        len = sizeof(msg_buf);
+        /*len = sizeof(msg_buf);*/
+        
+        if (NULL==msg_buf)
+        {
+            NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buf, NULL, ret);
+        }
+        len = msgsize_max;
+        
         nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout, msg_buf, &len);
         
@@ -1283,7 +1293,7 @@ expublic int sv_wait_for_request(void)
             }
             
             if (EXFAIL==len && EXFAIL==(len=ndrx_mq_receive (evmqd,
-                (char *)msg_buf, sizeof(msg_buf), &prio)))
+                (char *)msg_buf, msgsize_max, &prio)))
             {
                 if (EAGAIN==errno)
                 {
@@ -1325,7 +1335,7 @@ expublic int sv_wait_for_request(void)
                 if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no)
                 {
                     NDRX_LOG(log_debug, "Got admin request");
-                    ret=process_admin_req(msg_buf, len, &G_shutdown_req);
+                    ret=process_admin_req(&msg_buf, len, &G_shutdown_req);
                 }
                 else
                 {   
@@ -1348,12 +1358,19 @@ expublic int sv_wait_for_request(void)
                     G_server_conf.last_call.buf_ptr = msg_buf;
                     G_server_conf.last_call.len = len;
                     
-                    sv_server_request(msg_buf, len);
+                    sv_server_request(&msg_buf, len);
                 }
             }
         } /* for */
     }
 out:
+
+    /* free up system buffer, if not re-used */
+    if (NULL!=msg_buf)
+    {
+        NDRX_SYSBUF_FREE(msg_buf);
+    }
+
     return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

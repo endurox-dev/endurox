@@ -100,7 +100,6 @@ typedef struct
     char *buf;
     int len;
     char msg_type;
-    int threaded; /* Do we run in threaded mode? */
     
 } xatmi_brmessage_t;
 
@@ -113,8 +112,6 @@ typedef struct
     char *buf;
     int len;
     exnetcon_t *net;
-    /*int threaded;  Do we run in threaded mode? */
-    int buf_malloced; /* buffer is malloced? */
     cmd_br_net_call_t *call; /* Intermediate field */
 } net_brmessage_t;
 
@@ -126,10 +123,10 @@ extern __thread int G_thread_init;
 extern int br_submit_to_ndrxd(command_call_t *call, int len);
 extern int br_submit_to_service(tp_command_call_t *call, int len);
 extern int br_submit_to_service_notif(tp_notif_call_t *call, int len);
-extern int br_got_message_from_q(char *buf, int len, char msg_type);
+extern int br_got_message_from_q(char **buf, int len, char msg_type);
 extern int br_submit_reply_to_q(tp_command_call_t *call, int len);
     
-extern int br_process_msg(exnetcon_t *net, char *buf, int len);
+extern int br_process_msg(exnetcon_t *net, char **buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
 
 extern int br_calc_clock_diff(command_call_t *call);

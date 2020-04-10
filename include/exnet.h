@@ -54,7 +54,7 @@ extern int G_recv_tout;				/* Was there timeout on receive? */
 #define NDRX_NET_MIN_SIZE       4096            /**< Min net read...        */
 
 /* Buffer size + netlen */
-#define DATA_BUF_MAX                    NDRX_MSGSIZEMAX+NET_LEN_PFX_LEN 
+#define DATA_BUF_MAX                    NDRX_MSGSIZEMAX 
 
 #define APPFLAGS_MASK			0x0001	/* Mask the content in prod mode */
 #define APPFLAGS_TOUT_OK		0x0002	/* Timeout is OK		 */
@@ -91,7 +91,7 @@ struct exnetcon
     exnetcon_t *my_server;  /**< Pointer to listener structure, used by server, 
                              * in case if this was incoming connection */
     int rcvtimeout;             /**< Receive timeout                        */
-    char *d;                    /**< Data buffer                            */
+    char d[64];                    /**< Data buffer, prefix buffer          */
     int  dl;                    /**< Data left in databuffer                */
     int len_pfx;                /**< Length prefix                          */
     ndrx_stopwatch_t rcv_timer;     /**< Receive timer...  */
@@ -114,7 +114,7 @@ struct exnetcon
     int incomming_cons;             /**< Current number of incoming connections  */
 
     /* Have some callbacks... */
-    int (*p_process_msg)(exnetcon_t *net, char *buf, int len); /**< Callback when msg recived  */
+    int (*p_process_msg)(exnetcon_t *net, char **buf, int len); /**< Callback when msg recived  */
     int (*p_connected)(exnetcon_t *net); 	/**< Callback on even when we are connected */
     int (*p_disconnected)(exnetcon_t *net); 	/**< Callback on even when we are disconnected */
     int (*p_snd_zero_len)(exnetcon_t *net); 	/**< Callback for sending zero len msg */
@@ -135,7 +135,7 @@ extern int exnet_poll_cb(int fd, uint32_t events, void *ptr1);
 extern int exnet_periodic(void);
 /* </Callback functions will be invoked by ndrxd extensions> */
 
-extern int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
+extern int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char **buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
                 int (*p_snd_zero_len)(exnetcon_t *net));
 

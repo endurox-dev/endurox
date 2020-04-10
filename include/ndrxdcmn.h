@@ -824,7 +824,7 @@ extern NDRX_API int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
                             char *rply_buf_out,             /* might be a null  */
                             int *rply_buf_out_len,          /* if above is set, then must not be null */
                             int flags,
-                            int (*p_rply_request)(char *buf, long len)
+                            int (*p_rply_request)(char **buf, long len)
 );
 
 extern NDRX_API int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type,
@@ -842,7 +842,7 @@ extern NDRX_API int cmd_generic_bufcall(int ndrxd_cmd, int msg_src, int msg_type
                             char *rply_buf_out,             /* might be a null  */
                             int *rply_buf_out_len,          /* if above is set, then must not be null */
                             int flags,
-                            int (*p_rply_request)(char *buf, long len));
+                            int (*p_rply_request)(char **buf, long len));
 
 extern NDRX_API int cmd_generic_callfl(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, size_t call_size,

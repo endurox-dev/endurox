@@ -165,7 +165,7 @@ struct srv_conf
     int adv_service_count; /**< advertised service count. */
     int flags; /**< Special flags of the server (see: ndrxdcmn.h:SRV_KEY_FLAGS_BRIDGE) */
     int nodeid; /**< Other node id of the bridge */
-    int (*p_qmsg)(char *buf, int len, char msg_type); /**< Q message processor for bridge */
+    int (*p_qmsg)(char **buf, int len, char msg_type); /**< Q message processor for bridge */
     /**************** POLLING *****************/
     struct ndrx_epoll_event *events;
     int epollfd;
@@ -246,7 +246,7 @@ extern NDRX_API int _tpext_addperiodcb(int secs, int (*p_periodcb)(void));
 extern NDRX_API int _tpext_delperiodcb(void);
 extern NDRX_API int _tpext_addb4pollcb(int (*p_b4pollcb)(void));
 extern NDRX_API int _tpext_delb4pollcb(void);
-extern NDRX_API int process_admin_req(char *buf, long len, 
+extern NDRX_API int process_admin_req(char **buf, long len, 
         int *shutdown_req);
 
 /* auto buffer convert: */
