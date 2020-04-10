@@ -79,6 +79,13 @@ extern "C" {
 #define NDRX_FPABRSIZE        0x0004      /**< arbtirary size buf, free     */
     
 #define NDRX_FPA_HITS_MAX     1000000     /**< max feedback size 1M         */
+    
+#define NDRX_FPA_BMIN         10          /**< default Min block in poll    */
+#define NDRX_FPA_BMAX         20          /**< deafult Feedback area size   */    
+#define NDRX_FPA_BHITS        1000        /**< default hist at which feedback start */
+
+#define NDRX_FPA_SIZE_DEFAULT   -1   /**< these are default settings, use by init */
+#define NDRX_FPA_SIZE_SYSBUF   -2    /**< settings are for system buffer */
 
 /**
  * max number of sizes    
@@ -87,6 +94,19 @@ extern "C" {
  */
 #define NDRX_FPA_MAX            8                   /**< NDRX_MSGSIZEMAX pool no*/
 #define NDRX_FPA_DYN_MAX        (NDRX_FPA_MAX-1)    /**< dynamic range          */
+    
+#define NDRX_FPA_0_SIZE         (1*1024)    /**< 1KB pool                   */
+#define NDRX_FPA_1_SIZE         (2*1024)    /**< 2KB pool                   */
+#define NDRX_FPA_2_SIZE         (4*1024)    /**< 4KB pool                   */
+#define NDRX_FPA_3_SIZE         (8*1024)    /**< 8KB pool                   */
+#define NDRX_FPA_4_SIZE         (16*1024)   /**< 16KB pool                  */
+#define NDRX_FPA_5_SIZE         (32*1024)   /**< 32KB pool                  */
+#define NDRX_FPA_6_SIZE         (64*1024)   /**< 64KB pool                  */
+#define NDRX_FPA_7_SIZE         NDRX_FPA_SIZE_SYSBUF   /**< sysbuf pool     */
+#define NDRX_FPA_SIZE_MAX       NDRX_FPA_6_SIZE   /**< max dynamic range    */
+
+#define NDRX_FPA_SYSBUF_POOLNO    (NDRX_FPA_MAX-1)    /**< pool number of sysbuf */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
@@ -109,13 +129,13 @@ typedef struct ndrx_fpastack ndrx_fpapool_t;
 struct  ndrx_fpastack
 {
     int bsize;              /**< this does not include header size          */
+    int flags;              /**< flags for given entry                      */
     int bmin;               /**< min number of blocks int given size range  */
     int bmax;               /**< max number of blocks int given size range  */
-    int flags;              /**< flags for given entry                      */
+    int max_hits;           /**< number of pool hits when goes over the min */
     int blocks;             /**< Number of blocks allocated                 */
     ndrx_fpablock_t *stack; /**< stack head                                 */
     pthread_spinlock_t spinlock;    /**< spinlock for protecting given size */
-    int max_hits;           /**< number of pool hits when goes over the min */
     int cur_hits;           /**< current hits (i.e. number of times use over min*/    
 };
 
@@ -123,6 +143,8 @@ struct  ndrx_fpastack
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+extern NDRX_API void ndrx_fpuninit(void);
+extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 extern NDRX_API void *ndrx_fpmalloc(size_t size, int flags);
 extern NDRX_API void ndrx_fpfree(void *);
 
