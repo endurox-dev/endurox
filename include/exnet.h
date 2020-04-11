@@ -126,7 +126,8 @@ struct exnetcon
 /*------------------------------Globals---------------------------------------*/
 /*------------------------------Statics---------------------------------------*/
 /*------------------------------Prototypes------------------------------------*/
-extern int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int appflags);
+extern int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len, 
+        char *buf, int len, int flags, int appflags);
 extern int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int appflags);
 
 /* <Callback functions will be invoked by ndrxd extensions> */

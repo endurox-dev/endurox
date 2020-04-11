@@ -545,6 +545,7 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     char tmp_enc[NDRX_MSGSIZEMAX]; /* Not the best way, but we atleas we are clear... */
     char *snd;
     long snd_len;
+    int use_hdr = EXFALSE;
     
     cmd_br_net_call_t *call = (cmd_br_net_call_t *)tmp;
     NDRX_LOG(log_debug, "%s: sending %d bytes", fn, len);
@@ -575,8 +576,15 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         EXFAIL_OUT(ret);
     }
     
-    /* get away from this memcpy somehow? */
-    memcpy(call->buf, buf, len);
+    if (!G_bridge_cfg.common_format && EXEOS==G_bridge_cfg.gpg_recipient[0])
+    {
+        use_hdr=EXTRUE;
+    }
+    else
+    {
+        /* get away from this memcpy somehow? */
+        memcpy(call->buf, buf, len);
+    }
     
     snd = tmp;
     snd_len = len+sizeof(cmd_br_net_call_t); /* Is this correct? */
@@ -657,11 +665,24 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
                 
         if (exnet_is_connected(G_bridge_cfg.con))
         {
-            if (EXSUCCEED!=exnet_send_sync(G_bridge_cfg.con, 
-                    (char *)snd, snd_len, 0, 0))
+            if (use_hdr)
             {
-                NDRX_LOG(log_error, "Failed to submit message to network");
-                ret=EXFAIL;
+                if (EXSUCCEED!=exnet_send_sync(G_bridge_cfg.con, (char *)call, 
+                        sizeof(cmd_br_net_call_t), (char *)buf, len, 0, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to submit message to network");
+                    ret=EXFAIL;
+                }
+            }
+            else
+            {
+                /* slower, prev memcopy */
+                if (EXSUCCEED!=exnet_send_sync(G_bridge_cfg.con, NULL, 0,
+                        (char *)snd, snd_len, 0, 0))
+                {
+                    NDRX_LOG(log_error, "Failed to submit message to network");
+                    ret=EXFAIL;
+                }
             }
         }
         else

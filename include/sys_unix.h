@@ -339,7 +339,7 @@ extern NDRX_API int ndrx_epoll_ctl_mq(int epfd, int op, mqd_t fd, struct ndrx_ep
 extern NDRX_API int ndrx_epoll_create(int size);
 extern NDRX_API int ndrx_epoll_close(int fd);
 extern NDRX_API int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
-        int maxevents, int timeout, char *buf, int *buf_len);
+        int maxevents, int timeout, char **buf, int *buf_len);
 extern NDRX_API int ndrx_epoll_errno(void);
 extern NDRX_API char * ndrx_poll_strerror(int err);
 

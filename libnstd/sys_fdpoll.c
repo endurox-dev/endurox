@@ -438,9 +438,12 @@ out:
  * @param events
  * @param maxevents
  * @param timeout
+ * @param buf read pre-loaded msg (not used here)
+ * @param buf_len  pre-load buffer len
  * @return 
  */
-expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout)
+expublic inline int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, int maxevents, int timeout,
+            char **buf, int *buf_len)
 {
     int ret = EXSUCCEED;
     int numevents = 0;

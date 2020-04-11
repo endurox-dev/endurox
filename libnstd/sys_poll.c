@@ -997,7 +997,7 @@ out:
  * @return 
  */
 expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
-        int maxevents, int timeout, char *buf, int *buf_len)
+        int maxevents, int timeout, char **buf, int *buf_len)
 {
     int ret = EXSUCCEED;
     int numevents = 0;
