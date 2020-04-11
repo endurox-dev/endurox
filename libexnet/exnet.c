@@ -150,24 +150,29 @@ expublic void exnet_stopwatch_reset(exnetcon_t *net, ndrx_stopwatch_t *w)
 /**
  * Send single message, put length in front
  * We will send all stuff required, do that in loop!
+ * @param hdr_buf pre-send some header, to avoid extra mem opy
+ * @param hdr_len pre-send header lenght
  */
-expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int appflags)
+expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len, 
+        char *buf, int len, int flags, int appflags)
 {
     int ret=EXSUCCEED;
     int allow_size = DATA_BUF_MAX-net->len_pfx;
     int sent = 0;
-    char d[NET_LEN_PFX_LEN];	/* Data buffer, len     		   */
-    int size_to_send;
+    /* let to have 128 header size */
+    char d[NET_LEN_PFX_LEN+128];	/* Data buffer, len     		   */
+    int size_to_send, len_whdr, hdr_snd_size = 0;
     int tmp_s;
     int err;
     int retry;
     ndrx_stopwatch_t w;
 
     /* check the sizes are that supported? */
-    if (len>allow_size)
+    len_whdr = hdr_len + len;
+    if (len_whdr>allow_size)
     {
         NDRX_LOG(log_error, "Buffer too large for sending! "
-                        "requested: %d, allowed: %d", len, allow_size);
+                        "requested: %d, allowed: %d", len_whdr, allow_size);
         EXFAIL_OUT(ret);
     }
 
@@ -182,13 +187,21 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
     if (4==net->len_pfx)
     {
         /* Install the length prefix. */
-        d[0] = (len >> 24) & 0xff;
-        d[1] = (len >> 16) & 0xff;
-        d[2] = (len >> 8) & 0xff;
-        d[3] = (len) & 0xff;
+        d[0] = (len_whdr >> 24) & 0xff;
+        d[1] = (len_whdr >> 16) & 0xff;
+        d[2] = (len_whdr >> 8) & 0xff;
+        d[3] = (len_whdr) & 0xff;
+        hdr_snd_size+=net->len_pfx;
+    }
+    
+    if (NULL!=hdr_buf)
+    {
+        /* add hdr to msg */
+        memcpy(d+net->len_pfx, hdr_buf, hdr_len);
+        hdr_snd_size+=hdr_len;
     }
 
-    size_to_send = len+net->len_pfx;
+    size_to_send = len+hdr_snd_size;
 
     /* Do sending in loop... */
     MUTEX_LOCK_V(net->sendlock);
@@ -200,14 +213,14 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
         
         if (!(appflags & APPFLAGS_MASK))
         {
-            if (sent < net->len_pfx)
+            if (sent < hdr_snd_size)
             {
                 NDRX_DUMP(log_debug, "Sending, msg (msg len pfx)", 
-                        d+sent, net->len_pfx-sent);
+                        d+sent, hdr_snd_size-sent);
             }
             else
             {
-                NDRX_DUMP(log_debug, "Sending, msg ", buf+sent-net->len_pfx, 
+                NDRX_DUMP(log_debug, "Sending, msg ", buf+sent-hdr_snd_size, 
                             size_to_send-sent);
             }
         }
@@ -223,14 +236,14 @@ expublic int exnet_send_sync(exnetcon_t *net, char *buf, int len, int flags, int
             err = 0;
             retry = EXFALSE;
             
-            if (sent<net->len_pfx)
+            if (sent<hdr_snd_size)
             {
-                tmp_s = send(net->sock, d+sent, net->len_pfx-sent, flags);
+                tmp_s = send(net->sock, d+sent, hdr_snd_size-sent, flags);
             }
             else
             {
                 /* WARNING ! THIS MIGHT GENERATE SIGPIPE */
-                tmp_s = send(net->sock, buf+sent-net->len_pfx, 
+                tmp_s = send(net->sock, buf+sent-hdr_snd_size, 
                         size_to_send-sent, flags);
             }
             

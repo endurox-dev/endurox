@@ -201,6 +201,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         /* Allocate the message size */
         sz = NDRX_MSGSIZEMAX;
         
+        /*
         if (NULL==(M_buf = NDRX_MALLOC(sz)))
         {
             int err = errno;
@@ -208,6 +209,9 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             userlog("Failed to malloc %d bytes: %s", sz, strerror(err));
             EXFAIL_OUT(ret);
         }
+         */
+        
+        NDRX_SYSBUF_MALLOC_OUT(M_buf, NULL, ret);
         
         NDRX_LOG(log_debug, "About to wait for service admin message qid=%d", qid);
        
@@ -252,7 +256,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
             else
             {
                 /* push admin queue event... */
-                ndrx_svq_ev_t *ev = NDRX_MALLOC(sizeof(ndrx_svq_ev_t));
+                ndrx_svq_ev_t *ev = NDRX_FPMALLOC(sizeof(ndrx_svq_ev_t), 0);
 
                 if (NULL==ev)
                 {
@@ -300,7 +304,7 @@ out:
 
     if (NULL!=M_buf)
     {
-        NDRX_FREE(M_buf);
+        NDRX_FPFREE(M_buf);
     }
 
     return NULL;

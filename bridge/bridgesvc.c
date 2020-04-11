@@ -163,7 +163,7 @@ exprivate int br_snd_zero_len_th(void *ptr, int *p_finish_off)
 
     if (exnet_is_connected(net))
     {
-        if (EXSUCCEED!=exnet_send_sync(net, NULL, 0, 0, 0))
+        if (EXSUCCEED!=exnet_send_sync(net, NULL, 0, NULL, 0, 0, 0))
         {
             NDRX_LOG(log_debug, "Failed to send zero length message!");
         }

@@ -317,7 +317,7 @@ exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd, uint32_t events)
     
     if (NULL==el)
     {
-        el = NDRX_CALLOC(1, sizeof(ndrx_svq_fd_hash_t));
+        el = NDRX_FPMALLOC(sizeof(ndrx_svq_fd_hash_t), 0);
 
         NDRX_LOG(log_dump, "Registering %d as int", fd);
 
@@ -370,7 +370,7 @@ exprivate int ndrx_svq_fd_hash_del(int fd)
     if (NULL!=el)
     {
         EXHASH_DEL((M_mon.fdhash), el);
-        NDRX_FREE(el);
+        NDRX_FPFREE(el);
     }
     
 out:
@@ -400,7 +400,7 @@ exprivate int ndrx_svq_fd_hash_delbymqd(mqd_t mqd)
             
             /* delete the entry by it self */
             EXHASH_DEL(M_mon.fdhash, e);
-            NDRX_FREE(e);
+            NDRX_FPFREE(e);
             break;
         }
     }
@@ -442,7 +442,7 @@ exprivate int ndrx_svq_mqd_hash_add(mqd_t mqd, ndrx_stopwatch_t *stamp_time,
     
     if (NULL==el)
     {
-        el = NDRX_CALLOC(1, sizeof(ndrx_svq_mqd_hash_t));
+        el = NDRX_FPMALLOC(sizeof(ndrx_svq_mqd_hash_t), 0);
 
         NDRX_LOG(log_dump, "Registering %p as mqd_t", mqd);
 
@@ -504,7 +504,7 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
     {
         DL_DELETE(mqd->eventq, elt);
-        NDRX_FREE(elt);
+        NDRX_FPFREE(elt);
     }
     pthread_mutex_unlock(&(mqd->qlock));
     
@@ -514,7 +514,7 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     if (NULL!=ret)
     {
         EXHASH_DEL((M_mon.mqdhash), ret);
-        NDRX_FREE(ret);
+        NDRX_FPFREE(ret);
     }
 }
 
@@ -637,7 +637,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             /* lets put the event to the message queue... 
              * firstly we need to allocate the event.
              */            
-            if (NULL==(ev = NDRX_MALLOC(sizeof(ndrx_svq_ev_t))))
+            if (NULL==(ev = NDRX_FPMALLOC(sizeof(ndrx_svq_ev_t), 0)))
             {
                 err = errno;
                 NDRX_LOG(log_error, "Failed to allocate ndrx_svq_ev_t: %s", 
@@ -662,7 +662,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             
             /* delete timeout object from hash as no more relevant... */
             EXHASH_DEL((M_mon.mqdhash), r);
-            NDRX_FREE(r);
+            NDRX_FPFREE(r);
             
         }
     }
@@ -670,7 +670,7 @@ out:
     
     if (EXSUCCEED!=ret && NULL!=ev)
     {
-        NDRX_FREE(ev);
+        NDRX_FPFREE(ev);
     }
 
     return ret;
@@ -1134,7 +1134,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                     /* this one is from related file descriptor... 
                      * thus needs to put an event.
                      */
-                   if (NULL==(ev = NDRX_MALLOC(sizeof(*ev))))
+                   if (NULL==(ev = NDRX_FPMALLOC(sizeof(*ev), 0)))
                    {
                        err = errno;
                        NDRX_LOG(log_error, "Failed to malloc ndrx_svq_ev_t: %s", 
@@ -1747,7 +1747,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, *ev);
-        NDRX_FREE(*ev);
+        NDRX_FPFREE(*ev);
         *ev = NULL;
     }
     
@@ -1852,7 +1852,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         /* Remove any pending event, not relevant to our position */
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, *ev);
-        NDRX_FREE(*ev);
+        NDRX_FPFREE(*ev);
         *ev = NULL;
     }
 

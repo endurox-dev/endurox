@@ -542,12 +542,12 @@ expublic int ndrx_epoll_close(int fd)
  * @param events events return events struct 
  * @param maxevents max number of events can be loaded
  * @param timeout timeout in milliseconds
- * @param buf preloaded message
+ * @param buf double ptr to preloaded message
  * @param buf_len preloaded buffer size on input max size, on output actual msgs sz
  * @return 0 - timeout, -1 - FAIL, 1 - have one event
  */
 expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events, 
-        int maxevents, int timeout, char *buf, int *buf_len)
+        int maxevents, int timeout, char **buf, int *buf_len)
 {
     int ret = EXSUCCEED;
     ssize_t rcvlen = *buf_len;
@@ -576,7 +576,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
         tm.tv_sec += (timeout / 1000);  /* Set timeout, passed in msec, uses as sec */
     }
     
-    if (EXFAIL==ndrx_svq_event_sndrcv( M_mainq, buf, &rcvlen, 
+    if (EXFAIL==ndrx_svq_event_sndrcv( M_mainq, *buf, &rcvlen, 
             &tm, &ev, EXFALSE, EXTRUE))
     {
         err = errno;
@@ -609,7 +609,13 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     }
 
                     *buf_len = ev->datalen;
-                    memcpy(buf, ev->data, *buf_len);
+                    
+                    /* free up the buffer... of parent.. */
+                    NDRX_FPFREE(*buf);
+                    
+                    *buf = ev->data;
+                    ev->data = NULL;
+                    /* memcpy(buf, ev->data, *buf_len); - avoid copy ... */
                     
                     /* free up the event block? already done at exit... */
                     
@@ -647,7 +653,9 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     if (ev->datalen > 0)
                     {
                         *buf_len = ev->datalen;
-                        memcpy(buf, ev->data, *buf_len);
+                        /* memcpy(buf, ev->data, *buf_len); - avoid copy */
+                        *buf = ev->data;
+                        ev->data=NULL;
                     }
                     break;
                     
@@ -676,7 +684,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     else
     {
-        gen_command = (tp_command_generic_t *)buf;
+        gen_command = (tp_command_generic_t *)*buf;
         
         /* we got a message! */
         NDRX_LOG(log_debug, "Got message from main SysV queue %d "
@@ -689,13 +697,13 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
             case ATMI_COMMAND_CONNRPLY:
             case ATMI_COMMAND_TPREPLY:
                 
-                call = (tp_command_call_t *)buf;
+                call = (tp_command_call_t *)*buf;
                 
                 NDRX_LOG(log_debug, "Lookup service: [%s]", call->name);
                 if (NULL==(svc=ndrx_epoll_getsvc(call->name)))
                 {
                     err=EAGAIN;
-                    NDRX_DUMP(log_error, "!!! Missing queue def - dumpg", buf, rcvlen);
+                    NDRX_DUMP(log_error, "!!! Missing queue def - dumpg", *buf, rcvlen);
                     NDRX_LOG(log_error, "!!! Missing queue def for [%s] data "
                             "len %d- dropping "
                             "msg - is all servers on RQADDR serving all services?",
