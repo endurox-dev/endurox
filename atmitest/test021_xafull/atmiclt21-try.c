@@ -119,7 +119,6 @@ out:
         NDRX_LOG(log_error, "TESTERROR: tpclose() fail: %d:[%s]", 
                                             tperrno, tpstrerror(tperrno));
         ret=EXFAIL;
-        goto out;
     }
     
 
