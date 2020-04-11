@@ -382,8 +382,6 @@ out:
 expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
 {
     int ret = EXSUCCEED;
-    /*char buf[NDRX_MSGSIZEMAX];  have to allocate buffer dynamically -> NDRX_MSGSIZEMAX 
-     * might not be known at init stage (reading ini)  */
     long len = strlen(input);
     char *buf = NULL;
     size_t bufsz = len;

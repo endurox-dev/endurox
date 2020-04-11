@@ -331,7 +331,7 @@ out:
     
     if (NULL!=ev)
     {
-        NDRX_FREE(ev);
+        NDRX_FPFREE(ev);
     }
     
     errno = err;
@@ -557,7 +557,7 @@ out:
     
     if (NULL!=ev)
     {
-        NDRX_FREE(ev);
+        NDRX_FPFREE(ev);
     }
     
     errno = err;

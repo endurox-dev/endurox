@@ -744,10 +744,10 @@ out:
     {
         if (NULL!=ev->data)
         {
-            NDRX_FREE(ev->data);
+            NDRX_FPFREE(ev->data);
         }
         
-        NDRX_FREE(ev);
+        NDRX_FPFREE(ev);
     }
     
     if (EXSUCCEED==ret)

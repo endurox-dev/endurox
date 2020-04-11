@@ -211,7 +211,10 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         }
          */
         
-        NDRX_SYSBUF_MALLOC_OUT(M_buf, NULL, ret);
+        if (NULL==M_buf)
+        {
+            NDRX_SYSBUF_MALLOC_OUT(M_buf, NULL, ret);
+        }
         
         NDRX_LOG(log_debug, "About to wait for service admin message qid=%d", qid);
        
