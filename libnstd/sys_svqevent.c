@@ -1825,9 +1825,15 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     }
     else
     {
-        if (EINTR!=err && ENOMSG!=err)
+        if (EINTR!=err)
         {
-            NDRX_LOG(log_error, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
+            int lev = log_error;
+            
+            if (ENOMSG==err)
+            {
+                lev=log_debug;
+            }
+            NDRX_LOG(lev, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
                 mqd->qid, len, msgflg, strerror(err));
             EXFAIL_OUT(ret);
         }
