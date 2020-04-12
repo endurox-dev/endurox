@@ -249,16 +249,20 @@ out:
 
 /**
  * Serve service call
+ * @param call_buf call buffer
+ * @param call_len call buffer len
+ * @param call_no call service number
  * @return
  */
-expublic int sv_serve_call(int *service, int *status)
+expublic int sv_serve_call(int *service, int *status,
+                    char **call_buf, long call_len, int call_no)
 {
     int ret=EXSUCCEED;
     char *request_buffer = NULL;
     long req_len = 0;
     int reply_type;
     typed_buffer_descr_t *call_type;
-    tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
+    tp_command_call_t *call = (tp_command_call_t*)*call_buf;
     buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
     long call_age;
     int generate_rply = EXFALSE;
@@ -278,8 +282,15 @@ expublic int sv_serve_call(int *service, int *status)
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, client timeout = %d s", call_age, call->clttout);
+        NDRX_LOG(log_debug, "Received call already expired!  call age = %ld s, client timeout = %d"
+                        "cd: %d timestamp: %d (id: %d%d) callseq: %u, "
+			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
+                        " reply_to: %s, call_stack: %s",
+                        call_age, call->clttout,
+                    	call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, 
+			call->name, call->flags, call_age, call->data_len,
+                        call->my_id, call->reply_to, call->clttout, call->callstack);
+        
         *status=EXFAIL;
         goto out;
     }
@@ -289,7 +300,7 @@ expublic int sv_serve_call(int *service, int *status)
     {
         /* Assume that received data is valid. */
 	/* 20/08/2014 - have some more debugs - we get core dumps here! */
-        NDRX_LOG(6, "Recevied len = %ld buffer_type_id = %hd", 
+        NDRX_LOG(6, "Received len = %ld buffer_type_id = %hd", 
 			call->data_len, call->buffer_type_id);
 	/* Validate buffer type id, otherwise we get core */
         if (call->buffer_type_id < BUF_TYPE_MIN || 
@@ -334,7 +345,6 @@ expublic int sv_serve_call(int *service, int *status)
     if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP ||
             0==(reply_type=setjmp(G_server_conf.call_ret_env)))
     {
-        int no = G_server_conf.last_call.no;
         TPSVCINFO svcinfo;
         memset(&svcinfo, 0, sizeof(TPSVCINFO));
 
@@ -377,7 +387,7 @@ expublic int sv_serve_call(int *service, int *status)
          * */
         
         /* call the function */
-        *service=no-ATMI_SRV_Q_ADJUST;
+        *service=call_no-ATMI_SRV_Q_ADJUST;
         if (G_shm_srv)
         {
             G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
@@ -387,23 +397,23 @@ expublic int sv_serve_call(int *service, int *status)
         
         /* We need to convert buffer here (if function set...) */
         if (NULL!=request_buffer &&
-                G_server_conf.service_array[no]->xcvtflags && 
+                G_server_conf.service_array[call_no]->xcvtflags && 
                 
                 /* convert in case when really needed */
                 ( 
                   /* UBF2JSON */
                   (BUF_TYPE_UBF == outbufobj->type_id && 
-                    SYS_SRV_CVT_UBF2JSON & G_server_conf.service_array[no]->xcvtflags)
+                    SYS_SRV_CVT_UBF2JSON & G_server_conf.service_array[call_no]->xcvtflags)
                 ||
                   (BUF_TYPE_JSON == outbufobj->type_id && SYS_SRV_CVT_JSON2UBF & 
-                    G_server_conf.service_array[no]->xcvtflags)
+                    G_server_conf.service_array[call_no]->xcvtflags)
                 
                   /* VIEW2JSON */
                 || (BUF_TYPE_VIEW == outbufobj->type_id && 
-                    SYS_SRV_CVT_VIEW2JSON & G_server_conf.service_array[no]->xcvtflags)
+                    SYS_SRV_CVT_VIEW2JSON & G_server_conf.service_array[call_no]->xcvtflags)
                 ||
                   (BUF_TYPE_JSON == outbufobj->type_id && SYS_SRV_CVT_JSON2VIEW & 
-                    G_server_conf.service_array[no]->xcvtflags)
+                    G_server_conf.service_array[call_no]->xcvtflags)
                 
                 )
             )
@@ -412,8 +422,8 @@ expublic int sv_serve_call(int *service, int *status)
              * Mark that buffer is converted...
              * So that later we can convert back...
              */
-            last_call->sysflags|= G_server_conf.service_array[no]->xcvtflags;
-            call->sysflags |= G_server_conf.service_array[no]->xcvtflags;
+            last_call->sysflags|= G_server_conf.service_array[call_no]->xcvtflags;
+            call->sysflags |= G_server_conf.service_array[call_no]->xcvtflags;
             
             if (EXSUCCEED!=typed_xcvt(&outbufobj, call->sysflags, EXFALSE))
             {
@@ -435,11 +445,11 @@ expublic int sv_serve_call(int *service, int *status)
         last_call->autobuf = outbufobj;
         
         /* For golang integration we need to know at service the function name */
-        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
+        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[call_no]->fn_nm);
         
         if (EXFAIL!=*status) /* Dot not invoke if failed! */
         {
-            G_server_conf.service_array[no]->p_func(&svcinfo);
+            G_server_conf.service_array[call_no]->p_func(&svcinfo);
         }
         
         if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP &&
@@ -517,16 +527,20 @@ out:
 /**
  * Serve service call
  * TODO: we need XA handling here too!
+ * @param call_buf original call buffer
+ * @param call_len original call buffer len
+ * @param call_no call service number
  * @return
  */
-expublic int sv_serve_connect(int *service, int *status)
+expublic int sv_serve_connect(int *service, int *status, 
+        char **call_buf, long call_len, int call_no)
 {
     int ret=EXSUCCEED;
     char *request_buffer = NULL;
     long req_len = 0;
     int reply_type;
     typed_buffer_descr_t *call_type;
-    tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
+    tp_command_call_t *call = (tp_command_call_t*)*call_buf;
     *status=EXSUCCEED;
     long call_age;
     atmi_lib_env_t *env = ndrx_get_G_atmi_env();
@@ -577,7 +591,6 @@ expublic int sv_serve_connect(int *service, int *status)
     if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP || 
             0==(reply_type=setjmp(G_server_conf.call_ret_env)))
     {
-        int no = G_server_conf.last_call.no;
         TPSVCINFO svcinfo;
         memset(&svcinfo, 0, sizeof(TPSVCINFO));
 
@@ -663,7 +676,7 @@ expublic int sv_serve_connect(int *service, int *status)
  
 
         /* call the function */
-        *service=no-ATMI_SRV_Q_ADJUST;
+        *service=call_no-ATMI_SRV_Q_ADJUST;
         if (G_shm_srv)
         {
             G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
@@ -671,8 +684,8 @@ expublic int sv_serve_connect(int *service, int *status)
             NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
         }
         /* For golang integration we need to know at service the function name */
-        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[no]->fn_nm);
-        G_server_conf.service_array[no]->p_func(&svcinfo);
+        NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[call_no]->fn_nm);
+        G_server_conf.service_array[call_no]->p_func(&svcinfo);
         
         /*Needs some patch for go-lang that we do not use long jumps...
          * + we we need to get the status back...
@@ -739,14 +752,15 @@ out:
 
 /**
  * Decode received request & do the operation
- * @param buf
- * @param len
+ * @param call_buf call buffer
+ * @param call_len call buffer len
+ * @param call_no call service number
  * @return
  */
-expublic int sv_server_request(char **buf, int len)
+expublic int sv_server_request(char **call_buf, long call_len, int call_no)
 {
     int ret=EXSUCCEED;
-    tp_command_generic_t *gen_command = (tp_command_generic_t *)G_server_conf.last_call.buf_ptr;
+    tp_command_generic_t *gen_command = (tp_command_generic_t *)*call_buf;
     ndrx_stopwatch_t timer;
     /* take time */
     ndrx_stopwatch_reset(&timer);
@@ -758,7 +772,7 @@ expublic int sv_server_request(char **buf, int len)
     {
         if (NULL!=G_server_conf.p_qmsg)
         {
-            if (EXSUCCEED!=G_server_conf.p_qmsg(buf, len, BR_NET_CALL_MSG_TYPE_ATMI))
+            if (EXSUCCEED!=G_server_conf.p_qmsg(call_buf, call_len, BR_NET_CALL_MSG_TYPE_ATMI))
             {
                 NDRX_LOG(log_error, "Failed to process ATMI request on bridge!");
                 EXFAIL_OUT(ret);
@@ -786,12 +800,12 @@ expublic int sv_server_request(char **buf, int len)
     {
         case ATMI_COMMAND_TPCALL:
 
-            ret=sv_serve_call(&service, &status);
+            ret=sv_serve_call(&service, &status, call_buf, call_len, call_no);
 
             break;
         case ATMI_COMMAND_CONNECT:
             /* We have connection for conversation */
-            ret=sv_serve_connect(&service, &status);
+            ret=sv_serve_connect(&service, &status, call_buf, call_len, call_no);
             break;
         case ATMI_COMMAND_SELF_SD:
             
@@ -804,7 +818,7 @@ expublic int sv_server_request(char **buf, int len)
             break;
         case ATMI_COMMAND_CONNRPLY:
             {
-                tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
+                tp_command_call_t *call = (tp_command_call_t*)*call_buf;
                 NDRX_LOG(log_warn, "Dropping unsolicited/event reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
@@ -814,13 +828,12 @@ expublic int sv_server_request(char **buf, int len)
             break;
         case ATMI_COMMAND_TPREPLY:
             {
-                tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
+                tp_command_call_t *call = (tp_command_call_t*)*call_buf;
                 NDRX_LOG(log_warn, "Dropping unsolicited reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 
-                NDRX_DUMP(log_error, "Command content", G_server_conf.last_call.buf_ptr,  
-                        G_server_conf.last_call.len);
+                NDRX_DUMP(log_error, "Command content", *call_buf, call_len);
                 
                 ndrx_dump_call_struct(log_error, call);
             }
@@ -831,7 +844,7 @@ expublic int sv_server_request(char **buf, int len)
                 /* Got broadcast message, just use ATMI lib internal
                  * dispatcher...
                  */
-                tp_notif_call_t *notif = (tp_notif_call_t*)G_server_conf.last_call.buf_ptr;
+                tp_notif_call_t *notif = (tp_notif_call_t*)*call_buf;
                 char *request_buffer = NULL;
                 long req_len = 0;
                 typed_buffer_descr_t *call_type;
@@ -916,7 +929,7 @@ expublic int sv_server_request(char **buf, int len)
             NDRX_LOG(log_error, "Unknown command ID: %hd", gen_command->command_id);
             
             /* Dump the message to log... */
-            NDRX_DUMP(log_error, "Command content", *buf,  len);
+            NDRX_DUMP(log_error, "Command content", *call_buf,  call_len);
             
             EXFAIL_OUT(ret);
             break;
@@ -1117,7 +1130,7 @@ out:
 expublic int sv_wait_for_request(void)
 {
     int ret=EXSUCCEED;
-    int nfds, n, len, j;
+    int nfds, n, len, j, call_no;
     unsigned prio;
     int again;
     int tout;
@@ -1192,7 +1205,6 @@ expublic int sv_wait_for_request(void)
             NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buf, NULL, ret);
         }
         len = msgsize_max;
-        
         nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout, &msg_buf, &len);
         
@@ -1320,19 +1332,19 @@ expublic int sv_wait_for_request(void)
 
                 /* TODO: We could use hashtable to lookup for lookup*/
                 /* figure out target structure */
-                G_server_conf.last_call.no=EXFAIL;
+                call_no=EXFAIL;
                 for (j=0; j<G_server_conf.adv_service_count; j++)
                 {
                     if (evmqd==G_server_conf.service_array[j]->q_descr)
                     {
-                        G_server_conf.last_call.no = j;
+                        call_no = j;
                         break;
                     }
                 }
                 NDRX_LOG(log_debug, "Got request on logical channel %d, fd: %d",
-                            G_server_conf.last_call.no, evmqd);
+                            call_no, evmqd);
 
-                if (ATMI_SRV_ADMIN_Q==G_server_conf.last_call.no)
+                if (ATMI_SRV_ADMIN_Q==call_no)
                 {
                     NDRX_LOG(log_debug, "Got admin request");
                     ret=process_admin_req(&msg_buf, len, &G_shutdown_req);
@@ -1340,7 +1352,7 @@ expublic int sv_wait_for_request(void)
                 else
                 {   
                     /* This normally should not happen! */
-                    if (EXFAIL==G_server_conf.last_call.no)
+                    if (EXFAIL==call_no)
                     {
                         ndrx_TPset_error_fmt(TPESYSTEM, "No service entry for "
                                 "call descriptor %d", evmqd);
@@ -1355,10 +1367,7 @@ expublic int sv_wait_for_request(void)
                      * processed by thread_pool and reset the msg_buf to NULL
                      * so that we allocate new one.
                      */
-                    G_server_conf.last_call.buf_ptr = msg_buf;
-                    G_server_conf.last_call.len = len;
-                    
-                    sv_server_request(&msg_buf, len);
+                    sv_server_request(&msg_buf, len, call_no);
                 }
             }
         } /* for */

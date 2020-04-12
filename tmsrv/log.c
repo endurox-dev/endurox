@@ -75,9 +75,9 @@
 
 #define CHK_THREAD_ACCESS if (ndrx_gettid()!=p_tl->lockthreadid)\
     {\
-        NDRX_LOG(log_error, "Transaction [%s] not locked for thread " PRIu64 ", but for " PRIu64,\
+        NDRX_LOG(log_error, "Transaction [%s] not locked for thread %" PRIu64 ", but for %" PRIu64,\
                 p_tl->tmxid, ndrx_gettid(), p_tl->lockthreadid);\
-        userlog("Transaction [%s] not locked for thread " PRIu64 ", but for " PRIu64,\
+        userlog("Transaction [%s] not locked for thread %" PRIu64 ", but for %" PRIu64,\
                 p_tl->tmxid, ndrx_gettid(), p_tl->lockthreadid);\
         return EXFAIL;\
     }
@@ -105,7 +105,7 @@ expublic int tms_unlock_entry(atmi_xa_log_t *p_tl)
 {
     CHK_THREAD_ACCESS;
     
-    NDRX_LOG(log_info, "Transaction [%s] unlocked by thread " PRIu64, p_tl->tmxid,
+    NDRX_LOG(log_info, "Transaction [%s] unlocked by thread %" PRIu64, p_tl->tmxid,
             p_tl->lockthreadid);
     
     MUTEX_LOCK_V(M_tx_hash_lock);
@@ -154,11 +154,11 @@ restart:
                 
             }
             
-            NDRX_LOG(log_error, "Transaction [%s] already locked for thread_id: "
+            NDRX_LOG(log_error, "Transaction [%s] already locked for thread_id: %"
                     PRIu64 " lock time: %d msec",
                     tmxid, r->lockthreadid, dowait);
             
-            userlog("tmsrv: Transaction [%s] already locked for thread_id: " PRIu64
+            userlog("tmsrv: Transaction [%s] already locked for thread_id: %" PRIu64
                     "lock time: %d msec",
                     tmxid, r->lockthreadid, dowait);
             r = NULL;
@@ -166,7 +166,7 @@ restart:
         else
         {
             r->lockthreadid = ndrx_gettid();
-            NDRX_LOG(log_info, "Transaction [%s] locked for thread_id: " PRIu64,
+            NDRX_LOG(log_info, "Transaction [%s] locked for thread_id: %" PRIu64,
                     tmxid, r->lockthreadid);
         }
     }

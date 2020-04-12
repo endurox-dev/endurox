@@ -191,7 +191,7 @@ expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len,
         d[1] = (len_whdr >> 16) & 0xff;
         d[2] = (len_whdr >> 8) & 0xff;
         d[3] = (len_whdr) & 0xff;
-        hdr_snd_size+=net->len_pfx;
+        hdr_snd_size=net->len_pfx;
     }
     
     if (NULL!=hdr_buf)
@@ -455,9 +455,9 @@ out:
  * check some advanced flags..
  * On error we can close connection directly, because receive is done by main 
  * thread.
- * @return EXSUCCEED full msg recieved, EXFAIL no full msg 
+ * @return EXSUCCEED full msg received, EXFAIL no full msg 
  */
-expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int appflags)
+expublic int exnet_recv_sync(exnetcon_t *net, char **buf, int *len, int flags, int appflags)
 {
     int ret=EXSUCCEED;
     int got_len;
@@ -471,6 +471,12 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
     {
         /* This is new message */
         ndrx_stopwatch_reset(&net->rcv_timer);
+    }
+    
+    if (NULL==net->dlsysbuf)
+    {
+        /* alloc the buffer... */
+        NDRX_SYSBUF_MALLOC_OUT(net->dlsysbuf, NULL, ret);
     }
     
     while (EXSUCCEED==ret)
@@ -513,7 +519,8 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                 /* return the msg */
                 *len = full_msg-net->len_pfx;
                 net->dl -= full_msg;
-                
+                *buf=net->dlsysbuf;
+                net->dlsysbuf=NULL;
                 /* should be 0! */
                 
                 if (0!=net->dl)
@@ -523,9 +530,14 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                     abort();
                 }
                 
-                if (!(appflags & APPFLAGS_MASK))
+                if (0==*len)
                 {
-                    NDRX_DUMP(log_debug, "Got message: ", buf, *len);
+                    NDRX_LOG(log_debug, "zero length message - ignore!");
+                    ret=EXFAIL;
+                }
+                else if (!(appflags & APPFLAGS_MASK))
+                {
+                    NDRX_DUMP(log_debug, "Got message: ", *buf, *len);
                 }
                 
                 MUTEX_UNLOCK_V(net->rcvlock);
@@ -604,8 +616,8 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
         }
         else
         {
-            if (EXFAIL==(got_len=recv_wrap(net, buf+net->dl-net->len_pfx, download_size, 
-                    flags, appflags)))
+            if (EXFAIL==(got_len=recv_wrap(net, net->dlsysbuf+net->dl-net->len_pfx, 
+                    download_size, flags, appflags)))
             {
                 /* NDRX_LOG(log_error, "Failed to get data");*/
                 ret=EXFAIL;
@@ -615,7 +627,7 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
                 if (!(appflags&APPFLAGS_MASK))
                 {
                     NDRX_DUMP(log_debug, "Got packet: ",
-                            buf+net->dl-net->len_pfx, got_len);
+                            net->dlsysbuf+net->dl-net->len_pfx, got_len);
                 }
                 net->dl+=got_len;
             }
@@ -633,12 +645,12 @@ expublic int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, in
         NDRX_LOG(log_error, "This is time-out => schedule close socket !");
         net->schedule_close = EXTRUE;
     }
-    
+
+out:    
     MUTEX_UNLOCK_V(net->rcvlock);
     
     /* We should fail anyway, because no message received, yet! */
     ret=EXFAIL;
-out:
 
     return ret;
 }
@@ -684,8 +696,9 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
         goto out;
     }
     
-    /* sysbuf alloc */
+    /* sysbuf alloc  - moved to recv...
     NDRX_SYSBUF_MALLOC_OUT(buf, NULL, ret);
+     * */
 
     /* Receive the event of the socket */
     if (EXSUCCEED!=getsockopt(net->sock, SOL_SOCKET, SO_ERROR, &so_error, &len))
@@ -801,7 +814,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     {
         /* NDRX_LOG(6, "events & EPOLLIN => call exnet_recv_sync()"); */
 /*        while(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))*/
-        if(EXSUCCEED == exnet_recv_sync(net, buf, &buflen, 0, 0))
+        if(EXSUCCEED == exnet_recv_sync(net, &buf, &buflen, 0, 0))
         {
             /* We got the message - do the callback op */
             net->p_process_msg(net, &buf, buflen);

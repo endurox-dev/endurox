@@ -170,7 +170,7 @@ struct srv_conf
     struct ndrx_epoll_event *events;
     int epollfd;
     /* Information from last call */
-    call_basic_info_t last_call;
+    /* call_basic_info_t last_call; */
     jmp_buf call_ret_env;
     int time_out;
     int max_events; /**< Max epoll events. */
