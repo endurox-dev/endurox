@@ -630,7 +630,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             }
             pthread_spin_unlock(&(((mqd_t)r->mqd)->stamplock));
             
-            NDRX_LOG(log_warn, "Timeout condition: mqd %p time spent: %ld "
+            NDRX_LOG(log_debug, "Timeout condition: mqd %p time spent: %ld "
                     "matched: %d seq: %lu", 
                         r->mqd, delta, wait_matched, r->stamp_seq);
             
@@ -1825,7 +1825,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     }
     else
     {
-        if (EINTR!=err)
+        if (EINTR!=err && ENOMSG!=err)
         {
             NDRX_LOG(log_error, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
                 mqd->qid, len, msgflg, strerror(err));

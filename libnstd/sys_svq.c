@@ -299,7 +299,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
         {
             if (NDRX_SVQ_EV_TOUT==ev->ev)
             {
-                NDRX_LOG(log_warn, "Timed out");
+                NDRX_LOG(log_info, "Timed out");
                 err = ETIMEDOUT;
             }
             else

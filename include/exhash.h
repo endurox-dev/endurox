@@ -69,8 +69,8 @@ typedef unsigned char uint8_t;
 #define EXHASH_VERSION 1.9.4
 
 #define exhash_fatal(msg) exit(-1)        /* fatal error (out of memory,etc) */
-#define exhash_malloc(sz) NDRX_MALLOC(sz)      /* malloc fcn                 */
-#define exhash_free(ptr,sz) NDRX_FREE(ptr)     /* free fcn                   */
+#define exhash_malloc(sz) NDRX_FPMALLOC(sz, 0)      /* malloc fcn                 */
+#define exhash_free(ptr,sz) NDRX_FPFREE(ptr)     /* free fcn                   */
 
 #define exhash_noexpand_fyi(tbl)          /* can be defined to log noexpand  */
 #define exhash_expand_fyi(tbl)            /* can be defined to log expands   */

@@ -420,6 +420,8 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     {
         NDRX_LOG(log_error, "Got bridge message, but invalid magic: got"
                 " %p, expected: %p", p_netmsg->call->br_magic, BR_NET_CALL_MAGIC);
+        userlog("Got bridge message, but invalid magic: got"
+                " %p, expected: %p", p_netmsg->call->br_magic, BR_NET_CALL_MAGIC);
         goto out;
     }
     
@@ -560,7 +562,6 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     call->br_magic = BR_NET_CALL_MAGIC;
     call->msg_type = msg_type;
     call->command_id = command_id;
-    
     call->len = len;
     
     if (len > sizeof(tmp) - sizeof(call))
@@ -576,18 +577,18 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         EXFAIL_OUT(ret);
     }
     
-    if (!G_bridge_cfg.common_format && EXEOS==G_bridge_cfg.gpg_recipient[0])
-    {
-        use_hdr=EXTRUE;
-    }
-    else
+    if (G_bridge_cfg.common_format || EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
         /* get away from this memcpy somehow? */
         memcpy(call->buf, buf, len);
+        snd_len = len+sizeof(cmd_br_net_call_t);
+        snd = tmp;
     }
-    
-    snd = tmp;
-    snd_len = len+sizeof(cmd_br_net_call_t); /* Is this correct? */
+    else
+    {
+        /* faster route, no copy */
+        use_hdr=EXTRUE;
+    }
     
     /* use common format */
     if (G_bridge_cfg.common_format)

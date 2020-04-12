@@ -75,7 +75,6 @@ typedef struct
 
 exprivate mqd_t M_adminq = (mqd_t)EXFAIL;
 exprivate pthread_t M_evthread;
-exprivate char *M_buf = NULL;;
 
 /*---------------------------Prototypes---------------------------------*/
 
@@ -191,6 +190,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int sz, len;
     int err;
     ndrx_thstop_command_call_t *p_cmd;
+    char *buf = NULL;
     /* Wait for message to arrive
      * and post to main thread if have any..
      */
@@ -211,9 +211,9 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         }
          */
         
-        if (NULL==M_buf)
+        if (NULL==buf)
         {
-            NDRX_SYSBUF_MALLOC_OUT(M_buf, NULL, ret);
+            NDRX_SYSBUF_MALLOC_OUT(buf, NULL, ret);
         }
         
         NDRX_LOG(log_debug, "About to wait for service admin message qid=%d", qid);
@@ -221,7 +221,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         /* read the message, well we could read it directly from MQD 
          * then we do not need any locks..
          */
-        len = msgrcv(qid, M_buf, NDRX_SVQ_INLEN(sz), 0, 0);
+        len = msgrcv(qid, buf, NDRX_SVQ_INLEN(sz), 0, 0);
         err = errno;
         
         NDRX_LOG(log_debug, "Admin msgrcv: qid=%d len=%d", qid, len);
@@ -248,7 +248,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
         else
         {
             
-            p_cmd = (ndrx_thstop_command_call_t *)M_buf;
+            p_cmd = (ndrx_thstop_command_call_t *)buf;
             
             if (NDRX_SVQ_OUTLEN(len) == sizeof(ndrx_thstop_command_call_t)
                     && NDRX_COM_SVQ_PRIV==p_cmd->command_id)
@@ -271,7 +271,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
                     EXFAIL_OUT(ret);
                 }
 
-                ev->data = M_buf;
+                ev->data = buf;
                 ev->datalen = NDRX_SVQ_OUTLEN(len);
                 ev->ev = NDRX_SVQ_EV_DATA;
                 ev->next = NULL;
@@ -288,7 +288,7 @@ exprivate void * ndrx_svqadmin_run(void* arg)
                 /* Release pointer, as it was delivered to poller..
                  * so that we do not memory leaks at shutdown...
                  */
-                M_buf = NULL;
+                buf = NULL;
 
                 NDRX_LOG(log_debug, "After admin event...");
             }
@@ -305,9 +305,9 @@ out:
         abort();
     }
 
-    if (NULL!=M_buf)
+    if (NULL!=buf)
     {
-        NDRX_FPFREE(M_buf);
+        NDRX_SYSBUF_FREE(buf);
     }
 
     return NULL;

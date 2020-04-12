@@ -611,7 +611,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     *buf_len = ev->datalen;
                     
                     /* free up the buffer... of parent.. */
-                    NDRX_FPFREE(*buf);
+                    NDRX_SYSBUF_FREE(*buf);
                     
                     *buf = ev->data;
                     ev->data = NULL;
@@ -654,6 +654,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
                     {
                         *buf_len = ev->datalen;
                         /* memcpy(buf, ev->data, *buf_len); - avoid copy */
+                        NDRX_SYSBUF_FREE(*buf);
                         *buf = ev->data;
                         ev->data=NULL;
                     }
@@ -744,7 +745,7 @@ out:
     {
         if (NULL!=ev->data)
         {
-            NDRX_FPFREE(ev->data);
+            NDRX_SYSBUF_FREE(ev->data);
         }
         
         NDRX_FPFREE(ev);

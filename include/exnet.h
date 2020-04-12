@@ -91,8 +91,9 @@ struct exnetcon
     exnetcon_t *my_server;  /**< Pointer to listener structure, used by server, 
                              * in case if this was incoming connection */
     int rcvtimeout;             /**< Receive timeout                        */
-    char d[64];                    /**< Data buffer, prefix buffer          */
+    char d[64];                 /**< Data buffer, prefix buffer             */
     int  dl;                    /**< Data left in databuffer                */
+    char *dlsysbuf;             /**< Download sysbuf                        */
     int len_pfx;                /**< Length prefix                          */
     ndrx_stopwatch_t rcv_timer;     /**< Receive timer...  */
     ndrx_stopwatch_t connect_time;  /**< Time of connection in transit..... */
@@ -128,7 +129,7 @@ struct exnetcon
 /*------------------------------Prototypes------------------------------------*/
 extern int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len, 
         char *buf, int len, int flags, int appflags);
-extern int exnet_recv_sync(exnetcon_t *net, char *buf, int *len, int flags, int appflags);
+extern int exnet_recv_sync(exnetcon_t *net, char **buf, int *len, int flags, int appflags);
 
 /* <Callback functions will be invoked by ndrxd extensions> */
 extern int exnet_b4_poll_cb(void);
