@@ -289,7 +289,7 @@ expublic int sv_serve_call(int *service, int *status,
                         call_age, call->clttout,
                     	call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, 
 			call->name, call->flags, call_age, call->data_len,
-                        call->my_id, call->reply_to, call->clttout, call->callstack);
+                        call->my_id, call->reply_to, call->callstack);
         
         *status=EXFAIL;
         goto out;
