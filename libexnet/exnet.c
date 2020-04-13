@@ -81,7 +81,7 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define DBUF_SZ	(NDRX_MSGSIZEMAX - net->dl)	/* Buffer size to recv in 	*/
+#define DBUF_SZ	(NDRX_MSGSIZEMAX - net->dl)	/**< Buffer size to recv in 	*/
 
 #if defined(EX_USE_EPOLL)
 
@@ -157,10 +157,10 @@ expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len,
         char *buf, int len, int flags, int appflags)
 {
     int ret=EXSUCCEED;
-    int allow_size = DATA_BUF_MAX-net->len_pfx;
+    int allow_size = DATA_BUF_MAX;
     int sent = 0;
     /* let to have 128 header size */
-    char d[NET_LEN_PFX_LEN+128];	/* Data buffer, len     		   */
+    char d[NET_LEN_PFX_LEN+128];	/* Data buffer, len             */
     int size_to_send, len_whdr, hdr_snd_size = 0;
     int tmp_s;
     int err;
@@ -495,12 +495,12 @@ expublic int exnet_recv_sync(exnetcon_t *net, char **buf, int *len, int flags, i
                 ret=EXFAIL;
                 break;
             }
-            else if (full_msg > DBUF_SZ)
+            else if (full_msg > DATA_BUF_MAX)
             {
                 NDRX_LOG(log_error, "ERROR ! received len %d > max buf %ld! - "
-                        "closing socket!", full_msg, DBUF_SZ);
+                        "closing socket!", full_msg, DATA_BUF_MAX);
                 userlog("ERROR ! received len %d > max buf %ld! - "
-                        "closing socket!", full_msg, DBUF_SZ);
+                        "closing socket!", full_msg, DATA_BUF_MAX);
                 net->schedule_close = EXTRUE;
                 ret=EXFAIL;
                 break;
@@ -687,7 +687,7 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     socklen_t len = sizeof so_error;
     exnetcon_t *net = (exnetcon_t *)ptr1;   /* Get the connection ptr... */
     /* char buf[DATA_BUF_MAX]; */
-    int buflen = DATA_BUF_MAX;
+    int buflen = 0;
     char *buf = NULL;
     
     /* check schedule... */
