@@ -100,6 +100,16 @@ exprivate ndrx_svq_pollsvc_t * M_svcmap = NULL;
  */
 exprivate int M_accept_any = EXFALSE;
 
+/**
+ * Number of file descriptors monitored.
+ */
+exprivate int M_nrfds = 0;
+
+/**
+ * Protect M_nrfds
+ */
+EX_SPIN_LOCKDECL(M_nrfds_lock);
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -402,6 +412,10 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd,
                 NDRX_LOG(log_error, "Failed to add fd %d to mqd %p for polling: %s",
                         fd, M_mainq);
             }
+            /* hmmm add spinlock */
+            EX_SPIN_LOCK_V(M_nrfds_lock);
+            M_nrfds++;
+            EX_SPIN_UNLOCK_V(M_nrfds_lock);
             break;
         case EX_EPOLL_CTL_DEL:
             if (EXSUCCEED!=(ret = ndrx_svq_moncmd_rmfd(fd)))
@@ -410,6 +424,10 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd,
                 NDRX_LOG(log_error, "Failed to remove fd %d to mqd %p for polling: %s",
                         fd, M_mainq);
             }
+            /* add spinlock */
+            EX_SPIN_LOCK_V(M_nrfds_lock);
+            M_nrfds--;
+            EX_SPIN_UNLOCK_V(M_nrfds_lock);
             break;    
         default:
             NDRX_LOG(log_warn, "Unsupported operation: %d", op);
@@ -577,7 +595,7 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
     }
     
     if (EXFAIL==ndrx_svq_event_sndrcv( M_mainq, *buf, &rcvlen, 
-            &tm, &ev, EXFALSE, EXTRUE))
+            &tm, &ev, EXFALSE, M_nrfds))
     {
         err = errno;
         if (NULL!=ev)

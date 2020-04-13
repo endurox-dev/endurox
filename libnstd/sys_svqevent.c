@@ -1793,7 +1793,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         /* one FD is used by internal pipe, thus we are interested in
          * polled fds added by Enduro/X API
          */
-        if (syncfd && ndrx_svq_fd_nrof() > 1)
+        if (syncfd)
         {
             /* send via long channel -> pipe */
             if (EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
