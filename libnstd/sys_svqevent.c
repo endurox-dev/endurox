@@ -511,7 +511,7 @@ out:
 expublic void ndrx_svq_mqd_hash_del(mqd_t mqd)
 {
     ndrx_svq_mqd_hash_t *ret = NULL;
-    ndrx_svq_ev_t *elt, *tmp;
+    
     /* Remove queue completely */
     
     NDRX_LOG(log_debug, "Removing queue %p qstr:[%s] qid:%d", 
@@ -528,15 +528,7 @@ expublic void ndrx_svq_mqd_hash_del(mqd_t mqd)
     NDRX_LOG(log_dump, "Unregistering %p as mqd_t from timeout mon", mqd);
     */
     
-    pthread_mutex_lock(&(mqd->qlock));
-    /* Remove any un-processed queued events... */
-    DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
-    {
-        DL_DELETE(mqd->eventq, elt);
-        NDRX_FPFREE(elt);
-    }
-    pthread_mutex_unlock(&(mqd->qlock));
-    
+    /* do this first, so that afterwards we clean up all events possible... */
     MUTEX_LOCK_V(M_mon_lock_mq);
     /* remove from timeout hash */
     EXHASH_FIND_PTR( (M_mon.mqdhash), ((void **)&mqd), ret);
@@ -547,6 +539,7 @@ expublic void ndrx_svq_mqd_hash_del(mqd_t mqd)
         NDRX_FPFREE(ret);
     }
     MUTEX_UNLOCK_V(M_mon_lock_mq);
+    
 }
 
 /**
@@ -556,6 +549,7 @@ expublic void ndrx_svq_mqd_hash_del(mqd_t mqd)
 expublic int ndrx_svq_mqd_close(mqd_t mqd)
 {
     int ret = EXSUCCEED;
+    ndrx_svq_ev_t *elt, *tmp;
     
     /* remove FD firstly, if any */
     if (EXSUCCEED!=ndrx_svq_fd_hash_delbymqd(mqd))
@@ -564,6 +558,16 @@ expublic int ndrx_svq_mqd_close(mqd_t mqd)
     }
     
     ndrx_svq_mqd_hash_del(mqd);
+    
+    /* zap any events.. */
+    pthread_mutex_lock(&(mqd->qlock));
+    /* Remove any un-processed queued events... */
+    DL_FOREACH_SAFE(mqd->eventq,elt,tmp)
+    {
+        DL_DELETE(mqd->eventq, elt);
+        NDRX_FPFREE(elt);
+    }
+    pthread_mutex_unlock(&(mqd->qlock));
     
     pthread_spin_destroy(&mqd->rcvlock);
     pthread_spin_destroy(&mqd->rcvlockb4);
