@@ -53,8 +53,8 @@ extern int G_recv_tout;				/* Was there timeout on receive? */
 
 #define NDRX_NET_MIN_SIZE       4096            /**< Min net read...        */
 
-/* Buffer size + netlen */
-#define DATA_BUF_MAX                    NDRX_MSGSIZEMAX 
+/** Buffer size + netlen */
+#define DATA_BUF_MAX                    (NDRX_MSGSIZEMAX - NET_LEN_PFX_LEN)
 
 #define APPFLAGS_MASK			0x0001	/* Mask the content in prod mode */
 #define APPFLAGS_TOUT_OK		0x0002	/* Timeout is OK		 */

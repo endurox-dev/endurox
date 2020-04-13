@@ -135,8 +135,14 @@ exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
-exprivate mqd_t M_delref = NULL;         /**< this is delete reference    */
-EX_SPIN_LOCKDECL(M_delreflock);          /**< delete reference lock       */
+#if 0
+/* not used anymore... */
+exprivate mqd_t M_delref = NULL;        /**< this is delete reference            */
+EX_SPIN_LOCKDECL(M_delreflock);         /**< delete reference lock               */
+#endif
+
+MUTEX_LOCKDECL(M_mon_lock_mq);      /**< Mutex lock for shared M_mon access, mq  */
+MUTEX_LOCKDECL(M_mon_lock_fd);      /**< Mutex lock for shared M_mon access, fd  */
 
 /* we need two hash lists
  * - the one goes by mqd to list/update timeout registrations
@@ -152,6 +158,7 @@ EX_SPIN_LOCKDECL(M_delreflock);          /**< delete reference lock       */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+#if 0
 /**
  * Lock the reference list (should be done before forking..)
  */
@@ -168,6 +175,7 @@ exprivate void ndrx_svq_delref_unlock(void)
     EX_SPIN_UNLOCK_V(M_delreflock);
 }
 
+
 /**
  * Register QD for delete - local ptr copy so that sanitizer does not see the
  * leak...
@@ -179,9 +187,11 @@ expublic void ndrx_svq_delref_add(mqd_t qd)
     EXHASH_ADD_PTR(M_delref, self, qd);
     EX_SPIN_UNLOCK_V(M_delreflock);
 }
+#endif
 
 /**
  * Add FD to polling structure
+ * FD Locked by outer caller.
  * @param fd file descriptor to add for polling
  * @return EXSUCCEED/EXFAIL
  */
@@ -218,7 +228,7 @@ out:
 }
 
 /**
- * Remove FD from polling struct
+ * Remove FD from polling struct. Must be fd locked by caller
  * @param fd file descriptor
  * @return EXSUCCEED/EXFAIL
  */
@@ -226,7 +236,7 @@ exprivate int ndrx_svq_fd_hash_delpoll(int fd)
 {
     int ret = EXSUCCEED;
     int i;
-    
+   
     for (i = 0; i < M_mon.nrfds; i++)
     {
         if (M_mon.fdtab[i].fd == fd)
@@ -282,6 +292,7 @@ exprivate int ndrx_svq_fd_hash_delpoll(int fd)
     }
     
 out:
+   
     return ret;
 }
 
@@ -312,6 +323,8 @@ exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd, uint32_t events)
 {
     int ret = EXSUCCEED;
     ndrx_svq_fd_hash_t * el;
+    
+    MUTEX_LOCK_V(M_mon_lock_fd);
     
     el = ndrx_svq_fd_hash_find(fd);
     
@@ -344,10 +357,18 @@ exprivate int ndrx_svq_fd_hash_add(int fd, mqd_t mqd, uint32_t events)
     }
     
 out:
-    
+    MUTEX_UNLOCK_V(M_mon_lock_fd);
     return ret;
 }
 
+/**
+ * Number of file descriptors currently monitored
+ * @return Number of FDs
+ */
+expublic int ndrx_svq_fd_nrof(void)
+{
+    return M_mon.nrfds;
+}
 /**
  * Delete single entry from queue hash
  * @param fd queue ptr
@@ -358,6 +379,8 @@ exprivate int ndrx_svq_fd_hash_del(int fd)
     int ret = EXSUCCEED;
     ndrx_svq_fd_hash_t *el;
 
+    MUTEX_LOCK_V(M_mon_lock_fd);
+    
     /* remove from polling array!  */
     if (EXSUCCEED!=ndrx_svq_fd_hash_delpoll(fd))
     {
@@ -374,6 +397,7 @@ exprivate int ndrx_svq_fd_hash_del(int fd)
     }
     
 out:
+    MUTEX_UNLOCK_V(M_mon_lock_fd);
     return ret;
 }
 
@@ -387,6 +411,7 @@ exprivate int ndrx_svq_fd_hash_delbymqd(mqd_t mqd)
     int ret = EXSUCCEED;
     ndrx_svq_fd_hash_t *e=NULL, *et=NULL;
     
+    MUTEX_LOCK_V(M_mon_lock_fd);
     /* remove from polling array */
     EXHASH_ITER(hh, M_mon.fdhash, e, et)
     {
@@ -406,6 +431,7 @@ exprivate int ndrx_svq_fd_hash_delbymqd(mqd_t mqd)
     }
     
 out:
+    MUTEX_UNLOCK_V(M_mon_lock_fd);
     return ret;
 }
 
@@ -432,12 +458,13 @@ exprivate ndrx_svq_mqd_hash_t * ndrx_svq_mqd_hash_find(mqd_t mqd)
  * @param stamp_seq sequence number for expiry
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_svq_mqd_hash_add(mqd_t mqd, ndrx_stopwatch_t *stamp_time, 
+expublic int ndrx_svq_mqd_hash_add(mqd_t mqd, ndrx_stopwatch_t *stamp_time, 
         unsigned long stamp_seq, struct timespec *abs_timeout)
 {
     int ret = EXSUCCEED;
     ndrx_svq_mqd_hash_t * el;
     
+    MUTEX_LOCK_V(M_mon_lock_mq);
     el = ndrx_svq_mqd_hash_find(mqd);
     
     if (NULL==el)
@@ -472,6 +499,8 @@ exprivate int ndrx_svq_mqd_hash_add(mqd_t mqd, ndrx_stopwatch_t *stamp_time,
     
 out:
     
+    MUTEX_UNLOCK_V(M_mon_lock_mq);
+
     return ret;
 }
 
@@ -479,13 +508,13 @@ out:
  * Delete single entry from queue hash
  * @param mqd queue ptr
  */
-exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
+expublic void ndrx_svq_mqd_hash_del(mqd_t mqd)
 {
     ndrx_svq_mqd_hash_t *ret = NULL;
     ndrx_svq_ev_t *elt, *tmp;
     /* Remove queue completely */
     
-    NDRX_LOG(log_debug, "Closing queue %p qstr:[%s] qid:%d", 
+    NDRX_LOG(log_debug, "Removing queue %p qstr:[%s] qid:%d", 
             mqd, mqd->qstr, mqd->qid);
     
     /* for service queues, the ndrxd will which are subject for removal
@@ -508,6 +537,7 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
     }
     pthread_mutex_unlock(&(mqd->qlock));
     
+    MUTEX_LOCK_V(M_mon_lock_mq);
     /* remove from timeout hash */
     EXHASH_FIND_PTR( (M_mon.mqdhash), ((void **)&mqd), ret);
     
@@ -516,13 +546,14 @@ exprivate void ndrx_svq_mqd_hash_del(mqd_t mqd)
         EXHASH_DEL((M_mon.mqdhash), ret);
         NDRX_FPFREE(ret);
     }
+    MUTEX_UNLOCK_V(M_mon_lock_mq);
 }
 
 /**
  * Remove from MQ hash and remove linked file descriptors 
  * @param mqd queue descriptor to remove
  */
-exprivate int ndrx_svq_mqd_hash_delfull(mqd_t mqd)
+expublic int ndrx_svq_mqd_close(mqd_t mqd)
 {
     int ret = EXSUCCEED;
     
@@ -534,6 +565,11 @@ exprivate int ndrx_svq_mqd_hash_delfull(mqd_t mqd)
     
     ndrx_svq_mqd_hash_del(mqd);
     
+    pthread_spin_destroy(&mqd->rcvlock);
+    pthread_spin_destroy(&mqd->rcvlockb4);
+    pthread_mutex_destroy(&mqd->barrier);
+    pthread_mutex_destroy(&mqd->qlock);
+    
 out:
     return ret;
 }
@@ -542,6 +578,8 @@ out:
  * MQDs and vice versa
  */
 
+#if 0
+- not used, now we tick every second...
 /**
  * Find next timeout time - time that we shall spend in sleep...
  * @return timeout for sleeping in poll mode
@@ -592,6 +630,7 @@ exprivate int ndrx_svq_mqd_hash_findtout(void)
     
     return (int)tout;
 }
+#endif
 
 /**
  * Dispatch any pending timeouts
@@ -610,6 +649,9 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
     gettimeofday (&timeval, NULL);
     abs_timeout.tv_sec = timeval.tv_sec;
     abs_timeout.tv_nsec = timeval.tv_usec*1000;
+    
+    /* TODO: might want to reduce this region of locking... */
+    MUTEX_LOCK_V(M_mon_lock_mq);
     
     EXHASH_ITER(hh, (M_mon.mqdhash), r, rt)
     {
@@ -668,6 +710,8 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
     }
 out:
     
+    MUTEX_UNLOCK_V(M_mon_lock_mq);
+
     if (EXSUCCEED!=ret && NULL!=ev)
     {
         NDRX_FPFREE(ev);
@@ -841,10 +885,10 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     int timeout;
     int i, moc, donext;
     int err;
-    mqd_t tmpq;
     ndrx_svq_mon_cmd_t cmd;
     ndrx_svq_ev_t *ev;
     sigset_t set;
+    struct pollfd *fdtabmo_tmp = NULL; /**< Real monitoirng table       */
     
     /* mask all signals except user signal */
     
@@ -901,7 +945,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     /* wait for event... */
     while (!M_shutdown)
     {
-        timeout = ndrx_svq_mqd_hash_findtout();
+        /* timeout = ndrx_svq_mqd_hash_findtout(); 
         
         if (EXFAIL==timeout || 0==timeout)
         {
@@ -909,12 +953,18 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             userlog("Invalid System V poller timeout!");
             EXFAIL_OUT(ret);
         }
+        */
         
-        NDRX_LOG(log_debug, "About to poll for: %d sec nrfds=%d",
+        timeout = 1;    /* sleep 1 sec.. */
+        NDRX_LOG(6, "About to poll for: %d sec nrfds=%d",
                 timeout, M_mon.nrfds);
         
         moc=0;
         donext=EXTRUE;
+        /* this needs to be locked... */
+        
+        MUTEX_LOCK_V(M_mon_lock_fd);
+        
         for (i=0; i<M_mon.nrfds; i++)
         {
             /* M_mon.fdtab[i].revents = 0; 
@@ -931,14 +981,37 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                         M_mon.fdtabmo, M_mon.fdtab, M_mon.fdtabmo[moc].fd);
                 moc++;
             }
-            
         }
         
-        retpoll = poll( M_mon.fdtabmo, moc, timeout*1000);
+        /* copy the FDs to temporary buffer..., realloc */
+        if (NULL!=fdtabmo_tmp)
+        {
+            NDRX_FPFREE(fdtabmo_tmp);
+        }
+        
+        fdtabmo_tmp = NDRX_FPMALLOC(sizeof(struct pollfd)*moc, 0);
+        
+        if (NULL==fdtabmo_tmp)
+        {
+            NDRX_LOG(log_error, "Failed to malloc %d: %s", 
+                    sizeof(struct pollfd)*moc, strerror(errno));
+            userlog("Failed to malloc %d: %s", 
+                    sizeof(struct pollfd)*moc, strerror(errno));
+            
+            MUTEX_UNLOCK_V(M_mon_lock_fd);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* set off the data */
+        memcpy(fdtabmo_tmp, M_mon.fdtabmo, sizeof(struct pollfd)*moc);
+        
+        MUTEX_UNLOCK_V(M_mon_lock_fd);
+        
+        retpoll = poll( fdtabmo_tmp, moc, timeout*1000);
         
         /* syncfd = EXFALSE; */
         
-        NDRX_LOG(log_debug, "poll() ret = %d", retpoll);
+        NDRX_LOG(6, "poll() ret = %d", retpoll);
         if (EXFAIL==retpoll)
         {
             err = errno;
@@ -962,7 +1035,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
             /* 
              * we got timeout, so lets scan the hash lists to detect
              */
-            NDRX_LOG(log_debug, "Got timeout...");
+            NDRX_LOG(6, "Got timeout...");
             
             /* 
              * now detect queues/threads to which this event shall be submitted
@@ -981,10 +1054,10 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         }
         else for (i=0; i<moc && donext; i++)
         {
-            if (M_mon.fdtabmo[i].revents)
+            if (fdtabmo_tmp[i].revents)
             {
                 NDRX_LOG(log_debug, "%d fd=%d revents=%d", i, 
-                        M_mon.fdtabmo[i].fd, (int)M_mon.fdtabmo[i].revents);
+                        fdtabmo_tmp[i].fd, (int)fdtabmo_tmp[i].revents);
                 if (PIPE_POLL_IDX==i)
                 {
                     /* We got something from command pipe, thus 
@@ -1064,15 +1137,15 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             NDRX_LOG(log_info, "Terminate request...");
                             goto out;
                             break;
+#if 0
                         case NDRX_SVQ_MON_CLOSE:
-                            
                             /*
                              * This is close, not unlink...
                              */    
                             NDRX_LOG(log_info, "Close queue command mqd: %p qstr: [%s]/%d",
                                     cmd.mqd, cmd.mqd->qstr, cmd.mqd->qid);
                          
-                            if (EXSUCCEED!=ndrx_svq_mqd_hash_delfull(cmd.mqd))
+                            if (EXSUCCEED!=ndrx_svq_mqd_close(cmd.mqd))
                             {
                                 ret = EXFAIL;
                             }
@@ -1115,19 +1188,20 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             }
                             
                             break;
+#endif
                     }
                     
                 }
                 else
                 {
-                    ndrx_svq_fd_hash_t *fdh =  ndrx_svq_fd_hash_find(M_mon.fdtabmo[i].fd);
+                    ndrx_svq_fd_hash_t *fdh =  ndrx_svq_fd_hash_find(fdtabmo_tmp[i].fd);
                     
                     if (NULL==fdh)
                     {
                         NDRX_LOG(log_error, "File descriptor %d not registered"
-                                " int System V poller - FAIL", M_mon.fdtabmo[i].fd);
+                                " int System V poller - FAIL", fdtabmo_tmp[i].fd);
                         userlog("File descriptor %d not registered"
-                                " int System V poller - FAIL", M_mon.fdtabmo[i].fd);
+                                " int System V poller - FAIL", fdtabmo_tmp[i].fd);
                         EXFAIL_OUT(ret);
                     }
                             
@@ -1147,8 +1221,8 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                    ev->data = NULL;
                    ev->datalen = 0;
                    ev->ev = NDRX_SVQ_EV_FD;
-                   ev->fd = M_mon.fdtabmo[i].fd;
-                   ev->revents = M_mon.fdtabmo[i].revents;
+                   ev->fd = fdtabmo_tmp[i].fd;
+                   ev->revents = fdtabmo_tmp[i].revents;
                    ev->prev = NULL;
                    ev->next = NULL;
                    /* get queue descriptor  
@@ -1170,6 +1244,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     
 out:
     
+    MUTEX_LOCK_V(M_mon_lock_fd);
     if (NULL!=M_mon.fdtab)
     {
         NDRX_FREE(M_mon.fdtab);
@@ -1178,6 +1253,13 @@ out:
     if (NULL!=M_mon.fdtabmo)
     {
         NDRX_FREE(M_mon.fdtabmo);
+    }
+
+    MUTEX_UNLOCK_V(M_mon_lock_fd);
+
+    if (NULL!=fdtabmo_tmp)
+    {
+        NDRX_FPFREE(fdtabmo_tmp);
     }
 
     /* if we get "unknown" error here, then we have to shutdown the whole app
@@ -1616,6 +1698,8 @@ expublic int ndrx_svq_moncmd_term(void)
     return ret;
 }
 
+#if 0
+- not used anymore.
 /**
  * Remove message queue from the monitor.
  * Well what will happen if Queue is closed and mqd deleted?
@@ -1640,6 +1724,7 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
 
     return ret;
 }
+#endif
 
 /**
  * Send/Receive data with timeout and other events option
@@ -1705,13 +1790,34 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
     if (0!=abs_timeout->tv_nsec || 0!=abs_timeout->tv_sec || syncfd)
     {
-        if (EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
-            abs_timeout, syncfd))
+        /* one FD is used by internal pipe, thus we are interested in
+         * polled fds added by Enduro/X API
+         */
+        if (syncfd && ndrx_svq_fd_nrof() > 1)
         {
-            err = EFAULT;
-            NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_moncmd_tout()");
-            userlog("Failed to request timeout to ndrx_svq_moncmd_tout()");
-            EXFAIL_OUT(ret);
+            /* send via long channel -> pipe */
+            if (EXSUCCEED!=ndrx_svq_moncmd_tout(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
+                abs_timeout, syncfd))
+            {
+                err = EFAULT;
+                NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_moncmd_tout()");
+                userlog("Failed to request timeout to ndrx_svq_moncmd_tout()");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            /* set-time out directly in the hash list
+             * so that event thread checks it every sec...
+             */
+            if (EXSUCCEED!=ndrx_svq_mqd_hash_add(mqd, &(mqd->stamp_time), mqd->stamp_seq, 
+                abs_timeout))
+            {
+                err = EFAULT;
+                NDRX_LOG(log_error, "Failed to request timeout to ndrx_svq_mqd_hash_add()");
+                userlog("Failed to request timeout to ndrx_svq_mqd_hash_add()");
+                EXFAIL_OUT(ret);
+            }
         }
     }
     else
@@ -1880,6 +1986,9 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
     
 out:
     
+    /* Remove queue from hash... no problem if it was already removed... */
+    ndrx_svq_mqd_hash_del(mqd);
+
     errno = err;
 
     return ret;

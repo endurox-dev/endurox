@@ -97,6 +97,8 @@ expublic int ndrx_svq_close(mqd_t mqd)
     if (NULL!=mqd && (mqd_t)EXFAIL!=mqd)
     {   
 #ifdef EX_USE_SYSVQ
+        
+#if 0
         /* close the queue 
          * we will put the Q in hash locally so while it is in pipe
          * (in kernel space), the address sanitizer might see it as leaked
@@ -116,6 +118,10 @@ expublic int ndrx_svq_close(mqd_t mqd)
          * free will be done by backend thread..
         NDRX_FREE(mqd);
          */
+#endif
+        /* remove from hashes... */
+        ndrx_svq_mqd_close(mqd);
+        NDRX_FREE(mqd);
 #endif
 
 #ifdef EX_USE_SVAPOLL

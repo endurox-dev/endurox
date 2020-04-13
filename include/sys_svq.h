@@ -83,7 +83,9 @@
 #define NDRX_SVQ_MON_ADDFD        2 /**< Add file descriptor for ev monitoring*/
 #define NDRX_SVQ_MON_RMFD         3 /**< Remove file descriptor for ev mon    */
 #define NDRX_SVQ_MON_TERM         4 /**< Termination handler calls us         */
-#define NDRX_SVQ_MON_CLOSE        5 /**< Queue unlink request                 */
+
+
+/**#define NDRX_SVQ_MON_CLOSE        5 < Queue unlink request, not used anymore */
 
 #define NDRX_SVQ_INLEN(X)       (X-sizeof(long))    /**< System V input len   */
 #define NDRX_SVQ_OUTLEN(X)       (X+sizeof(long))   /**< System V output len  */
@@ -249,8 +251,20 @@ extern NDRX_API int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen,
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd);
 extern NDRX_API void ndrx_svq_event_exit(int detatch);
 
+/* Direct API for setting timeout values... so that we register time-out 
+ by worker thread. And the event thread will pick up any existing value there
+ if timed out
+ */
+extern NDRX_API int ndrx_svq_fd_nrof(void);
+extern NDRX_API void ndrx_svq_mqd_hash_del(mqd_t mqd);
+extern NDRX_API int ndrx_svq_mqd_close(mqd_t mqd);
+extern NDRX_API int ndrx_svq_mqd_hash_add(mqd_t mqd, ndrx_stopwatch_t *stamp_time, 
+        unsigned long stamp_seq, struct timespec *abs_timeout);
+
+/* end of Direct API */
+
 extern NDRX_API int ndrx_svq_moncmd_term(void);
-extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd);
+/* extern NDRX_API int ndrx_svq_moncmd_close(mqd_t mqd); */
 extern NDRX_API int ndrx_svq_moncmd_addfd(mqd_t mqd, int fdm, uint32_t events);
 extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
 extern NDRX_API mqd_t ndrx_svq_mainq_get(void);
