@@ -64,7 +64,7 @@
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
-            <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
             <appopt>-n1 -r -i 0.0.0.0 -p 20001 -tP -z30</appopt>
             <blacklistsvcs>UNIXINFO,UNIX2</blacklistsvcs>
         </server>
