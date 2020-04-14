@@ -142,6 +142,10 @@ case $UNAME in
     ;;
 esac
 
+# Support sanitizer
+if [ "X`xadmin pmode | grep '#define NDRX_SANITIZE'`" != "X" ]; then
+    COMPFLAGS="$COMPFLAGS -fsanitize=address"
+fi
 
 ###############################################################################
 echo "Firstly lets build the processes"
