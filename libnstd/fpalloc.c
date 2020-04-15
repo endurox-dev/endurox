@@ -1,5 +1,5 @@
 /**
- * @brief Feedback Pool Allocator
+ * @brief Fast Pool Allocator
  *
  * @file fpalloc.c
  */
@@ -52,17 +52,16 @@
 /*---------------------------Macros-------------------------------------*/
 
 /* states: */            
-#define NDRX_FP_GETSIZE         1 
+#define NDRX_FP_GETSIZE         1
 #define NDRX_FP_GETMODE         2
 #define NDRX_FP_USEMALLOC       3
-#define NDRX_FP_USEMIN          4
-#define NDRX_FP_USEMAX          5
-#define NDRX_FP_USEHITS         6
+#define NDRX_FP_USENUMBL        4
 
 
 /* debug of FPA */
 #define NDRX_FPDEBUG(fmt, ...)
 /*#define NDRX_FPDEBUG(fmt, ...) NDRX_LOG(log_debug, fmt, ##__VA_ARGS__)*/
+
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -74,14 +73,12 @@
 exprivate volatile ndrx_fpapool_t M_fpa_pools[NDRX_FPA_MAX] =
 {  
     /* size                 flags   */
-    {1*1024,                NDRX_FPNOFLAG}      /* 0 */
-    ,{2*1024,               NDRX_FPNOFLAG}      /* 1 */
-    ,{4*1024,               NDRX_FPNOFLAG}      /* 2 */
-    ,{8*1024,               NDRX_FPNOFLAG}      /* 3 */
-    ,{16*1024,              NDRX_FPNOFLAG}      /* 4 */
-    ,{32*1024,              NDRX_FPNOFLAG}      /* 5 */
-    ,{64*1024,              NDRX_FPNOFLAG}      /* 6 */
-    ,{NDRX_FPA_SIZE_SYSBUF,  NDRX_FPSYSBUF}      /* 7 */
+     {NDRX_FPA_0_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_0_DNUM}      /* 0 */
+    ,{NDRX_FPA_1_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_1_DNUM}      /* 1 */
+    ,{NDRX_FPA_2_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_2_DNUM}      /* 2 */
+    ,{NDRX_FPA_3_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_3_DNUM}      /* 3 */
+    ,{NDRX_FPA_4_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_4_DNUM}      /* 4 */
+    ,{NDRX_FPA_SIZE_SYSBUF,  NDRX_FPSYSBUF, NDRX_FPA_SYSBUF_DNUM} /* 5 */
 };
 
 /*---------------------------Statics------------------------------------*/
@@ -158,18 +155,15 @@ expublic void ndrx_fpuninit(void)
 exprivate int ndrx_fpinit(void)
 {
     int ret = EXSUCCEED;
-    int i, state, blocksz, bmin, bmax, hits, found;
+    int i, state, blocksz, bnum, found, len, multiplier;
     char settings[1024];
     char *bconf, *bopt, *saveptr1, *saveptr2;
     /* load defaults */
     for (i=0; i<N_DIM(M_fpa_pools); i++)
     {
-        M_fpa_pools[i].blocks = 0;
-        M_fpa_pools[i].cur_hits = 0;
-        M_fpa_pools[i].bmin = NDRX_FPA_BMIN;
-        M_fpa_pools[i].bmax = NDRX_FPA_BMAX;
-        M_fpa_pools[i].max_hits = NDRX_FPA_BHITS;
+        M_fpa_pools[i].cur_blocks = 0;
         M_fpa_pools[i].stack = NULL;
+        M_fpa_pools[i].allocs = 0;
         pthread_spin_init(&(M_fpa_pools[i].spinlock), 0);
     }
     
@@ -203,9 +197,7 @@ exprivate int ndrx_fpinit(void)
             NDRX_FPDEBUG("Parsing block: [%s]", bconf);
             
             state = NDRX_FP_GETSIZE;
-            bmin=EXFAIL;
-            bmax=EXFAIL;
-            hits=EXFAIL;
+            bnum=EXFAIL;
             for (bopt=strtok_r(bconf, ":", &saveptr2); NULL!=bopt; bopt=strtok_r(NULL, ":", &saveptr2))
             {
                 NDRX_FPDEBUG("Parsing option: [%s]", bopt);
@@ -224,14 +216,33 @@ exprivate int ndrx_fpinit(void)
                         }
                         else
                         {
-                            /* parse number - check first? */
+                            len = strlen(bopt);
+                            multiplier=1;
+                            
+                            if (len > 0)
+                            {
+                                if (bopt[len-1]=='K' || bopt[len-1]=='k')
+                                {
+                                    multiplier=1024;
+                                    bopt[len-1]=EXEOS;
+                                }
+                                else if (bopt[len-1]<'0' || bopt[len-1]>'9')
+                                {
+                                    userlog("%s: Invalid 'size' size multiplier "
+                                            "[%c] for token [%s] in [%s] ", 
+                                        CONF_NDRX_FPAOPTS, bopt[len-1], bopt, M_opts);
+                                    EXFAIL_OUT(ret);
+                                }
+                            }
+                            
                             if (!ndrx_is_numberic(bopt))
                             {
                                 userlog("%s: Invalid 'size' token [%s] in [%s]", 
                                         CONF_NDRX_FPAOPTS, bopt, M_opts);
                                 EXFAIL_OUT(ret);
                             }
-                            blocksz = atoi(bopt) * 1024;
+                            
+                            blocksz = atoi(bopt)*multiplier;
                         }
                         
                         state = NDRX_FP_GETMODE;
@@ -248,13 +259,14 @@ exprivate int ndrx_fpinit(void)
                         {
                             if (!ndrx_is_numberic(bopt))
                             {
-                                userlog("%s: Invalid 'min' token [%s] in [%s]", 
+                                userlog("%s: Invalid 'bnum' token [%s] in [%s]", 
                                         CONF_NDRX_FPAOPTS, bopt, M_opts);
                                 EXFAIL_OUT(ret);
                             }
-                            bmin = atoi(bopt);
-                            state=NDRX_FP_USEMIN;
-                            NDRX_FPDEBUG("bmin=%d", bmin);
+                            
+                            bnum = atoi(bopt);
+                            state=NDRX_FP_USENUMBL;
+                            NDRX_FPDEBUG("bnum=%d", bnum);
                         }
                         break;
                     case NDRX_FP_USEMALLOC:
@@ -263,33 +275,8 @@ exprivate int ndrx_fpinit(void)
                                         CONF_NDRX_FPAOPTS, bopt, M_opts);
                         EXFAIL_OUT(ret);
                         break;
-                    case NDRX_FP_USEMIN:
-                        /* got min, now get max */
-                        if (!ndrx_is_numberic(bopt))
-                        {
-                            userlog("%s: Invalid 'max' token [%s] in [%s]", 
-                                    CONF_NDRX_FPAOPTS, bopt, M_opts);
-                            EXFAIL_OUT(ret);
-                        }
-                        bmax = atoi(bopt);
-                        NDRX_FPDEBUG("bmax=%d", bmax);
-                        state=NDRX_FP_USEMAX;
-                        break;
-                    case NDRX_FP_USEMAX:
-                        /* got min, now get hits */
-                        if (!ndrx_is_numberic(bopt))
-                        {
-                            userlog("%s: Invalid 'hits' token [%s] in [%s]", 
-                                    CONF_NDRX_FPAOPTS, bopt, M_opts);
-                            EXFAIL_OUT(ret);
-                        }
-                        hits = atoi(bopt);
-                        NDRX_FPDEBUG("hits=%d", hits);
-                        state = NDRX_FP_USEHITS;
-                        break;
-                    case NDRX_FP_USEHITS:
-                        /* err ! not more settings! */
-                        userlog("%s: Unexpected argument after 'hits' token [%s] in [%s]", 
+                    case NDRX_FP_USENUMBL:
+                        userlog("%s: Token not expected [%s] in [%s]", 
                                         CONF_NDRX_FPAOPTS, bopt, M_opts);
                         EXFAIL_OUT(ret);
                         break;
@@ -325,19 +312,9 @@ exprivate int ndrx_fpinit(void)
                     }
                     else 
                     {
-                        if (EXFAIL!=bmin)
+                        if (EXFAIL!=bnum)
                         {
-                            M_fpa_pools[i].bmin=bmin;
-                        }
-                        
-                        if (EXFAIL!=bmax)
-                        {
-                            M_fpa_pools[i].bmax=bmax;
-                        }
-                        
-                        if (EXFAIL!=hits)
-                        {
-                            M_fpa_pools[i].max_hits=hits;
+                            M_fpa_pools[i].num_blocks=bnum;
                         }
                         
                         found=EXTRUE;
@@ -495,29 +472,16 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         if (NULL!=M_fpa_pools[poolno].stack)
         {
             ret = M_fpa_pools[poolno].stack;
-            
             M_fpa_pools[poolno].stack=M_fpa_pools[poolno].stack->next;
-            
-            /* set the feedback */
-            if (M_fpa_pools[poolno].blocks>M_fpa_pools[poolno].bmin)
-            {
-                if (M_fpa_pools[poolno].cur_hits < NDRX_FPA_HITS_MAX)
-                {
-                    M_fpa_pools[poolno].cur_hits++;
-                    NDRX_FPDEBUG("%d inc to cur_hits=%d", 
-                        poolno, M_fpa_pools[poolno].cur_hits);
-                }
-            }
-            else if (M_fpa_pools[poolno].cur_hits>0)
-            {
-                /* set hits to 0 as we took from min */
-                NDRX_FPDEBUG("%d setting cur_hits=%d to 0 ", 
-                        poolno, M_fpa_pools[poolno].cur_hits);
-                M_fpa_pools[poolno].cur_hits=0;
-            }
             /* reduce the block count */
-            M_fpa_pools[poolno].blocks--;
+            M_fpa_pools[poolno].cur_blocks--;
         }
+#ifdef NDRX_FPA_STATS
+        else
+        {
+            M_fpa_pools[poolno].allocs++;
+        }
+#endif
         
         pthread_spin_unlock(&M_fpa_pools[poolno].spinlock);
         
@@ -564,6 +528,10 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
     ndrx_fpablock_t *ret = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
     int poolno;
     int action_free = EXFALSE;
+#ifdef NDRX_FPA_STATS
+    static int callnum=0;
+    MUTEX_LOCKDECL(callnum_lock);
+#endif
     
     if (M_malloc_all)
     {
@@ -607,15 +575,11 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
     
     pthread_spin_lock(&M_fpa_pools[poolno].spinlock);
     
-    /* we free up the given block if blocks in blocks in pool>= max blocks or cur_hits>max_hits 
-     * Here we measure hits counted in malloc, the malloc
-     * calculations will indicate what we shall do here.
+    /* Add back to the pool
      */
-    if (M_fpa_pools[poolno].blocks >= M_fpa_pools[poolno].bmax ||
-            M_fpa_pools[poolno].cur_hits>M_fpa_pools[poolno].max_hits)
+    if (M_fpa_pools[poolno].cur_blocks >= M_fpa_pools[poolno].num_blocks)
     {
         action_free = EXTRUE;
-        M_fpa_pools[poolno].cur_hits=0; /**< reset hits back .... */
         NDRX_FPDEBUG("No space or hits in pool free up %p cur_hist=0", ret);
     }
     else
@@ -623,12 +587,28 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
         /* add block to stack */
         ret->next = M_fpa_pools[poolno].stack;
         M_fpa_pools[poolno].stack = ret;
-        M_fpa_pools[poolno].blocks++;
+        M_fpa_pools[poolno].cur_blocks++;
         NDRX_FPDEBUG("Add to pool %d: %p", poolno, ret);
     }
     
     pthread_spin_unlock(&M_fpa_pools[poolno].spinlock);
     
+#ifdef NDRX_FPA_STATS
+    MUTEX_LOCK_V(callnum_lock);
+    callnum++;
+
+    if ( callnum > 100)
+    {
+        int i;
+        for (i=0; i<N_DIM(M_fpa_pools); i++)
+        {   
+            userlog("bsize %d allocs: %d", M_fpa_pools[i].bsize, M_fpa_pools[i].allocs);
+        }
+        callnum=0;
+    }
+    MUTEX_UNLOCK_V(callnum_lock);
+#endif
+        
     if (action_free)
     {
         NDRX_FPDEBUG("Action free %p", ret);

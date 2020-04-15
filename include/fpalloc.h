@@ -1,31 +1,7 @@
 /**
  * @brief Feedback Pool Allocator API
- *  Basically we have sorted array with fixed block sizes. For each block size
- *  there is stack of free memory blocks. When malloc is requested library
- *  does binary search to find suitable block size. Once block size is found
- *  stack is checked, if there are free blocks in stack, block is returned. If
- *  block is not found, usual malloc is performed. When block is made free
- *  for particular size limits are checked and if needed page is added back to the
- *  stack.
- *  Following settings are used: blocks_min, blocks_max, blocks_hits.
- *  - if number of entries in stack are less than blocks_min, then add page
- *  back to stack.
- *  - if number of entries in stack are higher than blocks_min, but less than
- *  blocks_max and current hits is less than blocks_hits, then add page to
- *  to the stack.
- *  - if number of entries in stack are higher than blocks_min, but less than
- *  blocks_max and current hits is less than blocks_hits, then add page to
- *  to the stack.
- *  - if number of entries in stack higher than min, less than max, but blockhits>=
- *  blocks_hits, free the entry
- *  - if number of entries in stack higher than min, less than max, but blockhits
- *   >blocks_hits, add entry to fpa
- *  - if number of entries in stack equals or higher than blocks_max, free the entry
- *  - use spin locks during the calculations
- *  Metadata for each page is store in header of the malloc'd block.
- *  Standard library by it self should avoid FPA when doing config loading.
- * - In case if no block sizes matched, and there is no request for sysbuf, usual
- *  malloc shall be maded.
+ *  Basically for few fixed sizes we have configured cache for allocated
+ *  blocks. If we go over the list we just malloc and free.
  *
  * @file fpalloc.h
  */
@@ -78,12 +54,6 @@ extern "C" {
 #define NDRX_FPSYSBUF         0x0002      /**< use NDRX_MSGSIZEMAX          */
 #define NDRX_FPABRSIZE        0x0004      /**< arbtirary size buf, free     */
     
-#define NDRX_FPA_HITS_MAX     1000000     /**< max feedback size 1M         */
-    
-#define NDRX_FPA_BMIN         10          /**< default Min block in poll    */
-#define NDRX_FPA_BMAX         20          /**< deafult Feedback area size   */    
-#define NDRX_FPA_BHITS        1000        /**< default hist at which feedback start */
-
 #define NDRX_FPA_SIZE_DEFAULT   -1   /**< these are default settings, use by init */
 #define NDRX_FPA_SIZE_SYSBUF   -2    /**< settings are for system buffer */
 
@@ -92,20 +62,32 @@ extern "C" {
  * Note that dynamic range will be
  * NDRX_FPA_MAX - 1, as the last entry is SYSBUF
  */
-#define NDRX_FPA_MAX            8                   /**< NDRX_MSGSIZEMAX pool no*/
+#define NDRX_FPA_MAX            6                   /**< NDRX_MSGSIZEMAX pool no*/
 #define NDRX_FPA_DYN_MAX        (NDRX_FPA_MAX-1)    /**< dynamic range          */
     
-#define NDRX_FPA_0_SIZE         (1*1024)    /**< 1KB pool                   */
-#define NDRX_FPA_1_SIZE         (2*1024)    /**< 2KB pool                   */
-#define NDRX_FPA_2_SIZE         (4*1024)    /**< 4KB pool                   */
-#define NDRX_FPA_3_SIZE         (8*1024)    /**< 8KB pool                   */
-#define NDRX_FPA_4_SIZE         (16*1024)   /**< 16KB pool                  */
-#define NDRX_FPA_5_SIZE         (32*1024)   /**< 32KB pool                  */
-#define NDRX_FPA_6_SIZE         (64*1024)   /**< 64KB pool                  */
-#define NDRX_FPA_7_SIZE         NDRX_FPA_SIZE_SYSBUF   /**< sysbuf pool     */
-#define NDRX_FPA_SIZE_MAX       NDRX_FPA_6_SIZE   /**< max dynamic range    */
+#define NDRX_FPA_0_SIZE         (256)       /**< 256b pool                 */
+#define NDRX_FPA_0_DNUM         25          /**< default cache size        */
+    
+#define NDRX_FPA_1_SIZE         (512)       /**< 512b pool                 */
+#define NDRX_FPA_1_DNUM         15          /**< default cache size        */
+    
+#define NDRX_FPA_2_SIZE         (1*1024)    /**< 1KB pool                  */
+#define NDRX_FPA_2_DNUM         10          /**< default cache size        */
+    
+#define NDRX_FPA_3_SIZE         (2*1024)    /**< 2KB pool                  */
+#define NDRX_FPA_3_DNUM         10          /**< default cache size        */
+    
+#define NDRX_FPA_4_SIZE         (4*1024)    /**< 4KB pool                  */
+#define NDRX_FPA_4_DNUM         10          /**< default cache size        */
+    
+#define NDRX_FPA_SIZE_MAX       NDRX_FPA_4_SIZE   /**< max dynamic range   */
 
-#define NDRX_FPA_SYSBUF_POOLNO    (NDRX_FPA_MAX-1)    /**< pool number of sysbuf */
+#define NDRX_FPA_SYSBUF_SIZE         NDRX_FPA_SIZE_SYSBUF   /**< sysbuf pool    */
+#define NDRX_FPA_SYSBUF_DNUM    10          /**< default cache size             */
+#define NDRX_FPA_SYSBUF_POOLNO    (NDRX_FPA_MAX-1)    /**< pool number of sysbuf*/
+    
+/** print FPA statistics to ULOG 
+#define NDRX_FPA_STATS  1*/
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -130,13 +112,11 @@ struct  ndrx_fpastack
 {
     int bsize;              /**< this does not include header size          */
     int flags;              /**< flags for given entry                      */
-    int bmin;               /**< min number of blocks int given size range  */
-    int bmax;               /**< max number of blocks int given size range  */
-    int max_hits;           /**< number of pool hits when goes over the min */
-    int blocks;             /**< Number of blocks allocated                 */
+    int num_blocks;         /**< min number of blocks int given size range  */
+    int cur_blocks;         /**< Number of blocks allocated                 */
+    long allocs;            /**< number of allocs done, for stats           */
     ndrx_fpablock_t *stack; /**< stack head                                 */
     pthread_spinlock_t spinlock;    /**< spinlock for protecting given size */
-    int cur_hits;           /**< current hits (i.e. number of times use over min*/    
 };
 
 /*---------------------------Globals------------------------------------*/
