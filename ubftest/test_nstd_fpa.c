@@ -120,41 +120,41 @@ Ensure(test_nstd_fpa_dyn)
 /**
  * Pool limits tests
  */
-Ensure(test_nstd_fpalimits)
+Ensure(test_nstd_fpa_limits)
 {
-    char *ptr[NDRX_FPA_BMAX+1];
-    char *ptr2[NDRX_FPA_BMAX+1];
+    char *ptr[NDRX_FPA_4_DNUM+1];
+    char *ptr2[NDRX_FPA_4_DNUM+1];
     int i;
     ndrx_fpapool_t stats;
     
     /* load the bmin blocks */
-    for (i=0; i<NDRX_FPA_BMAX; i++)
+    for (i=0; i<NDRX_FPA_4_DNUM; i++)
     {
-        ptr2[i] = ptr[i] = ndrx_fpmalloc(NDRX_FPA_6_SIZE, 0);
+        ptr2[i] = ptr[i] = ndrx_fpmalloc(NDRX_FPA_4_SIZE, 0);
         
         /* use the memory. */
-        memset(ptr[i], i, NDRX_FPA_6_SIZE);
+        memset(ptr[i], i, NDRX_FPA_4_SIZE);
         
         /* check that we alloc'd something */
         assert_not_equal(ptr[i], NULL);
     }
 
     /* free up the pool, in reverse order, so that latest goes to the stack.. */
-    for (i=NDRX_FPA_BMAX-1; i>=0; i--)
+    for (i=NDRX_FPA_4_DNUM-1; i>=0; i--)
     {
         ndrx_fpfree(ptr[i]);
     }
     
-    /* get pool stats, shall be NDRX_FPA_BMAX allocations */
-    ndrx_fpstats(6, &stats);
+    /* get pool stats, shall be NDRX_FPA_BNUM allocations */
+    ndrx_fpstats(4, &stats);
     
-    assert_equal(stats.blocks, NDRX_FPA_BMAX);
+    assert_equal(stats.cur_blocks, NDRX_FPA_4_DNUM);
     
     /* alloc again, pointer shall match */
     
-    for (i=0; i<NDRX_FPA_BMAX; i++)
+    for (i=0; i<NDRX_FPA_4_DNUM; i++)
     {
-        ptr2[i] = ndrx_fpmalloc(NDRX_FPA_6_SIZE, 0);
+        ptr2[i] = ndrx_fpmalloc(NDRX_FPA_4_SIZE, 0);
         
         /* check that we alloc'd something */
         assert_not_equal(ptr2[i], NULL);
@@ -167,159 +167,29 @@ Ensure(test_nstd_fpalimits)
     }
     
     /* extra alloc over the pool limits */
-    ptr2[NDRX_FPA_BMAX] = ndrx_fpmalloc(NDRX_FPA_6_SIZE, 0);
-    assert_not_equal(ptr2[NDRX_FPA_BMAX], NULL);
+    ptr2[NDRX_FPA_4_DNUM] = ndrx_fpmalloc(NDRX_FPA_4_SIZE, 0);
+    assert_not_equal(ptr2[NDRX_FPA_4_DNUM], NULL);
     
     /* free stuff up... check the blocks ... */
-    for (i=0; i<NDRX_FPA_BMAX; i++)
+    for (i=0; i<NDRX_FPA_4_DNUM; i++)
     {
-        ndrx_fpstats(6, &stats);
-        assert_equal(stats.blocks, i);
+        ndrx_fpstats(4, &stats);
+        assert_equal(stats.cur_blocks, i);
         ndrx_fpfree(ptr2[i]);
     }
     
-    ndrx_fpstats(6, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMAX);
+    ndrx_fpstats(4, &stats);
+    assert_equal(stats.cur_blocks, NDRX_FPA_4_DNUM);
     
     /* free up that one extra... should have the same max blocks.. */
-    ndrx_fpfree(ptr2[NDRX_FPA_BMAX]);
-    ndrx_fpstats(6, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMAX);
+    ndrx_fpfree(ptr2[NDRX_FPA_4_DNUM]);
+    ndrx_fpstats(4, &stats);
+    assert_equal(stats.cur_blocks, NDRX_FPA_4_DNUM);
     
     /* deinit the pool */
     ndrx_fpuninit();
 }
 
-/**
- * Check the feedback function.
- * - If we swing around bmin limit, the pool shall stay at the given size over the bmin
- * - If we swing around over the bmin limit, the pool size shall reduce
- */
-Ensure(test_nstd_feeback_free)
-{
-    char *ptr[NDRX_FPA_BMAX+1];
-    int i;
-    ndrx_fpapool_t stats;
-    
-    /* build up the pool */
-    for (i=0; i<NDRX_FPA_BMIN+2; i++)
-    {
-        ptr[i] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-    }
-    
-    /* load blocks in the pool */
-    for (i=0; i<NDRX_FPA_BMIN+2; i++)
-    {
-        ndrx_fpfree(ptr[i]);
-    }
-    
-    /* check the hits and blocks */
-    ndrx_fpstats(5, &stats);
-    
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+2);
-    assert_equal(stats.cur_hits, 0);
-    
-    /* run the hits times */
-    for (i=0; i<stats.max_hits; i++)
-    {
-        ptr[0] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-        ndrx_fpfree(ptr[0]);
-    }
-    
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+2);
-    assert_equal(stats.cur_hits, stats.max_hits);
-    
-    /* next alloc pair shall remove one element as feedback reached */
-    ptr[0] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-    ndrx_fpfree(ptr[0]);
-    
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+1);
-    assert_equal(stats.cur_hits, 0);
-    
-    /* run loop again... */
-    for (i=0; i<stats.max_hits; i++)
-    {
-        ptr[0] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-        ndrx_fpfree(ptr[0]);
-    }
-    
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+1);
-    assert_equal(stats.cur_hits, stats.max_hits);
-    
-    /* go over the hits ... */
-    ptr[0] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-    ndrx_fpfree(ptr[0]);
-    
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN);
-    assert_equal(stats.cur_hits, 0);
-    
-    /* now we work in min area -> stay the same */
-    for (i=0; i<stats.max_hits*2; i++)
-    {
-        ptr[0] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-        ndrx_fpfree(ptr[0]);
-    }
-    
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN);
-    assert_equal(stats.cur_hits, 0);
-    
-    /* deinit the pool */
-    ndrx_fpuninit();
-    
-}
-
-/**
- * We do some dynamic work alloc pages bellow and above the bmin boundry
- * Thus pool size shall stay the same
- */
-Ensure(test_nstd_feeback_stay)
-{
-    char *ptr[NDRX_FPA_BMAX+1];
-    int i, j;
-    ndrx_fpapool_t stats;
-    
-    /* build up the pool */
-    for (i=0; i<NDRX_FPA_BMIN+5; i++)
-    {
-        ptr[i] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-    }
-    
-    /* load blocks in the pool */
-    for (i=0; i<NDRX_FPA_BMIN+5; i++)
-    {
-        ndrx_fpfree(ptr[i]);
-    }
-    
-    /* check the hits and blocks */
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+5);
-    assert_equal(stats.cur_hits, 0);
-    
-    for (j=0; j<stats.max_hits*2; j++)
-    {
-        /* alloc 7 */
-        for (i=0; i<7; i++)
-        {
-            ptr[i] = ndrx_fpmalloc(NDRX_FPA_5_SIZE, 0);
-        }
-
-        /* free 7 */
-        for (i=0; i<7; i++)
-        {
-            ndrx_fpfree(ptr[i]);
-        }
-    }
-    
-    /* size shall stay in dynamic range.. */
-    ndrx_fpstats(5, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+5);
-    assert_equal(stats.cur_hits, 0);
-}
 
 #define CHK_LOOPS   5
 /**
@@ -328,12 +198,12 @@ Ensure(test_nstd_feeback_stay)
 static void * thread_start(void *arg)
 {
     int i, j;
-    char *ptr[NDRX_FPA_BMAX+1];
+    char *ptr[NDRX_FPA_SYSBUF_DNUM+1];
     ndrx_fpapool_t stats;
     
     ndrx_fpstats(NDRX_FPA_SYSBUF_POOLNO, &stats);
     
-    for (j=0; j<stats.max_hits*10; j++)
+    for (j=0; j<1000; j++)
     {
         
         for (i=0; i<CHK_LOOPS; i++)
@@ -355,9 +225,9 @@ static void * thread_start(void *arg)
  * The pool size shall stay in the boundries of alloc'd size
  * due to negative feedback (went bellow bmin)
  */
-Ensure(test_nstd_feeback_stay_threaded)
+Ensure(test_nstd_fpa_threaded)
 {
-    char *ptr[NDRX_FPA_BMAX+1];
+    char *ptr[NDRX_FPA_SYSBUF_DNUM];
     int i;
     ndrx_fpapool_t stats;
     pthread_t th1;
@@ -365,13 +235,13 @@ Ensure(test_nstd_feeback_stay_threaded)
     int ret;
     
     /* build up the pool */
-    for (i=0; i<NDRX_FPA_BMIN+(CHK_LOOPS-1); i++)
+    for (i=0; i<NDRX_FPA_SYSBUF_DNUM; i++)
     {
         ptr[i] = ndrx_fpmalloc(NDRX_MSGSIZEMAX, NDRX_FPSYSBUF);
     }
     
     /* load blocks in the pool */
-    for (i=0; i<NDRX_FPA_BMIN+(CHK_LOOPS-1); i++)
+    for (i=0; i<NDRX_FPA_SYSBUF_DNUM; i++)
     {
         ndrx_fpfree(ptr[i]);
     }
@@ -386,7 +256,7 @@ Ensure(test_nstd_feeback_stay_threaded)
     pthread_join(th2, NULL);
     
     ndrx_fpstats(NDRX_FPA_SYSBUF_POOLNO, &stats);
-    assert_equal(stats.blocks, NDRX_FPA_BMIN+(CHK_LOOPS-1));
+    assert_equal(stats.cur_blocks, NDRX_FPA_SYSBUF_DNUM);
  
     /* deinit the pool */
     ndrx_fpuninit();
@@ -425,7 +295,7 @@ Ensure(test_nstd_fpa_config_limits)
     ndrx_fpapool_t stats;
     
     /* use malloc only... */
-    setenv(CONF_NDRX_FPAOPTS, "1:5,2:3:5,S:20:40:100,4:M", EXTRUE);
+    setenv(CONF_NDRX_FPAOPTS, "256:5,2K:3,S:20,4K:M", EXTRUE);
     
     /* pull in the init... */
     ptr=ndrx_fpmalloc(777, 0);
@@ -434,26 +304,18 @@ Ensure(test_nstd_fpa_config_limits)
     
     /* check the settings applied... */
     ndrx_fpstats(0, &stats);
-    assert_equal(stats.bmin, 5);
-    assert_equal(stats.bmax, NDRX_FPA_BMAX);
-    assert_equal(stats.max_hits, NDRX_FPA_BHITS);
+    assert_equal(stats.num_blocks, 5);
     
     /* check the settings applied... */
-    ndrx_fpstats(1, &stats);
-    assert_equal(stats.bmin, 3);
-    assert_equal(stats.bmax, 5);
-    assert_equal(stats.max_hits, NDRX_FPA_BHITS);
+    ndrx_fpstats(3, &stats);
+    assert_equal(stats.num_blocks, 3);
     
     /* check the settings applied... */
     ndrx_fpstats(NDRX_FPA_SYSBUF_POOLNO, &stats);
-    assert_equal(stats.bmin, 20);
-    assert_equal(stats.bmax, 40);
-    assert_equal(stats.max_hits, 100);
-    assert_equal(stats.flags, NDRX_FPSYSBUF);
+    assert_equal(stats.num_blocks, 20);
     
-    ndrx_fpstats(2, &stats);
+    ndrx_fpstats(4, &stats);
     assert_equal(stats.flags, NDRX_FPNOPOOL);
-    
     
     /* deinit the pool */
     ndrx_fpuninit();
@@ -481,25 +343,19 @@ Ensure(test_nstd_fpa_config_inval)
     assert_equal(ndrx_fpmalloc(777, 0), NULL);
     assert_equal(errno, EINVAL);
     
-    setenv(CONF_NDRX_FPAOPTS, "D:M:4", EXTRUE);
+    setenv(CONF_NDRX_FPAOPTS, "4M:4", EXTRUE);
     assert_equal(ndrx_fpmalloc(777, 0), NULL);
     assert_equal(errno, EINVAL);
     
-    setenv(CONF_NDRX_FPAOPTS, "D:1:2:3", EXTRUE);
-    ptr = ndrx_fpmalloc(777, 0);
-    assert_not_equal(ptr, NULL);
+    setenv(CONF_NDRX_FPAOPTS, "4k:99", EXTRUE);
+    assert_not_equal((ptr=ndrx_fpmalloc(777, 0)), NULL);
+    ndrx_fpstats(4, &stats);
+    assert_equal(stats.num_blocks, 99);
     ndrx_fpfree(ptr);
-    
-    ndrx_fpstats(2, &stats);
-    assert_equal(stats.bmin, 1);
-    assert_equal(stats.bmax, 2);
-    assert_equal(stats.max_hits, 3);
     
     /* check the settings applied... */
     ndrx_fpstats(NDRX_FPA_SYSBUF_POOLNO, &stats);
-    assert_equal(stats.bmin, 1);
-    assert_equal(stats.bmax, 2);
-    assert_equal(stats.max_hits, 3);
+    assert_equal(stats.num_blocks, NDRX_FPA_SYSBUF_DNUM);
     assert_equal(stats.flags, NDRX_FPSYSBUF);
     
 }
@@ -513,10 +369,8 @@ TestSuite *ubf_nstd_fpa(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_nstd_fpa_dyn);
-    add_test(suite, test_nstd_fpalimits);
-    add_test(suite, test_nstd_feeback_free);
-    add_test(suite, test_nstd_feeback_stay);
-    add_test(suite, test_nstd_feeback_stay_threaded);
+    add_test(suite, test_nstd_fpa_limits);
+    add_test(suite, test_nstd_fpa_threaded);
     add_test(suite, test_nstd_fpa_config_memall);
     add_test(suite, test_nstd_fpa_config_limits);
     add_test(suite, test_nstd_fpa_config_inval);
