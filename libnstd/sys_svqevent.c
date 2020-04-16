@@ -514,7 +514,7 @@ expublic void ndrx_svq_mqd_hash_del(mqd_t mqd)
     
     /* Remove queue completely */
     
-    NDRX_LOG(log_debug, "Removing queue %p qstr:[%s] qid:%d", 
+    NDRX_LOG(log_debug, "Closing SV descr queue %p qstr:[%s] qid:%d", 
             mqd, mqd->qstr, mqd->qid);
     
     /* for service queues, the ndrxd will which are subject for removal

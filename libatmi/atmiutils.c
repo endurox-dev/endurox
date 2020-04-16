@@ -411,12 +411,12 @@ restart_close:
  * @param prio - priority of message
  * @return GEN_QUEUE_ERR_NO_DATA/FAIL/data len
  */
-expublic long ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
+expublic ssize_t ndrx_generic_q_receive(mqd_t q_descr, char *q_str, 
         struct mq_attr *reply_q_attr,
         char *buf, long buf_max, 
         unsigned *prio, long flags)
 {
-    long ret=EXSUCCEED;
+    ssize_t ret=EXSUCCEED;
     int use_tout;
     struct timespec abs_timeout;   
     
@@ -456,14 +456,14 @@ restart:
 
             CONV_ERROR_CODE(ret, err);
 
-            ndrx_TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%d): %s",
+            ndrx_TPset_error_fmt(err, "ndrx_mq_receive failed for %lx (%zd): %s",
 			(long int)q_descr, ret, strerror(ret));
             ret=EXFAIL;
         }
     }
     
 out:
-    NDRX_LOG(log_debug, "ndrx_generic_q_receive: %ld", ret);
+    NDRX_LOG(log_debug, "ndrx_generic_q_receive: %zd", ret);
     return ret;
 }
 
@@ -515,7 +515,7 @@ expublic int cmd_generic_call_2(int ndrxd_cmd, int msg_src, int msg_type,
     unsigned prio = 0;
     /* char    msg_buffer_max[NDRX_MSGSIZEMAX];*/
     char    *msg_buffer_max= NULL;
-    size_t  reply_len;
+    ssize_t  reply_len;
     int attempts = 1;
     
 restart:
@@ -634,7 +634,7 @@ restart:
         } /* even's are requests... */
         else if (test_call->command % 2 == 0 && NULL!=p_rply_request)
         {
-            if (EXSUCCEED!=p_rply_request(&msg_buffer_max, reply_len))
+            if (EXSUCCEED!=p_rply_request(&msg_buffer_max, (size_t)reply_len))
             {
                 NDRX_LOG(log_error, "Failed to process request!");
                 ret=EXFAIL;
@@ -703,7 +703,7 @@ restart:
             {
                 if (reply_len>*rply_buf_out_len)
                 {
-                    NDRX_LOG(log_warn, "Received packet size %d longer "
+                    NDRX_LOG(log_warn, "Received packet size %zd longer "
                             "than user buffer in rply_buf_len %d", 
                             reply_len, *rply_buf_out_len);
                     EXFAIL_OUT(ret);

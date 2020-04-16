@@ -668,7 +668,7 @@ expublic int ndrx_tpgetrply (int *cd,
 {
     int ret=EXSUCCEED;
     char *pbuf = NULL;
-    long rply_len;
+    ssize_t rply_len;
     unsigned prio;
     long pbuf_len;
     tp_command_call_t *rply;
@@ -796,7 +796,7 @@ expublic int ndrx_tpgetrply (int *cd,
             }
 
             NDRX_LOG(log_debug, "accept any: %s, cd=%d (name: [%s], my_id: [%s]) "
-			"atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%ld",
+			"atmi_tls=%p cmd=%hd rplybuf=%p rply_len=%zd",
 			(flags & TPGETANY)?"yes":"no", rply->cd, 
 			rply->my_id, rply->name, G_atmi_tls, rply->command_id, pbuf, 
 			rply_len);
