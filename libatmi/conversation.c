@@ -535,98 +535,6 @@ out:
     return ret;
 }
 
-/* #define CONV_USE_ACK */
-/**
- * Send ACK message
- * @param conv - conversation descriptor
- * @return
- */
-exprivate int send_ack(tp_conversation_control_t *conv, long flags)
-{
-#if CONV_USE_ACK
-    int ret=EXSUCCEED;
-    tp_conv_ack_t ack;
-    char fn[]="get_ack";
-    
-    memset(&ack, 0, sizeof(ack));
-    ack.command_id = ATMI_COMMAND_CONVACK;
-    ack.cd=conv->cd;
-    
-    if (EXSUCCEED!=(ret=ndrx_generic_qfd_send(conv->reply_q, (char *)&ack, sizeof(ack), flags)))
-    {
-        int err;
-        
-        CONV_ERROR_CODE(ret, err);
-
-        ndrx_TPset_error_fmt(err, "%s: Failed to send ACK, os err: %s",  __func__, strerror(ret));
-
-        ret=EXFAIL;
-        goto out;
-    }
-    NDRX_LOG(log_debug, "ACK sent for cd %d", conv->cd);
-out:
-    return ret;
-#else
-    return EXSUCCEED;
-#endif
-}
-
-/**
- * Get ACK message
- * @param cd
- * @return
- */
-expublic int ndrx_get_ack(tp_conversation_control_t *conv, long flags)
-{
-#if CONV_USE_ACK
-    int ret=EXSUCCEED;
-    char buf[ATMI_MSG_MAX_SIZE];
-    tp_conv_ack_t *ack = (tp_conv_ack_t *)buf;
-    long rply_len;
-    unsigned prio;
-
-    if (EXSUCCEED!=ndrx_setup_queue_attrs(&conv->my_q_attr, conv->my_listen_q,
-                                    conv->my_listen_q_str, 0L))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-    NDRX_LOG(log_debug, "Waiting for ACK");
-    rply_len = ndrx_generic_q_receive(conv->my_listen_q, buf, sizeof(buf), &prio, flags);
-    
-    if (rply_len<sizeof(tp_conv_ack_t))
-    {
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPESYSTEM, "Invalid ACK reply, len: %d expected %d",
-                    rply_len, sizeof(tp_command_generic_t));
-        goto out;
-    }
-
-    if (ack->cd!=conv->cd)
-    {
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPESYSTEM, "Invalid ACK reply, waiting for cd %d got %d",
-                    conv->cd, ack->cd);
-    }
-    else if (ATMI_COMMAND_CONVACK!=ack->command_id)
-    {
-        ret=EXFAIL;
-        ndrx_TPset_error_fmt(TPESYSTEM, "Invalid ACK command %hd",
-                    ack->command_id);
-    }
-    else
-
-    {
-        NDRX_LOG(log_debug, "Got ACK for cd %d", conv->cd);
-    }
-
-out:
-    return ret;
-#else
-    return EXSUCCEED;
-#endif
-}
-
 /**
  * Internal implementation of tpconnect.
  * So basically after connect, the picture if following (example):
@@ -983,7 +891,7 @@ expublic int ndrx_tprecv (int cd, char **data,
                         short *command_id)
 {
     int ret=EXSUCCEED;
-    long rply_len;
+    ssize_t rply_len;
     unsigned prio;
     size_t rply_bufsz;
     char *rply_buf = NULL; /* Allocate dynamically! */
@@ -1120,12 +1028,6 @@ inject_message:
                 conv->msgseqin++;
                 NDRX_LOG(log_info, "msgseq %hu received as expected", 
                         rply->msgseq);
-            }
-
-            /* Send ACK? */
-            if (conv->handshaked && EXFAIL==send_ack(conv, flags))
-            {
-                EXFAIL_OUT(ret);
             }
 
             *command_id=rply->command_id;
@@ -1512,7 +1414,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
         conv->msgseqout++;
     }
 
-    if (conv->handshaked && EXSUCCEED!=ndrx_get_ack(conv, flags))
+    if (conv->handshaked)
     {
         ret=EXFAIL;
         goto out;

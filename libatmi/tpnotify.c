@@ -311,7 +311,7 @@ out:
  * @param buf buffer received (full) from Q
  * @param len buffer len
  */
-expublic void ndrx_process_notif(char *buf, long len)
+expublic void ndrx_process_notif(char *buf, ssize_t len)
 {
     int ret = EXSUCCEED;
     char *odata = NULL;
@@ -391,7 +391,7 @@ expublic int ndrx_tpchkunsol(void)
     int ret = EXSUCCEED;
     char *pbuf = NULL;
     size_t pbuf_len;
-    long rply_len;
+    ssize_t rply_len;
     int num_applied = 0;
     unsigned prio;
     tpmemq_t *tmp;
@@ -408,18 +408,18 @@ expublic int ndrx_tpchkunsol(void)
                 &(G_atmi_tls->G_atmi_conf.reply_q_attr),
                 pbuf, pbuf_len, &prio, TPNOBLOCK);
         
-        NDRX_LOG(log_debug, "%s: %lu", __func__, (long)rply_len);
+        NDRX_LOG(log_debug, "%s: %zd", __func__, (long)rply_len);
         
         if (rply_len<=0)
         {
-            NDRX_LOG(log_warn, "%s: No message (%ld)", __func__,  rply_len);
+            NDRX_LOG(log_warn, "%s: No message (%zd)", __func__,  rply_len);
             goto out;
         }
 
         notif=(tp_notif_call_t *) pbuf;
 
         /* could use %zu,  but we must be max cross platform... */
-        NDRX_LOG(log_info, "%s: got message, len: %ld, command id: %d", 
+        NDRX_LOG(log_info, "%s: got message, len: %zd, command id: %d", 
                 __func__, rply_len, notif->command_id);
 
         if (ATMI_COMMAND_TPNOTIFY == notif->command_id ||
