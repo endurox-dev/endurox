@@ -89,6 +89,7 @@ typedef struct thpool_{
 	volatile int num_threads_alive;      /* threads currently alive   */
 	volatile int num_threads_working;    /* threads currently working */
 	pthread_mutex_t  thcount_lock;       /* used for thread count etc */
+        pthread_spinlock_t thcount_lock_spin; /**< spinlock for faster ops */
 	pthread_cond_t  threads_all_idle;    /* signal to thpool_wait     */
         int threads_keepalive;
         int threads_on_hold;
@@ -165,6 +166,7 @@ struct thpool_* thpool_init(int num_threads){
 	}
 
 	pthread_mutex_init(&(thpool_p->thcount_lock), NULL);
+        pthread_spin_init(&(thpool_p->thcount_lock_spin), 0);
 	pthread_cond_init(&thpool_p->threads_all_idle, NULL);
 
 	/* Thread init */
@@ -231,6 +233,7 @@ void thpool_destroy(thpool_* thpool_p){
 	time_t start, end;
 	double tpassed = 0.0;
 	time (&start);
+        /* num_threads_alive - reads are atomic... as the same as writes. */
 	while (tpassed < TIMEOUT && thpool_p->num_threads_alive){
 		bsem_post_all(thpool_p->jobqueue.has_jobs);
 		time (&end);
@@ -346,9 +349,9 @@ static void* poolthread_do(struct poolthread* thread_p){
 
 	
 	/* Mark thread as alive (initialized) */
-	pthread_mutex_lock(&thpool_p->thcount_lock);
+	pthread_spin_lock(&thpool_p->thcount_lock_spin);
 	thpool_p->num_threads_alive += 1;
-	pthread_mutex_unlock(&thpool_p->thcount_lock);
+	pthread_spin_unlock(&thpool_p->thcount_lock_spin);
 
 	while(thread_p->thpool_p->threads_keepalive && !finish_off){
 
@@ -356,9 +359,9 @@ static void* poolthread_do(struct poolthread* thread_p){
 
 		if (thread_p->thpool_p->threads_keepalive){
 			
-			pthread_mutex_lock(&thpool_p->thcount_lock);
+			pthread_spin_lock(&thpool_p->thcount_lock_spin);
 			thpool_p->num_threads_working++;
-			pthread_mutex_unlock(&thpool_p->thcount_lock);
+			pthread_spin_unlock(&thpool_p->thcount_lock_spin);
 			
 			/* Read job from queue and execute it */
 			void(*func_buff)(void* arg, int *p_finish_off);
@@ -371,18 +374,25 @@ static void* poolthread_do(struct poolthread* thread_p){
 				NDRX_FPFREE(job_p);
 			}
 
-			pthread_mutex_lock(&thpool_p->thcount_lock);
+                        /* if no threads working, wake up the shutdown
+                         * waiter...
+                         * It will check that there are no any jobs
+                         */
+			pthread_spin_lock(&thpool_p->thcount_lock_spin);
 			thpool_p->num_threads_working--;
 			if (!thpool_p->num_threads_working) {
+                                pthread_spin_unlock(&thpool_p->thcount_lock_spin);
 				pthread_cond_signal(&thpool_p->threads_all_idle);
-			}
-			pthread_mutex_unlock(&thpool_p->thcount_lock);
+			} else {
+                            pthread_spin_unlock(&thpool_p->thcount_lock_spin);
+                        }
+			
 
 		}
 	}
-	pthread_mutex_lock(&thpool_p->thcount_lock);
+	pthread_spin_lock(&thpool_p->thcount_lock_spin);
 	thpool_p->num_threads_alive --;
-	pthread_mutex_unlock(&thpool_p->thcount_lock);
+	pthread_spin_unlock(&thpool_p->thcount_lock_spin);
 
 	return NULL;
 }
@@ -460,11 +470,8 @@ static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob){
 
 
 /* Get first job from queue(removes it from queue)
-<<<<<<< HEAD
  *
  * Notice: Caller MUST hold a mutex
-=======
->>>>>>> da2c0fe45e43ce0937f272c8cd2704bdc0afb490
  */
 static struct job* jobqueue_pull(jobqueue* jobqueue_p){
 

@@ -386,7 +386,7 @@ struct shm_svcinfo
 };
 
 /* Macros for shm service size */
-#define SHM_SVCINFO_SIZEOF  (sizeof(shm_svcinfo_t) + sizeof(short)*G_atmi_env.maxsvcsrvs)
+#define SHM_SVCINFO_SIZEOF  (sizeof(shm_svcinfo_t) + sizeof(ndrx_shm_resid_t)*G_atmi_env.maxsvcsrvs)
 
 /* memory access index: */
 #define SHM_SVCINFO_INDEX(MEM, IDX) ((shm_svcinfo_t*)(((char*)MEM)+(int)(SHM_SVCINFO_SIZEOF*IDX)))

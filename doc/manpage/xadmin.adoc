@@ -99,18 +99,18 @@ COMMANDS
     '-i' means restart specific server instance.
 *sr*::
     Alias for 'sreload'
-*psc*::
-    Print available services.
+*psc* [-s] ::
+    Print available services. '-s' used to show full service name *30* symbols.
 *down* [-y]::
     Force appserver shutdown & resources cleanup. RUN ONLY IF YOU KNOW WHAT YOU ARE DOING!
     Basically this kills all ATMI servers and Enduro/X daemon. This does NOT remove client
     processes.
 *cat*::
-    Attached console to ndrxd user session in progress
+    Attached console to ndrxd user session in progress.
 *reload*::
-    Load new configuration
+    Load new configuration.
 *testcfg*::
-    Test new configuration
+    Test new configuration.
 *unadv* -i server_id -s service_name::
     Un-advertise service. '-i' is server id, '-s' is service name to be
     unadvertised.
@@ -123,14 +123,16 @@ COMMANDS
 *r*::
     Alias for 'restart'
 *-v*::
-    Print version info
+    Print version info.
 *ver*::
     Alias for '-v'
 *ppm* [-2]::
     Print process model. The argument -2 show second page of process model
     attributes.
-*psvc*::
-    Shared mem, print services
+*psvc* [-r]::
+    Shared mem, print services. '-r' used for System V and Poll modes where
+    resource identifiers are printed (either msgid (for System V) or pid for
+    Poll mode).
 *psrv*::
     Shared mem, print servers
 *cabort* [-y]::

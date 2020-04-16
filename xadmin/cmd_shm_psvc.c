@@ -45,6 +45,7 @@
 #include <ndrxdcmn.h>
 #include <atmi_int.h>
 #include <gencall.h>
+#include <nclopt.h>
 
 #include "nstopwatch.h"
 /*---------------------------Externs------------------------------------*/
@@ -53,6 +54,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate int M_resources;  /**< should we print resources to stdout    */
 /*---------------------------Prototypes---------------------------------*/
 
 
@@ -122,16 +124,24 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
             CONF_NDRX_NODEID_COUNT,
             CONF_NDRX_NODEID_COUNT, gen_clstr_map(shm_psvc_info));
         
+        /* print only if -r flag applied (resources) for system v & pool */
         /* This is poll mode, provide info about individual serves: */
-        if (shm_psvc_info->resids[0].resid)
+        
+        if (M_resources && shm_psvc_info->resids[0].resid)
         {
-            fprintf(stdout, "    RES(%d): ", shm_psvc_info->resnr);
+            fprintf(stderr, "\t\n");
+            fprintf(stderr, "\tRES NO IDENTIFIER SERVERS\n");
+            fprintf(stderr, "\t------ ---------- -------\n");
             for (i=0; i<shm_psvc_info->resnr; i++)
             {
-                fprintf(stdout, "%d(%hd) ", shm_psvc_info->resids[i].resid,
+                fprintf(stdout, "\t%-6d %-10d %-7hd\n", 
+                        i, shm_psvc_info->resids[i].resid,
                         shm_psvc_info->resids[i].cnt);
             }
-            fprintf(stdout, "\n");
+            fprintf(stderr, "\t\n");
+            
+            /* home some header more... */
+            print_hdr();
         }
     }
     
@@ -143,17 +153,35 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
  * @param p_cmd_map
  * @param argc
  * @param argv
- * @return SUCCEED
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int cmd_shm_psvc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
+    int ret = EXSUCCEED;
     command_call_t call;
+    
+    ncloptmap_t clopt[] =
+    {
+        {'r', BFLD_INT, (void *)&M_resources, sizeof(M_resources), 
+                                NCLOPT_OPT, "Print resources"},
+        {0}
+    };
+    
+    M_resources = EXFALSE;
+            
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+    
     memset(&call, 0, sizeof(call));
 
     /* Print header at first step! */
     print_hdr();
     /* Then get listing... */
-    return cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
+    ret=cmd_generic_listcall(p_cmd_map->ndrxd_cmd, NDRXD_SRC_ADMIN,
                         NDRXD_CALL_TYPE_GENERIC,
                         &call, sizeof(call),
                         G_config.reply_queue_str,
@@ -165,6 +193,8 @@ expublic int cmd_shm_psvc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
                         G_call_args,
                         EXFALSE,
                         G_config.listcall_flags);
+out:
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

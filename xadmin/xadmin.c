@@ -188,13 +188,15 @@ cmd_mapping_t M_command_map[] =
                 "Print version info, same as -v"
                 , NULL},
     {"ppm",     cmd_ppm,  NDRXD_COM_XAPPM_RQ,    1,  2,  2, 
-                "Print process model"
+                "Print process model\n"
                 "\tUsage ppm [OPTION]...\n"
                 "\t\t -2\tPrint Page 2\n"
                 ,NULL},
-    {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  1,  1, 
-                "Shared mem, print services"
-                , NULL},
+    {"psvc",cmd_shm_psvc,NDRXD_COM_XASHM_PSVC_RQ,1,  2,  1, 
+                "Shared mem, print services\n"
+                "\t args: psvc [-r]\n"
+                "\t -r : for System V or Poll mode print resource identifers (msgid or pid)"
+                ,NULL},
     {"psrv",cmd_shm_psrv,NDRXD_COM_XASHM_PSRV_RQ,1,  1,  1, 
                 "Shared mem, print servers"
                 , NULL},
