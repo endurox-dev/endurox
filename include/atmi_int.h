@@ -180,31 +180,7 @@ extern "C" {
         errno = err;\
         EXFAIL_OUT(__ret);\
     }\
-    if (NULL!=__p_bufsz)\
-    {\
-        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
-    }\
-}
-    
-/**
- * Allocate the ATMI system buffer (MALLOC mode, just a hint)
- */
-#define NDRX_SYSBUF_MALLOC_OUT(__buf, __p_bufsz, __ret)\
-{\
-    int __buf_size__ = NDRX_MSGSIZEMAX;\
-    __buf = NDRX_FPMALLOC(__buf_size__, NDRX_FPSYSBUF);\
-    if (NULL==__buf)\
-    {\
-        int err = errno;\
-        NDRX_LOG(log_error, "%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
-        userlog("%s: failed to allocate sysbuf: %s", __func__,  strerror(errno));\
-        errno = err;\
-        EXFAIL_OUT(__ret);\
-    }\
-    if (NULL!=__p_bufsz)\
-    {\
-        *((size_t *)__p_bufsz) = (size_t)__buf_size__;\
-    }\
+    __p_bufsz = __buf_size__;\
 }
     
 /**

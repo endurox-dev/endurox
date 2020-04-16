@@ -398,7 +398,7 @@ expublic int ndrx_tpchkunsol(void)
     tp_notif_call_t *notif;
     
     /* Allocate the buffer... to put data into */
-    NDRX_SYSBUF_MALLOC_OUT(pbuf, &pbuf_len, ret);
+    NDRX_SYSBUF_MALLOC_OUT(pbuf, pbuf_len, ret);
 
     NDRX_LOG(log_debug, "Into %s", __func__);
     do
