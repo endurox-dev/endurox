@@ -475,8 +475,9 @@ expublic int exnet_recv_sync(exnetcon_t *net, char **buf, int *len, int flags, i
     
     if (NULL==net->dlsysbuf)
     {
+        size_t tmp_buf_len;
         /* alloc the buffer... */
-        NDRX_SYSBUF_MALLOC_OUT(net->dlsysbuf, NULL, ret);
+        NDRX_SYSBUF_MALLOC_OUT(net->dlsysbuf, tmp_buf_len, ret);
     }
     
     while (EXSUCCEED==ret)

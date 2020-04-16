@@ -678,7 +678,7 @@ expublic int ndrx_tpgetrply (int *cd,
     ATMI_TLS_ENTRY;
     
     /* Allocate the buffer, dynamically... */
-    NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, &pbuf_len, ret);
+    NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, pbuf_len, ret);
 
     NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p cd_exp %d", __func__, 
             flags, pbuf, cd_exp);

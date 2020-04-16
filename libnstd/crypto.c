@@ -61,6 +61,8 @@
 #include <exaes.h>
 #include <exbase64.h>
 
+#include "atmi_int.h"
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IV_INIT {   0xab, 0xcc, 0x1b, 0xc2, \
@@ -326,13 +328,15 @@ expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
 expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
 {
     int ret = EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    long bufsz = sizeof(buf);
+    char *buf = NULL;
+    long bufsz;
     long estim_size;
     long inlen = strlen(input);
     size_t b64len;
     API_ENTRY;
     
+    NDRX_SYSBUF_MALLOC_OUT(buf, bufsz, ret);
+
     /* encrypt data block */
     if (EXSUCCEED!=ndrx_crypto_enc_int(input, inlen, buf, &bufsz))
     {
@@ -370,6 +374,10 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
 #endif
     
 out:
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
     return ret;
 }
 

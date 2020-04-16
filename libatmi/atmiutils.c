@@ -608,10 +608,12 @@ restart:
         
         if (NULL==msg_buffer_max)
         {
-            NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buffer_max, NULL, ret);
+            NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buffer_max, reply_len, ret);
         }
-        
-        reply_len = NDRX_MSGSIZEMAX;
+        else
+        {
+            reply_len = NDRX_MSGSIZEMAX;
+        }
         
         test_call = (command_call_t *)msg_buffer_max;
         

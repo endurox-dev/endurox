@@ -323,7 +323,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
         int clr_len;
-        NDRX_SYSBUF_MALLOC_OUT(tmp_clr, &clr_len, ret);
+        NDRX_SYSBUF_MALLOC_OUT(tmp_clr, clr_len, ret);
         
 	if (!M_is_gpg_init)
 	{
@@ -380,9 +380,10 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     
     if (G_bridge_cfg.common_format)
     {
+        size_t tmp_buf_len;
         long tmp_len = p_netmsg->len;
         
-        NDRX_SYSBUF_MALLOC_OUT(tmp, NULL, ret);
+        NDRX_SYSBUF_MALLOC_OUT(tmp, tmp_buf_len, ret);
         
         NDRX_LOG(log_debug, "Convert message from network... (tmp buf = %p, size: %ld)", 
                 tmp, NDRX_MSGSIZEMAX);

@@ -190,6 +190,7 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type, char *destq)
 {
     int ret=EXSUCCEED;
     in_msg_t *msg;
+    size_t tmp_buf_len;
     
     if (NULL==(msg=NDRX_FPMALLOC(sizeof(in_msg_t), 0)))
     {
@@ -197,7 +198,7 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type, char *destq)
         EXFAIL_OUT(ret);
     }
     
-    NDRX_SYSBUF_MALLOC_WERR_OUT(msg->buffer, NULL, ret);
+    NDRX_SYSBUF_MALLOC_WERR_OUT(msg->buffer, tmp_buf_len, ret);
     
     /*fill in the details*/
     msg->pack_type = pack_type;

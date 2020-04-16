@@ -1434,8 +1434,10 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 {
                     UBFH *p_ub = (UBFH *)data;
                     
-                    char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];
-                    proto_ufb_fld_t *f =  (proto_ufb_fld_t *)f_data_buf;
+                    /* char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];*/
+                    char *f_data_buf;
+                    ssize_t f_data_buf_len;
+                    proto_ufb_fld_t *f;
                     BFLDOCC occ;
                     
                     short accept_tags[] = {UBF_TAG_BFLDID, UBF_TAG_BFLDLEN, 0, EXFAIL};
@@ -1447,11 +1449,16 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     long off_stop;
                     
                     xmsg_t tmp_cv;
+                    
+                    NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
+                    
+                    f =  (proto_ufb_fld_t *)f_data_buf;
 
                     /* This is sub tlv/ thus put tag... */
                     if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
                             proto_buf_offset, proto_bufsz))
                     {
+                        NDRX_SYSBUF_FREE(f_data_buf);
                         EXFAIL_OUT(ret);
                     }
                     
@@ -1484,7 +1491,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         /* Hmm lets drive our structure? */
                         
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
-                            (char *)f, sizeof(f_data_buf), proto_buf, 
+                            (char *)f, f_data_buf_len, proto_buf, 
                             proto_buf_offset,  accept_tags, f, proto_bufsz);
                     
                         if (EXSUCCEED!=ret)
@@ -1493,13 +1500,14 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                                     "sub/tag %x: [%s] %ld"
                                     "at offset %ld", 
                                     p->tag, p->cname, p->offset);
+                            NDRX_SYSBUF_FREE(f_data_buf);
                             EXFAIL_OUT(ret);
                         }
                         /*
                          * why?
                         memset(f.buf, 0, sizeof(f.buf));
                          */
-                        f->bfldlen = NDRX_MSGSIZEMAX - sizeof(*f);
+                        f->bfldlen = f_data_buf_len - sizeof(*f);
                     }
                     
                     /* </process field by field> */
@@ -1511,9 +1519,11 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset,
                             proto_bufsz))
                     {
+                        NDRX_SYSBUF_FREE(f_data_buf);
                         EXFAIL_OUT(ret);
                     }
                     /* </sub tlv> */
+                    NDRX_SYSBUF_FREE(f_data_buf);
                 }
                 else
                 {

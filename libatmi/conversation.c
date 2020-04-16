@@ -943,7 +943,7 @@ expublic int ndrx_tprecv (int cd, char **data,
     }
 
     /* Allocate Enduro/X system buffer */
-    NDRX_SYSBUF_MALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
+    NDRX_SYSBUF_MALLOC_WERR_OUT(rply_buf, rply_bufsz, ret);
     rply = (tp_command_call_t *)rply_buf;
     
     /* TODO: If we keep linked list with call descriptors and if there is
@@ -1016,7 +1016,7 @@ inject_message:
                 }
                 
                 /* Realloc system buffer */
-                NDRX_SYSBUF_MALLOC_WERR_OUT(rply_buf, &rply_bufsz, ret);
+                NDRX_SYSBUF_MALLOC_WERR_OUT(rply_buf, rply_bufsz, ret);
                 /* switch the ptrs... */
                 rply = (tp_command_call_t *)rply_buf;
                 

@@ -1202,9 +1202,13 @@ expublic int sv_wait_for_request(void)
         
         if (NULL==msg_buf)
         {
-            NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buf, NULL, ret);
+            NDRX_SYSBUF_MALLOC_WERR_OUT(msg_buf, len, ret);
         }
-        len = msgsize_max;
+        else
+        {
+            len = msgsize_max;
+        }
+        
         nfds = ndrx_epoll_wait(G_server_conf.epollfd, G_server_conf.events, 
                 G_server_conf.max_events, tout, &msg_buf, &len);
         
