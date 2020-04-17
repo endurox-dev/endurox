@@ -371,7 +371,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
     int poolno=EXFAIL;
     
     /* do the init. */
-    if (M_init_first)
+    if (NDRX_UNLIKELY(M_init_first))
     {
         MUTEX_LOCK_V(M_initlock);
         
@@ -387,7 +387,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
     }
     
     /* run all malloc */
-    if (M_malloc_all)
+    if (NDRX_UNLIKELY(M_malloc_all))
     {
         ret=malloc(size);
         NDRX_FPDEBUG("all malloc %p", ret);
@@ -430,7 +430,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         }
     }
     
-    if (EXFAIL==poolno)
+    if (NDRX_UNLIKELY(EXFAIL==poolno))
     {
         /* do malloc.., arb size */
         ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
@@ -533,7 +533,7 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
     MUTEX_LOCKDECL(callnum_lock);
 #endif
     
-    if (M_malloc_all)
+    if (NDRX_UNLIKELY(M_malloc_all))
     {
         /* free only use of direct memory.. */
         NDRX_FPDEBUG("M_alloc_all free %p", ptr);
@@ -541,7 +541,7 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
         goto out;
     }
     
-    if (ret->magic!=NDRX_FPA_MAGIC)
+    if (NDRX_UNLIKELY(ret->magic!=NDRX_FPA_MAGIC))
     {
         ssize_t wret;
         /* signal safe error msg */
@@ -556,7 +556,7 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
     }
     
     /* remove arb size */
-    if (ret->flags & NDRX_FPABRSIZE)
+    if (NDRX_UNLIKELY(ret->flags & NDRX_FPABRSIZE))
     {
         NDRX_FPDEBUG("Arb/nopool free %p", ret);
         NDRX_FREE(ret); 

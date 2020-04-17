@@ -543,14 +543,17 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 {
     int ret=EXSUCCEED;
     char *fn = "br_send_to_net";
-    char tmp[NDRX_MSGSIZEMAX];
-    char tmp2[NDRX_MSGSIZEMAX];
-    char tmp_enc[NDRX_MSGSIZEMAX]; /* Not the best way, but we atleas we are clear... */
-    char *snd;
+    char *tmp = NULL;
+    size_t tmp_len;
+    char *tmp2 = NULL;
+    size_t tmp2_len;
+    char *tmp_enc = NULL; /* Not the best way, but we atleas we are clear... */
+    int tmp_enc_len;
+    char **snd;
     long snd_len;
     int use_hdr = EXFALSE;
     
-    cmd_br_net_call_t *call = (cmd_br_net_call_t *)tmp;
+    cmd_br_net_call_t *call;
     NDRX_LOG(log_debug, "%s: sending %d bytes", fn, len);
     
     if (NULL==G_bridge_cfg.con)
@@ -559,21 +562,25 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         EXFAIL_OUT(ret);
     }
     
+    NDRX_SYSBUF_MALLOC_OUT(tmp, tmp_len, ret);
+    
+    call = (cmd_br_net_call_t *)tmp;
+    
     /*do some optimisation memset(tmp, 0, sizeof(tmp)); */
     call->br_magic = BR_NET_CALL_MAGIC;
     call->msg_type = msg_type;
     call->command_id = command_id;
     call->len = len;
     
-    if (len > sizeof(tmp) - sizeof(call))
+    if (len > tmp_len - sizeof(call))
     {
         NDRX_LOG(log_error, "%s: Sending more than buf can handle: "
                 "len=%d, (outbufsz: %ld)", __func__, 
-                len, (long)(sizeof(tmp) - sizeof(call)));
+                len, (long)(tmp_len - sizeof(call)));
         
         userlog("%s: Sending more than buf can handle: "
                 "len=%d, (outbufsz: %ld)", __func__, 
-                len, (long)(sizeof(tmp) - sizeof(call)));
+                len, (long)(tmp_len - sizeof(call)));
         
         EXFAIL_OUT(ret);
     }
@@ -583,7 +590,7 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         /* get away from this memcpy somehow? */
         memcpy(call->buf, buf, len);
         snd_len = len+sizeof(cmd_br_net_call_t);
-        snd = tmp;
+        snd = &tmp;
     }
     else
     {
@@ -597,23 +604,27 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         NDRX_LOG(log_debug, "Convert message to network...");
         /* do some more optimization: memset(tmp2, 0, sizeof(tmp2)); */
         
-        snd = tmp2;
+        NDRX_SYSBUF_MALLOC_OUT(tmp2, tmp2_len, ret);
+        
+        snd = &tmp2;
         
         snd_len = 0;
         /* TODO: Set the output buffer size border. */
         if (EXSUCCEED!=exproto_ex2proto((char *)call, snd_len, tmp2, 
-                &snd_len, sizeof(tmp2)))
+                &snd_len, tmp2_len))
         {
             ret=EXFAIL;
             goto out;
-        }    
+        }
+        
+        NDRX_SYSBUF_FREE(tmp);
+        tmp = NULL;
     }
     
 #ifndef DISABLEGPGME
     /* use GPG encryption */
     if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
-	int enc_len = NDRX_MSGSIZEMAX;
 	if (!M_is_gpg_init)
 	{
             /* TODO: Maybe we need lock here? */
@@ -628,10 +639,12 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
                 EXFAIL_OUT(ret);
             }
 	}
+        
+        NDRX_SYSBUF_MALLOC_OUT(tmp_enc, tmp_enc_len, ret);
 	
 	/* Encrypt the message */
-	if (EXSUCCEED!=pgpa_encrypt(&M_enc, snd, snd_len, 
-				tmp_enc, &enc_len))
+	if (EXSUCCEED!=pgpa_encrypt(&M_enc, *snd, snd_len, 
+				tmp_enc, &tmp_enc_len))
 	{
             NDRX_LOG(log_always, "GPG msg encryption failed: "
                                         "apierr=%d gpg_meerr=%d: %s", 
@@ -646,11 +659,15 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 	else
 	{
             NDRX_LOG(log_debug, "Msg Encryption OK, "
-                             "len: %d", enc_len);
+                             "len: %d", tmp_enc_len);
 	}
-	
-	snd = tmp_enc;
-	snd_len = enc_len;
+        
+        /* TODO: free up the snd...?! */
+        NDRX_SYSBUF_FREE(*snd);
+        *snd = NULL;
+	snd = &tmp_enc;
+	snd_len = tmp_enc_len;
+        
     }
 #endif
     
@@ -680,7 +697,7 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
             {
                 /* slower, prev memcopy */
                 if (EXSUCCEED!=exnet_send_sync(G_bridge_cfg.con, NULL, 0,
-                        (char *)snd, snd_len, 0, 0))
+                        (char *)*snd, snd_len, 0, 0))
                 {
                     NDRX_LOG(log_error, "Failed to submit message to network");
                     ret=EXFAIL;
@@ -709,6 +726,21 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     }
     
 out:
+    if (NULL!=tmp)
+    {
+        NDRX_SYSBUF_FREE(tmp);
+    }
+
+    if (NULL!=tmp2)
+    {
+        NDRX_SYSBUF_FREE(tmp2);
+    }
+
+    if (NULL!=tmp_enc)
+    {
+        NDRX_SYSBUF_FREE(tmp_enc);
+    }
+
     return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

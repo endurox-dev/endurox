@@ -114,7 +114,7 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
         
         FIX_SVC_NM(shm_psvc_info->service, svc, (sizeof(svc)-1));
                 
-        fprintf(stdout, "%-6d %-12.12s %-4.4s %-5d %-5d %-5d %-4d %-*.*s\n", 
+        fprintf(stdout, "%6d %-12.12s %4.4s %5d %5d %5d %4d %-*.*s\n", 
             shm_psvc_info->slot, 
             svc,
             ndrx_decode_num(shm_psvc_info->srvs, 0, 0, 1),
@@ -134,7 +134,7 @@ expublic int shm_psvc_rsp_process(command_reply_t *reply, size_t reply_len)
             fprintf(stderr, "\t------ ---------- -------\n");
             for (i=0; i<shm_psvc_info->resnr; i++)
             {
-                fprintf(stdout, "\t%-6d %-10d %-7hd\n", 
+                fprintf(stdout, "\t%6d %10d %7hd\n", 
                         i, shm_psvc_info->resids[i].resid,
                         shm_psvc_info->resids[i].cnt);
             }
