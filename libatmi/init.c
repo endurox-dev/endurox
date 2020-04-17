@@ -133,7 +133,6 @@ out:
 exprivate int ndrx_init_once(void)
 {
     int ret = EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX]; /* test the stack. */
     /* reset callstates to default */
     /* memset(&G_call_state, 0, sizeof(G_call_state)); */
     
