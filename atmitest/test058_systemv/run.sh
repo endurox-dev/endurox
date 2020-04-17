@@ -96,12 +96,11 @@ RET=0
 
 xadmin psc
 xadmin ppm
-xadmin psvc
+xadmin psvc -r
 #
 # Check psvc that there is two queues according to regexp map
 #
-RES=`xadmin psvc | egrep 'RES\(2\): [0-9]+\(2\) [0-9]+\(2\)'`
-
+RES=`xadmin psvc -r | egrep '^\s1\s[0-9]+\s2'`
 if [ "X$RES" == "X" ]; then
     echo "Invalid service count (1)!"
     go_out -10

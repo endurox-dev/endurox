@@ -1142,8 +1142,6 @@ expublic int sv_wait_for_request(void)
     char *msg_buf = NULL;
     size_t msgsize_max = NDRX_MSGSIZEMAX;
     
-    /* char msg_buf[NDRX_MSGSIZEMAX]; ALLOC IF NEEDED */
-    
     if (G_server_conf.periodcb_sec)
     {
         tout = G_server_conf.periodcb_sec*1000;

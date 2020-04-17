@@ -36,10 +36,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <stdarg.h>
 #include <errno.h>
 
 #include <ndrstandard.h>
@@ -57,22 +53,8 @@
 /*---------------------------Statics------------------------------------*/
 exprivate int M_maxmsgsize_loaded = EXFALSE; /* Is config loaded? */
 exprivate long M_maxmsgsize = EXFAIL; /* Max message size */
-exprivate long M_stack_estim = EXFAIL; /* Estimated stack size */
 MUTEX_LOCKDECL(M_maxmsgsize_loaded_lock);
 /*---------------------------Prototypes---------------------------------*/
-
-/**
- * Test the stack and have a function name which will tell
- * what to user do.
- */
-exprivate int ndrx_please_increase_stack(void)
-{
-    volatile char buf[M_stack_estim];
-    
-    buf[M_stack_estim-1] = EXSUCCEED;
-
-    return EXSUCCEED;
-}
 
 /**
  * Return configured max message size.
@@ -84,9 +66,8 @@ exprivate int ndrx_please_increase_stack(void)
 expublic long ndrx_msgsizemax (void)
 {
     char *esize;
-    struct rlimit rl;
     
-    if (!M_maxmsgsize_loaded)
+    if (NDRX_UNLIKELY(!M_maxmsgsize_loaded))
     {
         MUTEX_LOCK_V(M_maxmsgsize_loaded_lock);
         
@@ -111,40 +92,12 @@ expublic long ndrx_msgsizemax (void)
             else
             {
                 M_maxmsgsize = NDRX_ATMI_MSG_MAX_SIZE;
+                
             }
 
-            /* Estimate stack */
-            M_stack_estim = M_maxmsgsize * NDRX_STACK_MSG_FACTOR;
-
-            /* Check rlimit */
-            if (EXSUCCEED==getrlimit(RLIMIT_STACK, &rl))
-            {
-                if (RLIM_INFINITY!=rl.rlim_cur && rl.rlim_cur < M_stack_estim)
-                {   
-                    userlog("LIMITS ERROR ! Please set stack (ulimit -s) size "
-                                "to: %ld bytes or %ld kb (calculated by: "
-                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))", 
-                                (long)M_stack_estim, (long)(M_stack_estim/1024)+1, 
-                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
-
-                    fprintf(stderr, "LIMITS ERROR ! Please set stack (ulimit -s) size "
-                                "to: %ld bytes or %ld kb (calculated by: "
-                                "NDRX_MSGSIZEMAX(%ld)*NDRX_STACK_MSG_FACTOR(%d))\n", 
-                                (long)M_stack_estim, (long)(M_stack_estim/1024)+1, 
-                                (long)M_maxmsgsize, NDRX_STACK_MSG_FACTOR);
-
-                    fprintf(stderr, "Process is terminating with error...\n");
-
-                    exit(EXFAIL);
-                }
-            }
-            else
-            {
-                userlog("getrlimit(RLIMIT_STACK, ...) failed: %s", strerror(errno));
-            }
-
-            /*test the stack */
-            ndrx_please_increase_stack();
+            /* round the max msg size to modulus of 16, to be aligned. */
+            
+            M_maxmsgsize = M_maxmsgsize + 16 - M_maxmsgsize % 16;
 
             M_maxmsgsize_loaded = EXTRUE;
         }

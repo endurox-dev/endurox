@@ -127,7 +127,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;
-    call->data_len = 0;
+    call->data_len = MAX_CALL_DATA_SIZE;
     call->sysflags = 0; /* reset the flags. */
     
     /* TODO: put our call node id? As source which generated reply? */
@@ -420,6 +420,7 @@ expublic void _tpforward (char *svc, char *data,
     
     memset(call, 0, sizeof(*call)); /* have some safety net */
 
+    call->data_len = MAX_CALL_DATA_SIZE;
     /* Cannot do the forward if we are in conversation! */
     if (CONV_IN_CONVERSATION==p_accept_conn->status ||
             have_open_connection())
