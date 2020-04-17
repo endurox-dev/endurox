@@ -1414,12 +1414,6 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
         conv->msgseqout++;
     }
 
-    if (conv->handshaked)
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-
 out:
     /* TODO: Kill conversation if FAILED!!!! */
     NDRX_LOG(log_debug, "%s: return %d",  __func__, ret);

@@ -71,8 +71,9 @@
 expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX]; /* physical place where to put the reply */
-    tp_command_call_t *call=(tp_command_call_t *)buf;
+    char *buf=NULL; /**< physical place where to put the reply */
+    size_t buf_len; /**< buf_len */
+    tp_command_call_t *call;
     char fn[] = "_tpreturn";
     buffer_obj_t *buffer_info;
     typed_buffer_descr_t *descr;
@@ -85,13 +86,16 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_command_call_t * last_call;
     int was_auto_buf = EXFALSE;
 
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    
+    call =(tp_command_call_t *)buf;
     last_call = ndrx_get_G_last_call();
     
     if (last_call->flags & TPNOREPLY)
     {
         NDRX_LOG(log_debug, "No reply expected - return to main()!, "
                 "flags; %ld", last_call->flags);
-        goto return_to_main;
+        goto out;
     }
 
     /* client with last call is acceptable...! 
@@ -271,7 +275,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
-        goto return_to_main;
+        goto out;
     }
     
     /* Needs some hint for multi-threaded bridge
@@ -304,7 +308,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     {
         NDRX_LOG(log_error, "ATTENTION!! Reply to queue [%s] failed!",
                                             reply_to);
-        goto return_to_main;
+        goto out;
     }
 
     /* Wait for ack if we run in conversation */
@@ -314,7 +318,13 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         normal_connection_shutdown(p_accept_conn, EXFALSE, "tpreturn on open conversation");
     }
 
-return_to_main:
+out:
+    
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+        buf = NULL;
+    }
 
     /* Hmm we can free up the data? 
      * - well mvitolin 16/01/2017 - only auto buffers & this one.
@@ -383,8 +393,9 @@ expublic void _tpforward (char *svc, char *data,
                 long len, long flags)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    tp_command_call_t *call=(tp_command_call_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    tp_command_call_t *call;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
     char fn[] = "_tpforward";
@@ -398,7 +409,9 @@ expublic void _tpforward (char *svc, char *data,
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     
     NDRX_LOG(log_debug, "%s enter", fn);
-
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_command_call_t *)buf;
     /* client with last call is acceptable...! 
      * It can be servers companion thread.
      * TODO: Add the check.
@@ -454,7 +467,9 @@ expublic void _tpforward (char *svc, char *data,
     
     descr = &G_buf_descr[buffer_info->type_id];
 
-    /* prepare buffer for call */
+    /* prepare buffer for call 
+     * TODO: should we check call/buf (buf_len) buffer output size?
+     */
     if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
     {
         /* not good - error should be already set */
@@ -556,6 +571,11 @@ expublic void _tpforward (char *svc, char *data,
     }
 
 out:
+
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
 
     if (NULL!=data)
     {

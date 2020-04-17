@@ -981,7 +981,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                 M_mon.fdtabmo[moc].fd = M_mon.fdtab[i].fd;
                 M_mon.fdtabmo[moc].events = M_mon.fdtab[i].events;
                 
-                NDRX_LOG(log_debug, "moc=%d %p %p fd=%d", moc, 
+                NDRX_LOG(6, "moc=%d %p %p fd=%d", moc, 
                         M_mon.fdtabmo, M_mon.fdtab, M_mon.fdtabmo[moc].fd);
                 moc++;
             }

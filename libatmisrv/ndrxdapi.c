@@ -82,14 +82,19 @@ expublic void ndrx_set_report_to_ndrxd_cb(int (*report_to_ndrxd_cb) (void))
 expublic int report_to_ndrxd(void)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    srv_status_t *status = (srv_status_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    srv_status_t *status;
     int i, offset=0;
     svc_entry_fn_t *entry;
     size_t  send_size;
     static int first = EXTRUE;
     static int ppid = EXFAIL;
     char *p;
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    
+    status = (srv_status_t *)buf;
     /* shall we do full memset? */
     memset(buf, 0, sizeof(srv_status_t));
     
@@ -176,7 +181,13 @@ expublic int report_to_ndrxd(void)
         NDRX_LOG(log_info, "Callback on report_to_ndrxd is set.");
         ret=G_report_to_ndrxd_cb();
     }
+out:
     
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     return ret;
 }
 
@@ -188,11 +199,16 @@ expublic int report_to_ndrxd(void)
 expublic int unadvertse_to_ndrxd(char *svcname)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    command_dynadvertise_t *unadv = (command_dynadvertise_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    command_dynadvertise_t *unadv;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    
     memset(buf, 0, sizeof(command_dynadvertise_t));
+    
+    unadv = (command_dynadvertise_t *)buf;
     
     /* format out the status report */
     unadv->srvid= G_server_conf.srv_id;
@@ -226,6 +242,12 @@ expublic int unadvertse_to_ndrxd(char *svcname)
     }
 
 out:
+    
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     return ret;
 }
 
@@ -237,11 +259,15 @@ out:
 expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    command_dynadvertise_t *adv = (command_dynadvertise_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    command_dynadvertise_t *adv;
     size_t  send_size=sizeof(command_dynadvertise_t);
 
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    
     memset(buf, 0, sizeof(command_dynadvertise_t));
+    adv = (command_dynadvertise_t *)buf;
     
     /* format out the status report */
     adv->srvid= G_server_conf.srv_id;
@@ -278,6 +304,12 @@ expublic int advertse_to_ndrxd(svc_entry_fn_t *entry)
     }
 
 out:
+    
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     return ret;
 }
 
@@ -291,8 +323,6 @@ out:
 exprivate int get_bridges_rply_request(char **buf, long len)
 {
     int ret=EXSUCCEED;
-    svc_entry_fn_t *entry = G_server_conf.service_array[ATMI_SRV_ADMIN_Q];
-    command_call_t *p_adm_cmd = (command_call_t *)buf;
     
     /* we should re-queue back the stuff... */
     sleep(0); /* requeue stuff... */
