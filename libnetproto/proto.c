@@ -1770,14 +1770,21 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     char debug[16*1024];
     tp_command_call_t *more_debug;
     /* temp buf for UBF processing */
-    char tmpf[NDRX_MSGSIZEMAX];
-    proto_ufb_fld_t *f=(proto_ufb_fld_t *)tmpf;
+    char *tmpf = NULL;
+    size_t tmpf_len;
+    proto_ufb_fld_t *f;
 
     NDRX_LOG(log_debug, "Enter field: [%s] max_struct: %ld ex_buf: %p", 
                         cur->cname, *max_struct, ex_buf);
     
     NDRX_DUMP(log_debug, "_exproto_proto2ex enter", 
                     proto_buf, proto_len);
+    
+    
+    NDRX_SYSBUF_MALLOC_OUT(tmpf, tmpf_len, ret);
+    
+    f=(proto_ufb_fld_t *)tmpf;
+    
     while (int_pos < proto_len)
     {
         /* Read tag */
@@ -1984,7 +1991,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                      * we can install them in FB! */
                                     (char *)f, 0,
                                     max_struct, level,
-                                    p_ub, f, sizeof(tmpf));
+                                    p_ub, f, tmpf_len);
                         
                         if (EXSUCCEED!=ret)
                         {
@@ -2079,6 +2086,10 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     }
     
 out:
+    if (NULL!=tmpf)
+    {
+        NDRX_SYSBUF_FREE(tmpf);
+    }
     return ret;
 }
 

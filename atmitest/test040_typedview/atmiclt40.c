@@ -61,7 +61,8 @@ int test_view2json(void)
 {
     int ret = EXSUCCEED;
     struct MYVIEW1 v1;
-    char msg[NDRX_MSGSIZEMAX+1];
+    char *msg = NULL;
+    size_t msg_len;
     char *abuf = NULL;
     char view[NDRX_VIEW_NAME_LEN+1];
     char *testbuf = "{\"MYVIEW2\":{\"tshort1\":1,\"tlong1\":2,\"tchar1\":\"A\",\""
@@ -75,8 +76,10 @@ int test_view2json(void)
     struct MYVIEW3 v3;
     
     init_MYVIEW1(&v1);
+    
+    NDRX_SYSBUF_MALLOC_OUT(msg, msg_len, ret);
 
-    if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 
+    if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, msg_len, 
                              BVACCESS_NOTNULL))
     {
         NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
@@ -110,7 +113,7 @@ int test_view2json(void)
     init_MYVIEW1(&v1);
 
     msg[0] = EXEOS;
-    if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, sizeof(msg), 0))
+    if (EXSUCCEED!=tpviewtojson((char *)&v1, "MYVIEW1", msg, msg_len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
                  tpstrerror(tperrno));
@@ -201,7 +204,7 @@ int test_view2json(void)
 
     msg[0] = EXEOS;
 
-    if (EXSUCCEED!=tpviewtojson((char *)v2, "MYVIEW2", msg, sizeof(msg), 0))
+    if (EXSUCCEED!=tpviewtojson((char *)v2, "MYVIEW2", msg, msg_len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
                  tpstrerror(tperrno));
@@ -259,7 +262,7 @@ int test_view2json(void)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=tpviewtojson((char *)&v3, "MYVIEW3", msg, sizeof(msg), 0))
+    if (EXSUCCEED!=tpviewtojson((char *)&v3, "MYVIEW3", msg, msg_len, 0))
     {
         NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
                  tpstrerror(tperrno));
@@ -276,7 +279,7 @@ int test_view2json(void)
     }
     
     
-    if (EXSUCCEED!=tpviewtojson((char *)&v3, "MYVIEW3", msg, sizeof(msg), 
+    if (EXSUCCEED!=tpviewtojson((char *)&v3, "MYVIEW3", msg, msg_len, 
             BVACCESS_NOTNULL))
     {
         NDRX_LOG(log_error, "TESTERROR: tpviewtojson() failed: %s", 
@@ -308,6 +311,11 @@ out:
     if (NULL!=abuf)
     {
         tpfree(abuf);
+    }
+
+    if (NULL!=msg)
+    {
+        NDRX_FPFREE(msg);
     }
     
     return ret;

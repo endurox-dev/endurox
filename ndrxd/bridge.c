@@ -222,11 +222,15 @@ expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *ref
     bridgedef_t *br = NULL;
     pm_node_t *srv = NULL;
     char *fn = "brd_send_update";
-    
-    char buf[NDRX_MSGSIZEMAX];
-    bridge_refresh_t *tmp_refresh= (bridge_refresh_t *)buf;
+    char *buf=NULL;
+    size_t buf_len;
+    bridge_refresh_t *tmp_refresh;
     /* default use all */
     bridge_refresh_t *p_refresh = refresh;
+    
+    NDRX_SYSBUF_MALLOC_OUT(buf, buf_len, ret);
+    
+    tmp_refresh= (bridge_refresh_t *)buf;
     
     if ( NULL!=cur )
     {
@@ -319,6 +323,12 @@ expublic int brd_send_update(int nodeid, bridgedef_t *cur, bridge_refresh_t *ref
     
 out:
 
+            
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     NDRX_LOG(log_debug, "%s return %d", fn, ret);
     return ret;
 }
@@ -332,9 +342,12 @@ expublic int brd_connected(int nodeid)
 {
     int ret=EXSUCCEED;
     bridgedef_t *cur = brd_get_bridge(nodeid);
-    char buf[NDRX_MSGSIZEMAX];
-    bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    bridge_refresh_t *refresh;
     
+    NDRX_SYSBUF_MALLOC_OUT(buf, buf_len, ret);
+    refresh= (bridge_refresh_t *)buf;
     memset(refresh, 0, sizeof(bridge_refresh_t));
     
     if (NULL!=cur)
@@ -366,7 +379,15 @@ expublic int brd_connected(int nodeid)
         NDRX_LOG(log_warn, "Unknown bridge nodeid %d!!!", nodeid);
     }
     
-    return EXSUCCEED;
+    
+out:
+
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
+    return ret;
 }
 
 /**
@@ -735,15 +756,20 @@ expublic void brd_begin_diff(void)
  */
 expublic void brd_end_diff(void)
 {
+    int ret = EXSUCCEED;
     bridgedef_t *r = NULL;
     bridgedef_t *rtmp = NULL;
-    char buf[NDRX_MSGSIZEMAX];
-    bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    bridge_refresh_t *refresh;
     int first = EXTRUE;
     
     /* Nothing to do. */
     if (!ndrx_get_G_atmi_env()->is_clustered)
         return;
+    
+    NDRX_SYSBUF_MALLOC_OUT(buf, buf_len, ret);
+    refresh= (bridge_refresh_t *)buf;
     
     M_build_diff = EXFALSE;
     
@@ -790,6 +816,11 @@ expublic void brd_end_diff(void)
     /* Clear hashlist */
     brd_clear_diff();
     
+out:
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
 }
 
 /**
@@ -797,15 +828,19 @@ expublic void brd_end_diff(void)
  */
 expublic void brd_send_periodrefresh(void)
 {
+    int ret = EXSUCCEED;
     bridgedef_t *cur = NULL;
     bridgedef_t *rtmp = NULL;
-    char buf[NDRX_MSGSIZEMAX];
-    bridge_refresh_t *refresh= (bridge_refresh_t *)buf;
+    char *buf=NULL;
+    size_t buf_len;
+    bridge_refresh_t *refresh;
     
     /* Nothing to do. */
     if (!ndrx_get_G_atmi_env()->is_clustered || 0==G_app_config->brrefresh)
         return;
     
+    NDRX_SYSBUF_MALLOC_OUT(buf, buf_len, ret);
+    refresh= (bridge_refresh_t *)buf;
     /* Reset the buffer otherwise it keeps growing!!! */
     memset(refresh, 0, sizeof(bridge_refresh_t));
     
@@ -831,5 +866,12 @@ expublic void brd_send_periodrefresh(void)
             }
         } /* If connected */
     } /* EXHASH_ITER */
+    
+out:
+                                    
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
 }
 /* vim: set ts=4 sw=4 et smartindent: */

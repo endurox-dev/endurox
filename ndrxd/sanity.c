@@ -414,10 +414,13 @@ exprivate int check_server(char *qname)
     char    process[NDRX_MAX_Q_SIZE+1];
     pid_t pid;
     int     srv_id;
-    char buf[NDRX_MSGSIZEMAX];
+    char *buf = NULL;
+    size_t buf_len;
     srv_status_t *status = (srv_status_t *)buf;
     int ret=EXSUCCEED;
     
+    NDRX_SYSBUF_MALLOC_OUT(buf, buf_len, ret);
+    status = (srv_status_t *)buf;
     memset((char *)status, 0, sizeof(srv_status_t));
     
     parse_q(qname, EXTRUE, process, sizeof(process), &pid, &srv_id, EXFALSE);
@@ -445,6 +448,10 @@ exprivate int check_server(char *qname)
     
     }
 out:
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
     return ret;
 }
 
@@ -737,8 +744,12 @@ exprivate int check_dead_processes(void)
 {
     int ret=EXSUCCEED;
     pm_node_t *p_pm;
-    char buf[NDRX_MSGSIZEMAX];
-    srv_status_t *status = (srv_status_t *)buf;
+    char *buf = NULL;
+    size_t buf_len;
+    srv_status_t *status;
+    
+    NDRX_SYSBUF_MALLOC_OUT(buf, buf_len, ret);
+    status = (srv_status_t *)buf;
     
     DL_FOREACH(G_process_model, p_pm)
     {
@@ -775,6 +786,12 @@ exprivate int check_dead_processes(void)
     }/* DL_FOREACH */
     
 out:
+    
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     return ret;   
 }
 
