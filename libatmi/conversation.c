@@ -1072,7 +1072,7 @@ inject_message:
                  * This is really used only for handshaking internally
                  * so we do not use buffer managment here!
                  */
-                strcpy((char *)data, rply->data); /* return reply queue */
+                strcpy((char *)*data, rply->data); /* return reply queue */
             }
             else
             {
