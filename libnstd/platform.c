@@ -68,6 +68,7 @@ MUTEX_LOCKDECL(M_stack_size_lock);
 expublic long ndrx_platf_stack_get_size(void)
 {
     struct rlimit limit;
+    char *p;
     
     if (EXFAIL==M_stack_size)
     {
@@ -76,7 +77,11 @@ expublic long ndrx_platf_stack_get_size(void)
         
         if (EXFAIL==M_stack_size)
         {
-            if (EXSUCCEED!=getrlimit (RLIMIT_STACK, &limit))
+            if (NULL!=(p=getenv(CONF_NDRX_THREADSTACKSIZE)))
+            {
+                M_stack_size=atoi(p)*1024;
+            }
+            else if (EXSUCCEED!=getrlimit (RLIMIT_STACK, &limit))
             {
                 int err = errno;
                 NDRX_LOG(log_error, "Failed to get stack size: %s", strerror(err));
@@ -86,15 +91,15 @@ expublic long ndrx_platf_stack_get_size(void)
             {
                 M_stack_size=limit.rlim_cur;
                 
-                if (M_stack_size<0)
-                {
-                    M_stack_size = NDRX_STACK_MAX;
-                    NDRX_LOG(log_warn, "Unlimited stack, setting to %ld bytes",
-                            M_stack_size);
-                }
-                
                 NDRX_LOG(log_info, "Current stack size: %ld, max: %ld", 
                         M_stack_size,  (long)limit.rlim_max);
+            }
+            
+            if (M_stack_size<0)
+            {
+                M_stack_size = NDRX_STACK_MAX;
+                NDRX_LOG(log_warn, "Unlimited stack, setting to %ld bytes",
+                        M_stack_size);
             }
         }
         MUTEX_UNLOCK_V(M_stack_size_lock);

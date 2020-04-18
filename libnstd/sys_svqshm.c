@@ -51,7 +51,6 @@
 #include <exhash.h>
 #include <ndebug.h>
 #include <sys_svq.h>
-#include <atmi.h>   /**< little bit mess with dependencies as we are at nstd... */
 #include "nstd_shm.h"
 #include <sys_svq.h>
 #include <ndrx_config.h>

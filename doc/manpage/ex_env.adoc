@@ -261,6 +261,38 @@ Mandatory Env. Variables
     is in other context, for example starting or stopping. The default is *60*.
     Between each attempt 1 second sleep is done.
 
+*NDRX_FPAOPTS*='POOL_MALLOC_OPTS'::
+    This flag allows configures Enduro/X Fast Pool Allocator. Pool Allocator is
+    mechanism in Enduro/X core libraries to avoid calls to malloc() and free()
+    system calls. Instead for memory block of sizes *256*, *512*, *1024*, *2048*, *4096*
+    and *S* ( *NDRX_MSGSIZEMAX* - system buffer) are allocated and cached 
+    (stored in linked list) when parked free. Thus
+    at certain points Enduro/X requests for memory different sizes from FPA, the
+    FPA library finds the first suitable size (may be bigger than request) and
+    block is removed from list. When program does free the block, FPA returns it
+    to linked list instead of freeing back to the system. Thus from OS perspective
+    memory is still used. For each of the block sizes maximum number 
+    stored blocks are configured. The configuration is written
+    in following form '<block_size>:<stored_count>,...,<block_size_N>:<stored_count_N>'.
+    There is also defined special block size *D*. This means default. By setting
+    this values, counts are changed for all sizes.
+    The stored count can be set in value of *1*..*max_int*. 
+    If set to special value *M*, then standard, then malloc is used directly. 
+    It is error to have other non valid number as count. If block
+    size is not found then system, the userlog message is added, but error is
+    not generated. The block sizes supports suffix *K* which multiplies
+    the value by *1024*. Default value is  *256:25,512:15,1K:10,2K:10,4K:10,S:10*.
+    User might adjust these buffer sizes for multi-threaded apps, especially
+    the system buffer (*S*). By increasing the numbers, there is higher possibility
+    that process will permanently use more memory.
+
+*NDRX_THREADSTACKSIZE*='STACKS_SIZE_IN_KB'::
+    This is target stack size for new threads produced by Enduro/X. If value
+    is not specified, then threads produced by Enduro/X are configured by
+    stack size which is set for the program main thread (i.e. current resource
+    limit). If the limit is set to unlimited, then Enduro/X sets thread stack
+    size to *8192* (which is 8 megabytes).
+
 EXAMPLE
 -------
 Sample configuration:

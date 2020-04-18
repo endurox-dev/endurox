@@ -347,7 +347,7 @@ Ensure(test_nstd_fpa_config_inval)
     assert_equal(ndrx_fpmalloc(777, 0), NULL);
     assert_equal(errno, EINVAL);
     
-    setenv(CONF_NDRX_FPAOPTS, "4k:99", EXTRUE);
+    setenv(CONF_NDRX_FPAOPTS, "4K:99", EXTRUE);
     assert_not_equal((ptr=ndrx_fpmalloc(777, 0)), NULL);
     ndrx_fpstats(4, &stats);
     assert_equal(stats.num_blocks, 99);

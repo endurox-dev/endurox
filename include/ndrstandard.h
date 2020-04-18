@@ -111,10 +111,10 @@ extern "C" {
     
 #define NDRX_ATMI_MSG_MAX_SIZE   65536 /* internal */
     
-#define NDRX_STACK_MSG_FACTOR        30 /* max number of messages in stack */
+#define NDRX_STACK_MSG_FACTOR        30 /** max number of messages in stack, not used */
 
-/** See HARD_MSGSIZEMAX for linux */
-#define NDRX_STACK_MAX (NDRX_STACK_MSG_FACTOR*16777216)
+/** Default stack size if main is unlimited*/
+#define NDRX_STACK_MAX (8192*1024)
 /* Feature #127 
  * Allow dynamic buffer sizing with Variable Length Arrays (VLS) in C99
  */
@@ -291,6 +291,88 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_DIR_PERM 0775  /**< user and group have write perm, use umask to limit */
 #define NDRX_COM_SVQ_PRIV   999 /**< This is private command id use by system v */
 
+/**
+ * globals
+ */
+#define ATMI_MSG_MAX_SIZE   NDRX_MSGSIZEMAX
+#define NDRX_MAX_Q_SIZE     128
+#define NDRX_MAX_ID_SIZE    96      /**< pfx + binary name + server id + pid + nodeid */
+#define NDRX_MAX_KEY_SIZE   128     /**< Key size for random key                      */
+#define NDRX_QDIAG_MSG_SIZE 256     /**< Q diagnostic message size                    */
+/* List of configuration environment variables */
+#define CONF_NDRX_TOUT           "NDRX_TOUT"
+#define CONF_NDRX_ULOG           "NDRX_ULOG"
+#define CONF_NDRX_QPREFIX        "NDRX_QPREFIX"
+#define CONF_NDRX_SVCMAX         "NDRX_SVCMAX"
+#define CONF_NDRX_SRVMAX         "NDRX_SRVMAX"
+#define CONF_NDRX_CLTMAX         "NDRX_CLTMAX"     /**< Max number of client, cpm */
+#define CONF_NDRX_CONFIG         "NDRX_CONFIG"
+#define CONF_NDRX_QPATH          "NDRX_QPATH"
+#define CONF_NDRX_SHMPATH        "NDRX_SHMPATH"
+#define CONF_NDRX_CMDWAIT        "NDRX_CMDWAIT"    /**< Command wait time */
+#define CONF_NDRX_DPID           "NDRX_DPID"       /**< PID file for backend-process */
+#define CONF_NDRX_DMNLOG         "NDRX_DMNLOG"     /**< Log file for backend process */
+#define CONF_NDRX_LOG            "NDRX_LOG"        /**< Log file for command line utilty */
+#define CONF_NDRX_RNDK           "NDRX_RNDK"       /**< Random key */
+#define CONF_NDRX_MSGMAX         "NDRX_MSGMAX"     /**< Posix queues, max msgs */
+#define CONF_NDRX_MSGSIZEMAX     "NDRX_MSGSIZEMAX" /**< Maximum size of message for posixq */
+#define CONF_NDRX_MSGQUEUESMAX   "NDRX_MSGQUEUESMAX"/**< Max number of Queues (for sysv)  */
+#define CONF_NDRX_SVQREADERSMAX  "NDRX_SVQREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
+#define CONF_NDRX_SANITY         "NDRX_SANITY"     /**< Time in seconds after which do sanity check for dead processes */
+#define CONF_NDRX_QPATH          "NDRX_QPATH"      /**< Path to place on fs where queues lives */
+#define CONF_NDRX_IPCKEY         "NDRX_IPCKEY"     /**< IPC Key for shared memory */
+#define CONF_NDRX_DQMAX          "NDRX_DQMAX"      /**< Internal NDRXD Q len (max msgs) */
+#define CONF_NDRX_NODEID         "NDRX_NODEID"     /**< Cluster Node Id */
+#define CONF_NDRX_LDBAL          "NDRX_LDBAL"      /**< Load balance, 0 = run locally, 100 = run on cluster */
+#define CONF_NDRX_CLUSTERISED    "NDRX_CLUSTERISED"/**< Do we run in clusterized environment? */
+/* thise we can override with env_over: */
+#define CONF_NDRX_XA_RES_ID      "NDRX_XA_RES_ID"   /**< XA Resource ID           */
+#define CONF_NDRX_XA_OPEN_STR    "NDRX_XA_OPEN_STR" /**< XA Open string           */
+#define CONF_NDRX_XA_CLOSE_STR   "NDRX_XA_CLOSE_STR"/**< XA Close string          */
+#define CONF_NDRX_XA_DRIVERLIB   "NDRX_XA_DRIVERLIB"/**< Enduro RM Library        */
+#define CONF_NDRX_XA_RMLIB       "NDRX_XA_RMLIB"    /**< RM library               */
+#define CONF_NDRX_XA_FLAGS       "NDRX_XA_FLAGS"    /**< Enduro/X Specific flags  */
+#define CONF_NDRX_XA_LAZY_INIT   "NDRX_XA_LAZY_INIT"/**< 0 - load libs on 
+                                                      init, 1 - load at use     */
+#define CONF_NDRX_NRSEMS         "NDRX_NRSEMS"      /**< Number of semaphores used for
+                                                       service shared memory (for poll() mode)*/
+#define CONF_NDRX_NRSEMS_DFLT    30                 /**< default number of semphoares  */
+#define CONF_NDRX_MAXSVCSRVS     "NDRX_MAXSVCSRVS"  /**< Max servers per service (only for poll() mode) */
+#define CONF_NDRX_MAXSVCSRVS_DFLT 30                /**< default for NDRX_MAXSVCSRVS param */
+#define CONF_NDRX_XADMIN_CONFIG  "NDRX_XADMIN_CONFIG" /**< Xadmin config file          */
+#define CONF_NDRX_DEBUG_CONF     "NDRX_DEBUG_CONF"  /**< debug config file              */
+#define CONF_NDRX_PLUGINS        "NDRX_PLUGINS"     /**< list of plugins, ';' seperated */
+#define CONF_NDRX_SYSFLAGS       "NDRX_SYSFLAGS"    /**< Additional flags to process    */
+#define CONF_NDRX_SILENT         "NDRX_SILENT"      /**< Make xadmin silent             */
+#define CONF_NDRX_TESTMODE       "NDRX_TESTMODE"    /**< Is Enduro/X test mode enabled  */
+/** call/receive timeout for xadmin - override of NDRX_TOUT */
+#define CONF_NDRX_XADMINTOUT     "NDRX_XADMINTOUT" 
+/** Service process name */
+#define CONF_NDRX_SVPROCNAME     "NDRX_SVPROCNAME" 
+/** Service command line */
+#define CONF_NDRX_SVCLOPT        "NDRX_SVCLOPT" 
+/** Parent process PID of server process */
+#define CONF_NDRX_SVPPID         "NDRX_SVPPID" 
+/** Server ID */
+#define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
+/** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
+ * state required by command
+ */
+#define CONF_NDRX_NORMWAITMAX    "NDRX_NORMWAITMAX"
+/** Default for  NDRX_NORMWAITMAX */    
+#define CONF_NDRX_NORMWAITMAX_DLFT    60
+    
+/** resource manager override file*/
+#define CONF_NDRX_RMFILE        "NDRX_RMFILE"
+    
+/** Enduro/X MW home               */
+#define CONF_NDRX_HOME          "NDRX_HOME"
+    
+/** Feedback pool allocator options */
+#define CONF_NDRX_FPAOPTS       "NDRX_FPAOPTS"
+    
+/** Stack size for new threads produced by Enduro/X in kilobytes */
+#define CONF_NDRX_THREADSTACKSIZE   "NDRX_THREADSTACKSIZE"
 
 
 #ifdef	__cplusplus

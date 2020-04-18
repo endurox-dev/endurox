@@ -5,8 +5,8 @@ v1.0, 2012-12:
 	Initial draft
 :doctype: book
 
-Enduro/X Development standard
-----------------------------
+== Enduro/X Development standard
+
 Enduro/X build system is CMake. Version used should be 2.8 and above. It uses
 Flex and Bison for building UBF (FML) Expressions.
 
@@ -199,9 +199,8 @@ exprivate void some_local_func(void)
 
 --------------------------------------------------------------------------------
 
-
-
 ==== Code documentation
+
 *ALL* written code must be properly commented, so that other source maintainers
 can clearly understand what's going on at particular case. Comments are welcome.
 
@@ -295,6 +294,33 @@ expublic char *ndrx_some_func(int arg1, char *arg2)
 }
 
 --------------------------------------------------------------------------------
+
+=== Writing Enduro/X manuals
+
+Following asciidoc rules applies to certain document parts:
+
+*Bold applies to (in asciidoc asterisks)*:
+
+- References to other man pages (e.g. *ndrxd(8)*).
+
+- Binary names (e.g. *ndrxd(8)*).
+
+- Environment variable names  (e.g. *NDRX_NORMWAITMAX*).
+
+- Configuration section names (e.g. *[@xadmin/<$NDRX_CCTAG>]*).
+
+- Resource file names (e.g. */etc/xadmin.config*).
+
+- Constants, UBF field names (e.g. *EX_NETOURIP*).
+
+'Underline applies to (in asciidoc single quotes)':
+
+- Configuration tables (e.g. '<NDRX_QPREFIX>,shm,p2s').
+
+- Configuration parameters (e.g. '-j', '-k').
+
+- Variable names.
+
 
 === Reserved identifier prefixes
 
@@ -535,6 +561,7 @@ See the 'atmitest/test029_inicfg/atmiclt29.c' for sample code.
 
 
 === Common configuration internals
+
 The configuration driving is built in multiple layers:
 
 - Layer 1: Physical file reading by "ini.h" library which gives the 
@@ -988,7 +1015,6 @@ with rule (and mostly it does, because it will break the rules of
 library C/C++ processing).
 
 The typical code for Object API would be following:
-
 
 --------------------------------------------------------------------------------
 #include <string.h>

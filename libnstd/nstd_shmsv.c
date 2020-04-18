@@ -55,7 +55,6 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <nstd_shm.h>
-#include <xatmi.h>
 
 #include "sys_unix.h"
 

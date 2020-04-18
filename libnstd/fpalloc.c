@@ -42,7 +42,6 @@
 #include <ndrstandard.h>
 #include <fpalloc.h>
 #include <thlock.h>
-#include <atmi.h>
 #include <errno.h>
 #include <nstdutil.h>
 #include <userlog.h>
@@ -221,7 +220,7 @@ exprivate int ndrx_fpinit(void)
                             
                             if (len > 0)
                             {
-                                if (bopt[len-1]=='K' || bopt[len-1]=='k')
+                                if (bopt[len-1]=='K')
                                 {
                                     multiplier=1024;
                                     bopt[len-1]=EXEOS;
@@ -265,6 +264,14 @@ exprivate int ndrx_fpinit(void)
                             }
                             
                             bnum = atoi(bopt);
+                            
+                            if (bnum < 1)
+                            {
+                                userlog("%s: Invalid 'bnum' token (<1) [%s] in [%s]", 
+                                        CONF_NDRX_FPAOPTS, bopt, M_opts);
+                                EXFAIL_OUT(ret);
+                            }
+                            
                             state=NDRX_FP_USENUMBL;
                             NDRX_FPDEBUG("bnum=%d", bnum);
                         }
