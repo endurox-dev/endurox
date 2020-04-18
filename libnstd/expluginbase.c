@@ -46,9 +46,6 @@
 #include "userlog.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-/* same as xatmi.h" CONF_NDRX_PLUGINS */
-#define NDRX_PLUGINS_ENV "NDRX_PLUGINS"
-
 /** Offset definition for the function */
 #define OFSZ(e)   EXOFFSET(ndrx_pluginbase_t,p_ndrx_##e), EXOFFSET(ndrx_pluginbase_t,ndrx_##e##_provider)
 /*---------------------------Enums--------------------------------------*/
@@ -209,7 +206,7 @@ out:
 expublic int ndrx_plugins_load(void)
 {
     int ret = EXSUCCEED;
-    char *plugins_env = getenv(NDRX_PLUGINS_ENV);
+    char *plugins_env = getenv(CONF_NDRX_PLUGINS);
     char *plugins = NULL;
     char *p;
     char *fname;
@@ -218,7 +215,7 @@ expublic int ndrx_plugins_load(void)
     if (NULL==plugins_env)
     {
         NDRX_LOG_EARLY(log_info, "No plugins defined by %s env variable", 
-                NDRX_PLUGINS_ENV);
+                CONF_NDRX_PLUGINS);
         /* nothing to do... */
         goto out;
     }

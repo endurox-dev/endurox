@@ -30,7 +30,6 @@
 #include <signal.h>
 #include <thlock.h>
 #include <limits.h>
-#include <atmi.h>
 #include <exhash.h>
 #include <nstopwatch.h>
 #include <nstd_tls.h>

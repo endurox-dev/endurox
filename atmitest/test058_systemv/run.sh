@@ -50,7 +50,7 @@ fi;
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
-
+export NDRX_SILENT=Y
 export NDRX_TOUT=20
 
 #
@@ -100,21 +100,49 @@ xadmin psvc -r
 #
 # Check psvc that there is two queues according to regexp map
 #
-RES=`xadmin psvc -r | egrep '^\s1\s[0-9]+\s2'`
+RES=`xadmin psvc -r | egrep '^[^0-9]+0[^0-9]+[0-9]+[^0-9]+2$'`
 if [ "X$RES" == "X" ]; then
-    echo "Invalid service count (1)!"
+    echo "Invalid service count (0.2)!"
+    go_out -10
+fi
+
+RES=`xadmin psvc -r | egrep '^[^0-9]+1[^0-9]+[0-9]+[^0-9]+2$'`
+if [ "X$RES" == "X" ]; then
+    echo "Invalid service count (1.2)!"
+    go_out -10
+fi
+
+# expect count 2
+RES=`xadmin psvc -r | egrep '^[^0-9]+[0-9]+[^0-9]+[0-9]+[^0-9]+[0-9]+$' | wc | awk '{print $1}'`
+if [ "X$RES" != "X2" ]; then
+    echo "Invalid identifier count, expected 2 got $RES!"
     go_out -10
 fi
 
 #
 # Stop one service the map should be changed
 #
+echo "Stop one"
 xadmin stop -i 10
-
-RES=`xadmin psvc | egrep 'RES\(2\): [0-9]+\(1\) [0-9]+\(2\)'`
+xadmin psvc -r
+RES=`xadmin psvc -r | egrep '^[^0-9]+0[^0-9]+[0-9]+[^0-9]+1$'`
 
 if [ "X$RES" == "X" ]; then
-    echo "Invalid service count (2)!"
+    echo "Invalid service count (0.1)!"
+    go_out -11
+fi
+
+RES=`xadmin psvc -r | egrep '^[^0-9]+1[^0-9]+[0-9]+[^0-9]+2$'`
+
+if [ "X$RES" == "X" ]; then
+    echo "Invalid service count (1.2)!"
+    go_out -11
+fi
+
+# expect count 2
+RES=`xadmin psvc -r | egrep '^[^0-9]+[0-9]+[^0-9]+[0-9]+[^0-9]+[0-9]+$' | wc | awk '{print $1}'`
+if [ "X$RES" != "X2" ]; then
+    echo "Invalid identifier count, expected 2 got $RES!"
     go_out -11
 fi
 
@@ -123,26 +151,49 @@ fi
 # Stop another service from rqaddr map should be changed once again
 #
 
-xadmin stop -i 11
+echo "Stop another"
 
-RES=`xadmin psvc | egrep 'RES\(1\): [0-9]+\(2\) '`
+xadmin stop -i 11
+xadmin psvc -r
+
+RES=`xadmin psvc -r | egrep '^[^0-9]+0[^0-9]+[0-9]+[^0-9]+2$'`
 
 if [ "X$RES" == "X" ]; then
-    echo "Invalid service count (3)!"
+    echo "Invalid service count (0.2)!"
     go_out -12
 fi
 
+# expect count 1
+RES=`xadmin psvc -r | egrep '^[^0-9]+[0-9]+[^0-9]+[0-9]+[^0-9]+[0-9]+$' | wc | awk '{print $1}'`
+if [ "X$RES" != "X1" ]; then
+    echo "Invalid identifier count, expected 1 got $RES!"
+    go_out -12
+fi
 
 #
 # start servers back, services should be back as in first test
 #
 
 xadmin start -y
+xadmin psvc -r 
 
-RES=`xadmin psvc | egrep 'RES\(2\): [0-9]+\(2\) [0-9]+\(2\)'`
 
+RES=`xadmin psvc -r | egrep '^[^0-9]+0[^0-9]+[0-9]+[^0-9]+2$'`
 if [ "X$RES" == "X" ]; then
-    echo "Invalid service count (4)!"
+    echo "Invalid service count (0.2)!"
+    go_out -13
+fi
+
+RES=`xadmin psvc -r | egrep '^[^0-9]+1[^0-9]+[0-9]+[^0-9]+2$'`
+if [ "X$RES" == "X" ]; then
+    echo "Invalid service count (1.2)!"
+    go_out -13
+fi
+
+# expect count 2
+RES=`xadmin psvc -r | egrep '^[^0-9]+[0-9]+[^0-9]+[0-9]+[^0-9]+[0-9]+$' | wc | awk '{print $1}'`
+if [ "X$RES" != "X2" ]; then
+    echo "Invalid identifier count, expected 2 got $RES!"
     go_out -13
 fi
 

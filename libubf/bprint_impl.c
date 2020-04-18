@@ -341,7 +341,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         if (NULL!=p_readf)
         {
             /* read the data from callback */
-            ret = (int)p_readf(readbuf, sizeof(readbuf), dataptr1);
+            ret = (int)p_readf(readbuf, readbuf_len, dataptr1);
             
             if (0==ret)
             {
@@ -358,7 +358,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         }
         else 
         {
-            if (NULL==fgets(readbuf, sizeof(readbuf), inf))
+            if (NULL==fgets(readbuf, readbuf_len, inf))
             {
                 /* terminate the loop */
                 /*
@@ -459,7 +459,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         NDRX_STRNCPY_EOS(fldnm, p, cpylen, sizeof(fldnm));
         
         /* Copy off value */
-        NDRX_STRCPY_SAFE(value, tok+1);
+        NDRX_STRCPY_SAFE_DST(value, tok+1, value_len);
         UBF_LOG(log_debug, "Got [%s]:[%s]", fldnm, value);
 
         /*

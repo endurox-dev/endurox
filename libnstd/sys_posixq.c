@@ -48,7 +48,6 @@
 #include <string.h>
 
 #include <ndrx_config.h>
-#include <atmi.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <nstdutil.h>
