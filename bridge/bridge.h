@@ -136,6 +136,7 @@ extern void br_clock_adj(tp_command_call_t *call, int is_out);
 extern int br_tpcall_pushstack(tp_command_call_t *call);
 extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
 extern void br_run_q(void);
+extern int br_init_gpg(void);
 
 #ifdef	__cplusplus
 }

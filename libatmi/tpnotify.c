@@ -88,8 +88,9 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         int ex_flags)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    tp_notif_call_t *call=(tp_notif_call_t *)buf;
+    char *buf=NULL;
+    size_t buf_len;
+    tp_notif_call_t *call;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
     long data_len = MAX_CALL_DATA_SIZE;
@@ -102,6 +103,9 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     
     NDRX_LOG(log_debug, "%s enter", __func__);
 
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_notif_call_t *)buf;
+            
     /* Might want to remove in future... but it might be dangerous!*/
     memset(call, 0, sizeof(tp_notif_call_t));
    
@@ -302,6 +306,12 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     }
     
 out:
+    
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }

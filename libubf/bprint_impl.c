@@ -57,6 +57,8 @@
 #include <ubf_impl.h>
 #include <utils.h>
 #include <ubf_tls.h>
+
+#include "atmi_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -316,9 +318,11 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
 {
     int ret=EXSUCCEED;
     int line=0;
-    char readbuf[NDRX_MSGSIZEMAX];
+    char *readbuf=NULL;
+    size_t readbuf_len;
     char fldnm[UBFFLDMAX+1];
-    char value[NDRX_MSGSIZEMAX];
+    char *value=NULL;
+    size_t value_len;
     char flag;
     char *p;
     char *tok;
@@ -327,6 +331,9 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
     int fldtype;
     int cpylen;
     int len;
+    
+    NDRX_USYSBUF_MALLOC_WERR_OUT(readbuf, readbuf_len, ret);
+    NDRX_USYSBUF_MALLOC_WERR_OUT(value, value_len, ret);
     
     /* Read line by line */
     while(1)
@@ -543,6 +550,16 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
     } /* while */
     
 out:
+    if (NULL!=readbuf)
+    {
+        NDRX_SYSBUF_FREE(readbuf);
+    }
+
+    if (NULL!=value)
+    {
+        NDRX_SYSBUF_FREE(value);
+    }
+
     UBF_LOG(log_debug, "%s: return %d", __func__, ret);
     
     return ret;

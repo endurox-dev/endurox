@@ -403,6 +403,19 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
+    {
+        if (EXSUCCEED!=br_init_gpg())
+        {
+            NDRX_LOG(log_error, "GPG init fail");
+                EXFAIL_OUT(ret);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "GPG init OK");
+        }
+    }
+    
     /* Reset network structs */
     exnet_reset_struct(&G_bridge_cfg.net);
     

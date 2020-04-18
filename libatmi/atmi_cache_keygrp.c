@@ -328,10 +328,13 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
     BFLDLEN dlen;
     int got_dbname = EXFALSE;
     int cachekey_found = EXFALSE;
-    char buf[NDRX_MSGSIZEMAX];
+    char *buf=NULL;
+    size_t buf_len;
     char *kg_ptr;
     int align;
     char *defer_free = NULL;
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
     
     if (NULL!=have_keygrp)
     {
@@ -602,6 +605,11 @@ out:
     if (NULL!=defer_free)
     {
         NDRX_FREE(defer_free);
+    }
+
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
     }
 
     return ret;

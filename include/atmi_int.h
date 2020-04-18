@@ -164,8 +164,8 @@ extern "C" {
     
 /* Memory allocation helpers */
 
- /**
- * Allocate buffer, if fail set ATMI error, and goto out
+/**
+ * Allocate buffer, if fail set UBF error, and goto out
  */
 #define NDRX_SYSBUF_MALLOC_WERR_OUT(__buf, __p_bufsz, __ret)  \
 {\
@@ -182,11 +182,6 @@ extern "C" {
     }\
     __p_bufsz = __buf_size__;\
 }
-    
-/**
- * Free up resources
- */
-#define NDRX_SYSBUF_FREE(__buf) NDRX_FPFREE(__buf)
     
 #define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
 #define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */

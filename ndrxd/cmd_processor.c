@@ -295,13 +295,13 @@ exprivate char * get_ctx_string(int ctx)
 expublic int command_wait_and_run(int *finished, int *abort)
 {
     int ret=EXSUCCEED;
-    char    msg_buffer_max[NDRX_MSGSIZEMAX];
-    size_t buf_max = sizeof(msg_buffer_max);
+    char    *msg_buffer_max=NULL;
+    size_t buf_max;
     unsigned int prio = 0;
     struct timespec abs_timeout;
     /* Set recieve time-out */
     struct timeval  timeval;
-    command_call_t * call = (command_call_t *)msg_buffer_max;
+    command_call_t * call;
     size_t  data_len;
     int     error;
     command_map_t *cmd;
@@ -309,7 +309,10 @@ expublic int command_wait_and_run(int *finished, int *abort)
     char context_check[16];
     int prev_context = NDRXD_CTX_NOCHG;
     
-    memset(msg_buffer_max, 0, sizeof(msg_buffer_max));
+    NDRX_SYSBUF_MALLOC_OUT(msg_buffer_max, buf_max, ret);
+    
+    call = (command_call_t *)msg_buffer_max;
+    memset(msg_buffer_max, 0, sizeof(command_call_t));
     snprintf(context_check, sizeof(context_check), ",%d,", G_command_state.context);
 
     /* Initialize wait timeout */
@@ -550,7 +553,12 @@ out:
         G_command_state.context = prev_context;
         NDRX_LOG(log_debug, "Restoring context: %d", G_command_state.context);
     }
-        
+
+    if (NULL!=msg_buffer_max)
+    {
+        NDRX_SYSBUF_FREE(msg_buffer_max);
+    }
+
     return ret;
 }
 
