@@ -403,8 +403,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
                 ndrx_tpcall_cache_ctl_t *p_cachectl)
 {
     int ret=EXSUCCEED;
-    char buf[NDRX_MSGSIZEMAX];
-    tp_command_call_t *call=(tp_command_call_t *)buf;
+    char *buf=NULL;
+    size_t buf_len;
+    tp_command_call_t *call;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
     long data_len = MAX_CALL_DATA_SIZE;
@@ -417,6 +418,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
     ATMI_TLS_ENTRY;
     NDRX_LOG(log_debug, "%s enter", __func__);
 
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    
+    call=(tp_command_call_t *)buf;
     
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
@@ -648,6 +652,12 @@ expublic int ndrx_tpacall (char *svc, char *data,
     ret=tpcall_cd;
 
 out:
+                
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     NDRX_LOG(log_debug, "%s return %d", __func__, ret);
     return ret;
 }

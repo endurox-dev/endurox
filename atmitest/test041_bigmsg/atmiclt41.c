@@ -65,9 +65,17 @@ int main(int argc, char** argv) {
     long rsplen;
     int i, j;
     int ret=EXSUCCEED;
-    char bufferreq[TEST_MSGSIZE];
+    char *bufferreq;
     BFLDLEN retlen;
     
+    bufferreq = NDRX_MALLOC(TEST_MSGSIZE);
+    
+    if (NULL==bufferreq)
+    {
+        NDRX_LOG(log_error, "Failed to malloc: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+        
     for (j=0; j<2000; j++)
     {
         for (i=0; i<TEST_MSGSIZE; i++)
@@ -121,6 +129,12 @@ int main(int argc, char** argv) {
     }
     
 out:
+    
+    if (NULL!=bufferreq)
+    {
+        NDRX_FREE(bufferreq);
+    }
+
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 

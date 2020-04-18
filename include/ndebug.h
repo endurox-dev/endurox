@@ -278,6 +278,11 @@ extern NDRX_API volatile int G_ndrx_debug_first;
     __p_bufsz = __buf_size__;\
 }
 
+/**
+ * Free up resources
+ */
+#define NDRX_SYSBUF_FREE(__buf) NDRX_FPFREE(__buf)
+
 #ifdef NDRX_MEMORY_DEBUG
 
 #define NDRX_MALLOC(size) ndrx_malloc_dbg(size, __LINE__, __FILE__, __func__)

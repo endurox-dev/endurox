@@ -135,12 +135,13 @@ expublic int ndrx_cache_save (char *svc, char *idata,
 {
     int ret = EXSUCCEED;
     /* have a buffer in size of ATMI message */
-    char buf[NDRX_MSGSIZEMAX];
+    char *buf=NULL;
+    size_t buf_len;
     ndrx_tpcache_svc_t *svcc = NULL;
     typed_buffer_descr_t *buf_type;
     buffer_obj_t *buffer_info;
     ndrx_tpcallcache_t *cache;
-    ndrx_tpcache_data_t *exdata = (ndrx_tpcache_data_t *)buf;
+    ndrx_tpcache_data_t *exdata;
     int tran_started = EXFALSE;
     EDB_txn *txn;
     char key[NDRX_CACHE_KEY_MAX+1];
@@ -148,6 +149,9 @@ expublic int ndrx_cache_save (char *svc, char *idata,
     EDB_val cachedata;
     int is_matched=EXFALSE;
     
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    exdata = (ndrx_tpcache_data_t *)buf;
+            
     memset(exdata, 0, sizeof(ndrx_tpcache_data_t));
     
     exdata->magic = NDRX_CACHE_MAGIC;
@@ -442,6 +446,11 @@ out:
         {
             ndrx_cache_edb_abort(cache->cachedb, txn);
         }
+    }
+
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
     }
 
     return ret;

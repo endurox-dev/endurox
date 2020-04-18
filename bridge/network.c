@@ -67,8 +67,6 @@
 
 MUTEX_LOCKDECL(M_gpg_init_lock);
 
-int M_is_gpg_init = EXFALSE;
-
 #ifndef DISABLEGPGME
 pgpgme_enc_t M_enc;
 #endif
@@ -118,7 +116,7 @@ out:
 /**
  * Initialize GPG library 
  */
-static int br_init_gpg(void)
+expublic int br_init_gpg(void)
 {
     int ret=EXSUCCEED;
 
@@ -324,31 +322,6 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     {
         int clr_len;
         NDRX_SYSBUF_MALLOC_OUT(tmp_clr, clr_len, ret);
-        
-	if (!M_is_gpg_init)
-	{
-            MUTEX_LOCK_V(M_gpg_init_lock);
-            
-            /* thread which might hold the lock was already performed
-             * the init, thus check it here twice.
-             */
-            if (!M_is_gpg_init)
-            {
-                if (EXSUCCEED==(ret=br_init_gpg()))
-                {
-                    M_is_gpg_init = EXTRUE;
-                    NDRX_LOG(log_error, "GPG init OK");
-                }
-            }
-            
-            MUTEX_UNLOCK_V(M_gpg_init_lock);
-            
-            if (EXSUCCEED!=ret)
-            {
-                NDRX_LOG(log_error, "GPG init fail");
-                EXFAIL_OUT(ret);
-            }
-	}
 	
 	/* Encrypt the message */
 	if (EXSUCCEED!=pgpa_decrypt(&M_enc, p_netmsg->buf, p_netmsg->len, 
@@ -625,20 +598,6 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     /* use GPG encryption */
     if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
-	if (!M_is_gpg_init)
-	{
-            /* TODO: Maybe we need lock here? */
-            if (EXSUCCEED==br_init_gpg())
-            {
-                M_is_gpg_init = EXTRUE;
-                NDRX_LOG(log_error, "GPG init OK");
-            }
-            else
-            {
-                NDRX_LOG(log_error, "GPG init fail");
-                EXFAIL_OUT(ret);
-            }
-	}
         
         NDRX_SYSBUF_MALLOC_OUT(tmp_enc, tmp_enc_len, ret);
 	

@@ -57,12 +57,20 @@
 void TESTSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
-    char bufferreq[TEST_MSGSIZE];
+    char *bufferreq=NULL;
     int i;
     BFLDLEN retlen;
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
+    
+    bufferreq = NDRX_MALLOC(TEST_MSGSIZE);
+    
+    if (NULL==bufferreq)
+    {
+        NDRX_LOG(log_error, "Failed to malloc: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
     
      /* test the response... */
     retlen = TEST_MSGSIZE;
@@ -106,6 +114,12 @@ void TESTSV (TPSVCINFO *p_svc)
     }
     
 out:
+    
+    if (NULL!=bufferreq)
+    {
+        NDRX_FREE(bufferreq);
+    }
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_ub,

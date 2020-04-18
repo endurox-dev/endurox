@@ -561,9 +561,10 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     char fn[] = "_tpconnect";
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
-    char buf[NDRX_MSGSIZEMAX];
+    char *buf=NULL;
+    size_t buf_len;
     long data_len = MAX_CALL_DATA_SIZE;
-    tp_command_call_t *call = (tp_command_call_t *)buf;
+    tp_command_call_t *call;
     time_t timestamp;
     char send_qstr[NDRX_MAX_Q_SIZE+1];
     char reply_qstr[NDRX_MAX_Q_SIZE+1]; /* special one for conversation */
@@ -575,6 +576,9 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s: called", __func__);
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_command_call_t *)buf;
 
     /* Check service availability */
     if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge, NULL))
@@ -777,6 +781,12 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     conv->handshaked=EXTRUE;
     
 out:
+                                
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     /* TODO: Kill conversation if FAILED!!!! */
     NDRX_LOG(log_debug, "%s: ret= %d cd=%d",  __func__, ret);
 
@@ -1227,9 +1237,10 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     int ret=EXSUCCEED;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info=NULL;
-    char buf[NDRX_MSGSIZEMAX];
+    char *buf=NULL;
+    size_t buf_len;
     long data_len = MAX_CALL_DATA_SIZE;
-    tp_command_call_t *call = (tp_command_call_t *)buf;
+    tp_command_call_t *call;
     tp_conversation_control_t *conv;
     
     ATMI_TLS_ENTRY;
@@ -1237,6 +1248,9 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     NDRX_LOG(log_debug, "%s: called", __func__);
     *revent = 0;
 
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_command_call_t *)buf;
+    
     /* Check the current connection descriptor */
     if (NULL==(conv=get_current_connection(cd)))
     {
@@ -1415,6 +1429,12 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     }
 
 out:
+                                
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
     /* TODO: Kill conversation if FAILED!!!! */
     NDRX_LOG(log_debug, "%s: return %d",  __func__, ret);
     return ret;

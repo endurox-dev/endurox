@@ -115,13 +115,17 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
     int ret=EXSUCCEED;
     char q_str[NDRX_MAX_Q_SIZE+1];
     mqd_t qd=(mqd_t)EXFAIL;
-    char msg_buf[NDRX_MSGSIZEMAX];
+    char *msg_buf=NULL;
+    size_t msg_buf_len;
     int len;
     unsigned prio;
     tp_command_generic_t *gen_command;
     char *fn = "remove_service_q";
     
     NDRX_LOG(log_debug, "Enter, svc = [%s], srvid = %hd", svc?svc:"(null)", srvid);
+    
+    NDRX_SYSBUF_MALLOC_OUT(msg_buf, msg_buf_len, ret);
+    
     if (NULL!=in_qstr)
     {
         NDRX_STRCPY_SAFE(q_str, in_qstr);
@@ -173,8 +177,7 @@ expublic int remove_service_q(char *svc, short srvid, mqd_t in_qd, char *in_qstr
 #endif
 
     /* Read all messages from Q & reply with dummy/FAIL stuff back! */
-    while ((len=ndrx_mq_receive (qd,
-        (char *)msg_buf, sizeof(msg_buf), &prio)) > 0)
+    while ((len=ndrx_mq_receive (qd, msg_buf, msg_buf_len, &prio)) > 0)
     {
         NDRX_LOG(log_warn, "Got message, size: %d", len);
         gen_command = (tp_command_generic_t *)msg_buf;
@@ -231,7 +234,12 @@ out:
                     strerror(errno));
         }
     }
-  
+
+    if (NULL!=msg_buf)
+    {
+        NDRX_SYSBUF_FREE(msg_buf);
+    }
+
     NDRX_LOG(log_debug, "%s - return, ret = %d", fn, ret);
 
     return ret;

@@ -361,14 +361,16 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     char cmd = TMQ_CMD_ENQUEUE;
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
-    char tmp[NDRX_MSGSIZEMAX];
-    long tmp_len = sizeof(tmp);
+    char *tmp=NULL;
+    long tmp_len;
     UBFH *p_ub = NULL;
     short buftype;
     atmi_error_t errbuf;
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
     
     memset(&errbuf, 0, sizeof(errbuf));
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(tmp, tmp_len, ret);
     
     /*
      * Support #403
@@ -542,6 +544,11 @@ out:
     else
     {
         ctl->diagnostic = EXFALSE;
+    }
+
+    if (NULL!=tmp)
+    {
+        NDRX_SYSBUF_FREE(tmp);
     }
 
 

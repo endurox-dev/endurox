@@ -64,9 +64,12 @@ expublic int simple_command_reply(command_call_t * call,
 {
     int ret=EXSUCCEED;
     command_reply_t *reply;
-    char reply_buf[NDRX_MSGSIZEMAX];
+    char *reply_buf = NULL;
+    size_t reply_buf_size;
     size_t send_size = sizeof(command_reply_t);
 
+    NDRX_SYSBUF_MALLOC_OUT(reply_buf, reply_buf_size, ret);
+    
     memset(reply_buf, 0, sizeof(command_reply_t));
     reply = (command_reply_t *)reply_buf;
     
@@ -116,7 +119,12 @@ expublic int simple_command_reply(command_call_t * call,
         call->flags|=NDRXD_CALL_FLAGS_DEADQ;
         ret=EXFAIL;
     }
+out:
     
+    if (NULL!=reply_buf)
+    {
+        NDRX_SYSBUF_FREE(reply_buf);
+    }
     return ret;
 }
 
