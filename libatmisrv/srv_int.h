@@ -183,6 +183,12 @@ struct srv_conf
     xbufcvt_entry_t *xbufcvt_tab; /**< string hashlist for buffer convert funcs */
     
     char rqaddress[NDRX_MAX_Q_SIZE+1]; /**< request address if used... (sysv) */
+    
+    int is_threaded;            /**< is multi-threaded server       */
+    int mindispatchthreads;     /**< minimum dispatch threads       */
+    int maxdispatchthreads;     /**< maximum dispatch trheads       */
+  
+    threadpool dispthreads;     /**< thread pool for dispatch threads*/
 };
 
 typedef struct srv_conf srv_conf_t;

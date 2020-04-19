@@ -374,6 +374,12 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 /** Stack size for new threads produced by Enduro/X in kilobytes */
 #define CONF_NDRX_THREADSTACKSIZE   "NDRX_THREADSTACKSIZE"
 
+/** Minimum number of dispatch threads for ATMI Server */
+#define CONF_NDRX_MINDISPATCHTHREADS   "NDRX_MINDISPATCHTHREADS"
+
+/** Maximum number of dispatch threads for ATMI Server (not used currently) */
+#define CONF_NDRX_MAXDISPATCHTHREADS   "NDRX_MAXDISPATCHTHREADS"
+
 
 #ifdef	__cplusplus
 }

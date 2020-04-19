@@ -172,7 +172,7 @@ expublic void br_run_q(void)
             /* submit the job... */
             M_qrun_issued = EXTRUE;
             
-            thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
+            ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
         }
         
         MUTEX_UNLOCK_V(M_in_q_lock);
@@ -492,7 +492,7 @@ expublic int br_got_message_from_q(char **buf, int len, char msg_type)
     thread_data->len = len;
     thread_data->msg_type = msg_type;
     
-    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool_tonet, 
+    if (EXSUCCEED!=ndrx_thpool_add_work(G_bridge_cfg.thpool_tonet, 
             (void*)br_got_message_from_q_th, 
             (void *)thread_data))
     {

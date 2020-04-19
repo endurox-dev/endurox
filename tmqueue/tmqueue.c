@@ -304,11 +304,11 @@ void TMQUEUE (TPSVCINFO *p_svc)
     /* submit the job to thread pool: */
     if (cmd==TMQ_CMD_NOTIFY)
     {
-        thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
+        ndrx_thpool_add_work(G_tmqueue_cfg.thpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     else
     {
-        thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
+        ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void*)TMQUEUE_TH, (void *)thread_data);
     }
     
 out:
@@ -489,14 +489,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     /* service request handlers */
-    if (NULL==(G_tmqueue_cfg.thpool = thpool_init(G_tmqueue_cfg.threadpoolsize)))
+    if (NULL==(G_tmqueue_cfg.thpool = ndrx_thpool_init(G_tmqueue_cfg.threadpoolsize,
+            NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(G_tmqueue_cfg.notifthpool = thpool_init(G_tmqueue_cfg.notifpoolsize)))
+    if (NULL==(G_tmqueue_cfg.notifthpool = ndrx_thpool_init(G_tmqueue_cfg.notifpoolsize,
+            NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize udpate thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.notifpoolsize);
@@ -504,7 +506,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     /* q forward handlers */
-    if (NULL==(G_tmqueue_cfg.fwdthpool = thpool_init(G_tmqueue_cfg.fwdpoolsize)))
+    if (NULL==(G_tmqueue_cfg.fwdthpool = ndrx_thpool_init(G_tmqueue_cfg.fwdpoolsize,
+            NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize fwd thread pool (cnt: %d)!", 
                 G_tmqueue_cfg.fwdpoolsize);
@@ -539,28 +542,28 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         /* Terminate the threads (request) */
         for (i=0; i<G_tmqueue_cfg.threadpoolsize; i++)
         {
-            thpool_add_work(G_tmqueue_cfg.thpool, (void *)tmq_thread_shutdown, NULL);
+            ndrx_thpool_add_work(G_tmqueue_cfg.thpool, (void *)tmq_thread_shutdown, NULL);
         }
         
         /* update threads */
         for (i=0; i<G_tmqueue_cfg.notifpoolsize; i++)
         {
-            thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tmq_thread_shutdown, NULL);
+            ndrx_thpool_add_work(G_tmqueue_cfg.notifthpool, (void *)tmq_thread_shutdown, NULL);
         }
         
         /* forwarder */
         for (i=0; i<G_tmqueue_cfg.fwdpoolsize; i++)
         {
-            thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
+            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void *)tmq_thread_shutdown, NULL);
         }
         
         
         /* Wait for threads to finish */
-        thpool_wait(G_tmqueue_cfg.thpool);
-        thpool_destroy(G_tmqueue_cfg.thpool);
+        ndrx_thpool_wait(G_tmqueue_cfg.thpool);
+        ndrx_thpool_destroy(G_tmqueue_cfg.thpool);
         
-        thpool_wait(G_tmqueue_cfg.fwdthpool);
-        thpool_destroy(G_tmqueue_cfg.fwdthpool);
+        ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
+        ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
     }
     tpclose();
     

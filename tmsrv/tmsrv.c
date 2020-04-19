@@ -78,9 +78,6 @@
 expublic tmsrv_cfg_t G_tmsrv_cfg;
 /*---------------------------Statics------------------------------------*/
 exprivate int M_init_ok = EXFALSE;
-/* Wait for one free thread: */
-MUTEX_LOCKDECL(M_wait_th_mutex);
-pthread_cond_t M_wait_th_cond = PTHREAD_COND_INITIALIZER;
 
 /*
  * Thread private data
@@ -90,7 +87,6 @@ exprivate __thread int M_thread_first = EXTRUE;
 exprivate __thread XID M_ping_xid; /* run pings by this non existent xid */
 /*---------------------------Prototypes---------------------------------*/
 exprivate int tm_tout_check(void);
-exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off);
 
 /**
  * Initialize thread
@@ -428,21 +424,12 @@ void TPTMSRV (TPSVCINFO *p_svc)
     thread_data->context_data = tpsrvgetctxdata();
     
     /* submit the job to thread pool: */
-    thpool_add_work(G_tmsrv_cfg.thpool, (void*)TPTMSRV_TH, (void *)thread_data);
+    ndrx_thpool_add_work(G_tmsrv_cfg.thpool, (void*)TPTMSRV_TH, (void *)thread_data);
     
 out:
     if (EXSUCCEED==ret)
     {
-        /* serve next.. 
-         * At this point we should know that at least one thread is free
-         */
-        pthread_mutex_lock(&M_wait_th_mutex);
-        
-        /* submit the job to verify free thread */
-        
-        thpool_add_work(G_tmsrv_cfg.thpool, (void*)tm_chk_one_free_thread, NULL);
-        pthread_cond_wait(&M_wait_th_cond, &M_wait_th_mutex);
-        pthread_mutex_unlock(&M_wait_th_mutex);
+        ndrx_thpool_wait_one(G_tmsrv_cfg.thpool);
         
         tpcontinue();
     }
@@ -671,7 +658,8 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(G_tmsrv_cfg.thpool = thpool_init(G_tmsrv_cfg.threadpoolsize)))
+    if (NULL==(G_tmsrv_cfg.thpool = ndrx_thpool_init(G_tmsrv_cfg.threadpoolsize,
+            NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: %d)!", 
                 G_tmsrv_cfg.threadpoolsize);
@@ -714,15 +702,15 @@ void tpsvrdone(void)
         /* Terminate the threads */
         for (i=0; i<G_tmsrv_cfg.threadpoolsize; i++)
         {
-            thpool_add_work(G_tmsrv_cfg.thpool, (void *)tm_thread_shutdown, NULL);
+            ndrx_thpool_add_work(G_tmsrv_cfg.thpool, (void *)tm_thread_shutdown, NULL);
         }
         
         /* Wait to complete */
         pthread_join(G_bacground_thread, NULL);
 
         /* Wait for threads to finish */
-        thpool_wait(G_tmsrv_cfg.thpool);
-        thpool_destroy(G_tmsrv_cfg.thpool);
+        ndrx_thpool_wait(G_tmsrv_cfg.thpool);
+        ndrx_thpool_destroy(G_tmsrv_cfg.thpool);
     }
     atmi_xa_close_entry();
     
@@ -875,30 +863,18 @@ exprivate int tm_tout_check(void)
     int i;
     NDRX_LOG(log_dump, "Timeout check (submit job...)");
     
-    thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
+    ndrx_thpool_add_work(G_tmsrv_cfg.thpool, (void*)tx_tout_check_th, NULL);
     
     /* RUN PINGs... over the all threads... */
     if (G_tmsrv_cfg.ping_time > 0)
     {
         for (i=0; i<G_tmsrv_cfg.threadpoolsize; i++)
         {
-            thpool_add_work(G_tmsrv_cfg.thpool, (void*)tm_ping_db, NULL);
+            ndrx_thpool_add_work(G_tmsrv_cfg.thpool, (void*)tm_ping_db, NULL);
         }
     }
     
     return EXSUCCEED;
-}
-
-/**
- * Just run down one task via pool, to ensure that at least one
- * thread is free, before we are going to mail poll.
- * @param ptr
- */
-exprivate void tm_chk_one_free_thread(void *ptr, int *p_finish_off)
-{
-    pthread_mutex_lock(&M_wait_th_mutex);
-    pthread_cond_signal(&M_wait_th_cond);
-    pthread_mutex_unlock(&M_wait_th_mutex);
 }
 
 /**

@@ -453,17 +453,17 @@ expublic int forward_loop(void)
     {
         msg = NULL;
         
-        if (thpool_freethreads_nr(G_tmqueue_cfg.fwdthpool) > 0)
-        {
-            /* 2. get the message from Q */
-            msg = get_next_msg();
-        }
+        /* wait for one slot to become free.. */
+        ndrx_thpool_wait_one(G_tmqueue_cfg.fwdthpool);
+        
+        /* 2. get the message from Q */
+        msg = get_next_msg();
         
         /* 3. run off the thread */
         if (NULL!=msg)
         {
             /* Submit the job to thread */
-            thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
+            ndrx_thpool_add_work(G_tmqueue_cfg.fwdthpool, (void*)thread_process_forward, (void *)msg);            
         }
         else
         {

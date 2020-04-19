@@ -161,7 +161,7 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
     else if (COMPILE_TMS == buildmode)
     {        
         NDRX_STRCAT_S(build_cmd, sizeof(build_cmd), 
-                " -ltms -latmisrvinteg -latmi -lubf -lexuuid -lexthpool -lnstd");
+                " -ltms -latmisrvinteg -latmi -lubf -lexuuid -lnstd");
     }
     
     /* add any platform specific library */

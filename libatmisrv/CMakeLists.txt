@@ -88,6 +88,7 @@ add_library (objatmisrvinteg OBJECT
                 integra.c
                 oatmisrv.c
                 oatmisrv_integra.c
+                svthreads.c
    	    )
 
 add_library (atmisrvdum SHARED

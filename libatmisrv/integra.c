@@ -68,6 +68,13 @@ expublic long G_libatmisrv_flags     =   ATMI_SRVLIB_NOLONGJUMP;
 expublic NDRX_API_EXPORT struct tmsvrargs_t *ndrx_G_tmsvrargs = NULL;
 /** XA Switch passed to server      */
 expublic NDRX_API_EXPORT struct xa_switch_t *ndrx_G_p_xaswitch = NULL;
+
+/** Server init func        */
+expublic int (*ndrx_G_tpsvrthrinit)(int, char **) = NULL;
+
+/** thread server done func */
+expublic void (*ndrx_G_tpsvrthrdone)(void) = NULL;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -227,6 +234,11 @@ expublic int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrarg
     ndrx_G_tpsvrinit_sys = tpsrvinit_sys;
     G_tpsvrdone__ =  tmsvrargs->p_tpsvrdone;
     
+    /* warning ! for rearly releases p_tpsvrthrinit and p_tpsvrthrdone where
+     * not present.
+     */
+    ndrx_G_tpsvrthrinit = tmsvrargs->p_tpsvrthrinit;
+    ndrx_G_tpsvrthrdone = tmsvrargs->p_tpsvrthrdone;
     
 out:
     return ndrx_main(argc, argv);
@@ -262,9 +274,9 @@ expublic int tpsvrinit(int argc, char **argv)
      */
     if (!_tmbuilt_with_thread_option)
     {
-        if (NULL!=ndrx_G_tmsvrargs->p_tpsvrthrinit)
+        if (NULL!=ndrx_G_tpsvrthrinit)
         {
-            if (EXSUCCEED==ndrx_G_tmsvrargs->p_tpsvrthrinit(argc, argv))
+            if (EXSUCCEED==ndrx_G_tpsvrthrinit(argc, argv))
             {
                 userlog("Server started successfully");
             }
@@ -303,9 +315,9 @@ expublic void tpsvrdone(void)
          * used else where
          * (exept in MT mode)
          */
-        if (NULL!=ndrx_G_tmsvrargs->p_tpsvrthrdone)
+        if (NULL!=ndrx_G_tpsvrthrdone)
         {
-            ndrx_G_tmsvrargs->p_tpsvrthrdone();
+            ndrx_G_tpsvrthrdone();
         }
         else
         {
@@ -313,6 +325,5 @@ expublic void tpsvrdone(void)
         }
     }
 }
-
 
 /* vim: set ts=4 sw=4 et smartindent: */

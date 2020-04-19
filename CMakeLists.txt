@@ -436,7 +436,6 @@ add_subdirectory (libcgreen)
 add_subdirectory (libexuuid)
 add_subdirectory (libubf)
 add_subdirectory (libnetproto)
-add_subdirectory (libexthpool)
 add_subdirectory (ubftest)
 add_subdirectory (mkfldhdr)
 # Enduro/X sub-directories for ATMI

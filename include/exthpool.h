@@ -16,6 +16,11 @@ extern "C" {
 
 typedef struct thpool_* threadpool;
 
+/** thread pool init call */
+typedef  int (*ndrx_thpool_tpsvrthrinit_t)(int argc, char **argv);
+
+/** thread done call if any */
+typedef  void (*ndrx_thpool_tpsvrthrdone_t)(void);
 
 /**
  * @brief  Initialize threadpool
@@ -30,11 +35,18 @@ typedef struct thpool_* threadpool;
  *    thpool = thpool_init(4);               //then we initialize it to 4 threads
  *    ..
  *
- * @param  num_threads   number of threads to be created in the threadpool
+ * @param num_threads   number of threads to be created in the threadpool
+ * @param p_ret return of threads
+ * @param pf_init thread init function
+ * @param pf_done thread done function
+ * @param argc command line argument count
+ * @param argv cli arguments for init func
  * @return threadpool    created threadpool on success,
  *                       NULL on error
  */
-threadpool thpool_init(int num_threads);
+threadpool ndrx_thpool_init(int num_threads, int *p_ret, 
+        ndrx_thpool_tpsvrthrinit_t pf_init, ndrx_thpool_tpsvrthrdone_t pf_done,
+        int argc, char **argv);
 
 
 /**
@@ -64,7 +76,7 @@ threadpool thpool_init(int num_threads);
  * @param  arg_p         pointer to an argument
  * @return 0 on successs, -1 otherwise.
  */
-int thpool_add_work(threadpool, void (*function_p)(void*, int *), void* arg_p);
+int ndrx_thpool_add_work(threadpool, void (*function_p)(void*, int *), void* arg_p);
 
 
 /**
@@ -94,48 +106,13 @@ int thpool_add_work(threadpool, void (*function_p)(void*, int *), void* arg_p);
  * @param threadpool     the threadpool to wait for
  * @return nothing
  */
-void thpool_wait(threadpool);
-
-
-/**
- * @brief Pauses all threads immediately
- *
- * The threads will be paused no matter if they are idle or working.
- * The threads return to their previous states once thpool_resume
- * is called.
- *
- * While the thread is being paused, new work can be added.
- *
- * @example
- *
- *    threadpool thpool = thpool_init(4);
- *    thpool_pause(thpool);
- *    ..
- *    // Add a bunch of work
- *    ..
- *    thpool_resume(thpool); // Let the threads start their magic
- *
- * @param threadpool    the threadpool where the threads should be paused
- * @return nothing
- */
-void thpool_pause(threadpool);
-
+void ndrx_thpool_wait(threadpool);
 
 /**
- * @brief Unpauses all threads if they are paused
- *
- * @example
- *    ..
- *    thpool_pause(thpool);
- *    sleep(10);              // Delay execution 10 seconds
- *    thpool_resume(thpool);
- *    ..
- *
- * @param threadpool     the threadpool where the threads should be unpaused
- * @return nothing
+ * Wait for one thread to become free
+ * @param thpool_p
  */
-void thpool_resume(threadpool);
-
+void ndrx_thpool_wait_one(threadpool);
 
 /**
  * @brief Destroy the threadpool
@@ -156,50 +133,7 @@ void thpool_resume(threadpool);
  * @param threadpool     the threadpool to destroy
  * @return nothing
  */
-void thpool_destroy(threadpool);
-
-
-/**
- * @brief Show currently working threads
- *
- * Working threads are the threads that are performing work (not idle).
- *
- * @example
- * int main() {
- *    int threads_free;
- *    threadpool thpool1 = thpool_init(2);
- *    threadpool thpool2 = thpool_init(2);
- *    ..
- *    printf("Working threads: %d\n", thpool_num_threads_working(thpool1));
- *    ..
- *    return 0;
- * }
- *
- * @param threadpool     the threadpool of interest
- * @return integer       number of threads working
- */
-int thpool_num_threads_working(threadpool);
-
-/**
- * @brief Return number of free threads
- * 
- * This will wait for the currently active threads to finish and then 'kill'
- * the whole threadpool to free up memory.
- * 
- * @example
- * int main() {
- *    int threads_free;
- *    threadpool thpool1 = thpool_init(2);
- *    ..
- *    threads_free = thpool_freethreads_nr(thpool1);
- *    ..
- *    return 0;
- * }
- * 
- * @param threadpool     the threadpool to analyse
- * @return Number of free threads
- */
-int thpool_freethreads_nr(threadpool);
+void ndrx_thpool_destroy(threadpool);
 
 
 #ifdef __cplusplus

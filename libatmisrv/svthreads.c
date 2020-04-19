@@ -1,7 +1,7 @@
 /**
- * @brief Simple static main library
+ * @brief Service dispatcher thread support
  *
- * @file rawmain.c
+ * @file svthreads.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,45 +31,41 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
+
+/*---------------------------Includes-----------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
+#include <errno.h>
+#include <unistd.h>
+
 #include <ndrstandard.h>
+#include <ndebug.h>
+#include <utlist.h>
+#include <string.h>
+#include "srv_int.h"
+#include "tperror.h"
+#include "atmi_tls.h"
+#include <atmi_int.h>
+#include <atmi_shm.h>
+#include <xa_cmn.h>
+
 /*---------------------------Externs------------------------------------*/
-extern int ndrx_main(int argc, char** argv);
-extern int tpsvrinit(int argc, char **argv);
-extern void tpsvrdone(void);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-
-/** server init call        */
-expublic int (*G_tpsvrinit__)(int, char **) = tpsvrinit;
-
-/** system call for server init */
-expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
-
-/** call for server done    */
-expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
-
-/** Server init func        */
-expublic int (*ndrx_G_tpsvrthrinit)(int, char **) = NULL;
-
-/** thread server done func */
-expublic void (*ndrx_G_tpsvrthrdone)(void) = NULL;
-  
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * Forward the call to NDRX
- */
-int main(int argc, char** argv)
-{
+/* Do init  */
 
-    return ndrx_main(argc, argv);
+/**
+ * Run some init
+ * @return 
+ */
+expublic int ndrx_svthread_init(void)
+{
+    
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

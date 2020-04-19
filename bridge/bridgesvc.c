@@ -181,7 +181,7 @@ exprivate int br_snd_zero_len_th(void *ptr, int *p_finish_off)
  */
 exprivate int br_snd_zero_len(exnetcon_t *net)
 {
-    thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, (void *)net);
+    ndrx_thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, (void *)net);
     return EXSUCCEED;
 }
 
@@ -472,14 +472,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         goto out;
     }
     
-    if (NULL==(G_bridge_cfg.thpool_tonet = thpool_init(G_bridge_cfg.threadpoolsize)))
+    if (NULL==(G_bridge_cfg.thpool_tonet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
+            NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize to-net thread pool (cnt: %d)!", 
                 G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==(G_bridge_cfg.thpool_fromnet = thpool_init(G_bridge_cfg.threadpoolsize)))
+    if (NULL==(G_bridge_cfg.thpool_fromnet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
+            NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize from-net thread pool (cnt: %d)!",
                 G_bridge_cfg.threadpoolsize);
@@ -527,22 +529,22 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
         {
             NDRX_LOG(log_info, "Terminating to-net threadpool, thread #%d", i);
-            thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)tp_thread_shutdown, NULL);
+            ndrx_thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)tp_thread_shutdown, NULL);
         }
         
         /* Terminate the threads */
         for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
         {
             NDRX_LOG(log_info, "Terminating from-net threadpool, thread #%d", i);
-            thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)tp_thread_shutdown, NULL);
+            ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)tp_thread_shutdown, NULL);
         }
         
         /* Wait for threads to finish */
-        thpool_wait(G_bridge_cfg.thpool_tonet);
-        thpool_destroy(G_bridge_cfg.thpool_tonet);
+        ndrx_thpool_wait(G_bridge_cfg.thpool_tonet);
+        ndrx_thpool_destroy(G_bridge_cfg.thpool_tonet);
         
-        thpool_wait(G_bridge_cfg.thpool_fromnet);
-        thpool_destroy(G_bridge_cfg.thpool_fromnet);
+        ndrx_thpool_wait(G_bridge_cfg.thpool_fromnet);
+        ndrx_thpool_destroy(G_bridge_cfg.thpool_fromnet);
     }
     
     /* close if not server connection...  */
