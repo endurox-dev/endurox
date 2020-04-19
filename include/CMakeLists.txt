@@ -84,6 +84,7 @@ install (FILES
     tx.h
     Uunix.h
     expluginbase.h
+    fpalloc.h
     DESTINATION include)
 
 install (FILES

@@ -62,7 +62,7 @@ IF(DEFINE_DISABLEGPGME)
                          network.c
                          clock.c
                          brutils.c
-                         ../libatmisrv/rawmain_integra.c
+                         rawmain_fpa.c
                         )
 
 	SET(EX_LIB_GPGME "")
@@ -74,7 +74,7 @@ ELSE (DEFINE_DISABLEGPGME)
                          clock.c
                          brutils.c
 			 gpgme_encrypt.c
-                         ../libatmisrv/rawmain_integra.c
+                         rawmain_fpa.c
                         )
 
 	SET(EX_LIB_GPGME "gpgme")
@@ -84,7 +84,7 @@ IF (CMAKE_OS_NAME STREQUAL "SUNOS")
 	SET(EX_LIB_NET "socket")
 ENDIF()
 
-target_link_libraries (tpbridge exnet atmisrvinteg atmi netproto ubf exthpool nstd ${RT_LIB}
+target_link_libraries (tpbridge exnet atmisrvinteg atmi netproto ubf nstd ${RT_LIB}
                 ${EX_LIB_GPGME} ${EX_LIB_NET} pthread)
 
 set_target_properties(tpbridge PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

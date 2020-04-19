@@ -172,7 +172,7 @@ void TESTSVFN (TPSVCINFO *p_svc)
         goto out;
     }
      */
-    thpool_add_work(M_thpool, (void*)_TH_TESTSVFN, (void *)thread_data);
+    ndrx_thpool_add_work(M_thpool, (void*)_TH_TESTSVFN, (void *)thread_data);
     
     
 out:
@@ -200,7 +200,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_debug, "tpsvrinit called");
 
         /* service request handlers */
-    if (NULL==(M_thpool = thpool_init(10)))
+    if (NULL==(M_thpool = ndrx_thpool_init(10, NULL, NULL, NULL, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize thread pool (cnt: 10)!");
         EXFAIL_OUT(ret);

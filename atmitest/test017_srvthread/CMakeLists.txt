@@ -57,7 +57,7 @@ add_executable (atmiclt17 atmiclt17.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv17 atmisrvinteg atmi ubf exthpool pthread nstd m ${RT_LIB})
+target_link_libraries (atmi.sv17 atmisrvinteg atmi ubf pthread nstd m ${RT_LIB})
 target_link_libraries (atmiclt17 atmiclt atmi ubf pthread nstd m ${RT_LIB})
 
 set_target_properties(atmi.sv17 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

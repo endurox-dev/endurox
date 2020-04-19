@@ -56,6 +56,12 @@ expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
 /** call for server done */
 expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
 
+/** Server init func        */
+expublic int (*ndrx_G_tpsvrthrinit)(int, char **) = NULL;
+
+/** thread server done func */
+expublic void (*ndrx_G_tpsvrthrdone)(void) = NULL;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

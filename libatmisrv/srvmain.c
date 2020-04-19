@@ -346,6 +346,8 @@ expublic int ndrx_init(int argc, char** argv)
     /* Set default advertise all */
     G_server_conf.advertise_all = 1;
     G_server_conf.time_out = EXFAIL;
+    G_server_conf.mindispatchthreads = 1;
+    G_server_conf.maxdispatchthreads = 1;
     
     /* Load common atmi library environment variables */
     if (EXSUCCEED!=ndrx_load_common_env())
@@ -521,6 +523,93 @@ expublic int ndrx_init(int argc, char** argv)
     {
         NDRX_STRCPY_SAFE(G_server_conf.q_prefix, p);
     }
+    
+    /* configure server threads... */
+    if (NULL==(p=getenv(CONF_NDRX_QPREFIX)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Env [%s] not set", CONF_NDRX_QPREFIX);
+        ret=EXFAIL;
+        goto out;
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(G_server_conf.q_prefix, p);
+    }
+    
+    if (NULL!=(p=getenv(CONF_NDRX_MINDISPATCHTHREADS)))
+    {
+        G_server_conf.mindispatchthreads = atoi(p);
+        G_server_conf.maxdispatchthreads = atoi(p);
+    }
+    
+    if (NULL!=(p=getenv(CONF_NDRX_MAXDISPATCHTHREADS)))
+    {
+        G_server_conf.maxdispatchthreads = atoi(p);
+    }
+    
+    /* check thread option.. */
+    if (!_tmbuilt_with_thread_option && G_server_conf.mindispatchthreads > 1)
+    {
+        NDRX_LOG(log_error, "Error ! Buildserver thread option says single-threaded, "
+                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
+                G_server_conf.mindispatchthreads,
+                G_server_conf.maxdispatchthreads
+                );
+        userlog("Error ! Buildserver thread option says single-threaded, "
+                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
+                G_server_conf.mindispatchthreads,
+                G_server_conf.maxdispatchthreads);
+        
+        ndrx_TPset_error_fmt(TPEINVAL, "Error ! Buildserver thread option says single-threaded, "
+                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
+                G_server_conf.mindispatchthreads,
+                G_server_conf.maxdispatchthreads);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (G_server_conf.mindispatchthreads <=0 )
+    {
+        NDRX_LOG(log_error, "Error ! MINDISPATCHTHREADS(=%d) <=0", 
+                G_server_conf.mindispatchthreads);
+        userlog("Error ! MINDISPATCHTHREADS(=%d) <=0", 
+                G_server_conf.mindispatchthreads);
+        ndrx_TPset_error_fmt(TPEINVAL, "Error ! MINDISPATCHTHREADS(=%d) <=0", 
+                G_server_conf.mindispatchthreads);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (G_server_conf.maxdispatchthreads <=0 )
+    {
+        NDRX_LOG(log_error, "Error ! MAXDISPATCHTHREADS(=%d) <=0", 
+                G_server_conf.maxdispatchthreads);
+        userlog("Error ! MAXDISPATCHTHREADS(=%d) <=0", 
+                G_server_conf.maxdispatchthreads);
+        ndrx_TPset_error_fmt(TPEINVAL, "Error ! MAXDISPATCHTHREADS(=%d) <=0", 
+                G_server_conf.maxdispatchthreads);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (G_server_conf.mindispatchthreads > G_server_conf.maxdispatchthreads)
+    {
+        NDRX_LOG(log_error, "Error ! MINDISPATCHTHREADS(=%d) > MAXDISPATCHTHREADS(=%d)", 
+                G_server_conf.mindispatchthreads,
+                G_server_conf.maxdispatchthreads
+                );
+        userlog("Error ! MINDISPATCHTHREADS(=%d) > MAXDISPATCHTHREADS(=%d)", 
+                G_server_conf.mindispatchthreads,
+                G_server_conf.maxdispatchthreads);
+        
+        ndrx_TPset_error_fmt(TPEINVAL, "Error ! MINDISPATCHTHREADS(=%d) > MAXDISPATCHTHREADS(=%d)", 
+                G_server_conf.mindispatchthreads,
+                G_server_conf.maxdispatchthreads);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* start as multi-threaded */
+    if (G_server_conf.mindispatchthreads > 1)
+    {
+        G_server_conf.is_threaded = EXTRUE;
+    }
 
     G_srv_id = G_server_conf.srv_id;
     
@@ -681,6 +770,22 @@ int ndrx_main(int argc, char** argv)
     }
     
     /*
+     * Run off thread init if any
+     */
+    
+    if (G_server_conf.is_threaded)
+    {
+        G_server_conf.dispthreads = ndrx_thpool_init(G_server_conf.mindispatchthreads, 
+                &ret, ndrx_G_tpsvrthrinit, ndrx_G_tpsvrthrdone, argc, argv);
+        
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Thread pool init failure");
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    /*
      * Push the services out!
      */
     if (EXSUCCEED!=atmisrv_build_advertise_list())
@@ -736,6 +841,13 @@ int ndrx_main(int argc, char** argv)
     }
     
 out:
+                
+    /* if thread pool was in place, then perform de-init... */
+    if (NULL!=G_server_conf.dispthreads)
+    {
+        /* TODO: */
+    }
+
     /* finish up. */
     if (NULL!=G_tpsvrdone__)
     {

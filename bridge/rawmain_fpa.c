@@ -1,7 +1,7 @@
 /**
- * @brief Simple static main library
+ * @brief Integration mode
  *
- * @file rawmain.c
+ * @file rawmain_integra.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -35,41 +35,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <ndrstandard.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
-extern int ndrx_main(int argc, char** argv);
-extern int tpsvrinit(int argc, char **argv);
-extern void tpsvrdone(void);
+extern void NDRX_INTEGRA(tpsvrdone)(void);
+extern int NDRX_INTEGRA(tpsvrinit) (int argc, char **argv);
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-
-/** server init call        */
-expublic int (*G_tpsvrinit__)(int, char **) = tpsvrinit;
-
-/** system call for server init */
-expublic int (*ndrx_G_tpsvrinit_sys)(int, char **) = NULL;
-
-/** call for server done    */
-expublic void (*G_tpsvrdone__)(void) = tpsvrdone;
-
-/** Server init func        */
-expublic int (*ndrx_G_tpsvrthrinit)(int, char **) = NULL;
-
-/** thread server done func */
-expublic void (*ndrx_G_tpsvrthrdone)(void) = NULL;
-  
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 /*
  * Forward the call to NDRX
  */
-int main(int argc, char** argv)
+int main(int argc, char** argv) 
 {
-
-    return ndrx_main(argc, argv);
+    if (NULL==getenv(CONF_NDRX_FPAOPTS))
+    {
+        /* set the special mode for bridge 
+         * from stats we see that process is memory hungry.
+         */
+        setenv(CONF_NDRX_FPAOPTS, "256:100,S:30", EXTRUE);
+    }
+    
+    return ndrx_main_integra(argc, argv, 
+            NDRX_INTEGRA(tpsvrinit), NDRX_INTEGRA(tpsvrdone), 0);
 }
-
 /* vim: set ts=4 sw=4 et smartindent: */

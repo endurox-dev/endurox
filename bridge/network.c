@@ -206,7 +206,7 @@ expublic int br_process_msg(exnetcon_t *net, char **buf, int len)
     thread_data->len = len;
     thread_data->net = net;
     
-    if (EXSUCCEED!=thpool_add_work(G_bridge_cfg.thpool_fromnet, (void*)br_process_msg_th, 
+    if (EXSUCCEED!=ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void*)br_process_msg_th, 
             (void *)thread_data))
     {
         EXFAIL_OUT(ret);
