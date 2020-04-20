@@ -115,6 +115,10 @@ struct conf_server_node
     long rssmax;    /**< Default max resource memory size in bytes -1 not chk */
     long vszmax;    /**< Default max virtual memory size in bytes, -1 not chk */
     
+    int mindispatchthreads; /**< minimum dispatch threads                     */
+    int maxdispatchthreads; /**< maximum dispatch threads                     */
+    int threadstacksize;    /**< thread stack size in KB, 0 - default         */
+    
     /* have entries for environment */
     
     /** linked environment groups */
@@ -267,6 +271,10 @@ typedef struct
     long default_vszmax; /**< Default max virtual memory size in bytes, -1 nochk */
     
     int ctl_had_defaults; /**< Have defaults loaded atleast 1 time */
+    
+    int default_mindispatchthreads; /**< minimum dispatch threads             */
+    int default_maxdispatchthreads; /**< maximum dispatch threads             */
+    int default_threadstacksize;    /**< thread stack size in KB, 0 - default */
     
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;

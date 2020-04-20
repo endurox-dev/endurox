@@ -474,7 +474,7 @@ expublic int br_got_message_from_q(char **buf, int len, char msg_type)
     
     NDRX_LOG(log_debug, "%s: threaded mode - dispatching to worker", fn);
     
-    thread_data = NDRX_MALLOC(sizeof(xatmi_brmessage_t));
+    thread_data = NDRX_FPMALLOC(sizeof(xatmi_brmessage_t), 0);
 
     if (NULL==thread_data)
     {
@@ -633,7 +633,7 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
 out:
                 
     NDRX_SYSBUF_FREE(p_xatmimsg->buf);
-    NDRX_FREE(p_xatmimsg);
+    NDRX_FPFREE(p_xatmimsg);
     
     return ret;
 }

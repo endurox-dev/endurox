@@ -520,6 +520,7 @@ fi;
 
 export TESTDIR=""$NDRX_APPHOME/atmitest/$TESTNAME""
 export PATH=$PATH:$TESTDIR
+export NDRX_ULOG=$TESTDIR
 
 xadmin killall atmi.sv"+::prov.testid+@" 2>/dev/null
 xadmin killall atmiclt"+::prov.testid+@" 2>/dev/null
@@ -813,7 +814,7 @@ fi;
 
 export TESTDIR=""$NDRX_APPHOME/atmitest/$TESTNAME""
 export PATH=$PATH:$TESTDIR
-
+export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
 
 #

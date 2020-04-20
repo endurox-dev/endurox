@@ -429,6 +429,15 @@ expublic int pingrsp_to_ndrxd(command_srvping_t *ping)
 {
     int ret=EXSUCCEED;
     
+    /* if MT, wait for thread-pool one slot... 
+     * So that ping ensures that server is functional
+     */
+    if (G_server_conf.is_threaded)
+    {
+        NDRX_LOG(log_debug, "Wait for one free MT thread before ping response");
+        ndrx_thpool_wait_one(G_server_conf.dispthreads);
+    }
+    
     ret=cmd_generic_call(NDRXD_COM_SRVPING_RP, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_PM_INFO,
                         (command_call_t *)ping, sizeof(*ping),

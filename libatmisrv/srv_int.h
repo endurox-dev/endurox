@@ -48,6 +48,7 @@ extern NDRX_API "C" {
 #include <sys_unix.h>
 #include <atmi.h>
 #include <atmi_int.h>
+#include <exthpool.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -169,9 +170,6 @@ struct srv_conf
     /**************** POLLING *****************/
     struct ndrx_epoll_event *events;
     int epollfd;
-    /* Information from last call */
-    /* call_basic_info_t last_call; */
-    jmp_buf call_ret_env;
     int time_out;
     int max_events; /**< Max epoll events. */
     
@@ -189,6 +187,7 @@ struct srv_conf
     int maxdispatchthreads;     /**< maximum dispatch trheads       */
   
     threadpool dispthreads;     /**< thread pool for dispatch threads*/
+    pthread_spinlock_t mt_lock; /**< mt lock for data sync           */
 };
 
 typedef struct srv_conf srv_conf_t;
@@ -214,6 +213,12 @@ extern NDRX_API int G_shutdown_req;
 extern NDRX_API int G_shutdown_nr_wait;   /* Number of self shutdown messages to wait */
 extern NDRX_API int G_shutdown_nr_got;    /* Number of self shutdown messages got  */
 extern NDRX_API void (*___G_test_delayed_startup)(void);
+
+extern NDRX_API int (*G_tpsvrinit__)(int, char **);
+extern NDRX_API int (*ndrx_G_tpsvrinit_sys)(int, char **);
+extern NDRX_API void (*G_tpsvrdone__)(void);
+extern NDRX_API int (*ndrx_G_tpsvrthrinit)(int, char **);
+extern NDRX_API void (*ndrx_G_tpsvrthrdone)(void);
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/

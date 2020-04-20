@@ -163,7 +163,7 @@ exprivate int ndrx_fpinit(void)
         M_fpa_pools[i].cur_blocks = 0;
         M_fpa_pools[i].stack = NULL;
         M_fpa_pools[i].allocs = 0;
-        pthread_spin_init(&(M_fpa_pools[i].spinlock), 0);
+        pthread_spin_init(&(M_fpa_pools[i].spinlock), PTHREAD_PROCESS_PRIVATE);
     }
     
     /* setup the options if any... */

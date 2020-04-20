@@ -86,8 +86,8 @@ extern "C" {
 #define NDRX_FPA_SYSBUF_DNUM    10          /**< default cache size             */
 #define NDRX_FPA_SYSBUF_POOLNO    (NDRX_FPA_MAX-1)    /**< pool number of sysbuf*/
     
-/** print FPA statistics to ULOG  */
-#define NDRX_FPA_STATS  1
+/** print FPA statistics to ULOG  
+#define NDRX_FPA_STATS  1*/
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
