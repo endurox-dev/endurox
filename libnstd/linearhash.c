@@ -151,7 +151,7 @@ expublic int ndrx_lh_position_get(ndrx_lh_config_t *conf,
     start=try;
     *pos=EXFAIL;
     
-    NDRX_LOG(log_debug, "Try key for [%s] is %d, shm is: %p oflag: %d", 
+    NDRX_LOG(6, "Try key for [%s] is %d, shm is: %p oflag: %d", 
                                         key_debug, try, *(conf->memptr), oflag);
     /*
      * So we loop over filled entries until we found empty one or
@@ -248,7 +248,7 @@ expublic int ndrx_lh_position_get(ndrx_lh_config_t *conf,
         conf->p_val_debug(conf, try, val_debug, sizeof(val_debug));
     }
     
-    NDRX_LOG(log_debug, "ndrx_lh_position_get %s [%s] - result: %d, "
+    NDRX_LOG(6, "ndrx_lh_position_get %s [%s] - result: %d, "
                 "iterations: %d, pos: %d, have_value: %d flags: %hd [%s]",
                 key_typ, key_debug, ret, iterations, *pos, *have_value, 
                 GET_FLAGS(conf, try), val_debug);

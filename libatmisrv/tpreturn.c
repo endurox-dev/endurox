@@ -369,7 +369,7 @@ out:
         else
         {
             NDRX_LOG(log_debug, "%s about to jump to main()", fn);
-            longjmp(G_server_conf.call_ret_env, return_status);
+            longjmp(G_atmi_tls->call_ret_env, return_status);
         }
     }
     else
@@ -616,7 +616,7 @@ out:
         else 
         {
             NDRX_LOG(log_debug, "%s longjmp to main()", fn);
-            longjmp(G_server_conf.call_ret_env, return_status);
+            longjmp(G_atmi_tls->call_ret_env, return_status);
         }
     }
     else
@@ -648,7 +648,7 @@ expublic void _tpcontinue (void)
         return_status|=RETURN_TYPE_THREAD;
         
         NDRX_LOG(log_debug, "Long jumping to continue!");
-        longjmp(G_server_conf.call_ret_env, return_status);
+        longjmp(G_atmi_tls->call_ret_env, return_status);
         /* NDRX_LOG(log_error, "doing nothing after long jmp!"); - not reached. */
     }
 }

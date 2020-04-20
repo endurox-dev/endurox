@@ -272,6 +272,8 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
      
         /* next time reuse what ever we have */
         config->ctl_had_defaults = EXTRUE;
+        config->default_mindispatchthreads = 1; /**< assumed as 1 by atmisrv */
+        config->default_maxdispatchthreads = 1; /**< assumed as 1 by atmisrv */
     }
     
     if (NULL!=cur)
@@ -508,6 +510,30 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_debug, "vszmax: %ld bytes", config->default_vszmax);
                 xmlFree(p);
             }
+            else if (0==strcmp((char*)cur->name, "mindispatchthreads"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->default_mindispatchthreads = atoi(p);
+                NDRX_LOG(log_debug, "default mindispatchthreads: [%s] - %d",
+                                        p, config->default_mindispatchthreads);
+                xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "maxdispatchthreads"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->default_maxdispatchthreads = atoi(p);
+                NDRX_LOG(log_debug, "default maxdispatchthreads: [%s] - %d",
+                                        p, config->default_maxdispatchthreads);
+                xmlFree(p);
+            }
+            else if (0==strcmp((char*)cur->name, "threadstacksize"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->default_threadstacksize = atoi(p);
+                NDRX_LOG(log_debug, "default threadstacksize: [%s] - %d",
+                                        p, config->default_threadstacksize);
+                xmlFree(p);
+            }
             
 #if 0
             else
@@ -737,7 +763,6 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     xmlAttrPtr attr;
     char srvnm[MAXTIDENT+1]={EXEOS};
     char tmp[128];
-    char tmppath[PATH_MAX+1];
     conf_server_node_t *p_srvnode=NULL;
     char *p;
     /* first of all, we need to get server name from attribs */
@@ -766,6 +791,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     p_srvnode->rssmax = config->default_rssmax;
     p_srvnode->vszmax = config->default_vszmax;
+    
+    p_srvnode->mindispatchthreads = config->default_mindispatchthreads;
+    p_srvnode->maxdispatchthreads = config->default_maxdispatchthreads;
+    p_srvnode->threadstacksize= config->default_threadstacksize;
 
     for (attr=cur->properties; attr; attr = attr->next)
     {
@@ -1059,7 +1088,30 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             NDRX_LOG(log_debug, "vszmax: %ld bytes", p_srvnode->vszmax);
             xmlFree(p);
         }
-        
+        else if (0==strcmp((char*)cur->name, "mindispatchthreads"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            p_srvnode->mindispatchthreads = atoi(p);
+            NDRX_LOG(log_debug, "mindispatchthreads: [%s] - %d",
+                                    p, p_srvnode->mindispatchthreads);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "maxdispatchthreads"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            p_srvnode->maxdispatchthreads = atoi(p);
+            NDRX_LOG(log_debug, "maxdispatchthreads: [%s] - %d",
+                                    p, p_srvnode->maxdispatchthreads);
+            xmlFree(p);
+        }
+        else if (0==strcmp((char*)cur->name, "threadstacksize"))
+        {
+            p = (char *)xmlNodeGetContent(cur);
+            p_srvnode->threadstacksize = atoi(p);
+            NDRX_LOG(log_debug, "threadstacksize: [%s] - %d",
+                                    p, p_srvnode->threadstacksize);
+            xmlFree(p);
+        }
     }
     
     /* get rqaddr defaults */
@@ -1155,7 +1207,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     NDRX_LOG(log_debug, "Adding: %s SRVID=%d MIN=%d MAX=%d "
             "CLOPT=\"%s\" ENV=\"%s\" START_MAX=%d END_MAX=%d PINGTIME=%d PING_MAX=%d "
             "EXPORTSVCS=\"%s\" START_WAIT=%d STOP_WAIT=%d CCTAG=\"%s\" RELOADONCHANGE=\"%c\""
-	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\" RSSMAX=%ld VSZMAX=%ld",
+	    "RESPAWN=\"%c\" FULLPATH=\"%s\" CMDLINE=\"%s\" RSSMAX=%ld VSZMAX=%ld "
+            "MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d THREADSTACKSIZE=%d",
                     p_srvnode->binary_name, p_srvnode->srvid, p_srvnode->min,
                     p_srvnode->max, p_srvnode->clopt, p_srvnode->env,
                     p_srvnode->start_max, p_srvnode->end_max, p_srvnode->pingtime, 
@@ -1169,7 +1222,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                     p_srvnode->fullpath,
                     p_srvnode->cmdline,
                     p_srvnode->rssmax,
-                    p_srvnode->vszmax
+                    p_srvnode->vszmax,
+                    p_srvnode->mindispatchthreads,
+                    p_srvnode->maxdispatchthreads,
+                    p_srvnode->threadstacksize
                     );
     DL_APPEND(config->monitor_config, p_srvnode);
 

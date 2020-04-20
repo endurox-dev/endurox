@@ -986,6 +986,24 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
          */
         snprintf(tmp, sizeof(tmp), "%d", (int)getpid());
         NDRX_PM_SET_ENV(CONF_NDRX_SVPPID, tmp);
+        
+        if (p_pm->conf->mindispatchthreads > 1)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->mindispatchthreads);
+            NDRX_PM_SET_ENV(CONF_NDRX_MINDISPATCHTHREADS, tmp);
+        }
+        
+        if (p_pm->conf->maxdispatchthreads > 1)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->maxdispatchthreads);
+            NDRX_PM_SET_ENV(CONF_NDRX_MAXDISPATCHTHREADS, tmp);
+        }
+        
+        if (p_pm->conf->threadstacksize > 0)
+        {
+            snprintf(tmp, sizeof(tmp), "%d", p_pm->conf->threadstacksize);
+            NDRX_PM_SET_ENV(CONF_NDRX_THREADSTACKSIZE, tmp);
+        }
 
         alloc_args = 0;
         REALLOC_CMD;

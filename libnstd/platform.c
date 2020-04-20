@@ -81,18 +81,23 @@ expublic long ndrx_platf_stack_get_size(void)
             {
                 M_stack_size=atoi(p)*1024;
             }
-            else if (EXSUCCEED!=getrlimit (RLIMIT_STACK, &limit))
+            
+            /* if it was set to 0, or EXFAIL */
+            if (M_stack_size <= 0)
             {
-                int err = errno;
-                NDRX_LOG(log_error, "Failed to get stack size: %s", strerror(err));
-                userlog("Failed to get stack size: %s", strerror(err));
-            }
-            else
-            {
-                M_stack_size=limit.rlim_cur;
-                
-                NDRX_LOG(log_info, "Current stack size: %ld, max: %ld", 
-                        M_stack_size,  (long)limit.rlim_max);
+                if (EXSUCCEED!=getrlimit (RLIMIT_STACK, &limit))
+                {
+                    int err = errno;
+                    NDRX_LOG(log_error, "Failed to get stack size: %s", strerror(err));
+                    userlog("Failed to get stack size: %s", strerror(err));
+                }
+                else
+                {
+                    M_stack_size=limit.rlim_cur;
+
+                    NDRX_LOG(log_info, "Current stack size: %ld, max: %ld", 
+                            M_stack_size,  (long)limit.rlim_max);
+                }
             }
             
             if (M_stack_size<0)

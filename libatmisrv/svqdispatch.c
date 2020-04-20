@@ -49,6 +49,7 @@
 
 #include "srv_int.h"
 #include "xa_cmn.h"
+#include "atmi_tls.h"
 #include <atmi_int.h>
 #include <typed_buf.h>
 #include <nstopwatch.h>
@@ -63,6 +64,17 @@ expublic void (*___G_test_delayed_startup)(void) = NULL;
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * Dispatch thread submit the work
+ */
+typedef struct
+{
+    char *call_buf;
+    long call_len;
+    int call_no;
+} thread_dispatch_t;
+
 /*---------------------------Globals------------------------------------*/
 expublic int G_shutdown_req = 0;
 
@@ -343,7 +355,8 @@ expublic int sv_serve_call(int *service, int *status,
     /* Now we should call the service by it self, also we should check was reply back or not */
 
     if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP ||
-            0==(reply_type=setjmp(G_server_conf.call_ret_env)))
+            /* move to atmi_tls: */
+            0==(reply_type=setjmp(G_atmi_tls->call_ret_env)))
     {
         TPSVCINFO svcinfo;
         memset(&svcinfo, 0, sizeof(TPSVCINFO));
@@ -390,9 +403,21 @@ expublic int sv_serve_call(int *service, int *status,
         *service=call_no-ATMI_SRV_Q_ADJUST;
         if (G_shm_srv)
         {
-            G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
-            /* put reply address */
-            NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
+            if (G_server_conf.is_threaded)
+            {
+                pthread_spin_lock(&G_server_conf.mt_lock);
+                G_shm_srv->svc_status[*service]++;
+                pthread_spin_unlock(&G_server_conf.mt_lock);
+                /* put reply address - not supported.
+                NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
+                 * */
+            }
+            else
+            {
+                G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
+                /* put reply address */
+                NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
+            }
         }
         
         /* We need to convert buffer here (if function set...) */
@@ -589,7 +614,7 @@ expublic int sv_serve_connect(int *service, int *status,
     /* Now we should call the service by it self, also we should check was reply back or not */
 
     if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP || 
-            0==(reply_type=setjmp(G_server_conf.call_ret_env)))
+            0==(reply_type=setjmp(G_atmi_tls->call_ret_env)))
     {
         TPSVCINFO svcinfo;
         memset(&svcinfo, 0, sizeof(TPSVCINFO));
@@ -679,9 +704,21 @@ expublic int sv_serve_connect(int *service, int *status,
         *service=call_no-ATMI_SRV_Q_ADJUST;
         if (G_shm_srv)
         {
-            G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
-            /* put reply address */
-            NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
+            if (G_server_conf.is_threaded)
+            {
+                pthread_spin_lock(&G_server_conf.mt_lock);
+                G_shm_srv->svc_status[*service]++;
+                pthread_spin_unlock(&G_server_conf.mt_lock);
+                /* put reply address  - not supported..
+                NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
+                 * */
+            }
+            else
+            {
+                G_shm_srv->svc_status[*service] = NDRXD_SVC_STATUS_BUSY;
+                /* put reply address */
+                NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
+            }
         }
         /* For golang integration we need to know at service the function name */
         NDRX_STRCPY_SAFE(svcinfo.fname, G_server_conf.service_array[call_no]->fn_nm);
@@ -766,6 +803,7 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
     ndrx_stopwatch_reset(&timer);
     int service = EXFAIL;
     int status;
+    unsigned result;
     
     /*if we are bridge, then no more processing required!*/
     if (G_server_conf.flags & SRV_KEY_FLAGS_BRIDGE)
@@ -792,8 +830,18 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
 
     if (G_shm_srv)
     {
-        G_shm_srv->status = NDRXD_SVC_STATUS_BUSY;
-        G_shm_srv->last_command_id = gen_command->command_id;
+        if (G_server_conf.is_threaded)
+        {
+            pthread_spin_lock(&G_server_conf.mt_lock);
+            G_shm_srv->status++;
+            G_shm_srv->last_command_id = gen_command->command_id;
+            pthread_spin_unlock(&G_server_conf.mt_lock);
+        }
+        else
+        {
+            G_shm_srv->status = NDRXD_SVC_STATUS_BUSY;
+            G_shm_srv->last_command_id = gen_command->command_id;
+        }
     }
 
     switch (gen_command->command_id)
@@ -935,14 +983,27 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
             break;
     }
 
+    result = ndrx_stopwatch_get_delta(&timer);
+    
     /* Update stats, if ptr available */
     if (EXFAIL!=service && G_shm_srv)
     {
-        unsigned result = ndrx_stopwatch_get_delta(&timer);
-
+        if (G_server_conf.is_threaded)
+        {
+            pthread_spin_lock(&G_server_conf.mt_lock);
+        }
+        
         /* reset back to avail. */
-        G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
-        G_shm_srv->status = NDRXD_SVC_STATUS_AVAIL;
+        if (G_server_conf.is_threaded)
+        {
+            G_shm_srv->svc_status[service]--;
+            G_shm_srv->status--;
+        }
+        else
+        {
+            G_shm_srv->svc_status[service] = NDRXD_SVC_STATUS_AVAIL;
+            G_shm_srv->status = NDRXD_SVC_STATUS_AVAIL;
+        }
 
         /* update timing */
         /* min, if this is first time, then update directly */
@@ -957,7 +1018,9 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
         
         /* max */
         if (result>G_shm_srv->max_rsp_msec[service])
+        {
             G_shm_srv->max_rsp_msec[service]=result;
+        }
         
         G_shm_srv->last_rsp_msec[service]=result;
 
@@ -981,7 +1044,16 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
             }
             
             G_shm_srv->svc_fail[service]++;
-            
+           
+        }
+        
+        if (G_server_conf.is_threaded)
+        {
+            pthread_spin_unlock(&G_server_conf.mt_lock);
+        }
+        
+        if (status!=EXSUCCEED)
+        {
             /* If we are in global transaction,
              * then we shall notify the master RM of failure
              * or this will be done by caller. The master buffer will be marked
@@ -1009,6 +1081,31 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
     }
 
 out:
+    return ret;
+}
+
+/**
+ * Multi-threaded dispatch thread entry, extract thread data and
+ * run off the standard sv_server_request
+ * @param ptr data ptr
+ * @param p_finish_off stop?
+ * @return EXSUCCEED
+ */
+expublic int sv_server_request_th(void *ptr, int *p_finish_off)
+{
+    int ret;
+    thread_dispatch_t *work = (thread_dispatch_t *)ptr;
+    
+    NDRX_LOG(log_debug, "Dispatch thread got: %ld", work->call_len);
+    ret=sv_server_request(&work->call_buf, work->call_len, work->call_no);
+    
+    if (NULL!=work->call_buf)
+    {
+        NDRX_SYSBUF_FREE(work->call_buf);
+    }
+    
+    NDRX_FPFREE(work);
+    
     return ret;
 }
 
@@ -1343,6 +1440,7 @@ expublic int sv_wait_for_request(void)
                         break;
                     }
                 }
+                
                 NDRX_LOG(log_debug, "Got request on logical channel %d, fd: %d",
                             call_no, evmqd);
 
@@ -1362,15 +1460,54 @@ expublic int sv_wait_for_request(void)
                         goto out;
                     }
                     
-                    /* Save on the big message copy... */
-                    /* in case of MINDISPATCHTHREADS, buf needs to be dynamic
-                     * allocated (and re-used if one threaded used)
-                     * if using > 1 thread, then sv_server_request shall be
-                     * processed by thread_pool and reset the msg_buf to NULL
-                     * so that we allocate new one.
-                     */
-                    sv_server_request(&msg_buf, len, call_no);
-                }
+                    if (!G_server_conf.is_threaded)
+                    {
+                        /* Save on the big message copy... */
+                        /* in case of MINDISPATCHTHREADS, buf needs to be dynamic
+                         * allocated (and re-used if one threaded used)
+                         * if using > 1 thread, then sv_server_request shall be
+                         * processed by thread_pool and reset the msg_buf to NULL
+                         * so that we allocate new one.
+                         */
+                        sv_server_request(&msg_buf, len, call_no);
+                    }
+                    else
+                    {
+                        thread_dispatch_t *work;
+                        
+                        work = NDRX_FPMALLOC(sizeof(thread_dispatch_t), 0);
+
+                        if (NULL==work)
+                        {
+                            int err = errno;
+                            NDRX_LOG(log_error, "Failed to allocate thread_dispatch_t: %s", 
+                                    strerror(err));
+                            userlog("Failed to allocate thread_dispatch_t: %s", 
+                                    strerror(err));
+                            EXFAIL_OUT(ret);
+                        }
+                        
+                        work->call_buf=msg_buf;
+                        msg_buf=NULL;
+                        work->call_len = len;
+                        work->call_no = call_no;
+                        
+                        /* forward to dispatch thread */
+                        NDRX_LOG(log_debug, "Dispatching to worker thread... %d", len);
+                        if (EXSUCCEED!=ndrx_thpool_add_work(G_server_conf.dispthreads, 
+                            (void*)sv_server_request_th, 
+                            (void *)work))
+                        {
+                            EXFAIL_OUT(ret);
+                        }
+                        
+                        /* wait for one free slot before continue with next 
+                         * so that we do not consume all the messages in the
+                         * job queue, instead leave them in system queues
+                         */
+                        ndrx_thpool_wait_one(G_server_conf.dispthreads);
+                    }
+                } /* if normal request */
             }
         } /* for */
     }

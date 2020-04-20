@@ -539,7 +539,6 @@ expublic int ndrx_init(int argc, char** argv)
     if (NULL!=(p=getenv(CONF_NDRX_MINDISPATCHTHREADS)))
     {
         G_server_conf.mindispatchthreads = atoi(p);
-        G_server_conf.maxdispatchthreads = atoi(p);
     }
     
     if (NULL!=(p=getenv(CONF_NDRX_MAXDISPATCHTHREADS)))
@@ -609,6 +608,7 @@ expublic int ndrx_init(int argc, char** argv)
     if (G_server_conf.mindispatchthreads > 1)
     {
         G_server_conf.is_threaded = EXTRUE;
+        pthread_spin_init(&G_server_conf.mt_lock, PTHREAD_PROCESS_PRIVATE);
     }
 
     G_srv_id = G_server_conf.srv_id;
@@ -845,7 +845,7 @@ out:
     /* if thread pool was in place, then perform de-init... */
     if (NULL!=G_server_conf.dispthreads)
     {
-        /* TODO: */
+        ndrx_thpool_destroy(G_server_conf.dispthreads);
     }
 
     /* finish up. */

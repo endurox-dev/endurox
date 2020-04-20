@@ -48,6 +48,7 @@ extern "C" {
 #include <nstd_tls.h>
 #include <ubf_tls.h>
 #include <tx.h>
+#include <setjmp.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -170,9 +171,9 @@ typedef struct
     */
    TRANSACTION_TIMEOUT tx_transaction_timeout;
    
-   
-   
    ndrx_ctx_priv_t integpriv;    /**< integration  private data               */
+   
+   jmp_buf call_ret_env;    /**< for MT server where to return                */
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/

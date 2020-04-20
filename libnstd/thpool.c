@@ -186,7 +186,7 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
     for (n=0; n<num_threads; n++)
     {
         /* lock here */
-        thpool_p->thread_status = EXFALSE;
+        thpool_p->thread_status = EXSUCCEED;
         pthread_mutex_lock(&thpool_p->thcount_lock);
         
         /* run off the thread */
@@ -198,7 +198,7 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
         pthread_mutex_unlock(&thpool_p->thcount_lock);
         
         /* Check the status... */
-        if (!thpool_p->thread_status)
+        if (EXFAIL==thpool_p->thread_status)
         {
             /* join this one... and terminate all */
             pthread_join(thpool_p->threads[n]->pthread, NULL);
@@ -417,6 +417,7 @@ static void* poolthread_do(struct poolthread* thread_p)
     if (EXSUCCEED==ret)
     {
         thpool_p->num_threads_alive += 1;
+        thpool_p->num_threads+=1;
     }
     else
     {

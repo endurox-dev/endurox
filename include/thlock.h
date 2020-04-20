@@ -76,7 +76,7 @@ extern "C" {
 
 /* *** EX_SPIN LOCKS *** */
 #define EX_SPIN_VAR(X)        pthread_spinlock_t X
-#define EX_SPIN_VAR_INIT(X)   if ( EXSUCCEED!=pthread_spin_init ( &X, 0 ) ) \
+#define EX_SPIN_VAR_INIT(X)   if ( EXSUCCEED!=pthread_spin_init ( &X, PTHREAD_PROCESS_PRIVATE ) ) \
                     {\
                         userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
                         exit ( 1 );\

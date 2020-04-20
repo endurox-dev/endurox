@@ -1,7 +1,7 @@
 /**
- * @brief Service dispatcher thread support
+ * @brief Test Enduro/X server dispatch threading - client
  *
- * @file svthreads.c
+ * @file atmiclt75.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,24 +31,22 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-
-/*---------------------------Includes-----------------------------------*/
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
+#include <memory.h>
+#include <math.h>
 
-#include <ndrstandard.h>
+#include <atmi.h>
+#include <ubf.h>
 #include <ndebug.h>
-#include <utlist.h>
-#include <string.h>
-#include "srv_int.h"
-#include "tperror.h"
-#include "atmi_tls.h"
-#include <atmi_int.h>
-#include <atmi_shm.h>
-#include <xa_cmn.h>
-
+#include <test.fd.h>
+#include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include "test75.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -57,15 +55,43 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/* Do init  */
-
 /**
- * Run some init
- * @return 
+ * Do the test call to the server
  */
-expublic int ndrx_svthread_init(void)
+int main(int argc, char** argv)
 {
+
     
+    long rsplen;
+    int i;
+    int ret=EXSUCCEED;
+    
+    for (i=0; i<100000; i++)
+    {
+        UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    
+        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+        {
+            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+            ret=EXFAIL;
+            goto out;
+        }    
+
+        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        {
+            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        tpfree((char *)p_ub);
+    }
+    
+out:
+    tpterm();
+    fprintf(stderr, "Exit with %d\n", ret);
+
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

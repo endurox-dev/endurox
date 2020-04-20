@@ -579,6 +579,15 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         }
         else
         {
+            
+            if (G_server_conf.is_threaded)
+            {
+                ndrx_TPset_error_fmt(TPENOENT, "%s: runtime tpadvertise() not "
+                        "supported for multi-threaded servers", 
+                        __func__, svc_nm);
+                EXFAIL_OUT(ret);
+            }
+
             NDRX_LOG(log_warn, "Processing dynamic advertise");
             if (EXFAIL==dynamic_advertise(entry, svc_nm, p_func, fn_nm))
             {
@@ -650,6 +659,15 @@ expublic int tpunadvertise(char *svcname)
     }
     else
     {
+        
+        if (G_server_conf.is_threaded)
+        {
+            ndrx_TPset_error_fmt(TPENOENT, "%s: runtime tpunadvertise() not "
+                    "supported for multi-threaded servers", 
+                    thisfn, svc_nm);
+            EXFAIL_OUT(ret);
+        }
+        
         if (EXSUCCEED!=dynamic_unadvertise(svcname, NULL, NULL))
         {
             ret=EXFAIL;
