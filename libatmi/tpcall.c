@@ -512,6 +512,11 @@ expublic int ndrx_tpacall (char *svc, char *data,
     {
 	ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
 	    __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
+        
+        /* TODO: add tls hook for callback of non existent service, 
+         * same as tpacall flags
+         */
+        
         EXFAIL_OUT(ret);
     }
     
