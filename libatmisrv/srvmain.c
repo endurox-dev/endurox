@@ -659,7 +659,6 @@ int ndrx_main(int argc, char** argv)
     int ret=EXSUCCEED;
     char *env_procname;
     char *env_clopt = NULL;
-    int i;
     
     /* in case of argc/argv are empty, we shall attempt  */
     
@@ -749,15 +748,6 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /*
-     * Initialize services
-     */
-    if (NULL!=G_tpsvrinit__ && EXSUCCEED!=G_tpsvrinit__(argc, argv))
-    {
-        NDRX_LOG(log_error, "tpsvrinit() fail");
-        userlog("tpsvrinit() fail");
-        EXFAIL_OUT(ret);
-    }
     
     /*
      * Initialize services, system..
@@ -768,6 +758,20 @@ int ndrx_main(int argc, char** argv)
         userlog("tpsvrinit_sys() fail");
         EXFAIL_OUT(ret);
     }
+    
+    /* TODO: hook up atmitls with tpacall() service not found callback */
+    
+    /*
+     * Initialize services
+     */
+    if (NULL!=G_tpsvrinit__ && EXSUCCEED!=G_tpsvrinit__(argc, argv))
+    {
+        NDRX_LOG(log_error, "tpsvrinit() fail");
+        userlog("tpsvrinit() fail");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* TODO: unset hook...  */
     
     /*
      * Run off thread init if any
@@ -831,6 +835,10 @@ int ndrx_main(int argc, char** argv)
         userlog("Failed to add atfork hanlder!");
         EXFAIL_OUT(ret);
     }
+    
+    /* TODO: reply the linked list of any internal tpacall("X", TPNOREPLY)
+     * so that infinte servers may start...
+     */
 
     /* run process here! */
     if (EXSUCCEED!=(ret=sv_wait_for_request()))
