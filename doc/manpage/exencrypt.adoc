@@ -10,7 +10,7 @@ exencrypt - Encrypt string and print the Base64 value to stdout
 
 SYNOPSIS
 --------
-*exencrypt* STRING [STRING...]
+*exencrypt* [STRING...]
 
 
 DESCRIPTION
@@ -19,6 +19,11 @@ Program encrypts the *STRING* value passed on command line. In the result progra
 prints to *stdout* encrypted value of the string. The encrypted values is base64
 string. The debug is configured in standard way as for all other binaries via
 'ndrxdebug.conf' or Common Config.
+
+In case if no command line arguments *STRING* are not passed, data for encryption are
+asked in interactive way, two times. If inputs does not match, error message
+is provided and program is terminated with error code. Data input messages
+are printed to *stderr*.
 
 Encryption keys which are used for encryption are provided either by using built-in
 algorithm (username+hostname) hashed with SHA1. Or from vendor specific loaded plugin.
@@ -44,6 +49,16 @@ Two string encryption:
 $ exencrypt HELLO WORLD
 AAAABbBtKbtIv9BXe1SioTYi5xw=
 AAAABRaPhXxibr6ZktcZ6S71i50=
+--------------------------------------------------------------------------------
+
+
+Interactive mode:
+
+--------------------------------------------------------------------------------
+$ exencrypt 
+Enter data to encrypt (e.g. password): 
+Retype data to encrypt (e.g. password): 
+AAAABI5qGpDDyBZsqUP8lZeTjI4=
 --------------------------------------------------------------------------------
 
 EXIT STATUS

@@ -471,7 +471,7 @@ processing listings across all supported OSes.
 - Version 7.0.26 released on 09/03/2020 (stabel) Support #528, Support, #527, Support #524,
 Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
-- Version 7.0.28 released on 12/03/2020 (stabel, staging) Bug #530, Feature #313
+- Version 7.0.28 released on 12/03/2020 (stabel) Bug #530, Feature #313, Feature #536
 
 # Build configurations
 
