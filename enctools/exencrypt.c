@@ -59,7 +59,7 @@
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
-    char encbuf[PATH_MAX];
+    char encbuf[PATH_MAX+1];
     char temp_buf[PATH_MAX+1];
     char *manual_argv[2] = {argv[0], temp_buf};
     char **enc_ptr = argv;
