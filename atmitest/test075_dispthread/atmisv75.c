@@ -40,6 +40,7 @@
 #include <test.fd.h>
 #include <string.h>
 #include <unistd.h>
+#include <thlock.h>
 #include "test75.h"
 
 /*---------------------------Externs------------------------------------*/
@@ -48,6 +49,10 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate volatile short M_counter = 0; /** thread number */
+exprivate __thread short M_thr_id = 0;
+MUTEX_LOCKDECL(M_counter_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -72,6 +77,8 @@ void TESTSV (TPSVCINFO *p_svc)
         goto out;
     }
     
+    sleep (1);
+    
     if (0!=strcmp(testbuf, VALUE_EXPECTED))
     {
         NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
@@ -79,7 +86,15 @@ void TESTSV (TPSVCINFO *p_svc)
         ret=EXFAIL;
         goto out;
     }
-        
+    
+    /* set the thread id back */
+    if (EXSUCCEED!=Bchg(p_ub, T_SHORT_FLD, 0, (char *)&M_thr_id, 0L))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to set T_SHORT_FLD to %d: %s", 
+                M_thr_id, Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -120,14 +135,17 @@ void tpsvrdone(void)
 int tpsvrthrinit(int argc, char **argv)
 {
     int ret = EXSUCCEED;
-    NDRX_LOG(log_debug, "tpsvrthrinit called [argc=%d] argv[0]=[%s]", 
-            argc, argv[0]);
-
-    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
-    {
-        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
-        EXFAIL_OUT(ret);
-    }
+    
+    MUTEX_LOCK_V(M_counter_lock);
+    
+    M_thr_id = M_counter;
+    M_counter++;
+    
+    MUTEX_UNLOCK_V(M_counter_lock);
+    
+    NDRX_LOG(log_debug, "tpsvrthrinit called argc=[%d] argv[0]=[%s] thr_id=[%hd]", 
+            argc, argv[0], M_thr_id);
+    
 out:
     return ret;
 }

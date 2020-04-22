@@ -649,6 +649,49 @@ exprivate void childsrvuninit(void)
 }
 
 /**
+ * Wrapper for server thread done.
+ * This calls the users' tpsvrthrdone. Additionally tpterm() is called
+ * to terminate the thread ATMI session (basically a client)
+ */
+exprivate void ndrx_call_tpsvrthrdone(void)
+{
+    if (NULL!=ndrx_G_tpsvrthrdone)
+    {
+        ndrx_G_tpsvrthrdone();
+    }
+    
+    /* terminate the session */
+    tpterm();
+}
+
+
+/**
+ * Thread basic init. Performs initial tpinit.
+ * @param argc command line argument count
+ * @param argv cli arguments
+ */
+exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
+{
+    int ret = EXSUCCEED;
+    
+    /* terminate the session */
+    if (EXSUCCEED!=tpterm())
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL!=ndrx_G_tpsvrthrinit 
+            && ndrx_G_tpsvrthrinit(argc, argv) < 0)
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+
+/**
  * Real processing starts here.
  * @param argc
  * @param argv
@@ -780,7 +823,7 @@ int ndrx_main(int argc, char** argv)
     if (G_server_conf.is_threaded)
     {
         G_server_conf.dispthreads = ndrx_thpool_init(G_server_conf.mindispatchthreads, 
-                &ret, ndrx_G_tpsvrthrinit, ndrx_G_tpsvrthrdone, argc, argv);
+                &ret, ndrx_call_tpsvrthrinit, ndrx_call_tpsvrthrdone, argc, argv);
         
         if (EXSUCCEED!=ret)
         {

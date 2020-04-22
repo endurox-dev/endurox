@@ -462,6 +462,7 @@ expublic int ndrx_tpchkunsol(void)
             tmp->prev = NULL;
             tmp->next = NULL;
 
+            /* TODO: Add some lock ... (this just exchanges ptr, thus spin lock) */
             DL_APPEND(G_atmi_tls->memq, tmp); 
         }
         /* Note loop will be terminated if not message in Q */
