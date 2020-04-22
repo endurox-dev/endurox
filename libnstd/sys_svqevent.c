@@ -135,12 +135,6 @@ exprivate int M_shutdown = EXFALSE;      /**< is shutdown requested?      */
 exprivate int volatile M_alive = EXFALSE;         /**< is monitoring thread alive? */
 exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal?    */
 
-#if 0
-/* not used anymore... */
-exprivate mqd_t M_delref = NULL;        /**< this is delete reference            */
-EX_SPIN_LOCKDECL(M_delreflock);         /**< delete reference lock               */
-#endif
-
 MUTEX_LOCKDECL(M_mon_lock_mq);      /**< Mutex lock for shared M_mon access, mq  */
 MUTEX_LOCKDECL(M_mon_lock_fd);      /**< Mutex lock for shared M_mon access, fd  */
 
@@ -157,37 +151,6 @@ MUTEX_LOCKDECL(M_mon_lock_fd);      /**< Mutex lock for shared M_mon access, fd 
  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
-#if 0
-/**
- * Lock the reference list (should be done before forking..)
- */
-exprivate void ndrx_svq_delref_lock(void)
-{
-    EX_SPIN_LOCK_V(M_delreflock);
-}
-
-/**
- * Unlock reference list (shall be done after forking by parent and child)
- */
-exprivate void ndrx_svq_delref_unlock(void)
-{
-    EX_SPIN_UNLOCK_V(M_delreflock);
-}
-
-
-/**
- * Register QD for delete - local ptr copy so that sanitizer does not see the
- * leak...
- * @param qd queue descriptor to register
- */
-expublic void ndrx_svq_delref_add(mqd_t qd)
-{
-    EX_SPIN_LOCK_V(M_delreflock);
-    EXHASH_ADD_PTR(M_delref, self, qd);
-    EX_SPIN_UNLOCK_V(M_delreflock);
-}
-#endif
 
 /**
  * Add FD to polling structure
@@ -1141,58 +1104,6 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                             NDRX_LOG(log_info, "Terminate request...");
                             goto out;
                             break;
-#if 0
-                        case NDRX_SVQ_MON_CLOSE:
-                            /*
-                             * This is close, not unlink...
-                             */    
-                            NDRX_LOG(log_info, "Close queue command mqd: %p qstr: [%s]/%d",
-                                    cmd.mqd, cmd.mqd->qstr, cmd.mqd->qid);
-                         
-                            if (EXSUCCEED!=ndrx_svq_mqd_close(cmd.mqd))
-                            {
-                                ret = EXFAIL;
-                            }
-
-                            
-                            /* But admin works for main q
-                             * which is closed at the un-init...
-                             * and before that admin thread is terminated.
-                            pthread_mutex_lock(&cmd.mqd->barrier);
-                            pthread_mutex_unlock(&cmd.mqd->barrier);
-                            */
-                            
-                            /* ok finish off */
-                            pthread_spin_destroy(&cmd.mqd->rcvlock);
-                            pthread_spin_destroy(&cmd.mqd->rcvlockb4);
-                            pthread_mutex_destroy(&cmd.mqd->barrier);
-                            pthread_mutex_destroy(&cmd.mqd->qlock);
-                            
-                            EX_SPIN_LOCK_V(M_delreflock);
-                            EXHASH_FIND_PTR(M_delref, (void **)&(cmd.mqd), tmpq);
-                            
-                            if (NULL==tmpq)
-                            {
-                                NDRX_LOG(log_error, "mqd %p not found del hash!", 
-                                        cmd.mqd->self);
-                                userlog("mqd %p not found del hash!", 
-                                        cmd.mqd->self);
-                                EX_SPIN_UNLOCK_V(M_delreflock);
-                                EXFAIL_OUT(ret);
-                            }
-                            
-                            EXHASH_DEL(M_delref, tmpq);
-                            EX_SPIN_UNLOCK_V(M_delreflock);
-                            
-                            NDRX_FREE(cmd.mqd);
-                            
-                            if (EXSUCCEED!=ret)
-                            {
-                                goto out;
-                            }
-                            
-                            break;
-#endif
                     }
                     
                 }

@@ -174,6 +174,8 @@ typedef struct
    ndrx_ctx_priv_t integpriv;    /**< integration  private data               */
    
    jmp_buf call_ret_env;    /**< for MT server where to return                */
+   
+   /* TODO: Add spin lock */
     
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/

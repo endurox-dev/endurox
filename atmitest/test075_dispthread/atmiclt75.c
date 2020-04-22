@@ -49,6 +49,7 @@
 #include "test75.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define TEST_THREADS            5   /**< number of threads used         */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -60,29 +61,63 @@
  */
 int main(int argc, char** argv)
 {
-
-    
     long rsplen;
-    int i;
+    int i, j;
     int ret=EXSUCCEED;
+    int cd[TEST_THREADS];
+    short cd_rsp[TEST_THREADS];
     
-    for (i=0; i<100000; i++)
+    for (i=0; i<10; i++)
     {
         UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    
-        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+        
+        for (j=0; j<TEST_THREADS; j++)
         {
-            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-            ret=EXFAIL;
-            goto out;
-        }    
+            if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
+            {
+                NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }    
 
-        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-        {
-            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
+            if (EXFAIL == (cd[j]=tpacall("TESTSV", (char *)p_ub, 0L, 0)))
+            {
+                NDRX_LOG(log_error, "TESTSV %d %d failed: %s", i, j, tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
         }
+        
+        memset(cd_rsp, 0, sizeof(cd_rsp));
+        for (j=0; j<TEST_THREADS; j++)
+        {
+            short tmp;
+            if (EXFAIL==tpgetrply(&cd[j], (char **)&p_ub, &rsplen, 0))
+            {
+                NDRX_LOG(log_error, "tpgetrply %d %d failed: %s", i, j, 
+                        tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+            /* get the reply thread id... */
+            if (EXSUCCEED!=Bget(p_ub, T_SHORT_FLD, 0, (char *)&tmp, 0))
+            {
+                NDRX_LOG(log_error, "failed to get T_SHORT_FLD: %s", i, j, 
+                        Bstrerror(Berror));
+                EXFAIL_OUT(ret);
+            }
+            
+            cd_rsp[tmp]++;
+        }
+        
+        /* check that very response is unique */
+        for (j=0; j<TEST_THREADS; i++)
+        {
+            if (1!=cd_rsp[j])
+            {
+                NDRX_LOG(log_error, "Slot %d invalid rsp %hd", j, cd_rsp[j]);
+                EXFAIL_OUT(ret);
+            }
+        }
+        
         
         tpfree((char *)p_ub);
     }

@@ -735,7 +735,10 @@ expublic int ndrx_tpgetrply (int *cd,
             
             /* delete first elem in the list */
             tmp = G_atmi_tls->memq;
+            
+            /* Add some lock too... */
             DL_DELETE(G_atmi_tls->memq, tmp);
+            
             NDRX_FPFREE(tmp);
             
             /* Switch to received buffer... */
