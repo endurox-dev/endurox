@@ -362,6 +362,9 @@ extern NDRX_API void ndrx_intmap_remove (ndrx_intmap_t ** hash);
 extern NDRX_API FILE* ndrx_mkstemps(char *filetempl, int suffixlen, long flags);
 extern NDRX_API int ndrx_is_numberic(char *str);
 
+extern NDRX_API void ndrx_read_silent(char *buf, size_t bufsz);
+extern NDRX_API int ndrx_get_password(char *msg, char *buf, size_t bufsz);
+
 #ifdef	__cplusplus
 }
 #endif

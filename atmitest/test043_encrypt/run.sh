@@ -135,8 +135,32 @@ RET=$?
 echo "Decrypted value (with different key): [$DECSTR]"
 
 if [ "$RET" -eq "0" ] && [ "X$DECSTR" == "Xhello Test 2" ]; then
-    echo "ERROR ! value shall not be decrypted successfully with different key!"
+    echo "ERROR ! value shall not be decrypted successfully with different key! $RET"
     go_out -7
+fi
+
+echo "Checking interactive mode..."
+#
+# Check the CLI interactive mode
+#
+ENC_CLI=`{ echo 'hello Test 2'; echo 'hello Test 2'; } | exencrypt`
+RET=$?
+
+#Check values...
+if [ "$RET" -eq "0" ] && [ "X$ENC_CLI" == "X$ENCSTR" ]; then
+    echo "ERROR ! Interactive enc value [$ENC_CLI] expected [$ENCSTR]! $RET"
+    go_out -8
+fi
+
+# check input do not match...
+
+ENC_CLI=`{ echo 'hello Test 2'; echo 'hello Test 1'; } | exencrypt`
+RET=$?
+
+#Check values...
+if [ "$RET" -eq "0" ]; then
+    echo "ERROR ! Interactive no error on non matching data!"
+    go_out -9
 fi
 
 #

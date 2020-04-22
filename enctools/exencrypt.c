@@ -59,22 +59,36 @@
 int main(int argc, char** argv)
 {
     int ret = EXSUCCEED;
-    char encbuf[PATH_MAX];
+    char encbuf[PATH_MAX+1];
+    char temp_buf[PATH_MAX+1];
+    char *manual_argv[2] = {argv[0], temp_buf};
+    char **enc_ptr = argv;
     int i;
     
     /* pull in plugin loader.. */
     if (argc <= 1)
     {
-        fprintf(stderr, "usage: %s <string_to_encrypt>\n", argv[0]);
+        /*fprintf(stderr, "usage: %s <string_to_encrypt>\n", argv[0]);
         EXFAIL_OUT(ret);
+         */
+        if (EXSUCCEED!=ndrx_get_password("data to encrypt (e.g. password)", 
+                temp_buf, sizeof(temp_buf)))
+        {
+            EXFAIL_OUT(ret);
+        }
+        else
+        {
+            enc_ptr = manual_argv;
+            argc=2;
+        }
     }
     
     for (i=1; i<argc; i++)
     {
         /* Pull-in plugins, by debug... */
-        NDRX_LOG(6, "Encrypting [%s]", argv[i]);
+        NDRX_LOG(6, "Encrypting [%s]", enc_ptr[i]);
         
-        if (EXSUCCEED!=ndrx_crypto_enc_string(argv[i], encbuf, sizeof(encbuf)))
+        if (EXSUCCEED!=ndrx_crypto_enc_string(enc_ptr[i], encbuf, sizeof(encbuf)))
         {
             NDRX_LOG(log_error, "Failed to encrypt string: %s", Nstrerror(Nerror));
             fprintf(stderr, "Failed to encrypt string: %s\n", Nstrerror(Nerror));
