@@ -47,11 +47,11 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <nstd_tls.h>
-
-#include "nstdutil.h"
-#include "ndebug.h"
-#include "userlog.h"
-#include "atmi_int.h"
+#include <termios.h>
+#include <nstdutil.h>
+#include <ndebug.h>
+#include <userlog.h>
+#include <atmi_int.h>
 #include <errno.h>
 #include <excrypto.h>
 /*---------------------------Externs------------------------------------*/
@@ -1902,6 +1902,75 @@ expublic void ndrx_intmap_remove (ndrx_intmap_t ** hash)
         NDRX_FREE(e);
     }
     
+}
+
+/**
+ * Read password from CLI, disable terminal while read
+ * @param buf buffer where to load input
+ * @param bufsz buffer size
+ */
+expublic void ndrx_read_silent(char *buf, size_t bufsz)
+{
+    static struct termios old_terminal;
+    static struct termios new_terminal;
+
+    /* get terminal attrib*/
+    tcgetattr(STDIN_FILENO, &old_terminal);
+
+    /* remove echo */
+    new_terminal = old_terminal;
+    new_terminal.c_lflag &= ~(ECHO);
+
+    /* apply settings */
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_terminal);
+
+    ndrx_fgets_stdin_strip(buf, bufsz);
+
+    /* restore original terminal settings */
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_terminal);    
+}
+
+/**
+ * Read and check password
+ * @param msg message for password request
+ * @param buf buffer where to load the password (may be updated even on fail - no match)
+ * @param bufsz buffer size of password
+ * @return EXSUCCEED - read twice, machined, EXFAIL - did not match or malloc fail
+ */
+expublic int ndrx_get_password(char *msg, char *buf, size_t bufsz)
+{
+    char *tmp_buf = NDRX_MALLOC(bufsz);
+    int ret = EXSUCCEED;
+    
+    if (NULL==tmp_buf)
+    {
+        fprintf(stderr, "System error.\n");
+        NDRX_LOG(log_error, "Failed to malloc: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    fprintf(stderr, "Enter %s: ", msg);
+    ndrx_read_silent(tmp_buf, bufsz);
+    fprintf(stderr, "\n");
+    
+    fprintf(stderr, "Retype %s: ", msg);
+    ndrx_read_silent(buf, bufsz);
+    fprintf(stderr, "\n");
+    
+    if (0!=strcmp(buf, tmp_buf))
+    {
+        fprintf(stderr, "Sorry, input do not match\n");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+            
+    if (NULL!=tmp_buf)
+    {
+        NDRX_FREE(tmp_buf);
+    }
+
+    return ret;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -353,6 +353,9 @@ extern NDRX_API ndrx_intmap_t *ndrx_intmap_find (ndrx_intmap_t ** hash, int key)
 extern NDRX_API ndrx_intmap_t * ndrx_intmap_add (ndrx_intmap_t ** hash, int key, int value);
 extern NDRX_API void ndrx_intmap_remove (ndrx_intmap_t ** hash);
 
+extern NDRX_API void ndrx_read_silent(char *buf, size_t bufsz);
+extern NDRX_API int ndrx_get_password(char *msg, char *buf, size_t bufsz);
+
 #ifdef	__cplusplus
 }
 #endif
