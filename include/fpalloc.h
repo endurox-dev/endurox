@@ -62,7 +62,7 @@ extern "C" {
  * Note that dynamic range will be
  * NDRX_FPA_MAX - 1, as the last entry is SYSBUF
  */
-#define NDRX_FPA_MAX            6                   /**< NDRX_MSGSIZEMAX pool no*/
+#define NDRX_FPA_MAX            7                   /**< NDRX_MSGSIZEMAX pool no*/
 #define NDRX_FPA_DYN_MAX        (NDRX_FPA_MAX-1)    /**< dynamic range          */
     
 #define NDRX_FPA_0_SIZE         (256)       /**< 256b pool                 */
@@ -79,8 +79,11 @@ extern "C" {
     
 #define NDRX_FPA_4_SIZE         (4*1024)    /**< 4KB pool                  */
 #define NDRX_FPA_4_DNUM         10          /**< default cache size        */
+
+#define NDRX_FPA_5_SIZE         (8*1024)    /**< 8KB pool                  */
+#define NDRX_FPA_5_DNUM         10          /**< default cache size        */
     
-#define NDRX_FPA_SIZE_MAX       NDRX_FPA_4_SIZE   /**< max dynamic range   */
+#define NDRX_FPA_SIZE_MAX       NDRX_FPA_5_SIZE   /**< max dynamic range   */
 
 #define NDRX_FPA_SYSBUF_SIZE         NDRX_FPA_SIZE_SYSBUF   /**< sysbuf pool    */
 #define NDRX_FPA_SYSBUF_DNUM    10          /**< default cache size             */

@@ -1906,7 +1906,6 @@ expublic void ndrx_intmap_remove (ndrx_intmap_t ** hash)
     
 }
 
-<<<<<<< HEAD
 #define TEMP_MAKS_LEN 6
 /**
  * Generate temporary file name. Cross platform. Seem Solaris 10 does not have

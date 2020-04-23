@@ -77,7 +77,8 @@ exprivate volatile ndrx_fpapool_t M_fpa_pools[NDRX_FPA_MAX] =
     ,{NDRX_FPA_2_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_2_DNUM}      /* 2 */
     ,{NDRX_FPA_3_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_3_DNUM}      /* 3 */
     ,{NDRX_FPA_4_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_4_DNUM}      /* 4 */
-    ,{NDRX_FPA_SIZE_SYSBUF,  NDRX_FPSYSBUF, NDRX_FPA_SYSBUF_DNUM} /* 5 */
+    ,{NDRX_FPA_5_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_5_DNUM}      /* 5 */
+    ,{NDRX_FPA_SIZE_SYSBUF,  NDRX_FPSYSBUF, NDRX_FPA_SYSBUF_DNUM} /* 6 */
 };
 
 /*---------------------------Statics------------------------------------*/
