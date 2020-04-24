@@ -646,27 +646,44 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             /* lets put the event to the message queue... 
              * firstly we need to allocate the event.
              */            
-            if (NULL==(ev = NDRX_FPMALLOC(sizeof(ndrx_svq_ev_t), 0)))
+            
+            /* In case if not matched, why send event? Bug #537 */
+           
+            if (wait_matched)
             {
-                err = errno;
-                NDRX_LOG(log_error, "Failed to allocate ndrx_svq_ev_t: %s", 
-                            strerror(err));
-                userlog("Failed to allocate ndrx_svq_ev_t: %s", 
-                            strerror(err));
-                EXFAIL_OUT(ret);
-            }
+                if (NULL==(ev = NDRX_FPMALLOC(sizeof(ndrx_svq_ev_t), 0)))
+                {
+                    err = errno;
+                    NDRX_LOG(log_error, "Failed to allocate ndrx_svq_ev_t: %s", 
+                                strerror(err));
+                    userlog("Failed to allocate ndrx_svq_ev_t: %s", 
+                                strerror(err));
+                    EXFAIL_OUT(ret);
+                }
 
-            ev->ev = NDRX_SVQ_EV_TOUT;
-            ev->data = NULL;
-            ev->stamp_seq = r->stamp_seq;
-            ev->stamp_time = r->stamp_time;
-            ev->prev = NULL;
-            ev->next = NULL;
-            if (EXSUCCEED!=ndrx_svq_mqd_put_event(r->mqd, ev))
+                ev->ev = NDRX_SVQ_EV_TOUT;
+                ev->data = NULL;
+                ev->stamp_seq = r->stamp_seq;
+                ev->stamp_time = r->stamp_time;
+                ev->prev = NULL;
+                ev->next = NULL;
+                ret=ndrx_svq_mqd_put_event(r->mqd, &ev);
+                
+                if (NULL!=ev)
+                {
+                    NDRX_FPFREE(ev);
+                }
+                
+                if (EXSUCCEED!=ret)
+                {
+                    NDRX_LOG(log_error, "Failed to put event for %p typ %d",
+                            r->mqd, NDRX_SVQ_EV_TOUT);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
             {
-                NDRX_LOG(log_error, "Failed to put event for %p typ %d",
-                        r->mqd, ev->ev);
-                EXFAIL_OUT(ret);
+                NDRX_LOG(log_debug, "Wait not matched -> do not put event...");
             }
             
             /* delete timeout object from hash as no more relevant... */
@@ -679,11 +696,6 @@ out:
     
     MUTEX_UNLOCK_V(M_mon_lock_mq);
 
-    if (EXSUCCEED!=ret && NULL!=ev)
-    {
-        NDRX_FPFREE(ev);
-    }
-
     return ret;
 }
 
@@ -694,10 +706,10 @@ out:
  * Also... we might want to allow only single access to this function.
  * as it might cause some unpredictable deadlocks...
  * @param mqd message queue descriptor
- * @param ev allocate event structure
+ * @param ev allocate event structure, cleared if used.
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
+expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
 {
     int ret = EXSUCCEED;
     int l2, l1;
@@ -710,8 +722,9 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t *ev)
     
     /* Append messages to Q: */
     pthread_mutex_lock(&(mqd->qlock));
-    DL_APPEND(mqd->eventq, ev);
+    DL_APPEND(mqd->eventq, (*ev));
     pthread_mutex_unlock(&(mqd->qlock));
+    *ev=NULL;
     
     l1=pthread_spin_trylock(&(mqd->rcvlockb4));
     l2=pthread_spin_trylock(&(mqd->rcvlock));
@@ -1143,7 +1156,14 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
                    /* get queue descriptor  
                     * the data is deallocated by target thread
                     */
-                   if (EXSUCCEED!=ndrx_svq_mqd_put_event(fdh->mqd, ev))
+                   ret = ndrx_svq_mqd_put_event(fdh->mqd, &ev);
+                   
+                   if (NULL!=ev)
+                   {
+                       NDRX_FPFREE(ev);
+                   }
+                   
+                   if (EXSUCCEED!=ret)
                    {
                        NDRX_LOG(log_error, "Failed to put FD event for %p - FAIL", 
                                fdh->mqd);
@@ -1655,7 +1675,7 @@ expublic int ndrx_svq_moncmd_close(mqd_t mqd)
  *  not processed the FD, we will gate again FD wakups for the same events.
  * @return EXSUCCEED (got message from q)/EXFAIL (some event received)
  */
-expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, size_t *maxlen, 
+expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen, 
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd)
 {
     int ret = EXSUCCEED;

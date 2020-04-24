@@ -278,18 +278,26 @@ exprivate void * ndrx_svqadmin_run(void* arg)
                 ev->next = NULL;
                 ev->prev = NULL;
                 NDRX_LOG(log_debug, "Putting admin event...");
-
-                if (EXSUCCEED!=ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), ev))
+                ret = ndrx_svq_mqd_put_event(ndrx_svq_mainq_get(), &ev);
+                
+                /* shall be cleared if sent OK */
+                if (NULL!=ev)
+                {
+                    NDRX_SYSBUF_FREE(buf);
+                    NDRX_FPFREE(ev);
+                }
+                
+                /* Release pointer, as it was delivered to poller..
+                 * so that we do not memory leaks at shutdown...
+                 */
+                buf = NULL;
+                
+                if (EXSUCCEED!=ret)
                 {
                     NDRX_LOG(log_error, "Failed to put admin event");
                     userlog("Failed to put admin event");
                     EXFAIL_OUT(ret);
                 }
-
-                /* Release pointer, as it was delivered to poller..
-                 * so that we do not memory leaks at shutdown...
-                 */
-                buf = NULL;
 
                 NDRX_LOG(log_debug, "After admin event...");
             }
