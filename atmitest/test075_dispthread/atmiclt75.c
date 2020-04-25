@@ -100,7 +100,7 @@ int main(int argc, char** argv)
             /* get the reply thread id... */
             if (EXSUCCEED!=Bget(p_ub, T_SHORT_FLD, 0, (char *)&tmp, 0))
             {
-                NDRX_LOG(log_error, "failed to get T_SHORT_FLD: %s", i, j, 
+                NDRX_LOG(log_error, "failed to get T_SHORT_FLD %d %d: %s", i, j, 
                         Bstrerror(Berror));
                 EXFAIL_OUT(ret);
             }

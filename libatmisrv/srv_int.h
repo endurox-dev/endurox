@@ -188,7 +188,7 @@ struct srv_conf
     int maxdispatchthreads;     /**< maximum dispatch trheads       */
   
     threadpool dispthreads;     /**< thread pool for dispatch threads*/
-    EX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync           */
+    EX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync        */
 };
 
 typedef struct srv_conf srv_conf_t;
@@ -205,6 +205,28 @@ struct server_ctx_info
     TPTRANID                  tranid;           /* Transaction ID  (if used) */
 };
 typedef struct server_ctx_info server_ctx_info_t;
+
+/**
+ * Defer server tpacall
+ */
+typedef struct ndrx_tpacall_defer ndrx_tpacall_defer_t;
+struct ndrx_tpacall_defer
+{   
+    /** service to call */
+    char svcnm[MAXTIDENT+1];
+    
+    /** data may be null if sending NULL buffer */
+    char *data;
+    
+    /** data len */
+    long len;
+    
+    /** call flags */
+    long flags;
+    
+    ndrx_tpacall_defer_t *next;
+    ndrx_tpacall_defer_t *prev;
+};
 
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API srv_conf_t G_server_conf;
@@ -272,6 +294,11 @@ extern NDRX_API int atmisrv_array_remove_element(void *arr, int elem, int len, i
 
 extern NDRX_API int ndrx_skipsvc_chk(char *svc_nm);
 extern NDRX_API void ndrx_skipsvc_delhash(void);
+
+extern NDRX_API int ndrx_svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b);
+extern NDRX_API void ndrx_sv_advertise_lock();
+extern NDRX_API void ndrx_sv_advertise_unlock();
+
 
 #ifdef	__cplusplus
 }

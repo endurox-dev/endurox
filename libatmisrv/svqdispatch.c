@@ -1173,8 +1173,26 @@ expublic int process_admin_req(char **buf, long len, int *shutdown_req)
         
         NDRX_LOG(log_warn, "Server requested unadvertise service [%s] by [%s]",
                                         call_srv->svc_nm, call->reply_queue);
-        /* Send details to ndrxd */
-        dynamic_unadvertise(call_srv->svc_nm, NULL, NULL);
+        
+        /*
+         * There are too much service structures to protect, thus better
+         * do not support dynamic advertise (for now...)
+         */
+        if (G_server_conf.is_threaded)
+        {
+            NDRX_LOG(log_error, "Got command from ndrxd: %d - ndrxd unadvertise (svcnm=[%s]), "
+                    "but this MT server, unsupported - ignore", 
+                    call->command, call_srv->svc_nm);
+            
+            userlog("Got command from ndrxd: %d - ndrxd unadvertise (svcnm=[%s]), "
+                    "but this MT server, unsupported - ignore", 
+                    call->command, call_srv->svc_nm);
+        }
+        else
+        {
+            /* Send details to ndrxd */
+            dynamic_unadvertise(call_srv->svc_nm, NULL, NULL);
+        }
     }
     else if (NDRXD_COM_NXDREADV_RQ==call->command)
     {
@@ -1182,8 +1200,25 @@ expublic int process_admin_req(char **buf, long len, int *shutdown_req)
         
         NDRX_LOG(log_warn, "Server requested readvertise service [%s] by [%s]",
                                         call_srv->svc_nm, call->reply_queue);
-        /* Send details to ndrxd */
-        dynamic_readvertise(call_srv->svc_nm);
+        
+        /*
+         * There are too much service structures to protect, thus better
+         * do not support dynamic advertise (for now...)
+         */
+        if (G_server_conf.is_threaded)
+        {
+            NDRX_LOG(log_error, "Got command from ndrxd: %d - ndrxd re-advertise (svcnm=[%s]), "
+                    "but this MT server, unsupported - ignore", 
+                    call->command, call_srv->svc_nm);
+            
+            userlog("Got command from ndrxd: %d - ndrxd re-advertise (svcnm=[%s]), "
+                    "but this MT server, unsupported - ignore", 
+                    call->command, call_srv->svc_nm);
+        }
+        else
+        {
+            dynamic_readvertise(call_srv->svc_nm);
+        }
     }
     else if (NDRXD_COM_SRVPING_RQ==call->command)
     {

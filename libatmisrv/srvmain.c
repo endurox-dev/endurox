@@ -77,6 +77,13 @@
 /*---------------------------Globals------------------------------------*/
 srv_conf_t G_server_conf;
 ndrx_svchash_t *ndrx_G_svchash_skip = NULL;
+
+/**
+ * List of defer messages so that we can call self services during the
+ * startup...
+ */
+exprivate ndrx_tpacall_defer_t *M_deferred_tpacalls = NULL;
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -690,6 +697,166 @@ out:
     return ret;
 }
 
+/**
+ * Enqueue messages for later send
+ * firstly search the service.
+ * We need locking so that if doing advertise / unadvertise from server
+ * threads
+ * @param svc service name to call
+ * @param data XATMI allocated buffer
+ * @param len data len
+ * @param flags tpacall flags
+ * @return EXSUCCEED/EXFAIL 
+ */
+exprivate int ndrx_tpacall_noservice_hook_defer(char *svc, char *data, long len, long flags)
+{
+    int ret = EXSUCCEED;
+    svc_entry_fn_t *existing=NULL, eltmp;
+    ndrx_tpacall_defer_t *call = NULL;
+    int err;
+    
+    NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
+    
+    DL_SEARCH(G_server_conf.service_raw_list, existing, &eltmp, ndrx_svc_entry_fn_cmp);
+    
+    /* OK add to linked list for reply... */
+    if (!existing)
+    {
+        /* generate error as service not found */
+        ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
+	    __func__, svc, "server_init");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* duplicate the data and add to queue */
+    call = NDRX_FPMALLOC(sizeof(ndrx_tpacall_defer_t), 0);
+    
+    if (NULL==call)
+    {
+        err=errno;
+        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", tpstrerror(err));
+        ndrx_TPset_error_fmt(TPEOS, "%s: Service is not available %s by %s", 
+	    __func__, svc, "server_init");
+        EXFAIL_OUT(ret);
+        
+    }
+    
+    call->flags=flags;
+    call->len=len;
+    NDRX_STRCPY_SAFE(call->svcnm, svc);
+    
+    if (NULL!=data)
+    {
+        char type[16+1]={EXEOS};
+        char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
+        long xatmi_len;
+        /* call->data */
+        
+        xatmi_len=tptypes(data, type, subtype);
+        
+        if (EXFAIL==xatmi_len)
+        {
+            NDRX_LOG(log_error, "Failed to get data type for defered tpacall buffer");
+            EXFAIL_OUT(ret);
+        }
+        
+        call->data = tpalloc(type, subtype, xatmi_len);
+        
+        if (NULL==call->data)
+        {
+            NDRX_LOG(log_error, "Failed to alloc defered msg data buf");
+            EXFAIL_OUT(ret);
+        }
+        
+        /* copy full msg, no interpretation, for UBF we could make shorter
+         * copy...
+         */
+        memcpy(call->data, data, xatmi_len);
+        
+    }
+    else
+    {
+        call->data = NULL;
+    }
+    
+    /* Add the MSG */
+    NDRX_LOG(log_info, "Enqueue deferred tpacall svcnm=[%s] org_buf=%p "
+            "buf=%p (copy) len=%ld flags=%ld",
+            call->svcnm, data, call->data, call->len, call->flags);
+    
+    DL_APPEND(M_deferred_tpacalls, call);
+    
+out:
+                
+    if (EXSUCCEED!=ret)
+    {
+        /* delete any left overs... */
+        if (NULL!=call)
+        {
+            if (NULL!=call->data)
+            {
+                tpfree(call->data);
+            }
+        }
+        
+        NDRX_FPFREE(call);
+    }
+
+    return ret;
+}
+
+/**
+ * Perform the sending of tpacall messages, once services are open...
+ * and we are about to poll
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_tpacall_noservice_hook_send(void)
+{
+    int ret=EXSUCCEED;
+    ndrx_tpacall_defer_t *el, *elt;
+    
+    DL_FOREACH_SAFE(M_deferred_tpacalls, el, elt)
+    {
+        NDRX_LOG(log_info, "Performing deferred tpacall svcnm=[%s] buf=%p len=%ld flags=%ld",
+            el->svcnm, el->data, el->len, el->flags);
+        
+        if (EXFAIL==tpacall(el->svcnm, el->data, el->len, el->flags))
+        {
+            NDRX_LOG(log_info, "Deferred tpacall failed (svcnm=[%s] buf=%p len=%ld flags=%ld): %s",
+                el->svcnm, el->data, el->len, el->flags, tpstrerror(tperrno));
+            userlog("Deferred tpacall failed (svcnm=[%s] buf=%p len=%ld flags=%ld): %s",
+                el->svcnm, el->data, el->len, el->flags, tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (NULL!=el->data)
+        {
+            tpfree(el->data);
+        }
+        
+        DL_DELETE(M_deferred_tpacalls, el);
+        NDRX_FPFREE(el);
+    }
+    
+out:
+
+    /* delete messages if for error something have left here */
+    if (EXSUCCEED!=ret)
+    {
+        DL_FOREACH_SAFE(M_deferred_tpacalls, el, elt)
+        {
+            if (NULL!=el->data)
+            {
+                tpfree(el->data);
+            }
+
+            DL_DELETE(M_deferred_tpacalls, el);
+            NDRX_FPFREE(el);
+        }
+    }
+
+    return ret;
+}
 
 /**
  * Real processing starts here.
@@ -802,7 +969,9 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: hook up atmitls with tpacall() service not found callback */
+    /* hook up atmitls with tpacall() service not found callback */
+    
+    G_atmi_tls->pf_tpacall_noservice_hook=&ndrx_tpacall_noservice_hook_defer;
     
     /*
      * Initialize services
@@ -814,7 +983,8 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: unset hook...  */
+    /* unset hook...  */
+    G_atmi_tls->pf_tpacall_noservice_hook = NULL;
     
     /*
      * Run off thread init if any
@@ -832,6 +1002,8 @@ int ndrx_main(int argc, char** argv)
         }
     }
     
+    /* Lock advertise func - protect from threads */
+    ndrx_sv_advertise_lock();
     /*
      * Push the services out!
      */
@@ -839,6 +1011,7 @@ int ndrx_main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "tpsvrinit() fail");
         userlog("tpsvrinit() fail");
+        ndrx_sv_advertise_unlock();
         EXFAIL_OUT(ret);
     }
 
@@ -847,6 +1020,7 @@ int ndrx_main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "initialise_atmi_library() fail");
         userlog("initialise_atmi_library() fail");
+        ndrx_sv_advertise_unlock();
         EXFAIL_OUT(ret);
     }
     
@@ -857,8 +1031,12 @@ int ndrx_main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "sv_open_queue() fail");
         userlog("sv_open_queue() fail");
+        ndrx_sv_advertise_unlock();
         EXFAIL_OUT(ret);
     }
+    
+    /* Lock advertise func: protect from other threads... */
+    ndrx_sv_advertise_unlock();
     
     /* Do lib updates after Q open... */
     if (EXSUCCEED!=tp_internal_init_upd_replyq(G_server_conf.service_array[1]->q_descr,
@@ -879,9 +1057,15 @@ int ndrx_main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: reply the linked list of any internal tpacall("X", TPNOREPLY)
-     * so that infinte servers may start...
+    /* reply the linked list of any internal tpacall("X", TPNOREPLY)
+     * so that infinite servers may start...
      */
+    if (EXSUCCEED!=(ret=ndrx_tpacall_noservice_hook_send()))
+    {
+        NDRX_LOG(log_error, "ndrx_tpacall_noservice_hook_send() fail %d", ret);
+        userlog("ndrx_tpacall_noservice_hook_send() fail %d", ret);
+        goto out;
+    }
 
     /* run process here! */
     if (EXSUCCEED!=(ret=sv_wait_for_request()))
@@ -892,17 +1076,17 @@ int ndrx_main(int argc, char** argv)
     }
     
 out:
-                
-    /* if thread pool was in place, then perform de-init... */
-    if (NULL!=G_server_conf.dispthreads)
-    {
-        ndrx_thpool_destroy(G_server_conf.dispthreads);
-    }
 
     /* finish up. */
     if (NULL!=G_tpsvrdone__)
     {
         G_tpsvrdone__();
+    }
+
+    /* if thread pool was in place, then perform de-init... */
+    if (NULL!=G_server_conf.dispthreads)
+    {
+        ndrx_thpool_destroy(G_server_conf.dispthreads);
     }
 
     /*
