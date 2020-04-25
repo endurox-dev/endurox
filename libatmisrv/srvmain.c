@@ -797,9 +797,9 @@ out:
             {
                 tpfree(call->data);
             }
+            
+            NDRX_FPFREE(call);
         }
-        
-        NDRX_FPFREE(call);
     }
 
     return ret;

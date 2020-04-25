@@ -110,6 +110,16 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+
+#
+# Stop the daemon server...
+#
+
+
+#
+# Number of messares shall stop to grow
+#
+
 xadmin psc
 
 # Catch is there is test error!!!
