@@ -55,8 +55,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-MUTEX_LOCKDECL(M_view_change_lock);
-MUTEX_LOCKDECL(M_views_init_lock);
+exprivate MUTEX_LOCKDECL(M_view_change_lock);
+exprivate MUTEX_LOCKDECL(M_views_init_lock);
 exprivate int M_no_ubf_proc = EXFALSE; /* Do not process UBF during loading... */
 
 exprivate  volatile int M_views_loaded = EXFALSE; /* Is views loaded? */

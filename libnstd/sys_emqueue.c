@@ -66,7 +66,7 @@ struct qd_hash
 };
 typedef struct qd_hash qd_hash_t;
 
-MUTEX_LOCKDECL(M_lock);
+exprivate MUTEX_LOCKDECL(M_lock);
 exprivate qd_hash_t *M_qd_hash = NULL;
 
 exprivate  int M_first = EXTRUE; /**< Had random init? */
@@ -372,7 +372,7 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
     emqstat->mq_msgsize = attr->mq_msgsize;
     emqstat->mq_curmsgs = attr->mq_curmsgs;
 
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_getattr ret 0");
     return(0);
 }
@@ -427,11 +427,11 @@ expublic int emq_notify(mqd_t emqd, const struct sigevent *notification)
         emqhdr->emqh_pid = pid;
         emqhdr->emqh_event = *notification;
     }
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     return(0);
 
 err:
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     return(-1);
 #else
     errno = EINVAL;
@@ -849,13 +849,13 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
     
     attr->mq_curmsgs--;
 
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     
     NDRX_LOG(log_dump, "emq_timedreceive - got something len=%d", len);
     return(len);
 
 err:
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     n = errno;
     NDRX_LOG(log_dump, "emq_timedreceive - failed: %s", strerror(errno));
     errno = n;
@@ -1021,12 +1021,12 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     pthread_cond_signal(&emqhdr->emqh_wait);
     attr->mq_curmsgs++;
     
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_timedsend - return 0");
     return(0);
 
 err:
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
 
     n = errno;
     NDRX_LOG(log_dump, "into: emq_timedsend - return -1: %s", strerror(n));
@@ -1107,7 +1107,7 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
     else
         emqinfo->emqi_flags &= ~O_NONBLOCK;
 
-    pthread_mutex_unlock(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(&emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_setattr - return 0");
     return(0);
 }

@@ -40,6 +40,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <pthread.h>
+#include <userlog.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -47,15 +48,20 @@ extern "C" {
 /* *** PTHREAD MUTEX *** */
     
 #define MUTEX_VAR(X)        pthread_mutex_t X
-#define MUTEX_VAR_INIT(X)   pthread_mutex_init(&X, NULL)
-    
+#define MUTEX_VAR_INIT(X)   do {\
+                    if ( EXSUCCEED!=pthread_mutex_init ( &(X), NULL ) ) \
+                    {\
+                        userlog("Mutex init fail: %s", #X);\
+                        exit ( 1 );\
+                    }\
+                } while (0)
 /*
  Have custom error checks...
  */
 #if NDRX_MUTEX_DEBUG
-#define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+#define MUTEX_LOCKDECL(X) pthread_mutex_t X = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
 #else 
-#define MUTEX_LOCKDECL(X) static pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
+#define MUTEX_LOCKDECL(X) pthread_mutex_t X = PTHREAD_MUTEX_INITIALIZER;
 #endif
     
 #define MUTEX_LOCK_V(X) do {int ndrx_mut_ret; if (0!=(ndrx_mut_ret=pthread_mutex_lock(&X)))\
@@ -67,45 +73,61 @@ extern "C" {
         ndrx_mut_ret, strerror(ndrx_mut_ret), __FILE__, __LINE__, __func__); abort();} } while (0)
     
 #define MUTEX_TRYLOCK_V(X) pthread_mutex_trylock(&X)
+    
+/**
+ * Destroy mutex var
+ */
+#define MUTEX_DESTROY_V(X) pthread_mutex_destroy(&X)
 
 #define MUTEX_LOCK \
-		MUTEX_LOCKDECL(__mutexlock);\
+		static MUTEX_LOCKDECL(__mutexlock);\
 		MUTEX_LOCK_V(__mutexlock);
 
 #define MUTEX_UNLOCK MUTEX_UNLOCK_V(__mutexlock);
 
 /* *** EX_SPIN LOCKS *** */
-#define EX_SPIN_VAR(X)        pthread_spinlock_t X
-#define EX_SPIN_VAR_INIT(X)   if ( EXSUCCEED!=pthread_spin_init ( &X, PTHREAD_PROCESS_PRIVATE ) ) \
-                    {\
-                        userlog("Spinlock %s init fail: %s", #X, strerror(errno));\
-                        exit ( 1 );\
-                    }
     
-#define EX_SPIN_LOCKDECL(X) static pthread_spinlock_t X;\
-        MUTEX_LOCKDECL(X##__initlock__);\
-        static int volatile X##__first__ = EXTRUE;
+/**
+ * Spinlock init
+ */
+#define EX_SPIN_INIT_V(X)   \
+                do {\
+                    if ( EXSUCCEED!=pthread_spin_init ( &(X), PTHREAD_PROCESS_PRIVATE ) ) \
+                    {\
+                        userlog("Spinlock init fail: %s", #X);\
+                        exit ( 1 );\
+                    }\
+                }while(0)
+/**
+ * Spinlock declare variable
+ * @param X name of declare. If needs static, just add before
+ */
+#define EX_SPIN_LOCKDECL(X) pthread_spinlock_t X
+    
+/**
+ * Spinlock lock
+ * @param X name of variable of spinlock
+ */
+#define EX_SPIN_LOCK_V(X) pthread_spin_lock(&X)
+    
+/**
+ * Try lock
+ * @param X lock var name
+ * @return 0 - if locked, else error
+ */
+#define EX_SPIN_TRYLOCK_V(X) pthread_spin_trylock(&X)
+    
+/**
+ * Spinlock unlock
+ * @param X name of variable of spinlock
+ */
+#define EX_SPIN_UNLOCK_V(X) pthread_spin_unlock(&X)
 
-#define EX_SPIN_LOCK_V(X)\
-    if (X##__first__)\
-    {\
-        MUTEX_LOCK_V(X##__initlock__);\
-        if (X##__first__)\
-        {\
-            EX_SPIN_VAR_INIT(X);\
-            X##__first__=EXFALSE;\
-        }\
-        MUTEX_UNLOCK_V(X##__initlock__);\
-    }\
-    pthread_spin_lock(&X);
-
-#define EX_SPIN_UNLOCK_V(X) pthread_spin_unlock(&X);
-
-#define EX_SPIN_LOCK \
-		EX_SPIN_LOCKDECL(__spinlock);\
-		EX_SPIN_LOCK_V(__spinlock);
-
-#define EX_SPIN_UNLOCK EX_SPIN_UNLOCK_V(__spinlock);
+/**
+ * Destroy spinlock 
+ * @param X spinlock var
+ */
+#define EX_SPIN_DESTROY_V(X) pthread_spin_destroy(&X)
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/

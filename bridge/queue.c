@@ -70,7 +70,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 exprivate in_msg_t *M_in_q = NULL;  /**< Linked list with incoming message in Q */
-MUTEX_LOCKDECL(M_in_q_lock);        /**< Queue lock the queue cache             */
+exprivate MUTEX_LOCKDECL(M_in_q_lock);        /**< Queue lock the queue cache   */
 exprivate int M_qrun_issued = EXFALSE;/**< Indicate the that there is q runner job in
                                      * progress, because periodic timer then could
                                      * submit job several times

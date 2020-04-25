@@ -60,7 +60,7 @@ expublic int ndrx_G_ubf_db_triedload = EXFALSE; /* Have we tried to load? */
 expublic ndrx_ubf_db_t * ndrx_G_ubf_db = NULL;
 
 /* have some thread safety here */
-MUTEX_LOCKDECL(M_ubdb_init);
+exprivate MUTEX_LOCKDECL(M_ubdb_init);
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/

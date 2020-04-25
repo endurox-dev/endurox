@@ -49,6 +49,7 @@ extern NDRX_API "C" {
 #include <atmi.h>
 #include <atmi_int.h>
 #include <exthpool.h>
+#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
 extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
@@ -187,7 +188,7 @@ struct srv_conf
     int maxdispatchthreads;     /**< maximum dispatch trheads       */
   
     threadpool dispthreads;     /**< thread pool for dispatch threads*/
-    pthread_spinlock_t mt_lock; /**< mt lock for data sync           */
+    EX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync           */
 };
 
 typedef struct srv_conf srv_conf_t;

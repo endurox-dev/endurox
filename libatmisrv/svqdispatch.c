@@ -405,9 +405,9 @@ expublic int sv_serve_call(int *service, int *status,
         {
             if (G_server_conf.is_threaded)
             {
-                pthread_spin_lock(&G_server_conf.mt_lock);
+                EX_SPIN_LOCK_V(G_server_conf.mt_lock);
                 G_shm_srv->svc_status[*service]++;
-                pthread_spin_unlock(&G_server_conf.mt_lock);
+                EX_SPIN_UNLOCK_V(G_server_conf.mt_lock);
                 /* put reply address - not supported.
                 NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
                  * */
@@ -706,9 +706,9 @@ expublic int sv_serve_connect(int *service, int *status,
         {
             if (G_server_conf.is_threaded)
             {
-                pthread_spin_lock(&G_server_conf.mt_lock);
+                EX_SPIN_LOCK_V(G_server_conf.mt_lock);
                 G_shm_srv->svc_status[*service]++;
-                pthread_spin_unlock(&G_server_conf.mt_lock);
+                EX_SPIN_UNLOCK_V(G_server_conf.mt_lock);
                 /* put reply address  - not supported..
                 NDRX_STRCPY_SAFE(G_shm_srv->last_reply_q, call->reply_to);
                  * */
@@ -832,10 +832,10 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
     {
         if (G_server_conf.is_threaded)
         {
-            pthread_spin_lock(&G_server_conf.mt_lock);
+            EX_SPIN_LOCK_V(G_server_conf.mt_lock);
             G_shm_srv->status++;
             G_shm_srv->last_command_id = gen_command->command_id;
-            pthread_spin_unlock(&G_server_conf.mt_lock);
+            EX_SPIN_UNLOCK_V(G_server_conf.mt_lock);
         }
         else
         {
@@ -990,7 +990,7 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
     {
         if (G_server_conf.is_threaded)
         {
-            pthread_spin_lock(&G_server_conf.mt_lock);
+            EX_SPIN_LOCK_V(G_server_conf.mt_lock);
         }
         
         /* reset back to avail. */
@@ -1049,7 +1049,7 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
         
         if (G_server_conf.is_threaded)
         {
-            pthread_spin_unlock(&G_server_conf.mt_lock);
+            EX_SPIN_UNLOCK_V(G_server_conf.mt_lock);
         }
         
         if (status!=EXSUCCEED)

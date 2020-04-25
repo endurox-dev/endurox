@@ -109,7 +109,7 @@ int main(int argc, char** argv)
         }
         
         /* check that very response is unique */
-        for (j=0; j<TEST_THREADS; i++)
+        for (j=0; j<TEST_THREADS; j++)
         {
             if (1!=cd_rsp[j])
             {

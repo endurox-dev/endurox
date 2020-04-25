@@ -75,7 +75,7 @@
 /*---------------------------Statics------------------------------------*/
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
-MUTEX_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
+exprivate MUTEX_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
 /*---------------------------Prototypes---------------------------------*/
 
 #if EX_CPM_NO_THREADS

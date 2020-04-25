@@ -121,9 +121,9 @@ ndrx_debug_t G_stdout_debug;
 volatile int G_ndrx_debug_first = EXTRUE;
 volatile unsigned M_thread_nr = 0;
 exprivate int __thread M_is_initlock_owner = 0; /* for recursive logging calls */
-MUTEX_LOCKDECL(M_dbglock);
-MUTEX_LOCKDECL(M_thread_nr_lock);
-MUTEX_LOCKDECL(M_memlog_lock);
+exprivate MUTEX_LOCKDECL(M_dbglock);
+exprivate MUTEX_LOCKDECL(M_thread_nr_lock);
+exprivate MUTEX_LOCKDECL(M_memlog_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**

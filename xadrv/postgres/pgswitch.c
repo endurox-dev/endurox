@@ -72,7 +72,7 @@ struct ndrx_xid_list
 expublic __thread char ndrx_G_PG_conname[65]={EXEOS}; /**< connection name    */
 /*---------------------------Statics------------------------------------*/
 
-MUTEX_LOCKDECL(M_conndata_lock);
+exprivate MUTEX_LOCKDECL(M_conndata_lock);
 exprivate ndrx_pgconnect_t M_conndata; /**< parsed connection data            */
 exprivate int M_conndata_ok = EXFALSE; /**< Is connection parsed ok & cached? */
 

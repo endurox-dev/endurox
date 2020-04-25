@@ -44,6 +44,7 @@ extern "C" {
 #include <ndrx_config.h>
 #include <pthread.h>
 #include <sys_primitives.h> /**< spin locks for MacOS */
+#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_FPA_MAGIC          0xFEEDBCA1  /**< FPA Block magic            */
@@ -119,7 +120,7 @@ struct  ndrx_fpastack
     int cur_blocks;         /**< Number of blocks allocated                 */
     long allocs;            /**< number of allocs done, for stats           */
     ndrx_fpablock_t *stack; /**< stack head                                 */
-    pthread_spinlock_t spinlock;    /**< spinlock for protecting given size */
+    EX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size */
 };
 
 /*---------------------------Globals------------------------------------*/

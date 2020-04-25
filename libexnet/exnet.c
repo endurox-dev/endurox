@@ -102,8 +102,8 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-MUTEX_LOCKDECL(M_send_lock) 
-MUTEX_LOCKDECL(M_recv_lock) 
+exprivate MUTEX_LOCKDECL(M_send_lock) 
+exprivate MUTEX_LOCKDECL(M_recv_lock) 
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate int close_socket(exnetcon_t *net);

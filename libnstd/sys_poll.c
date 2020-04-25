@@ -157,7 +157,7 @@ exprivate ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
 exprivate ndrx_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
 
 
-MUTEX_LOCKDECL(M_psets_lock);
+exprivate MUTEX_LOCKDECL(M_psets_lock);
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 

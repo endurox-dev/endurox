@@ -71,7 +71,7 @@ expublic pthread_t G_forward_thread;
 expublic int G_forward_req_shutdown = EXFALSE;    /* Is shutdown request? */
 
 
-MUTEX_LOCKDECL(M_wait_mutex);
+exprivate MUTEX_LOCKDECL(M_wait_mutex);
 exprivate pthread_cond_t M_wait_cond = PTHREAD_COND_INITIALIZER;
 
 exprivate __thread int M_is_xa_open = EXFALSE; /* Init flag for thread. */
@@ -81,7 +81,7 @@ exprivate fwd_qlist_t *M_next_fwd_q_list = NULL;    /**< list of queues to check
 exprivate fwd_qlist_t *M_next_fwd_q_cur = NULL;     /**< current position in linked list... */
     
 
-MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
+exprivate MUTEX_LOCKDECL(M_forward_lock); /* Q Forward operations sync        */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -117,9 +117,9 @@ exprivate void thread_sleep(int sleep_sec)
     wait_time.tv_sec = now.tv_sec+sleep_sec;
     wait_time.tv_nsec = now.tv_usec;
 
-    pthread_mutex_lock(&M_wait_mutex);
+    MUTEX_LOCK_V(M_wait_mutex);
     rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);
-    pthread_mutex_unlock(&M_wait_mutex);
+    MUTEX_UNLOCK_V(M_wait_mutex);
 }
 
 /**
@@ -127,9 +127,9 @@ exprivate void thread_sleep(int sleep_sec)
  */
 expublic void forward_shutdown_wake(void)
 {
-    pthread_mutex_lock(&M_wait_mutex);
+    MUTEX_LOCK_V(M_wait_mutex);
     pthread_cond_signal(&M_wait_cond);
-    pthread_mutex_unlock(&M_wait_mutex);
+    MUTEX_UNLOCK_V(M_wait_mutex);
 }
 
 /**

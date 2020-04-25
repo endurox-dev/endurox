@@ -77,7 +77,7 @@ exprivate char *M_sections[] = {NDRX_CONF_SECTION_GLOBAL,
 exprivate char *M_sections_first_pass[] = {NDRX_CONF_SECTION_GLOBAL,
                         NULL};
 
-MUTEX_LOCKDECL(M_load_lock);
+exprivate MUTEX_LOCKDECL(M_load_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 exprivate int _ndrx_cconfig_load_pass(ndrx_inicfg_t **cfg, int is_internal, 

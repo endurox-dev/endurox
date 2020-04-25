@@ -108,12 +108,12 @@ expublic tmq_qhash_t *G_qhash = NULL;
 /*
  * Any public operations must be locked
  */
-MUTEX_LOCKDECL(M_q_lock);
+exprivate MUTEX_LOCKDECL(M_q_lock);
 
 /* Configuration section */
 expublic tmq_qconfig_t *G_qconf = NULL; 
 
-MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
+exprivate MUTEX_LOCKDECL(M_msgid_gen_lock); /* Thread locking for xid generation  */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate tmq_memmsg_t* tmq_get_msg_by_msgid_str(char *msgid_str);

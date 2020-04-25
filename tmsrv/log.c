@@ -86,7 +86,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 exprivate atmi_xa_log_t *M_tx_hash = NULL; 
-MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list            */
+exprivate MUTEX_LOCKDECL(M_tx_hash_lock); /* Operations with hash list            */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/

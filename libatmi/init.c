@@ -74,7 +74,7 @@ expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
 /*---------------------------Statics------------------------------------*/
 /* List of context slots... */
 exprivate long M_contexts[MAX_CONTEXTS];
-MUTEX_LOCKDECL(M_env_lock);
+exprivate MUTEX_LOCKDECL(M_env_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
