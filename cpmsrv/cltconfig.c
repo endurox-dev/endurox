@@ -66,7 +66,7 @@ expublic cpm_process_t *G_clt_config=NULL;
  */
 exprivate ndrx_env_group_t * M_envgrouphash = NULL;
 
-MUTEX_LOCKDECL(M_config_lock) 
+exprivate MUTEX_LOCKDECL(M_config_lock) 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

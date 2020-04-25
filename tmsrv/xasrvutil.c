@@ -60,7 +60,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
+exprivate MUTEX_LOCKDECL(M_xid_gen_lock); /* Thread locking for xid generation    */
 /*---------------------------Prototypes---------------------------------*/
 
 /**

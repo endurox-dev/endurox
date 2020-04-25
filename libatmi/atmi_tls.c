@@ -41,6 +41,7 @@
 #include <string.h>
 #include "thlock.h"
 #include "userlog.h"
+#include "utlist.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -51,7 +52,7 @@ __thread atmi_tls_t *G_atmi_tls = NULL; /* single place for library TLS storage 
 exprivate pthread_key_t M_atmi_tls_key;
 exprivate pthread_key_t M_atmi_switch_key; /* switch the structure */
 
-MUTEX_LOCKDECL(M_thdata_init);
+exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
 exprivate void atmi_buffer_key_destruct( void *value );
@@ -215,6 +216,8 @@ out:
  */
 expublic void ndrx_atmi_tls_free(void *data)
 {   
+    atmi_tls_t *tls = (atmi_tls_t *)data;
+    tpmemq_t *el, *elt;
     if (NULL!=data)
     {
         if (data == G_atmi_tls)
@@ -225,7 +228,23 @@ expublic void ndrx_atmi_tls_free(void *data)
             }
             G_atmi_tls = NULL;
         }
-
+        
+        /* de-init mutex & spinlock */
+        
+        MUTEX_DESTROY_V(tls->mutex);
+        
+        /* shouldn't we free up any  tls->memq ? */
+        
+        DL_FOREACH_SAFE(tls->memq, el, elt)
+        {
+            if (NULL!=(el->buf))
+            {
+                NDRX_SYSBUF_FREE(el->buf);
+            }
+            
+            NDRX_FPFREE(el);
+        }
+        
         NDRX_FREE((char*)data);
     }
 }
@@ -248,6 +267,9 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
         {
             pthread_key_create( &M_atmi_tls_key, 
                     &atmi_buffer_key_destruct );
+            
+            /* perform first time library inits..., locks, etc  */
+            ndrx_tpcall_init_once();
             M_first = EXFALSE;
         }
         MUTEX_UNLOCK_V(M_thdata_init);
@@ -313,7 +335,7 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     
     memset(&tls->integpriv, 0, sizeof(tls->integpriv));
     
-    pthread_mutex_init(&tls->mutex, NULL);
+    MUTEX_VAR_INIT(tls->mutex);
     
     /* set callback, when thread dies, we need to get the destructor 
      * to be called

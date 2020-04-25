@@ -51,7 +51,7 @@
 /*---------------------------Statics------------------------------------*/
 exprivate long M_count = 0; /**< number of calls received, 
                              * platform shall ensure the serialization */
-pthread_spinlock_t M_count_lock;
+exprivate EX_SPIN_LOCKDECL(M_count_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -73,9 +73,9 @@ void TESTSV (TPSVCINFO *p_svc)
         ret=EXFAIL;
         goto out;
     }
-    pthread_spin_lock(&M_count_lock);
+    EX_SPIN_LOCK_V(M_count_lock);
     M_count++;
-    pthread_spin_unlock(&M_count_lock);
+    EX_SPIN_LOCK_V(M_count_lock);
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -98,9 +98,9 @@ void GETINFOS (TPSVCINFO *p_svc)
     
     p_ub = (UBFH *)tprealloc((char *)p_ub, 1024);
     
-    pthread_spin_lock(&M_count_lock);
+    EX_SPIN_LOCK_V(M_count_lock);
     cnt = M_count;
-    pthread_spin_unlock(&M_count_lock);
+    EX_SPIN_UNLOCK_V(M_count_lock);
 
     if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&cnt, 0))
     {
@@ -126,7 +126,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int ret = EXSUCCEED;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    pthread_spin_init(&M_count_lock, PTHREAD_PROCESS_PRIVATE);
+    EX_SPIN_INIT_V(M_count_lock);
     
     if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
     {

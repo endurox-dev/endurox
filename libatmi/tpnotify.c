@@ -404,15 +404,18 @@ expublic int ndrx_tpchkunsol(void)
     ssize_t rply_len;
     int num_applied = 0;
     unsigned prio;
-    tpmemq_t *tmp;
     tp_notif_call_t *notif;
     
     /* Allocate the buffer... to put data into */
-    NDRX_SYSBUF_MALLOC_OUT(pbuf, pbuf_len, ret);
 
     NDRX_LOG(log_debug, "Into %s", __func__);
     do
     {
+        if (NULL==pbuf)
+        {
+            NDRX_SYSBUF_MALLOC_OUT(pbuf, pbuf_len, ret);
+        }
+
         rply_len = ndrx_generic_q_receive(G_atmi_tls->G_atmi_conf.reply_q, 
                 G_atmi_tls->G_atmi_conf.reply_q_str,
                 &(G_atmi_tls->G_atmi_conf.reply_q_attr),
@@ -446,27 +449,15 @@ expublic int ndrx_tpchkunsol(void)
         else
         {
             NDRX_LOG(log_info, "got non unsol command - enqueue");
-
-            if (NULL==(tmp = NDRX_FPMALLOC(sizeof(tpmemq_t), 0)))
+            
+            if (EXSUCCEED!=ndrx_add_to_memq(&pbuf, pbuf_len, rply_len))
             {
-                int err = errno;
-                NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
-                userlog("Failed to alloc: %s", strerror(err));
                 EXFAIL_OUT(ret);
             }
-
-            tmp->buf = pbuf;
-	    pbuf = NULL; /* save the buffer... */
-            tmp->len = pbuf_len;
-            tmp->data_len = rply_len;
-            tmp->prev = NULL;
-            tmp->next = NULL;
-
-            /* TODO: Add some lock ... (this just exchanges ptr, thus spin lock) */
-            DL_APPEND(G_atmi_tls->memq, tmp); 
+            
         }
         /* Note loop will be terminated if not message in Q */
-    } while (EXSUCCEED==ret);
+    } while (1);
 out:
 
     if (NULL!=pbuf)

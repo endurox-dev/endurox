@@ -63,7 +63,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr);
  */
 expublic buffer_obj_t *ndrx_G_buffers=NULL;
 
-MUTEX_LOCKDECL(M_lock); /* This will allow multiple reads */
+exprivate MUTEX_LOCKDECL(M_lock); /* This will allow multiple reads */
 
 /*
  * Buffer descriptors

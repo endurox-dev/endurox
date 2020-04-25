@@ -57,7 +57,7 @@
 /*---------------------------Statics------------------------------------*/
 exprivate long M_stack_size = EXFAIL;    /* Current stack size */
 
-MUTEX_LOCKDECL(M_stack_size_lock);
+exprivate MUTEX_LOCKDECL(M_stack_size_lock);
 
 /*---------------------------Prototypes---------------------------------*/
 

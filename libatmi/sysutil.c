@@ -78,7 +78,7 @@ struct qcache_hash
     EX_hash_handle hh; /* makes this structure hashable        */
 };
 
-MUTEX_LOCKDECL(M_q_cache_lock); /* lock the queue cache */
+exprivate MUTEX_LOCKDECL(M_q_cache_lock); /* lock the queue cache */
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 

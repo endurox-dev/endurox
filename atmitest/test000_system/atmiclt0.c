@@ -101,7 +101,7 @@ void* osx_chk_thread(void *arg)
     p_cond = (ndrx_osx_pthread_cond_t *)&M_cond;
 
     /* wait on thread */
-    pthread_mutex_lock(&M_mut);
+    MUTEX_LOCK_V(M_mut);
 
     /*let other thread to set the fields.. inside of pthread_cond_wait() */
     sleep(1);
@@ -120,7 +120,7 @@ void* osx_chk_thread(void *arg)
     }
     
     pthread_cond_signal( &M_cond ); 
-    pthread_mutex_unlock( &M_mut );
+    MUTEX_UNLOCK_V( M_mut );
 
     return NULL;
 }
@@ -138,7 +138,7 @@ int osx_chk_cond_work_around(void)
     pthread_t valth={0};
     p_cond = (ndrx_osx_pthread_cond_t *)&M_cond;
 
-    pthread_mutex_lock(&M_mut);
+    MUTEX_LOCK_V(M_mut);
 
     if( (ret=pthread_create( &valth, NULL, osx_chk_thread, NULL)) != 0)
     {
@@ -156,7 +156,7 @@ int osx_chk_cond_work_around(void)
         return EXFAIL;
     }
 
-    pthread_mutex_unlock(&M_mut);
+    MUTEX_UNLOCK_V(M_mut);
     
     pthread_join( valth, NULL );
     

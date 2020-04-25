@@ -787,6 +787,7 @@ extern NDRX_API int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         int dest_node, char *nodeid, char *usrname,  char *cltname,
         int ex_flags);
 extern NDRX_API int ndrx_tpchkunsol(void);
+extern NDRX_API int ndrx_add_to_memq(char **pbuf, size_t pbuf_len, ssize_t rply_len);
 extern NDRX_API int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         char *data,  long len, long flags, int dispatch_local);
 extern NDRX_API void ndrx_process_notif(char *buf, long len);
@@ -799,6 +800,7 @@ extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
 extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
 extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 extern NDRX_API void ndrx_dump_call_struct(int lev, tp_command_call_t *call);
+extern NDRX_API int ndrx_tpcall_init_once(void);
 extern NDRX_API unsigned short ndrx_get_next_callseq_shared(void);
 
 extern NDRX_API int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent,

@@ -162,7 +162,7 @@ struct ndrx_epoll_set
 typedef struct ndrx_epoll_set ndrx_epoll_set_t;
 
 exprivate ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
-MUTEX_LOCKDECL(M_psets_lock);
+exprivate MUTEX_LOCKDECL(M_psets_lock);
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/

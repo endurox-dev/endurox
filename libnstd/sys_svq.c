@@ -251,11 +251,11 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     }
 #ifdef EX_USE_SYSVQ
     /* Init mutexes... */
-    pthread_spin_init(&mq->rcvlock, PTHREAD_PROCESS_PRIVATE);
-    pthread_spin_init(&mq->rcvlockb4, PTHREAD_PROCESS_PRIVATE);
-    pthread_spin_init(&mq->stamplock, PTHREAD_PROCESS_PRIVATE);
-    pthread_mutex_init(&mq->barrier, NULL);
-    pthread_mutex_init(&mq->qlock, NULL);
+    EX_SPIN_INIT_V(mq->rcvlock);
+    EX_SPIN_INIT_V(mq->rcvlockb4);
+    EX_SPIN_INIT_V(mq->stamplock);
+    MUTEX_VAR_INIT(mq->barrier);
+    MUTEX_VAR_INIT(mq->qlock);
 #endif
     
 out:

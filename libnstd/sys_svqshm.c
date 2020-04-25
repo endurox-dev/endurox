@@ -104,7 +104,7 @@ if (!ndrx_G_svqshm_init) \
 
 expublic volatile int ndrx_G_svqshm_init = EXFALSE;
 /* have some lock for this argument */
-MUTEX_LOCKDECL(ndrx_G_svqshm_init_lock);
+exprivate MUTEX_LOCKDECL(ndrx_G_svqshm_init_lock);
 
 exprivate ndrx_shm_t M_map_p2s = {.fd=0, .path=""};   /**< Posix to System V mapping       */
 exprivate ndrx_shm_t M_map_s2p = {.fd=0, .path=""};   /**< System V to Posix mapping       */

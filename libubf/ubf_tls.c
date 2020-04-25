@@ -49,7 +49,7 @@
 __thread ubf_tls_t *G_ubf_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
 exprivate pthread_key_t M_ubf_tls_key;
-MUTEX_LOCKDECL(M_thdata_init);
+exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
 exprivate void ubf_buffer_key_destruct( void *value );

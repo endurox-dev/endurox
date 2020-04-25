@@ -51,7 +51,7 @@
 __thread nstd_tls_t *G_nstd_tls = NULL; /* single place for library TLS storage */
 /*---------------------------Statics------------------------------------*/
 exprivate pthread_key_t M_nstd_tls_key;
-MUTEX_LOCKDECL(M_thdata_init);
+exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
 exprivate void nstd_buffer_key_destruct( void *value );

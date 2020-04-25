@@ -65,7 +65,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-MUTEX_LOCKDECL(M_gpg_init_lock);
+exprivate MUTEX_LOCKDECL(M_gpg_init_lock);
 
 #ifndef DISABLEGPGME
 pgpgme_enc_t M_enc;

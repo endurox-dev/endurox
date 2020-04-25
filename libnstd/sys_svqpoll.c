@@ -357,6 +357,9 @@ out:
 expublic int ndrx_epoll_sys_init(void)
 {
     int ret = EXSUCCEED;
+    
+    EX_SPIN_INIT_V(M_nrfds_lock);
+    
     /* boot the Auxiliary thread */
     if (EXSUCCEED!=ndrx_svqshm_init(EXFALSE))
     {

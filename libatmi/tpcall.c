@@ -66,8 +66,19 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate EX_SPIN_LOCKDECL(M_callseq_lock);
+
 /*---------------------------Prototypes---------------------------------*/
 exprivate void unlock_call_descriptor(int cd, short status);
+
+/**
+ * Internal init function, once at app start
+ */
+expublic int ndrx_tpcall_init_once(void)
+{
+    EX_SPIN_INIT_V(M_callseq_lock);
+    return EXSUCCEED;
+}
 
 /**
  * Dump to the log Command call buffer
@@ -254,11 +265,10 @@ out:
 expublic unsigned short ndrx_get_next_callseq_shared(void)
 {
     static volatile unsigned short shared_callseq=0;
-    EX_SPIN_LOCKDECL(callseq_lock);
             
-    EX_SPIN_LOCK_V(callseq_lock);
+    EX_SPIN_LOCK_V(M_callseq_lock);
     shared_callseq++;
-    EX_SPIN_UNLOCK_V(callseq_lock);
+    EX_SPIN_UNLOCK_V(M_callseq_lock);
     
     return shared_callseq;
 }
@@ -668,6 +678,103 @@ out:
 }
 
 /**
+ * Add message to buffer
+ * @param pbuf double ptr to sysbuf
+ * @param pbuf_len sysbuf len
+ * @param rply_len len size got from q
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_add_to_memq(char **pbuf, size_t pbuf_len, ssize_t rply_len)
+{
+    int ret = EXSUCCEED;
+    tpmemq_t *tmp;
+    
+    if (NULL==(tmp = NDRX_FPMALLOC(sizeof(tpmemq_t), 0)))
+    {
+        int err = errno;
+        NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+        userlog("Failed to alloc: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
+
+    tmp->buf = *pbuf;
+    *pbuf = NULL; /* save the buffer... */
+    tmp->len = pbuf_len;
+    tmp->data_len = rply_len;
+    tmp->prev = NULL;
+    tmp->next = NULL;
+
+    /* Add some lock ... (this just exchanges ptr, thus spin lock) */
+    DL_APPEND(G_atmi_tls->memq, tmp); 
+
+out:
+    return ret;    
+}
+
+/**
+ * Dequeue message from memq
+ * - if cd is given, then seek for the CD
+ * - if cd is not give, and we have any flag, then return first
+ * @param cd seek for this cd
+ * @param flags get any?
+ * @param pbuf buffer to swap
+ * @param pbuf_len buffer len
+ * @param rply_len message len
+ * @return EXSUCCEED - not found, EXTRUE -> found something
+ */
+exprivate int ndrx_rm_frm_memq(int cd, long flags, char **pbuf, size_t *pbuf_len, ssize_t *rply_len)
+{
+    int ret=EXSUCCEED;
+    tpmemq_t *el, *elt;
+    NDRX_LOG(log_info, "Got message from memq...");
+
+    /* grab the buffer of mem linked list - check the flags any
+     * or what
+     */
+    if (flags & TPGETANY)
+    {
+        /* the buffer is allocated already by sysalloc, thus
+         * continue to use this buffer and free up our working buf.
+         */
+        NDRX_SYSBUF_FREE(*pbuf);
+        *pbuf = G_atmi_tls->memq->buf;
+        *pbuf_len = G_atmi_tls->memq->len;
+        *rply_len = G_atmi_tls->memq->data_len;
+
+        /* delete first elem in the list */
+        el = G_atmi_tls->memq;
+        ret=EXTRUE;
+    }
+    else
+    {
+        /* search for matched cd */
+        DL_FOREACH_SAFE(G_atmi_tls->memq, el, elt)
+        {
+            tp_command_call_t *rply = (tp_command_call_t *)el->buf;
+            
+            if (rply->cd==cd)
+            {    
+                NDRX_SYSBUF_FREE(*pbuf);
+                *pbuf = el->buf;
+                *pbuf_len = el->len;
+                *rply_len = el->data_len;
+                ret=EXTRUE;
+                break;
+            }
+        }
+    }
+    
+    /* remove any found rec */
+    if (EXTRUE==ret)
+    {
+        DL_DELETE(G_atmi_tls->memq, el);
+        NDRX_FPFREE(el);
+    }
+out:
+    return ret;
+}
+
+/**
  * Internal version of tpgetrply.
  * @param cd call descriptor
  * @param data data buffer into which return value
@@ -693,10 +800,9 @@ expublic int ndrx_tpgetrply (int *cd,
     ATMI_TLS_ENTRY;
     
     /* Allocate the buffer, dynamically... */
-    NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, pbuf_len, ret);
 
-    NDRX_LOG(log_debug, "%s enter, flags %ld pbuf %p cd_exp %d", __func__, 
-            flags, pbuf, cd_exp);
+    NDRX_LOG(log_debug, "%s enter, flags %ld cd_exp %d", __func__, 
+            flags, cd_exp);
         
     /* TODO: If we keep linked list with call descriptors and if there is
      * none, then we should return something back - FAIL/proto, not? */
@@ -713,35 +819,22 @@ expublic int ndrx_tpgetrply (int *cd,
     /**
      * We will drop any answers not registered for this call
      */
-    rply  = (tp_command_call_t *)pbuf;
     while (!answ_ok)
     {
+        
+        if (NULL==pbuf)
+        {
+            NDRX_SYSBUF_MALLOC_WERR_OUT(pbuf, pbuf_len, ret);
+            rply  = (tp_command_call_t *)pbuf;
+        }
+        
         /* We shall check that we do not have something in memq...
          * if so then switch the buffers and make current free
          */
-        if (NULL!=G_atmi_tls->memq)
+        if (NULL!=G_atmi_tls->memq &&
+                /* read from queue if has something... */
+                EXTRUE==ndrx_rm_frm_memq(*cd, flags, &pbuf, &pbuf_len, &rply_len))
         {
-            tpmemq_t * tmp;
-            NDRX_LOG(log_info, "Got message from memq...");
-            /* grab the buffer of mem linked list */
-            NDRX_SYSBUF_FREE(pbuf);
-            
-            /* the buffer is allocated already by sysalloc, thus
-             * continue to use this buffer and free up our working buf.
-             */
-            pbuf = G_atmi_tls->memq->buf;
-            pbuf_len = G_atmi_tls->memq->len;
-            rply_len = G_atmi_tls->memq->data_len;
-            
-            /* delete first elem in the list */
-            tmp = G_atmi_tls->memq;
-            
-            /* Add some lock too... */
-            DL_DELETE(G_atmi_tls->memq, tmp);
-            
-            NDRX_FPFREE(tmp);
-            
-            /* Switch to received buffer... */
             rply  = (tp_command_call_t *)pbuf;
             NDRX_LOG(log_debug, "from memq: pbuf=%p", pbuf);
         }
@@ -828,12 +921,19 @@ expublic int ndrx_tpgetrply (int *cd,
 		/* 01/11/2012 - if we have TPGETANY we ignore the cd */
                 if (/*cd_exp!=FAIL*/ !(flags & TPGETANY) && rply->cd!=cd_exp)
                 {
-                    NDRX_LOG(log_warn, "Dropping incoming message (not expected): "
+                    
+                    NDRX_LOG(log_warn, "Out of bound msg (for different cd): "
                         "cd: %d, expected cd: %d timestamp: %d callseq: %u, "
-                            "reply from %s, cd status %hd",
+                            "reply from %s, cd status %hd - add to buffer",
                         rply->cd, cd_exp, rply->timestamp, rply->callseq, rply->reply_to,
                             G_atmi_tls->G_call_state[rply->cd].status);
-                    ndrx_tpcancel(rply->cd);
+                    
+                    /* add msg to memqueue... */
+                    if (EXSUCCEED!=ndrx_add_to_memq(&pbuf, pbuf_len, rply_len))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    
                     continue;
                 }
 
@@ -1122,6 +1222,7 @@ out:
 expublic int ndrx_tpcancel (int cd)
 {
     int ret=EXSUCCEED;
+    tpmemq_t *el, *elt;
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "tpcancel issued for %d", cd);
@@ -1133,6 +1234,18 @@ expublic int ndrx_tpcancel (int cd)
         ret=EXFAIL;
         goto out;
     }
+    
+    /* search for matched cd and clean any queued messages... */
+    DL_FOREACH_SAFE(G_atmi_tls->memq, el, elt)
+    {
+        tp_command_call_t *rply = (tp_command_call_t *)el->buf;
+        if (rply->cd==cd)
+        {    
+            NDRX_SYSBUF_FREE(el->buf);
+            NDRX_FPFREE(el);
+        }
+    }
+    
     /* Mark call as cancelled, so that we could re-use it later. */
     G_atmi_tls->G_call_state[cd].status = CALL_CANCELED;
 

@@ -116,6 +116,8 @@ typedef struct
     
     /* We need a enqueued list of messages */
     tpmemq_t *memq; /* Message enqueued in memory... */
+    /* EX_SPIN_LOCKDECL(memq_lock); - not needed this TLS for one thread 
+     * thus memq is processed by same thread only*/
     
     /* tperror.c */
     char M_atmi_error_msg_buf[MAX_TP_ERROR_LEN+1]; /* = {EOS}; */
@@ -133,7 +135,7 @@ typedef struct
     
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* mutex lock (so that no two parallel threads work with same tls */
-    pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */
+    MUTEX_VAR(mutex); /* initialize later with PTHREAD_MUTEX_INITIALIZER */
     
     /* have the transport for other's TLSes 
      * used by tpgetctxt() and tpsetctxt()
