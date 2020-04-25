@@ -82,6 +82,34 @@ out:
 }
 
 /**
+ * Standard service entry, daemon thread
+ */
+void DMNSV2 (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+
+    /* Just print the buffer */
+    Bprint(p_ub);
+    
+    /* Check the buffer... */
+    while(!M_stopping)
+    {
+        NDRX_LOG(log_debug, "Daemon running...");
+        sleep(1);
+    }
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
  * Stop control service
  * @param p_svc
  */
@@ -90,6 +118,11 @@ void DMNSV_STOP (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     
     M_stopping=EXTRUE;
+    
+    /* TODO: control which daemon to stop... Test busy flag of two daemons
+     * if one stopped, the busy shall stay
+     * if another stopped, the busy shall be removed
+     */
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -114,6 +147,12 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=tpadvertise("DMNSV2", DMNSV2))
+    {
+        NDRX_LOG(log_error, "TESTERROR Failed to initialise DMNSV!");
+        EXFAIL_OUT(ret);
+    }
+    
     /* start the service, send some data */
     
     p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
@@ -133,11 +172,26 @@ int tpsvrinit(int argc, char **argv)
     }
     
     /* call twice... */
-    if (EXSUCCEED!=tpacall("DMNSV", (char *)p_ub, 0, TPNOREPLY))
+    if (EXSUCCEED!=tpacall("DMNSV2", (char *)p_ub, 0, TPNOREPLY))
     {
-        NDRX_LOG(log_error, "TESTERROR Failed to call DMNSV");
+        NDRX_LOG(log_error, "TESTERROR Failed to call DMNSV2");
         EXFAIL_OUT(ret);
     }
+    
+    /* call not advertised service, shall fail */
+    if (EXSUCCEED==tpacall("DMNSV3", (char *)p_ub, 0, TPNOREPLY))
+    {
+        NDRX_LOG(log_error, "TESTERROR There shall be no DMNSV3!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (tperrno!=TPENOENT)
+    {
+        NDRX_LOG(log_error, "TESTERROR tperror expected %d but got %d!",
+                TPENOENT, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
     
 out:
         
