@@ -337,6 +337,9 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     
     MUTEX_VAR_INIT(tls->mutex);
     
+    /* reset the hook */
+    tls->pf_tpacall_noservice_hook = NULL;
+    
     /* set callback, when thread dies, we need to get the destructor 
      * to be called
      */

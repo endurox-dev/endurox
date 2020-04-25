@@ -177,8 +177,9 @@ typedef struct
    
    jmp_buf call_ret_env;    /**< for MT server where to return                */
    
-   /* TODO: Add spin lock */
-    
+   /* hook tpacall no service... */
+    int (*pf_tpacall_noservice_hook)(char *svc, char *data,
+                long len, long flags); 
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */

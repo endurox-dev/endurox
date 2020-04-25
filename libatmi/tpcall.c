@@ -520,12 +520,20 @@ expublic int ndrx_tpacall (char *svc, char *data,
     /* generate eror */
     if (noenterr)
     {
+        /* add tls hook for callback of non existent service, 
+         * same as tpacall flags. Only for no reply..
+         * Need for tpsvrinit is doing tpacalls when services are still
+         * not advertised. Thus server can enqueue messages to send
+         * when the service queues are open
+         */
+        if (NULL!=G_atmi_tls->pf_tpacall_noservice_hook && (flags & TPNOREPLY ))
+        {
+            ret=G_atmi_tls->pf_tpacall_noservice_hook(svc, data, len, flags);
+            goto out;/*<<<< we are done.*/
+        }
+        
 	ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
 	    __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
-        
-        /* TODO: add tls hook for callback of non existent service, 
-         * same as tpacall flags
-         */
         
         EXFAIL_OUT(ret);
     }

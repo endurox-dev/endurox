@@ -54,9 +54,28 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-expublic shm_srvinfo_t *G_shm_srv = NULL;    /* ptr to shared memory block of the server */
+expublic shm_srvinfo_t *G_shm_srv = NULL;    /**< ptr to shared memory block of the server */
+exprivate MUTEX_LOCKDECL(M_advertise_lock); /**< protect from other threads doing advertise */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Protect advertise function
+ * Protect from multi-threaded servers
+ */
+expublic void ndrx_sv_advertise_lock(void)
+{
+    MUTEX_LOCK_V(M_advertise_lock);
+}
+
+/**
+ * Unlock advertise function
+ */
+expublic void ndrx_sv_advertise_unlock(void)
+{
+    MUTEX_UNLOCK_V(M_advertise_lock);
+}
 
 /**
  * Function for checking service function existance
@@ -64,7 +83,7 @@ expublic shm_srvinfo_t *G_shm_srv = NULL;    /* ptr to shared memory block of th
  * @param b
  * @return
  */
-exprivate int svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b)
+expublic int ndrx_svc_entry_fn_cmp(svc_entry_fn_t *a, svc_entry_fn_t *b)
 {
     return strcmp(a->svc_nm,b->svc_nm);
 }
@@ -81,7 +100,7 @@ exprivate svc_entry_fn_t* resolve_service_entry(char *svc)
     if (NULL!=svc)
     {
         NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
-        DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, svc_entry_fn_cmp);
+        DL_SEARCH(G_server_conf.service_raw_list, ret, &eltmp, ndrx_svc_entry_fn_cmp);
     }
 
     return ret;
@@ -506,7 +525,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
     svc_entry_fn_t *entry=NULL, eltmp;
     
     ndrx_TPunset_error();
-
+    ndrx_sv_advertise_lock();
     /* allocate memory for entry */
     if ( (entry = (svc_entry_fn_t*)NDRX_CALLOC(1, sizeof(svc_entry_fn_t))) == NULL)
     {
@@ -532,7 +551,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
 
         if (NULL==G_server_conf.service_array)
         {
-            DL_SEARCH(G_server_conf.service_raw_list, existing, &eltmp, svc_entry_fn_cmp);
+            DL_SEARCH(G_server_conf.service_raw_list, existing, &eltmp, ndrx_svc_entry_fn_cmp);
 
             if (existing)
             {
@@ -583,7 +602,10 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
             if (G_server_conf.is_threaded)
             {
                 ndrx_TPset_error_fmt(TPENOENT, "%s: runtime tpadvertise() not "
-                        "supported for multi-threaded servers", 
+                        "supported for multi-threaded servers (svcnm=[%s])", 
+                        __func__, svc_nm);
+                userlog("%s: runtime tpadvertise() not "
+                        "supported for multi-threaded servers (svcnm=[%s])", 
                         __func__, svc_nm);
                 EXFAIL_OUT(ret);
             }
@@ -595,11 +617,11 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
                 NDRX_FREE(entry);
                 goto out;
             }
-            
         }
     }
     
 out:
+    ndrx_sv_advertise_unlock();
     return ret;
 }
 
@@ -619,7 +641,7 @@ expublic int tpunadvertise(char *svcname)
     char *thisfn="tpunadvertise";
     
     ndrx_TPunset_error();
-    
+    ndrx_sv_advertise_lock();
     /* Validate argument */
     if (NULL==svcname || EXEOS==svcname[0])
     {
@@ -636,7 +658,7 @@ expublic int tpunadvertise(char *svcname)
 
     if (NULL==G_server_conf.service_array)
     {
-        DL_SEARCH(G_server_conf.service_raw_list, existing, &eltmp, svc_entry_fn_cmp);
+        DL_SEARCH(G_server_conf.service_raw_list, existing, &eltmp, ndrx_svc_entry_fn_cmp);
 
         if (existing)
         {
@@ -663,9 +685,12 @@ expublic int tpunadvertise(char *svcname)
         if (G_server_conf.is_threaded)
         {
             ndrx_TPset_error_fmt(TPENOENT, "%s: runtime tpunadvertise() not "
-                    "supported for multi-threaded servers", 
-                    thisfn, svc_nm);
-            EXFAIL_OUT(ret);
+                        "supported for multi-threaded servers (svcnm=[%s])", 
+                        __func__, svc_nm);
+            userlog("%s: runtime tpunadvertise() not "
+                    "supported for multi-threaded servers (svcnm=[%s])", 
+                    __func__, svc_nm);
+            EXFAIL_OUT(ret);   
         }
         
         if (EXSUCCEED!=dynamic_unadvertise(svcname, NULL, NULL))
@@ -673,9 +698,11 @@ expublic int tpunadvertise(char *svcname)
             ret=EXFAIL;
             goto out;
         }
+        
     }
     
 out:
+    ndrx_sv_advertise_unlock();
     return ret;
 }
 
