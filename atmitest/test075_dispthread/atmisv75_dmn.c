@@ -42,6 +42,8 @@
 #include <unistd.h>
 #include <thlock.h>
 #include "test75.h"
+#include "ubf_int.h"
+#include <exassert.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -50,28 +52,40 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-int M_stopping = EXFALSE;
+int M_stopping1 = EXFALSE;
+int M_stopping2 = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
  * Standard service entry, daemon thread
  */
-void DMNSV (TPSVCINFO *p_svc)
+void DMNSV1 (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
+    char tmp_buf[64];
     UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
-
+    
     /* Just print the buffer */
     Bprint(p_ub);
     
+    /* check that we got the data correctly */
+    
+    NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bget(p_ub, T_STRING_2_FLD, 0, tmp_buf, NULL)),
+            "Failed to get T_STRING_2_FLD");
+    
+    NDRX_ASSERT_VAL_OUT((0==strcmp(tmp_buf, "TEST_UBF")),
+            "Invalid value");
+    
     /* Check the buffer... */
-    while(!M_stopping)
+    while(!M_stopping1)
     {
         NDRX_LOG(log_debug, "Daemon running...");
         sleep(1);
     }
+    
+    M_stopping1=EXFALSE;
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -87,24 +101,29 @@ out:
 void DMNSV2 (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
-    UBFH *p_ub = (UBFH *)p_svc->data;
 
     NDRX_LOG(log_debug, "%s got call", __func__);
 
     /* Just print the buffer */
-    Bprint(p_ub);
+    if (NULL!=p_svc->data)
+    {
+        NDRX_LOG(log_error, "Expected NULL data");
+        EXFAIL_OUT(ret);
+    }
     
     /* Check the buffer... */
-    while(!M_stopping)
+    while(!M_stopping2)
     {
         NDRX_LOG(log_debug, "Daemon running...");
         sleep(1);
     }
     
+    M_stopping2=EXFALSE;
+    
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
-                (char *)p_ub,
+                (char *)p_svc->data,
                 0L,
                 0L);
 }
@@ -113,18 +132,82 @@ out:
  * Stop control service
  * @param p_svc
  */
-void DMNSV_STOP (TPSVCINFO *p_svc)
+void DMNSV_CTL (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+    UBFH *p_ub_tmp = NULL;
+    short dmn_no;
+    char cmd[16];
     
-    M_stopping=EXTRUE;
     
-    /* TODO: control which daemon to stop... Test busy flag of two daemons
+    /* control which daemon to stop... Test busy flag of two daemons
      * if one stopped, the busy shall stay
      * if another stopped, the busy shall be removed
      */
     
+    if (EXSUCCEED!=Bget(p_ub, T_STRING_FLD, 0, cmd, NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get command: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=Bget(p_ub, T_SHORT_FLD, 0, (char *)&dmn_no, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get command: %s", 
+                Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0==strcmp(cmd, "stop"))
+    {
+        switch (dmn_no)
+        {
+            case 1:
+                M_stopping1=EXTRUE;
+                break;
+            case 2:
+                M_stopping2=EXTRUE;
+                break;
+            default:
+                NDRX_LOG(log_error, "Invalid dmn_no=%hd", dmn_no);
+                break;
+        }
+    }
+    else if (0==strcmp(cmd, "start"))
+    {
+        switch (dmn_no)
+        {
+            case 1:
+                
+                p_ub_tmp = (UBFH *)tpalloc("UBF", NULL, 1024);
+                
+                NDRX_ASSERT_TP_OUT((NULL!=p_ub_tmp), "Failed to alloc");
+                NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bchg(p_ub_tmp, T_STRING_2_FLD, 0, "TEST_UBF", 0)), 
+                        "Failed to set");
+                NDRX_ASSERT_TP_OUT((EXSUCCEED==tpacall("DMNSV1", (char *)p_ub_tmp, 
+                        0, TPNOREPLY)), "Failed to call service with UBF");
+                
+                break;
+            case 2:
+                
+                NDRX_ASSERT_TP_OUT((EXSUCCEED==tpacall("DMNSV2", (char *)p_ub_tmp, 
+                        0, TPNOREPLY)), "Failed to call service with UBF");
+                break;
+            default:
+                NDRX_LOG(log_error, "Invalid dmn_no=%hd", dmn_no);
+                break;
+        }
+    }
+    
 out:
+                
+    if (NULL!=p_ub_tmp)
+    {
+        tpfree((char *)p_ub_tmp);
+    }
+
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 0L,
                 (char *)p_svc->data,
@@ -141,7 +224,7 @@ int tpsvrinit(int argc, char **argv)
     UBFH *p_ub = NULL;
     NDRX_LOG(log_debug, "tpsvrinit called");
 
-    if (EXSUCCEED!=tpadvertise("DMNSV", DMNSV))
+    if (EXSUCCEED!=tpadvertise("DMNSV1", DMNSV1))
     {
         NDRX_LOG(log_error, "TESTERROR Failed to initialise DMNSV!");
         EXFAIL_OUT(ret);
@@ -163,16 +246,16 @@ int tpsvrinit(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    Bchg(p_ub, BFLD_STRING, 0, "TEST DMN", 0L);
+    Bchg(p_ub, T_STRING_2_FLD, 0, "TEST_UBF", 0L);
     
-    if (EXSUCCEED!=tpacall("DMNSV", (char *)p_ub, 0, TPNOREPLY))
+    if (EXSUCCEED!=tpacall("DMNSV1", (char *)p_ub, 0, TPNOREPLY))
     {
         NDRX_LOG(log_error, "TESTERROR Failed to call DMNSV");
         EXFAIL_OUT(ret);
     }
     
     /* call twice... */
-    if (EXSUCCEED!=tpacall("DMNSV2", (char *)p_ub, 0, TPNOREPLY))
+    if (EXSUCCEED!=tpacall("DMNSV2", NULL, 0, TPNOREPLY))
     {
         NDRX_LOG(log_error, "TESTERROR Failed to call DMNSV2");
         EXFAIL_OUT(ret);
@@ -205,12 +288,14 @@ out:
 
 /**
  * Do de-initialisation
+ * After the server, thread pool is stopped
  */
 void tpsvrdone(void)
 {
     NDRX_LOG(log_debug, "tpsvrdone called");
     
-    M_stopping=EXTRUE;
+    M_stopping1=EXTRUE;
+    M_stopping2=EXTRUE;
 }
 
 /**
@@ -221,9 +306,9 @@ int tpsvrthrinit(int argc, char **argv)
     int ret = EXSUCCEED;
     
     /* will call few times, but nothing todo... just test */
-    if (EXSUCCEED!=tpadvertise("DMNSV_STOP", DMNSV_STOP))
+    if (EXSUCCEED!=tpadvertise("DMNSV_CTL", DMNSV_CTL))
     {
-        NDRX_LOG(log_error, "Failed to initialise DMNSV_STOP!");
+        NDRX_LOG(log_error, "Failed to initialise DMNSV_CTL!");
         EXFAIL_OUT(ret);
     }
     

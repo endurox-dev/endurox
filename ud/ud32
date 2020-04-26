@@ -1,7 +1,8 @@
+#!/bin/sh
 ##
-## @brief `ud' utility for sending UFB buffer to service
+## @brief @(#) ud32 wrapper
 ##
-## @file CMakeLists.txt
+## @file ud32
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -32,35 +33,5 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set a minimum version
-cmake_minimum_required(VERSION 2.8)
-
-# Make sure the compiler can find include files from UBF library
-include_directories (${ENDUROX_SOURCE_DIR}/libubf
-				     ${ENDUROX_SOURCE_DIR}/libatmi
-					 ${ENDUROX_SOURCE_DIR}/libatmiclt
-					 ${ENDUROX_SOURCE_DIR}/include
-					 ${ENDUROX_SOURCE_DIR}/libnstd)
-
-# Make sure the linker can find the UBF library once it is built.
-link_directories (${ENDUROX_BINARY_DIR}/libubf) 
-
-# Exectuables
-add_executable (ud ud.c)
-
-# Link the executable to the UBF library & others...
-target_link_libraries (ud atmiclt atmi ubf nstd ${RT_LIB} pthread m)
-set_target_properties(ud PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-
-
-# Install bin
-install (TARGETS 
-    ud
-    DESTINATION bin)
-
-# Install bin, scripts
-install (PROGRAMS 
-    ud32
-    DESTINATION bin)
-
+exec ud $@
 # vim: set ts=4 sw=4 et smartindent:
