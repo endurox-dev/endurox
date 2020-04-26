@@ -71,7 +71,7 @@ typedef struct
     
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-segmap_t M_map[] = {
+exprivate segmap_t M_map[] = {
         {NDRX_SHM_SRVINFO_SFX, NDRX_SHM_SRVINFO_KEYOFSZ}
         ,{NDRX_SHM_SVCINFO_SFX, NDRX_SHM_SVCINFO_KEYOFSZ}
         ,{NDRX_SHM_BRINFO_SFX, NDRX_SHM_BRINFO_KEYOFSZ}

@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -98,6 +99,15 @@ RET=0
 
 xadmin psc
 xadmin ppm
+
+echo "Test tpacall from tpsvrthrinit() - there shall be 6 calls"
+PSC_OUT=`xadmin psc | grep MULTI_INIT | grep 6`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "MULTI_INIT / 6 not found!"
+    go_out -1
+fi
+
 echo "Running off client"
 
 set_dom1;
@@ -112,15 +122,155 @@ fi
 
 
 #
+# Check the out start of daemons
+#
+echo "Check that daemons are booted..."
+
+PSC_OUT=`xadmin psc | grep DMNSV1 | grep BUSY`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV1 / BUSY not found!"
+    go_out -1
+fi
+
+PSC_OUT=`xadmin psc | grep DMNSV2 | grep BUSY`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV2 / BUSY not found!"
+    go_out -2
+fi
+
+echo "**** stop DMN 1 ****"
+#
 # Stop the daemon server...
 #
+cat << EOF | ud
+SRVCNM	DMNSV_CTL
+T_STRING_FLD	stop
+T_SHORT_FLD	1
+EOF
+if [ "X$RET" != "X0" ]; then
+    echo "ud failed"
+    go_out -101
+fi
 
-
-#
-# Number of messares shall stop to grow
-#
-
+# let thread to finish..
+sleep 1
 xadmin psc
+
+PSC_OUT=`xadmin psc | grep DMNSV1 | grep AVAIL`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV1 / AVAIL not found!"
+    go_out -3
+fi
+
+PSC_OUT=`xadmin psc | grep DMNSV2 | grep BUSY`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV2 / BUSY not found!"
+    go_out -4
+fi
+
+echo "****  stop DMN 2 ****"
+
+cat << EOF | ud
+SRVCNM	DMNSV_CTL
+T_STRING_FLD	stop
+T_SHORT_FLD	2
+EOF
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "ud failed"
+    go_out -104
+fi
+
+# let thread to finish..
+sleep 1
+xadmin psc
+
+PSC_OUT=`xadmin psc | grep DMNSV1 | grep AVAIL`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV1 / AVAIL not found!"
+    go_out -5
+fi
+
+PSC_OUT=`xadmin psc | grep DMNSV2 | grep AVAIL`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV2 / AVAIL not found!"
+    go_out -6
+fi
+
+echo "****  start DMN 1 ****"
+
+cat << EOF | ud
+SRVCNM	DMNSV_CTL
+T_STRING_FLD	start
+T_SHORT_FLD	1
+EOF
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "ud failed"
+    go_out -106
+fi
+
+# let thread to start..
+sleep 1
+xadmin psc
+
+PSC_OUT=`xadmin psc | grep DMNSV1 | grep BUSY`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV1 / BUSY not found!"
+    go_out -7
+fi
+
+PSC_OUT=`xadmin psc | grep DMNSV2 | grep AVAIL`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV2 / AVAIL not found!"
+    go_out -8
+fi
+
+
+echo "****  start DMN 2 ****"
+
+cat << EOF | ud
+SRVCNM	DMNSV_CTL
+T_STRING_FLD	start
+T_SHORT_FLD	2
+EOF
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "ud failed"
+    go_out -108
+fi
+
+# let thread to start..
+sleep 1
+xadmin psc
+
+PSC_OUT=`xadmin psc | grep DMNSV1 | grep BUSY`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV1 / BUSY not found!"
+    go_out -9
+fi
+
+PSC_OUT=`xadmin psc | grep DMNSV2 | grep BUSY`
+
+if [ "X$PSC_OUT" == "X" ]; then
+    echo "DMNSV2 / BUSY not found!"
+    go_out -10
+fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
@@ -128,9 +278,7 @@ if [ "X`grep TESTERROR *.log`" != "X" ]; then
         RET=-2
 fi
 
-
 go_out $RET
-
 
 # vim: set ts=4 sw=4 et smartindent:
 

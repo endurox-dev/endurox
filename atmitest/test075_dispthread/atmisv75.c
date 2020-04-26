@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <thlock.h>
 #include "test75.h"
+#include "exassert.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -49,7 +50,6 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-
 exprivate volatile short M_counter = 0; /** thread number */
 exprivate __thread short M_thr_id = 0;
 MUTEX_LOCKDECL(M_counter_lock);
@@ -105,6 +105,18 @@ out:
 }
 
 /**
+ * Multi-init from tpacall from thread init
+ * @param p_svc
+ */
+void MULTI_INIT (TPSVCINFO *p_svc)
+{
+    tpreturn(  TPSUCCESS,
+                0L,
+                (char *)p_svc->data,
+                0L,
+                0L);
+}
+/**
  * Do initialisation
  */
 int tpsvrinit(int argc, char **argv)
@@ -142,6 +154,16 @@ int tpsvrthrinit(int argc, char **argv)
     M_counter++;
     
     MUTEX_UNLOCK_V(M_counter_lock);
+    
+    /* advertise here the func... */
+    NDRX_ASSERT_TP_OUT((EXSUCCEED==tpadvertise("MULTI_INIT", MULTI_INIT)), 
+            "Advertise fail");
+    
+    /* call the service, this will call number of times as number of threads
+     * we have
+     */
+    NDRX_ASSERT_TP_OUT((EXSUCCEED==tpacall("MULTI_INIT", NULL, 0, TPNOREPLY)), 
+            "Failed to acall MULTI_INIT");
     
     NDRX_LOG(log_debug, "tpsvrthrinit called argc=[%d] argv[0]=[%s] thr_id=[%hd]", 
             argc, argv[0], M_thr_id);

@@ -80,6 +80,10 @@ int M_init = EXFALSE;                 /* no init yet done */
 
 /**
  * Initialise prefix part, that is needed for shm...
+ * WARNING ! Not thread safe.
+ * MT protected by:
+ * - called by ndrxd (single thread)
+ * - called by tp_internal_init(), locked protected
  * @param ndrx_prefix
  * @return 
  */
@@ -127,6 +131,8 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
 
 /**
  * Open shared memory
+ * WARNING ! Not thread safe.
+ * MT protected by: called by ndrxd only (single thread)
  * @return
  */
 expublic int ndrxd_shm_open_all(void)
@@ -169,6 +175,11 @@ out:
 
 /**
  * Closes all shared memory resources, generally ignores errors.
+ * WARNING ! Not thread safe.
+ * MT protected by: 
+ *  - called by ndrxd after fork (main thread only)
+ *  - called by ndrxd on exit
+ *  - called by atmi server un-init
  * @return FAIL if something failed.
  */
 expublic int ndrxd_shm_close_all(void)
@@ -198,6 +209,8 @@ out:
 
 /**
  * Does delete all shared memory blocks.
+ * WARNING ! Not thread safe.
+ * MT protected by: called by ndrxd only (single thread)
  */
 expublic int ndrxd_shm_delete(void)
 {
@@ -218,6 +231,10 @@ expublic int ndrxd_shm_delete(void)
 
 /**
  * Attach to shared memory block.
+ * WARNING ! Not thread safe.
+ * MT protected by:
+ * - Server does init first in single thread
+ * - For clients tp_internal_init() does the thread safe call internally
  * @lev indicates the attach level (should it be service array only)?
  * @return 
  */

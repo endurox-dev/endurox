@@ -86,7 +86,7 @@ exprivate ndrx_tpacall_defer_t *M_deferred_tpacalls = NULL;
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-
+exprivate int ndrx_tpacall_noservice_hook_defer(char *svc, char *data, long len, long flags);
 /**
  * Add service to skip advertise list
  * @param svcnm
@@ -681,11 +681,13 @@ exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
 {
     int ret = EXSUCCEED;
     
-    /* terminate the session */
-    if (EXSUCCEED!=tpterm())
+    /* start the session... */
+    if (EXSUCCEED!=tpinit(NULL))
     {
         EXFAIL_OUT(ret);
     }
+    
+    G_atmi_tls->pf_tpacall_noservice_hook = &ndrx_tpacall_noservice_hook_defer;
     
     if (NULL!=ndrx_G_tpsvrthrinit 
             && ndrx_G_tpsvrthrinit(argc, argv) < 0)
@@ -693,6 +695,8 @@ exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
         EXFAIL_OUT(ret);
     }
     
+    /* remove handler.. */
+    G_atmi_tls->pf_tpacall_noservice_hook = NULL;
 out:
     return ret;
 }
@@ -716,6 +720,9 @@ exprivate int ndrx_tpacall_noservice_hook_defer(char *svc, char *data, long len,
     int err;
     
     NDRX_STRCPY_SAFE(eltmp.svc_nm, svc);
+    
+    /* use the same advertise lock, the may not advertise, if msg is being defered */
+    ndrx_sv_advertise_lock();
     
     DL_SEARCH(G_server_conf.service_raw_list, existing, &eltmp, ndrx_svc_entry_fn_cmp);
     
@@ -801,6 +808,8 @@ out:
             NDRX_FPFREE(call);
         }
     }
+
+    ndrx_sv_advertise_unlock();
 
     return ret;
 }
@@ -986,12 +995,23 @@ int ndrx_main(int argc, char** argv)
     /* unset hook...  */
     G_atmi_tls->pf_tpacall_noservice_hook = NULL;
     
+    
+    /* initialize the library - switch main thread to server ... */
+    if (EXSUCCEED!=atmisrv_initialise_atmi_library())
+    {
+        NDRX_LOG(log_error, "initialise_atmi_library() fail");
+        userlog("initialise_atmi_library() fail");
+        EXFAIL_OUT(ret);
+    }
+    
     /*
      * Run off thread init if any
+     * We could provide noservice hook here too..
+     * Needs to configure hook handler, but then somehow remove it..
      */
-    
     if (G_server_conf.is_threaded)
     {
+        NDRX_LOG(log_debug, "About to init dispatch thread pool");
         G_server_conf.dispthreads = ndrx_thpool_init(G_server_conf.mindispatchthreads, 
                 &ret, ndrx_call_tpsvrthrinit, ndrx_call_tpsvrthrdone, argc, argv);
         
@@ -1002,8 +1022,6 @@ int ndrx_main(int argc, char** argv)
         }
     }
     
-    /* Lock advertise func - protect from threads */
-    ndrx_sv_advertise_lock();
     /*
      * Push the services out!
      */
@@ -1011,16 +1029,6 @@ int ndrx_main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "tpsvrinit() fail");
         userlog("tpsvrinit() fail");
-        ndrx_sv_advertise_unlock();
-        EXFAIL_OUT(ret);
-    }
-
-    /* initialize the library */
-    if (EXSUCCEED!=atmisrv_initialise_atmi_library())
-    {
-        NDRX_LOG(log_error, "initialise_atmi_library() fail");
-        userlog("initialise_atmi_library() fail");
-        ndrx_sv_advertise_unlock();
         EXFAIL_OUT(ret);
     }
     
@@ -1031,12 +1039,8 @@ int ndrx_main(int argc, char** argv)
     {
         NDRX_LOG(log_error, "sv_open_queue() fail");
         userlog("sv_open_queue() fail");
-        ndrx_sv_advertise_unlock();
         EXFAIL_OUT(ret);
     }
-    
-    /* Lock advertise func: protect from other threads... */
-    ndrx_sv_advertise_unlock();
     
     /* Do lib updates after Q open... */
     if (EXSUCCEED!=tp_internal_init_upd_replyq(G_server_conf.service_array[1]->q_descr,
