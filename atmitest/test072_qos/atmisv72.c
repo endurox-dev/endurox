@@ -75,7 +75,7 @@ void TESTSV (TPSVCINFO *p_svc)
     }
     EX_SPIN_LOCK_V(M_count_lock);
     M_count++;
-    EX_SPIN_LOCK_V(M_count_lock);
+    EX_SPIN_UNLOCK_V(M_count_lock);
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
