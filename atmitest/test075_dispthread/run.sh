@@ -108,6 +108,19 @@ if [ "X$PSC_OUT" == "X" ]; then
     go_out -1
 fi
 
+
+echo "Running conversational + notification to server daemon thread test..."
+
+(./atmiclt75_conv 2>&1) > ./atmiclt-dom1_conv.log
+#(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt75 2>&1) > ./atmiclt-dom1.log
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "atmiclt75_conv failed..."
+    go_out $RET
+fi
+
 echo "Running off client"
 
 set_dom1;
