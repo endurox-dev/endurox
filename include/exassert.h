@@ -50,12 +50,15 @@ extern "C" {
  * print the TP error to the log, ret=EXFAIL, goto out;
  * 
  * @param expr - test expression, expected true
- * @param msg - extra message for failure
+ * @param msg - extra message for failure, format string
+ * @param ... - params to format string
  */
-#define NDRX_ASSERT_TP_OUT(expr, msg) \
+#define NDRX_ASSERT_TP_OUT(expr, msg, ...) \
     do {\
         if (!(expr)) {\
-            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false: %s", #expr, #msg, tpstrerror(tperrno));\
+            char tmp_assert_buf_[PATH_MAX];\
+            snprintf(tmp_assert_buf_, sizeof(tmp_assert_buf_), msg, ##__VA_ARGS__);\
+            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false: %s", tmp_assert_buf_, #expr, tpstrerror(tperrno));\
             EXFAIL_OUT(ret);\
         }\
     } while (0)
@@ -65,12 +68,15 @@ extern "C" {
  * print the UBF error to the log, ret=EXFAIL, goto out;
  * 
  * @param expr - test expression, expected true
- * @param msg - extra message for failure
+ * @param msg - extra message for failure, format string
+ * @param ... - params to format string
  */    
-#define NDRX_ASSERT_UBF_OUT(expr, msg) \
+#define NDRX_ASSERT_UBF_OUT(expr, msg, ...) \
     do {\
         if (!(expr)) {\
-            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false: %s", #expr, #msg, Bstrerror(Berror));\
+            char tmp_assert_buf_[PATH_MAX];\
+            snprintf(tmp_assert_buf_, sizeof(tmp_assert_buf_), msg, ##__VA_ARGS__);\
+            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false: %s", tmp_assert_buf_, #expr, Bstrerror(Berror));\
             EXFAIL_OUT(ret);\
         }\
     } while (0)
@@ -81,11 +87,14 @@ extern "C" {
  * 
  * @param expr - test expression, expected true
  * @param msg - extra message for failure
+ * @param ... - params to format string
  */    
-#define NDRX_ASSERT_VAL_OUT(expr, msg) \
+#define NDRX_ASSERT_VAL_OUT(expr, msg, ...) \
     do {\
         if (!(expr)) {\
-            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false", #expr, #msg);\
+            char tmp_assert_buf_[PATH_MAX];\
+            snprintf(tmp_assert_buf_, sizeof(tmp_assert_buf_), msg, ##__VA_ARGS__);\
+            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false", tmp_assert_buf_, #expr);\
             EXFAIL_OUT(ret);\
         }\
     } while (0)
