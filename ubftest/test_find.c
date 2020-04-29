@@ -204,6 +204,34 @@ Ensure(test_cbfind)
     assert_equal(*(s=(short *)CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_SHORT)), 12312);
     assert_equal(*(s=(short *)CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_SHORT)), 0);
     assert_equal(*(s=(short *)CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_SHORT)), 0);
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_SHORT)), 88);
+    assert_equal(len, sizeof(short));
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_SHORT)), -1021);
+    assert_equal(len, sizeof(short));
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_SHORT)), 99);
+    assert_equal(len, sizeof(short));
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_SHORT)), 17);
+    assert_equal(len, sizeof(short));
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_SHORT)), 12312);
+    assert_equal(len, sizeof(short));
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_SHORT)), 0);
+    assert_equal(len, sizeof(short));
+    
+    len=0;
+    assert_equal(*(s=(short *)CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_SHORT)), 0);
+    assert_equal(len, sizeof(short));
 
     /* Test as long */
     assert_equal(*(l=(long *)CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_LONG)), 88);
@@ -213,6 +241,35 @@ Ensure(test_cbfind)
     assert_equal(*(l=(long *)CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_LONG)), 12312);
     assert_equal(*(l=(long *)CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_LONG)), 0);
     assert_equal(*(l=(long *)CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_LONG)), 0);
+    
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_LONG)), 88);
+    assert_equal(len, sizeof(long));
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_LONG)), -1021);
+    assert_equal(len, sizeof(long));
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_LONG)), 99);
+    assert_equal(len, sizeof(long));
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_LONG)), 17);
+    assert_equal(len, sizeof(long));
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_LONG)), 12312);
+    assert_equal(len, sizeof(long));
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_LONG)), 0);
+    assert_equal(len, sizeof(long));
+    
+    len=0;
+    assert_equal(*(l=(long *)CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_LONG)), 0);
+    assert_equal(len, sizeof(long));
 
     /* Test as char */
     assert_equal(*(c=(char *)CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_CHAR)), 'X');
@@ -222,6 +279,34 @@ Ensure(test_cbfind)
     assert_equal(*(c=(char *)CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_CHAR)), 24); /* May be incorrect dute to data size*/
     assert_equal(*(c=(char *)CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_CHAR)), 'T');
     assert_equal(*(c=(char *)CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_CHAR)), 'C');
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_CHAR)), 'X');
+    assert_equal(len, sizeof(char));
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_CHAR)), 3); /* may be incorrect due to data size*/
+    assert_equal(len, sizeof(char));
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_CHAR)), 'c');
+    assert_equal(len, sizeof(char));
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_CHAR)), 17);
+    assert_equal(len, sizeof(char));
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_CHAR)), 24); /* May be incorrect dute to data size*/
+    assert_equal(len, sizeof(char));
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_CHAR)), 'T');
+    assert_equal(len, sizeof(char));
+    
+    len=0;
+    assert_equal(*(c=(char *)CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_CHAR)), 'C');
+    assert_equal(len, sizeof(char));
 
     /* Test as float */
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_FLOAT)), 88);
@@ -231,8 +316,35 @@ Ensure(test_cbfind)
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_FLOAT)), 12312.1111);
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_FLOAT)), 0);
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_FLOAT)), 0);
-
-
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_FLOAT)), 88);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_FLOAT)), -1021);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_FLOAT)), 99);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_FLOAT)), 17.31);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_FLOAT)), 12312.1111);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_FLOAT)), 0);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_FLOAT)), 0);
+    assert_equal(len, sizeof(float));
+    
     /* Test as double */
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_DOUBLE)), 88);
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_LONG_FLD, 0, 0, BFLD_DOUBLE)), -1021);
@@ -241,6 +353,34 @@ Ensure(test_cbfind)
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_DOUBLE)), 12312.1111);
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_DOUBLE)), 0);
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_DOUBLE)), 0);
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_DOUBLE)), 88);
+    assert_equal(len, sizeof(double));
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_DOUBLE)), -1021);
+    assert_equal(len, sizeof(double));
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_DOUBLE)), 99);
+    assert_equal(len, sizeof(double));
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_DOUBLE)), 17.31);
+    assert_equal(len, sizeof(double));
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_DOUBLE)), 12312.1111);
+    assert_equal(len, sizeof(double));
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_DOUBLE)), 0);
+    assert_equal(len, sizeof(double));
+    
+    len=0;
+    assert_double_equal(*(d=(double *)CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_DOUBLE)), 0);
+    assert_equal(len, sizeof(double));
 
     /* Test as string */
     assert_string_equal(CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_STRING), "88");
@@ -251,6 +391,36 @@ Ensure(test_cbfind)
     assert_string_equal(CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_STRING), "TEST STR VAL");
     assert_string_equal(CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_STRING), "CARRAY1 TEST STRING DATA");
 
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_STRING), "88");
+    assert_equal(len, 3);
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_STRING), "-1021");
+    assert_equal(len, 6);
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_STRING), "c");
+    assert_equal(len, 2);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_STRING), "17.3", 4), 0);
+    assert_equal(len, 9);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_STRING), "12312.1111", 10), 0);
+    assert_equal(len, 13);
+    
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_STRING), "TEST STR VAL");
+    assert_equal(len, 13);
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_STRING), "CARRAY1 TEST STRING DATA");
+    assert_equal(len, 25);
+
+    
     /* Test as carray */
     assert_equal(strncmp(CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_CARRAY), "88", 2), 0);
     assert_equal(strncmp(CBfind(p_ub, T_LONG_FLD, 0, 0, BFLD_CARRAY), "-1021", 5), 0);
@@ -260,9 +430,38 @@ Ensure(test_cbfind)
     assert_equal(strncmp(CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_CARRAY), "TEST STR VAL", 12), 0);
     assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
     
+    
+    
     /* Bug #330 */
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_CARRAY), "88", 2), 0);
+    assert_equal(len, 2);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_CARRAY), "-1021", 5), 0);
+    assert_equal(len, 5);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_CARRAY), "c", 1), 0);
+    assert_equal(len, 1);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_CARRAY), "17.3", 4), 0);
+    /* This is due to 5 zeros... after dot */
+    assert_equal(len, 8);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_CARRAY), "12312.1111", 10), 0);
+    /* this is due to 6 zeros after dot */
+    assert_equal(len, 12);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_CARRAY), "TEST STR VAL", 12), 0);
+    assert_equal(len, 12);
+    
+    len=0;
     assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
-    assert_equal(len, len);
+    assert_equal(len, 24);
     
     assert_equal(CBfind(p_ub, T_CARRAY_3_FLD, 0, &len, BFLD_CARRAY), NULL);
     assert_equal(Berror, BNOTPRES);
