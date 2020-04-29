@@ -260,9 +260,38 @@ Ensure(test_cbfind)
     assert_equal(strncmp(CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_CARRAY), "TEST STR VAL", 12), 0);
     assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
     
+    
+    
     /* Bug #330 */
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_CARRAY), "88", 2), 0);
+    assert_equal(len, 2);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_CARRAY), "-1021", 5), 0);
+    assert_equal(len, 5);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_CARRAY), "c", 1), 0);
+    assert_equal(len, 1);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_CARRAY), "17.3", 4), 0);
+    /* This is due to 5 zeros... after dot */
+    assert_equal(len, 8);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_CARRAY), "12312.1111", 10), 0);
+    /* this is due to 6 zeros after dot */
+    assert_equal(len, 12);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_CARRAY), "TEST STR VAL", 12), 0);
+    assert_equal(len, 12);
+    
+    len=0;
     assert_equal(strncmp(CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_CARRAY), "CARRAY1 TEST STRING DATA", 24), 0);
-    assert_equal(len, len);
+    assert_equal(len, 24);
     
     assert_equal(CBfind(p_ub, T_CARRAY_3_FLD, 0, &len, BFLD_CARRAY), NULL);
     assert_equal(Berror, BNOTPRES);

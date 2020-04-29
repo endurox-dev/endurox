@@ -475,6 +475,8 @@ Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
 - Version 7.0.30 released on 24/03/2020 (stabel) Bug #537
 
+- Version 7.0.32 released on 29/03/2020 (stabel) Bug #544
+
 # Build configurations
 
 ## Configure make with: 
