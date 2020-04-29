@@ -231,8 +231,35 @@ Ensure(test_cbfind)
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_DOUBLE_FLD, 0, 0, BFLD_FLOAT)), 12312.1111);
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_FLOAT)), 0);
     assert_double_equal(*(f=(float *)CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_FLOAT)), 0);
-
-
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_FLOAT)), 88);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_FLOAT)), -1021);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_FLOAT)), 99);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_FLOAT)), 17.31);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_FLOAT)), 12312.1111);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_FLOAT)), 0);
+    assert_equal(len, sizeof(float));
+    
+    len=0;
+    assert_double_equal(*(f=(float *)CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_FLOAT)), 0);
+    assert_equal(len, sizeof(float));
+    
     /* Test as double */
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_DOUBLE)), 88);
     assert_double_equal(*(d=(double *)CBfind(p_ub, T_LONG_FLD, 0, 0, BFLD_DOUBLE)), -1021);
@@ -251,6 +278,36 @@ Ensure(test_cbfind)
     assert_string_equal(CBfind(p_ub, T_STRING_FLD, 0, 0, BFLD_STRING), "TEST STR VAL");
     assert_string_equal(CBfind(p_ub, T_CARRAY_FLD, 0, 0, BFLD_STRING), "CARRAY1 TEST STRING DATA");
 
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_SHORT_FLD, 0, &len, BFLD_STRING), "88");
+    assert_equal(len, 3);
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_LONG_FLD, 0, &len, BFLD_STRING), "-1021");
+    assert_equal(len, 6);
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_CHAR_FLD, 0, &len, BFLD_STRING), "c");
+    assert_equal(len, 2);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_FLOAT_FLD, 0, &len, BFLD_STRING), "17.3", 4), 0);
+    assert_equal(len, 9);
+    
+    len=0;
+    assert_equal(strncmp(CBfind(p_ub, T_DOUBLE_FLD, 0, &len, BFLD_STRING), "12312.1111", 10), 0);
+    assert_equal(len, 13);
+    
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_STRING_FLD, 0, &len, BFLD_STRING), "TEST STR VAL");
+    assert_equal(len, 13);
+    
+    len=0;
+    assert_string_equal(CBfind(p_ub, T_CARRAY_FLD, 0, &len, BFLD_STRING), "CARRAY1 TEST STRING DATA");
+    assert_equal(len, 25);
+
+    
     /* Test as carray */
     assert_equal(strncmp(CBfind(p_ub, T_SHORT_FLD, 0, 0, BFLD_CARRAY), "88", 2), 0);
     assert_equal(strncmp(CBfind(p_ub, T_LONG_FLD, 0, 0, BFLD_CARRAY), "-1021", 5), 0);
