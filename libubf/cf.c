@@ -399,7 +399,8 @@ expublic char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
                 return NULL; /* <<<< RETURN!!! */
             }
             /* Set the output size! */
-            *alloc_size=dtype->size;
+            /* Bug #544 - previously was  dtype->size which could be 0 */
+            *alloc_size=CF_TEMP_BUF_MAX;
         }
         else if (CB_MODE_ALLOC==mode)
         {
