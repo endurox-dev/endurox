@@ -58,11 +58,14 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 exprivate event_entry_t *M_subscribers=NULL;
+
+/** allow MT read, single thread write */
+exprivate NDRX_RWLOCK_DECL(M_subscribers_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * 
+ * Remove subscriber
  * @param subscription
  * @param my_id
  * @return
@@ -90,7 +93,7 @@ exprivate long remove_by_my_id (long subscription, char *my_id)
             ndrx_regfree(&elt->re);
             /* Delete out it from list */
             DL_DELETE(M_subscribers,elt);
-            NDRX_FREE(elt);
+            NDRX_FPFREE(elt);
             deleted++;
         }
 
@@ -125,6 +128,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     char buf_subtype[17];
     long buf_len;
     long flags;
+    int locked = EXFALSE;
     tp_command_call_t * last_call;
     
     /* Support #279 */
@@ -151,6 +155,11 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     NDRX_LOG(log_debug, "Posting event [%s] to system", last_call->extradata);
     
     /* Delete the stuff out */
+    
+    /* Lock the dispatch... */
+    NDRX_RWLOCK_RLOCK_V(M_subscribers_lock);
+    locked=EXTRUE;
+    
     DL_FOREACH_SAFE(M_subscribers,elt,tmp)
     {
         /* Get type */
@@ -210,7 +219,13 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
                                     " - unsubscribing %ld",
                                     elt->name1, elt->my_id, 
                                     tpstrerror(tperrno), elt->subscriberNr);
+                            
                             /* IF NO ENT, THEN UNSUBSCIRBE!!! */
+                            
+                            /* Switch to write lock */
+                            NDRX_RWLOCK_UNLOCK_V(M_subscribers_lock);
+                            NDRX_RWLOCK_WLOCK_V(M_subscribers_lock);
+                            
                             remove_by_my_id(elt->subscriberNr, NULL);
                         }
                         else
@@ -250,6 +265,9 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
             }
         }
     }
+    
+    NDRX_RWLOCK_UNLOCK_V(M_subscribers_lock);
+    locked=EXFALSE;
     
     if (dispatch_over_bridges)
     {
@@ -323,6 +341,11 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     }
     
 out:
+                                
+    if (locked) 
+    {
+        NDRX_RWLOCK_UNLOCK_V(M_subscribers_lock);
+    }
 
     if (NULL!=dup_chk)
     {
@@ -394,7 +417,9 @@ void TPEVUNSUBS (TPSVCINFO *p_svc)
     NDRX_LOG(log_debug, "About to remove subscription: %ld, my_id: %s",
                                         subscriberNr, ndrx_get_G_last_call()->my_id);
    /* Delete the subscriptions */
+   NDRX_RWLOCK_WLOCK_V(M_subscribers_lock);
    deleted=remove_by_my_id(subscriberNr, ndrx_get_G_last_call()->my_id);
+   NDRX_RWLOCK_UNLOCK_V(M_subscribers_lock);
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -426,7 +451,7 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     NDRX_LOG(log_debug, "TPEVSUBS got call");
     Bfprint(p_ub, stderr);
     
-    if (NULL==(p_ee=NDRX_MALLOC(sizeof(event_entry_t))))
+    if (NULL==(p_ee=NDRX_FPMALLOC(sizeof(event_entry_t), 0)))
     {
         NDRX_LOG(log_error, "Failed to allocate %d bytes: %s!",
                                         sizeof(event_entry_t), strerror(errno));
@@ -501,8 +526,9 @@ void TPEVSUBS (TPSVCINFO *p_svc)
     subscriberNr++; /* Increase subscription's ID for next user */
 
     /* Register the subscriber */
+    NDRX_RWLOCK_WLOCK_V(M_subscribers_lock);
     DL_APPEND(M_subscribers, p_ee);
-
+    NDRX_RWLOCK_UNLOCK_V(M_subscribers_lock);
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
                 p_ee->subscriberNr,
@@ -514,7 +540,7 @@ out:
 /*
  * Do initialization
  */
-int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+int tpsvrinit(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     short nodeid = (short)tpgetnodeid();
@@ -558,9 +584,40 @@ out:
     return ret;
 }
 
-void NDRX_INTEGRA(tpsvrdone) (void)
+void tpsvrdone (void)
 {
 
+}
+
+/* Auto generated system advertise table */
+expublic struct tmdsptchtbl_t ndrx_G_tmdsptchtbl[] = {
+    { NULL, NULL, NULL, 0, 0 }
+};
+
+/**
+ * Main entry for event server, allow mult-threading
+ */
+int main( int argc, char** argv )
+{
+    _tmbuilt_with_thread_option=EXTRUE;
+    struct tmsvrargs_t tmsvrargs =
+    {
+        &tmnull_switch,
+        &ndrx_G_tmdsptchtbl[0],
+        0,
+        tpsvrinit,
+        tpsvrdone,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    };
+    
+    return( _tmstartserver( argc, argv, &tmsvrargs ));
+    
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

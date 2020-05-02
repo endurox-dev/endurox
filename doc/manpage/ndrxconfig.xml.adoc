@@ -27,6 +27,8 @@ SYNOPSIS
     <defaults>
         <min>MIN_SERVERS_DEFAULT</min>
         <max>MAX_SERVERS_DEFAULT</max>
+        <mindispatchthreads>MIN_DISPTHREADS_DEFAULT</mindispatchthreads>
+        <maxdispatchthreads>MAX_DISPTHREADS_DEFAULT</maxdispatchthreads>
         <autokill>AUTOKILL_DEFAULT</autokill>
         <env>ENV_OVERRIDE_DEFAULT</env>
         <start_max>MAX_STARTUP_TIME_DEFAULT</start_max>
@@ -59,6 +61,8 @@ SYNOPSIS
         <server name="SERVER_BINARY_NAME">
             <min>MIN_SERVERS_SRV</min>
             <max>MAX_SERVERS_SRV</max>
+            <mindispatchthreads>MIN_DISPTHREADS_SERVER</mindispatchthreads>
+            <maxdispatchthreads>MAX_DISPTHREADS_SERVER</maxdispatchthreads>
             <autokill>AUTOKILL_SRV</autokill>
             <respawn>RESPAWN_SRV<respawn>
             <env>ENV_OVERRIDE_SRV</env>
@@ -173,44 +177,44 @@ Internal server ping can be configured here too.
 PARAMETERS
 ----------
 
-*SANITY_SECONDS*::
+'SANITY_SECONDS'::
     Number of seconds after which perform system sanity checks. This number
-    should divide by environment variable value 'NDRX_CMDWAIT'. As this actually
+    should divide by environment variable value *NDRX_CMDWAIT*. As this actually
     is time by which 'ndrxd' sleeps periodically.
-*CHECKPM_STY*::
+'CHECKPM_STY'::
     This is number of sanity cycles into which check dead processes from the
     process model. This makes the actual checking of th PID existence system.
     Thus if ndrxd is started in learning mode and will not receive signals
     of the dead servers, then by setting it will discover exited processes.
-*BRIDGE_REFRESH_TIME*::
-    Number of sanity units in which 'tpbridge' refresh should be send to other node.
-    If for example SANITY_SECONDS is set to 10, and BRIDGE_REFRESH_TIME is set to 2
+'BRIDGE_REFRESH_TIME'::
+    Number of sanity units in which *tpbridge(8)* refresh should be send to other node.
+    If for example 'SANITY_SECONDS' is set to 10, and 'BRIDGE_REFRESH_TIME' is set to 2
     then period between bridge refreshes will be 10*2 = 20 seconds.
     Default value is *0* - do not send full updates.
-*MIN_RESTART_TIME*::
+'MIN_RESTART_TIME'::
     Number of sanity units in which died server will be tried to start back. This is
     minimal time, means that this time is applied in case if server was running and died.
-    If it is consecutive try, then RESTART_STEP is applied on this timer.	
-*RESTART_STEP*::
+    If it is consecutive try, then 'RESTART_STEP' is applied on this timer.	
+'RESTART_STEP'::
     Number to sanity units to apply on 'MIN_RESTART_TIME' in case of consecutive server death.
     Meaning that next try of restart will tried later that previous by this
     number of sanity units.
-*MAX_RESTART_TIME*::
+'MAX_RESTART_TIME'::
     Max number of sanity units after which server will tried to restart.
     After each consecutive ATMI server death, next reboot is tried
     by 'MIN_RESTART_TIME'+'RESTART_STEP'*try_count. If this goes over the
     'MAX_RESTART_TIME' then 'MAX_RESTART_TIME' is used instead.
-*NDRXD_RESTART_TO_CHECK*::
+'NDRXD_RESTART_TO_CHECK'::
     Number of *seconds* for 'ndrxd' to wait after daemon started in recovery
     mode. Within this time no sanity checks are perfomed, but instead "learning" mode
     is used. During this mode, 'ndrxd' asks each ATMI server for it's configuration.
     If in this time ATMI server does not responds, then ATMI server is subject
     of sanity checks.
-*NDRXD_GATHER_PQ_STATS*::
-    Settings for *pq* 'xadmin' command. if set to 'Y', ndrxd will automatically collect
+'NDRXD_GATHER_PQ_STATS'::
+    Settings for *pq* *xadmin* command. if set to 'Y', ndrxd will automatically collect
     stats for service queues. In future this might be used for automatic service starting
     and stopping.
-*RQADDRTTL*::
+'RQADDRTTL'::
     Used only when operating System V queues mode. Due to common queue for
     multiple services / basically all service queues are shared request addresses,
     the only zapping approach when there are no servers on queues, is to check
@@ -221,96 +225,118 @@ PARAMETERS
     'ndrxd' will unlink the RQADDR. To avoid this issue, with TTL slight delay
     is introduced, after which queue is unlinked. Basically when queue is open
     it's change time is updated. And if current time minus change time is
-    less than *RQADDRTTL*, then queue is not unlinked (in this time server will
+    less than 'RQADDRTTL', then queue is not unlinked (in this time server will
     be able to add record to service shared memory). Also with this comes a fact
     that there must be no server processes with out any service. For those
     request address queue will be unlinked.
-    The value is in seconds. Checks are performed with *SANITY_SECONDS* intervals.
+    The value is in seconds. Checks are performed with 'SANITY_SECONDS' intervals.
     Default value is *10* seconds.
-*MIN_SERVERS_DEFAULT*::
+'MIN_SERVERS_DEFAULT'::
     Default minimum number of copies of the server which needs to be started automatically.
     This can be overridden by 'MIN_SERVERS_SRV' per server.
-*MAX_SERVERS_DEFAULT*::
+'MAX_SERVERS_DEFAULT'::
     Max number of ATMI server copies per ATMI server entry. The difference between
     MIN and MAX servers means the number of standby servers configured. They can be started
     by hand with out system re-configuration. But they are not booted automatically at
     system startup. You will have to start them with $ xadmin start -s <server_name>
     or by $ xadmin start -i <server_id>. This can be overridden by
     'MAX_SERVERS_SRV'.
-*AUTOKILL_DEFAULT*::
+'MIN_DISPTHREADS_DEFAULT'::
+    This is minimums dispatch threads used by XATMI server service dispatcher.
+    By default this is *1*. If set to greater value, the Enduro/X built in thread
+    pool will start process incoming server messages. Note that server programs
+    must be specially programmed to support multi-threading (i.e. data structures
+    must be protected). If server process is booting and it detects that 
+    if 'MIN_DISPTHREADS_DEFAULT' is greater than 1, then check is made against server
+    process capability to handle multi-threaded work-load. By default MT dispatcher 
+    is disabled in ATMI server library, and server process will fail to boot with
+    corresponding message in ULOG.
+    To enable MT mode, use *buildserver(8)* compiler and specify '-t' flag. Other 
+    option is before starting ATMI Server main routine, set the extern variable
+    '_tmbuilt_with_thread_option' to 1.
+    This parameter may be overridden by 'MIN_DISPTHREADS_SERVER'.
+'MIN_DISPTHREADS_DEFAULT'::
+    This parameter is reserved for future use. If 'MIN_DISPTHREADS_DEFAULT' (or
+    'MIN_DISPTHREADS_SERVER') is being configured, then this parameter must be 
+    greater or equal to 'MIN_DISPTHREADS_DEFAULT' (or 'MIN_DISPTHREADS_SERVER')
+    value. If this is not a true, then server process will fail to boot with
+    corresponding message in ULOG.
+'AUTOKILL_DEFAULT'::
     Should server be automatically killed (by sequence signal sequence 
     -2, -15, -9) in case if server have been starting up too long, or
     does not respond to pings too long, or it is performing shutdown
     too long. This can be overridden by 'AUTOKILL_SRV' on per server
     basis.
-*ENV_OVERRIDE_DEFAULT*::
+'ENV_OVERRIDE_DEFAULT'::
     Full path to file containing environment variable overrides.
     see 'ex_envover(5)' for more details. This can be overridden
     by per server basis by ENV_OVERRIDE_SRV. 
     Both are optional settings.
-*MAX_STARTUP_TIME_DEFAULT*::
+'MAX_STARTUP_TIME_DEFAULT'::
     Max time (in sanity units) in which server should start up, i.e. send init info to
-    'ndrxd'. If during this time server have not initialized, it is being restarted. This
+    *ndrxd*. If during this time server have not initialized, it is being restarted. This
     can be overridden by 'MAX_STARTUP_TIME_SRV'.
-*PING_EVERY_TIME_DEFAULT*::
+'PING_EVERY_TIME_DEFAULT'::
     Number of sanity units in which perform periodical server pings. This can be
     overridden by 'PING_EVERY_TIME_SRV'. Zero value disables ping.
-*MAX_PING_TIME_DEFAULT*::
+'MAX_PING_TIME_DEFAULT'::
     Number of sanity units, time in which server *must* respond to ping requests.
     If there is no response from server within this time, then restart sequence is
     initiated. This can be overridden by 'MAX_PING_TIME_SRV'.
-*MAX_SERVER_SHUTDOWN_TIME_DEFAULT*::
+'MAX_SERVER_SHUTDOWN_TIME_DEFAULT'::
     Maximum time in which shutdown of server must complete in sanity units.
     If in given time server is not shutdown, then forced shutdown sequence
     is started until server exits. This can be overridden by 'MAX_SERVER_SHUTDOWN_TIME_SRV'
     on per server basis.
-*EXPORT_SERVICES_DEFAULT*::
+'EXPORT_SERVICES_DEFAULT'::
     Comma separated list of services to be applied to all binaries which means the list of
     services to be exported by *tpbridge* server to other cluster node. This can be overridden by 
     'ATMI_SERVER_EXPORT_SERVICES'.
-*BLACKLIST_SERVICES_DEFAULT*::
+'BLACKLIST_SERVICES_DEFAULT'::
     Comma separated list of services to be applied to all server binaries which means the list of
     services that must not be exported by *tpbridge* server to other cluster node.
     'ATMI_SERVER_BLACKLIST_SERVICES' is first priority over the 'EXPORT_SERVICES_DEFAULT' if
     service appears in both lists. 'BLACKLIST_SERVICES_DEFAULT' can be overridden by 
     'ATMI_SERVER_BLACKLIST_SERVICES'. 
-*NDRXD_SRV_START_WAIT_DEFAULT*::
+'NDRXD_SRV_START_WAIT_DEFAULT'::
     Number of seconds to wait for servers to boot. If not started in given time,
     then continue with next server. This can be overridden by 'NDRXD_SRV_START_WAIT'.
     Default value for this is 30 seconds.
-*NDRXD_SRV_STOP_WAIT_DEFAULT*::
+'NDRXD_SRV_STOP_WAIT_DEFAULT'::
     Number of seconds to wait for server to shutdown. If not started in given time,
     then continue with next server. This can be overridden by 'NDRXD_SRV_STOP_WAIT_DEFAULT'.
     Default value for this is 30 seconds.
-*KILL_TIME_DEFAULT*::
+'KILL_TIME_DEFAULT'::
     Time in sanity units after which to progress from first signal -2 to next signal
     -15. And after -15 this time means when next -9 signal will be sent. This is used
     if forced restart of forced shutdown was initiated by 'ndrxd'. This
     can be overridden by 'KILL_TIME_SRV'.
-*COMMON_CONFIG_TAG_DEFAULT*::
-    Common configuration tag. Loaded into 'NDRX_CCTAG' environment variable before
-    process is spawned. This can be overridden by 'COMMON_CONFIG_TAG'.
-*PROTECTED_SERVER_DEFAULT*::
-    Protected server is one that does not shutdown with 'xadmin stop' unless you pass the
-    'xadmin stop -c' parameter (complete shutdown). Still you can run the 'sreload' and 
-    stop it by 'xadmin stop -i <srvid>' or by 'xadmin stop -s <servernm>'. The 'xadmin restart'
-    won't work on these because '-c' is not supposed to be used by restart.
+'COMMON_CONFIG_TAG_DEFAULT'::
+    Common configuration tag. Loaded into *NDRX_CCTAG* environment variable before
+    process is spawned. This can be overridden by *COMMON_CONFIG_TAG*.
+'PROTECTED_SERVER_DEFAULT'::
+    Protected server is one that does not shutdown with stop with *xadmin stop -k*
+    (keep ndrxd running).
+    If doing standard *xadmin stop* parameter then server is shutdown as all others. 
+    It is possible stop stop it by *xadmin stop -i <srvid>* or by 
+    *xadmin stop -s <servernm>*. The *xadmin restart* does not accept *-k* parameter
+    thus protected server will be stopped too.
     The idea behind this, is to avoid accidental stop of the critical servers, like bridge or
-    something else which is involved into 'ndrxd' daemon management it self.
+    something else which is involved into *ndrxd* daemon management it self.
     This can be overridden by 'PROTECTED_SERVER'.
-*RELOAD_ON_CHANGE_DEFAULT*::
+'RELOAD_ON_CHANGE_DEFAULT'::
     If set to *Y* or *y* the *ndrxd* daemon will scan the every binaries time stamp,
     and if it detects that time stamp is changed *ndrxd* will reload (stop/start)
     the XATMI servers one by one. The scanning will occur at every sanity
     cycle. This is recommended to be used *only* for development purposes. And
     must not be used on production servers! 
     This can be overridden by 'RELOAD_ON_CHANGE_SERVER' on per server basis.
-*RSSMAX_DEFAULT*::
+'RSSMAX_DEFAULT'::
     Maximum Resident Set Size memory size after which *ndrxd(8)* process will issue
     server reload (sr) command (i.e. gracefully 
     shutdown and start back) to server process if
     particular server process resident memory goes over this defined value. 
-    The value can be override by *ATMI_SERVER_RSSMAX* for particular server 
+    The value can be override by 'ATMI_SERVER_RSSMAX' for particular server 
     instance.
     This parameter is useful to be used to protect local machine against 
     defective/binaries with memory leaks. The parameter value is 
@@ -319,14 +345,14 @@ PARAMETERS
     "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
     limit resident memory to 10 megabytes. The default value is *-1*, which 
     means that functionality is not used.
-*VSZMAX_DEFAULT*::
+'VSZMAX_DEFAULT'::
     Maximum Virtual Set Size memory size (the number bytes program have asked to 
     OS kernel for memory, but does it does *not* mean it is physically used or initialized) 
     after which *ndrxd(8)* process will issue
     server reload (sr) command (i.e. gracefully shutdown and start back) to
     server process if particular server's process virtual memory goes 
     over this defined value. The value can be override by 
-    *ATMI_SERVER_VSZMAX* for particular server instance.
+    'ATMI_SERVER_VSZMAX' for particular server instance.
     This parameter is useful to be used to protect local machine
     defective/binaries with memory leaks. The parameter value is 
     expressed in bytes. Configuration file also accepts
@@ -334,7 +360,7 @@ PARAMETERS
     "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
     limit resident memory to 10 megabytes. The default value is *-1*, which 
     means that functionality is not used.
-*RQADDR_DEFAULT*::
+'RQADDR_DEFAULT'::
     Request address (common service queue) used in System V mode. For other
     modes each service have it's own queue, but due to limitations of the System V
     queues, for each XATMI server process have it's own queue (built as process
@@ -349,27 +375,27 @@ PARAMETERS
     This can be overridden by 'RQADDR' on per server basis. Request address
     cannot start with '@' symbol. The max length of the request address is *30*
     chars.
-*SECONDS_TO_SLEEP_AFTER_SRV_START*::
+'SECONDS_TO_SLEEP_AFTER_SRV_START'::
     Number of seconds to wait for next item to start after the server is launched.
     This is useful in cases when for example we start bridge server, let it for some
     seconds to connect to other node, then continue with other service startup.
-*SERVER_BINARY_NAME*::
+'SERVER_BINARY_NAME'::
     ATMI server executable's name. The executable must be in $PATH.
     This name cannot contain special symbols like path separator '/'
     and it cannot contains commas ','! Commas are used as internal
     queue separator combined with binary names.
-*RESPAWN_SRV*::
+'RESPAWN_SRV'::
     Do the automatic process re-spawning if process is died for some reason. The default
     value is *Y*, meaning that processes are automatically recovered. If set to 'N' or 'n',
     then sanity checks will not automatically re-boot the process.
-*SERVER_ID*::
+'SERVER_ID'::
     Server ID. It is internal ID for server instance. For each separate ATMI server
     the ID must be unique. Also special care should be take when MAX_SERVERS_SRV is greater
     than 1. In this case up till MAX servers, internally 'SERVER_ID' is incremented.
     Thus for example if SERVER_ID is 200, and MAX_SERVERS_SRV is 5, then
     following server IDs will be reserved: 200, 201, 202, 203, 204. The maximum server
     id is set in $NDRX_SRVMAX environment variable. Minimal server id is 1.
-*ATMI_SERVER_SYSTEM_OPTIONS*::
+'ATMI_SERVER_SYSTEM_OPTIONS'::
     Command line system options passed to ATMI server. Following parameters are
     used by Enduro/X ATMI servers: '-N', boolean type. If present, then no services
     will be advertised by server. In this case will be advertised only services specified
@@ -405,58 +431,58 @@ PARAMETERS
     afterwards the -N and -s<service_name1> flag works as usual, with -N disable
     all service advertise and with -s some single service may be enabled.
 
-*ATMI_SERVER_APPLICATION_OPTIONS*::
+'ATMI_SERVER_APPLICATION_OPTIONS'::
     Application specific command line options. This follows content after sys options as:
     'system options -- app options'.
-*ATMI_SERVER_EXPORT_SERVICES*::
+'ATMI_SERVER_EXPORT_SERVICES'::
     Enduro/X server specific list of services to be exported. This list is only for 
     *tpbridge* servers.
-*ATMI_SERVER_BLACKLIST_SERVICES*::
+'ATMI_SERVER_BLACKLIST_SERVICES'::
     Enduro/X server specific list of services that must not be exported. This list is only for 
     *tpbridge* servers. Blacklist have higher priority over the Export list.
-*ATMI_SERVER_FULL_PATH*::
+'ATMI_SERVER_FULL_PATH'::
     This is full path of the XATMI server binary. At the process startup this overrides
-    the server binary name at *SERVER_BINARY_NAME*. *ATMI_SERVER_FULL_PATH* is used only
+    the server binary name at 'SERVER_BINARY_NAME'. 'ATMI_SERVER_FULL_PATH' is used only
     for process startup. This is intended for testing, if server wrapper scripts
     needs to be started. But as the *ndrxd* will do the sanity checks against the process
     names, for time of the testing this needs to be disabled. Thus to do the testings with
     full path enabled, please increase the 'checkpm' sanity unit time. As at the moment
     of process model checks, the ndrxd will find out that wrapped binary name does not
-    contain the *SERVER_BINARY_NAME*, thus will reboot the process.
-*ATMI_SERVER_COMMAND_LINE*::
+    contain the 'SERVER_BINARY_NAME', thus will reboot the process.
+'ATMI_SERVER_COMMAND_LINE'::
     This is alternative command line build by user. From this command line the
     real process name is extracted as first executable (basename). When  building
     custom command line, the env substitution is available at the stage with
     following processes based envs (not counting the globals): *NDRX_SVSRVID* -
     Enduro/X server id, *NDRX_SVPROCNAME* - server process name (defined in XML
-    config as *SERVER_BINARY_NAME* variable, *NDRX_SVCLOPT* - standard command
+    config as 'SERVER_BINARY_NAME' value, *NDRX_SVCLOPT* - standard command
     line options used by Enduro/X. These options are used at stage with ATMI
     server library gets initialized, it will use in case *ndrx_main()* receives
     less than expected standard argument count. Basically this command line tag
     is suitable for interpreted languages, like Java, where interpreter needs to
     be started as stand alone binary, and the Enduro/X is initialized as a library
     within stand alone process.
-*SVGRP_ENV_GROUP_NAME*::
+'SVGRP_ENV_GROUP_NAME'::
     Environment variable group name for the servers section. Identifier max length
     is 30 chars. Same group can be used for different server processes. One server
     may import multiple groups. For client processes groups are defined 
-    *CLTGRP_ENV_GROUP_NAME* name at '<clients>' section. At process level groups
+    'CLTGRP_ENV_GROUP_NAME' name at '<clients>' section. At process level groups
     can be imported by using tag '<usegroup>' and specifying the group name. At
     that moment all variables defined in group are import for process. 
-*SVGRP_ENV_VARIABLE_NAME*::
+'SVGRP_ENV_VARIABLE_NAME'::
     This server server's group environment variable name, that shall be set for
-    process which uses this group. For client processes *CLTGRP_ENV_VARIABLE_NAME*
+    process which uses this group. For client processes 'CLTGRP_ENV_VARIABLE_NAME'
     set the variable name at group definition. Individual environment variables
     can be set at process level. For server processes that is set by
-    *SVPROC_ENV_VARIABLE_NAME* and for client processes by *CLTPROC_ENV_VARIABLE_NAME*.
-*SVGRP_ENV_VARIABLE_VALUE*::
+    'SVPROC_ENV_VARIABLE_NAME' and for client processes by 'CLTPROC_ENV_VARIABLE_NAME'.
+'SVGRP_ENV_VARIABLE_VALUE'::
     This is environment variable value to be set. For client process groups this
-    is defined by *CLTGRP_ENV_VARIABLE_VALUE*. For individual processes value is
-    defined by *SVPROC_ENV_VARIABLE_NAME* and *CLTPROC_ENV_VARIABLE_NAME*
+    is defined by 'CLTGRP_ENV_VARIABLE_VALUE'. For individual processes value is
+    defined by 'SVPROC_ENV_VARIABLE_NAME' and 'CLTPROC_ENV_VARIABLE_NAME'
     accordingly. The value is interpreted by variable substitution algorithm (see 
     bellow). The value is interpreted at time when process is spawned (not defined),
     meaning that it have access to full process variables at startup moment.
-*SVGRP_ENV_UNSET*::
+'SVGRP_ENV_UNSET'::
     If set to 'y' or 'Y' then environment's environment variable is unset (removed)
     from environment. This can be used if some specific variable for process is
     not needed. At client environment group level this can be set by *CLTGRP_ENV_UNSET*,
@@ -464,42 +490,42 @@ PARAMETERS
     accordingly. If any value is present for this variable, it is ignored, as the
     main action of this tag is unset the value and only what matters here is the
     variable name.
-*CLT_COMMAND_LINE*::
+'CLT_COMMAND_LINE'::
     Executable name and arguments for client program. Command line basically is a format
     string for which you can use '${NDRX_CLTTAG}' for tag substitution and '${NDRX_CLTSUBSECT}'
     for subsection substitution. Other env variables available here too.
-*CLT_LOG*::
+'CLT_LOG'::
     Logfile to which stdout and stderr is logged. Can be overridden by 'CLT_LOG_EXEC'
     for each individual process. Optional attribute.
-*CLT_STDOUT*::
+'CLT_STDOUT'::
     File where to log stdout. Can be overridden by 'CLT_STDOUT_EXEC'
     for each individual process. Optional attribute.
-*CLT_STDERR*::
+'CLT_STDERR'::
     File where to log stderr. Can be overridden by 'CLT_STDERR_EXEC'
     for each individual process. Optional attribute.
-*CLTGRP_ENV*::
+'CLTGRP_ENV'::
     Environment override file. See *ex_envover(5)* for syntax. Can be overridden 
     by 'CLTGRP_ENV_EXEC' for each individual process. Optional attribute.
-*CLT_CCTAG*::
+'CLT_CCTAG'::
     ATMI Client lib Common-Config tag. Can be overridden by 'CLT_CCTAG_EXEC'
     for each individual process. Optional attribute.
-*CLT_WD*::
+'CLT_WD'::
     Working directory for the process. Can be overridden by 'CLT_WD_EXEC'.
-*CLT_AUTOSTART*::
+'CLT_AUTOSTART'::
     Should process be started automatically? 'Y' or 'y' means boot at start.
     Can be overridden by 'CLT_AUTOSTART_EXEC' for each individual process. 
     Optional attribute. Default 'n'.
-*CLT_TAG_EXEC*::
+'CLT_TAG_EXEC'::
     Tagname to be set for process.
-*CLT_SUBSECT_EXEC*::
+'CLT_SUBSECT_EXEC'::
     Subsection to be set for process. '-' used as default.
-*CLT_RSSMAX*::
+'CLT_RSSMAX'::
     Maximum Resident Set Size memory size after which *cpmsrv(8)* process will 
     gracefully kill the client process by signals -2, -15, -9 if
     particular client process resident memory goes over this defined value. 
     After killing, the cpmsrv at first check interval will detect that client
     is dead, and at next check interval it will be respawned.
-    The value can be override by *CLT_RSSMAX_EXEC*.
+    The value can be override by 'CLT_RSSMAX_EXEC'.
     This parameter is useful to be used to protect local machine against 
     defective/binaries with memory leaks. The parameter value is 
     expressed in bytes. Configuration file also accepts
@@ -507,7 +533,7 @@ PARAMETERS
     "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
     limit resident memory to 10 megabytes. The default value is *-1*, which 
     means that functionality is not used.
-*CLT_VSZMAX*::
+'CLT_VSZMAX'::
     Maximum Virtual Set Size memory size (the number bytes program have asked to 
     OS kernel for memory, but does it does *not* mean it is physically used or initialized) 
     after which *cpmsrv(8)* process will 
@@ -515,7 +541,7 @@ PARAMETERS
     particular client process virtual memory goes over this defined value.
     After killing, the cpmsrv at first check interval will detect that client
     is dead, and at next check interval it will be respawned.
-    The value can be override by *CLT_RSSMAX_EXEC*.
+    The value can be override by 'CLT_RSSMAX_EXEC'.
     This parameter is useful to be used to protect local machine against 
     defective/binaries with memory leaks. The parameter value is 
     expressed in bytes. Configuration file also accepts
@@ -523,20 +549,20 @@ PARAMETERS
     "m" for megabytes and "K" or "k" for kilobytes. For example "10M" would
     limit resident memory to 10 megabytes. The default value is *-1*, which 
     means that functionality is not used.
-*CLT_SUBSECTFROM*::
+'CLT_SUBSECTFROM'::
     If set, then used to auto-generate number subsections for particular client
-    definition. In this case *CLT_SUBSECT_EXEC* parameter value is ignored.
+    definition. In this case 'CLT_SUBSECT_EXEC' parameter value is ignored.
     The loop must start with non negative number and must not be greater than
-    integer (2147483647) and less or equal to *CLT_SUBSECTTO*. 
-    Default is *undefined* and not used. Can be overriden
-    by *CLT_SUBSECTFROM_EXEC*. Must be used together with *CLT_SUBSECTTO*.
-*CLT_SUBSECTTO*::
+    integer (2147483647) and less or equal to 'CLT_SUBSECTTO'. 
+    Default is *undefined* and not used. Can be overridden
+    by 'CLT_SUBSECTFROM_EXEC'. Must be used together with 'CLT_SUBSECTTO'.
+'CLT_SUBSECTTO'::
     If set, then used to auto-generate number subsections for particular client
     definition. In this case *CLT_SUBSECT_EXEC* parameter value is ignored.
     The loop must end with non negative number and must not be greater than
     integer (2147483647). Default is *undefined* and not used. Can be overriden
-    by *CLT_SUBSECTFROM_EXEC*. Must be used together with *CLT_SUBSECTFROM*.
-*CLT_KLEVEL*::
+    by 'CLT_SUBSECTFROM_EXEC'. Must be used together with 'CLT_SUBSECTFROM'.
+'CLT_KLEVEL'::
     Kill level of the client. *0* - do not kill child processes recursively 
     of the client, *1* - do kill child processes only when performing 
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
@@ -547,9 +573,9 @@ VARIABLE SUBSTITUTION
 
 Several parameters in the ndrxconfig.xml file are processed via substitution 
 engine. Engine processes puts the environment variables or special functions
-in the place-holders. Placeholder is defined as ${ENV_VARIABLE} for environment
-variables and ${FUNC=[PARAMETER]} for functions. The value can be escaped with 
-\${some_value}.
+in the place-holders. Placeholder is defined as ${'ENV_VARIABLE'} for environment
+variables and ${'FUNC'=['PARAMETER']} for functions. The value can be escaped with 
+\${'some_value'}.
 
 Functions are processed in case if statement in brackets contains equal sign '='.
 As the sign is not allowed for environment variables, Enduro/X uses it to 
@@ -557,7 +583,7 @@ distinguish between env variable and function.
 
 Following *FUNC* (functions) are defined:
 
-*dec*::
+*dec*
     Decrypt base64 string in *PARAMETER* and replace the placeholder with the
     value. To get encrypted value, it is possible to use *exencrypt(8)* tool.
 

@@ -16,7 +16,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This is special ATMI server which manages local event brokerage.
-In bridged mode it also ensure that events are deliverd to other nodes too i.e.
+In bridged mode it also ensure that events are delivers to other nodes too i.e.
 to other cluster nodes local event brokers, which dispatches events locally
 to subscribed servers.
 Following special services are advertised by 'tpevsrv':
@@ -32,7 +32,28 @@ Following special services are advertised by 'tpevsrv':
 			event postings.
 
 Subscriptions to events are supported by per ATMI server instance.
-Only one instance of server should be present in local EnduroX instance.
+Only one instance of server should be present in local Enduro/X instance.
+
+Event server supports dispatch-threads multi-threading model. By default it
+uses single thread, but *ndrxconfig.xml(5)* servers settings such as
+'mindispatchtreads' and 'maxdispatchtreads' may be used to add some performance
+boost for multi-threading.
+
+The typical configuration looks like this (with 5 dispatching threads):
+
+--------------------------------------------------------------------------------
+
+            <server name="tpevsrv">
+                <srvid>10</srvid>
+                <mindispatchthreads>5</mindispatchthreads>
+                <maxdispatchthreads>5</maxdispatchthreads>
+                <sysopt>-e ${NDRX_HOME}/log/tpevsrv.log -r</sysopt>
+            </server>
+
+--------------------------------------------------------------------------------
+
+Note that any write operations such as sub-scribe or un-subscribe are executed
+with exclusive write lock. Postings are executed with shared read lock.
 
 EXIT STATUS
 -----------
@@ -48,7 +69,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxd(8)*, *ex_overview*
+*ndrxd(8)*, *ex_overview*, *ndrxconfig.xml(5)*
 
 
 COPYING

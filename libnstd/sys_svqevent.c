@@ -532,8 +532,8 @@ expublic int ndrx_svq_mqd_close(mqd_t mqd)
     }
     MUTEX_UNLOCK_V(mqd->qlock);
     
-    EX_SPIN_DESTROY_V(mqd->rcvlock);
-    EX_SPIN_DESTROY_V(mqd->rcvlockb4);
+    NDRX_SPIN_DESTROY_V(mqd->rcvlock);
+    NDRX_SPIN_DESTROY_V(mqd->rcvlockb4);
     MUTEX_TRYLOCK_V(mqd->barrier);
     MUTEX_TRYLOCK_V(mqd->qlock);
     
@@ -627,7 +627,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
         if (delta <= 0)
         {
             int wait_matched;
-            EX_SPIN_LOCK_V(( ((mqd_t)r->mqd)->stamplock));
+            NDRX_SPIN_LOCK_V(( ((mqd_t)r->mqd)->stamplock));
             
             if (NDRX_SVQ_TOUT_MATCH((r), ((mqd_t)r->mqd)))
             {
@@ -637,7 +637,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             {
                 wait_matched = EXFAIL;
             }
-            EX_SPIN_UNLOCK_V((((mqd_t)r->mqd)->stamplock));
+            NDRX_SPIN_UNLOCK_V((((mqd_t)r->mqd)->stamplock));
             
             NDRX_LOG(log_debug, "Timeout condition: mqd %p time spent: %ld "
                     "matched: %d seq: %lu", 
@@ -726,8 +726,8 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
     MUTEX_UNLOCK_V(mqd->qlock);
     *ev=NULL;
     
-    l1=EX_SPIN_TRYLOCK_V(mqd->rcvlockb4);
-    l2=EX_SPIN_TRYLOCK_V(mqd->rcvlock);
+    l1=NDRX_SPIN_TRYLOCK_V(mqd->rcvlockb4);
+    l2=NDRX_SPIN_TRYLOCK_V(mqd->rcvlock);
 
     if (0==l1)
     {
@@ -736,11 +736,11 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
          * assume that it will pick the msg up in next loop
          */
         /* fprintf(stderr, "we locked b4 area, thus process is in workload\n"); */
-        EX_SPIN_UNLOCK_V(mqd->rcvlockb4);
+        NDRX_SPIN_UNLOCK_V(mqd->rcvlockb4);
 
         if (0==l2)
         {
-            EX_SPIN_UNLOCK_V(mqd->rcvlock);
+            NDRX_SPIN_UNLOCK_V(mqd->rcvlock);
         }
     }
     else
@@ -759,7 +759,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
 
         if (0==l2)
         {
-            EX_SPIN_UNLOCK_V(mqd->rcvlock);
+            NDRX_SPIN_UNLOCK_V(mqd->rcvlock);
         }
 
         /* reseync on Q lock so that we know that main thread is close
@@ -775,8 +775,8 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
         while (1)
         {
             /* try lock again... */
-            l1=EX_SPIN_TRYLOCK_V(mqd->rcvlockb4);
-            l2=EX_SPIN_TRYLOCK_V(mqd->rcvlock);
+            l1=NDRX_SPIN_TRYLOCK_V(mqd->rcvlockb4);
+            l2=NDRX_SPIN_TRYLOCK_V(mqd->rcvlock);
 
             /* both not locked, then we need to interrupt the thread */
 
@@ -784,8 +784,8 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
             {
                 /* then it will process or queued event anyway... */
 
-                EX_SPIN_UNLOCK_V(mqd->rcvlockb4);
-                EX_SPIN_UNLOCK_V(mqd->rcvlock);
+                NDRX_SPIN_UNLOCK_V(mqd->rcvlockb4);
+                NDRX_SPIN_UNLOCK_V(mqd->rcvlock);
 
                 break;
             }
@@ -813,12 +813,12 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
 
             if (0==l1)
             {
-                EX_SPIN_UNLOCK_V(mqd->rcvlockb4);
+                NDRX_SPIN_UNLOCK_V(mqd->rcvlockb4);
             }
 
             if (0==l2)
             {
-                EX_SPIN_UNLOCK_V(mqd->rcvlock);
+                NDRX_SPIN_UNLOCK_V(mqd->rcvlock);
             }
 
             /* Maybe do yeald... */
@@ -1707,7 +1707,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      */
     
     /* update time stamps */
-    EX_SPIN_LOCK_V((mqd->stamplock));
+    NDRX_SPIN_LOCK_V((mqd->stamplock));
     
     mqd->stamp_seq++;
     cur_stamp.stamp_seq = mqd->stamp_seq;
@@ -1715,7 +1715,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     ndrx_stopwatch_reset(&(mqd->stamp_time));
     memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
     
-    EX_SPIN_UNLOCK_V(mqd->stamplock);
+    NDRX_SPIN_UNLOCK_V(mqd->stamplock);
     
     /* register timeout: */
 
@@ -1763,7 +1763,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     /* Also we shall here check the queue? */
 
     /* Lock here before process... */
-    EX_SPIN_LOCK_V((mqd->rcvlockb4));
+    NDRX_SPIN_LOCK_V((mqd->rcvlockb4));
 
     /* We need pre-read lock...? as it is flushing the queue
      * but we assume that it will still process the queue...! */
@@ -1797,7 +1797,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
         *ev = mqd->eventq;
         DL_DELETE(mqd->eventq, *ev);
         MUTEX_UNLOCK_V(mqd->qlock);
-        EX_SPIN_UNLOCK_V(mqd->rcvlockb4);
+        NDRX_SPIN_UNLOCK_V(mqd->rcvlockb4);
         
         NDRX_LOG(log_info, "Got event in q %p: %d", mqd, (*ev)->ev);
         EXFAIL_OUT(ret);
@@ -1811,7 +1811,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     mqd->thread = pthread_self();
     M_signalled = EXFALSE;
     /* here is no interrupt, as pthread locks are imune to signals */
-    EX_SPIN_LOCK_V((mqd->rcvlock));    
+    NDRX_SPIN_LOCK_V((mqd->rcvlock));    
     /* unlock queue  */
     MUTEX_UNLOCK_V(mqd->qlock);
 
@@ -1844,8 +1844,8 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
 
     /* TODO: Replace these two bellow with spin locks
      * so that we are sure that we do not get any signals on them... */
-    EX_SPIN_UNLOCK_V(mqd->rcvlock);
-    EX_SPIN_UNLOCK_V(mqd->rcvlockb4);
+    NDRX_SPIN_UNLOCK_V(mqd->rcvlock);
+    NDRX_SPIN_UNLOCK_V(mqd->rcvlockb4);
         
     MUTEX_LOCK_V(mqd->barrier);
     MUTEX_UNLOCK_V(mqd->barrier);

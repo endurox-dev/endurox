@@ -120,7 +120,7 @@ struct  ndrx_fpastack
     int cur_blocks;         /**< Number of blocks allocated                 */
     long allocs;            /**< number of allocs done, for stats           */
     ndrx_fpablock_t *stack; /**< stack head                                 */
-    EX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size */
+    NDRX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size */
 };
 
 /*---------------------------Globals------------------------------------*/

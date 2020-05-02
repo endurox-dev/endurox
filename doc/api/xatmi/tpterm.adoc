@@ -24,7 +24,7 @@ This function is available only for XATMI clients. It still valid to call the fu
 
 RETURN VALUE
 ------------
-On success, *tpterm_full()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
+On success, *tpterm()* return zero; on error, -1 is returned, with *tperrno* set to indicate the error.
 
 ERRORS
 ------

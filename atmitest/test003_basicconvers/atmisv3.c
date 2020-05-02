@@ -92,7 +92,7 @@ void CONVSV (TPSVCINFO *p_svc)
                 NDRX_LOG(log_error, "Failed to send to client!");
             }
         }
-    }
+    }   
 
     /* Now we will become as listeners, OK? */
     if (EXFAIL==tpsend(p_svc->cd, (char *)p_ub, 0L, TPRECVONLY, &revent))

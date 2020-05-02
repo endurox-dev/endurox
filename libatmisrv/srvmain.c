@@ -615,7 +615,7 @@ expublic int ndrx_init(int argc, char** argv)
     if (G_server_conf.mindispatchthreads > 1)
     {
         G_server_conf.is_threaded = EXTRUE;
-        EX_SPIN_INIT_V(G_server_conf.mt_lock);
+        NDRX_SPIN_INIT_V(G_server_conf.mt_lock);
     }
 
     G_srv_id = G_server_conf.srv_id;

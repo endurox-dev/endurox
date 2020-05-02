@@ -168,8 +168,8 @@ struct ndrx_svq_info
     /* Locks for synchronous or other event wakeup */
     
     /* Using spinlocks for better performance  */
-    EX_SPIN_LOCKDECL (rcvlock);    /**< Data receive lock, msgrcv              */
-    EX_SPIN_LOCKDECL (rcvlockb4);  /**< Data receive lock, before going msgrcv */
+    NDRX_SPIN_LOCKDECL (rcvlock);    /**< Data receive lock, msgrcv              */
+    NDRX_SPIN_LOCKDECL (rcvlockb4);  /**< Data receive lock, before going msgrcv */
     ndrx_svq_ev_t *eventq;      /**< Events queued for this ipc q              */
     pthread_mutex_t barrier;     /**< Border lock after msgrcv woken up        */
     pthread_mutex_t qlock;      /**< Queue lock (event queue)                  */
@@ -179,7 +179,7 @@ struct ndrx_svq_info
      * if needed. If not then event will be discarded because of stamps
      * does not match.
      */
-    EX_SPIN_LOCKDECL (stamplock);/**< Stamp change lock                     */
+    NDRX_SPIN_LOCKDECL (stamplock);/**< Stamp change lock                     */
     ndrx_stopwatch_t stamp_time;/**< timestamp for timeout waiting          */
     unsigned long stamp_seq;    /**< stamp sequence                         */
     

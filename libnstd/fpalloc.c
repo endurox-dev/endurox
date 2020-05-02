@@ -97,9 +97,9 @@ exprivate char *M_opts = NULL;                  /**< env options        */
 expublic void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats)
 {
     /* lock the pool */
-    EX_SPIN_LOCK_V(M_fpa_pools[poolno].spinlock);
+    NDRX_SPIN_LOCK_V(M_fpa_pools[poolno].spinlock);
     memcpy((char *)p_stats, (char *)&M_fpa_pools[poolno], sizeof(ndrx_fpapool_t));
-    EX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
+    NDRX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
 }
 
 /**
@@ -124,7 +124,7 @@ expublic void ndrx_fpuninit(void)
         {
             freebl = NULL;
             
-            EX_SPIN_LOCK_V(M_fpa_pools[i].spinlock);
+            NDRX_SPIN_LOCK_V(M_fpa_pools[i].spinlock);
 
             freebl = M_fpa_pools[i].stack;
             
@@ -133,7 +133,7 @@ expublic void ndrx_fpuninit(void)
                 M_fpa_pools[i].stack = freebl->next;
             }
 
-            EX_SPIN_UNLOCK_V(M_fpa_pools[i].spinlock);
+            NDRX_SPIN_UNLOCK_V(M_fpa_pools[i].spinlock);
             
             if (NULL!=freebl)
             {
@@ -164,7 +164,7 @@ exprivate int ndrx_fpinit(void)
         M_fpa_pools[i].cur_blocks = 0;
         M_fpa_pools[i].stack = NULL;
         M_fpa_pools[i].allocs = 0;
-        EX_SPIN_INIT_V(M_fpa_pools[i].spinlock);
+        NDRX_SPIN_INIT_V(M_fpa_pools[i].spinlock);
     }
     
     /* setup the options if any... */
@@ -475,7 +475,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         }
         
         /* get from stack alloc if needed */
-        EX_SPIN_LOCK_V(M_fpa_pools[poolno].spinlock);
+        NDRX_SPIN_LOCK_V(M_fpa_pools[poolno].spinlock);
         
         if (NULL!=M_fpa_pools[poolno].stack)
         {
@@ -491,7 +491,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         }
 #endif
         
-        EX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
+        NDRX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
         
         if (NULL==ret)
         {
@@ -581,7 +581,7 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
         goto out;
     }
     
-    EX_SPIN_LOCK_V(M_fpa_pools[poolno].spinlock);
+    NDRX_SPIN_LOCK_V(M_fpa_pools[poolno].spinlock);
     
     /* Add back to the pool
      */
@@ -599,7 +599,7 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
         NDRX_FPDEBUG("Add to pool %d: %p", poolno, ret);
     }
     
-    EX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
+    NDRX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
     
 #ifdef NDRX_FPA_STATS
     MUTEX_LOCK_V(callnum_lock);

@@ -251,9 +251,9 @@ expublic mqd_t ndrx_svq_open(const char *pathname, int oflag, mode_t mode,
     }
 #ifdef EX_USE_SYSVQ
     /* Init mutexes... */
-    EX_SPIN_INIT_V(mq->rcvlock);
-    EX_SPIN_INIT_V(mq->rcvlockb4);
-    EX_SPIN_INIT_V(mq->stamplock);
+    NDRX_SPIN_INIT_V(mq->rcvlock);
+    NDRX_SPIN_INIT_V(mq->rcvlockb4);
+    NDRX_SPIN_INIT_V(mq->stamplock);
     MUTEX_VAR_INIT(mq->barrier);
     MUTEX_VAR_INIT(mq->qlock);
 #endif
@@ -294,6 +294,8 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
     ndrx_svq_ev_t *ev = NULL;
     int err = 0;
     
+    VALIDATE_MQD;
+    
     /* set thread handler - for interrupts */
     mqd->thread = pthread_self();
     
@@ -306,12 +308,12 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
             if (NDRX_SVQ_EV_TOUT==ev->ev)
             {
                 NDRX_LOG(log_info, "Timed out");
-                err = ETIMEDOUT;
+                errno = ETIMEDOUT;
             }
             else
             {
                 NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
-                err = EBADF;
+                errno = EBADF;
             }
         }
         else
@@ -321,7 +323,7 @@ expublic ssize_t ndrx_svq_timedreceive(mqd_t mqd, char *ptr, size_t maxlen,
             {
                 NDRX_LOG(log_debug, "msgrcv(qid=%d) failed: %s", mqd->qid, 
                     strerror(err));
-                err = EAGAIN;
+                errno = EAGAIN;
             }
             else
             {
@@ -337,10 +339,13 @@ out:
     
     if (NULL!=ev)
     {
+        /* save the error, if any.. */
+        err=errno;
         NDRX_FPFREE(ev);
+        errno=err;
     }
     
-    errno = err;
+    /* errno = err; errno is loaded */
     return ret;
 #endif
     
@@ -520,6 +525,10 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
     
     *l = 1; /* set default mtype.. */
     /* set thread handler - for interrupts */
+    
+    /* Check for invalid descriptor... */
+    VALIDATE_MQD;
+    
     mqd->thread = pthread_self();
     
     if (EXSUCCEED!=ndrx_svq_event_sndrcv( mqd, (char *)ptr, &ret, 
@@ -531,12 +540,12 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
             if (NDRX_SVQ_EV_TOUT==ev->ev)
             {
                 NDRX_LOG(log_warn, "Timed out");
-                err = ETIMEDOUT;
+                errno = ETIMEDOUT;
             }
             else
             {
                 NDRX_LOG(log_error, "Unexpected event: %d", ev->ev);
-                err = EBADF;
+                errno = EBADF;
             }
         }
         else
@@ -546,7 +555,7 @@ expublic int ndrx_svq_timedsend(mqd_t mqd, const char *ptr, size_t len,
             {
                 NDRX_LOG(log_debug, "msgsnd(qid=%d) failed: %s", mqd->qid, 
                     strerror(err));
-                err = EAGAIN;
+                errno = EAGAIN;
             }
             else
             {
@@ -563,10 +572,13 @@ out:
     
     if (NULL!=ev)
     {
+        /* save the error if any */
+        err=errno;
         NDRX_FPFREE(ev);
+        errno=err;
     }
     
-    errno = err;
+    /* errno is loaded */
     return ret;
     
 #endif

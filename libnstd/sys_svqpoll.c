@@ -108,7 +108,7 @@ exprivate int M_nrfds = 0;
 /**
  * Protect M_nrfds
  */
-EX_SPIN_LOCKDECL(M_nrfds_lock);
+NDRX_SPIN_LOCKDECL(M_nrfds_lock);
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -358,7 +358,7 @@ expublic int ndrx_epoll_sys_init(void)
 {
     int ret = EXSUCCEED;
     
-    EX_SPIN_INIT_V(M_nrfds_lock);
+    NDRX_SPIN_INIT_V(M_nrfds_lock);
     
     /* boot the Auxiliary thread */
     if (EXSUCCEED!=ndrx_svqshm_init(EXFALSE))
@@ -416,9 +416,9 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd,
                         fd, M_mainq);
             }
             /* hmmm add spinlock */
-            EX_SPIN_LOCK_V(M_nrfds_lock);
+            NDRX_SPIN_LOCK_V(M_nrfds_lock);
             M_nrfds++;
-            EX_SPIN_UNLOCK_V(M_nrfds_lock);
+            NDRX_SPIN_UNLOCK_V(M_nrfds_lock);
             break;
         case EX_EPOLL_CTL_DEL:
             if (EXSUCCEED!=(ret = ndrx_svq_moncmd_rmfd(fd)))
@@ -428,9 +428,9 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd,
                         fd, M_mainq);
             }
             /* add spinlock */
-            EX_SPIN_LOCK_V(M_nrfds_lock);
+            NDRX_SPIN_LOCK_V(M_nrfds_lock);
             M_nrfds--;
-            EX_SPIN_UNLOCK_V(M_nrfds_lock);
+            NDRX_SPIN_UNLOCK_V(M_nrfds_lock);
             break;    
         default:
             NDRX_LOG(log_warn, "Unsupported operation: %d", op);

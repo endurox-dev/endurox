@@ -55,6 +55,8 @@
     <servers>
         <server name="tpevsrv">
             <srvid>10</srvid>
+            <mindispatchthreads>5</mindispatchthreads>
+            <maxdispatchthreads>5</maxdispatchthreads>
             <sysopt>-e ${TESTDIR}/tpevsrv-dom2.log -r</sysopt>
         </server>
         <server name="atmisv4_1ST">

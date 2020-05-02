@@ -188,7 +188,7 @@ struct srv_conf
     int maxdispatchthreads;     /**< maximum dispatch trheads       */
   
     threadpool dispthreads;     /**< thread pool for dispatch threads*/
-    EX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync        */
+    NDRX_SPIN_LOCKDECL (mt_lock);   /**< mt lock for data sync        */
 };
 
 typedef struct srv_conf srv_conf_t;

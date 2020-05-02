@@ -111,7 +111,7 @@ fi
 
 echo "Running conversational + notification to server daemon thread test..."
 
-(./atmiclt75_conv 2>&1) > ./atmiclt-dom1_conv.log
+(./atmiclt75_conv 2>&1) > ./atmiclt_conv.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt75 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
@@ -124,7 +124,7 @@ fi
 echo "Running off client"
 
 set_dom1;
-(./atmiclt75 2>&1) > ./atmiclt-dom1.log
+(./atmiclt75 2>&1) > ./atmiclt.log
 #(valgrind --leak-check=full --log-file="v.out" -v ./atmiclt75 2>&1) > ./atmiclt-dom1.log
 
 RET=$?

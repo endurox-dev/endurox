@@ -55,7 +55,7 @@
  */
 int test_normal_case(void)
 {
-  UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     int ret=EXSUCCEED;
     int cd;
     long revent;
@@ -90,8 +90,8 @@ int test_normal_case(void)
         tp_errno = tperrno;
         if (TPEEVENT == tp_errno)
         {
-                NDRX_LOG(log_error,
-                                 "TESTERROR: Unexpected conv event %lx", revent );
+            NDRX_LOG(log_error,
+                             "TESTERROR: Unexpected conv event %lx", revent );
         }
         else
         {
@@ -116,35 +116,35 @@ int test_normal_case(void)
             {
                     if (TPEV_SENDONLY == revent)
                     {
-                            if (EXFAIL == tpsend(cd, NULL,
-                                             0L, TPRECVONLY, &revent))
-                            {
-                                    NDRX_LOG(log_error,
-                                             "TESTERROR: Send failed %d", tperrno);
-                                    ret=EXFAIL;
-                                    goto out;
-                            }
-                            else
-                            {
-                                    recv_continue=1;
-                                    ret = EXSUCCEED;
-                            }
+                        if (EXFAIL == tpsend(cd, NULL,
+                                         0L, TPRECVONLY, &revent))
+                        {
+                            NDRX_LOG(log_error,
+                                     "TESTERROR: Send failed %d", tperrno);
+                            ret=EXFAIL;
+                            goto out;
+                        }
+                        else
+                        {
+                            recv_continue=1;
+                            ret = EXSUCCEED;
+                        }
                     }
                     else if (TPEV_SVCSUCC == revent)
                             ret = EXSUCCEED;
                     else
                     {
-                            NDRX_LOG(log_error,
-                                     "TESTERROR: Unexpected conv event %lx", revent );
-                            ret=EXFAIL;
-                            goto out;
+                        NDRX_LOG(log_error,
+                                 "TESTERROR: Unexpected conv event %lx", revent );
+                        ret=EXFAIL;
+                        goto out;
                     }
             }
             else
             {
-                    NDRX_LOG(log_error, "TESTERROR: recv error %d", tp_errno  );
-                    ret = EXFAIL;
-                    goto out;
+                NDRX_LOG(log_error, "TESTERROR: recv error %d", tp_errno  );
+                ret = EXFAIL;
+                goto out;
             }
         }
         else
