@@ -36,9 +36,9 @@
 use Time::Local;
 
 # The output format of the log could be like:
-#sss.fff|last 8 chars of file-name|<the log line>
-#sss.fff|last 8 chars of file-name|<the log line continues... (i.e. repeate of header, but dump data)>
-# sss.fff -> time diff from pervious line
+#sss.ffffff|last 8 chars of file-name|<the log line>
+#sss.ffffff|last 8 chars of file-name|<the log line continues... (i.e. repeate of header, but dump data)>
+# sss.ffffff -> time diff from pervious line
 ################################################################################
 # Config
 ################################################################################
@@ -46,8 +46,8 @@ use Time::Local;
 #
 # Mask used for line detection date/time value extraction
 #
-my $M_line_mask = '^.*:.*:[0-6]:.*:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:([0-9]{8}):([0-9]{9}):';
-my $M_line_front = '^(.*:.*:[0-6]:.*:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:[0-9]{8}:[0-9]{9}):';
+my $M_line_mask = '^.*:.*:[0-6]:.*:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:([0-9]{8}):([0-9]{12}):';
+my $M_line_front = '^(.*:.*:[0-6]:.*:[ 0-9]*:[0-9a-fA-F]*:[0-9]{3}:[0-9]{8}:[0-9]{12}):';
 
 my $M_last_tstamp = -1; # Last timestamp of printed line, to calculate timediff.
 
@@ -171,15 +171,15 @@ sub get_line_tstamp {
 
     my ($date, $time) = ($M_lines_enqueued[$idx] =~/$M_line_mask/);
     my ($year, $month, $day) = ($date=~/([0-9]{4})([0-9]{2})([0-9]{2})/);
-    my ($hour, $minute, $second, $fff) = ($time =~/^([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{3})/);
+    my ($hour, $minute, $second, $ffffff) = ($time =~/^([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{6})/);
 
     
     print STDERR "date=$date time=$time year=$year month=$month day=$day\n";
-    print STDERR "hour=$hour minute=$minute second=$second fff=$fff\n";
+    print STDERR "hour=$hour minute=$minute second=$second ffffff=$ffffff\n";
         
     my $epoch = timelocal($second,$minute,$hour,$day,$month-1,$year);
 
-    $epoch = $epoch* 1000 + $fff;
+    $epoch = $epoch* 1000000 + $ffffff;
     
     print STDERR "Extracted epoch: [$epoch] for the $idx\n";
 
@@ -243,8 +243,8 @@ sub print_line  {
 
     my ($line_front) = ($time =~ /\Q$M_line_front/);
 
-    my $lead = sprintf("%03d.%03d|%-14.14s", 
-        ($M_time_diff_cur / 1000), ($M_time_diff_cur % 1000), substr($ARGV[$idx], -14));
+    my $lead = sprintf("%03d.%06d|%-14.14s", 
+        ($M_time_diff_cur / 1000000), ($M_time_diff_cur % 1000000), substr($ARGV[$idx], -14));
 
     $line_front = $lead.'|'.$line_front;
 

@@ -98,14 +98,17 @@ function go_out {
     echo "Test exiting with: $1"
     
     set_dom1;
+    xadmin psc
     xadmin stop -y
     xadmin down -y
 
     set_dom2;
+    xadmin psc
     xadmin stop -y
     xadmin down -y
 
     set_dom3;
+    xadmin psc
     xadmin stop -y
     xadmin down -y
 
@@ -169,7 +172,7 @@ xadmin start -y || go_out 3
 ps -ef | grep tpev
 
 # Let domains to connect between them selves
-sleep 60
+sleep 30
 
 print_domains;
 

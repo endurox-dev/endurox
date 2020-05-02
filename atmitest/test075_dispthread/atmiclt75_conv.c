@@ -50,7 +50,7 @@
 #include "exassert.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define TEST_THREADS            4   /**< number of threads used         */
+#define TEST_THREADS            1   /**< number of threads used         */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     int cd[TEST_THREADS];
     long revent, len;
-    for (i=0; i<100000; i++)
+    for (i=0; i<10000000; i++)
     {
         char *buf[TEST_THREADS];
         

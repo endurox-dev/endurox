@@ -557,7 +557,7 @@ out:
 expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
-    int cd;
+    int cd=EXFAIL;
     char fn[] = "_tpconnect";
     typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
@@ -573,6 +573,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     short command_id=ATMI_COMMAND_CONNECT;
     tp_conversation_control_t *conv;
     int is_bridge;
+    int err;
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s: called", __func__);
@@ -787,7 +788,14 @@ out:
         NDRX_SYSBUF_FREE(buf);
     }
 
-    /* TODO: Kill conversation if FAILED!!!! */
+    /* Kill conversation if FAILED!!!! */
+    if (cd!=EXFAIL && EXFAIL!=ret)
+    {
+        err=tperrno;
+        ndrx_tpdiscon(cd);
+        tperrno=err;
+    }
+
     NDRX_LOG(log_debug, "%s: ret= %d cd=%d",  __func__, ret);
 
     if (EXFAIL!=ret)

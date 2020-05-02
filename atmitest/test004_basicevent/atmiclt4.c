@@ -44,38 +44,38 @@
 #include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define LOOP_NUM    10000
+#define THREADS_NUM 5
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+
 /*---------------------------Statics------------------------------------*/
+
+exprivate int num1=2;
+exprivate int num2=1;
+exprivate int num3=0;
+exprivate int M_err = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
-/*
- * Do the test call to the server
+/**
+ * Run test from thread...
+ * @param arg
+ * @return 
  */
-int main(int argc, char** argv) {
+void* thmain(void* arg)
+{
 
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
     int i;
     int ret=EXSUCCEED;
-    
-    int num1=2;
-    int num2=1;
-    int num3=0;
 
     CBadd(p_ub, T_DOUBLE_FLD, "5", 0, BFLD_STRING);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
     Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
     
-    if (argc>1 && 'Y'==argv[1][0])
-    {
-        /* networked run */
-        num1*=3;
-        num2*=3;
-    }
-    
     /* Do it many times...! */
-    for (i=0; i<1000; i++)
+    for (i=0; i<LOOP_NUM; i++)
     {
         ret=tppost("EVX.TEST", (char*)p_ub, 0L, TPSIGRSTRT);
         NDRX_LOG(log_debug, "dispatched events: %d", ret);
@@ -92,13 +92,53 @@ int main(int argc, char** argv) {
         {
             NDRX_LOG(log_debug, "6 dispatches - OK");
         }
+    }
+    
+out:
+    if (EXFAIL==ret)
+    {
+        M_err=EXTRUE;
+    }
         
-        if (i % 1000 == 0)
-        {
-            /* let services to flush the stuff... */
-            NDRX_LOG(log_debug, "Dispatched %d - sleeping", i);
-            sleep(10);
-        }
+    tpterm();
+    return NULL;
+}
+/*
+ * Do the test call to the server
+ */
+int main(int argc, char** argv) {
+
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+    int i;
+    int ret=EXSUCCEED;
+    pthread_t th[THREADS_NUM];
+
+    CBadd(p_ub, T_DOUBLE_FLD, "5", 0, BFLD_STRING);
+    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
+    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
+    
+    if (argc>1 && 'Y'==argv[1][0])
+    {
+        /* networked run */
+        num1*=3;
+        num2*=3;
+    }
+    
+    for (i=0; i<THREADS_NUM; i++)
+    {
+        pthread_create(&th[i], NULL, thmain, NULL);
+    }
+    
+    for (i=0; i<THREADS_NUM; i++)
+    {
+        void* val;
+        pthread_join(th[i], &val);
+    }
+    
+    if (M_err)
+    {
+        NDRX_LOG(log_error, "TESTERROR! some thread failed");
+        EXFAIL_OUT(ret)
     }
 
     ret=tppost("TEST2EV", (char*)p_ub, 0L, TPSIGRSTRT);

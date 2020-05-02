@@ -1,7 +1,7 @@
 ##
 ## @brief Test Enduro/X server dispatch threading - server
 ##
-## @file atmisv75.c
+## @file CMakeLists.txt
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -56,6 +56,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_executable (atmi.sv75 atmisv75.c)
 add_executable (atmi.sv75_dmn atmisv75_dmn.c)
 add_executable (atmi.sv75_conv atmisv75_conv.c)
+add_executable (atmi.sv75_conv2 atmisv75_conv2.c)
 add_executable (atmiclt75 atmiclt75.c)
 add_executable (atmiclt75_conv atmiclt75_conv.c)
 ################################################################################
@@ -64,12 +65,14 @@ add_executable (atmiclt75_conv atmiclt75_conv.c)
 target_link_libraries (atmi.sv75 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmi.sv75_dmn atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmi.sv75_conv atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv75_conv2 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt75 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt75_conv atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv75 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmi.sv75_dmn PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmi.sv75_conv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmi.sv75_conv2 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt75 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt75_conv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

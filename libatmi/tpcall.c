@@ -66,7 +66,7 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-exprivate EX_SPIN_LOCKDECL(M_callseq_lock);
+exprivate NDRX_SPIN_LOCKDECL(M_callseq_lock);
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate void unlock_call_descriptor(int cd, short status);
@@ -76,7 +76,7 @@ exprivate void unlock_call_descriptor(int cd, short status);
  */
 expublic int ndrx_tpcall_init_once(void)
 {
-    EX_SPIN_INIT_V(M_callseq_lock);
+    NDRX_SPIN_INIT_V(M_callseq_lock);
     return EXSUCCEED;
 }
 
@@ -266,9 +266,9 @@ expublic unsigned short ndrx_get_next_callseq_shared(void)
 {
     static volatile unsigned short shared_callseq=0;
             
-    EX_SPIN_LOCK_V(M_callseq_lock);
+    NDRX_SPIN_LOCK_V(M_callseq_lock);
     shared_callseq++;
-    EX_SPIN_UNLOCK_V(M_callseq_lock);
+    NDRX_SPIN_UNLOCK_V(M_callseq_lock);
     
     return shared_callseq;
 }

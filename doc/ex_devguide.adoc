@@ -299,7 +299,7 @@ expublic char *ndrx_some_func(int arg1, char *arg2)
 
 Following asciidoc rules applies to certain document parts:
 
-*Bold applies to (in asciidoc asterisks)*:
+*Bold applies to (in asciidoc asterisks)* to things that user is expected to write verbatim, for example:
 
 - References to other man pages (e.g. *ndrxd(8)*).
 
@@ -313,14 +313,14 @@ Following asciidoc rules applies to certain document parts:
 
 - Constants, UBF field names (e.g. *EX_NETOURIP*).
 
-'Underline applies to (in asciidoc single quotes)':
+- Command line arguments
 
-- Configuration tables (e.g. '<NDRX_QPREFIX>,shm,p2s').
+'Underline applies to (in asciidoc single quotes)' applies to things that user
+is expected to fill in:
 
-- Configuration parameters (e.g. '-j', '-k').
+- File names.
 
-- Variable names.
-
+- parameter value labels.
 
 === Reserved identifier prefixes
 
@@ -872,28 +872,40 @@ supported by Enduro/X. Enduro/X provides support for different transaction backe
 and there is no real difference for developer on which transport is used, except
 the performance and system resource administration aspects
 
-=== Linux epoll and FreeBSD kqueue
+=== Linux epoll, FreeBSD kqueue, AIX System V queue poll extension
 
 Enduro/X originally was developed for GNU/Linux kernels where resource polling sub-system
 i.e. epoll() can handle Posix queue handlers. This is linux non-standard feature which 
 greatly supports system development. FreeBSD operating system also supports polling
-and Posix queues. This allows to build one queue - multiple servers
-architecture (even for ATMI server processes waiting on different queues). However, this
-this feature limits platform to be working on Linux and FreeBSD only.
+and Posix queues. On IBM AIX there is support for poll() on System V queues.
+These polling features allows to build one queue - multiple servers
+architecture (even for ATMI server processes waiting on different set of queues). 
+However, this this feature limits platform to be working on Linux, FreeBSD and AIX
+only.
 
 [dia, epoll_message_dispatch_mode.dia, epoll_message_dispatch_mode.png, x300]
 -------------------------------
 -------------------------------
 
+Note there is a little overhead associated with IBM AIX, due to fact that Enduro/X
+uses string based queue identifiers, but System V queues are integers. Thus while
+operating in the same mode, for AIX two additional shared memory queue identifier 
+mapping tables are used which translate System V identifier to string and backwards.
+
 === System V mode
 
 Starting from Enduro/X version 6, there are added sub-system for System V IPC
-queues. With this supports, good performance (about 70-80% from the epoll/kqueue)
-is reached for Unix platforms, i.e. Oracle Solaris and IBM AIX. The mechanisms
-as for epoll can give true single-queue multiple servers approach for perfect load
-balancing between local processes. By default each XATMI server process opens it's
-own job request queue, but this can be configured, so that "request address" is
-used, i.e. it defines one queue name on which all XATMI servers must advertise
+queues. With this supports, good performance almost the same as for Linux epoll mode.
+The mode is suitable for classical unixes such as Oracle Solaris.
+
+In case of System V mode, one-queue-multiple servers does not work for different
+set of services if advertised by binaries advertising also common services.
+
+Thus by default each XATMI server process opens it's own job request queue, and
+service requests are dispatched in round robin patter. How ever if set of binaries
+same set of queues, then it is possible to configure shared queue for these
+server processes. The shared queue is specified as "request address". 
+It defines one queue name on which all XATMI servers must advertise
 the same services.
 
 The implementation for System V is quite complicated, because these queues (
@@ -908,9 +920,10 @@ used internally by Enduro/X. The mapping is done in two new shared memory segmen
 whose size is controlled by *NDRX_MSGQUEUESMAX* environment variable, see ex_env(5).
 
 . The timeouts are controlled by one new additional thread - event thread, 
-to which via unnamed pipe particular queue descriptor pointer 
-is submitted together with timeout. The thread then goes to
-sleep till the timeout. If the (main) thread which did queue
+to which receives list of queues to monitor for timeout via shared hash structure
+or via unnamed pipe (only for processes with having also file descriptors monitored
+in XATMI servers). The even thread wakes up every second and scan the hash list
+for time-outs. If time-out is found and main thread which did queue
 operation is still in the queue call, it is interrupted by pthread_kill() system
 call. There are timestamp and sequence markers for each blocked System V IPC
 queue calls, so that timeout knows that man thread is in particular state, and
