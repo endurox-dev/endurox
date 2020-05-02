@@ -3,6 +3,8 @@
  *   Some thoughts:
  *   1. Control is on that side which sends the message.
  *   2. ?
+ *   For server incoming call descriptor, there shall be only one descriptor
+ *   reserved.
  *
  * @file conversation.c
  */
@@ -789,7 +791,7 @@ out:
     }
 
     /* Kill conversation if FAILED!!!! */
-    if (cd!=EXFAIL && EXFAIL!=ret)
+    if (cd!=EXFAIL && EXFAIL==ret)
     {
         err=tperrno;
         ndrx_tpdiscon(cd);
