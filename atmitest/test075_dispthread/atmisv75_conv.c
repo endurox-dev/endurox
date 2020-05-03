@@ -48,7 +48,6 @@
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define TEST_THREADS            1   /**< number of threads used         */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -66,86 +65,6 @@ void notification_callback (char *data, long len, long flags)
 }
 
 /**
- * Run client test to CONV2
- */
-int run_clt_test(void)
-{
-    int i, j;
-    int ret=EXSUCCEED;
-    int cd[TEST_THREADS];
-    long revent, len;
-    for (i=0; i<10; i++)
-    {
-        char *buf[TEST_THREADS];
-        
-        for (j=0; j<TEST_THREADS; j++)
-        {
-            buf[j]= tpalloc("STRING", NULL, 1024);
-            NDRX_ASSERT_TP_OUT( (NULL!=buf[j]), "tpalloc failed %d", j);
-        }
-        
-        /* connect to the server */
-        for (j=0; j<TEST_THREADS; j++)
-        {
-            strcpy(buf[j], "HELLO");
-            cd[j]=tpconnect("CONVSV2", buf[j], 0, TPSENDONLY);
-            NDRX_ASSERT_TP_OUT( (EXFAIL!=cd[j]), "Failed to connect to CONVSV2!");
-        }
-        
-        /* give control  */
-        for (j=0; j<TEST_THREADS; j++)
-        {
-            strcpy(buf[j], "CLWAIT");
-            revent=0;
-            
-            NDRX_ASSERT_TP_OUT( (EXSUCCEED==tpsend(cd[j], buf[j], 0, TPRECVONLY, &revent)), 
-                    "Failed send CLWAIT");
-        }
-        
-        /* now do broadcast... */
-        for (j=0; j<9; j++)
-        {
-            NDRX_ASSERT_UBF_OUT((0==tpbroadcast("", "", "atmi.sv75_conv2", NULL, 0, 0)), 
-                    "Failed to broadcast");
-        }
-        
-        /* now receive data... */
-        for (j=0; j<TEST_THREADS; j++)
-        {
-            revent=0;
-            NDRX_ASSERT_TP_OUT( (EXSUCCEED==tprecv(cd[j], &buf[j], &len, 0, &revent)), 
-                    "Failed to get counts");
-            NDRX_ASSERT_VAL_OUT( (0==revent),  "Invalid revent");
-            NDRX_ASSERT_VAL_OUT( (0==strcmp(buf[j], "9")),  
-                    "Invalid count received but got: %s", buf[j]);
-        }
-        
-        /* expect to finish the conv */
-        for (j=0; j<TEST_THREADS; j++)
-        {
-            revent=0;
-            NDRX_ASSERT_TP_OUT( (EXFAIL==tprecv(cd[j], &buf[j], &len, 0, &revent)), 
-                    "Failed to recv");
-            
-            NDRX_ASSERT_TP_OUT( (TPEEVENT==tperrno),  "Expected TPEEVENT");
-            NDRX_ASSERT_TP_OUT( (TPEV_SVCSUCC==revent),  "Expected TPEV_SVCSUCC");
-        }
-        
-        for (j=0; j<TEST_THREADS; j++)
-        {
-            if (NULL!=buf[j])
-            {
-                tpfree(buf[j]);
-            }
-        }
-    }
-        
-out:
-    return ret;
-    
-}
-
-/**
  * Conversational server
  */
 void CONVSV1 (TPSVCINFO *p_svc)
@@ -153,7 +72,6 @@ void CONVSV1 (TPSVCINFO *p_svc)
     int ret=EXSUCCEED;
     char *buf = p_svc->data;
     long revent, len;
-    int i;
     NDRX_LOG(log_debug, "%s got call", __func__);
     M_notifs = 0;
     
@@ -165,8 +83,6 @@ void CONVSV1 (TPSVCINFO *p_svc)
     
     /* we shall receive some stuff... */
     NDRX_ASSERT_TP_OUT((EXFAIL==tprecv(p_svc->cd, &buf, &len, 0, &revent)), "Expected failure");
-    /* test that we are able to connect as clients to other server */
-    NDRX_ASSERT_VAL_OUT((EXSUCCEED==run_clt_test()), "Failed to run server side client tests");
     NDRX_ASSERT_TP_OUT( (TPEEVENT==tperrno),  "Expected TPEEVENT");
     NDRX_ASSERT_TP_OUT( (TPEV_SENDONLY==revent),  "Expected TPEV_SENDONLY");
     NDRX_ASSERT_VAL_OUT((strcmp(buf, "CLWAIT")==0), "Expected CLWAIT at connection point");
@@ -184,7 +100,7 @@ void CONVSV1 (TPSVCINFO *p_svc)
     
     buf = tprealloc(buf, 1024);
     NDRX_ASSERT_TP_OUT((NULL!=buf), "Failed to realloc");
-    sprintf(buf, "%d", M_notifs);
+    snprintf(buf, sizeof(buf), "%d", M_notifs);
     
     NDRX_ASSERT_TP_OUT( (EXSUCCEED==tpsend(p_svc->cd, buf, 0, 0, &revent)), 
                     "Failed send nr of notifs...");

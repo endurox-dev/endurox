@@ -48,11 +48,12 @@ transaction in the same transaction branch.
 *TPSENDONLY* At the call point, caller want's to enter in send only mode.
 
 *TPRECVONLY*  At the call point, caller want's to ender in receive only mode.
+
 *TPSENDONLY* and *TPRECVONLY* are each other exclusive and cannot be combined.
 
 RETURN VALUE
 ------------
-On success, *tpconnect()* return connection descriptor (>0); on error, -1 is 
+On success, *tpconnect()* return connection descriptor (>=0); on error, -1 is 
 returned, with *tperrno* set to indicate the error.
 
 

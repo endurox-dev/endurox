@@ -50,7 +50,14 @@
 #include "exassert.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define TEST_THREADS            1   /**< number of threads used         */
+
+/*
+ * This must match the ndrxconfig atmi server dispatch thread count
+ * otherwise if there is greater number of threads, they might
+ * accumulate the messages and once at random passed to other
+ * thread, the will count messages from first broadcast. 
+ */
+#define TEST_THREADS            5
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/

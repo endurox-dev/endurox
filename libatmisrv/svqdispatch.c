@@ -656,10 +656,10 @@ expublic int sv_serve_connect(int *service, int *status,
          * for case when we are as server
          * This will be cd + MAX, meaning, that we have called.
          */
-        svcinfo.cd+=MAX_CONNECTIONS;
-        last_call->cd+=MAX_CONNECTIONS;
+        svcinfo.cd+=NDRX_CONV_UPPER_CNT;
+        last_call->cd+=NDRX_CONV_UPPER_CNT;
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
-                                        call->cd, svcinfo.cd, MAX_CONNECTIONS);
+                                        call->cd, svcinfo.cd, NDRX_CONV_UPPER_CNT);
 
 
         /* At this point we should build up conversation queues

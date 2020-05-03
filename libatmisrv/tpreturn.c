@@ -120,7 +120,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
 
     if (CONV_IN_CONVERSATION==p_accept_conn->status)
     {
-        call->cd-=MAX_CONNECTIONS;
+        call->cd-=NDRX_CONV_UPPER_CNT;
         call->msgseq = p_accept_conn->msgseqout;
         p_accept_conn->msgseqout++;
     }
