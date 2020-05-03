@@ -357,9 +357,17 @@ extern "C" {
 
 #endif
 
-/* Bigger connection count may slowdown whole system. */
+/** Bigger connection count may slowdown whole system. */
 #define MAX_CONNECTIONS         10
-    
+
+/** this is upper limit for re-looping the cd
+ * basically the max connection is MAX_CONNECTIONS but with each
+ * connection we increment the cd until the upper limit.
+ * The actual CD position is taken by modulus.
+ * The system call descriptor internally tracks the real cd, and rejects
+ * the invalid value cd value not with the same exact value
+ */
+#define NDRX_CONV_UPPER_CNT      (MAX_CONNECTIONS*100)
     
 #define NDRX_EVENT_EXPR_MAX     255
 #define NDRX_CACHE_KEY_MAX      16384      /**< Max size of cache key            */

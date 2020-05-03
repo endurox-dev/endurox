@@ -62,7 +62,6 @@ typedef struct job
 /* Job queue */
 typedef struct jobqueue
 {
-    pthread_mutex_t rwmutex;             /* used for queue r/w access */
     job  *front;                         /* pointer to front of queue */
     job  *rear;                          /* pointer to rear  of queue */
     bsem *has_jobs;                      /* flag as binary semaphore  */
@@ -239,7 +238,9 @@ int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), vo
     newjob->arg=arg_p;
 
     /* add job to queue */
+    MUTEX_LOCK_V(thpool_p->thcount_lock);
     jobqueue_push(&thpool_p->jobqueue, newjob);
+    MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 
     return 0;
 }
@@ -247,6 +248,7 @@ int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), vo
 
 /**
  *  Wait until all jobs have finished 
+ * called by dispatch tread
  */
 void ndrx_thpool_wait(thpool_* thpool_p)
 {
@@ -261,6 +263,7 @@ void ndrx_thpool_wait(thpool_* thpool_p)
 
 /**
  * Wait until one thread is free.
+ * Called by dispatch thread.
  * @param thpool_p 
  */
 void ndrx_thpool_wait_one(thpool_* thpool_p)
@@ -434,15 +437,19 @@ static void* poolthread_do(struct poolthread* thread_p)
 
         if (thread_p->thpool_p->threads_keepalive)
         {
-
-            MUTEX_LOCK_V(thpool_p->thcount_lock);
-            thpool_p->num_threads_working++;
-            MUTEX_UNLOCK_V(thpool_p->thcount_lock);
-
-            /* Read job from queue and execute it */
             void(*func_buff)(void* arg, int *p_finish_off);
             void*  arg_buff;
-            job* job_p = jobqueue_pull(&thpool_p->jobqueue);
+            job* job_p;
+            
+            MUTEX_LOCK_V(thpool_p->thcount_lock);
+            thpool_p->num_threads_working++;
+            
+
+            /* Read job from queue and execute it */
+            job_p = jobqueue_pull(&thpool_p->jobqueue);
+            
+            /* FOR WAIT ONE.. HAVE FIXED LEN */
+            MUTEX_UNLOCK_V(thpool_p->thcount_lock);
             if (job_p)
             {
                 func_buff = job_p->function;
@@ -524,18 +531,23 @@ static int jobqueue_init(jobqueue* jobqueue_p)
     jobqueue_p->rear  = NULL;
 
     jobqueue_p->has_jobs = (struct bsem*)NDRX_FPMALLOC(sizeof(struct bsem), 0);
-    if (jobqueue_p->has_jobs == NULL){
-            return -1;
+    
+    if (jobqueue_p->has_jobs == NULL)
+    {
+        return -1;
     }
 
-    pthread_mutex_init(&(jobqueue_p->rwmutex), NULL);
     bsem_init(jobqueue_p->has_jobs, 0);
 
     return 0;
 }
 
 
-/* Clear the queue */
+/* 
+ * Clear the queue
+ * The caller must ensure that all worker threads have exit.
+ * Called by dispatch thread
+ */
 static void jobqueue_clear(jobqueue* jobqueue_p)
 {
     while(jobqueue_p->len)
@@ -551,68 +563,67 @@ static void jobqueue_clear(jobqueue* jobqueue_p)
 }
 
 /* Add (allocated) job to queue
+ *! must be protected by outside thcount_lock
+ * This is called by dispatcher thread
  */
 static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob)
 {
-
-    MUTEX_LOCK_V(jobqueue_p->rwmutex);
     newjob->prev = NULL;
 
     switch(jobqueue_p->len)
     {
 
         case 0:  /* if no jobs in queue */
-                jobqueue_p->front = newjob;
-                jobqueue_p->rear  = newjob;
-                break;
+            jobqueue_p->front = newjob;
+            jobqueue_p->rear  = newjob;
+            break;
 
         default: /* if jobs in queue */
-                jobqueue_p->rear->prev = newjob;
-                jobqueue_p->rear = newjob;
+            jobqueue_p->rear->prev = newjob;
+            jobqueue_p->rear = newjob;
 
     }
     jobqueue_p->len++;
 
     bsem_post(jobqueue_p->has_jobs);
-    MUTEX_UNLOCK_V(jobqueue_p->rwmutex);
 }
 
 
 /* Get first job from queue(removes it from queue)
  *
  * Notice: Caller MUST hold a mutex
+ * ! must be protected by outside thcount_lock
+ * This is done by worker
  */
 static struct job* jobqueue_pull(jobqueue* jobqueue_p)
 {
-
-    MUTEX_LOCK_V(jobqueue_p->rwmutex);
     job* job_p = jobqueue_p->front;
 
-    switch(jobqueue_p->len){
-
-            case 0:  /* if no jobs in queue */
-                    break;
+    switch(jobqueue_p->len)
+    {
+        case 0:  /* if no jobs in queue */
+            break;
 
         case 1:  /* if one job in queue */
-                    jobqueue_p->front = NULL;
-                    jobqueue_p->rear  = NULL;
-                    jobqueue_p->len = 0;
-                    break;
+            jobqueue_p->front = NULL;
+            jobqueue_p->rear  = NULL;
+            jobqueue_p->len = 0;
+            break;
 
-            default: /* if >1 jobs in queue */
-                    jobqueue_p->front = job_p->prev;
-                    jobqueue_p->len--;
-                    /* more than one job in queue -> post it */
-                    bsem_post(jobqueue_p->has_jobs);
+        default: /* if >1 jobs in queue */
+            jobqueue_p->front = job_p->prev;
+            jobqueue_p->len--;
+            /* more than one job in queue -> post it */
+            bsem_post(jobqueue_p->has_jobs);
 
     }
-
-    MUTEX_UNLOCK_V(jobqueue_p->rwmutex);
     return job_p;
 }
 
 
-/* Free all queue resources back to the system */
+/* Free all queue resources back to the system 
+ * Called by dispatch thread
+ */
 static void jobqueue_destroy(jobqueue* jobqueue_p)
 {
     jobqueue_clear(jobqueue_p);

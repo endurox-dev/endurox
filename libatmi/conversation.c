@@ -111,7 +111,7 @@ expublic int close_open_client_connections(void)
     {
         if (CONV_IN_CONVERSATION==G_atmi_tls->G_tp_conversation_status[i].status)
         {
-            if (EXFAIL==ndrx_tpdiscon(i))
+            if (EXFAIL==ndrx_tpdiscon(G_atmi_tls->G_tp_conversation_status[i].cd))
             {
                 NDRX_LOG(log_warn, "Failed to close connection [%d]", i);
                 ret=EXFAIL;
@@ -175,8 +175,10 @@ expublic int accept_connection(void)
 
     conv->flags = G_atmi_tls->G_last_call.flags; /* Save call flags */
     
-    /* Fix up cd for future use for replies.  */
-    conv->cd = G_atmi_tls->G_last_call.cd - MAX_CONNECTIONS;
+    /* Fix up cd for future use for replies.  
+     * Lets keep original cd...
+     */
+    conv->cd = G_atmi_tls->G_last_call.cd-NDRX_CONV_UPPER_CNT;
     /* Change the status, that we have connection open */
     conv->status = CONV_IN_CONVERSATION;
     conv->msgseqout = NDRX_CONF_MSGSEQ_START;
@@ -187,7 +189,7 @@ expublic int accept_connection(void)
                     NDRX_CONV_SRV_Q,
                     G_atmi_tls->G_atmi_conf.q_prefix, 
                     G_atmi_tls->G_last_call.my_id, 
-                    G_atmi_tls->G_last_call.cd-MAX_CONNECTIONS,
+                    conv->cd,
                     /* In accepted connection we put their id */
                     G_atmi_tls->G_atmi_conf.my_id
                     );
@@ -294,26 +296,45 @@ out:
 expublic tp_conversation_control_t*  get_current_connection(int cd)
 {
     tp_conversation_control_t *ret=NULL;
+    int server=EXFALSE;
     ATMI_TLS_ENTRY;
     
-    if (cd>=0 && cd<MAX_CONNECTIONS)
+    if (cd>=0 && cd<NDRX_CONV_UPPER_CNT)
     {
-        ret=&G_atmi_tls->G_tp_conversation_status[cd];
+        ret=&G_atmi_tls->G_tp_conversation_status[cd%MAX_CONNECTIONS];
     }
-    else if (cd>=MAX_CONNECTIONS)
+    else if (cd>=NDRX_CONV_UPPER_CNT)
     {
         ret=&G_atmi_tls->G_accepted_connection;
+        server=EXTRUE;
     }
     else
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Invalid connection descriptor %d", cd);
     }
-
-    if (NULL!=ret && CONV_IN_CONVERSATION!=ret->status)
+    
+    
+    if (NULL!=ret)
     {
-        ndrx_TPset_error_fmt(TPEINVAL, "Invalid connection descriptor %d - "
-                                        "connection closed",  cd);
-        ret=NULL;
+        if (CONV_IN_CONVERSATION!=ret->status)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid connection descriptor %d - "
+                                            "connection closed",  cd);
+            ret=NULL;
+        }
+        else if (ret->cd!=cd && !server)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid cd for slot. Slot %d used "
+                    "by cd=%d but requested cd=%d", cd%MAX_CONNECTIONS, ret->cd, cd);
+            ret=NULL;
+        }
+        else if (ret->cd!=(cd-NDRX_CONV_UPPER_CNT) && server)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid cd for server connection."
+                    "Used cd=%d but requested cd=%d (real: %d)", ret->cd, 
+                    cd-NDRX_CONV_UPPER_CNT, cd);
+            ret=NULL;
+        }
     }
 
     return ret;
@@ -411,52 +432,63 @@ out:
  */
 exprivate int conv_get_cd(long flags)
 {
+    int slot;
+    int nr_checked=0;
+    int cd=EXFAIL;
     ATMI_TLS_ENTRY;
     
-    int start_cd = G_atmi_tls->conv_cd; /* mark where we began */
     
     /* Just take a next number... for better hash. */
-    do {
-        G_atmi_tls->conv_cd++;
-
-        if (G_atmi_tls->conv_cd > MAX_CONNECTIONS-1)
+    
+    while (nr_checked < MAX_CONNECTIONS && cd==EXFAIL)
+    {
+        slot = G_atmi_tls->conv_cd % MAX_CONNECTIONS;
+        
+        if (CONV_NO_INITATED== G_atmi_tls->G_tp_conversation_status[slot].status)
         {
-            G_atmi_tls->conv_cd=1; /* TODO: Maybe start with 0? */
+            cd=G_atmi_tls->conv_cd;
         }
-
-        if (start_cd==G_atmi_tls->conv_cd)
+        
+        nr_checked++;
+        G_atmi_tls->conv_cd++;
+        
+        /* reset conv counter 
+         * The counter goes much higher than connection limit
+         * so that we do not re-use the cd very soon.
+         * That might cause at connection termination / re-start again
+         * some race condition, that server unlinks queues which have been
+         * re-opened by new connection. If we recycle cds less often, then
+         * chance is much smaller for stepping on this race condition.
+         */
+        if (G_atmi_tls->conv_cd>=NDRX_CONV_UPPER_CNT)
         {
-            NDRX_LOG(log_debug, "Connection descriptors overflow restart!");
-            break;
+            G_atmi_tls->conv_cd=0;
         }
     }
-    while (CONV_NO_INITATED!=
-            G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status);
 
-    if (CONV_NO_INITATED!=
-            G_atmi_tls->G_tp_conversation_status[G_atmi_tls->conv_cd].status)
+    if (EXFAIL==cd)
     {
         NDRX_LOG(log_debug, "All connection descriptors have been taken - FAIL!");
-        G_atmi_tls->conv_cd=EXFAIL;
     }
     else
     {
-        NDRX_LOG(log_debug, "Got free connection descriptor %d", G_atmi_tls->conv_cd);
+        NDRX_LOG(log_debug, "Got free connection descriptor %d", cd);
     }
     
-    if (EXFAIL!=G_atmi_tls->conv_cd && 
+    if (EXFAIL!=cd && 
             !(flags & TPNOTRAN) && G_atmi_tls->G_atmi_xa_curtx.txinfo)
     {
         NDRX_LOG(log_debug, "Registering conv cd=%d under global "
                 "transaction!", G_atmi_tls->conv_cd);
         if (EXSUCCEED!=atmi_xa_cd_reg(&(G_atmi_tls->G_atmi_xa_curtx.txinfo->conv_cds), 
-                G_atmi_tls->conv_cd))
+                cd))
         {
-            G_atmi_tls->conv_cd=EXFAIL;
+            cd=EXFAIL;
         }
     }
 
-    return G_atmi_tls->conv_cd;
+    /* return the slot we found */
+    return cd;
 }
 
 /**
@@ -602,7 +634,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
         goto out;
     }
 
-    conv = &G_atmi_tls->G_tp_conversation_status[cd];
+    conv = &G_atmi_tls->G_tp_conversation_status[cd%MAX_CONNECTIONS];
     /* Hmm setup cd? */
     conv->cd = cd;
     /* reset queues... */
@@ -1397,9 +1429,9 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     call->cd = conv->cd;
 
     /* Fix connection thing */
-    if (call->cd>MAX_CONNECTIONS)
+    if (call->cd>=NDRX_CONV_UPPER_CNT)
     {
-        call->cd-=MAX_CONNECTIONS;
+        call->cd-=NDRX_CONV_UPPER_CNT;
     }
 
     call->timestamp = conv->timestamp;
@@ -1452,7 +1484,7 @@ out:
 
 
 /**
- * Close connection imideatelly
+ * Close connection immediately
  * @param cd
  * @return SUCCEED/FAIL
  */

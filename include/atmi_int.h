@@ -237,6 +237,9 @@ extern "C" {
 /** Generic queue error */
 #define NDRX_QERR_MSG_SYSERR NDRX_XADMIN_ERR_FMT_PFX \
     "Queue error, check logs"
+    
+/** The 31 bit on, indicates that connection is servers accept one */
+#define NDRX_CONV_SRVMASK       0x40000000
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**

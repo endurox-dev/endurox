@@ -294,7 +294,7 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     
     
     /* init.c */    
-    tls->conv_cd=1;/*  first available */
+    tls->conv_cd=0;/*  Lets start from 0 now... */
     
     /* reset client info  */
     memset(&tls->client_init_data, 0, sizeof(tls->client_init_data));
