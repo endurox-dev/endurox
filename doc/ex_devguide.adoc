@@ -984,6 +984,105 @@ main thread supports Enduro/X extensions to add some other resource for
 polling (e.g. socket fd.)
 
 
+== Multi-threading
+
+Enduro/X supports multit-threading. For example all XATMI APIs are thread
+safe. The UBF APIs are thread safe while the two threads does not operate with
+the same UBF buffer. User code can do the multi-threading as required. Each
+new thread which starts to operate with XATMI API, joins to the system as
+XATMI client.
+
+=== XATMI Server dispatch thread pool
+
+The Enduro/X also comes with support of XATMI server thread call dispatch thread pool support.
+This means that developers can write multi-threaded (MT) server programs with very
+little to non additional effort. If MT is configured (*ndrxconfig.xml(5)*
+setting *<maxdispatchthreads>* is set greater than *1* and *<mindispatchthreads>* 
+denotest the actual number of worker threads), the XATMI servers at
+startup will create pool of configured number of worker threads. Thus when server's
+main thread will receive the message, the message is immediately passed to the
+thread pool. And at next step main thread goes back for waiting to the messages.
+
+Before main thread start to wait for next message, it ensures that at least one
+worker thread is free, otherwise the server process will just copy all messages
+from IPC queues to internal thread pool job queue. That would result in loss
+of load balancing between processes.
+
+If server threading is configured, the start up initialization sequence looks like this:
+
+. INIT: *tpsvrinit(3)* is invoked for main thread.
+
+. INIT: *tpsvrthrinit(3)* is invoked for each dispatching worker thread. Before function call
+each worker thread is initialized as XATMI client.
+This is special XATMI client, it has access to perform the work in name of the
+main server thread. Once initialized, the threads become parked on internal job queue.
+
+. OPER: main thread read the XATMI queues and puts the in job queue for worker threads.
+
+. OPER: main thread waits for one free worker thread.
+
+. SHUTDOWN: *tpsvrdone(3)* is called for main thread.
+
+. SHUTDOWN: *tpsvrthrdone(3)* is called for each worker thread. After the function returns,
+*tpterm(3)* is invoked for threads.
+
+To enable multi-thread mode, binaries must be specifically built for this. This may be
+done by passing the *-t* flag to *buildserver(8)* compiler tool, or by setting
+*_tmbuilt_with_thread_option* extern variable to *1* before running ndrx_main_integra(),
+ndrx_main() or _tmstartserver(). If flag is not configured, binary will not start
+and message will be printed to ULOG. The error would look like:
+
+--------------------------------------------------------------------------------
+
+05828:20200503:23031209:atmi.sv1    :Error ! Buildserver thread option says single-threaded, but MINDISPATCHTHREADS=5 MAXDISPATCHTHREADS=5
+
+--------------------------------------------------------------------------------
+
+*tpsvrthrinit(3)* and  *tpsvrthrdone(3)* may be specified only in case if string
+from _tmstartserver().
+
+Configuration example:
+
+--------------------------------------------------------------------------------
+
+                <server name="atmi.sv1">
+                        <srvid>1400</srvid>
+                        <min>1</min>
+                        <max>1</max>
+                        <mindispatchthreads>5</mindispatchthreads>
+                        <maxdispatchthreads>5</maxdispatchthreads>
+                        <sysopt>-e /tmp/ATMISV1 -r</sysopt>
+                </server>
+
+--------------------------------------------------------------------------------
+
+=== Infinite server (daemon) construction
+
+Enduro/X XATMI server multi-threading model supports infinit server mode. That is during
+the tpsvrinit() tpsvrthrinit() it is possible to do calls to self-advertised services with help
+of *tpacall*('SELF_SERVICE',...,*TPNOREPLY*). In this case after all init is done, 
+but before main thread goes in waiting for messages, these *tpacall(3)* messages are injected into service
+queues. Thus dispatcher will wake up and will process the message by worker thread. The worker
+thread may become busy for infinite time (loop). And for example other thread service 
+functions may be used to control the daemon thread.
+
+
+=== Server threading limitations
+
+. If file descriptors callbacks added by *tpext_addpollerfd(3)*, then any file 
+descriptor events are processed by main thread.
+
+. *tpadvertise(3)* and *tpunadvertise(3)* functions are during the service calls. 
+These functions are available during the tpsvrinit() and tpsvrthrinit() phases.
+
+
+=== Additional mulit-thread notes
+
+. Developer is free to implement any other multi-threading operations in the binaries.
+The server dispatcher mechanisms is provided only for simplicity of building
+multi-threaded servers.
+
+
 == Object-API
 
 Enduro/X provides Object API functions. This is meant to be used with integration 
@@ -1848,7 +1947,6 @@ particular work the client. Thus the *tpcall(3)* is not interrupted, but some
 feedback can be received and processed.
 
 Sample usage can be seen in Enduro/X ATMI test cases 38 and 39.
-
 
 == Adding Enduro/X bindings
 

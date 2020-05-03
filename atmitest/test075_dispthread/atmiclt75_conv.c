@@ -73,9 +73,15 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     int cd[TEST_THREADS];
     long revent, len;
-    for (i=0; i<10000000; i++)
+    /* for (i=0; i<1000000; i++) */
+    for (i=0; i<10000; i++)
     {
         char *buf[TEST_THREADS];
+        
+        if (i%1000 == 0)
+        {
+            printf("processed: %d\n", i);
+        }
         
         for (j=0; j<TEST_THREADS; j++)
         {

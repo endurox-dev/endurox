@@ -239,28 +239,25 @@ PARAMETERS
     MIN and MAX servers means the number of standby servers configured. They can be started
     by hand with out system re-configuration. But they are not booted automatically at
     system startup. You will have to start them with $ xadmin start -s <server_name>
-    or by $ xadmin start -i <server_id>. This can be overridden by
-    'MAX_SERVERS_SRV'.
+    or by $ xadmin start -i <server_id>. This can be overridden by 'MAX_SERVERS_SRV'.
+'MAX_DISPTHREADS_DEFAULT'::
+    This configures the maximum number of dispatch threads (workers) for XATMI
+    servers dispatcher. Default value is *1*. If set grater than *1*, then
+    XATMI server library booted in multi-thread mode and thread pool of workers
+    is intialized. The number of workers threads is configured by 
+    'MIN_DISPTHREADS_DEFAULT' / 'MIN_DISPTHREADS_SERVER' configuration values.
+    If XATMI server is not built for multi-thread mode (flag *-t* was not
+    passed to *buildserver(8)* or *_tmbuilt_with_thread_option* extern variable
+    before XATMI server main routine start was not set to *1*), the binary startup
+    will fail and error will be printed in ULOG.
 'MIN_DISPTHREADS_DEFAULT'::
-    This is minimums dispatch threads used by XATMI server service dispatcher.
-    By default this is *1*. If set to greater value, the Enduro/X built in thread
-    pool will start process incoming server messages. Note that server programs
-    must be specially programmed to support multi-threading (i.e. data structures
-    must be protected). If server process is booting and it detects that 
-    if 'MIN_DISPTHREADS_DEFAULT' is greater than 1, then check is made against server
-    process capability to handle multi-threaded work-load. By default MT dispatcher 
-    is disabled in ATMI server library, and server process will fail to boot with
-    corresponding message in ULOG.
-    To enable MT mode, use *buildserver(8)* compiler and specify '-t' flag. Other 
-    option is before starting ATMI Server main routine, set the extern variable
-    '_tmbuilt_with_thread_option' to 1.
-    This parameter may be overridden by 'MIN_DISPTHREADS_SERVER'.
-'MIN_DISPTHREADS_DEFAULT'::
-    This parameter is reserved for future use. If 'MIN_DISPTHREADS_DEFAULT' (or
-    'MIN_DISPTHREADS_SERVER') is being configured, then this parameter must be 
-    greater or equal to 'MIN_DISPTHREADS_DEFAULT' (or 'MIN_DISPTHREADS_SERVER')
-    value. If this is not a true, then server process will fail to boot with
-    corresponding message in ULOG.
+    This is actual number of dispatch threads (workers) used by XATMI server
+    service dispatcher. By default this is *1*. In case if *<maxdispatchthreads>*
+    was set to *1* (default), then multi-thread is not used and the main
+    thread is performing dispatch operations. The value of 'MIN_DISPTHREADS_DEFAULT'
+    may be overridden by 'MIN_DISPTHREADS_SERVER' value. The 'MIN_DISPTHREADS_DEFAULT'/
+    'MIN_DISPTHREADS_SERVER' must be less or equal to 'MAX_DISPTHREADS_DEFAULT'/
+    'MAX_DISPTHREADS_SERVER'.
 'AUTOKILL_DEFAULT'::
     Should server be automatically killed (by sequence signal sequence 
     -2, -15, -9) in case if server have been starting up too long, or
@@ -270,7 +267,7 @@ PARAMETERS
 'ENV_OVERRIDE_DEFAULT'::
     Full path to file containing environment variable overrides.
     see 'ex_envover(5)' for more details. This can be overridden
-    by per server basis by ENV_OVERRIDE_SRV. 
+    by per server basis by 'ENV_OVERRIDE_SRV'. 
     Both are optional settings.
 'MAX_STARTUP_TIME_DEFAULT'::
     Max time (in sanity units) in which server should start up, i.e. send init info to
