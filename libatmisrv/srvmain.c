@@ -553,8 +553,24 @@ expublic int ndrx_init(int argc, char** argv)
         G_server_conf.maxdispatchthreads = atoi(p);
     }
     
+    if (G_server_conf.maxdispatchthreads < G_server_conf.mindispatchthreads)
+    {
+        NDRX_LOG(log_error, "Error ! MAXDISPATCHTHREADS(=%d) < MINDISPATCHTHREADS(=%d)", 
+                G_server_conf.maxdispatchthreads,
+                G_server_conf.mindispatchthreads
+                );
+        userlog("Error ! MAXDISPATCHTHREADS(=%d) < MINDISPATCHTHREADS(=%d)", 
+                G_server_conf.maxdispatchthreads,
+                G_server_conf.mindispatchthreads);
+        
+        ndrx_TPset_error_fmt(TPEINVAL, "Error ! MAXDISPATCHTHREADS(=%d) < MINDISPATCHTHREADS(=%d)", 
+                G_server_conf.maxdispatchthreads,
+                G_server_conf.mindispatchthreads);
+        EXFAIL_OUT(ret);
+    }
+    
     /* check thread option.. */
-    if (!_tmbuilt_with_thread_option && G_server_conf.mindispatchthreads > 1)
+    if (!_tmbuilt_with_thread_option && G_server_conf.maxdispatchthreads > 1)
     {
         NDRX_LOG(log_error, "Error ! Buildserver thread option says single-threaded, "
                 "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
@@ -595,24 +611,11 @@ expublic int ndrx_init(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    if (G_server_conf.mindispatchthreads > G_server_conf.maxdispatchthreads)
-    {
-        NDRX_LOG(log_error, "Error ! MINDISPATCHTHREADS(=%d) > MAXDISPATCHTHREADS(=%d)", 
-                G_server_conf.mindispatchthreads,
-                G_server_conf.maxdispatchthreads
-                );
-        userlog("Error ! MINDISPATCHTHREADS(=%d) > MAXDISPATCHTHREADS(=%d)", 
-                G_server_conf.mindispatchthreads,
-                G_server_conf.maxdispatchthreads);
-        
-        ndrx_TPset_error_fmt(TPEINVAL, "Error ! MINDISPATCHTHREADS(=%d) > MAXDISPATCHTHREADS(=%d)", 
-                G_server_conf.mindispatchthreads,
-                G_server_conf.maxdispatchthreads);
-        EXFAIL_OUT(ret);
-    }
-    
-    /* start as multi-threaded */
-    if (G_server_conf.mindispatchthreads > 1)
+    /* start as multi-threaded
+     * thus we can run the MT mode operates with single thread too..
+     * i.e. maxdispatchthreads=2, mindispatchthreads=1
+     */
+    if (G_server_conf.maxdispatchthreads > 1)
     {
         G_server_conf.is_threaded = EXTRUE;
         NDRX_SPIN_INIT_V(G_server_conf.mt_lock);

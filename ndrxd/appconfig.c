@@ -1191,8 +1191,18 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     if (p_srvnode->ping_max && !p_srvnode->ping_max)
     {
-        NDRX_LOG(log_error, "`ping_max' not set for server! at line %hd", 
-                cur->line);
+        NDRX_LOG(log_error, "`ping_max' not set for server! srvid=%hd", 
+                p_srvnode->srvid);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    /* check the config.. */
+    if (p_srvnode->maxdispatchthreads< p_srvnode->mindispatchthreads)
+    {
+        NDRX_LOG(log_error, "maxdispatchthreads (%d) < mindispatchthreads (%d) srvid=%hd", 
+                p_srvnode->maxdispatchthreads, p_srvnode->mindispatchthreads, 
+                p_srvnode->srvid);
         ret=EXFAIL;
         goto out;
     }
