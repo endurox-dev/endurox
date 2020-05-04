@@ -400,6 +400,8 @@ expublic int atmisrv_initialise_atmi_library(void)
     if (NULL!=G_shm_srv)
     {
         G_shm_srv->srvid = G_srv_id;  
+        /* reset any error if booting from outside... */
+        G_shm_srv->execerr = 0;
     }
     
 out:

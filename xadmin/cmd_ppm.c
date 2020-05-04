@@ -74,6 +74,12 @@ M_descr [] =
     {NDRXD_PM_DIED,        "died"},
     {NDRXD_PM_EXIT,        "exit"},
     {NDRXD_PM_ENOENT,      "nobin"},
+    {NDRXD_PM_EACCESS,     "acces"},
+    {NDRXD_PM_ELIMIT,      "limit"},
+    {NDRXD_PM_EARGSLIM,    "eargs"},
+    {NDRXD_PM_ESYSTEM,     "esys"},
+    {NDRXD_PM_EENV,        "eenv"},
+    {NDRXD_PM_EBADFILE,    "badfi"},
     {NDRXD_PM_STARTING,    "stop"},
     {NDRXD_PM_RUNNING_OK,  "runok"},
     {NDRXD_PM_STOPPING,    "start"}

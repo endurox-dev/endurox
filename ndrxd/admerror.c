@@ -83,7 +83,11 @@ struct err_msg
     {NDRXD_ERROR(NDRXD_EENVFAIL)},
     {NDRXD_ERROR(NDRXD_EINVAL)},
     {NDRXD_ERROR(NDRXD_ENORMAL)},
-    
+    {NDRXD_ERROR(NDRXD_ECFGDEFAULTS)},
+    {NDRXD_ERROR(NDRXD_ECFGSERVER)},
+    {NDRXD_ERROR(NDRXD_ECFGAPPCONFIG)},
+    {NDRXD_ERROR(NDRXD_EACCES)},
+    {NDRXD_ERROR(NDRXD_ESYNTAX)},
     {NDRXD_ERROR(NDRXD_EMAXVAL)}	/* maximum error message */
 };
 
@@ -127,8 +131,7 @@ expublic char * ndrxd_strerror (int err)
 
     if (EXEOS!=M_ndrxd_error_msg_buf[0])
     {
-        snprintf(errbuf, sizeof(errbuf), "%d:%s (last error %d: %s)",
-                        err,
+        snprintf(errbuf, sizeof(errbuf), "%s (last error %d: %s)",
                         NDRXD_ERROR_DESCRIPTION(err),
                         M_ndrxd_error,
                         M_ndrxd_error_msg_buf);

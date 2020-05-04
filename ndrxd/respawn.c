@@ -83,10 +83,8 @@ expublic int do_respawn_check(void)
     {
         NDRX_LOG(6, "Proc: %s, Reqstate %d, curstate %d", 
 		 p_pm->binary_name, p_pm->reqstate, p_pm->state);
-        if (NDRXD_PM_RUNNING_OK==p_pm->reqstate && 
-                ( NDRXD_PM_DIED==p_pm->state 
-                ||NDRXD_PM_EXIT==p_pm->state
-                ||NDRXD_PM_ENOENT==p_pm->state))
+        
+        if (NDRXD_PM_RUNNING_OK==p_pm->reqstate && PM_NOT_RUNNING(p_pm->state))
         {
 		
 	    if (!p_pm->conf->respawn)

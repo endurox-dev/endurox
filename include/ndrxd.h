@@ -296,16 +296,17 @@ typedef struct
 typedef struct
 {
     char    *qprefix;
-    char    *config_file; /* Pointer to configuration file path... */
-    long    cmd_wait_time;  /* Command wait time in nano-seconds (1/(10^9)) */
-    char    *pidfile;       /* PID file to open... */
-    long    stat_flags;     /* Program state flags */
-    char    *qpath;         /* Path to the queue directory */
+    char    *config_file;       /**< Pointer to configuration file path... */
+    char    *config_file_short; /**< Pointer to configuration file path... */
+    long    cmd_wait_time;      /**< Command wait time in nano-seconds (1/(10^9)) */
+    char    *pidfile;           /**< PID file to open... */
+    long    stat_flags;         /**< Program state flags */
+    char    *qpath;             /**< Path to the queue directory */
     /* NDRXD restart: */
-    short restarting;  /* In restart mode, after restart_to_check expired, 
+    short restarting;  /**< In restart mode, after restart_to_check expired, 
                         * process becomes in normal mode */
-    ndrx_stopwatch_t time_from_restart; /* Time counter, how long we are restarting/learning */
-    int     fullstart;  /* Are we in full start mode or not? */
+    ndrx_stopwatch_t time_from_restart; /**< Time counter, how long we are restarting/learning */
+    int     fullstart;  /**< Are we in full start mode or not? */
 } sys_config_t;
 
 /**
@@ -348,7 +349,7 @@ extern int load_active_config(config_t **app_config, pm_node_t **process_model,
             pm_node_t ***process_model_hash, pm_pidhash_t ***process_model_pid_hash);
 /* test config or reload */
 extern int test_config(int reload, command_call_t * call, void (*p_reload_error)(command_call_t * call,
-                    int srvid, char *old_bin, char *new_bin, int error));
+                    int srvid, char *old_bin, char *new_bin, int error, char *msg));
 extern int build_process_model(conf_server_node_t *p_server_conf,
                                 pm_node_t **p_pm_model, /* proces model linked list */
                                 pm_node_t **p_pm_hash/* Hash table models */);

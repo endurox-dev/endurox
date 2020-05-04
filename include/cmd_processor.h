@@ -49,11 +49,23 @@ extern command_state_t G_command_state;
 /*---------------------------Typedefs-----------------------------------*/
 typedef struct
 {
-    void *mod_param1; 	/* Generic pointer */
-    int  param2;	/* Generic param 2 */
-    void *mod_param3;   /* Generic pointer 3 */
-    long param4;         /* long param 4 */
+    void *mod_param1;       /**< Generic pointer    */
+    int  param2;            /**< Generic param 2    */
+    void *mod_param3;       /**< Generic pointer 3  */
+    long param4;            /**< long param 4       */
 } mod_param_t;
+
+/**
+ * With additional text field
+ */
+typedef struct
+{
+    void *mod_param1;       /**< Generic pointer    */
+    int  param2;            /**< Generic param 2    */
+    void *mod_param3;       /**< Generic pointer 3  */
+    long param4;            /**< long param 4       */
+    char param5[128];       /**< add text field     */
+} mod_param5_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

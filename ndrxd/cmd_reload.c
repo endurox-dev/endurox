@@ -55,8 +55,10 @@
  * @param call
  * @param pm
  */
-expublic void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *params)
+expublic void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_param_t *paramsg)
 {
+    mod_param5_t *params = (mod_param5_t *)paramsg;
+            
     command_reply_reload_t * err_info = (command_reply_reload_t *)reply;
    
     reply->msg_type = NDRXD_CALL_TYPE_PM_RELERR;
@@ -71,6 +73,8 @@ expublic void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
 
     err_info->error = params->param2;
     err_info->srvid = (int)params->param4;
+    /* error msg... */
+    NDRX_STRCPY_SAFE(err_info->msg, params->param5);
 
     NDRX_LOG(log_debug, "magic: %ld", err_info->rply.magic);
 }
@@ -81,10 +85,11 @@ expublic void reload_reply_mod(command_reply_t *reply, size_t *send_size, mod_pa
  * @param pm
  * @return
  */
-expublic void reload_error(command_call_t * call, int srvid, char *old_bin, char *new_bin, int error)
+expublic void reload_error(command_call_t * call, int srvid, char *old_bin, 
+        char *new_bin, int error, char *msg)
 {
     int ret=EXSUCCEED;
-    mod_param_t params;
+    mod_param5_t params;
 
     NDRX_LOG(log_debug, "reload_error enter");
     memset(&params, 0, sizeof(mod_param_t));
@@ -94,10 +99,11 @@ expublic void reload_error(command_call_t * call, int srvid, char *old_bin, char
     params.param2 = error;
     params.mod_param3 = new_bin;
     params.param4 = srvid;
+    NDRX_STRCPY_SAFE(params.param5, msg);
 
     if (EXSUCCEED!=simple_command_reply(call, ret, NDRXD_CALL_FLAGS_RSPHAVE_MORE,
                             /* hook up the reply */
-                            &params, reload_reply_mod, 0L, 0, NULL))
+                            (mod_param_t*)&params, reload_reply_mod, 0L, 0, NULL))
     {
         userlog("Failed to send progress back to [%s]", call->reply_queue);
     }
