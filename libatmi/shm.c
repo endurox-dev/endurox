@@ -183,7 +183,6 @@ expublic void ndrxd_shm_srv_fork_status(int srvid, unsigned execerr)
 {
     if (EXSUCCEED==ndrx_shm_open(&G_srvinfo, EXTRUE))
     {
-        
         shm_srvinfo_t* srv = ndrxd_shm_getsrv(srvid);
         
         if (NULL!=srv)

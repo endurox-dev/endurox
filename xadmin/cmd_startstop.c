@@ -58,7 +58,7 @@
 /**
  * Return process state in human understandable string.
  * @param state
- * @return
+ * @return static test from console output
  */
 exprivate char *proc_state_to_str(long state, short msg_type)
 {
@@ -72,7 +72,7 @@ exprivate char *proc_state_to_str(long state, short msg_type)
     static char *ebadfile = "Bad executable";
     static char *elimits = "Limits exceeded";
     static char *stillstarting = "Still starting";
-    static char *eargslim = "CLI args on env params too long";
+    static char *eargslim = "Cli args on env params too long";
     static char *eenv= "Environment setup failure";
     static char *esys= "System failure";
     static char unknown[256];

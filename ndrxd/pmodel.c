@@ -894,6 +894,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     int numargs;
     int alloc_args;
     char tmp[256];
+    shm_srvinfo_t* srv;
 
     NDRX_LOG(log_warn, "*********processing for startup %s/%d*********",
                                     p_pm->binary_name, p_pm->srvid);
@@ -930,7 +931,12 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     pid = ndrx_fork();
     
     /* No error */
-    ndrxd_shm_getsrv(p_pm->srvid)->execerr=0;
+    srv=ndrxd_shm_getsrv(p_pm->srvid);
+    
+    if (NULL!=srv)
+    {
+        srv->execerr=0;
+    }
     
     if( pid == 0)
     {
