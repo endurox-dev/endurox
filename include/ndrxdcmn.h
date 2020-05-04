@@ -197,6 +197,12 @@ extern "C" {
 #define NDRXD_EENVFAIL           16         /**< putenv failed                */
 #define NDRXD_EINVAL             17         /**< Invalid argument             */
 #define NDRXD_ENORMAL            18         /**< Normal state expected        */
+#define NDRXD_ECFGDEFAULTS          19         /**< Invalid defaults             */
+#define NDRXD_ECFGSERVER            20         /**< Invalid server settigns      */
+#define NDRXD_ECFGAPPCONFIG         21         /**< Invalid appconfig settings   */
+#define NDRXD_EACCES             22         /**< No access to file            */
+#define NDRXD_ESYNTAX            23         /**< Syntax error during parsing  */
+
 #define NDRXD_EMAXVAL            1000
 
 /* This section list call types */
@@ -243,6 +249,12 @@ extern "C" {
 #define NDRXD_PM_DIED               1       /**< process died for some reason */
 #define NDRXD_PM_EXIT               2       /**< normal exit, shutdown      */
 #define NDRXD_PM_ENOENT             3       /**< Binary not found           */
+#define NDRXD_PM_EACCESS            4       /**< Access denied to execute   */
+#define NDRXD_PM_EBADFILE           5       /**< Bad executable             */
+#define NDRXD_PM_ELIMIT             6       /**< Limits exceeded            */
+#define NDRXD_PM_EENV               7       /**< Failed to prepare env      */
+#define NDRXD_PM_EARGSLIM           8       /**< Arguments or env too long  */
+#define NDRXD_PM_ESYSTEM            9       /**< Bad executable             */
 #define NDRXD_PM_MAX_EXIT           19      /**< Maximum dead process       */
     
 #define NDRXD_PM_MIN_RUNNING        20      /**< Minimum running process    */
@@ -264,6 +276,7 @@ extern "C" {
 
 #define NDRXD_SVC_STATUS_AVAIL          0       /**< Service is available     */
 #define NDRXD_SVC_STATUS_BUSY           1       /**< Service is busy          */
+
     
 #define NDRXD_CALL_FLAGS_DEADQ          0x0001  /**< Reply queue is dead....! */
 #define NDRXD_CALL_FLAGS_PAGE2          0x0002  /**< Second page from call    */
@@ -332,11 +345,12 @@ struct shm_srvinfo
     unsigned min_rsp_msec[MAX_SVC_PER_SVR];
     unsigned max_rsp_msec[MAX_SVC_PER_SVR];
     unsigned last_rsp_msec[MAX_SVC_PER_SVR];
-    short svc_status[MAX_SVC_PER_SVR];     /**< The status of the service    */
+    short svc_status[MAX_SVC_PER_SVR];     /**< The status of the service     */
 
     char last_reply_q[NDRX_MAX_Q_SIZE+1];  /**< Last queue on it should reply */
-    unsigned last_call_flags;              /**< Flags for last call           */
-    short status;                          /**< Glboal status, avail or busy  */
+    /** See NDRXD_PM_E error codes */
+    unsigned execerr;                      /**< Last exec error               */
+    short status;                          /**< Global status, avail or busy  */
     short last_command_id;                 /**< Last command ID received      */
 };
 
@@ -709,7 +723,7 @@ typedef struct
     command_reply_t rply;
     int slot;                              /**< Position in shm.              */
     int srvid;
-    unsigned last_call_flags;              /**< Flags for last call           */
+    unsigned execerr;                      /**< Flags for last call           */
     short status;                          /**< Glboal status, avail or busy  */
     short last_command_id;                 /**< Last command ID received      */
     char last_reply_q[NDRX_MAX_Q_SIZE+1];  /**< Last queue on it should reply */
@@ -717,7 +731,7 @@ typedef struct
 } command_reply_shm_psrv_t;
 
 /**
- * This reply contains aditional info about configuration loading process & errors
+ * This reply contains additional info about configuration loading process & errors
  */
 typedef struct
 {
@@ -726,6 +740,7 @@ typedef struct
     char old_binary[MAXTIDENT+1];   /**< Old binary in config    */
     char new_binary[MAXTIDENT+1];   /**< New binary in config    */
     int error;                      /**< Associated error code   */
+    char msg[256];                  /**< additional errro msg    */
 } command_reply_reload_t;
 
 /**

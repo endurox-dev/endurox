@@ -62,14 +62,19 @@
  */
 exprivate char *proc_state_to_str(long state, short msg_type)
 {
-
     static char *started = "Started";
     static char *not_started = "Not started";
     static char *died = "Died";
     static char *shutdown = "Shutdown succeeded";
     static char *stopping = "Shutdown in progress";
     static char *nosuchfile = "No such file or directory";
+    static char *eaccess = "Access denied";
+    static char *ebadfile = "Bad executable";
+    static char *elimits = "Limits exceeded";
     static char *stillstarting = "Still starting";
+    static char *eargslim = "CLI args on env params too long";
+    static char *eenv= "Environment setup failure";
+    static char *esys= "System failure";
     static char unknown[256];
     char *ret;
 
@@ -101,8 +106,26 @@ exprivate char *proc_state_to_str(long state, short msg_type)
         case NDRXD_PM_ENOENT:
             ret = nosuchfile;
             break;
+        case NDRXD_PM_EACCESS:
+            ret = eaccess;
+            break;
+        case NDRXD_PM_EBADFILE:
+            ret = ebadfile;
+            break;
+        case NDRXD_PM_ELIMIT:
+            ret = elimits;
+            break;
         case NDRXD_PM_STOPPING:
             ret = stopping;
+            break;
+        case NDRXD_PM_EARGSLIM:
+            ret = eargslim;
+            break;
+        case NDRXD_PM_EENV:
+            ret = eenv;
+            break;
+        case NDRXD_PM_ESYSTEM:
+            ret = esys;
             break;
         default:
             snprintf(unknown, sizeof(unknown), "Unknown state (%ld)", state);

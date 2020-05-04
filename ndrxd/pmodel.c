@@ -193,7 +193,6 @@ out:
 exprivate void handle_child(pid_t chldpid, int stat_loc)
 {
     srv_status_t status;
-
     memset(&status, 0, sizeof(status));
     
     if (chldpid>0)
@@ -206,7 +205,7 @@ exprivate void handle_child(pid_t chldpid, int stat_loc)
             return;
         }
         status.srvinfo.pid = chldpid;
-
+        
         if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
         {
             LOCKED_DEBUG(log_error, "Process normal shutdown!");
@@ -259,7 +258,7 @@ exprivate void * check_child_exit(void *arg)
         {
             LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
-        }        
+        }
 #endif
         
         if (M_shutdown)
@@ -676,16 +675,16 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
             {
                 /* Invalid srvid  */
-                NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "Invalid server id `%d'", 
-                        p_pm->srvid);
+                NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "(%s) Invalid server id `%d'", 
+                        G_sys_config.config_file_short, p_pm->srvid);
                 ret = EXFAIL;
                 goto out;
             }
             else if (NULL!=p_pm_hash[p_pm->srvid])
             {
                 /* Duplicate srvid */
-                NDRXD_set_error_fmt(NDRXD_ESRVCIDDUP, "Duplicate server id `%d'", 
-                        p_pm->srvid);
+                NDRXD_set_error_fmt(NDRXD_ESRVCIDDUP, "(%s) Duplicate server id `%d'", 
+                        G_sys_config.config_file_short, p_pm->srvid);
                 ret = EXFAIL;
                 goto out;
             }
@@ -930,13 +929,18 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     MUTEX_LOCK_V(M_forklock);
     pid = ndrx_fork();
     
+    /* No error */
+    ndrxd_shm_getsrv(p_pm->srvid)->execerr=0;
+    
     if( pid == 0)
     {
         char sysflags_str[30];
         long sysflags = 0;
         
-        /* Export startup mode */
+        /* Bug #176: close parent resources - not needed any more... */
+        ndrxd_shm_close_all();
         
+        /* Export startup mode */
         if (G_sys_config.fullstart)
         {
             sysflags |= NDRX_PRC_SYSFLAGS_FULLSTART;
@@ -947,11 +951,11 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         if (EXSUCCEED!=setenv(CONF_NDRX_SYSFLAGS, sysflags_str, EXTRUE))
         {
             userlog("Failed to set env: %s", strerror(errno));
+            ndrxd_shm_srv_fork_status(p_pm->srvid, NDRXD_PM_EENV);
             exit(1);
         }
         
-        /* Bug #176: close parent resources - not needed any more... */
-        ndrxd_shm_close_all();
+        
 
         /* for System V child event thread is not resumed
          * but it is not a big deal, this just deallocates the resources
@@ -1071,6 +1075,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             {
                 userlog("Failed to load custom env from: %s!", 
                         p_pm->conf->env);
+                ndrxd_shm_srv_fork_status(p_pm->srvid, NDRXD_PM_EENV);
                 exit(1);
             }
         }
@@ -1091,6 +1096,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 p_pm->conf->envlist))
         {
             userlog("Failed to load config from ndrxconfig.xml!");
+            ndrxd_shm_srv_fork_status(p_pm->srvid, NDRXD_PM_EENV);
             exit(1);
         }
         
@@ -1099,8 +1105,46 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         if (EXSUCCEED != execvp (cmd[0], cmd))
         {
             int err = errno;
-            fprintf(stderr, "Failed to start server [%s], error: %d, %s\n",
+            int errcode = 0;
+            
+            userlog("Failed to start server [%s], error: %d, %s",
                                 cmd[0], err, strerror(err));
+            
+            switch (err)
+            {
+                case E2BIG:
+                    errcode=E2BIG;
+                    break;
+                case EACCES:
+                case EPERM:
+                    errcode=NDRXD_PM_EACCESS;
+                    break;
+                case EFAULT:
+                case EIO:
+                case ELOOP:
+                case ENOMEM:
+                    errcode=NDRXD_PM_ESYSTEM;
+                    break;
+                case EINVAL:
+                case EISDIR:
+                case ENOEXEC:
+                    errcode=NDRXD_PM_EBADFILE;
+                    break;
+                case EMFILE:
+                case ENFILE:
+                case ENAMETOOLONG:
+                    errcode=NDRXD_PM_ELIMIT;
+                    break;
+                case ENOENT:
+                case ENOTDIR:
+                    errcode=NDRXD_PM_ENOENT;
+                    break;
+            }
+            
+            if (errcode > 0)
+            {
+                ndrxd_shm_srv_fork_status(p_pm->srvid, errcode);
+            }
             
             /* free up the list, so that we do not report memory leak... 
              * in case if binary not started.
@@ -1180,7 +1224,9 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             }
             else if (NDRXD_PM_NOT_STARTED==p_pm->state)
             {
-                /* Assume died? */
+                /* Assume died? 
+                 * we should normally get self notification...
+                 */
                 p_pm->state = NDRXD_PM_DIED;
                 p_pm->state_changed = SANITY_CNT_START;
                 NDRX_LOG(log_debug, "binary %s, srvid %d failed to start",
@@ -1194,7 +1240,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
         MUTEX_UNLOCK_V(M_forklock);
         
         NDRXD_set_error_fmt(NDRXD_EOS, "Fork failed: %s", strerror(errno));
-        p_pm->state = NDRXD_PM_DIED;
+        p_pm->state = NDRXD_PM_ELIMIT;
         p_pm->state_changed = SANITY_CNT_START;
         /*
         ret=FAIL;

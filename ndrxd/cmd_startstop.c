@@ -144,7 +144,7 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
     srv_status_t * pm_status = (srv_status_t *)call;
     pm_pidhash_t *pm_pid;
     pm_node_t *p_pm=NULL;
-
+    shm_srvinfo_t* srv;
     NDRX_LOG(log_warn, "Got notification for pid:%d srvid:%d",
                 pm_status->srvinfo.pid, pm_status->srvinfo.srvid);
 
@@ -167,7 +167,17 @@ expublic int cmd_notify (command_call_t * call, char *data, size_t len, int cont
          */
         if (pm_pid->p_pm->state!=NDRXD_PM_STOPPING)
         {
-            pm_pid->p_pm->state = pm_status->srvinfo.state;
+            /* try to use status from shared memory if available */
+            srv=ndrxd_shm_getsrv(pm_pid->p_pm->srvid);
+            
+            if (srv->execerr!=0)
+            {
+                pm_pid->p_pm->state = srv->execerr;
+            }
+            else
+            {
+                pm_pid->p_pm->state = pm_status->srvinfo.state;
+            }
         }
         else
         {

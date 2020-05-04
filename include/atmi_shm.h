@@ -64,6 +64,7 @@ extern NDRX_API ndrx_shm_t G_srvinfo;
 extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs);
 extern NDRX_API int ndrxd_shm_open_all(void);
 extern NDRX_API int ndrxd_shm_close_all(void);
+extern NDRX_API void ndrxd_shm_srv_fork_status(int srvid, unsigned execerr);
 extern NDRX_API int ndrxd_shm_delete(void);
 extern NDRX_API int ndrx_shm_attach_all(int lev);
 extern NDRX_API int ndrx_shm_get_svc(char *svc, char *send_q, int *is_bridge,

@@ -281,6 +281,17 @@ int main_init(int argc, char** argv)
         goto out;
     }
     
+    G_sys_config.config_file_short = strrchr(G_sys_config.config_file, '/');
+    
+    if (NULL==G_sys_config.config_file_short)
+    {
+        G_sys_config.config_file_short = G_sys_config.config_file;
+    }
+    else
+    {
+        G_sys_config.config_file_short++;
+    }
+    
     /* Override Q sizes */
     p = getenv(CONF_NDRX_DQMAX);
     if (NULL!=p)

@@ -174,6 +174,28 @@ out:
 }
 
 /**
+ * Set server exec status after forked exec failed
+ * This will temporary open shared memory.
+ * @param srvid server id
+ * @param execerr error code
+ */
+expublic void ndrxd_shm_srv_fork_status(int srvid, unsigned execerr)
+{
+    if (EXSUCCEED==ndrx_shm_open(&G_srvinfo, EXTRUE))
+    {
+        
+        shm_srvinfo_t* srv = ndrxd_shm_getsrv(srvid);
+        
+        if (NULL!=srv)
+        {
+            srv->execerr=execerr;
+        }
+        
+        ndrx_shm_close(&G_srvinfo);
+    }
+}
+
+/**
  * Closes all shared memory resources, generally ignores errors.
  * WARNING ! Not thread safe.
  * MT protected by: 

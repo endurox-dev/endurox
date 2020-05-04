@@ -81,9 +81,10 @@ pm_pidhash_t **G_process_model_pid_hash = NULL;
 /**
  * Validate request address, also strip down any un-needed chars
  * @param rqaddr request address from config
+ * @param section this is where error occurred
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int rqaddr_chk(char *rqaddr)
+exprivate int rqaddr_chk(char *rqaddr, char *section)
 {
     int ret = EXSUCCEED;
     
@@ -93,6 +94,11 @@ exprivate int rqaddr_chk(char *rqaddr)
     {
         NDRX_LOG(log_error, "Request address cannot start with [%c]", 
                 NDRX_SYS_SVC_PFXC);
+        
+        NDRXD_set_error_fmt(NDRXD_EINVPARAM, "(%s) Request address "
+                "cannot start with [%c] at %s", G_sys_config.config_file_short, 
+                NDRX_SYS_SVC_PFXC, section);
+        
         EXFAIL_OUT(ret);
     }
     
@@ -223,8 +229,9 @@ expublic int load_active_config(config_t **app_config, pm_node_t **process_model
 
     if (NULL==*process_model_pid_hash)
     {
-        NDRXD_set_error_fmt(NDRXD_EOS, "Failed to allocate *process_model_pid_hash - %d bytes",
-                                ndrx_get_G_atmi_env()->max_servers * sizeof(pm_pidhash_t *) );
+        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to allocate *process_model_pid_hash - %d bytes",
+                            G_sys_config.config_file_short,
+                            ndrx_get_G_atmi_env()->max_servers * sizeof(pm_pidhash_t *) );
         ret = EXFAIL;
         goto out;
     }
@@ -262,6 +269,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     int ret=EXSUCCEED;
     char *p;
     char tmp[PATH_MAX];
+    int last_line=0;
     
     if (!config->ctl_had_defaults)
     {
@@ -328,6 +336,8 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 if (EXSUCCEED!=ndrx_ndrxconf_envs_group_parse(doc, cur, 
                     &config->envgrouphash))
                 {
+                    NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to parse <envs> tag!",
+                            G_sys_config.config_file_short);
                     NDRX_LOG(log_error, "Failed to parse <envs> tag!");
                     EXFAIL_OUT(ret);
                 }
@@ -477,7 +487,7 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 /* validate the request address - it must not start with @ 
                  * also we need to strip down any tabs & spaces
                  */
-                if (EXSUCCEED!=rqaddr_chk(config->default_rqaddr))
+                if (EXSUCCEED!=rqaddr_chk(config->default_rqaddr, "defaults section"))
                 {
                     EXFAIL_OUT(ret);
                 }
@@ -491,6 +501,10 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 if (EXSUCCEED!=ndrx_storage_decode(p, &config->default_rssmax))
                 {
                     NDRX_LOG(log_error, "Failed to parse `rssmax', invalid value");
+                    
+                    NDRXD_set_error_fmt(NDRXD_EINVPARAM, "Invalid value `rssmax' "
+                            "at defaults section");
+                    
                     EXFAIL_OUT(ret);
                 }
                 
@@ -504,6 +518,10 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 if (EXSUCCEED!=ndrx_storage_decode(p, &config->default_vszmax))
                 {
                     NDRX_LOG(log_error, "Failed to parse `vszmax', invalid value");
+                    
+                    NDRXD_set_error_fmt(NDRXD_EINVPARAM, "Invalid value `vszmax' "
+                            "at defaults section");
+                    
                     EXFAIL_OUT(ret);
                 }
                 
@@ -541,32 +559,46 @@ exprivate int parse_defaults(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 NDRX_LOG(log_error, "Unknown element %s", cur->name);
             }
 #endif
+            last_line=cur->line;
             cur = cur->next;
         } while (cur);
     }
     
     if (!config->default_start_max)
     {
-        NDRX_LOG(log_debug, "appconfig: `start_max' not set!");
+        NDRX_LOG(log_debug, "(%s) `start_max' not set at defaults section near line %d!", 
+                G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
     }/* - Optional param. Default 0. 
     else if (!config->default_pingtime)
     {
-        NDRX_LOG(log_debug, "appconfig: `pingtime' not set!");
+        NDRX_LOG(log_debug, "(ndrxconfig.xml) `pingtime' not set!");
         ret=FAIL;
         goto out;
     }
     */
     else if (config->default_pingtime && !config->default_ping_max)
     {
-        NDRX_LOG(log_debug, "appconfig: `ping_max' not set!");
+        NDRX_LOG(log_debug, "(%s) `pingtime' set but `ping_max' not "
+                "set at default section", G_sys_config.config_file_short);
+        
+        NDRXD_set_error_fmt(NDRXD_ECFGDEFAULTS, "(%s)`pingtime' set but `ping_max' not "
+                "set at default section near line %d", 
+                G_sys_config.config_file_short, last_line);
+        
         ret=EXFAIL;
         goto out;
     }
     else if (!config->default_end_max)
     {
-        NDRX_LOG(log_debug, "appconfig: `end_max' not set!");
+        NDRX_LOG(log_debug, "`end_max' not set!");
+        
+        NDRXD_set_error_fmt(NDRXD_ECFGDEFAULTS, "(%s) `end_max' not set "
+                "at default section near line %d!", 
+                G_sys_config.config_file_short, 
+                last_line);
+        
         ret=EXFAIL;
         goto out;
     }
@@ -603,6 +635,7 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
     int ret=EXSUCCEED;
     char *p;
+    int last_line=0;
     
     if (NULL!=cur)
     {
@@ -688,7 +721,7 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   p, config->rqaddrttl);
                 xmlFree(p);
             }
-            
+            last_line=cur->line;
             cur = cur->next;
         } while (cur);
     }
@@ -697,52 +730,67 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     if (!config->sanity)
     {
-        NDRX_LOG(log_debug, "appconfig: `sanity' not set!");
+        NDRX_LOG(log_debug, "`sanity' not set!");
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `sanity' not "
+                "set at <appconfig> section near line %d!", 
+                G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
     } 
     else if (!config->restart_min)
     {
-        NDRX_LOG(log_debug, "appconfig: `restart_min' not set!");
+        NDRX_LOG(log_debug, "`restart_min' not set!");
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `restart_min' "
+                "not set at <appconfig> section near line %d!", 
+                G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
     }
     else if (!config->restart_step)
     {
-        NDRX_LOG(log_debug, "appconfig: `restart_step' not set!");
+        NDRX_LOG(log_debug, "`restart_step' not set!");
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `restart_step' "
+                "not set at <appconfig> section near line %d!", 
+                G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
     }
     else if (!config->restart_max)
     {
-        NDRX_LOG(log_debug, "appconfig: `restart_max' not set!");
+        NDRX_LOG(log_debug, "`restart_max' not set!");
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) `restart_max' "
+                "not set at <appconfig> section near line %d!",
+                G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
     }
     else if (!config->restart_to_check)
     {
-        NDRX_LOG(log_debug, "appconfig: `restart_to_check' not set!");
+        NDRX_LOG(log_debug, "`restart_to_check' not set!");
+        NDRXD_set_error_fmt(NDRXD_ECFGAPPCONFIG, "(%s) "
+                "`restart_to_check' not set at <appconfig> section near line %d!", 
+                G_sys_config.config_file_short, last_line);
         ret=EXFAIL;
         goto out;
     }
     
     if (!config->brrefresh)
     {
-        NDRX_LOG(log_warn, "appconfig: `brrefresh' not set - "
+        NDRX_LOG(log_warn, "`brrefresh' not set - "
                 "period refreshes will not be sent!");
     }
     
     if (!config->checkpm)
     {
         config->checkpm = CHECK_PM_DEFAULT;
-        NDRX_LOG(log_debug, "appconfig: `checkpm' not set using "
+        NDRX_LOG(log_debug, "`checkpm' not set using "
                 "default %d sty!", config->checkpm);
     }
     
     if (0 >= config->rqaddrttl)
     {
         config->rqaddrttl = DEF_RQADDRTTL;
-        NDRX_LOG(log_debug, "appconfig: `rqaddrtt' not set using "
+        NDRX_LOG(log_debug, "`rqaddrtt' not set using "
                 "default %d sty!", config->rqaddrttl);
     }
 
@@ -765,12 +813,15 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     char tmp[128];
     conf_server_node_t *p_srvnode=NULL;
     char *p;
+    int last_line=EXFAIL;
     /* first of all, we need to get server name from attribs */
     
     p_srvnode = NDRX_CALLOC(1, sizeof(conf_server_node_t));
     if (NULL==p_srvnode)
     {
         NDRX_LOG(log_error, "malloc failed for srvnode!");
+        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc failed for srvnode!", 
+                G_sys_config.config_file_short);
         EXFAIL_OUT(ret);
     }
     
@@ -1041,13 +1092,15 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             {
                 NDRX_LOG(log_error, "Failed to load environment variables for server [%d]", 
                         p_srvnode->srvid);
-                userlog("Failed to load environment variables for server [%d]", 
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to load <envs> tag "
+                        "for server srvid=%d",
                         p_srvnode->srvid);
                 EXFAIL_OUT(ret);
             }
         }
         else if (0==strcmp((char*)cur->name, "rqaddr"))
         {
+            char tmpbuf[64];
             p = (char *)xmlNodeGetContent(cur);
             NDRX_STRCPY_SAFE(p_srvnode->rqaddr, p);
             xmlFree(p);
@@ -1055,7 +1108,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             /* validate the request address - it must not start with @ 
              * also we need to strip down any tabs & spaces
              */
-            if (EXSUCCEED!=rqaddr_chk(p_srvnode->rqaddr))
+            snprintf(tmpbuf, sizeof(tmpbuf), "srvid=%d near line %d", 
+                    p_srvnode->srvid, (int)cur->line);
+            
+            if (EXSUCCEED!=rqaddr_chk(p_srvnode->rqaddr, tmpbuf))
             {
                 EXFAIL_OUT(ret);
             }
@@ -1069,6 +1125,12 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (EXSUCCEED!=ndrx_storage_decode(p, &p_srvnode->rssmax))
             {
                 NDRX_LOG(log_error, "Failed to parse `rssmax', invalid value");
+                
+                NDRXD_set_error_fmt(NDRXD_EINVPARAM, "(%s) Invalid value `rssmax' "
+                            "at srvid=%d near lines %d", 
+                        G_sys_config.config_file_short, p_srvnode->srvid,
+                        (int)cur->line);
+                
                 EXFAIL_OUT(ret);
             }
 
@@ -1082,6 +1144,12 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             if (EXSUCCEED!=ndrx_storage_decode(p, &p_srvnode->vszmax))
             {
                 NDRX_LOG(log_error, "Failed to parse `vszmax', invalid value");
+                
+                NDRXD_set_error_fmt(NDRXD_EINVPARAM, "(%s) Invalid value `vszmax' "
+                            "at srvid=%d near line %d", 
+                            G_sys_config.config_file_short, p_srvnode->srvid,
+                            (int)cur->line);
+                
                 EXFAIL_OUT(ret);
             }
 
@@ -1112,6 +1180,8 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                     p, p_srvnode->threadstacksize);
             xmlFree(p);
         }
+        
+        last_line = cur->line;
     }
     
     /* get rqaddr defaults */
@@ -1193,6 +1263,11 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     {
         NDRX_LOG(log_error, "`ping_max' not set for server! srvid=%hd", 
                 p_srvnode->srvid);
+        
+        NDRXD_set_error_fmt(NDRXD_ECFGSERVER, "(%s) `ping_max' not set for server! "
+                "srvid=%hd near %d line", G_sys_config.config_file_short, 
+                p_srvnode->srvid, last_line);
+        
         ret=EXFAIL;
         goto out;
     }
@@ -1200,16 +1275,28 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     /* check the config.. */
     if (p_srvnode->maxdispatchthreads< p_srvnode->mindispatchthreads)
     {
-        NDRX_LOG(log_error, "maxdispatchthreads (%d) < mindispatchthreads (%d) srvid=%hd", 
+        NDRX_LOG(log_error, "maxdispatchthreads (%d) < mindispatchthreads (%d) "
+                "srvid=%hd near line %d", 
                 p_srvnode->maxdispatchthreads, p_srvnode->mindispatchthreads, 
-                p_srvnode->srvid);
+                p_srvnode->srvid, last_line);
+        
+        NDRXD_set_error_fmt(NDRXD_ECFGSERVER, "(%s) maxdispatchthreads "
+                "(%d) < mindispatchthreads (%d) "
+                "srvid=%hd near line %d", 
+                G_sys_config.config_file_short,
+                p_srvnode->maxdispatchthreads, p_srvnode->mindispatchthreads, 
+                p_srvnode->srvid, last_line);
+        
         ret=EXFAIL;
         goto out;
     }
     
     if (EXFAIL==p_srvnode->srvid)
     {
-        NDRX_LOG(log_error, "No srvid near of line %hd", cur->line);
+        NDRX_LOG(log_error, "No <srvid> near of line %d", last_line);
+        NDRXD_set_error_fmt(NDRXD_ECFGSERVER, "(%s) No <srvid> for "
+                "server block near of line %d", G_sys_config.config_file_short,
+                last_line);
         ret=EXFAIL;
         goto out;
     }
@@ -1262,6 +1349,8 @@ exprivate int parse_servers(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
             /* Get the server name */
             if (EXSUCCEED!=parse_server(config, doc, cur))
             {
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                        "parse <server> section", G_sys_config.config_file_short);
                 ret=EXFAIL;
                 goto out;
             }
@@ -1284,6 +1373,8 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (NULL==cur)
     {
         NDRX_LOG(log_error, "Empty config?");
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Emtpy config?",
+                G_sys_config.config_file_short);
         ret=EXFAIL;
         goto out;
     }
@@ -1296,12 +1387,16 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         if (0==strcmp((char*)cur->name, "defaults")
                 && EXSUCCEED!=parse_defaults(config, doc, cur->children))
         {
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                    "parse <defaults>", G_sys_config.config_file_short);
             ret=EXFAIL;
             goto out;
         }
         else if (0==strcmp((char*)cur->name, "servers")
                 && EXSUCCEED!=parse_servers(config, doc, cur->children))
         {
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                    "parse <servers>", G_sys_config.config_file_short);
             ret=EXFAIL;
             goto out;
         }
@@ -1309,6 +1404,8 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 && (appconfig_found=EXTRUE)
                 && EXSUCCEED!=parse_appconfig(config, doc, cur->children))
         {
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to parse <appconfig>",
+                    G_sys_config.config_file_short);
             ret=EXFAIL;
             goto out;
         }
@@ -1325,12 +1422,43 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     if (!appconfig_found)
     {
         NDRX_LOG(log_error, "<appconfig> section not found in config!");
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) <appconfig> "
+                "section not found in config!", G_sys_config.config_file_short);
         ret=EXFAIL;
         goto out;
     }
 
 out:
     return ret;
+}
+
+/**
+ * Set error from xml data
+ * @param userData
+ * @param error
+ */
+void ndrx_xmlStructuredErrorFunc(void *userData, xmlErrorPtr error)
+{
+    char tmp[512];
+    int len;
+
+    NDRX_STRCPY_SAFE(tmp, error->message);
+
+    ndrx_str_rstrip(tmp, "\r\n");
+
+    if (NULL==error->file)
+    {
+        NDRXD_set_error_fmt(NDRXD_EACCES, "(%s) Failed to open config file: %s", 
+            G_sys_config.config_file_short, tmp);
+    }
+    else
+    {
+        NDRXD_set_error_fmt(NDRXD_ESYNTAX, "(%s) Parsing XML failed, near line %d: %s", 
+            G_sys_config.config_file_short, error->line, tmp);
+    }
+    
+    NDRX_LOG(log_error, "Parsing XML %s failed on line %d: %s", 
+            error->file?error->file:"N/A", error->line, tmp);
 }
 
 /**
@@ -1354,11 +1482,16 @@ expublic int load_config(config_t *config, char *config_file)
         goto out;
     }
 #endif
+    
+    xmlSetStructuredErrorFunc	(NULL, ndrx_xmlStructuredErrorFunc);
+    
     doc = xmlReadFile(config_file, NULL, 0);
 
     if (!doc)
     {
         NDRX_LOG(log_error, "Failed to open or parse %s", config_file);
+        NDRXD_set_error_fmt(NDRXD_EACCES, "(%s) Failed to open or parse XML", 
+                G_sys_config.config_file_short);
         ret=EXFAIL;
         goto out;
     }
@@ -1367,11 +1500,13 @@ expublic int load_config(config_t *config, char *config_file)
     if (!(root = xmlDocGetRootElement(doc)))
     {
         NDRX_LOG(log_error, "Failed to get root XML element");
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Invalid XML config: "
+                "Failed to get root XML element", G_sys_config.config_file_short);
         ret=EXFAIL;
         goto out;
     }
 
-    /* Step into first childer */
+    /* Step into first children */
     ret=parse_config(config, doc, root->children);
     
 out:
@@ -1407,7 +1542,7 @@ out:
  */
 expublic int test_config(int reload, command_call_t * call, 
         void (*p_reload_error)(command_call_t * call, int srvid, 
-        char *old_bin, char *new_bin, int error))
+        char *old_bin, char *new_bin, int error, char *msg))
 {
     int ret=EXSUCCEED;
     int new_error=EXFALSE;
@@ -1443,6 +1578,14 @@ expublic int test_config(int reload, command_call_t * call,
                 &t_process_model_hash, &t_process_model_pid_hash))
     {
         NDRX_LOG(log_error, "Failed to load new configuration & build pmodel!");
+        
+        /* p_reload_error -> try to load config */
+        if (NULL!=p_reload_error)
+        {
+            /* return config error */
+            p_reload_error(call, 0, "", "", ndrxd_errno, 
+                    ndrxd_strerror(ndrxd_errno));
+        }
         ret=EXFAIL;
         goto out;
     }
@@ -1488,13 +1631,14 @@ expublic int test_config(int reload, command_call_t * call,
                 /* Give some feedback to console */
                 if (NULL!=p_reload_error)
                     p_reload_error(call, new->srvid, old->binary_name,
-                                new->binary_name, NDRXD_EREBBINARYRUN);
+                                new->binary_name, NDRXD_EREBBINARYRUN, "");
                 
                 if (!new_error)
                 {
                     /* This is error case */
-                    NDRXD_set_error_fmt(NDRXD_EREBBINARYRUN, "Renamed binary [%s] for "
+                    NDRXD_set_error_fmt(NDRXD_EREBBINARYRUN, "(%s) Renamed binary [%s] for "
                             "serverid=%d is in non shutdown state (%d)! New binary for this id is [%s]",
+                            G_sys_config.config_file_short, 
                             old->binary_name, new->srvid, old->state, new->binary_name);
                 }
                 new_error=EXTRUE;
@@ -1523,7 +1667,7 @@ expublic int test_config(int reload, command_call_t * call,
         new = t_process_model_hash[old->srvid];
         if (NULL==new)
         {
-            if (!(NDRXD_PM_MIN_EXIT<=old->state && old->state<=NDRXD_PM_MAX_EXIT))
+            if (!(PM_NOT_RUNNING(old->state)))
             {
                 NDRX_LOG(log_error,"Removed binary [%s] for "
                         "serverid=%d is in non shutdown state (%d)!",
@@ -1532,13 +1676,14 @@ expublic int test_config(int reload, command_call_t * call,
                 /* Give some feedback to console */
                 if (NULL!=p_reload_error)
                     p_reload_error(call, old->srvid, old->binary_name,
-                                NULL, NDRXD_EBINARYRUN);
+                                NULL, NDRXD_EBINARYRUN, "");
 
                 if (!old_error)
                 {
                     /* This is error case */
-                    NDRXD_set_error_fmt(NDRXD_EBINARYRUN, "Removed binary [%s] for "
-                            "serverid=%d is in non shutdown state (%d)!",
+                    NDRXD_set_error_fmt(NDRXD_EBINARYRUN, "(%s) Removed "
+                            "binary [%s] for srvid=%d is in non shutdown state (%d)!",
+                            G_sys_config.config_file_short, 
                             old->binary_name, old->srvid, old->state);
                 }
                 old_error=EXTRUE;

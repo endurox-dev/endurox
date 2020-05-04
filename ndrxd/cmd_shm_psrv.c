@@ -65,14 +65,13 @@ expublic void shm_psrv_reply_mod(command_reply_t *reply, size_t *send_size, mod_
 {
     command_reply_shm_psrv_t * shm_psrv_info = (command_reply_shm_psrv_t *)reply;
     shm_srvinfo_t *p_shm = (shm_srvinfo_t *)params->mod_param1;
-    pm_node_svc_t *elt;
     
     reply->msg_type = NDRXD_CALL_TYPE_PM_SHM_PSRV;
     /* calculate new send size */
     *send_size += (sizeof(command_reply_shm_psrv_t) - sizeof(command_reply_t));
     
     /* Copy data to reply structure */
-    shm_psrv_info->last_call_flags = p_shm->last_call_flags;
+    shm_psrv_info->execerr = p_shm->execerr;
     shm_psrv_info->last_command_id = p_shm->last_command_id;
     NDRX_STRCPY_SAFE(shm_psrv_info->last_reply_q, p_shm->last_reply_q);
     shm_psrv_info->slot = params->param2;
