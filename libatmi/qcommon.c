@@ -325,7 +325,7 @@ expublic char * tmq_msgid_serialize(char *msgid_in, char *msgid_str_out)
  */
 expublic char * tmq_msgid_deserialize(char *msgid_str_in, char *msgid_out)
 {
-    size_t tot_len = EXFAIL;
+    size_t tot_len = 0;
     
     NDRX_LOG(log_debug, "Serialized MSGID: [%s]", msgid_str_in);
     
