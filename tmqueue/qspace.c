@@ -947,7 +947,7 @@ expublic tmq_msg_t * tmq_msg_dequeue(char *qname, long flags, int is_auto)
     {
         
         NDRX_LOG(log_error, "Failed to get q config [%s]", 
-                node->msg->hdr.qname);
+                qname);
         goto out;
     }
     NDRX_LOG(log_debug, "mode: %s", TMQ_MODE_LIFO == qconf->mode?"LIFO":"FIFO");

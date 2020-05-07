@@ -419,7 +419,7 @@ expublic int command_wait_and_run(int *finished, int *abort)
         NDRX_LOG(log_error, "Invalid request received, bad magic: got %ld expected %ld",
                 call->magic, NDRX_MAGIC);
         /* Dump content... */
-        NDRX_DUMP(log_error, "Invalid request recieved", msg_buffer_max, data_len);
+        NDRX_DUMP(log_error, "Invalid request received", msg_buffer_max, data_len);
         goto out;
     }
 #if 0
