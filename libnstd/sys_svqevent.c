@@ -1679,7 +1679,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
         struct timespec *abs_timeout, ndrx_svq_ev_t **ev, int is_send, int syncfd)
 {
     int ret = EXSUCCEED;
-    int err;
+    int err=0;
     int msgflg;
     int len;
     ndrx_svq_ev_t cur_stamp;
@@ -1853,7 +1853,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
         }
         else
         {
-            NDRX_LOG(log_debug, "MQ op fail qid:%d len:%d msgflg: %d: %s", 
+            NDRX_LOG(log_debug, "(EINTR) MQ op fail qid:%d len:%d msgflg: %d: %s", 
                 mqd->qid, len, msgflg, strerror(err));
         }
     }
@@ -1894,6 +1894,16 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     
 out:
     
+    /* seems if we get real signal in the thread
+     * and there is no event waiting, then return fail
+     * Bug #537
+     */
+    if (EXSUCCEED==ret && NULL==*ev && EINTR==err)
+    {
+        NDRX_LOG(log_warn, "Interrupted by external signal");
+        ret=EXFAIL;
+    }
+
     errno = err;
 
     return ret;
