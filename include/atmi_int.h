@@ -203,7 +203,6 @@ extern "C" {
 
 /** @} */ /* xa_flags_sys */
     
-<<<<<<< HEAD
 #define NDRX_BANNER(X) \
     if (NULL==getenv(CONF_NDRX_SILENT))\
     {\
@@ -215,32 +214,10 @@ extern "C" {
                         __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
         fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
         fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-        fprintf(stderr, "Copyright (C) 2017-2019 Mavimax Ltd. All Rights Reserved.\n\n");\
+        fprintf(stderr, "Copyright (C) 2017-2020 Mavimax Ltd. All Rights Reserved.\n\n");\
         fprintf(stderr, "This software is released under one of the following licenses:\n");\
         fprintf(stderr, "AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.\n\n");\
     }
-||||||| merged common ancestors
-#define NDRX_BANNER \
-    fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, \
-                    __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
-    fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
-    fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-    fprintf(stderr, "Copyright (C) 2017-2019 Mavimax Ltd. All Rights Reserved.\n\n");\
-    fprintf(stderr, "This software is released under one of the following licenses:\n");\
-    fprintf(stderr, "AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.\n\n");
-    
-=======
-#define NDRX_BANNER \
-    fprintf(stderr, "%s, build %s %s, using %s for %s (%ld bits)\n\n", NDRX_VERSION, \
-                    __DATE__, __TIME__, ndrx_epoll_mode(), NDRX_BUILD_OS_NAME, sizeof(void *)*8);\
-    fprintf(stderr, "Enduro/X Middleware Platform for Distributed Transaction Processing\n");\
-    fprintf(stderr, "Copyright (C) 2009-2016 ATR Baltic Ltd.\n");\
-    fprintf(stderr, "Copyright (C) 2017-2020 Mavimax Ltd. All Rights Reserved.\n\n");\
-    fprintf(stderr, "This software is released under one of the following licenses:\n");\
-    fprintf(stderr, "AGPLv3 (with Java and Go exceptions) or Mavimax license for commercial use.\n\n");
-    
->>>>>>> master
-    
 
 /** Used by NDRX_SYSFLAGS env variable, Full application start */
 #define NDRX_PRC_SYSFLAGS_FULLSTART     0x00000001
