@@ -626,7 +626,7 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
             }
             else
             {
-                wait_matched = EXFAIL;
+                wait_matched = EXFALSE;
             }
             pthread_spin_unlock(&(((mqd_t)r->mqd)->stamplock));
             
