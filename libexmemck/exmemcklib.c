@@ -111,6 +111,7 @@ out:
     {
         EXHASH_DEL(M_config, ret);
         NDRX_FREE(ret);
+	ret=NULL;
     }
 
     return ret;
