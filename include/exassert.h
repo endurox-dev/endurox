@@ -58,7 +58,7 @@ extern "C" {
         if (!(expr)) {\
             char tmp_assert_buf_[PATH_MAX];\
             snprintf(tmp_assert_buf_, sizeof(tmp_assert_buf_), msg, ##__VA_ARGS__);\
-            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false: %s", tmp_assert_buf_, #expr, tpstrerror(tperrno));\
+            NDRX_LOG(log_always, "TESTERROR %s: expr [%s] is false: %s", tmp_assert_buf_, #expr, tpstrerror(tperrno));\
             EXFAIL_OUT(ret);\
         }\
     } while (0)
@@ -76,7 +76,7 @@ extern "C" {
         if (!(expr)) {\
             char tmp_assert_buf_[PATH_MAX];\
             snprintf(tmp_assert_buf_, sizeof(tmp_assert_buf_), msg, ##__VA_ARGS__);\
-            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false: %s", tmp_assert_buf_, #expr, Bstrerror(Berror));\
+            NDRX_LOG(log_always, "TESTERROR %s: expr [%s] is false: %s", tmp_assert_buf_, #expr, Bstrerror(Berror));\
             EXFAIL_OUT(ret);\
         }\
     } while (0)
@@ -94,7 +94,7 @@ extern "C" {
         if (!(expr)) {\
             char tmp_assert_buf_[PATH_MAX];\
             snprintf(tmp_assert_buf_, sizeof(tmp_assert_buf_), msg, ##__VA_ARGS__);\
-            NDRX_LOG(log_error, "TESTERROR %s: expr [%s] is false", tmp_assert_buf_, #expr);\
+            NDRX_LOG(log_always, "TESTERROR %s: expr [%s] is false", tmp_assert_buf_, #expr);\
             EXFAIL_OUT(ret);\
         }\
     } while (0)

@@ -50,6 +50,7 @@ fi;
 . ../testenv.sh
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
+export NDRX_ULOG=$TESTDIR
 export PATH=$PATH:$TESTDIR
 export CC=gcc
 export NDRX_TOUT=10
@@ -104,6 +105,7 @@ function go_out {
 }
 
 rm *.log 2>/dev/null
+rm ULOG* 2>/dev/null
 
 UNAME=`uname -s`
 
@@ -209,6 +211,34 @@ RET=$?
 
 if [ "X$RET" != "X0" ]; then
     echo "Failed to build atmi.sv71def: $RET"
+    go_out 2
+fi
+
+echo ""
+echo "************************************************************************"
+echo "Build server, default tpsrvinit(), default tpsrvdone()..., threaded"
+echo "************************************************************************"
+
+buildserver -o atmi.sv71thr -rTestSw -t -v -f "$ADDFLAGS" -sWTHR:ECHOSV -f atmisv71_4.c
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmi.sv71thr: $RET"
+    go_out 2
+fi
+
+echo ""
+echo "************************************************************************"
+echo "Build server, default tpsrvinit(), default tpsrvdone()..., non-threaded"
+echo "************************************************************************"
+
+buildserver -o atmi.sv71nthr -rTestSw -v -f "$ADDFLAGS" -sNTHR:ECHOSV -f atmisv71_4.c
+
+RET=$?
+
+if [ "X$RET" != "X0" ]; then
+    echo "Failed to build atmi.sv71nthr: $RET"
     go_out 2
 fi
 
@@ -439,6 +469,26 @@ if [ "X$TXRES" == "X" ]; then
     go_out -12
 fi
 
+# Check that threaded server services are booted
+CNT=`xadmin psc | grep WTHR| wc | awk '{print $1}'`
+if [ $CNT -ne 1 ]; then
+    echo "Invalid WTHR (threaded server count) shall be 1!: $CNT"
+    go_out -13
+fi
+
+# Check that non threaded server is not booted.
+CNT=`xadmin psc | grep NTHR| wc | awk '{print $1}'`
+if [ $CNT -ne 0 ]; then
+    echo "Invalid NTHR (non-threaded server count) shall be 0!: $CNT"
+    go_out -13
+fi
+
+# check ulog contains the msg...
+# Check: Buildserver thread option says single-threaded, but MINDISPATCHTHREADS=5 MAXDISPATCHTHREADS=5
+if [ "X`grep 'thread option says single-threaded' ULOG*`" == "X" ]; then
+    echo "Missing single-thread warning!"
+    RET=-14
+fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
