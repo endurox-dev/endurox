@@ -252,8 +252,15 @@ out:
  */
 expublic int tpsvrthrinit(int argc, char **argv)
 {
+    int ret=EXSUCCEED;
+    
     NDRX_LOG(log_info, "Default tpsvrthrinit()");
-    tx_open();
+    
+    if (EXSUCCEED!=tx_open())
+    {
+        userlog("tx_open() failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+    }
     
     return EXSUCCEED;
 }
@@ -267,7 +274,10 @@ expublic int tpsvrthrinit(int argc, char **argv)
  */
 expublic int tpsvrinit(int argc, char **argv)
 {
-    NDRX_LOG(log_info, "Default tpsvrinit()");
+    int ret =  EXSUCCEED;
+    
+    NDRX_LOG(log_info, "Default tpsvrinit() _tmbuilt_with_thread_option=%d",
+            _tmbuilt_with_thread_option);
     
     /*
      * Only if not multi-threaded
@@ -276,16 +286,25 @@ expublic int tpsvrinit(int argc, char **argv)
     {
         if (NULL!=ndrx_G_tpsvrthrinit)
         {
-            if (EXSUCCEED==ndrx_G_tpsvrthrinit(argc, argv))
+            if (EXSUCCEED!=(ret=ndrx_G_tpsvrthrinit(argc, argv)))
             {
-                userlog("Server started successfully");
+                EXFAIL_OUT(ret);
             }
         }
         else
         {
-            userlog("tpsvrthrinit() not set");
+            NDRX_LOG(log_warn, "tpsvrthrinit() not set");
         }
     }
+    
+out:
+    
+    if (EXSUCCEED==ret)
+    {
+        userlog("Server started successfully");
+    }
+
+    return ret;
 }
 
 /**
@@ -294,7 +313,10 @@ expublic int tpsvrinit(int argc, char **argv)
 expublic void tpsvrthrdone(void)
 {
     NDRX_LOG(log_info, "Default tpsvrthrdone()");
-    tx_close();
+    if (EXSUCCEED!=tx_close())
+    {
+        userlog("tx_close() failed: %s", tpstrerror(tperrno));
+    }
 }
 
 /**

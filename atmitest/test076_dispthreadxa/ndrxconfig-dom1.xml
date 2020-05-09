@@ -51,7 +51,6 @@
         <!-- Interval, in seconds, by which signal sequence -2, -15, -9, -9.... will be sent
         to process until it have been terminated. -->
         <killtime>20</killtime>
-
     </defaults>
     <servers>
         
@@ -60,70 +59,15 @@
             <srvid>10</srvid>
             <min>1</min>
             <max>1</max>
-            <envs>
-                <env name="NDRX_XA_RES_ID">1</env>
-            </envs>
             <sysopt>-e ${TESTDIR}/TM1.log -r -- -t1 -l${TESTDIR}/RM1 </sysopt>
         </server>
         
-        <!-- TestSw - 2 -->
-        <server name="tmstest">
-            <srvid>20</srvid>
-            <min>1</min>
+        <server name="tpbridge">
             <max>1</max>
-            <sysopt>-e ${TESTDIR}/TM2.log -r -- -t1 -l${TESTDIR}/RM2 </sysopt>
-            <envs>
-                <env name="NDRX_XA_RES_ID">2</env>
-            </envs>
+            <srvid>101</srvid>
+            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
         </server>
-        
-        <server name="atmi.sv71">
-            <min>1</min>
-            <max>1</max>
-            <srvid>100</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
-            <envs>
-                <env name="NDRX_XA_RES_ID">2</env>
-            </envs>
-        </server>
-        
-        <!-- default tpsrvinit and done... -->
-        <server name="atmi.sv71def">
-            <min>1</min>
-            <max>1</max>
-            <srvid>200</srvid>
-            <sysopt>-e ${TESTDIR}/atmi.sv71def-dom1.log -r -N -sXX</sysopt>
-            <envs>
-                <env name="NDRX_XA_RES_ID">2</env>
-            </envs>
-        </server>
-        
-        <!-- This boots OK -->
-        <server name="atmi.sv71thr">
-            <min>1</min>
-            <max>1</max>
-            <mindispatchthreads>5</mindispatchthreads>
-            <maxdispatchthreads>5</maxdispatchthreads>
-            <srvid>400</srvid>
-            <sysopt>-e ${TESTDIR}/atmi.sv71thr-dom1.log -r -N -sWTHR</sysopt>
-            <envs>
-                <env name="NDRX_XA_RES_ID">2</env>
-            </envs>
-        </server>
-        
-        <!-- This does not boots as threading not enabled -->
-        <server name="atmi.sv71nthr">
-            <min>1</min>
-            <max>1</max>
-            <mindispatchthreads>5</mindispatchthreads>
-            <maxdispatchthreads>5</maxdispatchthreads>
-            <srvid>500</srvid>
-            <sysopt>-e ${TESTDIR}/atmi.sv71nthr-dom1.log -r -N -sNTHR</sysopt>
-            <envs>
-                <env name="NDRX_XA_RES_ID">2</env>
-            </envs>
-        </server>
-        
     </servers>
 </endurox>
 
