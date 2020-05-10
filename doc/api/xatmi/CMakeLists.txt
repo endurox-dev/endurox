@@ -134,6 +134,8 @@ set(MAN3_NAMES
         _tmstartserver
         tpgetconn
         tpscmt
+        tpsvrthrinit
+        tpsvrthrdone
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

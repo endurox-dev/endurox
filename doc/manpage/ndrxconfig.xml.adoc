@@ -249,7 +249,7 @@ PARAMETERS
     If XATMI server is not built for multi-thread mode (flag *-t* was not
     passed to *buildserver(8)* or *_tmbuilt_with_thread_option* extern variable
     before XATMI server main routine start was not set to *1*), the binary startup
-    will fail and error will be printed in ULOG.
+    will fall-back to single-thread mode and warning is printed in ULOG.
 'MIN_DISPTHREADS_DEFAULT'::
     This is actual number of dispatch threads (workers) used by XATMI server
     service dispatcher. By default this is *1*. In case if *<maxdispatchthreads>*

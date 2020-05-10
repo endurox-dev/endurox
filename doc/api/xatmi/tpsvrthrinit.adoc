@@ -1,0 +1,78 @@
+TPSVRTHRINIT(3)
+===============
+:doctype: manpage
+
+
+NAME
+----
+tpsvrthrinit - Template and default version for server dispatch thread init function
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsvrthrinit (int 'argc', char **'argv');
+
+For XATMI server link with '-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+This function is called upon XATMI server process starting up. Function is invoked
+for XATMI servers which are configured to work in multi-threaded mode.
+
+The 'argc' and 'argv' is command line parameters  passed to binary after the '--'. 
+Initial parameters are used by Enduro/X, these are sys-opts in the *ndrxconfig.xml*, 
+after the '--' those are application specific options.
+
+Normally at *tpsvrthrinit()* is used for threads to perform the initialization.
+In multi-threaded mode, the worker threads actually are clients for which *tpinit()*
+is done previously by Enduro/X.
+
+The default version of this function is provided by Enduro/X which is built in
+in the the *-latmisrvinteg* library. Default version of the function invokes
+*tx_open()*. If *tx_open()* fails, the service process will abort the startup.
+
+The *tpsvrthrinit()* is activated only
+
+. if XATMI server is built by *builserver(8)* having flag *-t* set.
+
+. Or XATMI server process is started by *_tmstartserver(3)* with extern variable 
+*_tmbuilt_with_thread_option* is set to *1*. And function name is specified in 
+*tmsvrargs_t* structure for the *p_tpsvrthrinit* field.
+
+In case if program is single threaded and default *tpsrvinit(3)* is used. Where
+default *tpsrvinit()* will invoke the *tpsvrthrinit()*.
+
+To start program as multi-threaded *ndrxconfig.xml(5)* in server section 
+*<mindispatchthreads>* and *<maxdispatchthreads>* must be greater than 1.
+
+
+This only applies to XATMI servers.
+
+RETURN VALUE
+------------
+If application failed to initialize, the user shall return non 0 value. 
+If succeed, then 0 must be returned.
+
+ERRORS
+------
+Not available.
+
+EXAMPLE
+-------
+See *atmitest/test075_dispthread/atmisv75.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpsvrinit(3)* *tpsvrdone(3)* *tpsvrthrdone(3)* 
+*_tmstartserver(3)* *ndrxconfig.xml(5)* *builserver(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

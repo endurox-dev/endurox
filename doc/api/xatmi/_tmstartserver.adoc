@@ -15,7 +15,7 @@ SYNOPSIS
 int _tmstartserver( int 'argc', char **'argv', struct tmsvrargs_t *'tmsvrargs');
 
 
-Link with '-latmisrvnomain -latmi -lubf -lnstd -lpthread -lrt -lm'
+Link with '-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
@@ -28,6 +28,9 @@ have also exported to 'tmsvrargs.svctab', will be ignored (i.e. *TPEMATCH* error
 will be ignored). The 'tmsvrargs.svctab' table must be terminated with row for
 which 'svcnm' is set to NULL.
 
+If starting XATMI server in mult-threaded, mode *_tmbuilt_with_thread_option* extern
+variable must be set to *1*.
+
 
 The *struct tmsvrargs_t* structure is following:
 
@@ -35,16 +38,18 @@ The *struct tmsvrargs_t* structure is following:
 
 struct tmsvrargs_t
 {
-  struct xa_switch_t * sw;          /**< XA Switch                            */
+  struct xa_switch_t * xa_switch;   /**< XA Switch                            */
   struct tmdsptchtbl_t *svctab;     /**< Service dispatch table               */
-  long rfu1;                        /**< Reserved for future use              */
+  long flags;                       /**< Reserved for future use              */
   int (*p_tpsvrinit)(int, char **); /**< Server init function                 */
   void (*p_tpsvrdone)(void);        /**< callback to server done              */
-  void * rfu2;                      /**< Reserved for future use              */
-  void * rfu3;                      /**< Reserved for future use              */
-  void * rfu4;                      /**< Reserved for future use              */
-  void * rfu5;                      /**< Reserved for future use              */
-  void * rfu6;                      /**< Reserved for future use              */
+  void * reserved0;                 /**< Reserved for future use              */
+  void * reserved1;                 /**< Reserved for future use              */
+  void * reserved2;                 /**< Reserved for future use              */
+  void * reserved3;                 /**< Reserved for future use              */
+  void * reserved4;                 /**< Reserved for future use              */
+  int (*p_tpsvrthrinit)(int, char **); /**< thread init func                  */
+  void (*p_tpsvrthrdone)(void);        /**< thread done func                  */
 };
 
 --------------------------------------------------------------------------------
@@ -86,7 +91,8 @@ See *atmitest/test004_basicevent/atmisv4_1ST.c* for sample code.
 
 SEE ALSO
 --------
-*ndrx_main(3)* *ndrx_main_integra(3)*
+*ndrx_main(3)* *ndrx_main_integra(3)* *tpsvrinit(3) *tpsvrdone(3)* 
+*tpthrsvrinit(3)* *tpthrsvdone(3)*
 
 COPYING
 -------
