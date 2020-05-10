@@ -1720,14 +1720,6 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             dlen = dtype_ext1->hdr_size;
             *d_ptr=p+dlen;
 
-            /* Now return the len if needed */
-#if 0
-            if (NULL!=len)
-            {
-               /* *len = data_len;*/
-               dtype->p_next(dtype, (char *)p, len);
-            }
-#endif
         }
 
         if (NULL!=buf)

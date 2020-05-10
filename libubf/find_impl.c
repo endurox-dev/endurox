@@ -267,7 +267,7 @@ expublic BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN l
         cmp_ret=dtype_ext1->p_cmp(dtype_ext1, p_dat, dlen, buf, len, 0L);
         if (EXTRUE==cmp_ret)
         {
-            UBF_LOG(log_debug, "%s: Found occurrance: %d", fn, iocc);
+            UBF_LOG(log_debug, "%s: Found occurrence: %d", fn, iocc);
             ret=iocc;
             break; /* <<< BREAKE on Found. */
         }
