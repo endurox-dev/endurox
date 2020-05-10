@@ -157,7 +157,7 @@ expublic dtype_str_t G_dtype_str_map[] =
 };
 
 #define DAO EX_ALIGNMENT_BYTES
-#define DAC EX_ALIGNMENT_BYTES+4 /* for carray having some extra... */
+#define DAC EX_ALIGNMENT_BYTES+sizeof(BFLDLEN) /* for string,carray having some extra... */
 
 /**
  * We operate with 32 bit align.
@@ -170,7 +170,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 {BFLD_CHAR,  g_dflt_empty, put_empty_dftl, dump_char,  DAO, tbuf_char,  tallocdlft, cmp_char},      /* 2 */
 {BFLD_FLOAT, g_dflt_empty, put_empty_dftl, dump_float, DAO, tbuf_float, tallocdlft, cmp_float},     /* 3 */
 {BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,DAO, tbuf_double,tallocdlft, cmp_double},    /* 4 */
-{BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,DAO, tbuf_string,tallocdlft, cmp_string},    /* 5 */
+{BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,DAC, tbuf_string,tallocdlft, cmp_string},    /* 5 */
 {BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,DAC, tbuf_carray,tallocdlft, cmp_carray},    /* 6 */
 {BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 7 */
 /* TODO - create support functions: */
@@ -214,23 +214,12 @@ exprivate int get_fb_dftl_size(dtype_str_t *t, char *fb, int *payload_size)
 exprivate int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size)
 {
     UBF_string_t *str = (UBF_string_t *)fb;
-    int data_size = strlen(str->str) + 1;
-    /* int aligned; 
-    int tmp;*/
+    
     if (NULL!=payload_size)
-        *payload_size = data_size;
-
-    /*
-    aligned = sizeof(BFLDID) + data_size;
-    tmp=aligned%DEFAULT_ALIGN;
-    aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-    */
+        *payload_size = str->dlen;
     
+    return ALIGNED_SIZE((sizeof (BFLDLEN) + str->dlen));
     
-    
-    /* Including EOS (+1) */
-    /* return aligned; */
-    return ALIGNED_SIZE(data_size);
 }
 /**
  * Get data size which are placed into bisubf buffer.
@@ -241,17 +230,8 @@ exprivate int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size)
 exprivate int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size)
 {
     UBF_carray_t *carr = (UBF_carray_t *)fb;
-    /* int aligned;
-    int tmp; */
     if (NULL!=payload_size)
         *payload_size = carr->dlen;
-
-    /*
-    aligned = (sizeof (BFLDID) + sizeof (BFLDLEN) + carr->dlen);
-    tmp=aligned%DEFAULT_ALIGN;
-    aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-    */
-    
     return ALIGNED_SIZE((sizeof (BFLDLEN) + carr->dlen));
 }
 
@@ -296,19 +276,11 @@ exprivate int put_data_string(dtype_str_t *t, char *fb, BFLDID bfldid,
         char *data, int len)
 {
     UBF_string_t *str = (void *)fb;
-    /* int tlen = strlen(data)+1; */
-    /*int align = tlen % DEFAULT_ALIGN;  This assumes that fieldid is aligned already */
-    
+
     strcpy(str->str, data);
+    str->dlen = strlen(str->str)+1;
     str->bfldid=bfldid;
 
-    /*
-    if (align>0)
-    {
-        align=DEFAULT_ALIGN-align;
-        memset(str->str + tlen, 0, align);
-    }
-    */
     return EXSUCCEED;
 }
 
@@ -368,19 +340,11 @@ exprivate int get_d_size_string (struct dtype_str *t, char *data,
         int len, int *payload_size)
 {
     int str_data_len = strlen(data)+1;
-/*    int aligned;
-    int tmp; */
-    /* Counting: BFLDID, STRLEN + EOS */
+
     if (NULL!=payload_size)
         *payload_size = str_data_len;
-
-    /*
-    aligned = (sizeof(BFLDID)+str_data_len);
-    tmp=aligned%DEFAULT_ALIGN;
-    aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-    */
     
-    return ALIGNED_SIZE(str_data_len);
+    return ALIGNED_SIZE(sizeof(BFLDLEN)+str_data_len);
 }
 
 /**
@@ -394,18 +358,10 @@ exprivate int get_d_size_carray (struct dtype_str *t, char *data,
         int len, int *payload_size)
 {
     /* Counting: BFLDID, DLEN + data len*/
-    /*
-    int aligned;
-    int tmp;*/
+    
     if (NULL!=payload_size)
         *payload_size=len;
 
-    /*
-    aligned = (sizeof(BFLDID)+sizeof(BFLDLEN)+len);
-    tmp=aligned%DEFAULT_ALIGN;
-    aligned = aligned+ (tmp>0?DEFAULT_ALIGN-tmp:0);
-    */
-    
     return ALIGNED_SIZE((sizeof(BFLDLEN)+len));
 }
 
@@ -459,26 +415,24 @@ out:
 exprivate int get_data_str (struct dtype_str *t, char *fb, char *buf, int *len)
 {
     UBF_string_t *str = (UBF_string_t *)fb;
-    int data_len = strlen(str->str)+1;
     int ret=EXSUCCEED;
 
-    if (NULL!=len && *len < data_len)
+    if (NULL!=len && *len < str->dlen)
     {
         /* Set error, that string buffer too short */
         ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
-                                "output: %d", data_len, *len);
+                                "output: %d", str->dlen, *len);
         EXFAIL_OUT(ret);
     }
     else
     {
         strcpy(buf, str->str);
-        ret = EXSUCCEED;
     }
     
     /* Return the size to caller */
     if (NULL!=len)
     {
-        *len = data_len;
+        *len = str->dlen;
     }
     
 out:
@@ -545,7 +499,7 @@ exprivate int g_dflt_empty(struct dtype_ext1* t)
  */
 exprivate int g_str_empty(struct dtype_ext1* t)
 {
-    return ALIGNED_SIZE(1); /* empty string eos */
+    return ALIGNED_SIZE(sizeof(BFLDLEN)+1); /* empty string eos */
 }
 /**
  * Return empty character array size
@@ -599,8 +553,9 @@ exprivate int put_empty_str(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 
     UBF_string_t *fld = (UBF_string_t *)fb;
     fld->bfldid = bfldid;
-    /* Uses alignmnet */
+    /* Uses alignment */
     fld->str[0] = EXEOS;
+    fld->dlen = 1;
     /*
     memset(fld->str, 0, DEFAULT_ALIGN);
     */

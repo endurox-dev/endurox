@@ -144,6 +144,7 @@ struct UBF_string
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
+    BFLDLEN  dlen; /**< Data len, for faster data access */
     char str[1];
 };
 typedef struct UBF_string UBF_string_t;

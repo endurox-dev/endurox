@@ -261,7 +261,12 @@ void do_dummy_data_test(UBFH *p_ub)
 void basic_setup(void)
 {
     /*printf("basic_setup\n");*/
-    M_p_ub = malloc(DEFAULT_BUFFER);
+    
+    if (NULL!=M_p_ub)
+    {
+        NDRX_FREE(M_p_ub);
+    }
+    M_p_ub = NDRX_MALLOC(DEFAULT_BUFFER);
     memset(M_p_ub, 255, DEFAULT_BUFFER);
     if (EXFAIL==Binit(M_p_ub, DEFAULT_BUFFER))
     {
@@ -275,7 +280,11 @@ void basic_setup(void)
 void basic_teardown(void)
 {
     /*printf("basic_teardown\n"); */
-    free (M_p_ub);
+    
+    if (NULL!=M_p_ub)
+    {
+        NDRX_FREE(M_p_ub);
+    }
 }
 
 /**
@@ -422,7 +431,7 @@ Ensure(test_Bsizeof)
  */
 Ensure(test_Bunused)
 {
-    char tmpbuf[64]; /* +2 for short align */
+    char tmpbuf[68]; /* +2 for short align, +4 for string dlen */
     short s;
     UBFH * p_ub =  (UBFH *) tmpbuf;
 
@@ -630,7 +639,13 @@ TestSuite *ubf_basic_tests() {
 TestSuite *ubf_bmkfldid_multidir_tests(void) {
     TestSuite *suite = create_test_suite();
     
-    M_p_ub = malloc(DEFAULT_BUFFER);
+    if (NULL!=M_p_ub)
+    {
+        NDRX_FREE(M_p_ub);
+    }
+    
+    M_p_ub = NDRX_MALLOC(DEFAULT_BUFFER);
+    
     memset(M_p_ub, 255, DEFAULT_BUFFER);
     if (EXFAIL==Binit(M_p_ub, DEFAULT_BUFFER))
     {
