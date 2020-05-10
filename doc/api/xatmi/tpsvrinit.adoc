@@ -14,9 +14,6 @@ SYNOPSIS
 
 int tpsvrinit (int 'argc', char **'argv');
 
-
-For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
-
 For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
@@ -75,7 +72,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrx_main(3)* *ndrx_main_integra(3)* *tpsvrinit(3)* *tpclose(3)* *tpopen(3)* *xadmin(8)*
+*ndrx_main(3)* *ndrx_main_integra(3)* *tpsvrdone(3)* *tpclose(3)* *tpopen(3)* *xadmin(8)*
 
 COPYING
 -------

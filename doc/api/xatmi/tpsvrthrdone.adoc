@@ -1,0 +1,72 @@
+TPSVRTHRDONE(3)
+===============
+:doctype: manpage
+
+
+NAME
+----
+tpsvrthrdone - Template and default version for server dispatch thread de-init function
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsvrthrdone (void);
+
+For XATMI server link with '-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+This function is called upon XATMI server process shutting down. Function is invoked
+for XATMI servers which are configured to work in multi-threaded mode.
+
+Normally at *tpsvrthrdone()* is used for threads to perform the de-initialization.
+
+The default version of this function is provided by Enduro/X which is built in
+in the the *-latmisrvinteg* library. Default version of the function invokes
+*tx_close()*.
+
+The *tpsvrthrdone()* is activated only
+
+. if XATMI server is built by *builserver(8)* having flag *-t* set.
+
+. Or XATMI server process is started by *_tmstartserver(3)* with extern variable 
+*_tmbuilt_with_thread_option* is set to *1*. And function name is specified in 
+*tmsvrargs_t* structure for the *p_tpsvrthrdone* field.
+
+In case if program is single threaded and default *tpsrvdone(3)* is used. Where
+default *tpsrvinit()* will invoke the *tpsvrthrinit()*.
+
+To start program as multi-threaded *ndrxconfig.xml(5)* in server section 
+*<mindispatchthreads>* and *<maxdispatchthreads>* must be greater than 1.
+
+
+This only applies to XATMI servers.
+
+RETURN VALUE
+------------
+If application failed to initialize, the user shall return non 0 value. 
+If succeed, then 0 must be returned.
+
+ERRORS
+------
+Not available.
+
+EXAMPLE
+-------
+See *atmitest/test075_dispthread/atmisv75.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpsvrdone(3)* *tpsvrinit(3)* *tpsvrthrinit(3)* 
+*_tmstartserver(3)* *ndrxconfig.xml(5)* *builserver(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -572,21 +572,15 @@ expublic int ndrx_init(int argc, char** argv)
     /* check thread option.. */
     if (!_tmbuilt_with_thread_option && G_server_conf.maxdispatchthreads > 1)
     {
-        NDRX_LOG(log_error, "Error ! Buildserver thread option says single-threaded, "
-                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
+        NDRX_LOG(log_error, "Warning ! Server not built for mulit-threading, "
+                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d, falling back to single thread mode", 
                 G_server_conf.mindispatchthreads,
                 G_server_conf.maxdispatchthreads
                 );
-        userlog("Error ! Buildserver thread option says single-threaded, "
-                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
+        userlog("Warning ! Server not built for mulit-threading, "
+                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d, falling back to single thread mode", 
                 G_server_conf.mindispatchthreads,
                 G_server_conf.maxdispatchthreads);
-        
-        ndrx_TPset_error_fmt(TPEINVAL, "Error ! Buildserver thread option says single-threaded, "
-                "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d", 
-                G_server_conf.mindispatchthreads,
-                G_server_conf.maxdispatchthreads);
-        EXFAIL_OUT(ret);
     }
     
     if (G_server_conf.mindispatchthreads <=0 )
@@ -600,7 +594,7 @@ expublic int ndrx_init(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
-    if (G_server_conf.maxdispatchthreads <=0 )
+    if (G_server_conf.maxdispatchthreads <=0)
     {
         NDRX_LOG(log_error, "Error ! MAXDISPATCHTHREADS(=%d) <=0", 
                 G_server_conf.maxdispatchthreads);
@@ -615,7 +609,7 @@ expublic int ndrx_init(int argc, char** argv)
      * thus we can run the MT mode operates with single thread too..
      * i.e. maxdispatchthreads=2, mindispatchthreads=1
      */
-    if (G_server_conf.maxdispatchthreads > 1)
+    if (G_server_conf.maxdispatchthreads > 1 && _tmbuilt_with_thread_option)
     {
         G_server_conf.is_threaded = EXTRUE;
         NDRX_SPIN_INIT_V(G_server_conf.mt_lock);
@@ -685,6 +679,9 @@ exprivate int ndrx_call_tpsvrthrinit(int argc, char ** argv)
     int ret = EXSUCCEED;
     
     /* start the session... */
+    NDRX_LOG(log_info, "Starting new server dispatched thread");
+    userlog("Starting new server dispatched thread");
+    
     if (EXSUCCEED!=tpinit(NULL))
     {
         EXFAIL_OUT(ret);

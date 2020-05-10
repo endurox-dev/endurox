@@ -279,6 +279,7 @@ expublic int tpsvrinit(int argc, char **argv)
     NDRX_LOG(log_info, "Default tpsvrinit() _tmbuilt_with_thread_option=%d",
             _tmbuilt_with_thread_option);
     
+    userlog("Default tpsvrinit() function used");
     /*
      * Only if not multi-threaded
      */
@@ -326,6 +327,7 @@ expublic void tpsvrdone(void)
 {
     
     NDRX_LOG(log_info, "Default tpsvrdone()");
+    userlog("Default tpsvrdone() function used");
     
     /* only for single threaded */
     if (!_tmbuilt_with_thread_option)

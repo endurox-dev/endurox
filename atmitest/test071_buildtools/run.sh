@@ -476,16 +476,16 @@ if [ $CNT -ne 1 ]; then
     go_out -13
 fi
 
-# Check that non threaded server is not booted.
+# Server shall be booted in single-thread mode
 CNT=`xadmin psc | grep NTHR| wc | awk '{print $1}'`
-if [ $CNT -ne 0 ]; then
-    echo "Invalid NTHR (non-threaded server count) shall be 0!: $CNT"
+if [ $CNT -ne 1 ]; then
+    echo "Invalid NTHR (non-threaded server count) shall be 1!: $CNT"
     go_out -13
 fi
 
 # check ulog contains the msg...
 # Check: Buildserver thread option says single-threaded, but MINDISPATCHTHREADS=5 MAXDISPATCHTHREADS=5
-if [ "X`grep 'thread option says single-threaded' ULOG*`" == "X" ]; then
+if [ "X`grep 'falling back to single thread mode' ULOG*`" == "X" ]; then
     echo "Missing single-thread warning!"
     RET=-14
 fi

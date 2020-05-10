@@ -1021,6 +1021,8 @@ main server thread. Once initialized, the threads become parked on internal job 
 
 . OPER: main thread waits for one free worker thread.
 
+. OPER: main thread continue with XATMI queues read.
+
 . SHUTDOWN: *tpsvrdone(3)* is called for main thread.
 
 . SHUTDOWN: *tpsvrthrdone(3)* is called for each worker thread. After the function returns,
@@ -1029,12 +1031,12 @@ main server thread. Once initialized, the threads become parked on internal job 
 To enable multi-thread mode, binaries must be specifically built for this. This may be
 done by passing the *-t* flag to *buildserver(8)* compiler tool, or by setting
 *_tmbuilt_with_thread_option* extern variable to *1* before running ndrx_main_integra(),
-ndrx_main() or _tmstartserver(). If flag is not configured, binary will not start
-and message will be printed to ULOG. The error would look like:
+ndrx_main() or _tmstartserver(). If flag is not configured, binary will start
+in single-thread mode and warning will be printed to ULOG. The error would look like:
 
 --------------------------------------------------------------------------------
 
-05828:20200503:23031209:atmi.sv1    :Error ! Buildserver thread option says single-threaded, but MINDISPATCHTHREADS=5 MAXDISPATCHTHREADS=5
+05828:20200503:23031209:atmi.sv1    :Warning ! Server not built for mulit-threading, but MINDISPATCHTHREADS=2 MAXDISPATCHTHREADS=2, falling back to single thread mode
 
 --------------------------------------------------------------------------------
 
@@ -1045,14 +1047,14 @@ Configuration example:
 
 --------------------------------------------------------------------------------
 
-                <server name="atmi.sv1">
-                        <srvid>1400</srvid>
-                        <min>1</min>
-                        <max>1</max>
-                        <mindispatchthreads>5</mindispatchthreads>
-                        <maxdispatchthreads>5</maxdispatchthreads>
-                        <sysopt>-e /tmp/ATMISV1 -r</sysopt>
-                </server>
+    <server name="atmi.sv1">
+            <srvid>1400</srvid>
+            <min>1</min>
+            <max>1</max>
+            <mindispatchthreads>5</mindispatchthreads>
+            <maxdispatchthreads>5</maxdispatchthreads>
+            <sysopt>-e /tmp/ATMISV1 -r</sysopt>
+    </server>
 
 --------------------------------------------------------------------------------
 
@@ -1076,7 +1078,7 @@ descriptor events are processed by main thread.
 These functions are available during the tpsvrinit() and tpsvrthrinit() phases.
 
 
-=== Additional mulit-thread notes
+=== Additional multi-thread notes
 
 . Developer is free to implement any other multi-threading operations in the binaries.
 The server dispatcher mechanisms is provided only for simplicity of building
