@@ -1078,6 +1078,25 @@ expublic int ndrx_file_exists(char *filename)
 }
 
 /**
+ * Touch the file (create empty one)
+ * @param filename path + file name
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_file_touch(char *filename)
+{
+    FILE *f = fopen(filename, "a");
+    
+    if (NULL==f)
+    {
+        return EXFAIL;
+    }
+    
+    fclose(f);
+    
+    return EXSUCCEED;
+}
+
+/**
  * Test if given path is regular file
  * @param path
  * @return 
