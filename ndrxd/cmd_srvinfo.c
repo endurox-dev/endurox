@@ -156,17 +156,17 @@ expublic int cmd_srvinfo (command_call_t * call, char *data, size_t len, int con
         }
         
         /* Check the state of original of current process */
-        if (p_pm_chk->state == NDRXD_PM_RUNNING_OK)
+        if (NDRXD_PM_STARTING == p_pm_chk->state)
+        {
+            NDRX_LOG(log_warn, "Binary was starting up, updating status");
+            start_start_info(p_pm, srvinfo);
+        }
+        else if (NDRXD_PM_RUNNING_OK == p_pm_chk->state)
         {
             NDRX_LOG(log_warn, "Existing server already runs OK "
                     "this is some mistake!");
             /* TODO: We could referesh service list! */
             goto out;
-        }
-        else if (NDRXD_PM_STARTING == p_pm_chk->state)
-        {
-            NDRX_LOG(log_warn, "Binary was starting up, updating status");
-            start_start_info(p_pm, srvinfo);
         }
         else
         {
