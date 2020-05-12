@@ -1280,7 +1280,7 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                             NULL,
                             EXFALSE,
                             EXFALSE,
-                            NULL, NULL, TPNOTIME, NULL)))
+                            NULL, NULL, TPNOTIME|TPNOBLOCK, NULL)))
             {
                 /*goto out; Ignore this condition, just get the status of binary... */
                 /* if server was starting, the admin possibly q was not open */
