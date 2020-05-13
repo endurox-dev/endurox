@@ -129,6 +129,7 @@ add_subdirectory (test072_qos)
 add_subdirectory (test074_sanitulog)
 add_subdirectory (test075_dispthread)
 add_subdirectory (test076_dispthreadxa)
+add_subdirectory (test077_diedslowstrt)
 
 ################################################################################
 # Master test case driver

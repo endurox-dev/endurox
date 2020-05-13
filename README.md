@@ -450,32 +450,34 @@ processing listings across all supported OSes.
 
 - Version 6.0.27 released on 30/03/2019 (development) Feature #402
 
-- Version 6.0.28 released on 11/06/2019 (stabel) Feature #419
+- Version 6.0.28 released on 11/06/2019 (stable) Feature #419
 
-- Version 7.0.10 released on 03/11/2019 (stabel) Release notes are here: https://www.endurox.org/news/18
+- Version 7.0.10 released on 03/11/2019 (stable) Release notes are here: https://www.endurox.org/news/18
 
-- Version 7.0.12 released on 13/11/2019 (stabel) Fixes on Bug #466
+- Version 7.0.12 released on 13/11/2019 (stable) Fixes on Bug #466
 
-- Version 7.0.14 released on 13/11/2019 (stabel) Fixes on Feature #470, Support #471, Support #473, Support #475
+- Version 7.0.14 released on 13/11/2019 (stable) Fixes on Feature #470, Support #471, Support #473, Support #475
 
-- Version 7.0.16 released on 16/11/2019 (stabel) Fixes on Support #443, Support #493
+- Version 7.0.16 released on 16/11/2019 (stable) Fixes on Support #443, Support #493
 
-- Version 7.0.18 released on 17/01/2020 (stabel) Fixes on Bug #412, Support #505
+- Version 7.0.18 released on 17/01/2020 (stable) Fixes on Bug #412, Support #505
 
-- Version 7.0.20 released on 22/01/2020 (stabel) Fixes on Support #502
+- Version 7.0.20 released on 22/01/2020 (stable) Fixes on Support #502
 
-- Version 7.0.22 released on 31/01/2020 (stabel) Feature #509
+- Version 7.0.22 released on 31/01/2020 (stable) Feature #509
 
-- Version 7.0.24 released on 01/01/2020 (stabel) Support #506
+- Version 7.0.24 released on 01/01/2020 (stable) Support #506
 
-- Version 7.0.26 released on 09/03/2020 (stabel) Support #528, Support, #527, Support #524,
+- Version 7.0.26 released on 09/03/2020 (stable) Support #528, Support, #527, Support #524,
 Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
-- Version 7.0.28 released on 12/03/2020 (stabel) Bug #530, Feature #313, Feature #536
+- Version 7.0.28 released on 12/03/2020 (stable) Bug #530, Feature #313, Feature #536
 
-- Version 7.0.30 released on 24/03/2020 (stabel) Bug #537
+- Version 7.0.30 released on 24/03/2020 (stable) Bug #537
 
-- Version 7.0.32 released on 29/03/2020 (stabel) Bug #544
+- Version 7.0.32 released on 29/03/2020 (stable) Bug #544
+
+- Version 7.0.34 released on 11/05/2020 (stable) Bug #501
 
 # Build configurations
 
