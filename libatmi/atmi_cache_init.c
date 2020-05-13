@@ -349,7 +349,7 @@ exprivate int ndrx_cache_phydb_getref(ndrx_tpcache_db_t *db)
 {
     int ret = EXSUCCEED;
     unsigned int dbflags=0;
-    ndrx_tpcache_phydb_t *phy;
+    ndrx_tpcache_phydb_t *phy=NULL;
     
     if (NULL!=(db->phy = ndrx_cache_phydbget(db->cachedbphy)))
     {
@@ -435,6 +435,12 @@ exprivate int ndrx_cache_phydb_getref(ndrx_tpcache_db_t *db)
     db->phy = phy;
     
 out:
+    /* avoid memory leak */
+    if (NULL!=phy && EXSUCCEED!=ret)
+    {
+        NDRX_FREE(phy);
+    }
+
     return ret;
 }
 

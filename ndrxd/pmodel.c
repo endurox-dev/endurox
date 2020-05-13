@@ -1275,7 +1275,10 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     command_call_t call;
     ndrx_stopwatch_t timer;
     int finished = EXFALSE;
+    int first_shutdown;
+    long start_state;
     char *srv_queue;
+    int retry;
     char fn[] = "stop_process";
 
     memset(&call, 0, sizeof(call));
@@ -1293,7 +1296,7 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             NDRXD_PM_STOPPING!=p_pm->state &&
             NDRXD_PM_STARTING!=p_pm->state)
     {
-        NDRX_LOG(log_debug, "Proces already in non-runnabled "
+        NDRX_LOG(log_debug, "Process already in non-runabled "
                                     "state: %d", p_pm->state);
         /* set the state to shutdown! */
         p_pm->state = NDRXD_PM_EXIT;
@@ -1316,42 +1319,69 @@ expublic int stop_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
     /* Form a call queue, probably we need move all stuff to atmienv!  
     snprintf(srv_queue, sizeof(srv_queue), NDRX_ADMIN_FMT, G_sys_config.qprefix, 
             p_pm->binary_name, p_pm->srvid, p_pm->pid);*/
-    
-    srv_queue = get_srv_admin_q(p_pm);
-    
-    NDRX_LOG(log_debug, "%s: calling up: [%s]", fn, srv_queue);
-    
-    /* Then get listing... */
-    if (EXSUCCEED!=(ret=cmd_generic_call_2(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_ADMIN,
-                    NDRXD_CALL_TYPE_GENERIC,
-                    &call, sizeof(call),
-                    G_command_state.listenq_str,
-                    G_command_state.listenq,
-                    (mqd_t)EXFAIL,
-                    srv_queue,
-                    0, NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    EXFALSE,
-                    EXFALSE,
-                    NULL, NULL, TPNOTIME, NULL)))
-    {
-        /*goto out; Ignore this condition, just get the status of binary... */
-    }
 
     ndrx_stopwatch_reset(&timer);
+    first_shutdown=EXTRUE;
+    retry=EXFALSE;
+    start_state = p_pm->state;
     do
     {
+        /* Request the shutdown 
+         * in case if first request
+         * or if server slipped initial shutdown request
+         * if states are changed that means that still we are in running range
+         * otherwise the bellow while should terminate
+         */
+        if (first_shutdown || start_state!=p_pm->state || retry)
+        {
+            srv_queue = get_srv_admin_q(p_pm);
+            NDRX_LOG(log_debug, "%s: calling up: [%s] (retry: %d start_state: %ld cur_state: %ld)", 
+                    fn, srv_queue, retry, start_state, p_pm->state);
+            if (EXSUCCEED!=(ret=cmd_generic_call_2(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_ADMIN,
+                            NDRXD_CALL_TYPE_GENERIC,
+                            &call, sizeof(call),
+                            G_command_state.listenq_str,
+                            G_command_state.listenq,
+                            (mqd_t)EXFAIL,
+                            srv_queue,
+                            0, NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            EXFALSE,
+                            EXFALSE,
+                            NULL, NULL, TPNOTIME|TPNOBLOCK, NULL)))
+            {
+                /*goto out; Ignore this condition, just get the status of binary... */
+                /* if server was starting, the admin possibly q was not open */
+                retry=EXTRUE;
+            }
+            else
+            {
+                start_state=p_pm->state;
+                retry=EXFALSE;
+            }
+        }
+        
         NDRX_LOG(log_debug, "Waiting for response from srv... state: %d",
-                                        p_pm->state);   
+                                        p_pm->state); 
         /* do command processing for now */
         command_wait_and_run(&finished, abort);
-        /* check the status? */
+        
+        
+        /* check the status? 
+         * in case if during the shutdown process have changed state
+         * i.e. from one started state switched to another started
+         * state, that could indicate that process was in slow
+         * startup and did ignore our shutdown request..
+         * Thus if state is changed we should restart the call
+         */
+        first_shutdown=EXFALSE;
+        
     } while (ndrx_stopwatch_get_delta(&timer) < p_pm->conf->srvstopwait &&
                     !PM_NOT_RUNNING(p_pm->state) &&
                     !(*abort));
-
+    
     /* grab some stats... */
     if (PM_NOT_RUNNING(p_pm->state))
     {
