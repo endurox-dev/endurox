@@ -63,7 +63,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bextread(3)* *Bfprint(3)* *Bfprintcb(3) *Bread(3)* *Bwrite(3)*
+*Bextread(3)* *Bfprint(3)* *Bfprintcb(3)* *Bread(3)* *Bwrite(3)*
 
 COPYING
 -------
