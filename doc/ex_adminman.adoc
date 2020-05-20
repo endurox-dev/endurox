@@ -840,39 +840,10 @@ The application instance is started!
 Starting from Enduro/X version 5.1+, the max message size what can be transported
 over the XATMI sub-system is limited to the operating system's queue settings.
 For example on Linux kernel 3.13 the message size limit (/proc/sys/fs/mqueue/msgsize_max)
-is around 10 MB. The message size is configured with 'NDRX_MSGMAX' environment
+is around 10 MB. The message size is configured with *NDRX_MSGMAX* environment
 variable, see ex_env(5) man page.
 
-Also what should be noted, as Enduro/X mostly uses stack allocation
-instead of heap allocation (for safer and faster code), then there are requirements
-against the stack size. The stack size (ulimit -s) must be at least size of message
-multiplied with 30. So for example if message size is set to 1 MegaByte, then stack
-size shall be set to 30 Mega bytes (ulimit -s 30720 KB). If the stack is not sufficient
-the following error will be print when attempting to run any Enduro/X based software:
-
---------------------------------------------------------------------------------
-Logging to ./ULOG.20171112
-Failed to open [./ULOG.20171112]
- 9138:20171112:19144166:xadmin      :LIMITS ERROR ! Please set stack (ulimit -s) size to: 1966080 bytes or 1920 kb (calculated by: NDRX_MSGSIZEMAX(65536)*NDRX_STACK_MSG_FACTOR(30))
-
-LIMITS ERROR ! Please set stack (ulimit -s) size to: 1966080 bytes or 1920 kb (calculated by: NDRX_MSGSIZEMAX(65536)*NDRX_STACK_MSG_FACTOR(30))
-Process is terminating with error...
---------------------------------------------------------------------------------
-
-In this case stack size needs to be increased, that could be done by in multiple
-ways:
-
-1. Change by $ ulimit -s 1920
-To ensure that this is set each time the Enduro/X is started, it needs to be 
-added to the "env" script of the application which prepares application
-environment before app boot. Also system settings must be checked in
-'/etc/security/limits.conf' either the limit is enough - "stack" parameter.
-
-2. Set the user/system limit directly in '/etc/security/limits.conf'.
-For other operating systems, please consult with corresponding manual for changing
-the message size and stack size.
-
-Also regarding the buffer sizes, when 'NDRX_MSGMAX' is set bellow 64K, the buffer
+Also regarding the buffer sizes, when *NDRX_MSGMAX* is set bellow 64K, the buffer
 size is fixed to 64K, this means that operations like network packet size when
 using tpbridge, is set to 64K.
 
@@ -881,28 +852,6 @@ not all space can be used by sending some data (for example CARRAY or UBF buffer
 Some overhead is added by Enduro/X, message headers, for bridge protocol format
 extra data is added for TLV structure. Thus to be safe, for example if expected
 data size is 64K, then message size should be set to something like 80KB.
-
-
-For threads which are spawned by Enduro/X for bridge, transaction manager and
-other processes, the Pthreads stack size is automatically adjusted. By default
-new thread does not use parent's thread stack size, but instead some default
-value is used. Which usually is quite small. Thus to get rid with this problem
-Enduro/X detects current process stack limit and tries to set this in thread
-attributes. To get current stack size, the getrlimit (RLIMIT_STACK, ...) system
-call is used. How ever with IBM AIX 7.1 SP 2 TL 5, it is been seen that 
-pthread_attr_setstacksize() fails for read stack size, with error *EINVAL*. Thus
-this give some uncertainty what stack size to use. Thus to fix the problem,
-the code tries in loop the use the size attribute, each time with failure new
-stack size is two times lower than previous. This is done until the correct
-value is found. If value is not found (i.e. target size is 0 after divisions),
-the user message is logged:
-
---------------------------------------------------------------------------------
-Error ! failed to set stack value!
---------------------------------------------------------------------------------
-
-Process continues after this, but it can be expected that random errors or
-core dumps may appear.
 
 
 == Enduro/X Smart Cache

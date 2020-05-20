@@ -168,8 +168,8 @@ Typical word wrap should look like:
 
 --------------------------------------------------------------------------------
 
-
 ==== Function visibility
+
 Function visibility in C is controlled by *static* prefix for functions. If
 one is present, then function visibility is at object file level, if prefix
 is not present, then function visibility is global exported symbol. To make
@@ -992,6 +992,19 @@ the same UBF buffer. User code can do the multi-threading as required. Each
 new thread which starts to operate with XATMI API, joins to the system as
 XATMI client.
 
+=== Thread stack sizes
+
+Enduro/X may create threads for processes such as *tpbridge(8)*, *tmsrv(8)*, in case if
+using XATMI Server dispatch threads, System V mode, etc. 
+In general in case if Enduro/X is creating thread internally, the following strategy is applied:
+
+. The Enduro/X thread stack size maybe set by help of *NDRX_THREADSTACKSIZE*.
+
+. If *NDRX_THREADSTACKSIZE* is missing, getrlimit(), *RLIMIT_STACK* call is used
+to determine main thread stack size. 
+
+. If above does not succeed, the new thread stack size is set to 8 MB.
+
 === XATMI Server dispatch thread pool
 
 The Enduro/X also comes with support of XATMI server thread call dispatch thread pool support.
@@ -1083,6 +1096,39 @@ These functions are available during the tpsvrinit() and tpsvrthrinit() phases.
 . Developer is free to implement any other multi-threading operations in the binaries.
 The server dispatcher mechanisms is provided only for simplicity of building
 multi-threaded servers.
+
+
+== Fast Pool Allocator
+
+Enduro/X uses dynamic memory for storing temporary internal messages. For
+performance reasons dynamic memory allocated memory blocks are being cached so
+that they can be re-used, instead of requesting malloc() and then free() again.
+I.e. if there are no entries in cache, then malloc() is issued. When Enduro/X is
+doing block free, cache is tested, if there are less block than minimum cached,
+then block is added to linked list of free blocks. If there are enough cached
+blocks, the block is processed by standard free() call.
+
+The cache size can be configured by setting *NDRX_FPAOPTS* environment variable
+(see ex_env(5)*). The variable may override default settings for the block cache.
+
+Block cache is set for following sizes (with default nr of blocks cached in scopes):
+
+. 256 bytes (25 blocks).
+
+. 512 bytes (15 blocks).
+
+. 1024 bytes (10 blocks).
+
+. 2048 bytes (10 blocks).
+
+. 4096 bytes (10 blocks).
+
+. 8192 bytes (10 blocks).
+
+. System buffer size set in *NDRX_MSGMAX* (10 blocks).
+
+The sizes may be changed by *NDRX_FPAOPTS* environment variable value. See *ex_env(5)*
+for syntax.
 
 
 == Object-API
@@ -1294,10 +1340,21 @@ Xadmin's package also includes provision scripts which will setup runtime quickl
 command is '$ xadmin provision'.
 
 === Implementing custom generators
+
 Enduro/X *xadmin* can be configured with custom generators. The directory or script
 file name where xadmin looks for Platform Scripts, are configured with following
 configuration resources:
 
+1. Search by *NDRX_XADMIN_CONFIG* environment variable.
+
+2. Search *~/.xadmin.config*
+
+3. Search */etc/xadmin.config*
+
+Use first one found. Searches *[xadmin/<CCTAG>]* section. uses parameter *gen scripts=*.
+This indicates the folder where to list the *.pscript* generator files.
+
+For sample file, see Enduro/X *xadmin/scripts/gen_c_client.pscript* generator in source code.
 
 
 === Building sample application generators
@@ -1309,6 +1366,7 @@ and endurox-go packages to your system and kernel parameters are configured (e.g
 queue settings in case of Linux).
 
 ==== Prepare project folder3
+
 Lets assume our project will be made at $TESTHOME. The sources (with
 sub-projects) will go under $TESTHOME/src. This structure is required
 for Go projects. For Linux operating system we will set $TESTHOME to */home/user1/app2*.
@@ -1322,6 +1380,7 @@ $ mkdir $TESTHOME/src
 --------------------------------------------------------------------------------
 
 ==== Generate UBF table for both C & Go
+
 The application will communicate via Unified Buffer Format (*UBF*) buffer. The
 test field definitions will be used for this application. Firstly lets generate C
 headers:
@@ -1485,6 +1544,7 @@ So it have installed a 'ubftab' package, and generated 'test.fd.h' file.
 
 
 ==== Generate C client code & make
+
 Now lets generate a C client code which will send the UBF buffer to Go server.
 The generator provides C sample client, let's use it.
 
@@ -1578,6 +1638,7 @@ With provisioning of the configuration files and adding testsv to boot applicati
 boot sequence.
 
 ==== Provision runtime and put binaries symlinks
+
 To create a runtime system, we will use $ xadmin provision command. This command
 allows to register one server to ndrxconfig.xml. For demo application purposes
 this is fully fine. The provision will be done in root directly of "bankapp2".
