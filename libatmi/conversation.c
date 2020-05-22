@@ -1032,7 +1032,7 @@ expublic int ndrx_tprecv (int cd, char **data,
         else if (EXFAIL==rply_len)
         {
             /* we have failed */
-            NDRX_LOG(log_error, "%s failed to receive answer (%s)", __func__, conv->my_listen_q);
+            NDRX_LOG(log_error, "%s failed to receive answer (%s)", __func__, conv->my_listen_q_str);
             ret=EXFAIL;
             goto out;
         }
