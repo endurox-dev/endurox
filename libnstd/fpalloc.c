@@ -367,6 +367,41 @@ out:
     return ret;
 }
 
+/*
+ * Search for the target slot 
+ */
+#define DO_BIN_SEARCH \
+        do {\
+            /* get the pool size */\
+            int low=0, mid, high=NDRX_FPA_DYN_MAX-1;\
+            \
+            while(low <= high)\
+            {\
+                mid = (low + high) / 2;\
+                \
+                if (M_fpa_pools[mid].bsize > size)\
+                {\
+                    high = mid - 1;\
+                }\
+                else if (M_fpa_pools[mid].bsize < size)\
+                {\
+                    low = mid + 1;\
+                }\
+                else\
+                {\
+                    poolno = mid;\
+                    break;\
+                }\
+            }\
+            \
+            if (EXFAIL==poolno && high < NDRX_FPA_DYN_MAX-2)\
+            {\
+                /* select next size */\
+                poolno = high+1;\
+            }\
+        }\
+        while (0)
+
 /**
  * Malloc the memory block
  * @param size bytes to alloc
@@ -409,33 +444,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
     }
     else
     {
-        /* get the pool size */
-        int low=0, mid, high=NDRX_FPA_DYN_MAX-1;
-        
-        while(low <= high)
-        {
-            mid = (low + high) / 2;
-             
-            if (M_fpa_pools[mid].bsize > size)
-            {
-                high = mid - 1;
-            }
-            else if (M_fpa_pools[mid].bsize < size)
-            {
-                low = mid + 1;
-            }
-            else
-            {
-                poolno = mid;
-                break;
-            }
-        }
-        
-        if (EXFAIL==poolno && high < NDRX_FPA_DYN_MAX-2)
-        {
-            /* select next size */
-            poolno = high+1;
-        }
+        DO_BIN_SEARCH;
     }
     
     if (NDRX_UNLIKELY(EXFAIL==poolno))
@@ -637,10 +646,13 @@ out:
 expublic void *ndrx_fprealloc(void *ptr, size_t size)
 {
     void *ret = NULL;
+    int poolno=EXFAIL;
+    ndrx_fpapool_t *cur = NULL;
+    ndrx_fpablock_t *blk;
     
     if (NULL==ptr)
     {
-        ret=ndrx_fpmalloc(size);
+        ret=ndrx_fpmalloc(size, 0);
         NDRX_FPDEBUG("ndrx_fprealloc ret %p", ret);
         return ret;
     }
@@ -653,6 +665,8 @@ expublic void *ndrx_fprealloc(void *ptr, size_t size)
         return ret;
     }
     
+    blk = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
+    
     /* check the descriptor 
      * OK we shall get the boundries.
      * Get current descr
@@ -660,7 +674,41 @@ expublic void *ndrx_fprealloc(void *ptr, size_t size)
      * Get previous descr -> shrink to this size if needed
      */
     
+    DO_BIN_SEARCH;
     
+    /* check the new pool */
+    
+    if (EXFAIL!=poolno)
+    {
+        if (blk->poolno==poolno)
+        {
+            ret = ptr;
+            NDRX_FPDEBUG("No pool changed %d", poolno);
+            goto out;
+        }
+        else
+        {
+            NDRX_FPDEBUG("Change pool from %d to %d", blk->poolno, poolno);
+            /* realloc to new pool */
+            ret=NDRX_REALLOC(ptr, M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
+            blk = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
+            blk->poolno=poolno;
+        }
+    }
+    else
+    {
+        /* Target shall be moved to free style */   
+        NDRX_FPDEBUG("Realloc to arb size (old pool: %d)", blk->poolno);
+        ret=NDRX_REALLOC(ptr, size+sizeof(ndrx_fpablock_t));
+        /* set free style flag */
+        blk = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
+        blk->flags=NDRX_FPABRSIZE;
+        blk->poolno=EXFAIL;
+        goto out;
+    }
+    
+out:
+    return ret;    
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

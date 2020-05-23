@@ -63,6 +63,7 @@ extern "C" {
  * Note that dynamic range will be
  * NDRX_FPA_MAX - 1, as the last entry is SYSBUF
  */
+#define NDRX_FPA_MIN            0           /**< minimum dynamic range     */
 #define NDRX_FPA_MAX            7                   /**< NDRX_MSGSIZEMAX pool no*/
 #define NDRX_FPA_DYN_MAX        (NDRX_FPA_MAX-1)    /**< dynamic range          */
     
@@ -130,6 +131,7 @@ struct  ndrx_fpastack
 extern NDRX_API void ndrx_fpuninit(void);
 extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 extern NDRX_API void *ndrx_fpmalloc(size_t size, int flags);
+extern NDRX_API void *ndrx_fprealloc(void *ptr, size_t size);
 extern NDRX_API void ndrx_fpfree(void *);
 
 #if defined(__cplusplus)
