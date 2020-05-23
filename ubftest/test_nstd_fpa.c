@@ -361,6 +361,21 @@ Ensure(test_nstd_fpa_config_inval)
 }
 
 /**
+ * Do some realloc tests
+ */
+Ensure(test_nstd_fpa_realloc)
+{
+    ndrx_fpapool_t stats;
+    ndrx_fpablock_t *hdr;
+    char *ptr;
+    
+    ptr = ndrx_fpmalloc(NDRX_FPA_0_SIZE, 0);
+    hdr = (ndrx_fpablock_t *)(ptr - sizeof(ndrx_fpablock_t));
+    
+    
+}
+
+/**
  * Standard library tests
  * @return
  */
