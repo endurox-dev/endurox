@@ -626,4 +626,41 @@ out:
     return;
 }
 
+/**
+ * Reallocate memory block. If growing up, then moving to next (or free style
+ * memory pool).
+ * If shrinking then move to smaller pool, or stay in the first 256 byte pool
+ * @param ptr to current memory block
+ * @param size new memory size to allocate
+ * @return alloc'd memory block or NULL on error (org ptr keeps)
+ */
+expublic void *ndrx_fprealloc(void *ptr, size_t size)
+{
+    void *ret = NULL;
+    
+    if (NULL==ptr)
+    {
+        ret=ndrx_fpmalloc(size);
+        NDRX_FPDEBUG("ndrx_fprealloc ret %p", ret);
+        return ret;
+    }
+    
+    if (NDRX_UNLIKELY(M_malloc_all))
+    {
+        /* free only use of direct memory.. */
+        NDRX_FPDEBUG("M_alloc_all realloc ptr=%p %size=zu", ptr, size);
+        ret=NDRX_REALLOC(ptr, size);
+        return ret;
+    }
+    
+    /* check the descriptor 
+     * OK we shall get the boundries.
+     * Get current descr
+     * Get next descr -> grow to this size if needed
+     * Get previous descr -> shrink to this size if needed
+     */
+    
+    
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */
