@@ -403,6 +403,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
+#ifndef DISABLEGPGME
+
     if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
     {
         if (EXSUCCEED!=br_init_gpg())
@@ -415,6 +417,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             NDRX_LOG(log_error, "GPG init OK");
         }
     }
+#endif
     
     /* Reset network structs */
     exnet_reset_struct(&G_bridge_cfg.net);

@@ -61,9 +61,9 @@
  */
 Ensure(test_nstd_fpa_dyn)
 {
-    char *ptr[0];
-    char *ptr2[0];
-    ndrx_fpablock_t *hdr[0];
+    char *ptr[1];
+    char *ptr2[1];
+    ndrx_fpablock_t *hdr[1];
     
     ptr[0] = ndrx_fpmalloc(NDRX_FPA_0_SIZE, 0);
     hdr[0] = (ndrx_fpablock_t *)(ptr[0] - sizeof(ndrx_fpablock_t));
