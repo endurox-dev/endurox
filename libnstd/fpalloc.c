@@ -410,7 +410,7 @@ out:
  */
 expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
 {
-    ndrx_fpablock_t *ret = NULL;
+    ndrx_fpablock_t *addr = NULL;
     int poolno=EXFAIL;
     
     /* do the init. */
@@ -432,9 +432,9 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
     /* run all malloc */
     if (NDRX_UNLIKELY(M_malloc_all))
     {
-        ret=malloc(size);
-        NDRX_FPDEBUG("all malloc %p", ret);
-        return ret;
+        addr=malloc(size);
+        NDRX_FPDEBUG("all malloc %p", addr);
+        return addr;
     }
     
     /* bin search... for the descriptor */
@@ -450,18 +450,18 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
     if (NDRX_UNLIKELY(EXFAIL==poolno))
     {
         /* do malloc.., arb size */
-        ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
+        addr = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
         
-        NDRX_FPDEBUG("Arb size alloc %p", ret);
+        NDRX_FPDEBUG("Arb size alloc %p", addr);
         
-        if (NULL==ret)
+        if (NULL==addr)
         {
             goto out;
         }
-        ret->flags=NDRX_FPABRSIZE;
-        ret->magic = NDRX_FPA_MAGIC;
-        ret->next = NULL;
-        ret->poolno = EXFAIL;
+        addr->flags=NDRX_FPABRSIZE;
+        addr->magic = NDRX_FPA_MAGIC;
+        addr->next = NULL;
+        addr->poolno = EXFAIL;
     }
     else
     {
@@ -469,18 +469,18 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         if (M_fpa_pools[poolno].flags & NDRX_FPNOPOOL)
         {
             /* return new block as no pool used for particular size */
-            ret = (ndrx_fpablock_t *)NDRX_MALLOC(M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
-            NDRX_FPDEBUG("no-pool block for %d alloc %p", poolno, ret);
+            addr = (ndrx_fpablock_t *)NDRX_MALLOC(M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
+            NDRX_FPDEBUG("no-pool block for %d alloc %p", poolno, addr);
             
-            if (NULL==ret)
+            if (NULL==addr)
             {
                 goto out;
             }
             
-            ret->poolno = poolno;
-            ret->flags=NDRX_FPNOPOOL;
-            ret->magic = NDRX_FPA_MAGIC;
-            ret->next = NULL;
+            addr->poolno = poolno;
+            addr->flags=NDRX_FPNOPOOL;
+            addr->magic = NDRX_FPA_MAGIC;
+            addr->next = NULL;
         }
         
         /* get from stack alloc if needed */
@@ -488,7 +488,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         
         if (NULL!=M_fpa_pools[poolno].stack)
         {
-            ret = M_fpa_pools[poolno].stack;
+            addr = M_fpa_pools[poolno].stack;
             M_fpa_pools[poolno].stack=M_fpa_pools[poolno].stack->next;
             /* reduce the block count */
             M_fpa_pools[poolno].cur_blocks--;
@@ -502,38 +502,38 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         
         NDRX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
         
-        if (NULL==ret)
+        if (NULL==addr)
         {
             /* do malloc.. */
             if (NDRX_FPA_SIZE_SYSBUF==M_fpa_pools[poolno].bsize)
             {
                 /* size must be correctly passed in */
-                ret = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
-                NDRX_FPDEBUG("Pool %d sysbuf alloc %p", poolno, ret);
+                addr = (ndrx_fpablock_t *)NDRX_MALLOC(size+sizeof(ndrx_fpablock_t));
+                NDRX_FPDEBUG("Pool %d sysbuf alloc %p", poolno, addr);
             }
             else
             {
-                ret = (ndrx_fpablock_t *)NDRX_MALLOC(M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
-                NDRX_FPDEBUG("Pool %d block alloc %p", poolno, ret);
+                addr = (ndrx_fpablock_t *)NDRX_MALLOC(M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
+                NDRX_FPDEBUG("Pool %d block alloc %p", poolno, addr);
             }
-            if (NULL==ret)
+            if (NULL==addr)
             {
                 goto out;
             }
-            ret->flags=0;
-            ret->magic = NDRX_FPA_MAGIC;
-            ret->next = NULL;
-            ret->poolno = poolno;
+            addr->flags=0;
+            addr->magic = NDRX_FPA_MAGIC;
+            addr->next = NULL;
+            addr->poolno = poolno;
         }
         else
         {
-            NDRX_FPDEBUG("Got from pool %d addr %p", poolno, ret);
+            NDRX_FPDEBUG("Got from pool %d addr %p", poolno, addr);
         }
     }
     
 out:
                         
-    return (void *) (((char *)ret) + sizeof(ndrx_fpablock_t));
+    return (void *) (((char *)addr) + sizeof(ndrx_fpablock_t));
 }
 
 /**
@@ -542,7 +542,7 @@ out:
  */
 expublic NDRX_API void ndrx_fpfree(void *ptr)
 {
-    ndrx_fpablock_t *ret = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
+    ndrx_fpablock_t *addr = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
     int poolno;
     int action_free = EXFALSE;
 #ifdef NDRX_FPA_STATS
@@ -558,7 +558,7 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
         goto out;
     }
     
-    if (NDRX_UNLIKELY(ret->magic!=NDRX_FPA_MAGIC))
+    if (NDRX_UNLIKELY(addr->magic!=NDRX_FPA_MAGIC))
     {
         ssize_t wret;
         /* signal safe error msg */
@@ -573,20 +573,20 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
     }
     
     /* remove arb size */
-    if (NDRX_UNLIKELY(ret->flags & NDRX_FPABRSIZE))
+    if (NDRX_UNLIKELY(addr->flags & NDRX_FPABRSIZE))
     {
-        NDRX_FPDEBUG("Arb/nopool free %p", ret);
-        NDRX_FREE(ret); 
+        NDRX_FPDEBUG("Arb/nopool free %p", addr);
+        NDRX_FREE(addr); 
         goto out;
     }
     
     /* decide the feedback, at hits level we free up the buffer */
-    poolno = ret->poolno;
+    poolno = addr->poolno;
     
     if (M_fpa_pools[poolno].flags & NDRX_FPNOPOOL)
     {
-        NDRX_FPDEBUG("fpnopool %d free %p", poolno, ret);
-        NDRX_FREE(ret); 
+        NDRX_FPDEBUG("fpnopool %d free %p", poolno, addr);
+        NDRX_FREE(addr); 
         goto out;
     }
     
@@ -597,15 +597,15 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
     if (M_fpa_pools[poolno].cur_blocks >= M_fpa_pools[poolno].num_blocks)
     {
         action_free = EXTRUE;
-        NDRX_FPDEBUG("No space or hits in pool free up %p cur_hist=0", ret);
+        NDRX_FPDEBUG("No space or hits in pool free up %p cur_hist=0", addr);
     }
     else
     {
         /* add block to stack */
-        ret->next = M_fpa_pools[poolno].stack;
-        M_fpa_pools[poolno].stack = ret;
+        addr->next = M_fpa_pools[poolno].stack;
+        M_fpa_pools[poolno].stack = addr;
         M_fpa_pools[poolno].cur_blocks++;
-        NDRX_FPDEBUG("Add to pool %d: %p", poolno, ret);
+        NDRX_FPDEBUG("Add to pool %d: %p", poolno, addr);
     }
     
     NDRX_SPIN_UNLOCK_V(M_fpa_pools[poolno].spinlock);
@@ -628,8 +628,8 @@ expublic NDRX_API void ndrx_fpfree(void *ptr)
         
     if (action_free)
     {
-        NDRX_FPDEBUG("Action free %p", ret);
-        NDRX_FREE(ret);
+        NDRX_FPDEBUG("Action free %p", addr);
+        NDRX_FREE(addr);
     }
 out:    
     return;
@@ -645,27 +645,25 @@ out:
  */
 expublic void *ndrx_fprealloc(void *ptr, size_t size)
 {
-    void *ret = NULL;
     int poolno=EXFAIL;
-    ndrx_fpapool_t *cur = NULL;
-    ndrx_fpablock_t *blk;
+    ndrx_fpablock_t *addr;
     
     if (NULL==ptr)
     {
-        ret=ndrx_fpmalloc(size, 0);
+        addr=ndrx_fpmalloc(size, 0);
         NDRX_FPDEBUG("ndrx_fprealloc ret %p", ret);
-        return ret;
+        return addr;
     }
     
     if (NDRX_UNLIKELY(M_malloc_all))
     {
         /* free only use of direct memory.. */
         NDRX_FPDEBUG("M_alloc_all realloc ptr=%p %size=zu", ptr, size);
-        ret=NDRX_REALLOC(ptr, size);
-        return ret;
+        addr=(ndrx_fpablock_t *)NDRX_REALLOC(ptr, size);
+        return (void *)addr;
     }
     
-    blk = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
+    addr = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
     
     /* check the descriptor 
      * OK we shall get the boundries.
@@ -680,35 +678,33 @@ expublic void *ndrx_fprealloc(void *ptr, size_t size)
     
     if (EXFAIL!=poolno)
     {
-        if (blk->poolno==poolno)
+        if (addr->poolno==poolno)
         {
-            ret = ptr;
             NDRX_FPDEBUG("No pool changed %d", poolno);
             goto out;
         }
         else
         {
-            NDRX_FPDEBUG("Change pool from %d to %d", blk->poolno, poolno);
+            NDRX_FPDEBUG("Change pool from %d to %d", addr->poolno, poolno);
             /* realloc to new pool */
-            ret=NDRX_REALLOC(ptr, M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
-            blk = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
-            blk->poolno=poolno;
+            addr=(ndrx_fpablock_t *)NDRX_REALLOC(addr, M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
+            addr->poolno=poolno;
+            addr->flags=0;
         }
     }
     else
     {
         /* Target shall be moved to free style */   
-        NDRX_FPDEBUG("Realloc to arb size (old pool: %d)", blk->poolno);
-        ret=NDRX_REALLOC(ptr, size+sizeof(ndrx_fpablock_t));
+        NDRX_FPDEBUG("Realloc to arb size (old pool: %d)", addr->poolno);
+        addr=(ndrx_fpablock_t *)NDRX_REALLOC(addr, size+sizeof(ndrx_fpablock_t));
         /* set free style flag */
-        blk = (ndrx_fpablock_t *)(((char *)ptr)-sizeof(ndrx_fpablock_t));
-        blk->flags=NDRX_FPABRSIZE;
-        blk->poolno=EXFAIL;
+        addr->flags=NDRX_FPABRSIZE;
+        addr->poolno=EXFAIL;
         goto out;
     }
     
 out:
-    return ret;    
+    return (void *) (((char *)addr) + sizeof(ndrx_fpablock_t));;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

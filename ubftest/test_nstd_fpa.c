@@ -367,10 +367,47 @@ Ensure(test_nstd_fpa_realloc)
 {
     ndrx_fpapool_t stats;
     ndrx_fpablock_t *hdr;
-    char *ptr;
+    char *ptr, *ptr2;
     
-    ptr = ndrx_fpmalloc(NDRX_FPA_0_SIZE, 0);
+    ptr = ndrx_fpmalloc(NDRX_FPA_0_SIZE-100, 0);
+    
+    NDRX_STRCPY_SAFE_DST(ptr, "HELLO WORLD", (NDRX_FPA_0_SIZE-100));
+    
     hdr = (ndrx_fpablock_t *)(ptr - sizeof(ndrx_fpablock_t));
+    assert_equal(hdr->poolno, 0);
+    
+    /* check that it is still first pool, no pointer change */
+    ptr2 = ndrx_fprealloc(ptr, NDRX_FPA_0_SIZE);
+    assert_equal(ptr, ptr2);
+    hdr = (ndrx_fpablock_t *)(ptr - sizeof(ndrx_fpablock_t));
+    assert_equal(hdr->poolno, 0);
+    assert_string_equal(ptr, "HELLO WORLD");
+    
+    
+    /* check that it is second poll */
+    ptr = ndrx_fprealloc(ptr, NDRX_FPA_1_SIZE);
+    hdr = (ndrx_fpablock_t *)(ptr - sizeof(ndrx_fpablock_t));
+    assert_equal(hdr->poolno, 1);
+    assert_string_equal(ptr, "HELLO WORLD");
+    
+    /* check that it is free style pool */
+    ptr = ndrx_fprealloc(ptr, NDRX_FPA_5_SIZE+100);
+    hdr = (ndrx_fpablock_t *)(ptr - sizeof(ndrx_fpablock_t));
+    assert_equal(hdr->flags, NDRX_FPABRSIZE);
+    assert_string_equal(ptr, "HELLO WORLD");
+    
+    /* check that it is first pool */
+    ptr = ndrx_fprealloc(ptr, 1);
+    hdr = (ndrx_fpablock_t *)(ptr - sizeof(ndrx_fpablock_t));
+    assert_equal(hdr->poolno, 0);
+    /* block stays the same... */
+    assert_string_equal(ptr, "HELLO WORLD");
+    
+    ndrx_fpfree(ptr);
+    
+    ndrx_fpstats(0, &stats);
+    
+    assert_equal(stats.cur_blocks, 1);
     
     
 }
@@ -389,6 +426,7 @@ TestSuite *ubf_nstd_fpa(void)
     add_test(suite, test_nstd_fpa_config_memall);
     add_test(suite, test_nstd_fpa_config_limits);
     add_test(suite, test_nstd_fpa_config_inval);
+    add_test(suite, test_nstd_fpa_realloc);
     
     return suite;
 }
