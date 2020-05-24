@@ -205,6 +205,7 @@ exprivate int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     /*fill in the details*/
     msg->pack_type = pack_type;
     msg->len = len;
+    msg->tries=0;
     NDRX_STRCPY_SAFE(msg->destqstr, destq);
     memcpy(msg->buffer, buf, len);
     
