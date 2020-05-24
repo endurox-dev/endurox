@@ -307,6 +307,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_STRDUP(ptr) strdup(ptr)
 
 #define NDRX_FPMALLOC(size, flags) ndrx_fpmalloc(size, flags)
+#define NDRX_FPREALLOC(ptr, size) ndrx_fprealloc(ptr, size)
 #define NDRX_FPFREE(ptr) ndrx_fpfree(ptr)
 
 #define NDRX_FOPEN(path, mode) fopen(path, mode)

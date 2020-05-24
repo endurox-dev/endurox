@@ -71,7 +71,7 @@
 /*---------------------------Globals------------------------------------*/
 exprivate in_msg_t *M_in_q = NULL;  /**< Linked list with incoming message in Q */
 exprivate MUTEX_LOCKDECL(M_in_q_lock);        /**< Queue lock the queue cache   */
-exprivate int M_qrun_issued = EXFALSE;/**< Indicate the that there is q runner job in
+exprivate volatile int M_qrun_issued = EXFALSE;/**< Indicate the that there is q runner job in
                                      * progress, because periodic timer then could
                                      * submit job several times
                                      */
@@ -87,6 +87,7 @@ exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q,
  * Run queue from thread.
  * This is started from main thread periodic runner.
  * The special flag is used to indicate if run job was in queue
+ * TODO: seems like having issue with queue/thread locking...
  * @param ptr not used
  * @param p_finish_off not used
  * @return EXSUCCEED;
@@ -143,9 +144,10 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
         MUTEX_LOCK_V(M_in_q_lock);
     }
     
-    MUTEX_UNLOCK_V(M_in_q_lock);
-    
+    /* only when locked to avoid twice start */
     M_qrun_issued = EXFALSE;
+    
+    MUTEX_UNLOCK_V(M_in_q_lock);
     
     return ret;
 }
