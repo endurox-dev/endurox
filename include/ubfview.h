@@ -171,6 +171,18 @@ struct ndrx_typedview
     EX_hash_handle hh;         /* makes this structure hashable */    
 };
 
+
+/**
+ * Handler for data header
+ */
+typedef struct
+{ 
+    unsigned int vflags;                /**< RFU flags                  */
+    char vname[NDRX_VIEW_NAME_LEN+1];   /**< View field name            */ 
+    uint32_t cksum;                     /**< Checksum of view version   */
+    char data[0];                       /**< pointer to view structure  */ 
+} ndrx_view_header;
+
 /*---------------------------Globals------------------------------------*/
 extern ndrx_typedview_t *ndrx_G_view_hash;
 /*---------------------------Statics------------------------------------*/

@@ -45,6 +45,10 @@ extern "C" {
 
 /* fixes for Support #519 shared section, include once: */
 #ifndef FML_H
+    
+#define FVIEWNAMESIZE NDRX_VIEW_NAME_LEN
+#define FVIEWFLD    BVIEWFLD
+    
 #define F_LENGTH BF_LENGTH
 #define FLD_MIN BFLD_MIN
 #define FLD_SHORT BFLD_SHORT
