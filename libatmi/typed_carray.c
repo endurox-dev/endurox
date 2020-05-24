@@ -68,7 +68,7 @@ expublic int CARRAY_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
     int ret=EXSUCCEED;
     char fn[]="CARRAY_prepare_outgoing";
     
-    /* Check that we have space enought to prepare for send */
+    /* Check that we have space enough to prepare for send */
     if (NULL!=olen && 0!=*olen && *olen < ilen)
     {
         ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "

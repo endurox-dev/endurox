@@ -135,7 +135,6 @@ extern "C" {
 typedef int BFLDID;
 typedef int BFLDLEN;
 typedef int BFLDOCC;
-
 typedef struct Ubfh UBFH;
 
 /* Bnext state struct */
@@ -163,6 +162,16 @@ typedef struct
 {
     BFLDID *last_checked;
 } Bfld_loc_info_t;
+
+/**
+ * Handler for adding view to UBF buffer
+ */
+typedef struct
+{ 
+    unsigned int vflags;                /**< RFU flags                  */
+    char vname[NDRX_VIEW_NAME_LEN+1];   /**< View field name            */ 
+    char *data;                         /**< pointer to view structure  */ 
+} BVIEWFLD;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

@@ -49,6 +49,11 @@ extern "C" {
 
 /* fixes for Support #519 shared section, include once: */
 #ifndef FML32_H
+    
+    
+#define FVIEWNAMESIZE NDRX_VIEW_NAME_LEN
+#define FVIEWFLD    BVIEWFLD
+
 #define F_LENGTH BF_LENGTH
 #define FLD_MIN BFLD_MIN
 #define FLD_SHORT BFLD_SHORT
@@ -68,7 +73,7 @@ extern "C" {
 
 #define FSTDXINT  16
     
-/* capabiltiy for error codes */
+/* compatibility for error codes */
 #define FMINVAL BMINVAL
 #define FALIGNERR BALIGNERR
 #define FNOTFLD BNOTFLD
