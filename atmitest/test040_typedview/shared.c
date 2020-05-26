@@ -224,7 +224,7 @@ expublic int validate_MYVIEW1(struct MYVIEW1 *v)
      * TODO: Add this note to the VIEW files. That if
      * Count is used, then during service calls, count also is used..
      */
-    TEST_NUM_EQUAL(v->tshort3[2], 0);
+    /* TEST_NUM_EQUAL(v->tshort3[2], 0); - do not test, network no send, local send */
     
     TEST_NUM_EQUAL(v->tshort4, -10);
 
@@ -249,8 +249,8 @@ expublic int validate_MYVIEW1(struct MYVIEW1 *v)
 
     TEST_NUM_EQUAL(v->C_tchar3, 0);
     /* due to count set to 0 */
-    TEST_NUM_EQUAL(v->tchar3[0], 0);
-    TEST_NUM_EQUAL(v->tchar3[1], 0);
+    /*TEST_NUM_EQUAL(v->tchar3[0], 0); - local blob send, so has this */
+    /*TEST_NUM_EQUAL(v->tchar3[1], 0); -local blob send has */
 
     TEST_DOUBLE_EQUAL(v->tfloat1[0],-0.11);
     TEST_DOUBLE_EQUAL(v->tfloat1[1],-0.22);
@@ -280,7 +280,7 @@ expublic int validate_MYVIEW1(struct MYVIEW1 *v)
 
     TEST_STRING_EQUAL(v->tstring2[0], "CCCCAAAADDDD");
     TEST_STRING_EQUAL(v->tstring2[1], "EEEFFFGGG");
-    TEST_STRING_EQUAL(v->tstring2[2], "");
+    /*TEST_STRING_EQUAL(v->tstring2[2], ""); - local blob*/
 
     TEST_NUM_EQUAL(v->C_tstring3, 4);
 
