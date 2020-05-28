@@ -162,7 +162,7 @@ struct UBF_carray
 #endif
     BFLDLEN  dlen; /* Data len */
     /* If len is 0, then this already part of next structure?!?! */
-    char carr[1];
+    char carr[0];
 };
 typedef struct UBF_carray UBF_carray_t;
 
@@ -229,7 +229,7 @@ struct UBF_generic
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
-    char d[1];
+    char d[0];
 };
 typedef struct UBF_generic UBF_generic_t;
 
