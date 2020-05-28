@@ -149,7 +149,7 @@ struct UBF_string
 };
 typedef struct UBF_string UBF_string_t;
 
-/*
+/**
  * Struct for string
  */
 struct UBF_carray
@@ -220,7 +220,7 @@ struct UBF_long
 typedef struct UBF_long UBF_long_t;
 
 
-/*
+/**
  * Generic (for system defined type processing)
  */
 struct UBF_generic
@@ -233,6 +233,52 @@ struct UBF_generic
 };
 typedef struct UBF_generic UBF_generic_t;
 
+/**
+ * UBF field
+ */
+struct UBF_ubf
+{
+    BFLDID   bfldid;
+    
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
+    BFLDLEN  dlen; /* Data len */
+    /* If len is 0, then this already part of next structure. */
+    char ubfdata[1];
+};
+typedef struct UBF_ubf UBF_ubf_t;
+
+/**
+ * VIEW field
+ */
+struct UBF_ubf
+{
+    BFLDID   bfldid;
+    
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
+    BFLDLEN  dlen; /* Data len */
+    char vname[NDRX_VIEW_NAME_LEN+1];
+    /* If len is 0, then this already part of next structure. */
+    char data[1];
+};
+typedef struct UBF_view UBF_view_t;
+
+/**
+ * pointer to tpallc'd field
+ */
+struct UBF_ptr
+{
+    BFLDID   bfldid;
+    
+#if EX_ALIGNMENT_BYTES == 8
+    BFLDID         padding;
+#endif
+    char *ptr;  /**< pointer to any tpalloc'd buffer */
+};
+typedef struct UBF_ptr UBF_ptr_t;
 
 /**
  * field definition found in .fd files
