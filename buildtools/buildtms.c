@@ -151,10 +151,8 @@ int main(int argc, char **argv)
     
     if (EXEOS==ofile[0])
     {
-        NDRX_LOG(log_error, "error! Output file name is not set, use -o");
-        /* set error */
-        _Nset_error_fmt(NEINVAL, "error! Output file name is not set, use -o");
-        EXFAIL_OUT(ret);
+        print_help(argv[0]);
+        return EXFAIL; /*<<<< RETURN ! */
     }
     
     if ( NULL==(out_fptr=ndrx_mkstemps(cfile, 2, 0) ))
