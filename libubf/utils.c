@@ -277,9 +277,9 @@ expublic void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p_ub)
  */
 expublic long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize)
 {
-    /* the biggest field we have is carray, for which we have also len stored.. */
+    /* the biggest field we have is string, for which we have also len stored.. and EOS */
     return sizeof(UBF_header_t) + totsize 
-            + nrfields*(EX_ALIGNMENT_BYTES+sizeof(UBF_carray_t));
+            + nrfields*(EX_ALIGNMENT_BYTES+sizeof(UBF_string_t));
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

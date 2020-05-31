@@ -86,6 +86,8 @@ add_library (objubf OBJECT
 		${FLEX_EXPRSCANNER_OUTPUTS}
                 bcmp.c
                 fielddb.c
+                fld_ptr.c
+                fld_ubf.c
 	)
 
 set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)

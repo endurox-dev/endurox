@@ -48,7 +48,6 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <cf.h>
-#include <ubf_impl.h>
 
 #include "userlog.h"
 /*---------------------------Externs------------------------------------*/

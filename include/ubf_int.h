@@ -45,9 +45,20 @@ extern "C" {
 #include <stdio.h>
 #include <exhash.h>
 #include <ndrstandard.h>
+#include <ndrx_config.h>
+#include <fdatatype.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define UBFFLDMAX	64
+    
+#define UBF_BINARY_SEARCH_OK(bfldid) ((bfldid>>EFFECTIVE_BITS) < BFLD_STRING)
+    
+    
+#define UBF_BINSRCH_GET_LAST_NONE       0x00
+#define UBF_BINSRCH_GET_LAST            0x01
+#define UBF_BINSRCH_GET_LAST_CHG        0x02 /**< for change              */
+    
+#define UBF_CMP_MODE_STD          0x00000001 /**< standard compare mode   */
 
 /* Print some debug out there! */
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);
@@ -58,11 +69,6 @@ extern "C" {
 #define CONF_VIEWDIR    "VIEWDIR"           /* Folders with view files stored, ':' - sep   */
     
 #define UBFDEBUGLEV "UBF_E_"
-
-#define UBF_MAGIC   "UBF1"
-#define UBF_MAGIC_SIZE   4
-#define CF_TEMP_BUF_MAX 64
-#define EXTREAD_BUFFSIZE    16384
 
 /* #define UBF_16 */
 
@@ -93,6 +99,7 @@ extern "C" {
 #define BFLD_STRING_SIZE	0
 #define BFLD_CARRAY_SIZE	0
 #define BFLD_INT_SIZE		sizeof(int)
+#define BFLD_PTR_SIZE		sizeof(char *)
 
 
 /* #define UBF_API_DEBUG   1 *//* Provide lots of debugs from UBF API? */
@@ -101,6 +108,12 @@ extern "C" {
 #define VALIDATE_MODE_NO_FLD    0x1
 
 #define IS_TYPE_INVALID(T) (T<BFLD_MIN || T>BFLD_MAX)
+    
+/**
+ * Check is this complex type, no conversions, etc..
+ * @param T type to check
+ */
+#define IS_TYPE_COMPLEX(T) (BFLD_PTR==T||BFLD_UBF==T||BFLD_VIEW==T)
 
 #define CHECK_ALIGN(p, p_ub, hdr) (((long)p) > ((long)p_ub+hdr->bytes_used))
 
@@ -146,21 +159,133 @@ extern "C" {
     __p_bufsz = __buf_size__;\
 }
 
+/* for sparc we set to 8 */
+#define DEFAULT_ALIGN       EX_ALIGNMENT_BYTES
+    
+    
+#if EX_ALIGNMENT_BYTES == 8
+
+#define ALIGNED_SIZE(DSIZE) \
+    (sizeof(BFLDID)*2 + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID)*2 + DSIZE) % DEFAULT_ALIGN;
+
+#else
+
+#define ALIGNED_SIZE(DSIZE) \
+    (sizeof(BFLDID) + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID) + DSIZE) % DEFAULT_ALIGN;
+
+#endif
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-typedef short _UBF_SHORT;
-typedef unsigned int _UBF_INT;
-typedef double UBF_DOUBLE;
-typedef float UBF_FLOAT;
-typedef long UBF_LONG;
-typedef char UBF_CHAR;
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API void ndrx_build_printable_string(char *out, int out_len, char *in, 
         int in_len);
+
+
+extern char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+                            dtype_str_t **fld_dtype, int get_last, int *last_occ, 
+                            char ** last_checked, char ** last_match);
+extern char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+                            dtype_str_t **fld_dtype,
+                            char ** last_checked,
+                            char ** last_matched,
+                            int *last_occ,
+                            Bfld_loc_info_t *last_start);
+extern void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff);
+extern void ubf_cache_dump(UBFH *p_ub, char *msg);
+extern int ubf_cache_update(UBFH *p_ub);
+
+extern int ndrx_Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
+                            char * buf, BFLDLEN * buflen);
+extern int ndrx_Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
+                                Bfld_loc_info_t *last_start, 
+				Bfld_loc_info_t *next_fld);
+extern int ndrx_Bchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
+                            char * buf, BFLDLEN len, Bfld_loc_info_t *last_start, 
+                            int upd_only);
+extern int have_buffer_size(UBFH *p_ub, int add_size, int set_err);
+extern int validate_entry(UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, int mode);
+extern char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
+                                        BFLDOCC occ, BFLDLEN * len,
+                                        char **p_fld);
+extern BFLDOCC ndrx_Boccur (UBFH * p_ub, BFLDID bfldid);
+extern int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+
+extern char * ndrx_CBfind (UBFH *p_ub, BFLDID bfldid,
+                        BFLDOCC occ, BFLDLEN * len, int usrtype, int mode,
+                        int extralen);
+extern char * ndrx_Bgetalloc (UBFH * p_ub,
+                            BFLDID bfldid, BFLDOCC occ, BFLDLEN *extralen);
+extern char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
+                                                BFLDOCC *occ,
+                                                BFLDLEN * len);
+extern char * ndrx_Btypcvt (BFLDLEN * to_len, int to_type,
+                    char *from_buf, int from_type, BFLDLEN from_len);
+
+extern int ndrx_Bfprint (UBFH *p_ub, FILE * outf, 
+        ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1);
+
+extern int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
+                                BFLDOCC *occ, char *buf, BFLDLEN *len,
+                                char **d_ptr);
+extern int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
+                                    int mode, int *processed);
+
+extern int ndrx_Bprojcpy (UBFH * p_ub_dst, UBFH * p_ub_src,
+                                    BFLDID * fldlist);
+extern int ndrx_Bupdate (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern int ndrx_Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src);
+extern BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN len);
+extern BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN len, int usrtype);
+extern int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
+                                   BFLDOCC *occ, char *buf, BFLDLEN *len);
+extern int ndrx_Bextread (UBFH * p_ub, FILE *inf,
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
+extern void ndrx_Bboolpr (char * tree, FILE *outf, 
+        int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
+extern int ndrx_Bread  (UBFH * p_ub, FILE * inf,
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
+extern int ndrx_Bwrite (UBFH *p_ub, FILE * outf,
+        long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
+extern int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
+extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+
+extern int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
+extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
+
+extern BFLDOCC ndrx_Bnum(UBFH *p_ub);
+
+extern int ndrx_Bjoin(UBFH *dest, UBFH *src);
+extern int ndrx_Bojoin(UBFH *dest, UBFH *src);
+
+extern UBFH * ndrx_Balloc (BFLDOCC f, BFLDLEN v, long len_set);
+extern UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set);
+
+extern long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize);
+
+/* FLD_PTR support: */
+extern NDRX_API int ndrx_put_data_ptr(dtype_str_t *t, char *fb, BFLDID bfldid, 
+        char *data, int len);
+extern NDRX_API int ndrx_get_data_ptr (struct dtype_str *t, char *fb, char *buf, int *len);
+extern NDRX_API int ndrx_cmp_ptr (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+extern NDRX_API void ndrx_dump_ptr (struct dtype_ext1 *t, char *text, char *data, int *len);
+
+/* FLD_UBF support: */
+
+extern NDRX_API int ndrx_get_fb_ubf_size(dtype_str_t *t, char *fb, int *payload_size);
+extern NDRX_API int ndrx_put_data_ubf(dtype_str_t *t, char *fb, BFLDID bfldid, 
+        char *data, int len);
+extern NDRX_API int ndrx_get_d_size_ubf (struct dtype_str *t, char *data, 
+        int len, int *payload_size);
+extern NDRX_API int ndrx_get_data_ubf (struct dtype_str *t, char *fb, char *buf, int *len);
+extern NDRX_API int ndrx_g_ubf_empty(struct dtype_ext1* t);
+extern NDRX_API int ndrx_put_empty_ubf(struct dtype_ext1* t, char *fb, BFLDID bfldid);
+extern NDRX_API void ndrx_dump_ubf(struct dtype_ext1 *t, char *text, char *data, int *len);
+extern NDRX_API int ndrx_cmp_ubf (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
 
 
 #ifdef	__cplusplus

@@ -64,13 +64,14 @@ extern "C" {
 #define BFLD_DOUBLE	4
 #define BFLD_STRING	5
 #define BFLD_CARRAY	6
-#define BFLD_MAX	6
-	
+    
 #define BFLD_INT        7   /**< Used for view access                       */
 #define BFLD_RFU0       8   /**< Reserved for future use                    */
 #define BFLD_PTR        9   /**< pointer to a buffer                        */
 #define BFLD_UBF        10  /**< embedded FML32 buffer                      */
 #define BFLD_VIEW       11  /**< embedded VIEW32 buffer                     */
+
+#define BFLD_MAX	11
 
 /* invalid field id - returned from functions where field id not found */
 #define BBADFLDID (BFLDID)0
@@ -99,7 +100,7 @@ extern "C" {
 #define BVFOPEN             19 /**< Failed to open VIEW file */
 #define BBADACM             20 /**< Reserved for future use */
 #define BNOCNAME            21 /**< Structure field not found for VIEW */
-#define BEBADOP             22 /**< Reserved for future use */
+#define BEBADOP             22 /**< Buffer operation not supported (complex type) */
 #define BMAXVAL             22 /**< max error */
     
 /* Bvopt options: */

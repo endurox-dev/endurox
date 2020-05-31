@@ -53,7 +53,6 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <cf.h>
-#include <ubf_impl.h>
 #include <expr.h>
 #include <thlock.h>
 #include <typed_view.h>
@@ -81,6 +80,11 @@
             if (IS_TYPE_INVALID(X)) \
             { \
                 ndrx_Bset_error_fmt(BTYPERR, "Invalid user type %d", X);\
+                Y;\
+            }\
+            if (IS_TYPE_COMPLEX(X)) \
+            { \
+                ndrx_Bset_error_fmt(BEBADOP, "Invalid user type %d", X);\
                 Y;\
             }
 
@@ -524,6 +528,13 @@ expublic int CBadd (UBFH *p_ub, BFLDID bfldid, char * buf,
 
     /* validate user specified type */
     VALIDATE_USER_TYPE(usrtype, return EXFAIL);
+    
+    /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(to_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", to_type);
+        return EXFAIL;
+    }
 
     /* if types are the same then do direct call */
     if (usrtype==to_type)
@@ -603,6 +614,14 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
     }
     /* validate user specified type */
     VALIDATE_USER_TYPE(usrtype, return EXFAIL);
+    
+    
+        /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(to_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", to_type);
+        return EXFAIL;
+    }
 
     /* if types are the same then do direct call */
     if (usrtype==to_type)
@@ -668,6 +687,13 @@ expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
 
     /* validate user specified type */
     VALIDATE_USER_TYPE(usrtype, return EXFAIL);
+    
+        /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(from_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", from_type);
+        return EXFAIL;
+    }
 
     /* if types are the same then do direct call */
     if (usrtype==from_type)
@@ -1377,6 +1403,7 @@ expublic int Bconcat (UBFH *p_ub_dst, UBFH *p_ub_src)
 expublic char * CBfind (UBFH * p_ub, 
                     BFLDID bfldid, BFLDOCC occ, BFLDLEN * len, int usrtype)
 {
+    int bfldid_type = (bfldid>>EFFECTIVE_BITS);
     API_ENTRY;
 
     UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", __func__, bfldid, occ);
@@ -1390,6 +1417,13 @@ expublic char * CBfind (UBFH * p_ub,
     
     /* validate user specified type */
     VALIDATE_USER_TYPE(usrtype, return NULL);
+    
+    /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(bfldid_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", bfldid_type);
+        return NULL;
+    }
 
     /* Call the implementation */
     return ndrx_CBfind (p_ub, bfldid, occ, len, usrtype, CB_MODE_TEMPSPACE, 0);
@@ -1410,6 +1444,7 @@ expublic char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
 {
     char *ret=NULL;
     char fn[] = "CBgetalloc";
+    int bfldid_type = (bfldid>>EFFECTIVE_BITS);
     API_ENTRY;
     UBF_LOG(log_debug, "%s: bfldid: %d occ: %hd", fn, bfldid, occ);
 
@@ -1422,6 +1457,13 @@ expublic char * CBgetalloc (UBFH * p_ub, BFLDID bfldid,
     
     /* validate user specified type */
     VALIDATE_USER_TYPE(usrtype, return NULL);
+    
+    /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(bfldid_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", bfldid_type);
+        return NULL;
+    }
 
     /* Call the implementation */
     ret=ndrx_CBfind (p_ub, bfldid, occ, extralen, usrtype, CB_MODE_ALLOC, 
@@ -1479,6 +1521,7 @@ expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
                                         char * buf, BFLDLEN len, int usrtype)
 {
     char *fn = "CBfindocc";
+    int bfldid_type = (bfldid>>EFFECTIVE_BITS);
     API_ENTRY;
 
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
@@ -1498,8 +1541,13 @@ expublic BFLDOCC CBfindocc (UBFH *p_ub, BFLDID bfldid,
 
     /* validate user specified type */
     VALIDATE_USER_TYPE(usrtype, return EXFAIL);
-
-    /* validate user type */
+    
+    /* validate that type is not complex */
+    if (IS_TYPE_COMPLEX(bfldid_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported bfldid type %d", bfldid_type);
+        return EXFAIL;
+    }
 
     /* Call the implementation */
     return ndrx_CBfindocc (p_ub, bfldid, buf, len, usrtype);

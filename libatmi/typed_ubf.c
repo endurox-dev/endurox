@@ -43,8 +43,7 @@
 #include <atmi.h>
 #include <typed_buf.h>
 #include <ndebug.h>
-#include <fdatatype.h>
-#include <ubf_impl.h>
+#include <ubf_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define UBF_DEFAULT_SIZE    1024

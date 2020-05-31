@@ -53,7 +53,7 @@
 #include <exparson.h>
 #include <atmi_cache.h>
 #include <Exfields.h>
-#include <ubf_impl.h>
+#include <ubf_int.h>
 #include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

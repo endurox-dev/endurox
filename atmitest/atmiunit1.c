@@ -63,6 +63,13 @@ Ensure(test000_system)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test000_system_atmiunit0)
+{
+    int ret;
+    ret=system_dbg("test000_system/run-unit.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 Ensure(test001_basiccall)
 {
     int ret;
@@ -614,6 +621,8 @@ TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
     add_test(suite, test000_system);
+    add_test(suite, test000_system_atmiunit0);
+    
     add_test(suite, test001_basiccall);
     add_test(suite, test002_basicforward);
     add_test(suite, test003_basicconvers);

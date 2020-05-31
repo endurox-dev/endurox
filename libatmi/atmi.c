@@ -1294,9 +1294,10 @@ out:
 }
 
 /**
- * Call info
+ * Retrieve metadata associated with the call.
+ * 
  * @param msg buffer to measure
- * @param obuf field container
+ * @param obuf field container. This can be NULL or ATMI allocated buffer
  * @param flags RFU
  * @return EXFAIL
  */
@@ -1311,8 +1312,26 @@ expublic int tpgetcallinfo(const char *msg, UBFH **obuf, long flags)
         ret=EXFAIL;
         goto out;
     }   
-    ndrx_TPset_error_msg(TPENOENT, "TODO: tpgetcallinfo: Not yet implemented.");
-    ret = EXFAIL;
+    
+    if (NULL==msg)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "msg call buffer cannot be NULL", msg);
+        EXFAIL_OUT(ret);   
+    }
+    
+    if (NULL==obuf)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "obuf cannot be null NULL", msg);
+        EXFAIL_OUT(ret);   
+    }
+    
+    if (0!=flags)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Flags (%ld) must be 0", flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_tpgetcallinfo(msg, obuf, flags);
 
 out:
     return ret;
@@ -1336,8 +1355,26 @@ expublic int tpsetcallinfo(const char *msg, UBFH *obuf, long flags)
         ret=EXFAIL;
         goto out;
     }   
-    ndrx_TPset_error_msg(TPENOENT, "TODO: tpsetcallinfo: Not yet implemented.");
-    ret = EXFAIL;
+    
+    if (!Bisubf(obuf))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "obuf %p is not UBF", obuf);
+        EXFAIL_OUT(ret);   
+    }
+    
+    if (NULL==msg)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "msg call buffer cannot be NULL", msg);
+        EXFAIL_OUT(ret);   
+    }
+    
+    if (0!=flags)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Flags (%ld) must be 0", flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_tpsetcallinfo(msg, obuf, flags);
 
 out:
     return ret;

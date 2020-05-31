@@ -53,7 +53,6 @@
 #include <regex.h>
 #include <expr.tab.h>
 #include <exhash.h>
-#include <ubf_impl.h>
 /*---------------------------Externs------------------------------------*/
 /* make llvm silent.. */
 extern void yy_scan_string (char *yy_str  );
