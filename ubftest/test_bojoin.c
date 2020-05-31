@@ -41,7 +41,7 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "ndebug.h"
-#include <fdatatype.h>
+#include <ubf_int.h>
 
 void load_test_data_bojoin_dst(UBFH *p_ub)
 {

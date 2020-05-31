@@ -54,7 +54,6 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <cf.h>
-#include <ubf_impl.h>
 #include <utils.h>
 #include <ubf_tls.h>
 

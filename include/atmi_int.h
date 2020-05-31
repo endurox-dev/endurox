@@ -254,6 +254,7 @@ struct buffer_obj
     char *buf;        /**< allocated datat block                        */
     long size;        /**< Allocated size....                           */
     char *callinfobuf;/**< Call info allocated buffer                   */
+    long callinfobuf_len; /**< buffer len                               */
     /* Move to hash by buf */
     /* buffer_obj_t *prev, *next; */
     EX_hash_handle hh;         /**< makes this structure hashable */
@@ -899,6 +900,9 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long i
 
 /* export the symbol */
 extern NDRX_API struct xa_switch_t * ndrx_xa_builtin_get(void);
+
+extern NDRX_API int ndrx_tpgetcallinfo(const char *msg, UBFH **obuf, long flags);
+extern NDRX_API int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags);
 
 #ifdef	__cplusplus
 }

@@ -40,7 +40,7 @@ extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <ubf.h>
-#include <ubf_int.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_UBF_TYPE_LEN             32 /* Storage for field type */
@@ -58,10 +58,25 @@ extern "C" {
 #else
 #define FF_USED_BYTES   sizeof(BFLDID)
 #endif
-    
+
+#define UBFFLDMAX	64
+#define UBF_MAGIC   "UBF1"
+#define UBF_MAGIC_SIZE   4
+#define CF_TEMP_BUF_MAX 64
+#define EXTREAD_BUFFSIZE    16384
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+    
+typedef short _UBF_SHORT;
+typedef unsigned int _UBF_INT;
+typedef double UBF_DOUBLE;
+typedef float UBF_FLOAT;
+typedef long UBF_LONG;
+typedef char UBF_CHAR;
+typedef char* UBF_PTR;
+
+    
 struct dtype_str {
     char *fldname;  /**< field type name                    */
     char *altname;  /**< alternate field type name          */
@@ -235,6 +250,7 @@ typedef struct UBF_generic UBF_generic_t;
 
 /**
  * UBF field
+ * The data len is extracted from ubfdata
  */
 struct UBF_ubf
 {
@@ -243,16 +259,15 @@ struct UBF_ubf
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
-    BFLDLEN  dlen; /* Data len */
     /* If len is 0, then this already part of next structure. */
-    char ubfdata[1];
+    char ubfdata[0];
 };
 typedef struct UBF_ubf UBF_ubf_t;
 
 /**
  * VIEW field
  */
-struct UBF_ubf
+struct UBF_view
 {
     BFLDID   bfldid;
     
@@ -262,7 +277,7 @@ struct UBF_ubf
     BFLDLEN  dlen; /* Data len */
     char vname[NDRX_VIEW_NAME_LEN+1];
     /* If len is 0, then this already part of next structure. */
-    char data[1];
+    char data[0];
 };
 typedef struct UBF_view UBF_view_t;
 
@@ -276,7 +291,7 @@ struct UBF_ptr
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
-    char *ptr;  /**< pointer to any tpalloc'd buffer */
+    UBF_PTR ptr;  /**< pointer to any tpalloc'd buffer */
 };
 typedef struct UBF_ptr UBF_ptr_t;
 

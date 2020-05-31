@@ -504,4 +504,76 @@ out:
     return ret;
     
 }
+
+/**
+ * Set call info
+ * @param typed buffer to which associate meta-data
+ * @param obuf input buffer (must be UBF)
+ * @param flags call flags, not used must be set to 0
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags)
+{
+    int ret = EXSUCCEED;
+    buffer_obj_t * node_msg;
+    typed_buffer_descr_t *callbuf = &G_buf_descr[BUF_TYPE_UBF];
+    
+    
+    NDRX_LOG(log_debug, "Setting call info primary buffer msg=%p, obuf=%p, flags=%ld",
+            msg, obuf, flags);
+    
+    /* Check the call buffer */
+    if (NULL==(node_msg=ndrx_find_buffer((char *)msg)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "msg buffer %p is not know to system", msg);
+        EXFAIL_OUT(ret);
+    }
+
+    /* now try to receive -> setup data from incoming UBF... */
+    if (EXSUCCEED!=callbuf->pf_prepare_incoming(callbuf, (char *)obuf, Bused(obuf), 
+            &node_msg->callinfobuf, &node_msg->callinfobuf_len, 0))
+    {
+        NDRX_LOG(log_error, "Failed to setup call info buffer: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Retrieve meta data
+ * @param msg call buffer
+ * @param obuf metadata
+ * @param flags
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **obuf, long flags)
+{
+    int ret = EXSUCCEED;
+    buffer_obj_t * node_msg;
+    typed_buffer_descr_t *callbuf = &G_buf_descr[BUF_TYPE_UBF];
+    long olen=0;
+    
+    NDRX_LOG(log_debug, "Setting call info primary buffer msg=%p, obuf=%p, flags=%ld",
+            msg, obuf, flags);
+    
+    /* Check the call buffer */
+    if (NULL==(node_msg=ndrx_find_buffer((char *)msg)))
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "msg buffer %p is not know to system", msg);
+        EXFAIL_OUT(ret);
+    }
+
+    /* now try to receive -> setup data from incoming UBF... */
+    if (EXSUCCEED!=callbuf->pf_prepare_incoming(callbuf, node_msg->callinfobuf, 
+            node_msg->callinfobuf_len, (char **)obuf, &olen, 0))
+    {
+        NDRX_LOG(log_error, "Failed to retrieve call infos: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
 /* vim: set ts=4 sw=4 et smartindent: */
