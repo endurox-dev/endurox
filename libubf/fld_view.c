@@ -1,7 +1,7 @@
 /**
- * @brief BFLD_UBF type support
+ * @brief BFLD_VIEW type support
  *
- * @file fld_ubf.c
+ * @file fld_view.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -47,6 +47,7 @@
 #include <ubfutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define VIEW_SIZE_OVERHEAD   (sizeof(BFLDLEN)+NDRX_VIEW_NAME_LEN+1)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -54,23 +55,21 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Get total data size. The payload size shall be measured with Bused()
- * The dlen contains cached value for 
+ * Get total size of the view, living in UBF
  * @param t type descriptor
  * @param ptr on UBF field start in UBF buffer
  * @return size in bytes, aligned
  */
-expublic int ndrx_get_fb_ubf_size(dtype_str_t *t, char *fb, int *payload_size)
+expublic int ndrx_get_fb_view_size(dtype_str_t *t, char *fb, int *payload_size)
 {
-    UBF_ubf_t *ubf = (UBF_ubf_t *)fb;
-    UBF_header_t *hdr = (UBF_header_t *)ubf->ubfdata;
+    UBF_view_t *view = (UBF_view_t *)fb;
     
     if (NULL!=payload_size)
     {
-        *payload_size = hdr->bytes_used;
+        *payload_size = view->dlen;
     }
     
-    return ALIGNED_SIZE((sizeof (BFLDLEN) + hdr->bytes_used));
+    return ALIGNED_SIZE((VIEW_SIZE_OVERHEAD + hdr->bytes_used));
 }
 
 /**
@@ -81,10 +80,10 @@ expublic int ndrx_get_fb_ubf_size(dtype_str_t *t, char *fb, int *payload_size)
  * @param data must be UBF type buffer
  * @param len not used, we take datak
  */
-expublic int ndrx_put_data_ubf(dtype_str_t *t, char *fb, BFLDID bfldid, 
+expublic int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid, 
         char *data, int len)
 {
-    UBF_ubf_t *ubf = (UBF_ubf_t *)fb;
+    UBF_view_t *ubf = (UBF_view_t *)fb;
     UBF_header_t *hdr = (UBF_header_t *)ubf->ubfdata;
     
     /* int align; */
@@ -103,7 +102,7 @@ expublic int ndrx_put_data_ubf(dtype_str_t *t, char *fb, BFLDID bfldid,
  * @param len passed len, not used
  * @return bytes needed
  */
-expublic int ndrx_get_d_size_ubf (struct dtype_str *t, char *data, 
+expublic int ndrx_get_d_size_view (struct dtype_str *t, char *data, 
         int len, int *payload_size)
 {
     UBF_header_t *hdr = (UBF_header_t *)data;
@@ -111,7 +110,7 @@ expublic int ndrx_get_d_size_ubf (struct dtype_str *t, char *data,
     if (NULL!=payload_size)
         *payload_size=hdr->bytes_used;
 
-    return ALIGNED_SIZE((sizeof(BFLDLEN)+hdr->bytes_used));
+    return ALIGNED_SIZE(hdr->bytes_used));
 }
 
 /**
@@ -125,9 +124,9 @@ expublic int ndrx_get_d_size_ubf (struct dtype_str *t, char *data,
  * @param len output buffer len, shall we use this?
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_get_data_ubf (struct dtype_str *t, char *fb, char *buf, int *len)
+expublic int ndrx_get_data_view (struct dtype_str *t, char *fb, char *buf, int *len)
 {
-    UBF_ubf_t *ubf = (UBF_ubf_t *)fb;
+    UBF_view_t *ubf = (UBF_view_t *)fb;
     UBF_header_t *hdr = (UBF_header_t *)ubf->ubfdata;
     int ret=EXSUCCEED;
     BFLDLEN      org_buf_len; /* keep the org buffer len */
@@ -162,7 +161,7 @@ out:
  * @param t data type
  * @return aligned bytes required for the UBF buffer
  */
-expublic int ndrx_g_ubf_empty(struct dtype_ext1* t)
+expublic int ndrx_g_view_empty(struct dtype_ext1* t)
 {
     return ALIGNED_SIZE(sizeof(UBF_header_t)-FF_USED_BYTES); /* empty string eos */
 }
@@ -174,10 +173,10 @@ expublic int ndrx_g_ubf_empty(struct dtype_ext1* t)
  * @param bfldid field id to set
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_put_empty_ubf(struct dtype_ext1* t, char *fb, BFLDID bfldid)
+expublic int ndrx_put_empty_view(struct dtype_ext1* t, char *fb, BFLDID bfldid)
 {
     int ret=EXSUCCEED;
-    UBF_ubf_t *ubf = (UBF_ubf_t *)fb;
+    UBF_view_t *ubf = (UBF_view_t *)fb;
     UBF_header_t empty_buf;
     
     
@@ -201,11 +200,11 @@ expublic int ndrx_put_empty_ubf(struct dtype_ext1* t, char *fb, BFLDID bfldid)
  * @param data ptr to UBF field to print
  * @param len not used..
  */
-expublic void ndrx_dump_ubf(struct dtype_ext1 *t, char *text, char *data, int *len)
+expublic void ndrx_dump_view(struct dtype_ext1 *t, char *text, char *data, int *len)
 {
     if (NULL!=data)
     {
-        ndrx_debug_dump_UBF_ubflogger(log_debug, text, (UBFH *)data);
+        ndrx_debug_dump_UBF_viewlogger(log_debug, text, (UBFH *)data);
     }
     else
     {
@@ -223,7 +222,7 @@ expublic void ndrx_dump_ubf(struct dtype_ext1 *t, char *text, char *data, int *l
  * @param mode UBF_CMP_MODE_STD? 
  * @return EXTRUE/EXFALSE, or -1,0,1
  */
-expublic int ndrx_cmp_ubf (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+expublic int ndrx_cmp_view (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
         char *val2, BFLDLEN len2, long mode)
 {
     
