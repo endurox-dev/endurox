@@ -162,7 +162,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 /* TODO - create support functions: */
 {BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},      /* 8 */
 {BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       NULL, ndrx_cmp_ptr},/* 9 */
-{BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL,        NULL, ndrx_cmp_ubf},       /* 10 */
+{BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, NULL, ndrx_cmp_ubf},       /* 10 */
 {BFLD_VIEW,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, NULL,       NULL, cmp_int},      /* 11 */
 
 {-1}

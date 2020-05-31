@@ -1,5 +1,5 @@
 /**
- * @brief FLD_PTR type support
+ * @brief BFLD_PTR type support
  *
  * @file fld_ptr.c
  */
