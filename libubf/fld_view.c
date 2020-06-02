@@ -97,10 +97,12 @@ expublic int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid,
 
 /**
  * Return estimated required data size
+ * Lookup the field definition to extract the required number of bytes
+ * for the slot
  * @param t type descr
  * @param data data
  * @param len passed len, not used
- * @return bytes needed
+ * @return bytes needed. TODO:What happens if view is not found?
  */
 expublic int ndrx_get_d_size_view (struct dtype_str *t, char *data, 
         int len, int *payload_size)
@@ -110,7 +112,7 @@ expublic int ndrx_get_d_size_view (struct dtype_str *t, char *data,
     if (NULL!=payload_size)
         *payload_size=hdr->bytes_used;
 
-    return ALIGNED_SIZE(hdr->bytes_used));
+    return ALIGNED_SIZE(VIEW_SIZE_OVERHEAD+hdr->bytes_used);
 }
 
 /**
@@ -159,7 +161,9 @@ out:
  * Question here is -> if we add empty UBF buffer, is it normal buffer
  * THe buffer is normal empty buffer...
  * @param t data type
- * @return aligned bytes required for the UBF buffer
+ * @return aligned bytes required for the UBF buffer. What happens here?
+ *  how shall we setup the data? Or just return error, that this is not
+ *  supported?
  */
 expublic int ndrx_g_view_empty(struct dtype_ext1* t)
 {
