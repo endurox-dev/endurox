@@ -76,6 +76,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     char buftype[16+1]={EXEOS};
     char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     size_t outlen;
+    /* !!!! TODO: MOVE TO DYNAMIC MEMORY !!! */
     char b64_buf[CARR_BUFFSIZE_B64+1];
     long size_existing=EXFAIL;
 
