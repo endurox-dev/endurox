@@ -166,15 +166,20 @@ extern "C" {
 #if EX_ALIGNMENT_BYTES == 8
 
 #define ALIGNED_SIZE(DSIZE) \
-    (sizeof(BFLDID)*2 + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID)*2 + DSIZE) % DEFAULT_ALIGN;
-
+    ((sizeof(BFLDID)*2 + DSIZE + DEFAULT_ALIGN - 1) / DEFAULT_ALIGN * DEFAULT_ALIGN)
 #else
 
 #define ALIGNED_SIZE(DSIZE) \
-    (sizeof(BFLDID) + DSIZE) + DEFAULT_ALIGN - (sizeof(BFLDID) + DSIZE) % DEFAULT_ALIGN;
-
+    ((sizeof(BFLDID) + DSIZE + DEFAULT_ALIGN -1 ) / DEFAULT_ALIGN * DEFAULT_ALIGN)
 #endif
-    
+   
+/**
+ * Get aligned size with the data
+ * @param TNAME type name this shall include standard field id with 8 alignment if needed
+ */
+#define ALIGNED_SIZE_T(TNAME, DSIZE) \
+    ((sizeof(TNAME) + DSIZE + DEFAULT_ALIGN -1 ) / DEFAULT_ALIGN * DEFAULT_ALIGN)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
