@@ -69,31 +69,37 @@ expublic int ndrx_get_fb_view_size(dtype_str_t *t, char *fb, int *payload_size)
         *payload_size = view->dlen;
     }
     
-    return ALIGNED_SIZE((VIEW_SIZE_OVERHEAD + hdr->bytes_used));
+    return ALIGNED_SIZE_T(UBF_view_t, view->dlen);
 }
 
 /**
- * Put the buffer data
+ * Put the buffer data.
+ * If we cannot extract the data length from the view, we shall generate
+ * error: BBADVIEW
  * @param t type descriptor
  * @param fb UBF buffer position for field
  * @param bfldid field id
  * @param data must be UBF type buffer
  * @param len not used, we take datak
+ * @return status (BBADVIEW if view not found...)
  */
 expublic int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid, 
         char *data, int len)
 {
-    UBF_view_t *ubf = (UBF_view_t *)fb;
-    UBF_header_t *hdr = (UBF_header_t *)ubf->ubfdata;
+    int ret = EXSUCCEED;
+    UBF_view_t *view = (UBF_view_t *)fb;
+    struct BVIEWFLD *vdata = (struct BVIEWFLD *)data;
+    
+    /* find the view */
     
     /* int align; */
-    ubf->bfldid = bfldid;
+    view->bfldid = bfldid;
 
     memcpy(ubf->ubfdata, data, hdr->bytes_used);
-        
-    return EXSUCCEED;
+    
+out:
+    return ret;
 }
-
 
 /**
  * Return estimated required data size

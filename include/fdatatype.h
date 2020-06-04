@@ -255,7 +255,7 @@ typedef struct UBF_generic UBF_generic_t;
 struct UBF_ubf
 {
     BFLDID   bfldid;
-    
+
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
@@ -270,12 +270,13 @@ typedef struct UBF_ubf UBF_ubf_t;
 struct UBF_view
 {
     BFLDID   bfldid;
-    
+
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
     BFLDLEN  dlen; /* Data len */
     char vname[NDRX_VIEW_NAME_LEN+1];
+    /* TOOD: move dlen here and possibly * 2 in case of 8 */
     /* If len is 0, then this already part of next structure. */
     char data[0];
 };

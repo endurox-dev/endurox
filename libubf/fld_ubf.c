@@ -80,6 +80,7 @@ expublic int ndrx_get_fb_ubf_size(dtype_str_t *t, char *fb, int *payload_size)
  * @param bfldid field id
  * @param data must be UBF type buffer
  * @param len not used, we take datak
+ * @return SUCCEED
  */
 expublic int ndrx_put_data_ubf(dtype_str_t *t, char *fb, BFLDID bfldid, 
         char *data, int len)
