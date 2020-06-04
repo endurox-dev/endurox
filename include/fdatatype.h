@@ -270,13 +270,13 @@ typedef struct UBF_ubf UBF_ubf_t;
 struct UBF_view
 {
     BFLDID   bfldid;
-
 #if EX_ALIGNMENT_BYTES == 8
     BFLDID         padding;
 #endif
-    BFLDLEN  dlen; /* Data len */
     char vname[NDRX_VIEW_NAME_LEN+1];
-    /* TOOD: move dlen here and possibly * 2 in case of 8 */
+    BFLDLEN  dlen; /* Data len */
+    /* have some flags? -> size of long for align to 8 */
+    long vflags;
     /* If len is 0, then this already part of next structure. */
     char data[0];
 };
