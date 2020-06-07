@@ -1,0 +1,69 @@
+BVCMP(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+Bvcmp - Compare two view contents
+
+
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvcmp(char *'cstruct1', char *'view1', char *'cstruct2', char *'view2');
+
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Function compares two views by analyzing the view type and their contents. Compare
+is based on following principles:
+
+. The names are compared as strings and if they differ, result is returned.
+
+. The count indicators (if used) are matched. If differ, result is returned.
+
+. Only used fields are compared. Array values beyond count indicator (if used) are ignored.
+
+. For *CARRAY* if length indicator is used, then it is matched in first place, 
+if differ, result is returned.
+
+All function arguments must not be *NULL*. In case of error (for example view
+is not defined), value *-2* is returned.
+
+RETURN VALUE
+------------
+On success, *Bvcmp()* return *-1* if 'view1'/'cstruct1' is lesser than 'view2'/'cstruct2'.
+*0* is returned in case of both structures matches. *1* is returned in case if 
+'view1'/'cstruct1' is lesser greater than 'view2'/'cstruct2'.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message with debug info 
+from last function call.
+
+*BEINVAL* 'cstruct1', 'view1', 'cstruct2' or 'view2' is *NULL*.
+
+*BBADVIEW* 'view' not found in view files.
+
+EXAMPLE
+-------
+See *atmitest/test040_typedview/viewunit1.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*CBvchg(3)* *CBvget(3)* *Bvsetoccur(3)* *Bvoccur(3)* *viewfile(5)* *ex_env(5)*
+*viewc(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
