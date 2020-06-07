@@ -246,6 +246,8 @@ extern NDRX_API int ndrx_Bvsetoccur(char *cstruct, char *view, char *cname, BFLD
 extern NDRX_API int ndrx_Bvnext (Bvnext_state_t *state, char *view, 
         char *cname, int *fldtype, BFLDOCC *maxocc, long *dim_size);
 
+extern NDRX_API int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -89,6 +89,7 @@
             }
 
 #define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
+#define VIEW_ENTRY2 if (EXSUCCEED!=ndrx_view_init()) {ret=-2; goto out;}
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -1774,13 +1775,25 @@ expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
         ndrx_Bset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, from_type);
         return NULL; /* <<< RETURN! */
     }
-
+    
+    if (IS_TYPE_COMPLEX(from_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported from_type type %d", from_type);
+        return NULL;
+    }
+    
     if (IS_TYPE_INVALID(to_type))
     {
         ndrx_Bset_error_fmt(BTYPERR, "%s: Invalid from_type %d", fn, to_type);
         return NULL; /* <<< RETURN! */
     }
-
+    
+    if (IS_TYPE_COMPLEX(to_type))
+    {
+        ndrx_Bset_error_fmt(BEBADOP, "Unsupported to_type type %d", to_type);
+        return NULL;
+    }
+    
     /*
      * We provide from length, it is needed for core implementation.
      */
@@ -2727,6 +2740,58 @@ out:
 }
 
 /**
+ * Compare to views
+ * @param cstruct1 view structure 1 ptr
+ * @param view1 view name 1
+ * @param cstruct2 view structure 2 ptr
+ * @param view2 view name 2
+ * @return  0 - view name/data are equal
+ *  -1 - first view field is less than view2/cstruct
+ *  1 - first view is greater than view2
+ *  -2 - there is error (view not found)
+ */
+expublic int Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY2;
+    
+    if (NULL==cstruct1)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct1 is NULL!");
+        ret=-2;
+        goto out;
+    }
+    
+    if (NULL==view1)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view1 is NULL!");
+        ret=-2;
+        goto out;
+    }
+    
+    if (NULL==cstruct2)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct2 is NULL!");
+        ret=-2;
+        goto out;
+    }
+    
+    if (NULL==view2)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view2 is NULL!");
+        ret=-2;
+        goto out;
+    }
+        
+    ret=ndrx_Bvcmp(cstruct1, view1, cstruct2, view2);
+
+out:
+
+    return ret;    
+}
+
+/**
  * Compare buffer 1 with buffer 2
  * @param p_ubf1 UBF buf1
  * @param p_ubf2 UBF buf2
@@ -2743,37 +2808,40 @@ expublic int Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
     UBF_header_t *ubf2_h = (UBF_header_t *)p_ubf2;
     API_ENTRY;
 
-    UBF_LOG(log_debug, "%s: About to compare FB=%p to FB=%p", __func__,
-                                    p_ubf1, p_ubf2);
+    UBF_LOG(log_debug, "About to compare FB=%p to FB=%p", p_ubf1, p_ubf2);
 
     if (NULL==p_ubf1)
     {
         ndrx_Bset_error_msg(BEINVAL, "p_ubf1 is NULL!");
-        EXFAIL_OUT(ret);
+        ret=-2;
+        goto out;
     }
 
     if (NULL==p_ubf2)
     {
         ndrx_Bset_error_msg(BEINVAL, "p_ubf2 is NULL!");
-        EXFAIL_OUT(ret);
+        ret=-2;
+        goto out;
     }
 
     if (0!=strncmp(ubf1_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
         ndrx_Bset_error_msg(BNOTFLD, "p_ubf1 magic failed!");
-        EXFAIL_OUT(ret);
+        ret=-2;
+        goto out;
     }
 
     if (0!=strncmp(ubf2_h->magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
         ndrx_Bset_error_msg(BNOTFLD, "p_ubf2 magic failed!");
-        EXFAIL_OUT(ret);
+        ret=-2;
+        goto out;
     }
 
     ret = ndrx_Bcmp(p_ubf1, p_ubf2);
     
 out:
-    UBF_LOG(log_debug, "%s: return %d", __func__, ret);
+    UBF_LOG(log_debug, "return %d", ret);
     
     return ret;
 }

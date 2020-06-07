@@ -66,6 +66,7 @@
  * -1 - first ubf1 field is less than ubf2, value of 1 is less than 2
  *      ubf1 have less fields than ubf2
  * 1 - vice versa
+ * -2 - for error
  */
 expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
 {
@@ -104,14 +105,16 @@ expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
         {
             /* error must be set */
             UBF_LOG(log_debug, "buffer1 Bnext failed");
-            EXFAIL_OUT(ret);
+            ret=-2;
+            goto out;
         }
 
         if (EXFAIL==ret2)
         {
             /* error must be set */
             UBF_LOG(log_debug, "buffer2 Bnext failed");
-            EXFAIL_OUT(ret);
+            ret=-2;
+            goto out;
         }
 
         if (EXTRUE!=ret1 && EXTRUE!=ret2)
@@ -150,7 +153,7 @@ expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
         
         if (typcode > BFLD_MAX || typcode < BFLD_MIN)
         {
-            ret=-11;
+            ret=-2;
             userlog("Invalid type id found in buffer %p: %d - corrupted UBF buffer?", 
                     p_ubf1, typcode);
             UBF_LOG(log_error, "Invalid type id found in buffer %p: %d "
