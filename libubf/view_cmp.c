@@ -111,7 +111,6 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
         {
             C_count1 = (short *)(cstruct1+f->count_fld_offset);
             C_count2 = (short *)(cstruct2+f->count_fld_offset);
-            
         }
         else
         {

@@ -60,6 +60,8 @@
 /**
  * Internal version of Bgetalloc
  * uses Bfind in core.
+ * TODO: How about FLD_PTR, FLD_UBF, FLD_VIEW?
+ * ndrx_ubf_get_cbuf() won't work for these.
  * @param p_ub
  * @param bfldid
  * @param occ

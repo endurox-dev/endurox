@@ -535,6 +535,10 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 /* Find the value and put into buffer. */
                 if (NULL!=copy_form)
                 {
+                    /* WARNING! This might move the source buffer before setting
+                     * Say: We set field_id=1 from field_id=2. Thus we will move
+                     * the 2 to get space for 1.
+                     */
                     if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, copy_form, len_from)))
                     {
                         EXFAIL_OUT(ret);

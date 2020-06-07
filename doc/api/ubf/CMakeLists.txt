@@ -80,6 +80,7 @@ set(MAN3_NAMES
     CBfindocc
     Bfindocc
     CBgetalloc
+    Bgetalloc
     Bfindlast
     Bgetlast
     Bprint
@@ -118,6 +119,7 @@ set(MAN3_NAMES
     Bvoccur
     Bvsetoccur
     Bvnext
+    Bvcmp
     Baddfast
     Bcmp
     Bsubset
