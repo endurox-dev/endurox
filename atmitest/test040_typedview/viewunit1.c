@@ -747,6 +747,123 @@ Ensure(test_Bvopt)
 }
 
 /**
+ * Test Bvcmp func
+ */
+Ensure(test_Bvcmp)
+{
+    struct MYVIEW1 v;
+    struct MYVIEW1 v2;
+    
+    
+    NDRX_LOG(log_debug, "test_Bvcmp start...");
+    
+    assert_equal(Bvcmp(NULL, "MYVIEW2", (char *)&v, "MYVIEW2"), -2);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_equal(Bvcmp((char *)&v, NULL, (char *)&v, "MYVIEW2"), -2);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_equal(Bvcmp((char *)&v, "MYVIEW2", NULL, "MYVIEW2"), -2);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_equal(Bvcmp((char *)&v, "MYVIEW2", (char *)&v, NULL), -2);
+    assert_equal(Berror, BEINVAL);
+    
+    assert_equal(Bvcmp((char *)&v, "HELLO", (char *)&v, "HELLO"), -2);
+    assert_equal(Berror, BBADVIEW);
+    
+    init_MYVIEW1(&v);
+    
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v, "MYVIEW1"), 0);
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v, "MYVIEW2"), -1);
+    
+    /* check short type */
+    init_MYVIEW1(&v2);
+    v2.tshort1=15557;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    v2.tshort1=15555;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+    
+    /* Check array len */
+    v2.tshort1=15556;
+    v2.C_tshort2=3;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    
+    v2.C_tshort2=1;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+    
+    /* Check array eleme */
+    v2.C_tshort2=2;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 0);
+    
+    v2.tshort2[1]=7777;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+    
+    /* do not check if data changed behind the indicators... */
+    v2.C_tshort2=1;
+    v.C_tshort2=1;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 0);
+    
+    /* ok reset back... */
+    init_MYVIEW1(&v);
+    init_MYVIEW1(&v2);
+    
+    /* check long */
+    v2.tlong1=88;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+    
+    /* check int */
+    init_MYVIEW1(&v2);
+    v2.tint2[1]=23233;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    
+    /* check char */
+    init_MYVIEW1(&v2);
+    
+    v2.tchar2[4]--;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+    
+    /* check float */
+    init_MYVIEW1(&v2);
+    
+    v2.tfloat1[3]+=0.1;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    
+    /* check double */
+    init_MYVIEW1(&v2);
+    
+    v2.tdouble1[1]+=0.1;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    
+    /* check string */
+    init_MYVIEW1(&v2);
+    
+    /* goes over the count */
+    NDRX_STRCPY_SAFE(v2.tstring2[2], "MM");
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 0);
+    
+    /* goes over the count */
+    NDRX_STRCPY_SAFE(v2.tstring2[1], "ZZZZZZZZZ");
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    
+    /* check carray */
+    init_MYVIEW1(&v2);
+    v2.L_tcarray2 = 4;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+    
+    v2.L_tcarray2 = 5;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 0);
+    
+    v2.tcarray2[0] = 255;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), -1);
+    
+    init_MYVIEW1(&v2);
+    
+    v2.tcarray5[0]=0;
+    assert_equal(Bvcmp((char *)&v, "MYVIEW1", (char *)&v2, "MYVIEW1"), 1);
+}
+
+/**
  * Very basic tests of the framework
  * @return
  */
@@ -763,6 +880,7 @@ TestSuite *view_tests() {
     add_test(suite, test_Bvstof);
     add_test(suite, test_Bvftos);
     add_test(suite, test_Bvopt);
+    add_test(suite, test_Bvcmp);
     
     return suite;
 }

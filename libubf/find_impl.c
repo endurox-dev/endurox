@@ -414,7 +414,7 @@ expublic char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
     {
         int dlen;
 
-        /* Return the occurrance found. */
+        /* Return the occurrence found. */
         if (NULL!=occ)
             *occ = last_occ;
 

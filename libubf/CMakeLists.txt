@@ -89,6 +89,7 @@ add_library (objubf OBJECT
                 fld_ptr.c
                 fld_ubf.c
                 fld_view.c
+                view_cmp.c
 	)
 
 set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)
