@@ -14,7 +14,7 @@ SYNOPSIS
 #include <ubf.h>
 
 int Bvnext (Bvnext_state_t *'state', char *'view', char *'cname', int *'fldtype', 
-BFLDOCC *'maxocc', long *'dim_size)
+BFLDOCC *'maxocc', long *'dim_size')
 
 Link with '-lubf -lnstd -lm -lpthread'
 
