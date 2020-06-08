@@ -404,8 +404,22 @@ expublic char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
         }
         else if (CB_MODE_ALLOC==mode)
         {
-            int tmp_len = CF_TEMP_BUF_MAX+extra_len;
-            /* Using temporary buffer space */
+            int tmp_len;
+            
+            /* Using temporary buffer space -> in case of PTR/UBF/VIEW use
+             * originally estimated size. There is no other use there excep
+             * Bgetalloc()
+             */
+            
+            if (BFLD_PTR==in_from_type || BFLD_UBF==in_from_type || BFLD_VIEW==in_from_type)
+            {
+                tmp_len = in_len+extra_len;
+            }
+            else
+            {
+                tmp_len = CF_TEMP_BUF_MAX+extra_len;
+            }
+            
             if (NULL==(ret = dtype_ext1->p_talloc(dtype_ext1, &tmp_len)))
             {
                 return NULL; /* <<<< RETURN!!! */

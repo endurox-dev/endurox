@@ -800,6 +800,10 @@ expublic int Bcpy (UBFH * p_ub_dst, UBFH * p_ub_src)
         dst_h->cache_double_off = src_h->cache_double_off;
         dst_h->cache_string_off = src_h->cache_string_off;
         dst_h->cache_carray_off = src_h->cache_carray_off;
+        
+        dst_h->cache_ptr_off = src_h->cache_ptr_off;
+        dst_h->cache_ubf_off = src_h->cache_ubf_off;
+        dst_h->cache_view_off = src_h->cache_view_off;
     
         
     }

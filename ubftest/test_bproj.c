@@ -341,7 +341,10 @@ Ensure(test_projcpy)
     UBF_LOG(log_debug, "hdst dump string, 5: %ld", hdst->cache_string_off);
     UBF_LOG(log_debug, "hdst dump carray, 6: %ld", hdst->cache_carray_off);
     
-
+    UBF_LOG(log_debug, "hdst dump ptr, 6: %ld", hdst->cache_ptr_off);
+    UBF_LOG(log_debug, "hdst dump ubf, 6: %ld", hdst->cache_ubf_off);
+    UBF_LOG(log_debug, "hdst dump view, 6: %ld", hdst->cache_view_off);
+    
     /* Now test the spacing. We will put big string in src buffer,
      * but dest buffer will be shorter, so we must get error, that we do not have
      * a space!

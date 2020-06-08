@@ -106,7 +106,7 @@ struct dtype_ext1 {
     int hdr_size; /* header size (bytes afer which data starts in FB */
     /* Get temporary buffer space */
     char *(*p_tbuf) (struct dtype_ext1 *t, int len);
-    /* allocate conversation buffer for user. */
+    /* allocate conversation buffer for user. data used for types as ubf/view */
     char *(*p_talloc) (struct dtype_ext1 *t, int *len);
     /* Fn to compare two values of data type */
     int (*p_cmp) (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, 
@@ -132,6 +132,9 @@ struct UBF_header
     BFLDLEN      cache_double_off;
     BFLDLEN      cache_string_off;
     BFLDLEN      cache_carray_off;
+    BFLDLEN      cache_ptr_off;
+    BFLDLEN      cache_ubf_off;
+    BFLDLEN      cache_view_off;
     
     BFLDLEN      buf_len; /* includes header */
     _UBF_INT     opts;

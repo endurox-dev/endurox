@@ -100,6 +100,8 @@ extern "C" {
 #define BFLD_CARRAY_SIZE	0
 #define BFLD_INT_SIZE		sizeof(int)
 #define BFLD_PTR_SIZE		sizeof(char *)
+#define BFLD_UBF_SIZE		sizeof(UBF_ubf_t)
+#define BFLD_VIEW_SIZE		sizeof(UBF_view_t)
 
 
 /* #define UBF_API_DEBUG   1 *//* Provide lots of debugs from UBF API? */
@@ -291,7 +293,9 @@ extern NDRX_API int ndrx_put_empty_ubf(struct dtype_ext1* t, char *fb, BFLDID bf
 extern NDRX_API void ndrx_dump_ubf(struct dtype_ext1 *t, char *text, char *data, int *len);
 extern NDRX_API int ndrx_cmp_ubf (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
         char *val2, BFLDLEN len2, long mode);
-
+extern NDRX_API int ndrx_cmp_view (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+extern NDRX_API char *ndrx_talloc_view (struct dtype_ext1 *t, int *len);
 
 #ifdef	__cplusplus
 }
