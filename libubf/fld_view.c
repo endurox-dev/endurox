@@ -273,4 +273,38 @@ out:
     return ret;
 }
 
+/**
+ * Allocate buffer for view (in case of Bgetalloc()).
+ * Also prepare internal structures -> calculate data pointer.
+ * We return real size + extra if requested.
+ * @param t
+ * @param len - buffer length to allocate.
+ * @return NULL/ptr to allocated mem
+ */
+expublic char *ndrx_talloc_view (struct dtype_ext1 *t, int *len)
+{
+    char *ret=NULL;
+    int alloc_size = *len;
+    BVIEWFLD *ptr;
+    
+    ret= NDRX_MALLOC(sizeof(BVIEWFLD) + alloc_size);
+    
+    ptr = (BVIEWFLD *)ret;
+    
+    if (NULL==ret)
+    {
+        ndrx_Bset_error_fmt(BMALLOC, "Failed to allocate %d bytes (with hdr) for user", 
+                sizeof(BVIEWFLD) + alloc_size);
+    }
+    else
+    {
+        *len = alloc_size;
+        /* this is the trick, we alloc one block with data to self offset */
+        ptr->data = ret + sizeof(BVIEWFLD);
+    }
+
+    return ret;
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

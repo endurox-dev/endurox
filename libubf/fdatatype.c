@@ -137,8 +137,8 @@ expublic dtype_str_t G_dtype_str_map[] =
 /* TODO - create support functions: */
 {"rfu0",NULL,   BFLD_RFU0,   EXFAIL,           4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 8 */
 {"ptr",	NULL,   BFLD_PTR,    BFLD_PTR_SIZE,    8, get_fb_dftl_size, ndrx_put_data_ptr, get_d_size_dftl, ndrx_get_data_ptr},/* 9 */
-{"ubf", "fml32",BFLD_UBF,    EXFAIL,           8, ndrx_get_fb_ubf_size, ndrx_put_data_ubf, ndrx_get_d_size_ubf, ndrx_get_data_ubf},	  /* 10 */
-{"view","view32",BFLD_VIEW,  EXFAIL,           8, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 11 */
+{"ubf", "fml32",BFLD_UBF,    BFLD_UBF_SIZE,    8, ndrx_get_fb_ubf_size, ndrx_put_data_ubf, ndrx_get_d_size_ubf, ndrx_get_data_ubf},	  /* 10 */
+{"view","view32",BFLD_VIEW,  BFLD_VIEW_SIZE,   8, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 11 */
 {""}
 };
 
@@ -161,9 +161,9 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 {BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 7 */
 /* TODO - create support functions: */
 {BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},      /* 8 */
-{BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       NULL, ndrx_cmp_ptr},/* 9 */
-{BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, NULL, ndrx_cmp_ubf},       /* 10 */
-{BFLD_VIEW,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, NULL,       NULL, cmp_int},      /* 11 */
+{BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       tallocdlft, ndrx_cmp_ptr},/* 9 */
+{BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, tallocdlft, ndrx_cmp_ubf},/* 10 */
+{BFLD_VIEW,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, NULL,       ndrx_talloc_view, ndrx_cmp_view}, /* 11 */
 
 {-1}
 };
@@ -805,7 +805,7 @@ exprivate char *tbuf_int (struct dtype_ext1 *t, int len)
  * to set correct amount to use. It is suggested that amount should be over
  * CF_TEMP_BUF_MAX define.
  * @param t
- * @param len - buffer lenght to allocate.
+ * @param len - buffer length to allocate.
  * @return NULL/ptr to allocated mem
  */
 exprivate char *tallocdlft (struct dtype_ext1 *t, int *len)

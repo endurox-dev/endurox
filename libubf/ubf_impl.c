@@ -94,6 +94,10 @@ expublic void ubf_cache_dump(UBFH *p_ub, char *msg)
     UBF_LOG(log_debug, "%s: ubf cache double, 4: %d", msg, hdr->cache_double_off);
     UBF_LOG(log_debug, "%s: ubf cache string, 5: %d", msg, hdr->cache_string_off);
     UBF_LOG(log_debug, "%s: ubf cache carray, 6: %d", msg, hdr->cache_carray_off);
+    
+    UBF_LOG(log_debug, "%s: ubf cache ptr, 6: %d", msg, hdr->cache_ptr_off);
+    UBF_LOG(log_debug, "%s: ubf cache ubf, 6: %d", msg, hdr->cache_view_off);
+    UBF_LOG(log_debug, "%s: ubf cache view, 6: %d", msg, hdr->cache_ubf_off);
 }
 /**
  * Update the cache (usable after merge)...
@@ -236,8 +240,27 @@ exprivate inline void ubf_cache_set(UBFH *p_ub, BFLDID fldid, int next_offset)
 #ifdef BIN_SEARCH_DEBUG
             UBF_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off=> %d", 
                     fn, uh->cache_carray_off);
+#endif      
+        case BFLD_CARRAY:
+            uh->cache_ptr_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "%s: BFLD_CARRAY, uh->cache_ptr_off=> %d", 
+                    fn, uh->cache_ptr_off);
+#endif      
+        case BFLD_PTR:
+            uh->cache_ubf_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "%s: BFLD_PTR, uh->cache_ubf_off=> %d", 
+                    fn, uh->cache_ubf_off);
+#endif      
+        case BFLD_UBF:
+            uh->cache_view_off=next_offset;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "%s: BFLD_UBF, uh->cache_view_off=> %d", 
+                    fn, uh->cache_view_off);
 #endif
             break;
+            
     }
 }
 /**
@@ -289,6 +312,24 @@ expublic inline void ubf_cache_shift(UBFH *p_ub, BFLDID fldid, int size_diff)
 #ifdef BIN_SEARCH_DEBUG
             UBF_LOG(log_debug, "%s: BFLD_STRING, uh->cache_carray_off+=%d => %d", 
                     fn, size_diff, uh->cache_carray_off);
+#endif      
+        case BFLD_CARRAY:
+            uh->cache_ptr_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "%s: BFLD_CARRAY, uh->cache_ptr_off+=%d => %d", 
+                    fn, size_diff, uh->cache_ptr_off);
+#endif
+        case BFLD_PTR:
+            uh->cache_ubf_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "%s: BFLD_PTR, uh->cache_ubf_off+=%d => %d", 
+                    fn, size_diff, uh->cache_ubf_off);
+#endif
+        case BFLD_UBF:
+            uh->cache_view_off+=size_diff;
+#ifdef BIN_SEARCH_DEBUG
+            UBF_LOG(log_debug, "%s: BFLD_UBF, uh->cache_view_off+=%d => %d", 
+                    fn, size_diff, uh->cache_view_off);
 #endif
             break;
     }
