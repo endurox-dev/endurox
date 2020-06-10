@@ -59,9 +59,6 @@ typedef struct
 {
     int magic; /* have some magic for context data */
     
-    /* bprint_impl.c */
-    Bnext_state_t bprint_state;
-    
     /* fdatatype.c */
     short tbuf_s; /* =0; */
     long tbuf_l;/*=0; */
