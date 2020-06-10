@@ -129,9 +129,6 @@ done
 export NDRX_MSGMAX=100
 export NDRX_MSGSIZEMAX=40000
 
-# Increase stack size
-ulimit -s 40000
-
 ################################################################################
 # In case if building with Postgresql DB database testing support
 # or building endurox-java with Oracle DB tests (03_xapostgres), then

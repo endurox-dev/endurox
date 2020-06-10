@@ -82,7 +82,6 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     char subtype_obuf[XATMI_SUBTYPE_LEN+1];
     double version;
     char *data;
-    char data_bin[CARR_BUFFSIZE+1];
     char *serialized_data=NULL;
     UBFH *p_ub=NULL;
     long size_used=EXFAIL;

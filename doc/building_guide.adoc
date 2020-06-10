@@ -367,9 +367,6 @@ export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 #  To complete unit tests:
 export NDRX_MSGSIZEMAX=1049600
 
-# Increase stack size
-ulimit -s 30751
-
 ################################################################################
 # In case if building with Oracle DB database testing support
 # i.e. having flag -DENABLE_TEST47=ON
