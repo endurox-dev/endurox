@@ -78,10 +78,11 @@
  *  if do_write is set, the data in buffer will be written to output.
  *  'buffer' may be reallocated.
  * @param dataptr1 optional argument to p_writef if callback present
+ * @param level this is recursive level used for printing embedded buffers
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
-          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1)
+          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1, int level)
 {
     int ret=EXSUCCEED;
     BFLDID bfldid;
@@ -92,14 +93,55 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
     char *cnv_buf = NULL;
     char *tmp_buf = NULL;
     BFLDLEN cnv_len;
+    char fmt_wdata[256];
+    char fmt_ndata[256];
+    int i;
+    Bnext_state_t bprint_state;
     
     UBF_TLS_ENTRY;
     
-    memset(&G_ubf_tls->bprint_state, 0, sizeof(G_ubf_tls->bprint_state));
-
+    memset(&bprint_state, 0, sizeof(bprint_state));
+    
+    for (i=0; i<level; i++)
+    {
+        fmt_wdata[i]='\t';
+        fmt_ndata[i]='\t';
+    }
+    
+    fmt_wdata[i]='%';
+    fmt_ndata[i]='%';
+    
+    i++;
+    fmt_wdata[i]='s';
+    fmt_ndata[i]='s';
+    
+    i++;
+    fmt_wdata[i]='\\';
+    fmt_ndata[i]='\\';
+            
+    i++;
+    fmt_wdata[i]='t';
+    fmt_ndata[i]='t';
+    
+    i++;
+    fmt_wdata[i]='%';
+    fmt_ndata[i]='\\';
+    
+    i++;
+    fmt_wdata[i]='s';
+    fmt_ndata[i]='n';
+    fmt_ndata[i+1]=EXEOS;
+    
+    i++;
+    fmt_wdata[i]='\\';
+    
+    i++;
+    fmt_wdata[i]='n';
+    fmt_ndata[i+1]=EXEOS;
+    
     bfldid = BFIRSTFLDID;
 
-    while(1==ndrx_Bnext(&G_ubf_tls->bprint_state, 
+    while(1==ndrx_Bnext(&bprint_state, 
             p_ub, &bfldid, &occ, NULL, &len, &p))
     {
         if (NULL!=tmp_buf)
@@ -117,7 +159,15 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
         fldtype=bfldid>>EFFECTIVE_BITS;
 
         /* All other data types needs to be converted */
-        if (BFLD_STRING!=fldtype && BFLD_CARRAY!=fldtype)
+        
+        if (BFLD_STRING==BFLD_UBF)
+        {
+            if (EXSUCCEED!=ndrx_Bfprint ((UBFH *)p, outf, p_writef, dataptr1, level))
+            {
+                /* TODO: */
+            }
+        }
+        else if (BFLD_STRING!=fldtype && BFLD_CARRAY!=fldtype)
         {
             cnv_buf=ndrx_Btypcvt(&cnv_len, BFLD_STRING, p, fldtype, len);
 
@@ -185,7 +235,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
         /* value is kept in p */
         if (len>0)
         {
-#define OUTPUT_FORMAT_WDATA "%s\t%s\n", ndrx_Bfname_int(bfldid), p
+/* #define OUTPUT_FORMAT_WDATA "%s\t%s\n", ndrx_Bfname_int(bfldid), p*/
+#define OUTPUT_FORMAT_WDATA fmt_wdata, ndrx_Bfname_int(bfldid), p
             if (NULL!=p_writef)
             {
                 char *tmp;
@@ -228,7 +279,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
         }
         else
         {
-#define OUTPUT_FORMAT_NDATA "%s\t\n", ndrx_Bfname_int(bfldid)
+#define OUTPUT_FORMAT_NDATA fmt_ndata, ndrx_Bfname_int(bfldid)
             
             if (NULL!=p_writef)
             {
