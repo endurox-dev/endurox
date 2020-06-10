@@ -38,6 +38,11 @@ set(VERSION "7.5.1")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
+string(REPLACE "." ";" VERSION_LIST ${VERSION})
+list(GET VERSION_LIST 0 NDRX_VERSION_MAJOR)
+list(GET VERSION_LIST 1 NDRX_VERSION_MINOR)
+list(GET VERSION_LIST 2 NDRX_VERSION_PATCH)
+
 
 ################################################################################
 # Check versions if defined, export build env
