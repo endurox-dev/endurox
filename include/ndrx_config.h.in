@@ -110,6 +110,10 @@
 #cmakedefine NDRX_BLD_COMMIT "@NDRX_BLD_COMMIT@"
 #cmakedefine NDRX_BLD_HASH "@NDRX_BLD_HASH@"
 
+#cmakedefine NDRX_VERSION_MAJOR "@NDRX_VERSION_MAJOR@"
+#cmakedefine NDRX_VERSION_MINOR "@NDRX_VERSION_MINOR@"
+#cmakedefine NDRX_VERSION_PATCH "@NDRX_VERSION_PATCH@"
+
 /* Use FS based registry for mq */
 #cmakedefine USE_FS_REGISTRY @USE_FS_REGISTRY@
 
