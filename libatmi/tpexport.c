@@ -194,7 +194,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
         NDRX_LOG(log_debug, "ibuf is binary... convert to b64");
         outlen = CARR_BUFFSIZE_B64_EOS;
         if (NULL==ndrx_base64_encode((unsigned char *)ibuf, size_existing, 
-                &outlen, CARR_BUFFSIZE_B64_EOS))
+                &outlen, b64_buf))
         {
                 NDRX_LOG(log_error, "Failed to convert to b64!");
                 EXFAIL_OUT(ret);
@@ -202,9 +202,9 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
 
         /* TODO: Where is EOS??? */
         
-        if (EXJSONSuccess!=exjson_object_set_string(root_object, "data", CARR_BUFFSIZE_B64_EOS))
+        if (EXJSONSuccess!=exjson_object_set_string(root_object, "data", b64_buf))
         {
-            NDRX_LOG(log_error, "Failed to set carray data=[%s]", CARR_BUFFSIZE_B64_EOS);
+            NDRX_LOG(log_error, "Failed to set carray data=[%s]", b64_buf);
             EXFAIL_OUT(ret);
         }
     }
