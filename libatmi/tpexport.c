@@ -53,6 +53,8 @@
 /*---------------------------Macros-------------------------------------*/
 #define CARR_BUFFSIZE       NDRX_MSGSIZEMAX
 #define CARR_BUFFSIZE_B64	(4 * (CARR_BUFFSIZE) / 3)
+/* Support #553 fixed */
+#define CARR_BUFFSIZE_B64_EOS   (CARR_BUFFSIZE_B64+1)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -76,7 +78,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     char buftype[16+1]={EXEOS};
     char subtype[XATMI_SUBTYPE_LEN]={EXEOS};
     size_t outlen;
-    char b64_buf[CARR_BUFFSIZE_B64+1];
+    char *b64_buf=NULL;
     long size_existing=EXFAIL;
 
     EXJSON_Value *root_value = exjson_value_init_object();
@@ -87,6 +89,15 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     EXJSON_Object *data_object = NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
+    
+    b64_buf=NDRX_MALLOC(CARR_BUFFSIZE_B64_EOS);
+    
+    if (NULL==b64_buf)
+    {
+        NDRX_LOG(log_error, "Failed to malloc %d bytes: %s", 
+            CARR_BUFFSIZE_B64_EOS, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
     
     /* how about carray ilen? */
     if (EXFAIL==(size_existing=ndrx_tptypes(ibuf, buftype, subtype)))
@@ -181,9 +192,9 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     else if ( 0 == strcmp(BUF_TYPE_CARRAY_STR, buftype))
     {
         NDRX_LOG(log_debug, "ibuf is binary... convert to b64");
-        outlen = sizeof(b64_buf);
+        outlen = CARR_BUFFSIZE_B64_EOS;
         if (NULL==ndrx_base64_encode((unsigned char *)ibuf, size_existing, 
-                &outlen, b64_buf))
+                &outlen, CARR_BUFFSIZE_B64_EOS))
         {
                 NDRX_LOG(log_error, "Failed to convert to b64!");
                 EXFAIL_OUT(ret);
@@ -191,9 +202,9 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
 
         /* TODO: Where is EOS??? */
         
-        if (EXJSONSuccess!=exjson_object_set_string(root_object, "data", b64_buf))
+        if (EXJSONSuccess!=exjson_object_set_string(root_object, "data", CARR_BUFFSIZE_B64_EOS))
         {
-            NDRX_LOG(log_error, "Failed to set carray data=[%s]", b64_buf);
+            NDRX_LOG(log_error, "Failed to set carray data=[%s]", CARR_BUFFSIZE_B64_EOS);
             EXFAIL_OUT(ret);
         }
     }
@@ -250,7 +261,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
         EXFAIL_OUT(ret);
     }
 
-    out:
+out:
 
     NDRX_LOG(log_debug, "%s: return %d", __func__, ret);
 
@@ -262,6 +273,11 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     if (NULL!=root_value)
     {
         exjson_value_free(root_value);
+    }
+    
+    if (NULL!=b64_buf)
+    {
+        NDRX_FREE(b64_buf);
     }
 
     return ret;
