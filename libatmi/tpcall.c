@@ -800,7 +800,7 @@ expublic int ndrx_tpgetrply (int *cd,
     char *pbuf = NULL;
     ssize_t rply_len;
     unsigned prio;
-    long pbuf_len;
+    size_t pbuf_len;
     tp_command_call_t *rply;
     typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
