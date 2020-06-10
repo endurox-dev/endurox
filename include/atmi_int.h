@@ -792,7 +792,7 @@ extern NDRX_API int ndrx_tpchkunsol(void);
 extern NDRX_API int ndrx_add_to_memq(char **pbuf, size_t pbuf_len, ssize_t rply_len);
 extern NDRX_API int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         char *data,  long len, long flags, int dispatch_local);
-extern NDRX_API void ndrx_process_notif(char *buf, long len);
+extern NDRX_API void ndrx_process_notif(char *buf, ssize_t len);
 extern NDRX_API char * ndrx_tprealloc (char *buf, long len);
 extern NDRX_API long	ndrx_tptypes (char *ptr, char *type, char *subtype);
 extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,

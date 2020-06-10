@@ -330,7 +330,7 @@ expublic void ndrx_process_notif(char *buf, ssize_t len)
     expublic buffer_obj_t * typed_buf = NULL;
     tp_notif_call_t *notif = (tp_notif_call_t *) buf;
     
-    NDRX_LOG(log_debug, "%s: Got notification from: [%s], data len: %d: ", 
+    NDRX_LOG(log_debug, "%s: Got notification from: [%s], data len: %ld: ", 
             __func__, notif->my_id, notif->data_len);
     
     if (NULL==G_atmi_tls->p_unsol_handler)
