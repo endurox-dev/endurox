@@ -63,7 +63,7 @@
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e /tmp/bridge-dom2.log -r</sysopt>
-            <appopt>-n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0 -R999999</appopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P8 -R999999</appopt>
         </server>
     </servers>
 </endurox>
