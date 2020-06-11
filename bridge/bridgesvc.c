@@ -228,6 +228,13 @@ expublic int poll_timer(void)
  */
 int b4poll(void)
 {
+    /* avoid over extensive queues. Have some free
+     * free thread (i.e. there is less jobs queued
+     * then free threads)
+     */
+    ndrx_thpool_wait_one(G_bridge_cfg.thpool_fromnet);
+    ndrx_thpool_wait_one(G_bridge_cfg.thpool_tonet);
+
     return exnet_b4_poll_cb();
 }
 
