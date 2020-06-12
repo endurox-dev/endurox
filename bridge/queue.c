@@ -96,6 +96,8 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
 {
     int ret = EXSUCCEED;
     in_msg_t *el, *elt;
+    int was_ok = EXFALSE;
+    int was_fail = EXFALSE;
     
     /**
      * Possible dead lock if service puts back in queue/ 
@@ -121,11 +123,22 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             if (EXSUCCEED!=(ret=ndrx_generic_q_send(el->destqstr, (char *)el->buffer, 
                     el->len, TPNOBLOCK, 0)))
             {
+                if (!was_fail)
+                {
+                    was_fail=EXTRUE;
+                }
+
                 NDRX_LOG(log_error, "Failed to send message to [%s]: %s",
                         el->destqstr, tpstrerror(ret));
             }
             else
             {
+
+                if (!was_ok)
+                {
+                    was_ok=EXTRUE;
+                }
+
                 /* locking here needed.. */
                 MUTEX_LOCK_V(M_in_q_lock);
                 /* remove from Q - ok */
@@ -148,6 +161,13 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     M_qrun_issued = EXFALSE;
     
     MUTEX_UNLOCK_V(M_in_q_lock);
+
+    /* reloop again if there are some unsent stuff... */
+    if (was_ok && was_fail)
+    {
+        /* run loop again */
+        ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
+    }
     
     return ret;
 }
