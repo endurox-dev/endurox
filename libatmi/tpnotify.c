@@ -173,11 +173,13 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
             /* Will do call in recursive way so that cluster code picks up
              * this dispatch...
              */
-            return ndrx_tpnotify(clientid, p_clientid_myid, 
+            ret = ndrx_tpnotify(clientid, p_clientid_myid, 
                         cltq, /* client q already built by broadcast */
                         data, len, flags, 
                         p_clientid_myid->nodeid, 
                         nodeid, usrname, cltname,ex_flags | TPCALL_BRCALL);
+            /* avoid memory leak */
+            goto out;
             
         }
     }
