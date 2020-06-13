@@ -1626,6 +1626,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     mqd->stamp_seq++;
     cur_stamp.stamp_seq = mqd->stamp_seq;
     
+    /* TODO: Remove from spin lock area: */
     ndrx_stopwatch_reset(&(mqd->stamp_time));
     memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
     
