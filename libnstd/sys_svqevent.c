@@ -541,64 +541,6 @@ out:
     return ret;
 }
 
-/* TODO: We need a full delete where we scan the FD hash and remove any related
- * MQDs and vice versa
- */
-
-#if 0
-- not used, now we tick every second...
-/**
- * Find next timeout time - time that we shall spend in sleep...
- * @return timeout for sleeping in poll mode
- */
-exprivate int ndrx_svq_mqd_hash_findtout(void)
-{
-    int tout = DFLT_TOUT;
-    long tmp;
-    ndrx_svq_mqd_hash_t * r, *rt;
-    struct timespec abs_timeout;
-    struct timeval  timeval;
-    
-    gettimeofday (&timeval, NULL);
-    abs_timeout.tv_sec = timeval.tv_sec;
-    abs_timeout.tv_nsec = timeval.tv_usec*1000;
-    
-    /* loop over the hash and compare stuff for current time,
-     * get delta
-     */
-    EXHASH_ITER(hh, (M_mon.mqdhash), r, rt)
-    {
-        tmp = ndrx_timespec_get_delta(&(r->abs_timeout), &abs_timeout);
-        
-        if (tmp < 1)
-        {
-            /* so we get msgs with delay, ma */
-            NDRX_LOG(log_debug, "For mqd %p timeout less than 0 (%ld) "
-                    "- default to 1 msec - slow system?",
-                    r->mqd, tmp);
-            tmp = 1;
-        }
-        
-        /* calculate delta time 
-         * get the seconds from diff
-         */
-        tmp = ndrx_ceil(tmp, 1000);
-        
-        NDRX_LOG(log_debug, "Requesting for mqd %p to %d sec",
-                r->mqd, tmp);
-        
-        if (tmp < tout)
-        {
-            tout = tmp;
-        }
-    }
-    
-    NDRX_LOG(log_debug, "Next timeout requested to %d", tout);
-    
-    return (int)tout;
-}
-#endif
-
 /**
  * Dispatch any pending timeouts
  * @return EXSUCCEED/EXFAIL
@@ -1632,34 +1574,6 @@ expublic int ndrx_svq_moncmd_term(void)
     
     return ret;
 }
-
-#if 0
-- not used anymore.
-/**
- * Remove message queue from the monitor.
- * Well what will happen if Queue is closed and mqd deleted?
- * we will not be able to delete them from hashes...
- * thus close shall finish off any timeouts
- * @param mqd message queue descriptor to remove
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_svq_moncmd_close(mqd_t mqd)
-{
-    int ret;
-    ndrx_svq_mon_cmd_t cmd;
-    
-    memset(&cmd, 0, sizeof(cmd));
-    
-    cmd.cmd = NDRX_SVQ_MON_CLOSE;
-    cmd.mqd = mqd;
-
-    
-    /* perform sync off */
-    ret = ndrx_svq_moncmd_send(&cmd);
-
-    return ret;
-}
-#endif
 
 /**
  * Send/Receive data with timeout and other events option
