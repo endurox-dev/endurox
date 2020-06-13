@@ -53,9 +53,9 @@ add_library (ndrxconf STATIC
    	        envapi.c)
 
 if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
-    target_link_libraries(ndrxconf atmisrvinteg atmi nstd)
+    target_link_libraries(ndrxconf atmi nstd)
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
-    target_link_libraries(ndrxconf atmisrvinteg atmi nstd)
+    target_link_libraries(ndrxconf atmi nstd)
 endif()
 
 # vim: set ts=4 sw=4 et smartindent:
