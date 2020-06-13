@@ -1107,7 +1107,7 @@ expublic int emq_setattr(mqd_t emqd, const struct mq_attr *emqstat, struct mq_at
     else
         emqinfo->emqi_flags &= ~O_NONBLOCK;
 
-    MUTEX_UNLOCK_V(&emqhdr->emqh_lock);
+    MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     NDRX_LOG(log_dump, "into: emq_setattr - return 0");
     return(0);
 }
