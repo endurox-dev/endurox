@@ -77,6 +77,9 @@ struct xa_switch_t *ndrx_get_xa_switch(void)
         NDRX_LOG(log_warn, "ndrx_xa_builtin_get symbol not found");
         goto out;
     }
+
+    NDRX_LOG(log_debug, "ndrx_xa_builtin_get func ptr %p", f);
+
     /* get the switch */
     ret = f();
     
