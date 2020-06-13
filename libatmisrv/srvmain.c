@@ -572,12 +572,12 @@ expublic int ndrx_init(int argc, char** argv)
     /* check thread option.. */
     if (!_tmbuilt_with_thread_option && G_server_conf.maxdispatchthreads > 1)
     {
-        NDRX_LOG(log_error, "Warning ! Server not built for mulit-threading, "
+        NDRX_LOG(log_error, "Warning ! Server not built for multi-threading, "
                 "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d, falling back to single thread mode", 
                 G_server_conf.mindispatchthreads,
                 G_server_conf.maxdispatchthreads
                 );
-        userlog("Warning ! Server not built for mulit-threading, "
+        userlog("Warning ! Server not built for multi-threading, "
                 "but MINDISPATCHTHREADS=%d MAXDISPATCHTHREADS=%d, falling back to single thread mode", 
                 G_server_conf.mindispatchthreads,
                 G_server_conf.maxdispatchthreads);
