@@ -490,6 +490,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 #endif
     
+    if (EXSUCCEED!=ndrx_br_init_queue())
+    {
+        NDRX_LOG(log_error, "Failed to init queue runner");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Reset network structs */
     exnet_reset_struct(&G_bridge_cfg.net);
     
@@ -634,6 +640,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         exnet_close_shut(&G_bridge_cfg.net);
     }
     
+    ndrx_br_uninit_queue();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
