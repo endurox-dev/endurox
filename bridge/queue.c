@@ -75,6 +75,7 @@ exprivate volatile int M_qrun_issued = EXFALSE;/**< Indicate the that there is q
                                      * progress, because periodic timer then could
                                      * submit job several times
                                      */
+exprivate NDRX_SPIN_LOCKDECL(M_qrun_issued_lock);
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -82,6 +83,23 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off);
 exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q, 
         int pack_type, char *destqstr);
 
+/**
+ * Perform library inits
+ */
+expublic int ndrx_br_init_queue(void)
+{
+    NDRX_SPIN_INIT_V(M_qrun_issued_lock);
+    
+    return EXSUCCEED;
+}
+
+/**
+ * Perform un-init of the queue lib
+ */
+expublic void ndrx_br_uninit_queue(void)
+{
+    NDRX_SPIN_DESTROY_V(M_qrun_issued_lock);
+}
 
 /**
  * Run queue from thread.
@@ -98,6 +116,24 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     in_msg_t *el, *elt;
     int was_ok = EXFALSE;
     int was_fail = EXFALSE;
+    int did_lock = EXFALSE;
+    
+    
+    NDRX_SPIN_LOCK_V(M_qrun_issued_lock);
+    
+    if (!M_qrun_issued)
+    {
+        M_qrun_issued=EXTRUE;
+        did_lock=EXTRUE;
+    }
+    
+    NDRX_SPIN_UNLOCK_V(M_qrun_issued_lock);
+    
+    if (!did_lock)
+    {
+        /* nothing to-do some-one already running this code section */
+        goto out;
+    }
     
     /**
      * Possible dead lock if service puts back in queue/ 
@@ -157,11 +193,16 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
         MUTEX_LOCK_V(M_in_q_lock);
     }
     
-    /* only when locked to avoid twice start */
-    M_qrun_issued = EXFALSE;
-    
     MUTEX_UNLOCK_V(M_in_q_lock);
 
+    
+    /* we do not run it any more... 
+     * Thus give a runner flag away...
+     */
+    NDRX_SPIN_LOCK_V(M_qrun_issued_lock);
+    M_qrun_issued=EXFALSE;
+    NDRX_SPIN_UNLOCK_V(M_qrun_issued_lock);
+    
     /* reloop again if there are some unsent stuff... */
     if (was_ok && was_fail)
     {
@@ -169,36 +210,17 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
         ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
     }
     
+out:
     return ret;
 }
 
 /**
  * Perform periodic run of the queue
+ * The thread func will decide is it duplicate run...
  */
 expublic void br_run_q(void)
 {
-    
-    /* check if there is something is in q & not locked, then submit to
-     * incoming worker thread to finish this off...
-     */
-    
-    /* try lock, not cannot lock, then already in progress... 
-     * Also the locking would mean that other worker thread would lock up
-     * if trying to add to runner Q.
-     * So better would be to do lock for each message.
-     */
-    if (EXSUCCEED==MUTEX_TRYLOCK_V(M_in_q_lock))
-    {
-        if (!M_qrun_issued && NULL!=M_in_q)
-        {
-            /* submit the job... */
-            M_qrun_issued = EXTRUE;
-            
-            ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
-        }
-        
-        MUTEX_UNLOCK_V(M_in_q_lock);
-    }
+    ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)br_run_q_th, NULL);
 }
 
 /**
