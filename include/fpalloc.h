@@ -99,6 +99,7 @@ extern "C" {
     
 /**
  * Feedback alloc block memory block
+ * TODO: move to internal header
  */
 typedef struct ndrx_fpablock ndrx_fpablock_t;
 struct  ndrx_fpablock
@@ -111,6 +112,7 @@ struct  ndrx_fpablock
 
 /**
  * One size stack for allocator
+ * TOOD: Move to internal header
  */
 typedef struct ndrx_fpastack ndrx_fpapool_t;
 struct  ndrx_fpastack
