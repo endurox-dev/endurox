@@ -65,6 +65,8 @@ Ensure(test_nstd_fpa_dyn)
     char *ptr2[1];
     ndrx_fpablock_t *hdr[1];
     
+    unsetenv(CONF_NDRX_FPAOPTS);
+
     ptr[0] = ndrx_fpmalloc(NDRX_FPA_0_SIZE, 0);
     hdr[0] = (ndrx_fpablock_t *)(ptr[0] - sizeof(ndrx_fpablock_t));
     assert_not_equal(ptr[0], NULL);
@@ -127,6 +129,8 @@ Ensure(test_nstd_fpa_limits)
     int i;
     ndrx_fpapool_t stats;
     
+    unsetenv(CONF_NDRX_FPAOPTS);
+
     /* load the bmin blocks */
     for (i=0; i<NDRX_FPA_4_DNUM; i++)
     {
@@ -234,6 +238,8 @@ Ensure(test_nstd_fpa_threaded)
     pthread_t th2;
     int ret;
     
+    unsetenv(CONF_NDRX_FPAOPTS);
+
     /* build up the pool */
     for (i=0; i<NDRX_FPA_SYSBUF_DNUM; i++)
     {
@@ -369,6 +375,8 @@ Ensure(test_nstd_fpa_realloc)
     ndrx_fpablock_t *hdr;
     char *ptr, *ptr2;
     
+    unsetenv(CONF_NDRX_FPAOPTS);
+
     ptr = ndrx_fpmalloc(NDRX_FPA_0_SIZE-100, 0);
     
     NDRX_STRCPY_SAFE_DST(ptr, "HELLO WORLD", (NDRX_FPA_0_SIZE-100));
