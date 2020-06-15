@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <nstdutil.h>
 #include <userlog.h>
+#include <nstd_int.h>
 
 #include "ndebug.h"
 /*---------------------------Externs------------------------------------*/
