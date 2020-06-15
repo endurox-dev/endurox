@@ -46,7 +46,8 @@
 #include "ubfunit1.h"
 #include "xatmi.h"
 #include "nstopwatch.h"
-#include "fpalloc.h"
+#include <nstd_int.h>
+#include <fpalloc.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

@@ -42,9 +42,6 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
-#include <pthread.h>
-#include <sys_primitives.h> /**< spin locks for MacOS */
-#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_FPA_MAGIC          0xFEEDBCA1  /**< FPA Block magic            */
@@ -96,42 +93,11 @@ extern "C" {
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-    
-/**
- * Feedback alloc block memory block
- * TODO: move to internal header
- */
-typedef struct ndrx_fpablock ndrx_fpablock_t;
-struct  ndrx_fpablock
-{
-    int magic;              /**< magic constant                             */
-    int poolno;               /**< slot number to which block belongs         */
-    int flags;              /**< flags for given alloc block                */
-    ndrx_fpablock_t *next;  /**< Next free block                            */
-};
-
-/**
- * One size stack for allocator
- * TOOD: Move to internal header
- */
-typedef struct ndrx_fpastack ndrx_fpapool_t;
-struct  ndrx_fpastack
-{
-    int bsize;              /**< this does not include header size          */
-    int flags;              /**< flags for given entry                      */
-    int num_blocks;         /**< min number of blocks int given size range  */
-    int cur_blocks;         /**< Number of blocks allocated                 */
-    long allocs;            /**< number of allocs done, for stats           */
-    ndrx_fpablock_t *stack; /**< stack head                                 */
-    NDRX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size */
-};
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 extern NDRX_API void ndrx_fpuninit(void);
-extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 extern NDRX_API void *ndrx_fpmalloc(size_t size, int flags);
 extern NDRX_API void *ndrx_fprealloc(void *ptr, size_t size);
 extern NDRX_API void ndrx_fpfree(void *);
