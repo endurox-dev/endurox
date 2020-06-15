@@ -70,7 +70,7 @@
 /**
  * List of malloc pools with different sizes and min/max settings
  */
-exprivate volatile ndrx_fpapool_t M_fpa_pools[NDRX_FPA_MAX] =
+exprivate ndrx_fpapool_t M_fpa_pools[NDRX_FPA_MAX] =
 {  
     /* size                 flags   */
      {NDRX_FPA_0_SIZE,       NDRX_FPNOFLAG, NDRX_FPA_0_DNUM}      /* 0 */
@@ -109,7 +109,7 @@ expublic void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats)
 expublic void ndrx_fpuninit(void)
 {
     int i;
-    ndrx_fpablock_t *freebl;
+    volatile ndrx_fpablock_t *freebl;
     /* free up all allocated pages... */
     
     if (M_init_first)
@@ -138,7 +138,7 @@ expublic void ndrx_fpuninit(void)
             
             if (NULL!=freebl)
             {
-                NDRX_FREE(freebl);
+                NDRX_FREE((void *)freebl);
             }
             
         } 
@@ -411,7 +411,7 @@ out:
  */
 expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
 {
-    ndrx_fpablock_t *addr = NULL;
+    volatile ndrx_fpablock_t *addr = NULL;
     int poolno=EXFAIL;
     
     /* do the init. */
@@ -435,7 +435,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
     {
         addr=malloc(size);
         NDRX_FPDEBUG("all malloc %p", addr);
-        return addr;
+        return (void *)addr;
     }
     
     /* bin search... for the descriptor */
