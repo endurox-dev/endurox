@@ -1503,7 +1503,7 @@ expublic int ndrx_tpdiscon (int cd)
     }
 
     /* Send disconnect command to server */
-    if (EXFAIL!=conv->reply_q && EXFAIL==ndrx_tpsend (cd, NULL, 0L, 0L, 
+    if ((mqd_t)EXFAIL!=conv->reply_q && EXFAIL==ndrx_tpsend (cd, NULL, 0L, 0L, 
             &revent, ATMI_COMMAND_DISCONN))
     {
         NDRX_LOG(log_debug, "Failed to send disconnect to server - IGNORE!");

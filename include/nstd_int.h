@@ -55,9 +55,9 @@ typedef struct ndrx_fpablock ndrx_fpablock_t;
 struct  ndrx_fpablock
 {
     int magic;              /**< magic constant                             */
-    int poolno;               /**< slot number to which block belongs         */
+    int poolno;             /**< slot number to which block belongs         */
     int flags;              /**< flags for given alloc block                */
-    ndrx_fpablock_t *next;  /**< Next free block                            */
+    volatile ndrx_fpablock_t *next;  /**< Next free block                   */
 };
 
 /**
@@ -67,13 +67,13 @@ struct  ndrx_fpablock
 typedef struct ndrx_fpastack ndrx_fpapool_t;
 struct  ndrx_fpastack
 {
-    int bsize;              /**< this does not include header size          */
-    int flags;              /**< flags for given entry                      */
-    int num_blocks;         /**< min number of blocks int given size range  */
-    int cur_blocks;         /**< Number of blocks allocated                 */
-    long allocs;            /**< number of allocs done, for stats           */
-    ndrx_fpablock_t *stack; /**< stack head                                 */
-    NDRX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size */
+    int bsize;                       /**< this does not include header size          */
+    int flags;                       /**< flags for given entry                      */
+    volatile int num_blocks;         /**< min number of blocks int given size range  */
+    volatile int cur_blocks;         /**< Number of blocks allocated                 */
+    volatile long allocs;            /**< number of allocs done, for stats           */
+    volatile ndrx_fpablock_t *stack; /**< stack head                                 */
+    NDRX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size         */
 };
 
 /*---------------------------Globals------------------------------------*/
