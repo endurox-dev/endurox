@@ -124,7 +124,6 @@ typedef struct
     
 } ndrx_svq_evmon_t;
 
-
 /*---------------------------Globals------------------------------------*/
 
 /* have a thread handler for tout monitoring thread! */
@@ -534,8 +533,11 @@ expublic int ndrx_svq_mqd_close(mqd_t mqd)
     
     NDRX_SPIN_DESTROY_V(mqd->rcvlock);
     NDRX_SPIN_DESTROY_V(mqd->rcvlockb4);
+/*
+    why?
     MUTEX_TRYLOCK_V(mqd->barrier);
     MUTEX_TRYLOCK_V(mqd->qlock);
+*/
     
 out:
     return ret;
@@ -771,7 +773,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
 
 out:
     MUTEX_UNLOCK_V(mqd->barrier);
-    
+
     return ret;        
 }
 
@@ -789,7 +791,7 @@ exprivate void ndrx_svq_signal_action(int sig)
     NDRX_LOG(log_debug, "Signal action");
      * !!!! Bug #530 Signal handler - not safe functions used.
      * */
-    M_signalled = EXTRUE;
+    M_signalled = sig;
     return;
 }
 
@@ -1360,7 +1362,7 @@ expublic int ndrx_svq_event_init(void)
         NDRX_LOG(log_error, "Failed to init sigaction: %s" ,strerror(err));
         EXFAIL_OUT(ret);
     }
-    
+
     /* At this moment we need to bootstrap a timeout monitoring thread.. 
      * the stack size of this thread could be small one because it
      * will mostly work with dynamically allocated memory..
@@ -1738,6 +1740,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      */
     if (!M_signalled)
     {
+
         if (is_send)
         {
             ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
@@ -1746,7 +1749,11 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
         {
             ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
         }
-        err=errno;
+
+        if (EXFAIL==ret)
+        {
+            err=errno;
+        }
     }
     else
     {
@@ -1845,7 +1852,7 @@ out:
      */
     if (EXSUCCEED==ret && NULL==*ev && EINTR==err)
     {
-        NDRX_LOG(log_warn, "Interrupted by external signal");
+        NDRX_LOG(log_error, "Interrupted by external signal, M_signalled=%d", M_signalled);
         ret=EXFAIL;
     }
 
