@@ -830,7 +830,7 @@ out:
         tperrno=err;
     }
 
-    NDRX_LOG(log_debug, "%s: ret= %d cd=%d",  __func__, ret);
+    NDRX_LOG(log_debug, "%s: ret= %d cd=%d",  __func__, ret, cd);
 
     if (EXFAIL!=ret)
     	return cd;
