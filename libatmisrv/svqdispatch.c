@@ -294,7 +294,7 @@ expublic int sv_serve_call(int *service, int *status,
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_debug, "Received call already expired!  call age = %ld s, client timeout = %d"
+        NDRX_LOG(log_debug, "Received call already expired!  call age = %ld s, client timeout = %d "
                         "cd: %d timestamp: %d (id: %d%d) callseq: %u, "
 			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
                         " reply_to: %s, call_stack: %s",
