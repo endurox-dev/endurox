@@ -532,8 +532,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
             goto out;/*<<<< we are done.*/
         }
         
-	ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
-	    __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
+	    ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
+	        __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
         
         EXFAIL_OUT(ret);
     }
