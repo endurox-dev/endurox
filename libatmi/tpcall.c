@@ -1198,6 +1198,13 @@ expublic int ndrx_tpcall (char *svc, char *idata, long ilen,
     }
 
 out:
+
+    /* Bug #560 */
+    if (EXSUCCEED!=ret && TPETIME==tperrno)
+    {
+         ndrx_tpcancel(cd_req);
+    }
+    
     NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);
 
     /* tpcall cache implementation: add to cache if required */
@@ -1205,7 +1212,7 @@ out:
     {
         int ret2;
         
-        /* lookup cache */
+        /* lookup cache, what about tperrno?*/
         if (EXSUCCEED!=(ret2=ndrx_cache_save (svc, *odata, 
             *olen, tperrno, G_atmi_tls->M_svc_return_code, 
                 G_atmi_env.our_nodeid, flags, EXFAIL, EXFAIL, EXFALSE)))

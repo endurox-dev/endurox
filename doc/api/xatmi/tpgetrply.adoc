@@ -48,6 +48,11 @@ different buffer type is received than original, then error *TPEINVAL* is return
 *TPNOABORT* Do not abort global transaction (if one in progress), even if service
 failed.
 
+If case if reply was requested for particular 'cd' and timeout was received 
+(*TPETIME*), function does not cancel the 'cd'. Thus if server process
+the request slower than timeout value, still it is possible to receive the
+response data with several tpgetrply() attempts on particular 'cd'.
+
 RETURN VALUE
 ------------
 On success, *tpgetrply()* returns 0; on error, -1 is returned, with 
