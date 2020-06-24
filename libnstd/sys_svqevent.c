@@ -137,6 +137,9 @@ exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal? 
 exprivate MUTEX_LOCKDECL(M_mon_lock_mq); /**< Mutex lock for shared M_mon access, mq  */
 exprivate MUTEX_LOCKDECL(M_mon_lock_fd); /**< Mutex lock for shared M_mon access, fd  */
 
+exprivate int M_scanunit = CONF_NDRX_SCANUNIT_DFLT;  /**< ms for wait on poll q */
+exprivate int M_scanunit_was_init = EXFALSE;         /**< i.e used by ndrxd     */
+
 /* we need two hash lists
  * - the one goes by mqd to list/update timeout registrations
  *   from this list we calculate the next wakeup too...
@@ -806,7 +809,6 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
 {
     int retpoll;
     int ret = EXSUCCEED;
-    int timeout;
     int i, moc, donext;
     int err;
     ndrx_svq_mon_cmd_t cmd;
@@ -869,19 +871,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     /* wait for event... */
     while (!M_shutdown)
     {
-        /* timeout = ndrx_svq_mqd_hash_findtout(); 
-        
-        if (EXFAIL==timeout || 0==timeout)
-        {
-            NDRX_LOG(log_error, "Invalid System V poller timeout!");
-            userlog("Invalid System V poller timeout!");
-            EXFAIL_OUT(ret);
-        }
-        */
-        
-        timeout = 1;    /* sleep 1 sec.. */
-        NDRX_LOG(6, "About to poll for: %d sec nrfds=%d",
-                timeout, M_mon.nrfds);
+
+        NDRX_LOG(6, "About to poll for: %d ms nrfds=%d",
+                M_scanunit, M_mon.nrfds);
         
         moc=0;
         donext=EXTRUE;
@@ -931,9 +923,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         
         MUTEX_UNLOCK_V(M_mon_lock_fd);
         
-        retpoll = poll( fdtabmo_tmp, moc, timeout*1000);
-        
-        /* syncfd = EXFALSE; */
+        retpoll = poll( fdtabmo_tmp, moc, M_scanunit);
         
         NDRX_LOG(6, "poll() ret = %d", retpoll);
         if (EXFAIL==retpoll)
@@ -1332,6 +1322,20 @@ out:
 }
 
 /**
+ * Set the timeout-thread scan unit
+ * @param ms milliseconds to set
+ */
+expublic int ndrx_svq_scanunit_set(int ms)
+{
+    int prev_val = M_scanunit;
+    
+    M_scanunit_was_init=EXTRUE;
+    M_scanunit=ms;
+    
+    return prev_val;
+}
+
+/**
  * Setup basics for Event handling for System V queues
  * @return EXSUCCEED/EXFAIL
  */
@@ -1361,6 +1365,41 @@ expublic int ndrx_svq_event_init(void)
         err = errno;
         NDRX_LOG(log_error, "Failed to init sigaction: %s" ,strerror(err));
         EXFAIL_OUT(ret);
+    }
+    
+    /* if ndrxd applied the setting, do not use the env anymore. */
+    if (first)
+    {
+        if (!M_scanunit_was_init)
+        {
+            char *p = getenv(CONF_NDRX_SCANUNIT);
+
+            if (NULL!=p)
+            {
+                if (!ndrx_is_numberic(p))
+                {
+                    NDRX_LOG(log_error, "ERROR ! %s is not number! Got [%s]", 
+                            CONF_NDRX_SCANUNIT, p);
+
+                    userlog("ERROR ! %s is not number! Got [%s]", 
+                            CONF_NDRX_SCANUNIT, p);
+                    EXFAIL_OUT(ret);
+                }
+
+                M_scanunit = atoi(p);
+
+                if (M_scanunit < 1)
+                {
+                    NDRX_LOG(log_error, "ERROR ! %s is than min %d ms! Got %d", 
+                            CONF_NDRX_SCANUNIT, CONF_NDRX_SCANUNIT_MIN, M_scanunit);
+
+                    userlog("ERROR ! %s is than min %d ms! Got %d", 
+                            CONF_NDRX_SCANUNIT, CONF_NDRX_SCANUNIT_MIN, M_scanunit);
+                    EXFAIL_OUT(ret);
+                }
+            }
+        }
+        NDRX_LOG(log_info, "System-V Scan unit set to %d ms", M_scanunit);
     }
 
     /* At this moment we need to bootstrap a timeout monitoring thread.. 
