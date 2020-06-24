@@ -130,6 +130,7 @@ add_subdirectory (test074_sanitulog)
 add_subdirectory (test075_dispthread)
 add_subdirectory (test076_dispthreadxa)
 add_subdirectory (test077_diedslowstrt)
+add_subdirectory (test078_tpacallmix)
 
 ################################################################################
 # Master test case driver
