@@ -155,13 +155,15 @@ out:
  * Second row is title
  * and following are data
  * @param table ptr to table
+ * @param coltypes array of column types - int (numeric = 0, string = 1)
  */
-expublic void ndrx_tab_print(ndrx_growlist_t *table)
+expublic void ndrx_tab_print(ndrx_growlist_t *table, ndrx_growlist_t *coltypes)
 {
     int col, row = 0;
     ndrx_growlist_t **col_cur;
     char **val_cur;
     long *width;
+    long *typ; /* have some align... */
     int first = 0;
             
     while (1)
@@ -170,7 +172,7 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table)
         {
             
             col_cur = (ndrx_growlist_t **)(table->mem + sizeof(ndrx_growlist_t *)*col);
-            
+            typ=(long *)(coltypes->mem + sizeof(long)*col);
             if (row > (*col_cur)->maxindexused)
             {
                 goto out;
@@ -183,7 +185,14 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table)
             {
                 if (0==first)
                 {
-                    fprintf(stderr, "%-*s ", (int)*width, *val_cur);
+                    if (BFLD_STRING==*typ || BFLD_CARRAY==*typ)
+                    {
+                        fprintf(stderr, "%-*s ", (int)*width, *val_cur);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "%*s ", (int)*width, *val_cur);
+                    }
                 }
                 else
                 {
@@ -199,7 +208,14 @@ expublic void ndrx_tab_print(ndrx_growlist_t *table)
             }
             else if (row > 1)
             {
-                fprintf(stdout, "%-*s ", (int)*width, *val_cur);
+                if (BFLD_STRING==*typ || BFLD_CARRAY==*typ)
+                {
+                    fprintf(stdout, "%-*s ", (int)*width, *val_cur);
+                }
+                else
+                {
+                    fprintf(stdout, "%*s ", (int)*width, *val_cur);
+                }
             }
         }
         

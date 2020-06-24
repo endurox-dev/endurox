@@ -103,7 +103,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
     FIX_SVC_NM_DIRECT(qspace, 9);
     FIX_SVC_NM_DIRECT(qname, 9);
     
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %s",
+    fprintf(stdout, "%2d %5d %-9.9s %-9.9s %-5.5s %s",
             nodeid, 
             srvid, 
             qspace, 
