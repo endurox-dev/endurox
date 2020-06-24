@@ -270,6 +270,7 @@ extern NDRX_API int ndrx_svq_moncmd_rmfd(int fd);
 extern NDRX_API mqd_t ndrx_svq_mainq_get(void);
 
 extern NDRX_API int ndrx_svq_event_init(void);
+extern NDRX_API int ndrx_svq_scanunit_set(int ms);
 
 /* internals... */
 extern NDRX_API int ndrx_svqshm_init(int attach_only);
