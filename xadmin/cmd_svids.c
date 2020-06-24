@@ -74,7 +74,7 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     
     memset(&list, 0, sizeof(list));
     
-    if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, EXTRUE))
+    if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, NDRX_SV_RESTYPE_QUE))
     {
         fprintf(stderr, "Failed to list System V queues\n");
         NDRX_LOG(log_error, "Failed to list System V queues");
@@ -86,7 +86,7 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         
     for (i=0; i<=list.maxindexused; i++)
     {
-        fprintf(stdout, "%d\n", ((int *)list.mem)[i]);
+        fprintf(stdout, "%12d\n", ((int *)list.mem)[i]);
     }
     
 out:
@@ -112,7 +112,7 @@ expublic int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
     
     memset(&list, 0, sizeof(list));
     
-    if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, EXFALSE))
+    if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, NDRX_SV_RESTYPE_SEM))
     {
         fprintf(stderr, "Failed to list System V semaphores\n");
         NDRX_LOG(log_error, "Failed to list System V Semaphores");
@@ -124,7 +124,7 @@ expublic int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
         
     for (i=0; i<=list.maxindexused; i++)
     {
-        fprintf(stdout, "%d\n", ((int *)list.mem)[i]);
+        fprintf(stdout, "%12d\n", ((int *)list.mem)[i]);
     }
     
 out:

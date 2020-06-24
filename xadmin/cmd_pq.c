@@ -89,7 +89,7 @@ expublic int pq_rsp_process(command_reply_t *reply, size_t reply_len)
                 strcat(q_hist, " ");
         }
         
-        fprintf(stdout, "%-12.12s %-10d %-7d %s\n", 
+        fprintf(stdout, "%-12.12s %10d %7d %s\n", 
                 svc, pq_info->pq_info[1], pq_info->pq_info[0],q_hist);
     }
     

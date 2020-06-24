@@ -66,7 +66,7 @@ exprivate char M_qspace[XATMI_SERVICE_NAME_LENGTH+1] = "";
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Nd SRVID MSGID (STR/Base64 mod)                       TSTAMP (UTC)      TRIES L\n");
+    fprintf(stderr, "Nd SRVID MSGID (STR/Base64 mod)                            TSTAMP (UTC) TRIES L\n");
     fprintf(stderr, "-- ----- -------------------------------------------- ----------------- ----- -\n");
 }
 
@@ -106,7 +106,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
         EXFAIL_OUT(ret);
     }    
        
-    fprintf(stdout, "%-2d %-5d %-44.44s %-17.17s %-5.5s %s",
+    fprintf(stdout, "%2d %5d %-44.44s %17.17s %5.5s %s",
             nodeid, 
             srvid, 
             msgid_str,

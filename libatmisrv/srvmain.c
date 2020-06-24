@@ -620,7 +620,8 @@ expublic int ndrx_init(int argc, char** argv)
     /* Default number of events supported by e-poll */
     G_server_conf.max_events = 1;
     
-    /* format the request queue */
+#ifdef EX_USE_SYSVQ
+    /* format the request queue - only for system v*/
     if (EXEOS==rqaddress[0])
     {
         /* so name not set, lets build per binary request address... */
@@ -637,6 +638,7 @@ expublic int ndrx_init(int argc, char** argv)
         ndrx_epoll_mainq_set(tmp);
         NDRX_STRCPY_SAFE(G_server_conf.rqaddress, tmp);
     }
+#endif
     
 out:
     return ret;
