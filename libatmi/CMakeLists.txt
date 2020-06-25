@@ -99,6 +99,7 @@ add_library (objatmi OBJECT
                 tpexport.c
                 tx.c
                 cltshm.c
+                tpcrypto.c
             )
 
 # shared libraries need PIC

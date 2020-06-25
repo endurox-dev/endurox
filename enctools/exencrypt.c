@@ -64,6 +64,7 @@ int main(int argc, char** argv)
     char *manual_argv[2] = {argv[0], temp_buf};
     char **enc_ptr = argv;
     int i;
+    long len;
     
     /* pull in plugin loader.. */
     if (argc <= 1)
@@ -88,7 +89,8 @@ int main(int argc, char** argv)
         /* Pull-in plugins, by debug... */
         NDRX_LOG(6, "Encrypting [%s]", enc_ptr[i]);
         
-        if (EXSUCCEED!=ndrx_crypto_enc_string(enc_ptr[i], encbuf, sizeof(encbuf)))
+        len=sizeof(encbuf);
+        if (EXSUCCEED!=ndrx_crypto_enc_string(enc_ptr[i], encbuf, &len))
         {
             NDRX_LOG(log_error, "Failed to encrypt string: %s", Nstrerror(Nerror));
             fprintf(stderr, "Failed to encrypt string: %s\n", Nstrerror(Nerror));
