@@ -117,6 +117,15 @@ expublic char * ndrx_Necodestr(int err)
 }
 
 /**
+ * Return current error buffer
+ * @return ptr to error buffer from TLS
+ */
+expublic char * ndrx_Nemsg_buf(void)
+{
+    return G_nstd_tls->M_nstd_error_msg_buf;
+}
+
+/**
  * Extended version. This will print internal error message what happened.
  * This is not thread safe (as all other functions).
  * @param error_code
