@@ -53,12 +53,15 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Test - executables ###############################
 add_executable (atmiclt43 atmiclt43.c)
+add_executable (atmiclt43_tp atmiclt43_tp.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmiclt43 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt43_tp atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmiclt43 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt43_tp PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
 
