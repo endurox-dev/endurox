@@ -458,7 +458,7 @@ expublic char * ndrx_str_env_subs_len(char * str, int buf_size)
                          * space of the data will be shorter or the same size or smaller
                          * encrypted block.
                          */
-                        if (EXSUCCEED!=ndrx_crypto_dec_string(pval, tempbuf, bufsz))
+                        if (EXSUCCEED!=ndrx_crypto_dec_string(pval, tempbuf, &bufsz))
                         {
                             userlog("Failed to decrypt [%s] string: %s",
                                     pval, Nstrerror(Nerror));
