@@ -63,8 +63,14 @@ export NDRX_CONFIG=$TESTDIR/ndrxconfig.xml
 export NDRX_DMNLOG=$TESTDIR/ndrxd.log
 export NDRX_LOG=$TESTDIR/ndrx.log
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
-# Override timeout!
-export NDRX_TOUT=4
+# for ndrxd systemv, for other ignored:
+export NDRX_SCANUNIT=3000
+
+# Override timeout, have a tice as much of scanunit
+# should have even more. in worst case for system-v it could be:
+# checkpm*NDRX_SCANUNIT, thus 15, lets use then 20
+# this is due to sanity will be picked up only at scanunit intervals..
+export NDRX_TOUT=20
 
 #
 # Generic exit function
@@ -89,12 +95,14 @@ xadmin start -y || go_out 1
 # Have some wait for ndrxd goes in service
 sleep 1
 
+# for systemv, run clients fast
+export NDRX_SCANUNIT=250
 atmiclt_$TESTNO &
 atmiclt_$TESTNO &
 atmiclt_$TESTNO &
 atmiclt_$TESTNO &
 
-sleep 6
+sleep 40
 
 # We should have in log files OK-TPETIME & OK-TPESVCERR
 

@@ -794,7 +794,7 @@ extern NDRX_API int ndrx_tpchkunsol(void);
 extern NDRX_API int ndrx_add_to_memq(char **pbuf, size_t pbuf_len, ssize_t rply_len);
 extern NDRX_API int ndrx_tpbroadcast_local(char *nodeid, char *usrname, char *cltname,
         char *data,  long len, long flags, int dispatch_local);
-extern NDRX_API void ndrx_process_notif(char *buf, long len);
+extern NDRX_API void ndrx_process_notif(char *buf, ssize_t len);
 extern NDRX_API char * ndrx_tprealloc (char *buf, long len);
 extern NDRX_API long	ndrx_tptypes (char *ptr, char *type, char *subtype);
 extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
@@ -903,6 +903,10 @@ extern NDRX_API struct xa_switch_t * ndrx_xa_builtin_get(void);
 
 extern NDRX_API int ndrx_tpgetcallinfo(const char *msg, UBFH **obuf, long flags);
 extern NDRX_API int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags);
+
+/* tp encryption functions */
+extern NDRX_API int tpencrypt_int(char *input, long ilen, char *output, long *olen, long flags);
+extern NDRX_API int tpdecrypt_int(char *input, long ilen, char *output, long *olen, long flags);
 
 #ifdef	__cplusplus
 }

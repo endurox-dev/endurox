@@ -52,7 +52,12 @@ fi;
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export NDRX_ULOG=$TESTDIR
 export PATH=$PATH:$TESTDIR
-export CC=gcc
+
+# fallback to default compiler
+if [ "X$CC" == "X" ]; then
+	export CC=cc
+fi
+
 export NDRX_TOUT=10
 
 #
@@ -137,6 +142,9 @@ case $UNAME in
         COMPFLAGS="-Wl,-brtl -maix64"
     fi
 
+    ;;
+  SunOS)
+        COMPFLAGS="-m64"
     ;;
 
   *)

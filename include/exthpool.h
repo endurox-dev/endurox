@@ -115,6 +115,13 @@ void ndrx_thpool_wait(threadpool);
 void ndrx_thpool_wait_one(threadpool);
 
 /**
+ * Wait for at least one thread to become free
+ * @param thpool_p
+ * @return EXTRUE(has free), EXFALSE(no free)
+ */
+int ndrx_thpool_is_one_avail(threadpool);
+
+/**
  * @brief Destroy the threadpool
  *
  * This will wait for the currently active threads to finish and then 'kill'

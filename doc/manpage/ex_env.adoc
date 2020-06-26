@@ -295,6 +295,12 @@ Mandatory Env. Variables
     limit). If the limit is set to unlimited, then Enduro/X sets thread stack
     size to *8192* (which is 8 megabytes).
 
+*NDRX_SCANUNIT*='SYSVTOUT_THREAD_SCAN_WAIT_MS'::
+    This flag is used by *SystemV* polling configuration, for others modes like 
+    *epoll*, *poll*, *kqueue*, *emq*, *svapoll* it is not used. The flag indicates
+    how long time is spent (in milliseconds) on waits between scanning for 
+    System-V timeouts. The default value is *1000* and minimum is *1*.
+
 EXAMPLE
 -------
 Sample configuration:

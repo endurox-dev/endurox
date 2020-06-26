@@ -200,26 +200,26 @@ exprivate int ndrx_crypto_enc_int(char *input, long ilen, char *output, long *ol
 #ifdef CRYPTODEBUG_DUMP
     NDRX_DUMP(log_debug, "About to encrypt: ", input, ilen);
 #endif
+    
     if (size_estim > *olen)
     {
-        userlog("Encryption output buffer to short, estimated: %ld, but on input: %ld",
+        userlog("Encryption output buffer too short, estimated: %ld, but on input: %ld",
                 size_estim, *olen);
         
-        _Nset_error_fmt(NENOSPACE, "Encryption output buffer to short, "
+        _Nset_error_fmt(NENOSPACE, "Encryption output buffer too short, "
                 "estimated: %ld, but on input: %ld",
                 size_estim, *olen);
-        
+    
+        *olen = size_estim;
         EXFAIL_OUT(ret);
     }
+    *olen = size_estim;
     
     /* so data len will not be encrypted */
     *len_ind = htonl((uint32_t)ilen);
     
     EXAES_CBC_encrypt_buffer((uint8_t*)(output+CRYPTO_LEN_PFX_BYTES), 
             (uint8_t*)input, ilen, (const uint8_t*)sha1key, (const uint8_t*) iv);
-    
-    
-    *olen = size_estim;
     
 #ifdef CRYPTODEBUG_DUMP
     
@@ -243,7 +243,7 @@ out:
 expublic int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen)
 {
     API_ENTRY;
-    return ndrx_crypto_enc(input, ilen, output, olen);
+    return ndrx_crypto_enc_int(input, ilen, output, olen);
 }
 
 /**
@@ -274,10 +274,10 @@ expublic int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *ole
 #endif
     
 #ifdef CRYPTODEBUG
-    NDRX_LOG_EARLY(log_debug, "Data size: %ld, %ld, output buffer: %ld",
-            data_size, olen);
+    NDRX_LOG_EARLY(log_debug, "Data size: %ld, output buffer: %ld",
+            data_size, *olen);
 #endif
-
+    
     if (data_size > *olen)
     {
         userlog("Decryption output buffer too short, data: %ld, output buffer: %ld",
@@ -286,10 +286,12 @@ expublic int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *ole
         _Nset_error_fmt(NENOSPACE, "Decryption output buffer too short, "
                 "data: %ld, output buffer: %ld",
                 data_size, *olen);
-        
+      
+        *olen = data_size;
         EXFAIL_OUT(ret);
     }
     *olen = data_size;
+    
     EXAES_CBC_decrypt_buffer((uint8_t*)(output), 
             (uint8_t*)(input+CRYPTO_LEN_PFX_BYTES), ilen-CRYPTO_LEN_PFX_BYTES, 
             (const uint8_t*)sha1key, (const uint8_t*) iv);
@@ -325,7 +327,7 @@ expublic int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen)
  * @param olen output buffer length
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
+expublic int ndrx_crypto_enc_string(char *input, char *output, long *olen)
 {
     int ret = EXSUCCEED;
     char *buf = NULL;
@@ -345,25 +347,30 @@ expublic int ndrx_crypto_enc_string(char *input, char *output, long olen)
     
     /* translate data block the the base64 (with size estim) */
     estim_size = NDRX_BASE64_SIZE(bufsz) + 1;
-    if (NDRX_BASE64_SIZE(bufsz) +1 /* for EOS */ > olen)
+    
+    if (NDRX_BASE64_SIZE(bufsz) +1 /* for EOS */ > *olen)
     {
         userlog("Output buffer too short. Required for "
-                "base64 %ld bytes, but got %ld", estim_size, olen);
+                "base64 %ld bytes, but got %ld", estim_size, *olen);
 #ifdef CRYPTODEBUG
         NDRX_LOG_EARLY(log_error, "Output buffer too short. Required for "
-                "base64 %ld bytes, but got %ld", estim_size, olen);
+                "base64 %ld bytes, but got %ld", estim_size, *olen);
 #endif
         
         _Nset_error_fmt(NENOSPACE, "Output buffer too short. Required for "
                 "base64 %ld bytes, but got %ld",
-              estim_size, olen);
+              estim_size, *olen);
+        
+        *olen = NDRX_BASE64_SIZE(bufsz) +1;
         EXFAIL_OUT(ret);
     }
     
     /* encode to base64... */
-    b64len = (size_t)olen;
+    b64len = (size_t)*olen;
     ndrx_base64_encode((unsigned char *)buf, bufsz, &b64len, output);
     
+    /* this includes EOS */
+    *olen=b64len;
     /* output[b64len] = EXEOS; */
     
 #ifdef CRYPTODEBUG
@@ -387,7 +394,7 @@ out:
  * @param output clear text output storage
  * @param olen output buffer size
  */
-expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
+expublic int ndrx_crypto_dec_string(char *input, char *output, long *olen)
 {
     int ret = EXSUCCEED;
     long len = strlen(input);
@@ -407,7 +414,7 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
         userlog("%s: Failed to allocate %ld bytes: %s",
                 __func__, len, strerror(err));
         
-        _Nset_error_fmt(NESYSTEM, "%s: Failed to allocate %ld bytes: %s",
+        _Nset_error_fmt(NEUNIX, "%s: Failed to allocate %ld bytes: %s",
                 __func__, len, strerror(err));
         EXFAIL_OUT(ret);
     }
@@ -416,7 +423,7 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     
 #ifdef CRYPTODEBUG
     NDRX_LOG_EARLY(log_debug, "%s, output buf %p, olen=%ld input len: %ld", 
-            __func__, output, olen, len);
+            __func__, output, *olen, len);
     NDRX_LOG_EARLY(log_debug, "%s: About to decrypt (b64): [%s]", __func__, input);
 #endif
 
@@ -439,43 +446,47 @@ expublic int ndrx_crypto_dec_string(char *input, char *output, long olen)
     /* Check the output buffer len */
     data_size = ntohl(*len_ind);
     
-    if (data_size +1 > olen)
+    if (data_size +1 > *olen)
     {
-        userlog("String decryption output buffer too short, data: %ld, "
-                "output buffer: %ld", data_size, olen);
+        userlog("String decryption output buffer too short, data (incl. EOS): %ld, "
+                "output buffer: %ld", data_size+1, *olen);
         
         _Nset_error_fmt(NENOSPACE, "String decryption output buffer too short, "
-                "data: %ld, output buffer: %ld",
-                data_size, olen);
+                "data (incl. EOS): %ld, output buffer: %ld",
+                data_size+1, *olen);
         
+        *olen=data_size+1;
         EXFAIL_OUT(ret);
     }
     
     /* decrypt the data to the output buffer */
     
-    if (EXSUCCEED!=ndrx_crypto_dec_int(buf, bufsz, output, &olen))
+    if (EXSUCCEED!=ndrx_crypto_dec_int(buf, bufsz, output, olen))
     {
-        #ifdef CRYPTODEBUG
+#ifdef CRYPTODEBUG
         NDRX_LOG_EARLY(log_error, "%s: Failed to decrypt [%s]!", __func__, input);
-        #endif
+#endif
         userlog("%s: Failed to decrypt [%s]!", __func__, input);
     }
     
-    output[olen] = EXEOS;
+    output[*olen] = EXEOS;
     
     /* check that data does not contain binary zero
      * because we operate with 0x00 strings, thus if zero is found, data
      * is not decrypted.
      */
-    if ((len=strlen(output)) != olen)
+    if ((len=strlen(output)) != *olen)
     {
-        userlog("Found EOS at %ld. Output data len %ld", len, olen);
+        userlog("Found EOS at %ld. Output data len %ld", len, *olen);
         
         _Nset_error_fmt(NEINVALKEY, "Found EOS at %ld. Output data len %ld", 
-                len, olen);
+                len, *olen);
         
         EXFAIL_OUT(ret);
     }
+    
+    /* add EOS... */
+    (*olen)++;
     
 out:
 

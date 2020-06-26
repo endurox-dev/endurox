@@ -63,6 +63,7 @@ if(${CMAKE_OS_NAME} STREQUAL "CYGWIN")
 elseif(${CMAKE_OS_NAME} STREQUAL "DARWIN")
     target_link_libraries(atmiclt atmi ubf nstd)
     target_link_libraries(atmicltbld atmi ubf nstd)
+    set_target_properties(atmicltbld PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
 
 install (TARGETS 

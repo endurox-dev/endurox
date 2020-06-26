@@ -67,7 +67,7 @@
  */
 exprivate void print_hdr(char *dbname)
 {
-    fprintf(stderr, "ND  UTC DATE ADDED      HITS  TY DLEN  KEY\n");
+    fprintf(stderr, " ND      UTC DATE ADDED  HITS TY  DLEN KEY\n");
     fprintf(stderr, "--- ------------------- ----- -- ----- ----------------------------------------\n");
 }
 
@@ -91,7 +91,7 @@ exprivate int print_buffer(UBFH *p_ub, char *dbname)
         EXFAIL_OUT(ret);
     }
     
-    printf("%-3d %-19.19s %-5.5s %-2hd %-5.5s %s\n"
+    printf("%3d %19.19s %5.5s %2hd %5.5s %s\n"
             ,cdata.nodeid
             ,ndrx_get_strtstamp_from_sec(0, cdata.t)
             ,ndrx_decode_num(cdata.hits, 0, 0, 1)

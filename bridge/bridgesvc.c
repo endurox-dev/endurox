@@ -53,6 +53,7 @@
 #include <regex.h>
 #include <utlist.h>
 #include <unistd.h>    /* for getopt */
+#include <poll.h>
 
 #include <ndebug.h>
 #include <atmi.h>
@@ -228,6 +229,76 @@ expublic int poll_timer(void)
  */
 int b4poll(void)
 {
+    ndrx_stopwatch_t w;
+    int spent, ret;
+    
+    /* avoid over extensive queues. Have some free
+     * free thread (i.e. there is less jobs queued
+     * then free threads)
+     */
+    ndrx_thpool_wait_one(G_bridge_cfg.thpool_fromnet);
+    
+    /*
+     * For sending to net, the socket may be full/blocked
+     * thus try to receive messages from network.
+     * Every 1 sec still process the poll as we might want to receive pings, etc.
+     */
+    spent = 0;
+    ndrx_stopwatch_reset(&w);
+    while (!ndrx_thpool_is_one_avail(G_bridge_cfg.thpool_tonet) && 
+            NULL!=G_bridge_cfg.con && 
+            G_bridge_cfg.con->is_connected && 
+            !G_bridge_cfg.con->schedule_close && 
+            spent < 1000)
+    {
+        struct pollfd ufd;
+        memset(&ufd, 0, sizeof ufd);
+        ufd.fd = G_bridge_cfg.con->sock;
+        ufd.events = POLLOUT | POLLIN;
+
+        ret=poll(&ufd, 1, 1000 - spent);
+
+        if (ret > 0)
+        {
+            if (ufd.revents & POLLOUT)
+            {
+                /* we can start to send */
+                break;
+            }
+            else if (ufd.revents & POLLIN)
+            {
+                int buflen = 0;
+                char *buf = NULL;
+
+                NDRX_LOG(log_warn, "Early msg receive (due to blocked sending)");
+                
+                /* we can receive something */
+                if(EXSUCCEED == exnet_recv_sync(G_bridge_cfg.con, &buf, &buflen, 0, 0))
+                {
+                    /* We got the message - do the callback op */
+                    G_bridge_cfg.con->p_process_msg(G_bridge_cfg.con, &buf, buflen);
+                }
+                
+                if (NULL!=buf)
+                {
+                    NDRX_SYSBUF_FREE(buf);
+                }
+            }
+            else
+            {
+                /* we do not expect anything more... */
+                break;
+            }
+        }
+        else
+        {
+            /* if timedout or error finish off... */
+            break;
+        }
+
+        spent = ndrx_stopwatch_get_delta_sec(&w);
+    }
+
     return exnet_b4_poll_cb();
 }
 
@@ -419,6 +490,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
 #endif
     
+    if (EXSUCCEED!=ndrx_br_init_queue())
+    {
+        NDRX_LOG(log_error, "Failed to init queue runner");
+        EXFAIL_OUT(ret);
+    }
+    
     /* Reset network structs */
     exnet_reset_struct(&G_bridge_cfg.net);
     
@@ -563,6 +640,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         exnet_close_shut(&G_bridge_cfg.net);
     }
     
+    ndrx_br_uninit_queue();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

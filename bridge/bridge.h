@@ -137,6 +137,8 @@ extern int br_tpcall_pushstack(tp_command_call_t *call);
 extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
 extern void br_run_q(void);
 extern int br_init_gpg(void);
+extern int ndrx_br_init_queue(void);
+extern void ndrx_br_uninit_queue(void);
 
 #ifdef	__cplusplus
 }

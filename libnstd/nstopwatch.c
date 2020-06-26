@@ -176,14 +176,14 @@ expublic void ndrx_stopwatch_reset(ndrx_stopwatch_t *timer)
  */
 expublic void ndrx_stopwatch_timer_set(ndrx_stopwatch_t *timer, int tout)
 {
-    int left_over;
+    long left_over;
     clock_gettime(CLOCK_MONOTONIC, &timer->t);
     
     timer->t.tv_sec += tout/1000;
+    /* convert to nanosec*/
+    left_over = (tout % 1000)*1000000;
     
-    left_over = tout % 1000;
-    
-    timer->t.tv_nsec + left_over;
+    timer->t.tv_nsec+= left_over;
     
 #define NDRX_NANO_SEC 999999999
     

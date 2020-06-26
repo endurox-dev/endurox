@@ -136,6 +136,8 @@ set(MAN3_NAMES
         tpscmt
         tpsvrthrinit
         tpsvrthrdone
+        tpencrypt
+        tpdecrypt
 )
 set(PDF_MAN_NAMES ${MAN3_NAMES})
 

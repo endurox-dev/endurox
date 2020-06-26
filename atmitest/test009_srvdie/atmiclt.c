@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         }
         
         NDRX_LOG(log_error, "Wait 10 for dead + sanity check...");
-        sleep(10);
+        sleep(20);
         
         if (EXSUCCEED==(ret = tpgetrply(&cd, (char **)&p_ub, &rsplen, 
                 TPNOBLOCK | TPGETANY)))
@@ -107,10 +107,12 @@ int main(int argc, char** argv) {
         tpcall_err = tperrno;
         if (tpcall_err==TPENOENT)
         {
+            /* service error is reply from ndrxd on behalf of the server */
             NDRX_LOG(log_error, "OK-TPESVCERR");
         }
         else if (tpcall_err==TPETIME)
         {
+            /* tout because first is dead */
             NDRX_LOG(log_error, "OK-TPETIME");
         }
         else
