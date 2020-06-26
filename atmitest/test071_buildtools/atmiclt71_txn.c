@@ -93,7 +93,7 @@ int main(int argc, char** argv)
             EXFAIL_OUT(ret);
         }
         
-        snprintf(buf, sizeof(buf), "CLT %d", i);
+        snprintf(buf, sizeof(buf), "CLT %d\n", i);
         NDRX_LOG(log_debug, "TRA: %s", buf);
         
         if (EXSUCCEED!=__write_to_tx_file(buf)) /* symbol from xa switch lib */

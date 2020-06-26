@@ -2,16 +2,13 @@ NDRXD(8)
 ========
 :doctype: manpage
 
-
 NAME
 ----
 ndrxd - Enduro/X local ATMI monitor.
 
-
 SYNOPSIS
 --------
 *ndrxd* ['OPTIONS']
-
 
 DESCRIPTION
 -----------
@@ -40,7 +37,7 @@ Random key associate with Enduro/X instance. This is used so that
 shell scripts can identify processes belonging the some specific
 instance of Enduro/X.
 
-*-r*::
+[*-r*]::
 Restart/Recovery mode. This is used when 'ndrxd' process is killed
 during application domain running. When starting in this mode, 'ndrxd'
 will request service listings from running servers (resolved from
@@ -48,6 +45,9 @@ queues, usually <prefix>,srv,admin,<server>. In given time frame
 (set via configuration) servers must provide listings. After the
 learning time frame, 'ndrxd' starts to act as it would work normally,
 i.e. kill non responsible services, etc.
+
+[*-h*]::
+Print help.
 
 EXIT STATUS
 -----------
@@ -63,7 +63,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)* *tpbridge(8)*
+*xadmin(8)* *tpbridge(8)* *ex_env(5)* *ndrxconfig.xml(5)*
 
 COPYING
 -------

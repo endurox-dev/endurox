@@ -291,7 +291,7 @@ extern int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
 
 extern void ndrx_tab_init(ndrx_growlist_t *table);
 extern int ndrx_tab_add_col(ndrx_growlist_t *table, int col_nr, char *str);
-extern void ndrx_tab_print(ndrx_growlist_t *table);
+extern void ndrx_tab_print(ndrx_growlist_t *table, ndrx_growlist_t *coltypes);
 extern void ndrx_tab_free(ndrx_growlist_t *table);
 
 

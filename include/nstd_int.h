@@ -42,16 +42,48 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
 #include <inicfg.h>
+#include <sys_primitives.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+/**
+ * Feedback alloc block memory block
+ * TODO: move to internal header
+ */
+typedef struct ndrx_fpablock ndrx_fpablock_t;
+struct  ndrx_fpablock
+{
+    int magic;              /**< magic constant                             */
+    int poolno;             /**< slot number to which block belongs         */
+    int flags;              /**< flags for given alloc block                */
+    volatile ndrx_fpablock_t *next;  /**< Next free block                   */
+};
+
+/**
+ * One size stack for allocator
+ * TOOD: Move to internal header
+ */
+typedef struct ndrx_fpastack ndrx_fpapool_t;
+struct  ndrx_fpastack
+{
+    int bsize;                       /**< this does not include header size          */
+    int flags;                       /**< flags for given entry                      */
+    volatile int num_blocks;         /**< min number of blocks int given size range  */
+    volatile int cur_blocks;         /**< Number of blocks allocated                 */
+    volatile long allocs;            /**< number of allocs done, for stats           */
+    volatile ndrx_fpablock_t *stack; /**< stack head                                 */
+    NDRX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size         */
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
     
 extern NDRX_API int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg, 
         char **resources, char *section, ndrx_inicfg_section_keyval_t **out);
+
+extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 
 #ifdef	__cplusplus
 }

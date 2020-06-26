@@ -126,7 +126,7 @@ expublic int cmd_pqa(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
             continue;
         }
 
-        fprintf(stdout, "%-10d %s\n", (int)att.mq_curmsgs, elt->qname);
+        fprintf(stdout, "%10d %s\n", (int)att.mq_curmsgs, elt->qname);
     }
 
 out:

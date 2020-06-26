@@ -124,7 +124,6 @@ typedef struct
     
 } ndrx_svq_evmon_t;
 
-
 /*---------------------------Globals------------------------------------*/
 
 /* have a thread handler for tout monitoring thread! */
@@ -137,6 +136,9 @@ exprivate int volatile __thread M_signalled = EXFALSE;/**< Did we got a signal? 
 
 exprivate MUTEX_LOCKDECL(M_mon_lock_mq); /**< Mutex lock for shared M_mon access, mq  */
 exprivate MUTEX_LOCKDECL(M_mon_lock_fd); /**< Mutex lock for shared M_mon access, fd  */
+
+exprivate int M_scanunit = CONF_NDRX_SCANUNIT_DFLT;  /**< ms for wait on poll q */
+exprivate int M_scanunit_was_init = EXFALSE;         /**< i.e used by ndrxd     */
 
 /* we need two hash lists
  * - the one goes by mqd to list/update timeout registrations
@@ -534,70 +536,15 @@ expublic int ndrx_svq_mqd_close(mqd_t mqd)
     
     NDRX_SPIN_DESTROY_V(mqd->rcvlock);
     NDRX_SPIN_DESTROY_V(mqd->rcvlockb4);
+/*
+    why?
     MUTEX_TRYLOCK_V(mqd->barrier);
     MUTEX_TRYLOCK_V(mqd->qlock);
+*/
     
 out:
     return ret;
 }
-
-/* TODO: We need a full delete where we scan the FD hash and remove any related
- * MQDs and vice versa
- */
-
-#if 0
-- not used, now we tick every second...
-/**
- * Find next timeout time - time that we shall spend in sleep...
- * @return timeout for sleeping in poll mode
- */
-exprivate int ndrx_svq_mqd_hash_findtout(void)
-{
-    int tout = DFLT_TOUT;
-    long tmp;
-    ndrx_svq_mqd_hash_t * r, *rt;
-    struct timespec abs_timeout;
-    struct timeval  timeval;
-    
-    gettimeofday (&timeval, NULL);
-    abs_timeout.tv_sec = timeval.tv_sec;
-    abs_timeout.tv_nsec = timeval.tv_usec*1000;
-    
-    /* loop over the hash and compare stuff for current time,
-     * get delta
-     */
-    EXHASH_ITER(hh, (M_mon.mqdhash), r, rt)
-    {
-        tmp = ndrx_timespec_get_delta(&(r->abs_timeout), &abs_timeout);
-        
-        if (tmp < 1)
-        {
-            /* so we get msgs with delay, ma */
-            NDRX_LOG(log_debug, "For mqd %p timeout less than 0 (%ld) "
-                    "- default to 1 msec - slow system?",
-                    r->mqd, tmp);
-            tmp = 1;
-        }
-        
-        /* calculate delta time 
-         * get the seconds from diff
-         */
-        tmp = ndrx_ceil(tmp, 1000);
-        
-        NDRX_LOG(log_debug, "Requesting for mqd %p to %d sec",
-                r->mqd, tmp);
-        
-        if (tmp < tout)
-        {
-            tout = tmp;
-        }
-    }
-    
-    NDRX_LOG(log_debug, "Next timeout requested to %d", tout);
-    
-    return (int)tout;
-}
-#endif
 
 /**
  * Dispatch any pending timeouts
@@ -829,7 +776,7 @@ expublic int ndrx_svq_mqd_put_event(mqd_t mqd, ndrx_svq_ev_t **ev)
 
 out:
     MUTEX_UNLOCK_V(mqd->barrier);
-    
+
     return ret;        
 }
 
@@ -847,7 +794,7 @@ exprivate void ndrx_svq_signal_action(int sig)
     NDRX_LOG(log_debug, "Signal action");
      * !!!! Bug #530 Signal handler - not safe functions used.
      * */
-    M_signalled = EXTRUE;
+    M_signalled = sig;
     return;
 }
 
@@ -862,7 +809,6 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
 {
     int retpoll;
     int ret = EXSUCCEED;
-    int timeout;
     int i, moc, donext;
     int err;
     ndrx_svq_mon_cmd_t cmd;
@@ -925,19 +871,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     /* wait for event... */
     while (!M_shutdown)
     {
-        /* timeout = ndrx_svq_mqd_hash_findtout(); 
-        
-        if (EXFAIL==timeout || 0==timeout)
-        {
-            NDRX_LOG(log_error, "Invalid System V poller timeout!");
-            userlog("Invalid System V poller timeout!");
-            EXFAIL_OUT(ret);
-        }
-        */
-        
-        timeout = 1;    /* sleep 1 sec.. */
-        NDRX_LOG(6, "About to poll for: %d sec nrfds=%d",
-                timeout, M_mon.nrfds);
+
+        NDRX_LOG(6, "About to poll for: %d ms nrfds=%d",
+                M_scanunit, M_mon.nrfds);
         
         moc=0;
         donext=EXTRUE;
@@ -987,9 +923,7 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
         
         MUTEX_UNLOCK_V(M_mon_lock_fd);
         
-        retpoll = poll( fdtabmo_tmp, moc, timeout*1000);
-        
-        /* syncfd = EXFALSE; */
+        retpoll = poll( fdtabmo_tmp, moc, M_scanunit);
         
         NDRX_LOG(6, "poll() ret = %d", retpoll);
         if (EXFAIL==retpoll)
@@ -1388,6 +1322,20 @@ out:
 }
 
 /**
+ * Set the timeout-thread scan unit
+ * @param ms milliseconds to set
+ */
+expublic int ndrx_svq_scanunit_set(int ms)
+{
+    int prev_val = M_scanunit;
+    
+    M_scanunit_was_init=EXTRUE;
+    M_scanunit=ms;
+    
+    return prev_val;
+}
+
+/**
  * Setup basics for Event handling for System V queues
  * @return EXSUCCEED/EXFAIL
  */
@@ -1419,6 +1367,41 @@ expublic int ndrx_svq_event_init(void)
         EXFAIL_OUT(ret);
     }
     
+    /* if ndrxd applied the setting, do not use the env anymore. */
+    if (first)
+    {
+        if (!M_scanunit_was_init)
+        {
+            char *p = getenv(CONF_NDRX_SCANUNIT);
+
+            if (NULL!=p)
+            {
+                if (!ndrx_is_numberic(p))
+                {
+                    NDRX_LOG(log_error, "ERROR ! %s is not number! Got [%s]", 
+                            CONF_NDRX_SCANUNIT, p);
+
+                    userlog("ERROR ! %s is not number! Got [%s]", 
+                            CONF_NDRX_SCANUNIT, p);
+                    EXFAIL_OUT(ret);
+                }
+
+                M_scanunit = atoi(p);
+
+                if (M_scanunit < 1)
+                {
+                    NDRX_LOG(log_error, "ERROR ! %s is than min %d ms! Got %d", 
+                            CONF_NDRX_SCANUNIT, CONF_NDRX_SCANUNIT_MIN, M_scanunit);
+
+                    userlog("ERROR ! %s is than min %d ms! Got %d", 
+                            CONF_NDRX_SCANUNIT, CONF_NDRX_SCANUNIT_MIN, M_scanunit);
+                    EXFAIL_OUT(ret);
+                }
+            }
+        }
+        NDRX_LOG(log_info, "System-V Scan unit set to %d ms", M_scanunit);
+    }
+
     /* At this moment we need to bootstrap a timeout monitoring thread.. 
      * the stack size of this thread could be small one because it
      * will mostly work with dynamically allocated memory..
@@ -1633,34 +1616,6 @@ expublic int ndrx_svq_moncmd_term(void)
     return ret;
 }
 
-#if 0
-- not used anymore.
-/**
- * Remove message queue from the monitor.
- * Well what will happen if Queue is closed and mqd deleted?
- * we will not be able to delete them from hashes...
- * thus close shall finish off any timeouts
- * @param mqd message queue descriptor to remove
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_svq_moncmd_close(mqd_t mqd)
-{
-    int ret;
-    ndrx_svq_mon_cmd_t cmd;
-    
-    memset(&cmd, 0, sizeof(cmd));
-    
-    cmd.cmd = NDRX_SVQ_MON_CLOSE;
-    cmd.mqd = mqd;
-
-    
-    /* perform sync off */
-    ret = ndrx_svq_moncmd_send(&cmd);
-
-    return ret;
-}
-#endif
-
 /**
  * Send/Receive data with timeout and other events option
  * @param mqd queue descriptor (already validated)
@@ -1712,6 +1667,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
     mqd->stamp_seq++;
     cur_stamp.stamp_seq = mqd->stamp_seq;
     
+    /* TODO: Remove from spin lock area: */
     ndrx_stopwatch_reset(&(mqd->stamp_time));
     memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
     
@@ -1823,6 +1779,7 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      */
     if (!M_signalled)
     {
+
         if (is_send)
         {
             ret=msgsnd (mqd->qid, ptr, NDRX_SVQ_INLEN(len), msgflg);
@@ -1831,7 +1788,11 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
         {
             ret=msgrcv (mqd->qid, ptr, NDRX_SVQ_INLEN(len), 0, msgflg);
         }
-        err=errno;
+
+        if (EXFAIL==ret)
+        {
+            err=errno;
+        }
     }
     else
     {
@@ -1930,7 +1891,7 @@ out:
      */
     if (EXSUCCEED==ret && NULL==*ev && EINTR==err)
     {
-        NDRX_LOG(log_warn, "Interrupted by external signal");
+        NDRX_LOG(log_error, "Interrupted by external signal, M_signalled=%d", M_signalled);
         ret=EXFAIL;
     }
 

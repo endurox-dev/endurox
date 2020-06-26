@@ -51,23 +51,28 @@ Ensure(test_crypto_enc_string)
     char buf[1024]="";
     char buf2[1024]="";
     int i;
-    
+    long len;
 #define ENC_TEST_STRING "HELLO STRING _ 123 hello test"
     
     for (i=0; i<100; i++)
     {
+        len=sizeof(buf);
         assert_equal(
-                ndrx_crypto_enc_string(ENC_TEST_STRING, buf, sizeof(buf)),
+                ndrx_crypto_enc_string(ENC_TEST_STRING, buf, &len),
                 EXSUCCEED);
 
+        assert_equal(strlen(buf)+1, len);
+        
         NDRX_LOG(log_debug, "Encrypted string: [%s]", buf);
 
+        len=sizeof(buf2);
         assert_equal(
-                ndrx_crypto_dec_string(buf, buf2, sizeof(buf2)),
+                ndrx_crypto_dec_string(buf, buf2, &len),
                 EXSUCCEED);
 
         /* decrypted strings must be equal... */
         assert_string_equal(buf2, ENC_TEST_STRING);
+        assert_equal(strlen(buf2)+1, len);
     }
 }
 
@@ -80,6 +85,7 @@ Ensure(test_crypto_subst_func)
     char encdata[PATH_MAX];
     char fmt[PATH_MAX];
     int i;
+    long len;
     
 #define ENC_SUBST_STRING "Enduro/X"
 
@@ -91,7 +97,8 @@ Ensure(test_crypto_subst_func)
     {
         /* Encrypt "Enduro/X" */
 
-        assert_equal(ndrx_crypto_enc_string(ENC_SUBST_STRING, encdata, sizeof(encdata)), 
+        len=sizeof(encdata);
+        assert_equal(ndrx_crypto_enc_string(ENC_SUBST_STRING, encdata, &len), 
                 EXSUCCEED);
 
         snprintf(fmt, sizeof(fmt), "Hello ${dec=%s} ${UBFTESTENV} "

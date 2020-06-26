@@ -34,10 +34,15 @@
 
 cmake_minimum_required (VERSION 3.1) 
 project (ENDUROX) 
-set(VERSION "7.0.34")
+set(VERSION "7.5.1")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
+string(REPLACE "." ";" VERSION_LIST ${VERSION})
+list(GET VERSION_LIST 0 NDRX_VERSION_MAJOR)
+list(GET VERSION_LIST 1 NDRX_VERSION_MINOR)
+list(GET VERSION_LIST 2 NDRX_VERSION_PATCH)
+MATH (EXPR NDRX_VERSION_NUM "${NDRX_VERSION_MAJOR} * 10000 + ${NDRX_VERSION_MINOR} * 100 + ${NDRX_VERSION_PATCH}")
 
 ################################################################################
 # Check versions if defined, export build env

@@ -280,6 +280,30 @@ void ndrx_thpool_wait_one(thpool_* thpool_p)
     MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 }
 
+/**
+ * Is one thread available?
+ * @param thpool_p 
+ * @return EXTRUE/EXFALSE
+ */
+int ndrx_thpool_is_one_avail(thpool_* thpool_p)
+{
+    int ret = EXFALSE;
+    
+    MUTEX_LOCK_V(thpool_p->thcount_lock);
+
+    /* Wait for at-leat one free thread (i.e.) no job found... */
+    if ( (thpool_p->jobqueue.len - 
+            (thpool_p->num_threads-thpool_p->num_threads_working) < 0 ))
+    {
+        ret=EXTRUE;
+    }
+
+    MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+out:
+    return ret;
+}
+
+
 /* Destroy the threadpool */
 void ndrx_thpool_destroy(thpool_* thpool_p)
 {

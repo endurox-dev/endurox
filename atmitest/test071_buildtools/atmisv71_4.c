@@ -99,7 +99,7 @@ out:
  */
 void ECHO2SV (TPSVCINFO *p_svc)
 {
-    return ECHOSV(p_svc);
+    ECHOSV(p_svc);
 }
 
 /**
@@ -107,7 +107,7 @@ void ECHO2SV (TPSVCINFO *p_svc)
  */
 void SERV (TPSVCINFO *p_svc)
 {
-    return ECHOSV(p_svc);
+    ECHOSV(p_svc);
 }
 
 

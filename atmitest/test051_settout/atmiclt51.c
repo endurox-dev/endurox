@@ -90,6 +90,7 @@ int main(int argc, char** argv)
         goto out;
     }    
 
+    /* get standard timeout due to 1 sec... */
     if (EXSUCCEED == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "TESTERROR!  Call succeed but must fail!");
@@ -105,16 +106,20 @@ int main(int argc, char** argv)
         ret=EXFAIL;
         goto out;
     }
+
+    /* TODO: Shouldn't the cd canceled? */
     
-    /* invoke now with full wait */
-    
+    /* invoke now with full wait first 2 sec + 3 sec, we get 6-7 sec 
+     * thus receive normal response...
+     */
     if (EXSUCCEED!=tptoutset(6))
     {
-        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 5: %s", 
+        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 6: %s", 
                 tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
 
+    /* now wait fully for response, the first call shall be dropped.. */
     if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "TESTERROR!  Second call failed: %s", 
@@ -123,7 +128,18 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    
+    /* also this will make assumtion that if we receive message
+     * we do not check was it actually expired by previous timeout settings
+     * this applies on waiting on reply queue and not actual msg age.
+     * call age is checked by dest server.
+     */ 
+    if (EXSUCCEED!=tptoutset(2))
+    {
+        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 2: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+
     /* shall test the case when message sits in queue for too long by custom
      * timeout setting, thus it must be dropped, thus lets do three async calls
      * for atleast one we shall get the dropped message in server log.
@@ -153,8 +169,20 @@ int main(int argc, char** argv)
         ret=EXFAIL;
         goto out;
     }
+
+    /* wait 5 sec for each... */
+    if (EXSUCCEED!=tptoutset(5))
+    {
+        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 5: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
     
-    /* wait for reply */
+    /* wait for reply
+     * this one shall come back, as first processed in 3 sec.
+     * The others must be dropped due to expired.. as the server requires wait for 3 sec
+     * but we marked packets to live only for 2 sec
+     */
     if (EXSUCCEED!=tpgetrply(&cd, (char **)&p_ub, &rsplen, TPGETANY))
     {
         NDRX_LOG(log_error, "TESTERROR! tpgetrply (1) failed: %s", 
@@ -163,15 +191,17 @@ int main(int argc, char** argv)
         goto out;
     }
     
+    /*
     if (EXSUCCEED!=tptoutset(1))
     {
-        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 2 (for tpgetrply): %s", 
+        NDRX_LOG(log_debug, "TESTERROR: Failed to set timeout to 1 (for tpgetrply): %s", 
                 tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
+    */
     
+    /* these shall be zapped by dest server due to expired */
     /* the other shall fail as total 4+4 > 4 tout setting */
-    
     if (EXSUCCEED==tpgetrply(&cd, (char **)&p_ub, &rsplen, TPGETANY))
     {
         NDRX_LOG(log_error, "TESTERROR! tpgetrply (2) SUCCEED but must fail!");

@@ -293,7 +293,7 @@ extern "C" {
  * used by tpconvert()
  */
 #define TPCONVMAXSTR    512         /**< Max identifier buffer                */
-#define TPTOSTRING      0x00000001  /**< Covnert to string                    */
+#define TPTOSTRING      0x00000001  /**< convert to string                    */
 #define TPCONVCLTID     0x00000002  /**< Convert client id                    */
 #define TPCONVTRANID    0x00000004  /**< Convert transaction id               */
 #define TPCONVXID       0x00000008  /**< Convert XID (current not supported   */
@@ -775,6 +775,8 @@ extern NDRX_API void ndrx_atfork_child(void);
 extern NDRX_API void ndrx_atfork_parent(void);
 extern NDRX_API void ndrx_atfork_prepare(void);
 
+extern NDRX_API int tpencrypt(char *input, long ilen, char *output, long *olen, long flags);
+extern NDRX_API int tpdecrypt(char *input, long ilen, char *output, long *olen, long flags);
 
 #if defined(__cplusplus)
 }

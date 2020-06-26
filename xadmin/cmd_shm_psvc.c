@@ -65,7 +65,7 @@ exprivate int M_resources;  /**< should we print resources to stdout    */
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "SLOT   SERVICE NAME NSRV FLAGS CSRVS TCLST CMAX CNODES\n");
+    fprintf(stderr, "  SLOT SERVICE NAME NSRV FLAGS CSRVS TCLST CMAX CNODES\n");
     fprintf(stderr, "------ ------------ ---- ----- ----- ----- ---- --------------------------------\n");
 }
 

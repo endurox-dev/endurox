@@ -65,7 +65,7 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "SLOT   MSGID      FLAGS             CTIME    Q NAME\n");
+    fprintf(stderr, "  SLOT      MSGID FLAGS                CTIME Q NAME\n");
     fprintf(stderr, "------ ---------- ----------------- -------- -----------------------------------\n");
 }
 
@@ -200,7 +200,7 @@ expublic int cmd_svmaps(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                 strcat(flagsstr, "rqaddr");
             }
             
-            fprintf(stdout, "%-6d %-10d %-17.17s %-8.8s %s\n",
+            fprintf(stdout, "%6d %10d %17.17s %-8.8s %s\n",
                     i, el->qid, flagsstr, 
                     ndrx_decode_msec(ndrx_stopwatch_get_delta(&el->ctime), 0, 0, 2),
                     el->qstr);

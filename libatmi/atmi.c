@@ -1925,4 +1925,103 @@ out:
     return ptr;
 }
 
+/**
+ * Encrypt data block.
+ * Currently AES-128 is used, CBC mode
+ * In string mode (TPEX_STRING) - input is 0x0 terminated string, on output base64
+ * encoded data (output buffer size is checked, but no len provided)
+ * @param input input input data
+ * @param ilen input string len (not used for TPEX_STRING)
+ * @param output output buffer
+ * @param olen output buffer len
+ * @param flags TPEX_STRING - input & output data is string
+ * @return EXSUCCEED/EXFAIL tperror loaded
+ */
+expublic int tpencrypt(char *input, long ilen, char *output, long *olen, long flags)
+{
+    int ret = EXSUCCEED;
+    /* no API/Client init pls */
+    ndrx_TPunset_error();
+    
+    if (NULL==input)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "input cannot be null");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==output)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "output cannot be null");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==olen)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "olen cannot be null");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!(flags & TPEX_STRING) && ilen <= 0)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid ilen, expected data size len (%ld)>0", 
+                ilen);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=tpencrypt_int(input, ilen, output, olen, flags);
+    
+out:
+    return ret;
+}
+
+/**
+ * Decrypt data block.
+ * Currently AES-128 is used, CBC mode
+ * In string mode (TPEX_STRING) - input is 0x0 terminated string with base64 data,
+ * on output 0x0 terminate string is provided. No len is provided on output
+ * but output buffer size is tested.
+ * @param input input data buffer, string or binary data
+ * @param ilen input len (only for binary)
+ * @param output output buffer
+ * @param olen output buffer size, on output len provided (only for binary mode)
+ * @param flags TPEX_STRING - input & output data is string
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpdecrypt(char *input, long ilen, char *output, long *olen, long flags)
+{
+    int ret = EXSUCCEED;
+    /* no API/Client init pls */
+    ndrx_TPunset_error();
+    
+    if (NULL==input)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "input cannot be null");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==output)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "output cannot be null");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==olen)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "olen cannot be null");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!(flags & TPEX_STRING) && ilen <= 0)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Invalid ilen, expected data size len (%ld)>0", 
+                ilen);
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=tpdecrypt_int(input, ilen, output, olen, flags);
+    
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

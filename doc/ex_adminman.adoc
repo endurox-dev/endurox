@@ -342,9 +342,13 @@ As Enduro/X uses System V shared memory segments, the default sizes are not
 sufficient for the at least Enduro/X unit testing. Thus limits needs to be
 changed:
 
+
+Starting from OS X 10.3.9 the config file is */etc/sysctl.conf*, in oder versions
+use */boot/loader.conf*:
+
 --------------------------------------------------------------------------------
 $ sudo -s
-# cat << EOF >> /boot/loader.conf
+# cat << EOF >> /etc/sysctl.conf
 kern.sysv.shmmax=419430400
 kern.sysv.shmmin=1
 kern.sysv.shmmni=32

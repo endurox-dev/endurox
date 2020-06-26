@@ -159,6 +159,7 @@ out:
         M_has_failure=EXTRUE;
     }
     
+    return NULL;
 }
 
 /**

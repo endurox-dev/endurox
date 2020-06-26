@@ -617,6 +617,13 @@ Ensure(test077_diedslowstrt)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test078_tpacallmix)
+{
+    int ret;
+    ret=system_dbg("test078_tpacallmix/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -751,8 +758,8 @@ TestSuite *atmi_test_all(void)
     
     add_test(suite, test075_dispthread);
     add_test(suite, test076_dispthreadxa);
-    
     add_test(suite, test077_diedslowstrt);
+    add_test(suite, test078_tpacallmix);
     
     return suite;
 }

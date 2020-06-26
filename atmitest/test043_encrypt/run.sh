@@ -188,6 +188,23 @@ export NDRX_CCONFIG=`pwd`/test.conf
 
 RET=$?
 
+if [ "$RET" -ne "0" ]; then
+    echo "ERROR ! atmiclt43 failed!"
+    go_out -11
+fi
+
+#
+# Check the tptools do the same
+#
+(./atmiclt43_tp $ENCSTR 2>&1) > ./atmiclt43_tp.log
+
+RET=$?
+
+if [ "$RET" -ne "0" ]; then
+    echo "ERROR ! atmiclt43_tp failed!"
+    go_out -12
+fi
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
 	echo "Test error detected!"
