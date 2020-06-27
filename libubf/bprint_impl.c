@@ -60,6 +60,10 @@
 #include "atmi_int.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+#define OUTPUT_FORMAT_WDATA fmt_wdata, ndrx_Bfname_int(bfldid), p
+#define OUTPUT_FORMAT_NDATA fmt_ndata, ndrx_Bfname_int(bfldid)
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -160,9 +164,10 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
 
         /* All other data types needs to be converted */
         
-        if (BFLD_STRING==BFLD_UBF)
+        if (BFLD_UBF==fldtype)
         {
-            if (EXSUCCEED!=ndrx_Bfprint ((UBFH *)p, outf, p_writef, dataptr1, level))
+            /* TODO: print the field id */
+            if (EXSUCCEED!=ndrx_Bfprint ((UBFH *)p, outf, p_writef, dataptr1, level+1))
             {
                 /* TODO: */
             }
@@ -236,7 +241,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
         if (len>0)
         {
 /* #define OUTPUT_FORMAT_WDATA "%s\t%s\n", ndrx_Bfname_int(bfldid), p*/
-#define OUTPUT_FORMAT_WDATA fmt_wdata, ndrx_Bfname_int(bfldid), p
+
             if (NULL!=p_writef)
             {
                 char *tmp;
@@ -279,8 +284,6 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
         }
         else
         {
-#define OUTPUT_FORMAT_NDATA fmt_ndata, ndrx_Bfname_int(bfldid)
-            
             if (NULL!=p_writef)
             {
                 char *tmp;
