@@ -156,17 +156,18 @@ exprivate void * check_child_exit(void *arg)
     {
         int got_something = 0;
 
-/* seems not working on darwin ... thus just wait for pid.
- * if we do not have any childs, then sleep for 1 sec.
- */
-#ifndef EX_OS_DARWIN
+        /* macos may return form sigwait with out carrying any singal
+         */
         LOCKED_DEBUG(log_debug, "about to sigwait()");
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        sig=0;
+        do
         {
-            LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
+            if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+            {
+                LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
-        }        
-#endif
+            }
+        } while (0==sig);
         
         LOCKED_DEBUG(log_debug, "about to wait()");
         /*
@@ -205,14 +206,6 @@ exprivate void * check_child_exit(void *arg)
             cpm_unlock_config(); /* we are done... */
             
         }
-
-#if EX_OS_DARWIN
-        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
-        if (!got_something)
-        {
-            sleep(1);
-        }
-#endif
     }
    
 /*
