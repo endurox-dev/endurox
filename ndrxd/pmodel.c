@@ -247,24 +247,27 @@ exprivate void * check_child_exit(void *arg)
     {
 	int got_something = 0;
 
-/* seems not working on darwin ... thus just wait for pid.
- * if we do not have any childs, then sleep for 1 sec.
- */
-#ifndef EX_OS_DARWIN
+
         LOCKED_DEBUG(log_debug, "about to sigwait()");
         
-        /* Wait for notification signal */
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))
+        /* seems not working on darwin ... we might get 0 sig
+         * thus continue to wait...
+         */
+        /* Wait for notification signal with work-a-round for Macos */
+        sig=0;
+        do
         {
-            LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
-
+            if (EXSUCCEED!=sigwait(&blockMask, &sig))
+            {
+                LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
+                break;
+            }
         }
-#endif
+        while (0==sig);
         
         if (M_shutdown)
         {
             break;
-            
         }
         
         LOCKED_DEBUG(log_debug, "about to wait()");
@@ -275,13 +278,6 @@ exprivate void * check_child_exit(void *arg)
             handle_child(chldpid, stat_loc);
         }
         
-#if EX_OS_DARWIN
-        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
-        if (!got_something)
-        {
-            sleep(1);
-        }
-#endif
     }
    
     LOCKED_DEBUG(log_debug, "check_child_exit terminated");
