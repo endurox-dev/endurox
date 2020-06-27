@@ -1652,7 +1652,7 @@ expublic int Bfprint (UBFH *p_ub, FILE * outf)
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, outf, NULL, NULL);
+    return ndrx_Bfprint (p_ub, outf, NULL, NULL, 0);
 }
 
 /**
@@ -1684,7 +1684,7 @@ expublic int Bfprintcb (UBFH *p_ub,
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, NULL, p_writef, dataptr1);
+    return ndrx_Bfprint (p_ub, NULL, p_writef, dataptr1, 0);
 }
 
 /**
@@ -1705,7 +1705,7 @@ expublic int Bprint (UBFH *p_ub)
         return EXFAIL;
     }
 
-    return ndrx_Bfprint (p_ub, stdout, NULL, NULL);
+    return ndrx_Bfprint (p_ub, stdout, NULL, NULL, 0);
 }
 
 /**
@@ -1746,7 +1746,7 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
         else
         {
             /* use plugin callback */
-            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL);
+            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL, 0);
         }
     }
 }
