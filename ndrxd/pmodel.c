@@ -242,6 +242,12 @@ exprivate void * check_child_exit(void *arg)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
+    /* seems like needed for osx */
+    if (EXFAIL==pthread_sigmask(SIG_BLOCK, &blockMask, NULL))
+    {
+        LOCKED_DEBUG(log_always, "sigprocmask failed: %s", strerror(errno));
+    }
+
     LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     while (!M_shutdown)
     {
