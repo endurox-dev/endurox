@@ -138,32 +138,32 @@ expublic dtype_str_t G_dtype_str_map[] =
 {"rfu0",NULL,   BFLD_RFU0,   EXFAIL,           4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 8 */
 {"ptr",	NULL,   BFLD_PTR,    BFLD_PTR_SIZE,    8, get_fb_dftl_size, ndrx_put_data_ptr, get_d_size_dftl, ndrx_get_data_ptr},/* 9 */
 {"ubf", "fml32",BFLD_UBF,    BFLD_UBF_SIZE,    8, ndrx_get_fb_ubf_size, ndrx_put_data_ubf, ndrx_get_d_size_ubf, ndrx_get_data_ubf},	  /* 10 */
-{"view","view32",BFLD_VIEW,  BFLD_VIEW_SIZE,   8, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 11 */
+{"view","view32",BFLD_VIEW,  BFLD_VIEW_SIZE,   8, ndrx_get_fb_view_size, ndrx_put_data_view, ndrx_get_d_size_view, ndrx_get_data_view},	  /* 11 */
 {""}
 };
 
 #define DAO EX_ALIGNMENT_BYTES
-#define DAC EX_ALIGNMENT_BYTES+sizeof(BFLDLEN) /* for string,carray having some extra... */
-
+#define DAC EX_ALIGNMENT_BYTES+sizeof(BFLDLEN) /**< for string,carray having some extra... */
+#define DVW sizeof(UBF_view_t)  /**< full view size */
 /**
  * We operate with 32 bit align.
  */
 expublic dtype_ext1_t G_dtype_ext1_map[] =
 {
 /* type,    get default,  put empty deflt, dump,    datoff, tmpbuf fn, alloc buf */
-{BFLD_SHORT, g_dflt_empty, put_empty_dftl, dump_short, DAO, tbuf_short, tallocdlft, cmp_short},     /* 0 */
-{BFLD_LONG,  g_dflt_empty, put_empty_dftl, dump_long,  DAO, tbuf_long,  tallocdlft, cmp_long},      /* 1 */
-{BFLD_CHAR,  g_dflt_empty, put_empty_dftl, dump_char,  DAO, tbuf_char,  tallocdlft, cmp_char},      /* 2 */
-{BFLD_FLOAT, g_dflt_empty, put_empty_dftl, dump_float, DAO, tbuf_float, tallocdlft, cmp_float},     /* 3 */
-{BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,DAO, tbuf_double,tallocdlft, cmp_double},    /* 4 */
-{BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,DAC, tbuf_string,tallocdlft, cmp_string},    /* 5 */
-{BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,DAC, tbuf_carray,tallocdlft, cmp_carray},    /* 6 */
-{BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},       /* 7 */
+{BFLD_SHORT, g_dflt_empty, put_empty_dftl, dump_short, DAO, tbuf_short, tallocdlft, cmp_short, NULL},     /* 0 */
+{BFLD_LONG,  g_dflt_empty, put_empty_dftl, dump_long,  DAO, tbuf_long,  tallocdlft, cmp_long, NULL},      /* 1 */
+{BFLD_CHAR,  g_dflt_empty, put_empty_dftl, dump_char,  DAO, tbuf_char,  tallocdlft, cmp_char, NULL},      /* 2 */
+{BFLD_FLOAT, g_dflt_empty, put_empty_dftl, dump_float, DAO, tbuf_float, tallocdlft, cmp_float, NULL},     /* 3 */
+{BFLD_DOUBLE,g_dflt_empty, put_empty_dftl, dump_double,DAO, tbuf_double,tallocdlft, cmp_double, NULL},    /* 4 */
+{BFLD_STRING,g_str_empty,  put_empty_str,  dump_string,DAC, tbuf_string,tallocdlft, cmp_string, NULL},    /* 5 */
+{BFLD_CARRAY,g_carr_empty, put_empty_carr, dump_carray,DAC, tbuf_carray,tallocdlft, cmp_carray, NULL},    /* 6 */
+{BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int, NULL},       /* 7 */
 /* TODO - create support functions: */
-{BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int},      /* 8 */
-{BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       tallocdlft, ndrx_cmp_ptr},/* 9 */
-{BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, tallocdlft, ndrx_cmp_ubf},/* 10 */
-{BFLD_VIEW,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, NULL,       ndrx_talloc_view, ndrx_cmp_view}, /* 11 */
+{BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int, NULL},      /* 8 */
+{BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       tallocdlft, ndrx_cmp_ptr, NULL},/* 9 */
+{BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, tallocdlft, ndrx_cmp_ubf, NULL},/* 10 */
+{BFLD_VIEW,  ndrx_g_view_empty, ndrx_put_empty_view,  ndrx_dump_view,   DVW, NULL,ndrx_talloc_view, ndrx_cmp_view, NULL}, /* 11 */
 
 {-1}
 };

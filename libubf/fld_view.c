@@ -226,7 +226,10 @@ expublic void ndrx_dump_view(struct dtype_ext1 *t, char *text, char *data, int *
 }
 
 /**
- * Compare two buffers
+ * Compare two views
+ * This shall point to BVIEWFLD. So that later any finds and next ops
+ * would return the same BVIEWFLD and could be used in existing places where
+ * data is compared by value, and not by headers.
  * @param t data type
  * @param val1 ptr in buffer
  * @param len1 not used
@@ -240,19 +243,19 @@ expublic int ndrx_cmp_view (struct dtype_ext1 *t, char *val1, BFLDLEN len1,
 {
     int ret = 0;
     
-    UBF_view_t *viewfb1 = (UBF_view_t *)val1;
-    UBF_view_t *viewfb2 = (UBF_view_t *)val2;
+    BVIEWFLD *vdata1 = (BVIEWFLD *)val1;
+    BVIEWFLD *vdata2 = (BVIEWFLD *)val2;
     
     if (mode & UBF_CMP_MODE_STD)
     {
-        ret = Bvcmp(viewfb1->data, viewfb1->vname, 
-                viewfb2->data, viewfb2->vname);
+        ret = Bvcmp(vdata1->data, vdata1->vname, 
+                view2->data, view2->vname);
         goto out;
     }
     else
     {
-        ret = Bvcmp(viewfb1->data, viewfb1->vname, 
-                viewfb2->data, viewfb2->vname);
+        ret = Bvcmp(vdata1->data, vdata1->vname, 
+                view2->data, view2->vname);
         
         if (-2==ret)
         {
@@ -306,5 +309,24 @@ expublic char *ndrx_talloc_view (struct dtype_ext1 *t, int *len)
     return ret;
 }
 
+/**
+ * Prepare view data for presenting to user.
+ * This will setup BVIEWFLD and return the pointer to it
+ * @param t type descriptor
+ * @param storage where to store the returned data ptr
+ * @param data start in UBF buffer
+ * @return ptr to data block of BVIEWFLD
+ */
+expublic char* ndrx_prep_viewp (struct dtype_ext1 *t, 
+        ndrx_ubf_tls_bufval_t *storage, char *data)
+{
+     UBF_view_t *viewfb = (UBF_view_t *)data;
+     
+     NDRX_STRCPY_SAFE(storage->viewfld.vname, viewfb->vname);
+     storage->viewfld.vflags = (unsigned int)viewfb->vflags;
+     storage->viewfld.data=viewfb->data;
+     
+     return (char *)&storage->viewfld;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */

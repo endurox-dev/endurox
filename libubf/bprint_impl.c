@@ -100,9 +100,12 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
     char fmt_wdata[256];
     char fmt_ndata[256];
     int i;
+    BVIEWFLD *vdata;
     Bnext_state_t bprint_state;
     
     UBF_TLS_ENTRY;
+    
+    UBF_LOG(log_debug, "%s enter at level %d", __func__, level);
     
     memset(&bprint_state, 0, sizeof(bprint_state));
     
@@ -163,14 +166,17 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
         fldtype=bfldid>>EFFECTIVE_BITS;
 
         /* All other data types needs to be converted */
-        
-        if (BFLD_UBF==fldtype)
+        if (BFLD_VIEW==fldtype)
         {
-            /* TODO: print the field id */
-            if (EXSUCCEED!=ndrx_Bfprint ((UBFH *)p, outf, p_writef, dataptr1, level+1))
-            {
-                /* TODO: */
-            }
+            vdata = (BVIEWFLD *)p;
+            /* for value we print the view name */
+            p=vdata->vname;
+            len=strlen(vdata->vname)+1;
+        }
+        else if (BFLD_UBF==fldtype)
+        {
+            /* for UBFs we just print the field name */
+            len = 0;
         }
         else if (BFLD_STRING!=fldtype && BFLD_CARRAY!=fldtype)
         {
@@ -178,7 +184,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
 
             if (NULL==cnv_buf)
             {
-                /* we failed to convertet - FAIL! No buffers should be allocated
+                /* we failed to convert - FAIL! No buffers should be allocated
                  * at the moment. */
                 break; /* <<< BREAK */
             }
@@ -186,16 +192,15 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             {
                 p=cnv_buf;
             }
-        }
-        else
-        {
-            cnv_len = len; /* for str & carray we have the same len */
+            
+            len=cnv_len;
         }
 
         /* now check are we printable? */
         if (BFLD_STRING==fldtype || BFLD_CARRAY==fldtype)
         {
             int temp_len;
+            
             /* For strings we must count off trailing EOS */
             if (BFLD_STRING==fldtype)
             {
@@ -290,7 +295,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                 long tmp_len;
                 int do_write = EXFALSE;
                 
-                NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_WDATA);
+                NDRX_ASPRINTF(&tmp, &tmp_len, OUTPUT_FORMAT_NDATA);
                 
                 if (NULL==tmp)
                 {
@@ -332,6 +337,25 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             EXFAIL_OUT(ret);
         }
         
+        /* Step into printing the inner ubf */
+        if (BFLD_UBF==fldtype)
+        {
+            if (EXSUCCEED!=ndrx_Bfprint ((UBFH *)p, outf, p_writef, dataptr1, level+1))
+            {
+                UBF_LOG(log_error, "ndrx_Bfprint failed at level %d", level+1);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (BFLD_VIEW==fldtype)
+        {
+            /* at this step we shall print the VIEW at given indentation level */
+            if (EXSUCCEED!=ndrx_Bvfprint (vdata->data, vdata->vname, outf,
+                    p_writef, dataptr1, level+1))
+            {
+                UBF_LOG(log_error, "ndrx_Bvfprint failed at level %d", level+1);
+                EXFAIL_OUT(ret);
+            }
+        }
     }
     
 out:
@@ -345,6 +369,7 @@ out:
     {
         NDRX_FREE(cnv_buf);
     }
+
     /* release the stuff... */
     fflush(outf);
 

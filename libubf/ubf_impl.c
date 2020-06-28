@@ -1647,9 +1647,8 @@ expublic int _Bpres (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ)
 }
 
 /**
- * Get the next occurrance. This will iterate over the all FB. Inside it it uses
- * static pointer & counter for fields. So function should not be used for two
- * searches in the same time.
+ * Get the next occurrence. This will iterate over the all FB. Inside it uses
+ * static pointer & counter for fields.
  *
  * Search must start with BFIRSTFLDID
  * @param p_ub
@@ -1705,7 +1704,6 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         step = dtype->p_next(dtype, p, NULL);
         p+=step;
 
-
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
@@ -1755,11 +1753,17 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
             int dlen;
             dtype_ext1_t *dtype_ext1;
             /* Return the pointer to the data */
-            *d_ptr = p;
             dtype_ext1 = &G_dtype_ext1_map[type];
             dlen = dtype_ext1->hdr_size;
-            *d_ptr=p+dlen;
-
+            
+            if (NULL!=dtype_ext1->p_prep_ubfp)
+            {
+                *d_ptr=dtype_ext1->p_prep_ubfp(dtype_ext1, &state->vstorage, p);
+            }
+            else
+            {
+                *d_ptr=p+dlen;
+            }
         }
 
         if (NULL!=buf)

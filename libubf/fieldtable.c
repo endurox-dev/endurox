@@ -289,7 +289,7 @@ exprivate int _ubf_load_def_table(void)
 
     int ret=EXSUCCEED;
 
-    flddir = getenv(FLDTBLDIR);
+    flddir = getenv(CONF_FLDTBLDIR);
     if (NULL==flddir)
     {
         ndrx_Bset_error_msg(BFTOPEN, "Field table directory not set - "
@@ -300,7 +300,7 @@ exprivate int _ubf_load_def_table(void)
     UBF_LOG(log_debug, 
             "Load field dir [%s] (multiple directories supported)", flddir);
 
-    flds = getenv(FIELDTBLS);
+    flds = getenv(CONF_FIELDTBLS);
     if (NULL==flds)
     {
         ndrx_Bset_error_msg(BFTOPEN, "Field table list not set - "

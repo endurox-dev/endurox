@@ -60,6 +60,7 @@
 #include <ubfutil.h>
 
 #include "expluginbase.h"
+#include "ubf_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -989,7 +990,6 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
     char fn[] = "Bnext";
     UBF_header_t *hdr = (UBF_header_t *)p_ub;
     /* Seems this caused tricks for multi threading.*/
-    static __thread Bnext_state_t state;
 
     API_ENTRY;
 
@@ -1004,28 +1004,28 @@ expublic int  Bnext(UBFH *p_ub, BFLDID *bfldid, BFLDOCC *occ, char *buf, BFLDLEN
         ndrx_Bset_error_msg(BEINVAL, "Bnext: ptr of bfldid or occ is NULL!");
         return EXFAIL;
     }
-    else if (*bfldid != BFIRSTFLDID && state.p_ub != p_ub)
+    else if (*bfldid != BFIRSTFLDID && G_ubf_tls->bnext_state.p_ub != p_ub)
     {
         ndrx_Bset_error_fmt(BEINVAL, "%s: Different buffer [state: %p used: %p] "
                                     "used for different state", fn,
-                                    state.p_ub, p_ub);
+                                    G_ubf_tls->bnext_state.p_ub, p_ub);
         return EXFAIL;
     }
-    else if (*bfldid != BFIRSTFLDID && state.size!=hdr->bytes_used)
+    else if (*bfldid != BFIRSTFLDID && G_ubf_tls->bnext_state.size!=hdr->bytes_used)
     {
         ndrx_Bset_error_fmt(BEINVAL, "%s: Buffer size changed [state: %d used: %d] "
                                     "from last search", fn,
-                                    state.size, hdr->bytes_used);
+                                    G_ubf_tls->bnext_state.size, hdr->bytes_used);
         return EXFAIL;
     }
     else
     {
         if (*bfldid == BFIRSTFLDID)
         {
-            memset(&state, 0, sizeof(state));
+            memset(&G_ubf_tls->bnext_state, 0, sizeof(G_ubf_tls->bnext_state));
         }
 
-        return ndrx_Bnext(&state, p_ub, bfldid, occ, buf, len, NULL);
+        return ndrx_Bnext(&G_ubf_tls->bnext_state, p_ub, bfldid, occ, buf, len, NULL);
     }
 }
 

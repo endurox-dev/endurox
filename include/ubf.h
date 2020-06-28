@@ -138,13 +138,37 @@ typedef int BFLDLEN;
 typedef int BFLDOCC;
 typedef struct Ubfh UBFH;
 
-/* Bnext state struct */
+
+/**
+ * Handler for adding view to UBF buffer
+ */
+typedef struct
+{ 
+    unsigned int vflags;                /**< RFU flags                  */
+    char vname[NDRX_VIEW_NAME_LEN+1];   /**< View field name            */ 
+    char *data;                         /**< pointer to view structure  */ 
+} BVIEWFLD;
+
+/**
+ * Temporary store for returned UBF value
+ * thread related...
+ */
+typedef struct
+{
+    BVIEWFLD viewfld;
+} ndrx_ubf_tls_bufval_t;
+
+/**
+ *  Bnext state struct 
+ */
 struct Bnext_state
 {
     BFLDID *p_cur_bfldid;
     BFLDOCC cur_occ;
     UBFH *p_ub;
     size_t size;
+    /** view data returned by Bnext */
+    ndrx_ubf_tls_bufval_t vstorage;
 };
 typedef struct Bnext_state Bnext_state_t;
 
@@ -163,16 +187,6 @@ typedef struct
 {
     BFLDID *last_checked;
 } Bfld_loc_info_t;
-
-/**
- * Handler for adding view to UBF buffer
- */
-typedef struct
-{ 
-    unsigned int vflags;                /**< RFU flags                  */
-    char vname[NDRX_VIEW_NAME_LEN+1];   /**< View field name            */ 
-    char *data;                         /**< pointer to view structure  */ 
-} BVIEWFLD;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/

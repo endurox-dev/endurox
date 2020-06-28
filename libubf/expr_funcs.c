@@ -48,6 +48,7 @@
 #include "ndebug.h"
 #include "ferror.h"
 #include <ubf.h>
+#include <ubf_int.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <regex.h>
