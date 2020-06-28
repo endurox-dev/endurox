@@ -84,6 +84,9 @@ typedef struct
     /* ubf.c */
     Bnext_state_t bnext_state;
     
+    /* storage for Bfind */
+    ndrx_ubf_tls_bufval_t ndrx_Bfind_tls_stor;
+    
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* we should have lock inside */
     pthread_mutex_t mutex; /* initialize later with PTHREAD_MUTEX_INITIALIZER */

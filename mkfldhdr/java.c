@@ -42,6 +42,7 @@
 
 #include <ndrstandard.h>
 #include <ubf.h>
+#include <ubf_int.h>
 #include <ferror.h>
 #include <fieldtable.h>
 #include <fdatatype.h>

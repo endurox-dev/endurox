@@ -49,6 +49,8 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <cf.h>
+
+#include "ubf_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -121,8 +123,18 @@ expublic char * ndrx_Bfind (UBFH * p_ub, BFLDID bfldid,
 
         dtype_ext1 = &G_dtype_ext1_map[dtype->fld_type];
         dlen = dtype_ext1->hdr_size;
-        /* Move us to start of the data. */
-        ret+=dlen;
+        
+        if (NULL!=dtype_ext1->p_prep_ubfp)
+        {
+            /* translate to value */
+            ret=dtype_ext1->p_prep_ubfp(dtype_ext1, 
+                    &G_ubf_tls->ndrx_Bfind_tls_stor, ret);
+        }
+        else
+        {
+            /* Move us to start of the data. */
+            ret+=dlen;
+        }
     }
     else
     {

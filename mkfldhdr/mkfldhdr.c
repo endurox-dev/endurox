@@ -135,7 +135,7 @@ exprivate char *get_next_from_env (int *ret)
     {
         first=0;
 
-        flddir = (char *)getenv(FLDTBLDIR);
+        flddir = (char *)getenv(CONF_FLDTBLDIR);
         if (NULL==flddir)
         {
             ndrx_Bset_error_msg(BFTOPEN, "Field table directory not set - "
@@ -147,7 +147,7 @@ exprivate char *get_next_from_env (int *ret)
                 "Load field dir [%s] (multiple directories supported)", 
                  flddir);
 
-        flds = (char *)getenv(FIELDTBLS);
+        flds = (char *)getenv(CONF_FIELDTBLS);
         if (NULL==flds)
         {
             ndrx_Bset_error_msg(BFTOPEN, "Field table list not set - "

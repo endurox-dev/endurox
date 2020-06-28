@@ -40,6 +40,7 @@ extern "C" {
 #endif
 /*---------------------------Includes-----------------------------------*/
 #include <ubf.h>
+#include <ubf_tls.h>
 #include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -104,13 +105,22 @@ struct dtype_ext1 {
     int (*p_put_empty) (struct dtype_ext1* t, char *fb, BFLDID bfldid);
     void (*p_dump_data) (struct dtype_ext1 *t, char *text, char *data, int *len);
     int hdr_size; /* header size (bytes afer which data starts in FB */
-    /* Get temporary buffer space */
+    /** Get temporary buffer space */
     char *(*p_tbuf) (struct dtype_ext1 *t, int len);
-    /* allocate conversation buffer for user. data used for types as ubf/view */
+    /** allocate conversation buffer for user. data used for types as ubf/view */
     char *(*p_talloc) (struct dtype_ext1 *t, int *len);
-    /* Fn to compare two values of data type */
+    /** Fn to compare two values of data type */
     int (*p_cmp) (struct dtype_ext1 *t, char *val1, BFLDLEN len1, char *val2, 
         BFLDLEN len2, long mode);
+    /** 
+     * prepare ubf pointer for reading data 
+     * @param t type descriptor
+     * @param vstorage value storage block where to store the prepared user data
+     * @param fld_start UBF start of the field (including header)
+     * @return data pointer for user to return
+     */
+    char *(*p_prep_ubfp) (struct dtype_ext1 *t, ndrx_ubf_tls_bufval_t *vstorage, char *fld_start);
+    
 };
 
 typedef struct dtype_ext1 dtype_ext1_t;

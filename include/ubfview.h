@@ -248,6 +248,9 @@ extern NDRX_API int ndrx_Bvnext (Bvnext_state_t *state, char *view,
 
 extern NDRX_API int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2);
 
+extern NDRX_API int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
+          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1, int level);
+
 #ifdef	__cplusplus
 }
 #endif

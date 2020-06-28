@@ -82,6 +82,8 @@ add_library (objubf OBJECT
                 view_struct.c
                 view_ubf.c
 		view_access.c
+                view_print.c
+                view_cmp.c
 		${BISON_EXPRPARSER_OUTPUTS} 
 		${FLEX_EXPRSCANNER_OUTPUTS}
                 bcmp.c
@@ -89,7 +91,6 @@ add_library (objubf OBJECT
                 fld_ptr.c
                 fld_ubf.c
                 fld_view.c
-                view_cmp.c
 	)
 
 set_property(TARGET objubf PROPERTY POSITION_INDEPENDENT_CODE 1)

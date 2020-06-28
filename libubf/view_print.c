@@ -1,7 +1,7 @@
 /**
- * @brief UBF library - header file for UBF error handling.
+ * @brief View print & parse functions to/from UBF style output
  *
- * @file ferror.h
+ * @file view_print.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,41 +31,44 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef FERROR_H
-#define	FERROR_H
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <errno.h>
+#include <dirent.h>
+#include <limits.h>
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <regex.h>
 #include <ndrstandard.h>
+#include <ubfview.h>
+#include <ndebug.h>
+
+#include <userlog.h>
+#include <view_cmn.h>
+#include <atmi_tls.h>
+#include <cf.h>
+#include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define MAX_ERROR_LEN   1024
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_Bset_error(int error_code);
-extern NDRX_API void ndrx_Bset_error_msg(int error_code, char *msg);
-extern NDRX_API void ndrx_Bset_error_fmt(int error_code, const char *fmt, ...);
-/* Is error already set?  */
-extern NDRX_API int ndrx_Bis_error(void);
-extern NDRX_API void ndrx_Bappend_error_msg(char *msg);
 
-extern NDRX_API void ndrx_Bunset_error(void);
-
-/* This is not related with UBF error, we will handle it here anyway
- * because file is part of error handling
+/**
+ * Print VIEW data to file pointer 
+ * @param cstruct ptr to the view struct (c)
+ * @param view view name
+ * @param outf file pointer to which to print
+ * @param p_writef masking function if any (shared with UBF)
+ * @param dataptr1 RFU data pointer
+ * @param level level (front tabs at which to print)
+ * @return EXSUCCEED/EXFAIL
  */
-extern NDRX_API void ndrx_report_regexp_error(char *fun_nm, int err, regex_t *rp);
-#ifdef	__cplusplus
+expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
+          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1, int level)
+{
+    
 }
-#endif
-
-#endif	/* FERROR_H */
-
 /* vim: set ts=4 sw=4 et smartindent: */

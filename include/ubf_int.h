@@ -62,11 +62,6 @@ extern "C" {
 
 /* Print some debug out there! */
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);
-#define FLDTBLDIR	"FLDTBLDIR"
-#define FIELDTBLS	"FIELDTBLS"
-    
-#define CONF_VIEWFILES  "VIEWFILES"         /* List of view files to load      */
-#define CONF_VIEWDIR    "VIEWDIR"           /* Folders with view files stored, ':' - sep   */
     
 #define UBFDEBUGLEV "UBF_E_"
 
@@ -101,7 +96,8 @@ extern "C" {
 #define BFLD_INT_SIZE		sizeof(int)
 #define BFLD_PTR_SIZE		sizeof(char *)
 #define BFLD_UBF_SIZE		sizeof(UBF_ubf_t)
-#define BFLD_VIEW_SIZE		sizeof(UBF_view_t)
+/** strip field id & align off */
+#define BFLD_VIEW_SIZE		(sizeof(UBF_view_t) - EX_ALIGNMENT_BYTES)
 
 
 /* #define UBF_API_DEBUG   1 *//* Provide lots of debugs from UBF API? */
@@ -183,7 +179,7 @@ extern "C" {
     ((sizeof(TNAME) + DSIZE + DEFAULT_ALIGN -1 ) / DEFAULT_ALIGN * DEFAULT_ALIGN)
 
 /*---------------------------Enums--------------------------------------*/
-/*---------------------------Typedefs-----------------------------------*/
+/*---------------------------Typedefs-----------------------------------*/    
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -296,6 +292,25 @@ extern NDRX_API int ndrx_cmp_ubf (struct dtype_ext1 *t, char *val1, BFLDLEN len1
 extern NDRX_API int ndrx_cmp_view (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
         char *val2, BFLDLEN len2, long mode);
 extern NDRX_API char *ndrx_talloc_view (struct dtype_ext1 *t, int *len);
+
+
+/* FLD_VIEW support: */
+
+extern NDRX_API int ndrx_get_fb_view_size(dtype_str_t *t, char *fb, int *payload_size);
+extern NDRX_API int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid, 
+        char *data, int len);
+extern NDRX_API int ndrx_get_d_size_view (struct dtype_str *t, char *data, 
+        int len, int *payload_size);
+extern NDRX_API int ndrx_get_data_view (struct dtype_str *t, char *fb, char *buf, int *len);
+extern NDRX_API int ndrx_g_view_empty(struct dtype_ext1* t);
+extern NDRX_API int ndrx_put_empty_view(struct dtype_ext1* t, char *fb, BFLDID bfldid);
+extern NDRX_API void ndrx_dump_view(struct dtype_ext1 *t, char *text, char *data, int *len);
+extern NDRX_API int ndrx_cmp_view (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
+        char *val2, BFLDLEN len2, long mode);
+extern NDRX_API char *ndrx_talloc_view (struct dtype_ext1 *t, int *len);
+
+extern NDRX_API char* ndrx_prep_viewp (struct dtype_ext1 *t, 
+        ndrx_ubf_tls_bufval_t *storage, char *data);
 
 #ifdef	__cplusplus
 }
