@@ -238,6 +238,9 @@ exprivate void * check_child_exit(void *arg)
     sigset_t blockMask;
     int sig;
     struct rusage rusage;
+    int old;
+    
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old);
     
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
@@ -270,24 +273,40 @@ exprivate void * check_child_exit(void *arg)
         if (M_shutdown)
         {
             break;
-            
         }
         
         LOCKED_DEBUG(log_debug, "about to wait()");
         
+#if EX_OS_DARWIN
+        /* waitpid cancel enabled...
+         * sleep if no childs
+         *  */
+        while (chldpid = waitpid(-1, &stat_loc, WUNTRACED))
+        {
+            int err;
+            
+            if (EXFAIL==chldpid)
+            {
+                if (err!=ECHILD)
+                {
+                    userlog("waitpid failed: %s", tpstrerror(err));
+                }
+                sleep(1);
+            }
+            else
+            {
+                pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
+                handle_child(chldpid, stat_loc);
+                pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old);
+            }
+        }       
+#else
         while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
-            got_something++;
             handle_child(chldpid, stat_loc);
         }
-        
-#if EX_OS_DARWIN
-        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
-        if (!got_something)
-        {
-            sleep(1);
-        }
 #endif
+        
     }
    
     LOCKED_DEBUG(log_debug, "check_child_exit terminated");
@@ -421,13 +440,19 @@ expublic void ndrxd_sigchld_uninit(void)
      */
     M_shutdown = EXTRUE;
     
+#if EX_OS_DARWIN
+    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+#else
     if (EXSUCCEED!=(err=pthread_kill(M_signal_thread, SIGCHLD)))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(err));
     }
+#endif
     else
     {
-
         if (EXSUCCEED!=pthread_join(M_signal_thread, NULL))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
