@@ -281,8 +281,9 @@ exprivate void * check_child_exit(void *arg)
         /* waitpid cancel enabled...
          * sleep if no childs
          *  */
-        while (chldpid = waitpid(-1, &stat_loc, WUNTRACED))
+        while (1)
         {
+            chldpid = (pid_t)waitpid(-1, &stat_loc, WUNTRACED);
             int err;
             
             if (EXFAIL==chldpid)
