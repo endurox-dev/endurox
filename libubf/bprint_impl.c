@@ -346,7 +346,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                 EXFAIL_OUT(ret);
             }
         }
-        else if (BFLD_VIEW==fldtype)
+        /* the view is not empty one... */
+        else if (BFLD_VIEW==fldtype && len > 1)
         {
             /* at this step we shall print the VIEW at given indentation level */
             if (EXSUCCEED!=ndrx_Bvfprint (vdata->data, vdata->vname, outf,

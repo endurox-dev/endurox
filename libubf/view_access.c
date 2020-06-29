@@ -590,7 +590,7 @@ expublic int ndrx_Bvnext (Bvnext_state_t *state, char *view, char *cname,
 
     }
     
-    NDRX_STRCPY_SAFE_DST(cname, f->cname, NDRX_VIEW_CNAME_LEN);
+    NDRX_STRCPY_SAFE_DST(cname, f->cname, (NDRX_VIEW_CNAME_LEN+1));
     
     if (NULL!=fldtype)
     {

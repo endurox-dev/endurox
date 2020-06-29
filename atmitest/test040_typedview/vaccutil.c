@@ -176,7 +176,7 @@ Ensure(test_Bvnext)
 {
     struct MYVIEW1 v;
     Bvnext_state_t state;
-    char cname[NDRX_VIEW_CNAME_LEN];
+    char cname[NDRX_VIEW_CNAME_LEN+1];
     int fldtype=99;
     BFLDOCC maxocc;
     long dim_size;
