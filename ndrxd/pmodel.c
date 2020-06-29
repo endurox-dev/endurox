@@ -206,7 +206,7 @@ exprivate void handle_child(pid_t chldpid, int stat_loc)
         }
         status.srvinfo.pid = chldpid;
         
-        if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
+        if (WIFEXITED(stat_loc) && 0==WEXITSTATUS(stat_loc))
         {
             LOCKED_DEBUG(log_error, "Process normal shutdown!");
             status.srvinfo.state = NDRXD_PM_EXIT;
