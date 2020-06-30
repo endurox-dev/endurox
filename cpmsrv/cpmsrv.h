@@ -168,7 +168,6 @@ extern cpm_process_t *G_clt_config;
 extern int load_config(void);
 extern cpm_process_t * cpm_get_client_by_pid(pid_t pid);
 extern cpm_process_t * cpm_client_get(char *tag, char *subsect);
-/* extern void sign_chld_handler(int sig); */
 
 extern void cpm_sigchld_init(void);
 extern void cpm_sigchld_uninit(void);
@@ -188,10 +187,6 @@ extern void cpm_lock_config(void);
 extern void cpm_unlock_config(void);
 
 extern int ndrx_cpm_sync_from_shm(void);
-
-#ifdef EX_CPM_NO_THREADS
-extern void sign_chld_handler(int sig);
-#endif
 
 #ifdef	__cplusplus
 }

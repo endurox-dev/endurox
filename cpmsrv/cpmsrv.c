@@ -230,10 +230,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 __func__, strerror(errno));
     }
 
-#ifndef EX_CPM_NO_THREADS
-    cpm_sigchld_init();
-#endif
-    
     /* attach to the shared memory */
     if (EXSUCCEED!=ndrx_cltshm_init(EXFALSE))
     {
@@ -292,10 +288,6 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     
     cpm_killall();
     
-#ifndef EX_CPM_NO_THREADS
-    cpm_sigchld_uninit();
-#endif
-    
     ndrx_cltshm_detach();
     ndrx_cltshm_remove(EXFALSE);
 
@@ -320,11 +312,6 @@ exprivate int cpm_callback_timer(void)
         ndrx_stopwatch_reset(&t);
     }
 
-#ifdef EX_CPM_NO_THREADS
-    /* Process any dead child... */
-    sign_chld_handler(SIGCHLD);
-#endif
-    
     if (ndrx_stopwatch_get_delta_sec(&t) < G_config.chk_interval)
     {
         goto out;
@@ -427,8 +414,6 @@ exprivate int cpm_callback_timer(void)
         cpm_pidtest(c);
        
     } /* hash loop */
-    /* handle any signal 
-    sign_chld_handler(SIGCHLD); */
     
 out:
     return EXSUCCEED;
