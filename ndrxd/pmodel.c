@@ -251,8 +251,7 @@ exprivate void * check_child_exit(void *arg)
     LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     while (!M_shutdown)
     {
-	int got_something = 0;
-
+        
 /* seems not working on darwin ... thus just wait for pid.
  * if we do not have any childs, then sleep for 1 sec.
  */

@@ -207,21 +207,10 @@ exprivate void * check_child_exit(void *arg)
  */
 expublic void cpm_sigchld_init(void)
 {
-    sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
     char *fn = "cpm_sigchld_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
-    
-    /* Block the notification signal (do not need it here...) */
-    
-    sigemptyset(&blockMask);
-    sigaddset(&blockMask, SIGCHLD);
-    
-    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
-    {
-        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
-    }
     
     pthread_attr_init(&pthread_custom_attr);
     
