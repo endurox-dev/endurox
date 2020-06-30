@@ -138,12 +138,6 @@ exprivate void * check_child_exit(void *arg)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
-    /* seems like needed for osx */
-    if (EXFAIL==pthread_sigmask(SIG_BLOCK, &blockMask, NULL))
-    {
-        LOCKED_DEBUG(log_always, "sigprocmask failed: %s", strerror(errno));
-    }
-
     LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     while (!M_shutdown)
     {
@@ -445,7 +439,6 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
-        /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
@@ -481,7 +474,6 @@ expublic int cpm_kill(cpm_process_t *c)
         /* if running from shared memory, do the check... */
         
         cpm_pidtest(c);
-        /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
