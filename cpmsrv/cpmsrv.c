@@ -230,6 +230,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 __func__, strerror(errno));
     }
 
+    cpm_sigchld_init();
+    
     /* attach to the shared memory */
     if (EXSUCCEED!=ndrx_cltshm_init(EXFALSE))
     {
@@ -287,6 +289,8 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     NDRX_LOG(log_debug, "tpsvrdone called - shutting down client processes...");
     
     cpm_killall();
+    
+    cpm_sigchld_uninit();
     
     ndrx_cltshm_detach();
     ndrx_cltshm_remove(EXFALSE);
