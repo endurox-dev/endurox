@@ -76,59 +76,49 @@
 exprivate pthread_t M_signal_thread; /* Signalled thread */
 exprivate int M_signal_thread_set = EXFALSE; /* Signal thread is set */
 exprivate MUTEX_LOCKDECL(M_forklock);       /**< forking lock, no q ops during fork!  */
+exprivate volatile int M_shutdown = EXFALSE; /**< Doing shutdown    */
 /*---------------------------Prototypes---------------------------------*/
-
-#if EX_CPM_NO_THREADS
 /**
- * Handle the child signal
- * @return
+ * process child
+ * @param chldpid child pid
+ * @param stat_loc exit status
  */
-expublic void sign_chld_handler(int sig)
+exprivate void handle_child(pid_t chldpid, int stat_loc)
 {
-    pid_t chldpid;
-    int stat_loc;
-    cpm_process_t * c;
-    struct rusage rusage;
+    cpm_process_t * c = cpm_get_client_by_pid(chldpid);
+    
+    /* Bug #108 01/04/2015, mvitolin
+    * If config file is changed by foreground thread in this time,
+    * then we must synchronize with them.
+    */
+   cpm_lock_config();
+   
+   if (NULL!=c)
+   {
+       c->dyn.cur_state = CLT_STATE_NOTRUN;
 
-    memset(&rusage, 0, sizeof(rusage));
+       /* these bellow use some debug and time funcs
+        * thus lock all
+        */
+       MUTEX_LOCK_V(M_forklock);
+       /* update shared memory to stopped... */
+       ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
 
-    NDRX_LOG(log_debug, "About to wait3()");
-    while (0<(chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)))
-    {
-        /* - no debug please... Can cause lockups... - not using singlals thus no tproblem... */
-        NDRX_LOG(log_warn, "sigchld: PID: %d exit status: %d",
-                                           chldpid, stat_loc);
-        
-        /* Search for the client & mark it as dead */
-        cpm_lock_config();
-        
-        c = cpm_get_client_by_pid(chldpid);
-        
-        if (NULL!=c)
-        {
-            c->dyn.cur_state = CLT_STATE_NOTRUN;
-            c->dyn.exit_status = stat_loc;
-            /* Set status change time */
-            cpm_set_cur_time(c);
-            
-            /* update shared memory to stopped... */
-            ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
-            
-        }
-        else
-        {
-            NDRX_LOG(log_error, "PID not found %d in client registry!",chldpid);
-        }
+       c->dyn.exit_status = stat_loc;
+       /* Set status change time */
+       /* have some lock due to time use... */
+       cpm_set_cur_time(c);
+       MUTEX_UNLOCK_V(M_forklock);
+   }
 
-        cpm_unlock_config(); /* we are done... */
-        
-    }
-
-    /*signal(SIGCHLD, sign_chld_handler);*/
+   cpm_unlock_config(); /* we are done... */
 }
 
-#else
-
+/**
+ * Checks for child exit.
+ * We will let mainthread to do all internal struct related work!
+ * @return Got child exit
+ */
 /**
  * Checks for child exit.
  * We will let mainthread to do all internal struct related work!
@@ -141,85 +131,79 @@ exprivate void * check_child_exit(void *arg)
     sigset_t blockMask;
     int sig;
     struct rusage rusage;
-        
+    int old;
+    
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old);
+    
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
-
-    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
-    {
-        LOCKED_DEBUG(log_always, "%s: pthread_sigmask failed (thread): %s",
-            __func__, strerror(errno));
-    }
     
-    LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
-    for (;;)
+    /* seems like needed for osx */
+    if (EXFAIL==pthread_sigmask(SIG_BLOCK, &blockMask, NULL))
     {
-        int got_something = 0;
+        LOCKED_DEBUG(log_always, "sigprocmask failed: %s", strerror(errno));
+    }
 
+    LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
+    while (!M_shutdown)
+    {
 /* seems not working on darwin ... thus just wait for pid.
  * if we do not have any childs, then sleep for 1 sec.
  */
 #ifndef EX_OS_DARWIN
         LOCKED_DEBUG(log_debug, "about to sigwait()");
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+        
+        /* Wait for notification signal */
+        if (EXSUCCEED!=sigwait(&blockMask, &sig))
         {
             LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
 
         }        
 #endif
         
+        if (M_shutdown)
+        {
+            break;
+        }
+        
         LOCKED_DEBUG(log_debug, "about to wait()");
-        /*
-        while ((chldpid = wait(&stat_loc)) >= 0)
-         */  
+        
+#if EX_OS_DARWIN
+        /* waitpid cancel enabled...
+         * sleep if no childs
+         *  */
+        while (1)
+        {
+            chldpid = (pid_t)waitpid(-1, &stat_loc, WUNTRACED);
+            int err;
+            
+            if (EXFAIL==chldpid)
+            {
+                if (err!=ECHILD)
+                {
+                    userlog("waitpid failed: %s", tpstrerror(err));
+                }
+                sleep(1);
+            }
+            else
+            {
+                pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
+                handle_child(chldpid, stat_loc);
+                pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old);
+            }
+        }       
+#else
         while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
-            /* Bug #108 01/04/2015, mvitolin
-             * If config file is changed by foreground thread in this time,
-             * then we must synchronize with them.
-             */
-            cpm_lock_config();
-            
-            cpm_process_t * c = cpm_get_client_by_pid(chldpid);
-            got_something++;
-                   
-            if (NULL!=c)
-            {
-                c->dyn.cur_state = CLT_STATE_NOTRUN;
-                
-                
-                /* these bellow use some debug and time funcs
-                 * thus lock all
-                 */
-                MUTEX_LOCK_V(M_forklock);
-                /* update shared memory to stopped... */
-                ndrx_cltshm_setpos(c->key, EXFAIL, NDRX_CPM_MAP_WASUSED, NULL);
-                
-                c->dyn.exit_status = stat_loc;
-                /* Set status change time */
-                /* have some lock due to time use... */
-                cpm_set_cur_time(c);
-                MUTEX_UNLOCK_V(M_forklock);
-            }
-            
-            cpm_unlock_config(); /* we are done... */
-            
-        }
-
-#if EX_OS_DARWIN
-        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
-        if (!got_something)
-        {
-            sleep(1);
+            handle_child(chldpid, stat_loc);
         }
 #endif
+        
     }
    
-/*
-    - not reached.
-    NDRX_LOG(log_debug, "check_child_exit: %s", strerror(errno));
+    LOCKED_DEBUG(log_debug, "check_child_exit terminated");
+    
     return NULL;
-*/
 }
 
 /**
@@ -229,38 +213,31 @@ exprivate void * check_child_exit(void *arg)
  */
 expublic void cpm_sigchld_init(void)
 {
+    sigset_t blockMask;
     pthread_attr_t pthread_custom_attr;
-    pthread_attr_t pthread_custom_attr_dog;
-    struct sigaction sa; /* Seem on AIX signal might slip.. */
-    char *fn = "ndrxd_sigchld_init";
+    char *fn = "cpm_sigchld_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
     
-    /* our friend AIX, might just ignore the SIG_BLOCK and raise signal
-     * Thus we will handle the stuff in as it was in Enduro/X 2.5
-     */
+    /* Block the notification signal (do not need it here...) */
     
-#if 0
-    /* sa.sa_handler = sign_chld_handler; they are blocked... */
-    sigemptyset (&sa.sa_mask);
-    sa.sa_flags = SA_RESTART; /* restart system calls please... */
-    sigaction (SIGCHLD, &sa, 0);
-#endif
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
+    }
     
     pthread_attr_init(&pthread_custom_attr);
-    pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
-    /* pthread_attr_setstacksize(&pthread_custom_attr, 2048*1024); */
-    
     ndrx_platf_stack_set(&pthread_custom_attr);
-    
     pthread_create(&M_signal_thread, &pthread_custom_attr, 
             check_child_exit, NULL);
 
     M_signal_thread_set = EXTRUE;
 }
-#endif
 
 
 /**
@@ -269,42 +246,41 @@ expublic void cpm_sigchld_init(void)
  */
 expublic void cpm_sigchld_uninit(void)
 {
-    char *fn = "ndrxd_sigchld_uninit";
-
+    char *fn = "cpm_sigchld_uninit";
+    int err;
     NDRX_LOG(log_debug, "%s - enter", fn);
     
     if (!M_signal_thread_set)
     {
-        NDRX_LOG(log_debug, "Signal thread was not initialized, nothing to do...");
+        NDRX_LOG(log_debug, "Signal thread was not initialised, nothing todo...");
         goto out;
     }
+
 
     NDRX_LOG(log_debug, "About to cancel signal thread");
     
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
+    M_shutdown = EXTRUE;
+    
+#if EX_OS_DARWIN
     if (EXSUCCEED!=pthread_cancel(M_signal_thread))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
     }
+#else
+    if (EXSUCCEED!=(err=pthread_kill(M_signal_thread, SIGCHLD)))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(err));
+    }
+#endif
     else
     {
-        void * res = EXSUCCEED;
-        if (EXSUCCEED!=pthread_join(M_signal_thread, &res))
+        if (EXSUCCEED!=pthread_join(M_signal_thread, NULL))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 
                     strerror(errno));
-        }
-
-        if (res == PTHREAD_CANCELED)
-        {
-            NDRX_LOG(log_info, "Signal thread canceled ok!")
-        }
-        else
-        {
-            NDRX_LOG(log_info, "Signal thread failed to cancel "
-                    "(should not happen!!)");
         }
     }
     
@@ -412,10 +388,6 @@ expublic int cpm_killall(void)
             ndrx_stopwatch_reset(&t);
             do
             {
-#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
-                /* Process any dead child... */
-                sign_chld_handler(SIGCHLD);
-#endif
                 EXHASH_ITER(hh, G_clt_config, c, ct)
                 {
                     if (CLT_STATE_STARTED==c->dyn.cur_state)
@@ -473,10 +445,6 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
-#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
-        /* Process any dead child... */
-        sign_chld_handler(SIGCHLD);
-#endif
         /* sign_chld_handler(0); */
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
@@ -510,10 +478,6 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
-#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
-        /* Process any dead child... */
-        sign_chld_handler(SIGCHLD);
-#endif
         /* if running from shared memory, do the check... */
         
         cpm_pidtest(c);
@@ -557,10 +521,6 @@ expublic int cpm_kill(cpm_process_t *c)
     ndrx_stopwatch_reset(&t);
     do
     {
-#ifdef EX_CPM_NO_THREADS /* Bug #234 - have feedback at shutdown when no threads used */
-        /* Process any dead child... */
-        sign_chld_handler(SIGCHLD);
-#endif
         if (CLT_STATE_STARTED==c->dyn.cur_state)
         {
             usleep(CLT_STEP_INTERVAL);
