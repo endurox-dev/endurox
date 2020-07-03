@@ -514,6 +514,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     /* Start the background processing */
     forward_process_init();
     
+    M_init_ok=EXTRUE;
+    
 out:
     return ret;
 }
