@@ -102,6 +102,7 @@ expublic void tmq_thread_init(void)
  */
 expublic void tmq_thread_uninit(void)
 {
+    NDRX_LOG(log_debug, "Into tmq_thread_uninit");
     tpclose();
     tpterm();
 }
@@ -516,6 +517,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Start the background processing */
     forward_process_init();
+
+    /* Bug #565 */
+    M_init_ok=EXTRUE;
     
 out:
     return ret;

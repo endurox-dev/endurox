@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <errno.h>
 #include <memory.h>
 #include <unistd.h>
@@ -480,12 +481,41 @@ int main_uninit(void)
     return EXSUCCEED;
 }
 
+/* dummy, otherwise sigwait() does not return anything... */
+exprivate void sig_hand(int sig) {}
+
 /*
  * Program main entry
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
     int ret=EXSUCCEED;
+    struct sigaction sa; /* Seem on AIX signal might slip.. */
+    sigset_t blockMask;
+
+    /* block sigchld first as some IPC mechanisms like systemv start
+     * threads very early...
+     */
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    /*
+    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        */
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", __func__, 
+                strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* if handler is not set, the sigwait() does not return any results.. */
+    sa.sa_handler = sig_hand;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sigaction (SIGCHLD, &sa, 0);
+    
     /* Do some init */
     memset(&G_sys_config, 0, sizeof(G_sys_config));
     
