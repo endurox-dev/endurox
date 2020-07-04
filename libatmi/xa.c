@@ -1365,13 +1365,6 @@ expublic int ndrx_tpclose(void)
 {
     int ret=EXSUCCEED;
     
-    if (!G_atmi_tls->G_atmi_is_init ||!G_atmi_tls->G_atmi_xa_curtx.is_xa_open)
-    {
-        /* nothing todo */
-        NDRX_LOG(log_debug, "tp is not open");
-        goto out;
-    }
-    
     XA_API_ENTRY(EXTRUE);
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)
