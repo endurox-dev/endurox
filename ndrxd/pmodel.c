@@ -206,7 +206,7 @@ exprivate void handle_child(pid_t chldpid, int stat_loc)
         }
         status.srvinfo.pid = chldpid;
         
-        if (WIFEXITED(stat_loc) && (0 == (stat_loc & 0xff)))
+        if (WIFEXITED(stat_loc) && 0==WEXITSTATUS(stat_loc))
         {
             LOCKED_DEBUG(log_error, "Process normal shutdown!");
             status.srvinfo.state = NDRXD_PM_EXIT;
@@ -238,21 +238,20 @@ exprivate void * check_child_exit(void *arg)
     sigset_t blockMask;
     int sig;
     struct rusage rusage;
+    int old;
+    int ret;
+    
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old);
     
     sigemptyset(&blockMask);
     sigaddset(&blockMask, SIGCHLD);
     
     /* seems like needed for osx */
-    if (EXFAIL==pthread_sigmask(SIG_BLOCK, &blockMask, NULL))
-    {
-        LOCKED_DEBUG(log_always, "sigprocmask failed: %s", strerror(errno));
-    }
 
     LOCKED_DEBUG(log_debug, "check_child_exit - enter...");
     while (!M_shutdown)
     {
-	int got_something = 0;
-
+        
 /* seems not working on darwin ... thus just wait for pid.
  * if we do not have any childs, then sleep for 1 sec.
  */
@@ -260,95 +259,57 @@ exprivate void * check_child_exit(void *arg)
         LOCKED_DEBUG(log_debug, "about to sigwait()");
         
         /* Wait for notification signal */
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))
+        ret=sigwait(&blockMask, &sig);
+        
+        if (EXSUCCEED!=ret)
         {
             LOCKED_DEBUG(log_warn, "sigwait failed:(%s)", strerror(errno));
-
         }        
 #endif
         
         if (M_shutdown)
         {
             break;
-            
         }
         
         LOCKED_DEBUG(log_debug, "about to wait()");
         
+#if EX_OS_DARWIN
+        /* waitpid cancel enabled...
+         * sleep if no childs
+         *  */
+        while (1)
+        {
+            chldpid = (pid_t)waitpid(-1, &stat_loc, WUNTRACED);
+            int err;
+            
+            if (EXFAIL==chldpid)
+            {
+                if (err!=ECHILD)
+                {
+                    userlog("waitpid failed: %s", tpstrerror(err));
+                }
+                sleep(1);
+            }
+            else
+            {
+                pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
+                handle_child(chldpid, stat_loc);
+                pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old);
+            }
+        }       
+#else
         while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
         {
-            got_something++;
             handle_child(chldpid, stat_loc);
         }
-        
-#if EX_OS_DARWIN
-        LOCKED_DEBUG(6, "wait: %s", strerror(errno));
-        if (!got_something)
-        {
-            sleep(1);
-        }
 #endif
+        
     }
    
     LOCKED_DEBUG(log_debug, "check_child_exit terminated");
     
     return NULL;
-}
-
-
-/**
- * Checks for child exit.
- * We will let mainthread to do all internal struct related work!
- * @return Got child exit
- */
-expublic int thread_check_child_exit(void)
-{
-    pid_t chldpid;
-    int stat_loc;
-    struct rusage rusage;
-    int ret=EXFALSE;
-
-    memset(&rusage, 0, sizeof(rusage));
-
-    while ((chldpid = wait3(&stat_loc, WNOHANG|WUNTRACED, &rusage)) > 0)
-    {
-        handle_child(chldpid, stat_loc);
-    }
-    
-    return ret;
-}
-
-/**
- * Thread main entry...
- * @param arg
- * @return
- */
-exprivate void *sigthread_enter(void *arg)
-{
-    LOCKED_DEBUG(log_error, "***********SIGNAL THREAD START***********");
-    thread_check_child_exit();
-    LOCKED_DEBUG(log_error, "***********SIGNAL THREAD EXIT***********");
-    
-    return NULL;
-}
-
-/**
- * NDRXD process got sigchld (handling the signal if OS have slipped the thing) out
- * of the mask.
- * @return
- */
-void sign_chld_handler(int sig)
-{
-    pthread_t thread;
-    pthread_attr_t pthread_custom_attr;
-
-    pthread_attr_init(&pthread_custom_attr);
-    /* clean up resources after exit.. */
-    pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
-    /* set some small stacks size, 1M should be fine! */
-    ndrx_platf_stack_set(&pthread_custom_attr);
-    pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
-
 }
 
 /**
@@ -358,34 +319,11 @@ void sign_chld_handler(int sig)
  */
 expublic void ndrxd_sigchld_init(void)
 {
-    sigset_t blockMask;
+    
     pthread_attr_t pthread_custom_attr;
-    struct sigaction sa; /* Seem on AIX signal might slip.. */
     char *fn = "ndrxd_sigchld_init";
 
     NDRX_LOG(log_debug, "%s - enter", fn);
-    
-    /* our friend AIX, might just ignore the SIG_BLOCK and raise signal
-     * Thus we will handle the stuff in as it was in Enduro/X 2.5
-     */
-    
-    sa.sa_handler = sign_chld_handler;
-    sigemptyset (&sa.sa_mask);
-    sa.sa_flags = SA_RESTART; /* restart system calls please... */
-    sigaction (SIGCHLD, &sa, 0);
-    
-    /* Block the notification signal (do not need it here...) */
-    
-    sigemptyset(&blockMask);
-    sigaddset(&blockMask, SIGCHLD);
-    
-    /*
-    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
-        */
-    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
-    {
-        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
-    }
     
     pthread_attr_init(&pthread_custom_attr);
     
@@ -413,7 +351,6 @@ expublic void ndrxd_sigchld_uninit(void)
         goto out;
     }
 
-
     NDRX_LOG(log_debug, "About to cancel signal thread");
     
     /* TODO: have a counter for number of sets, so that we can do 
@@ -421,13 +358,19 @@ expublic void ndrxd_sigchld_uninit(void)
      */
     M_shutdown = EXTRUE;
     
+#if EX_OS_DARWIN
+    if (EXSUCCEED!=pthread_cancel(M_signal_thread))
+    {
+        NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
+    }
+#else
     if (EXSUCCEED!=(err=pthread_kill(M_signal_thread, SIGCHLD)))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(err));
     }
+#endif
     else
     {
-
         if (EXSUCCEED!=pthread_join(M_signal_thread, NULL))
         {
             NDRX_LOG(log_error, "Failed to join pthread_join() signal thread: %s", 

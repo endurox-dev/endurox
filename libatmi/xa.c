@@ -86,8 +86,11 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 
-/* current library status */
-exprivate int M_is_xa_init = EXFALSE;
+/** current library status */
+exprivate int volatile M_is_xa_init = EXFALSE;
+
+/** protect from double init... */
+exprivate MUTEX_LOCKDECL(M_is_xa_init_lock);
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate int atmi_xa_init_thread(int do_open);
@@ -146,189 +149,211 @@ expublic int atmi_xa_init(void)
     ndrx_get_xa_switch_loader func;
     char *error;
     char *xa_flags = NULL; /* dynamically allocated... */
+    int has_lock = EXFALSE;
     
+    /* Bug #565 avoid double init */
     if (!M_is_xa_init)
+    {   
+        MUTEX_LOCK_V(M_is_xa_init_lock);
+        has_lock=EXTRUE;
+        
+        /* we are done... (other thread already performed init) */
+        if (M_is_xa_init)
+        {
+            goto out;
+        }
+    }
+    
+    /* how about thread safety? */
+    NDRX_LOG(log_info, "Loading XA driver: [%s]", G_atmi_env.xa_driverlib);
+    handle = dlopen (G_atmi_env.xa_driverlib, RTLD_NOW);
+    if (!handle)
     {
-        /* how about thread safety? */
-        NDRX_LOG(log_info, "Loading XA driver: [%s]", G_atmi_env.xa_driverlib);
-        handle = dlopen (G_atmi_env.xa_driverlib, RTLD_NOW);
-        if (!handle)
-        {
-            error = dlerror();
-            NDRX_LOG(log_error, "Failed to load XA lib [%s]: %s", 
-                    G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
-            
-            ndrx_TPset_error_fmt(TPEOS, "Failed to load XA lib [%s]: %s", 
-                    G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
-            EXFAIL_OUT(ret);
-        }
-
-        func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
-
-        if (!func) 
-        {
-            error = dlerror();
-            NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+        error = dlerror();
+        NDRX_LOG(log_error, "Failed to load XA lib [%s]: %s", 
                 G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
 
-            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+        ndrx_TPset_error_fmt(TPEOS, "Failed to load XA lib [%s]: %s", 
                 G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
+        EXFAIL_OUT(ret);
+    }
+
+    func = (ndrx_get_xa_switch_loader)dlsym(handle, "ndrx_get_xa_switch");
+
+    if (!func) 
+    {
+        error = dlerror();
+        NDRX_LOG(log_error, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+            G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
+
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to get symbol `ndrx_get_xa_switch' [%s]: %s", 
+            G_atmi_env.xa_driverlib, error?error:"no dlerror provided");
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_info, "About to call ndrx_get_xa_switch()");
+
+    /* Do not deallocate the lib... */
+    if (NULL==(G_atmi_env.xa_sw = func()))
+    {
+        NDRX_LOG(log_error, "Cannot get XA switch handler - "
+                        "`ndrx_get_xa_switch()' - returns NULL");
+
+        ndrx_TPset_error_fmt(TPESYSTEM,  "Cannot get XA switch handler - "
+                        "`ndrx_get_xa_switch()' - returns NULL");
+        EXFAIL_OUT(ret);
+    }
+
+    NDRX_LOG(log_info, "Using XA %s", 
+            (G_atmi_env.xa_sw->flags&TMREGISTER)?"dynamic registration":"static registration");
+
+    if (G_atmi_env.xa_sw->flags & TMNOMIGRATE)
+    {
+        NDRX_LOG(log_warn, "XA Switch has TMNOMIGRATE flag -> fallback to nojoin");
+        ndrx_xa_nojoin(EXTRUE);
+    }
+
+    /* Parse the flags... and store the config 
+     * This is done for Feature #160. Customer have an issue with xa_start
+     * after a while. Suspect that firewall closes connections and oracle XA
+     * lib looses the connection (fact that there was xa_open()). Thus 
+     * at xa_start allow to retry with xa_close(), xa_open() and xa_start.
+     */
+    NDRX_LOG(log_debug, "xa_flags = [%s]", G_atmi_env.xa_flags);
+    if (EXEOS!=G_atmi_env.xa_flags[0])
+    {
+        char *tag_ptr;
+        /* Note this will be parsed and EOS inserted. */
+        char *tag_first;
+        char *tag_token;
+        int token_nr = 0;
+
+        char *value_ptr, *value_first, *value_token;
+
+        if (NULL==(xa_flags = NDRX_STRDUP(G_atmi_env.xa_flags)))
+        {
+            int err = errno;
+            ndrx_TPset_error_fmt(TPEOS,  "Failed to allocate xa_flags temp buffer: %s", 
+                    strerror(err));
+
+            userlog("Failed to allocate xa_flags temp buffer: %s", strerror(err));
+
             EXFAIL_OUT(ret);
         }
 
-        NDRX_LOG(log_info, "About to call ndrx_get_xa_switch()");
-
-        /* Do not deallocate the lib... */
-        if (NULL==(G_atmi_env.xa_sw = func()))
+        tag_first = xa_flags;
+        NDRX_LOG(log_debug, "About token: [%s]", tag_first);
+        while ((tag_token = strtok_r(tag_first, ";", &tag_ptr)))
         {
-            NDRX_LOG(log_error, "Cannot get XA switch handler - "
-                            "`ndrx_get_xa_switch()' - returns NULL");
-            
-            ndrx_TPset_error_fmt(TPESYSTEM,  "Cannot get XA switch handler - "
-                            "`ndrx_get_xa_switch()' - returns NULL");
-            EXFAIL_OUT(ret);
-        }
-        
-        NDRX_LOG(log_info, "Using XA %s", 
-                (G_atmi_env.xa_sw->flags&TMREGISTER)?"dynamic registration":"static registration");
-        
-        if (G_atmi_env.xa_sw->flags & TMNOMIGRATE)
-        {
-            NDRX_LOG(log_warn, "XA Switch has TMNOMIGRATE flag -> fallback to nojoin");
-            ndrx_xa_nojoin(EXTRUE);
-        }
-        
-        /* Parse the flags... and store the config 
-         * This is done for Feature #160. Customer have an issue with xa_start
-         * after a while. Suspect that firewall closes connections and oracle XA
-         * lib looses the connection (fact that there was xa_open()). Thus 
-         * at xa_start allow to retry with xa_close(), xa_open() and xa_start.
-         */
-        NDRX_LOG(log_debug, "xa_flags = [%s]", G_atmi_env.xa_flags);
-        if (EXEOS!=G_atmi_env.xa_flags[0])
-        {
-            char *tag_ptr;
-            /* Note this will be parsed and EOS inserted. */
-            char *tag_first;
-            char *tag_token;
-            int token_nr = 0;
-            
-            char *value_ptr, *value_first, *value_token;
-            
-            if (NULL==(xa_flags = NDRX_STRDUP(G_atmi_env.xa_flags)))
+            if (NULL!=tag_first)
             {
-                int err = errno;
-                ndrx_TPset_error_fmt(TPEOS,  "Failed to allocate xa_flags temp buffer: %s", 
-                        strerror(err));
-                
-                userlog("Failed to allocate xa_flags temp buffer: %s", strerror(err));
-                
-                EXFAIL_OUT(ret);
+                tag_first = NULL; /* now loop over the string */
             }
-            
-            tag_first = xa_flags;
-            NDRX_LOG(log_debug, "About token: [%s]", tag_first);
-            while ((tag_token = strtok_r(tag_first, ";", &tag_ptr)))
+
+            NDRX_LOG(log_debug, "Got tag [%s]", tag_token);
+
+            /* format: RECON:<1,2,* - error codes>:<tries>:<sleep_millisec>
+             * "*" - used for any error.
+             * example:
+             * RECON:*:3:250
+             * Meaning: on any xa_start error, reconnect (tpclose/tpopen/tpbegin)
+             * 3x times, between attempts sleep 250ms.
+             */
+            if (0==strncmp(tag_token, NDRX_XA_FLAG_RECON_TEST, strlen(NDRX_XA_FLAG_RECON_TEST)))
             {
-                if (NULL!=tag_first)
+                value_first = tag_token;
+                G_atmi_env.xa_recon_usleep = EXFAIL;
+
+                NDRX_LOG(log_warn, "Parsing RECON tag... [%s]", value_first);
+
+                while ((value_token = strtok_r(value_first, ":", &value_ptr)))
                 {
-                    tag_first = NULL; /* now loop over the string */
-                }
-                
-                NDRX_LOG(log_debug, "Got tag [%s]", tag_token);
-                
-                /* format: RECON:<1,2,* - error codes>:<tries>:<sleep_millisec>
-                 * "*" - used for any error.
-                 * example:
-                 * RECON:*:3:250
-                 * Meaning: on any xa_start error, reconnect (tpclose/tpopen/tpbegin)
-                 * 3x times, between attempts sleep 250ms.
-                 */
-                if (0==strncmp(tag_token, NDRX_XA_FLAG_RECON_TEST, strlen(NDRX_XA_FLAG_RECON_TEST)))
-                {
-                    value_first = tag_token;
-                    G_atmi_env.xa_recon_usleep = EXFAIL;
-                    
-                    NDRX_LOG(log_warn, "Parsing RECON tag... [%s]", value_first);
-                    
-                    while ((value_token = strtok_r(value_first, ":", &value_ptr)))
+                    token_nr++;
+                    if (NULL!=value_first)
                     {
-                        token_nr++;
-                        if (NULL!=value_first)
-                        {
-                            value_first = NULL; /* now loop over the string */
-                        }
-                        
-                        switch (token_nr)
-                        {
-                            case 1:
-                                /* This is "RECON" */
-                                NDRX_LOG(log_debug, "RECON: 1: [%s]", value_token);
-                                break;
-                            case 2:
-                                /* This is list of error codes */
-                                NDRX_LOG(log_debug, "RECON: 2: [%s]", value_token);
-                                snprintf(G_atmi_env.xa_recon_retcodes, 
-                                        sizeof(G_atmi_env.xa_recon_retcodes),
-                                        ",%s,", value_token);
-                                
-                                /* Remove spaces and tabs.. */
-                                ndrx_str_strip(G_atmi_env.xa_recon_retcodes, "\t ");
-                                
-                                break;
-                                
-                            case 3:
-                                NDRX_LOG(log_debug, "RECON: 3: [%s]", value_token);
-                                G_atmi_env.xa_recon_times = atoi(value_token);
-                                break;
-                            case 4:
-                                /* so user gives us milliseconds */
-                                NDRX_LOG(log_debug, "RECON: 4: [%s]", value_token);
-                                G_atmi_env.xa_recon_usleep = atol(value_token)*1000;
-                                break;
-                        }
+                        value_first = NULL; /* now loop over the string */
                     }
-                    
-                    if (G_atmi_env.xa_recon_usleep < 0)
+
+                    switch (token_nr)
                     {
-                        NDRX_LOG(log_error, "Invalid [%s] settings in "
-                                "XA_FLAGS [%s] (usleep not set)", 
-                                NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
-                        
-                        ndrx_TPset_error_fmt(TPEINVAL, "Invalid [%s] settings in "
-                                "XA_FLAGS [%s] (usleep not set)", 
-                                NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
-                        
-                        EXFAIL_OUT(ret);
+                        case 1:
+                            /* This is "RECON" */
+                            NDRX_LOG(log_debug, "RECON: 1: [%s]", value_token);
+                            break;
+                        case 2:
+                            /* This is list of error codes */
+                            NDRX_LOG(log_debug, "RECON: 2: [%s]", value_token);
+                            snprintf(G_atmi_env.xa_recon_retcodes, 
+                                    sizeof(G_atmi_env.xa_recon_retcodes),
+                                    ",%s,", value_token);
+
+                            /* Remove spaces and tabs.. */
+                            ndrx_str_strip(G_atmi_env.xa_recon_retcodes, "\t ");
+
+                            break;
+
+                        case 3:
+                            NDRX_LOG(log_debug, "RECON: 3: [%s]", value_token);
+                            G_atmi_env.xa_recon_times = atoi(value_token);
+                            break;
+                        case 4:
+                            /* so user gives us milliseconds */
+                            NDRX_LOG(log_debug, "RECON: 4: [%s]", value_token);
+                            G_atmi_env.xa_recon_usleep = atol(value_token)*1000;
+                            break;
                     }
-                    
-                    NDRX_LOG(log_error, "XA flag: [%s]: on xa_start ret codes: [%s],"
-                            " recon number of %d times, sleep %ld "
-                            "microseconds between attempts",
-                            NDRX_XA_FLAG_RECON, 
-                            G_atmi_env.xa_recon_retcodes, 
-                            G_atmi_env.xa_recon_times, 
-                            G_atmi_env.xa_recon_usleep);
-                } /* If tag is NOJOIN */
-                else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOJOIN))
-                {
-                    NDRX_LOG(log_warn, "NOJOIN flag found");
-                    ndrx_xa_nojoin(EXTRUE);
                 }
-                else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSTARTXID))
+
+                if (G_atmi_env.xa_recon_usleep < 0)
                 {
-                    NDRX_LOG(log_warn, "NOSTARTXID flag found");
-                    ndrx_xa_nostartxid(EXTRUE);
+                    NDRX_LOG(log_error, "Invalid [%s] settings in "
+                            "XA_FLAGS [%s] (usleep not set)", 
+                            NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
+
+                    ndrx_TPset_error_fmt(TPEINVAL, "Invalid [%s] settings in "
+                            "XA_FLAGS [%s] (usleep not set)", 
+                            NDRX_XA_FLAG_RECON, G_atmi_env.xa_flags);
+
+                    EXFAIL_OUT(ret);
                 }
-                
-            } /* for tag.. */
-        } /* if xa_flags set */
+
+                NDRX_LOG(log_error, "XA flag: [%s]: on xa_start ret codes: [%s],"
+                        " recon number of %d times, sleep %ld "
+                        "microseconds between attempts",
+                        NDRX_XA_FLAG_RECON, 
+                        G_atmi_env.xa_recon_retcodes, 
+                        G_atmi_env.xa_recon_times, 
+                        G_atmi_env.xa_recon_usleep);
+            } /* If tag is NOJOIN */
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOJOIN))
+            {
+                NDRX_LOG(log_warn, "NOJOIN flag found");
+                ndrx_xa_nojoin(EXTRUE);
+            }
+            else if (0==strcmp(tag_token, NDRX_XA_FLAG_NOSTARTXID))
+            {
+                NDRX_LOG(log_warn, "NOSTARTXID flag found");
+                ndrx_xa_nostartxid(EXTRUE);
+            }
+
+        } /* for tag.. */
+    } /* if xa_flags set */
         
-        M_is_xa_init = EXTRUE;
+    M_is_xa_init = EXTRUE;
+    
+    if (EXSUCCEED==ret)
+    {
+        NDRX_LOG(log_info, "XA lib initialized.");
+        /* M_is_xa_init = TRUE; */
     }
     
 out:
-                                
+     
+    if (has_lock)
+    {
+        MUTEX_UNLOCK_V(M_is_xa_init_lock);
+    }
+
     if (NULL!=xa_flags)
     {
         NDRX_FREE(xa_flags);
@@ -338,12 +363,6 @@ out:
     {
         /* close the handle */
         dlclose(handle);
-    }
-
-    if (EXSUCCEED==ret)
-    {
-        NDRX_LOG(log_info, "XA lib initialized.");
-        /* M_is_xa_init = TRUE; */
     }
 
     return ret;
@@ -1345,6 +1364,7 @@ out:
 expublic int ndrx_tpclose(void)
 {
     int ret=EXSUCCEED;
+    
     XA_API_ENTRY(EXTRUE);
 
     if (G_atmi_tls->G_atmi_xa_curtx.txinfo)

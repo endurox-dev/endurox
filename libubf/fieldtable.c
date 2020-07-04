@@ -459,7 +459,7 @@ exprivate int _ubf_load_fld_def(int base,
     /* Map type */
     while(EXEOS!=p->fldname[0])
     {
-        if (0==strcmp(p->fldname, ftype) || p->altname && 0==strcmp(p->altname, ftype))
+        if (0==strcmp(p->fldname, ftype) || (p->altname && 0==strcmp(p->altname, ftype)))
         {
             fld->fldtype = p->fld_type;
             dtype = p->fld_type;
