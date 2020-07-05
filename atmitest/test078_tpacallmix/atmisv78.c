@@ -1,7 +1,7 @@
 /**
- * @brief Encrypt string
+ * @brief Mixed tpcall with tpacall - server
  *
- * @file exencrypt.c
+ * @file atmisv78.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,22 +31,20 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <sys/param.h>
-#include <unistd.h>
-#include <ctype.h>
-
-
-#include <ndrstandard.h>
 #include <ndebug.h>
-#include <excrypto.h>
+#include <atmi.h>
+#include <ndrstandard.h>
+#include <ubf.h>
+#include <test.fd.h>
+#include <string.h>
+#include <unistd.h>
+#include <exassert.h>
+#include "test78.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -54,56 +52,56 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Main Entry point..
+ * Standard service entry
  */
-int main(int argc, char** argv)
+void TESTSV (TPSVCINFO *p_svc)
 {
-    int ret = EXSUCCEED;
-    char encbuf[PATH_MAX+1];
-    char temp_buf[PATH_MAX+1];
-    char *manual_argv[2] = {argv[0], temp_buf};
-    char **enc_ptr = argv;
-    int i;
-    long len;
-    
-    /* pull in plugin loader.. */
-    if (argc <= 1)
-    {
-        /*fprintf(stderr, "usage: %s <string_to_encrypt>\n", argv[0]);
-        EXFAIL_OUT(ret);
-         */
-        if (EXSUCCEED!=ndrx_get_password("data to encrypt (e.g. password)", 
-                temp_buf, sizeof(temp_buf)))
-        {
-            EXFAIL_OUT(ret);
-        }
-        else
-        {
-            enc_ptr = manual_argv;
-            argc=2;
-        }
-    }
-    
-    for (i=1; i<argc; i++)
-    {
-        /* Pull-in plugins, by debug... */
-        NDRX_LOG(6, "Encrypting [%s]", enc_ptr[i]);
-        
-        len=sizeof(encbuf);
-        if (EXSUCCEED!=ndrx_crypto_enc_string(enc_ptr[i], encbuf, &len))
-        {
-            NDRX_LOG(log_error, "Failed to encrypt string: %s", Nstrerror(Nerror));
-            fprintf(stderr, "Failed to encrypt string: %s\n", Nstrerror(Nerror));
-            EXFAIL_OUT(ret);
-        }
+    int ret=EXSUCCEED;
+    char testbuf[1024];
+    long l;
+    UBFH *p_ub = (UBFH *)p_svc->data;
 
-        fprintf(stdout, "%s\n", encbuf);
-    }
+    NDRX_LOG(log_debug, "%s got call", __func__);
+    
+    /* buffer shall be atleast 1k, not? */
+    
+    NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bget(p_ub, T_LONG_FLD, 0, (char *)&l, 0L)), 
+                "Failed to get T_LONG_FLD");
+    
+    NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0L)), 
+                "Failed to set T_LONG_2_FLD");
     
 out:
-    NDRX_LOG(log_debug, "program terminates with: %s", 
-        EXSUCCEED==ret?"SUCCEED":"FAIL");
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Do initialisation
+ */
+int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
+{
+    int ret = EXSUCCEED;
+    NDRX_LOG(log_debug, "tpsvrinit called");
+
+    if (EXSUCCEED!=tpadvertise("TESTSV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSV!");
+        EXFAIL_OUT(ret);
+    }
+out:
     return ret;
+}
+
+/**
+ * Do de-initialisation
+ */
+void NDRX_INTEGRA(tpsvrdone)(void)
+{
+    NDRX_LOG(log_debug, "tpsvrdone called");
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

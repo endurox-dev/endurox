@@ -64,12 +64,12 @@ exprivate void print_hdr(void)
 {
     if (M_svconly)
     {
-        fprintf(stderr, "Nd Service Name                   Prog SRVID #SUCC #FAIL MAX      LAST     STAT\n");
+        fprintf(stderr, "Nd Service Name                   Prog SRVID #SUCC #FAIL      MAX     LAST STAT\n");
         fprintf(stderr, "-- ------------------------------ ---- ----- ----- ----- -------- -------- -----\n");
     }
     else
     {
-        fprintf(stderr, "Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL MAX      LAST     STAT\n");
+        fprintf(stderr, "Nd Service Name Routine Name Prog Name SRVID #SUCC #FAIL      MAX     LAST STAT\n");
         fprintf(stderr, "-- ------------ ------------ --------- ----- ----- ----- -------- -------- -----\n");
     }
 }
@@ -97,7 +97,7 @@ expublic int psc_rsp_process(command_reply_t *reply, size_t reply_len)
             {
                 /* Feature #230 */
                 /*svc    fun     bin*/
-                fprintf(stdout, "%-2d %-30.30s %-4.4s %-5d %-5.5s %-5.5s %-8.8s %-8.8s %-5.5s\n",
+                fprintf(stdout, "%2d %-30.30s %-4.4s %5d %5.5s %5.5s %8.8s %8.8s %-5.5s\n",
                        psc_info->nodeid,
                        psc_info->svcdet[i].svc_nm, binary, psc_info->srvid, 
                        ndrx_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 
@@ -112,7 +112,7 @@ expublic int psc_rsp_process(command_reply_t *reply, size_t reply_len)
                 FIX_SVC_NM(psc_info->svcdet[i].svc_nm, svc, (sizeof(svc)-1));
                 FIX_SVC_NM(psc_info->svcdet[i].fn_nm, fun, (sizeof(fun)-1));
                                  /*svc    fun     bin*/
-                fprintf(stdout, "%-2d %-12.12s %-12.12s %-9.9s %-5d %-5.5s %-5.5s %-8.8s %-8.8s %-5.5s\n",
+                fprintf(stdout, "%2d %-12.12s %-12.12s %-9.9s %5d %5.5s %5.5s %8.8s %8.8s %-5.5s\n",
                        psc_info->nodeid,
                        svc, fun, binary, psc_info->srvid, 
                        ndrx_decode_num(psc_info->svcdet[i].done, 0, 0, 1), 

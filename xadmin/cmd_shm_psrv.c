@@ -61,7 +61,7 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "SLOT  SRVID EXECERR   STATUS LAST CMD LAST CALLER   \n");
+    fprintf(stderr, " SLOT SRVID   EXECERR STATUS LAST CMD LAST CALLER   \n");
     fprintf(stderr, "----- ----- --------- ------ -------- --------------\n");
 }
 
@@ -79,7 +79,7 @@ expublic int shm_psrv_rsp_process(command_reply_t *reply, size_t reply_len)
     if (NDRXD_CALL_TYPE_PM_SHM_PSRV==reply->msg_type)
     {
         command_reply_shm_psrv_t * shm_psrv_info = (command_reply_shm_psrv_t*)reply;
-        fprintf(stdout, "%-5d %-5d %-9d %-6hd %-8hd %s\n", 
+        fprintf(stdout, "%5d %5d %9d %6hd %8hd %s\n", 
                 shm_psrv_info->slot, shm_psrv_info->srvid, shm_psrv_info->execerr, 
                 shm_psrv_info->status, shm_psrv_info->last_command_id, 
                 shm_psrv_info->last_reply_q

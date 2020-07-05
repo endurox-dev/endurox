@@ -194,7 +194,7 @@ fi
 
 echo "Testing service queues..."
 
-if [ "X`xadmin pqa| egrep '^3'`" == "X" ]; then
+if [ "X`xadmin pqa| egrep '^[ ]*3'`" == "X" ]; then
     echo "There must be queue with 3x msgs enqueued...!"
     go_out -1
 fi
@@ -204,7 +204,7 @@ if [ "X`xadmin pq| grep '3 3'`" == "X" ]; then
     go_out -1
 fi
 
-if [ "X`xadmin pqa| egrep '^4'`" == "X" ]; then
+if [ "X`xadmin pqa| egrep '^[ ]*4'`" == "X" ]; then
     echo "There must be queue with 4x msgs enqueued...!"
     go_out -1
 fi
@@ -228,7 +228,7 @@ fi
 
 echo "Test hello queue message counts..."
 
-if [ "X`xadmin pqa -a| grep 'some_hello_queue' | egrep '^2'`" == "X" ]; then
+if [ "X`xadmin pqa -a| grep 'some_hello_queue' | egrep '^[ ]*2'`" == "X" ]; then
     echo "[some_hello_queue] must have 2x messages enqueued!"
     go_out -1
 fi

@@ -135,10 +135,10 @@ exprivate unsigned char *ndrx_b64decode(unsigned char *data,
 
 /**
  * XA Version of Base64 encode
- * WARNING ! EOS Is not installed in output data!
+ * EOS is installed in output data
  * @param data
  * @param input_length
- * @param output_length
+ * @param output_length includes EOS byte
  * @param encoded_data
  * @return 
  */
@@ -171,10 +171,10 @@ expublic unsigned char *ndrx_xa_base64_decode(unsigned char *data,
 
 /**
  * Standard Version of Base64 encode
- * WARNING ! EOS Is not installed in output data!
+ * EOS is installed in output data
  * @param data
  * @param input_length
- * @param output_length
+ * @param output_length includes EOS byte
  * @param encoded_data
  * @return 
  */
@@ -206,10 +206,10 @@ unsigned char *ndrx_base64_decode(const char *data,
 
 /**
  * Encode the data
- * WARNING NO EOS is set in the string!!!
+ * Output string contains EOS
  * @param data
  * @param input_length
- * @param output_length
+ * @param output_length includes the EOS
  * @return 
  */
 exprivate char * ndrx_b64encode(const unsigned char *data,
@@ -259,7 +259,10 @@ exprivate char * ndrx_b64encode(const unsigned char *data,
         encoded_data[*output_length - 1 - i] = '=';
 
     encoded_data[*output_length] = EXEOS;
-            
+    
+    /* we wrote to output including EOS.. */
+    (*output_length)++;
+    
     return encoded_data;
 }
 

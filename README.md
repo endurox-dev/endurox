@@ -479,9 +479,13 @@ Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
 - Version 7.0.34 released on 11/05/2020 (stable) Bug #501
 
+- Version 7.0.36 released on 25/06/2020 (stable) Feature #262
+
 - Version 7.5.1 released on 10/06/2020 (development) Feature #547, Support #553, Feature #545, Feature #540,
 Feature #218, Feature #368, Feature #398, Feature #440, Feature #463, Feature #497, Feature #511, Feature #539,
 Bug #542, Feature #549
+
+- Version 7.0.38 released on 03/07/2020 (stable) Bug #565
 
 # Build configurations
 

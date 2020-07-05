@@ -64,7 +64,7 @@
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "Nd SRVID QSPACE    QNAME     #QUEU #LOCK #ENQ  #DEQ  #SUCC #FAIL\n");
+    fprintf(stderr, "Nd SRVID QSPACE    QNAME     #QUEU #LOCK  #ENQ #DEQ  #SUCC #FAIL\n");
     fprintf(stderr, "-- ----- --------- --------- ----- ----- ----- ----- ----- -----\n");
 }
 
@@ -114,7 +114,7 @@ exprivate int print_buffer(UBFH *p_ub, char *svcnm)
     FIX_SVC_NM_DIRECT(qspace, 9);
     FIX_SVC_NM_DIRECT(qname, 9);
     
-    fprintf(stdout, "%-2d %-5d %-9.9s %-9.9s %-5.5s %-5.5s %-5.5s %-5.5s %-5.5s %-5.5s",
+    fprintf(stdout, "%2d %5d %-9.9s %-9.9s %5.5s %5.5s %5.5s %5.5s %5.5s %5.5s",
             nodeid, 
             srvid, 
             qspace, 
