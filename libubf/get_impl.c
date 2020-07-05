@@ -73,7 +73,6 @@ expublic char * ndrx_Bgetalloc (UBFH * p_ub, BFLDID bfldid,
 {
     int data_type = (bfldid>>EFFECTIVE_BITS);
     BFLDLEN tmp_len = 0;
-    char *cvn_buf;
     char *fb_data;
     char *alloc_buf=NULL;
     int alloc_size = 0;
