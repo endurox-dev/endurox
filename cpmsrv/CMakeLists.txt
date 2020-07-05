@@ -59,7 +59,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 add_executable (cpmsrv  cpmsrv.c 
                         cltconfig.c 
                         cltexec.c 
-                        ../libatmisrv/rawmain_integra.c
+                        rawmain.c
                         cpmshm.c)
 target_link_libraries (cpmsrv atmisrvinteg atmi ndrxconf ubf nstd pthread 
         ${LIBXML2_LIBRARIES} ${RT_LIB} m)

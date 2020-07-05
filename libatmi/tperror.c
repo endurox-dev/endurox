@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <atmi.h>
 #include <ndebug.h>
+#include <nerror.h>
 #include <tperror.h>
 #include <Exfields.h>
 
@@ -226,6 +227,54 @@ expublic void ndrx_TPset_error(int error_code)
 
     G_atmi_tls->M_atmi_error_msg_buf[0] = EXEOS;
     G_atmi_tls->M_atmi_error = error_code;
+}
+
+/**
+ * Translate error from standard library to ATMI
+ */
+expublic void ndrx_TPset_error_nstd(void)
+{
+    int err = _Nis_error();
+    /* copy msg only if error is present */
+    if (err)
+    {
+        NDRX_STRCPY_SAFE(G_atmi_tls->M_atmi_error_msg_buf, ndrx_Nemsg_buf());
+    }
+    
+    /* switch the error */
+    switch (err)
+    {
+        case NEINVALKEY: /* Invalid key (probably) */
+        case NEMANDATORY: /* Mandatory field is missing */
+        case NEFORMAT: /* Format error */
+        case NEINVAL: /* Invalid value passed to function */
+        case NEINVALINI:       /* Invalid INI file */
+            err=TPEINVAL;
+            break;
+        case NEMALLOC: /* Malloc failed */
+        case NEUNIX: /* Unix error occurred */
+            err=TPEOS;
+            break;
+        case NEPLUGIN: /* Plugin error */
+        case NESYSTEM: /* System failure */
+            err=TPESYSTEM;
+            break;
+        case NETOUT: /* Time-out condition */
+            err=TPETIME;
+            break;
+        case NENOCONN: /* Connection not found */
+            err=TPENOENT;
+            break;
+        case NENOSPACE: /* No space */
+        case NELIMIT: /* Limit reached */
+            err=TPELIMIT;
+            break;
+        default:
+            err=TPESYSTEM;
+            break;
+    }
+    
+    G_atmi_tls->M_atmi_error=err;
 }
 
 /**

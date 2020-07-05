@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <errno.h>
 #include <memory.h>
 #include <unistd.h>
@@ -58,7 +59,8 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-sys_config_t        G_sys_config;           /* Deamon configuration     */
+sys_config_t        G_sys_config;           /**< Deamon configuration       */
+exprivate int       M_scanunit=250;         /**< Scan unit for SystemV poll */
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -161,6 +163,19 @@ void clean_shutdown(int sig)
 }
 
 /**
+ * print help for the command
+ * @param name name of the program, argv[0]
+ */
+exprivate void print_help(char *name)
+{
+    fprintf(stderr, "Usage: %s [options] -k key \n", name);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -k <key>         Random key value\n");
+    fprintf(stderr, "  -r               Start in recovery mode\n");
+    fprintf(stderr, "  -h               Print this help\n");   
+}
+
+/**
  * Process command line options
  * @param argc
  * @param argv
@@ -172,7 +187,7 @@ expublic int init_cmdline_opts(int argc, char **argv)
     int c;
     extern char *optarg;
     int have_key = EXFALSE;
-    int print_help = EXFALSE;
+    int do_print_help = EXFALSE;
     
     /* Parse command line */
     while ((c = getopt(argc, argv, "h?rk:")) != -1)
@@ -180,7 +195,7 @@ expublic int init_cmdline_opts(int argc, char **argv)
         switch(c)
         {
             case 'r':
-                fprintf(stderr, "Entering in restart mode");
+                fprintf(stderr, "Entering in restart mode\n");
                 G_sys_config.restarting  = EXTRUE;
                 break;
             case 'k':
@@ -188,15 +203,14 @@ expublic int init_cmdline_opts(int argc, char **argv)
                 have_key = EXTRUE;
                 break;
             case 'h': case '?':
-                print_help = EXTRUE;
+                do_print_help = EXTRUE;
                 break;
         }
     }
 
-    if (!have_key || print_help)
+    if (!have_key || do_print_help)
     {
-        printf("usage: %s -k random_key [-r restart]\n",
-                argv[0]);
+        print_help(argv[0]);
         return EXFAIL;
     }
     
@@ -217,15 +231,6 @@ int main_init(int argc, char** argv)
     struct sigaction oldact;
     pid_t ndrxd_pid;
     sigaction(SIGINT, NULL, &oldact);
-    
-#if 0
-    
-#ifdef EX_USE_EMQ
-    /* We need to get lock in */
-    emq_set_lock_timeout(NDRX_Q_TRYLOCK_TIME);
-#endif
-    
-#endif
 
     /* common env loader will init the debug lib
      * which might call `ps' for process name
@@ -428,16 +433,6 @@ int main_init(int argc, char** argv)
     
     ndrxd_sigchld_init();
     
-#if 0
-    /* Do the initialization... */
-    if (EXFAIL==load_config(M_config_file))
-    {
-        /* Write to ULOG? */
-        NDRX_LOG(log_error, "Configuration failed!");
-        ret=EXFAIL;
-        goto out;
-    }
-#endif
     
 out:
     return ret;
@@ -486,12 +481,41 @@ int main_uninit(void)
     return EXSUCCEED;
 }
 
+/* dummy, otherwise sigwait() does not return anything... */
+exprivate void sig_hand(int sig) {}
+
 /*
  * Program main entry
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
 
     int ret=EXSUCCEED;
+    struct sigaction sa; /* Seem on AIX signal might slip.. */
+    sigset_t blockMask;
+
+    /* block sigchld first as some IPC mechanisms like systemv start
+     * threads very early...
+     */
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    /*
+    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        */
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", __func__, 
+                strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* if handler is not set, the sigwait() does not return any results.. */
+    sa.sa_handler = sig_hand;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sigaction (SIGCHLD, &sa, 0);
+    
     /* Do some init */
     memset(&G_sys_config, 0, sizeof(G_sys_config));
     

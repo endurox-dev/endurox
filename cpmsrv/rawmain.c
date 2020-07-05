@@ -1,7 +1,7 @@
 /**
- * @brief Encrypt string
+ * @brief Integration mode, mask signals first
  *
- * @file exencrypt.c
+ * @file rawmain.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -34,76 +34,54 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <sys/param.h>
-#include <unistd.h>
-#include <ctype.h>
-
-
-#include <ndrstandard.h>
+#include <signal.h>
 #include <ndebug.h>
-#include <excrypto.h>
-
+#include <memory.h>
+#include <atmi.h>
 /*---------------------------Externs------------------------------------*/
+extern void NDRX_INTEGRA(tpsvrdone)(void);
+extern int NDRX_INTEGRA(tpsvrinit) (int argc, char **argv);
 /*---------------------------Macros-------------------------------------*/
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Main Entry point..
+/* dummy, otherwise sigwait() does not return anything... */
+exprivate void sig_hand(int sig) {}
+
+/*
+ * Forward the call to NDRX
  */
-int main(int argc, char** argv)
+int main(int argc, char** argv) 
 {
-    int ret = EXSUCCEED;
-    char encbuf[PATH_MAX+1];
-    char temp_buf[PATH_MAX+1];
-    char *manual_argv[2] = {argv[0], temp_buf};
-    char **enc_ptr = argv;
-    int i;
-    long len;
-    
-    /* pull in plugin loader.. */
-    if (argc <= 1)
-    {
-        /*fprintf(stderr, "usage: %s <string_to_encrypt>\n", argv[0]);
-        EXFAIL_OUT(ret);
-         */
-        if (EXSUCCEED!=ndrx_get_password("data to encrypt (e.g. password)", 
-                temp_buf, sizeof(temp_buf)))
-        {
-            EXFAIL_OUT(ret);
-        }
-        else
-        {
-            enc_ptr = manual_argv;
-            argc=2;
-        }
-    }
-    
-    for (i=1; i<argc; i++)
-    {
-        /* Pull-in plugins, by debug... */
-        NDRX_LOG(6, "Encrypting [%s]", enc_ptr[i]);
-        
-        len=sizeof(encbuf);
-        if (EXSUCCEED!=ndrx_crypto_enc_string(enc_ptr[i], encbuf, &len))
-        {
-            NDRX_LOG(log_error, "Failed to encrypt string: %s", Nstrerror(Nerror));
-            fprintf(stderr, "Failed to encrypt string: %s\n", Nstrerror(Nerror));
-            EXFAIL_OUT(ret);
-        }
+    sigset_t blockMask;
+    struct sigaction sa; /* Seem on AIX signal might slip.. */
 
-        fprintf(stdout, "%s\n", encbuf);
+    /* block sigchld first as some IPC mechanisms like systemv start
+     * threads very early...
+     */
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
+    
+    /*
+    if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        */
+    if (sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1)
+    {
+        NDRX_LOG(log_always, "%s: sigprocmask failed: %s", __func__, 
+                strerror(errno));
+        return EXFAIL;
     }
     
-out:
-    NDRX_LOG(log_debug, "program terminates with: %s", 
-        EXSUCCEED==ret?"SUCCEED":"FAIL");
-    return ret;
+    /* if handler is not set, the sigwait() does not return any results.. */
+    sa.sa_handler = sig_hand;
+    sigemptyset (&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sigaction (SIGCHLD, &sa, 0);
+    
+    return ndrx_main_integra(argc, argv, 
+            NDRX_INTEGRA(tpsvrinit), NDRX_INTEGRA(tpsvrdone), 0);
 }
-
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -899,6 +899,10 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long i
 /* export the symbol */
 extern NDRX_API struct xa_switch_t * ndrx_xa_builtin_get(void);
 
+/* tp encryption functions */
+extern NDRX_API int tpencrypt_int(char *input, long ilen, char *output, long *olen, long flags);
+extern NDRX_API int tpdecrypt_int(char *input, long ilen, char *output, long *olen, long flags);
+
 #ifdef	__cplusplus
 }
 #endif

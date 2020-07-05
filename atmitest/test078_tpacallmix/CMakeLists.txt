@@ -1,7 +1,7 @@
 ##
-## @brief Test encrypt/decrypt functionality... - makefile
+## @brief Mixed tpcall with tpacall - server
 ##
-## @file CMakeLists.txt
+## @file atmisv78.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
 ## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
-##
+## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU Affero General Public License, version 3 as published
 ## by the Free Software Foundation;
@@ -23,7 +23,7 @@
 ## for more details.
 ##
 ## You should have received a copy of the GNU Affero General Public License along 
-## with this program; if not, write to the Free Software Foundation, Inc.,
+## with this program; if not, write to the Free Software Foundation, Inc., 
 ## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
@@ -31,6 +31,7 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
+
 cmake_minimum_required(VERSION 2.8)
 
 # Make sure the compiler can find include files from UBF library
@@ -52,17 +53,16 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
-add_executable (atmiclt43 atmiclt43.c)
-add_executable (atmiclt43_tp atmiclt43_tp.c)
+add_executable (atmi.sv78 atmisv78.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt78 atmiclt78.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmiclt43 atmiclt atmi ubf nstd m pthread ${RT_LIB})
-target_link_libraries (atmiclt43_tp atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv78 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt78 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
-set_target_properties(atmiclt43 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
-set_target_properties(atmiclt43_tp PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmi.sv78 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt78 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
-
 
 # vim: set ts=4 sw=4 et smartindent:

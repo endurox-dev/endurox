@@ -380,6 +380,13 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 /** Maximum number of dispatch threads for ATMI Server (not used currently) */
 #define CONF_NDRX_MAXDISPATCHTHREADS   "NDRX_MAXDISPATCHTHREADS"
 
+/** Used by System-V tout thread -> sleep period between timeout-scans    
+ * in milli-seconds. Default is 1000.
+ */
+#define CONF_NDRX_SCANUNIT   "NDRX_SCANUNIT"
+#define CONF_NDRX_SCANUNIT_DFLT   1000
+#define CONF_NDRX_SCANUNIT_MIN    1
+
 
 #ifdef	__cplusplus
 }

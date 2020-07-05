@@ -1,7 +1,7 @@
 /**
- * @brief Basic test client
+ * @brief Mixed tpcall with tpacall - client
  *
- * @file atmiclt.c
+ * @file atmiclt78.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -35,12 +35,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <math.h>
 
 #include <atmi.h>
 #include <ubf.h>
 #include <ndebug.h>
 #include <test.fd.h>
 #include <ndrstandard.h>
+#include <nstopwatch.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <nstdutil.h>
+#include <exassert.h>
+#include "test78.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -49,83 +56,65 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/*
+/**
  * Do the test call to the server
  */
-int main(int argc, char** argv) {
-
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+int main(int argc, char** argv)
+{
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
+    UBFH *p_ub2 = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
-    int ret=EXSUCCEED;
-    int tpcall_err;
+    int i;
     int cd;
-    if (argc > 1 && 0==strcmp(argv[1], "tpacall_norply"))
+    long test_num=0;
+    long test_num_sync, test_num_async, l;
+    int ret=EXSUCCEED;
+    
+    for (i=0; i<100000; i++)
     {
-        /* this one is called and server processes it for 4 sec and then die */
-        ret = tpacall("EXITSVC", (char *)p_ub, 0L, TPNOREPLY);
-        if (EXSUCCEED!=ret)
-        {
-            NDRX_LOG(log_error, "TESTERROR first tpacall got %d: %s",
-                ret, tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
+        /* do the acall */
+        test_num++;
+        test_num_async = test_num;
         
-        /* we make next calls */
-        ret = tpacall("EXITSVC", (char *)p_ub, 0L, TPNOREPLY);
-        if (EXSUCCEED!=ret)
-        {
-            NDRX_LOG(log_error, "TESTERROR second tpacall got %d: %s",
-                ret, tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
+        NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bchg(p_ub, T_LONG_FLD, 0, (char *)&test_num_async, 0L)), 
+                "Failed to set T_LONG_FLD to p_ub");
         
-        NDRX_LOG(log_error, "Wait 10 for dead + sanity check...");
-        sleep(20);
+        NDRX_ASSERT_TP_OUT((EXFAIL != tpacall("TESTSV", (char *)p_ub, 0L, 0L)), 
+                "Failed to tpacall TESTSV");
         
-        if (EXSUCCEED==(ret = tpgetrply(&cd, (char **)&p_ub, &rsplen, 
-                TPNOBLOCK | TPGETANY)))
-        {
-            NDRX_LOG(log_error, "TESTERROR There must be TPEBLOCK error set!");
-            EXFAIL_OUT(ret);
-        }
+        test_num++;
+        test_num_sync = test_num;
+        NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bchg(p_ub2, T_LONG_FLD, 0, (char *)&test_num_sync, 0L)), 
+                "Failed to set T_LONG_FLD to p_ub2");
         
-        if (TPEBLOCK!=tperrno)
-        {
-            NDRX_LOG(log_error, "TESTERROR: tperrno must be TPEBLOCK but is: %d: %s",
-                    tperrno, tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
+        /* now to the sync call */
+        NDRX_ASSERT_TP_OUT((EXFAIL != tpcall("TESTSV", (char *)p_ub2, 0L, (char **)&p_ub2, &rsplen,0)), 
+                "Failed to tpcall TESTSV");
         
-        return 0;
+        /* get echo field, */
+        NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bget(p_ub2, T_LONG_2_FLD, 0, (char *)&l, 0L)), 
+                "Failed to set T_LONG_FLD to p_ub2");
+        
+        /* shall match the reply */
+        NDRX_ASSERT_VAL_OUT((l==test_num_sync), "Reply does not match (1): %ld vs %ld", 
+                l, test_num_sync);
+        
+        /* read the reply... */
+        NDRX_ASSERT_TP_OUT((EXFAIL != tpgetrply(&cd, (char **)&p_ub, &rsplen, TPGETANY)), 
+                "Failed tpgetrply failed");
+        
+        /* get reply value */
+        NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bget(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0L)), 
+                "Failed to set T_LONG_FLD to p_ub2");
+        
+        /* match the response */
+        NDRX_ASSERT_VAL_OUT((l==test_num_async), "Reply does not match (2): %ld vs %ld",
+                l, test_num_async);
     }
     
-    if (EXFAIL == tpcall("TESTSVFN", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "TESTSVFN failed: %s", tpstrerror(tperrno));
-        
-        /* Check the code TOUT & SVCERR is OK*/
-        tpcall_err = tperrno;
-        if (tpcall_err==TPENOENT)
-        {
-            /* service error is reply from ndrxd on behalf of the server */
-            NDRX_LOG(log_error, "OK-TPESVCERR");
-        }
-        else if (tpcall_err==TPETIME)
-        {
-            /* tout because first is dead */
-            NDRX_LOG(log_error, "OK-TPETIME");
-        }
-        else
-        {
-            NDRX_LOG(log_error, "TESTERROR: UNEXPECTED ERROR");
-        }
-        
-        goto out;
-    }
-
 out:
-    /* Terminate the session */
     tpterm();
+    fprintf(stderr, "Exit with %d\n", ret);
 
     return ret;
 }

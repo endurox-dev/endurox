@@ -2,19 +2,16 @@
 <endurox>
     <appconfig>
         <!-- ALL BELLOW ONES USES <sanity> periodical timer  -->
-        <!-- Sanity check time, sec. For system-v We get 1-2 sec
-            due to timeout thread is living it's own life -->
+        <!-- Sanity check time, sec -->
         <sanity>1</sanity>
         <!-- If process have been state changed to other than dead, exit or not running
         but PID of program does not exists in system, then send internel message, then 
         program have been stopped.
-        In Sanity units.
+        In Seconds.
         -->
         <checkpm>5</checkpm>
         <!--  <sanity> timer, end -->
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
-        <!-- Do dead process restart every X seconds -->
-        <respawncheck>10</respawncheck>
         <!-- Do process reset after 1 sec -->
         <restart_min>1</restart_min>
         <!-- If restart fails, then boot after +5 sec of previous wait time -->
@@ -26,24 +23,24 @@
         <!-- Time after attach when program will start do sanity & respawn checks,
         starts counting after configuration load -->
         <restart_to_check>20</restart_to_check>
-        <!-- Zap Request address queues in this time -->
-        <rqaddrttl>1</rqaddrttl>
+        <!-- Send full service table every 5 seconds -->
+        <brrefresh>5</brrefresh>
     </appconfig>
     <defaults>
         <min>1</min>
         <max>1</max>
         <autokill>1</autokill>
         <!-- Do not need respawning! -->
-        <respawn>0</respawn>
+        <respawn>1</respawn>
         <!-- The maximum time while process can hang in 'starting' state i.e.
-        have not completed initialization, sec -->
+        have not completed initialisation, sec -->
         <start_max>20</start_max>
         <!--
-        Ping server in every X seconds (minimum step is <sanity>).
+        Ping server in every X sanity units
         -->
         <pingtime>9</pingtime>
         <!--
-        Max time in seconds in which server must respond.
+        Max number of sanity units in which server must respond.
         The granularity is sanity time.
         -->
         <ping_max>40</ping_max>
@@ -56,9 +53,18 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-        <server name="atmisv_009">
+            <server name="atmi.sv78">
+            <min>1</min>
+            <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv.log -r</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
+        </server>
+                 <server name="tpbridge">
+            <max>1</max>
+            <srvid>101</srvid>
+            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
         </server>
     </servers>
 </endurox>
+

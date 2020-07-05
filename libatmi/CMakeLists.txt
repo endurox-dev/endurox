@@ -100,6 +100,7 @@ add_library (objatmi OBJECT
                 tx.c
                 cltshm.c
                 tmnull_switch.c
+                tpcrypto.c
             )
 
 # shared libraries need PIC

@@ -1,7 +1,7 @@
 /**
- * @brief Cryptography related
+ * @brief Mixed tpcall with tpacall - common header
  *
- * @file excrypto.h
+ * @file testtest078_tpacallmix.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -31,36 +31,20 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef EXCRYPTO_H
-#define	EXCRYPTO_H
+#ifndef TEST78_H
+#define TEST78_H
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 extern "C" {
 #endif
-/*---------------------------Includes-----------------------------------*/
-#include <ndrx_config.h>
-/*---------------------------Externs------------------------------------*/
-/*---------------------------Macros-------------------------------------*/
-#define NDRX_ENCKEY_BUFSZ       21 /* string with EOS */
-#define NDRX_ENC_BLOCK_SIZE     16
-/*---------------------------Enums--------------------------------------*/
-/*---------------------------Typedefs-----------------------------------*/
-/*---------------------------Globals------------------------------------*/
-/*---------------------------Statics------------------------------------*/
-/*---------------------------Prototypes---------------------------------*/
 
-extern NDRX_API int ndrx_crypto_getkey_std(char *key_out, int key_out_bufsz);
-extern NDRX_API int ndrx_crypto_enc(char *input, long ilen, char *output, long *olen);
-extern NDRX_API int ndrx_crypto_dec_int(char *input, long ilen, char *output, long *olen);
-extern NDRX_API int ndrx_crypto_dec(char *input, long ilen, char *output, long *olen);
-extern NDRX_API int ndrx_crypto_enc_string(char *input, char *output, long *olen);
-extern NDRX_API int ndrx_crypto_dec_string(char *input, char *output, long *olen);
 
-    
-#ifdef	__cplusplus
+#define VALUE_EXPECTED "Hello EnduroX"
+
+#ifdef  __cplusplus
 }
 #endif
 
-#endif	/* EXCRYPTO_H */
+#endif  /* TEST78_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */

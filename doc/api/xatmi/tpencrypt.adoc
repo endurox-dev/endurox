@@ -1,0 +1,84 @@
+TPENCRYPT(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+tpencrypt - Encrypt data block
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+
+int tpencrypt(char *'input', long 'ilen', char *'output', long *'olen', long 'flags');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Data encrypt function. Function provides access to Enduro/X built-in 
+encryption engine. AES-128 in CBC mode algorithm is used. By default encryption key is 
+from current hostname and username, but key could be retrieved from other 
+resources by plugin interface, if configured.
+
+Function may work in binary mode (the input data and output data is binary).
+The other mode is string mode with flag *TPEX_STRING*, where 'input' is expected
+to be 0x00 terminated string and 'output' will be Base64 encoded.
+
+'input' buffer contains clear data with corresponding data length in 'ilen' 
+(number of bytes). 'output' buffer is used for encrypted data with corresponding 
+data length in 'olen' (number of bytes in/out).
+
+In string mode 'ilen' is ignored, in binary mode 'ilen' is required and must be >*0*.
+'olen' is used for checking output buffer sizes. In case if there is no space,
+the error *TPELIMIT* is returned, and 'olen' variable is set to estimated space
+required.
+
+In the result of function 'olen' is set to bytes written to 'output' buffer.
+
+For string encryption, function internally uses temporary buffer which size 
+is set by *NDRX_MSGSIZEMAX* env variable, thus encrypted output data (
+non Base64) shall not be larger than 'NDRX_MSGSIZEMAX' value.
+
+*Valid flags*
+
+*TPEX_STRING* In this mode expected input is EOS terminated string. On success
+output will contain Base64 encoded binary data.
+
+RETURN VALUE
+------------
+On success, *tpencrypt()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
+
+*TPEINVAL* Invalid arguments to function. 'input', 'ilen', 'output' or 'olen'
+is *NULL*. For non string mode 'ilen' is <= *0*.
+
+*TPELIMIT* There is not enough space in 'output' buffer. Estimate is returned
+in 'olen'.
+
+EXAMPLE
+-------
+See *atmitest/test043_encrypt/atmiclt43_tp.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpdecrypt(3)* *ex_env(5)* *exencrypt(8)* *exdecrypt(8)* *ex_devguide(guides)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

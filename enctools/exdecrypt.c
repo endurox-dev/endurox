@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     int ret = EXSUCCEED;
     char clrbuf[PATH_MAX];
     int i;
-    
+    long len;
     /* pull in plugin loader.. */
     if (argc <= 1)
     {
@@ -72,7 +72,8 @@ int main(int argc, char** argv)
     {
         NDRX_LOG(log_debug, "Decrypting [%s]", argv[i]);
 
-        if (EXSUCCEED!=ndrx_crypto_dec_string(argv[i], clrbuf, sizeof(clrbuf)))
+        len=sizeof(clrbuf);
+        if (EXSUCCEED!=ndrx_crypto_dec_string(argv[i], clrbuf, &len))
         {
             NDRX_LOG(log_error, "Failed to decrypt string: %s", Nstrerror(Nerror));
             fprintf(stderr, "Failed to decrypt string: %s\n", Nstrerror(Nerror));

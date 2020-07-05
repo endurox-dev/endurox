@@ -89,6 +89,7 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     long error_code = 0;
     ndrx_adm_class_map_t *clazz_descr;
     ndrx_growlist_t table;
+    ndrx_growlist_t coltypes;
 
     ncloptmap_t clopt[] =
     {
@@ -105,7 +106,8 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     
     
     ndrx_tab_init(&table);
-
+    ndrx_growlist_init(&coltypes, 100, sizeof(long));
+    
     /* parse command line */
     if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
     {
@@ -208,6 +210,8 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                 /* print headers.. for selected class ... */
                 for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
                 {
+                    long typ;
+                    
                     if (machine_fmt)
                     {
                         fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
@@ -219,6 +223,24 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                                 clazz_descr->fields_map[i].name))
                         {
                             fprintf(stderr, "Failed to prepare results\n");
+                        }
+                        
+                        typ = Bfldtype(clazz_descr->fields_map[i].fid);
+                        
+                        if (TA_DOMAINID==clazz_descr->fields_map[i].fid ||
+                                TA_LMID==clazz_descr->fields_map[i].fid)
+                        {
+                            /* Enduro/X machine id is number */
+                            typ=BFLD_SHORT;
+                        }
+                        
+                        /* set column types */
+                        if (EXSUCCEED!=ndrx_growlist_add(&coltypes, (char *)&typ, 
+                                coltypes.maxindexused+1))
+                        {
+                            NDRX_LOG(log_error, "Failed to add column type code");
+                            fprintf(stderr, "Failed to add column type code\n");
+                            EXFAIL_OUT(ret);
                         }
                     }
                 }
@@ -309,7 +331,7 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     
     if (!machine_fmt)
     {
-        ndrx_tab_print(&table);
+        ndrx_tab_print(&table, &coltypes);
     }
 out:
     
@@ -324,7 +346,7 @@ out:
     }
 
     ndrx_tab_free(&table);
-
+    ndrx_growlist_free(&coltypes);
 
 
     return ret;

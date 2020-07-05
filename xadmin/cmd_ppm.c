@@ -91,7 +91,7 @@ M_descr [] =
  */
 exprivate void print_hdr(void)
 {
-    fprintf(stderr, "BINARY   SRVID PID      SVPID    STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
+    fprintf(stderr, "BINARY   SRVID      PID    SVPID STATE REQST AS EXSQ RSP  NTRM LSIG K STCH FLAGS\n");
     fprintf(stderr, "-------- ----- -------- -------- ----- ----- -- ---- ---- ---- ---- - ---- -----\n");
 }
 
@@ -100,7 +100,7 @@ exprivate void print_hdr(void)
  */
 exprivate void print_hdr2(void)
 {
-    fprintf(stderr, "BINARY   SVBIN    SRVID PID      SVPID    RQADDR\n");
+    fprintf(stderr, "BINARY   SVBIN    SRVID      PID    SVPID RQADDR\n");
     fprintf(stderr, "-------- -------- ----- -------- -------- -----------------------\n");
 }
 
@@ -172,7 +172,7 @@ expublic int ppm_rsp_process2(command_reply_t *reply, size_t reply_len)
     {
         command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
         FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
-        fprintf(stdout, "%-8.8s %-8.8s %-5d %-8d %-8d %s\n", 
+        fprintf(stdout, "%-8.8s %-8.8s %5d %8d %8d %s\n", 
                 ppm_info->binary_name,
                 ppm_info->binary_name_real,
                 ppm_info->srvid,
@@ -204,8 +204,8 @@ expublic int ppm_rsp_process(command_reply_t *reply, size_t reply_len)
     {
         command_reply_ppm_t * ppm_info = (command_reply_ppm_t*)reply;
         FIX_NM(ppm_info->binary_name, binary, (sizeof(binary)-1));
-        fprintf(stdout, "%-8.8s %-5d %-8d %-8d %-5.5s %-5.5s %-2hd %-4.4s "
-                "%-4.4s %-4.4s %-4.4s %-1d %-4.4s %-5.5s\n", 
+        fprintf(stdout, "%-8.8s %5d %8d %8d %-5.5s %-5.5s %2hd %4.4s "
+                "%4.4s %4.4s %4.4s %1d %4.4s %-5.5s\n", 
                 ppm_info->binary_name,
                 ppm_info->srvid,
                 ppm_info->pid, 
