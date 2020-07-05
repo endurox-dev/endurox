@@ -31,6 +31,11 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+
+/* needed for asprintf */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,14 +55,367 @@
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define OUTPUT_FORMAT_WDATA fmt_wdata, f->cname, p
+#define OUTPUT_FORMAT_NDATA fmt_ndata, f->cname
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Read the view data from the data input
+ * @param cstruct view structure to fill up
+ * @param view view name to read
+ * @param inf input stream
+ * @param p_readf read data from function
+ * @param dataptr1 RFU
+ * @param level current read level
+ * @param p_readbuf_buffered any buffered data returned (i.e. if read from
+ *  UBF buffer dump
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), 
+        void *dataptr1, int level, char **p_readbuf_buffered)
+{
+    int ret=EXSUCCEED;
+    int line=0;
+    char *readbuf=NULL;
+    size_t readbuf_len;
+    char fldnm[NDRX_VIEW_CNAME_LEN+1];
+    char *value=NULL;
+    size_t value_len;
+    char flag;
+    char *p;
+    char *tok;
+    BFLDID bfldid;
+    BFLDID bfldid_from;
+    int fldtype;
+    int cpylen;
+    int len;
+    char *readbuf_buffered=NULL;
+    int nr_lead_tabs;
+    int is_eof=EXFALSE;
+    NDRX_USYSBUF_MALLOC_WERR_OUT(readbuf, readbuf_len, ret);
+    NDRX_USYSBUF_MALLOC_WERR_OUT(value, value_len, ret);
+    
+    /* TODO: Resolve view descriptor */
+    
+    /* Read line by line */
+    while(1)
+    {
+        if (NULL!=p_readf)
+        {
+            /* read the data from callback */
+            ret = (int)p_readf(readbuf, readbuf_len, dataptr1);
+            
+            if (0==ret)
+            {
+                /* eof reached */
+                break;
+            }
+            if (ret < 0)
+            {
+                ndrx_Bset_error_fmt(BEUNIX, "p_readf() user callback failed");
+                
+                EXFAIL_OUT(ret);
+            }
+            ret = EXSUCCEED;
+        }
+        else 
+        {
+            if (NULL==fgets(readbuf, readbuf_len, inf))
+            {
+                /* terminate the loop */
+                /*
+                 * Check errors on file.
+                 */
+                if (!feof(inf))
+                {
+                   /* some other error happened!?! */
+                   ndrx_Bset_error_fmt(BEUNIX, "Failed to read from file "
+                           "with error: [%s]", strerror(errno));
+                   EXFAIL_OUT(ret);
+                }
+
+                break;
+            }
+        }
+                
+        len = strlen(readbuf);
+        line++;
+        bfldid=BBADFLDID;
+        value[0] = EXEOS;
+        fldnm[0] = EXEOS;
+        p = readbuf;
+
+        if ('#'==p[0])
+        {
+            continue; /* <<<< nothing to do - continue */
+        }
+
+        /* Ignore any newline we get, so that we are backwards compatible
+         * with original logic
+         */
+        if (0==strcmp(p, "\n"))
+        {
+            continue; /* <<<< nothing to do - continue */
+        }
+        
+        /* check the leading tabs, to see the current nesting level */
+        nr_lead_tabs=0;
+        while (*p=='\t')
+        {
+            nr_lead_tabs++;
+            p++;
+        }
+        
+        /* terminate the function if found less tabs than current level*/
+        if (nr_lead_tabs < level)
+        {
+            UBF_LOG(log_debug, "Found tab level %d current %d, popping up line %d", 
+                    nr_lead_tabs, level, line);
+            if (NULL!=p_readbuf_buffered)
+            {
+                /* pass to upper level */
+                *p_readbuf_buffered=readbuf;
+                readbuf=NULL;
+            }
+            /* terminate the read */
+            goto out;
+        }
+        else if (nr_lead_tabs > level)
+        {
+            ndrx_Bset_error_fmt(BSYNTAX, "Tab level %d expected %d or less - "
+                    "invalid data at line %d", nr_lead_tabs, level, line);
+            EXFAIL_OUT(ret);
+        }
+        /* else: it is current level and process ok */
+        
+        flag = 0;
+
+        if ('-'==p[0] || '+'==p[0] || '='==p[0])
+        {
+            /* Check syntax with flags... */
+
+            flag=p[0];
+
+            if (' '!=p[1])
+            {
+                ndrx_Bset_error_fmt(BSYNTAX, "Space does not follow the flag on "
+                                            "line %d!", line);
+                
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                /* step forward, flag + eos*/
+                p+=2;
+            }
+        }
+        
+        tok = strchr(p, '\t');
+        if (NULL==tok)
+        {
+            ndrx_Bset_error_fmt(BSYNTAX, "No tab on "
+                                        "line %d!", line);
+            EXFAIL_OUT(ret);
+        }
+        else if (tok==readbuf)
+        {
+            ndrx_Bset_error_fmt(BSYNTAX, "Line should not start with tab on "
+                                        "line %d!", line);
+            EXFAIL_OUT(ret);
+        } 
+        else
+        {
+            int tmpl = strlen(p);
+            /* seems to be ok, remove trailing newline */
+            
+            if (p[tmpl-1]!='\n')
+            {
+                /* new line at the end is optional for callbacks... */
+                if (NULL==p_readf)
+                {
+                    ndrx_Bset_error_fmt(BSYNTAX, "Line %d does not "
+                            "terminate with newline!", line);
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                p[tmpl-1]=EXEOS;
+            }
+        }
+
+        /* now read field number + value */
+        cpylen = (tok-p);
+        /* Copy off field name */
+        NDRX_STRNCPY_EOS(fldnm, p, cpylen, sizeof(fldnm));
+        
+        /* Copy off value */
+        NDRX_STRCPY_SAFE_DST(value, tok+1, value_len);
+        UBF_LOG(log_debug, "Got [%s]:[%s]", fldnm, value);
+
+#if 0
+        /*
+         * Resolve field name
+         */
+        bfldid = ndrx_Bfldid_int(fldnm);
+        if (BBADFLDID==bfldid)
+        {
+            ndrx_Bset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
+                                        "line %d!", fldnm, line);
+            EXFAIL_OUT(ret);
+        }
+#endif
+        
+        /* get field descriptor... */
+        
+        /* Check field type */
+        if ((BFLD_STRING == fldtype || BFLD_CARRAY == fldtype) && '='!=flag)
+        {
+            if (EXFAIL==ndrx_normalize_string(value, &len))
+            {
+                ndrx_Bset_error_fmt(BSYNTAX, "Cannot normalize value on line %d", 
+                        line);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if (BFLD_UBF == fldtype)
+        {
+            /* init the buffer */
+            if (EXSUCCEED!=Binit((UBFH*)value, value_len))
+            {
+                UBF_LOG(log_error, "Failed to init %p/%z level: %d", 
+                        value, value_len, level);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* start to parse inner struct.. */
+            if (EXSUCCEED!=ndrx_Bextread ((UBFH*)value, inf,
+                p_readf, dataptr1, level+1, &readbuf_buffered))
+            {
+                UBF_LOG(log_error, "Failed to parse inner UBF level %d", level+1);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* if no next line found, then it is EOF */
+            if (NULL==readbuf_buffered)
+            {
+                is_eof=EXTRUE;
+            }
+        }
+        else if (BFLD_VIEW == fldtype)
+        {
+            /* now parse the view  */
+        }
+        
+        /* now about to execute command */
+        if (0==flag)
+        {
+            if (BFLD_UBF == fldtype)
+            {
+                if (EXSUCCEED!=(ret=Badd(p_ub, bfldid, value, 0)))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (EXSUCCEED!=(ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY)))
+            {
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if ('+'==flag)
+        {
+            if (BFLD_UBF == fldtype)
+            {
+                if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, value, 0)))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY)))
+            {
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if ('-'==flag)
+        {
+            if (EXSUCCEED!=(ret=Bdel(p_ub, bfldid, 0)))
+            {
+                EXFAIL_OUT(ret);
+            }
+        }
+        else if ('='==flag)
+        {
+            /* Resolve field to-field id */
+            bfldid_from = ndrx_Bfldid_int(value);
+            if (BBADFLDID==bfldid_from)
+            {
+                ndrx_Bset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
+                                            "line %d!", value, line);
+                EXFAIL_OUT(ret);
+            }
+            else
+            {
+                BFLDLEN len_from=0;
+                /* TODO: use Bgetalloc to copy value from */
+                char *copy_form = Bgetalloc (p_ub, bfldid_from, 0, &len_from);
+                
+                /* Find the value and put into buffer. */
+                if (NULL!=copy_form)
+                {
+                    
+                    /* WARNING! This might move the source buffer before setting
+                     * Say: We set field_id=1 from field_id=2. Thus we will move
+                     * the 2 to get space for 1.
+                     * Fixed: moved from Bfind to ndrx_Bgetalloc
+                     */
+                    if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, copy_form, len_from)))
+                    {
+                        NDRX_FREE(copy_form);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    NDRX_FREE(copy_form);
+                }
+                else
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+        } /* '='==flag */
+    } /* while */
+    
+out:
+    
+    if (NULL!=readbuf_buffered)
+    {
+        NDRX_SYSBUF_FREE(readbuf_buffered);
+    }
+
+    if (NULL!=readbuf)
+    {
+        NDRX_SYSBUF_FREE(readbuf);
+    }
+
+    if (NULL!=value)
+    {
+        NDRX_SYSBUF_FREE(value);
+    }
+
+    UBF_LOG(log_debug, "%s: return %d", __func__, ret);
+    
+    return ret;
+
+}
+
 /**
  * Print VIEW data to file pointer 
+ * Note that only initialized are printed in case if 
  * @param cstruct ptr to the view struct (c)
  * @param view view name
  * @param outf file pointer to which to print
@@ -83,17 +441,12 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
     int i;
     BVIEWFLD *vdata;
     Bvnext_state_t bprint_state;
-    char cname[NDRX_VIEW_CNAME_LEN+1];
-    BFLDOCC maxocc;
-    long dim_size;
-    Bvnext_state_t state;
     char *p_view = view;
     
     /* Indicators.. */
     short *C_count;
     short C_count_stor;
     unsigned short *L_length; /* will transfer as long */
-    long L_len_long;
     
     ndrx_typedview_t *v;
     ndrx_typedview_field_t *f;
@@ -139,26 +492,24 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
     fmt_wdata[i]='n';
     fmt_ndata[i+1]=EXEOS;
     
-    /*
-    struct MYVIEW1 v;
-    
-    init_MYVIEW1(&v);
-    
-    assert_equal(Bvnext (&state, "MYVIEW1", cname, &fldtype, &maxocc, &dim_size), 1);
-    assert_string_equal(cname, "tshort1");
-    assert_equal(fldtype, 0);
-    assert_equal(maxocc, 1);
-    assert_equal(dim_size, sizeof(short));
-    
-    
-    assert_equal(Bvnext (&state, NULL, cname, &fldtype, &maxocc, &dim_size), 1);
-    */
-    
     bfldid = BFIRSTFLDID;
 
     DL_FOREACH(v->fields, f)
     {
         p_view=NULL;
+        
+        /* free up any buffers used: */
+        if (NULL!=tmp_buf)
+        {
+            NDRX_FREE(tmp_buf);
+            tmp_buf = NULL;
+        }
+
+        if (NULL!=cnv_buf)
+        {
+            NDRX_FREE(cnv_buf);
+            cnv_buf = NULL;
+        }
         
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
@@ -185,63 +536,90 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
         
         for (occ=0; occ<*C_count; occ++)
         {
-            int dim_size = f->fldsize/f->count;
-            char *fld_offs = cstruct+f->offset+occ*dim_size;
-        }
-        
-        
-        
-        /* now check are we printable? */
-        if (CBvget())
-        {
-            int temp_len;
+            BFLDLEN dim_size = f->fldsize/f->count;
+            p = cstruct+f->offset+occ*dim_size;
             
-            /* For strings we must count off trailing EOS */
-            if (BFLD_STRING==fldtype)
+            /* get the carray length  */
+            if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
             {
-                len--;
+                L_length = (unsigned short *)(cstruct+f->length_fld_offset+
+                            occ*sizeof(unsigned short));
+                len = (BFLDLEN)*L_length;
             }
-
-            temp_len = ndrx_get_nonprintable_char_tmpspace(p, len);
-
-            if (temp_len!=len) /* for carray we need EOS at end! */
+            else
             {
-                UBF_LOG(log_debug, "Containing special characters -"
-                                    " needs to temp buffer for prefixing");
-                tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
-                if (NULL==tmp_buf)
+                len=dim_size;
+            }
+            
+            /* print the field... */
+            if (BFLD_STRING==fldtype || BFLD_CARRAY==fldtype)
+            {
+                int temp_len;
+
+                /* For strings we must count off trailing EOS */
+                if (BFLD_STRING==fldtype)
                 {
-                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ",
-                            __func__, temp_len+1);
-                    EXFAIL_OUT(ret);
+                    len=strlen(p);
                 }
 
-                /* build the printable string */
-                ndrx_build_printable_string(tmp_buf, temp_len+1, p, len);
-                p = tmp_buf;
-            }
-            else if (BFLD_CARRAY==fldtype) /* we need EOS for carray... */
-            {
-                tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
-                
-                memcpy(tmp_buf, p, temp_len);
-                
-                if (NULL==tmp_buf)
+                temp_len = ndrx_get_nonprintable_char_tmpspace(p, len);
+
+                if (temp_len!=len) /* for carray we need EOS at end! */
                 {
-                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", 
-                            __func__, temp_len+1);
-                    EXFAIL_OUT(ret);
+                    UBF_LOG(log_debug, "Containing special characters -"
+                                        " needs to temp buffer for prefixing");
+                    tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
+                    if (NULL==tmp_buf)
+                    {
+                        ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ",
+                                __func__, temp_len+1);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    /* build the printable string */
+                    ndrx_build_printable_string(tmp_buf, temp_len+1, p, len);
+                    
+                    p = tmp_buf;
                 }
-                tmp_buf[temp_len] = EXEOS;
-                p = tmp_buf;
+                else if (BFLD_CARRAY==fldtype) /* we need EOS for carray... */
+                {
+                    tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
+
+                    memcpy(tmp_buf, p, temp_len);
+
+                    if (NULL==tmp_buf)
+                    {
+                        ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ", 
+                                __func__, temp_len+1);
+                        EXFAIL_OUT(ret);
+                    }
+                    tmp_buf[temp_len] = EXEOS;
+                    p = tmp_buf;
+                }
             }
+            else
+            {
+                cnv_buf=ndrx_Btypcvt(&cnv_len, BFLD_STRING, p, fldtype, len);
+
+                if (NULL==cnv_buf)
+                {
+                    /* we failed to convert - FAIL! No buffers should be allocated
+                     * at the moment. */
+                    break; /* <<< BREAK */
+                }
+                else
+                {
+                    p=cnv_buf;
+                }
+
+                len=cnv_len;
+            }
+            
         }
-
+        
         /* value is kept in p */
         if (len>0)
         {
-/* #define OUTPUT_FORMAT_WDATA "%s\t%s\n", ndrx_Bfname_int(bfldid), p*/
-
             if (NULL!=p_writef)
             {
                 char *tmp;
@@ -321,8 +699,7 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
             else
             {
                 fprintf(outf, OUTPUT_FORMAT_NDATA);
-            }
-   
+            }   
         }
         
         if (NULL!=outf && ferror(outf))
@@ -332,25 +709,6 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
             EXFAIL_OUT(ret);
         }
         
-        /* Step into printing the inner ubf */
-        if (BFLD_UBF==fldtype)
-        {
-            if (EXSUCCEED!=ndrx_Bfprint ((UBFH *)p, outf, p_writef, dataptr1, level+1))
-            {
-                UBF_LOG(log_error, "ndrx_Bfprint failed at level %d", level+1);
-                EXFAIL_OUT(ret);
-            }
-        }
-        else if (BFLD_VIEW==fldtype)
-        {
-            /* at this step we shall print the VIEW at given indentation level */
-            if (EXSUCCEED!=ndrx_Bvfprint (vdata->data, vdata->vname, outf,
-                    p_writef, dataptr1, level+1))
-            {
-                UBF_LOG(log_error, "ndrx_Bvfprint failed at level %d", level+1);
-                EXFAIL_OUT(ret);
-            }
-        }
     }
     
 out:
@@ -366,7 +724,11 @@ out:
     }
 
     /* release the stuff... */
-    fflush(outf);
+
+    if (0==level)
+    {
+        fflush(outf);
+    }
 
     return ret;
 }

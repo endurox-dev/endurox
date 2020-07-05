@@ -186,6 +186,7 @@ extern "C" {
 extern NDRX_API void ndrx_build_printable_string(char *out, int out_len, char *in, 
         int in_len);
 
+extern NDRX_API int ndrx_get_nonprintable_char_tmpspace(char *str, int len);
 
 extern char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
                             dtype_str_t **fld_dtype, int get_last, int *last_occ, 
@@ -245,7 +246,8 @@ extern BFLDOCC ndrx_CBfindocc (UBFH *p_ub, BFLDID bfldid, char * value, BFLDLEN 
 extern int ndrx_Bgetlast (UBFH *p_ub, BFLDID bfldid,
                                    BFLDOCC *occ, char *buf, BFLDLEN *len);
 extern int ndrx_Bextread (UBFH * p_ub, FILE *inf,
-        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1,
+        int level, char **p_readbuf_buffered);
 extern void ndrx_Bboolpr (char * tree, FILE *outf, 
         int (*p_writef)(char *buffer, long datalen, void *dataptr1), void *dataptr1);
 extern int ndrx_Bread  (UBFH * p_ub, FILE * inf,

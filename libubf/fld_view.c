@@ -249,13 +249,13 @@ expublic int ndrx_cmp_view (struct dtype_ext1 *t, char *val1, BFLDLEN len1,
     if (mode & UBF_CMP_MODE_STD)
     {
         ret = Bvcmp(vdata1->data, vdata1->vname, 
-                view2->data, view2->vname);
+                vdata2->data, vdata2->vname);
         goto out;
     }
     else
     {
         ret = Bvcmp(vdata1->data, vdata1->vname, 
-                view2->data, view2->vname);
+                vdata2->data, vdata2->vname);
         
         if (-2==ret)
         {

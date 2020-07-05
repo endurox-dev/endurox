@@ -56,6 +56,7 @@
 #include <cf.h>
 #include <utils.h>
 #include <ubf_tls.h>
+#include <ubfview.h>
 
 #include "atmi_int.h"
 /*---------------------------Externs------------------------------------*/
@@ -195,9 +196,8 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
             
             len=cnv_len;
         }
-
         /* now check are we printable? */
-        if (BFLD_STRING==fldtype || BFLD_CARRAY==fldtype)
+        else if (BFLD_STRING==fldtype || BFLD_CARRAY==fldtype)
         {
             int temp_len;
             
@@ -372,7 +372,10 @@ out:
     }
 
     /* release the stuff... */
-    fflush(outf);
+    if (0==level)
+    {
+        fflush(outf);
+    }
 
     return ret;
 }
@@ -390,10 +393,15 @@ out:
  *  Once EOF is reached, the callback shall return read of 0 bytes. Otherwise
  *  it must return number of bytes read, including EOS.
  * @param dataptr1 option user pointer forwarded to \p p_readf.
+ * @param level recursion level
+ * @param p_readbuf_buffered (if previous recursion terminated with next line
+ *  from current buffer
+ * @param p_is_eof is EOF set by recusrsion
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
-        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), 
+        void *dataptr1, int level, char **p_readbuf_buffered)
 {
     int ret=EXSUCCEED;
     int line=0;
@@ -410,14 +418,23 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
     int fldtype;
     int cpylen;
     int len;
-    
+    char *readbuf_buffered=NULL;
+    int nr_lead_tabs;
+    int is_eof=EXFALSE;
     NDRX_USYSBUF_MALLOC_WERR_OUT(readbuf, readbuf_len, ret);
     NDRX_USYSBUF_MALLOC_WERR_OUT(value, value_len, ret);
     
     /* Read line by line */
-    while(1)
+    while(!is_eof)
     {
-        if (NULL!=p_readf)
+        /* use buffered line from inner reads */
+        if (NULL!=readbuf_buffered)
+        {
+            NDRX_SYSBUF_FREE(readbuf);
+            readbuf=readbuf_buffered;
+            readbuf_buffered=NULL;
+        }
+        else if (NULL!=p_readf)
         {
             /* read the data from callback */
             ret = (int)p_readf(readbuf, readbuf_len, dataptr1);
@@ -474,7 +491,37 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         {
             continue; /* <<<< nothing to do - continue */
         }
-
+        
+        /* check the leading tabs, to see the current nesting level */
+        nr_lead_tabs=0;
+        while (*p=='\t')
+        {
+            nr_lead_tabs++;
+            p++;
+        }
+        
+        /* terminate the function if found less tabs than current level */
+        if (nr_lead_tabs < level)
+        {
+            UBF_LOG(log_debug, "Found tab level %d current %d, popping up line %d", 
+                    nr_lead_tabs, level, line);
+            if (NULL!=p_readbuf_buffered)
+            {
+                /* pass to upper level */
+                *p_readbuf_buffered=readbuf;
+                readbuf=NULL;
+            }
+            /* terminate the read */
+            goto out;
+        }
+        else if (nr_lead_tabs > level)
+        {
+            ndrx_Bset_error_fmt(BSYNTAX, "Tab level %d expected %d or less - "
+                    "invalid data at line %d", nr_lead_tabs, level, line);
+            EXFAIL_OUT(ret);
+        }
+        /* else: it is current level and process ok */
+        
         flag = 0;
 
         if ('-'==p[0] || '+'==p[0] || '='==p[0])
@@ -496,8 +543,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 p+=2;
             }
         }
-
-        /* Check syntax with/out flags, we should have tab inside */
+        
         tok = strchr(p, '\t');
         if (NULL==tok)
         {
@@ -573,22 +619,63 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 EXFAIL_OUT(ret);
             }
         }
+        else if (BFLD_UBF == fldtype)
+        {
+            /* init the buffer */
+            if (EXSUCCEED!=Binit((UBFH*)value, value_len))
+            {
+                UBF_LOG(log_error, "Failed to init %p/%z level: %d", 
+                        value, value_len, level);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* start to parse inner struct.. */
+            if (EXSUCCEED!=ndrx_Bextread ((UBFH*)value, inf,
+                p_readf, dataptr1, level+1, &readbuf_buffered))
+            {
+                UBF_LOG(log_error, "Failed to parse inner UBF level %d", level+1);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* if no next line found, then it is EOF */
+            if (NULL==readbuf_buffered)
+            {
+                is_eof=EXTRUE;
+            }
+        }
+        else if (BFLD_VIEW == fldtype)
+        {
+            /* now parse the view  */
+        }
         
         /* now about to execute command */
         if (0==flag)
         {
-            if (EXSUCCEED!=(ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY)))
+            if (BFLD_UBF == fldtype)
+            {
+                if (EXSUCCEED!=(ret=Badd(p_ub, bfldid, value, 0)))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (EXSUCCEED!=(ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY)))
             {
                 EXFAIL_OUT(ret);
             }
         }
         else if ('+'==flag)
         {
-            if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY)))
+            if (BFLD_UBF == fldtype)
+            {
+                if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, value, 0)))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY)))
             {
                 EXFAIL_OUT(ret);
             }
-            
         }
         else if ('-'==flag)
         {
@@ -610,19 +697,25 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
             else
             {
                 BFLDLEN len_from=0;
-                char *copy_form = Bfind(p_ub, bfldid_from, 0, &len_from);
-
+                /* TODO: use Bgetalloc to copy value from */
+                char *copy_form = Bgetalloc (p_ub, bfldid_from, 0, &len_from);
+                
                 /* Find the value and put into buffer. */
                 if (NULL!=copy_form)
                 {
+                    
                     /* WARNING! This might move the source buffer before setting
                      * Say: We set field_id=1 from field_id=2. Thus we will move
                      * the 2 to get space for 1.
+                     * Fixed: moved from Bfind to ndrx_Bgetalloc
                      */
                     if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, copy_form, len_from)))
                     {
+                        NDRX_FREE(copy_form);
                         EXFAIL_OUT(ret);
                     }
+                    
+                    NDRX_FREE(copy_form);
                 }
                 else
                 {
@@ -633,6 +726,12 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
     } /* while */
     
 out:
+    
+    if (NULL!=readbuf_buffered)
+    {
+        NDRX_SYSBUF_FREE(readbuf_buffered);
+    }
+
     if (NULL!=readbuf)
     {
         NDRX_SYSBUF_FREE(readbuf);

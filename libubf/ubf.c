@@ -1836,7 +1836,7 @@ expublic int Bextread (UBFH * p_ub, FILE *inf)
         ndrx_Bset_error_msg(BEINVAL, "Input file cannot be NULL!");
         return EXFAIL;
     }
-    return ndrx_Bextread (p_ub, inf, NULL, NULL);
+    return ndrx_Bextread (p_ub, inf, NULL, NULL, 0, NULL);
 }
 
 /**
@@ -1869,7 +1869,7 @@ expublic int Bextreadcb (UBFH * p_ub,
         return EXFAIL;
     }
     
-    return ndrx_Bextread (p_ub, NULL, p_readf, dataptr1);
+    return ndrx_Bextread (p_ub, NULL, p_readf, dataptr1, 0, NULL);
 }
 
 /**
