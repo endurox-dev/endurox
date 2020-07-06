@@ -128,7 +128,7 @@ endif()
 
 SET (STACK_PROTECTOR "-fstack-protector")
 
-if(${CMAKE_OS_NAME} STREQUAL "AIX")
+if(${CMAKE_OS_NAME} STREQUAL "AIX" OR ${CMAKE_OS_NAME} STREQUAL "SUNOS")
     # not for aix, on gcc 9 does not build
     SET (STACK_PROTECTOR "")
 endif()
