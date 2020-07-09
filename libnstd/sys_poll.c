@@ -145,7 +145,7 @@ struct ndrx_epoll_set
     int nrfmqds; /* Number of queues polled */
     
     
-    int wakeup_pipe[2]; /* wakeup pipe from notification thread */
+    int wakeup_pipe[2]; /**< wakeup pipe from notification thread */
     
     EX_hash_handle hh;         /* makes this structure hashable */
 };
@@ -156,6 +156,11 @@ typedef struct ndrx_pipe_mqd_hash ndrx_pipe_mqd_hash_t;
 exprivate ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
 exprivate ndrx_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
 
+#define EX_OS_DARWIN
+
+#ifdef EX_OS_DARWIN
+exprivate int M_signal_notif_pipe[2]={EXFAIL, EXFAIL}; /**< pipe msg to sig thread */
+#endif
 
 MUTEX_LOCKDECL(M_psets_lock);
 /*---------------------------Globals------------------------------------*/
@@ -179,26 +184,26 @@ exprivate void slipSigHandler (int sig);
 exprivate int signal_handle_event(void);
 
 
-exprivate void *sigthread_enter(void *arg)
-{
-    NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
-    signal_handle_event();
-    NDRX_LOG(log_error, "***********SIGNAL THREAD EXIT***********");
-    return NULL;
-}
-
-
+/**
+ * Just sent a notification to signal thread to process the queues.
+ * @param sig
+ */
 exprivate void slipSigHandler (int sig)
 {
-    pthread_t thread;
-    pthread_attr_t pthread_custom_attr;
 
-    pthread_attr_init(&pthread_custom_attr);
-    /* clean up resources after exit.. */
-    pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
-    /* set some small stacks size, 1M should be fine! */
-    ndrx_platf_stack_set(&pthread_custom_attr);
-    pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
+#ifdef EX_OS_DARWIN
+    int dum;
+    int err;
+    if (EXFAIL==write(M_signal_notif_pipe[WRITE], (char *)&dum, sizeof(dum)))
+    {
+        err=errno;
+        
+        if (errno!=EAGAIN && errno!=EFBIG && errno!=ENOSPC && errno!=EWOULDBLOCK)
+        {
+            abort();
+        }
+    }
+#endif
 }
 
 
@@ -280,7 +285,7 @@ exprivate void * signal_process(void *arg)
     char *fn = "signal_process";
     int ret = EXSUCCEED;
     int sig;
-    
+    int dum;
 
     NDRX_LOG(log_debug, "%s - enter", fn);
     
@@ -292,7 +297,12 @@ exprivate void * signal_process(void *arg)
     for (;;)
     {
         
+        struct timeval tv = {10000, 0};
+    
         NDRX_LOG(log_debug, "%s - before sigwait()", fn);
+
+        /* for mac sigwait is broken */
+#ifndef EX_OS_DARWIN
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
@@ -300,7 +310,29 @@ exprivate void * signal_process(void *arg)
         }
         
         NDRX_LOG(log_debug, "%s - after sigwait()", fn);
+#else
         
+        if (pthread_sigmask(SIG_UNBLOCK, &blockMask, NULL) == -1)
+        {
+            NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
+        }
+
+        if (EXFAIL==read(M_signal_notif_pipe[READ], (char *)&dum, sizeof(dum)))
+        {
+            int err=errno;
+            if (err!=EAGAIN && err!=EINTR)
+            {
+                userlog("Failed to read from signal pipe: %s - abort", strerror(err));
+                NDRX_LOG(log_error, "Failed to read from signal pipe: %s - abort", strerror(err))
+                abort();
+            }
+        }
+        
+        if (pthread_sigmask(SIG_BLOCK, &blockMask, NULL) == -1)
+        {
+            NDRX_LOG(log_always, "%s: sigprocmask failed: %s", fn, strerror(errno));
+        }
+#endif   
         /* check all queues and pipe down the event... */
         signal_handle_event();
     }
@@ -342,22 +374,39 @@ expublic int ndrx_epoll_sys_init(void)
     sigset_t blockMask;
     struct sigaction sa; /* Seem on AIX signal might slip.. */
     pthread_attr_t pthread_custom_attr;
-    pthread_attr_t pthread_custom_attr_dog;
     char *fn = "ndrx_epoll_sys_init";
-
+    int ret=EXSUCCEED;
+    
     NDRX_LOG(log_debug, "%s - enter", fn);
+    
     if (!M_signal_first)
     {
 	NDRX_LOG(log_warn, "Already init done for poll()");
 	return EXSUCCEED;
     }
-
+    
+#ifdef EX_OS_DARWIN
+    /* 
+     * create pipe for signal transfer to thread 
+     */
+    if (pipe(M_signal_notif_pipe) == -1)
+    {
+        NDRX_LOG(log_error, "pipe failed for M_signal_notif_pipe");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXFAIL==fcntl(M_signal_notif_pipe[WRITE], F_SETFL, 
+		fcntl(M_signal_notif_pipe[WRITE], F_GETFL) | O_NONBLOCK))
+    {
+        NDRX_LOG(log_error, "fcntl READ notif pipe set O_NONBLOCK failed");
+        EXFAIL_OUT(ret);
+    }
+#endif
     sa.sa_handler = slipSigHandler;
     sigemptyset (&sa.sa_mask);
-    sa.sa_flags = SA_RESTART; /* restart system calls please... */
+    sa.sa_flags = SA_RESTART;  /* restart system calls please... */
     sigaction (NOTIFY_SIG, &sa, 0);
 
-    
     /* Block the notification signal (do not need it here...) */
     
     sigemptyset(&blockMask);
@@ -370,7 +419,6 @@ expublic int ndrx_epoll_sys_init(void)
     
     
     pthread_attr_init(&pthread_custom_attr);
-    pthread_attr_init(&pthread_custom_attr_dog);
     
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
@@ -379,7 +427,8 @@ expublic int ndrx_epoll_sys_init(void)
     M_signal_first = EXFALSE;
     
     
-    return EXSUCCEED;
+out:
+    return ret;
 }
 
 /**
@@ -421,6 +470,23 @@ expublic void ndrx_epoll_sys_uninit(void)
                     "(should not happen!!)");
         }
     }
+    
+    #ifdef EX_OS_DARWIN
+
+    if (EXFAIL!=M_signal_notif_pipe[WRITE])
+    {
+        close(M_signal_notif_pipe[WRITE]);
+        M_signal_notif_pipe[WRITE]=EXFAIL;
+    }
+    
+    if (EXFAIL!=M_signal_notif_pipe[READ])
+    {
+        close(M_signal_notif_pipe[READ]);
+        M_signal_notif_pipe[READ]=EXFAIL;
+        
+    }
+    
+    #endif
     
     NDRX_LOG(log_debug, "finished ok");
 }
