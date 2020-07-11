@@ -44,6 +44,14 @@
 #include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+
+/* async messages get stuck for a while in tpbridge, for RPI mem is low... */
+#if EX_SIZEOF_LONG==4
+#define TEST_ASYNC_LOOPS    20000
+#else
+#define TEST_ASYNC_LOOPS    200000
+#endif
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -66,7 +74,7 @@ exprivate int tpacall_tpnoreply_forward_test(void)
     long rsplen;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
     
-    for (j=0; j<200000; j++)
+    for (j=0; j<TEST_ASYNC_LOOPS; j++)
     {
         Binit(p_ub, Bsizeof(p_ub));
         Badd(p_ub, T_STRING_FLD, "tpacall_tpnoreply_forward_test", 0);
@@ -108,7 +116,7 @@ exprivate int tpacall_tpnoreply_forward_nodestsrv(void)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
     long rsplen;
     
-    for (j=0; j<200000; j++)
+    for (j=0; j<TEST_ASYNC_LOOPS; j++)
     {
         Binit(p_ub, Bsizeof(p_ub));
         Badd(p_ub, T_STRING_FLD, "tpacall_tpnoreply_forward_nodestsrv", 0);
