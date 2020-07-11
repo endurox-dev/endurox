@@ -52,15 +52,15 @@
 		<killtime>20</killtime>
 	</defaults>
 	<servers>
-		<server name="atmisv2SECOND">
-			<srvid>10</srvid>
-			<sysopt>-e ${TESTDIR}/atmisv2SECOND-dom3.log -r</sysopt>
-		</server>
-        <server name="tpbridge">
-            <max>1</max>
-            <srvid>102</srvid>
-            <sysopt>-e /tmp/bridgeN2-dom3.log -r</sysopt>
-            <appopt>-f -n2 -r -i 0.0.0.0 -p 22002 -tP -z30</appopt>
-        </server>
+            <server name="atmisv2SECOND">
+                    <srvid>10</srvid>
+                    <sysopt>-e ${TESTDIR}/atmisv2SECOND-dom3.log -r</sysopt>
+            </server>
+            <server name="tpbridge">
+                <max>1</max>
+                <srvid>102</srvid>
+                <sysopt>-e /tmp/bridgeN2-dom3.log -r</sysopt>
+                <appopt>-R99999 -f -n2 -r -i 0.0.0.0 -p 22002 -tP -z30</appopt>
+            </server>
 	</servers>
 </endurox>

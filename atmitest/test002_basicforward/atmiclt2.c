@@ -50,6 +50,97 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * This will test that tpacall forward will not hang in TPNOREPLY mode.
+ * i.e. at the at the second forwarded service reply shall be ignored,
+ * and not delivered back to client.
+ * What happened here: Bug #570 is that client receive unexpected replies
+ * and client queue become full.
+ * @return EXSUCCEED/EXFAIL.
+ */
+exprivate int tpacall_tpnoreply_forward_test(void)
+{
+    int ret = EXSUCCEED;
+    int j;
+    long rsplen;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
+    
+    for (j=0; j<200000; j++)
+    {
+        Binit(p_ub, Bsizeof(p_ub));
+        Badd(p_ub, T_STRING_FLD, "tpacall_tpnoreply_forward_test", 0);
+
+        if (EXFAIL==tpacall("TEST2_1ST_AL", (char *)p_ub, 0, TPNOREPLY))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to call TEST2_1ST_AL with TPNOREPLY: %s", 
+                    tpstrerror(tperrno));
+            
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    /* wait for queue to finish ...*/
+    if (EXFAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTIME))
+    {
+        NDRX_LOG(log_error, "TEST2_1ST_AL failed: %s",
+               tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+out:
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+    return ret;
+}
+
+/**
+ * Test that tpforward fails, but for TPNOREPLY we shall not receive any reply
+ * Bug #570 - currently client queue may fill up
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int tpacall_tpnoreply_forward_nodestsrv(void)
+{
+    int ret = EXSUCCEED;
+    int j;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 8192);
+    long rsplen;
+    
+    for (j=0; j<200000; j++)
+    {
+        Binit(p_ub, Bsizeof(p_ub));
+        Badd(p_ub, T_STRING_FLD, "tpacall_tpnoreply_forward_nodestsrv", 0);
+        Badd(p_ub, T_STRING_10_FLD, "failure set", 0);
+
+        if (EXFAIL==tpacall("TEST2_1ST_AL", (char *)p_ub, 0, TPNOREPLY))
+        {
+            NDRX_LOG(log_error, "TESTERROR: failed to call TEST2_1ST_AL with TPNOREPLY: %s", 
+                    tpstrerror(tperrno));
+            
+            EXFAIL_OUT(ret);
+        }
+    }
+
+    /* sync off */
+    Bdel(p_ub, T_STRING_10_FLD, 0);
+    if (EXFAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,TPNOTIME))
+    {
+        NDRX_LOG(log_error, "TEST2_1ST_AL failed: %s",
+               tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+
+out:
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+    return ret;
+}
+
 /*
  * Do the test call to the server
  */
@@ -64,69 +155,84 @@ int main(int argc, char** argv) {
     double dv = 55.66;
     double dv2 = 11.66;
     
-for (j=0; j<100000; j++)
-{
-    Binit(p_ub, Bsizeof(p_ub));
-
-    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
-    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
-    Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
-
-    for (i=0; i<100; i++)
+    for (j=0; j<100000; j++)
     {
-        cnt++;
-        dv+=1;
-        dv2+=1;
-        
-        if (EXFAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        Binit(p_ub, Bsizeof(p_ub));
+
+        Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 1", 0);
+        Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 2", 0);
+        Badd(p_ub, T_STRING_FLD, "THIS IS TEST FIELD 3", 0);
+
+        for (i=0; i<100; i++)
         {
-            NDRX_LOG(log_error, "TEST2_1ST_AL failed: %s",
-                    tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
+            cnt++;
+            dv+=1;
+            dv2+=1;
+
+            if (EXFAIL == tpcall("TEST2_1ST_AL", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+            {
+                NDRX_LOG(log_error, "TEST2_1ST_AL failed: %s",
+                        tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+
+            /* Verify the data */
+            if (EXFAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
+            {
+                NDRX_LOG(log_debug, "Failed to get T_DOUBLE_FLD[%d]", i);
+                ret=EXFAIL;
+                goto out;
+            }
+
+            if (EXFAIL==Bget(p_ub, T_DOUBLE_2_FLD, i, (char *)&d2, 0))
+            {
+                NDRX_LOG(log_debug, "Failed to get T_DOUBLE_2_FLD[%d]", i);
+                ret=EXFAIL;
+                goto out;
+            }
+
+            if (fabs(dv-d) > 0.00001)
+            {
+                NDRX_LOG(log_debug, "T_DOUBLE_FLD: %lf!=%lf =>  FAIL", dv, d);
+                ret=EXFAIL;
+                goto out;
+            }
+
+            if (fabs(dv2 - d2) > 0.00001)
+            {
+                NDRX_LOG(log_debug, "T_DOUBLE_2_FLD: %lf!=%lf =>  FAIL", dv, d);
+                ret=EXFAIL;
+                goto out;
+            }
+
+            /* print the output */
+            Bfprint(p_ub, stderr);
         }
 
-        /* Verify the data */
-        if (EXFAIL==Bget(p_ub, T_DOUBLE_FLD, i, (char *)&d, 0))
+        NDRX_LOG(log_debug, "CURRENT CNT: %ld", cnt);
+        if (argc<=1)
         {
-            NDRX_LOG(log_debug, "Failed to get T_DOUBLE_FLD[%d]", i);
-            ret=EXFAIL;
-            goto out;
+            break;
         }
-
-        if (EXFAIL==Bget(p_ub, T_DOUBLE_2_FLD, i, (char *)&d2, 0))
-        {
-            NDRX_LOG(log_debug, "Failed to get T_DOUBLE_2_FLD[%d]", i);
-            ret=EXFAIL;
-            goto out;
-        }
-
-        if (fabs(dv-d) > 0.00001)
-        {
-            NDRX_LOG(log_debug, "T_DOUBLE_FLD: %lf!=%lf =>  FAIL", dv, d);
-            ret=EXFAIL;
-            goto out;
-        }
-
-        if (fabs(dv2 - d2) > 0.00001)
-        {
-            NDRX_LOG(log_debug, "T_DOUBLE_2_FLD: %lf!=%lf =>  FAIL", dv, d);
-            ret=EXFAIL;
-            goto out;
-        }
-        
-        /* print the output */
-        Bfprint(p_ub, stderr);
     }
-
-    NDRX_LOG(log_debug, "CURRENT CNT: %ld", cnt);
-    if (argc<=1)
+    
+    /* test Bug #570 */
+    if (EXSUCCEED!=tpacall_tpnoreply_forward_test())
     {
-        break;
+        EXFAIL_OUT(ret);
     }
-}
+    
+    if (EXSUCCEED!=tpacall_tpnoreply_forward_nodestsrv())
+    {
+        EXFAIL_OUT(ret);
+    }
 
 out:
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
     return ret;
 }
 
