@@ -190,6 +190,8 @@ exprivate void *sigthread_enter(void *arg)
 
 exprivate void slipSigHandler (int sig)
 {
+/* seems sigwait for sigusr2 works */
+#if 0
     pthread_t thread;
     pthread_attr_t pthread_custom_attr;
 
@@ -199,6 +201,7 @@ exprivate void slipSigHandler (int sig)
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
     pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
+#endif
 }
 
 
