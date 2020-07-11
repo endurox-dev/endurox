@@ -477,7 +477,7 @@ expublic void _tpforward (char *svc, char *data,
 
     NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
-    call->flags = flags;
+    call->flags = last_call->flags; /* preserve the original call flags Bug #570 */
     call->cd = last_call->cd; /* <<< another difference from call! */
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;

@@ -66,10 +66,22 @@ void TEST2_1ST (TPSVCINFO *p_svc)
     }
 
 out:
-    tpforward(  "TEST2_2ND",
+        
+    /* indicator that we shall send to invalid server */
+    if (Bpres(p_ub, T_STRING_10_FLD, 0))
+    {
+        tpforward(  "TEST2_2ND_NON_EXIST",
                 (char *)p_ub,
                 0L,
                 0L);
+    }
+    else
+    {
+        tpforward(  "TEST2_2ND",
+                    (char *)p_ub,
+                    0L,
+                    0L);
+    }
 }
 
 /*

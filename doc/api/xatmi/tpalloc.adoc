@@ -67,8 +67,8 @@ structure (like *tpcall(3)* or *Bvstof(3)*) can cause segmentation fault.
 
 RETURN VALUE
 ------------
-On success, *tpalloc()* return zero; on error, -1 is returned, with *tperrno* set 
-to indicate the error.
+On success, *tpalloc()* return ptr to mem block; on error, NULL is returned, 
+with *tperrno* set to indicate the error.
 
 
 ERRORS

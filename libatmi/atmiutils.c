@@ -914,6 +914,13 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     tp_command_call_t *call;
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
 
+    /* Bug #570 */
+    if (last_call->flags & TPNOREPLY)
+    {
+        NDRX_LOG(log_warn, "No reply expected ignore error delivery");
+        goto out;
+    }
+    
     if (NULL==buf)
     {
         call = &call_b;
@@ -925,7 +932,6 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     
     memset(call, 0, sizeof(*call));
     call->command_id = ATMI_COMMAND_TPREPLY;
-    call->cd = last_call->cd;
     call->cd = last_call->cd;
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;
