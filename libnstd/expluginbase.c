@@ -144,8 +144,8 @@ expublic int ndrx_plugins_loadone(char *fname)
     
     if (EXFAIL==flags)
     {
-        NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] init failed1", fname);
-        userlog("Invalid plugin [%s] init failed1", fname);
+        NDRX_LOG_EARLY(log_error, "Invalid plugin [%s] init failed!", fname);
+        userlog("Invalid plugin [%s] init failed!", fname);
         EXFAIL_OUT(ret);
     }
     
