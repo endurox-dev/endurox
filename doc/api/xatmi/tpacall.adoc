@@ -37,7 +37,7 @@ case if caller process is running in transaction mode, but destination
 process shall not run in the same global transaction
 
 *TPSIGRSTRT* Restart the system call in progress if interrupted by 
-signal handler. This affects only underlaying mq_* function calls.
+signal handler. This affects only underlying mq_* function calls.
 
 *TPNOBLOCK* In case of target service queue is full, do not wait on queue, but
 return error. The error code for this situation is *TPEBLOCK*.
