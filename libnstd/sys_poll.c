@@ -190,8 +190,17 @@ exprivate void *sigthread_enter(void *arg)
 
 exprivate void slipSigHandler (int sig)
 {
-/* seems sigwait for sigusr2 works */
+/* seems sigwait for sigusr2 works
 #if 0
+--- well, on go threads seems that mask is different and possibly other threads
+have un-masked signal, thus all stops.
+Possibly variant could be that in emq: each process opens on disk a pipe
+and then instead of notify via kill, we could just notify via pipe msg.
+The other open would be that sigwait() thread instead of pipe just opens
+another queue (say client reply queue with tpinit(), and then just wait msg
+on this Q (custom read) and do tpterm() at shutdown. This would avoid any
+houskeeping issues.. (no need to scan for pipes..).
+*/
     pthread_t thread;
     pthread_attr_t pthread_custom_attr;
 
@@ -201,7 +210,6 @@ exprivate void slipSigHandler (int sig)
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
     pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
-#endif
 }
 
 
