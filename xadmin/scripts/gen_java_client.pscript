@@ -76,6 +76,7 @@ class JavaClient extends WizardBase {
     {
 	
         clientVal = @"import org.endurox.*;
+import org.endurox.exceptions.*;
 import java.util.*;
 
 public class "+classname+@" {
