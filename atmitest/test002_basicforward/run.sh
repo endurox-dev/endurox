@@ -49,6 +49,7 @@ fi;
 . ../testenv.sh
 
 rm *.log
+export NDRX_DEBUG_CONF=`pwd`/debug.conf
 
 (./atmisv2FIRST -t 4 -i 1 2>&1) > ./atmisv2FIRST.log &
 (./atmisv2SECOND -i 1 2>&1) > ./atmisv2SECOND.log &
