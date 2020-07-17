@@ -489,7 +489,7 @@ Bug #542, Feature #549
 
 - Version 7.0.38 released on 03/07/2020 (stable) Bug #565, Bug #566
 
-- Version 7.0.40 released on 11/07/2020 (stable) Bug #570
+- Version 7.0.40 released on 11/07/2020 (stable) Bug #570, Support #571
 
 # Build configurations
 
