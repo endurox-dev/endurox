@@ -24,6 +24,18 @@ needed for multi threaded server, in order to restore tpcall() data in worker th
 If global transaction was running in main thread for which *tpsrvgetctxdata()* 
 was called, then *tpsrvsetctxdata()* will resume the global transaction in current thread.
 
+In case when restoring context in other server process service, the
+auto-buffer marking (buffer allocated by incoming message service dispatcher and
+marked as auto-buffer) is lost. Thus when doing *tpreturn(3)* 
+or *tpforward(3)* with other buffer, than original service 
+incoming call buffer, the original call buffer (initial auto-buffer) will leak. By
+contrast of normal service work, where *tpsrvsetctxdata()* is not used, the 
+auto-buffer will be freed by system, even doing return with other XATMI buffer.
+
+Thus to avoid leaking, either *tpreturn()* or *tpforward()* shall be done with original
+call buffer, or if not possible, then after doing *tpsrvsetctxdata()*, original
+call buffer shall be freed by *tpfree(3)*.
+
 This function is available only for XATMI servers.
 
 *Valid flags*
@@ -31,7 +43,9 @@ This function is available only for XATMI servers.
 *TPNOAUTBUF* Do not restore auto buffer when restoring the server context. 
 This can be suitable in case if buffer is already made free by initial service thread
 and the target server/service does not know anything about given pointer. E.g.
-the context is copied to different process.
+the context is copied to different process. If context is copied to other process
+with out using this flag, then segmentation fault is possible at *tpreturn()*
+or *tpforward()*.
 
 RETURN VALUE
 ------------
@@ -47,7 +61,8 @@ debug info from last function call.
 
 *TPEPROTO* Global transaction is already started.
 
-*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or debugs for more info. Could be the case if XA sub-system is not open by *tpopen()*.
+*TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
+debugs for more info. Could be the case if XA sub-system is not open by *tpopen()*.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
 
@@ -61,7 +76,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpsrvgetctxdata(3)* *tpcontinue(3)* *tpinit(3)*
+*tpsrvgetctxdata(3)* *tpcontinue(3)* *tpinit(3)* *tpreturn(3)* *tpforward(3)*
+*tpfree(3)*
 
 COPYING
 -------
