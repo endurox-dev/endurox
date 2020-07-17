@@ -98,10 +98,27 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
     char *readbuf_buffered=NULL;
     int nr_lead_tabs;
     int is_eof=EXFALSE;
+    ndrx_typedview_t *v = NULL;
+    
+    
     NDRX_USYSBUF_MALLOC_WERR_OUT(readbuf, readbuf_len, ret);
     NDRX_USYSBUF_MALLOC_WERR_OUT(value, value_len, ret);
     
-    /* TODO: Resolve view descriptor */
+    /* Resolve view descriptor */
+    
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* TODO: Init the view to NULL, so that we can count occurrences 
+     * Question about initialization of the occurrences, if occurrence
+     * follows after some other field -> shall be set first or still added
+     * to last. If added to last, then we need to build a hash list of each
+     * parsed field to count the occurrences.
+     * String Hash... of integer
+     */
     
     /* Read line by line */
     while(1)
@@ -284,60 +301,19 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
                 EXFAIL_OUT(ret);
             }
         }
-        else if (BFLD_UBF == fldtype)
-        {
-            /* init the buffer */
-            if (EXSUCCEED!=Binit((UBFH*)value, value_len))
-            {
-                UBF_LOG(log_error, "Failed to init %p/%z level: %d", 
-                        value, value_len, level);
-                EXFAIL_OUT(ret);
-            }
-            
-            /* start to parse inner struct.. */
-            if (EXSUCCEED!=ndrx_Bextread ((UBFH*)value, inf,
-                p_readf, dataptr1, level+1, &readbuf_buffered))
-            {
-                UBF_LOG(log_error, "Failed to parse inner UBF level %d", level+1);
-                EXFAIL_OUT(ret);
-            }
-            
-            /* if no next line found, then it is EOF */
-            if (NULL==readbuf_buffered)
-            {
-                is_eof=EXTRUE;
-            }
-        }
-        else if (BFLD_VIEW == fldtype)
-        {
-            /* now parse the view  */
-        }
         
         /* now about to execute command */
         if (0==flag)
         {
-            if (BFLD_UBF == fldtype)
-            {
-                if (EXSUCCEED!=(ret=Badd(p_ub, bfldid, value, 0)))
-                {
-                    EXFAIL_OUT(ret);
-                }
-            }
-            else if (EXSUCCEED!=(ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY)))
+            /* TODO: Resolve occurrence */
+            if (EXSUCCEED!=(ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY)))
             {
                 EXFAIL_OUT(ret);
             }
         }
         else if ('+'==flag)
         {
-            if (BFLD_UBF == fldtype)
-            {
-                if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, value, 0)))
-                {
-                    EXFAIL_OUT(ret);
-                }
-            }
-            else if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY)))
+            if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY)))
             {
                 EXFAIL_OUT(ret);
             }
