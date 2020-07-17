@@ -103,18 +103,28 @@ expublic int is_ndrxd_running(pid_t *p_pid)
     FILE *f = NULL;
     pid_t    pid;
     char    pidbuf[64] = {EXEOS};
-
+    
     /* Reset to default - not running! */
     G_config.ndrxd_stat = NDRXD_STAT_NOT_STARTED;
 
+    NDRX_LOG(log_info, "Probing for ndrxd...");
+    
     /* Check queue first  */
     if ((mqd_t)EXFAIL==G_config.ndrxd_q)
         G_config.ndrxd_q = ndrx_mq_open_at_wrp (G_config.ndrxd_q_str, O_WRONLY);
 
     if ((mqd_t)EXFAIL==G_config.ndrxd_q)
     {
-        NDRX_LOG(log_warn, "Failed to open admin queue [%s]: %s",
-                G_config.ndrxd_q_str, strerror(errno));
+        if (ENOENT==errno)
+        {
+            NDRX_LOG(log_info, "ndrxd queue [%s] not found - continue probing", 
+                    G_config.ndrxd_q_str);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to open ndrxd queue [%s]: %s",
+                    G_config.ndrxd_q_str, strerror(errno));
+        }
     }
     
     /*
@@ -125,8 +135,16 @@ expublic int is_ndrxd_running(pid_t *p_pid)
      */
     if (NULL==(f=NDRX_FOPEN(G_config.pid_file, "r")))
     {
-        NDRX_LOG(log_error, "Failed to open ndrxd PID file: [%s]: %s",
-                G_config.pid_file, strerror(errno));
+        if (ENOENT==errno)
+        {
+            NDRX_LOG(log_info, "ndrxd PID file [%s] not found - continue probing", 
+                    G_config.pid_file);
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to open ndrxd PID file: [%s]: %s",
+                    G_config.pid_file, strerror(errno));
+        }
         
         goto out;
     }
@@ -204,6 +222,9 @@ out:
         ndrx_mq_close(G_config.ndrxd_q);
         G_config.ndrxd_q=(mqd_t)EXFAIL;
     }
+
+    NDRX_LOG(log_info, "%s returns: %s", __func__, (ret?"running":"not running"));
+
     return ret;
 }
 
