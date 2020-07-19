@@ -53,16 +53,77 @@
 #include <atmi_tls.h>
 #include <cf.h>
 #include "Exfields.h"
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define OUTPUT_FORMAT_WDATA fmt_wdata, f->cname, p
 #define OUTPUT_FORMAT_NDATA fmt_ndata, f->cname
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
+
+/**
+ * View occurrence counter
+ */
+typedef struct ndrx_viewocc ndrx_viewocc_t;
+struct ndrx_viewocc
+{
+    char fldnm[NDRX_VIEW_CNAME_LEN+1];  /**< field name */
+    int occ;            /**< Current field occurrence */
+    EX_hash_handle hh; /**< makes this structure hashable (for msgid)        */
+};
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+
+/**
+ * Get current occurrence, if field is not register, add new 0 entry to
+ * the hash
+ * @return -1 if failed (malloc), >=0 occurrence
+ */
+exprivate int ndrx_viewocc_get(ndrx_viewocc_t **hhandle, char *fld)
+{
+    ndrx_viewocc_t *el;
+    int occ=EXFAIL;
+    
+    EXHASH_FIND_STR( (*hhandle), fld, el);
+    
+    if (NULL==el)
+    {
+        if (NULL==(el = NDRX_FPMALLOC(sizeof(ndrx_viewocc_t), 0)))
+        {
+            int err = errno;
+            NDRX_LOG(log_error, "Failed to alloc: %s", strerror(err));
+            userlog("Failed to alloc: %s", strerror(err));
+            goto out;
+        }
+        
+        /* set the data and add */
+        NDRX_STRCPY_SAFE(el->fldnm, fld);
+        el->occ = 0;
+        EXHASH_ADD_STR( (*hhandle), fldnm, el);
+        occ=el->occ;
+    }
+out:
+    return occ;
+}
+
+/**
+ * free occ counter hash
+ * @param hhandle hash handle
+ */
+exprivate void ndrx_viewocc_free(ndrx_viewocc_t **hhandle)
+{
+    ndrx_viewocc_t * el = NULL;
+    ndrx_viewocc_t * tmp = NULL;
+    
+    EXHASH_ITER(hh, (*hhandle), el, tmp)
+    {
+        EXHASH_DEL((*hhandle), el);
+        NDRX_FPFREE(el);
+    }
+}
 
 /**
  * Read the view data from the data input
@@ -84,31 +145,40 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
     int line=0;
     char *readbuf=NULL;
     size_t readbuf_len;
-    char fldnm[NDRX_VIEW_CNAME_LEN+1];
+    char cname[NDRX_VIEW_CNAME_LEN+1];
     char *value=NULL;
     size_t value_len;
     char flag;
     char *p;
     char *tok;
-    BFLDID bfldid;
-    BFLDID bfldid_from;
     int fldtype;
     int cpylen;
     int len;
     char *readbuf_buffered=NULL;
     int nr_lead_tabs;
-    int is_eof=EXFALSE;
+    ndrx_viewocc_t *occhash = NULL;
+    BFLDOCC occ;
     ndrx_typedview_t *v = NULL;
-    
+    ndrx_typedview_field_t *f = NULL;
+    ndrx_typedview_field_t *fsrc = NULL;
+    char *copysrcbuf;
+    BFLDLEN copysrcbuf_len;
     
     NDRX_USYSBUF_MALLOC_WERR_OUT(readbuf, readbuf_len, ret);
     NDRX_USYSBUF_MALLOC_WERR_OUT(value, value_len, ret);
     
     /* Resolve view descriptor */
-    
     if (NULL==(v = ndrx_view_get_view(view)))
     {
         ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
+    UBF_LOG(log_debug, "Init view [%s] at %p to null", view, cstruct);
+    
+    if (EXSUCCEED!=ndrx_Bvsinit(cstruct, view))
+    {
+        UBF_LOG(log_error, "Failed to init view [%s] at %p to null", view, cstruct);
         EXFAIL_OUT(ret);
     }
     
@@ -163,9 +233,8 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
                 
         len = strlen(readbuf);
         line++;
-        bfldid=BBADFLDID;
         value[0] = EXEOS;
-        fldnm[0] = EXEOS;
+        cname[0] = EXEOS;
         p = readbuf;
 
         if ('#'==p[0])
@@ -270,26 +339,32 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
         /* now read field number + value */
         cpylen = (tok-p);
         /* Copy off field name */
-        NDRX_STRNCPY_EOS(fldnm, p, cpylen, sizeof(fldnm));
+        NDRX_STRNCPY_EOS(cname, p, cpylen, sizeof(cname));
         
         /* Copy off value */
         NDRX_STRCPY_SAFE_DST(value, tok+1, value_len);
-        UBF_LOG(log_debug, "Got [%s]:[%s]", fldnm, value);
+        UBF_LOG(log_debug, "Got [%s]:[%s]", cname, value);
 
-#if 0
-        /*
-         * Resolve field name
-         */
-        bfldid = ndrx_Bfldid_int(fldnm);
-        if (BBADFLDID==bfldid)
+        /* ignore, be backward/forward compatible */
+        if (NULL==(f = ndrx_view_get_field(v, cname)))
         {
-            ndrx_Bset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
-                                        "line %d!", fldnm, line);
-            EXFAIL_OUT(ret);
+            UBF_LOG(log_warn, "Field [%s] of view [%s] not found - ignore", 
+                    cname, view);
+            continue;
         }
-#endif
+        
+        fldtype=f->typecode_full;
         
         /* get field descriptor... */
+        occ = ndrx_viewocc_get(&occhash, cname);
+        
+        if (EXFAIL==occ)
+        {
+            ndrx_Bset_error_fmt(BEUNIX, "malloc failed");
+            EXFAIL_OUT(ret);
+        }
+        
+        UBF_LOG(log_debug, "field [%s] next occ=%d type=%d", cname, occ, fldtype);
         
         /* Check field type */
         if ((BFLD_STRING == fldtype || BFLD_CARRAY == fldtype) && '='!=flag)
@@ -305,63 +380,57 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
         /* now about to execute command */
         if (0==flag)
         {
-            /* TODO: Resolve occurrence */
-            if (EXSUCCEED!=(ret=CBadd(p_ub, bfldid, value, len, BFLD_CARRAY)))
+            if (EXSUCCEED!=(ret=ndrx_CBvchg_int(cstruct, v, f, occ, value, len, 
+                    BFLD_CARRAY)))
             {
                 EXFAIL_OUT(ret);
             }
         }
         else if ('+'==flag)
         {
-            if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, value, len, BFLD_CARRAY)))
+            if (EXSUCCEED!=(ret=ndrx_CBvchg_int(cstruct, v, f, 0, value, len, 
+                    BFLD_CARRAY)))
             {
                 EXFAIL_OUT(ret);
             }
+            
         }
         else if ('-'==flag)
         {
-            if (EXSUCCEED!=(ret=Bdel(p_ub, bfldid, 0)))
+            if (EXSUCCEED!=(ret=ndrx_Bvselinit_int(v, f,  0, cstruct)))
             {
                 EXFAIL_OUT(ret);
             }
         }
         else if ('='==flag)
         {
-            /* Resolve field to-field id */
-            bfldid_from = ndrx_Bfldid_int(value);
-            if (BBADFLDID==bfldid_from)
+            /* Resolve field to-field id 
+             * get ptr & size from field, and BVchg to current field.
+             */
+            
+            if (NULL==(fsrc = ndrx_view_get_field(v, value)))
             {
-                ndrx_Bset_error_fmt(BBADNAME, "Cannot resolve field ID from [%s] on"
-                                            "line %d!", value, line);
+                ndrx_Bset_error_fmt(BNOCNAME, "Source field [%s] of view [%s] not found!", 
+                        value, v->vname);
                 EXFAIL_OUT(ret);
             }
-            else
+
+            /* copy from src */
+            copysrcbuf = ndrx_Bvfind_int(cstruct, v, fsrc, 0, &copysrcbuf_len);
+            
+            /* normally shall not happen as field is defined and we search
+             * for 0 occ
+             */
+            if (NULL==copysrcbuf)
             {
-                BFLDLEN len_from=0;
-                /* TODO: use Bgetalloc to copy value from */
-                char *copy_form = Bgetalloc (p_ub, bfldid_from, 0, &len_from);
-                
-                /* Find the value and put into buffer. */
-                if (NULL!=copy_form)
-                {
-                    
-                    /* WARNING! This might move the source buffer before setting
-                     * Say: We set field_id=1 from field_id=2. Thus we will move
-                     * the 2 to get space for 1.
-                     * Fixed: moved from Bfind to ndrx_Bgetalloc
-                     */
-                    if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, copy_form, len_from)))
-                    {
-                        NDRX_FREE(copy_form);
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    NDRX_FREE(copy_form);
-                }
-                else
-                {
-                    EXFAIL_OUT(ret);
-                }
+                UBF_LOG(log_error, "Failed to read field [%s] at occ 0", value);
+                EXFAIL_OUT(ret);
+            }
+            
+            if (EXSUCCEED!=(ret=ndrx_CBvchg_int(cstruct, v, f, occ, copysrcbuf, 
+                    copysrcbuf_len, fsrc->typecode_full)))
+            {
+                EXFAIL_OUT(ret);
             }
         } /* '='==flag */
     } /* while */
@@ -381,6 +450,11 @@ out:
     if (NULL!=value)
     {
         NDRX_SYSBUF_FREE(value);
+    }
+
+    if (NULL!=ndrx_viewocc_free)
+    {
+        ndrx_viewocc_free(&occhash);
     }
 
     UBF_LOG(log_debug, "%s: return %d", __func__, ret);

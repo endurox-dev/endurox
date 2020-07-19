@@ -2607,7 +2607,6 @@ out:
 }
 
 
-
 /**
  * Get field occurrences number of array elements in VIEW.
  * Set by 'count' column in view file.
@@ -2793,6 +2792,216 @@ expublic int Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2)
 out:
 
     return ret;    
+}
+
+/**
+ * Read view contents from text file.
+ * Contents is similar to Bextread, instead of field names, view field names
+ * are used. Unknown fields are ignored.
+ * @param cstruct pre-allocated c view structure 
+ * @param view view name
+ * @param inf input stream
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvextread(char *cstruct, char *view, FILE *inf)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY2;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is empty string!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==inf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "inf is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvextread (cstruct, view, inf, NULL, NULL, 0, NULL);
+
+out:
+
+    return ret;    
+}
+
+/**
+ * Read view contents from callback function
+ * Contents is similar to Bextreadcb, instead of field names, view field names
+ * are used. Unknown fields are ignored.
+ * @param cstruct pre-allocated c view structure 
+ * @param view view name
+ * @param p_readf cllback func, where `buffer' and bufsz indicates the temp
+ *  space for putting data to read, `dataptr1' is received from Bvextreadcb() call
+ * @param dataptr1 dat
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvextreadcb(char *cstruct, char *view, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY2;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==view[0])
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is empty string!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_readf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_readf callback is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvextread (cstruct, view, NULL, p_readf, dataptr1, 0, NULL);
+
+out:
+
+    return ret;
+}
+
+/**
+ * Print the view to output stream
+ * @param cstruct view blob
+ * @param view view name
+ * @param outf output stream
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvfprint (char *cstruct, char *view, FILE * outf)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY2;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==outf)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "outf FILE ptr is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvfprint (cstruct, view, outf, NULL, NULL, 0);
+
+out:
+
+    return ret;
+}
+
+/**
+ * Print VIEW buffer by using callback function for data outputting
+ * @param cstruct C Structure according to view
+ * @param view View name
+ * @param dataptr1 user pointer passed back to callback
+ * @param p_writef callback function for data output. Note that 'buffer' argument
+ *  is allocated and deallocated by Bvfprintcb it self. The string is zero byte
+ *  terminated. The dataptr1 passed to function is forwarded to callback func.
+ *  *datalen* includes the EOS byte. if do_write is set to TRUE, the data in buffer
+ *  is written to output file.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int Bvfprintcb (char *cstruct, char *view,
+        ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY2;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL!");
+        ret=-2;
+        goto out;
+    }
+    
+    if (NULL==p_writef)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "p_writef callback is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_Bvfprint (cstruct, view, NULL, p_writef, dataptr1, 0);
+
+out:
+
+    return ret;
+}
+
+/**
+ * Print the view to stdout
+ * @param cstruct C Structure according to view
+ * @param view View name
+ * @return
+ */
+expublic int Bvprint (char *cstruct, char *view)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    VIEW_ENTRY2;
+    
+    if (NULL==cstruct)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "cstruct is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==view)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "view is NULL!");
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    ret=ndrx_Bvfprint (cstruct, view, stdout, NULL, NULL, 0);
+
+out:
+
+    return ret;
 }
 
 /**

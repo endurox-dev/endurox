@@ -57,6 +57,49 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Find field occurrence and field length
+ * @param cstruct c structure onto which operate
+ * @param v resolved view
+ * @param f resolved field
+ * @param occ occurrence to seek
+ * @param p_len data len
+ * @return ptr to value or NULL on error (Berror loaded)
+ */
+expublic char * ndrx_Bvfind_int(char *cstruct, ndrx_typedview_t *v,
+	ndrx_typedview_field_t *f, BFLDOCC occ, BFLDLEN *p_len)
+{
+    int ret = EXSUCCEED;
+    int dim_size = f->fldsize/f->count;
+    char *fld_offs = cstruct+f->offset+occ*dim_size;
+    char *cvn_buf;
+    short *C_count;
+    short C_count_stor;
+    unsigned short *L_length;
+    unsigned short L_length_stor;
+
+    UBF_LOG(log_debug, "%s enter, get %s.%s occ=%d", __func__,
+            v->vname, f->cname, occ);
+    
+    if (occ > f->count-1 || occ<0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Invalid occurrence requested for field "
+                "%s.%s, count=%d occ=%d (zero base)",
+                v->vname, f->cname, f->count, occ);
+        fld_offs=NULL;
+        goto out;
+    }
+    
+    NDRX_VIEW_COUNT_SETUP;
+    
+    /* Will request type convert now */
+    NDRX_VIEW_LEN_SETUP(occ, dim_size);
+    
+    *p_len = (BFLDLEN)*L_length;
+out:
+    return fld_offs;
+}
+
+/**
  * Return the VIEW field according to user type
  * In case of NULL value, we do not return the given occurrence.
  * If the C_count is less than given occurrence and BVACCESS_NOTNULL is set, then
@@ -225,47 +268,47 @@ expublic int ndrx_CBvchg_int(char *cstruct, ndrx_typedview_t *v,
 		ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, 
 			     BFLDLEN len, int usrtype)
 {
-	int ret = EXSUCCEED;
-	int dim_size = f->fldsize/f->count;
-	char *fld_offs = cstruct+f->offset+occ*dim_size;
-	char *cvn_buf;
-	short *C_count;
-	short C_count_stor;
-	unsigned short *L_length;
-	unsigned short L_length_stor;
-   
-	BFLDLEN setlen;
-	UBF_LOG(log_debug, "%s enter, get %s.%s occ=%d", __func__,
-		v->vname, f->cname, occ);
-	
-	NDRX_VIEW_COUNT_SETUP;
-	
-	/* Length output buffer */
-	NDRX_VIEW_LEN_SETUP(occ, dim_size);
+    int ret = EXSUCCEED;
+    int dim_size = f->fldsize/f->count;
+    char *fld_offs = cstruct+f->offset+occ*dim_size;
+    char *cvn_buf;
+    short *C_count;
+    short C_count_stor;
+    unsigned short *L_length;
+    unsigned short L_length_stor;
 
-	setlen = dim_size;
-	
-	cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_OUT, buf, len,
-                                    f->typecode_full, fld_offs, &setlen);
-	
-	if (NULL==cvn_buf)
-        {
-            UBF_LOG(log_error, "%s: failed to convert data!", __func__);
-            /* Error should be provided by conversation function */
-            EXFAIL_OUT(ret);
-        }
-        
-        if (occ+1 > *C_count)
-        {
-            *C_count = occ+1;
-        }
-	
-	*L_length = setlen;
+    BFLDLEN setlen;
+    UBF_LOG(log_debug, "%s enter, get %s.%s occ=%d", __func__,
+            v->vname, f->cname, occ);
+
+    NDRX_VIEW_COUNT_SETUP;
+
+    /* Length output buffer */
+    NDRX_VIEW_LEN_SETUP(occ, dim_size);
+
+    setlen = dim_size;
+
+    cvn_buf = ndrx_ubf_convert(usrtype, CNV_DIR_OUT, buf, len,
+                                f->typecode_full, fld_offs, &setlen);
+
+    if (NULL==cvn_buf)
+    {
+        UBF_LOG(log_error, "%s: failed to convert data!", __func__);
+        /* Error should be provided by conversation function */
+        EXFAIL_OUT(ret);
+    }
+
+    if (occ+1 > *C_count)
+    {
+        *C_count = occ+1;
+    }
+
+    *L_length = setlen;
 	
 out:	
-	UBF_LOG(log_debug, "%s return %d", __func__, ret);
-	
-	return ret;
+    UBF_LOG(log_debug, "%s return %d", __func__, ret);
+
+    return ret;
 }
 
 /**

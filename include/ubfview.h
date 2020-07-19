@@ -218,6 +218,18 @@ extern NDRX_API int ndrx_Bvstof_int(UBFH *p_ub, ndrx_typedview_t *v, char *cstru
 extern NDRX_API int ndrx_Bvstof(UBFH *p_ub, char *cstruct, int mode, char *view);
 
 /* View dynamic data access functions: */
+
+extern NDRX_API int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), 
+        void *dataptr1, int level, char **p_readbuf_buffered);
+
+
+extern NDRX_API int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
+          ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1, int level);
+
+extern NDRX_API char * ndrx_Bvfind_int(char *cstruct, ndrx_typedview_t *v,
+	ndrx_typedview_field_t *f, BFLDOCC occ, BFLDLEN *p_len);
+
 extern NDRX_API int ndrx_CBvget_int(char *cstruct, ndrx_typedview_t *v,
     ndrx_typedview_field_t *f, BFLDOCC occ, char *buf, BFLDLEN *len, 
                  int usrtype, long flags);

@@ -408,6 +408,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
     char *readbuf=NULL;
     size_t readbuf_len;
     char fldnm[UBFFLDMAX+1];
+    char view[NDRX_VIEW_NAME_LEN+1];
     char *value=NULL;
     size_t value_len;
     char flag;
@@ -645,7 +646,44 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         }
         else if (BFLD_VIEW == fldtype)
         {
-            /* now parse the view  */
+            /* now parse the view  
+             * So where do we load?
+             * And how do we add to FB? Needs some temp space not...
+             */
+            ndrx_typedview_t *v = NULL;
+            
+            NDRX_STRCPY_SAFE(view, value);
+            
+            if (EXSUCCEED!=ndrx_view_init())
+            {
+                UBF_LOG(log_error, "Failed to init view sub-system");
+                EXFAIL_OUT(ret);
+            }
+            
+            /* Resolve view descriptor */
+            if (NULL==(v = ndrx_view_get_view(view)))
+            {
+                ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+                EXFAIL_OUT(ret);
+            }
+            
+            if (value_len<v->ssize)
+            {
+                ndrx_Bset_error_fmt(BNOSPACE, "Temporary buffer size %zu "
+                        "is shorter than view size %ld", value_len, v->ssize);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* use value buffer for building up the view data */
+            if (EXSUCCEED!=ndrx_Bvextread (value, view, inf, p_readf, dataptr1, 
+                    level+1, &readbuf_buffered))
+            {
+                UBF_LOG(log_error, "Failed to parse view [%s] at level %d", 
+                        view, level+1);
+                EXFAIL_OUT(ret);
+            }
+            
+            /* add stuff to fb... */
         }
         
         /* now about to execute command */
@@ -654,6 +692,18 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
             if (BFLD_UBF == fldtype)
             {
                 if (EXSUCCEED!=(ret=Badd(p_ub, bfldid, value, 0)))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (BFLD_VIEW == fldtype)
+            {
+                BVIEWFLD vadd;
+                
+                vadd.data=value;
+                NDRX_STRCPY_SAFE(vadd.vname, view);
+                vadd.vflags=0;
+                if (EXSUCCEED!=(ret=Badd(p_ub, bfldid, (char *)&vadd, 0)))
                 {
                     EXFAIL_OUT(ret);
                 }
@@ -668,6 +718,18 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
             if (BFLD_UBF == fldtype)
             {
                 if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, value, 0)))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else if (BFLD_VIEW == fldtype)
+            {
+                BVIEWFLD vadd;
+                
+                vadd.data=value;
+                NDRX_STRCPY_SAFE(vadd.vname, view);
+                vadd.vflags=0;
+                if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, (char *)&vadd, 0)))
                 {
                     EXFAIL_OUT(ret);
                 }

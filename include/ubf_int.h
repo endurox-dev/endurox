@@ -183,6 +183,10 @@ extern "C" {
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+    
+extern NDRX_API int ndrx_get_num_from_hex(char c);
+extern NDRX_API int ndrx_normalize_string(char *str, int *out_len);
+
 extern NDRX_API void ndrx_build_printable_string(char *out, int out_len, char *in, 
         int in_len);
 

@@ -216,8 +216,10 @@ expublic void ndrx_dump_view(struct dtype_ext1 *t, char *text, char *data, int *
     
     if (NULL!=data)
     {
-        NDRX_LOG(log_debug, "%s: View [%s] vflags [%ld]", text, viewfb->vname, viewfb->vflags);
-        UBF_DUMP(log_debug, text, data, *len);
+        
+        NDRX_LOG(log_debug, "%s: View [%s] vflags [%ld]", text, 
+                viewfb->vname, viewfb->vflags);
+        ndrx_debug_dump_VIEW_ubflogger(log_debug, text, viewfb->data, viewfb->vname);
     }
     else
     {
