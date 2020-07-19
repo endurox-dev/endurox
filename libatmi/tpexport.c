@@ -62,7 +62,7 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * 
+ * Export Any buffer to JSON format
  * @param bufctl
  * @param ibuf
  * @param ilen
