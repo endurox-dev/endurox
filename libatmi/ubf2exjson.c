@@ -50,14 +50,15 @@
 #include <typed_buf.h>
 #include <fieldtable.h>
 #include <exbase64.h>
+#include <view2exjson.h>
 #include "tperror.h"
 
 
 /*------------------------------Externs---------------------------------------*/
 /*------------------------------Macros----------------------------------------*/
-#define IS_INT(X) (BFLD_CHAR == Bfldtype(X) || BFLD_SHORT == Bfldtype(X) || BFLD_LONG == Bfldtype(X))
-#define IS_NUM(X) (BFLD_SHORT == Bfldtype(X) || BFLD_LONG == Bfldtype(X) || BFLD_FLOAT == Bfldtype(X) || BFLD_DOUBLE == Bfldtype(X))
-#define IS_BIN(X) (BFLD_CARRAY == Bfldtype(X))
+#define IS_INT(X) (BFLD_CHAR == X || BFLD_SHORT == X || BFLD_LONG == X)
+#define IS_NUM(X) (BFLD_SHORT == X || BFLD_LONG == X || BFLD_FLOAT == X || BFLD_DOUBLE == X)
+#define IS_BIN(X) (BFLD_CARRAY == X)
 
 /* TODO: Fix atmi buffer size to match size of ATMI buffer size. */
 #define CARR_BUFFSIZE		NDRX_MSGSIZEMAX
@@ -75,6 +76,7 @@ exprivate long round_long( double r ) {
 
 /**
  * Convert JSON text buffer to UBF
+ * TODO: Add support for embedded ubf/view
  * @param p_ub - UBF buffer to fill data in
  * @param buffer - json text to parse
  * @data_object - already parsed json in object
@@ -97,6 +99,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
     char    *bin_buf=NULL;
     size_t bin_buf_len;
     char	*s_ptr;
+    int fldtyp;
 
     /* allocate dynamically... */
     bin_buf_len=CARR_BUFFSIZE+1;
@@ -138,6 +141,8 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
             NDRX_LOG(log_warn, "Name: [%s] - not known in UBFTAB - ignore", name);
             continue;
         }
+        
+        fldtyp=Bfldtype(fid);
 
         switch ((f_type=exjson_value_get_type(exjson_object_get_value_at(root_object, i))))
         {
@@ -148,7 +153,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
 
                 /* If it is carray - parse hex... */
-                if (IS_BIN(fid))
+                if (IS_BIN(fldtyp))
                 {
                     size_t st_len = bin_buf_len;
                     NDRX_LOG(log_debug, "Field is binary..."
@@ -192,7 +197,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 d_val = exjson_object_get_number(root_object, name);
                 NDRX_LOG(log_debug, "Double Value: [%lf]", d_val);
 
-                if (IS_INT(fid))
+                if (IS_INT(fldtyp))
                 {
                     l = round_long(d_val);
                     if (EXSUCCEED!=CBchg(p_ub, fid, 0, 
@@ -261,7 +266,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                                         "Array j=%d, Str Value: [%s]", j, str_val);
 
                             /* If it is carray - parse hex... */
-                            if (IS_BIN(fid))
+                            if (IS_BIN(fldtyp))
                             {
                                 size_t st_len = bin_buf_len;
                                 if (NULL==ndrx_base64_decode(str_val,
@@ -304,7 +309,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                             d_val = exjson_array_get_number(array, j);
                             NDRX_LOG(log_debug, "Array j=%d, Double Value: [%lf]", j, d_val);
 
-                            if (IS_INT(fid))
+                            if (IS_INT(fldtyp))
                             {
                                 l = round_long(d_val);
                                 NDRX_LOG(log_debug, "Array j=%d, Long value: [%ld]", j, l);
@@ -400,40 +405,53 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
     int occs;
     int is_array;
     double d_val;
-    /*
-    char strval[CARR_BUFFSIZE+1]; 
-    char b64_buf[CARR_BUFFSIZE_B64+1];
-     * */
-    
     size_t strval_len = CARR_BUFFSIZE+1;
     char *strval=NULL; 
-    
     size_t b64_buf_len =CARR_BUFFSIZE_B64+1;
     char *b64_buf=NULL;
-    
     int is_num;
     char *s_ptr;
+    char *d_ptr;
     BFLDLEN flen;
-    EXJSON_Value *root_value = exjson_value_init_object();
-    EXJSON_Object *root_object=data_object;
+    /* use if there is no root */
+    EXJSON_Value *root_value=NULL;
+    EXJSON_Object *root_object=NULL;
     char *serialized_string = NULL;
     BFLDOCC oc;
     BFLDLEN fldlen;
-
+    int fldtyp;
+    EXJSON_Value *emb_value = NULL;
+    EXJSON_Object *emb_object = NULL;
+    Bnext_state_t state;
+    char *nm;
+    EXJSON_Value *jarr_value=NULL;
+    EXJSON_Array *jarr=NULL;
+    
     NDRX_MALLOC_OUT(strval, strval_len, char);
     NDRX_MALLOC_OUT(b64_buf, b64_buf_len, char);
     
     if ( NULL == data_object )
     {
+        /* TOOD: Refactor for view? */
+        root_value = exjson_value_init_object();
+        
+        if (NULL==root_value)
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to init json object value - mem issue?");
+            EXFAIL_OUT(ret);
+        }
+        
         root_object = exjson_value_get_object(root_value);
     }
-
-    char *nm;
-    EXJSON_Value *jarr_value=NULL;
-    EXJSON_Array *jarr=NULL;
-
+    else
+    {
+        root_object = data_object;
+    }
+    
+    memset(&state, 0, sizeof(state));
+    
     for (fldid = BFIRSTFLDID, oc = 0;
-            1 == (ret = Bnext(p_ub, &fldid, &oc, NULL, &fldlen));)
+            1 == (ret = ndrx_Bnext(&state, p_ub, &fldid, &oc, NULL, &fldlen, &d_ptr));)
     {
         /* Feature #232 return ID if field not found in tables... */
         nm = ndrx_Bfname_int(fldid);
@@ -472,8 +490,10 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
         {
             is_array = EXTRUE;
         }
+        
+        fldtyp=Bfldtype(fldid);
 
-        if (IS_NUM(fldid))
+        if (IS_NUM(fldtyp))
         {
             if (EXSUCCEED!=CBget(p_ub, fldid, oc, (char *)&d_val, 0L, BFLD_DOUBLE))
             {
@@ -486,6 +506,45 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             }
             is_num = EXTRUE;
             NDRX_LOG(log_debug, "Numeric value: %lf", d_val);
+        }
+        else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp)
+        {
+            if (NULL==(emb_value = exjson_value_init_object()))
+            {
+                NDRX_LOG(log_error, "Failed to init data_value");
+                ndrx_TPset_error_fmt(TPESYSTEM, "exparson: failed to init data_value");
+                
+                EXFAIL_OUT(ret);
+            }
+
+            if (NULL==(emb_object = exjson_value_get_object(emb_value)))
+            {
+                NDRX_LOG(log_error, "Failed to get object value");
+                ndrx_TPset_error_fmt(TPESYSTEM, "exparson: Failed to get object");
+                EXFAIL_OUT(ret);
+            }
+            
+             /* process embedded buffer */
+            if (BFLD_UBF==fldtyp)
+            {
+                if (EXSUCCEED!=ndrx_tpubftojson((UBFH *)d_ptr, NULL, 0, emb_object))
+                {
+                    NDRX_LOG(log_error, "Failed to build embedded data object from UBF!");
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                /* if this is a view... needs to get view struct data... */
+                ndrx_ubf_tls_bufval_t *bufval = (ndrx_ubf_tls_bufval_t *)d_ptr;
+                
+                if (EXSUCCEED!=ndrx_tpviewtojson(bufval->viewfld.data, 
+                        bufval->viewfld.vname, NULL, 0, BVACCESS_NOTNULL, emb_object))
+                {
+                    NDRX_LOG(log_error, "Failed to build embedded data object from VIEW!");
+                    EXFAIL_OUT(ret);
+                }
+            }
         }
         else
         {
@@ -503,7 +562,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             }
 
             /* If it is carray, then convert to hex... */
-            if (IS_BIN(fldid))
+            if (IS_BIN(fldtyp))
             {
                 size_t outlen = b64_buf_len;
                 NDRX_LOG(log_debug, "Field is binary... convert to b64");
@@ -532,36 +591,54 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
 
         if (is_array)
         {
-                /* Add array element 
-                exjson_object_set_value */
+            /* Add array element 
+            exjson_object_set_value */
 
-                /* Add normal element */
-                if (is_num)
+            /* Add normal element */
+            if (is_num)
+            {
+                if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
                 {
-                    if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
-                    {
-                        NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
-                                d_val);
-                        
-                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                "elem to [%lf]!", d_val);
-                        
-                        EXFAIL_OUT(ret);
-                    }
+                    NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
+                            d_val);
+
+                    ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                            "elem to [%lf]!", d_val);
+
+                    EXFAIL_OUT(ret);
                 }
-                else
+            }
+            else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp)
+            {
+                /* append  */
+                if (EXJSONSuccess!=exjson_array_append_value(jarr, emb_value))
                 {
-                    if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
-                    {
-                        NDRX_LOG(log_error, "Failed to set array elem to [%s]!", 
-                                s_ptr);
-                        
-                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                "elem to [%s]!", s_ptr);
-                        
-                        EXFAIL_OUT(ret);
-                    }
+                    NDRX_LOG(log_error, "exjson: Failed to set array "
+                            "elem [%s] to embedded object (view/ubf) occ: %d fldid: %d!", 
+                            nm, oc, fldid);
+                    
+                    ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                            "elem [%s] to embedded object (view/ubf) occ: %d fldid: %d!", 
+                            nm, oc, fldid);
+                    EXFAIL_OUT(ret);
                 }
+                
+                /* set to not to free up... */
+                emb_value=NULL;
+            }
+            else
+            {
+                if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
+                {
+                    NDRX_LOG(log_error, "Failed to set array elem to [%s]!", 
+                            s_ptr);
+
+                    ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                            "elem to [%s]!", s_ptr);
+
+                    EXFAIL_OUT(ret);
+                }
+            }
 
         }
         else
@@ -579,6 +656,16 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     
                     EXFAIL_OUT(ret);
                 }
+            }
+            else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp)
+            {
+                if (EXJSONSuccess!=exjson_object_set_value(root_object, nm, emb_value))
+                {
+                    NDRX_LOG(log_error, "Failed to add embedded VIEW/UBF [%s]", nm);
+                    EXFAIL_OUT(ret);
+                }
+                /* set to not to free up... */
+                emb_value=NULL;
             }
             else
             {
@@ -625,6 +712,12 @@ out:
         exjson_free_serialized_string(serialized_string);
     }
 
+    if (NULL!=emb_value)
+    {
+        exjson_value_free(emb_value);
+    }
+
+    /* kill the root value if any... */
     if (NULL!=root_value)
     {
         exjson_value_free(root_value);
@@ -635,7 +728,6 @@ out:
         exjson_value_free(jarr_value);
     }
 
-    
     if (NULL!=strval)
     {
         NDRX_FREE(strval);

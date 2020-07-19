@@ -94,12 +94,16 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
     double d_val;
     int f_type;
     short   bool_val;
-    char bin_buf[CARR_BUFFSIZE+1];
+    char    *bin_buf=NULL;
+    size_t bin_buf_len;
     char    *s_ptr;
     long vsize;
     int cnametyp;
     char *cstruct = NULL;
 
+    bin_buf_len=CARR_BUFFSIZE+1;
+    NDRX_MALLOC_OUT(bin_buf, bin_buf_len, char);
+    
     if ( NULL != buffer )
     {
         NDRX_LOG(log_debug, "Parsing buffer: [%s]", buffer);
@@ -206,7 +210,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                 /* If it is carray - parse hex... */
                 if (IS_BIN(cnametyp))
                 {
-                    size_t st_len = sizeof(bin_buf);
+                    size_t st_len = bin_buf_len;
                     NDRX_LOG(log_debug, "Field is binary..."
                             " convert from b64...");
 
@@ -323,7 +327,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
                             /* If it is carray - parse hex... */
                             if (IS_BIN(cnametyp))
                             {
-                                size_t st_len = sizeof(bin_buf);
+                                size_t st_len = bin_buf_len;
                                 if (NULL==ndrx_base64_decode(str_val,
                                         strlen(str_val),
                                         &st_len,
@@ -444,6 +448,11 @@ out:
         tpfree(cstruct);
         cstruct = NULL;
     }
+
+    if (NULL!=bin_buf)
+    {
+        NDRX_FREE(bin_buf);
+    }
     
     
     return cstruct;
@@ -466,8 +475,11 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     int occs;
     int is_array;
     double d_val;
-    char strval[CARR_BUFFSIZE+1]; 
-    char b64_buf[CARR_BUFFSIZE_B64+1];
+    size_t strval_len = CARR_BUFFSIZE+1;
+    char *strval=NULL; 
+    
+    size_t b64_buf_len =CARR_BUFFSIZE_B64+1;
+    char *b64_buf=NULL;
     int is_num;
     char *s_ptr;
     BFLDLEN flen;
@@ -481,6 +493,9 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     EXJSON_Value *root_value = NULL;
     EXJSON_Object *root_object = data_object;
     
+    NDRX_MALLOC_OUT(strval, strval_len, char);
+    NDRX_MALLOC_OUT(b64_buf, b64_buf_len, char);
+
     if (NULL == data_object)
     {
         root_value = exjson_value_init_object();
@@ -591,7 +606,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
             else
             {
                 is_num = EXFALSE;
-                flen = sizeof(strval);
+                flen = strval_len;
                 if (EXSUCCEED!=CBvget(cstruct, view, cname, oc, 
                         strval, &flen, BFLD_CARRAY, 0))
                 {
@@ -607,7 +622,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                 /* If it is carray, then convert to hex... */
                 if (IS_BIN(fldtype))
                 {
-                    size_t outlen = sizeof(b64_buf);
+                    size_t outlen = b64_buf_len;
                     NDRX_LOG(log_debug, "Field is binary... convert to b64");
 
                     if (NULL==ndrx_base64_encode((unsigned char *)strval, flen, 
@@ -744,6 +759,17 @@ out:
     if (NULL!=jarr_value )
     {
         exjson_value_free(jarr_value);
+    }
+
+    if (NULL!=strval)
+    {
+        NDRX_FREE(strval);
+    }
+    
+    
+    if (NULL!=b64_buf)
+    {
+        NDRX_FREE(b64_buf);
     }
 
     /* At iter end, ret normally becomes 0, thus fine here as SUCCEED */
