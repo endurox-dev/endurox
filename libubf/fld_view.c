@@ -322,13 +322,13 @@ expublic char *ndrx_talloc_view (struct dtype_ext1 *t, int *len)
 expublic char* ndrx_prep_viewp (struct dtype_ext1 *t, 
         ndrx_ubf_tls_bufval_t *storage, char *data)
 {
-     UBF_view_t *viewfb = (UBF_view_t *)data;
-     
-     NDRX_STRCPY_SAFE(storage->viewfld.vname, viewfb->vname);
-     storage->viewfld.vflags = (unsigned int)viewfb->vflags;
-     storage->viewfld.data=viewfb->data;
-     
-     return (char *)&storage->viewfld;
+    UBF_view_t *viewfb = (UBF_view_t *)data;
+
+    NDRX_STRCPY_SAFE(storage->viewfld.vname, viewfb->vname);
+    storage->viewfld.vflags = (unsigned int)viewfb->vflags;
+    storage->viewfld.data=viewfb->data;
+
+    return (char *)&storage->viewfld;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

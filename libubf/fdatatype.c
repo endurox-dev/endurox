@@ -150,7 +150,7 @@ expublic dtype_str_t G_dtype_str_map[] =
  */
 expublic dtype_ext1_t G_dtype_ext1_map[] =
 {
-/* type,    get default,  put empty deflt, dump,    datoff, tmpbuf fn, alloc buf */
+/* type,    get default,  put empty deflt, dump,    datoff, tmpbuf fn, alloc buf, data cmp, prep offset data */
 {BFLD_SHORT, g_dflt_empty, put_empty_dftl, dump_short, DAO, tbuf_short, tallocdlft, cmp_short, NULL},     /* 0 */
 {BFLD_LONG,  g_dflt_empty, put_empty_dftl, dump_long,  DAO, tbuf_long,  tallocdlft, cmp_long, NULL},      /* 1 */
 {BFLD_CHAR,  g_dflt_empty, put_empty_dftl, dump_char,  DAO, tbuf_char,  tallocdlft, cmp_char, NULL},      /* 2 */
@@ -163,7 +163,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 {BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int, NULL},      /* 8 */
 {BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       tallocdlft, ndrx_cmp_ptr, NULL},/* 9 */
 {BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, tallocdlft, ndrx_cmp_ubf, NULL},/* 10 */
-{BFLD_VIEW,  ndrx_g_view_empty, ndrx_put_empty_view,  ndrx_dump_view,   DVW, NULL,ndrx_talloc_view, ndrx_cmp_view, NULL}, /* 11 */
+{BFLD_VIEW,  ndrx_g_view_empty, ndrx_put_empty_view,  ndrx_dump_view,   DVW, NULL,ndrx_talloc_view, ndrx_cmp_view, ndrx_prep_viewp}, /* 11 */
 
 {-1}
 };

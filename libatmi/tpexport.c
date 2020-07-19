@@ -160,6 +160,9 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
         
         if (EXJSONSuccess!=exjson_object_set_value(root_object,"data",data_value))
         {
+            /* clean up objects? */
+            exjson_value_free(data_value);
+                    
             NDRX_LOG(log_error, "Failed to set data object with UBF!!!!");
             EXFAIL_OUT(ret);
         }
