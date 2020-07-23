@@ -162,7 +162,7 @@ if [[ "X$RET" != "X0" ]]; then
 fi
 
 echo "Wait for some averges..."
-sleep 5
+sleep 10
 
 echo "Printing services"
 xadmin pq
