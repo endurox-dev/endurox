@@ -116,7 +116,7 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
         {
             NDRX_LOG(log_debug, "Failed to parse root element");
             ndrx_TPset_error_fmt(TPEINVAL, "exjson: Failed to parse root element");
-            return NULL;
+            EXFAIL_OUT(ret);
         }
         root_object = exjson_value_get_object(root_value);
     }
