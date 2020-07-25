@@ -74,13 +74,15 @@ exprivate long round_long( double r ) {
     return (r > 0.0) ? (r + 0.5) : (r - 0.5); 
 }
 
-exprivate int ndrx_load_object(char *name, int fldtyp, char *bin_buf, size_t bin_buf_len)
+exprivate int ndrx_load_object(UBFH *p_ub, char *name, int fldtyp, 
+        char *bin_buf, size_t bin_buf_len, BFLDID fid, EXJSON_Object *dataobj)
 {
+    
+    int ret = EXSUCCEED;
     
     if (BFLD_UBF==fldtyp)
     {
         UBFH *p_ub_tmp = (UBFH *)bin_buf;
-        EXJSON_Object *ub_obj;
 
         if (EXFAIL==Binit(p_ub_tmp, bin_buf_len))
         {
@@ -92,16 +94,6 @@ exprivate int ndrx_load_object(char *name, int fldtyp, char *bin_buf, size_t bin
             EXFAIL_OUT(ret);
         }
 
-        ub_obj = exjson_object_get_object(root_object, name);
-
-        if (NULL==ub_obj)
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, 
-                    "Null object received for field [%s]", name);
-            NDRX_LOG(log_error, "Null object received for field [%s]", 
-                    name);
-            EXFAIL_OUT(ret);
-        }
 
         if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub_tmp, NULL, ub_obj))
         {
@@ -127,20 +119,7 @@ exprivate int ndrx_load_object(char *name, int fldtyp, char *bin_buf, size_t bin
     }
     else if (BFLD_VIEW!=fldtyp)
     {
-        EXJSON_Object *v_obj;
         BVIEWFLD v;
-
-        v_obj = exjson_object_get_object(root_object, name);
-
-        if (NULL==v_obj)
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, 
-                    "Null object received for field [%s]", name);
-            NDRX_LOG(log_error, "Null object received for field [%s]", 
-                    name);
-            EXFAIL_OUT(ret);
-        }
-
         v.vflags=0;
 
         if (NULL==(v.data=ndrx_tpjsontoview(v.vname, NULL, v_obj)))
