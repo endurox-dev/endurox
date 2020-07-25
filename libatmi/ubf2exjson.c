@@ -74,6 +74,113 @@ exprivate long round_long( double r ) {
     return (r > 0.0) ? (r + 0.5) : (r - 0.5); 
 }
 
+exprivate int ndrx_load_object(char *name, int fldtyp, char *bin_buf, size_t bin_buf_len)
+{
+    
+    if (BFLD_UBF==fldtyp)
+    {
+        UBFH *p_ub_tmp = (UBFH *)bin_buf;
+        EXJSON_Object *ub_obj;
+
+        if (EXFAIL==Binit(p_ub_tmp, bin_buf_len))
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, 
+                    "Failed to init temporary UBF for [%s]: %s", 
+                    name, Bstrerror(Berror));
+            NDRX_LOG(log_error, "Failed to init temporary UBF for [%s]: %s", 
+                    name, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        ub_obj = exjson_object_get_object(root_object, name);
+
+        if (NULL==ub_obj)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, 
+                    "Null object received for field [%s]", name);
+            NDRX_LOG(log_error, "Null object received for field [%s]", 
+                    name);
+            EXFAIL_OUT(ret);
+        }
+
+        if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub_tmp, NULL, ub_obj))
+        {
+            NDRX_LOG(log_error, "Failed to parse UBF json at field [%s]", 
+                    name);
+            EXFAIL_OUT(ret);
+        }
+
+        /* Add UBF to buffer */
+        if (EXSUCCEED!=Badd(p_ub, fid, (char *)p_ub_tmp, 0L))
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, 
+                    "Failed to add to parent UBF inner UBF [%s] (fldid=%d): %s", 
+                    name, fid, Bstrerror(Berror));
+            NDRX_LOG(log_error, "Failed to add to parent UBF inner UBF [%s] (fldid=%d): %s", 
+                    name, fid, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "Added sub-ubf [%s] fldid=%d to UBF buffer %p",
+                name, fid, p_ub);
+
+    }
+    else if (BFLD_VIEW!=fldtyp)
+    {
+        EXJSON_Object *v_obj;
+        BVIEWFLD v;
+
+        v_obj = exjson_object_get_object(root_object, name);
+
+        if (NULL==v_obj)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, 
+                    "Null object received for field [%s]", name);
+            NDRX_LOG(log_error, "Null object received for field [%s]", 
+                    name);
+            EXFAIL_OUT(ret);
+        }
+
+        v.vflags=0;
+
+        if (NULL==(v.data=ndrx_tpjsontoview(v.vname, NULL, v_obj)))
+        {
+            NDRX_LOG(log_error, "Failed to parse UBF json at field [%s]", 
+                    name);
+            EXFAIL_OUT(ret);
+        }
+
+        /* Add UBF to buffer */
+        if (EXSUCCEED!=Badd(p_ub, fid, (char *)&v, 0L))
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, 
+                    "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
+                    v.vname, name, fid, Bstrerror(Berror));
+            NDRX_LOG(log_error, "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
+                    v.vname, name, fid, Bstrerror(Berror));
+
+            NDRX_FREE(v.data);
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_FREE(v.data);
+
+        NDRX_LOG(log_debug, "Added sub-view[%s] [%s] fldid=%d to UBF buffer %p",
+                v.vname, name, fid, p_ub);
+    }
+    else
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Field [%s] type is %s but object received",
+                name, (Btype(fldtyp)?Btype(fldtyp):"(null)"));
+        NDRX_LOG(log_error, "Field [%s] type is %s but object received",
+                name, (Btype(fldtyp)?Btype(fldtyp):"(null)"))
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
 /**
  * Convert JSON text buffer to UBF
  * TODO: Add support for embedded ubf/view
@@ -240,6 +347,15 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 }
             }
             break;
+            
+            /* parse embedded object */
+            case EXJSONObject:
+                
+                
+                                
+                
+                break;
+                
             /* Fielded buffer fields with more than one occurrance will go to array: 
              * Stuff here is almost identicial to above!
              */
