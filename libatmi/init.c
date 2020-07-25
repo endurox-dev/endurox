@@ -600,6 +600,47 @@ expublic int ndrx_load_common_env(void)
                 CONF_NDRX_MAXSVCSRVS, G_atmi_env.maxsvcsrvs, CONF_NDRX_MAXSVCSRVS_DFLT);
     
     /* </poll() mode configuration> */
+    
+    
+    /* parse flags */
+    
+    G_atmi_env.apiflags=0;
+    if (NULL!=(p=getenv(CONF_NDRX_APIFLAGS)))
+    {
+        char *tmp = NDRX_STRDUP(p);
+        char *str_first = tmp;
+        char *ptr;
+        char *token;
+        
+        if (NULL==tmp)
+        {
+            int err;
+            NDRX_LOG(log_error, "Failed to strdup [%s]: %s", p, strerror(err));
+            userlog("Failed to strdup [%s]: %s", p, strerror(err));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* tokenize & check... */
+        while (token = strtok_r(str_first, "\t ", &ptr))
+        {
+            if (NULL!=str_first)
+            {
+                str_first = NULL; /* now loop over the string */
+            }
+            
+            if (0==strcmp(token, NDRX_APIFLAGS_JSONESCAPE_CODE))
+            {
+                NDRX_LOG(log_debug, "%s found - C escape json strings",
+                        NDRX_APIFLAGS_JSONESCAPE_CODE);
+                G_atmi_env.apiflags|=NDRX_APIFLAGS_JSONESCAPE;
+            }
+        }
+        
+        NDRX_FREE(tmp);
+        
+    }
+    
+    
 
     /* Init the util lib.. */ 
     if (EXSUCCEED!=ndrx_atmiutil_init())

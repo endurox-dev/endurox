@@ -387,6 +387,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SCANUNIT_DFLT   1000
 #define CONF_NDRX_SCANUNIT_MIN    1
 
+#define CONF_NDRX_APIFLAGS     "NDRX_APIFLAGS"  /**< API configuration flags */
 
 #define CONF_VIEWFILES  "VIEWFILES"         /* List of view files to load      */
 #define CONF_VIEWDIR    "VIEWDIR"           /* Folders with view files stored, ':' - sep   */

@@ -83,10 +83,11 @@ exprivate long round_long( double r ) {
  * @param bin_buf temporary working space
  * @param bin_buf_len working space length
  * @param innerobj data object under the field in JSON
+ * @param occ occurrence to set in UBF
  * @return EXSUCCED/EXFAIL (error loaded if any)
  */
 exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp, 
-        char *bin_buf, size_t bin_buf_len, EXJSON_Object *innerobj)
+        char *bin_buf, size_t bin_buf_len, EXJSON_Object *innerobj, BFLDOCC occ)
 {
     
     int ret = EXSUCCEED;
@@ -114,7 +115,7 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
         }
 
         /* Add UBF to buffer */
-        if (EXSUCCEED!=Badd(p_ub, fldid, (char *)p_ub_tmp, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)p_ub_tmp, 0L))
         {
             ndrx_TPset_error_fmt(TPESYSTEM, 
                     "Failed to add to parent UBF inner UBF [%s] (fldid=%d): %s", 
@@ -141,7 +142,7 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
         }
 
         /* Add UBF to buffer */
-        if (EXSUCCEED!=Badd(p_ub, fldid, (char *)&v, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&v, 0L))
         {
             ndrx_TPset_error_fmt(TPESYSTEM, 
                     "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
@@ -172,8 +173,82 @@ out:
 }
 
 /**
+ * Common parser for string data, allows to use escape sequences if API is
+ * configured so
+ * @param p_ub parent UBF into which load the data
+ * @param fldnm field name in json (UBF field name)
+ * @param fldid resolved filed id
+ * @param fldtyp UBF field type
+ * @param bin_buf temporary working space
+ * @param bin_buf_len working space length
+ * @param str_val string data
+ * @param occ occurrence to set in UBF
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_load_string(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp, 
+        char *bin_buf, size_t bin_buf_len, char* str_val, BFLDOCC occ)
+{
+    int ret = EXSUCCEED;
+    char	*s_ptr;
+    BFLDLEN     str_len;
+    
+    /* If it is carray - parse hex... */
+    if (IS_BIN(fldtyp))
+    {
+        size_t st_len = bin_buf_len;
+        NDRX_LOG(log_debug, "Field is binary..."
+                " convert from b64...");
+
+        if (NULL==ndrx_base64_decode(str_val,
+                strlen(str_val),
+                &st_len,
+                bin_buf))
+        {
+            NDRX_LOG(log_debug, "Failed to "
+                    "decode base64!");
+
+            ndrx_TPset_error_fmt(TPEINVAL, "Failed to "
+                    "decode base64: %s", fldnm);
+
+            EXFAIL_OUT(ret);
+        }
+        str_len = st_len;
+        s_ptr = bin_buf;
+        NDRX_LOG(log_debug, "got binary len [%d]", str_len);
+    }
+    else if (G_atmi_env.apiflags & NDRX_APIFLAGS_JSONESCAPE)
+    {
+        /* convert string from C escape... */
+        if (EXSUCCEED!=ndrx_normalize_string(str_val, &str_len))
+        {
+            NDRX_LOG(log_error, "Invalid C escape used in field [%s] data: [%s]",
+                    fldnm, str_val);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        str_len = strlen(s_ptr);
+    }
+
+    if (EXSUCCEED!=CBchg(p_ub, fldid, occ, s_ptr, str_len, BFLD_CARRAY))
+    {
+        NDRX_LOG(log_error, "Failed to set UBF field (%s) %d: %s",
+                fldnm, fldid, Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set UBF field (%s) %d: %s",
+                fldnm, fldid, Bstrerror(Berror));
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Convert JSON text buffer to UBF
  * TODO: Add support for embedded ubf/view
+ * TODO: Reset the UBF buffer at the start, so that we do not conflict
+ * with existing fields
  * @param p_ub - UBF buffer to fill data in
  * @param buffer - json text to parse
  * @data_object - already parsed json in object
@@ -246,45 +321,18 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
         {
             case EXJSONString:
             {
-                BFLDLEN str_len;
-                s_ptr = str_val = (char *)exjson_object_get_string(root_object, name);
+                str_val = (char *)exjson_object_get_string(root_object, name);
                 NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
+                
+                /* Read string to UBF */
+                
+                str_val = (char *)exjson_array_get_string(array, j);
 
-                /* If it is carray - parse hex... */
-                if (IS_BIN(fldtyp))
+                if (EXSUCCEED!=ndrx_load_string(p_ub, name, fid, fldtyp, 
+                        bin_buf, bin_buf_len, str_val, 0))
                 {
-                    size_t st_len = bin_buf_len;
-                    NDRX_LOG(log_debug, "Field is binary..."
-                            " convert from b64...");
-
-                    if (NULL==ndrx_base64_decode(str_val,
-                            strlen(str_val),
-                            &st_len,
-                            bin_buf))
-                    {
-                        NDRX_LOG(log_debug, "Failed to "
-                                "decode base64!");
-                        
-                        ndrx_TPset_error_fmt(TPEINVAL, "Failed to "
-                                "decode base64: %s", name);
-                        
-                        EXFAIL_OUT(ret);
-                    }
-                    str_len = st_len;
-                    s_ptr = bin_buf;
-                    NDRX_LOG(log_debug, "got binary len [%d]", str_len);
-                }
-                else
-                {
-                    str_len = strlen(s_ptr);
-                }
-
-                if (EXSUCCEED!=CBchg(p_ub, fid, 0, s_ptr, str_len, BFLD_CARRAY))
-                {
-                    NDRX_LOG(log_error, "Failed to set UBF field (%s) %d: %s",
-                            name, fid, Bstrerror(Berror));
-                    ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set UBF field (%s) %d: %s",
-                            name, fid, Bstrerror(Berror));
+                    NDRX_LOG(log_error, "Failed to set array string value for [%s]", 
+                            name);
                     EXFAIL_OUT(ret);
                 }
                 break;
@@ -354,7 +402,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 }
 
                 if (EXSUCCEED!=ndrx_load_object(p_ub, name, fid, fldtyp, 
-                        bin_buf, bin_buf_len, innerobj))
+                        bin_buf, bin_buf_len, innerobj, 0))
                 {
                     NDRX_LOG(log_error, "Failed to parse inner object of [%s]", 
                             name);
@@ -383,45 +431,15 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                     {
                         case EXJSONString:
                         {
-                            BFLDLEN str_len;
-                            s_ptr = str_val = (char *)exjson_array_get_string(array, j);
+                            str_val = (char *)exjson_array_get_string(array, j);
                             NDRX_LOG(log_debug, 
                                         "Array j=%d, Str Value: [%s]", j, str_val);
-
-                            /* If it is carray - parse hex... */
-                            if (IS_BIN(fldtyp))
+                            
+                            if (EXSUCCEED!=ndrx_load_string(p_ub, name, fid, fldtyp, 
+                                    bin_buf, bin_buf_len, str_val, j))
                             {
-                                size_t st_len = bin_buf_len;
-                                if (NULL==ndrx_base64_decode(str_val,
-                                        strlen(str_val),
-                                        &st_len,
-                                        bin_buf))
-                                {
-                                    NDRX_LOG(log_debug, "Failed to "
-                                            "decode base64!");
-                                    
-                                    ndrx_TPset_error_fmt(TPEINVAL, "Failed to "
-                                            "decode base64!");
-                                    
-                                    EXFAIL_OUT(ret);
-                                }
-                                str_len = st_len;
-                                s_ptr = bin_buf;
-                                NDRX_LOG(log_debug, "got binary len [%d]", str_len);
-                            }
-                            else
-                            {
-                                str_len = strlen(s_ptr);
-                            }
-
-                            if (EXSUCCEED!=CBchg(p_ub, fid, j, s_ptr, str_len, BFLD_CARRAY))
-                            {
-                                NDRX_LOG(log_error, "Failed to set [%s] to [%s]: %s", 
-                                        name, str_val, Bstrerror(Berror));
-                                ndrx_TPset_error_fmt(TPESYSTEM, "Failed to set [%s] "
-                                        "to [%s]: %s", 
-                                        name, str_val, Bstrerror(Berror));
-                                
+                                NDRX_LOG(log_error, "Failed to set array string value for [%s]", 
+                                        name);
                                 EXFAIL_OUT(ret);
                             }
                         }
@@ -494,7 +512,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                             }
 
                             if (EXSUCCEED!=ndrx_load_object(p_ub, name, fid, fldtyp, 
-                                    bin_buf, bin_buf_len, innerobj))
+                                    bin_buf, bin_buf_len, innerobj, j))
                             {
                                 NDRX_LOG(log_error, "Failed to parse inner array object of [%s]", 
                                         name);
@@ -534,7 +552,6 @@ out:
 
     return ret;
 }
-
 
 /**
  * Build json text from UBF buffer
@@ -612,18 +629,18 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                 if (EXJSONSuccess!=exjson_object_set_value(root_object, 
                         nm, exjson_value_init_array()))
                 {
-                        NDRX_LOG(log_error, "Failed to add Array to root object!!");
-                        
-                        ndrx_TPset_error_msg(TPESYSTEM, "Failed to add Array "
-                                "to root object!!");
-                        EXFAIL_OUT(ret);
+                    NDRX_LOG(log_error, "Failed to add Array to root object!!");
+
+                    ndrx_TPset_error_msg(TPESYSTEM, "Failed to add Array "
+                            "to root object!!");
+                    EXFAIL_OUT(ret);
                 }
                 if (NULL == (jarr=exjson_object_get_array(root_object, nm)))
                 {
-                        NDRX_LOG(log_error, "Failed to initialize array!!");
-                        
-                        ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array");
-                        EXFAIL_OUT(ret);                    
+                    NDRX_LOG(log_error, "Failed to initialize array!!");
+
+                    ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array");
+                    EXFAIL_OUT(ret);
                 }
             }
             else
@@ -724,6 +741,28 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                 /* b64_buf[outlen] = EXEOS; */
                 s_ptr = b64_buf;
 
+            }
+            else if (G_atmi_env.apiflags & NDRX_APIFLAGS_JSONESCAPE)
+            {
+                int tmp_len = ndrx_get_nonprintable_char_tmpspace(strval, flen);
+                
+                if (tmp_len+1 > b64_buf_len)
+                {
+                    NDRX_LOG(log_error, "Field [%s] value too long for json "
+                            "escape temporary buffer: required %d have: %z - "
+                            "increase NDRX_MSGSIZEMAX",
+                            nm, tmp_len+1, b64_buf_len);
+                    
+                    ndrx_TPset_error_fmt(TPEINVAL, "Field [%s] value too long for json "
+                            "escape temporary buffer: required %d have: %z - "
+                            "increase NDRX_MSGSIZEMAX",
+                            nm, tmp_len+1, b64_buf_len);
+                    
+                    EXFAIL_OUT(ret);
+                }
+                
+                ndrx_build_printable_string(b64_buf, b64_buf_len, strval, flen);
+                s_ptr = b64_buf;
             }
             else
             {

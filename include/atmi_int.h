@@ -200,6 +200,11 @@ extern "C" {
 #define NDRX_XA_FLAG_SYS_NOAPISUSP      0x00000001  /**< No tran susp in contexting */
 #define NDRX_XA_FLAG_SYS_NOJOIN         0x00000002  /**< No join supported          */
 #define NDRX_XA_FLAG_SYS_NOSTARTXID     0x00000004  /**< No XID given in start      */
+    
+    
+/**< Escape JSON strings to handler invalid UTF-8 */
+#define NDRX_APIFLAGS_JSONESCAPE        0x00000001
+#define NDRX_APIFLAGS_JSONESCAPE_CODE   "json_escape" /**< config flag code   */
 
 /** @} */ /* xa_flags_sys */
     
@@ -425,6 +430,8 @@ struct atmi_lib_env
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!)               */
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
+    
+    long     apiflags;            /**< API mode flags, see NDRX_APIFLAGS_*      */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;
