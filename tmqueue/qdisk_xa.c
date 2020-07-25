@@ -95,10 +95,14 @@
 exprivate __thread int M_is_open = EXFALSE;
 exprivate __thread int M_rmid = EXFAIL;
 
-exprivate char M_folder[PATH_MAX] = {EXEOS}; /* Where to store the q data */
-exprivate char M_folder_active[PATH_MAX] = {EXEOS}; /* Active transactions */
-exprivate char M_folder_prepared[PATH_MAX] = {EXEOS}; /* Prepared transactions */
-exprivate char M_folder_committed[PATH_MAX] = {EXEOS}; /* Committed transactions */
+exprivate char M_folder[PATH_MAX] = {EXEOS}; /**< Where to store the q data         */
+exprivate char M_folder_active[PATH_MAX] = {EXEOS}; /**< Active transactions        */
+exprivate char M_folder_prepared[PATH_MAX] = {EXEOS}; /**< Prepared transactions    */
+exprivate char M_folder_committed[PATH_MAX] = {EXEOS}; /**< Committed transactions  */
+
+exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
+exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
+
 
 /* Per thread data: */
 exprivate __thread int M_is_reg = EXFALSE; /* Dynamic registration done? */
@@ -484,25 +488,13 @@ exprivate int send_unlock_notif_hdr(tmq_cmdheader_t *p_hdr)
 }
 
 /**
- * Open API
- * @param sw
- * @param xa_info
- * @param rmid
- * @param flags
- * @return 
+ * Create required folders
+ * @param xa_info root folder
+ * @return EXSUCCEED/RM ERR
  */
-expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+expublic int xa_open_entry_mkdir(char *xa_info)
 {
-    int ret = EXSUCCEED;
-    if (M_is_open)
-    {
-        NDRX_LOG(log_warn, "xa_open_entry() - already open!");
-        return XA_OK;
-    }
-
-    M_is_open = EXTRUE;
-    M_rmid = rmid;
-    
+    int ret;
     /* The xa_info is directory, where to store the data...*/
     NDRX_STRNCPY(M_folder, xa_info, sizeof(M_folder)-2);
     M_folder[sizeof(M_folder)-1] = EXEOS;
@@ -579,8 +571,54 @@ expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long
         }
     }
     
-             
+    NDRX_LOG(log_info, "Prepared M_folder=[%s]", M_folder);
+    NDRX_LOG(log_info, "Prepared M_folder_active=[%s]", M_folder_active);
+    NDRX_LOG(log_info, "Prepared M_folder_prepared=[%s]", M_folder_prepared);
+    NDRX_LOG(log_info, "Prepared M_folder_committed=[%s]", M_folder_committed);
+    
+    M_folder_set=EXTRUE;
+    
     return XA_OK;
+}
+/**
+ * Open API
+ * @param sw
+ * @param xa_info
+ * @param rmid
+ * @param flags
+ * @return 
+ */
+expublic int xa_open_entry(struct xa_switch_t *sw, char *xa_info, int rmid, long flags)
+{
+    int ret = XA_OK;
+    if (M_is_open)
+    {
+        NDRX_LOG(log_warn, "xa_open_entry() - already open!");
+        return XA_OK;
+    }
+
+    M_is_open = EXTRUE;
+    M_rmid = rmid;
+    
+    /* Load only once? */
+    if (!M_folder_set)
+    {
+        /* LOCK & Check */
+        MUTEX_LOCK_V(M_folder_lock);
+        
+        if (!M_folder_set)
+        {
+            ret=xa_open_entry_mkdir(xa_info);
+        }   
+        MUTEX_UNLOCK_V(M_folder_lock);
+        
+        if (XA_OK!=ret)
+        {
+            NDRX_LOG(log_error, "Failed to prepare message folders");
+        }
+    }
+             
+    return ret;
 }
 /**
  * Close entry
