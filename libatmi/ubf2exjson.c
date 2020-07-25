@@ -74,8 +74,19 @@ exprivate long round_long( double r ) {
     return (r > 0.0) ? (r + 0.5) : (r - 0.5); 
 }
 
-exprivate int ndrx_load_object(UBFH *p_ub, char *name, int fldtyp, 
-        char *bin_buf, size_t bin_buf_len, BFLDID fid, EXJSON_Object *dataobj)
+/**
+ * Load VIEW or UBF object
+ * @param p_ub parent UBF into which load the data
+ * @param fldnm field name in json (UBF field name)
+ * @param fldid resolved filed id
+ * @param fldtyp UBF field type
+ * @param bin_buf temporary working space
+ * @param bin_buf_len working space length
+ * @param innerobj data object under the field in JSON
+ * @return EXSUCCED/EXFAIL (error loaded if any)
+ */
+exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp, 
+        char *bin_buf, size_t bin_buf_len, EXJSON_Object *innerobj)
 {
     
     int ret = EXSUCCEED;
@@ -88,33 +99,33 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *name, int fldtyp,
         {
             ndrx_TPset_error_fmt(TPESYSTEM, 
                     "Failed to init temporary UBF for [%s]: %s", 
-                    name, Bstrerror(Berror));
+                    fldnm, Bstrerror(Berror));
             NDRX_LOG(log_error, "Failed to init temporary UBF for [%s]: %s", 
-                    name, Bstrerror(Berror));
+                    fldnm, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
 
 
-        if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub_tmp, NULL, ub_obj))
+        if (EXSUCCEED!=ndrx_tpjsontoubf(p_ub_tmp, NULL, innerobj))
         {
             NDRX_LOG(log_error, "Failed to parse UBF json at field [%s]", 
-                    name);
+                    fldnm);
             EXFAIL_OUT(ret);
         }
 
         /* Add UBF to buffer */
-        if (EXSUCCEED!=Badd(p_ub, fid, (char *)p_ub_tmp, 0L))
+        if (EXSUCCEED!=Badd(p_ub, fldid, (char *)p_ub_tmp, 0L))
         {
             ndrx_TPset_error_fmt(TPESYSTEM, 
                     "Failed to add to parent UBF inner UBF [%s] (fldid=%d): %s", 
-                    name, fid, Bstrerror(Berror));
+                    fldnm, fldid, Bstrerror(Berror));
             NDRX_LOG(log_error, "Failed to add to parent UBF inner UBF [%s] (fldid=%d): %s", 
-                    name, fid, Bstrerror(Berror));
+                    fldnm, fldid, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
 
         NDRX_LOG(log_debug, "Added sub-ubf [%s] fldid=%d to UBF buffer %p",
-                name, fid, p_ub);
+                fldnm, fldid, p_ub);
 
     }
     else if (BFLD_VIEW!=fldtyp)
@@ -122,21 +133,21 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *name, int fldtyp,
         BVIEWFLD v;
         v.vflags=0;
 
-        if (NULL==(v.data=ndrx_tpjsontoview(v.vname, NULL, v_obj)))
+        if (NULL==(v.data=ndrx_tpjsontoview(v.vname, NULL, innerobj)))
         {
             NDRX_LOG(log_error, "Failed to parse UBF json at field [%s]", 
-                    name);
+                    fldnm);
             EXFAIL_OUT(ret);
         }
 
         /* Add UBF to buffer */
-        if (EXSUCCEED!=Badd(p_ub, fid, (char *)&v, 0L))
+        if (EXSUCCEED!=Badd(p_ub, fldid, (char *)&v, 0L))
         {
             ndrx_TPset_error_fmt(TPESYSTEM, 
                     "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
-                    v.vname, name, fid, Bstrerror(Berror));
+                    v.vname, fldnm, fldid, Bstrerror(Berror));
             NDRX_LOG(log_error, "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
-                    v.vname, name, fid, Bstrerror(Berror));
+                    v.vname, fldnm, fldid, Bstrerror(Berror));
 
             NDRX_FREE(v.data);
             EXFAIL_OUT(ret);
@@ -145,14 +156,14 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *name, int fldtyp,
         NDRX_FREE(v.data);
 
         NDRX_LOG(log_debug, "Added sub-view[%s] [%s] fldid=%d to UBF buffer %p",
-                v.vname, name, fid, p_ub);
+                v.vname, fldnm, fldid, p_ub);
     }
     else
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Field [%s] type is %s but object received",
-                name, (Btype(fldtyp)?Btype(fldtyp):"(null)"));
+                fldnm, (Btype(fldtyp)?Btype(fldtyp):"(null)"));
         NDRX_LOG(log_error, "Field [%s] type is %s but object received",
-                name, (Btype(fldtyp)?Btype(fldtyp):"(null)"))
+                fldnm, (Btype(fldtyp)?Btype(fldtyp):"(null)"))
         EXFAIL_OUT(ret);
     }
     
@@ -173,6 +184,7 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
     int ret = EXSUCCEED;
     EXJSON_Value *root_value=NULL;
     EXJSON_Object *root_object=data_object;
+    EXJSON_Object *innerobj;
     EXJSON_Array *array;
     size_t i, cnt, j, arr_cnt;
     int type;
@@ -330,8 +342,24 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
             /* parse embedded object */
             case EXJSONObject:
                 
-                
-                                
+                innerobj = exjson_object_get_object(root_object, name);
+
+                if (NULL==innerobj)
+                {
+                    ndrx_TPset_error_fmt(TPEINVAL, 
+                            "Null object received for field [%s]", name);
+                    NDRX_LOG(log_error, "Null object received for field [%s]", 
+                            name);
+                    EXFAIL_OUT(ret);
+                }
+
+                if (EXSUCCEED!=ndrx_load_object(p_ub, name, fid, fldtyp, 
+                        bin_buf, bin_buf_len, innerobj))
+                {
+                    NDRX_LOG(log_error, "Failed to parse inner object of [%s]", 
+                            name);
+                    EXFAIL_OUT(ret);
+                }
                 
                 break;
                 
@@ -451,6 +479,29 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                                 EXFAIL_OUT(ret);
                             }
                         }
+                        
+                        case EXJSONObject:
+                            
+                            innerobj = exjson_array_get_object(array, j);
+
+                            if (NULL==innerobj)
+                            {
+                                ndrx_TPset_error_fmt(TPEINVAL, 
+                                        "Null object received for array field [%s]", name);
+                                NDRX_LOG(log_error, "Null object received for array field [%s]", 
+                                        name);
+                                EXFAIL_OUT(ret);
+                            }
+
+                            if (EXSUCCEED!=ndrx_load_object(p_ub, name, fid, fldtyp, 
+                                    bin_buf, bin_buf_len, innerobj))
+                            {
+                                NDRX_LOG(log_error, "Failed to parse inner array object of [%s]", 
+                                        name);
+                                EXFAIL_OUT(ret);
+                            }
+                             
+                        break;
                         default:
                             NDRX_LOG(log_error, 
                                         "Unsupported array elem "
@@ -458,7 +509,6 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                         break;
                     }
                 }
-
             }
             break;
             default:
