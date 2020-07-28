@@ -68,6 +68,17 @@ T_CARRAY_FLD		81	carray  - 1 Carray test field 1
 T_CARRAY_2_FLD		82	carray	- 1 Carray test field 2
 T_CARRAY_3_FLD		83	carray	- 1 Carray test field 3
 
+T_PTR_FLD		    100	ptr  - 1 Pointer to XATMI buffer 1
+T_PTR_2_FLD		    101	ptr	- 1 Pointer to XATMI buffer 2
+T_PTR_3_FLD		    102	ptr	- 1 Pointer to XATMI buffer 3
+
+T_UBF_FLD		    110	ubf - 1 Embedded UBF buffer 1
+T_UBF_2_FLD		    111	fml32	- 1 Embdedded UBF buffer 2
+T_UBF_3_FLD		    112	ubf	- 1 Embedded UBF buffer 3
+
+T_VIEW_FLD		    120	view  - 1 VIEW buffer 1
+T_VIEW_2_FLD		121	view32	- 1 VIEW buffer 2
+T_VIEW_3_FLD		122	view	- 1 VIEW buffer 3
 
 $#endif
 

@@ -393,7 +393,12 @@ Ensure(test_Btype)
     assert_string_equal(Btype(T_DOUBLE_FLD), "double");
     assert_string_equal(Btype(T_STRING_FLD), "string");
     assert_string_equal(Btype(T_CARRAY_FLD), "carray");
-    assert_string_equal(Btype(0xfffffff), NULL);
+    
+    assert_string_equal(Btype(T_PTR_FLD), "ptr");
+    assert_string_equal(Btype(T_UBF_FLD), "ubf");
+    assert_string_equal(Btype(T_VIEW_FLD), "view");
+    
+    assert_string_equal(Btype(0xffffffff), NULL);
     assert_equal(Berror, BTYPERR);
 }
 
@@ -431,7 +436,7 @@ Ensure(test_Bsizeof)
  */
 Ensure(test_Bunused)
 {
-    char tmpbuf[68]; /* +2 for short align, +4 for string dlen */
+    char tmpbuf[76]; /* +2 for short align, +4 for string dlen */
     short s;
     UBFH * p_ub =  (UBFH *) tmpbuf;
 
