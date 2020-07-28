@@ -91,7 +91,7 @@ extern TestSuite *ubf_bcmp_tests(void);
 extern TestSuite *ubf_bnum_tests(void);
 extern TestSuite *ubf_bjoin_tests(void);
 extern TestSuite *ubf_bojoin_tests(void);
-
+extern TestSuite *ubf_embubf_tests(void);
 
 /* Standard library suites */
 extern TestSuite *ubf_nstd_crypto(void);

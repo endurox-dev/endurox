@@ -720,6 +720,7 @@ int main(int argc, char** argv)
     add_suite(suite, ubf_bjoin_tests());
     add_suite(suite, ubf_bojoin_tests());
     add_suite(suite, ubf_bmkfldid_multidir_tests());
+    add_suite(suite, ubf_embubf_tests());
 
     if (argc > 1)
     {
