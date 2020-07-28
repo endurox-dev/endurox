@@ -86,7 +86,7 @@ expublic int ndrx_put_data_ubf(dtype_str_t *t, char *fb, BFLDID bfldid,
         char *data, int len)
 {
     UBF_ubf_t *ubf = (UBF_ubf_t *)fb;
-    UBF_header_t *hdr = (UBF_header_t *)ubf->ubfdata;
+    UBF_header_t *hdr = (UBF_header_t *)data;
     
     /* int align; */
     ubf->bfldid = bfldid;
