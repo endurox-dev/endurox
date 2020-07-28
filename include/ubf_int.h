@@ -51,7 +51,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define UBF_BINARY_SEARCH_OK(bfldid) ((bfldid>>EFFECTIVE_BITS) < BFLD_STRING)
+#define UBF_BINARY_SEARCH_OK(bfldid) ((bfldid>>EFFECTIVE_BITS) < BFLD_STRING || (bfldid>>EFFECTIVE_BITS)==BFLD_PTR)
     
     
 #define UBF_BINSRCH_GET_LAST_NONE       0x00
