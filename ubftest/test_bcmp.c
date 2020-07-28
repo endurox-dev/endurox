@@ -252,19 +252,19 @@ Ensure(test_Bcmp)
     
     /* test errors */
     
-    assert_equal(Bcmp(NULL, p_ub_2), EXFAIL);
+    assert_equal(Bcmp(NULL, p_ub_2), -2);
     assert_equal(Berror, BEINVAL);
     
-    assert_equal(Bcmp(p_ub, NULL), EXFAIL);
+    assert_equal(Bcmp(p_ub, NULL), -2);
     assert_equal(Berror, BEINVAL);
     
     
     memset(fb, 0, sizeof(fb));
     
-    assert_equal(Bcmp(p_ub, p_ub_2), EXFAIL);
+    assert_equal(Bcmp(p_ub, p_ub_2), -2);
     assert_equal(Berror, BNOTFLD);
     
-    assert_equal(Bcmp(p_ub_2, p_ub), EXFAIL);
+    assert_equal(Bcmp(p_ub_2, p_ub), -2);
     assert_equal(Berror, BNOTFLD);
     
     

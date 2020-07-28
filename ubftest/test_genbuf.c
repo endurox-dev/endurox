@@ -255,7 +255,7 @@ Ensure(test_btypcvt)
     free(p);
 
     /* test invalid types */
-    assert_equal((p=Btypcvt(&len, 11, (char *)"TEST CARRAY", BFLD_CARRAY, 11)), NULL);
+    assert_equal((p=Btypcvt(&len, 12, (char *)"TEST CARRAY", BFLD_CARRAY, 11)), NULL);
     assert_equal(Berror, BTYPERR);
     assert_equal((p=Btypcvt(&len, BFLD_CARRAY, (char *)"TEST CARRAY", 12, 11)), NULL);
     assert_equal(Berror, BTYPERR);

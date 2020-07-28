@@ -266,6 +266,7 @@ Ensure(test_bfprintcb)
     /* compare the buffers */
     for (line_counter=0; line_counter<N_DIM(ref_print)-1; line_counter++)
     {
+        UBF_LOG(log_debug, "Got line [%s]", data.lines[line_counter]);
         assert_string_equal(data.lines[line_counter], ref_print[line_counter]);
         line_counter++;
     }

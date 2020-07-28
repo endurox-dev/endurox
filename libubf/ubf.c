@@ -1297,7 +1297,7 @@ expublic char * Btype (BFLDID bfldid)
 {
     int type = bfldid >> EFFECTIVE_BITS;
     API_ENTRY;
-
+    
     if (IS_TYPE_INVALID(type))
     {
         ndrx_Bset_error_fmt(BTYPERR, "Unknown type number %d", type);

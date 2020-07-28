@@ -65,5 +65,14 @@
 #define	T_CARRAY_FLD	((BFLDID32)201327673)	/* number: 1081	 type: carray */
 #define	T_CARRAY_2_FLD	((BFLDID32)201327674)	/* number: 1082	 type: carray */
 #define	T_CARRAY_3_FLD	((BFLDID32)201327675)	/* number: 1083	 type: carray */
+#define	T_PTR_FLD	((BFLDID32)301990988)	/* number: 1100	 type: ptr */
+#define	T_PTR_2_FLD	((BFLDID32)301990989)	/* number: 1101	 type: ptr */
+#define	T_PTR_3_FLD	((BFLDID32)301990990)	/* number: 1102	 type: ptr */
+#define	T_UBF_FLD	((BFLDID32)335545430)	/* number: 1110	 type: ubf */
+#define	T_UBF_2_FLD	((BFLDID32)335545431)	/* number: 1111	 type: ubf */
+#define	T_UBF_3_FLD	((BFLDID32)335545432)	/* number: 1112	 type: ubf */
+#define	T_VIEW_FLD	((BFLDID32)369099872)	/* number: 1120	 type: view */
+#define	T_VIEW_2_FLD	((BFLDID32)369099873)	/* number: 1121	 type: view */
+#define	T_VIEW_3_FLD	((BFLDID32)369099874)	/* number: 1122	 type: view */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */
