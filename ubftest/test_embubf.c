@@ -37,6 +37,7 @@
 #include <cgreen/cgreen.h>
 #include <ubf.h>
 #include <ndrstandard.h>
+#include <ndebug.h>
 #include <string.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
@@ -51,21 +52,44 @@ Ensure(test_ubf_Badd)
     
     char buf2[56000];
     UBFH *p_ub2 = (UBFH *)buf2;
+    
+    char buf3[56000];
+    UBFH *p_ub3 = (UBFH *)buf3;
 
+    char tmp_str[1024];
     
     memset(buf1, 0, sizeof(buf1));
     memset(buf2, 0, sizeof(buf2));
+    memset(buf3, 0, sizeof(buf3));
     
     assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(buf2)), EXSUCCEED);
+    assert_equal(Binit(p_ub3, sizeof(buf3)), EXSUCCEED);
     
     
     assert_equal(Badd(p_ub1, T_STRING_2_FLD, "HELLO_PARENT", 0), EXSUCCEED);
     assert_equal(Badd(p_ub2, T_STRING_3_FLD, "HELLO_CHILD", 0), EXSUCCEED);
+    assert_equal(Badd(p_ub2, T_STRING_3_FLD, "HELLO_CHILD 2", 0), EXSUCCEED);
+    assert_equal(Badd(p_ub2, T_STRING_3_FLD, "HELLO_CHILD 3", 0), EXSUCCEED);
+    assert_equal(Badd(p_ub2, T_STRING_3_FLD, "HELLO_CHILD 4", 0), EXSUCCEED);
+    assert_equal(Badd(p_ub1, T_STRING_4_FLD, "HELLO_PARENT 2", 0), EXSUCCEED);
 
     assert_equal(Badd(p_ub1, T_UBF_FLD, (char *)p_ub2, 0), EXSUCCEED);
+    assert_equal(Badd(p_ub1, T_UBF_FLD, (char *)p_ub2, 0), EXSUCCEED);
     
-    Bprint(p_ub1);
+    
+    assert_equal(Badd(p_ub3, T_UBF_2_FLD, (char *)p_ub1, 0), EXSUCCEED);
+    
+    
+    UBF_DUMP(log_error, "Buffer Dump", buf1, Bused(p_ub1));
+        
+    memset(buf2, 0, sizeof(buf2));
+
+    assert_equal(Bget(p_ub1, T_UBF_FLD, 0, (char *)p_ub2, 0), EXSUCCEED);
+    assert_equal(Bget(p_ub2, T_STRING_3_FLD, 0, tmp_str, 0), EXSUCCEED);
+    assert_string_equal(tmp_str, "HELLO_CHILD");
+    
+    Bprint(p_ub3);
     
 }
 
