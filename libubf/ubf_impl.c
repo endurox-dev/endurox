@@ -76,6 +76,8 @@ static ubf_type_cache_t M_ubf_type_cache[] =
     EXOFFSET(UBF_header_t,cache_double_off), /* DOUBLE */
     EXOFFSET(UBF_header_t,cache_string_off), /* STRING */
     EXOFFSET(UBF_header_t,cache_carray_off), /* CARRAY */
+    -1, /* INT */
+    -1, /* RFU */
     EXOFFSET(UBF_header_t,cache_ptr_off), /* PTR */
     EXOFFSET(UBF_header_t,cache_ubf_off), /* UBF */
     EXOFFSET(UBF_header_t,cache_view_off), /* VIEW */

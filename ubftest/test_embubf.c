@@ -65,6 +65,8 @@ Ensure(test_ubf_Badd)
 
     assert_equal(Badd(p_ub1, T_UBF_FLD, (char *)p_ub2, 0), EXSUCCEED);
     
+    Bprint(p_ub1);
+    
 }
 
 /**
