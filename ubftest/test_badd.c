@@ -177,6 +177,30 @@ Ensure(test_Badd_str)
 }
 
 /**
+ * TODO: Add UBF sub-buffer tests
+ */
+Ensure(test_Badd_ubf)
+{
+    
+}
+
+/**
+ * TODO: Add VIEW sub-buffer tests
+ */
+Ensure(test_Badd_view)
+{
+    
+}
+
+/**
+ * TODO: Add ptr sub-buffer tests
+ */
+Ensure(test_Badd_ptr)
+{
+    
+}
+
+/**
  * Test of FAST add test
  * Single field in buffer
  */

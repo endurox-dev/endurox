@@ -53,7 +53,13 @@
 /* float exponent */
 EXP	([Ee][-+]?[0-9]+)
 FLD	([_a-zA-Z][_a-zA-Z0-9]*)
-FUNC ([_a-zA-Z][_a-zA-Z0-9]*"()")
+FUNC    ([_a-zA-Z][_a-zA-Z0-9]*"()")
+
+/* Recursive field syntax FIELD[OCC].FIELD2.FIELD3[OCC], etc.. 
+ * TODO: Needs a parsers to build field sequence
+ */
+RFLDOCC    ([_a-zA-Z][_a-zA-Z0-9]*(\[[0-9]+\]){0,1}(\.[_a-zA-Z][_a-zA-Z0-9]*(\[[0-9]+\]){0,1})+)
+
 %%
  /* single character ops */
 "("				{ return OP; }
