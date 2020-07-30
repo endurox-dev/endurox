@@ -85,10 +85,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     tp_command_call_t * last_call;
     int was_auto_buf = EXFALSE;
-
-    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
     
-    call =(tp_command_call_t *)buf;
     last_call = ndrx_get_G_last_call();
     
     if (last_call->flags & TPNOREPLY)
@@ -110,6 +107,9 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         ndrx_TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
         return; /* <<<< RETURN */
     }
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call =(tp_command_call_t *)buf;
 
     memset(call, 0, sizeof(*call));
 
@@ -405,28 +405,43 @@ expublic void _tpforward (char *svc, char *data,
     int is_bridge;
     tp_command_call_t * last_call;
     int was_auto_buf = EXFALSE;
+    atmi_lib_conf_t *p_atmi_lib_conf = ndrx_get_G_atmi_conf();
     
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
     
     NDRX_LOG(log_debug, "%s enter", fn);
     
-    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
-    call = (tp_command_call_t *)buf;
+    
     /* client with last call is acceptable...! 
      * It can be servers companion thread.
      * TODO: Add the check.
      */
     last_call = ndrx_get_G_last_call();
     
-    memset(call, 0, sizeof(*call)); /* have some safety net */
-
-    call->data_len = MAX_CALL_DATA_SIZE;
+    if (p_atmi_lib_conf->is_client && !last_call->cd)
+    {
+        /* this is client */
+        NDRX_LOG(log_debug, "tpforward is not available for clients "
+                "(is_client=%d, cd=%d)!!!", p_atmi_lib_conf->is_client, 
+                last_call->cd);
+        ndrx_TPset_error_fmt(TPEPROTO, "tpforward - not available for clients!!!");
+        return; /* <<<< RETURN */
+    }
+    
     /* Cannot do the forward if we are in conversation! */
     if (CONV_IN_CONVERSATION==p_accept_conn->status ||
             have_open_connection())
     {
         ndrx_TPset_error_fmt(TPEPROTO, "tpforward no allowed for conversation server!");
+	return;
     }
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_command_call_t *)buf;
+    
+    memset(call, 0, sizeof(*call)); /* have some safety net */
+
+    call->data_len = MAX_CALL_DATA_SIZE;
 
     if (NULL==(buffer_info = ndrx_find_buffer(data)))
     {
