@@ -318,6 +318,11 @@ extern NDRX_API char *ndrx_talloc_view (struct dtype_ext1 *t, int *len);
 extern NDRX_API char* ndrx_prep_viewp (struct dtype_ext1 *t, 
         ndrx_ubf_tls_bufval_t *storage, char *data);
 
+
+/* Recursive API: */
+extern NDRX_API int ndrx_RBget (UBFH * p_ub, BFLDID *fldidocc,
+                            char * buf, BFLDLEN * buflen);
+
 #ifdef	__cplusplus
 }
 #endif

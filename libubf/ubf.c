@@ -3562,4 +3562,30 @@ expublic int B16to32(UBFH *dest, UBFH *src)
     return EXSUCCEED;
 }
 
+
+/**
+ * Recursive buffer get
+ * @param p_ub root UBF buffer
+ * @param fldidocc field sequence, array of FLDID1,OCC1,FLDID2,OCC2,FLDID3,OCC3,-1
+ *  i.e. terminator is -1
+ * @param buf output buffer
+ * @param buflen on input buf size, on output - bytes written
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_RBget (p_ub, fldidocc, buf, buflen);
+out:
+    return ret;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

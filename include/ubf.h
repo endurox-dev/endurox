@@ -303,6 +303,16 @@ extern NDRX_API int Bvsetoccur(char *cstruct, char *view, char *cname, BFLDOCC o
 extern NDRX_API int Bvnext (Bvnext_state_t *state, char *view, char *cname, 
 			    int *fldtype, BFLDOCC *maxocc, long *dim_size);
 extern NDRX_API int Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2);
+
+extern NDRX_API int Bvprint (char *cstruct, char *view);
+extern NDRX_API int Bvfprint (char *cstruct, char *view, FILE * outf);
+
+extern NDRX_API int Bvfprintcb (char *cstruct, char *view,
+        ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1);
+extern NDRX_API int Bvextread(char *cstruct, char *view, FILE *inf);
+extern NDRX_API int Bvextreadcb(char *cstruct, char *view, 
+        long (*p_readf)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
+
 /* VIEW related, END */
 
 /* ATMI library TLS: */
@@ -329,6 +339,11 @@ extern NDRX_API int Bflddbadd(EDB_txn *txn, short fldtype, BFLDID bfldno,
 
 extern NDRX_API int B32to16(UBFH *dest, UBFH *src);
 extern NDRX_API int B16to32(UBFH *dest, UBFH *src);
+
+
+/* Recursive API: */
+
+extern NDRX_API int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen);
 
 #if defined(__cplusplus)
 }
