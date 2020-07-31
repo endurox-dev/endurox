@@ -114,7 +114,7 @@ SYNOPSIS
             stdout="CLT_STDOUT"
             stderr="CLT_STDERR"
             env="CLTGRP_ENV"
-            CCTAG="CLT_CCTAG"
+            cctag="CLT_CCTAG"
             wd="CLT_WD"
             klevel="CLT_KLEVEL"
             autostart="CLT_AUTOSTART"
