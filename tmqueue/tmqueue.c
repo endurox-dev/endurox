@@ -563,6 +563,10 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         thpool_wait(G_tmqueue_cfg.thpool);
         thpool_destroy(G_tmqueue_cfg.thpool);
         
+        /* Bug #578 */
+        thpool_wait(G_tmqueue_cfg.notifthpool);
+        thpool_destroy(G_tmqueue_cfg.notifthpool);
+
         thpool_wait(G_tmqueue_cfg.fwdthpool);
         thpool_destroy(G_tmqueue_cfg.fwdthpool);
     }

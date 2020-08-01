@@ -101,7 +101,7 @@ exprivate char M_folder_prepared[PATH_MAX] = {EXEOS}; /**< Prepared transactions
 exprivate char M_folder_committed[PATH_MAX] = {EXEOS}; /**< Committed transactions  */
 
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
-exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
+MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make  */
 
 
 /* Per thread data: */
