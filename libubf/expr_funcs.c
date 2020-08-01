@@ -174,7 +174,6 @@ char *M_subtypes_sign_only[] =
 
 /*---------------------------Prototypes---------------------------------*/
 expublic void _Btreefree_no_recurse (char *tree);
-int get_bfldid(bfldid_t *p_fl);
 int is_float_val(value_block_t *v);
 /*
  * ERROR RECOVERY AND ALLOCATED RESOUCES.
@@ -290,6 +289,8 @@ expublic void _Btreefree_no_recurse (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
+    
+    struct ast_fld *a_fld;
 
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
@@ -299,6 +300,9 @@ expublic void _Btreefree_no_recurse (char *tree)
     {
         case NODE_TYPE_FLD:
             /* nothing to do */
+            a_fld = (struct ast_fld *)tree;
+            ndrx_ubf_rfldid_free(&(a_fld->fld));
+            
             break;
         case NODE_TYPE_STR:
             /* Free up internal resources (if have such)? */
@@ -370,7 +374,7 @@ struct ast * newast(int nodetype, int sub_type, struct ast *l, struct ast *r)
     return a;
 }
 
-struct ast * newfld(bfldid_t f)
+struct ast * newfld(ndrx_ubf_rfldid_t f)
 {
     struct ast_fld *a = NDRX_MALLOC(sizeof(struct ast_fld));
     memset(a, 0, sizeof(struct ast_fld));
@@ -399,13 +403,8 @@ struct ast * newfld(bfldid_t f)
     G_node_count++;
 
     /* Resolve field id */
-    if (BBADFLDID==get_bfldid(&(a->fld)))
-    {
-        yyerror("Bad field Id");
-        ndrx_Bset_error_fmt(BBADNAME, "Bad field name for [%s]", a->fld.fldnm);
-        /* Not sure is this good? If we do free get stack coruption/double free */
-        goto out;
-    }
+    memcpy(&(a->fld), &f, sizeof(ndrx_ubf_rfldid_t));
+    
     UBF_LOG(log_debug, "adding newfld: id: %02d, type: %s, sub-type:%s "
                               "value: [fld: [%s] occ: [%d] bfldid: [%d]]",
                           a->nodeid,
@@ -1122,26 +1121,45 @@ out:
     return ret;
 }
 
-/*
- * Read and cache field id
+
+/**
+ * Retrieve value in unified/recursive way.
+ * Also read the value from view buffer
+ * @param p_ub
+ * @param rbfldid
+ * @param buf
+ * @param len
+ * @param usrtype
+ * @return 
  */
-int get_bfldid(bfldid_t *p_fl)
+exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid, 
+        char *buf, BFLDLEN *len, int usrtype)
 {
-    BFLDID ret=BBADFLDID;
-
-    UBF_LOG(log_debug, "About to get info for [%s]\n", p_fl->fldnm);
-
-    /* Cache this lookup */
-    if (BBADFLDID==p_fl->bfldid && BBADFLDID==(p_fl->bfldid=Bfldid(p_fl->fldnm)))
+    int ret = EXSUCCEED;
+    
+    if (rbfldid->nrflds==1)
     {
-        UBF_LOG(log_error, "Failed to lookup data type for [%s]\n", p_fl->fldnm);
-        ret=BBADFLDID;
+        ret=CBget(p_ub, rbfldid->bfldid, rbfldid->occ, buf, len, usrtype);
     }
-    else
-    {
-        ret=p_fl->bfldid;
-    }
+    
+    return ret;
+}
 
+/**
+ * Unified field presence tester, works for sub-views too and recursive buffers
+ * @param p_ub UBF buffer
+ * @param rbfldid recursive field id
+ * @return EXFAIL/EXFALSE/EXTRUE
+ */
+exprivate int Bpres_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid)
+{
+    int ret = EXSUCCEED;
+    
+    if (rbfldid->nrflds==1)
+    {
+        ret=Bpres(p_ub, rbfldid->bfldid, rbfldid->occ);
+    }
+    
     return ret;
 }
 
@@ -1162,7 +1180,7 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
     if (NODE_TYPE_FLD==l->nodetype)
     {
         /* Get the value of field */
-        if (EXSUCCEED==ret && EXSUCCEED!=(ret=CBget(p_ub, lf->fld.bfldid, lf->fld.occ,
+        if (EXSUCCEED==ret && EXSUCCEED!=(ret=CBget_unified(p_ub, &(lf->fld),
                                     l_buf, &len, BFLD_STRING)))
         {
             if (BNOTPRES==Berror)
@@ -1315,7 +1333,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 	{
             fld_type=Bfldtype(bfldid);
 
-            if (!Bpres(p_ub, bfldid, occ))
+            if (!Bpres_unified(p_ub, &(fld->fld)))
             {
                 UBF_LOG(log_debug, "Field [%s] not present in fb",
                                                     fld->fld.fldnm);
@@ -1339,7 +1357,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                     v->dyn_alloc = 1; /* ensure that FREE_UP_UB_BUF can capture these */
                 }
 
-                if (EXSUCCEED==ret && EXSUCCEED!=CBget(p_ub, bfldid, occ,
+                if (EXSUCCEED==ret && EXSUCCEED!=CBget_unified(p_ub, &(fld->fld),
                                 (char *)v->strval, &len, BFLD_STRING))
                 {
                     if (BNOTPRES==Berror)
@@ -1373,7 +1391,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
             }
             else if (BFLD_SHORT==fld_type || BFLD_LONG==fld_type)
             {
-                if (EXSUCCEED!=CBget(p_ub, bfldid, occ, 
+                if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld), 
                                 (char *)&v->longval, NULL, BFLD_LONG))
                 {
                     if (BNOTPRES==Berror)
@@ -1401,7 +1419,7 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
             }
             else if (BFLD_FLOAT==fld_type || BFLD_DOUBLE==fld_type)
             {
-                if (EXSUCCEED!=CBget(p_ub, bfldid, occ, 
+                if (EXSUCCEED!=CBget_unified(p_ub, &(fld->fld), 
                                 (char *)&v->floatval, NULL, BFLD_DOUBLE))
                 {
                     if (BNOTPRES==Berror)

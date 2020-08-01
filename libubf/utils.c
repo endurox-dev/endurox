@@ -270,6 +270,62 @@ expublic void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p_ub)
 }
 
 /**
+ * Print UBF header to UBF log
+ * @param p_ub UBF buffer to dump
+ */
+expublic void ndrx_debug_dump_UBF_hdr_ubflogger(int lev, char *title, UBFH *p_ub)
+{
+    UBF_header_t *hdr = (UBF_header_t*)p_ub;
+    ndrx_debug_t * dbg = debug_get_ubf_ptr();
+    
+    if (dbg->level>=lev)
+    {
+        UBF_LOG(lev, "%s: UBF_header_t.buffer_type=[%c] offset=%d", title,
+                hdr->buffer_type, EXOFFSET(UBF_header_t, buffer_type));
+        UBF_LOG(lev, "%s: UBF_header_t.version=[%d]  offset=%d", title,
+                (unsigned int)hdr->version, EXOFFSET(UBF_header_t, version));
+        UBF_LOG(lev, "%s: UBF_header_t.magic=[%x%x%x%x]  offset=%d", title,
+                (unsigned int)hdr->magic[0], (unsigned int)hdr->magic[1], 
+                (unsigned int)hdr->magic[2], (unsigned int)hdr->magic[3],
+                EXOFFSET(UBF_header_t, magic));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_long_off=[%d] offset=%d", title,
+                hdr->cache_long_off, EXOFFSET(UBF_header_t, cache_long_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_char_off=[%d] offset=%d", title,
+                hdr->cache_char_off, EXOFFSET(UBF_header_t, cache_char_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_float_off=[%d] offset=%d", title,
+                hdr->cache_float_off, EXOFFSET(UBF_header_t, cache_float_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_double_off=[%d] offset=%d", title,
+                hdr->cache_double_off, EXOFFSET(UBF_header_t, cache_double_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_string_off=[%d] offset=%d", title,
+                hdr->cache_string_off, EXOFFSET(UBF_header_t, cache_string_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_carray_off=[%d] offset=%d", title,
+                hdr->cache_carray_off, EXOFFSET(UBF_header_t, cache_carray_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_ptr_off=[%d] offset=%d", title,
+                hdr->cache_ptr_off, EXOFFSET(UBF_header_t, cache_ptr_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_ubf_off=[%d] offset=%d", title,
+                hdr->cache_ubf_off, EXOFFSET(UBF_header_t, cache_ubf_off));
+        UBF_LOG(lev, "%s: UBF_header_t.cache_view_off=[%d] offset=%d", title,
+                hdr->cache_view_off, EXOFFSET(UBF_header_t, cache_view_off));
+        UBF_LOG(lev, "%s: UBF_header_t.buf_len=[%d] offset=%d", title,
+                hdr->buf_len, EXOFFSET(UBF_header_t, buf_len));
+        UBF_LOG(lev, "%s: UBF_header_t.opts=[%d] offset=%d", title,
+                hdr->opts, EXOFFSET(UBF_header_t, opts));
+        UBF_LOG(lev, "%s: UBF_header_t.bytes_used=[%d] offset=%d", title,
+                hdr->bytes_used, EXOFFSET(UBF_header_t, bytes_used));
+    #if EX_ALIGNMENT_BYTES == 8
+        UBF_LOG(lev, "%s: UBF_header_t.padding1=[%ld] offset=%d", title
+                hdr->padding1, EXOFFSET(UBF_header_t, padding1));
+    #endif
+        UBF_LOG(lev, "%s: UBF_header_t.bfldid=[%d] offset=%d", title,
+                hdr->bfldid, EXOFFSET(UBF_header_t, buffer_type));
+    #if EX_ALIGNMENT_BYTES == 8
+        UBF_LOG(lev, "%s: UBF_header_t.passing2=[%d] offset=%d", title,
+                hdr->passing2, EXOFFSET(UBF_header_t, passing2));
+    #endif
+    }
+}
+
+/**
  * Dump the VIEW buffer to log file, UBF logger
  * @param lev debug level
  * @param title debug title

@@ -47,6 +47,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <ndrx_config.h>
 #include <fdatatype.h>
+#include <nstdutil.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -180,6 +181,26 @@ extern "C" {
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/    
+
+/**
+ * Recursive field id with dot syntax
+ */
+typedef struct
+{
+    ndrx_growlist_t fldidocc;   /**< array of: fldid1,fldocc1,fldid2,occ2,-1  */
+    char *cname;        /**< In case if leaf view, have a malloced field name */
+    BFLDOCC cname_occ;  /**< occurrence for view field                        */
+    
+    /* last UBF name        */
+    char fldnm[BF_LENGTH+1];
+    
+    /* last field cached...*/
+    BFLDID bfldid;
+    BFLDOCC occ;
+    int nrflds;
+    
+} ndrx_ubf_rfldid_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -322,6 +343,9 @@ extern NDRX_API char* ndrx_prep_viewp (struct dtype_ext1 *t,
 /* Recursive API: */
 extern NDRX_API int ndrx_RBget (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen);
+
+extern NDRX_API void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid);
+extern NDRX_API int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid);
 
 #ifdef	__cplusplus
 }

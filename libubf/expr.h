@@ -45,6 +45,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <ubf_int.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -119,23 +120,18 @@ typedef long (*functionPtr_t)(UBFH *p_ub, char *funcname);
 #define VALUE_TYPE_STRING	4
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/*
- * Field info
- */
-typedef struct {
-    char fldnm[BF_LENGTH+1];
-    BFLDID bfldid;
-    BFLDOCC occ;
-} bfldid_t;
 
-/* symbol table */
-struct symbol {		/* a variable name */
+/**
+ *  symbol table 
+ */
+struct symbol 
+{		/* a variable name */
     char *name;
     double value;
     struct ast *func;	/* stmt for the function */
     struct symlist *syms; /* list of dummy args */
     char strval[MAX_TEXT+1];
-    bfldid_t fld;
+    ndrx_ubf_rfldid_t fld;
     char  funcname[MAX_FUNC_NAME+1]; /* Function name */
 };
 
@@ -159,7 +155,7 @@ struct ast_fld {
     int nodetype;
     int sub_type;
     int nodeid;
-    bfldid_t fld;
+    ndrx_ubf_rfldid_t fld;
 };
 
 /* Pointer to function */
@@ -218,7 +214,7 @@ struct list_node {
 /* build an AST */
 struct ast *newast(int nodetype, int sub_type, struct ast *l, struct ast *r);
 
-struct ast *newfld(bfldid_t f);
+struct ast *newfld(ndrx_ubf_rfldid_t f);
 struct ast *newstring(char *str);
 struct ast *newfloat(double d);
 struct ast *newlong(long l);
