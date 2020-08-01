@@ -76,8 +76,8 @@ static ubf_type_cache_t M_ubf_type_cache[] =
     EXOFFSET(UBF_header_t,cache_double_off), /* DOUBLE */
     EXOFFSET(UBF_header_t,cache_string_off), /* STRING */
     EXOFFSET(UBF_header_t,cache_carray_off), /* CARRAY */
-    -1, /* INT */
-    -1, /* RFU */
+    EXFAIL, /* INT */
+    EXFAIL, /* RFU */
     EXOFFSET(UBF_header_t,cache_ptr_off), /* PTR */
     EXOFFSET(UBF_header_t,cache_ubf_off), /* UBF */
     EXOFFSET(UBF_header_t,cache_view_off), /* VIEW */
@@ -125,8 +125,11 @@ expublic int ubf_cache_update(UBFH *p_ub)
     /* reset cache... */
     for (i=1; i<N_DIM(M_ubf_type_cache); i++)
     {
-        BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[i].cache_offset);
-        *offset = 0;
+        if (M_ubf_type_cache[i].cache_offset > EXFAIL)
+        {
+            BFLDLEN *offset = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[i].cache_offset);
+            *offset = 0;
+        }
     }
 
 #ifdef BIN_SEARCH_DEBUG

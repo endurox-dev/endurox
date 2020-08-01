@@ -42,7 +42,7 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 #include <time.h>
-
+#include <ubfutil.h>
 /**
  * Init the memory, so that valgrind does not barg on padding bytes
  * as un-initialized
@@ -484,6 +484,10 @@ Ensure(test_Bdelete)
     assert_equal(Bdelete(p_ub, delete_all), EXSUCCEED);
             
     assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), EXSUCCEED);
+    
+    ndrx_debug_dump_UBF_hdr_ubflogger(log_debug, "p_ub", p_ub);
+    ndrx_debug_dump_UBF_hdr_ubflogger(log_debug, "p_ub2", p_ub2);
+    
     
 }
 

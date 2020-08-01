@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ndebug.h"
+#include <ubf_int.h>
 #include "expr.h"
 
 extern int yylex (void);
@@ -48,7 +49,7 @@ extern int yylex (void);
   struct symbol *s;		/* which symbol */
   struct symlist *sl;
   int fn;			/* which function */
-  bfldid_t fld;
+  ndrx_ubf_rfldid_t fld;
   char strval[MAX_TEXT+1]; /* String value */
   char  funcname[MAX_FUNC_NAME]; /* Function name */
 }

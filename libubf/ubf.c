@@ -666,7 +666,7 @@ expublic int CBchg (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
 }
 
 /* Have to think here, not?  */
-expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ ,
+expublic int CBget (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ,
                                 char *buf, BFLDLEN *len, int usrtype)
 {
     int ret=EXSUCCEED;
