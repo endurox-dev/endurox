@@ -79,7 +79,8 @@ In case of connecting to address (*client*):
 
 3. Perform connect() to selected IP
 
-4. If connect() failed with any error, select next IP, continue with 3.
+4. If connect() asynchronously failed (after *EINPROGRESS*) with any error, 
+select next IP, continue with 3.
 
 5. If list of IP addresses are exhausted, start with 1.
 
