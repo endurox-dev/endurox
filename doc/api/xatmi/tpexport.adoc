@@ -177,6 +177,8 @@ Will be imported into following JSON
 }
 --------------------------------------------------------------------------------
 
+String type data such as string VIEW fields, UBF *BFLD_STRING* fields or *STRING* buffers
+must correspond to *UTF-8* encoding.
 
 RETURN VALUE
 ------------
@@ -195,7 +197,7 @@ debug info from last function call.
 environment is not configured.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
-debugs for more info.
+debugs for more info. Strings does not correspond to *UTF-8* format.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info. In case of insufficient memory this error will be 

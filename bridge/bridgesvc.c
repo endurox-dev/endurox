@@ -218,7 +218,7 @@ expublic int poll_timer(void)
     /* run any queue left overs... */
     br_run_q();
     
-    NDRX_LOG(log_debug, "FD=%d", G_bridge_cfg.net.sock);
+    /*NDRX_LOG(log_debug, "FD=%d", G_bridge_cfg.net.sock);*/
     
     return exnet_periodic();
 }
@@ -321,29 +321,30 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     int c;
-    int i;
-    int is_server = EXFAIL;
-    char addr[EXNET_ADDR_LEN] = {EXEOS};
-    int port=EXFAIL;
-    int rcvtimeout = ndrx_get_G_atmi_env()->time_out;
-    int backlog = 100;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
-    int periodic_zero = 0; /* send zero length messages periodically */
-    int recv_activity_timeout = EXFAIL;
     int thpoolcfg = 0;
     NDRX_LOG(log_debug, "tpsvrinit called");
+    
+    /* Reset network structs */
+    exnet_reset_struct(&G_bridge_cfg.net);
     
     G_bridge_cfg.nodeid = EXFAIL;
     G_bridge_cfg.timediff = 0;
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
         {
+            case '6':
+                
+                NDRX_LOG(log_debug, "Using IPv6 addresses");
+                G_bridge_cfg.net.is_ipv6=EXTRUE;
+                
+                break;
             case 'r':
                 NDRX_LOG(log_debug, "Will send refersh to node.");
                 /* Will send refersh */
@@ -354,23 +355,48 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "Node ID, -n = [%hd]", G_bridge_cfg.nodeid);
                 break;
             case 'i':
-                NDRX_STRCPY_SAFE(addr, optarg);
-                NDRX_LOG(log_debug, "IP server/binding addresss, -i = [%s]", addr);
+                
+                if (EXEOS!=G_bridge_cfg.net.addr[0])
+                {
+                    NDRX_LOG(log_error, "ERROR! Connection address already set "
+                            "to: [%s] cannot process -i", G_bridge_cfg.net.addr);
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_STRCPY_SAFE(G_bridge_cfg.net.addr, optarg);
+                NDRX_LOG(log_debug, "IP server/binding address, -i = [%s]", 
+                        G_bridge_cfg.net.addr);
+                G_bridge_cfg.net.is_numeric = EXTRUE;
+                break;
+                
+            case 'h':
+                
+                if (EXEOS!=G_bridge_cfg.net.addr[0])
+                {
+                    NDRX_LOG(log_error, "ERROR! Connection address already set "
+                            "to: [%s] connect process -h", G_bridge_cfg.net.addr);
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_STRCPY_SAFE(G_bridge_cfg.net.addr, optarg);
+                NDRX_LOG(log_debug, "DNS host name, -h = [%s]", 
+                        G_bridge_cfg.net.addr);
+                G_bridge_cfg.net.is_numeric = EXFALSE;
                 break;
             case 'p':
-                port = atoi(optarg);
+                NDRX_STRCPY_SAFE(G_bridge_cfg.net.port, optarg);
 		/* port will be promoted to integer... */
-                NDRX_LOG(log_debug, "Port no, -p = [%d]", port);
+                NDRX_LOG(log_debug, "Port no, -p = [%s]", G_bridge_cfg.net.port);
                 break;
             case 'T':
-                rcvtimeout = atoi(optarg);
+                G_bridge_cfg.net.rcvtimeout = atoi(optarg);
                 NDRX_LOG(log_debug, "Receive time-out (-T): %d", 
-                        rcvtimeout);
+                        G_bridge_cfg.net.rcvtimeout);
                 break;
             case 'b':
-                backlog = atoi(optarg);
+                G_bridge_cfg.net.backlog = atoi(optarg);
                 NDRX_LOG(log_debug, "Backlog (-b): %d", 
-                        backlog);
+                        G_bridge_cfg.net.backlog);
                 break;
             case 'c':
                 check = atoi(optarg);
@@ -378,14 +404,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                         check);
                 break;
             case 'z':
-                periodic_zero = atoi(optarg);
+                G_bridge_cfg.net.periodic_zero = atoi(optarg);
                 NDRX_LOG(log_debug, "periodic_zero (-z): %d", 
-                                periodic_zero);
+                                G_bridge_cfg.net.periodic_zero);
                 break;
             case 'a':
-                recv_activity_timeout = atoi(optarg);
+                G_bridge_cfg.net.recv_activity_timeout = atoi(optarg);
                 NDRX_LOG(log_debug, "recv_activity_timeout (-a): %d", 
-                                recv_activity_timeout);
+                                G_bridge_cfg.net.recv_activity_timeout);
                 break;
             case 'f':
                 G_bridge_cfg.common_format = EXTRUE;
@@ -415,13 +441,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 {
                     NDRX_LOG(log_debug, "Server mode enabled - "
                             "will wait for call");
-                    is_server = EXTRUE;
+                    G_bridge_cfg.net.is_server = EXTRUE;
                 }
                 else
                 {
                     NDRX_LOG(log_debug, "Client mode enabled - "
                             "will connect to server");
-                    is_server = EXFALSE;
+                    G_bridge_cfg.net.is_server = EXFALSE;
                 }
                 break;
             default:
@@ -430,9 +456,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
-    if (0>recv_activity_timeout)
+    if (0>G_bridge_cfg.net.recv_activity_timeout)
     {
-        recv_activity_timeout = periodic_zero*2;
+        G_bridge_cfg.net.recv_activity_timeout = G_bridge_cfg.net.periodic_zero*2;
     }
     
     if (G_bridge_cfg.threadpoolsize < 1)
@@ -447,7 +473,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             G_bridge_cfg.threadpoolsize, G_bridge_cfg.threadpoolsize, thpoolcfg);
     
     NDRX_LOG(log_warn, "Periodic zero: %d sec, reset on no received: %d sec",
-            periodic_zero, recv_activity_timeout);
+            G_bridge_cfg.net.periodic_zero, G_bridge_cfg.net.recv_activity_timeout);
     
     /* Check configuration */
     if (EXFAIL==G_bridge_cfg.nodeid)
@@ -456,19 +482,19 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXEOS==addr[0])
+    if (EXEOS==G_bridge_cfg.net.addr[0])
     {
         NDRX_LOG(log_error, "Flag -i not set!");
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==port)
+    if (EXFAIL==G_bridge_cfg.net.port[0])
     {
         NDRX_LOG(log_error, "Flag -p not set!");
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==is_server)
+    if (EXFAIL==G_bridge_cfg.net.is_server)
     {
         NDRX_LOG(log_error, "Flag -T not set!");
         EXFAIL_OUT(ret);
@@ -496,9 +522,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    /* Reset network structs */
-    exnet_reset_struct(&G_bridge_cfg.net);
-    
     /* Allocate network buffer */
     if (EXSUCCEED!=exnet_net_init(&G_bridge_cfg.net))
     {
@@ -513,9 +536,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
     
     /* Then configure the lib - we will have only one client session! */
-    if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
-        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero,
-            recv_activity_timeout))
+    G_bridge_cfg.net.len_pfx=NET_LEN_PFX_LEN;
+    G_bridge_cfg.net.max_cons=1;
+    
+    if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
         EXFAIL_OUT(ret);
@@ -641,6 +665,10 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     
     ndrx_br_uninit_queue();
+    
+    /* erase addresses... */
+    exnet_unconfigure(&G_bridge_cfg.net);
+    
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

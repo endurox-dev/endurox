@@ -568,6 +568,10 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         
         ndrx_thpool_wait(G_tmqueue_cfg.fwdthpool);
         ndrx_thpool_destroy(G_tmqueue_cfg.fwdthpool);
+
+        ndrx_thpool_wait(G_tmqueue_cfg.notifthpool);
+        ndrx_thpool_destroy(G_tmqueue_cfg.notifthpool);
+
     }
     tpclose();
     

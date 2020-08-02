@@ -55,6 +55,34 @@ tpbridge supports traffic encryption & signing by GNU PGP keys. In this case
 for Enduro/X user keys must be setup and exchanged with recipient. Bridge
 process needs to know sender (for signing) and recipient (for encryption) references.
 
+When using host name (*-h*) for resolving binding host or connection address,
+tpbridge will resolve IP addresses. Multiple IP addresses for host name are
+supported. The logic for using them is following:
+
+In case of binding (*server*):
+
+1. Query host name
+
+2. Select first IP found in list
+
+3. Try to bind to selected IP
+
+4. If bind failed with *EADDRINUSE* or *EADDRNOTAVAIL*, select next IP, continue with 3.
+
+5. If list of IP addresses are exhausted,  start with 1.
+
+In case of connecting to address (*client*):
+
+1. Query host name
+
+2. Select first IP found in list
+
+3. Perform connect() to selected IP
+
+4. If connect() failed with any error, select next IP, continue with 3.
+
+5. If list of IP addresses are exhausted, start with 1.
+
 OPTIONS
 -------
 *-n* 'NODE_ID'::
@@ -71,6 +99,15 @@ will be client mode.
 *-i* 'IP_ADDRESS'::
 In Active mode it is IP address to connect to. In passive mode it is
 binding/listen address.
+
+*-h* 'HOST_NAME'::
+Binding/connection IP Address may be resolved from host name set in -h parameter.
+Host name is resolved by OS, DNS queries, etc. *tpbridge* shall be started with 
+*-i* or with *-h*, if both flags will be set, error will be generated.
+
+*-6*::
+If set, then IPv6 addresses will be used. By default *tpbridge* operates with
+*IPv4* addresses.
 
 *-p* 'PORT_NUMBER'::
 In active mode 'PORT_NUMBER' is port to connect to. In passive mode it is
