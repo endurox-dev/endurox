@@ -48,8 +48,9 @@ extern "C" {
 
 #define UBF_VERSION     1
 #define UBF_EXTENDED
-#define MAXUBFLEN	0xffffffff		/* Maximum UBFH length */
-#define BF_LENGTH        32
+#define MAXUBFLEN	0xffffffff		/* Maximum UBFH length        */
+    
+#define BF_LENGTH        64                     /**< max UBF field len        */
 
 /* UFB field types, suggest the c data types */
     

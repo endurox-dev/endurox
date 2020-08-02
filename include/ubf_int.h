@@ -47,7 +47,7 @@ extern "C" {
 #include <ndrstandard.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define UBFFLDMAX	64
+#define UBFFLDMAX	BF_LENGTH
 
 /* Print some debug out there! */
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);

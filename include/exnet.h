@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-
+#include <netdb.h>
 #include <nstopwatch.h>
 
 #include "ndrstandard.h"
@@ -78,15 +78,22 @@ typedef struct exnetcon exnetcon_t;
 struct exnetcon
 {
     /* General config: */
-    u_short port;                 /**< user specified port number             */
-    char addr[EXNET_ADDR_LEN];    /**< will be a pointer to the address       */
+    
+    char port[PATH_MAX];          /**< Service name or port                   */
+    char addr[PATH_MAX];          /**< IP/DNS Host name                       */
+    
+    struct addrinfo *addr_cur;   /**< Current address from bellow list        */
+    struct addrinfo *addrinfos;  /**< List of resolved IP addresses           */
+    
+    /* this is used by clients: */
     struct sockaddr_in address;   /**< the libc network address data structure*/
     int sock;                     /**< file descriptor for the network socket */    
     int is_connected;             /**< Connection state...                    */
     int is_server;                /**< Are we server or client?               */
     int is_incoming;              /**< Is connection incoming?                */
     int schedule_close;           /**< Schedule connection close...           */
-    
+    int is_ipv6;                  /**< Is socket configured for IPv6?         */
+    int is_numeric;               /**< Is address numeric form?               */
     /* Client properties */
     exnetcon_t *my_server;  /**< Pointer to listener structure, used by server, 
                              * in case if this was incoming connection */
@@ -140,10 +147,11 @@ extern int exnet_periodic(void);
 extern int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char **buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
                 int (*p_snd_zero_len)(exnetcon_t *net));
+extern int exnet_configure(exnetcon_t *net);
+extern void exnet_unconfigure(exnetcon_t *net);
 
-extern int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
-        int len_pfx, int is_server, int backlog, int max_cons, 
-        int periodic_zero, int recv_activity_timeout);
+extern int exnet_addr_next(exnetcon_t *net);
+extern int exnet_addr_get(exnetcon_t *net);
 
 extern int exnet_is_connected(exnetcon_t *net);
 extern int exnet_close_shut(exnetcon_t *net);
@@ -161,7 +169,7 @@ extern void exnet_rwlock_mainth_read(exnetcon_t *net);
 
 extern long exnet_stopwatch_get_delta_sec(exnetcon_t *net, ndrx_stopwatch_t *w);
 extern void exnet_stopwatch_reset(exnetcon_t *net, ndrx_stopwatch_t *w);
-
+extern in_port_t exnet_get_port(struct sockaddr *sa);
 
 /* Connection tracking: */
 extern void exnet_add_con(exnetcon_t *net);
