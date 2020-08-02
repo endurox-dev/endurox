@@ -89,7 +89,6 @@ else \
     {\
         is_view=VIEW_FLD_FOUND;\
     } /* cache last field */\
-    NDRX_STRCPY_SAFE(rfldid->fldnm, tmp);\
     rfldid->bfldid=parsedid;\
 }\
 j=0;\
@@ -129,6 +128,13 @@ expublic void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid)
         NDRX_FREE(rfldid->cname);
         rfldid->cname=NULL;
     }
+    
+    if (NULL!=rfldid->fldnm)
+    {
+        NDRX_FREE(rfldid->fldnm);
+        rfldid->fldnm=NULL;
+    }
+    
     ndrx_growlist_free(&(rfldid->fldidocc));
 }
 
@@ -154,6 +160,16 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     UBF_LOG(log_debug, "Parsing field id sequence: [%s]", rfldidstr);
     ndrx_growlist_init(&(rfldid->fldidocc), 10, sizeof(int));
     rfldid->cname = NULL;
+    rfldid->fldnm = NDRX_STRDUP(rfldidstr);
+    
+    if (NULL==rfldid->fldnm)
+    {
+        int err = errno;
+        
+        ndrx_Bset_error_fmt(BEUNIX, "Failed to malloc rfldidstr: %s", strerror(err));
+        UBF_LOG(log_error, "Failed to malloc rfldidstr: %s", strerror(err));
+        EXFAIL_OUT(ret);
+    }
     
     len=strlen(rfldidstr);
     
