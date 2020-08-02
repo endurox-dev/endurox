@@ -192,7 +192,7 @@ typedef struct
     BFLDOCC cname_occ;  /**< occurrence for view field                        */
     
     /* last UBF name        */
-    char fldnm[BF_LENGTH+1];
+    char *fldnm;
     
     /* last field cached...*/
     BFLDID bfldid;
