@@ -84,7 +84,7 @@ exprivate int get_key_data (void *data1, void *data2, void *data3, void *data4,
     BFLDID fid;
     int *p_errdetbufsz = (int *)data3;
     UBFH *p_ub = (UBFH *)data1;
-    char tmpsymbol[BF_LENGTH+2+5+1]; /* +2 [] + NNNNN (occ) + EOS */
+    char tmpsymbol[UBFFLDMAX+2+5+1]; /* +2 [] + NNNNN (occ) + EOS */
     char *p_start_sq;
     char *p_stop_sq;
     char tmp[256];

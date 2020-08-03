@@ -131,10 +131,10 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
     }
     else if (BFLD_VIEW!=fldtyp)
     {
-        BVIEWFLD v;
-        v.vflags=0;
+        BVIEWFLD vdata;
+        vdata.vflags=0;
 
-        if (NULL==(v.data=ndrx_tpjsontoview(v.vname, NULL, innerobj)))
+        if (NULL==(vdata.data=ndrx_tpjsontoview(vdata.vname, NULL, innerobj)))
         {
             NDRX_LOG(log_error, "Failed to parse UBF json at field [%s]", 
                     fldnm);
@@ -142,22 +142,22 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
         }
 
         /* Add UBF to buffer */
-        if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&v, 0L))
+        if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&vdata, 0L))
         {
             ndrx_TPset_error_fmt(TPESYSTEM, 
                     "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
-                    v.vname, fldnm, fldid, Bstrerror(Berror));
+                    vdata.vname, fldnm, fldid, Bstrerror(Berror));
             NDRX_LOG(log_error, "Failed to add to parent UBF inner VIEW[%s] [%s] (fldid=%d): %s", 
-                    v.vname, fldnm, fldid, Bstrerror(Berror));
+                    vdata.vname, fldnm, fldid, Bstrerror(Berror));
 
-            NDRX_FREE(v.data);
+            NDRX_FREE(vdata.data);
             EXFAIL_OUT(ret);
         }
 
-        NDRX_FREE(v.data);
+        NDRX_FREE(vdata.data);
 
         NDRX_LOG(log_debug, "Added sub-view[%s] [%s] fldid=%d to UBF buffer %p",
-                v.vname, fldnm, fldid, p_ub);
+                vdata.vname, fldnm, fldid, p_ub);
     }
     else
     {
@@ -700,8 +700,8 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                 /* if this is a view... needs to get view struct data... */
                 ndrx_ubf_tls_bufval_t *bufval = (ndrx_ubf_tls_bufval_t *)d_ptr;
                 
-                if (EXSUCCEED!=ndrx_tpviewtojson(bufval->viewfld.data, 
-                        bufval->viewfld.vname, NULL, 0, BVACCESS_NOTNULL, emb_object))
+                if (EXSUCCEED!=ndrx_tpviewtojson(bufval->vdata.data, 
+                        bufval->vdata.vname, NULL, 0, BVACCESS_NOTNULL, emb_object))
                 {
                     NDRX_LOG(log_error, "Failed to build embedded data object from VIEW!");
                     EXFAIL_OUT(ret);

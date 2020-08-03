@@ -59,7 +59,6 @@ extern "C" {
 #define UBF_BINSRCH_GET_LAST_CHG        0x02 /**< for change              */
     
 #define UBF_CMP_MODE_STD          0x00000001 /**< standard compare mode   */
-#define UBFFLDMAX	BF_LENGTH
 
 /* Print some debug out there! */
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);
@@ -343,6 +342,17 @@ extern NDRX_API char* ndrx_prep_viewp (struct dtype_ext1 *t,
 /* Recursive API: */
 extern NDRX_API int ndrx_RBget (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen);
+
+
+extern NDRX_API int ndrx_RBpres (UBFH *p_ub, BFLDID *fldidocc);
+
+extern NDRX_API int ndrx_RCBget (UBFH * p_ub, BFLDID *fldidocc,
+                            char * buf, BFLDLEN * len, int usrtype);
+extern NDRX_API char* ndrx_RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
+
+extern NDRX_API char* ndrx_RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len, int usrtype);
+
+extern NDRX_API int ndrx_RBpres (UBFH *p_ub, BFLDID *fldidocc);
 
 extern NDRX_API void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid);
 extern NDRX_API int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid);

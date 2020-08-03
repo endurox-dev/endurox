@@ -324,11 +324,11 @@ expublic char* ndrx_prep_viewp (struct dtype_ext1 *t,
 {
     UBF_view_t *viewfb = (UBF_view_t *)data;
 
-    NDRX_STRCPY_SAFE(storage->viewfld.vname, viewfb->vname);
-    storage->viewfld.vflags = (unsigned int)viewfb->vflags;
-    storage->viewfld.data=viewfb->data;
+    NDRX_STRCPY_SAFE(storage->vdata.vname, viewfb->vname);
+    storage->vdata.vflags = (unsigned int)viewfb->vflags;
+    storage->vdata.data=viewfb->data;
 
-    return (char *)&storage->viewfld;
+    return (char *)&storage->vdata;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
