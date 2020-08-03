@@ -51,7 +51,6 @@ extern "C" {
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-    
 #define UBF_BINARY_SEARCH_OK(bfldid) ((bfldid>>EFFECTIVE_BITS) < BFLD_STRING || (bfldid>>EFFECTIVE_BITS)==BFLD_PTR)
     
     
@@ -60,6 +59,7 @@ extern "C" {
 #define UBF_BINSRCH_GET_LAST_CHG        0x02 /**< for change              */
     
 #define UBF_CMP_MODE_STD          0x00000001 /**< standard compare mode   */
+#define UBFFLDMAX	BF_LENGTH
 
 /* Print some debug out there! */
 #define UBFDEBUG(x)	do { fprintf(stderr, x); } while(0);

@@ -198,8 +198,6 @@ int periodical_cb(void)
         char *addr;                  /* will be a pointer to the address */
         struct sockaddr_in address;  /* the libc network address data structure */
         short int sock = -1;         /* file descriptor for the network socket */
-        fd_set fdset;
-        struct timeval tv;
 
         NDRX_LOG(log_debug, "Try to connect somewhere, and "
                         "check will we get Event!");
@@ -225,17 +223,6 @@ int periodical_cb(void)
         
         first=EXFALSE;
         
-        /*
-         * Lets have multiple connections!!
-        first=FALSE;
-         * 
-         * 
-         *   // Set to blocking mode again... 
-  arg = fcntl(soc, F_GETFL, NULL); 
-  arg &= (~O_NONBLOCK); 
-  fcntl(soc, F_SETFL, arg); 
-         * 
-         */
     }
     
     
