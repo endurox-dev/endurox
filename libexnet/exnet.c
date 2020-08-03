@@ -319,7 +319,8 @@ expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len,
                     size_to_send - sent);
         }
         
-    } while (EXSUCCEED==ret && sent < size_to_send);
+    } 
+    while (EXSUCCEED==ret && sent < size_to_send);
 
 out_unlock:
     MUTEX_UNLOCK_V(net->sendlock);
@@ -398,53 +399,6 @@ exprivate int get_full_len(exnetcon_t *net)
 
     return msg_len;
 }
-
-#if 0
-/**
- *  Cut the message from buffer & return it to caller!
- */
-exprivate int cut_out_msg(exnetcon_t *net, int full_msg, char *buf, int *len, int appflags)
-{
-    int ret=EXSUCCEED;
-    int len_with_out_pfx = full_msg-net->len_pfx;
-    /* 1. check the sizes 			*/
-    NDRX_LOG(log_debug, "Msg len with out pfx: %d  (full_msg: %d - pfx: %d), userbuf: %d",
-                    len_with_out_pfx, full_msg, net->len_pfx, *len);
-    if (*len < len_with_out_pfx)
-    {
-        NDRX_LOG(log_error, "User buffer to small: %d < %d",
-                        *len, len_with_out_pfx);
-        ret=EXFAIL;
-        goto out;
-    }
-
-    /* 2. copy data to user buffer 		*/
-    NDRX_LOG(log_debug, "Got message, len: %d", full_msg);
-
-    if (!(appflags & APPFLAGS_MASK))
-    {
-        NDRX_DUMP(log_debug, "Got message: ", net->d, full_msg);
-    }
-
-    memcpy(buf, net->d+net->len_pfx, len_with_out_pfx);
-    *len = len_with_out_pfx;
-
-    /* 3. reduce the internal buffer 	*/
-    memmove(net->d, net->d+full_msg, net->dl - full_msg);
-    net->dl -= full_msg;
-
-    NDRX_LOG(log_info, "net->dl = %d after cut", net->dl);
-    
-    if (0==*len)
-    {
-        NDRX_LOG(log_debug, "zero length message - ignore!");
-        ret=EXFAIL;
-    }
-
-out:
-    return ret;
-}
-#endif
 
 /**
  * Receive single message with prefixed length.
@@ -972,15 +926,35 @@ out:
 }
 
 /**
+ * Extract port number
+ * @param sa socket address 
+ * @return port number
+ */
+expublic in_port_t exnet_get_port(struct sockaddr *sa)
+{
+    if (AF_INET == sa->sa_family)
+    {
+        return ntohs(((struct sockaddr_in*)sa)->sin_port);
+    }
+    else
+    {
+        return ntohs(((struct sockaddr_in6*)sa)->sin6_port);
+    }
+}
+
+/**
  * Open socket
  */
 exprivate int open_socket(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
+    char ip[(INET6_ADDRSTRLEN)*2];
+    
     /* Try to connect! */
     net->is_connected=EXFALSE;
 
-    net->sock = socket(AF_INET, SOCK_STREAM, 0);
+    net->sock = socket(net->addr_cur->ai_family, 
+            SOCK_STREAM, net->addr_cur->ai_protocol);
 
     /* Create socket for listening */
     if (EXFAIL==net->sock)
@@ -997,11 +971,31 @@ exprivate int open_socket(exnetcon_t *net)
         EXFAIL_OUT(ret);
     }
 
-    NDRX_LOG(log_debug, "Trying to connect to: %s:%d", net->addr, net->port);
-    if (EXSUCCEED!=connect(net->sock, (struct sockaddr *)&net->address, sizeof(net->address)))
+    if (NULL!=inet_ntop (net->addr_cur->ai_family, 
+            &((struct sockaddr_in *)net->addr_cur->ai_addr)->sin_addr, ip, sizeof(ip)))
+    {
+        NDRX_LOG(log_info,"Trying to connect to IPv%d address: %s port: %d", 
+                net->addr_cur->ai_family == PF_INET6 ? 6 : 4, ip, 
+                (int)exnet_get_port(net->addr_cur->ai_addr));
+    }
+    else
+    {
+        NDRX_LOG(log_error, "Failed to extract address info: %s", strerror(errno));
+    }
+
+    if (EXSUCCEED!=connect(net->sock, net->addr_cur->ai_addr, 
+            net->addr_cur->ai_addrlen))
     {
         NDRX_LOG(log_error, "connect() failed for fd=%d: %d/%s",
                         net->sock, errno, strerror(errno));
+        
+        if (ENETUNREACH==errno)
+        {
+            NDRX_LOG(log_error, "Try later to connect -> next ip");
+            close(net->sock);
+            net->sock=EXFAIL;
+            goto out;
+        }
         if (EINPROGRESS!=errno)
         {
             ret=EXFAIL;
@@ -1082,11 +1076,24 @@ expublic int exnet_periodic(void)
         {
             if (net->is_server)
             {
+                /* if bind failed / try next address... */
+                if (EXSUCCEED!=exnet_addr_next(net))
+                {
+                    NDRX_LOG(log_error, "Failed to resolve next binding address!");
+                    EXFAIL_OUT(ret);
+                }
+                
                 /* Server should bind at this point */
-                ret = exnet_bind(net);               
+                ret = exnet_bind(net);
+                
             }
             else if (!net->is_incoming)
             {
+                if (EXSUCCEED!=exnet_addr_next(net))
+                {
+                    NDRX_LOG(log_error, "Failed to resolve next connect address!");
+                    EXFAIL_OUT(ret);
+                }
                 /* Client should open socket at this point. */
                 ret = open_socket(net);
             }
@@ -1125,43 +1132,166 @@ expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *
 out:
     return ret;
 }
+/**
+ * Destroy connection handler (free up resources)
+ * This assumes that connection is closed
+ * @param net handler to destroy/free up
+ */
+expublic void exnet_unconfigure(exnetcon_t *net)
+{
+    if (NULL!=net->addrinfos)
+    {
+        freeaddrinfo(net->addrinfos);
+        net->addrinfos=NULL;
+    }
+    
+    net->addr_cur=NULL;
+}
 
 /**
- * Configure the library
- * @param periodic_zero send periodic zero msg in case of no send activity
- *  is found on socket.
- * @param recv_activity_timeout number of seconds in which some socket receive 
- *  activity must exist (i.e. some bytes received).
- * 
+ * Get list of addresses...
+ * @param net network config
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
-        int len_pfx, int is_server, int backlog, int max_cons, int periodic_zero,
-        int recv_activity_timeout)
+expublic int exnet_addr_get(exnetcon_t *net)
 {
     int ret=EXSUCCEED;
-
-    net->port = port;
-    NDRX_STRCPY_SAFE(net->addr, addr);
-
-    net->address.sin_family = AF_INET;
-    net->address.sin_addr.s_addr = inet_addr(net->addr); /* assign the address */
-    net->address.sin_port = htons(net->port);          /* translate int2port num */
-    net->len_pfx = len_pfx;
-    net->rcvtimeout = rcvtimeout;
-    /* server settings: */
-    net->backlog = backlog;
-    net->max_cons = max_cons;
-    net->periodic_zero = periodic_zero;
-    net->recv_activity_timeout =recv_activity_timeout;
+    struct addrinfo hints;
+    struct addrinfo *iter;
+    char ip[(INET6_ADDRSTRLEN)*2];
     
-    if (!is_server)
+    /* delete dynamic data... */
+    exnet_unconfigure(net);
+    
+    if (!net->is_server)
     {
-        NDRX_LOG(log_error, "EXNET: client for: %s:%u", net->addr, net->port);
+        NDRX_LOG(log_error, "EXNET: client for: %s:%s", net->addr, net->port);
     }
     else
     {
-        net->is_server = EXTRUE;
-        NDRX_LOG(log_error, "EXNET: server for: %s:%u", net->addr, net->port);
+        NDRX_LOG(log_error, "EXNET: server for: %s:%s", net->addr, net->port);
+    }
+    
+    /* Resolve address... */
+    memset(&hints, 0, sizeof(struct addrinfo));
+    
+    if (net->is_ipv6)
+    {
+        hints.ai_family = AF_INET6;    /* Default Allow IPv4 */
+    }
+    else
+    {
+        hints.ai_family = AF_INET;    /* Default Allow IPv4 */
+    }
+    
+    hints.ai_socktype = SOCK_STREAM; /* TCP Socket socket */
+    
+    if (net->is_server)
+    {
+        hints.ai_flags = AI_PASSIVE;
+    }
+    else
+    {
+        hints.ai_flags = 0;
+    }
+    
+    /* allow numeric IP */
+    if (net->is_numeric)
+    {
+        hints.ai_flags|=AI_NUMERICHOST;
+    }
+    
+    hints.ai_protocol = 0; /* Any protocol */
+
+    ret = getaddrinfo(net->addr, net->port, &hints, &net->addrinfos);
+    
+    if (ret != EXSUCCEED)
+    {
+        NDRX_LOG(log_error, "Failed to resolve -i addr: getaddrinfo(): %s", 
+                gai_strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* print all resolved addresses... */
+    for(iter=net->addrinfos; iter != NULL;iter=iter->ai_next)
+    {
+        if (NULL!=inet_ntop (iter->ai_family, 
+            &((struct sockaddr_in *)iter->ai_addr)->sin_addr, ip, sizeof(ip)))
+        {
+            NDRX_LOG(log_info,"Resolved: IPv%d address: %s port: %d", 
+                    iter->ai_family == PF_INET6 ? 6 : 4, ip, 
+                    (int)exnet_get_port(iter->ai_addr));
+        }
+        else
+        {
+            NDRX_LOG(log_error, "Failed to get addr info: %s", strerror(errno));
+        }
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * Select next address..
+ * If we are at the end of address selection,
+ * query addresses again...
+ * 
+ * @param net exnet_configure()
+ * @return 
+ */
+expublic int exnet_addr_next(exnetcon_t *net)
+{
+    int ret = EXSUCCEED;
+    
+    if (NULL==net->addr_cur)
+    {
+        net->addr_cur=net->addrinfos;
+    }
+    else
+    {
+        net->addr_cur=net->addr_cur->ai_next;
+    }
+    
+    if (NULL==net->addr_cur)
+    {
+        NDRX_LOG(log_warn, "Reload addresses");
+        
+        ret=exnet_addr_get(net);
+        
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Failed to resolve bind/connect addresses!");
+            EXFAIL_OUT(ret);
+        }
+        
+        net->addr_cur=net->addrinfos;
+    }
+    
+    if (NULL==net->addr_cur)
+    {
+        NDRX_LOG(log_error, "NULL Address found");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    NDRX_LOG(log_error, "exnet_addr_next returns %d", ret);
+
+    return ret;
+}
+
+/**
+ * Configure the library
+ * @param net values for the socket must be pre-loaded from caller.
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int exnet_configure(exnetcon_t *net)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=exnet_addr_get(net))
+    {
+        EXFAIL_OUT(ret);
     }
     
     /* Add stuff to the list of connections */
@@ -1290,9 +1420,11 @@ out:
 expublic void exnet_reset_struct(exnetcon_t *net)
 {
     memset(net, 0, sizeof(*net));
-    net->sock = EXFAIL;              /* file descriptor for the network socket */    
-    net->rcvtimeout = EXFAIL;         /* Receive timeout                        */
-    net->len_pfx = EXFAIL;           /* Length prefix                          */    
+    net->sock = EXFAIL;             /**< file descriptor for the network socket */    
+    net->rcvtimeout = EXFAIL;       /**< Receive timeout                        */
+    net->len_pfx = EXFAIL;          /**< Length prefix                          */    
+    net->is_server = EXFAIL;        /**< server mode                            */
+    net->rcvtimeout = ndrx_get_G_atmi_env()->time_out;
 }
 
 /**
