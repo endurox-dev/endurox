@@ -103,7 +103,6 @@ exprivate char M_folder_committed[PATH_MAX] = {EXEOS}; /**< Committed transactio
 exprivate int volatile M_folder_set = EXFALSE;   /**< init flag                     */
 exprivate MUTEX_LOCKDECL(M_folder_lock); /**< protect against race codition during path make*/
 
-
 /* Per thread data: */
 exprivate __thread int M_is_reg = EXFALSE; /* Dynamic registration done? */
 /*
