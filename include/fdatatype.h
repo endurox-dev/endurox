@@ -60,7 +60,6 @@ extern "C" {
 #define FF_USED_BYTES   sizeof(BFLDID)
 #endif
 
-#define UBFFLDMAX	64
 #define UBF_MAGIC   "UBF1"
 #define UBF_MAGIC_SIZE   4
 #define CF_TEMP_BUF_MAX 64

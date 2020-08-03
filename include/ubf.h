@@ -49,9 +49,8 @@ extern "C" {
 #define UBF_VERSION     1
 #define UBF_EXTENDED
 #define MAXUBFLEN	0xffffffff		/* Maximum UBFH length        */
-    
-#define BF_LENGTH        64                     /**< max UBF field len        */
 
+#define UBFFLDMAX	64               /**< Max UBF buffer field len        */
 /* UFB field types, suggest the c data types */
     
 /** Minimum data type code */
@@ -105,11 +104,12 @@ extern "C" {
 #define BMAXVAL             22 /**< max error */
     
 /* Bvopt options: */
-#define B_FTOS              1 /**< flag S, one way UBF->Struct */
-#define B_STOF              2 /**< flag F, one way Struct->UBF */
-#define B_OFF               3 /**< Zero way mapping, N */
-#define B_BOTH              4 /**< both F & S */
-
+#define B_FTOS              1 /**< flag S, one way UBF->Struct          */
+#define B_STOF              2 /**< flag F, one way Struct->UBF          */
+#define B_OFF               3 /**< Zero way mapping, N                  */
+#define B_BOTH              4 /**< both F & S                           */
+#define BF_LENGTH       UBFFLDMAX /**< Left for older API compatilbity  */
+    
 #define BUPDATE             1   /**< Update buffer */
 #define BOJOIN              2   /**< outer joing buffers, RFU */
 #define BJOIN               3   /**< join buffers, RFU */
@@ -156,7 +156,7 @@ typedef struct
  */
 typedef struct
 {
-    BVIEWFLD viewfld;
+    BVIEWFLD vdata;
 } ndrx_ubf_tls_bufval_t;
 
 /**

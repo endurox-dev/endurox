@@ -143,6 +143,7 @@ exprivate char * conv_short_double(struct conv_type *t, int cnv_dir, char *input
 exprivate char * conv_short_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_short_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_short_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_short_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Functions from long to something */
 exprivate char * conv_long_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -152,6 +153,7 @@ exprivate char * conv_long_double(struct conv_type *t, int cnv_dir, char *input_
 exprivate char * conv_long_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_long_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_long_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_long_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Functions from char to something */
 exprivate char * conv_char_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -161,6 +163,7 @@ exprivate char * conv_char_double(struct conv_type *t, int cnv_dir, char *input_
 exprivate char * conv_char_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_char_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_char_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_char_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Functions from float to something */
 exprivate char * conv_float_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -170,6 +173,7 @@ exprivate char * conv_float_double(struct conv_type *t, int cnv_dir, char *input
 exprivate char * conv_float_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_float_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_float_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_float_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Functions from double to something */
 exprivate char * conv_double_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -179,6 +183,7 @@ exprivate char * conv_double_float(struct conv_type *t, int cnv_dir, char *input
 exprivate char * conv_double_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_double_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_double_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_double_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Functions from string to something */
 exprivate char * conv_string_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -188,6 +193,7 @@ exprivate char * conv_string_float(struct conv_type *t, int cnv_dir, char *input
 exprivate char * conv_string_double(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_string_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_string_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_string_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 exprivate char * conv_carr_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_carr_long(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -196,6 +202,7 @@ exprivate char * conv_carr_float(struct conv_type *t, int cnv_dir, char *input_b
 exprivate char * conv_carr_double(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_carr_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_carr_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_carr_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Int type operations */
 exprivate char * conv_int_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -205,6 +212,17 @@ exprivate char * conv_int_float(struct conv_type *t, int cnv_dir, char *input_bu
 exprivate char * conv_int_double(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_int_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 exprivate char * conv_int_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_int_ptr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+
+/* ptr type operations */
+exprivate char * conv_ptr_short(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_long(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_char(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_float(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_double(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_string(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_carr(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
+exprivate char * conv_ptr_int(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
 
 /* Special conversation parts */
 exprivate char * conv_same(struct conv_type *t, int cnv_dir, char *input_buf, int in_len, char *output_buf , int *out_len);
@@ -219,7 +237,9 @@ expublic conv_type_t G_conv_fn_short[] =
     {BFLD_SHORT, BFLD_DOUBLE, conv_short_double},
     {BFLD_SHORT, BFLD_STRING, conv_short_string},
     {BFLD_SHORT, BFLD_CARRAY, conv_short_carr},
-    {BFLD_SHORT, BFLD_INT, conv_short_int}
+    {BFLD_SHORT, BFLD_INT, conv_short_int},
+    {BFLD_SHORT, BFLD_RFU0, NULL},
+    {BFLD_SHORT, BFLD_PTR, conv_short_ptr}
 };
 expublic conv_type_t G_conv_fn_long[] =
 {
@@ -230,7 +250,9 @@ expublic conv_type_t G_conv_fn_long[] =
     {BFLD_LONG, BFLD_DOUBLE, conv_long_double},
     {BFLD_LONG, BFLD_STRING, conv_long_string},
     {BFLD_LONG, BFLD_CARRAY, conv_long_carr},
-    {BFLD_LONG, BFLD_INT, conv_long_int}
+    {BFLD_LONG, BFLD_INT, conv_long_int},
+    {BFLD_LONG, BFLD_RFU0, NULL},
+    {BFLD_LONG, BFLD_PTR, conv_long_ptr}
 };
 
 expublic conv_type_t G_conv_fn_char[] =
@@ -243,7 +265,9 @@ expublic conv_type_t G_conv_fn_char[] =
     {BFLD_CHAR, BFLD_DOUBLE, conv_char_double},
     {BFLD_CHAR, BFLD_STRING, conv_char_string},
     {BFLD_CHAR, BFLD_CARRAY, conv_char_carr},
-    {BFLD_CHAR, BFLD_INT, conv_char_int}
+    {BFLD_CHAR, BFLD_INT, conv_char_int},
+    {BFLD_CHAR, BFLD_RFU0, NULL},
+    {BFLD_CHAR, BFLD_PTR, conv_char_ptr}
 };
 
 expublic conv_type_t G_conv_fn_float[] =
@@ -255,7 +279,9 @@ expublic conv_type_t G_conv_fn_float[] =
     {BFLD_FLOAT, BFLD_DOUBLE, conv_float_double},
     {BFLD_FLOAT, BFLD_STRING, conv_float_string},
     {BFLD_FLOAT, BFLD_CARRAY, conv_float_carr},
-    {BFLD_FLOAT, BFLD_INT, conv_float_int}
+    {BFLD_FLOAT, BFLD_INT, conv_float_int},
+    {BFLD_FLOAT, BFLD_RFU0, NULL},
+    {BFLD_FLOAT, BFLD_PTR, conv_float_ptr}
 };
 
 expublic conv_type_t G_conv_fn_double[] =
@@ -267,7 +293,9 @@ expublic conv_type_t G_conv_fn_double[] =
     {BFLD_DOUBLE, BFLD_DOUBLE, conv_same},
     {BFLD_DOUBLE, BFLD_STRING, conv_double_string},
     {BFLD_DOUBLE, BFLD_CARRAY, conv_double_carr},
-    {BFLD_DOUBLE, BFLD_INT, conv_double_int}
+    {BFLD_DOUBLE, BFLD_INT, conv_double_int},
+    {BFLD_DOUBLE, BFLD_RFU0, NULL},
+    {BFLD_DOUBLE, BFLD_PTR, conv_double_ptr}
 };
 
 expublic conv_type_t G_conv_fn_string[] =
@@ -279,7 +307,9 @@ expublic conv_type_t G_conv_fn_string[] =
     {BFLD_STRING, BFLD_DOUBLE, conv_string_double},
     {BFLD_STRING, BFLD_STRING, conv_same},
     {BFLD_STRING, BFLD_CARRAY, conv_string_carr},
-    {BFLD_STRING, BFLD_INT, conv_string_int}
+    {BFLD_STRING, BFLD_INT, conv_string_int},
+    {BFLD_STRING, BFLD_RFU0, NULL},
+    {BFLD_STRING, BFLD_PTR, conv_string_ptr}
 };
 
 expublic conv_type_t G_conv_fn_carr[] =
@@ -292,6 +322,8 @@ expublic conv_type_t G_conv_fn_carr[] =
     {BFLD_CARRAY, BFLD_STRING, conv_carr_string},
     {BFLD_CARRAY, BFLD_CARRAY, conv_same},
     {BFLD_CARRAY, BFLD_INT, conv_carr_int},
+    {BFLD_CARRAY, BFLD_RFU0, NULL},
+    {BFLD_CARRAY, BFLD_PTR, conv_carr_ptr}
 };
 
 expublic conv_type_t G_conv_fn_int[] =
@@ -303,7 +335,23 @@ expublic conv_type_t G_conv_fn_int[] =
     {BFLD_INT, BFLD_DOUBLE, conv_int_double},
     {BFLD_INT, BFLD_STRING, conv_int_string},
     {BFLD_INT, BFLD_CARRAY, conv_int_carr},
-    {BFLD_INT, BFLD_INT, conv_same}
+    {BFLD_INT, BFLD_INT, conv_same},
+    {BFLD_INT, BFLD_RFU0, NULL},
+    {BFLD_INT, BFLD_PTR, conv_int_ptr}
+};
+
+expublic conv_type_t G_conv_fn_ptr[] =
+{
+    {BFLD_PTR, BFLD_SHORT, conv_ptr_short},
+    {BFLD_PTR, BFLD_LONG, conv_ptr_long},
+    {BFLD_PTR, BFLD_CHAR, conv_ptr_char},
+    {BFLD_PTR, BFLD_FLOAT, conv_ptr_float},
+    {BFLD_PTR, BFLD_DOUBLE, conv_ptr_double},
+    {BFLD_PTR, BFLD_STRING, conv_ptr_string},
+    {BFLD_PTR, BFLD_CARRAY, conv_ptr_carr},
+    {BFLD_PTR, BFLD_INT, conv_ptr_carr},
+    {BFLD_PTR, BFLD_RFU0, NULL},
+    {BFLD_INT, BFLD_INT, conv_same},
 };
 
 /**
@@ -474,6 +522,9 @@ expublic char * ndrx_ubf_convert(int from_type, int cnv_dir, char *input_buf, in
 	case BFLD_INT:
             conv_tab = (conv_type_t*)&G_conv_fn_int;
             break;
+        case BFLD_PTR:
+            conv_tab = (conv_type_t*)&G_conv_fn_ptr;
+            break;
         default:
             /* ERR - invalid type */
             ret=NULL;
@@ -635,6 +686,25 @@ exprivate char * conv_short_int(struct conv_type *t, int cnv_dir, char *input_bu
 
     return output_buf;
 }
+
+exprivate char * conv_short_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    short *ptr = (short *)input_buf;
+    void** p = (void **)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *p = (void*)(long)*ptr;
+
+    return output_buf;
+}
+
 /********************************* LONG ****************************************/
 exprivate char * conv_long_short(struct conv_type *t, int cnv_dir, char *input_buf, 
 				int in_len, char *output_buf , int *out_len)
@@ -749,6 +819,25 @@ exprivate char * conv_long_int(struct conv_type *t, int cnv_dir, char *input_buf
 
     return output_buf;
 }
+
+exprivate char * conv_long_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    long *ptr = (long *)input_buf;
+    void **p = (void **)output_buf;
+
+    /* Check the data type len for output */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *p = (void *)(long)*ptr;
+
+    return output_buf;
+}
+
 
 /********************************* BFLD_CHAR ***********************************/
 exprivate char * conv_char_short(struct conv_type *t, int cnv_dir, char *input_buf, 
@@ -883,6 +972,23 @@ exprivate char * conv_char_int(struct conv_type *t, int cnv_dir, char *input_buf
     return output_buf;
 }
 
+exprivate char * conv_char_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+			       int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    unsigned char *ptr = (unsigned char *)input_buf;
+    void **p = (void **)output_buf;
+
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *p = (void *)(long) *ptr;
+
+    return output_buf;
+}
+
 /********************************* BFLD_FLOAT ***********************************/
 exprivate char * conv_float_short(struct conv_type *t, int cnv_dir, char *input_buf, 
 				 int in_len, char *output_buf , int *out_len)
@@ -994,6 +1100,23 @@ exprivate char * conv_float_int(struct conv_type *t, int cnv_dir, char *input_bu
         *out_len = to->size;
 
     *i = (int)*ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_float_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				 int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    float *ptr = (float *)input_buf;
+    void **p = (void **)output_buf;
+
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *p = (void*)(long)*ptr;
 
     return output_buf;
 }
@@ -1110,6 +1233,24 @@ exprivate char * conv_double_int(struct conv_type *t, int cnv_dir, char *input_b
         *out_len = to->size;
 
     *i = (int)*ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_double_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				  int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    double *ptr = (double *)input_buf;
+    void **p = (void **)output_buf;
+
+
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *p = (void *)(long)*ptr;
 
     return output_buf;
 }
@@ -1240,6 +1381,23 @@ exprivate char * conv_string_int(struct conv_type *t, int cnv_dir, char *input_b
     return output_buf;
 }
 
+exprivate char * conv_string_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				  int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    char *ptr = (char *)input_buf;
+    void **p = (void **)output_buf;
+
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    sscanf (ptr, "%p", p);
+    
+    return output_buf;
+}
+
 /********************************* BFLD_CARRAY ***********************************/
 exprivate char * conv_carr_short(struct conv_type *t, int cnv_dir, char *input_buf,
 				int in_len, char *output_buf , int *out_len)
@@ -1366,6 +1524,24 @@ exprivate char * conv_carr_int(struct conv_type *t, int cnv_dir, char *input_buf
     return output_buf;
 }
 
+exprivate char * conv_carr_ptr(struct conv_type *t, int cnv_dir, char *input_buf,
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    char *ptr = (char *)input_buf;
+    void **p = (void **)output_buf;
+    CARR_TEMP_BUF;
+    
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    sscanf(tmp, "%p", p);
+
+    return output_buf;
+}
+
 
 /********************************* BFLD_INT ***********************************/
 
@@ -1479,6 +1655,159 @@ exprivate char * conv_int_carr(struct conv_type *t, int cnv_dir, char *input_buf
     int len;
 
     CONV_TO_CARRAY("%d");
+
+    return output_buf;
+}
+
+exprivate char * conv_int_ptr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    int *ptr = (int *)input_buf;
+    void **p = (void *)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *p = (void *)(long)*ptr;
+
+    return output_buf;
+}
+
+/********************************* BFLD_PTR ***********************************/
+
+
+exprivate char * conv_ptr_short(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void *)input_buf;
+    short *s = (short *)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *s = (short)(long)*ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_long(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    long *l = (long *)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *l = (long)*ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_char(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    unsigned char *c = (unsigned char *)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *c = (char)(long)*ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_float(struct conv_type *t, int cnv_dir, char *input_buf, 
+				 int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    float *f = (float *)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *f = (float)(long) *ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_double(struct conv_type *t, int cnv_dir, char *input_buf, 
+				  int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    double *d = (double *)output_buf;
+
+    /* Check the data type len for output */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *d = (double)(long)*ptr;
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_string(struct conv_type *t, int cnv_dir, char *input_buf, 
+				  int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    int len;
+
+    CONV_TO_STRING("%p");
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_carr(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    int len;
+
+    CONV_TO_CARRAY("%p");
+
+    return output_buf;
+}
+
+exprivate char * conv_ptr_int(struct conv_type *t, int cnv_dir, char *input_buf, 
+				int in_len, char *output_buf , int *out_len)
+{
+    dtype_str_t *to = &G_dtype_str_map[t->to_type];
+    void **ptr = (void **)input_buf;
+    int *i = (int *)output_buf;
+
+    /* Check the data type lengths */
+    CHECK_OUTPUT_BUF_SIZE;
+
+    if (NULL!=out_len)
+        *out_len = to->size;
+
+    *i = (int)(long)*ptr;
 
     return output_buf;
 }
