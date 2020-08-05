@@ -354,6 +354,10 @@ extern NDRX_API char* ndrx_RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len
 
 extern NDRX_API int ndrx_RBpres (UBFH *p_ub, BFLDID *fldidocc);
 
+extern NDRX_API int ndrx_RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
+extern NDRX_API int ndrx_RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN *len, int usrtype, long flags);
+
 extern NDRX_API void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid);
 extern NDRX_API int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid);
 
