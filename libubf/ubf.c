@@ -3588,4 +3588,35 @@ out:
     return ret;
 }
 
+/**
+ * Recursive Convert Buffer get
+ * @param p_ub UBF buffer
+ * @param fldidocc field path in array of fldid,occ,fldid,occ,...,-1
+ * @param buf where to unload the data
+ * @param buflen buffer length 
+ * @param usrtype user type to convert to
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int RCBget (UBFH * p_ub, BFLDID *fldidocc,
+                            char * buf, BFLDLEN * buflen, int usrtype)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_RCBget (p_ub, fldidocc, buf, buflen, usrtype);
+out:
+    return ret;
+}
+
+expublic char* RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
+{
+    /* TODO: */
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

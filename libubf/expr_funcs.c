@@ -1159,6 +1159,26 @@ exprivate int Bpres_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid)
     {
         ret=Bpres(p_ub, rbfldid->bfldid, rbfldid->occ);
     }
+    else if (NULL!=rbfldid->cname)
+    {
+        /* recursive view lookup */
+        ret=RBvget(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
+                rbfldid->cname_occ);
+    }
+    else
+    {
+        /* recursive buffer lookup */
+        ret=RBvnull (p_ub, (BFLDID *)rbfldid->fldidocc.mem);
+        
+        if (EXTRUE==ret)
+        {
+            ret=EXFALSE;/* field not present */
+        }
+        else if (EXFALSE==ret)
+        {
+            ret=EXTRUE;/* field is present */
+        }
+    }
     
     return ret;
 }
@@ -1174,7 +1194,6 @@ int regexp_eval(UBFH *p_ub, struct ast *l, struct ast *r, value_block_t *v)
 
     struct ast_string *ls = (struct ast_string *)l;
     struct ast_fld *lf = (struct ast_fld *)l;
-    struct ast_func *lfunc = (struct ast_func *)l;
     struct ast_string *rs = (struct ast_string *)r;
 
     if (NODE_TYPE_FLD==l->nodetype)
