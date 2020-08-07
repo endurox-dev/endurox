@@ -263,7 +263,7 @@ To install Enduro/X build dependencies.
 $ su - root
 # yum install yum-utils
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel 
+# yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel
 
 ---------------------------------------------------------------------
 
@@ -299,10 +299,19 @@ $ su - root
 # yum install dnf-plugins-core
 # yum config-manager --set-enabled PowerTools
 # yum update
-# yum install gpgme-devel
+# yum install gpgme-devel gpgme
 ---------------------------------------------------------------------
 
-if not configured, then build with *-DDEFINE_DISABLEGPGME=ON*.
+Install GPG-ME on Oracle Linux 8.x:
+
+---------------------------------------------------------------------
+$ su - root
+# dnf config-manager ol8_codeready_builder
+# dnf --enablerepo=ol8_codeready_builder install gpgme-devel gpgme
+
+---------------------------------------------------------------------
+
+If GPG-ME is not configured, then build with *-DDEFINE_DISABLEGPGME=ON*.
 
 ==== AsciiDoc Integration with Dia
 
