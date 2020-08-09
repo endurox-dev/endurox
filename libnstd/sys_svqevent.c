@@ -560,15 +560,16 @@ exprivate int ndrx_svq_mqd_hash_dispatch(void)
     ndrx_svq_ev_t * ev = NULL;
     int err;
     
-    gettimeofday (&timeval, NULL);
-    abs_timeout.tv_sec = timeval.tv_sec;
-    abs_timeout.tv_nsec = timeval.tv_usec*1000;
-    
     /* TODO: might want to reduce this region of locking... */
     MUTEX_LOCK_V(M_mon_lock_mq);
     
     EXHASH_ITER(hh, (M_mon.mqdhash), r, rt)
     {
+        
+        gettimeofday (&timeval, NULL);
+        abs_timeout.tv_sec = timeval.tv_sec;
+        abs_timeout.tv_nsec = timeval.tv_usec*1000;
+
         delta = ndrx_timespec_get_delta(&(r->abs_timeout), &abs_timeout);
         
         if (delta <= 0)
@@ -1662,14 +1663,14 @@ expublic int ndrx_svq_event_sndrcv(mqd_t mqd, char *ptr, ssize_t *maxlen,
      */
     
     /* update time stamps */
+    ndrx_stopwatch_reset(&(mqd->stamp_time));
+    
     NDRX_SPIN_LOCK_V((mqd->stamplock));
     
     mqd->stamp_seq++;
     cur_stamp.stamp_seq = mqd->stamp_seq;
     
-    /* TODO: Remove from spin lock area: */
-    ndrx_stopwatch_reset(&(mqd->stamp_time));
-    memcpy(&cur_stamp.stamp_time, &(mqd->stamp_time), sizeof(cur_stamp.stamp_time));
+    memcpy(&(mqd->stamp_time), &cur_stamp.stamp_time, sizeof(cur_stamp.stamp_time));
     
     NDRX_SPIN_UNLOCK_V(mqd->stamplock);
     

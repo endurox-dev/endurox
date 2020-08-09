@@ -425,7 +425,7 @@ out:
     {
         /* do poll on queue.. */
         struct ndrx_pollmsg msgs;
-	unsigned long nfd = 1 << 16;
+        unsigned long nfd = 1 << 16;
         
         msgs.msgid=mqd->qid;
         msgs.reqevents = POLLIN;
@@ -433,7 +433,8 @@ out:
         
         NDRX_LOG(log_debug, "wait: %d qid: %d", wait_left, mqd->qid);
         ret = poll((void *)&msgs, nfd, wait_left);
-        NDRX_LOG(log_debug, "poll ret=%d", ret);
+        err=errno;
+        NDRX_LOG(log_error, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
         if (ret>0)
         {
             /* OK, can try to receive something */
@@ -470,8 +471,6 @@ out:
         }
         else
         {
-            err = errno;
-
             /* this is poll error */
             NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid,
                 wait_left, strerror(err));
@@ -620,7 +619,7 @@ out:
         {
             /* if no msg, then continue with bellow */
             err = errno;
-            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+            NDRX_LOG(log_error, "msgsnd(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
             errno = err;
             goto out;
