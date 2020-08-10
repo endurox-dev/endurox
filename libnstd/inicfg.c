@@ -382,7 +382,11 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
         goto out;
     }
         
-    /* Add stuff to the section */
+    /* Add stuff to the section 
+     * TODO: what if we get the same key twice with different values?
+     * wouldn't be mem-leak?
+     * Thus lookup the hash before add
+     */
     EXHASH_ADD_KEYPTR(hh, mem_section->values, mem_value->key, 
             strlen(mem_value->key), mem_value);
     
