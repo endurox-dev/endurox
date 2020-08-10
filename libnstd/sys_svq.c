@@ -75,6 +75,21 @@
         errno = EINVAL;\
         EXFAIL_OUT(ret);\
     }
+
+/**
+ * Set timeout config common for send and receive
+ */
+#define NDRX_SVAPOLL_TOUT_SET     gettimeofday (&timeval, NULL);\
+    tout = ((__abs_timeout->tv_sec - timeval.tv_sec)*1000 +\
+        (__abs_timeout->tv_nsec/1000 - timeval.tv_usec)/1000);\
+    ndrx_stopwatch_timer_set(&w, (int)tout);\
+    wait_left = ndrx_stopwatch_get_delta(&w) * -1;\
+\
+    if (wait_left<=0)\
+    {\
+        NDRX_LOG(log_error, "expired call: wait_left: %d tout: %ld qid: %d", wait_left, tout, mqd->qid);\
+    }\
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -358,7 +373,8 @@ out:
      * In the same way if poll gives timeout, just return TPETIME.
      */
     
-    int wait_left, tout;
+    int wait_left;
+    long tout;
     ndrx_stopwatch_t w;
     int ret;
     int err;
@@ -410,30 +426,27 @@ out:
         goto out;
     }
     
-    
-    /* enduro/X uses full seconds... */
-    gettimeofday (&timeval, NULL);
-    tout = (__abs_timeout->tv_sec - timeval.tv_sec);    
-    ndrx_stopwatch_timer_set(&w, tout*1000);
-    wait_left = ndrx_stopwatch_get_delta(&w) * -1;
-    
+    NDRX_SVAPOLL_TOUT_SET;
+
     /* prepare for timed out */ 
     errno=ETIMEDOUT;
     ret=EXFAIL;
+
     /* wait for message...  */
     while (wait_left>0)
     {
         /* do poll on queue.. */
         struct ndrx_pollmsg msgs;
-	unsigned long nfd = 1 << 16;
+        unsigned long nfd = 1 << 16;
         
         msgs.msgid=mqd->qid;
         msgs.reqevents = POLLIN;
         msgs.rtnevents = 0;
         
-        NDRX_LOG(log_debug, "wait: %d qid: %d", wait_left, mqd->qid);
+        NDRX_LOG(log_debug, "wait_left: %d qid: %d", wait_left, mqd->qid);
         ret = poll((void *)&msgs, nfd, wait_left);
-        NDRX_LOG(log_debug, "poll ret=%d", ret);
+        err=errno;
+        NDRX_LOG(log_error, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
         if (ret>0)
         {
             /* OK, can try to receive something */
@@ -470,13 +483,11 @@ out:
         }
         else
         {
-            err = errno;
-
             /* this is poll error */
-            NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+            NDRX_LOG(log_error, "poll (qid=%d) failed (wait_left: %d): %s", mqd->qid,
                 wait_left, strerror(err));
             
-            userlog("poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+            userlog("poll (qid=%d) failed (wait_left: %d): %s", mqd->qid,
                 wait_left, strerror(err));
             errno = err;
 
@@ -592,7 +603,7 @@ out:
     
     ndrx_stopwatch_t w;
     int wait_left;
-    int tout;
+    long tout;
     int ret;
     int err;
     long *l;
@@ -620,7 +631,7 @@ out:
         {
             /* if no msg, then continue with bellow */
             err = errno;
-            NDRX_LOG(log_error, "msgrcv(qid=%d) failed: %s", mqd->qid, 
+            NDRX_LOG(log_error, "msgsnd(qid=%d) failed: %s", mqd->qid, 
                         strerror(err));
             errno = err;
             goto out;
@@ -632,15 +643,12 @@ out:
         goto out;
     }
     
-    /* enduro/X uses full seconds... */
-    gettimeofday (&timeval, NULL);
-    tout = (__abs_timeout->tv_sec - timeval.tv_sec);    
-    ndrx_stopwatch_timer_set(&w, tout*1000);
-    wait_left = ndrx_stopwatch_get_delta(&w) * -1;
-    
+    NDRX_SVAPOLL_TOUT_SET;
+
     /* prepare for timeout ... */
     errno=ETIMEDOUT;
     ret=EXFAIL;
+
     /* wait for message...
      * firstly attempt to send, if NO MSG, then wait on POLL
      */
@@ -654,7 +662,7 @@ out:
         msgs.reqevents = POLLOUT;
         msgs.rtnevents = 0;
         
-        NDRX_LOG(log_debug, "wait: %d qid: %d", wait_left, mqd->qid);
+        NDRX_LOG(log_debug, "wait_left: %d qid: %d", wait_left, mqd->qid);
         ret = poll((void *)&msgs, nfd, wait_left);
         NDRX_LOG(log_debug, "poll ret=%d", ret);
         
@@ -707,10 +715,10 @@ out:
             err = errno;
 
             /* this is poll error */
-            NDRX_LOG(log_error, "poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+            NDRX_LOG(log_error, "poll (qid=%d) failed (wait_left: %d): %s", mqd->qid,
                 wait_left, strerror(err));
 
-            userlog("poll (qid=%d) failed (tout: %d): %s", mqd->qid,
+            userlog("poll (qid=%d) failed (wait_left: %d): %s", mqd->qid,
                 wait_left, strerror(err));
             errno = err;
 
