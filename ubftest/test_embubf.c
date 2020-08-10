@@ -92,7 +92,8 @@ Ensure(test_ubf_Badd)
     Bprint(p_ub3);
     
     tmp_str[0]=EXEOS;
-    assert_equal(RBget (p_ub3, (int []){ T_UBF_2_FLD, 0, T_UBF_FLD, 1, T_STRING_3_FLD, 1, -1 }, tmp_str, NULL), EXSUCCEED);
+    assert_equal(RBget (p_ub3, (int []){ T_UBF_2_FLD, 0, T_UBF_FLD, 1, T_STRING_3_FLD, 1, BBADFLDID }, 
+            tmp_str, NULL), EXSUCCEED);
     assert_string_equal(tmp_str, "HELLO_CHILD 2");
     
 }

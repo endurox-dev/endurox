@@ -3570,7 +3570,9 @@ expublic int B16to32(UBFH *dest, UBFH *src)
  *  i.e. terminator is -1
  * @param buf output buffer
  * @param buflen on input buf size, on output - bytes written
- * @return EXSUCCEED/EXFAIL
+ * @return EXSUCCEED/EXFAIL  in case of error
+ *  combines errors from Bfind + BTYPERR in case of in middle of sequence
+ *  BFLD_UBF is not found, BEINVAL for invalid sequence 
  */
 expublic int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen)
 {
@@ -3580,6 +3582,12 @@ expublic int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen)
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
         UBF_LOG(log_error, "invalid buffer passed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
         EXFAIL_OUT(ret);
     }
     
@@ -3595,7 +3603,9 @@ out:
  * @param buf where to unload the data
  * @param buflen buffer length 
  * @param usrtype user type to convert to
- * @return EXSUCCEED/EXFAIL
+ * @return EXSUCCEED/EXFAIL in case of error
+ *  combines errors from Bfind + BTYPERR in case of in middle of sequence
+ *  BFLD_UBF is not found, BEINVAL for invalid sequence 
  */
 expublic int RCBget (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen, int usrtype)
@@ -3609,14 +3619,181 @@ expublic int RCBget (UBFH * p_ub, BFLDID *fldidocc,
         EXFAIL_OUT(ret);
     }
     
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
     ret=ndrx_RCBget (p_ub, fldidocc, buf, buflen, usrtype);
 out:
     return ret;
 }
 
+/**
+ * Recursive field find
+ * @param p_ub UBF buffer to search into
+ * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDID sequence
+ * @param p_len indicates the data size in bytes
+ * @return ptr to data found or NULL in case of error
+ *  combines errors from Bfind + BTYPERR in case of in middle of sequence
+ *  BFLD_UBF is not found, BEINVAL for invalid sequence 
+ */
 expublic char* RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
 {
-    /* TODO: */
+    char *ret = NULL;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        goto out;
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        goto out;
+    }
+    
+    ret=ndrx_RBfind (p_ub, fldidocc, p_len);
+    
+out:
+    return ret;
 }
+
+/**
+ * Recursive with Convert field find
+ * @param p_ub buffer to start search from
+ * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDID sequence
+ * @param len output ptr optional for data length indication
+ * @param usrtype field type to convert to
+ * @return ptr to data found or NULL in case of error
+ *  combines errors from Bfind + BTYPERR in case of in middle of sequence
+ *  BFLD_UBF is not found, BEINVAL for invalid sequence
+ */
+expublic char *RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype)
+{
+    char *ret = NULL;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        goto out;
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        goto out;
+    }
+    
+    ret=ndrx_RCBfind (p_ub, fldidocc, len, usrtype);
+    
+out:
+    return ret;
+}
+
+/**
+ * Test is field present or not in recursive way
+ * @param p_ub UBF buffer into which perform the search
+ * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDID
+ * @return EXTRUE/EXFALSE (even in case of errro)
+ */
+expublic int RBpres (UBFH *p_ub, BFLDID *fldidocc)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_RBpres (p_ub, fldidocc);
+    
+out:
+    return ret;
+}
+
+/**
+ * Get view field from UBF recursive buffer
+ * @param p_ub UBF buffer
+ * @param c
+ * @param cname field name from view to get
+ * @param occ occurrence from view to get
+ * @param buf buffer where to extract the data
+ * @param len on input it indicates buffer size, on output but bytes written to buffer
+ * @param usrtype type to convert to the data in VIEW
+ * @param flags BVACCESS_NOTNULL treat NULLs as field not present
+ * @return EXSUCCEED/EXFAIL in case of error
+ *  combines errors from Bfind + BTYPERR in case of in middle of sequence
+ *  BFLD_UBF is not found, BEINVAL for invalid sequence
+ */
+expublic int RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN *len, int usrtype, long flags)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_RCBvget (p_ub, fldidocc, cname, occ, buf, len, usrtype, flags);
+    
+out:
+    return ret;
+}
+
+/**
+ * Test the view field for NULL value
+ * @param p_ub UBF buffer into which search for the view
+ * @param fldidocc fldidocc fldid,occ,fldid,occ,...,fldid (of view),occ,BBADFLDID
+ * @param cname field name
+ * @param occ field occurrence
+ * @return EXSUCCEED/EXFALSE/EXFAIL in case of error
+ *  combines errors from Bfind + BTYPERR in case of in middle of sequence
+ *  BFLD_UBF is not found, BEINVAL for invalid sequence
+ */
+expublic int RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
+{
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    
+    if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_error, "invalid buffer passed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fldidocc)
+    {
+        ndrx_Bset_error_msg(BEINVAL, "fldidocc must not be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=ndrx_RBvnull (p_ub, fldidocc, cname, occ);
+    
+out:
+    return ret;
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
