@@ -121,7 +121,7 @@ extern "C" {
 #define Berror	(*ndrx_Bget_Ferror_addr())
 #define BFLDID32 BFLDID
 	
-#define BVACCESS_NOTNULL	0x00000001	/* return value if not NULL */
+#define BVACCESS_NOTNULL	0x00000001	/* return value only if not NULL */
 
 /* View settings: */    
 #define NDRX_VIEW_CNAME_LEN             256  /* Max c field len in struct   */
@@ -345,6 +345,16 @@ extern NDRX_API int B16to32(UBFH *dest, UBFH *src);
 /* Recursive API: */
 
 extern NDRX_API int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen);
+extern NDRX_API int RCBget (UBFH * p_ub, BFLDID *fldidocc,
+                            char * buf, BFLDLEN * buflen, int usrtype);
+
+extern NDRX_API char* RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
+
+extern NDRX_API char *RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype);
+extern NDRX_API int RBpres (UBFH *p_ub, BFLDID *fldidocc);
+extern NDRX_API int RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+             char *buf, BFLDLEN *len, int usrtype, long flags);
+extern NDRX_API int RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
 
 #if defined(__cplusplus)
 }
