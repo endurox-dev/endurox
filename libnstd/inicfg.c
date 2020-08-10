@@ -322,6 +322,13 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
         goto out;
     }
     
+    if (NULL!=_ndrx_keyval_hash_get(mem_section->values, (char *)name))
+    {
+        /* do not allow duplicates... */
+        ret=1;
+        goto out;
+    }
+            
     mem_value = NDRX_CALLOC(1, sizeof(ndrx_inicfg_section_keyval_t));
     
     if (NULL==mem_value)
@@ -332,7 +339,7 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
         goto out;
     }
     
-    if (NULL==(mem_value->section = strdup(section)))
+    if (NULL==(mem_value->section = NDRX_STRDUP(section)))
     {
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->section: %s", strerror(err));
@@ -341,7 +348,7 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
     }
     
     /* Process the key */
-    if (NULL==(mem_value->key = strdup(name)))
+    if (NULL==(mem_value->key = NDRX_STRDUP(name)))
     {
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->key: %s", strerror(err));
@@ -349,7 +356,7 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
         goto out;
     }
     
-    if (NULL==(mem_value->val = strdup(value)))
+    if (NULL==(mem_value->val = NDRX_STRDUP(value)))
     {
         int err = errno;
         _Nset_error_fmt(NEMALLOC, "Failed to malloc mem_value->val: %s", strerror(err));
@@ -382,9 +389,14 @@ exprivate int handler(void* cf_ptr, void *vsection_start_with, void *cfg_ptr,
         goto out;
     }
         
-    /* Add stuff to the section */
+    /* Add stuff to the section 
+     * TODO: what if we get the same key twice with different values?
+     * wouldn't be mem-leak?
+     * Thus lookup the hash before add
+     */
     EXHASH_ADD_KEYPTR(hh, mem_section->values, mem_value->key, 
-            strlen(mem_value->key), mem_value);
+            /* should we include EOS? */
+            strlen(mem_value->key)+1, mem_value);
     
 #ifdef INICFG_ENABLE_DEBUG
     fprintf(stderr, "section/key/value added OK\n");
