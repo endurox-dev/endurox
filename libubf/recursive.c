@@ -50,7 +50,12 @@
 #include "xatmi.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define R_IS_NEXT_EOS(X) (BBADFLDID==*(X) || BBADFLDID==*(X+2))
+#if BBADFLDOCC<0
+#define R_IS_NEXT_EOS(X) (BBADFLDOCC==*(X) || BBADFLDOCC==*(X+1) || BBADFLDOCC==*(X+2))
+#else
+#define R_IS_NEXT_EOS(X) (BBADFLDOCC==*(X) || BBADFLDOCC==*(X+2))
+#endif
+
 #define DEBUG_STR_MAX   512 /**< Max debug string len                   */
 
 #define VIEW_FLD_FOUND  1
@@ -332,7 +337,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     /* Terminate the memory sequence... */
     
     /* Unload the field... */
-    terminator=-1;
+    terminator=BBADFLDOCC;
     ndrx_growlist_append(&(rfldid->fldidocc), &terminator);
     
     rfldidseq=(int *)rfldid->fldidocc.mem;
@@ -388,12 +393,12 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         /* first is fld id */
         bfldid=*fldidocc;
         
-        if (BBADFLDID==*fldidocc)
+        if (BBADFLDOCC==*fldidocc)
         {
             UBF_LOG(log_error, "Invalid recursive field identifier sequence, "
-                    "expected occ, got BBADFLDID at pos %d", pos);
+                    "expected BFLDID, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
             ndrx_Bset_error_fmt(BEINVAL, "Invalid recursive field identifier sequence, "
-                    "expected occ, got BBADFLDID at pos %d", pos);
+                    "expected BFLDID, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
             p_ub=NULL;
             goto out;
         }
@@ -402,13 +407,24 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         fldidocc++;
         pos++;
         
+/* can check if <0, as >=0 is valid occ */
+#if BBADFLDOCC<0
+        if (BBADFLDOCC==*fldidocc)
+        {
+            UBF_LOG(log_error, "Invalid recursive occurrence sequence, "
+                    "expected occ, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
+            ndrx_Bset_error_fmt(BEINVAL, "Invalid recursive field identifier sequence, "
+                    "expected occ, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
+            p_ub=NULL;
+            goto out;
+        }
+#endif
+
         occ=*fldidocc;
-        
         /* find the buffer */
         typ = Bfldtype(bfldid);
         if (BFLD_UBF!=typ)
         {
-            
             UBF_LOG(log_error, "Expected BFLD_UBF (%d) at position %d in "
                     "sequence but got: %d type", BFLD_UBF, pos, typ);
             ndrx_Bset_error_fmt(BTYPERR, "Expected BFLD_UBF (%d) at "
@@ -434,12 +450,12 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
     
     if (NULL!=p_ub)
     {
-        if (BBADFLDID==*fldidocc)
+        if(BBADFLDOCC==*fldidocc)
         {
-            UBF_LOG(log_error, "Field ID not present at position %d in sequence (BBADFLDID found)",
-                    pos);
-            ndrx_Bset_error_fmt(BEINVAL, "Field ID not present at position %d in sequence (BBADFLDID found)",
-                    pos);
+            UBF_LOG(log_error, "Field ID not present at position %d in sequence (BBADFLDOCC (%d) found)",
+                    pos, BBADFLDOCC);
+            ndrx_Bset_error_fmt(BEINVAL, "Field ID not present at position %d in sequence (BBADFLDOCC (%d) found)",
+                    pos, BBADFLDOCC);
             p_ub=NULL;
             goto out;
         }
@@ -449,33 +465,23 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         fldidocc++;
         pos++;
         
-        if (BBADFLDID==*fldidocc)
+#if BBADFLDOCC<0
+        if (BBADFLDOCC==*fldidocc)
         {
-            UBF_LOG(log_error, "Occurrence not present at position %d in sequence (BBADFLDID found)",
-                    pos);
-            ndrx_Bset_error_fmt(BEINVAL, "Occurrence not present at position %d in sequence (BBADFLDID found)",
-                    pos);
+            UBF_LOG(log_error, "Occurrence not present at position %d in sequence (BBADFLDID (%d) found)",
+                    pos, BBADFLDOCC);
+            ndrx_Bset_error_fmt(BEINVAL, "Occurrence not present at position %d in sequence (BBADFLDID (%d) found)",
+                    pos, BBADFLDOCC);
             p_ub=NULL;
             goto out;
         }
+#endif
         
         *occ_leaf=*fldidocc;    
         
         
         fldidocc++;
         pos++;
-        
-        if (BBADFLDID!=*fldidocc)
-        {
-            UBF_LOG(log_error, "Missing BBADFLDID at sequence position %d found "
-                    "(%d) - expect corrupted memory",
-                    pos, *fldidocc);
-            ndrx_Bset_error_fmt(BEINVAL, "Missing BBADFLDID at sequence position "
-                    "%d found (%d) - expect corrupted memory",
-                    pos, *fldidocc);
-            p_ub=NULL;
-            goto out;
-        }
     }
     
     UBF_LOG(log_debug, "Leaf fldid=%d occ=%d", *fldid_leaf, *occ_leaf);
@@ -503,7 +509,7 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
     char tmp[128];
     debug_buf[0]=EXEOS;
     
-    while (BBADFLDID!=*fldidocc)
+    while (BBADFLDOCC!=*fldidocc)
     {
         /* field id: */
         nam=Bfname(*fldidocc);
@@ -519,6 +525,13 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
         fldidocc++;
         pos++;
         
+#if BBADFLDOCC < 0
+        if (*fldidocc==BBADFLDOCC)
+        {
+            break;
+        }
+#endif
+
         NDRX_STRCAT_S(debug_buf, debug_buf_len, "[");
         snprintf(tmp, sizeof(tmp), "%d", *fldidocc);
         NDRX_STRCAT_S(debug_buf, debug_buf_len, tmp);
@@ -534,7 +547,7 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
 /**
  * Recursive field field get
  * @param p_ub parent UBF buffer
- * @param fldidocc array of: <field_id1>,<occ1>,..<field_idN><occN>,BBADFLDID
+ * @param fldidocc array of: <field_id1>,<occ1>,..<field_idN><occN>,BBADFLDOCC
  * @param buf buffer where to return the value
  * @param len in input buffer len, on output bytes written
  * @return EXSUCCEED/EXFAIL
@@ -573,7 +586,7 @@ out:
 /**
  * Recursive field field get, with convert
  * @param p_ub parent UBF buffer
- * @param fldidocc array of: <field_id1>,<occ1>,..<field_idN><occN>,BBADFLDID
+ * @param fldidocc array of: <field_id1>,<occ1>,..<field_idN><occN>,BBADFLDOCC
  * @param buf buffer where to return the value
  * @param len in input buffer len, on output bytes written
  * @param usrtype user type to convert data to

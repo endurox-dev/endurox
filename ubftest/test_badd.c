@@ -220,26 +220,26 @@ Ensure(test_Badd_ubf)
     
     /* test field presence... */
     UBF_LOG(log_debug, "First");
-    assert_equal(RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 0, BBADFLDID}), EXTRUE);
+    assert_equal(RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 0, BBADFLDOCC}), EXTRUE);
     
     assert_equal(Berror, EXSUCCEED);
     
     UBF_LOG(log_debug, "2nd");
     
     assert_equal(
-            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 1, BBADFLDID}),
+            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 1, BBADFLDOCC}),
             EXTRUE);
     assert_equal(Berror, EXSUCCEED);
             
     assert_equal(
-            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 2, BBADFLDID}),
+            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 2, BBADFLDOCC}),
             EXFALSE);
     
     assert_equal(Berror, EXSUCCEED);
             
     assert_equal(
-            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_3_FLD, 0, BBADFLDID}),
-            EXFALSE);
+            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_3_FLD, 0, BBADFLDOCC}),
+            EXTRUE);
     assert_equal(Berror, EXSUCCEED);
                         
             
