@@ -39,11 +39,14 @@
 #include <string.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include "ndebug.h"
 
 
 
 #define DEFAULT_BUFFER  1024
-UBFH *M_p_ub1 = NULL;
+exprivate UBFH *M_p_ub1 = NULL;
+exprivate UBFH *M_p_ub2 = NULL;
+exprivate UBFH *M_p_ub3 = NULL;
 
 /**
  * Basic preparation before the test
@@ -55,7 +58,21 @@ Ensure(basic_setup1)
     memset(M_p_ub1, 255, DEFAULT_BUFFER);
     if (EXFAIL==Binit(M_p_ub1, DEFAULT_BUFFER))
     {
-        fprintf(stderr, "Binit failed!\n");
+        fprintf(stderr, "Binit failed 1!\n");
+    }
+    
+    M_p_ub2 = malloc(DEFAULT_BUFFER);
+    memset(M_p_ub2, 255, DEFAULT_BUFFER);
+    if (EXFAIL==Binit(M_p_ub2, DEFAULT_BUFFER))
+    {
+        fprintf(stderr, "Binit failed 2!\n");
+    }
+    
+    M_p_ub3 = malloc(DEFAULT_BUFFER);
+    memset(M_p_ub3, 255, DEFAULT_BUFFER);
+    if (EXFAIL==Binit(M_p_ub3, DEFAULT_BUFFER))
+    {
+        fprintf(stderr, "Binit failed 3!\n");
     }
 
     setenv("FLDTBLDIR", "./ubftab", 1);
@@ -66,6 +83,8 @@ void basic_teardown1(void)
 {
     /*printf("basic_teardown\n");*/
     free (M_p_ub1);
+    free (M_p_ub2);
+    free (M_p_ub3);
 }
 
 /**
@@ -181,6 +200,50 @@ Ensure(test_Badd_str)
  */
 Ensure(test_Badd_ubf)
 {
+    /* Add empty */
+    assert_equal(
+            Badd(M_p_ub1, T_UBF_2_FLD, (char *)M_p_ub2, 0),
+            EXSUCCEED);
+   
+    assert_equal(
+            Badd(M_p_ub1, T_UBF_2_FLD, (char *)M_p_ub2, 0),
+            EXSUCCEED);
+   
+    assert_equal(
+            Badd(M_p_ub1, T_UBF_3_FLD, (char *)M_p_ub3, 0),
+            EXSUCCEED);
+   
+    /* Add some data, 3x levels */
+    assert_equal(
+            Badd(M_p_ub2, T_UBF_FLD, (char *)M_p_ub1, 0),
+            EXSUCCEED);
+    
+    /* test field presence... */
+    UBF_LOG(log_debug, "First");
+    assert_equal(RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 0, BBADFLDID}), EXTRUE);
+    
+    assert_equal(Berror, EXSUCCEED);
+    
+    UBF_LOG(log_debug, "2nd");
+    
+    assert_equal(
+            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 1, BBADFLDID}),
+            EXTRUE);
+    assert_equal(Berror, EXSUCCEED);
+            
+    assert_equal(
+            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_2_FLD, 2, BBADFLDID}),
+            EXFALSE);
+    
+    assert_equal(Berror, EXSUCCEED);
+            
+    assert_equal(
+            RBpres(M_p_ub2, (int []){T_UBF_FLD, 0, T_UBF_3_FLD, 0, BBADFLDID}),
+            EXFALSE);
+    assert_equal(Berror, EXSUCCEED);
+                        
+            
+    /* Load some values to-sub buffer */
     
 }
 
@@ -306,6 +369,8 @@ TestSuite *ubf_Badd_tests(void)
     add_test(suite, test_Badd_str);
     add_test(suite, test_Baddfast1);
     add_test(suite, test_Baddfast2);
+    add_test(suite, test_Badd_ubf);
+    
 
     return suite;
 }
