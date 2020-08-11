@@ -33,7 +33,7 @@ distributions.
 ---------------------------------------------------------------------
 $ su - root
 # emerge sync
-# emerge -av indent asciidoc dblatex libxml2 cmake dia \
+# emerge -av indent asciidoc libxml2 cmake dia \
 	flex bison zlib openssl app-crypt/gpgme dev-vcs/git
 ---------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ $ su - root
 The same goes on Raspbian (Raspberry Pi OS)
 ---------------------------------------------------------------------
 $ sudo apt-get update
-$ sudo apt-get install indent asciidoc dblatex libxml2-dev \
+$ sudo apt-get install indent asciidoc libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++-dev \
 	libgpgme11-dev libxml2-dev git
@@ -52,9 +52,6 @@ Note if having issues like:
 ---------------------------------------------------------------------
 dpkg: error processing package tex-common (--configure)
 ---------------------------------------------------------------------
-
-Then you may skip the "dblatex" installation. This is optional, used for
-generating PDF documentation.
 
 If running unit tests with PostgreSQL, then following additional package shall
 be installed:
@@ -70,7 +67,7 @@ $ sudo systemctl start postgresql
 ==== System level dependencies - for Ubuntu 14.04
 ---------------------------------------------------------------------
 $ sudo apt-get update
-$ sudo apt-get install indent asciidoc dblatex libxml2-dev \
+$ sudo apt-get install indent asciidoc libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++9 libcrypto++-dev \
 	libgpgme11-dev libxml2-dev git
@@ -80,7 +77,7 @@ $ sudo apt-get install indent asciidoc dblatex libxml2-dev \
 
 ---------------------------------------------------------------------
 $ sudo apt-get update
-$ sudo apt-get install indent asciidoc dblatex libxml2-dev \
+$ sudo apt-get install indent asciidoc libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
 	libssl-dev libcrypto++-dev \
 	libgpgme11-dev libxml2-dev libxml2-utils git
@@ -92,19 +89,6 @@ be installed:
 ---------------------------------------------------------------------
 $ sudo apt-get install  postgresql postgresql-client libecpg-dev \
  libpq-dev postgresql-server-dev-all
----------------------------------------------------------------------
-
-For Linux Mint Mate 19+ additional packages are required (or you get
-following error during build):
-
----------------------------------------------------------------------
-a2x: ERROR: missing configuration file: /etc/asciidoc/dblatex/asciidoc-dblatex.xsl
----------------------------------------------------------------------
-
-Install:
-
----------------------------------------------------------------------
-$ sudo apt-get update asciidoc-dblatex
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Centos 6.x
@@ -153,7 +137,7 @@ $ su - root
 Now install system dependencies  
 
 But if you run build on *Oracle Linux*, you need to enable optional repo
-for asciidoc/gpgme-devel/dblatex
+for asciidoc and gpgme-devel.
 
 ---------------------------------------------------------------------
 # yum install yum-utils
@@ -163,7 +147,7 @@ for asciidoc/gpgme-devel/dblatex
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
 # yum install git cmake asciidoc openssl openssl-devel \
-	gpgme-devel redhat-lsb dblatex libxml2-devel
+	gpgme-devel redhat-lsb libxml2-devel
 ---------------------------------------------------------------------
 
 Centos 7 does not ship with `dia' package. Thus we will install
@@ -267,8 +251,7 @@ $ su - root
 
 ---------------------------------------------------------------------
 
-The PDF building (dblatex) is not available on this system, thus PDF documentation
-will not be built. Also the "dia" package is not available on this system, thus
+The "dia" package is not available on this system, thus
 it will be user from Fedora Core OS:
 
 ---------------------------------------------------------------------
