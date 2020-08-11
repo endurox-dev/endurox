@@ -352,16 +352,28 @@ extern NDRX_API int B16to32(UBFH *dest, UBFH *src);
 /* Recursive API: */
 
 extern NDRX_API int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen);
+extern NDRX_API int RBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, ...);
+
 extern NDRX_API int RCBget (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen, int usrtype);
+extern NDRX_API int RCBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, int usrtype, ...);
 
 extern NDRX_API char* RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
+extern NDRX_API char* RBfindv (UBFH *p_ub, BFLDLEN *p_len, ...);
 
 extern NDRX_API char *RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype);
+extern NDRX_API char *RCBfindv (UBFH *p_ub, BFLDLEN *len, int usrtype, ...);
+
 extern NDRX_API int RBpres (UBFH *p_ub, BFLDID *fldidocc);
+extern NDRX_API int RBpresv (UBFH *p_ub, ...);
+
 extern NDRX_API int RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
+extern NDRX_API int RCBvgetv(UBFH *p_ub, char *cname, BFLDOCC occ,
+            char *buf, BFLDLEN *len, int usrtype, long flags, ...);
+
 extern NDRX_API int RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
+extern NDRX_API int RBvnullv(UBFH *p_ub, char *cname, BFLDOCC occ, ...);
 
 #if defined(__cplusplus)
 }
