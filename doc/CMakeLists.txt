@@ -34,7 +34,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
-find_program(DBLATEX "dblatex")
 
 set(PDF_NAMES ex_devguide ex_overview ex_adminman building_guide 
                        getting_started_tutorial persistent_message_queues_overview
@@ -44,30 +43,6 @@ set(HTML_NAMES ex_devguide ex_overview ex_adminman building_guide
                        getting_started_tutorial persistent_message_queues_overview
                         macos_notes aix_notes solaris_notes freebsd_notes
 						benchmark third_party_licences)
-
-# Generate PDFs...
-if(DBLATEX)
-set(A2X_OPTS_PDF -L -f pdf --doctype book)
-set(PDF_FILES)
-foreach(m IN LISTS PDF_NAMES)
-  set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.pdf)
-  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
-  add_custom_command(OUTPUT ${mf}
-    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF} ${ms}
-    DEPENDS ${ms}
-    WORKING_DIRECTORY .
-    COMMENT "Building PDF ${mf}"
-    VERBATIM)
-  list(APPEND PDF_FILES ${mf})
-
-  # Install the docs
-  install (FILES
-    ${mf}
-    DESTINATION share/endurox/doc/pdf)
-
-endforeach()
-add_custom_target(pdf ALL DEPENDS ${PDF_FILES})
-endif()
 
 # Generate HTMLs
 set(A2X_OPTS_HTML -D . -f xhtml)
@@ -86,12 +61,16 @@ foreach(m IN LISTS HTML_NAMES)
   # Install the docs
   install (FILES
     ${mf}
-    DESTINATION share/endurox/doc/html)
+    DESTINATION share/endurox/doc/html/guides)
 
 endforeach()
 add_custom_target(html ALL DEPENDS ${HTML_FILES})
 
+install (FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/docbook-xsl.css
+  DESTINATION share/endurox/doc/html/guides)
 
+# install images 
 add_subdirectory (manpage)
 add_subdirectory (api)
 #add_subdirectory (doxygen)
