@@ -71,7 +71,7 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         by combining UBF and VIEW buffers.
 * Transaction Management - Global Transactions - Two-phase commit protocol - X/Open XA
 * Clustering - on peer-to-peer basis
-* Event broker (also called publish and subscribe messaging)
+* Multi-threaded Event broker (also called publish and subscribe messaging)
 * Security - Cluster link encryption with GNU PGP framework
 * System process monitoring and self healing (pings and restarts)
 * SOA Service cache. XATMI services can be cached to LMDB database. Resulting 
@@ -101,6 +101,15 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         Payment Card Industry Data Security Standard (PCI/DSS).
 * Application monitoring with TM_MIB interface. For example NetXMS.
 * XA Driver for PostgreSQL.
+* Fully functional buildserver, buildclient, buildtms tools.
+* Provides server entry point _tmstartserver().
+* Multi-threaded dispatcher support (mindispatchthreads/maxdispatchthreads),
+        including support for tpsvrthrinit() tpsvrthrdone() callbacks.
+* Fast Pool Allocator - for performance reasons malloc results are cached, 
+        so that blocks can be re-used instead of doing malloc again, thus Enduro/X
+        is gaining overall performance.
+* Support for writing server daemons for multi-threaded servers 
+        i.e. tpacall() to self services during tpsvrinit().
       
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
