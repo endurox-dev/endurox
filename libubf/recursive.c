@@ -394,12 +394,14 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
                     "expected occ, got BBADFLDID at pos %d", pos);
             ndrx_Bset_error_fmt(BEINVAL, "Invalid recursive field identifier sequence, "
                     "expected occ, got BBADFLDID at pos %d", pos);
-            EXFAIL_OUT(ret);
+            p_ub=NULL;
+            goto out;
         }
 
         /* second is occurrence */
         fldidocc++;
-
+        pos++;
+        
         occ=*fldidocc;
         
         /* find the buffer */
@@ -411,7 +413,8 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
                     "sequence but got: %d type", BFLD_UBF, pos, typ);
             ndrx_Bset_error_fmt(BTYPERR, "Expected BFLD_UBF (%d) at "
                     "position %d in sequence but got: %d type", BFLD_UBF, pos, typ);
-            EXFAIL_OUT(ret);
+            p_ub=NULL;
+            goto out;
         }
         
         p_ub = (UBFH *)ndrx_Bfind(p_ub, bfldid, occ, len, NULL);
@@ -419,13 +422,13 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         if (NULL==p_ub)
         {
             UBF_LOG(log_error, "Buffer not found at position of field sequence %d", pos);
-            EXFAIL_OUT(ret);
+            p_ub=NULL;
+            goto out;
         }
-        
-        pos++;
-        
+
         /* step to next pair */
-        fldidocc+=1;
+        fldidocc++;
+        pos++;
         
     }
     
@@ -437,12 +440,14 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
                     pos);
             ndrx_Bset_error_fmt(BEINVAL, "Field ID not present at position %d in sequence (BBADFLDID found)",
                     pos);
-            EXFAIL_OUT(ret);
+            p_ub=NULL;
+            goto out;
         }
         
         *fldid_leaf=*fldidocc;
         
         fldidocc++;
+        pos++;
         
         if (BBADFLDID==*fldidocc)
         {
@@ -450,10 +455,27 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
                     pos);
             ndrx_Bset_error_fmt(BEINVAL, "Occurrence not present at position %d in sequence (BBADFLDID found)",
                     pos);
-            EXFAIL_OUT(ret);
+            p_ub=NULL;
+            goto out;
         }
         
         *occ_leaf=*fldidocc;    
+        
+        
+        fldidocc++;
+        pos++;
+        
+        if (BBADFLDID!=*fldidocc)
+        {
+            UBF_LOG(log_error, "Missing BBADFLDID at sequence position %d found "
+                    "(%d) - expect corrupted memory",
+                    pos, *fldidocc);
+            ndrx_Bset_error_fmt(BEINVAL, "Missing BBADFLDID at sequence position "
+                    "%d found (%d) - expect corrupted memory",
+                    pos, *fldidocc);
+            p_ub=NULL;
+            goto out;
+        }
     }
     
     UBF_LOG(log_debug, "Leaf fldid=%d occ=%d", *fldid_leaf, *occ_leaf);
@@ -503,6 +525,8 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
         NDRX_STRCAT_S(debug_buf, debug_buf_len, "]");
         
         /* step to next */
+        fldidocc++;
+        pos++;
         
     }
 }
