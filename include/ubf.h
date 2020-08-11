@@ -48,21 +48,26 @@ extern "C" {
 
 #define UBF_VERSION     1
 #define UBF_EXTENDED
-#define MAXUBFLEN	0xffffffff		/* Maximum UBFH length        */
+#define MAXUBFLEN	0xffffffff		 /**< Maximum UBFH length               */
 
-#define UBFFLDMAX	64               /**< Max UBF buffer field len        */
+#define UBFFLDMAX	64               /**< Max UBF buffer field len          */
 /* UFB field types, suggest the c data types */
     
-/** Minimum data type code */
+/** Minimum data type code                                                  */
 #define BFLD_MIN        0
-/** 'short' C data type for UBF buffer */
+/** 'short' C data type for UBF buffer                                      */
 #define BFLD_SHORT	0
-/** 'long' C data type for UBF buffer */
+/** 'long' C data type for UBF buffer                                       */
 #define BFLD_LONG	1
+/** 'char' C data type for UBF field                                        */
 #define BFLD_CHAR	2
+/** 'float' C data type for UBF field                                       */
 #define BFLD_FLOAT	3
+/** 'double' C data type for UBF field                                      */
 #define BFLD_DOUBLE	4
+/** 'char *' C data type for UBF field (zero terminated string)             */
 #define BFLD_STRING	5
+/** byte array data type                                                    */
 #define BFLD_CARRAY	6
     
 #define BFLD_INT        7   /**< Used for view access                       */
@@ -73,10 +78,12 @@ extern "C" {
 
 #define BFLD_MAX	11
 
-/* invalid field id - returned from functions where field id not found */
+/** invalid field id - returned from functions where field id not found     */
 #define BBADFLDID (BFLDID)0
-/* define an invalid field id used for first call to Bnext */
+/** define an invalid field id used for first call to Bnext                 */
 #define BFIRSTFLDID (BFLDID)0
+/** Indicates the termination of FLDID,OCC,..,FLDID,OCC,BBADFLDOCC list     */
+#define BBADFLDOCC (BFLDID)-1
 
 #define BMINVAL             0  /**< min error */
 #define BERFU0              1  /**< Reserved for future use */
