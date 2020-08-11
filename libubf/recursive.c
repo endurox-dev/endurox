@@ -388,9 +388,6 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         /* first is fld id */
         bfldid=*fldidocc;
         
-        /* second is occurrence */
-        fldidocc++;
-        
         if (BBADFLDID==*fldidocc)
         {
             UBF_LOG(log_error, "Invalid recursive field identifier sequence, "
@@ -399,6 +396,9 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
                     "expected occ, got BBADFLDID at pos %d", pos);
             EXFAIL_OUT(ret);
         }
+
+        /* second is occurrence */
+        fldidocc++;
 
         occ=*fldidocc;
         
