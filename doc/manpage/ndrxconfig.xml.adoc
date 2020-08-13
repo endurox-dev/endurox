@@ -664,7 +664,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *xadmin(8)*, *ndrxd(8)*, *ndrxconfig.xml(5)*, *ndrxdebug.conf(5)*, *ex_envover(5)*,
-*exencrytp(8)*
+*exencrypt(8)*
 
 COPYING
 -------
