@@ -158,7 +158,7 @@ expublic int cmd_brrefresh (command_call_t * call, char *data, size_t len, int c
     /* So we get the full list we should iter over */
     for (i=0; i<refresh->count; i++)
     {
-        NDRX_LOG(log_error, "Got service from node: %d - [%s] count: [%d], mode: [%c]", 
+        NDRX_LOG(log_info, "Got service from node: %d - [%s] count: [%d], mode: [%c]", 
                 refresh->call.caller_nodeid,
                 refresh->svcs[i].svc_nm,
                 refresh->svcs[i].count,
