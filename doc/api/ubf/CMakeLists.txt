@@ -129,6 +129,7 @@ set(MAN3_NAMES
     Bflddbdrop
     Bflddbdel
     Bflddbadd
+    Bflddbname
     Bnum
     Bjoin
     Bojoin
