@@ -109,7 +109,7 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         so that blocks can be re-used instead of doing malloc again, thus Enduro/X
         is gaining overall performance.
 * Support of writing server daemons for multi-threaded servers 
-        i.e. tpacall() to self services during tpsvrinit().
+        i.e. tpacall() to self advertised services during tpsvrinit().
       
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
