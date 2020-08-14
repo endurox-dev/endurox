@@ -183,7 +183,8 @@ endforeach()
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/xatmi)
+  DESTINATION share/endurox/doc/html/xatmi
+  OPTIONAL)
 
 add_custom_target(html_man3_xatmi ALL DEPENDS ${XHTML_MAN_NAMES})
 

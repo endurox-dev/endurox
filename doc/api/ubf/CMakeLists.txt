@@ -180,7 +180,8 @@ endforeach()
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/ubf)
+  DESTINATION share/endurox/doc/html/ubf
+  OPTIONAL)
 
 add_custom_target(html_man3_ubf ALL DEPENDS ${XHTML_MAN_NAMES})
 
