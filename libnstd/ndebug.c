@@ -1239,7 +1239,7 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     ndrx_get_dt_local(&ldate, &ltime, &lusec);
     
     snprintf(line_start, sizeof(line_start), 
-        "%c:%s:%d:%08x:%5d:%08llx:%03ld:%08ld:%06ld%06d:%-12.12s:%-8.8s:%04ld:",
+        "%c:%s:%d:%08x:%50d:%08llx:%03ld:%08ld:%06ld%06d:%-12.12s:%-8.8s:%04ld:",
         dbg_ptr->code, dbg_ptr->module, lev, (unsigned int)dbg_ptr->hostnamecrc32, 
             (int)dbg_ptr->pid, (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec), func_last, line_print, line);
