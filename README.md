@@ -108,8 +108,8 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
 * Fast Pool Allocator - for performance reasons malloc results are cached, 
         so that blocks can be re-used instead of doing malloc again, thus Enduro/X
         is gaining overall performance.
-* Support for writing server daemons for multi-threaded servers 
-        i.e. tpacall() to self services during tpsvrinit().
+* Support of writing server daemons for multi-threaded servers 
+        i.e. tpacall() to self advertised services during tpsvrinit().
       
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
@@ -500,7 +500,7 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580
 
 - Version 7.0.40 released on 11/07/2020 (stable) Bug #570, Support #571
 
-- Version 7.0.42 released on 02/08/2020 (stable) Bug #572, Bug #578
+- Version 7.0.42 released on 13/08/2020 (stable) Bug #572, Bug #578, Feature #581
 
 # Build configurations
 
