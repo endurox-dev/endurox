@@ -68,7 +68,8 @@ add_custom_target(html ALL DEPENDS ${HTML_FILES})
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/guides)
+  DESTINATION share/endurox/doc/html/guides
+  OPTIONAL)
 
 # install images 
 add_subdirectory (manpage)

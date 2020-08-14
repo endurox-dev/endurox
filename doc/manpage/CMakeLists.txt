@@ -117,7 +117,8 @@ add_custom_target(man5html ALL DEPENDS ${XHTML_MAN_NAMES})
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html5/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/man5)
+  DESTINATION share/endurox/doc/html/man5
+  OPTIONAL)
 
 
 #
@@ -148,7 +149,8 @@ add_custom_target(man8html ALL DEPENDS ${XHTML_MAN_NAMES})
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html8/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/man8)
+  DESTINATION share/endurox/doc/html/man8
+  OPTIONAL)
 
 # end.
 
