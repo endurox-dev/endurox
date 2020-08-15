@@ -66,6 +66,62 @@ foreach(m IN LISTS HTML_NAMES)
 endforeach()
 add_custom_target(html ALL DEPENDS ${HTML_FILES})
 
+
+install (FILES
+    class_diagram.png
+    cluster_detail.png
+    cluster_links_center.png
+    cluster_links_mix.png
+    cluster_links_nocentre.png
+    common_config.png
+    endurox_overview.png
+    epoll_message_dispatch_mode.png
+    event_processing.png
+    exforward_forward.png
+    exforward_tpcall.png
+    module_dependency.png
+    netxms_avg_rsp.png
+    netxms_clients_list.png
+    netxms_new_dci2.png
+    netxms_new_dci.png
+    netxms_qsize.png
+    netxms_service_chk.png
+    netxms_succ.png
+    netxms_tps.png
+    netxms_tps_transf.png
+    poll_message_dispatch_mode.png
+    reqlogging.png
+    rt-patching.png
+    server_monitoring_and_recovery.png
+    systemv_message_dispatch_mode.png
+    tmqinternals.png
+    tpcache.png
+    tpenqueue_auto.png
+    tpenqueue_tpdequeue.png
+    tpnotify.png
+    transaction_groups.png
+    endurox-load-balance.jpg
+    Endurox-product.jpg
+    excache.jpg
+    benchmark/01_tpcall.png
+    benchmark/02_tpcall_network.png
+    benchmark/03_tpcall_threads.png
+    benchmark/04_tpacall.png
+    benchmark/05_persistent_storage.png
+    benchmark/06_tpcache.png
+  DESTINATION share/endurox/doc/html/guides
+  OPTIONAL)
+
+install (FILES
+    benchmark/01_tpcall.png
+    benchmark/02_tpcall_network.png
+    benchmark/03_tpcall_threads.png
+    benchmark/04_tpacall.png
+    benchmark/05_persistent_storage.png
+    benchmark/06_tpcache.png
+  DESTINATION share/endurox/doc/html/guides/benchmark
+  OPTIONAL)
+
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/docbook-xsl.css
   DESTINATION share/endurox/doc/html/guides
