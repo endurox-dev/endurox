@@ -494,7 +494,6 @@ ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
-add_subdirectory (sampleconfig) #  For install
 
 #
 # Install license files
