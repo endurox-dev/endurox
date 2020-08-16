@@ -174,13 +174,13 @@ foreach(m IN LISTS HTML_MAN_NAMES)
   # Install the docs
   install (FILES
     ${mf}
-    DESTINATION share/endurox/doc/html/ubf)
+    DESTINATION share/endurox/doc/html/api/ubf)
 
 endforeach()
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/ubf
+  DESTINATION share/endurox/doc/html/api/ubf
   OPTIONAL)
 
 add_custom_target(html_man3_ubf ALL DEPENDS ${XHTML_MAN_NAMES})

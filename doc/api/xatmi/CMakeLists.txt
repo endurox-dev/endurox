@@ -177,13 +177,13 @@ foreach(m IN LISTS HTML_MAN_NAMES)
   # Install the docs
   install (FILES
     ${mf}
-    DESTINATION share/endurox/doc/html/xatmi)
+    DESTINATION share/endurox/doc/html/api/xatmi)
 
 endforeach()
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html/docbook-xsl.css
-  DESTINATION share/endurox/doc/html/xatmi
+  DESTINATION share/endurox/doc/html/api/xatmi
   OPTIONAL)
 
 add_custom_target(html_man3_xatmi ALL DEPENDS ${XHTML_MAN_NAMES})
