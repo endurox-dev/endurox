@@ -45,7 +45,7 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            libndrxxapq libndrxxaecpg libndrxxawsmqs libndrxxaoras tpadmsv libndrxxanulls
            libndrxxatmsx)
 
-set(XHTML_MAN_NAMES ${MAN5_NAMES} ${MAN8_NAMES})
+set(HTML_FILES ${MAN5_NAMES} ${MAN8_NAMES})
 
 
 # Generate MAN5
@@ -95,7 +95,7 @@ add_custom_target(man8 ALL DEPENDS ${MAN8_FILES})
 # html man pages, man 5
 #
 set(A2X_OPTS_XHTML_MAN -f xhtml -D html5)
-set(XHTML_MAN_NAMES)
+set(HTML_FILES)
 foreach(m IN LISTS MAN5_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/html5/${m}.html)
   set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
@@ -105,7 +105,7 @@ foreach(m IN LISTS MAN5_NAMES)
     WORKING_DIRECTORY .
     COMMENT "Building HTML_MAN ${mf}"
     VERBATIM)
-  list(APPEND XHTML_MAN_NAMES ${mf})
+  list(APPEND HTML_FILES ${mf})
 
   # Install the docs
   install (FILES
@@ -113,7 +113,7 @@ foreach(m IN LISTS MAN5_NAMES)
     DESTINATION share/endurox/doc/html/manuals)
 
 endforeach()
-add_custom_target(man5html ALL DEPENDS ${XHTML_MAN_NAMES})
+add_custom_target(man5html ALL DEPENDS ${HTML_FILES})
 
 install (FILES
   ${CMAKE_CURRENT_BINARY_DIR}/html5/docbook-xsl.css
@@ -125,7 +125,7 @@ install (FILES
 # html man pages, man 8
 #
 set(A2X_OPTS_XHTML_MAN -f xhtml -D html8)
-set(XHTML_MAN_NAMES)
+set(HTML_FILES)
 foreach(m IN LISTS MAN8_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/html8/${m}.html)
   set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
@@ -135,7 +135,7 @@ foreach(m IN LISTS MAN8_NAMES)
     WORKING_DIRECTORY .
     COMMENT "Building HTML_MAN ${mf}"
     VERBATIM)
-  list(APPEND XHTML_MAN_NAMES ${mf})
+  list(APPEND HTML_FILES ${mf})
 
   # Install the docs
   install (FILES
@@ -144,7 +144,7 @@ foreach(m IN LISTS MAN8_NAMES)
 
 endforeach()
 
-add_custom_target(man8html ALL DEPENDS ${XHTML_MAN_NAMES})
+add_custom_target(man8html ALL DEPENDS ${HTML_FILES})
 
 # end.
 
