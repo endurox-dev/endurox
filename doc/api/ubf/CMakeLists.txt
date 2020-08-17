@@ -159,7 +159,7 @@ endforeach()
 add_custom_target(man3_ubf ALL DEPENDS ${MAN3_FILES})
 
 set(A2X_OPTS_XHTML_MAN -f xhtml -D html)
-set(XHTML_MAN_NAMES)
+set(HTML_FILES)
 foreach(m IN LISTS HTML_MAN_NAMES)
   set(mf ${CMAKE_CURRENT_BINARY_DIR}/html/${m}.html)
   set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
@@ -169,7 +169,7 @@ foreach(m IN LISTS HTML_MAN_NAMES)
     WORKING_DIRECTORY .
     COMMENT "Building HTML_MAN ${mf}"
     VERBATIM)
-  list(APPEND XHTML_MAN_NAMES ${mf})
+  list(APPEND HTML_FILES ${mf})
 
   # Install the docs
   install (FILES
@@ -183,7 +183,7 @@ install (FILES
   DESTINATION share/endurox/doc/html/api/ubf
   OPTIONAL)
 
-add_custom_target(html_man3_ubf ALL DEPENDS ${XHTML_MAN_NAMES})
+add_custom_target(html_man3_ubf ALL DEPENDS ${HTML_FILES})
 
 # end.
 
