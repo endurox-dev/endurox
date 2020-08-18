@@ -81,7 +81,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplog(3)*, *ex_overview*
+*tplog(3)*, *ex_overview(guides)*
 
 COPYING
 -------
