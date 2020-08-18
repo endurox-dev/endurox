@@ -492,7 +492,7 @@ Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
 - Version 7.5.1 released on 10/06/2020 (development) Feature #547, Support #553, Feature #545, Feature #540,
 Feature #218, Feature #368, Feature #398, Feature #440, Feature #463, Feature #497, Feature #511, Feature #539,
-Bug #542, Feature #549, Bug #576, Feature #577, Bug #580
+Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.0.38 released on 03/07/2020 (stable) Bug #565
 
@@ -501,6 +501,8 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580
 - Version 7.0.40 released on 11/07/2020 (stable) Bug #570, Support #571
 
 - Version 7.0.42 released on 13/08/2020 (stable) Bug #572, Bug #578, Feature #581
+
+- Version 7.5.2 released on 18/08/2020 (stable) First release version.
 
 # Build configurations
 
