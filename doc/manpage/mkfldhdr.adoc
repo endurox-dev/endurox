@@ -162,7 +162,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ex_overview*, *ex_env(5)*
+*ex_overview(guides)*, *ex_env(5)*
 
 COPYING
 -------

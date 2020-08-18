@@ -69,7 +69,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*ndrxd(8)*, *ex_overview*, *ndrxconfig.xml(5)*
+*ndrxd(8)*, *ex_overview(guides)*, *ndrxconfig.xml(5)*
 
 
 COPYING
