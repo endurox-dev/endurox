@@ -34,7 +34,7 @@
 
 cmake_minimum_required (VERSION 3.1) 
 project (ENDUROX) 
-set(VERSION "7.5.1")
+set(VERSION "7.5.2")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -494,7 +494,6 @@ ENDIF (DEFINE_DISABLEDOC)
 
 add_subdirectory (include) #  For install
 add_subdirectory (scripts) #  For install
-add_subdirectory (sampleconfig) #  For install
 
 #
 # Install license files

@@ -34,7 +34,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
-find_program(DBLATEX "dblatex")
 
 set(MAN5_NAMES ex_env ndrxdebug.conf ndrxconfig.xml ex_envover q.conf
                 viewfile tpcache.ini ubfdb.ini tm_mib)
@@ -45,13 +44,8 @@ set(MAN8_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv tmsrv
            edb_dump edb_copy edb_stat edb_load tpcachebtsv tpcached tpcachesv
            libndrxxapq libndrxxaecpg libndrxxawsmqs libndrxxaoras tpadmsv libndrxxanulls
            libndrxxatmsx)
-# Joined lists
-#set(PDF_MAN_NAMES xadmin ndrxd ud mkfldhdr tpbridge tpevsrv 
-#                ex_env ndrxdebug.conf ndrxconfig.xml ex_envover
-#                tmsrv tprecover cpmsrv tmqueue q.conf)
 
-
-set(PDF_MAN_NAMES ${MAN5_NAMES} ${MAN8_NAMES})
+set(HTML_FILES ${MAN5_NAMES} ${MAN8_NAMES})
 
 
 # Generate MAN5
@@ -97,28 +91,60 @@ foreach(m IN LISTS MAN8_NAMES)
 endforeach()
 add_custom_target(man8 ALL DEPENDS ${MAN8_FILES})
 
-if(DBLATEX)
-set(A2X_OPTS_PDF_MAN -L -f pdf --doctype book)
-set(PDF_MAN_FILES)
-foreach(m IN LISTS PDF_MAN_NAMES)
-  set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.pdf)
+#
+# html man pages, man 5
+#
+set(A2X_OPTS_XHTML_MAN -f xhtml -D html5)
+set(HTML_FILES)
+foreach(m IN LISTS MAN5_NAMES)
+  set(mf ${CMAKE_CURRENT_BINARY_DIR}/html5/${m}.html)
   set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
-    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF_MAN} ${ms}
+    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_XHTML_MAN} ${ms}
     DEPENDS ${ms}
     WORKING_DIRECTORY .
-    COMMENT "Building PDF_MAN ${mf}"
+    COMMENT "Building HTML_MAN ${mf}"
     VERBATIM)
-  list(APPEND PDF_MAN_FILES ${mf})
+  list(APPEND HTML_FILES ${mf})
 
   # Install the docs
   install (FILES
     ${mf}
-    DESTINATION share/endurox/doc/pdf)
+    DESTINATION share/endurox/doc/html/manuals)
 
 endforeach()
-add_custom_target(pdf_man ALL DEPENDS ${PDF_MAN_FILES})
-endif()
+add_custom_target(man5html ALL DEPENDS ${HTML_FILES})
+
+install (FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/html5/docbook-xsl.css
+  DESTINATION share/endurox/doc/html/manuals
+  OPTIONAL)
+
+
+#
+# html man pages, man 8
+#
+set(A2X_OPTS_XHTML_MAN -f xhtml -D html8)
+set(HTML_FILES)
+foreach(m IN LISTS MAN8_NAMES)
+  set(mf ${CMAKE_CURRENT_BINARY_DIR}/html8/${m}.html)
+  set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
+  add_custom_command(OUTPUT ${mf}
+    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_XHTML_MAN} ${ms}
+    DEPENDS ${ms}
+    WORKING_DIRECTORY .
+    COMMENT "Building HTML_MAN ${mf}"
+    VERBATIM)
+  list(APPEND HTML_FILES ${mf})
+
+  # Install the docs
+  install (FILES
+    ${mf}
+    DESTINATION share/endurox/doc/html/manuals)
+
+endforeach()
+
+add_custom_target(man8html ALL DEPENDS ${HTML_FILES})
 
 # end.
 

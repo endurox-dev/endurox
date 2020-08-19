@@ -155,7 +155,7 @@ expublic int UBF_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
         if (outbufobj->type_id!=BUF_TYPE_UBF)
         {
             NDRX_LOG(log_info, "User buffer %d is different, "
-                    "free it up and re-allocate as UBF", G_buf_descr[outbufobj->type_id]);
+                    "free it up and re-allocate as UBF", G_buf_descr[outbufobj->type_id].type);
             ndrx_tpfree(*odata, outbufobj);
             *odata=NULL;
         }
