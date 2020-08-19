@@ -378,7 +378,7 @@ expublic int emq_getattr(mqd_t emqd, struct mq_attr *emqstat)
 }
 
 /**
- * Confiugre notification
+ * Configure notification
  * @param emqd
  * @param notification
  * @return 

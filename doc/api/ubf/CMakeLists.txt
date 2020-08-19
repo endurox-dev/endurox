@@ -34,7 +34,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 find_program(A2X_EXECUTABLE NAMES a2x)
-find_program(DBLATEX "dblatex")
 
 set(MAN3_NAMES 
     Bchg
@@ -132,12 +131,13 @@ set(MAN3_NAMES
     Bflddbdrop
     Bflddbdel
     Bflddbadd
+    Bflddbname
     Bnum
     Bjoin
     Bojoin
     Bneeded
    )
-set(PDF_MAN_NAMES ${MAN3_NAMES})
+set(HTML_MAN_NAMES ${MAN3_NAMES})
 
 # Generate MAN3
 set(A2X_OPTS_MAN3 --format=manpage -D man3)
@@ -160,28 +160,32 @@ foreach(m IN LISTS MAN3_NAMES)
 endforeach()
 add_custom_target(man3_ubf ALL DEPENDS ${MAN3_FILES})
 
-if(DBLATEX)
-set(A2X_OPTS_PDF_MAN -L -f pdf --doctype book)
-set(PDF_MAN_FILES)
-foreach(m IN LISTS PDF_MAN_NAMES)
-  set(mf ${CMAKE_CURRENT_BINARY_DIR}/${m}.pdf)
+set(A2X_OPTS_XHTML_MAN -f xhtml -D html)
+set(HTML_FILES)
+foreach(m IN LISTS HTML_MAN_NAMES)
+  set(mf ${CMAKE_CURRENT_BINARY_DIR}/html/${m}.html)
   set(ms ${CMAKE_CURRENT_SOURCE_DIR}/${m}.adoc)
   add_custom_command(OUTPUT ${mf}
-    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_PDF_MAN} ${ms}
+    COMMAND ${A2X_EXECUTABLE} ${A2X_OPTS_XHTML_MAN} ${ms}
     DEPENDS ${ms}
     WORKING_DIRECTORY .
-    COMMENT "Building PDF_MAN ${mf}"
+    COMMENT "Building HTML_MAN ${mf}"
     VERBATIM)
-  list(APPEND PDF_MAN_FILES ${mf})
+  list(APPEND HTML_FILES ${mf})
 
   # Install the docs
   install (FILES
     ${mf}
-    DESTINATION share/endurox/doc/pdf)
+    DESTINATION share/endurox/doc/html/api/ubf)
 
 endforeach()
-add_custom_target(pdf_man3_ubf ALL DEPENDS ${PDF_MAN_FILES})
-endif()
+
+install (FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/html/docbook-xsl.css
+  DESTINATION share/endurox/doc/html/api/ubf
+  OPTIONAL)
+
+add_custom_target(html_man3_ubf ALL DEPENDS ${HTML_FILES})
 
 # end.
 

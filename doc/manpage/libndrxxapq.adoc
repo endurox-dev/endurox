@@ -251,7 +251,7 @@ $ psql -U testuser -d testdb -h localhost
 
 testdb=> select * from manextest;
  userid 
---------
+========
       2
 (1 row)
 

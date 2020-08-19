@@ -6,7 +6,7 @@ NDRX_ATFORK_CHILD(3)
 NAME
 ----
 ndrx_atfork_child - Function to be executed by child process after the fork
-if ndrx_fork() not used
+if ndrx_fork() is not used
 
 
 SYNOPSIS
@@ -23,14 +23,14 @@ DESCRIPTION
 -----------
 When process is copied by *fork()* system call, *ndrx_atfork_child()* shall be
 executed by child process after the fork call. This ensures that Enduro/X 
-sub-systems for child process cleans up any open resources. Particularly fork is 
+sub-systems for child process cleans up any open resources. Particularly if fork is 
 done by XATMI server then function deallocates any server resources
 open. *NOTE* that if any thread is doing XATMI client tasks, then *tpterm(3)*
-shall be called period fork is done.
+shall be called prior fork() is executed.
 
 The logic of function is subject of change and in future releases some other 
 tasks might be required to be done by Enduro/X after process forking, 
-thus it is recommended to use *ndrx_fork()*, call manually *ndrx_atfork_chikld()* 
+thus it is recommended to use *ndrx_fork()*, call manually *ndrx_atfork_child()* 
 or register it with *pthread_atfork()*
 
 RETURN VALUE

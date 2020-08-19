@@ -49,7 +49,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bvchg(3)* *Bvsizeof(3)*
+*CBvchg(3)* *Bvsizeof(3)*
 
 COPYING
 -------
