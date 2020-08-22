@@ -441,7 +441,6 @@ add_subdirectory (libcgreen)
 add_subdirectory (libexuuid)
 add_subdirectory (libubf)
 add_subdirectory (libnetproto)
-add_subdirectory (ubftest)
 add_subdirectory (mkfldhdr)
 # Enduro/X sub-directories for ATMI
 add_subdirectory (libatmi) # General Purpose ATMI library
@@ -484,6 +483,7 @@ add_subdirectory (xadrv) # XA Drivers for RMs
 add_subdirectory (cconfsrv) # Common-Config server
 add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (enctools) # XA Drivers for RMs
+add_subdirectory (ubftest) # UBF library testing
 add_subdirectory (atmitest) #  ATMI testing
 
 IF(DEFINE_DISABLEDOC)

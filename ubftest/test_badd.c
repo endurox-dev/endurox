@@ -40,7 +40,7 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "ndebug.h"
-
+#include "test_view.h"
 
 
 #define DEFAULT_BUFFER  1024
@@ -61,9 +61,9 @@ Ensure(basic_setup1)
         fprintf(stderr, "Binit failed 1!\n");
     }
     
-    M_p_ub2 = malloc(DEFAULT_BUFFER);
-    memset(M_p_ub2, 255, DEFAULT_BUFFER);
-    if (EXFAIL==Binit(M_p_ub2, DEFAULT_BUFFER))
+    M_p_ub2 = malloc(DEFAULT_BUFFER*3);
+    memset(M_p_ub2, 255, DEFAULT_BUFFER*3);
+    if (EXFAIL==Binit(M_p_ub2, DEFAULT_BUFFER*3))
     {
         fprintf(stderr, "Binit failed 2!\n");
     }
@@ -77,6 +77,10 @@ Ensure(basic_setup1)
 
     setenv("FLDTBLDIR", "./ubftab", 1);
     setenv("FIELDTBLS", "Exfields,test.fd", 1);
+    
+    /* set view env... */
+    setenv("VIEWDIR", "./", 1);
+    setenv("VIEWFILES", "test_view.V", 1);
 }
 
 void basic_teardown1(void)
@@ -196,10 +200,29 @@ Ensure(test_Badd_str)
 }
 
 /**
- * TODO: Add UBF sub-buffer tests
+ * UBF sub-buffer tests + ptr & view test
+ * This will fill up sme recursive data to M_p_ub2
  */
 Ensure(test_Badd_ubf)
 {
+    char tmp_buf[128];
+    int l;
+    struct MYVIEW1 v;
+    BVIEWFLD vf;
+    int i;
+    
+    assert_equal(
+            Badd(M_p_ub2, T_STRING_4_FLD, "HELLO4", 0),
+            EXSUCCEED);
+    
+    assert_equal(
+            Badd(M_p_ub3, T_STRING_2_FLD, "HELLO WORLD", 0),
+            EXSUCCEED);
+    
+    assert_equal(
+            Badd(M_p_ub3, T_STRING_2_FLD, "HELLO WORLD 2", 0),
+            EXSUCCEED);
+    
     /* Add empty */
     assert_equal(
             Badd(M_p_ub1, T_UBF_2_FLD, (char *)M_p_ub2, 0),
@@ -208,7 +231,7 @@ Ensure(test_Badd_ubf)
     assert_equal(
             Badd(M_p_ub1, T_UBF_2_FLD, (char *)M_p_ub2, 0),
             EXSUCCEED);
-   
+    
     assert_equal(
             Badd(M_p_ub1, T_UBF_3_FLD, (char *)M_p_ub3, 0),
             EXSUCCEED);
@@ -217,6 +240,36 @@ Ensure(test_Badd_ubf)
     assert_equal(
             Badd(M_p_ub2, T_UBF_FLD, (char *)M_p_ub1, 0),
             EXSUCCEED);
+    
+    /* Add field before UBF (ptr)  */
+    assert_equal(
+            CBadd(M_p_ub2, T_CARRAY_2_FLD, "0x55", 0, BFLD_STRING),
+            EXSUCCEED);
+    
+    assert_equal(
+            CBadd(M_p_ub2, T_PTR_FLD, "0x55", 0, BFLD_STRING),
+            EXSUCCEED);
+    
+    NDRX_STRCPY_SAFE(v.tcarray5, "TEST");
+    
+    /* Load some view data... */
+    vf.data=(char *)&v;
+    vf.vflags=0;
+    NDRX_STRCPY_SAFE(vf.vname, "MYVIEW1");
+    
+    assert_equal(
+            Badd(M_p_ub2, T_VIEW_FLD, (char *)&vf, 0),
+            EXSUCCEED);
+    
+    NDRX_STRCPY_SAFE(v.tcarray5, "SOME");
+    
+    assert_equal(
+            Badd(M_p_ub2, T_VIEW_FLD, (char *)&vf, 0),
+            EXSUCCEED);
+    
+    /* add buffer full... */
+    while (EXSUCCEED==Badd(M_p_ub2, T_VIEW_FLD, (char *)&vf, 0)){}
+    assert_equal(Berror, BNOSPACE);
     
     /* test field presence... */
     UBF_LOG(log_debug, "First");
@@ -244,22 +297,48 @@ Ensure(test_Badd_ubf)
                         
             
     /* Load some values to-sub buffer */
+    assert_equal(RBgetv(M_p_ub2, tmp_buf, 0, 
+            T_UBF_FLD, 0, T_UBF_2_FLD, 0, T_STRING_4_FLD, 0, BBADFLDOCC), EXSUCCEED);
     
-}
-
-/**
- * TODO: Add VIEW sub-buffer tests
- */
-Ensure(test_Badd_view)
-{
+    assert_string_equal(tmp_buf, "HELLO4");
     
-}
-
-/**
- * TODO: Add ptr sub-buffer tests
- */
-Ensure(test_Badd_ptr)
-{
+    assert_equal(CBget(M_p_ub2, T_PTR_FLD, 0, (char *)&l, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(l, 0x55);
+    
+    /* Read view... & check values - occ 0*/
+    memset(&v, 0, sizeof(v));
+    vf.vname[0]=EXEOS;
+    vf.data=(char *)&v;
+    
+    assert_equal(Bget(M_p_ub2, T_VIEW_FLD, 0, (char *)&vf, 0), EXSUCCEED);
+    assert_string_equal(vf.vname, "MYVIEW1");
+    assert_string_equal(v.tcarray5, "TEST");
+    
+    /* occ 1 */
+    memset(&v, 0, sizeof(v));
+    vf.vname[0]=EXEOS;
+    vf.data=(char *)&v;
+    assert_equal(Bget(M_p_ub2, T_VIEW_FLD, 1, (char *)&vf, 0), EXSUCCEED);
+    assert_string_equal(vf.vname, "MYVIEW1");
+    assert_string_equal(v.tcarray5, "SOME");
+    
+    
+    /* test buffer full of FBs... */
+    assert_equal(Binit(M_p_ub2, Bsizeof(M_p_ub2)), EXSUCCEED);
+    
+    i=0;
+    while (EXSUCCEED==Badd(M_p_ub2, T_UBF_3_FLD, (char *)M_p_ub3, 0)){i++;}
+    assert_equal(Berror, BNOSPACE);
+    assert_not_equal(i, 0);
+    
+    
+    /* test buffer full of ptrs */
+    assert_equal(Binit(M_p_ub2, Bsizeof(M_p_ub2)), EXSUCCEED);
+    
+    i=0;
+    while (EXSUCCEED==Badd(M_p_ub2, T_PTR_FLD, (char *)M_p_ub3, 0)){i++;}
+    assert_equal(Berror, BNOSPACE);
+    assert_not_equal(i, 0);
     
 }
 

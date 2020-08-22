@@ -50,7 +50,16 @@ ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D UBF_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
 
-# Exectuables
+
+add_custom_command(
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  OUTPUT test_view.h test_view.V
+  COMMAND ../viewc/viewc -n -L "../libatmi:../libatmiclt:../libnstd:../libubf" 
+        -b "../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../include -L../libatmi -L../libatmiclt -L../libnstd -L../libubf'" 
+        test_view.v_in
+  DEPENDS test_view.v_in)
+
+# Executables
 add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c 
                 test_cbget.c test_bdel.c test_expr.c test_bnext.c test_bproj.c
                 test_mem.c test_bupdate.c test_bconcat.c test_find.c test_get.c
@@ -60,7 +69,7 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
                 test_nstd_mtest4.c test_nstd_mtest5.c test_nstd_mtest6_dupcursor.c
                 test_bcmp.c test_nstd_macros.c test_nstd_debug.c test_nstd_growlist.c
                 test_nstd_standard.c test_nstd_util.c test_bnum.c test_bojoin.c test_bjoin.c
-                test_nstd_lh.c test_nstd_mtest6.c test_nstd_fpa.c test_embubf.c)
+                test_nstd_lh.c test_nstd_mtest6.c test_nstd_fpa.c test_embubf.c test_view.h test_view.V)
 
 add_executable (testedbsync test_nstd_msync.c)
 

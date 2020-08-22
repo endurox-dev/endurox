@@ -136,7 +136,7 @@ expublic dtype_str_t G_dtype_str_map[] =
 {"int",NULL,	BFLD_INT,    BFLD_INT_SIZE,    4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 7 */
 /* TODO - create support functions: */
 {"rfu0",NULL,   BFLD_RFU0,   EXFAIL,           4, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},	  /* 8 */
-{"ptr",	NULL,   BFLD_PTR,    BFLD_PTR_SIZE,    8, get_fb_dftl_size, ndrx_put_data_ptr, get_d_size_dftl, ndrx_get_data_ptr},/* 9 */
+{"ptr",	NULL,   BFLD_PTR,    BFLD_PTR_SIZE,    8, get_fb_dftl_size, put_data_dflt, get_d_size_dftl, get_data_dflt},/* 9 */
 {"ubf", "fml32",BFLD_UBF,    BFLD_UBF_SIZE,    8, ndrx_get_fb_ubf_size, ndrx_put_data_ubf, ndrx_get_d_size_ubf, ndrx_get_data_ubf},	  /* 10 */
 {"view","view32",BFLD_VIEW,  BFLD_VIEW_SIZE,   8, ndrx_get_fb_view_size, ndrx_put_data_view, ndrx_get_d_size_view, ndrx_get_data_view},	  /* 11 */
 {""}

@@ -84,6 +84,8 @@ extern "C" {
 #define BFIRSTFLDID (BFLDID)0
 /** Indicates the termination of FLDID,OCC,..,FLDID,OCC,BBADFLDOCC list     */
 #define BBADFLDOCC (BFLDID)-1
+/** Max number of FLD,OCC pairs for recursive lookup */
+#define BFLDOCCMAX (BFLDID)128  
 
 #define BMINVAL             0  /**< min error */
 #define BERFU0              1  /**< Reserved for future use */
