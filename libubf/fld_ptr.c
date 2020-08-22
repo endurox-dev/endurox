@@ -62,6 +62,7 @@
  * @param bfldid field id to install
  * @param data data ptr (use just ptr)
  * @param len data len, not used
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_put_data_ptr(dtype_str_t *t, char *fb, BFLDID bfldid, 
         char *data, int len)
@@ -121,13 +122,23 @@ out:
 expublic int ndrx_cmp_ptr (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
         char *val2, BFLDLEN len2, long mode)
 {
+    char **p1 = (char **)val1;
+    char **p2 = (char **)val2;
+    
     if (mode & UBF_CMP_MODE_STD)
     {
-        return memcmp(&val1, &val2, sizeof(UBF_ptr_t));
+        int res = *p1 - *p2;
+        
+        if (res > 0)
+            return 1;
+        else if (res < 0)
+            return -1;
+        else
+            return 0;
     }
     else
     {
-        return (0==memcmp(&val1, &val2, sizeof(UBF_ptr_t)));
+        return (*p1==*p2);
     }
 }
 

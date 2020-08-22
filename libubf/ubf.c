@@ -58,6 +58,7 @@
 #include <typed_view.h>
 #include <ubfdb.h>
 #include <ubfutil.h>
+#include <stdarg.h>
 
 #include "expluginbase.h"
 #include "ubf_tls.h"
@@ -88,9 +89,6 @@
                 ndrx_Bset_error_fmt(BEBADOP, "Invalid user type %d", X);\
                 Y;\
             }
-
-#define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
-#define VIEW_ENTRY2 if (EXSUCCEED!=ndrx_view_init()) {ret=-2; goto out;}
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -216,7 +214,7 @@ expublic int Bget (UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
 {
     API_ENTRY;
 
-    if (EXSUCCEED!=validate_entry(p_ub, bfldid,occ,0))
+    if (EXSUCCEED!=validate_entry(p_ub, bfldid, occ, 0))
     {
         UBF_LOG(log_warn, "Bget: arguments fail!");
         return EXFAIL; /* <<<< RETURN HERE! */
@@ -3633,7 +3631,7 @@ out:
 /**
  * Recursive field find
  * @param p_ub UBF buffer to search into
- * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDID sequence
+ * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDOCC sequence
  * @param p_len indicates the data size in bytes
  * @return ptr to data found or NULL in case of error
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
@@ -3665,7 +3663,7 @@ out:
 /**
  * Recursive with Convert field find
  * @param p_ub buffer to start search from
- * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDID sequence
+ * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDOCC sequence
  * @param len output ptr optional for data length indication
  * @param usrtype field type to convert to
  * @return ptr to data found or NULL in case of error
@@ -3698,7 +3696,7 @@ out:
 /**
  * Test is field present or not in recursive way
  * @param p_ub UBF buffer into which perform the search
- * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDID
+ * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDOCC
  * @return EXTRUE/EXFALSE (even in case of errro)
  */
 expublic int RBpres (UBFH *p_ub, BFLDID *fldidocc)
@@ -3765,7 +3763,7 @@ out:
 /**
  * Test the view field for NULL value
  * @param p_ub UBF buffer into which search for the view
- * @param fldidocc fldidocc fldid,occ,fldid,occ,...,fldid (of view),occ,BBADFLDID
+ * @param fldidocc fldidocc fldid,occ,fldid,occ,...,fldid (of view),occ,BBADFLDOCC
  * @param cname field name
  * @param occ field occurrence
  * @return EXSUCCEED/EXFALSE/EXFAIL in case of error
@@ -3790,6 +3788,62 @@ expublic int RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
     }
     
     ret=ndrx_RBvnull (p_ub, fldidocc, cname, occ);
+    
+out:
+    return ret;
+}
+
+/**
+ * Recursive get with var args
+ * @param p_ub UBF buffer to get value from
+ * @param buf where to unload the value
+ * @param buflen output length
+ * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int RBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, ...)
+{
+    BFLDID fldidocc[BFLDOCCMAX*2+1];
+    va_list ap;
+    int id;
+    int pos = 0;
+    int ret = EXSUCCEED;
+    
+    va_start(ap, buflen);
+    
+    while (BBADFLDOCC!=(id = va_arg(ap, int)))
+    {
+        fldidocc[pos]=id;
+        pos++;
+        if (pos >= sizeof(fldidocc))
+        {
+            ndrx_Bset_error_fmt(BEINVAL, "FLDID,OCC path too long, max %d", 
+                    BFLDOCCMAX);
+            va_end(ap);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    fldidocc[pos]=id;
+    pos++;
+    
+    va_end(ap);
+    
+    if ( pos % 2 == 0)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Expected odd number FLDID,OCC,..,"
+                "<terminator> arguments got: %d", pos);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (1==pos)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "Expected FLDID,OCC,..,"
+                "<terminator> path, got only terminator");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret=RBget (p_ub, fldidocc, buf, buflen);
     
 out:
     return ret;

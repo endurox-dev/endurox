@@ -47,6 +47,7 @@
 #include <ubf_int.h>
 #include <ubfutil.h>
 #include <fdatatype.h>
+#include <ubfview.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IS_NOT_PRINTABLE(X) !(isprint(X) && !iscntrl(X))
@@ -335,7 +336,8 @@ expublic void ndrx_debug_dump_UBF_hdr_ubflogger(int lev, char *title, UBFH *p_ub
 expublic void ndrx_debug_dump_VIEW_ubflogger(int lev, char *title, char *cstruct, char *view)
 {
     ndrx_debug_t * dbg = debug_get_ubf_ptr();
-    if (dbg->level>=lev)
+    
+    if (EXSUCCEED==ndrx_view_init() && dbg->level>=lev)
     {
         UBF_LOG(lev, "%s: VIEW [%s]", title, view);
         Bvfprint(cstruct, view, dbg->dbg_f_ptr);

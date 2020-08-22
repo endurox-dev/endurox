@@ -563,11 +563,7 @@ expublic char * get_fld_loc_binary_search(UBFH * p_ub, BFLDID bfldid, BFLDOCC oc
         p_bfldid_start= (BFLDID *)(((char *)p_bfldid_start) + *to_add1);
         start = (char *)p_bfldid_start;
     }
-    else if (type > BFLD_CARRAY)
-    {
-	    
-    }
-    
+
     /* stop will be bigger than start.... anyway (take the next field cache offset) */
     /* start from the typed offset (type cache) */
     to_add2 = (BFLDLEN *)(((char *)hdr) + M_ubf_type_cache[type+1].cache_offset);

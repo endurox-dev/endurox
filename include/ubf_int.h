@@ -111,7 +111,7 @@ extern "C" {
  * Check is this complex type, no conversions, etc..
  * @param T type to check
  */
-#define IS_TYPE_COMPLEX(T) (BFLD_PTR==T||BFLD_UBF==T||BFLD_VIEW==T)
+#define IS_TYPE_COMPLEX(T) (BFLD_UBF==T||BFLD_VIEW==T)
 
 #define CHECK_ALIGN(p, p_ub, hdr) (((long)p) > ((long)p_ub+hdr->bytes_used))
 
@@ -178,6 +178,9 @@ extern "C" {
 #define ALIGNED_SIZE_T(TNAME, DSIZE) \
     ((sizeof(TNAME) + DSIZE + DEFAULT_ALIGN -1 ) / DEFAULT_ALIGN * DEFAULT_ALIGN)
 
+    
+#define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
+#define VIEW_ENTRY2 if (EXSUCCEED!=ndrx_view_init()) {ret=-2; goto out;}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/    
 

@@ -93,6 +93,9 @@ expublic int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid,
     int ret = EXSUCCEED;
     UBF_view_t *viewfb = (UBF_view_t *)fb;
     BVIEWFLD *vdata = (BVIEWFLD *)data;
+    
+    VIEW_ENTRY;
+    
     /* find the view */
     ndrx_typedview_t * vdef = ndrx_view_get_view(vdata->vname);
     
@@ -107,7 +110,7 @@ expublic int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid,
     viewfb->dlen=vdef->ssize;
     
     NDRX_STRCPY_SAFE(viewfb->vname, vdata->vname);
-    memcpy(viewfb->data, data, vdef->ssize);
+    memcpy(viewfb->data, vdata->data, vdef->ssize);
     
 out:
     return ret;
@@ -127,6 +130,9 @@ expublic int ndrx_get_d_size_view (struct dtype_str *t, char *data,
 {
     int ret;
     BVIEWFLD *vdata = (BVIEWFLD *)data;
+    
+    VIEW_ENTRY;
+    
     /* find the view */
     ndrx_typedview_t * vdef = ndrx_view_get_view(vdata->vname);
     
@@ -216,7 +222,6 @@ expublic void ndrx_dump_view(struct dtype_ext1 *t, char *text, char *data, int *
     
     if (NULL!=data)
     {
-        
         NDRX_LOG(log_debug, "%s: View [%s] vflags [%ld]", text, 
                 viewfb->vname, viewfb->vflags);
         ndrx_debug_dump_VIEW_ubflogger(log_debug, text, viewfb->data, viewfb->vname);
