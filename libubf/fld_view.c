@@ -138,7 +138,8 @@ expublic int ndrx_get_d_size_view (struct dtype_str *t, char *data,
     
     if (NULL==vdef)
     {
-        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not loaded, check VIEWFILES env");
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not loaded, check VIEWFILES env", 
+                vdata->vname);
         EXFAIL_OUT(ret);
     }
     

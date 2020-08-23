@@ -2232,7 +2232,7 @@ out:
 }
 
 /**
- * Initialize structure field
+ * Initialize view fields (all)
  * @param cstruct memory addr
  * @param view view name
  * @return EXSUCCEED/EXFAIL
@@ -3793,6 +3793,46 @@ out:
     return ret;
 }
 
+#define NDRX_UBF_GET_FLDIDOCC(LAST_ARG) \
+    BFLDID fldidocc[BFLDOCCMAX*2+1];\
+    va_list ap;\
+    int id;\
+    int pos = 0;\
+    \
+    va_start(ap, LAST_ARG);\
+    \
+    while (BBADFLDOCC!=(id = va_arg(ap, int)))\
+    {\
+        fldidocc[pos]=id;\
+        pos++;\
+        if (pos >= sizeof(fldidocc))\
+        {\
+            ndrx_Bset_error_fmt(BEINVAL, "FLDID,OCC path too long, max %d", \
+                    BFLDOCCMAX);\
+            va_end(ap);\
+            EXFAIL_OUT(ret);\
+        }\
+    }\
+    \
+    fldidocc[pos]=id;\
+    pos++;\
+    \
+    va_end(ap);\
+    \
+    if ( pos % 2 == 0)\
+    {\
+        ndrx_Bset_error_fmt(BEINVAL, "Expected odd number FLDID,OCC,..,"\
+                "<terminator> arguments got: %d", pos);\
+        EXFAIL_OUT(ret);\
+    }\
+    \
+    if (1==pos)\
+    {\
+        ndrx_Bset_error_fmt(BEINVAL, "Expected FLDID,OCC,..,"\
+                "<terminator> path, got only terminator");\
+        EXFAIL_OUT(ret);\
+    }
+    
 /**
  * Recursive get with var args
  * @param p_ub UBF buffer to get value from
@@ -3803,47 +3843,128 @@ out:
  */
 expublic int RBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, ...)
 {
-    BFLDID fldidocc[BFLDOCCMAX*2+1];
-    va_list ap;
-    int id;
-    int pos = 0;
     int ret = EXSUCCEED;
-    
-    va_start(ap, buflen);
-    
-    while (BBADFLDOCC!=(id = va_arg(ap, int)))
-    {
-        fldidocc[pos]=id;
-        pos++;
-        if (pos >= sizeof(fldidocc))
-        {
-            ndrx_Bset_error_fmt(BEINVAL, "FLDID,OCC path too long, max %d", 
-                    BFLDOCCMAX);
-            va_end(ap);
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    fldidocc[pos]=id;
-    pos++;
-    
-    va_end(ap);
-    
-    if ( pos % 2 == 0)
-    {
-        ndrx_Bset_error_fmt(BEINVAL, "Expected odd number FLDID,OCC,..,"
-                "<terminator> arguments got: %d", pos);
-        EXFAIL_OUT(ret);
-    }
-    
-    if (1==pos)
-    {
-        ndrx_Bset_error_fmt(BEINVAL, "Expected FLDID,OCC,..,"
-                "<terminator> path, got only terminator");
-        EXFAIL_OUT(ret);
-    }
+    NDRX_UBF_GET_FLDIDOCC(buflen);
     
     ret=RBget (p_ub, fldidocc, buf, buflen);
+    
+out:
+    return ret;
+}
+
+/**
+ * Recursive Change buffer get, varargs
+ * @param p_ub UBF buffer to get value from
+ * @param buf where to unload the value
+ * @param buflen output length
+ * @param usrtype user type for data unload to ubf/buflen
+ * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int RCBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, int usrtype, ...)
+{
+    int ret = EXSUCCEED;
+    NDRX_UBF_GET_FLDIDOCC(usrtype);
+    
+    ret=RCBget (p_ub, fldidocc, buf, buflen, usrtype);
+    
+out:
+    return ret;
+}
+
+/**
+ * Recursive convert Buffer find, var-args
+ * @param p_ub UBF buffer where to search
+ * @param len data len to return (optional)
+ * @param usrtype user type to convert to found data
+ * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
+ * @return ptr to converted value or NULL in case of error
+ */
+expublic char *RCBfindv (UBFH *p_ub, BFLDLEN *len, int usrtype, ...)
+{
+    char *vret = NULL;
+    int ret = EXSUCCEED;
+    NDRX_UBF_GET_FLDIDOCC(usrtype);
+    
+    vret=RCBfind (p_ub, fldidocc, len, usrtype);
+    
+out:
+    return vret;
+}
+
+/**
+ * Recursive buffer find, var-args
+ * @param p_ub UBF buffer into which search the sub-buffer
+ * @param p_len output value
+ * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
+ * @return Value found or NULL (with error loaded)
+ */
+expublic char* RBfindv (UBFH *p_ub, BFLDLEN *p_len, ...)
+{
+    char *vret = NULL;
+    int ret = EXSUCCEED;
+    NDRX_UBF_GET_FLDIDOCC(p_len);
+    
+    vret=RBfind (p_ub, fldidocc, p_len);
+    
+out:
+    return vret;
+}
+/**
+ * Check is recursive field present, using var-args
+ * @param p_ub UBF buffer
+ * @param ... varargs to search for
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int RBpresv (UBFH *p_ub, ...)
+{
+    int ret = EXSUCCEED;
+    NDRX_UBF_GET_FLDIDOCC(p_ub);
+    
+    ret=RBpres (p_ub, fldidocc);
+    
+out:
+    return ret;
+}
+
+/**
+ * Convert view get value from UBF recursive view field. Varg-args
+ * @param p_ub UBF buffer which contains view in some of the levels
+ * @param cname view field name
+ * @param occ view occurrence
+ * @param buf buffer to which unload value to
+ * @param len optional len, on input buffer size, on output bytes copied to buf
+ * @param usrtype user type to convert view value to
+ * @param flags BVACCESS_NOTNULL - thread null view value as BNOTPRES error
+ * @param ... path to view field <FLDID>,<OCC>,...,<FLDID (of view)>,OCC,BBADFLDOCC
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int RCBvgetv(UBFH *p_ub, char *cname, BFLDOCC occ,
+            char *buf, BFLDLEN *len, int usrtype, long flags, ...)
+{
+    int ret = EXSUCCEED;
+    NDRX_UBF_GET_FLDIDOCC(flags);
+    
+    ret=RCBvget (p_ub, fldidocc, cname, occ, buf, len, usrtype, flags);
+    
+out:
+    return ret;
+}
+
+/**
+ * Check is view field NULL
+ * @param p_ub UBF buffer into which search the view field in recrusive way
+ * @param cname view field name to test
+ * @param occ view field occurrence to test
+ * @param ... varargs of <FLDID>,<OCC>,...,<FLDID (of view)>,OCC,BBADFLDOCC
+ * @return 1 - field pres, 0 - field not pres, -1 error
+ */
+expublic int RBvnullv(UBFH *p_ub, char *cname, BFLDOCC occ, ...)
+{
+    int ret = EXSUCCEED;
+    NDRX_UBF_GET_FLDIDOCC(occ);
+    
+    ret=RBvnull(p_ub, fldidocc, cname, occ);
     
 out:
     return ret;

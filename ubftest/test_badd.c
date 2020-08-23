@@ -40,7 +40,6 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include "ndebug.h"
-#include "test_view.h"
 
 
 #define DEFAULT_BUFFER  1024
@@ -207,7 +206,7 @@ Ensure(test_Badd_ubf)
 {
     char tmp_buf[128];
     int l;
-    struct MYVIEW1 v;
+    struct UBTESTVIEW1 v;
     BVIEWFLD vf;
     int i;
     
@@ -255,7 +254,7 @@ Ensure(test_Badd_ubf)
     /* Load some view data... */
     vf.data=(char *)&v;
     vf.vflags=0;
-    NDRX_STRCPY_SAFE(vf.vname, "MYVIEW1");
+    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW1");
     
     assert_equal(
             Badd(M_p_ub2, T_VIEW_FLD, (char *)&vf, 0),
@@ -311,7 +310,7 @@ Ensure(test_Badd_ubf)
     vf.data=(char *)&v;
     
     assert_equal(Bget(M_p_ub2, T_VIEW_FLD, 0, (char *)&vf, 0), EXSUCCEED);
-    assert_string_equal(vf.vname, "MYVIEW1");
+    assert_string_equal(vf.vname, "UBTESTVIEW1");
     assert_string_equal(v.tcarray5, "TEST");
     
     /* occ 1 */
@@ -319,7 +318,7 @@ Ensure(test_Badd_ubf)
     vf.vname[0]=EXEOS;
     vf.data=(char *)&v;
     assert_equal(Bget(M_p_ub2, T_VIEW_FLD, 1, (char *)&vf, 0), EXSUCCEED);
-    assert_string_equal(vf.vname, "MYVIEW1");
+    assert_string_equal(vf.vname, "UBTESTVIEW1");
     assert_string_equal(v.tcarray5, "SOME");
     
     

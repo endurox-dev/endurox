@@ -41,6 +41,7 @@ extern "C" {
 
 #include <cgreen/cgreen.h>
 #include <ubf.h>
+#include "test_view.h"
 
 
 #define BIG_TEST_STRING \
