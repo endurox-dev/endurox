@@ -41,6 +41,20 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 
+exprivate char *M_some_ptr1 = "HELLOptr";
+exprivate char *M_some_ptr2 = "HELLOptr";
+
+/**
+ * Basic preparation before the test
+ */
+Ensure(cmp_basic_setup1)
+{
+    /* set view env... */
+    setenv("VIEWDIR", "./", 1);
+    setenv("VIEWFILES", "test_view.V", 1);
+}
+
+
 /**
  * Load data1
  */
@@ -53,7 +67,7 @@ exprivate void load1(UBFH *p_ub)
     double d = 12312.1111;
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
-
+    
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
@@ -61,9 +75,9 @@ exprivate void load1(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
-
+    
 }
-
+    
 /**
  * Load data 2
  */
@@ -333,13 +347,140 @@ Ensure(test_Bsubset)
     
 }
 
+/**
+ * Compare ptrs values
+ */
+Ensure(test_Bcmp_ptr)
+{
+    char fb[1024];
+    char fb_2[2048];
+    long ptr1;
+    long ptr2;
+    UBFH *p_ub = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    
+    ptr1=1;
+    ptr2=2;
+    
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&ptr1, 0L, BFLD_LONG), EXSUCCEED);
+    assert_equal(CBchg(p_ub_2, T_PTR_FLD, 0, (char *)&ptr2, 0L, BFLD_LONG), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    assert_equal(Bcmp(p_ub, p_ub), 0);
+    
+}
+
+/**
+ * Compare view in UBF values
+ */
+Ensure(test_Bcmp_view)
+{
+    char fb[1024];
+    char fb_2[2048];
+    struct UBTESTVIEW1 v1;
+    BVIEWFLD vf1;
+    
+    struct UBTESTVIEW1 v2;
+    BVIEWFLD vf2;
+    
+    UBFH *p_ub = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    
+    assert_equal(Bvsinit((char *)&v1, "UBTESTVIEW1"), EXSUCCEED);
+    assert_equal(Bvsinit((char *)&v2, "UBTESTVIEW1"), EXSUCCEED);
+    
+    vf1.data=(char *)&v1;
+    vf1.vflags=0;
+    NDRX_STRCPY_SAFE(vf1.vname, "UBTESTVIEW1");
+    assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 0, (char *)&vf1, 0L), EXSUCCEED);
+    
+    vf2.data=(char *)&v2;
+    vf2.vflags=0;
+    NDRX_STRCPY_SAFE(vf2.vname, "UBTESTVIEW1");
+    assert_equal(Bchg(p_ub_2, T_VIEW_3_FLD, 0, (char *)&vf2, 0L), EXSUCCEED);
+    
+    /* must match */
+    assert_equal(Bcmp(p_ub, p_ub_2), 0);
+    
+    /* change some view values... in the view, lets say null value 
+     * as count is 0, this shall not be checked and still we shall match...
+     */
+    NDRX_STRCPY_SAFE(v1.tcarray3[4], "HELLO");
+    assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 0, (char *)&vf1, 0L), EXSUCCEED);
+    assert_equal(Bcmp(p_ub, p_ub_2), 0);
+    
+    /* no change some non counted field... */
+    NDRX_STRCPY_SAFE(v1.tcarray1, "AAAA");
+    NDRX_STRCPY_SAFE(v2.tcarray1, "BBBB");
+    
+    assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 0, (char *)&vf1, 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub_2, T_VIEW_3_FLD, 0, (char *)&vf2, 0L), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub_2), -1);
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+}
+
+/**
+ * Compare sub-ubf buffers.
+ */
+Ensure(test_Bcmp_ubf)
+{
+    char fb[1024];
+    char fb_2[2048];
+    char fb_tmp[2048];
+    
+    
+    UBFH *p_ub = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
+    UBFH *p_ub_tmp = (UBFH *)fb_tmp;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    assert_equal(Binit(p_ub_tmp, sizeof(fb_tmp)), EXSUCCEED);
+    
+    /* setup the temp buffer.. */
+    
+    load1(p_ub_tmp);
+    
+    /* match test: */
+    assert_equal(Bchg(p_ub, T_UBF_3_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub_2, T_UBF_3_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub_2, p_ub), 0);
+    
+    /* change something in sub-ubf... */
+    assert_equal(Binit(p_ub_tmp, sizeof(fb_tmp)), EXSUCCEED);
+    load3(p_ub_tmp);
+    assert_equal(Bchg(p_ub_2, T_UBF_3_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub_2, p_ub), 1);
+    
+    
+}
+
 TestSuite *ubf_bcmp_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
+    set_setup(suite, cmp_basic_setup1);
     add_test(suite, test_Bcmp);
+    add_test(suite, test_Bcmp_ptr);
+    add_test(suite, test_Bcmp_view);   
+    add_test(suite, test_Bcmp_ubf);
+    
     add_test(suite, test_Bsubset);
-
+    
+    /* TODO: Add sub-set tests... */
+    
+    
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
