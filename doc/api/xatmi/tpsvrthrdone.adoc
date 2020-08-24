@@ -64,7 +64,7 @@ Report bugs to support@mavimax.com
 SEE ALSO
 --------
 *tpsvrdone(3)* *tpsvrinit(3)* *tpsvrthrinit(3)* 
-*_tmstartserver(3)* *ndrxconfig.xml(5)* *builserver(8)*
+*_tmstartserver(3)* *ndrxconfig.xml(5)* *buildserver(8)*
 
 COPYING
 -------
