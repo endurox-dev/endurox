@@ -66,6 +66,11 @@ exprivate void load1(UBFH *p_ub)
     float f = 17.31;
     double d = 12312.1111;
     char carr[] = "CARRAY1 TEST STRING DATA";
+    char tmp[1024];
+    UBFH *p_tmp = (UBFH *)tmp;
+    struct UBTESTVIEW2 v2;
+    BVIEWFLD vf2;
+    
     BFLDLEN len = strlen(carr);
     
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
@@ -75,6 +80,20 @@ exprivate void load1(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+
+    /* Load equal UBF occ 0*/
+    assert_equal(Binit(p_tmp, sizeof(tmp)), EXSUCCEED);
+    assert_equal(Bchg(p_tmp, T_STRING_10_FLD, 0, "HELO", 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD, 0, (char *)p_tmp, len), EXSUCCEED);
+    /* Load equal PTR occ 0 */
+    assert_equal(Bchg(p_ub, T_PTR_FLD, 0, (char *)&M_some_ptr1, len), EXSUCCEED);
+    /* Load equal VIEW occ 0*/
+    memset(&v2, 0, sizeof(v2));
+    v2.tlong1=1000;
+    vf2.data=(char *)&v2;
+    vf2.vflags=0;
+    NDRX_STRCPY_SAFE(vf2.vname, "UBTESTVIEW2");
+    assert_equal(Bchg(p_ub, T_VIEW_FLD, 0, (char *)&vf2, len), EXSUCCEED);
     
 }
     
@@ -90,6 +109,10 @@ exprivate void load2(UBFH *p_ub)
     double d;
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
+    char tmp[1024];
+    UBFH *p_tmp = (UBFH *)tmp;
+    struct UBTESTVIEW2 v2;
+    BVIEWFLD vf2;
 
     /* Make second copy of field data (another for not equal test)*/
     s = 99;
@@ -108,6 +131,20 @@ exprivate void load2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
     
+    /* Load equal UBF occ 0*/
+    assert_equal(Binit(p_tmp, sizeof(tmp)), EXSUCCEED);
+    assert_equal(Bchg(p_tmp, T_STRING_10_FLD, 0, "HELO", 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD, 1, (char *)p_tmp, len), EXSUCCEED);
+    /* Load equal PTR occ 0 */
+    assert_equal(Bchg(p_ub, T_PTR_FLD, 1, (char *)&M_some_ptr1, len), EXSUCCEED);
+    /* Load equal VIEW occ 0*/
+    memset(&v2, 0, sizeof(v2));
+    v2.tlong1=1000;
+    vf2.data=(char *)&v2;
+    vf2.vflags=0;
+    NDRX_STRCPY_SAFE(vf2.vname, "UBTESTVIEW2");
+    assert_equal(Bchg(p_ub, T_VIEW_FLD, 1, (char *)&vf2, len), EXSUCCEED);
+    
 }
 /**
  * Load test data 3
@@ -121,7 +158,11 @@ exprivate void load3(UBFH *p_ub)
     double d;
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
-
+    char tmp[1024];
+    UBFH *p_tmp = (UBFH *)tmp;
+    struct UBTESTVIEW2 v2;
+    BVIEWFLD vf2;
+    
     s = 212;
     l = 212;
     c = 'b';
@@ -135,6 +176,22 @@ exprivate void load3(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"XEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    
+    /* Load equal UBF occ 0*/
+    assert_equal(Binit(p_tmp, sizeof(tmp)), EXSUCCEED);
+    assert_equal(Bchg(p_tmp, T_STRING_10_FLD, 0, "EHLO", 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD, 0, (char *)p_tmp, len), EXSUCCEED);
+    /* Load equal PTR occ 0 */
+    assert_equal(Bchg(p_ub, T_PTR_FLD, 0, (char *)&M_some_ptr2, len), EXSUCCEED);
+    
+    /* Load equal VIEW occ 0*/
+    memset(&v2, 0, sizeof(v2));
+    v2.tlong1=2000;
+    vf2.data=(char *)&v2;
+    vf2.vflags=0;
+    NDRX_STRCPY_SAFE(vf2.vname, "UBTESTVIEW2");
+    assert_equal(Bchg(p_ub, T_VIEW_FLD, 0, (char *)&vf2, len), EXSUCCEED);
 }
 
 
@@ -462,7 +519,6 @@ Ensure(test_Bcmp_ubf)
     assert_equal(Bchg(p_ub_2, T_UBF_3_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
     
     assert_equal(Bcmp(p_ub_2, p_ub), 1);
-    
     
 }
 
