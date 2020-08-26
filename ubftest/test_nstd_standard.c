@@ -331,7 +331,8 @@ exprivate void chk_token(char *str, char **tokens, int num_tokens)
     char *tok;
     int i=0;
     
-    for (tok = ndrx_strtokblk ( str, " \t", "'\""), i=0; NULL!=tok; tok = ndrx_strtokblk (NULL, " \t,\n", "'\""), i++)
+    UBF_LOG(log_debug, "Splitting [%s]", str);
+    for (tok = ndrx_strtokblk ( str, " \t\n", "'\""), i=0; NULL!=tok; tok = ndrx_strtokblk (NULL, " \t\n", "'\""), i++)
     {
         assert_string_equal(tok, tokens[i]);
     }
@@ -410,11 +411,6 @@ Ensure(test_nstd_strtokblk)
     
     do {
         char test1[]="some '\\\\' arg";
-        chk_token(test1, (char*[]){"some", "\\", "arg"}, 3);
-    }while(0);
-    
-    do {
-        char test1[]="some,arg,1";
         chk_token(test1, (char*[]){"some", "\\", "arg"}, 3);
     }while(0);
     
