@@ -502,7 +502,7 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.0.42 released on 13/08/2020 (stable) Bug #572, Bug #578, Feature #581
 
-- Version 7.5.2 released on 18/08/2020 (stable) First release version.
+- Version 7.5.2 released on 18/08/2020 (stable) First release version. Support #585, Bug #584, Bug #575
 
 # Build configurations
 
