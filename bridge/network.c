@@ -54,123 +54,14 @@
 #include "bridge.h"
 #include "../libatmisrv/srv_int.h"
 
-/* gpg-me - optional */
-#ifndef DISABLEGPGME
-#include "gpgme_encrypt.h"
-#endif
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
-
-exprivate MUTEX_LOCKDECL(M_gpg_init_lock);
-
-#ifndef DISABLEGPGME
-pgpgme_enc_t M_enc;
-#endif
 /*---------------------------Prototypes---------------------------------*/
 exprivate int br_process_msg_th(void *ptr, int *p_finish_off);
-
-/**
- * Logging function for encryption
- */
-void og_callback(int lev, char *msg)
-{
-    NDRX_LOG(lev, "%s", msg);
-}
-
-#ifndef DISABLEGPGME
-/**
- * Set the signer (either when we send, or we receive!)
- */
-static int br_set_signer(char *name)
-{
-    int ret=EXSUCCEED;
-    /* Set the signer if PGP encryption is enabled. */	
-    if (0!=G_bridge_cfg.gpg_signer[0])
-    {
-        NDRX_LOG(log_debug, "Setting GPG signer to [%s]",
-                                        name);
-
-        if (EXSUCCEED!=pgpa_set_signer(&M_enc, name))
-        {
-            NDRX_LOG(log_always, "GPG set signer fail: "
-                                        "apierr=%d gpg_meerr=%d: %s", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-            userlog("GPG set signer (%s) fail: apierr=%d gpg_meerr=%d: %s ", 
-                    name,
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-            ret=EXFAIL;
-            goto out;
-        }
-    }
-out:
-    return ret;
-}
-/**
- * Initialize GPG library 
- */
-expublic int br_init_gpg(void)
-{
-    int ret=EXSUCCEED;
-
-    if (EXSUCCEED!=pgpa_init(&M_enc,og_callback, 
-                    /* use signing if signer set! */
-                    (0==G_bridge_cfg.gpg_signer[0]?EXFALSE:EXTRUE)))
-    {
-
-        NDRX_LOG(log_always, 
-                "GPG init fail: apierr=%d gpg_meerr=%d: %s ", 
-                gpga_aerrno(), gpga_gerrno(), 
-                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-        userlog("GPG init fail: apierr=%d gpg_meerr=%d: %s ", 
-                gpga_aerrno(), gpga_gerrno(), 
-                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-        ret=EXFAIL;
-        goto out;
-    }
-
-    /* we sing with singing key... */
-    if (EXSUCCEED!=br_set_signer(G_bridge_cfg.gpg_signer))
-    {
-        ret=EXFAIL;
-        goto out;
-    }
-
-    NDRX_LOG(log_debug, "Setting GPG recipient to [%s]",
-                                    G_bridge_cfg.gpg_recipient);
-
-    if (EXSUCCEED!=pgpa_set_recipient(&M_enc, G_bridge_cfg.gpg_recipient))
-    {
-        NDRX_LOG(log_always, "GPG set recipient fail: "
-                                    "apierr=%d gpg_meerr=%d: %s", 
-                gpga_aerrno(), gpga_gerrno(), 
-                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-        userlog("GPG set recipient (%s) fail: apierr=%d gpg_meerr=%d: %s ", 
-                G_bridge_cfg.gpg_recipient,
-                gpga_aerrno(), gpga_gerrno(), 
-                gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-        ret=EXFAIL;
-        goto out;
-    }
-	
-	
-out:
-    return ret;
-}
-
-#endif /* ifndef DISABLEGPGME */
-
 
 /**
  * Process message from network (wrapper) for dispatching to thread.
@@ -314,42 +205,6 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
     {
         BR_THREAD_ENTRY;
     }
-    
-#ifndef DISABLEGPGME
-    /* Decrypt the mssages, if decryption is used... */
-    /* use GPG encryption */
-    if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
-    {
-        int clr_len;
-        NDRX_SYSBUF_MALLOC_OUT(tmp_clr, clr_len, ret);
-	
-	/* Encrypt the message */
-	if (EXSUCCEED!=pgpa_decrypt(&M_enc, p_netmsg->buf, p_netmsg->len, 
-				tmp_clr, &clr_len))
-	{
-            NDRX_LOG(log_always, "GPG msg decryption failed: "
-                                        "apierr=%d gpg_meerr=%d: %s", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-            userlog("GPG decryption failed: apierr=%d gpg_meerr=%d: %s ", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-            EXFAIL_OUT(ret);
-	}
-	else
-	{
-            NDRX_LOG(log_debug, "Msg Decrypt OK, len: %d", clr_len);
-	}
-	
-        /* So this was buffer by memdup.. */
-        NDRX_SYSBUF_FREE(p_netmsg->buf);
-        p_netmsg->buf = tmp_clr;
-
-        p_netmsg->len = clr_len;
-	p_netmsg->call = (cmd_br_net_call_t *)p_netmsg->buf;
-    }
-#endif
     
     if (G_bridge_cfg.common_format)
     {
@@ -558,7 +413,7 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         EXFAIL_OUT(ret);
     }
     
-    if (G_bridge_cfg.common_format || EXEOS!=G_bridge_cfg.gpg_recipient[0])
+    if (G_bridge_cfg.common_format)
     {
         /* get away from this memcpy somehow? */
         memcpy(call->buf, buf, len);
@@ -593,42 +448,6 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         NDRX_SYSBUF_FREE(tmp);
         tmp = NULL;
     }
-    
-#ifndef DISABLEGPGME
-    /* use GPG encryption */
-    if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
-    {
-        
-        NDRX_SYSBUF_MALLOC_OUT(tmp_enc, tmp_enc_len, ret);
-	
-	/* Encrypt the message */
-	if (EXSUCCEED!=pgpa_encrypt(&M_enc, *snd, snd_len, 
-				tmp_enc, &tmp_enc_len))
-	{
-            NDRX_LOG(log_always, "GPG msg encryption failed: "
-                                        "apierr=%d gpg_meerr=%d: %s", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-
-            userlog("GPG encryption failed: apierr=%d gpg_meerr=%d: %s ", 
-                    gpga_aerrno(), gpga_gerrno(), 
-                    gpga_strerr(gpga_aerrno(), gpga_gerrno()));
-            EXFAIL_OUT(ret);
-	}
-	else
-	{
-            NDRX_LOG(log_debug, "Msg Encryption OK, "
-                             "len: %d", tmp_enc_len);
-	}
-        
-        /* TODO: free up the snd...?! */
-        NDRX_SYSBUF_FREE(*snd);
-        *snd = NULL;
-	snd = &tmp_enc;
-	snd_len = tmp_enc_len;
-        
-    }
-#endif
     
     /* Might want to move this stuff to Q */
     

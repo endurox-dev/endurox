@@ -531,7 +531,6 @@ expublic int cpm_exec(cpm_process_t *c)
     pid_t pid;
     char cmd_str[PATH_MAX];
     char *cmd[PATH_MAX]; /* splitted pointers.. */
-    char separators[] = CPM_CMDLINE_SEP;
     char *token;
     int numargs = 0;
     int fd_stdout;
@@ -583,11 +582,11 @@ expublic int cpm_exec(cpm_process_t *c)
         
         NDRX_STRCPY_SAFE(cmd_str, c->stat.command_line);
 
-        token = strtok(cmd_str, separators);
+        token = ndrx_strtokblk(cmd_str, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
         while( token != NULL )
         {
             cmd[numargs] = token;
-            token = strtok( NULL, separators );
+            token = ndrx_strtokblk( NULL, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
             numargs++;
         }
         cmd[numargs] = NULL;

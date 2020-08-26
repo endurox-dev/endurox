@@ -365,6 +365,10 @@ extern NDRX_API int ndrx_is_numberic(char *str);
 
 extern NDRX_API void ndrx_read_silent(char *buf, size_t bufsz);
 extern NDRX_API int ndrx_get_password(char *msg, char *buf, size_t bufsz);
+extern NDRX_API void ndrx_str_trim_single_right(char *input, char symb);
+extern NDRX_API void ndrx_str_trim_single_left(char *input, char symb);
+extern NDRX_API void ndrx_str_unescape(char *input, char *symbs);
+extern NDRX_API char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs);
 
 #ifdef	__cplusplus
 }

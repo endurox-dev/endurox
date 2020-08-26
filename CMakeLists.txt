@@ -412,15 +412,7 @@ MESSAGE( STATUS "INSTALL_LIB_DIR: " ${INSTALL_LIB_DIR} )
 ################################################################################
 # Options
 ################################################################################
-
-# Option to disable gpg-me (gpg-me enabled by default)
-
-OPTION(DEFINE_DISABLEGPGME "Use GPG-ME encryption" OFF)
- 
-IF(DEFINE_DISABLEGPGME)
-    ADD_DEFINITIONS(-DDISABLEGPGME)
-ENDIF(DEFINE_DISABLEGPGME)
-
+OPTION(DEFINE_DISABLEGPGME "Use GPG-ME encryption (not used, for compatiblity)" OFF)
 OPTION(DEFINE_DISABLEPSCRIPT "Disable Platform Script" OFF)
 ###############################################################################
 
@@ -667,8 +659,6 @@ set(CPACK_PACKAGE_VERSION ${VERSION})
 set(CPACK_RPM_PACKAGE_RELEASE ${RELEASE})
 set(CPACK_RPM_PACKAGE_RELEASE_DIST ${RELEASE})
 set(CPACK_DEBIAN_PACKAGE_RELEASE ${RELEASE})
-#set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2,openssl,libgpgme11")
-#set(CPACK_RPM_PACKAGE_REQUIRES "libxml2,openssl,libssl,libgpgme11")
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LO)
 message("CPack:Debug: PROJECT NAME = ${PROJECT_NAME_LO}")
 set(CPACK_PACKAGE_FILE_NAME         ${PROJECT_NAME_LO}-${VERSION}-${RELEASE}.${LSB_RELEASE_OUTPUT_OS}${LSB_RELEASE_OUTPUT_VER}_${CMAKE_C_COMPILER_ID}_${EX_POLLER_STR}.${EX_CPU_ARCH})

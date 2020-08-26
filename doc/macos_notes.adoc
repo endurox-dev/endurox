@@ -1,8 +1,5 @@
 Building Enduro/X On MacOS Platform
 ===================================
-user1 Vitolins
-v1.0, 2016-06:
-	Initial draft
 :doctype: book
 
 == About manual
@@ -36,8 +33,6 @@ This document covers only core functionality of the Enduro/X building. That's
 mean that building of:
 
 . documentation;
-
-. gpg-me;
 
 is out of the scope.
 
@@ -234,7 +229,7 @@ This install the binary version to /Users/user1/endurox:
 
 ---------------------------------------------------------------------
 $ cd /Users/user1/endurox
-$ cmake -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
