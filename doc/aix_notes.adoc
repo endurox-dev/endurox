@@ -12,9 +12,8 @@ Document is based on AIX 7.1 SP2, TL5. Compilers supported are GNU GCC and IBM x
 
 == Overview
 
-This manual includes basic installation of Enduro/X which does not 
-include building of documentation, does not include platform script (as there 
-is issues with c++ headers), and does not use GPG-ME encryption for bridges.
+This manual includes basic installation of Enduro/X. This does not 
+include building of documentation.
 
 == Operating System Configuration
 
@@ -310,7 +309,7 @@ $ export CC=xlc
 $ export CXX=xlC
 $ cd /home/user1/endurox
 $ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON\
-      -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
+      -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -337,7 +336,7 @@ $ export CC=gcc
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON \
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON \
     -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make
 $ make install
@@ -440,7 +439,7 @@ compilation terminated.
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON\
+$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON \
     -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 -- The C compiler identification is GNU 4.8.3
 -- The CXX compiler identification is GNU 4.8.3

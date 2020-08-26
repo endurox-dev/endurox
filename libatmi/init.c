@@ -734,7 +734,9 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
     int ret=EXSUCCEED;
     char fn[]="tp_internal_init";
     static int first = EXTRUE;
-    int sem_fail = EXFALSE;
+    static int cl_shm = EXFALSE;
+    static int sv_shm = EXFALSE;
+    static int sem_fail = EXFALSE;
     ATMI_TLS_ENTRY;
     /* we connect to semaphore  */
     /* Check that if we are client (in server staging, then close current queues) */
@@ -823,7 +825,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             {
                 if (init_data->is_client)
                 {
-                    if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR) &&
+                    if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | NDRX_SHM_LEV_BR) && 
                             sem_fail)
                     {
                         NDRX_LOG(log_error, "SHM ok, but sem fail -"
@@ -831,10 +833,15 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                         MUTEX_UNLOCK;
                         EXFAIL_OUT(ret);
                     }
+                    
+                    cl_shm=EXTRUE;
                 }
                 else
                 {
                     /* In case of server we attach to both shared memory blocks */
+                    /* TODO: if there was tpinit() before server booted, the  NDRX_SHM_LEV_SRV is
+                     * not mounted.
+                     */
                     if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SVC | 
                                         NDRX_SHM_LEV_SRV | NDRX_SHM_LEV_BR) &&
                             sem_fail)
@@ -845,6 +852,8 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                         MUTEX_UNLOCK;
                         EXFAIL_OUT(ret);
                     }
+                    
+                    sv_shm=EXTRUE;
                 }
             }
 
@@ -858,6 +867,22 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             }
             
             first = EXFALSE;
+        }
+        else if (!sv_shm && !init_data->is_client)
+        {
+            NDRX_LOG(log_debug, "Client shm init was first, init server SHM");
+            
+            if (EXSUCCEED==ndrx_shm_attach_all(NDRX_SHM_LEV_SRV) &&
+                            sem_fail)
+                    
+            {
+                NDRX_LOG(log_error, "SHM ok, but sem fail -"
+                        " cannot operate in this mode!");
+                MUTEX_UNLOCK;
+                EXFAIL_OUT(ret);
+            }
+            
+            sv_shm=EXTRUE;
         }
         MUTEX_UNLOCK;
     }

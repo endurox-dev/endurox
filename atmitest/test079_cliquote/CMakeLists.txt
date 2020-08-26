@@ -1,7 +1,7 @@
 ##
-## @brief Cluster bridge server.
+## @brief Test CLI quotes - server
 ##
-## @file CMakeLists.txt
+## @file atmisv79.c
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
 ## See LICENSE file for full text.
 ## -----------------------------------------------------------------------------
 ## AGPL license:
-##
+## 
 ## This program is free software; you can redistribute it and/or modify it under
 ## the terms of the GNU Affero General Public License, version 3 as published
 ## by the Free Software Foundation;
@@ -23,7 +23,7 @@
 ## for more details.
 ##
 ## You should have received a copy of the GNU Affero General Public License along 
-## with this program; if not, write to the Free Software Foundation, Inc.,
+## with this program; if not, write to the Free Software Foundation, Inc., 
 ## 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
 ## -----------------------------------------------------------------------------
@@ -31,49 +31,38 @@
 ## contact@mavimax.com
 ## -----------------------------------------------------------------------------
 ##
+
 cmake_minimum_required(VERSION 2.8)
 
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
-					 ${ENDUROX_SOURCE_DIR}/ubftest
-					 )
+					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
 
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
-IF (ENV{RELEASE_BUILD})
+IF ($ENV{RELEASE_BUILD})
 	# do nothing
-ELSE (ENV{RELEASE_BUILD})
+ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
-ENDIF (ENV{RELEASE_BUILD})
+ENDIF ($ENV{RELEASE_BUILD})
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
-############################# Executables ###############################
+############################# Test - executables ###############################
+add_executable (atmi.sv79 atmisv79.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt79 atmiclt79.c)
+################################################################################
+############################# Test - executables ###############################
+# Link the executable to the ATMI library & others...
+target_link_libraries (atmi.sv79 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt79 atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
-
-add_executable (tpbridge bridgesvc.c
-                 queue.c
-                 network.c
-                 clock.c
-                 brutils.c
-                 rawmain_fpa.c
-                )
-
-IF (CMAKE_OS_NAME STREQUAL "SUNOS")
-	SET(EX_LIB_NET "socket")
-ENDIF()
-
-target_link_libraries (tpbridge exnet atmisrvinteg atmi netproto ubf nstd ${RT_LIB}
-                ${EX_LIB_GPGME} ${EX_LIB_NET} pthread)
-
-set_target_properties(tpbridge PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmi.sv79 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt79 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
-install (TARGETS 
-    tpbridge 
-    DESTINATION bin)
 # vim: set ts=4 sw=4 et smartindent:
