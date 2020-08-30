@@ -247,7 +247,7 @@ Ensure(test_Bcmp)
     load1(p_ub_2);
     
     
-    assert_equal(Bdel(p_ub, T_CARRAY_FLD, 0), EXSUCCEED);
+    assert_equal(Bdel(p_ub, T_VIEW_FLD, 0), EXSUCCEED);
     
     /* buf2 have more fields */
     assert_equal(Bcmp(p_ub, p_ub_2), -1);
@@ -534,7 +534,7 @@ TestSuite *ubf_bcmp_tests(void)
     
     add_test(suite, test_Bsubset);
     
-    /* TODO: Add sub-set tests... */
+    /* TODO: Add sub-set tests for view, ptr and UBF... */
     
     
     return suite;
