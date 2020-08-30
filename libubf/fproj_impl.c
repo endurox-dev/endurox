@@ -141,43 +141,43 @@ exprivate void delete_buffer_data(UBFH *p_ub, char *del_start, char *del_stop,
                                     (hdr->buf_len - hdr->bytes_used));
 #endif
 /*******************************************************************************/
-        /* We should remove here stuff out of the buffer
-         * In range from del_bfldid_start..p_bfldid
-         * and update the pointers
-         */
+    /* We should remove here stuff out of the buffer
+     * In range from del_bfldid_start..p_bfldid
+     * and update the pointers
+     */
 
-        remove_size = del_stop-del_start;
+    remove_size = del_stop-del_start;
 
-        UBF_LOG(log_debug, "About to delete from buffer: %d bytes",
-                remove_size);
+    UBF_LOG(log_debug, "About to delete from buffer: %d bytes",
+            remove_size);
 
-        last = (char *)hdr;
-        last+=(hdr->bytes_used-1);
+    last = (char *)hdr;
+    last+=(hdr->bytes_used-1);
 
-        /* Remove the data */
-        move_size = (last-del_start+1) - remove_size;
+    /* Remove the data */
+    move_size = (last-del_start+1) - remove_size;
 
-        UBF_LOG(log_debug, "delete_buffer_data: to %p, from %p size: %d",
-                        del_start, del_start+remove_size, move_size);
-        
-        memmove(del_start, del_start+remove_size, move_size);
-        hdr->bytes_used-=remove_size;
-                
-        /* Now reset the tail to zeros */
-        last = (char *)hdr;
-        last+=(hdr->bytes_used-1);
+    UBF_LOG(log_debug, "delete_buffer_data: to %p, from %p size: %d",
+                    del_start, del_start+remove_size, move_size);
 
-        /* Ensure that we reset last elements... So that we do not get
-         * used elements
-         */
-        UBF_LOG(log_debug, "resetting: %p to 0 - %d bytes",
-                        last+1, remove_size);
-        memset(last+1, 0, remove_size);
+    memmove(del_start, del_start+remove_size, move_size);
+    hdr->bytes_used-=remove_size;
 
-        /* Update the pointer to next */
-        p = (char *)*p_nextfld;
-        p-=remove_size;
-        *p_nextfld= (BFLDID *)p;
+    /* Now reset the tail to zeros */
+    last = (char *)hdr;
+    last+=(hdr->bytes_used-1);
+
+    /* Ensure that we reset last elements... So that we do not get
+     * used elements
+     */
+    UBF_LOG(log_debug, "resetting: %p to 0 - %d bytes",
+                    last+1, remove_size);
+    memset(last+1, 0, remove_size);
+
+    /* Update the pointer to next */
+    p = (char *)*p_nextfld;
+    p-=remove_size;
+    *p_nextfld= (BFLDID *)p;
 /***************************************** DEBUG *******************************/
 #ifdef UBF_API_DEBUG
     __dbg_olduse = __p_ub_copy->bytes_used;
@@ -278,7 +278,6 @@ expublic int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
     }
     else
     {
-
         /* Get the count */
         if (PROJ_MODE_DELALL!=mode)
         {
@@ -296,7 +295,7 @@ expublic int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
 
         /* In all other cases
          * 1. Sort the incoming array
-         * 2. Loop throught the buffer, and delete all un-needed items.
+         * 2. Loop through the buffer, and delete all un-needed items.
          */
         qsort (fldlist, fld_count, sizeof(int), compare);
 

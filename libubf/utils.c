@@ -281,6 +281,7 @@ expublic void ndrx_debug_dump_UBF_hdr_ubflogger(int lev, char *title, UBFH *p_ub
     
     if (dbg->level>=lev)
     {
+        UBF_LOG(lev, "****************** START OF %p UBF HEADER ******************", p_ub);
         UBF_LOG(lev, "%s: UBF_header_t.buffer_type=[%c] offset=%d", title,
                 hdr->buffer_type, EXOFFSET(UBF_header_t, buffer_type));
         UBF_LOG(lev, "%s: UBF_header_t.version=[%d]  offset=%d", title,
@@ -323,6 +324,7 @@ expublic void ndrx_debug_dump_UBF_hdr_ubflogger(int lev, char *title, UBFH *p_ub
         UBF_LOG(lev, "%s: UBF_header_t.passing2=[%d] offset=%d", title,
                 hdr->passing2, EXOFFSET(UBF_header_t, passing2));
     #endif
+        UBF_LOG(lev, "******************** END OF %p UBF HEADER ******************", p_ub);
     }
 }
 
