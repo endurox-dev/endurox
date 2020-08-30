@@ -585,6 +585,53 @@ Following *FUNC* (functions) are defined:
     value. To get encrypted value, it is possible to use *exencrypt(8)* tool.
 
 
+COMMAND LINE ARGUMENT ESCAPE
+----------------------------
+Process command line arguments normally may contain spaces or tables in their values.
+As Enduro/X processes needs to prepare arguments for exec, at prepare phase clear
+distinguishing must be made between multiple arguments and argument values.
+Thus Enduro/X employs parser to split CLI strings into arguments. Blocks with
+spaces or tabs inside must be quoted. The logic is similar to way how shall performs
+quote processing.
+
+Following rules applies :
+
+. Blocks can be quoted either with single quote or double quote.
+. Quote symbols are stripped from the start and the end of the value.
+. To have quote symbol in block value, use backslash.
+. To have backslash in any part of CLI string, use double backslash.
+. If block is started with single quotes, and value contains backlash and double quotes
+    then backlash and double quotes are put in value. This works in vice versa if starting
+    value with double quotes and escaping single quotes.
+. If quoted string contains non tab or space separated values before or after
+the quotes, then values are joined to block value. Leading and trailing quotes
+are stripped.
+. Alone escape values between tab or space separators are eliminated from value.
+. Unterminated quotes produces single value till the end of string.
+
+Samples:
+--------------------------------------------------------------------------------
+Example 1:
+CLI Value: someproc 'HELLO\' WORLD' X"some value \'"X
+
+Process would receive arguments:
+1. someproc
+2. HELLO' WORLD
+3. Xsome value \'X
+
+Example 1:
+CLI Value: someproc HELLO \ 'SOMETHING
+
+Process would receive arguments:
+1. someproc
+2. HELLO
+3.
+4. SOMETHING
+--------------------------------------------------------------------------------
+
+Above applies to 'CLT_COMMAND_LINE', 'ATMI_SERVER_SYSTEM_OPTIONS' and 
+'ATMI_SERVER_APPLICATION_OPTIONS'.
+
 EXAMPLE
 -------
 

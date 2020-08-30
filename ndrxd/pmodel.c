@@ -837,8 +837,8 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
 
     /* prepare args for execution... */
     char cmd_str[PATH_MAX];
-    char **cmd = NULL; /* splitted pointers.. */
-    char separators[]   = " ,\t\n";
+    char **cmd = NULL; /* split pointers.. */
+    char separators[]   = " \t\n";
     char *token;
     int numargs;
     int alloc_args;
@@ -909,8 +909,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             ndrxd_shm_srv_fork_status(p_pm->srvid, NDRXD_PM_EENV);
             exit(1);
         }
-        
-        
 
         /* for System V child event thread is not resumed
          * but it is not a big deal, this just deallocates the resources
@@ -974,8 +972,10 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
             /* format the cmdline */
             ndrx_str_env_subs_len(cmd_str, sizeof(cmd_str));
             
-            numargs=0;    
-            token = strtok(cmd_str, separators);
+            numargs=0;
+            
+            /* have strtok which respects quoted strings... */
+            token = ndrx_strtokblk(cmd_str, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
             while( token != NULL )
             {
                 /* the alloc args are zero based index.. */
@@ -985,7 +985,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                     REALLOC_CMD;
                 }
                 cmd[numargs] = token;
-                token = strtok( NULL, separators );
+                token = ndrx_strtokblk( NULL, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
                 numargs++;
             }
             cmd[numargs] = NULL;
@@ -1006,7 +1006,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 cmd[0] = p_pm->binary_name;
             }
             
-            token = strtok(cmd_str, separators);
+            token = ndrx_strtokblk(cmd_str, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
             while( token != NULL )
             {
                 /* the alloc args are zero based index.. */
@@ -1017,7 +1017,7 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                 }
                 
                 cmd[numargs] = token;
-                token = strtok( NULL, separators );
+                token = ndrx_strtokblk( NULL, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
                 numargs++;
             }
             cmd[numargs] = NULL;

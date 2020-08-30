@@ -1383,9 +1383,12 @@ expublic int exnet_is_connected(exnetcon_t *net)
  */
 expublic int exnet_close_shut(exnetcon_t *net)
 {
-    exnet_rwlock_mainth_write(net);
-    close_socket(net);
-    exnet_rwlock_mainth_read(net);
+    if (net->lock_init)
+    {
+        exnet_rwlock_mainth_write(net);
+        close_socket(net);
+        exnet_rwlock_mainth_read(net);
+    }
 
     return EXSUCCEED;
 }
@@ -1459,6 +1462,7 @@ expublic int exnet_net_init(exnetcon_t *net)
                                                    strerror(err));
         exit(EXFAIL);
     }
+    net->lock_init=EXTRUE;
             
 out:
     return ret;

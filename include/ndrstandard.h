@@ -394,6 +394,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #define CONF_FLDTBLDIR	"FLDTBLDIR"
 #define CONF_FIELDTBLS	"FIELDTBLS"
+#define NDRX_CMDLINE_SEP        " \t\n" /**< command line seperators          */
+#define NDRX_CMDLINE_QUOTES     "'\""   /**< Block quotes for non splitting   */
 
 #ifdef	__cplusplus
 }

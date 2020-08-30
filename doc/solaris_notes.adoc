@@ -1,8 +1,5 @@
 Building Enduro/X On Oracle Solaris Platform
 ============================================
-Madars Vitolins
-v1.0, 2016-06:
-	Initial draft
 :doctype: book
 
 == About manual
@@ -13,7 +10,7 @@ Document is based on Solaris 11 on x86 machine. Compiler used to Enduro/X is GCC
 == Overview
 
 This manual includes basic installation of Enduro/X which does not 
-include building of documentation and does not use GPG-ME encryption for bridges.
+include building of documentation.
 
 Enduro/X on Solaris platform is Using System V message queues.
 
@@ -367,7 +364,7 @@ thus following cmake will pick up gcc by default:
 ---------------------------------------------------------------------
 $ cd \$HOME/endurox
 $ cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc\
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/csw/lib/amd64 .
+-DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/csw/lib/amd64 .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -381,7 +378,7 @@ buildclient script for view test cases.
 $ export CC=gcc
 $ cd \$HOME/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc \
--DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+-DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------
@@ -395,7 +392,7 @@ The compilation will be done in 64bit mode
 
 ---------------------------------------------------------------------
 $ cd \$HOME/endurox
-$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON .
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEDOC=ON .
 ---------------------------------------------------------------------
 
 In case if errors like
@@ -421,7 +418,7 @@ This assumes that GCC is installed, and "ar" from gcc will be used.
 ---------------------------------------------------------------------
 $ cd \$HOME/endurox
 $ cmake -D CMAKE_AR=/opt/csw/gnu/ar \
--DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEGPGME=ON -DDEFINE_DISABLEDOC=ON .
+-DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEDOC=ON .
 ---------------------------------------------------------------------
 
 The support is not available for Solaris Studio on Solaris 10 due
@@ -515,7 +512,7 @@ point to correct path for libraries. For example:
 
 ---------------------------------------------------------------------
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DDEFINE_DISABLEDOC=ON\
-    -DENABLE_POSTGRES=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_LIBRARY_PATH=/opt/csw/lib/amd64 .
+    -DENABLE_POSTGRES=ON -DCMAKE_LIBRARY_PATH=/opt/csw/lib/amd64 .
 ---------------------------------------------------------------------
 
 == Conclusions

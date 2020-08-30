@@ -325,6 +325,97 @@ Ensure(test_nstd_NDRX_STRCPY_LAST_SAFE)
     assert_string_equal(dst, "ABCDEF");
 }
 
+
+exprivate void chk_token(char *str, char **tokens, int num_tokens)
+{
+    char *tok;
+    int i=0;
+    
+    UBF_LOG(log_debug, "Splitting [%s]", str);
+    for (tok = ndrx_strtokblk ( str, " \t\n", "'\""), i=0; NULL!=tok; tok = ndrx_strtokblk (NULL, " \t\n", "'\""), i++)
+    {
+        assert_string_equal(tok, tokens[i]);
+    }
+    assert_equal(i, num_tokens);
+}
+
+/**
+ * Check the ndrx_strtokblk engine
+ */
+Ensure(test_nstd_strtokblk)
+{
+    do {
+    char test1[]="HELLO WORLD";
+    chk_token(test1, (char*[]){ "HELLO", "WORLD"}, 2);
+    }while(0);
+    
+    do {
+        char test1[]="HELLO' WORLD '1 OK";
+        chk_token(test1, (char*[]){ "HELLO WORLD 1", "OK"}, 2);
+    }while(0);
+    
+    
+    do {
+        char test1[]="-e\t\"HELLO";
+        chk_token(test1, (char*[]){ "-e", "HELLO"}, 2);
+    }while(0);
+    
+    do {
+        char test1[]="\"THIS IS SIGNER\\\\\\\"QUOTE 'RIGHT?'\"";
+        chk_token(test1, (char*[]){"THIS IS SIGNER\\\"QUOTE 'RIGHT?'"}, 1);
+    }while(0);
+    
+    do {
+        char test1[]="-e\\' -z\\\"";
+        chk_token(test1, (char*[]){"-e'", "-z\""}, 2);
+    }while(0);
+    
+    do {
+        char test1[]="test string '\t inside double\"OK \"?'";
+        chk_token(test1, (char*[]){"test", "string", "\t inside double\"OK \"?"}, 3);
+    }while(0);
+    
+    do {
+        char test1[]="\\X \"\\'\" ";
+        chk_token(test1, (char*[]){"\\X", "\\'"}, 2);
+    }while(0);
+    
+    do {
+        char test1[]="\"\\'";
+        chk_token(test1, (char*[]){"\\'"}, 1);
+    }while(0);
+    
+    
+    do {
+        char test1[]="'\\\"'";
+        chk_token(test1, (char*[]){"\\\""}, 1);
+    }while(0);
+    
+    
+    do {
+        char test1[]="arg1  arg2";
+        chk_token(test1, (char*[]){"arg1", "", "arg2"}, 3);
+    }while(0);
+    
+    do {
+        char test1[]="some \\\\ arg";
+        chk_token(test1, (char*[]){"some", "\\", "arg"}, 3);
+    }while(0);
+    
+    /* nothing to escape... */
+    do {
+        char test1[]="some \\ arg";
+        chk_token(test1, (char*[]){"some", "", "arg"}, 3);
+    }while(0);
+    
+    
+    do {
+        char test1[]="some '\\\\' arg";
+        chk_token(test1, (char*[]){"some", "\\", "arg"}, 3);
+    }while(0);
+    
+}
+
 /**
  * Standard header tests
  * @return
@@ -341,6 +432,7 @@ TestSuite *ubf_nstd_standard(void)
     add_test(suite, test_nstd_NDRX_STRNCPY_EOS);
     add_test(suite, test_nstd_NDRX_STRNCPY_SRC);
     add_test(suite, test_nstd_NDRX_STRCPY_LAST_SAFE);
+    add_test(suite, test_nstd_strtokblk);
     
     return suite;
 }

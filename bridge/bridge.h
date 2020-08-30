@@ -70,8 +70,6 @@ typedef struct
     char svc[XATMI_SERVICE_NAME_LENGTH+1];  /**< Service name used by this bridge */
     long long timediff;           /**< Bridge time correction       */
     int common_format;            /**< Common platform format. */
-    char gpg_recipient[33];       /**< PGP Encryption recipient */
-    char gpg_signer[33];          /**< PGP Encryption signer */
     int qretries;                 /**< Queue Resubmit retries */
     int threadpoolsize;           /**< Thread pool size */
     threadpool thpool_tonet;      /**< Thread pool by it self */
@@ -136,7 +134,6 @@ extern void br_clock_adj(tp_command_call_t *call, int is_out);
 extern int br_tpcall_pushstack(tp_command_call_t *call);
 extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
 extern void br_run_q(void);
-extern int br_init_gpg(void);
 extern int ndrx_br_init_queue(void);
 extern void ndrx_br_uninit_queue(void);
 

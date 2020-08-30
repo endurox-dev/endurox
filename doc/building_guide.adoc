@@ -1,8 +1,5 @@
 Building Enduro/X On GNU/Linux Platform
 =======================================
-Madars Vitolins
-v1.0, 2015-11:
-	Initial draft
 :doctype: book
 
 == About manual
@@ -34,7 +31,7 @@ distributions.
 $ su - root
 # emerge sync
 # emerge -av indent asciidoc libxml2 cmake dia \
-	flex bison zlib openssl app-crypt/gpgme dev-vcs/git
+	flex bison zlib openssl dev-vcs/git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Debian 8.2
@@ -43,8 +40,7 @@ The same goes on Raspbian (Raspberry Pi OS)
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
-	libssl-dev libcrypto++-dev \
-	libgpgme11-dev libxml2-dev git
+	libssl-dev libcrypto++-dev libxml2-dev git
 ---------------------------------------------------------------------
 
 Note if having issues like:
@@ -69,8 +65,7 @@ $ sudo systemctl start postgresql
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
-	libssl-dev libcrypto++9 libcrypto++-dev \
-	libgpgme11-dev libxml2-dev git
+	libssl-dev libcrypto++9 libcrypto++-dev libxml2-dev git
 ---------------------------------------------------------------------
 
 ==== System level dependencies - for Ubuntu 16.04 (Mint 18), 18.04
@@ -79,8 +74,7 @@ $ sudo apt-get install indent asciidoc libxml2-dev \
 $ sudo apt-get update
 $ sudo apt-get install indent asciidoc libxml2-dev \
 	cmake dia flex bison gcc g++ zlib1g-dev \
-	libssl-dev libcrypto++-dev \
-	libgpgme11-dev libxml2-dev libxml2-utils git
+	libssl-dev libcrypto++-dev libxml2-dev libxml2-utils git
 ---------------------------------------------------------------------
 
 If running unit tests with PostgreSQL, then following additional package shall
@@ -106,14 +100,13 @@ $ su - root
 # rpm -Uvh epel-release*rpm
 ---------------------------------------------------------------------
 
-Now install system depenencies  
+Now install system dependencies  
 
 ---------------------------------------------------------------------
 # yum update
 # yum groupinstall 'Development Tools'
 # yum install git cmake asciidoc \
-	openssl openssl-devel \
-	gpgme-devel dia libxml2-devel
+	openssl openssl-devel dia libxml2-devel
 # exit
 $
 ---------------------------------------------------------------------
@@ -136,8 +129,8 @@ $ su - root
 
 Now install system dependencies  
 
-But if you run build on *Oracle Linux*, you need to enable optional repo
-for asciidoc and gpgme-devel.
+On *Oracle Linux*, needs to enable optional repositories
+for asciidoc.
 
 ---------------------------------------------------------------------
 # yum install yum-utils
@@ -146,8 +139,7 @@ for asciidoc and gpgme-devel.
 
 ---------------------------------------------------------------------
 # yum groupinstall 'Development Tools'
-# yum install git cmake asciidoc openssl openssl-devel \
-	gpgme-devel redhat-lsb libxml2-devel
+# yum install git cmake asciidoc openssl openssl-devel redhat-lsb libxml2-devel
 ---------------------------------------------------------------------
 
 Centos 7 does not ship with `dia' package. Thus we will install
@@ -223,8 +215,8 @@ sources.
 installation of packages:
 
 ---------------------------------------------------------------------
-# zypper install git-core cmake flex bison gcc libxml2 libgpgme11 gcc-c++ \
-libxml2-devel libgpgme-devel asciidoc cmake dia rpm-build
+# zypper install git-core cmake flex bison gcc libxml2 gcc-c++ \
+libxml2-devel asciidoc cmake dia rpm-build
 ---------------------------------------------------------------------
 
 PostgreSQL can be installed in following way:
@@ -273,28 +265,6 @@ $ su - root
 # systemctl start postgresql
 # systemctl enable postgresql
 ---------------------------------------------------------------------
-
-In case if additional repositories are configured in the system such es 
-EPEL (e.g. CentOS 8 Package Management), then gpgme-devel can be installed too:
-
----------------------------------------------------------------------
-$ su - root
-# yum install dnf-plugins-core
-# yum config-manager --set-enabled PowerTools
-# yum update
-# yum install gpgme-devel gpgme
----------------------------------------------------------------------
-
-Install GPG-ME on Oracle Linux 8.x:
-
----------------------------------------------------------------------
-$ su - root
-# dnf config-manager ol8_codeready_builder
-# dnf --enablerepo=ol8_codeready_builder install gpgme-devel gpgme
-
----------------------------------------------------------------------
-
-If GPG-ME is not configured, then build with *-DDEFINE_DISABLEGPGME=ON*.
 
 ==== AsciiDoc Integration with Dia
 
@@ -406,9 +376,6 @@ RHEL/OL/Centos 8.x you need to specify Postgresql include folder manually, e.g.
 add "-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/pgsql/internal" string to cmake
 line, otherwise error "Could NOT find PostgreSQL (missing: PostgreSQL_TYPE_INCLUDE_DIR)"
 will be given at configure.
-
-If *gpgme-devel* was not installed, then "-DDEFINE_DISABLEGPGME=ON" string must
-be passed to cmake, to disable GPG-ME usage.
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox

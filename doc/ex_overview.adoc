@@ -1,53 +1,59 @@
-EnduroX System Overview
+Enduro/X System Overview
 =======================
-Madars Vitolins
-v1.0, 2012-11:
-    Initial draft
+:doctype: book
 
-What is EnduroX?
-----------------
-EnduroX is middle-ware software that composes semantics of Application
-Transaction Monitor Interface (ATMI). Also EnduroX provides UBF
+What is Enduro/X?
+-----------------
+Enduro/X is middle-ware software that composes semantics of Application
+Transaction Monitor Interface (ATMI). Also Enduro/X provides UBF
 (Universal Buffer Format) so programmers can use self described buffers for 
 inter-process communication purposes.
 
 System principles have similarities with Oracle (R) Tuxedo (R) system.
 
-EnduroX consists release consists of various components. Like libraries for C/C++ programs,
+Enduro/X consists release consists of various components. Like libraries for C/C++ programs,
 transaction monitor it self, and command line administration utility.
 
-On each machine transaction monitor process runs locally, it controls so called server processes, which 
-are programs which are started by transaction monitor and they advertise services. It is possible to join
-together many transaction monitor processes under same machine or over multiple  machines. This makes
+On each machine transaction monitor process runs locally, it controls so 
+called server processes, which are programs which are started by transaction 
+monitor and they advertise services. It is possible to join together many 
+transaction monitor processes under same machine or over multiple  machines. This makes
 a cluster.
 
-In cluster environment services are shared over the linked local transaction monitors. It is possible to
-load balance some service which runs on local machine and on some other machine. The caller/client might be
+In cluster environment services are shared over the linked local transaction 
+monitors. It is possible to load balance some service which runs on local 
+machine and on some other machine. The caller/client might be
 unaware on which machine the call actually is served.
 
+How Enduro/X Differ from Oracle(R) Tuxedo(R)
+--------------------------------------------
+Basically Enduro/X is consider as clone of Tuxedo. Enduro/X have source level 
+compatibility with Tuxedo. However there are set of functionality which is 
+missing in Enduro/X.
+This is the list what Enduro/X does NOT support:
 
-How EnduroX Differ from Oracle(R) Tuxedo(R)
--------------------------------------------
-Basically EnduroX is consider as clone of Tuxedo. EnduroX have source level compatibility with Tuxedo.
-However there are set of functionality which is missing in EnduroX.
-This is the list what EnduroX does NOT support:
-
-. No support for FML views;
 . No FML indexing;
-. Some FML functionality is not implemented (but mostly all is supported);
+. DDR not yet supported;
+. Embedded buffers not yet supported;
+. TMIB interface is partially supported for monitoring.
 
 Improvements over Tuxedo:
 
 . ATMI servers can register custom poll file descriptors with own callback function;
 . ATMI servers can register periodic callback functions while ATMI server is idling;
-. Cluster is peer based, there is no master node;
-. Much simpler configuration reload during running app. Just edit 'ndrxconf.xml' and run 'xadmin reload' command.
-Tuxedo UBB configuration file is much harder to update in running up.
-. System can run with out the main Enduro/X daemon (ndrxd). It is much like running the Tuxedo with out Bulletin Board, which is not possible for Tuxedo. Even if 'ndrxd' daemon dies for some reason, it is possible to start in back in running application server instance with out service interruption.
-. Simple TMQUEUE setup. Allows run-time configuration updates and defaulted queue setups.
+. Cluster is peer based, there is no master node. *tpforward(3)* may be 
+    executed between nodes;
+. Much simpler configuration reload during running app. Just edit 'ndrxconf.xml' and run 'xadmin reload' command;
+Tuxedo UBB configuration file is much harder to update in running up;
+. System can run with out the main Enduro/X daemon (ndrxd). It is much like running the Tuxedo with 
+    out Bulletin Board, which is not possible for Tuxedo. Even if 'ndrxd' daemon dies for 
+    some reason, it is possible to start in back in running application server 
+    instance with out service interruption;
+. Simple TMQUEUE setup. Allows run-time configuration updates and defaulted queue setups;
+. Provides infrastructure for client process administration.
+. User accessible logging infrastructure.
 
-
-What EnduroX deliverable contains?
+What Enduro/X deliverable contains?
 ----------------------------------
 The distribution package contains following list of resources:
 
@@ -55,58 +61,138 @@ The distribution package contains following list of resources:
 [width="100%",options="header"]
 |==============================================
 | Resource        | Description
-| buildclient| Wrapper script for client process build. Basically it links binary with required EnduroX libraries
-| buildserver| Wrapper script for building server executables.
-Basically it links developers object files with libatmisrv.so which contains main() entry of the process
-| fdown.sh| Internal shell script forced shutdown of the transaction monitor. Part of `ndrx' admin utility
-| mkfldhdr | Generates C header files for UBF buffers
-| ndrxd | EnduroX deamon. This process is central point of the application which does the Application Transaction Monitoring
+| buildclient | Fully featured featured build client, includes static linking of XA switch
+| buildserver | Fully featured server build processes, generates main with automatic advertises
+| buildtms | Build alternate transaction manager, which includes statically linked XA switch
+| mkfldhdr | Generates C/Go/Java header files for UBF buffers
+| ndrxd | Enduro/X deamon. This process is central point of the application
+ which does the Application Transaction Monitoring
 | tmadmin | Alias for xadmin
-| tpbridge | Special ATMI server which drives the connectivity for cluster purposes.
-It allows to connect one EnduroX instance to another EnduroX instance
+| tpbridge | Special ATMI server which drives the connectivity for cluster purposes
+It allows to connect one Enduro/X instance to another Enduro/X instance
 | tpevsrv | Special ATMI server which serves the local even distribution over the services
-| ud | ATMI client utility. This reads stdin of dumped UBF buffer. And sends request to specified service.
-when responses is received, it is dumped back to stdout.
-| xadmin | EnduroX Administration command utility. Basically utility is also responsible for 
-local ATMI instance start, stop, configuration test/load/reload, status printing, etc.
-| tmsrv | Transaction Manager Server. Responsible for XA two phase transaction management.
-| tprecover | Enduro/X main daemon (ndrxd) monitoring and recovery server.
+| ud | ATMI client utility. This reads stdin of dumped UBF buffer. And sends request to specified service
+when responses is received, it is dumped back to stdout
+| xadmin | Enduro/X Administration command utility. Basically utility is also responsible for 
+local ATMI instance start, stop, configuration test/load/reload, status printing, etc
+| tmsrv | Transaction Manager Server. Responsible for XA two phase transaction management
+| tprecover | Enduro/X main daemon (ndrxd) monitoring and recovery server
 | tmqueue | Persistent queue support server
+| cpmsrv | Client process monitor
+| edb_copy, edb_dump, edb_load, edb_stat | LMDB cache management
+| exencrypt | Encrypt configuration string
+| exdecrypt | Encrypt configuration string  
+| tpadmsv | TMIB interface provider sever
+| tpbrdcstsv | *tpbroadcast(3)* and *tpnotify(3)* support servers
+| tpcachebtsv | Boot time cache configuration server
+| tpcached | Cache management client process (house-keeping)
+| tpcachesv | Interactive cache management support server (backing for xadmin commands)
+| uvlog | Log file merge tool
+| viewc | View file compiler
+| xmemck | Memory leak monitor, used for Enduro/X debugging.
 |==============================================
 
 .Distribution package description - "lib" directory
 [width="100%",options="header"]
 |==============================================
-| Resource        | Description
-|libatmi.so| ATMI common client and server shared library, serves functions like tpcall(), tpforward(), etc.
-|libatmiclt.so| ATMI Client process shared library
-|libatmisrv.so| ATMI Server process shared library. 
-This contains main() entry point. This serves functions like tpreturn(), tpforward(), etc.
-|libexnet.so| External network library. Used by tpbridge. This basically is wrapper for sockets.
-Library provides facility for network clients and network servers. Library allows to handle multiple connections
-over the single thread
-|libnstd.so| EnduroX standard library, contains debugging and other facilies
-|libubf.so| EnduroX Universal Buffer Format handling shared library
-|libnetproto.so| EnduroX Standard Network protocol library, used by tpbridge
+| Resource  | Description
+| libfml.so | Dummy for compatibility
+| libfml32.so | Dummy for compatibility
+| libexuuid.a | UIID generation lib
+| libnstd.so | Enduro/X standard library
+| libubf.so | Unified Buffer Format APIs / FML support
+| libatmisrvdum.so | Dummy ATMI server entries for *tpsvrinit(3)*, *tpsvrdone(3)* (for Cygwin)
+| libatmiclt.so | ATMI client functions (terminators for server calls)
+| libatmicltbld.so | ATMI clients functions for *buildclient(8)* linking
+| libexmemck.so | Memory usage debugger
+| libndrxxaoras.so | Oracle DB static XA switch resolver library
+| libndrxxaorad.so | Oracle DB dynamic XA switch resolver library
+| libndrxxadb2s.so | DB2 static XA switch resolver library
+| libndrxxadb2d.so | DB2 dynamic XA switch resolver library
+| libndrxxawsmqs.so | Websphere MQ static XA switch resolver
+| libndrxxawsmqd.so | Websphere MQ dynamic XA switch resolver
+| libndrxxatmsx.so | buildclient/buildserver/buildtms statically linked XA switch resolved library
+| libndrxxanulls.so | XA Null switch dummy (gives XA_OK for all XA calls)
+| libcryptohost.so | Enduro/X plugin - provides configuration cryptography key from server hostname
+| libnetproto.so | Enduro/X bridge protocol support lib
+| libexnet.so | Enduro/X networking support lib
+| libtms.so | provides transaction manager logic, used by *buildtms(8)*
+| libndrxxaqdisk.so | TMQUEUE disk storage provider
+| libndrxxaqdisks.so | TMQUEUE disk static XA Switch resolver
+| libndrxxaqdiskd.so | TMQUEUE disk dynamic XA Switch resolver
+| libatmi.so | ATMI common client and server shared library, serves functions 
+    like tpcall(), tpforward(), etc.
+| libatmisrvinteg.so | ATMI Server process shared library - provides _tmstartserver(),
+    and ndrx_main_integra(). This is preferred entry library for ATMI servers.
+| libatmisrv.so | ATMI Server process shared library - library with build-in main()
+    function for server process. Searches for external tpsvrinit() and tpsvrdone().
+| libatmisrvnomain.so | ATMI Server process shared library - provides ndrx_main(),
+    expects external tpsvrinit() and tpsvrdone().
+| libtux.so | Library for compatibility
+| libps.so | Platform script backing lib
+| libpsstdlib.so | Platform script standard lib
 |==============================================
 
 .Distribution package description - "include" directory
 [width="100%",options="header"]
 |==============================================
 | Resource        | Description
-| atmi.h | General ATMI interface
-| exenv.h | Execution Environment related macros 
-| fml.h | Wrapper for ubf.h
-| fml32.h | Wrapper for ubf.h
-| nstopwatch.h | Stop-watch library
-| ubf.h | Universal Buffer Format handling header
-| userlog.h | User logging facility interface
+| userlog.h | User log function
+| fml.h | FML emulation header 
+| fml32.h |  FML32 emulation header
+| fml1632.h |  FML 16/32 emulation header
+| ubf.h |  Unified Buffer Format APIs
+| ubfutil.h | Enduro/X internal use header for module binding
+| atmi.h | ATMI interface for compatibility
+| xatmi.h |  ATMI interface
+| pscript.h | Enduro/X internal use header, used for module binding
+| exparson.h | Enduro/X internal use header, used for module binding
+| ndebug.h | Enduro/X debugger interfaces
+| ndebugcmn.h | Enduro/X internal use header, used by binded modules
+| ndrstandard.h | Enduro/X internal use header for module binding
+| nstd_shm.h | Enduro/X internal use header for module binding
+| nstdutil.h | Enduro/X internal use header for module binding
+| nstd_tls.h | Enduro/X internal use header for module binding
+| thlock.h | Enduro/X internal use header for module binding
+| exhash.h | Enduro/X internal use header for module binding
+| cconfig.h  | Enduro/X internal use header for module binding
+| inicfg.h | Enduro/X internal use header for module binding
+| nerror.h | Enduro/X internal use header for module binding
+| xa.h | XA standard header
+| ndrx_config.h | Enduro/X build time platform configuration flags
+| sys_unix.h | Enduro/X internal use header for module binding
+| sys_primitives.h | Enduro/X internal use header for module binding
+| sys_mqueue.h  | Enduro/X internal use header for module binding
+| sys_emqueue.h | Enduro/X internal use header for module binding
+| sys_svq.h     | Enduro/X internal use header for module binding
+| oubf.h | Enduro/X internal use header for module binding
+| odebug.h | Enduro/X internal use header for module binding
+| ondebug.h | Enduro/X internal use header for module binding
+| onerror.h | Enduro/X internal use header for module binding
+| oatmisrv_integra.h | Enduro/X internal use header for module binding
+| oatmi.h | Enduro/X internal use header for module binding
+| oatmisrv.h | Enduro/X internal use header for module binding
+| Exfields.h | Enduro/X internal fields definitions 
+| Excompat.h | Enduro/X compatibility field definitions
+| tpadm.h | tpadmin call interface
+| evt_mib.h | Compatibility header
+| view_cmn.h | Enduro/X internal use header for module binding
+| exdb.h | Enduro/X internal use header for module binding
+| nstopwatch.h | Enduro/X internal use header for module binding
+| exthpool.h | Enduro/X internal use header for module binding
+| exstring.h | Enduro/X internal use header for module binding
+| Usysfl32.h | Compatibility header
+| tmenv.h | Enduro/X internal use header for module binding
+| tx.h | TX transactions interface API
+| Uunix.h | Compatibility header
+| expluginbase.h | Enduro/X plugin APIs
+| fpalloc.h | Enduro/X internal use header for module binding
 |==============================================
 
 How system works
 ----------------
 .Basically local ATMI works by using system's IPC facilities. Following facilities are used
-by EnduroX:
+by Enduro/X:
 
  * System V IPC Semaphores
  * Posix Queues
@@ -117,11 +203,11 @@ by EnduroX:
 -------------------------------
 -------------------------------
 
-EnduroX In cluster
-------------------
-This section gives overview how EnduroX Operates in cluster environment.
-Currently there can be possible 32 nodes in cluster. EnduroX clustering utilises TCP/IP
-connections to join local EnduroX instances. For each link between two different instances
+Enduro/X In cluster
+-------------------
+This section gives overview how Enduro/X Operates in cluster environment.
+Currently there can be possible 32 nodes in cluster. Enduro/X clustering utilizes TCP/IP
+connections to join local Enduro/X instances. For each link between two different instances
 seperate TCP/IP channel is used.
 
 Cluster can be configured in different way, for example with one central node which will have
@@ -134,7 +220,7 @@ Cluster with central node:
 -------------------------------
 -------------------------------
 
-Note that in case of central node, each node only sees centre node (Node1), However centre node sees
+Note that in case of central node, each node only sees center node (Node1), However centre node sees
 all other nodes.
 
 
@@ -158,7 +244,7 @@ Node1 will see Node7 and Node2 will see Node6.
 Service tables are replaced only over the direct link. They are not distributed over the
 whole cluster.
 
-Local EnduroX instances can be cluster by using special ATMI server 'tpbridge'. This server
+Local Enduro/X instances can be cluster by using special ATMI server 'tpbridge'. This server
 accepts configuration (in '<appopts>') where it says either this endpoint is passive (waits
 for connection) or active (tries to connect to specified ip address:port). The Node ID of
 other endpoint and some other parameters.
@@ -170,7 +256,7 @@ node so that service is removed there too.
 Full service lists are exchanged periodically (every 30 sec for example). Also 'tpbridge'
 periodically sends zero length messages to other node to keep the connection open.
 
-If connection is lost, both EnduroX local instances will remove all other instance (who's link is lost)
+If connection is lost, both Enduro/X local instances will remove all other instance (who's link is lost)
 services from shared memory.
 
 
@@ -191,7 +277,7 @@ to 'TPBRIDGE002' Queue, which forwards the packet to other node. See points 1. -
 Also it is possible to have service be presented locally and on remote machine. All this information 
 is recorded in shared memory for each of the services. Each shared memory entry contains the 32 element long
 array which at each cell contains the number of services shared on other node.
-EnduroX environment parameter 'NDRX_LDBAL' says in percentage how much requests serve locally
+Enduro/X environment parameter 'NDRX_LDBAL' says in percentage how much requests serve locally
 and how much to send to remote machine. Percentage is calculated on random basis
 and remote node is also calculated on random basis.
 The shared mem info can be looked by 'xadmin', 'psvc' command, for example:
@@ -222,8 +308,8 @@ Which for example displays that 2 service instances of 'UNIX2' is available on N
 Event processing
 ----------------
 
-EnduroX Supports ATMI events via 'tpsubscribe()', 'tppost()' and 'tpunsubscribe()' calls. Events
-are processed by special ATMI server named 'tpevsrv'. This server ships in EnduroX package.
+Enduro/X Supports ATMI events via 'tpsubscribe()', 'tppost()' and 'tpunsubscribe()' calls. Events
+are processed by special ATMI server named 'tpevsrv'. This server ships in Enduro/X package.
 Events are supported in clustered environment too. In this case the local node additionally
 broadcasts event to all other connected nodes. On other nodes 'tpbridge' process delivers this
 event to local 'tpevsrv' which posts the event locally only.
@@ -233,46 +319,43 @@ event to local 'tpevsrv' which posts the event locally only.
 -------------------------------
 
 
-Features of EnduroX
--------------------
+Features of Enduro/X
+--------------------
 =====================================================================
-This section lists the features of EnduroX framework:
+This section lists the features of Enduro/X framework:
 
 . Runs on 64bit GNU/Linux, starting from Kernel version 2.6.12.
 . Distributed architecture.
 . Peer based cluster. None of cluster nodes are master.
 . PING of ATMI servers are supported. If server does not respond on pings
 withing timeframe, they being restarted.
-. EnduroX monitors processes:
+. Enduro/X monitors processes:
 	.. For long startup, processes are being killed and restarted
 	.. If proceses for some reason dies, they are being restarted
 	.. If process dies who was the only which provides some service
 then SRVCERR response is sent back to caller
-	.. For long shutdown (not in time frame), processes are forcebly killed
+	.. For long shutdown (not in time frame), processes are forcibly killed
 . The run-time is possible with out local central ATMI Monitor (ndrxd). 
 As long as other servers are running, system will work.
 . It is possible to restart ndrxd during the runtime. Runtime will not be interrupted.
 When doing restarting, ndrxd must be started in recovery mode.
 In this mode it learns about the system and only after a while it becomes a master of the system.
 . Local housekeeping is made. If ATMI clients are unclean shutdown (i.e. not called tpterm()).
-Then EnduroX daemon detects these cases and cleans up system accordingly.
-. It is easy to debug application for EnduroX. The server processes is 
+Then Enduro/X daemon detects these cases and cleans up system accordingly.
+. It is easy to debug application for Enduro/X. The server processes is 
 possible to start from command line (not mandatory started by ndrxd).
 This means that it is possible to start server processes via wrappers 
-like valgrind or start via IDE and use step by step debbuging of
+like valgrind or start via IDE and use step by step debugging of
 server process.
 . System is tested by extensive automated unit tests.
-. 'buildserver' and 'buildclient' are just a wrapper scripts. 
-It is possible to link binaries direclty with correct shared libraries.
-. It is possible to specify environment overrides for each of the seperate ATMI server.
-. EnduroX contains debbuging facilities. It is possible to get debug logs for 
-EnduroX ATMI and UBF sub-systems. Logging for each of the systems can be configured
-seperately for each of the executables using these libs.
+It is possible to link binaries directly with correct shared libraries.
+. It is possible to specify environment overrides for each of the separate ATMI server.
+. Enduro/X contains debugging facilities. It is possible to get debug logs for 
+Enduro/X ATMI and UBF sub-systems. Logging for each of the systems can be configured
+separately for each of the executables using these libs.
 . ATMI configuration can be reloaded during runtime. It can be done as simple as just 
 editing the config file 'ndrxconfig.xml' and running 'xadmin reload'.
 =====================================================================
-
-:numbered!:
 
 [bibliography]
 Additional documentation 
@@ -280,24 +363,14 @@ Additional documentation
 This section lists additional related documents.
 
 [bibliography]
-.Internet resources
-- [[[ATMI-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux71/html/pgint6.htm
-- [[[FML-API]]] http://docs.oracle.com/cd/E13203_01/tuxedo/tux91/fml/index.htm
-
-[glossary]
-Glossary
---------
-This section lists
-
-[glossary]
-ATMI::
-  Application Transaction Monitor Interface
-
-UBF::
-  Unified Buffer Format it is similar API as Tuxedo's FML
+.Enduro/X Documentation
+- [[[ex_adminman]]] ex_adminman(guides)(Enduro/X Administration Manual)
+- [[[building_guide]]] building_guide(guides)(Building Enduro/X On GNU/Linux Platform)
+- [[[ex_devguide]]] ex_devguide(guides)(Additional developer information)
 
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being
 generated automatically by the DocBook toolchain.
 ////////////////////////////////////////////////////////////////
+

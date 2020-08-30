@@ -1,8 +1,5 @@
 Building Enduro/X On FreeBSD Platform
 =====================================
-Madars Vitolins
-v1.0, 2016-06:
-	Initial draft
 :doctype: book
 
 About manual
@@ -13,7 +10,7 @@ on FreeBSD 10.3 on amd64 machine. Default FreeBSD C/C++ compiler is used.
 == Overview
 
 This manual includes basic installation of Enduro/X which does not include building of
-documentation and does not use GPG-ME encryption for bridges.
+documentation.
 
 == Operating System Configuration
 
@@ -219,7 +216,7 @@ $ sudo service postgresql restart
 
 ---------------------------------------------------------------------
 $ cd /home/user1/endurox
-$ cmake -DDEFINE_DISABLEDOC=ON -DDEFINE_DISABLEGPGME=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
+$ cmake -DDEFINE_DISABLEDOC=ON -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .
 $ make 
 $ make install
 ---------------------------------------------------------------------

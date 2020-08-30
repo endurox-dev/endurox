@@ -131,6 +131,7 @@ add_subdirectory (test075_dispthread)
 add_subdirectory (test076_dispthreadxa)
 add_subdirectory (test077_diedslowstrt)
 add_subdirectory (test078_tpacallmix)
+add_subdirectory (test079_cliquote)
 
 ################################################################################
 # Master test case driver

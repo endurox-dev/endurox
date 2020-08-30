@@ -312,6 +312,34 @@ void TPBRIDGE (TPSVCINFO *p_svc)
 }
 
 /**
+ * Terminate the thread...
+ */
+void ndrx_thpool_thread_done(void)
+{
+    tpterm();
+}
+
+/**
+ * This is thread init
+ * @param argc
+ * @param argv
+ * @return EXSUCCEED/EXFAIL
+ */
+int ndrx_thpool_thread_init(int argc, char **argv)
+{
+    int ret = EXSUCCEED;
+    
+    if (EXSUCCEED!=tpinit(NULL))
+    {
+        NDRX_LOG(log_error, "Failed to tpinit for thread...");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
  * Do initialization
  * For bridge we could make a special rq address, for example "@TPBRIDGENNN"
  * we will an API for ndrx_reqaddrset("...") which would configure the libnstd
@@ -418,14 +446,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "Using common network protocol.");
                 break;
             case 'g':
-                NDRX_STRCPY_SAFE(G_bridge_cfg.gpg_recipient, optarg);
-                NDRX_LOG(log_debug, "Using GPG Encryption, recipient: [%s]", 
-					G_bridge_cfg.gpg_recipient);
+                NDRX_LOG(log_warn, "-g not supported any more");
                 break;
             case 's':
-                NDRX_STRCPY_SAFE(G_bridge_cfg.gpg_signer, optarg);
-                NDRX_LOG(log_debug, "Using GPG Encryption, signer: [%s]", 
-					G_bridge_cfg.gpg_signer);
+                NDRX_LOG(log_warn, "-s not supported any more");
                 break;
             case 'P': 
                 /* half is used for download, and other half for upload */
@@ -500,22 +524,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-#ifndef DISABLEGPGME
-
-    if (EXEOS!=G_bridge_cfg.gpg_recipient[0])
-    {
-        if (EXSUCCEED!=br_init_gpg())
-        {
-            NDRX_LOG(log_error, "GPG init fail");
-                EXFAIL_OUT(ret);
-        }
-        else
-        {
-            NDRX_LOG(log_error, "GPG init OK");
-        }
-    }
-#endif
-    
     if (EXSUCCEED!=ndrx_br_init_queue())
     {
         NDRX_LOG(log_error, "Failed to init queue runner");
@@ -577,18 +585,30 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     if (NULL==(G_bridge_cfg.thpool_tonet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
-            NULL, NULL, NULL, 0, NULL)))
+            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize to-net thread pool (cnt: %d)!", 
                 G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
     
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "to-net thread init failed");
+        EXFAIL_OUT(ret);
+    }
+    
     if (NULL==(G_bridge_cfg.thpool_fromnet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
-            NULL, NULL, NULL, 0, NULL)))
+            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)))
     {
         NDRX_LOG(log_error, "Failed to initialize from-net thread pool (cnt: %d)!",
                 G_bridge_cfg.threadpoolsize);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_error, "from-net thread init failed");
         EXFAIL_OUT(ret);
     }
     
@@ -628,21 +648,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
      * as network object is gone..
      */
     if (M_init_ok)
-    {
-        /* Terminate the threads */
-        for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
-        {
-            NDRX_LOG(log_info, "Terminating to-net threadpool, thread #%d", i);
-            ndrx_thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)tp_thread_shutdown, NULL);
-        }
-        
-        /* Terminate the threads */
-        for (i=0; i<G_bridge_cfg.threadpoolsize; i++)
-        {
-            NDRX_LOG(log_info, "Terminating from-net threadpool, thread #%d", i);
-            ndrx_thpool_add_work(G_bridge_cfg.thpool_fromnet, (void *)tp_thread_shutdown, NULL);
-        }
-        
+    {   
         /* Wait for threads to finish */
         ndrx_thpool_wait(G_bridge_cfg.thpool_tonet);
         ndrx_thpool_destroy(G_bridge_cfg.thpool_tonet);
