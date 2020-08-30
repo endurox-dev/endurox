@@ -51,13 +51,15 @@
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <cf.h>
+
+/*#define BIN_SEARCH_DEBUG*/
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 struct ubf_type_cache
 {
-    size_t  cache_offset;
+    ssize_t  cache_offset;
 };
 typedef struct ubf_type_cache ubf_type_cache_t;
 

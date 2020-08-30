@@ -486,7 +486,12 @@ Ensure(test_Bdelete)
     assert_equal(memcmp(p_ub, p_ub2, Bused(p_ub)), EXSUCCEED);
     
     ndrx_debug_dump_UBF_hdr_ubflogger(log_debug, "p_ub", p_ub);
+    
+    ndrx_debug_dump_UBF(log_debug, "p_ub", p_ub);
+    
     ndrx_debug_dump_UBF_hdr_ubflogger(log_debug, "p_ub2", p_ub2);
+    
+    ndrx_debug_dump_UBF(log_debug, "p_ub2", p_ub2);
     
     
 }
