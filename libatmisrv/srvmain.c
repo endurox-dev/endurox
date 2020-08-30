@@ -886,7 +886,6 @@ int ndrx_main(int argc, char** argv)
     if (argc<=1 || NULL==argv)
     {
         char *p;
-        char *saveptr1;
         char *tok;
         int alloc_args = 0;
         /* try to lookup env variables */
@@ -933,7 +932,7 @@ int ndrx_main(int argc, char** argv)
         argc=1;
         argv[0] = env_procname;
         
-        tok = strtok_r(env_clopt, " \t", &saveptr1);
+        tok = ndrx_strtokblk(env_clopt, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
         while (NULL!=tok)
         {
             argc++;
@@ -946,7 +945,7 @@ int ndrx_main(int argc, char** argv)
             argv[argc-1] = tok;
             
             /* Get next */
-            tok = strtok_r(NULL, " \t", &saveptr1);
+            tok = ndrx_strtokblk(NULL, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
         }
         
     }

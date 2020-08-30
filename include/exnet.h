@@ -115,7 +115,7 @@ struct exnetcon
     MUTEX_VAR(rcvlock);             /**< Receive lock                       */
     MUTEX_VAR(sendlock);            /**< Send lock                          */
     MUTEX_VAR(flagslock);           /**< Some flags locking (send/rcv timers) */
-    
+    int lock_init;                  /**< had the lock init performed?         */
     /* Server settings */
     int backlog;                    /**< Incoming connection queue len (backlog) */
     int max_cons;                   /**< Max number of connections we will handle*/

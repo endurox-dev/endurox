@@ -335,7 +335,7 @@ expublic char *ndrx_str_replace(char *orig, char *rep, char *with) {
      *    ins points to the next occurrence of rep in orig
      *    orig points to the remainder of orig after "end of rep"
      */
-    tmp = result = NDRX_MALLOC(strlen(orig) + (len_with - len_rep) * count + 1);
+    tmp = result = NDRX_FPMALLOC(strlen(orig) + (len_with - len_rep) * count + 1, 0);
 
     if (!result)
         return NULL;
@@ -551,7 +551,7 @@ out:
     {
         malloced = ndrx_str_replace(str, "\\\\", "\\");
         strcpy(str, malloced);
-        NDRX_FREE(malloced);
+        NDRX_FPFREE(malloced);
     }
     
     return str;
@@ -688,7 +688,7 @@ out:
     {
         malloced = ndrx_str_replace(str, "\\\\", "\\");
         strcpy(str, malloced);
-        NDRX_FREE(malloced);
+        NDRX_FPFREE(malloced);
     }
 
     if (NULL!=outbuf)

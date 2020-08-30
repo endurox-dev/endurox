@@ -1,8 +1,5 @@
 Enduro/X benchmarks
 ===================
-Madras Vitolins
-v1.0, 2016-07:
-	Initial draft
 :doctype: book
 
 Overview

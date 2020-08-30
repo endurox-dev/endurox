@@ -201,8 +201,8 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
     int loop_subsectfrom;
     int loop_subsectto;
     int i, genloop;
-    char separators[] = CPM_CMDLINE_SEP;
-    int len;
+    char *token;
+    char tmp_command_line[PATH_MAX+1+CPM_TAG_LEN+CPM_SUBSECT_LEN];
     
     memset(&cltproc, 0, sizeof(cpm_process_t));
     
@@ -636,6 +636,9 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                         sizeof(p_cltproc->stat.log_stderr));
                 
                 /* update the process name / hint */
+#if 0
+                /* TODO: Use strtokblk engine to extract first token ... */
+                //
                 p = strpbrk (p_cltproc->stat.command_line, separators);
                 
                 if (p > 0)
@@ -656,6 +659,18 @@ exprivate int parse_client(xmlDocPtr doc, xmlNodePtr cur)
                 
                 strncpy(p_cltproc->stat.procname, p_cltproc->stat.command_line, len);
                 p_cltproc->stat.procname[len] = EXEOS;
+#endif
+                NDRX_STRCPY_SAFE(tmp_command_line, p_cltproc->stat.command_line);
+                
+                token = ndrx_strtokblk(tmp_command_line, NDRX_CMDLINE_SEP, NDRX_CMDLINE_QUOTES);
+                
+                if (NULL==token)
+                {
+                    NDRX_LOG(log_error, "Invalid command line [%s]", tmp_command_line);
+                    EXFAIL_OUT(ret);
+                }
+                
+                NDRX_STRCPY_SAFE(p_cltproc->stat.procname, token);
                 
                 /* add to hash list */
                 cpm_get_key(p_cltproc->key, sizeof(p_cltproc->key), 

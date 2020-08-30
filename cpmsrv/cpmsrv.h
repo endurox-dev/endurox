@@ -42,6 +42,7 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <exhash.h>
 #include <nstopwatch.h>
+#include <ndrstandard.h>
 #include <cpm.h>
 #include <cconfig.h>
 #include <exenv.h>
@@ -77,7 +78,6 @@ extern "C" {
 /* Global shutdown: */
 #define CLT_STEP_INTERVAL_ALL       300000 /**< microseconds for usleep */
 #define CLT_STEP_SECOND_ALL         CLT_STEP_INTERVAL / 1000000.0f /**< part of second */
-#define CPM_CMDLINE_SEP             " ,\t\n" /**< command line seperators   */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
     
