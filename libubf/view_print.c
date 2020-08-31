@@ -505,42 +505,25 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
     
     memset(&bprint_state, 0, sizeof(bprint_state));
     
+    
+    /* Resolve view descriptor */
+    if (NULL==(v = ndrx_view_get_view(view)))
+    {
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+        EXFAIL_OUT(ret);
+    }
+    
     for (i=0; i<level; i++)
     {
         fmt_wdata[i]='\t';
         fmt_ndata[i]='\t';
     }
     
-    fmt_wdata[i]='%';
-    fmt_ndata[i]='%';
+    fmt_wdata[i]=EXEOS;
+    fmt_ndata[i]=EXEOS;
     
-    i++;
-    fmt_wdata[i]='s';
-    fmt_ndata[i]='s';
-    
-    i++;
-    fmt_wdata[i]='\\';
-    fmt_ndata[i]='\\';
-            
-    i++;
-    fmt_wdata[i]='t';
-    fmt_ndata[i]='t';
-    
-    i++;
-    fmt_wdata[i]='%';
-    fmt_ndata[i]='\\';
-    
-    i++;
-    fmt_wdata[i]='s';
-    fmt_ndata[i]='n';
-    fmt_ndata[i+1]=EXEOS;
-    
-    i++;
-    fmt_wdata[i]='\\';
-    
-    i++;
-    fmt_wdata[i]='n';
-    fmt_ndata[i+1]=EXEOS;
+    NDRX_STRCAT_S(fmt_wdata, sizeof(fmt_wdata), "%s\t%s\n");
+    NDRX_STRCAT_S(fmt_ndata, sizeof(fmt_ndata), "%s\t\n");
     
     bfldid = BFIRSTFLDID;
 

@@ -192,9 +192,10 @@ out:
  * are present in ubf1
  * @param p_ubf1 haystack
  * @param p_ubf2 needle
+ * @param level recursion level for debug
  * @return EXFALSE not a subset, EXTRUE is subset, EXFAIL (error occurred)
  */
-expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
+expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2, int level)
 {
     /* so basically we loop over the p_ubf2 and check every field obf ubf2
      * presence in ubf1 and compare their values... */
@@ -216,6 +217,7 @@ expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
     dtype_ext1_t *typ;
     int typcode;
     
+    UBF_LOG(log_debug, "Matching %p vs %p at level %d", p_ubf1, p_ubf2, level);
     
     memset(&state2, 0, sizeof(state2));
     
@@ -273,10 +275,18 @@ expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
             goto out;
         }
 
+        /* If this is UBF buffer type, then we shall step in as in recursion */
         
-        typ = &G_dtype_ext1_map[typcode];
-        
-        ret=typ->p_cmp(typ, buf1, len1, buf2, len2, 0);
+        if (typcode==BFLD_UBF)
+        {
+            UBF_LOG(log_debug, "Stepping into UBF for UBF fldid %d", bfldid2);
+            ret=ndrx_Bsubset((UBFH *)buf1, (UBFH *)buf2, level+1);
+        }
+        else
+        {
+            typ = &G_dtype_ext1_map[typcode];
+            ret=typ->p_cmp(typ, buf1, len1, buf2, len2, 0);
+        }
         
         if (EXFALSE==ret)
         {

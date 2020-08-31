@@ -181,6 +181,7 @@ extern "C" {
     
 #define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
 #define VIEW_ENTRY2 if (EXSUCCEED!=ndrx_view_init()) {ret=-2; goto out;}
+#define VIEW_ENTRY3 if (EXSUCCEED!=ndrx_view_init()) {return EXFAIL;}
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/    
 
@@ -285,7 +286,7 @@ extern int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
 extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
 
 extern int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
-extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);
+extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2, int level);
 
 extern BFLDOCC ndrx_Bnum(UBFH *p_ub);
 

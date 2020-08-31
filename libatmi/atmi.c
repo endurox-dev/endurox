@@ -1241,7 +1241,7 @@ expublic int tploggetbufreqfile(char *data, char *filename, int bufsize)
     int ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
     API_ENTRY;
-
+    
     if (EXSUCCEED!=entry_status)
     {
         EXFAIL_OUT(ret);

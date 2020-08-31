@@ -40,6 +40,7 @@
 #include <string.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include "ndebug.h"
 
 exprivate char *M_some_ptr1 = "HELLOptr";
 exprivate char *M_some_ptr2 = "HELLOptr";
@@ -58,7 +59,7 @@ Ensure(cmp_basic_setup1)
 /**
  * Load data1
  */
-exprivate void load1(UBFH *p_ub)
+exprivate void load1(UBFH *p_ub, BFLDOCC occ)
 {
     short s = 88;
     long l = -1021;
@@ -73,79 +74,30 @@ exprivate void load1(UBFH *p_ub)
     
     BFLDLEN len = strlen(carr);
     
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_SHORT_FLD, occ, (char *)&s, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_LONG_FLD, occ, (char *)&l, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CHAR_FLD, occ, (char *)&c, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_FLOAT_FLD, occ, (char *)&f, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, occ, (char *)&d, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_STRING_FLD, occ, (char *)"TEST STR VAL", 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_CARRAY_FLD, occ, (char *)carr, len), EXSUCCEED);
 
     /* Load equal UBF occ 0*/
     assert_equal(Binit(p_tmp, sizeof(tmp)), EXSUCCEED);
     assert_equal(Bchg(p_tmp, T_STRING_10_FLD, 0, "HELO", 0L), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_UBF_FLD, 0, (char *)p_tmp, len), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD, occ, (char *)p_tmp, len), EXSUCCEED);
     /* Load equal PTR occ 0 */
-    assert_equal(Bchg(p_ub, T_PTR_FLD, 0, (char *)&M_some_ptr1, len), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_PTR_FLD, occ, (char *)&M_some_ptr1, len), EXSUCCEED);
     /* Load equal VIEW occ 0*/
     memset(&v2, 0, sizeof(v2));
     v2.tlong1=1000;
     vf2.data=(char *)&v2;
     vf2.vflags=0;
     NDRX_STRCPY_SAFE(vf2.vname, "UBTESTVIEW2");
-    assert_equal(Bchg(p_ub, T_VIEW_FLD, 0, (char *)&vf2, len), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_VIEW_FLD, occ, (char *)&vf2, len), EXSUCCEED);
     
 }
-    
-/**
- * Load data 2
- */
-exprivate void load2(UBFH *p_ub)
-{
-    short s;
-    long l;
-    char c;
-    float f;
-    double d;
-    char carr[] = "CARRAY1 TEST STRING DATA";
-    BFLDLEN len = strlen(carr);
-    char tmp[1024];
-    UBFH *p_tmp = (UBFH *)tmp;
-    struct UBTESTVIEW2 v2;
-    BVIEWFLD vf2;
 
-    /* Make second copy of field data (another for not equal test)*/
-    s = 99;
-    l = -1021;
-    c = '.';
-    f = 17.31;
-    d = 12312.1111;
-    carr[0] = 'Y';
-    len = strlen(carr);
-
-    assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
-    
-    /* Load equal UBF occ 0*/
-    assert_equal(Binit(p_tmp, sizeof(tmp)), EXSUCCEED);
-    assert_equal(Bchg(p_tmp, T_STRING_10_FLD, 0, "HELO", 0L), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_UBF_FLD, 1, (char *)p_tmp, len), EXSUCCEED);
-    /* Load equal PTR occ 0 */
-    assert_equal(Bchg(p_ub, T_PTR_FLD, 1, (char *)&M_some_ptr1, len), EXSUCCEED);
-    /* Load equal VIEW occ 0*/
-    memset(&v2, 0, sizeof(v2));
-    v2.tlong1=1000;
-    vf2.data=(char *)&v2;
-    vf2.vflags=0;
-    NDRX_STRCPY_SAFE(vf2.vname, "UBTESTVIEW2");
-    assert_equal(Bchg(p_ub, T_VIEW_FLD, 1, (char *)&vf2, len), EXSUCCEED);
-    
-}
 /**
  * Load test data 3
  */
@@ -208,14 +160,14 @@ Ensure(test_Bcmp)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
-    load1(p_ub);
-    load1(p_ub_2);
+    load1(p_ub, 0);
+    load1(p_ub_2, 0);
     
     assert_equal(Bcmp(p_ub, p_ub_2), 0);
     
     
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
-    load2(p_ub_2);
+    load1(p_ub_2, 1);
     
     /* ID of first is greater (due to missing occurrences) than second buffer */
     assert_equal(Bcmp(p_ub, p_ub_2), 1);
@@ -230,7 +182,7 @@ Ensure(test_Bcmp)
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
     load3(p_ub);
-    load1(p_ub_2);
+    load1(p_ub_2, 0);
     
     /* load3 short is bigger than load1 */
     assert_equal(Bcmp(p_ub, p_ub_2), 1);
@@ -243,8 +195,8 @@ Ensure(test_Bcmp)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
-    load1(p_ub);
-    load1(p_ub_2);
+    load1(p_ub, 0);
+    load1(p_ub_2, 0);
     
     
     assert_equal(Bdel(p_ub, T_VIEW_FLD, 0), EXSUCCEED);
@@ -263,7 +215,7 @@ Ensure(test_Bcmp)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
-    load1(p_ub);
+    load1(p_ub, 0);
     load3(p_ub_2);
 
     
@@ -354,14 +306,14 @@ Ensure(test_Bsubset)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
-    load1(p_ub);
-    load1(p_ub_2);
+    load1(p_ub, 0);
+    load1(p_ub_2, 0);
     
     assert_equal(Bsubset(p_ub, p_ub_2), EXTRUE);
     
     
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
-    load2(p_ub_2);
+    load1(p_ub_2, 1);
     
     /* ID of first is greater (due to missing occurrences) than second buffer */
     assert_equal(Bsubset(p_ub, p_ub_2), EXFALSE);
@@ -374,8 +326,8 @@ Ensure(test_Bsubset)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
-    load1(p_ub);
-    load1(p_ub_2);
+    load1(p_ub, 0);
+    load1(p_ub_2, 0);
     
     assert_equal(Bdel(p_ub_2, T_CHAR_FLD, 0), EXSUCCEED);
     assert_equal(Bdel(p_ub_2, T_FLOAT_FLD, 0), EXSUCCEED);
@@ -505,7 +457,7 @@ Ensure(test_Bcmp_ubf)
     
     /* setup the temp buffer.. */
     
-    load1(p_ub_tmp);
+    load1(p_ub_tmp, 0);
     
     /* match test: */
     assert_equal(Bchg(p_ub, T_UBF_3_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
@@ -522,6 +474,62 @@ Ensure(test_Bcmp_ubf)
     
 }
 
+/**
+ * Test UBF subset function at second level
+ */
+Ensure(test_Bsubset_ubf)
+{
+    char fb[2048];
+    char fb_2[2048];
+    char fb_tmp[2048];
+    char fb_tmp2[2048];
+    
+    UBFH *p_ub = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
+    UBFH *p_ub_tmp = (UBFH *)fb_tmp;
+    UBFH *p_ub_tmp2 = (UBFH *)fb_tmp2;
+    
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
+    assert_equal(Binit(p_ub_tmp, sizeof(fb_tmp)), EXSUCCEED);
+    assert_equal(Binit(p_ub_tmp2, sizeof(fb_tmp2)), EXSUCCEED);
+    
+    /* setup the temp buffer.. */
+    
+    load1(p_ub_tmp, 0);
+    load1(p_ub_tmp, 1);
+    load1(p_ub_tmp, 2);
+    
+    /* that path is  T_UBF_FLD.T_UBF_2_FLD.<fields> */
+    
+    assert_equal(Bchg(p_ub_tmp2, T_UBF_2_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD, 0, (char *)p_ub_tmp2, 0L), EXSUCCEED);
+    
+    /* for p_ub_2 there is two levels less */
+    assert_equal(Binit(p_ub_tmp, sizeof(fb_tmp)), EXSUCCEED);
+    assert_equal(Binit(p_ub_tmp2, sizeof(fb_tmp2)), EXSUCCEED);
+    
+    load1(p_ub_tmp, 0);
+    load1(p_ub_tmp, 1);
+    
+    assert_equal(Bchg(p_ub_tmp2, T_UBF_2_FLD, 0, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub_2, T_UBF_FLD, 0, (char *)p_ub_tmp2, 0L), EXSUCCEED);
+    
+    
+    UBF_LOG(log_debug, "****Starting Bsubset ****");
+    assert_equal(Bsubset(p_ub, p_ub_2), EXTRUE);
+    UBF_LOG(log_debug, "****ENDING Bsubset ****");
+    
+    fprintf(stderr, "p_ub:\n");
+    Bprint(p_ub);
+    
+    fprintf(stderr, "p_ub2:\n");
+    Bprint(p_ub_2);
+    
+    assert_equal(Bsubset(p_ub_2, p_ub), EXFALSE);
+    
+}
+
 TestSuite *ubf_bcmp_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -533,9 +541,7 @@ TestSuite *ubf_bcmp_tests(void)
     add_test(suite, test_Bcmp_ubf);
     
     add_test(suite, test_Bsubset);
-    
-    /* TODO: Add sub-set tests for view, ptr and UBF... */
-    
+    add_test(suite, test_Bsubset_ubf);
     
     return suite;
 }
