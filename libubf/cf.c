@@ -81,7 +81,7 @@
         len = strlen(tmp)+1; /* Including EOS! */\
         if (*out_len<len)\
         {\
-            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", len, *out_len);\
+            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified: %d", len, *out_len);\
             return NULL;\
         }\
         else\
@@ -111,7 +111,7 @@ if (CNV_DIR_OUT==cnv_dir)\
         len = strlen(tmp); /* NOT Including EOS! */\
         if (NULL!=out_len && *out_len < len)\
         {\
-            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified :%d", len, *out_len);\
+            ndrx_Bset_error_fmt(BNOSPACE, "data size: %d specified: %d", len, *out_len);\
             return NULL;\
         }\
         else\
@@ -351,7 +351,7 @@ expublic conv_type_t G_conv_fn_ptr[] =
     {BFLD_PTR, BFLD_CARRAY, conv_ptr_carr},
     {BFLD_PTR, BFLD_INT, conv_ptr_carr},
     {BFLD_PTR, BFLD_RFU0, NULL},
-    {BFLD_INT, BFLD_INT, conv_same},
+    {BFLD_PTR, BFLD_INT, conv_same},
 };
 
 /**
@@ -432,7 +432,7 @@ expublic char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
     }
     else
     {
-        UBF_LOG(log_debug, "Conv: using temp buf");
+        UBF_LOG(log_debug, "Conv: using temp buf mode: %d", mode);
         if (CB_MODE_DEFAULT==mode)
         {
             /* Not sure do we need to return alloc_size here? */
@@ -458,8 +458,7 @@ expublic char * ndrx_ubf_get_cbuf(int in_from_type, int in_to_type,
              * originally estimated size. There is no other use there excep
              * Bgetalloc()
              */
-            
-            if (BFLD_PTR==in_from_type || BFLD_UBF==in_from_type || BFLD_VIEW==in_from_type)
+            if (BFLD_UBF==in_from_type || BFLD_VIEW==in_from_type)
             {
                 tmp_len = in_len+extra_len;
             }

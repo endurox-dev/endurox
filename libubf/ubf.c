@@ -1636,7 +1636,8 @@ expublic int Bgetlast (UBFH *p_ub, BFLDID bfldid,
 expublic int Bfprint (UBFH *p_ub, FILE * outf)
 {
     API_ENTRY;
-
+    VIEW_ENTRY3;
+    
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
@@ -1668,7 +1669,8 @@ expublic int Bfprintcb (UBFH *p_ub,
         ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1)
 {
     API_ENTRY;
-
+    VIEW_ENTRY3;
+    
     /* Do standard validation */
     if (EXSUCCEED!=validate_entry(p_ub, 0, 0, VALIDATE_MODE_NO_FLD))
     {
@@ -1717,7 +1719,7 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
     API_ENTRY;
     ndrx_debug_t * dbg = debug_get_tp_ptr();
     
-    if (dbg->level>=lev)
+    if (EXSUCCEED==ndrx_view_init() && dbg->level>=lev)
     {
 
 #ifdef UBF_API_DEBUG
@@ -3098,7 +3100,7 @@ expublic int Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
         EXFAIL_OUT(ret);
     }
 
-    ret = ndrx_Bsubset(p_ubf1, p_ubf2);
+    ret = ndrx_Bsubset(p_ubf1, p_ubf2, 0);
     
 out:
     UBF_LOG(log_debug, "%s: return %d", __func__, ret);
