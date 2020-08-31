@@ -145,9 +145,6 @@ Ensure(test_bjoin_simple)
     double d;
     char buf[100];
 
-    UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
-    UBF_header_t *hdst = (UBF_header_t *)p_ub_dst;
-
     Binit(p_ub_src, sizeof(fb_src));
     Binit(p_ub_dst, sizeof(fb_dst));
 
