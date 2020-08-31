@@ -70,7 +70,7 @@ expublic int ndrx_get_fb_ubf_size(dtype_str_t *t, char *fb, int *payload_size)
         *payload_size = hdr->bytes_used;
     }
     
-    return ALIGNED_SIZE((sizeof (BFLDLEN) + hdr->bytes_used));
+    return ALIGNED_SIZE(hdr->bytes_used);
 }
 
 /**
@@ -112,7 +112,7 @@ expublic int ndrx_get_d_size_ubf (struct dtype_str *t, char *data,
     if (NULL!=payload_size)
         *payload_size=hdr->bytes_used;
 
-    return ALIGNED_SIZE((sizeof(BFLDLEN)+hdr->bytes_used));
+    return ALIGNED_SIZE(hdr->bytes_used);
 }
 
 /**

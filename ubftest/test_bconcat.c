@@ -1,5 +1,5 @@
 /**
- *
+ * Perform Bconcat API tests
  * @file test_bconcat.c
  */
 /* -----------------------------------------------------------------------------
@@ -40,6 +40,122 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 
+
+/**
+ * Preparation before the test
+ */
+Ensure(bconcat_basic_setup1)
+{
+    /* set view env... */
+    setenv("VIEWDIR", "./", 1);
+    setenv("VIEWFILES", "test_view.V", 1);
+}
+
+/**
+ * Load test data for view/ubf/ptr
+ * @param p_ub buffer where to load
+ * @param occ occurrence of data
+ * @param offset data offset (value to change from base)
+ * @param fldoff field offset (different field set)
+ */
+void load_ubf_view_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    struct UBTESTVIEW2 v;
+    BVIEWFLD vf;
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH*)tmp;
+    long ptr=9000+offset;
+    char str[2];
+    
+    assert_equal(CBchg(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0, BFLD_LONG), EXSUCCEED);
+    
+    v.tshort1=1+offset;
+    v.tlong1=2+offset;
+    v.tchar1='3'+offset;
+    v.tfloat1=4+offset;
+    v.tdouble1=5+offset;
+    str[0]='A'+offset;
+    str[1]=EXEOS;
+    
+    NDRX_STRCPY_SAFE(v.tstring1, str);
+    str[0]='C'+offset;
+    str[1]=EXEOS;
+    
+    NDRX_STRCPY_SAFE(v.tcarray1, str);
+    vf.data=(char *)&v;
+    vf.vflags=0;
+    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
+    
+    assert_equal(Bchg(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, 0L), EXSUCCEED);
+    assert_equal(Binit(p_ub_tmp, sizeof(tmp)), EXSUCCEED);
+    
+    /* Load some sub-field */
+    str[0]='S'+offset;
+    str[1]=EXEOS;
+    
+    assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+fldoff, 0, str, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, 0), EXSUCCEED);
+}
+
+/**
+ * Validate the data is OK
+ * @param p_ub
+ * @param occ
+ * @param offset
+ * @param fldoff UBF field offset
+ */
+void test_ubf_view_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    struct UBTESTVIEW2 v;
+    BVIEWFLD vf;
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH*)tmp;
+    long ptr;
+    char str[2];
+    BFLDLEN len;
+    
+    assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
+    assert_equal(ptr, 9000+offset);
+    
+    /* UBF test */
+    len=1;
+    assert_equal(Bget(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, &len), EXFAIL);
+    assert_equal(Berror, BNOSPACE);
+    
+    len=sizeof(tmp);
+    assert_equal(Bget(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, &len), EXSUCCEED);
+    
+    str[0]='S'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(Bfind(p_ub_tmp, T_STRING_FLD+fldoff, 0, 0L), str);
+    
+    /* View test */
+    vf.data=(char *)&v;
+    len=sizeof(v)-1;
+    assert_equal(Bget(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, &len), EXFAIL);
+    assert_equal(Berror, BNOSPACE);
+    
+    len=sizeof(v);
+    assert_equal(Bget(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, &len), EXSUCCEED);
+    
+    /* Check value of view fields... */
+    
+    assert_equal(v.tshort1, 1+offset);
+    assert_equal(v.tlong1, 2+offset);
+    assert_equal(v.tchar1, '3'+offset);
+    assert_equal(v.tfloat1, 4+offset);
+    assert_equal(v.tdouble1, 5+offset);
+    
+    str[0]='A'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(v.tstring1,str);
+    
+    str[0]='C'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(v.tcarray1, str);
+    assert_string_equal(vf.vname, "UBTESTVIEW2");
+}
+
 void load_concat_test_data(UBFH *p_ub)
 {
     short s = 88;
@@ -49,7 +165,8 @@ void load_concat_test_data(UBFH *p_ub)
     double d = 12312.1111;
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
-
+    
+    /* Section 1: */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
@@ -57,6 +174,8 @@ void load_concat_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+
+    load_ubf_view_ptr(p_ub, 0, 1, 0);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 8;
@@ -66,7 +185,8 @@ void load_concat_test_data(UBFH *p_ub)
     d = 1231.1111;
     carr[0] = 'Y';
     len = strlen(carr);
-
+    /* Section 2: */
+    
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
@@ -74,21 +194,9 @@ void load_concat_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
-#if 0
-    s = 212;
-    l = 212;
-    c = 'b';
-    f = 12127;
-    d = 1231232.1;
-    carr[0] = 'X';
-    assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
-#endif
+    
+    
+    load_ubf_view_ptr(p_ub, 1, 2, 0);
 }
 
 void test_concat_data_1(UBFH *p_ub)
@@ -101,7 +209,13 @@ void test_concat_data_1(UBFH *p_ub)
     char buf[100];
     BFLDLEN len;
     char carr[] = "CARRAY1 TEST STRING DATA";
-
+    struct UBTESTVIEW2 v;
+    BVIEWFLD vf;
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH*)tmp;
+    long lptr;
+    
+    /* Matches Section 1: */
     /* OCC 0 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 88);
@@ -119,7 +233,10 @@ void test_concat_data_1(UBFH *p_ub)
     len = sizeof(buf);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
-
+    
+    test_ubf_view_ptr(p_ub, 0, 1, 0);
+    
+    /* Matches Section 2: */
     /* OCC 1 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 8);
@@ -138,26 +255,10 @@ void test_concat_data_1(UBFH *p_ub)
     carr[0] = 'Y';
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 1, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
-#if 0
-    /* Test FLD2 */
-    assert_equal(Bget(p_ub, T_SHORT_2_FLD, 0, (char *)&s, 0), EXSUCCEED);
-    assert_equal(s, 212);
-    assert_equal(Bget(p_ub, T_LONG_2_FLD, 0, (char *)&l, 0), EXSUCCEED);
-    assert_equal(l, 212);
-    assert_equal(Bget(p_ub, T_CHAR_2_FLD, 0, (char *)&c, 0), EXSUCCEED);
-    assert_equal(c, 'b');
-    assert_equal(Bget(p_ub, T_FLOAT_2_FLD, 0, (char *)&f, 0), EXSUCCEED);
-    assert_double_equal(f, 12127);
-    assert_equal(Bget(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
-    assert_double_equal(d, 1231232.1);
-    assert_equal(Bget(p_ub, T_STRING_2_FLD, 0, (char *)buf, 0), EXSUCCEED);
-    assert_string_equal(buf, "XTEST STR VAL");
+    
+    test_ubf_view_ptr(p_ub, 1, 2, 0);
+    
 
-    len = sizeof(buf);
-    carr[0] = 'X';
-    assert_equal(Bget(p_ub, T_CARRAY_2_FLD, 8, (char *)buf, &len), EXSUCCEED);
-    assert_equal(strncmp(buf, carr, strlen(carr)), 0);
-#endif
 }
 
 /**
@@ -174,6 +275,7 @@ void load_concat_test_data_2(UBFH *p_ub)
     char carr[] = "CARRAY1 TEST STRING DATA1 --- SOME --- LONG - STUFF";
     BFLDLEN len = strlen(carr);
 
+    /* Section 3: */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
@@ -182,6 +284,8 @@ void load_concat_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL1M THIS IS LOGN STRING", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
+    load_ubf_view_ptr(p_ub, 0, 3, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     s = 81;
     l = -211;
@@ -191,6 +295,7 @@ void load_concat_test_data_2(UBFH *p_ub)
     carr[0] = '2';
     len = strlen(carr);
 
+    /* Section 4: */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 1, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 1, (char *)&c, 0), EXSUCCEED);
@@ -198,7 +303,8 @@ void load_concat_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"3EST STRING ARRAY2 THIS IS EVEN MORE LONGER", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
-
+    load_ubf_view_ptr(p_ub, 1, 4, 0);
+    
     /* This part we will keep the same */
     s = 2121;
     l = 2121;
@@ -206,6 +312,9 @@ void load_concat_test_data_2(UBFH *p_ub)
     f = 1227;
     d = 1232.1;
     carr[0] = 'G';
+    
+    /* Section 5: */
+    
     assert_equal(Bchg(p_ub, T_SHORT_2_FLD, 2, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_2_FLD, 2, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_2_FLD, 2, (char *)&c, 0), EXSUCCEED);
@@ -213,6 +322,7 @@ void load_concat_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 2, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 2, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 2, (char *)carr, len), EXSUCCEED);
+    load_ubf_view_ptr(p_ub, 2, 5, 1);
 }
 
 void test_concat_data_2(UBFH *p_ub)
@@ -226,6 +336,8 @@ void test_concat_data_2(UBFH *p_ub)
     BFLDLEN len;
     char carr[] = "CARRAY1 TEST STRING DATA1 --- SOME --- LONG - STUFF";
 
+    /* Matches Section 3: */
+    
     /* OCC 0 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 2, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 881);
@@ -243,7 +355,10 @@ void test_concat_data_2(UBFH *p_ub)
     len = sizeof(buf);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 2, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
-
+    test_ubf_view_ptr(p_ub, 2, 3, 0);
+    
+    /* Matches Section 4: */
+    
     /* OCC 1 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 3, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 81);
@@ -262,7 +377,9 @@ void test_concat_data_2(UBFH *p_ub)
     carr[0] = '2';
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 3, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    test_ubf_view_ptr(p_ub, 3, 4, 0);
 
+    /* Matches Section 5: */
     /* Test FLD2 */
     assert_equal(Bget(p_ub, T_SHORT_2_FLD, 2, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 2121);
@@ -281,6 +398,9 @@ void test_concat_data_2(UBFH *p_ub)
     carr[0] = 'G';
     assert_equal(Bget(p_ub, T_CARRAY_2_FLD, 2, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    //test_ubf_view_ptr(p_ub, 2, 5, 1);
+    
 }
 
 
@@ -314,6 +434,11 @@ Ensure(test_fconcat)
 
     load_concat_test_data(p_ub);
     load_concat_test_data_2(p_ub2);
+    
+    Bfprint(p_ub, stderr);
+    
+    Bfprint(p_ub2, stderr);
+    
     assert_equal(Bconcat(p_ub, p_ub2), EXSUCCEED);
 
     /* Both tests should be passed. */
@@ -326,6 +451,8 @@ TestSuite *ubf_fconcat_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
+    set_setup(suite, bconcat_basic_setup1);
+    
     add_test(suite, test_fconcat);
 
     return suite;
