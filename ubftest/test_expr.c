@@ -128,7 +128,7 @@ void load_expr_test_data_2(UBFH *p_ub)
 
 Ensure(test_expr_basic)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     /*----------------------------------------------------------*/
@@ -1278,7 +1278,7 @@ Ensure(test_expr_basic_scopes)
  */
 Ensure(test_expr_short)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     short short_val;
@@ -1342,9 +1342,9 @@ Ensure(test_expr_short)
 Ensure(test_bboolpr)
 {
     char *tree;
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
-    char testbuf[640];
+    char testbuf[2048];
     int read;
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     /* Simple test... */
@@ -1408,9 +1408,9 @@ exprivate int bboolprcb_callback(char *buffer, long datalen, void *dataptr1)
 Ensure(test_bboolprcb)
 {
     char *tree;
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
-    char testbuf[640];
+    char testbuf[2048];
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     
@@ -1489,7 +1489,7 @@ long callback_function_value(UBFH *p_ub, char *funcname)
  */
 Ensure(test_cbfunc)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     short short_val;
@@ -1604,7 +1604,7 @@ Ensure(test_cbfunc)
  */
 Ensure(test_expr_argsval)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char *tree = NULL;
     

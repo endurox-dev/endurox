@@ -637,27 +637,30 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 EXFAIL_OUT(ret);
             }
             
-            /* Resolve view descriptor */
-            if (NULL==(v = ndrx_view_get_view(view)))
+            /* Resolve view descriptor, in case of view is not empty... */
+            if (EXEOS!=view[0])
             {
-                ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
-                EXFAIL_OUT(ret);
-            }
-            
-            if (value_len<v->ssize)
-            {
-                ndrx_Bset_error_fmt(BNOSPACE, "Temporary buffer size %zu "
-                        "is shorter than view size %ld", value_len, v->ssize);
-                EXFAIL_OUT(ret);
-            }
-            
-            /* use value buffer for building up the view data */
-            if (EXSUCCEED!=ndrx_Bvextread (value, view, inf, p_readf, dataptr1, 
-                    level+1, &readbuf_buffered))
-            {
-                UBF_LOG(log_error, "Failed to parse view [%s] at level %d", 
-                        view, level+1);
-                EXFAIL_OUT(ret);
+                if (NULL==(v = ndrx_view_get_view(view)))
+                {
+                    ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
+                    EXFAIL_OUT(ret);
+                }
+
+                if (value_len<v->ssize)
+                {
+                    ndrx_Bset_error_fmt(BNOSPACE, "Temporary buffer size %zu "
+                            "is shorter than view size %ld", value_len, v->ssize);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* use value buffer for building up the view data */
+                if (EXSUCCEED!=ndrx_Bvextread (value, view, inf, p_readf, dataptr1, 
+                        level+1, &readbuf_buffered))
+                {
+                    UBF_LOG(log_error, "Failed to parse view [%s] at level %d", 
+                            view, level+1);
+                    EXFAIL_OUT(ret);
+                }
             }
             
             /* add stuff to fb... */

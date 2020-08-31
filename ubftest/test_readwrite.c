@@ -46,9 +46,9 @@
  */
 Ensure(test_readwrite)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
-    char fb2[1024];
+    char fb2[2048];
     UBFH *p_ub2 = (UBFH *)fb2;
 
     /* needs to set padding to some known value */
@@ -83,7 +83,7 @@ Ensure(test_readwrite)
  */
 Ensure(test_readwrite_err_space)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
     char fb2[128];
     UBFH *p_ub2 = (UBFH *)fb2;
@@ -115,7 +115,7 @@ Ensure(test_readwrite_err_space)
  */
 Ensure(test_readwrite_invalid_descr)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
     char fb2[128];
     UBFH *p_ub2 = (UBFH *)fb2;
@@ -146,7 +146,7 @@ Ensure(test_readwrite_invalid_descr)
 /**
  * Place where to put the read/write data
  */
-exprivate char M_temp_space[1024];
+exprivate char M_temp_space[2048];
 exprivate int M_cur_offset;
 
 /**
@@ -191,7 +191,7 @@ exprivate long test_readf(char *buffer, long bufsz, void *dataptr1)
  */
 Ensure(test_readwrite_callbacked)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
     
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);

@@ -361,7 +361,7 @@ Ensure(test_projcpy)
  */
 Ensure(test_Bdelall)
 {
-    char fb[1024];
+    char fb[2048];
     char buf[64];
     UBFH *p_ub = (UBFH *)fb;
     int len;

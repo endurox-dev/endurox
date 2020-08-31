@@ -845,19 +845,6 @@ expublic char * get_fld_loc(UBFH * p_ub, BFLDID bfldid, BFLDOCC occ,
         step = dtype->p_next(dtype, p, NULL);
         p+=step;
         
-        /* Align error */
-#if 0
-        if (CHECK_ALIGN(p, p_ub, hdr))
-        {
-            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p "
-                    "(offset: %ld) field: %d, len: %d, overrun: %d", 
-                    fn, p, (long)(p-((char *)hdr)),
-                    *p_bfldid, step, (p-((char *)hdr)) - hdr->bytes_used );
-            stat=EXFAIL;
-            goto out;
-        }
-#endif
-
         if (EXTRUE==(eof=UBF_EOF(hdr, p)))
         {
             break;
