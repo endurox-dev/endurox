@@ -239,7 +239,7 @@ expublic int ndrx_put_empty_view(struct dtype_ext1* t, char *fb, BFLDID bfldid)
     int ret=EXSUCCEED;
     UBF_view_t *viewfb = (UBF_view_t *)fb;
     
-    memset(viewfb, 0, sizeof(viewfb));    
+    memset(viewfb, 0, sizeof(UBF_view_t));    
     viewfb->bfldid = bfldid;
 
     return ret;

@@ -50,6 +50,7 @@ UBFH *M_p_ub = NULL;
 
 char M_test_temp_filename[]="/tmp/ubf-test-com-XXXXXX";
 FILE *M_test_temp_file=NULL;
+int M_has_init = EXFALSE;
 
 /**
  * Open test file for write
@@ -105,8 +106,16 @@ void remove_test_temp(void)
  */
 void load_field_table(void)
 {
-    setenv("FLDTBLDIR", "./ubftab", 1);
-    setenv("FIELDTBLS", "test.fd,Exfields", 1);
+    if (!M_has_init)
+    {
+        setenv("FLDTBLDIR", "./ubftab", 1);
+        setenv("FIELDTBLS", "test.fd,Exfields", 1);
+
+        setenv("VIEWDIR", "./", 1);
+        setenv("VIEWFILES", "test_view.V", 1);
+        M_has_init=EXTRUE;
+    }
+    
 }
 
 /**
@@ -116,28 +125,15 @@ void load_field_table(void)
  */
 void set_up_dummy_data(UBFH *p_ub)
 {
-#if 0
-    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "20", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_9_FLD, "31", 0, BFLD_STRING), EXSUCCEED);
-
-    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "1.11", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_DOUBLE_3_FLD, "2.41231", 0, BFLD_STRING), EXSUCCEED);
-
-    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_8_FLD, "HELLO WORLD1", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_5_FLD, "HELLO WORLD2", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_7_FLD, "HELLO WORLD3", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_6_FLD, "HELLO WORLD4", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_10_FLD, "HELLO WORLD5", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_4_FLD, "HELLO WORLD6", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBadd(p_ub, T_STRING_3_FLD, "HELLO WORLD7", 0, BFLD_STRING), EXSUCCEED);
-    assert_equal(CBchg(p_ub, T_CARRAY_2_FLD, 1, "TEST CARRAY", 0, BFLD_STRING), EXSUCCEED);
-#endif
-    
-    
     char buf[128];
     int len;
+    long ptr;
+    BVIEWFLD vf;
+    struct UBTESTVIEW2 v;
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH *)tmp;
+    
+    load_field_table();
     
     assert_equal(CBadd(p_ub, T_STRING_9_FLD, "01", 0, BFLD_STRING), EXSUCCEED);
     
@@ -214,6 +210,39 @@ void set_up_dummy_data(UBFH *p_ub)
     assert_equal(CBget(p_ub, T_CARRAY_2_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "TEST CARRAY");
     
+    /* Load some PTR, VIEW and UBF */
+    ptr=199;
+    assert_equal(CBchg(p_ub, T_PTR_3_FLD, 0, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
+    ptr=299;
+    assert_equal(CBchg(p_ub, T_PTR_3_FLD, 1, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
+    
+    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
+    vf.vflags=0;
+    vf.data = (char *)&v;
+    
+    v.tshort1=100;
+    v.tlong1=200;
+    v.tchar1='G';
+    v.tfloat1=400;
+    v.tdouble1=500;
+    NDRX_STRCPY_SAFE(v.tstring1, "6XX");
+    NDRX_STRCPY_SAFE(v.tcarray1, "7XX");
+    
+    assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 0, (char *)&vf, 0L), EXSUCCEED);
+    
+    NDRX_STRCPY_SAFE(v.tstring1, "6YY");
+    NDRX_STRCPY_SAFE(v.tcarray1, "7YY");
+    v.tchar1='Z';
+    assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 4, (char *)&vf, 0L), EXSUCCEED);
+    
+    
+    /* And some ubf... */
+    assert_equal(Binit(p_ub_tmp, sizeof(tmp)), EXSUCCEED);
+    assert_equal(Bchg(p_ub_tmp, T_STRING_9_FLD, 3, "HELLO WORLD UB", 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_3_FLD, 2, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    
+    assert_equal(Bchg(p_ub_tmp, T_STRING_7_FLD, 2, "ANOTHER UB", 0L), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_3_FLD, 3, (char *)p_ub_tmp, 0L), EXSUCCEED);
 
 }
 
@@ -221,6 +250,12 @@ void do_dummy_data_test(UBFH *p_ub)
 {
     char buf[128];
     int len;
+    long ptr;
+    BVIEWFLD vf;
+    struct UBTESTVIEW2 v;
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH *)tmp;
+    
     assert_equal(CBget(p_ub, T_STRING_9_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "01");
     assert_equal(CBget(p_ub, T_STRING_9_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
@@ -253,6 +288,45 @@ void do_dummy_data_test(UBFH *p_ub)
     len = sizeof(buf);
     assert_equal(CBget(p_ub, T_CARRAY_2_FLD, 1, buf, 0, BFLD_STRING), EXSUCCEED);
     assert_string_equal(buf, "TEST CARRAY");
+    
+    /* TODO: Test some PTR, VIEW and UBF */
+    assert_equal(CBget(p_ub, T_PTR_3_FLD, 0, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
+    assert_equal(ptr, 199);
+    assert_equal(CBget(p_ub, T_PTR_3_FLD, 1, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
+    assert_equal(ptr, 299);
+    
+    vf.data = (char *)&v;
+    
+    assert_equal(Bget(p_ub, T_VIEW_3_FLD, 0, (char *)&vf, 0L), EXSUCCEED);
+    
+    assert_string_equal(vf.vname, "UBTESTVIEW2");
+    assert_equal(vf.vflags, 0);
+    
+    assert_equal(v.tshort1, 100);
+    assert_equal(v.tlong1, 200);
+    assert_equal(v.tchar1, 'G');
+    assert_equal(v.tfloat1, 400);
+    assert_equal(v.tdouble1, 500);
+    assert_string_equal(v.tstring1, "6XX");
+    assert_string_equal(v.tcarray1, "7XX");
+    
+    assert_equal(Bget(p_ub, T_VIEW_3_FLD, 4, (char *)&vf, 0L), EXSUCCEED);
+    assert_equal(v.tchar1, 'Z');
+    assert_string_equal(v.tstring1, "6YY");
+    assert_string_equal(v.tcarray1, "7YY");
+    
+    
+    assert_equal(Bget(p_ub, T_UBF_3_FLD, 2, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    assert_equal(Bget(p_ub_tmp, T_STRING_9_FLD, 3, (char *)buf, 0L), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD UB");
+    
+    
+    assert_equal(Bget(p_ub, T_UBF_3_FLD, 3, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    assert_equal(Bget(p_ub_tmp, T_STRING_7_FLD, 2, (char *)buf, 0L), EXSUCCEED);
+    assert_string_equal(buf, "ANOTHER UB");    
+    assert_equal(Bget(p_ub_tmp, T_STRING_9_FLD, 3, (char *)buf, 0L), EXSUCCEED);
+    assert_string_equal(buf, "HELLO WORLD UB");
+    
 }
 
 /**

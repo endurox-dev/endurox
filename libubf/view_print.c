@@ -167,7 +167,6 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
     NDRX_USYSBUF_MALLOC_WERR_OUT(readbuf, readbuf_len, ret);
     NDRX_USYSBUF_MALLOC_WERR_OUT(value, value_len, ret);
     
-    /* Resolve view descriptor */
     if (NULL==(v = ndrx_view_get_view(view)))
     {
         ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", view);
@@ -482,14 +481,12 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
     BFLDLEN  len;
     BFLDOCC occ;
     char *p;
-    int fldtype;
     char *cnv_buf = NULL;
     char *tmp_buf = NULL;
     BFLDLEN cnv_len;
     char fmt_wdata[256];
     char fmt_ndata[256];
     int i;
-    BVIEWFLD *vdata;
     Bvnext_state_t bprint_state;
     char *p_view = view;
     
@@ -585,12 +582,12 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
             }
             
             /* print the field... */
-            if (BFLD_STRING==fldtype || BFLD_CARRAY==fldtype)
+            if (BFLD_STRING==f->typecode_full || BFLD_CARRAY==f->typecode_full)
             {
                 int temp_len;
 
                 /* For strings we must count off trailing EOS */
-                if (BFLD_STRING==fldtype)
+                if (BFLD_STRING==f->typecode_full)
                 {
                     len=strlen(p);
                 }
@@ -614,7 +611,7 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
                     
                     p = tmp_buf;
                 }
-                else if (BFLD_CARRAY==fldtype) /* we need EOS for carray... */
+                else if (BFLD_CARRAY==f->typecode_full) /* we need EOS for carray... */
                 {
                     tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
 
@@ -632,7 +629,7 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
             }
             else
             {
-                cnv_buf=ndrx_Btypcvt(&cnv_len, BFLD_STRING, p, fldtype, len);
+                cnv_buf=ndrx_Btypcvt(&cnv_len, BFLD_STRING, p, f->typecode_full, len);
 
                 if (NULL==cnv_buf)
                 {

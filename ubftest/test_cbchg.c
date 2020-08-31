@@ -45,7 +45,7 @@
  */
 Ensure(test_Bchg_short_org)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     short test_val;
     short short_val = 123;
@@ -102,7 +102,7 @@ Ensure(test_Bchg_short_org)
  */
 Ensure(test_Bchg_long_org)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     long test_val;
     short short_val = 123;
@@ -159,7 +159,7 @@ Ensure(test_Bchg_long_org)
  */
 Ensure(test_Bchg_char_org)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char test_val;
     short short_val = 1;
@@ -216,7 +216,7 @@ Ensure(test_Bchg_char_org)
  */
 Ensure(test_Bchg_float_org)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     float test_val;
     short short_val = 12321;
@@ -287,7 +287,7 @@ Ensure(test_Bchg_float_org)
  */
 Ensure(test_Bchg_double_org)
 {
-    char buf[640];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     double test_val;
     short short_val = 22321;
@@ -353,7 +353,7 @@ Ensure(test_Bchg_double_org)
  */
 Ensure(test_Bchg_string_org)
 {
-    char buf[1024];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char test_val[641];
     short short_val = 22321;
@@ -448,7 +448,7 @@ Ensure(test_Bchg_string_org)
  */
 Ensure(test_Bchg_carray_org)
 {
-    char buf[1024];
+    char buf[2048];
     UBFH *p_ub = (UBFH *)buf;
     char test_val[514];
     short short_val = 22321;

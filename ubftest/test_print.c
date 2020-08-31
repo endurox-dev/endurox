@@ -334,22 +334,28 @@ Ensure(test_bextread_bfldid)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub2, sizeof(fb2)), EXSUCCEED);
 
+    UBF_LOG(log_debug, "****** load_print_test_data ******");
     load_print_test_data(p_ub);
+    UBF_LOG(log_debug, "****** set_up_dummy_data ******");
     set_up_dummy_data(p_ub);
-    
 
     assert_not_equal(mkstemp(filename), EXFAIL);
 
     assert_not_equal((f=fopen(filename, "w")), NULL);
+    
+    UBF_LOG(log_debug, "****** Bfprint ******");
     assert_equal(Bfprint(p_ub, f), EXSUCCEED);
     fclose(f);
 
     /* read stuff form file */
     assert_not_equal((f=fopen(filename, "r")), NULL);
+    UBF_LOG(log_debug, "****** Bextread ******");
     assert_equal(Bextread(p_ub2, f), EXSUCCEED);
     fclose(f);
     
+    
     /* compare readed buffer */
+    UBF_LOG(log_debug, "****** Bcmp ******");
     assert_equal(Bcmp(p_ub, p_ub2), 0);
     /* Remove test file */
     assert_equal(unlink(filename), EXSUCCEED);

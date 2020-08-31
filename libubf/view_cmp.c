@@ -88,10 +88,27 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
     
     UBF_LOG(log_debug, "Compare views by data %p [%s] %p [%s]", 
             cstruct1, view1, cstruct2, view2);
+
+    if (EXEOS==view1[0] && EXEOS==view2[0])
+    {
+        UBF_LOG(log_debug, "Both empty views - assume equals");
+        goto out;
+    }
     
     if (0!=(ret=strcmp(view1, view2)))
     {
         UBF_LOG(log_debug, "Name differs");
+        
+        /* normalize values */
+        if (ret<-1)
+        {
+            ret=-1;
+        }
+        else if (ret>1)
+        {
+            ret=1;
+        }
+        
         goto out;
     }
     
