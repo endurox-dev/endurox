@@ -28,6 +28,9 @@ If 'p_ubf2' occurrences, fields and values are found in 'p_ubf1' the function
 returns *1*, if there are any differences, function returns 0 (not found). In
 case of error -1 is returned with *Berror* set accordingly.
 
+For field type *BFLD_UBF* subset testing is performed in recursive way, i.e.
+subset of 'p_ubf2' UBF field is tested in 'p_ubf1' UBF field.
+
 ERRORS
 ------
 Note that *Bstrerror()* returns generic error message plus custom message with 

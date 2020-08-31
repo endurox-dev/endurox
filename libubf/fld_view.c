@@ -93,24 +93,41 @@ expublic int ndrx_put_data_view(dtype_str_t *t, char *fb, BFLDID bfldid,
     int ret = EXSUCCEED;
     UBF_view_t *viewfb = (UBF_view_t *)fb;
     BVIEWFLD *vdata = (BVIEWFLD *)data;
-    
+    ndrx_typedview_t * vdef;
+    long vsize;
     VIEW_ENTRY;
     
     /* find the view */
-    ndrx_typedview_t * vdef = ndrx_view_get_view(vdata->vname);
     
-    if (NULL==vdef)
+    if (EXEOS!=vdata->vname[0])
     {
-        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not loaded, check VIEWFILES env");
-        EXFAIL_OUT(ret);
+        vdef = ndrx_view_get_view(vdata->vname);
+
+        if (NULL==vdef)
+        {
+            ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not loaded, check VIEWFILES env");
+            EXFAIL_OUT(ret);
+        }
+        
+        vsize=vdef->ssize;
     }
+    else
+    {
+        /* for empty fields */
+        vsize=0;
+    }
+    
     /* int align; */
     viewfb->bfldid = bfldid;
     viewfb->vflags = vdata->vflags;
-    viewfb->dlen=vdef->ssize;
+    viewfb->dlen=vsize;
     
     NDRX_STRCPY_SAFE(viewfb->vname, vdata->vname);
-    memcpy(viewfb->data, vdata->data, vdef->ssize);
+    
+    if (vsize>0)
+    {
+        memcpy(viewfb->data, vdata->data, vsize);
+    }
     
 out:
     return ret;
@@ -130,23 +147,33 @@ expublic int ndrx_get_d_size_view (struct dtype_str *t, char *data,
 {
     int ret;
     BVIEWFLD *vdata = (BVIEWFLD *)data;
-    
+    ndrx_typedview_t * vdef;
+    long vsize;
     VIEW_ENTRY;
     
     /* find the view */
-    ndrx_typedview_t * vdef = ndrx_view_get_view(vdata->vname);
     
-    if (NULL==vdef)
+    if (EXEOS!=vdata->vname[0])
     {
-        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not loaded, check VIEWFILES env", 
-                vdata->vname);
-        EXFAIL_OUT(ret);
+        vdef = ndrx_view_get_view(vdata->vname);
+
+        if (NULL==vdef)
+        {
+            ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not loaded, check VIEWFILES env", 
+                    vdata->vname);
+            EXFAIL_OUT(ret);
+        }
+        vsize=vdef->ssize;
+    }
+    else
+    {
+        vsize=0;
     }
     
     if (NULL!=payload_size)
-        *payload_size=vdef->ssize;
+        *payload_size=vsize;
 
-    ret=ALIGNED_SIZE_T(UBF_view_t, vdef->ssize);
+    ret=ALIGNED_SIZE_T(UBF_view_t, vsize);
     
 out:
     return ret;
@@ -167,6 +194,15 @@ expublic int ndrx_get_data_view (struct dtype_str *t, char *fb, char *buf, int *
     UBF_view_t *viewfb = (UBF_view_t *)fb;
     BVIEWFLD *vdata = (BVIEWFLD *)buf;
 
+    
+    if (NULL!=len && *len>0 && *len < viewfb->dlen)
+    {
+        /* Set error, that string buffer too short */
+        ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
+                                "output: %d", viewfb->dlen, *len);
+        EXFAIL_OUT(ret);
+    }
+    
     /* copy the data */
     NDRX_STRCPY_SAFE(vdata->vname, viewfb->vname);
     vdata->vflags = (unsigned int )viewfb->vflags;

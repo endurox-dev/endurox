@@ -521,10 +521,10 @@ Ensure(test_Bsubset_ubf)
     UBF_LOG(log_debug, "****ENDING Bsubset ****");
     
     fprintf(stderr, "p_ub:\n");
-    Bprint(p_ub);
+    Bfprint(p_ub, stderr);
     
     fprintf(stderr, "p_ub2:\n");
-    Bprint(p_ub_2);
+    Bfprint(p_ub_2, stderr);
     
     assert_equal(Bsubset(p_ub_2, p_ub), EXFALSE);
     

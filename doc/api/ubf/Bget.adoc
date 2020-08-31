@@ -23,12 +23,18 @@ DESCRIPTION
 Function is used to get field data from UBF buffer. 'p_ub' is pointer to UBF 
 buffer, 'bfldid' is field id, 'occ' is field occurrence at buffer, which needs 
 to be read. 'buf' is buffer where to output the data. 'len' is used as *input* 
-for indicating the lenght of the bytes for the target buffer ('buf'). If the 
-data is larger than 'len' inidicated, then error of *BNOSPACE*. Then 'len' is 
+for indicating the length of the bytes for the target buffer ('buf'). If the 
+data is larger than 'len' indicates, then error of *BNOSPACE*. Then 'len' is 
 optional. If set to NULL, then no such checks are made. 'len' is used for 
-*BFLD_STRING* and *BFLD_CARRAY*. On output 'len' (if not NULL), indicates the 
-length of data loaded in bytes. 'buf' pointed data type must match the field 
+*BFLD_STRING*, *BFLD_CARRAY*, *BFLD_UBF* and *BFLD_VIEW*. On output 'len' (if not NULL), 
+indicates the length of data loaded in bytes. 'buf' pointed data type must match the field 
 type in buffer.
+
+When 'bfldid' data type is *BFLD_VIEW*, it is expected that 'buf' points to 
+*BVIEWFLD* structure, where 'BVIEWFLD.data' pointers it set to are where data
+shall be unloaded. The 'BVIEWFLD.vname' is set to view name, 'vflags' currently
+is not used. When processing *BFLD_VIEW* field, 'len' on input indicates the
+area size of 'BVIEWFLD.data'.
 
 RETURN VALUE
 ------------
