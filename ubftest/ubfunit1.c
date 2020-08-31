@@ -330,6 +330,161 @@ void do_dummy_data_test(UBFH *p_ub)
 }
 
 /**
+ * Load ptr data
+ * @param p_ub buffer where to load
+ * @param occ occurrence of data
+ * @param offset data offset (value to change from base)
+ * @param fldoff field offset (different field set)
+ */
+void gen_load_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    long ptr=9000+offset;   
+    assert_equal(CBchg(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0, BFLD_LONG), EXSUCCEED);
+}
+
+/**
+ * Load test data for view
+ * @param p_ub buffer where to load
+ * @param occ occurrence of data
+ * @param offset data offset (value to change from base)
+ * @param fldoff field offset (different field set)
+ */
+void gen_load_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    struct UBTESTVIEW2 v;
+    BVIEWFLD vf;
+    char str[2];
+    
+    v.tshort1=1+offset;
+    v.tlong1=2+offset;
+    v.tchar1='3'+offset;
+    v.tfloat1=4+offset;
+    v.tdouble1=5+offset;
+    str[0]='A'+offset;
+    str[1]=EXEOS;
+    
+    NDRX_STRCPY_SAFE(v.tstring1, str);
+    str[0]='C'+offset;
+    str[1]=EXEOS;
+    
+    NDRX_STRCPY_SAFE(v.tcarray1, str);
+    vf.data=(char *)&v;
+    vf.vflags=0;
+    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
+    
+    assert_equal(Bchg(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, 0L), EXSUCCEED);
+}
+
+
+/**
+ * Load test data for ubf
+ * @param p_ub buffer where to load
+ * @param occ occurrence of data
+ * @param offset data offset (value to change from base)
+ * @param fldoff field offset (different field set)
+ */
+void gen_load_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH*)tmp;
+    char str[2];
+    
+    assert_equal(Binit(p_ub_tmp, sizeof(tmp)), EXSUCCEED);
+    
+    /* Load some sub-field */
+    str[0]='S'+offset;
+    str[1]=EXEOS;
+    
+    assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+fldoff, 0, str, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, 0), EXSUCCEED);
+}
+
+/**
+ * Validate ptr data
+ * @param p_ub
+ * @param occ
+ * @param offset
+ * @param fldoff UBF field offset
+ */
+void gen_test_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    long ptr;
+    
+    assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
+    assert_equal(ptr, 9000+offset);
+}
+
+
+/**
+ * Validate the data is OK
+ * @param p_ub
+ * @param occ
+ * @param offset
+ * @param fldoff UBF field offset
+ */
+void gen_test_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    struct UBTESTVIEW2 v;
+    BVIEWFLD vf;
+    char str[2];
+    BFLDLEN len;
+    
+    /* View test */
+    vf.data=(char *)&v;
+    len=sizeof(v)-1;
+    assert_equal(Bget(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, &len), EXFAIL);
+    assert_equal(Berror, BNOSPACE);
+    
+    len=sizeof(v);
+    assert_equal(Bget(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, &len), EXSUCCEED);
+    
+    /* Check value of view fields... */
+    
+    assert_equal(v.tshort1, 1+offset);
+    assert_equal(v.tlong1, 2+offset);
+    assert_equal(v.tchar1, '3'+offset);
+    assert_equal(v.tfloat1, 4+offset);
+    assert_equal(v.tdouble1, 5+offset);
+    
+    str[0]='A'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(v.tstring1,str);
+    
+    str[0]='C'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(v.tcarray1, str);
+    assert_string_equal(vf.vname, "UBTESTVIEW2");
+}
+
+
+/**
+ * Validate the ubf data is OK
+ * @param p_ub
+ * @param occ
+ * @param offset
+ * @param fldoff UBF field offset
+ */
+void gen_test_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    char tmp[1024];
+    UBFH* p_ub_tmp=(UBFH*)tmp;
+    char str[2];
+    BFLDLEN len;
+    
+    /* UBF test */
+    len=1;
+    assert_equal(Bget(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, &len), EXFAIL);
+    assert_equal(Berror, BNOSPACE);
+    
+    len=sizeof(tmp);
+    assert_equal(Bget(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, &len), EXSUCCEED);
+    
+    str[0]='S'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(Bfind(p_ub_tmp, T_STRING_FLD+fldoff, 0, 0L), str);
+}
+
+/**
  * Basic preparation before the test
  */
 void basic_setup(void)

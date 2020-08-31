@@ -64,6 +64,13 @@ extern void set_up_dummy_data(UBFH *p_ub);
 extern void do_dummy_data_test(UBFH *p_ub);
 extern void randomize_test_data(char *ptr, int size);
 
+extern void gen_test_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_test_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_test_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_load_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_load_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_load_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+
 extern void open_test_temp(char *mode);
 extern void open_test_temp_for_read(char *mode);
 extern void write_to_temp(char **data);
