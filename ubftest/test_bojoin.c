@@ -57,7 +57,11 @@ void load_test_data_bojoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
-
+    
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
     l = -1021;
@@ -70,6 +74,10 @@ void load_test_data_bojoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING 2", 0), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 1, 2, 0);
+    gen_load_view(p_ub, 1, 2, 0);
+    gen_load_ptr(p_ub, 1, 2, 0);
 
     /* Make second copy of field data (another for not equal test)*/
     l = -2323;
@@ -97,6 +105,10 @@ void load_test_data_bojoin_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL OUTER JOIN", 0), EXSUCCEED);
 
+    gen_load_ubf(p_ub, 0, 3, 0);
+    gen_load_view(p_ub, 0, 3, 0);
+    gen_load_ptr(p_ub, 0, 3, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     s = 33;
     l = -2048;
@@ -110,6 +122,10 @@ void load_test_data_bojoin_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
 
+    gen_load_ubf(p_ub, 1, 4, 0);
+    gen_load_view(p_ub, 1, 4, 0);
+    gen_load_ptr(p_ub, 1, 4, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     c = 'Q';
     f = 7.7;
@@ -123,6 +139,7 @@ void load_test_data_bojoin_src(UBFH *p_ub)
 
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 3, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 3, (char *)&f, 0), EXSUCCEED);
+ 
 }
 
 Ensure(test_bojoin_simple)
@@ -138,9 +155,6 @@ Ensure(test_bojoin_simple)
     float f;
     double d;
     char buf[100];
-
-    UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
-    UBF_header_t *hdst = (UBF_header_t *)p_ub_dst;
 
     Binit(p_ub_src, sizeof(fb_src));
     Binit(p_ub_dst, sizeof(fb_dst));
@@ -183,7 +197,16 @@ Ensure(test_bojoin_simple)
     assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 2, (char *)&f, 0), EXSUCCEED);
     assert_double_equal(f,7.7);
     assert_equal(Bpres(p_ub_dst, T_DOUBLE_FLD, 2), EXTRUE);
-
+    
+    /* test new types..: */
+    gen_test_ubf(p_ub_dst, 0, 3, 0);
+    gen_test_view(p_ub_dst, 0, 3, 0);
+    gen_test_ptr(p_ub_dst, 0, 3, 0);
+    
+    gen_test_ubf(p_ub_dst, 1, 4, 0);
+    gen_test_view(p_ub_dst, 1, 4, 0);
+    gen_test_ptr(p_ub_dst, 1, 4, 0);
+    
 }
 
 TestSuite *ubf_bojoin_tests(void)

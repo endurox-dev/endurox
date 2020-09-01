@@ -39,6 +39,7 @@
 #include <string.h>
 #include "test.fd.h"
 #include "ubfunit1.h"
+#include <fdatatype.h>
 
 
 void load_fdel_test_data(UBFH *p_ub)
@@ -59,6 +60,10 @@ void load_fdel_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
     l = -1021;
@@ -75,6 +80,10 @@ void load_fdel_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 1, 2, 0);
+    gen_load_view(p_ub, 1, 2, 0);
+    gen_load_ptr(p_ub, 1, 2, 0);
 
     s = 212;
     l = 212;
@@ -89,6 +98,10 @@ void load_fdel_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 0, 2, 1);
+    gen_load_view(p_ub, 0, 2, 1);
+    gen_load_ptr(p_ub, 0, 2, 1);
 }
 
 /**
@@ -103,6 +116,7 @@ Ensure(test_fnext_simple)
     BFLDID bfldid;
     BFLDOCC occ;
     char data_buf[100];
+    BVIEWFLD *vf;
     BFLDLEN  len;
     int fldcount=0;
 
@@ -112,9 +126,20 @@ Ensure(test_fnext_simple)
     
     len = sizeof(data_buf);
     bfldid = BFIRSTFLDID;
+    
+    vf=(BVIEWFLD *)data_buf;
+    vf->data=data_buf+sizeof(BVIEWFLD);
+    
     while(1==Bnext(p_ub, &bfldid, &occ, data_buf, &len))
     {
         /* Put the data inside of the other buffer... */
+        
+        /* The VIEW data requires that data ptr is set...
+         * thus use the same area...
+         */
+        vf=(BVIEWFLD *)data_buf;
+        vf->data=data_buf+sizeof(BVIEWFLD);
+        
         assert_equal(Bchg(p_ub_2, bfldid, occ, data_buf, len), EXSUCCEED);
         /* Got the value? */
         len = sizeof(data_buf);
@@ -130,7 +155,7 @@ Ensure(test_fnext_simple)
         fldcount++;
     }
 
-    assert_equal(fldcount, 21);
+    assert_equal(fldcount, 30);
 }
 
 /**
@@ -192,6 +217,10 @@ Ensure(test_fnext_len)
     assert_equal(CBchg(p_ub, T_STRING_FLD, 0, "123", 0L, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, "123", 0L, BFLD_STRING), EXSUCCEED);
     
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
+    
     bfldid = BFIRSTFLDID;
     assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
     assert_equal(bfldid, T_SHORT_FLD);
@@ -220,6 +249,27 @@ Ensure(test_fnext_len)
     assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
     assert_equal(bfldid, T_CARRAY_FLD);
     assert_equal(len, 3); /* + EOS*/
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_PTR_FLD);
+    
+#ifdef SYS32BIT
+    /* this is for 64bit machines: */
+    assert_equal(len, 4); /* + EOS*/
+#else
+     /* this is for 64bit machines: */
+    assert_equal(len, 8); /* + EOS*/
+#endif
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal( (len > sizeof(UBF_header_t)), EXTRUE );
+    
+    /* some data in buffer */
+    assert_equal( (len < sizeof(UBF_header_t) + 100), EXTRUE );
+    
+    assert_equal(Bnext(p_ub, &bfldid, &occ, NULL, &len), 1);
+    assert_equal(bfldid, T_VIEW_FLD);
+    assert_equal(len, sizeof(struct UBTESTVIEW2));
     
 }
 

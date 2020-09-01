@@ -26,6 +26,38 @@ optional fields. 'len' on input indicate the buffer length, on output it indicat
 length of data loaded. If 'len' is set to NULL, then it is assumed that on input buffer is 
 large enough to store data. The state of iteration is stored in thread local storage (TLS).
 
+When Bnext steps onto *BFLD_VIEW* type field, it is expected that 'buf' points
+to initialized BVIEWFLD field where 'data' field is set to pointer to area
+where VIEW can be unloaded. To loop over the UBF buffer in generic way where
+any type can be expected, it is advised that 'buf' before Bnext call is initialized
+as BVIEWFLD. For example:
+
+--------------------------------------------------------------------------------
+
+char data_buf[1024];
+BFLDID bfldid;
+BFLDOCC occ;
+BVIEWFLD *vf;
+BFLDLEN  len;
+
+/* prepare for view, for other types any data in buffer will be overwritten */
+vf=(BVIEWFLD *)data_buf;
+vf->data=data_buf+sizeof(BVIEWFLD);
+len = sizeof(data_buf);
+
+while(1==Bnext(p_ub, &bfldid, &occ, data_buf, &len))
+{
+
+    /* Process the retrieved data.. */
+
+    /* prepare for view, for other types any data in buffer will be overwritten */
+    vf=(BVIEWFLD *)data_buf;
+    vf->data=data_buf+sizeof(BVIEWFLD);
+    len = sizeof(data_buf);
+}
+
+--------------------------------------------------------------------------------
+
 RETURN VALUE
 ------------
 On success, *Bnext()* return *1*, if End Of Buffer reached, then *0* is returned; on error, 
