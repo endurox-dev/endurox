@@ -139,6 +139,10 @@ void load_test_data_bojoin_src(UBFH *p_ub)
 
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 3, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 3, (char *)&f, 0), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 0, 5, 1);
+    gen_load_view(p_ub, 0, 5, 1);
+    gen_load_ptr(p_ub, 0, 5, 1);
  
 }
 
@@ -206,6 +210,11 @@ Ensure(test_bojoin_simple)
     gen_test_ubf(p_ub_dst, 1, 4, 0);
     gen_test_view(p_ub_dst, 1, 4, 0);
     gen_test_ptr(p_ub_dst, 1, 4, 0);
+    
+    /* test fields not pres: */
+    assert_equal(Bpres(p_ub_dst, T_UBF_2_FLD, 2), EXFALSE);
+    assert_equal(Bpres(p_ub_dst, T_VIEW_2_FLD, 2), EXFALSE);
+    assert_equal(Bpres(p_ub_dst, T_PTR_2_FLD, 2), EXFALSE);
     
 }
 

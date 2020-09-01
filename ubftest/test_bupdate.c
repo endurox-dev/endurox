@@ -50,6 +50,7 @@ void load_update_test_data(UBFH *p_ub)
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
 
+    /* block 1 */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
@@ -58,6 +59,8 @@ void load_update_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
+    
+    /* block 2 */
     /* Make second copy of field data (another for not equal test)*/
     s = 8;
     l = -21;
@@ -75,6 +78,7 @@ void load_update_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 5, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 5, (char *)carr, len), EXSUCCEED);
 
+    /* block 3 */
     s = 212;
     l = 212;
     c = 'b';
@@ -101,6 +105,7 @@ void test_update_data_1(UBFH *p_ub)
     BFLDLEN len;
     char carr[] = "CARRAY1 TEST STRING DATA";
 
+    /* test block 1 */
     /* OCC 0 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 88);
@@ -119,6 +124,7 @@ void test_update_data_1(UBFH *p_ub)
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
 
+    /* test block 2 */
     /* OCC 1 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 5, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 8);
@@ -138,6 +144,8 @@ void test_update_data_1(UBFH *p_ub)
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 5, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
 
+    /* test block 3 */
+    
     /* Test FLD2 */
     assert_equal(Bget(p_ub, T_SHORT_2_FLD, 8, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 212);
@@ -172,6 +180,7 @@ void load_update_test_data_2(UBFH *p_ub)
     char carr[] = "CARRAY1 TEST STRING DATA1 --- SOME --- LONG - STUFF";
     BFLDLEN len = strlen(carr);
 
+    /* block 4 */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
@@ -180,6 +189,7 @@ void load_update_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL1M THIS IS LOGN STRING", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
+    /* block 5 */
     /* Make second copy of field data (another for not equal test)*/
     s = 81;
     l = -211;
@@ -197,6 +207,7 @@ void load_update_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 6, (char *)"3EST STRING ARRAY2 THIS IS EVEN MORE LONGER", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 6, (char *)carr, len), EXSUCCEED);
 
+    /* block 6 */
     /* This part we will keep the same */
     s = 2121;
     l = 2121;
@@ -224,6 +235,7 @@ void test_update_data_2(UBFH *p_ub)
     BFLDLEN len;
     char carr[] = "CARRAY1 TEST STRING DATA1 --- SOME --- LONG - STUFF";
 
+    /* test block 4 */
     /* OCC 0 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 881);
@@ -242,6 +254,7 @@ void test_update_data_2(UBFH *p_ub)
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
 
+    /* test block 5 */
     /* OCC 1 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 6, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 81);
@@ -261,6 +274,7 @@ void test_update_data_2(UBFH *p_ub)
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 6, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
 
+    /* test block 6 */
     /* Test FLD2 */
     assert_equal(Bget(p_ub, T_SHORT_2_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 2121);
