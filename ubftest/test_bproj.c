@@ -86,6 +86,11 @@ void test_proj_data_1(UBFH *p_ub)
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
     
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
+    
+    
     /* OCC 1 */
     assert_equal(Bget(p_ub, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(s, 8);
@@ -104,6 +109,10 @@ void test_proj_data_1(UBFH *p_ub)
     carr[0] = 'Y';
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 1, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    gen_load_ubf(p_ub, 1, 2, 0);
+    gen_load_view(p_ub, 1, 2, 0);
+    gen_load_ptr(p_ub, 1, 2, 0);
 }
 
 void load_proj_test_data(UBFH *p_ub)
@@ -124,6 +133,10 @@ void load_proj_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
+    gen_load_ubf(p_ub, 0, 3, 0);
+    gen_load_view(p_ub, 0, 3, 0);
+    gen_load_ptr(p_ub, 0, 3, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     s = 8;
     l = -21;
@@ -140,6 +153,10 @@ void load_proj_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 1, 4, 0);
+    gen_load_view(p_ub, 1, 4, 0);
+    gen_load_ptr(p_ub, 1, 4, 0);
 
     s = 212;
     l = 212;
@@ -154,6 +171,10 @@ void load_proj_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 0, 5, 1);
+    gen_load_view(p_ub, 0, 5, 1);
+    gen_load_ptr(p_ub, 0, 5, 1);
 }
 
 /**
@@ -174,6 +195,9 @@ Ensure(test_proj_simple)
         T_DOUBLE_FLD,
         T_STRING_FLD,
         T_CARRAY_FLD,
+        T_PTR_FLD,
+        T_VIEW_FLD,
+        T_UBF_FLD,
         BBADFLDID
     };
     /* Empty list - delete all */
@@ -195,6 +219,9 @@ Ensure(test_proj_simple)
     assert_equal(Bpres(p_ub, T_DOUBLE_FLD, 0), EXTRUE);
     assert_equal(Bpres(p_ub, T_STRING_FLD, 0), EXTRUE);
     assert_equal(Bpres(p_ub, T_CARRAY_FLD, 0), EXTRUE);
+    assert_equal(Bpres(p_ub, T_PTR_FLD, 0), EXTRUE);
+    assert_equal(Bpres(p_ub, T_VIEW_FLD, 0), EXTRUE);
+    assert_equal(Bpres(p_ub, T_UBF_FLD, 0), EXTRUE);
 
     assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_LONG_2_FLD, 0), EXFALSE);
@@ -203,6 +230,10 @@ Ensure(test_proj_simple)
     assert_equal(Bpres(p_ub, T_DOUBLE_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_STRING_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_CARRAY_2_FLD, 0), EXFALSE);
+    
+    assert_equal(Bpres(p_ub, T_VIEW_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_UBF_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_PTR_2_FLD, 0), EXFALSE);
 
     test_proj_data_1(p_ub);
 
@@ -219,7 +250,10 @@ Ensure(test_proj_simple)
     assert_equal(Bpres(p_ub, T_DOUBLE_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_STRING_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_CARRAY_FLD, 0), EXFALSE);
-
+    assert_equal(Bpres(p_ub, T_PTR_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_VIEW_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_UBF_FLD, 0), EXFALSE);
+    
     assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_LONG_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_CHAR_2_FLD, 0), EXFALSE);
@@ -227,6 +261,9 @@ Ensure(test_proj_simple)
     assert_equal(Bpres(p_ub, T_DOUBLE_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_STRING_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_CARRAY_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_VIEW_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_UBF_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_PTR_2_FLD, 0), EXFALSE);
 
     /* Test the case when projection list is empty. */
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
@@ -239,6 +276,9 @@ Ensure(test_proj_simple)
     assert_equal(Bpres(p_ub, T_DOUBLE_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_STRING_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_CARRAY_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_PTR_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_VIEW_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_UBF_FLD, 0), EXFALSE);
 
     assert_equal(Bpres(p_ub, T_SHORT_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_LONG_2_FLD, 0), EXFALSE);
@@ -247,7 +287,9 @@ Ensure(test_proj_simple)
     assert_equal(Bpres(p_ub, T_DOUBLE_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_STRING_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_CARRAY_2_FLD, 0), EXFALSE);
-
+    assert_equal(Bpres(p_ub, T_VIEW_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_UBF_2_FLD, 0), EXFALSE);
+    assert_equal(Bpres(p_ub, T_PTR_2_FLD, 0), EXFALSE);
 
 }
 
@@ -256,12 +298,12 @@ Ensure(test_proj_simple)
  */
 Ensure(test_projcpy)
 {
-    char fb_src[600];
+    char fb_src[2400];
     UBFH *p_ub_src = (UBFH *)fb_src;
     char fb_src2[2400];
     UBFH *p_ub_src2 = (UBFH *)fb_src2;
     
-    char fb_dst[600];
+    char fb_dst[2400];
     UBFH *p_ub_dst = (UBFH *)fb_dst;
     
     UBF_header_t *hsrc = (UBF_header_t *)p_ub_src;
@@ -275,6 +317,9 @@ Ensure(test_projcpy)
         T_DOUBLE_FLD,
         T_STRING_FLD,
         T_CARRAY_FLD,
+        T_PTR_FLD,
+        T_VIEW_FLD,
+        T_UBF_FLD,
         BBADFLDID
     };
     BFLDID proj_all[] = {
@@ -286,6 +331,9 @@ Ensure(test_projcpy)
         T_DOUBLE_2_FLD,
         T_STRING_2_FLD,
         T_CARRAY_2_FLD,
+        T_PTR_2_FLD,
+        T_VIEW_2_FLD,
+        T_UBF_2_FLD,
         T_SHORT_FLD,
         T_LONG_FLD,
         T_CHAR_FLD,
@@ -293,6 +341,9 @@ Ensure(test_projcpy)
         T_DOUBLE_FLD,
         T_STRING_FLD,
         T_CARRAY_FLD,
+        T_PTR_FLD,
+        T_VIEW_FLD,
+        T_UBF_FLD,
         BBADFLDID
     };
 
@@ -351,6 +402,9 @@ Ensure(test_projcpy)
      */
     load_proj_test_data(p_ub_src2);
     assert_equal(Bchg(p_ub_src2, T_STRING_FLD, 0, BIG_TEST_STRING, 0), EXSUCCEED);
+    
+    assert_equal(Binit(p_ub_dst, 200), EXSUCCEED);
+    
     assert_equal(Bprojcpy(p_ub_dst, p_ub_src2, proj_all), EXFAIL);
     assert_equal(Berror, BNOSPACE);
 
@@ -361,7 +415,7 @@ Ensure(test_projcpy)
  */
 Ensure(test_Bdelall)
 {
-    char fb[2048];
+    char fb[4096];
     char buf[64];
     UBFH *p_ub = (UBFH *)fb;
     int len;
@@ -374,7 +428,7 @@ Ensure(test_Bdelall)
     set_up_dummy_data(p_ub);
 
     assert_equal(Badd(p_ub, T_STRING_2_FLD, "TEST 2 data", 0), EXSUCCEED);
-    /* Delete all string occurrances... */
+    /* Delete all string occurrences... */
     assert_equal(Bdelall(p_ub, T_STRING_2_FLD), EXSUCCEED);
     assert_equal(Bpres(p_ub, T_STRING_2_FLD, 0), EXFALSE);
     assert_equal(Bpres(p_ub, T_STRING_FLD, 0), EXTRUE);
@@ -447,6 +501,9 @@ Ensure(test_Bdelete)
         T_DOUBLE_2_FLD,
         T_STRING_2_FLD,
         T_CARRAY_2_FLD,
+        T_PTR_2_FLD,
+        T_VIEW_2_FLD,
+        T_UBF_2_FLD,
         BBADFLDID
     };
 
@@ -458,6 +515,9 @@ Ensure(test_Bdelete)
         T_DOUBLE_FLD,
         T_STRING_FLD,
         T_CARRAY_FLD,
+        T_PTR_FLD,
+        T_VIEW_FLD,
+        T_UBF_FLD,
         T_SHORT_2_FLD,
         T_SHORT_2_FLD,
         T_LONG_2_FLD,
@@ -466,6 +526,9 @@ Ensure(test_Bdelete)
         T_DOUBLE_2_FLD,
         T_STRING_2_FLD,
         T_CARRAY_2_FLD,
+        T_PTR_2_FLD,
+        T_VIEW_2_FLD,
+        T_UBF_2_FLD,
         BBADFLDID
     };
 
