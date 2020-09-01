@@ -58,6 +58,11 @@ void load_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
+
 
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
@@ -75,6 +80,10 @@ void load_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 1, 2, 0);
+    gen_load_view(p_ub, 1, 2, 0);
+    gen_load_ptr(p_ub, 1, 2, 0);
 
     s = 212;
     l = 212;
@@ -89,6 +98,10 @@ void load_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 0, 3, 1);
+    gen_load_view(p_ub, 0, 3, 1);
+    gen_load_ptr(p_ub, 0, 3, 1);
 }
 
 /**
@@ -98,16 +111,13 @@ Ensure(test_bnum_simple)
 {
     char fb[1400];
     UBFH *p_ub = (UBFH *)fb;
-    char data_buf[100];
     int fldcount;
-    BFLDID bfldid;
-    BFLDOCC occ;
 
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_test_data(p_ub);
 
     fldcount=Bnum(p_ub);
-    assert_equal(fldcount, 21);
+    assert_equal(fldcount, 30);
 }
 
 TestSuite *ubf_bnum_tests(void)

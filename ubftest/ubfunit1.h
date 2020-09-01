@@ -64,12 +64,21 @@ extern void set_up_dummy_data(UBFH *p_ub);
 extern void do_dummy_data_test(UBFH *p_ub);
 extern void randomize_test_data(char *ptr, int size);
 
-extern void gen_test_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
-extern void gen_test_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
-extern void gen_test_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
-extern void gen_load_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
-extern void gen_load_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
-extern void gen_load_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_test_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+extern void gen_load_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+
+
+#define gen_test_ubf(P_UB, OCC, OFFSET, FLDOFF) gen_test_ubf_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
+#define gen_test_view(P_UB, OCC, OFFSET, FLDOFF) gen_test_view_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
+#define gen_test_ptr(P_UB, OCC, OFFSET, FLDOFF) gen_test_ptr_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
+
+#define gen_load_ubf(P_UB, OCC, OFFSET, FLDOFF) gen_load_ubf_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
+#define gen_load_view(P_UB, OCC, OFFSET, FLDOFF) gen_load_view_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
+#define gen_load_ptr(P_UB, OCC, OFFSET, FLDOFF) gen_load_ptr_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
 
 extern void open_test_temp(char *mode);
 extern void open_test_temp_for_read(char *mode);

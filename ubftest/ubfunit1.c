@@ -336,10 +336,12 @@ void do_dummy_data_test(UBFH *p_ub)
  * @param offset data offset (value to change from base)
  * @param fldoff field offset (different field set)
  */
-void gen_load_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_load_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     long ptr=9000+offset;   
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
     assert_equal(CBchg(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0, BFLD_LONG), EXSUCCEED);
+    UBF_LOG(log_debug, "Asserting %s:%d, done", file, line);
 }
 
 /**
@@ -349,11 +351,14 @@ void gen_load_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
  * @param offset data offset (value to change from base)
  * @param fldoff field offset (different field set)
  */
-void gen_load_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     struct UBTESTVIEW2 v;
     BVIEWFLD vf;
     char str[2];
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+    load_field_table();
     
     v.tshort1=1+offset;
     v.tlong1=2+offset;
@@ -373,6 +378,7 @@ void gen_load_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
     NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
     
     assert_equal(Bchg(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, 0L), EXSUCCEED);
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
 
 
@@ -383,11 +389,13 @@ void gen_load_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
  * @param offset data offset (value to change from base)
  * @param fldoff field offset (different field set)
  */
-void gen_load_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     char tmp[1024];
     UBFH* p_ub_tmp=(UBFH*)tmp;
     char str[2];
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
     
     assert_equal(Binit(p_ub_tmp, sizeof(tmp)), EXSUCCEED);
     
@@ -397,6 +405,7 @@ void gen_load_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
     
     assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+fldoff, 0, str, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, 0), EXSUCCEED);
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
 
 /**
@@ -406,12 +415,13 @@ void gen_load_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
  * @param offset
  * @param fldoff UBF field offset
  */
-void gen_test_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_test_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     long ptr;
-    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
     assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
     assert_equal(ptr, 9000+offset);
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
 
 
@@ -422,12 +432,14 @@ void gen_test_ptr(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
  * @param offset
  * @param fldoff UBF field offset
  */
-void gen_test_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     struct UBTESTVIEW2 v;
     BVIEWFLD vf;
     char str[2];
     BFLDLEN len;
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
     
     /* View test */
     vf.data=(char *)&v;
@@ -454,6 +466,8 @@ void gen_test_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
     str[1]=EXEOS;
     assert_string_equal(v.tcarray1, str);
     assert_string_equal(vf.vname, "UBTESTVIEW2");
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
 
 
@@ -464,12 +478,14 @@ void gen_test_view(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
  * @param offset
  * @param fldoff UBF field offset
  */
-void gen_test_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     char tmp[1024];
     UBFH* p_ub_tmp=(UBFH*)tmp;
     char str[2];
     BFLDLEN len;
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
     
     /* UBF test */
     len=1;
@@ -482,6 +498,8 @@ void gen_test_ubf(UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
     str[0]='S'+offset;
     str[1]=EXEOS;
     assert_string_equal(Bfind(p_ub_tmp, T_STRING_FLD+fldoff, 0, 0L), str);
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
 
 /**
