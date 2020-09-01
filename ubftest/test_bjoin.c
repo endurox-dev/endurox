@@ -53,6 +53,7 @@ void load_test_data_bjoin_dst(UBFH *p_ub)
     char carr[] = "CARRAY1 TEST STRING DATA";
     BFLDLEN len = strlen(carr);
 
+    /* block 1 */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
@@ -60,7 +61,12 @@ void load_test_data_bjoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
-
+    
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
+    
+    /* block 2 */
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
     l = -1021;
@@ -76,6 +82,11 @@ void load_test_data_bjoin_dst(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING 2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 1, 2, 0);
+    gen_load_view(p_ub, 1, 2, 0);
+    gen_load_ptr(p_ub, 1, 2, 0);
+    
 
     /* Make second copy of field data (another for not equal test)*/
     l = -2323;
@@ -96,13 +107,20 @@ void load_test_data_bjoin_src(UBFH *p_ub)
     float f = 9.9;
     double d = 987654.9876;
 
+    /* block 3 */
     assert_equal(Bchg(p_ub, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CHAR_FLD, 0, (char *)&c, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 0, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL JOIN", 0), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 0, 3, 0);
+    gen_load_view(p_ub, 0, 3, 0);
+    gen_load_ptr(p_ub, 0, 3, 0);
+    
 
+    /* block 4 */
     /* Make second copy of field data (another for not equal test)*/
     s = 33;
     l = -2048;
@@ -116,6 +134,10 @@ void load_test_data_bjoin_src(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_FLOAT_FLD, 1, (char *)&f, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
 
+    gen_load_ubf(p_ub, 1, 4, 0);
+    gen_load_view(p_ub, 1, 4, 0);
+    gen_load_ptr(p_ub, 1, 4, 0);
+    
     /* Make second copy of field data (another for not equal test)*/
     c = 'Q';
     f = 7.7;
@@ -153,11 +175,14 @@ Ensure(test_bjoin_simple)
 
     significant_figures_for_assert_double_are(FLOAT_RESOLUTION);
 
+    UBF_LOG(log_debug, "************* Bjoin START *****************");
     assert_equal(Bjoin(p_ub_dst, p_ub_src),EXSUCCEED);
+    UBF_LOG(log_debug, "************* Bjoin END *****************");
 
     UBF_LOG(log_debug, "Field num in src buffer after Bjoin [%d]", Bnum(p_ub_src));
     UBF_LOG(log_debug, "Field num in dst buffer after Bjoin [%d]", Bnum(p_ub_dst));
 
+    /* test block is from  block 3 */
     assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 0, (char *)&s, 0), EXSUCCEED);
     assert_equal(s,222);
     assert_equal(Bget(p_ub_dst, T_LONG_FLD, 0, (char *)&l, 0), EXSUCCEED);
@@ -171,7 +196,14 @@ Ensure(test_bjoin_simple)
     assert_equal(Bget(p_ub_dst, T_STRING_FLD, 0, (char *)buf, 0), EXSUCCEED);
     assert_string_equal(buf,"TEST STR VAL JOIN");
     assert_equal(Bpres(p_ub_dst, T_CARRAY_FLD, 0), EXFALSE);
+    
+    UBF_LOG(log_debug, "************* DST 0 TEST *****************");
+    gen_test_ubf(p_ub_dst, 0, 3, 0);
+    gen_test_view(p_ub_dst, 0, 3, 0);
+    gen_test_ptr(p_ub_dst, 0, 3, 0);
+    
 
+    /* from block 4 */
     assert_equal(Bget(p_ub_dst, T_SHORT_FLD, 1, (char *)&s, 0), EXSUCCEED);
     assert_equal(s,33);
     assert_equal(Bpres(p_ub_dst, T_LONG_FLD, 1), EXFALSE);
@@ -182,7 +214,13 @@ Ensure(test_bjoin_simple)
     assert_equal(Bget(p_ub_dst, T_DOUBLE_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_double_equal(d,12312.1111);
     assert_equal(Bpres(p_ub_dst, T_STRING_FLD, 1), EXFALSE);
-
+    
+    
+    UBF_LOG(log_debug, "************* DST 1 TEST *****************");
+    gen_test_ubf(p_ub_dst, 1, 4, 0);
+    gen_test_view(p_ub_dst, 1, 4, 0);
+    gen_test_ptr(p_ub_dst, 1, 4, 0);
+    
     assert_equal(Bget(p_ub_dst, T_CHAR_FLD, 2, (char *)&c, 0), EXSUCCEED);
     assert_equal(c,'Q');
     assert_equal(Bget(p_ub_dst, T_FLOAT_FLD, 2, (char *)&f, 0), EXSUCCEED);

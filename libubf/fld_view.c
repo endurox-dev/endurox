@@ -370,6 +370,8 @@ expublic char* ndrx_prep_viewp (struct dtype_ext1 *t,
     storage->vdata.vflags = (unsigned int)viewfb->vflags;
     storage->vdata.data=viewfb->data;
 
+    UBF_LOG(log_debug, "Into ndrx_prep_viewp - preparing view BVIEWFLD");
+    
     return (char *)&storage->vdata;
 }
 
