@@ -59,6 +59,9 @@ void load_update_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
 
+    gen_load_ubf(p_ub, 0, 1, 0);
+    gen_load_view(p_ub, 0, 1, 0);
+    gen_load_ptr(p_ub, 0, 1, 0);
     
     /* block 2 */
     /* Make second copy of field data (another for not equal test)*/
@@ -77,6 +80,10 @@ void load_update_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 5, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 5, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 5, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 5, 2, 0);
+    gen_load_view(p_ub, 5, 2, 0);
+    gen_load_ptr(p_ub, 5, 2, 0);
 
     /* block 3 */
     s = 212;
@@ -92,6 +99,11 @@ void load_update_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 8, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 8, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 8, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 8, 3, 1);
+    gen_load_view(p_ub, 8, 3, 1);
+    gen_load_ptr(p_ub, 8, 3, 1);
+    
 }
 
 void test_update_data_1(UBFH *p_ub)
@@ -123,6 +135,11 @@ void test_update_data_1(UBFH *p_ub)
     len = sizeof(buf);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    gen_test_ubf(p_ub, 0, 1, 0);
+    gen_test_view(p_ub, 0, 1, 0);
+    gen_test_ptr(p_ub, 0, 1, 0);
+
 
     /* test block 2 */
     /* OCC 1 */
@@ -143,6 +160,12 @@ void test_update_data_1(UBFH *p_ub)
     carr[0] = 'Y';
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 5, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    
+    gen_test_ubf(p_ub, 5, 2, 0);
+    gen_test_view(p_ub, 5, 2, 0);
+    gen_test_ptr(p_ub, 5, 2, 0);
+
 
     /* test block 3 */
     
@@ -164,6 +187,11 @@ void test_update_data_1(UBFH *p_ub)
     carr[0] = 'X';
     assert_equal(Bget(p_ub, T_CARRAY_2_FLD, 8, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    gen_test_ubf(p_ub, 8, 3, 1);
+    gen_test_view(p_ub, 8, 3, 1);
+    gen_test_ptr(p_ub, 8, 3, 1);
+
 }
 
 /**
@@ -188,6 +216,12 @@ void load_update_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL1M THIS IS LOGN STRING", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    
+    gen_load_ubf(p_ub, 0, 4, 0);
+    gen_load_view(p_ub, 0, 4, 0);
+    gen_load_ptr(p_ub, 0, 4, 0);
+
 
     /* block 5 */
     /* Make second copy of field data (another for not equal test)*/
@@ -206,6 +240,10 @@ void load_update_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 6, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 6, (char *)"3EST STRING ARRAY2 THIS IS EVEN MORE LONGER", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 6, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 6, 5, 0);
+    gen_load_view(p_ub, 6, 5, 0);
+    gen_load_ptr(p_ub, 6, 5, 0);
 
     /* block 6 */
     /* This part we will keep the same */
@@ -222,6 +260,11 @@ void load_update_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 1, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 1, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 1, (char *)carr, len), EXSUCCEED);
+    
+    
+    gen_load_ubf(p_ub, 1, 6, 1);
+    gen_load_view(p_ub, 1, 6, 1);
+    gen_load_ptr(p_ub, 1, 6, 1);
 }
 
 void test_update_data_2(UBFH *p_ub)
@@ -253,6 +296,10 @@ void test_update_data_2(UBFH *p_ub)
     len = sizeof(buf);
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    gen_test_ubf(p_ub, 0, 4, 0);
+    gen_test_view(p_ub, 0, 4, 0);
+    gen_test_ptr(p_ub, 0, 4, 0);
 
     /* test block 5 */
     /* OCC 1 */
@@ -273,6 +320,11 @@ void test_update_data_2(UBFH *p_ub)
     carr[0] = '2';
     assert_equal(Bget(p_ub, T_CARRAY_FLD, 6, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    gen_test_ubf(p_ub, 6, 5, 0);
+    gen_test_view(p_ub, 6, 5, 0);
+    gen_test_ptr(p_ub, 6, 5, 0);
+
 
     /* test block 6 */
     /* Test FLD2 */
@@ -293,6 +345,10 @@ void test_update_data_2(UBFH *p_ub)
     carr[0] = 'G';
     assert_equal(Bget(p_ub, T_CARRAY_2_FLD, 1, (char *)buf, &len), EXSUCCEED);
     assert_equal(strncmp(buf, carr, strlen(carr)), 0);
+    
+    gen_test_ubf(p_ub, 1, 6, 1);
+    gen_test_view(p_ub, 1, 6, 1);
+    gen_test_ptr(p_ub, 1, 6, 1);
 }
 
 
