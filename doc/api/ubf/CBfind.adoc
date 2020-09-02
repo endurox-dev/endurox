@@ -27,7 +27,7 @@ Then 'len' is optional. Returned pointer is valid only until next
 UBF operation call, as the converted value is stored in thread 
 local storage used for various UBF operations.
 
-Function operations on field types *BFLD_PTR*, *BFLD_UBF* and *BFLD_VIEW* 
+Function operations on field types *BFLD_UBF* and *BFLD_VIEW* 
 are not supported. This includes type of 'bfldid' or 'usrtype' having any 
 unsupported field types for this function.
 
@@ -49,7 +49,7 @@ debug info from last function call.
 
 *BMALLOC* Failed to allocate type conversion buffer.
 
-*BEBADOP* Operation not supported (e.g. work with *BFLD_PTR*, *BFLD_UBF* 
+*BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields).
 
 EXAMPLE

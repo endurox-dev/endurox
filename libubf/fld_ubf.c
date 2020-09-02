@@ -109,6 +109,14 @@ expublic int ndrx_get_d_size_ubf (struct dtype_str *t, char *data,
 {
     UBF_header_t *hdr = (UBF_header_t *)data;
     
+    
+    /* Check that input buffer is valid? */
+    if (EXSUCCEED!=validate_entry((UBFH *)data, 0, 0, VALIDATE_MODE_NO_FLD))
+    {
+        UBF_LOG(log_warn, "Invalid sub-UBF to add to UBF: %p", data);
+        return EXFAIL;
+    }
+    
     if (NULL!=payload_size)
         *payload_size=hdr->bytes_used;
 

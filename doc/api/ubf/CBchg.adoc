@@ -31,7 +31,7 @@ defaults. For numeric it is 0, for *BFLD_CHAR* it is 0x00,
 for *BFLD_STRING* it is empty string, for *BFLD_CARRAY* 
 it is empty byte array (with length 0).
 
-Function operations on field types *BFLD_PTR*, *BFLD_UBF* and *BFLD_VIEW* 
+Function operations on field types *BFLD_UBF* and *BFLD_VIEW* 
 are not supported. This includes type of 'bfldid' or 'usrtype' having any 
 unsupported field types for this function.
 
@@ -55,7 +55,7 @@ with debug info from last function call.
 
 *BBADFLD* Invalid field id passed.
 
-*BEBADOP* Operation not supported (e.g. work with *BFLD_PTR*, *BFLD_UBF* 
+*BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields).
 
 EXAMPLE

@@ -73,11 +73,11 @@
 /*
  * This converts simple data type to string
  */
-#define CONV_TO_STRING(X) \
+#define CONV_TO_STRING(X, C) \
     if (CNV_DIR_OUT==cnv_dir && NULL!=out_len)\
     {\
         char tmp[CF_TEMP_BUF_MAX+1];\
-        sprintf(tmp, X, *ptr);\
+        sprintf(tmp, X, (C)*ptr);\
         len = strlen(tmp)+1; /* Including EOS! */\
         if (*out_len<len)\
         {\
@@ -92,7 +92,7 @@
     else\
     {\
         /* In case if converting in, we have space for trailing EOS! */\
-        sprintf(output_buf, X, *ptr);\
+        sprintf(output_buf, X, (C)*ptr);\
         if (NULL!=out_len) /* In case if we really need it! */\
             len = strlen(output_buf)+1;\
     }\
@@ -103,11 +103,11 @@
  * Convert simple data type to character array
  * This is the same as above, but strncpy used instead of strcpy!
  */
-#define CONV_TO_CARRAY(X)\
+#define CONV_TO_CARRAY(X, C)\
 if (CNV_DIR_OUT==cnv_dir)\
     {\
         char tmp[CF_TEMP_BUF_MAX+1];\
-        sprintf(tmp, X, *ptr);\
+        sprintf(tmp, X, (C)*ptr);\
         len = strlen(tmp); /* NOT Including EOS! */\
         if (NULL!=out_len && *out_len < len)\
         {\
@@ -122,7 +122,7 @@ if (CNV_DIR_OUT==cnv_dir)\
     else\
     {\
         /* In case if converting in, we have space for trailing EOS! */\
-        sprintf(output_buf, X, *ptr);\
+        sprintf(output_buf, X, (C)*ptr);\
         if (NULL!=out_len) /* In case if we really need it! */\
             len = strlen(output_buf);\
     }\
@@ -651,7 +651,7 @@ exprivate char * conv_short_string(struct conv_type *t, int cnv_dir, char *input
     short *ptr = (short *)input_buf;
     int len;
 
-    CONV_TO_STRING("%hd");
+    CONV_TO_STRING("%hd", short);
 
     return output_buf;
 }
@@ -663,7 +663,7 @@ exprivate char * conv_short_carr(struct conv_type *t, int cnv_dir, char *input_b
     short *ptr = (short *)input_buf;
     int len;
 
-    CONV_TO_CARRAY("%hd");
+    CONV_TO_CARRAY("%hd", short);
 
     return output_buf;
 }
@@ -784,7 +784,7 @@ exprivate char * conv_long_string(struct conv_type *t, int cnv_dir, char *input_
     long *ptr = (long *)input_buf;
     int len;
 
-    CONV_TO_STRING("%ld");
+    CONV_TO_STRING("%ld", long);
 
     return output_buf;
 }
@@ -796,7 +796,7 @@ exprivate char * conv_long_carr(struct conv_type *t, int cnv_dir, char *input_bu
     long *ptr = (long *)input_buf;
     long len;
     
-    CONV_TO_CARRAY("%ld");
+    CONV_TO_CARRAY("%ld", long);
 
     return output_buf;
 }
@@ -1067,7 +1067,7 @@ exprivate char * conv_float_string(struct conv_type *t, int cnv_dir, char *input
     char fmt[]="%.0lf";
     fmt[2]+=FLOAT_RESOLUTION;
 
-    CONV_TO_STRING(fmt);
+    CONV_TO_STRING(fmt, float);
 
     return output_buf;
 }
@@ -1081,7 +1081,7 @@ exprivate char * conv_float_carr(struct conv_type *t, int cnv_dir, char *input_b
     char fmt[]="%.0lf";
     fmt[2]+=FLOAT_RESOLUTION;
     
-    CONV_TO_CARRAY(fmt);
+    CONV_TO_CARRAY(fmt, float);
 
     return output_buf;
 }
@@ -1199,7 +1199,7 @@ exprivate char * conv_double_string(struct conv_type *t, int cnv_dir, char *inpu
     char fmt[]="%.0lf";
     fmt[2]+=DOUBLE_RESOLUTION;
 
-    CONV_TO_STRING(fmt);
+    CONV_TO_STRING(fmt, double);
 
     return output_buf;
 }
@@ -1213,7 +1213,7 @@ exprivate char * conv_double_carr(struct conv_type *t, int cnv_dir, char *input_
     char fmt[]="%.0lf";
     fmt[2]+=DOUBLE_RESOLUTION;
     
-    CONV_TO_CARRAY(fmt);
+    CONV_TO_CARRAY(fmt, double);
 
     return output_buf;
 }
@@ -1392,7 +1392,8 @@ exprivate char * conv_string_ptr(struct conv_type *t, int cnv_dir, char *input_b
     if (NULL!=out_len)
         *out_len = to->size;
 
-    sscanf (ptr, "%p", p);
+    /* LP64 */
+    sscanf (ptr, "0x%lx", (long *)p);
     
     return output_buf;
 }
@@ -1536,7 +1537,8 @@ exprivate char * conv_carr_ptr(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    sscanf(tmp, "%p", p);
+    /* LP64 */
+    sscanf(tmp, "0x%lx", (long*)p);
 
     return output_buf;
 }
@@ -1641,7 +1643,7 @@ exprivate char * conv_int_string(struct conv_type *t, int cnv_dir, char *input_b
     int *ptr = (int *)input_buf;
     int len;
 
-    CONV_TO_STRING("%d");
+    CONV_TO_STRING("%d", int);
 
     return output_buf;
 }
@@ -1653,7 +1655,7 @@ exprivate char * conv_int_carr(struct conv_type *t, int cnv_dir, char *input_buf
     int *ptr = (int *)input_buf;
     int len;
 
-    CONV_TO_CARRAY("%d");
+    CONV_TO_CARRAY("%d", int);
 
     return output_buf;
 }
@@ -1776,7 +1778,8 @@ exprivate char * conv_ptr_string(struct conv_type *t, int cnv_dir, char *input_b
     void **ptr = (void **)input_buf;
     int len;
 
-    CONV_TO_STRING("%p");
+    /* assume working on LP64 */
+    CONV_TO_STRING("0x%lx", long);
 
     return output_buf;
 }
@@ -1788,7 +1791,8 @@ exprivate char * conv_ptr_carr(struct conv_type *t, int cnv_dir, char *input_buf
     void **ptr = (void **)input_buf;
     int len;
 
-    CONV_TO_CARRAY("%p");
+    /* assume working on LP64 */
+    CONV_TO_CARRAY("0x%lx", long);
 
     return output_buf;
 }

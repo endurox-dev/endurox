@@ -25,7 +25,7 @@ field id in 'bfldid'. The user field value is passed in 'buf'.
 The 'len' is used only if 'usrtype' is *BFLD_CARRAY*, for which length 
 cannot be detected from passed data.
 
-Function operations on field types *BFLD_PTR*, *BFLD_UBF* and *BFLD_VIEW* 
+Function operations on field types *BFLD_UBF* and *BFLD_VIEW* 
 are not supported. This includes type of 'bfldid' or 'usrtype' having any 
 unsupported field types for this function.
 
@@ -47,7 +47,7 @@ message with debug info from last function call.
 
 *BMALLOC* Failed to allocate type conversion buffer.
 
-*BEBADOP* Operation not supported (e.g. work with *BFLD_PTR*, *BFLD_UBF* 
+*BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields).
 
 EXAMPLE
