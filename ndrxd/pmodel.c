@@ -1086,7 +1086,6 @@ expublic int start_process(command_startstop_t *cmd_call, pm_node_t *p_pm,
                     errcode=NDRXD_PM_EBADFILE;
                     break;
                 case EMFILE:
-                case ENFILE:
                 case ENAMETOOLONG:
                     errcode=NDRXD_PM_ELIMIT;
                     break;

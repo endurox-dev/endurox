@@ -973,22 +973,6 @@ expublic inline int validate_entry(UBFH *p_ub, BFLDID bfldid, int occ, int mode)
         ndrx_Bset_error_msg(BEINVAL, "occ < -1");
         EXFAIL_OUT(ret);
     }
-#if 0
-    /* Validate the buffer. Last 4 bytes must be empty! */
-    /* Get the end of the buffer */
-    p = (char *)p_ub;
-    p+=hdr->bytes_used;
-    p-= FF_USED_BYTES;
-
-    last=(BFLDID *)(p);
-    if (*last!=BBADFLDID)
-    {
-        ndrx_Bset_error_fmt(BALIGNERR, "last %d bytes of buffer not equal to "
-                                    "%p (got %p)",
-                                    FF_USED_BYTES, BBADFLDID, *last);
-        EXFAIL_OUT(ret);
-    }
-#endif
    
 out:
     return ret;
@@ -1062,6 +1046,12 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
     ndtype = &G_dtype_str_map[ntype];
     /* Move memory around (i.e. prepare free space to put data in) */
     new_dat_size=ndtype->p_get_data_size(ndtype, buf, len, &actual_data_size);
+    
+    if (new_dat_size<0)
+    {
+        UBF_LOG(log_error, "Invalid data size: %d", new_dat_size);
+        EXFAIL_OUT(ret);
+    }
 
     /* Check required buffer size */
     if (!have_buffer_size(p_ub, new_dat_size, EXTRUE))

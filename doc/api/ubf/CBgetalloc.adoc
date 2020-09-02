@@ -28,7 +28,7 @@ case no extra memory is allocated.
 Function is based on *Bgetalloc(3)*, which does not convert to user type, 
 but returns direct value.
 
-Function operations on field types *BFLD_PTR*, *BFLD_UBF* and *BFLD_VIEW* 
+Function operations on field types *BFLD_UBF* and *BFLD_VIEW* 
 are not supported. This includes type of 'bfldid' or 'usrtype' having any 
 unsupported field types for this function.
 
@@ -54,7 +54,7 @@ with debug info from last function call.
 
 *BTYPERR* Invalid user type specified.
 
-*BEBADOP* Operation not supported (e.g. work with *BFLD_PTR*, *BFLD_UBF* 
+*BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields).
 
 EXAMPLE

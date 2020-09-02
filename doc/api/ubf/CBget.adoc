@@ -27,7 +27,7 @@ then error of *BNOSPACE*. Then 'len' is optional. If set to NULL, then no such c
 made. 'len' is used for *BFLD_STRING* and *BFLD_CARRAY*. On output 'len' (if not NULL), 
 indicates the length of data loaded in bytes. 'usrtype' indicates the data type of the 'buf'.
 
-Function operations on field types *BFLD_PTR*, *BFLD_UBF* and *BFLD_VIEW* 
+Function operations on field types *BFLD_UBF* and *BFLD_VIEW* 
 are not supported. This includes type of 'bfldid' or 'usrtype' having any 
 unsupported field types for this function.
 
@@ -52,7 +52,7 @@ info from last function call.
 
 *BNOTPRES* Field not present.
 
-*BEBADOP* Operation not supported (e.g. work with *BFLD_PTR*, *BFLD_UBF* 
+*BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields)
 
 EXAMPLE

@@ -565,7 +565,7 @@ Ensure(test_bfindocc)
 }
 
 /**
- * Get occurrance out from value (from user converted value)
+ * Get occurrence out from value (from user converted value)
  */
 Ensure(test_cbfindocc)
 {
