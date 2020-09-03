@@ -42,7 +42,6 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <Excompat.h>
 #include <ubf.h>
-#include <nstdutil.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MIB_LOCAL   0x00001
@@ -87,7 +86,6 @@ extern "C" {
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API int tpadmcall(UBFH *inbuf, UBFH **outbuf, long flags);
-extern NDRX_API int ndrx_buffer_list(ndrx_growlist_t *list);
 
 #ifdef	__cplusplus
 }
