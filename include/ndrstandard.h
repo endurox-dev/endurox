@@ -40,6 +40,7 @@ extern "C" {
     
 #include <ndrx_config.h>
 #include <stdint.h>
+#include <limits.h>
 #include <string.h>
     
 #if UINTPTR_MAX == 0xffffffff
@@ -48,8 +49,36 @@ extern "C" {
 #elif UINTPTR_MAX == 0xffffffffffffffff
 #define SYS64BIT
 #else
-/* wtf */
+#error Cannot detect word size
 #endif
+    
+/**
+ * Detect pointer storage format
+ */
+#ifdef SYS32BIT
+    
+typedef long long ndrx_longptr_t;
+#define NDRX_LONGPTR_HEX    "%llx"
+
+#else
+
+/* check the model LP or LLP */
+#if ULONG_MAX == 0xffffffff
+
+typedef long long ndrx_longptr_t;
+#define NDRX_LONGPTR_HEX    "%llx"
+
+#elif ULONG_MAX == 0xffffffffffffffff
+
+typedef long ndrx_longptr_t;
+#define NDRX_LONGPTR_HEX    "%lx"
+
+#else
+#error Cannot detect size of long
+#endif
+
+#endif
+
 
 #ifndef EXFAIL
 #define EXFAIL		-1
@@ -83,7 +112,7 @@ extern "C" {
 #define EXTRUE         1
 #endif
 
-/** Directory seperator symbol */
+/** Directory separator symbol */
 #define EXDIRSEP      '/'
 
 #define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
@@ -91,7 +120,6 @@ extern "C" {
 #ifndef EXFAIL_OUT
 #define EXFAIL_OUT(X)    {X=EXFAIL; goto out;}
 #endif
-
 
 #ifndef EXOFFSET
 #ifdef SYS64BIT
@@ -122,8 +150,8 @@ extern NDRX_API long ndrx_msgsizemax (void);
 #define NDRX_MSGSIZEMAX          ndrx_msgsizemax()
 
 /**
- * Overhead applied to max buffer size used during the trasnport / 
- * encapuslation structures.
+ * Overhead applied to max buffer size used during the transport / 
+ * encapsulation structures.
  */
 #define NDRX_MSGSIZEMAX_OVERHD   200
 

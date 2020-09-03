@@ -699,7 +699,7 @@ exprivate char * conv_short_ptr(struct conv_type *t, int cnv_dir, char *input_bu
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *p = (void*)(long)*ptr;
+    *p = (void*)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -832,7 +832,7 @@ exprivate char * conv_long_ptr(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *p = (void *)(long)*ptr;
+    *p = (void *)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -983,7 +983,7 @@ exprivate char * conv_char_ptr(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *p = (void *)(long) *ptr;
+    *p = (void *)(ndrx_longptr_t) *ptr;
 
     return output_buf;
 }
@@ -1115,7 +1115,7 @@ exprivate char * conv_float_ptr(struct conv_type *t, int cnv_dir, char *input_bu
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *p = (void*)(long)*ptr;
+    *p = (void*)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1249,7 +1249,7 @@ exprivate char * conv_double_ptr(struct conv_type *t, int cnv_dir, char *input_b
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *p = (void *)(long)*ptr;
+    *p = (void *)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1393,7 +1393,7 @@ exprivate char * conv_string_ptr(struct conv_type *t, int cnv_dir, char *input_b
         *out_len = to->size;
 
     /* LP64 */
-    sscanf (ptr, "0x%lx", (long *)p);
+    sscanf (ptr, "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t *)p);
     
     return output_buf;
 }
@@ -1538,7 +1538,7 @@ exprivate char * conv_carr_ptr(struct conv_type *t, int cnv_dir, char *input_buf
         *out_len = to->size;
 
     /* LP64 */
-    sscanf(tmp, "0x%lx", (long*)p);
+    sscanf(tmp, "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t*)p);
 
     return output_buf;
 }
@@ -1673,7 +1673,7 @@ exprivate char * conv_int_ptr(struct conv_type *t, int cnv_dir, char *input_buf,
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *p = (void *)(long)*ptr;
+    *p = (void *)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1694,7 +1694,7 @@ exprivate char * conv_ptr_short(struct conv_type *t, int cnv_dir, char *input_bu
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *s = (short)(long)*ptr;
+    *s = (short)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1712,7 +1712,7 @@ exprivate char * conv_ptr_long(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *l = (long)*ptr;
+    *l = (ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1730,7 +1730,7 @@ exprivate char * conv_ptr_char(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *c = (char)(long)*ptr;
+    *c = (char)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1748,7 +1748,7 @@ exprivate char * conv_ptr_float(struct conv_type *t, int cnv_dir, char *input_bu
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *f = (float)(long) *ptr;
+    *f = (float)(ndrx_longptr_t) *ptr;
 
     return output_buf;
 }
@@ -1766,7 +1766,7 @@ exprivate char * conv_ptr_double(struct conv_type *t, int cnv_dir, char *input_b
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *d = (double)(long)*ptr;
+    *d = (double)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }
@@ -1779,7 +1779,7 @@ exprivate char * conv_ptr_string(struct conv_type *t, int cnv_dir, char *input_b
     int len;
 
     /* assume working on LP64 */
-    CONV_TO_STRING("0x%lx", long);
+    CONV_TO_STRING("0x" NDRX_LONGPTR_HEX, ndrx_longptr_t);
 
     return output_buf;
 }
@@ -1792,7 +1792,7 @@ exprivate char * conv_ptr_carr(struct conv_type *t, int cnv_dir, char *input_buf
     int len;
 
     /* assume working on LP64 */
-    CONV_TO_CARRAY("0x%lx", long);
+    CONV_TO_CARRAY("0x" NDRX_LONGPTR_HEX, ndrx_longptr_t);
 
     return output_buf;
 }
@@ -1810,7 +1810,7 @@ exprivate char * conv_ptr_int(struct conv_type *t, int cnv_dir, char *input_buf,
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *i = (int)(long)*ptr;
+    *i = (int)(ndrx_longptr_t)*ptr;
 
     return output_buf;
 }

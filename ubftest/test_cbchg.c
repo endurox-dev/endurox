@@ -55,7 +55,8 @@ Ensure(test_Bchg_short_org)
     double double_val=1443;
     char string[129]="31255";
     char carray[128]="26411";
-
+    char *ptr=(char *)(ndrx_longptr_t)11;
+    
     /* init */
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
@@ -95,6 +96,23 @@ Ensure(test_Bchg_short_org)
     assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 26411);
     do_dummy_data_test(p_ub);
+    
+    /* ptr-to-short */
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_SHORT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 11);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-short */
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-short */
+    assert_equal(CBchg(p_ub, T_SHORT_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
 }
 
 /**
@@ -112,7 +130,8 @@ Ensure(test_Bchg_long_org)
     double double_val=14431234;
     char string[129]="3125511";
     char carray[128]="2641133";
-
+    char *ptr=(char *)(ndrx_longptr_t)11;
+    
     /* init */
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
@@ -152,6 +171,22 @@ Ensure(test_Bchg_long_org)
     assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 2641133);
     do_dummy_data_test(p_ub);
+    
+    /* ptr-to-long */
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_LONG_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 11);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-long */
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-long */
+    assert_equal(CBchg(p_ub, T_LONG_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
 }
 
 /**
@@ -169,7 +204,8 @@ Ensure(test_Bchg_char_org)
     double double_val=4;
     char string[129]="5";
     char carray[128]="6";
-
+    char *ptr=(char *)(ndrx_longptr_t)65;
+    
     /* init */
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
@@ -209,6 +245,22 @@ Ensure(test_Bchg_char_org)
     assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_equal(test_val, 54);
     do_dummy_data_test(p_ub);
+    
+    /* ptr-to-char */
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CHAR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 'A');
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-char */
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-char */
+    assert_equal(CBchg(p_ub, T_CHAR_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
 }
 
 /**
@@ -227,7 +279,8 @@ Ensure(test_Bchg_float_org)
     char string[129]="3125.511";
     char carray[128]="-264.1133";
     BFLDLEN len; /* Testing len only for few, because thos other should work fine w/out them */
-
+    char *ptr=(char *)(ndrx_longptr_t)65;
+    
     /* init */
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
@@ -280,6 +333,22 @@ Ensure(test_Bchg_float_org)
     assert_double_equal(test_val, -264.1133f);
     do_dummy_data_test(p_ub);
     assert_equal(len, sizeof(test_val));
+    
+    /* ptr-to-float */
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_FLOAT_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_double_equal(test_val, 65.0f);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-float */
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-float */
+    assert_equal(CBchg(p_ub, T_FLOAT_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
 }
 
 /**
@@ -298,6 +367,7 @@ Ensure(test_Bchg_double_org)
     char string[129]="2125.511";
     char carray[128]="-2264.1133";
     BFLDLEN len; /* Testing len only for few, because thos other should work fine w/out them */
+    char *ptr=(char *)(ndrx_longptr_t)65;
     
     /* init */
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
@@ -346,6 +416,22 @@ Ensure(test_Bchg_double_org)
     assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
     assert_double_equal(test_val, -2264.1133);
     do_dummy_data_test(p_ub);
+    
+    /* ptr-to-double */
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_DOUBLE_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_double_equal(test_val, 65.0f);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-double */
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-double */
+    assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
 }
 
 /**
@@ -369,6 +455,7 @@ Ensure(test_Bchg_string_org)
     char string_big[1024];
     int str_len_tmp;
     int big_loop;
+    char *ptr=(char *)(ndrx_longptr_t)65;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
@@ -430,7 +517,7 @@ Ensure(test_Bchg_string_org)
     assert_equal(len, sizeof(carray)+1);
     do_dummy_data_test(p_ub);
 
-    /* Special test for hadling large strings & carrays */
+    /* Special test for handling large strings & carrays */
     for (big_loop=0; big_loop<10;big_loop++)
     {
         str_len_tmp=strlen(BIG_TEST_STRING);
@@ -441,6 +528,22 @@ Ensure(test_Bchg_string_org)
         assert_equal(strncmp(string_big, BIG_TEST_STRING, str_len_tmp), 0);
     }
     
+    /* ptr-to-string */
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_STRING_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_string_equal(test_val, "0x41");
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-string */
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-string */
+    assert_equal(CBchg(p_ub, T_STRING_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+
 }
 
 /**
@@ -464,6 +567,9 @@ Ensure(test_Bchg_carray_org)
     char carray_big[1024];
     int str_len_tmp;
     int big_loop;
+    
+    /* working in LP64 mode */
+    char *ptr=(char *)(ndrx_longptr_t)0xff;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     set_up_dummy_data(p_ub);
@@ -551,8 +657,23 @@ Ensure(test_Bchg_carray_org)
         assert_equal(len, str_len_tmp);
         assert_equal(strncmp(carray_big, BIG_TEST_STRING, str_len_tmp), 0);
     }
+    
+    /* ptr-to-carray */
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_CARRAY_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(strncmp(test_val, "0xff", 4), 0);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-carray */
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-carray */
+    assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
 }
-
 
 Ensure(test_Bchg_simple)
 {
@@ -563,6 +684,212 @@ Ensure(test_Bchg_simple)
     UBFH *p_ub = (UBFH *)fb;
     assert_equal(Binit(p_ub, len), EXSUCCEED);
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 0, buf, len-84, BFLD_CARRAY), EXSUCCEED);
+}
+
+/**
+ * Note all over the system we assume that sizeof(long) == sizeof(ptr)
+ * In case if will port to Windows someday, then this needs to be corrected
+ * i.e. in that case we need to use long long LLP64
+ */
+Ensure(test_Bchg_ptr_org)
+{
+    char buf[2048];
+    UBFH *p_ub = (UBFH *)buf;
+    ndrx_longptr_t test_val;
+    short short_val = 123;
+    long long_val = 102;
+    char char_val = '7';
+    float float_val=11123341;
+    double double_val=14431234;
+    char string[129]="0x3125511";
+    char carray[128]="0x2641133";
+    char *ptr=(char *)(ndrx_longptr_t)11;
+    
+    /* init */
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    set_up_dummy_data(p_ub);
+
+    /* short-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&short_val, 0, BFLD_SHORT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 123);
+    do_dummy_data_test(p_ub);
+    /* long-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&long_val, 0, BFLD_LONG), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 102);
+    do_dummy_data_test(p_ub);
+    /* char-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&char_val, 0, BFLD_CHAR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 55); /* 55 - ascii code for '7' */
+    do_dummy_data_test(p_ub);
+    /* float-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&float_val, 0, BFLD_FLOAT), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 11123341);
+    do_dummy_data_test(p_ub);
+    /* double-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&double_val, 0, BFLD_DOUBLE), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 14431234);
+    do_dummy_data_test(p_ub);
+    /* string-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)string, 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 0x3125511);
+    do_dummy_data_test(p_ub);
+    /* carray-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)carray, strlen(carray), BFLD_CARRAY), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 0x2641133);
+    do_dummy_data_test(p_ub);
+    
+    /* ptr-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    assert_equal(Bget(p_ub, T_PTR_FLD, 0, (char *)&test_val, 0), EXSUCCEED);
+    assert_equal(test_val, 11);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)&ptr, 0L, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-ptr */
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 0, (char *)ptr, 0L, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+}
+
+Ensure(test_Bchg_ubf_org)
+{
+    char buf[2048];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    char buf_tmp[2048];
+    UBFH *p_ub_tmp = (UBFH *)buf_tmp;
+    
+    /* init */
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    assert_equal(Binit(p_ub_tmp, sizeof(buf_tmp)), EXSUCCEED);
+    
+    set_up_dummy_data(p_ub);
+    
+    /* load some UBF */
+    assert_equal(Badd(p_ub_tmp, T_STRING_FLD, "HELLO WORLD", 0), EXSUCCEED);
+    assert_equal(Badd(p_ub, T_UBF_FLD, (char *)p_ub_tmp, 0), EXSUCCEED);
+
+    /* short-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_SHORT), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* long-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_LONG), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* char-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_CHAR), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* float-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_FLOAT), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* double-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_DOUBLE), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* string-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_STRING), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* carray-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_CARRAY), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* ptr-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_PTR), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* view-to-ubf */
+    assert_equal(CBchg(p_ub, T_UBF_FLD, 0, (char *)buf_tmp, 0, BFLD_VIEW), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+}
+
+Ensure(test_Bchg_view_org)
+{
+    char buf[2048];
+    UBFH *p_ub = (UBFH *)buf;
+    char buf_tmp[2048];
+    BVIEWFLD vf;
+    struct UBTESTVIEW2 v;
+    
+    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
+    vf.vflags=0;
+    vf.data=(char *)&v;
+    
+    /* init */
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    set_up_dummy_data(p_ub);
+    
+    /* load some UBF */
+    assert_equal(Badd(p_ub, T_VIEW_FLD, (char *)&vf, 0), EXSUCCEED);
+
+    /* short-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_SHORT), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* long-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_LONG), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* char-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_CHAR), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* float-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_FLOAT), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* double-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_DOUBLE), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* string-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_STRING), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* carray-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_CARRAY), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* ptr-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_PTR), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
+    
+    /* ubf-to-view */
+    assert_equal(CBchg(p_ub, T_VIEW_FLD, 0, (char *)buf_tmp, 0, BFLD_UBF), EXFAIL);
+    assert_equal(Berror, BEBADOP);
+    do_dummy_data_test(p_ub);
 }
 
 TestSuite *ubf_cfchg_tests(void)
@@ -580,6 +907,10 @@ TestSuite *ubf_cfchg_tests(void)
     add_test(suite, test_Bchg_double_org);
     add_test(suite, test_Bchg_string_org);
     add_test(suite, test_Bchg_carray_org);
+    add_test(suite, test_Bchg_ptr_org);
+    add_test(suite, test_Bchg_ubf_org);
+    add_test(suite, test_Bchg_view_org);
+    
     return suite;
 }
 
