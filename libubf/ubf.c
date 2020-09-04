@@ -3809,7 +3809,7 @@ out:
         pos++;\
         if (pos >= sizeof(fldidocc))\
         {\
-            ndrx_Bset_error_fmt(BEINVAL, "FLDID,OCC path too long, max %d", \
+            ndrx_Bset_error_fmt(BBADFLDID, "FLDID,OCC path too long, max %d", \
                     BFLDOCCMAX);\
             va_end(ap);\
             EXFAIL_OUT(ret);\
@@ -3823,14 +3823,14 @@ out:
     \
     if ( pos % 2 == 0)\
     {\
-        ndrx_Bset_error_fmt(BEINVAL, "Expected odd number FLDID,OCC,..,"\
+        ndrx_Bset_error_fmt(BBADFLDID, "Expected odd number FLDID,OCC,..,"\
                 "<terminator> arguments got: %d", pos);\
         EXFAIL_OUT(ret);\
     }\
     \
     if (1==pos)\
     {\
-        ndrx_Bset_error_fmt(BEINVAL, "Expected FLDID,OCC,..,"\
+        ndrx_Bset_error_fmt(BBADFLDID, "Expected FLDID,OCC,..,"\
                 "<terminator> path, got only terminator");\
         EXFAIL_OUT(ret);\
     }
