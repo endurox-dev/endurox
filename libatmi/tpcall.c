@@ -1202,7 +1202,7 @@ out:
     /* Bug #560 */
     if (EXSUCCEED!=ret && TPETIME==tperrno)
     {
-         ndrx_tpcancel(cd_req);
+        ndrx_tpcancel(cd_req);
     }
     
     NDRX_LOG(log_debug, "%s: return %d cd %d", __func__, ret, cd_rply);

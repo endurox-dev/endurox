@@ -194,6 +194,8 @@ expublic int ndrx_get_data_view (struct dtype_str *t, char *fb, char *buf, int *
     UBF_view_t *viewfb = (UBF_view_t *)fb;
     BVIEWFLD *vdata = (BVIEWFLD *)buf;
 
+    UBF_LOG(log_debug, "viewfb->dlen=%d len=%p (%d)",
+            viewfb->dlen, len, len?*len:0);
     
     if (NULL!=len && *len>0 && *len < viewfb->dlen)
     {
