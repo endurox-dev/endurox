@@ -131,6 +131,7 @@ void set_up_dummy_data(UBFH *p_ub)
     BVIEWFLD vf;
     struct UBTESTVIEW2 v;
     char tmp[1024];
+    long l;
     UBFH* p_ub_tmp=(UBFH *)tmp;
     
     load_field_table();
@@ -235,7 +236,6 @@ void set_up_dummy_data(UBFH *p_ub)
     v.tchar1='Z';
     assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 4, (char *)&vf, 0L), EXSUCCEED);
     
-    
     /* And some ubf... */
     assert_equal(Binit(p_ub_tmp, sizeof(tmp)), EXSUCCEED);
     assert_equal(Bchg(p_ub_tmp, T_STRING_9_FLD, 3, "HELLO WORLD UB", 0L), EXSUCCEED);
@@ -243,6 +243,9 @@ void set_up_dummy_data(UBFH *p_ub)
     
     assert_equal(Bchg(p_ub_tmp, T_STRING_7_FLD, 2, "ANOTHER UB", 0L), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_UBF_3_FLD, 3, (char *)p_ub_tmp, 0L), EXSUCCEED);
+    
+    l=889991;
+    assert_equal(Bchg(p_ub, T_LONG_3_FLD, 3, (char *)&l, 0L), EXSUCCEED);
 
 }
 
@@ -250,10 +253,11 @@ void do_dummy_data_test(UBFH *p_ub)
 {
     char buf[128];
     int len;
-    long ptr;
+    ndrx_longptr_t ptr;
     BVIEWFLD vf;
     struct UBTESTVIEW2 v;
     char tmp[1024];
+    long l;
     UBFH* p_ub_tmp=(UBFH *)tmp;
     
     assert_equal(CBget(p_ub, T_STRING_9_FLD, 0, buf, 0, BFLD_STRING), EXSUCCEED);
@@ -326,6 +330,9 @@ void do_dummy_data_test(UBFH *p_ub)
     assert_string_equal(buf, "ANOTHER UB");    
     assert_equal(Bget(p_ub_tmp, T_STRING_9_FLD, 3, (char *)buf, 0L), EXSUCCEED);
     assert_string_equal(buf, "HELLO WORLD UB");
+    
+    assert_equal(Bget(p_ub, T_LONG_3_FLD, 3, (char *)&l, 0L), EXSUCCEED);
+    assert_equal(l, 889991);
     
 }
 
