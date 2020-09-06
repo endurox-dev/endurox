@@ -501,18 +501,18 @@ Ensure(test_RBget)
     
     assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD, BBADFLDOCC}, 
             tmp, &len), EXFAIL);
-    assert_equal(Berror, BBADFLDID);
+    assert_equal(Berror, BBADFLD);
     
     assert_equal(RBgetv (p_ub, tmp, &len, T_UBF_2_FLD, BBADFLDOCC), EXFAIL);
-    assert_equal(Berror, BBADFLDID);
+    assert_equal(Berror, BBADFLD);
     
     /* check invalid subfield (i.e subfield of non UBF..) */
     assert_equal(RBget (p_ub, (int []){ T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC}, 
             tmp, &len), EXFAIL);
-    assert_equal(Berror, BBADFLDID);
+    assert_equal(Berror, BTYPERR);
     
     assert_equal(RBgetv (p_ub, tmp, &len, T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC), EXFAIL);
-    assert_equal(Berror, BBADFLDID);
+    assert_equal(Berror, BTYPERR);
     
     /* check field not found */
     
@@ -550,13 +550,11 @@ Ensure(test_RBget)
     
     /* check no space.. */
     len=1;
-    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,
-            T_VIEW_3_FLD,3,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXFAIL);
+    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXFAIL);
     assert_equal(Berror, BNOSPACE);
     
     len=sizeof(buf_tmp);
-    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,
-            T_VIEW_3_FLD,3,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXSUCCEED);
+    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXSUCCEED);
     do_dummy_data_test(p_ub_tmp);
     
     //T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[3]
