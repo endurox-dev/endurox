@@ -397,7 +397,7 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         {
             UBF_LOG(log_error, "Invalid recursive field identifier sequence, "
                     "expected BFLDID, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
-            ndrx_Bset_error_fmt(BEINVAL, "Invalid recursive field identifier sequence, "
+            ndrx_Bset_error_fmt(BBADFLD, "Invalid recursive field identifier sequence, "
                     "expected BFLDID, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
             p_ub=NULL;
             goto out;
@@ -413,7 +413,7 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         {
             UBF_LOG(log_error, "Invalid recursive occurrence sequence, "
                     "expected occ, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
-            ndrx_Bset_error_fmt(BEINVAL, "Invalid recursive field identifier sequence, "
+            ndrx_Bset_error_fmt(BBADFLD, "Invalid recursive field identifier sequence, "
                     "expected occ, got BBADFLDOCC(%d) at pos %d", BBADFLDOCC, pos);
             p_ub=NULL;
             goto out;
@@ -454,7 +454,7 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         {
             UBF_LOG(log_error, "Field ID not present at position %d in sequence (BBADFLDOCC (%d) found)",
                     pos, BBADFLDOCC);
-            ndrx_Bset_error_fmt(BEINVAL, "Field ID not present at position %d in sequence (BBADFLDOCC (%d) found)",
+            ndrx_Bset_error_fmt(BBADFLD, "Field ID not present at position %d in sequence (BBADFLDOCC (%d) found)",
                     pos, BBADFLDOCC);
             p_ub=NULL;
             goto out;
@@ -470,7 +470,7 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         {
             UBF_LOG(log_error, "Occurrence not present at position %d in sequence (BBADFLDID (%d) found)",
                     pos, BBADFLDOCC);
-            ndrx_Bset_error_fmt(BEINVAL, "Occurrence not present at position %d in sequence (BBADFLDID (%d) found)",
+            ndrx_Bset_error_fmt(BBADFLD, "Occurrence not present at position %d in sequence (BBADFLDID (%d) found)",
                     pos, BBADFLDOCC);
             p_ub=NULL;
             goto out;
@@ -507,6 +507,7 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
     int pos=0;
     char *nam;
     char tmp[128];
+    int err=Berror;
     debug_buf[0]=EXEOS;
     
     while (BBADFLDOCC!=*fldidocc)
@@ -542,6 +543,7 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
         pos++;
         
     }
+    Berror=err;
 }
 
 /**
