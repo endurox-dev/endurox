@@ -1,0 +1,10 @@
+RBGET(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+RBget - Get data from UBF buffer, recursive
+
+include::RBget_common.adoc[]
