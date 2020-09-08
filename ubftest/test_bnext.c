@@ -112,19 +112,19 @@ Ensure(test_fnext_simple)
     char fb[1400];
     char fb_2[1400];
     UBFH *p_ub = (UBFH *)fb;
-    UBFH *p_ub_2 = (UBFH *)fb;
+    UBFH *p_ub_2 = (UBFH *)fb_2;
     BFLDID bfldid;
     BFLDOCC occ;
-    char data_buf[100];
+    char data_buf[200];
     BVIEWFLD *vf;
     BFLDLEN  len;
     int fldcount=0;
-
+    
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     load_fdel_test_data(p_ub);
     
-    len = sizeof(data_buf);
+    len = sizeof(data_buf)-sizeof(BVIEWFLD);
     bfldid = BFIRSTFLDID;
     
     vf=(BVIEWFLD *)data_buf;
@@ -142,15 +142,15 @@ Ensure(test_fnext_simple)
         
         assert_equal(Bchg(p_ub_2, bfldid, occ, data_buf, len), EXSUCCEED);
         /* Got the value? */
-        len = sizeof(data_buf);
+        len = sizeof(data_buf)-sizeof(BVIEWFLD);
     }
     /* Now do the mem compare (this is not the best way to test,
      * but will be OK for now */
-    assert_equal(memcmp(p_ub, p_ub_2, sizeof(fb)),0);
+    assert_equal(Bcmp(p_ub, p_ub_2),0);
 
     /* Now test the count because buffer is NULL */
     bfldid = BFIRSTFLDID;
-    while(1==Bnext(p_ub, &bfldid, &occ, NULL, NULL))
+    while(1==Bnext(p_ub_2, &bfldid, &occ, NULL, NULL))
     {
         fldcount++;
     }

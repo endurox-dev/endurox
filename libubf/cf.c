@@ -1703,7 +1703,7 @@ exprivate char * conv_ptr_long(struct conv_type *t, int cnv_dir, char *input_buf
 				int in_len, char *output_buf , int *out_len)
 {
     dtype_str_t *to = &G_dtype_str_map[t->to_type];
-    void **ptr = (void **)input_buf;
+    ndrx_longptr_t **ptr = (ndrx_longptr_t **)input_buf;
     long *l = (long *)output_buf;
 
     /* Check the data type lengths */
@@ -1712,7 +1712,7 @@ exprivate char * conv_ptr_long(struct conv_type *t, int cnv_dir, char *input_buf
     if (NULL!=out_len)
         *out_len = to->size;
 
-    *l = (ndrx_longptr_t)*ptr;
+    *l = (long)*ptr;
 
     return output_buf;
 }

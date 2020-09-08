@@ -205,7 +205,7 @@ Ensure(test_Badd_str)
 Ensure(test_Badd_ubf)
 {
     char tmp_buf[128];
-    int l;
+    long l;
     struct UBTESTVIEW1 v;
     BVIEWFLD vf;
     int i;
