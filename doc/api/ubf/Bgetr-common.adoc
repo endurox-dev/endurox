@@ -3,7 +3,7 @@ SYNOPSIS
 
 #include <ubf.h>
 
-int RBget (UBFH *'p_ub', BFLDID 'bfldid', BFLDOCC 'occ', char *'buf', BFLDLEN 
+int Bgetr (UBFH *'p_ub', BFLDID 'bfldid', BFLDOCC 'occ', char *'buf', BFLDLEN 
 *'buflen');
 
 Link with '-lubf -lnstd -lm -lpthread'

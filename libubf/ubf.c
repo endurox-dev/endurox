@@ -3574,7 +3574,7 @@ expublic int B16to32(UBFH *dest, UBFH *src)
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
  *  BFLD_UBF is not found, BEINVAL for invalid sequence 
  */
-expublic int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen)
+expublic int Bgetr (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -3591,7 +3591,7 @@ expublic int RBget (UBFH * p_ub, BFLDID *fldidocc, char * buf, BFLDLEN * buflen)
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_RBget (p_ub, fldidocc, buf, buflen);
+    ret=ndrx_Bgetr (p_ub, fldidocc, buf, buflen);
 out:
     return ret;
 }
@@ -3607,7 +3607,7 @@ out:
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
  *  BFLD_UBF is not found, BEINVAL for invalid sequence 
  */
-expublic int RCBget (UBFH * p_ub, BFLDID *fldidocc,
+expublic int CBgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen, int usrtype)
 {
     int ret = EXSUCCEED;
@@ -3625,7 +3625,7 @@ expublic int RCBget (UBFH * p_ub, BFLDID *fldidocc,
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_RCBget (p_ub, fldidocc, buf, buflen, usrtype);
+    ret=ndrx_CBgetr (p_ub, fldidocc, buf, buflen, usrtype);
 out:
     return ret;
 }
@@ -3639,7 +3639,7 @@ out:
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
  *  BFLD_UBF is not found, BEINVAL for invalid sequence 
  */
-expublic char* RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
+expublic char* Bfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
 {
     char *ret = NULL;
     API_ENTRY;
@@ -3656,7 +3656,7 @@ expublic char* RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
         goto out;
     }
     
-    ret=ndrx_RBfind (p_ub, fldidocc, p_len);
+    ret=ndrx_Bfindr (p_ub, fldidocc, p_len);
     
 out:
     return ret;
@@ -3672,7 +3672,7 @@ out:
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
  *  BFLD_UBF is not found, BEINVAL for invalid sequence
  */
-expublic char *RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype)
+expublic char *CBfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype)
 {
     char *ret = NULL;
     API_ENTRY;
@@ -3689,7 +3689,7 @@ expublic char *RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *len, int usrtype)
         goto out;
     }
     
-    ret=ndrx_RCBfind (p_ub, fldidocc, len, usrtype);
+    ret=ndrx_CBfindr (p_ub, fldidocc, len, usrtype);
     
 out:
     return ret;
@@ -3701,7 +3701,7 @@ out:
  * @param fldidocc fldid,occ,fldid,occ,...,BBADFLDOCC
  * @return EXTRUE/EXFALSE (even in case of errro)
  */
-expublic int RBpres (UBFH *p_ub, BFLDID *fldidocc)
+expublic int Bpresr (UBFH *p_ub, BFLDID *fldidocc)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -3718,7 +3718,7 @@ expublic int RBpres (UBFH *p_ub, BFLDID *fldidocc)
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_RBpres (p_ub, fldidocc);
+    ret=ndrx_Bpresr (p_ub, fldidocc);
     
 out:
     return ret;
@@ -3738,7 +3738,7 @@ out:
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
  *  BFLD_UBF is not found, BEINVAL for invalid sequence
  */
-expublic int RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+expublic int CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags)
 {
     int ret = EXSUCCEED;
@@ -3756,7 +3756,7 @@ expublic int RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ,
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_RCBvget (p_ub, fldidocc, cname, occ, buf, len, usrtype, flags);
+    ret=ndrx_CBvgetr (p_ub, fldidocc, cname, occ, buf, len, usrtype, flags);
     
 out:
     return ret;
@@ -3772,7 +3772,7 @@ out:
  *  combines errors from Bfind + BTYPERR in case of in middle of sequence
  *  BFLD_UBF is not found, BEINVAL for invalid sequence
  */
-expublic int RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
+expublic int Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
 {
     int ret = EXSUCCEED;
     API_ENTRY;
@@ -3789,7 +3789,7 @@ expublic int RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_RBvnull (p_ub, fldidocc, cname, occ);
+    ret=ndrx_Bvnullr (p_ub, fldidocc, cname, occ);
     
 out:
     return ret;
@@ -3843,12 +3843,12 @@ out:
  * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
  * @return EXSUCCEED/EXFAIL
  */
-expublic int RBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, ...)
+expublic int Bgetrv (UBFH * p_ub, char * buf, BFLDLEN * buflen, ...)
 {
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(buflen);
     
-    ret=RBget (p_ub, fldidocc, buf, buflen);
+    ret=Bgetr (p_ub, fldidocc, buf, buflen);
     
 out:
     return ret;
@@ -3863,12 +3863,12 @@ out:
  * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
  * @return EXSUCCEED/EXFAIL
  */
-expublic int RCBgetv (UBFH * p_ub, char * buf, BFLDLEN * buflen, int usrtype, ...)
+expublic int CBgetrv (UBFH * p_ub, char * buf, BFLDLEN * buflen, int usrtype, ...)
 {
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(usrtype);
     
-    ret=RCBget (p_ub, fldidocc, buf, buflen, usrtype);
+    ret=CBgetr (p_ub, fldidocc, buf, buflen, usrtype);
     
 out:
     return ret;
@@ -3882,13 +3882,13 @@ out:
  * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
  * @return ptr to converted value or NULL in case of error
  */
-expublic char *RCBfindv (UBFH *p_ub, BFLDLEN *len, int usrtype, ...)
+expublic char *CBfindrv (UBFH *p_ub, BFLDLEN *len, int usrtype, ...)
 {
     char *vret = NULL;
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(usrtype);
     
-    vret=RCBfind (p_ub, fldidocc, len, usrtype);
+    vret=CBfindr (p_ub, fldidocc, len, usrtype);
     
 out:
     return vret;
@@ -3901,13 +3901,13 @@ out:
  * @param ... var args of <FLDID>,<OCC>,<FLDID>,OCC,BBADFLDOCC
  * @return Value found or NULL (with error loaded)
  */
-expublic char* RBfindv (UBFH *p_ub, BFLDLEN *p_len, ...)
+expublic char* Bfindrv (UBFH *p_ub, BFLDLEN *p_len, ...)
 {
     char *vret = NULL;
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(p_len);
     
-    vret=RBfind (p_ub, fldidocc, p_len);
+    vret=Bfindr (p_ub, fldidocc, p_len);
     
 out:
     return vret;
@@ -3918,12 +3918,12 @@ out:
  * @param ... varargs to search for
  * @return EXSUCCEED/EXFAIL
  */
-expublic int RBpresv (UBFH *p_ub, ...)
+expublic int Bpresrv (UBFH *p_ub, ...)
 {
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(p_ub);
     
-    ret=RBpres (p_ub, fldidocc);
+    ret=Bpresr (p_ub, fldidocc);
     
 out:
     return ret;
@@ -3941,13 +3941,13 @@ out:
  * @param ... path to view field <FLDID>,<OCC>,...,<FLDID (of view)>,OCC,BBADFLDOCC
  * @return EXSUCCEED/EXFAIL
  */
-expublic int RCBvgetv(UBFH *p_ub, char *cname, BFLDOCC occ,
+expublic int CBvgetrv(UBFH *p_ub, char *cname, BFLDOCC occ,
             char *buf, BFLDLEN *len, int usrtype, long flags, ...)
 {
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(flags);
     
-    ret=RCBvget (p_ub, fldidocc, cname, occ, buf, len, usrtype, flags);
+    ret=CBvgetr (p_ub, fldidocc, cname, occ, buf, len, usrtype, flags);
     
 out:
     return ret;
@@ -3961,12 +3961,12 @@ out:
  * @param ... varargs of <FLDID>,<OCC>,...,<FLDID (of view)>,OCC,BBADFLDOCC
  * @return 1 - field pres, 0 - field not pres, -1 error
  */
-expublic int RBvnullv(UBFH *p_ub, char *cname, BFLDOCC occ, ...)
+expublic int Bvnullrv(UBFH *p_ub, char *cname, BFLDOCC occ, ...)
 {
     int ret = EXSUCCEED;
     NDRX_UBF_GET_FLDIDOCC(occ);
     
-    ret=RBvnull(p_ub, fldidocc, cname, occ);
+    ret=Bvnullr(p_ub, fldidocc, cname, occ);
     
 out:
     return ret;

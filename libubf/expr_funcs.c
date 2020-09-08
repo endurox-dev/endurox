@@ -1147,12 +1147,12 @@ exprivate int CBget_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid,
          * return data even if it is NULL, so that buffer can tested agains
          * NULL values.
          */
-        ret = RCBvget(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
+        ret = CBvgetr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
                 rbfldid->cname_occ, buf, len, usrtype, 0);
     }
     else
     {
-        ret = RCBget (p_ub, (BFLDID *)rbfldid->fldidocc.mem,
+        ret = CBgetr (p_ub, (BFLDID *)rbfldid->fldidocc.mem,
                             buf, len, usrtype);
     }
     
@@ -1176,7 +1176,7 @@ exprivate int Bpres_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid)
     else if (NULL!=rbfldid->cname)
     {
         /* recursive view lookup */
-        ret=RBvnull(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
+        ret=Bvnullr(p_ub, (BFLDID *)rbfldid->fldidocc.mem, rbfldid->cname, 
                 rbfldid->cname_occ);
         
         if (EXFALSE==ret)
@@ -1191,7 +1191,7 @@ exprivate int Bpres_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid)
     else
     {
         /* recursive buffer lookup */
-        ret=RBpres (p_ub, (BFLDID *)rbfldid->fldidocc.mem);
+        ret=Bpresr (p_ub, (BFLDID *)rbfldid->fldidocc.mem);
     }
     
     return ret;

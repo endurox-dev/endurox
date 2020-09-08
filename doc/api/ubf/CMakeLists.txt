@@ -136,7 +136,7 @@ set(MAN3_NAMES
     Bjoin
     Bojoin
     Bneeded
-    RBget
+    Bgetr
    )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

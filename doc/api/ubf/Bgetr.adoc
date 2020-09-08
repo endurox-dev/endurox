@@ -1,0 +1,10 @@
+BGETR(3)
+========
+:doctype: manpage
+
+
+NAME
+----
+Bgetr - Get data from UBF buffer, recursive
+
+include::Bgetr-common.adoc[]

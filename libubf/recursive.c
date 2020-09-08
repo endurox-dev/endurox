@@ -554,7 +554,7 @@ exprivate void ndrx_ubf_sequence_str(BFLDID *fldidocc,
  * @param len in input buffer len, on output bytes written
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_RBget (UBFH * p_ub, BFLDID *fldidocc,
+expublic int ndrx_Bgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen)
 {
     
@@ -594,7 +594,7 @@ out:
  * @param usrtype user type to convert data to
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_RCBget (UBFH * p_ub, BFLDID *fldidocc,
+expublic int ndrx_CBgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen, int usrtype)
 {
     int ret = EXSUCCEED;
@@ -629,7 +629,7 @@ out:
  * @param p_len data len
  * @return ptr to data
  */
-expublic char* ndrx_RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
+expublic char* ndrx_Bfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len)
 {
     char* ret = NULL;
     BFLDID bfldid;
@@ -664,7 +664,7 @@ out:
  * @param usrtype user type
  * @return ptr to data
  */
-expublic char* ndrx_RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len, int usrtype)
+expublic char* ndrx_CBfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len, int usrtype)
 {
     char* ret = NULL;
     BFLDID bfldid;
@@ -697,7 +697,7 @@ out:
  * @param fldidocc fldid,occ,fldocc,...,BBADFLDID
  * @return EXFALSE/EXTRUE
  */ 
-expublic int ndrx_RBpres (UBFH *p_ub, BFLDID *fldidocc)
+expublic int ndrx_Bpresr (UBFH *p_ub, BFLDID *fldidocc)
 {
     char ret = EXSUCCEED;
     BFLDID bfldid;
@@ -737,7 +737,7 @@ out:
  * @param flags optional BVACCESS_NOTNULL
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+expublic int ndrx_CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags)
 {
     int ret = EXSUCCEED;
@@ -802,7 +802,7 @@ out:
  * @param occ occurrence to test
  * @return EXFAIL (on error), EXFALSE (field 
  */
-expublic int ndrx_RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
+expublic int ndrx_Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ)
 {
     int ret = EXSUCCEED;
     BFLDID bfldid;
