@@ -344,22 +344,22 @@ extern NDRX_API char* ndrx_prep_viewp (struct dtype_ext1 *t,
 
 
 /* Recursive API: */
-extern NDRX_API int ndrx_RBget (UBFH * p_ub, BFLDID *fldidocc,
+extern NDRX_API int ndrx_Bgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * buflen);
 
 
-extern NDRX_API int ndrx_RBpres (UBFH *p_ub, BFLDID *fldidocc);
+extern NDRX_API int ndrx_Bpresr (UBFH *p_ub, BFLDID *fldidocc);
 
-extern NDRX_API int ndrx_RCBget (UBFH * p_ub, BFLDID *fldidocc,
+extern NDRX_API int ndrx_CBgetr (UBFH * p_ub, BFLDID *fldidocc,
                             char * buf, BFLDLEN * len, int usrtype);
-extern NDRX_API char* ndrx_RBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
+extern NDRX_API char* ndrx_Bfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len);
 
-extern NDRX_API char* ndrx_RCBfind (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len, int usrtype);
+extern NDRX_API char* ndrx_CBfindr (UBFH *p_ub, BFLDID *fldidocc, BFLDLEN *p_len, int usrtype);
 
-extern NDRX_API int ndrx_RBpres (UBFH *p_ub, BFLDID *fldidocc);
+extern NDRX_API int ndrx_Bpresr (UBFH *p_ub, BFLDID *fldidocc);
 
-extern NDRX_API int ndrx_RBvnull(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
-extern NDRX_API int ndrx_RCBvget(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
+extern NDRX_API int ndrx_Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ);
+extern NDRX_API int ndrx_CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ, 
              char *buf, BFLDLEN *len, int usrtype, long flags);
 
 extern NDRX_API void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid);

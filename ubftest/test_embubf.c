@@ -484,7 +484,7 @@ T_VIEW_3_FLD	UBTESTVIEW2
     
 }
 
-Ensure(test_RBget)
+Ensure(test_Bgetr)
 {
     char buf[56000];
     char buf_tmp[56000];
@@ -499,31 +499,31 @@ Ensure(test_RBget)
     
     /* check error path: */
     
-    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD, BBADFLDOCC}, 
+    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD, BBADFLDOCC}, 
             tmp, &len), EXFAIL);
     assert_equal(Berror, BBADFLD);
     
-    assert_equal(RBgetv (p_ub, tmp, &len, T_UBF_2_FLD, BBADFLDOCC), EXFAIL);
+    assert_equal(Bgetrv (p_ub, tmp, &len, T_UBF_2_FLD, BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BBADFLD);
     
     /* check invalid subfield (i.e subfield of non UBF..) */
-    assert_equal(RBget (p_ub, (int []){ T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC}, 
+    assert_equal(Bgetr (p_ub, (int []){ T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC}, 
             tmp, &len), EXFAIL);
     assert_equal(Berror, BTYPERR);
     
-    assert_equal(RBgetv (p_ub, tmp, &len, T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC), EXFAIL);
+    assert_equal(Bgetrv (p_ub, tmp, &len, T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BTYPERR);
     
     /* check field not found */
     
-    assert_equal(RBgetv (p_ub, tmp, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 4, T_STRING_3_FLD, 1, BBADFLDOCC), EXFAIL);
+    assert_equal(Bgetrv (p_ub, tmp, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 4, T_STRING_3_FLD, 1, BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BNOTPRES);
     
     /* check no space.. */
     
     /* check standard version */
     len=sizeof(tmp);
-    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_STRING_3_FLD, 1, BBADFLDOCC}, 
+    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_STRING_3_FLD, 1, BBADFLDOCC}, 
             tmp, &len), EXSUCCEED);
     assert_string_equal(tmp, "HELLO_CHILD 2");
     assert_equal(len, 14);
@@ -532,17 +532,17 @@ Ensure(test_RBget)
     len=sizeof(tmp);
     tmp[0]=EXEOS;
     
-    assert_equal(RBgetv (p_ub, tmp, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_STRING_3_FLD, 1, BBADFLDOCC), EXSUCCEED);
+    assert_equal(Bgetrv (p_ub, tmp, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_STRING_3_FLD, 1, BBADFLDOCC), EXSUCCEED);
     assert_string_equal(tmp, "HELLO_CHILD 2");
     assert_equal(len, 14);
 
     /* read fixed len for level 0*/
     
-    assert_equal(RBget (p_ub, (int []){ T_LONG_3_FLD, 3, BBADFLDOCC}, (char *)&l, &len), EXSUCCEED);
+    assert_equal(Bgetr (p_ub, (int []){ T_LONG_3_FLD, 3, BBADFLDOCC}, (char *)&l, &len), EXSUCCEED);
     assert_equal(l, 889991);
     
     l=0;
-    assert_equal(RBgetv (p_ub, (char *)&l, &len, T_LONG_3_FLD, 3, BBADFLDOCC), EXSUCCEED);
+    assert_equal(Bgetrv (p_ub, (char *)&l, &len, T_LONG_3_FLD, 3, BBADFLDOCC), EXSUCCEED);
     assert_equal(l, 889991);
     
     
@@ -550,11 +550,11 @@ Ensure(test_RBget)
     
     /* check no space.. */
     len=1;
-    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXFAIL);
+    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXFAIL);
     assert_equal(Berror, BNOSPACE);
     
     len=sizeof(buf_tmp);
-    assert_equal(RBget (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXSUCCEED);
+    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXSUCCEED);
     do_dummy_data_test(p_ub_tmp);
     
     //T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[3]
@@ -571,7 +571,7 @@ TestSuite *ubf_embubf_tests(void)
     TestSuite *suite = create_test_suite();
 
     set_setup(suite, embubf_basic_setup1);
-    add_test(suite, test_RBget);
+    add_test(suite, test_Bgetr);
     
     return suite;
 }
