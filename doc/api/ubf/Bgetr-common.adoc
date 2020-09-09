@@ -29,18 +29,40 @@ Assuming that UBF buffer contains following data:
 
 --------------------------------------------------------------------------------
 
+T_STRING_8_FLD	HELLO WORLD1
+T_STRING_9_FLD	01
+T_STRING_9_FLD	20
+T_STRING_9_FLD	31
+T_CARRAY_2_FLD	
+T_CARRAY_2_FLD	TEST CARRAY
+T_PTR_3_FLD	0xc7
+T_PTR_3_FLD	0x12b
+T_UBF_FLD	
+	T_SHORT_1_FLD	6500
+	T_LONG_1_FLD	3200
+T_UBF_FLD	
+	T_LONG_3_FLD	9999
+	T_LONG_3_FLD	8888
+	T_UBF_3_FLD	
+		T_STRING_9_FLD	HELLO WORLD ONE
+		T_STRING_9_FLD  HELLO WORLD TWO
+		T_STRING_9_FLD  HELLO WORLD THREE
+
 --------------------------------------------------------------------------------
 
-To extract that data from sub-buffer, calls would look like:
+To extract *T_STRING_9_FLD* third occurrence value from *T_UBF_FLD/T_UBF_3_FLD* sub-buffer field,
+use following syntax:
 
 --------------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
-
-or
+ret=Bgetr(p_ub, (int []){ T_UBF_FLD,1,T_UBF_3_FLD,0,T_UBF_2_FLD,0,T_STRING_9_FLD,2,BBADFLDOCC}, buf, &len)
 
 --------------------------------------------------------------------------------
 
+or with var-args:
+
+--------------------------------------------------------------------------------
+ret=Bgetrv(p_ub, buf, &len, T_UBF_FLD,1,T_UBF_3_FLD,0,T_UBF_2_FLD,0,T_STRING_9_FLD,2,BBADFLDOCC)
 --------------------------------------------------------------------------------
 
 
