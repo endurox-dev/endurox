@@ -499,6 +499,10 @@ Ensure(test_Bgetr)
     
     /* check error path: */
     
+    assert_equal(Bgetr (p_ub, (int []){BBADFLDOCC}, 
+            tmp, &len), EXFAIL);
+    assert_equal(Berror, BBADFLD);
+
     assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD, BBADFLDOCC}, 
             tmp, &len), EXFAIL);
     assert_equal(Berror, BBADFLD);
