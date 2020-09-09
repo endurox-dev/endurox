@@ -7,4 +7,4 @@ NAME
 ----
 Bgetr - Get data from UBF buffer, recursive
 
-include::Bgetr-common.adoc[]
+include::recurs-common.adoc[]

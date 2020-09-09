@@ -1,0 +1,10 @@
+BGETRV(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bgetr - Get data from UBF buffer, recursive, var-args path
+
+include::recurs-common.adoc[]

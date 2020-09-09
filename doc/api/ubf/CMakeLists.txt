@@ -137,6 +137,7 @@ set(MAN3_NAMES
     Bojoin
     Bneeded
     Bgetr
+    Bgetrv
    )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 
