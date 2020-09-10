@@ -1,10 +1,10 @@
-BGETRV(3)
+BFINDR(3)
 =========
 :doctype: manpage
 
 
 NAME
 ----
-Bgetrv - Get data from UBF buffer, recursive, var-args path
+Bfindr - Find field in (sub) UBF buffer, recursive
 
 include::recurs-common.adoc[]

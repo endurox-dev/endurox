@@ -138,6 +138,12 @@ set(MAN3_NAMES
     Bneeded
     Bgetr
     Bgetrv
+    CBgetr
+    CBgetrv
+    Bfindr
+    Bfindrv
+    CBfindr
+    CBfindrv
    )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

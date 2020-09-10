@@ -1,0 +1,10 @@
+CBGETR(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+CBgetr - Get data from UBF buffer with type convert, recursive
+
+include::recurs-common.adoc[]
