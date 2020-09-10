@@ -41,7 +41,7 @@ DESCRIPTION
 Group of macro functions used lookup to the field in sub-UBF buffers. The exact field  
 from which to take the value at given sub-level, is specified in field id sequence. 
 Functions with *r* suffix encodes the field id sequence in array specified in 
-'fldidocc' parameter. Function which or *rv* suffix encodes the field id sequence in
+'fldidocc' parameter. Functions with *rv* suffix encodes the field id sequence in
 var-args. Last field id in sequence (leaf) identifies the UBF field id on which the 
 target operation must be executed. For *view* operations, this field must correspond
 to the *view* field present in UBF buffer.
@@ -52,22 +52,21 @@ Field id sequence must be present in following form:
 
 Internally function uses *Bfind(3)* to search the sub-UBF buffer from internal UBF field IDs.
 
-Function mapping is following on which leaf field id with 
-found sub-ubf buffer are called:
+Function mapping is following where leaf field id is executed on sub-ubf buffer:
 
-. *Bgetr(3)* and *Bgetrv(3)* translates to *Bget(3)*.
+. *Bgetr(3)* and *Bgetrv(3)* translates to *Bget(3)* call.
 
-. *CBgetr(3)* and *CBgetrv(3)* translates to *CBget(3)*.
+. *CBgetr(3)* and *CBgetrv(3)* translates to *CBget(3)* call.
 
-. *Bfindr(3)* and *Bfindrv(3)* translates to *Bfindr(3)*.
+. *Bfindr(3)* and *Bfindrv(3)* translates to *Bfindr(3)* call.
 
-. *Bpresr(3)* and *Bpresrv(3)* translates to *Bpres(3)*.
+. *Bpresr(3)* and *Bpresrv(3)* translates to *Bpres(3)* call.
 
-. *CBvgetr(3)* and *CBvgetrv(3)* translates to *CBvget(3)*. Note that here it
+. *CBvgetr(3)* and *CBvgetrv(3)* translates to *CBvget(3)* call. Note that here it
 is expected that leaf field in field id sequence matches the *view* typed field
 in UBF buffer. Thus on this field value in UBF buffer *CBvget(3)* is executed.
 
-. *Bvnullr(3)* and *Bvnullrv(3)* translates to *Bvnull(3)*. Note that here it
+. *Bvnullr(3)* and *Bvnullrv(3)* translates to *Bvnull(3)* call. Note that here it
 is expected that leaf field in field id sequence matches the *view* typed field
 in UBF buffer. Thus on this field value in UBF buffer *Bvnull(3)* is executed.
 

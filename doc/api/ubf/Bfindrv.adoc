@@ -1,0 +1,10 @@
+BFINDRV(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bfindrv - Find field in (sub) UBF buffer, recursive, var-args path
+
+include::recurs-common.adoc[]

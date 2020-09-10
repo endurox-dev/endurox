@@ -1,0 +1,10 @@
+CBFINDRV(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+CBfindrv - Find field in (sub) UBF buffer and convert value to user specified type, recursive, var-args path
+
+include::recurs-common.adoc[]
