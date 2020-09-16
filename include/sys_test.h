@@ -42,7 +42,7 @@ extern "C" {
 /*---------------------------Externs------------------------------------*/
 extern NDRX_API int ndrx_G_systest_enabled;
 /*---------------------------Macros-------------------------------------*/
-#define NDRX_SYSTEST_ENBLD      (NDRX_UNLIKELY((0!=ndrx_G_systest_enabled)))
+#define NDRX_SYSTEST_ENBLD      (NDRX_UNLIKELY(ndrx_G_systest_enabled))
 
 
 /** 
