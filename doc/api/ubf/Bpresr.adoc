@@ -1,0 +1,10 @@
+Bpresr(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+Bpresr - Check field presence in UBF buffer, recursive
+
+include::recurs-common.adoc[]
