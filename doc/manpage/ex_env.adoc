@@ -334,6 +334,7 @@ export NDRX_SHMPATH=/dev/shm
 export NDRX_SRVMAX=10000
 export NDRX_SVCMAX=600
 export NDRX_TOUT=60
+export NDRX_THREADSTACKSIZE=8192
 export NDRX_UBFMAXFLDS=16000
 export NDRX_ULOG=/enduro/tst1/logs
 
