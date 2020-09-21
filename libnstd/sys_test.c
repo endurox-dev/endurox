@@ -100,7 +100,7 @@ out:
  */
 expublic int ndrx_systest_case(char *mode)
 {
-    if (0!=strstr(M_modebuf, mode))
+    if (M_modebuf && 0!=strstr(M_modebuf, mode))
     {
         return EXTRUE;
     }
