@@ -89,11 +89,11 @@ int main(int argc, char **argv)
     int ret = EXSUCCEED;
     int c;
     int lang_mode = HDR_C_LANG;
-    char ofile[PATH_MAX+1]=" a.out";
-    char cfile[PATH_MAX+1]="ndrx_bc_XXXXXX.c";
+    char ofile[NDRX_BPATH_MAX+1]=" a.out";
+    char cfile[NDRX_BPATH_MAX+1]="ndrx_bc_XXXXXX.c";
     int keep_main=EXFALSE;
-    char firstfiles[PATH_MAX+1] = {EXEOS};
-    char lastfiles[PATH_MAX+1] = {EXEOS};
+    char firstfiles[NDRX_BPATH_MAX+1] = {EXEOS};
+    char lastfiles[NDRX_BPATH_MAX+1] = {EXEOS};
     int verbose = EXFALSE;
     ndrx_rm_def_t rmdef;
     FILE *out_fptr = NULL;

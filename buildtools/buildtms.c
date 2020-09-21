@@ -84,11 +84,11 @@ int main(int argc, char **argv)
 {
     int ret = EXSUCCEED;
     int c;
-    char ofile[PATH_MAX+1]="";
-    char cfile[PATH_MAX+1]="ndrx_tms_XXXXXX.c";
+    char ofile[NDRX_BPATH_MAX+1]="";
+    char cfile[NDRX_BPATH_MAX+1]="ndrx_tms_XXXXXX.c";
     int keep_main=EXFALSE;
-    char firstfiles[PATH_MAX+1] = {EXEOS};
-    char lastfiles[PATH_MAX+1] = {EXEOS};
+    char firstfiles[NDRX_BPATH_MAX+1] = {EXEOS};
+    char lastfiles[NDRX_BPATH_MAX+1] = {EXEOS};
     int nomain = EXFALSE;
     int verbose = EXFALSE;
     FILE *out_fptr = NULL;
