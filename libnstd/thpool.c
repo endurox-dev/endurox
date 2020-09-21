@@ -25,6 +25,7 @@
 #include <exthpool.h>
 
 #include <nstdutil.h>
+#include <ndrxdiag.h>
 
 #ifdef THPOOL_DEBUG
 #define THPOOL_DEBUG 1
@@ -189,8 +190,18 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
         MUTEX_LOCK_V(thpool_p->thcount_lock);
         
         /* run off the thread */
-        poolthread_init(thpool_p, &thpool_p->threads[n], n);
-
+        if (EXSUCCEED!=poolthread_init(thpool_p, &thpool_p->threads[n], n))
+        {
+            if (NULL!=p_ret)
+            {
+                *p_ret=EXFAIL;
+            }
+        
+            /* unlock the mutex, as thread failed to init... */
+            MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+            goto out;
+        }
+        
         /* wait for init complete */
         pthread_cond_wait(&thpool_p->threads_one_idle, &thpool_p->thcount_lock);
         
@@ -216,7 +227,8 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
     /* TODO: Wait for threads to initialize 
     while (thpool_p->num_threads_alive != num_threads) {sched_yield();}
      * */
-
+    
+out:
     return thpool_p;
 }
 
@@ -365,7 +377,7 @@ void ndrx_thpool_destroy(thpool_* thpool_p)
  */
 static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int id)
 {
-
+    int ret = EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
 
@@ -383,11 +395,15 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
     /* have some stack space... */
     ndrx_platf_stack_set(&pthread_custom_attr);
 
-    pthread_create(&(*thread_p)->pthread, &pthread_custom_attr,
-                    (void *)poolthread_do, (*thread_p));
+    if (EXSUCCEED!=pthread_create(&(*thread_p)->pthread, &pthread_custom_attr,
+                    (void *)poolthread_do, (*thread_p)))
+    {
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "poolthread_init");
+        EXFAIL_OUT(ret);
+    }
     /* pthread_detach((*thread_p)->pthread); */
-
-    return 0;
+out:
+    return ret;
 }
 
 /* What each thread is doing

@@ -158,7 +158,7 @@ extern int tm_rmstatus(UBFH *p_ub);
 /* Background API */
 extern int background_read_log(void);
 extern void background_wakeup(void);
-extern void background_process_init(void);
+extern int background_process_init(void);
 extern void background_lock(void);
 extern void background_unlock(void);
 
