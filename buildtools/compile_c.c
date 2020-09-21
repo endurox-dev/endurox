@@ -68,12 +68,12 @@ expublic int ndrx_compile_c(int buildmode, int verbose, char *cfile, char *ofile
 {
     int ret=EXSUCCEED;
     char *env_cc, *env_cflags, *env_ndrx_home;
-    char build_cmd[PATH_MAX+1] = {EXEOS};
-    char default_compiler[PATH_MAX+1] = "cc";
+    char build_cmd[NDRX_BPATH_MAX+1] = {EXEOS};
+    char default_compiler[NDRX_BPATH_MAX+1] = "cc";
     char *build_final_cmd;
-    char ndrx_lib[PATH_MAX+1]={EXEOS};
-    char ndrx_inc[PATH_MAX+1]={EXEOS};
-    char tmp[PATH_MAX+1];
+    char ndrx_lib[NDRX_BPATH_MAX+1]={EXEOS};
+    char ndrx_inc[NDRX_BPATH_MAX+1]={EXEOS};
+    char tmp[NDRX_BPATH_MAX+1];
     char *saveptr1;
     char *p;
     env_cc = getenv("CC");
