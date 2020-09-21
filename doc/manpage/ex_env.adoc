@@ -289,11 +289,12 @@ Mandatory Env. Variables
     that process will permanently use more memory.
 
 *NDRX_THREADSTACKSIZE*='STACKS_SIZE_IN_KB'::
-    This is target stack size for new threads produced by Enduro/X. If value
+    This is target stack size for new threads produced by Enduro/X. If value *0* is
+    is specified, default OS new thread stack size is used. If value
     is not specified, then threads produced by Enduro/X are configured by
     stack size which is set for the program main thread (i.e. current resource
-    limit). If the limit is set to unlimited, then Enduro/X sets thread stack
-    size to *8192* (which is 8 megabytes).
+    limit read by getrlimit(RLIMIT_STACK, ...)). If the limit is set to unlimited, 
+    then Enduro/X sets thread stack size to *8192* (which is 8 megabytes).
 
 *NDRX_SCANUNIT*='SYSVTOUT_THREAD_SCAN_WAIT_MS'::
     This flag is used by *SystemV* polling configuration, for others modes like 
