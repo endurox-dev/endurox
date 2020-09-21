@@ -1,7 +1,8 @@
+#!/bin/sh
 ##
-## @brief Enduro/X Execution platform's UBF library's mkfldhdr utility
+## @brief @(#) mkfldhdr32 wrapper
 ##
-## @file CMakeLists.txt
+## @file mkfldhdr32
 ##
 ## -----------------------------------------------------------------------------
 ## Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -32,25 +33,5 @@
 ## -----------------------------------------------------------------------------
 ##
 
-# Set a minimum version
-cmake_minimum_required(VERSION 2.8)
-
-# Make sure the compiler can find include files from UBF library
-include_directories (${ENDUROX_SOURCE_DIR}/libubf
-					 ${ENDUROX_SOURCE_DIR}/include
-					 ${ENDUROX_SOURCE_DIR}/libnstd)
-
-# Make sure the linker can find the UBF library once it is built.
-link_directories (${ENDUROX_BINARY_DIR}/libubf) 
-
-# Exectuables
-add_executable (mkfldhdr mkfldhdr.c clang.c golang.c java.c)
-
-# Link the executable to the UBF library & others...
-target_link_libraries (mkfldhdr ubf m nstd ${RT_LIB} pthread)
-
-install (TARGETS 
-    mkfldhdr 
-    mkfldhdr32
-    DESTINATION bin)
+exec mkfldhdr $@
 # vim: set ts=4 sw=4 et smartindent:
