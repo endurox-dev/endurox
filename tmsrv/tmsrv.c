@@ -667,15 +667,18 @@ int tpsvrinit(int argc, char **argv)
     }
     
     /* Start the background processing */
-    background_process_init();
-    
+    if (EXSUCCEED!=background_process_init())
+    {
+        NDRX_LOG(log_error, "Failed to creat background txn tout/completion thread");
+        EXFAIL_OUT(ret);
+    }
     
     /* Register timer check (needed for time-out detection) */
     if (EXSUCCEED!=tpext_addperiodcb(G_tmsrv_cfg.tout_check_time, tm_tout_check))
     {
-            ret=EXFAIL;
-            NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
-                            tpstrerror(tperrno));
+        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
+                        tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
     }
     
     M_init_ok = EXTRUE;

@@ -397,6 +397,7 @@ NDRX_SRVMAX=10000
 NDRX_SVCMAX=600
 NDRX_TOUT=60
 NDRX_UBFMAXFLDS=16000
+NDRX_THREADSTACKSIZE=8192
 NDRX_ULOG=/enduro/tst1/logs
 
 #
@@ -436,6 +437,16 @@ NOTES FOR ORACLE DB
 -------------------
 Note that *tmsrv* run with multiple threads. Flag '+Threads=true' MUST be set in
 *NDRX_XA_OPEN_STR*. Otherwise unexpected core dumps can be received from *tmsrv*.
+
+
+NOTES FOR IBM AIX
+-----------------
+For IBM AIX it is recommended that *NDRX_THREADSTACKSIZE* parameter is used.
+If parameter is not set, Enduro/X tries to get new thread stack size from
+getrlimit(RLIMIT_STACK, ...) and is assigning current value to new thread.
+Starting from AIX 7.2, it looks like AIX is summing these stacks and checks
+against the *ulimit -s* (which is the same *RLIMIT_STACK* value), and thus
+new threads fails to create, as total process stack limit is exhausted.
 
 BUGS
 ----

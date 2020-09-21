@@ -569,6 +569,7 @@ NDRX_SRVMAX=10000
 NDRX_SVCMAX=20000
 NDRX_TOUT="+timeout+@"
 NDRX_UBFMAXFLDS=16000
+NDRX_THREADSTACKSIZE=8192
 NDRX_LIBEXT="+shared_lib_pfx+@"
 NDRX_ULOG=${NDRX_APPHOME}/"+logDir+@"
 FIELDTBLS=Exfields"+(addubf!=""?(","+addubf):"")+@"
