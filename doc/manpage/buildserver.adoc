@@ -86,6 +86,9 @@ The command line template, how C compiler is invoked, is following:
 -L<NDRX_HOME>/{lib|lib64}] [<first_files>] [<RM_libs>] -latmisrvinteg -latmi -lubf -lnstd [<last_files>]
 --------------------------------------------------------------------------------
 
+All filesystem path related buffers internally are set to 5120 bytes + EOS byte,
+thus for example if build command is longer than 5120, it will be truncated
+to 5120.
 
 ENVIRONMENT
 -----------
