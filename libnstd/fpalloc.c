@@ -457,7 +457,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
         
         if (NULL==addr)
         {
-            goto out;
+            goto out_err;
         }
         addr->flags=NDRX_FPABRSIZE;
         addr->magic = NDRX_FPA_MAGIC;
@@ -475,7 +475,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
             
             if (NULL==addr)
             {
-                goto out;
+                goto out_err;
             }
             
             addr->poolno = poolno;
@@ -519,7 +519,7 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
             }
             if (NULL==addr)
             {
-                goto out;
+                goto out_err;
             }
             addr->flags=0;
             addr->magic = NDRX_FPA_MAGIC;
@@ -535,6 +535,9 @@ expublic NDRX_API void *ndrx_fpmalloc(size_t size, int flags)
 out:
                         
     return (void *) (((char *)addr) + sizeof(ndrx_fpablock_t));
+
+out_err:
+    return NULL;
 }
 
 /**
@@ -689,6 +692,10 @@ expublic void *ndrx_fprealloc(void *ptr, size_t size)
             NDRX_FPDEBUG("Change pool from %d to %d", addr->poolno, poolno);
             /* realloc to new pool */
             addr=(ndrx_fpablock_t *)NDRX_REALLOC(addr, M_fpa_pools[poolno].bsize+sizeof(ndrx_fpablock_t));
+            if (NULL==addr)
+            {
+                goto out_err;
+            }
             addr->poolno=poolno;
             addr->flags=0;
         }
@@ -698,6 +705,10 @@ expublic void *ndrx_fprealloc(void *ptr, size_t size)
         /* Target shall be moved to free style */   
         NDRX_FPDEBUG("Realloc to arb size (old pool: %d)", addr->poolno);
         addr=(ndrx_fpablock_t *)NDRX_REALLOC(addr, size+sizeof(ndrx_fpablock_t));
+        if (NULL==addr)
+        {
+            goto out_err;
+        }
         /* set free style flag */
         addr->flags=NDRX_FPABRSIZE;
         addr->poolno=EXFAIL;
@@ -705,7 +716,11 @@ expublic void *ndrx_fprealloc(void *ptr, size_t size)
     }
     
 out:
-    return (void *) (((char *)addr) + sizeof(ndrx_fpablock_t));;
+    return (void *) (((char *)addr) + sizeof(ndrx_fpablock_t));
+
+out_err:
+    return NULL;
+
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
