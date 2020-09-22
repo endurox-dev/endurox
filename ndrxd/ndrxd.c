@@ -418,21 +418,23 @@ int main_init(int argc, char** argv)
         /* Semaphores are first */
         if (EXSUCCEED!=ndrx_sem_open_all())
         {
-            ret=EXFAIL;
+            
             NDRX_LOG(log_error, "Failed to open semaphores!");
-            goto out;
+            EXFAIL_OUT(ret);
         }
         
         if (EXSUCCEED!=ndrxd_shm_open_all())
         {
-            ret=EXFAIL;
             NDRX_LOG(log_error, "Failed to open shared memory segments!");
-            goto out;
+            EXFAIL_OUT(ret);
         }
     }
     
-    ndrxd_sigchld_init();
-    
+    if (EXSUCCEED!=ndrxd_sigchld_init())
+    {
+        NDRX_LOG(log_error, "Failed to init signal handler thread!");
+        EXFAIL_OUT(ret);
+    }
     
 out:
     return ret;

@@ -62,6 +62,7 @@
 #include "userlog.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>
+#include <ndrxdiag.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -514,18 +515,24 @@ expublic void * forward_process(void *arg)
 
 /**
  * Initialize background process
- * @return
+ * @return EXSUCCEED/EXFAIL
  */
-expublic void forward_process_init(void)
+expublic int forward_process_init(void)
 {
-    struct sigaction        actions;
+    int ret = EXSUCCEED;
     
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
     
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
-    pthread_create(&G_forward_thread, &pthread_custom_attr, 
-            forward_process, NULL);  
+    if (EXSUCCEED!=pthread_create(&G_forward_thread, &pthread_custom_attr, 
+            forward_process, NULL))
+    {
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "forward_process_init");
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

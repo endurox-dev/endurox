@@ -52,7 +52,7 @@
 #include <ndebug.h>
 #include <sys_unix.h>
 #include <sys_svq.h>
-
+#include <ndrxdiag.h>
 #include "atmi_int.h"
 
 /*---------------------------Externs------------------------------------*/
@@ -106,8 +106,7 @@ exprivate void admin_fork_resume(void)
     if (EXSUCCEED!=(ret=pthread_create(&M_evthread, &pthread_custom_attr, 
             &ndrx_svqadmin_run, NULL)))
     {
-        NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
-        userlog("Failed to create admin thread: %s", strerror(ret));
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "admin thread");
     }
 }
 
@@ -129,8 +128,7 @@ expublic int ndrx_svqadmin_init(mqd_t adminq)
     if (EXSUCCEED!=(ret=pthread_create(&M_evthread, &pthread_custom_attr, 
             &ndrx_svqadmin_run, NULL)))
     {
-        NDRX_LOG(log_error, "Failed to create admin thread: %s", strerror(ret));
-        userlog("Failed to create admin thread: %s", strerror(ret));
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "admin thread");
         EXFAIL_OUT(ret);
     }
     
