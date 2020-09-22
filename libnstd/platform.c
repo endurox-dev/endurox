@@ -77,11 +77,11 @@ expublic void ndrx_platf_diag(char *file, long line, int code, int err, char *ms
         case NDRX_DIAG_PTHREAD_CREATE:
             
             NDRX_LOG(log_always, "Failed to pthread_create() for %s (%d): %s, at %s:%ld", 
-                    msg, errno, strerror(errno), line, file);
+                    msg, errno, strerror(errno), file, line);
             userlog("Failed to pthread_create() for %s (%d): %s, at %s:%ld", 
-                    msg, errno, strerror(errno), line, file);
+                    msg, errno, strerror(errno), file, line);
 
-            if (EAGAIN==err || EINVAL==err)
+            if (ENOMEM==err || EINVAL==err)
             {
 #ifdef EX_OS_AIX
                 NDRX_LOG(log_always, "Check thread specific resource "
