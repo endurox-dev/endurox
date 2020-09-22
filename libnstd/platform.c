@@ -49,6 +49,7 @@
 #include "userlog.h"
 #include <errno.h>
 #include <sys/resource.h>
+#include <ndrxdiag.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -60,6 +61,47 @@ exprivate long M_stack_size = EXFAIL;    /* Current stack size */
 exprivate MUTEX_LOCKDECL(M_stack_size_lock);
 
 /*---------------------------Prototypes---------------------------------*/
+
+/**
+ * Diagnostic for pthread_create
+ * @param file source file
+ * @param line source line
+ * @param NDRX_DIAG_* code
+ * @param msg module message
+ * @param err errno after the pthread_create() failed.
+ */
+expublic void ndrx_platf_diag(char *file, long line, int code, int err, char *msg)
+{
+    switch (code)
+    {
+        case NDRX_DIAG_PTHREAD_CREATE:
+            
+            NDRX_LOG(log_always, "Failed to pthread_create() for %s (%d): %s, at %s:%ld", 
+                    msg, errno, strerror(errno), line, file);
+            userlog("Failed to pthread_create() for %s (%d): %s, at %s:%ld", 
+                    msg, errno, strerror(errno), line, file);
+
+            if (EAGAIN==err || EINVAL==err)
+            {
+#ifdef EX_OS_AIX
+                NDRX_LOG(log_always, "Check thread specific resource "
+                        "settings e.g. NDRX_THREADSTACKSIZE. For AIX ulimit -s "
+                        "is setting global stack limit to all threads! Do limit "
+                        "with NDRX_THREADSTACKSIZE", code);
+                userlog("Check thread specific resource "
+                        "settings e.g. NDRX_THREADSTACKSIZE. For AIX ulimit -s "
+                        "is setting global stack limit to all threads! Do limit "
+                        "with NDRX_THREADSTACKSIZE", code);
+#else
+                NDRX_LOG(log_always, "Check thread specific resource "
+                        "settings e.g. NDRX_THREADSTACKSIZE", code);
+                userlog("Check thread specific resource settings "
+                        "e.g. NDRX_THREADSTACKSIZE", code);
+#endif
+            }
+        break;
+    }
+}
 
 /**
  * Return stack size configured for system

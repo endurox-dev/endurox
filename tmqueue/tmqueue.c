@@ -516,7 +516,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     /* Start the background processing */
-    forward_process_init();
+    if (EXSUCCEED!=forward_process_init())
+    {
+        NDRX_LOG(log_error, "Failed to initialize fwd process thread");
+        EXFAIL_OUT(ret);
+    }
 
     /* Bug #565 */
     M_init_ok=EXTRUE;

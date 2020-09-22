@@ -230,7 +230,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 __func__, strerror(errno));
     }
 
-    cpm_sigchld_init();
+    if (EXSUCCEED!=cpm_sigchld_init())
+    {
+        NDRX_LOG(log_error, "Failed to init signal thread");
+        EXFAIL_OUT(ret);
+    }
     
     /* attach to the shared memory */
     if (EXSUCCEED!=ndrx_cltshm_init(EXFALSE))

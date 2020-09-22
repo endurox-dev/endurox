@@ -209,6 +209,9 @@ houskeeping issues.. (no need to scan for pipes..).
     pthread_attr_setdetachstate(&pthread_custom_attr, PTHREAD_CREATE_DETACHED);
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
+    
+    /* cannot check the is thread created, as we are signal handler, and cannot log
+     * anything */
     pthread_create(&thread, &pthread_custom_attr, sigthread_enter, NULL);
 }
 
