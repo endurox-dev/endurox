@@ -132,29 +132,6 @@ outgoing traffic is processed - e.g. "@TPBRIDGEXXX" queue will not be read.
 2. To respond to *ndrxd(5)* pings, bridge lets to process 
 one outgoing message per second (i.e. read Enduro/X XATMI server queues).
 
-*In case :*
-
-- Messages stuck in queue will expire according to 'QUEUE_RETRIES' count 
-or 'TEMPORARY_QUEUE_TTL' which ever will come first, 
-thus for slow systems this number (*-R* flag or *-L*) shall be set accordingly. 
-Lower numbers will allow to recover faster from locks, but it would make possible to
-lose some messages. For example if setting *-R* to *0* would make to drop any
-message that cannot be put in XATMI IPC queue.
-
-- Try to increase 'TEMPORARY_QUEUE_SIZE' (*-Q* flag) to cope with overload, but
-downside of this is that tpbridge memory will start to grow.
-
-- Review IPC queue settings (max messages in queue) and corresponding *NDRX_MSGMAX*
-setting. More messages in queue will make lesser possibility that bridge will
-start to grow the temporary queue.
-
-- As once every second main thread of bridge is unlocked, it shall allow
-slowly to recover from deadlock.
-
-- The final mitigation for deadlock issue is Enduro/X service pings. Check
-*<pingtime>* and *<ping_max>* settings in *ndrxconfig.xml(5)*. Thus if ever
-theoretical the deadlock is made, the *ndrxd(8)* will restart bridge process
-and thus connection can be re-established.
 
 OPTIONS
 -------
