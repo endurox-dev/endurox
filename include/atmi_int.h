@@ -729,6 +729,7 @@ typedef struct ndrx_expbufctl ndrx_expbufctl_t;
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
 extern NDRX_API int G_srv_id;
+extern NDRX_API pollextension_rec_t * ndrx_G_pollext;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 

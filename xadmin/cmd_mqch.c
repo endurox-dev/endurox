@@ -99,7 +99,7 @@ expublic int cmd_mqch(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     if (EXSUCCEED!=tpinit(NULL))
     {
         fprintf(stderr, "Failed to tpinit(): %s", tpstrerror(tperrno));
-        NDRX_LOG(log_error, "Failed to tpinit(): %s", tpstrerror(tperrno))
+        NDRX_LOG(log_error, "Failed to tpinit(): %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     

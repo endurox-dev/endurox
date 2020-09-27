@@ -82,13 +82,13 @@ void TEST40_VIEW(TPSVCINFO *p_svc)
         
     NDRX_LOG(log_debug, "%s About to compare data block..", __func__);
     
-    NDRX_LOG(log_error, "v1 OK, now BUF")
+    NDRX_LOG(log_error, "v1 OK, now BUF");
     if (EXSUCCEED!=validate_MYVIEW1((struct MYVIEW1 *)buf))
     {
         NDRX_LOG(log_error, "Invalid data recovered from FB!");
         EXFAIL_OUT(ret);
     }
-    NDRX_LOG(log_error, "BUF OK")
+    NDRX_LOG(log_error, "BUF OK");
     
     /* Return different block back */
     if (NULL==(buf = tpalloc("VIEW", "MYVIEW3", sizeof(struct MYVIEW3))))

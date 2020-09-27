@@ -76,6 +76,7 @@ void TESTSV (TPSVCINFO *p_svc)
     NDRX_SPIN_LOCK_V(M_count_lock);
     M_count++;
     NDRX_SPIN_UNLOCK_V(M_count_lock);
+    /* usleep(2000); */
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -101,6 +102,7 @@ void GETINFOS (TPSVCINFO *p_svc)
     NDRX_SPIN_LOCK_V(M_count_lock);
     cnt = M_count;
     NDRX_SPIN_UNLOCK_V(M_count_lock);
+    /* usleep(2000); */
 
     if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&cnt, 0))
     {

@@ -313,7 +313,7 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
         }
         else
         {
-            NDRX_LOG(log_error, "Failed to allocate input/output buffer!")
+            NDRX_LOG(log_error, "Failed to allocate input/output buffer!");
             EXFAIL_OUT(ret);
         }
     }

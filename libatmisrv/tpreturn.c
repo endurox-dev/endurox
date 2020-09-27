@@ -126,6 +126,8 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     }
 
     call->timestamp = last_call->timestamp;
+    /* store the client timeout setting, so that bridge can drop on expiry */
+    call->clttout = last_call->clttout;
     call->callseq = last_call->callseq;
     call->data_len = MAX_CALL_DATA_SIZE;
     call->sysflags = 0; /* reset the flags. */

@@ -1422,6 +1422,10 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
     call->command_id = command_id;
     call->flags = flags;
     
+    /* set call expiry? */
+    call->clttout = G_atmi_env.time_out;
+    ndrx_stopwatch_reset(&call->timer);
+    
     /* Fix up send/receive flags */
     CONV_TARGET_FLAGS(call);
 

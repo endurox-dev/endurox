@@ -155,7 +155,7 @@ expublic int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2)
             userlog("Invalid type id found in buffer %p: %d - corrupted UBF buffer?", 
                     p_ubf1, typcode);
             UBF_LOG(log_error, "Invalid type id found in buffer %p: %d "
-                    "- corrupted UBF buffer?",  p_ubf1, typcode)
+                    "- corrupted UBF buffer?",  p_ubf1, typcode);
             /* set error */
             ndrx_Bset_error_fmt(BNOTFLD, "Invalid type id found in buffer %p: %d "
                     "- corrupted UBF buffer?", p_ubf1, typcode);
@@ -263,7 +263,7 @@ expublic int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2)
             userlog("Invalid type id found in buffer %p: %d - corrupted UBF buffer?", 
                     p_ubf1, typcode);
             UBF_LOG(log_error, "Invalid type id found in buffer %p: %d "
-                    "- corrupted UBF buffer?",  p_ubf1, typcode)
+                    "- corrupted UBF buffer?",  p_ubf1, typcode);
             /* set error */
             ndrx_Bset_error_fmt(BNOTFLD, "Invalid type id found in buffer %p: %d "
                     "- corrupted UBF buffer?", p_ubf1, typcode);
