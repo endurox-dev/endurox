@@ -309,7 +309,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
                 
                 EXHASH_ADD_LONG(M_prehash, pid, p_clt);
                 
-                NDRX_LOG(log_debug, "Hashed pid=%d - %s", p_clt->pid, p_clt->clientid)
+                NDRX_LOG(log_debug, "Hashed pid=%d - %s", p_clt->pid, p_clt->clientid);
                 
             } /* if used */
         }
@@ -330,7 +330,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
         
         if (NULL!=p_clt2)
         {
-            NDRX_LOG(log_debug, "PID %d matched with SHM", (int)p_clt->pid)
+            NDRX_LOG(log_debug, "PID %d matched with SHM", (int)p_clt->pid);
             /* update the client */
             snprintf(p_clt->clientid, sizeof(p_clt->clientid), "%s/%ld",
                     p_clt2->clientid, p_clt->contextid);

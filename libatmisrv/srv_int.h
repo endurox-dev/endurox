@@ -231,7 +231,7 @@ struct ndrx_tpacall_defer
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API srv_conf_t G_server_conf;
 extern NDRX_API shm_srvinfo_t *G_shm_srv;
-extern NDRX_API pollextension_rec_t *G_pollext;
+extern NDRX_API pollextension_rec_t *ndrx_G_pollext;
 extern NDRX_API int G_shutdown_req;
 extern NDRX_API int G_shutdown_nr_wait;   /* Number of self shutdown messages to wait */
 extern NDRX_API int G_shutdown_nr_got;    /* Number of self shutdown messages got  */
@@ -272,6 +272,7 @@ extern NDRX_API int	dynamic_advertise(svc_entry_fn_t *entry_new,
 extern NDRX_API int dynamic_readvertise(char *svcname);
 
 /* Polling extension */
+extern NDRX_API void ndrx_ext_pollsync(int flag);
 extern NDRX_API pollextension_rec_t * ext_find_poller(int fd);
 extern NDRX_API int _tpext_addpollerfd(int fd, uint32_t events, 
         void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));

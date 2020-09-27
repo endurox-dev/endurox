@@ -41,11 +41,12 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <exthpool.h>
+#include <pthread.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define BR_QRETRIES_DEFAULT             3 /**< Default number of retries    */
-#define BR_DEFAULT_THPOOL_SIZE          2 /**< Default threadpool size      */
+#define BR_QRETRIES_DEFAULT             999999  /**< Default number of retries    */
+#define BR_DEFAULT_THPOOL_SIZE          2       /**< Default threadpool size      */
 #define BR_THREAD_ENTRY if (!G_thread_init) \
          { \
                 if (EXSUCCEED==tpinit(NULL))\
@@ -57,6 +58,10 @@ extern "C" {
                     EXFAIL_OUT(ret);\
                 } \
          }
+    
+#define DEFAULT_QUEUE_SIZE          100    /**< max nr of queued messages dflt */
+#define DEFAULT_QUEUE_MAXSLEEP      50     /**< Max number milliseconds to sleep */
+#define DEFAULT_QUEUE_MINSLEEP      10     /**< Mininum sleep between attempts */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*
@@ -71,11 +76,20 @@ typedef struct
     long long timediff;           /**< Bridge time correction       */
     int common_format;            /**< Common platform format. */
     int qretries;                 /**< Queue Resubmit retries */
+    int qsize;                    /**< Number of messages stored in memory before blocking */
+    int qttl;                     /**< Number of miliseconds for message to live in queue */
+    int qmaxsleep;                /**< Max number of millisecionds to sleep between attempts */
+    int qminsleep;                /**< Min number of millisecionds to sleep between attempts */
+    int threadpoolbufsz;          /**< Threadpool buffer size, lock after full */
     int threadpoolsize;           /**< Thread pool size */
+    int check_interval;           /**< connection checking interval             */
     threadpool thpool_tonet;      /**< Thread pool by it self */
     /* Support #502, we get deadlock when both nodes all threads attempt to send
      * and there is no one who performs receive, all sockets become full */
     threadpool thpool_fromnet;    /**< Thread pool by it self */
+    
+    threadpool thpool_queue;    /**< Queue runner */
+    
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;
@@ -116,6 +130,7 @@ typedef struct
 /*---------------------------Globals------------------------------------*/
 extern bridge_cfg_t G_bridge_cfg;
 extern __thread int G_thread_init;
+extern pthread_mutex_t ndrx_G_global_br_lock;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int br_submit_to_ndrxd(command_call_t *call, int len);
@@ -133,9 +148,10 @@ extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
 extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
-extern void br_run_q(void);
-extern int ndrx_br_init_queue(void);
-extern void ndrx_br_uninit_queue(void);
+extern int br_chk_limit(void);
+
+extern int br_netin_setup(void);
+extern void br_netin_shutdown(void);
 
 #ifdef	__cplusplus
 }

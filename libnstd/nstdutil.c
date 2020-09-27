@@ -1465,7 +1465,7 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
     if (NULL==list->mem)
     {
         new_size = list->step * list->size;
-        if (NULL==(list->mem = NDRX_MALLOC(list->step * list->size)))
+        if (NULL==(list->mem = NDRX_FPMALLOC(list->step * list->size, 0)))
         {
             userlog("Failed to alloc %d bytes: %s", new_size,
                         strerror(errno));
@@ -1487,7 +1487,7 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
         NDRX_LOG(log_debug, "realloc: new_size: %d (index: %d items: %d)", 
                 new_size, index, list->items);
         */
-        if (NULL==(list->mem = NDRX_REALLOC(list->mem, new_size)))
+        if (NULL==(list->mem = NDRX_FPREALLOC(list->mem, new_size)))
         {
             userlog("Failed to realloc %d bytes (%d blocks): %s", new_size,
                         next_blocks, strerror(errno));
@@ -1538,7 +1538,7 @@ expublic int ndrx_growlist_append(ndrx_growlist_t *list, void *item)
  */
 expublic void ndrx_growlist_free(ndrx_growlist_t *list)
 {
-    NDRX_FREE(list->mem);
+    NDRX_FPFREE(list->mem);
 }
 
 /**

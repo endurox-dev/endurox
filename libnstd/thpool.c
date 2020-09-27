@@ -15,8 +15,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <errno.h>
-#include <time.h> 
+#include <sys/time.h> 
 #include <ndebug.h>
+#include <time.h>
 #include <ndrstandard.h>
 #ifdef EX_OS_LINUX
 #include <sys/prctl.h>
@@ -88,6 +89,7 @@ typedef struct thpool_
     pthread_mutex_t  thcount_lock;          /**< used for thread count etc  */
     pthread_cond_t  threads_all_idle;       /**< signal to thpool_wait      */
     pthread_cond_t  threads_one_idle;       /**< signal to thpool_wait_one  */
+    pthread_cond_t  proc_one;               /**< One job is processed       */
     int threads_keepalive;
     int num_threads;                        /**< total number of threads    */
     int thread_status;                      /**< if EXTRUE, init OK         */
@@ -180,6 +182,7 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
     pthread_mutex_init(&(thpool_p->thcount_lock), NULL);
     pthread_cond_init(&thpool_p->threads_all_idle, NULL);
     pthread_cond_init(&thpool_p->threads_one_idle, NULL);
+    pthread_cond_init(&thpool_p->proc_one, NULL);
 
     /* Thread init, lets do one by one... and check the final counts... */
     int n;
@@ -232,13 +235,13 @@ out:
     return thpool_p;
 }
 
-
-/* Add work to the thread pool */
-int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), void* arg_p)
+int ndrx_thpool_add_work2(thpool_* thpool_p, void (*function_p)(void*, int *), void* arg_p, long flags, int max_len)
 {
+    int ret = EXSUCCEED;
     job* newjob;
 
     newjob=(struct job*)NDRX_FPMALLOC(sizeof(struct job), 0);
+    
     if (newjob==NULL)
     {
         err("thpool_add_work(): Could not allocate memory for new job\n");
@@ -248,15 +251,61 @@ int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), vo
     /* add function and argument */
     newjob->function=function_p;
     newjob->arg=arg_p;
-
+    
     /* add job to queue */
     MUTEX_LOCK_V(thpool_p->thcount_lock);
+    
+    if (flags & NDRX_THPOOL_ONEJOB && thpool_p->jobqueue.len > 0)
+    {
+        NDRX_LOG(log_debug, "NDRX_THPOOL_ONEJOB set and queue len is %d - skip this job",
+                thpool_p->jobqueue.len);
+        
+        /* WARNING !!!! Early return! */
+        NDRX_FPFREE(newjob);
+        MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+        return NDRX_THPOOL_ONEJOB;
+    }
+
+    /* wait for pool to process some amount of jobs, before we continue....
+     * otherwise this might cause us to buffer lot of outgoing messages
+     */
+    if (max_len > 0)
+    {
+        while (thpool_p->jobqueue.len > max_len)
+        {
+            /* wait for 1 sec... so that we release some control */
+            int ret;
+            struct timespec wait_time;
+            struct timeval now;
+
+            gettimeofday(&now,NULL);
+
+            wait_time.tv_sec = now.tv_sec+1;
+            wait_time.tv_nsec = now.tv_usec;
+
+            if (EXSUCCEED!=(ret=pthread_cond_timedwait(&thpool_p->proc_one, 
+                    &thpool_p->thcount_lock, &wait_time)))
+            {
+                NDRX_LOG(log_error, "Waiting for %d jobs (current: %d) but expired... (err: %s)", 
+                        max_len, thpool_p->jobqueue.len, strerror(ret));            
+            }
+        }
+    }
+
     jobqueue_push(&thpool_p->jobqueue, newjob);
+    
     MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 
     return 0;
 }
 
+/* Add work to the thread pool 
+ * default version
+ */
+int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), void* arg_p)
+{
+    return ndrx_thpool_add_work2(thpool_p, function_p, arg_p, 0, 0);
+}
 
 /**
  *  Wait until all jobs have finished 
@@ -533,7 +582,10 @@ static void* poolthread_do(struct poolthread* thread_p)
             if (one_idle)
             {  
                 pthread_cond_signal(&thpool_p->threads_one_idle);
-            } 
+            }
+            
+            /* one job is processed... */
+            pthread_cond_signal(&thpool_p->proc_one);
 
             MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 

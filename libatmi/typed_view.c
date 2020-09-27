@@ -198,7 +198,7 @@ exprivate  int sized_Bchg (UBFH **pp_ub, BFLDID bfldid,
     }
     
 out:
-    NDRX_LOG(log_debug, "%s: ret: %d: %s", __func__, ret, Bstrerror(Berror))
+    NDRX_LOG(log_debug, "%s: ret: %d: %s", __func__, ret, Bstrerror(Berror));
     return ret;
 }
 

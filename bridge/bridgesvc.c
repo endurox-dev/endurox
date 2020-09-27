@@ -182,7 +182,11 @@ exprivate int br_snd_zero_len_th(void *ptr, int *p_finish_off)
  */
 exprivate int br_snd_zero_len(exnetcon_t *net)
 {
-    ndrx_thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, (void *)net);
+    /* no need to send to network if already has to-net jobs... 
+     * thus avoid any blocking conditions on outgoing...
+     */
+    ndrx_thpool_add_work2(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, 
+            (void *)net, NDRX_THPOOL_ONEJOB, 0);
     return EXSUCCEED;
 }
 
@@ -207,99 +211,6 @@ expublic int br_report_to_ndrxd_cb(void)
     }
     
     return ret;
-}
-
-/**
- * Periodic poll callback.
- * @return 
- */
-expublic int poll_timer(void)
-{
-    /* run any queue left overs... */
-    br_run_q();
-    
-    /*NDRX_LOG(log_debug, "FD=%d", G_bridge_cfg.net.sock);*/
-    
-    return exnet_periodic();
-}
-
-/**
- * Invode before poll.
- * @return 
- */
-int b4poll(void)
-{
-    ndrx_stopwatch_t w;
-    int spent, ret;
-    
-    /* avoid over extensive queues. Have some free
-     * free thread (i.e. there is less jobs queued
-     * then free threads)
-     */
-    ndrx_thpool_wait_one(G_bridge_cfg.thpool_fromnet);
-    
-    /*
-     * For sending to net, the socket may be full/blocked
-     * thus try to receive messages from network.
-     * Every 1 sec still process the poll as we might want to receive pings, etc.
-     */
-    spent = 0;
-    ndrx_stopwatch_reset(&w);
-    while (!ndrx_thpool_is_one_avail(G_bridge_cfg.thpool_tonet) && 
-            NULL!=G_bridge_cfg.con && 
-            G_bridge_cfg.con->is_connected && 
-            !G_bridge_cfg.con->schedule_close && 
-            spent < 1000)
-    {
-        struct pollfd ufd;
-        memset(&ufd, 0, sizeof ufd);
-        ufd.fd = G_bridge_cfg.con->sock;
-        ufd.events = POLLOUT | POLLIN;
-
-        ret=poll(&ufd, 1, 1000 - spent);
-
-        if (ret > 0)
-        {
-            if (ufd.revents & POLLOUT)
-            {
-                /* we can start to send */
-                break;
-            }
-            else if (ufd.revents & POLLIN)
-            {
-                int buflen = 0;
-                char *buf = NULL;
-
-                NDRX_LOG(log_warn, "Early msg receive (due to blocked sending)");
-                
-                /* we can receive something */
-                if(EXSUCCEED == exnet_recv_sync(G_bridge_cfg.con, &buf, &buflen, 0, 0))
-                {
-                    /* We got the message - do the callback op */
-                    G_bridge_cfg.con->p_process_msg(G_bridge_cfg.con, &buf, buflen);
-                }
-                
-                if (NULL!=buf)
-                {
-                    NDRX_SYSBUF_FREE(buf);
-                }
-            }
-            else
-            {
-                /* we do not expect anything more... */
-                break;
-            }
-        }
-        else
-        {
-            /* if timedout or error finish off... */
-            break;
-        }
-
-        spent = ndrx_stopwatch_get_delta_sec(&w);
-    }
-
-    return exnet_b4_poll_cb();
 }
 
 /**
@@ -349,8 +260,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     int c;
+    char *p;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
-    int check=5;  /* Connection check interval, seconds */
     int thpoolcfg = 0;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
@@ -358,11 +269,18 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     exnet_reset_struct(&G_bridge_cfg.net);
     
     G_bridge_cfg.nodeid = EXFAIL;
+    G_bridge_cfg.qsize = EXFAIL;
+    G_bridge_cfg.qttl= EXFAIL;
+    G_bridge_cfg.qmaxsleep= EXFAIL;
+    G_bridge_cfg.qminsleep= EXFAIL;
     G_bridge_cfg.timediff = 0;
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
+    G_bridge_cfg.check_interval=EXFAIL;
+    G_bridge_cfg.threadpoolbufsz=EXFAIL;
+    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:L:M:B:m:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
@@ -381,6 +299,31 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             case 'n':
                 G_bridge_cfg.nodeid=(short)atoi(optarg);
                 NDRX_LOG(log_debug, "Node ID, -n = [%hd]", G_bridge_cfg.nodeid);
+                break;
+            case 'Q':
+                G_bridge_cfg.qsize=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Temporary queue size, -Q = [%d]", G_bridge_cfg.qsize);
+                break;
+            case 'L':
+                G_bridge_cfg.qttl=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Temporary queue TTL, -L = [%d] ms", G_bridge_cfg.qttl);
+                break;
+            case 'M':
+                G_bridge_cfg.qmaxsleep=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Temporary queue Max Sleep, -M = [%d] ms", 
+                        G_bridge_cfg.qmaxsleep);
+                break;
+                
+            case 'm':
+                G_bridge_cfg.qminsleep=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Temporary queue Min Sleep, -m = [%d] ms", 
+                        G_bridge_cfg.qmaxsleep);
+                break;
+            
+            case 'B':
+                G_bridge_cfg.threadpoolbufsz=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Thread pool buffer size, -B = [%d]", 
+                        G_bridge_cfg.threadpoolbufsz);
                 break;
             case 'i':
                 
@@ -427,9 +370,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                         G_bridge_cfg.net.backlog);
                 break;
             case 'c':
-                check = atoi(optarg);
+                G_bridge_cfg.check_interval = atoi(optarg);
                 NDRX_LOG(log_debug, "check (-c): %d", 
-                        check);
+                        G_bridge_cfg.check_interval);
                 break;
             case 'z':
                 G_bridge_cfg.net.periodic_zero = atoi(optarg);
@@ -480,17 +423,65 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         }
     }
     
-    if (0>G_bridge_cfg.net.recv_activity_timeout)
+    if (G_bridge_cfg.qsize <= 0 && NULL!=(p=getenv(CONF_NDRX_MSGMAX)))
     {
-        G_bridge_cfg.net.recv_activity_timeout = G_bridge_cfg.net.periodic_zero*2;
+        NDRX_LOG(log_debug, "Reading queue size from [%s]", CONF_NDRX_MSGMAX);
+        G_bridge_cfg.qsize = atoi(p);
     }
     
-    if (G_bridge_cfg.threadpoolsize < 1)
+    if (G_bridge_cfg.qsize <= 0)
+    {
+        NDRX_LOG(log_debug, "Defaulting queue size");
+        G_bridge_cfg.qsize = DEFAULT_QUEUE_SIZE;
+    }
+    
+    if (G_bridge_cfg.qmaxsleep <= 0)
+    {
+        NDRX_LOG(log_debug, "Defaulting queue max sleep");
+        G_bridge_cfg.qmaxsleep = DEFAULT_QUEUE_MAXSLEEP;
+    }
+    
+    if (G_bridge_cfg.qminsleep <= 0)
+    {
+        NDRX_LOG(log_debug, "Defaulting queue min sleep");
+        G_bridge_cfg.qminsleep = DEFAULT_QUEUE_MINSLEEP;
+    }
+    
+    if (G_bridge_cfg.qttl < 0)
+    {
+        NDRX_LOG(log_debug, "Setting TTL to NDRX_TOUT value");
+        /* convert from seconds to ms */
+        G_bridge_cfg.qttl = tptoutget()*1000;
+    }
+    
+     if (G_bridge_cfg.threadpoolsize < 1)
     {
         NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
                 "(%d) defaulting to %d", 
                 thpoolcfg, BR_DEFAULT_THPOOL_SIZE*2);
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
+    }
+    
+    if (G_bridge_cfg.threadpoolbufsz < 0)
+    {
+        G_bridge_cfg.threadpoolbufsz = G_bridge_cfg.threadpoolsize/2;
+    }
+    
+    if (G_bridge_cfg.check_interval < 1)
+    {
+        G_bridge_cfg.check_interval=5;
+    }
+
+    NDRX_LOG(log_warn, "Temporary queue size set to: %d", G_bridge_cfg.qsize);
+    NDRX_LOG(log_warn, "Temporary queue ttl set to: %d", G_bridge_cfg.qttl);
+    NDRX_LOG(log_warn, "Temporary queue max sleep set to: %d", G_bridge_cfg.qmaxsleep);
+    NDRX_LOG(log_warn, "Temporary queue min sleep set to: %d", G_bridge_cfg.qminsleep);
+    NDRX_LOG(log_warn, "Threadpool job queue size: %d", G_bridge_cfg.threadpoolbufsz);
+    NDRX_LOG(log_warn, "Check interval is: %d seconds", G_bridge_cfg.check_interval);
+    
+    if (0>G_bridge_cfg.net.recv_activity_timeout)
+    {
+        G_bridge_cfg.net.recv_activity_timeout = G_bridge_cfg.net.periodic_zero*2;
     }
     
     NDRX_LOG(log_warn, "Threadpool size set to: from-net=%d to-net=%d (cfg=%d)",
@@ -524,12 +515,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=ndrx_br_init_queue())
-    {
-        NDRX_LOG(log_error, "Failed to init queue runner");
-        EXFAIL_OUT(ret);
-    }
-    
     /* Allocate network buffer */
     if (EXSUCCEED!=exnet_net_init(&G_bridge_cfg.net))
     {
@@ -553,24 +538,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    /* Register timer check.... */
-    if (EXSUCCEED==ret &&
-            EXSUCCEED!=tpext_addperiodcb(check, poll_timer))
-    {
-        ret=EXFAIL;
-        NDRX_LOG(log_error, "tpext_addperiodcb failed: %s",
-                        tpstrerror(tperrno));
-    }
-    
-    /* Register poller callback.... */
-    if (EXSUCCEED==ret &&
-            EXSUCCEED!=tpext_addb4pollcb(b4poll))
-    {
-        ret=EXFAIL;
-        NDRX_LOG(log_error, "tpext_addb4pollcb failed: %s",
-                        tpstrerror(tperrno));
-    }
-    
     /* Set server flags  */
     tpext_configbrige(G_bridge_cfg.nodeid, flags, br_got_message_from_q);
     
@@ -592,9 +559,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=ret)
+    if (NULL==(G_bridge_cfg.thpool_queue = ndrx_thpool_init(1, 
+            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)))
     {
-        NDRX_LOG(log_error, "to-net thread init failed");
+        NDRX_LOG(log_error, "Failed to initialize queue-runner thread pool (cnt: %d)!", 
+                G_bridge_cfg.threadpoolsize);
         EXFAIL_OUT(ret);
     }
     
@@ -606,9 +575,9 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=ret)
+    if (EXSUCCEED!=br_netin_setup())
     {
-        NDRX_LOG(log_error, "from-net thread init failed");
+        NDRX_LOG(log_error, "Failed to init network management (net-in) thread");
         EXFAIL_OUT(ret);
     }
     
@@ -633,14 +602,15 @@ expublic void tp_thread_shutdown(void *ptr, int *p_finish_off)
     NDRX_LOG(log_info, "tp_thread_shutdown - ok");
 }
 
-
 /**
  * Do de-initialization
  */
 void NDRX_INTEGRA(tpsvrdone)(void)
 {
-    int i;
     NDRX_LOG(log_debug, "tpsvrdone called");
+    
+    /* shutdown network runner... */
+    br_netin_shutdown();
     
     /* Bug #170
      * Shutdown threads and only then close connection
@@ -655,6 +625,9 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         
         ndrx_thpool_wait(G_bridge_cfg.thpool_fromnet);
         ndrx_thpool_destroy(G_bridge_cfg.thpool_fromnet);
+        
+        ndrx_thpool_wait(G_bridge_cfg.thpool_queue);
+        ndrx_thpool_destroy(G_bridge_cfg.thpool_queue);
     }
     
     /* close if not server connection...  */
@@ -669,8 +642,6 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     {
         exnet_close_shut(&G_bridge_cfg.net);
     }
-    
-    ndrx_br_uninit_queue();
     
     /* erase addresses... */
     exnet_unconfigure(&G_bridge_cfg.net);

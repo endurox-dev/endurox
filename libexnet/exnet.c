@@ -725,6 +725,13 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
     else if (net->is_connected)
     {
         long rcvt;
+        
+        
+        /* TODO: This shall be moved to main thread
+         * as sending is not part of the receiving...
+         * and shall be periodic
+         */
+        
         /* We are connected, send zero length message, ok 
          * Firstly: sending shall be done by worker thread
          * Secondly: send only in case if there was no data sent over the socket

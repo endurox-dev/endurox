@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 #if EX_SIZEOF_LONG==4
     while (ndrx_stopwatch_get_delta_sec(&w) < 5)
 #else
-    while (ndrx_stopwatch_get_delta_sec(&w) < 20)
+    while (ndrx_stopwatch_get_delta_sec(&w) < 200)
 #endif
     {
         if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))

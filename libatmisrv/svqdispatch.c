@@ -1401,7 +1401,7 @@ expublic int sv_wait_for_request(void)
             NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, "
                     "is_mq_only: %d, G_pollext=%p",
                     n, G_server_conf.events[n].data.u32, evfd, evmqd, 
-                    is_mq_only, G_pollext);
+                    is_mq_only, ndrx_G_pollext);
             
             if (0==evfd && 0==evmqd)
             {
@@ -1410,7 +1410,7 @@ expublic int sv_wait_for_request(void)
             }
             
             /* Check poller extension */
-            if (NULL!=G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
+            if (NULL!=ndrx_G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
             {
                 ext=ext_find_poller(evfd);
                 
