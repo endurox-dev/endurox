@@ -38,6 +38,7 @@
 #include <regex.h>
 #include <utlist.h>
 #include <poll.h>
+#include <fcntl.h>
 
 #include <ndebug.h>
 #include <atmi.h>
