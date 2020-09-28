@@ -193,7 +193,7 @@ out:
         {
             if (EXSUCCEED!=tpcommit(0))
             {
-                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno))
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
                 ret=EXFAIL;
             }
         }
@@ -202,7 +202,7 @@ out:
         {
             if (EXSUCCEED!=tpabort(0))
             {
-                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno))
+                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno));
             }
         }
     }
@@ -260,7 +260,7 @@ out:
         {
             if (EXSUCCEED!=tpcommit(0))
             {
-                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno))
+                NDRX_LOG(log_error, "Failed to commit: %s", tpstrerror(tperrno));
                 ret=EXFAIL;
             }
         }
@@ -269,7 +269,7 @@ out:
         {
             if (EXSUCCEED!=tpabort(0))
             {
-                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno))
+                NDRX_LOG(log_error, "Failed to abort: %s", tpstrerror(tperrno));
             }
         }
     }
