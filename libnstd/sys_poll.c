@@ -427,7 +427,7 @@ expublic void ndrx_epoll_sys_uninit(void)
 
         if (res == PTHREAD_CANCELED)
         {
-            NDRX_LOG(log_info, "Signal thread canceled ok!")
+            NDRX_LOG(log_info, "Signal thread canceled ok!");
         }
         else
         {
