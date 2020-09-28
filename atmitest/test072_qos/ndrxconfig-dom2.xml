@@ -57,13 +57,13 @@
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -sTEST2:TESTSV -sGETINFOS2:GETINFOS</sysopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom2.log -r -sTEST2:TESTSV -sGETINFOS2:GETINFOS -sTEST22:TESTSVB -sGETINFOS22:GETINFOSB</sysopt>
         </server>
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
-            <appopt>-n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P8 -Q10</appopt>
+            <appopt>-n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P8</appopt>
         </server>
     </servers>
 </endurox>

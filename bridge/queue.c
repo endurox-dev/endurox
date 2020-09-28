@@ -63,412 +63,13 @@
 #include "cgreen/assertions.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
-#define     PACK_TYPE_TONDRXD   1   /**< Send message NDRXD                   */
-#define     PACK_TYPE_TOSVC     2   /**< Send to service, use timer (their)   */
-#define     PACK_TYPE_TORPLYQ   3   /**< Send to reply q, use timer (internal)*/
-
-#define RM_MSG  do {\
-                    /* locking here needed.. */\
-                    MUTEX_LOCK_V(M_in_q_lock);\
-                    /* remove from Q - ok */\
-                    DL_DELETE(M_in_q, el);\
-                    NDRX_FPFREE(el->buffer);\
-                    NDRX_FPFREE(el);\
-                    M_msgs_in_q--;\
-                    MUTEX_UNLOCK_V(M_in_q_lock);\
-                } while (0);
-                
-#define DISCARD_CALL_LOG    do {NDRX_LOG(log_error, \
-                    "Discarding svc call! call age = %ld s, client timeout = %d "\
-                    "cd: %d timestamp: %d (id: %d%d) callseq: %u, "\
-                    "svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "\
-                    " reply_to: %s, call_stack: %s",\
-                    call_age, call->clttout,\
-                    call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, \
-                    call->name, call->flags, call_age, call->data_len,\
-                    call->my_id, call->reply_to, call->callstack);} while (0)
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-exprivate in_msg_t *M_in_q = NULL;  /**< Linked list with incoming message in Q */
-exprivate MUTEX_LOCKDECL(M_in_q_lock);  /**< Queue lock the queue cache       */
-exprivate int M_msgs_in_q = 0;          /**< Number of messages enqueued      */
-exprivate int M_stopped = EXFALSE;      /**< Is incoming stopped              */
-MUTEX_LOCKDECL(ndrx_G_global_br_lock);  /**< Global bridge lock               */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
 exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off);
-exprivate int br_process_error(char *buf, int len, int err, in_msg_t* from_q, 
-        int pack_type, char *destqstr);
-
-
-/**
- * Check the global processing limit
- * @return EXSUCCEED (ok), EXFAIL (lock time limit)
- */
-expublic int br_chk_limit(void)
-{
-#ifdef EX_OS_DARWIN
-    
-    MUTEX_LOCK_V(ndrx_G_global_br_lock);
-    MUTEX_UNLOCK_V(ndrx_G_global_br_lock);
-    
-#else
-    int ret;
-    
-    struct timespec wait_time;
-    struct timeval now;
-
-    gettimeofday(&now,NULL);
-
-    wait_time.tv_sec = now.tv_sec+1;
-    wait_time.tv_nsec = now.tv_usec;
-
-    ret=pthread_mutex_timedlock(&ndrx_G_global_br_lock, &wait_time);
-    
-    if (EXSUCCEED==ret)
-    {
-        MUTEX_UNLOCK_V(ndrx_G_global_br_lock);
-    }
-    else
-    {
-        NDRX_LOG(log_error, "Global lock timed out: %s", strerror(ret));
-    }
-    return ret;
-#endif
-}
-
-/**
- * Run queue from thread.
- * This is started from main thread periodic runner.
- * The special flag is used to indicate if run job was in queue
- * If incoming limit of queue reached, we shall lock the mutex and do not
- * allow any incoming traffic.
- * 
- * @param ptr not used
- * @param p_finish_off not used
- * @return EXSUCCEED;
- */
-exprivate int br_run_q_th(void *ptr, int *p_finish_off)
-{
-    int ret = EXSUCCEED;
-    in_msg_t *el, *elt;
-    long call_age;
-    long time_in_q;
-    long sleep_time;
-    
-    /**
-     * Possible dead lock if service puts back in queue/ 
-     * do the unlock in the middle to allow adding msg?
-     * 
-     * If delete is allowed only from this thread, then we should sync only
-     * on adding..
-     * 
-     */
-    MUTEX_LOCK_V(M_in_q_lock);
-    
-    /* loop runs in locked mode.. */
-    sleep_time=0;
-    DL_FOREACH_SAFE(M_in_q, el, elt)
-    {
-        MUTEX_UNLOCK_V(M_in_q_lock);
-        
-        time_in_q = ndrx_stopwatch_get_delta(&(el->trytime));
-        el->tries++;
-        NDRX_LOG(log_warn, "Processing late delivery of %p/%d [%s] try %d/%d time_in_q %ld ms (ttl: %d)", 
-                el->buffer, el->len, el->destqstr, el->tries, 
-                G_bridge_cfg.qretries, time_in_q, G_bridge_cfg.qttl);
-        
-        /* if ttl is used, then check time-out too */
-        if (el->tries <= G_bridge_cfg.qretries && time_in_q<=G_bridge_cfg.qttl)
-        {
-            if (EXSUCCEED!=(ret=ndrx_generic_q_send(el->destqstr, (char *)el->buffer, 
-                    el->len, TPNOBLOCK, 0)))
-            {
-                
-                sleep_time++;
-                
-                NDRX_LOG(log_error, "Failed to send message to [%s]: %s",
-                        el->destqstr, tpstrerror(ret));
-                
-                /* analyze the error - if queue is missing
-                 * then drop the message -> set the max tries...
-                 * or do the retry if queue is full, otherwise we drop the msg.
-                 */
-                
-                if (ENOENT==ret)
-                {
-                   NDRX_LOG(log_error, "Dest queue is missing - service call failed");
-                   
-                   br_process_error((char *)el->buffer, el->len, EXFAIL, 
-                            el, el->pack_type, el->destqstr);
-                   
-                }
-                /* if it is svc reply, check the timeout flag too.. */
-                else if (PACK_TYPE_TOSVC==el->pack_type)
-                {
-                    tp_command_call_t *call = (tp_command_call_t *)el->buffer;
-                    call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
-                    /**
-                     * If possible check the expiry of the call,
-                     * if so, drop the msg
-                     */
-                    if ((ATMI_COMMAND_TPCALL==call->command_id || 
-                        ATMI_COMMAND_CONNECT==call->command_id) &&
-                            call->clttout > 0 && call_age >= call->clttout && 
-                            !(call->flags & TPNOTIME))
-                    {
-                        /* no need to reply? */
-                        NDRX_LOG(log_error, "Message expired - remove / no reply");
-                        DISCARD_CALL_LOG;
-                        RM_MSG;
-                    }
-                }
-                
-            }
-            else
-            {
-                /* if sent ok, vote for none sleep */
-                sleep_time--;
-                RM_MSG;
-            }
-        }
-        else
-        {
-            br_process_error((char *)el->buffer, 
-                    el->len, EXFAIL, el, el->pack_type, el->destqstr);
-        }
-        
-        MUTEX_LOCK_V(M_in_q_lock);
-        
-        if (M_msgs_in_q > G_bridge_cfg.qsize && !M_stopped)
-        {
-            NDRX_LOG(log_error, "Max number of msgs queued in bridge: %d "
-                    "currently: %d - stop online traffic", 
-                    G_bridge_cfg.qsize, M_msgs_in_q);
-            
-            /* set global lock */
-            MUTEX_LOCK_V(ndrx_G_global_br_lock);
-            M_stopped=EXTRUE;
-            
-        }
-        else if (M_msgs_in_q < G_bridge_cfg.qsize && M_stopped)
-        {
-            NDRX_LOG(log_error, "Max number of msgs queued in bridge: %d "
-                    "currently: %d - resume online traffic", 
-                    G_bridge_cfg.qsize, M_msgs_in_q);
-            
-            /* unset global lock */
-            MUTEX_UNLOCK_V(ndrx_G_global_br_lock);
-            M_stopped=EXFALSE;
-        }
-        
-    }
-    
-    MUTEX_UNLOCK_V(M_in_q_lock);
-    
-    if (M_msgs_in_q > 0)
-    {
-        /* calc the milliseconds of the sleep */
-        if (sleep_time<G_bridge_cfg.qminsleep)
-        {
-            sleep_time=G_bridge_cfg.qminsleep;
-        }
-        else if (sleep_time > G_bridge_cfg.qmaxsleep)
-        {
-            sleep_time=G_bridge_cfg.qmaxsleep;
-        }
-        
-        if (sleep_time>0)
-        {
-            NDRX_LOG(log_error, "Sleep time: %ld us", sleep_time*1000);
-            
-            /* wouldn't it be better to wait for conditional?
-             * so that if new msg is enqueued, checks can be performed?
-             */
-            usleep(sleep_time*1000);
-        }
-        
-        /* run loop again */
-        if (EXSUCCEED!=ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void *)br_run_q_th, 
-                NULL, NDRX_THPOOL_ONEJOB, 0))
-        {
-            NDRX_LOG(log_error, "Already run queued...");
-        }
-    }
-    
-out:
-    NDRX_LOG(log_error, "Current queue stats: M_msgs_in_q=%d", M_msgs_in_q);
-    return ret;
-}
-
-/**
- * Enqueue the message for delayed send.
- * @param call
- * @param len
- * @param from_q
- * @return 
- */
-exprivate int br_add_to_q(char *buf, int len, int pack_type, char *destq)
-{
-    int ret=EXSUCCEED;
-    in_msg_t *msg;
-    
-    if (NULL==(msg=NDRX_FPMALLOC(sizeof(in_msg_t), 0)))
-    {
-        NDRX_ERR_MALLOC(sizeof(in_msg_t));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (NULL==(msg->buffer=NDRX_FPMALLOC(len, 0)))
-    {
-        NDRX_ERR_MALLOC(len);
-        EXFAIL_OUT(ret);
-    }
-    
-    /*fill in the details*/
-    msg->pack_type = pack_type;
-    msg->len = len;
-    msg->tries=1;
-    NDRX_STRCPY_SAFE(msg->destqstr, destq);
-    memcpy(msg->buffer, buf, len);
-    
-    ndrx_stopwatch_reset(&msg->trytime);
-    
-    /* Bug #465 moved  after the adding to Q */
-    NDRX_LOG(log_warn, "Message %p/%d [%s] added to in-mem queue "
-            "for late delivery...", msg->buffer, msg->len, msg->destqstr);
-    
-    MUTEX_LOCK_V(M_in_q_lock);
-    /* we added msgs... */
-    M_msgs_in_q++;
-    DL_APPEND(M_in_q, msg);
-    MUTEX_UNLOCK_V(M_in_q_lock);
-    
-    /* issue the queue runner job */
-    ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void*)br_run_q_th, 
-            NULL, NDRX_THPOOL_ONEJOB, 0);
-    
-out:
-
-    /* if not checking for ret, the queue sender may be already processed the msg... */
-    if (EXSUCCEED!=ret && NULL==msg->buffer && NULL!=msg)
-    {
-        NDRX_FPFREE(msg);
-    }
-
-    return ret;
-}
-
-
-/**
- * Generate error to network if required.
- * We detect the packet type here.
- * @param buf
- * @param len
- * @param pack_type
- * @return 
- */
-exprivate int br_generate_error_to_net(char *buf, int len, int pack_type, long rcode)
-{
-    int ret=EXSUCCEED;
-    
-    switch(pack_type)
-    {
-        case PACK_TYPE_TONDRXD:
-            /* Will not generate any error here*/
-            break;
-        case PACK_TYPE_TOSVC:
-            /* So This was TPCALL, we might want to send error reply back. */
-        {
-            tp_command_call_t *call = (tp_command_call_t *)buf;
-            
-            if (!(call->flags & TPNOREPLY))
-            {
-                NDRX_LOG(log_warn, "Sending back error reply");
-                reply_with_failure(TPNOBLOCK, call, NULL, NULL, rcode);
-            }
-        }
-            break;
-        case PACK_TYPE_TORPLYQ:
-            /* Will not generate any error here*/
-            break;
-        default:
-            NDRX_LOG(log_warn, "Nothing to do for pack_type=%d", 
-                    pack_type);
-            break;
-    }
-    
-out:
-    return ret;
-}
-
-/**
- * So we got q send error.
- * @param destqstr dest queue where message sent attempt was made
- *  in case of NULL, no enqueue required (failed to resolve service q, nothing todo)
- */
-exprivate int br_process_error(char *buf, int len, int err, 
-        in_msg_t* el, int pack_type, char *destqstr)
-{
-    long rcode = TPESVCERR;
-    
-    if (err==ENOENT)
-    {
-        rcode = TPENOENT;
-    }
-    
-    /* So this is initial call */
-    if (NULL==el && NULL!=destqstr)
-    {
-        /* This will be processed by queue runner */
-        if (EAGAIN==err)
-        {
-            /* Put stuff in queue */
-            br_add_to_q(buf, len, pack_type, destqstr);
-        }
-        else
-        {
-            /* TODO: Ignore the error or send error back - TPNOENT probably (if this is request) */
-            br_generate_error_to_net(buf, len, pack_type, rcode);
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Got error processing from Q");
-        
-        /* In this case we should handle the stuff!?!?
-         * Generate reply (only if needed), Not sure TPNOTENT or svcerr?
-         * SVCERR could be better because initially we thought that service exists.
-         */
-        br_generate_error_to_net(buf, len, pack_type, rcode);
-        
-        if (PACK_TYPE_TOSVC==pack_type)
-        {
-            tp_command_call_t *call = (tp_command_call_t *)buf;
-            long call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
-            /* print some add info */
-            
-            DISCARD_CALL_LOG;
-        }
-        
-        NDRX_DUMP(log_warn, "Discarding message", buf, len);
-        
-        userlog("Discarding message: %p/%d dest q: target q: [%s]", buf, len, 
-                destqstr?destqstr:"(null)");
-        
-        /* why err! check just kill the msg */
-        if (NULL!=el)
-        {
-            RM_MSG;
-        }
-    }
-    
-    return EXSUCCEED;
-}
 
 /**
  * Send stuff directly to NDRXD
@@ -482,7 +83,8 @@ expublic int br_submit_to_ndrxd(command_call_t *call, int len)
             (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
-        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TONDRXD, qstr);
+        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TONDRXD, qstr, 
+                NULL);
     }
     
 out:
@@ -506,7 +108,7 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len)
         NDRX_LOG(log_error, "Failed to get local service [%s] for bridge call!",
                 call->name);
         userlog("Failed to get local service [%s] for bridge call!", call->name);
-        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, NULL);
+        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, NULL, NULL);
         EXFAIL_OUT(ret);
     }
 
@@ -515,7 +117,7 @@ expublic int br_submit_to_service(tp_command_call_t *call, int len)
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(svc_q, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to local ATMI service!");
-        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, svc_q);
+        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, svc_q, NULL);
     }
     /* TODO: Check the result, if called failed, then reply back with error? */
     
@@ -545,7 +147,7 @@ expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len)
                 svcnm);
         userlog("Failed to get local service [%s] for bridge call!", svcnm);
         
-        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, NULL);
+        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, NULL, NULL);
         
         EXFAIL_OUT(ret);
     }
@@ -558,7 +160,7 @@ expublic int br_submit_to_service_notif(tp_notif_call_t *call, int len)
             /* call->flags ??*/TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to ndrxd!");
-        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, svc_q);
+        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TOSVC, svc_q, NULL);
     }
     
     /* TODO: Check the result, if called failed, then reply back with error? */
@@ -591,7 +193,7 @@ expublic int br_submit_reply_to_q(tp_command_call_t *call, int len)
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(reply_to, (char *)call, len, TPNOBLOCK, 0)))
     {
         NDRX_LOG(log_error, "Failed to send message to %s!", reply_to);
-        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TORPLYQ, reply_to);
+        br_process_error((char *)call, len, ret, NULL, PACK_TYPE_TORPLYQ, reply_to, NULL);
         goto out;
     }
     

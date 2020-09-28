@@ -124,10 +124,12 @@ echo "Running off client - dom2 background"
 
 set_dom2;
 (./atmiclt72 TEST1 GETINFOS1 2>&1) > ./atmiclt-dom2.log &
+(./atmiclt72 TEST11 GETINFOS11 2>&1) > ./atmiclt-dom2_1.log &
 
 echo "Running off client - dom1 foreground"
 
 set_dom1;
+(./atmiclt72 TEST22 GETINFOS22 2>&1) > ./atmiclt-dom1_1.log &
 (./atmiclt72 TEST2 GETINFOS2 2>&1) > ./atmiclt-dom1.log
 
 RET=$?
