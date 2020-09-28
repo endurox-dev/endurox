@@ -497,7 +497,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
         if (EXSUCCEED!=ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void *)br_run_q_th, 
                 NULL, NDRX_THPOOL_ONEJOB, 0))
         {
-            NDRX_LOG(log_error, "Already run queued...");
+            NDRX_LOG(log_debug, "Already run queued...");
         }
     }
     
