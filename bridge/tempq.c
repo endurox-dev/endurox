@@ -468,26 +468,28 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             /* wouldn't it be better to wait for conditional?
              * so that if new msg is enqueued, checks can be performed?
              */
-
             MUTEX_LOCK_V(M_in_q_lock);
+            if (M_msgs_in_q > G_bridge_cfg.qsize && !M_stopped)
+            {
 
-            /* wait for conditional... so that we get quick wakeups
-             * in case if sleeping for long and some msgs is being added...
-             */
+                /* wait for conditional... so that we get quick wakeups
+                * in case if sleeping for long and some msgs is being added...
+                */
             
-            struct timespec wait_time;
-            struct timeval now;
+                struct timespec wait_time;
+                struct timeval now;
 
-            gettimeofday(&now, NULL);
+                gettimeofday(&now, NULL);
 
-            wait_time.tv_sec = now.tv_sec;
-            wait_time.tv_nsec = now.tv_usec;
+                wait_time.tv_sec = now.tv_sec;
+                wait_time.tv_nsec = now.tv_usec;
             
-            ndrx_timespec_plus(&wait_time, sleep_time);
+                ndrx_timespec_plus(&wait_time, sleep_time);
             
-            /* sleep or wait event.. */
-            pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
+                /* sleep or wait event.. */
+                pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
             
+            }
             MUTEX_UNLOCK_V(M_in_q_lock);
         }
 
