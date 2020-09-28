@@ -1538,7 +1538,10 @@ expublic int ndrx_growlist_append(ndrx_growlist_t *list, void *item)
  */
 expublic void ndrx_growlist_free(ndrx_growlist_t *list)
 {
-    NDRX_FPFREE(list->mem);
+    if (NULL!=list->mem)
+    {
+        NDRX_FPFREE(list->mem);
+    }
 }
 
 /**

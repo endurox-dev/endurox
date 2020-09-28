@@ -285,6 +285,10 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
         if (sleep_time>0)
         {
             NDRX_LOG(log_error, "Sleep time: %ld us", sleep_time*1000);
+            
+            /* wouldn't it be better to wait for conditional?
+             * so that if new msg is enqueued, checks can be performed?
+             */
             usleep(sleep_time*1000);
         }
         
