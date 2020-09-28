@@ -289,7 +289,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     /* Master loop of queues... */
     
     /* loop runs in locked mode.. */
-    sleep_time=0;
+    sleep_time=99999;
         
     MUTEX_LOCK_V(M_in_q_lock);
     EXHASH_ITER(hh, M_qstr_hash, qhash, qhashtmp)
@@ -396,7 +396,14 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             if (!msg_deleted)
             {
                 /* schedule next run. */
-                el->next_try_ms=el->tries*2;
+                
+                if (0==el->next_try_ms)
+                {
+                    el->next_try_ms=1;
+                }
+                
+                /* multiple sleep time by 2 */
+                el->next_try_ms*=2;
                 
                 if (el->next_try_ms>G_bridge_cfg.qmaxsleep)
                 {
@@ -407,7 +414,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
                     el->next_try_ms<G_bridge_cfg.qminsleep;
                 }
                 
-                if (el->next_try_ms > sleep_time)
+                if (el->next_try_ms < sleep_time)
                 {
                     sleep_time = el->next_try_ms;
                 }
@@ -427,7 +434,6 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             MUTEX_LOCK_V(M_in_q_lock);
         }
        
-        
         /* here we are locked... */
     }
     
@@ -544,9 +550,6 @@ out:
 
 /**
  * Enqueue the message for delayed send.
- * @param call
- * @param len
- * @param from_q
  * @return 
  */
 expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
