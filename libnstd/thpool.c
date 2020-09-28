@@ -274,7 +274,6 @@ int ndrx_thpool_add_work2(thpool_* thpool_p, void (*function_p)(void*, int *), v
         while (thpool_p->jobqueue.len > max_len)
         {
             /* wait for 1 sec... so that we release some control */
-            int ret;
             struct timespec wait_time;
             struct timeval now;
 

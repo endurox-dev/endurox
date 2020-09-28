@@ -522,6 +522,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
         
+    br_tempq_init();
+    
     /* Install call-backs */
     exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, 
             br_disconnected, br_snd_zero_len);

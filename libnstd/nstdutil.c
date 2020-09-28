@@ -2104,4 +2104,26 @@ out:
     return ret;
 }
 
+/**
+ * Calculate the due time past and future
+ * @param due time to process
+ * @param ms milliseconds to substract or add
+ */
+expublic void ndrx_timespec_plus(struct timespec *due, long ms)
+{
+    due->tv_sec += (ms / 1000);
+    due->tv_nsec += ((ms % 1000) * 1000000);
+    
+    if (due->tv_nsec >= 1000000000)
+    {
+        due->tv_nsec -= 1000000000;
+        due->tv_sec++;
+    }
+    else if (due->tv_nsec < 0)
+    {
+        due->tv_nsec += 1000000000;
+        due->tv_sec--;
+    }
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

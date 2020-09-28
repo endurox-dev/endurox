@@ -62,6 +62,12 @@ extern "C" {
 #define DEFAULT_QUEUE_SIZE          100    /**< max nr of queued messages dflt */
 #define DEFAULT_QUEUE_MAXSLEEP      50     /**< Max number milliseconds to sleep */
 #define DEFAULT_QUEUE_MINSLEEP      10     /**< Mininum sleep between attempts */
+    
+    
+#define     PACK_TYPE_TONDRXD   1   /**< Send message NDRXD                   */
+#define     PACK_TYPE_TOSVC     2   /**< Send to service, use timer (their)   */
+#define     PACK_TYPE_TORPLYQ   3   /**< Send to reply q, use timer (internal)*/
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*
@@ -99,9 +105,21 @@ struct in_msg
     char destqstr[NDRX_MAX_Q_SIZE+1];  /**< Destination queue to which sent msg */
     char *buffer;
     int len;
-    int tries;                  /**< number of attempts for sending msg to Q */
-    ndrx_stopwatch_t trytime;   /**< Time in Q                               */
+    int tries;                    /**< number of attempts for sending msg to Q */
+    ndrx_stopwatch_t addedtime;   /**< Time in Q                               */
+    ndrx_stopwatch_t updatetime;  /**< Last time when msg was processed        */
+    int next_try_ms;              /**< When the next attempt is scheduled      */
     in_msg_t *prev, *next;
+};
+
+
+typedef struct in_msg_hash in_msg_hash_t;
+struct in_msg_hash
+{
+    char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string                */
+    int nrmsg;                   /**< current number of messages per posix q */
+    in_msg_t  *msgs;             /**< DL list of messages                    */
+    EX_hash_handle hh;
 };
 
 /**
@@ -114,7 +132,6 @@ typedef struct
     char msg_type;
     
 } xatmi_brmessage_t;
-
 
 /**
  * Message received from network and submitted to thread
@@ -152,6 +169,12 @@ extern int br_chk_limit(void);
 
 extern int br_netin_setup(void);
 extern void br_netin_shutdown(void);
+
+extern int br_process_error(char *buf, int len, int err, in_msg_t* from_q, 
+        int pack_type, char *destqstr, in_msg_hash_t * qhash);
+
+extern void br_tempq_init(void);
+extern int br_add_to_q(char *buf, int len, int pack_type, char *destq);
 
 #ifdef	__cplusplus
 }
