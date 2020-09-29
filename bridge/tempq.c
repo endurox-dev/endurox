@@ -277,6 +277,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     int msg_deleted;
     int cur_was_ok;
     
+#define NEVER_SLEEP (G_bridge_cfg.qmaxsleep+1)
     /**
      * Possible dead lock if service puts back in queue/ 
      * do the unlock in the middle to allow adding msg?
@@ -289,7 +290,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     /* Master loop of queues... */
     
     /* loop runs in locked mode.. */
-    sleep_time=99999;
+    sleep_time=NEVER_SLEEP;
         
     MUTEX_LOCK_V(M_in_q_lock);
     EXHASH_ITER(hh, M_qstr_hash, qhash, qhashtmp)
@@ -468,6 +469,15 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     {
         if (sleep_time>0)
         {
+
+            /* while the M_in_q_lock was unlocked (loop) finished, somene has added msg
+             * thus use min sleep
+             */
+            if (sleep_time > G_bridge_cfg.qmaxsleep)
+            {
+                sleep_time=G_bridge_cfg.qminsleep;
+            }
+
             NDRX_LOG(log_info, "Sleep time: %ld ms M_msgs_in_q: %d", 
                     sleep_time, M_msgs_in_q);
 
