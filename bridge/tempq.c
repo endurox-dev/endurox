@@ -277,6 +277,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     int msg_deleted;
     int cur_was_ok;
     
+#define NEVER_SLEEP (G_bridge_cfg.qmaxsleep+1)
     /**
      * Possible dead lock if service puts back in queue/ 
      * do the unlock in the middle to allow adding msg?
@@ -289,7 +290,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     /* Master loop of queues... */
     
     /* loop runs in locked mode.. */
-    sleep_time=0;
+    sleep_time=NEVER_SLEEP;
         
     MUTEX_LOCK_V(M_in_q_lock);
     EXHASH_ITER(hh, M_qstr_hash, qhash, qhashtmp)
@@ -396,7 +397,14 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             if (!msg_deleted)
             {
                 /* schedule next run. */
-                el->next_try_ms=el->tries*2;
+                
+                if (0==el->next_try_ms)
+                {
+                    el->next_try_ms=1;
+                }
+                
+                /* multiple sleep time by 2 */
+                el->next_try_ms*=2;
                 
                 if (el->next_try_ms>G_bridge_cfg.qmaxsleep)
                 {
@@ -407,7 +415,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
                     el->next_try_ms<G_bridge_cfg.qminsleep;
                 }
                 
-                if (el->next_try_ms > sleep_time)
+                if (el->next_try_ms < sleep_time)
                 {
                     sleep_time = el->next_try_ms;
                 }
@@ -427,7 +435,6 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             MUTEX_LOCK_V(M_in_q_lock);
         }
        
-        
         /* here we are locked... */
     }
     
@@ -462,32 +469,43 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     {
         if (sleep_time>0)
         {
+
+            /* while the M_in_q_lock was unlocked (loop) finished, somene has added msg
+             * thus use min sleep
+             */
+            if (sleep_time > G_bridge_cfg.qmaxsleep)
+            {
+                sleep_time=G_bridge_cfg.qminsleep;
+            }
+
             NDRX_LOG(log_info, "Sleep time: %ld ms M_msgs_in_q: %d", 
                     sleep_time, M_msgs_in_q);
 
             /* wouldn't it be better to wait for conditional?
              * so that if new msg is enqueued, checks can be performed?
              */
-
             MUTEX_LOCK_V(M_in_q_lock);
+            if (M_msgs_in_q > G_bridge_cfg.qsize && !M_stopped)
+            {
 
-            /* wait for conditional... so that we get quick wakeups
-             * in case if sleeping for long and some msgs is being added...
-             */
+                /* wait for conditional... so that we get quick wakeups
+                * in case if sleeping for long and some msgs is being added...
+                */
             
-            struct timespec wait_time;
-            struct timeval now;
+                struct timespec wait_time;
+                struct timeval now;
 
-            gettimeofday(&now, NULL);
+                gettimeofday(&now, NULL);
 
-            wait_time.tv_sec = now.tv_sec;
-            wait_time.tv_nsec = now.tv_usec;
+                wait_time.tv_sec = now.tv_sec;
+                wait_time.tv_nsec = now.tv_usec;
             
-            ndrx_timespec_plus(&wait_time, sleep_time);
+                ndrx_timespec_plus(&wait_time, sleep_time);
             
-            /* sleep or wait event.. */
-            pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
+                /* sleep or wait event.. */
+                pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
             
+            }
             MUTEX_UNLOCK_V(M_in_q_lock);
         }
 
@@ -495,7 +513,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
         if (EXSUCCEED!=ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void *)br_run_q_th, 
                 NULL, NDRX_THPOOL_ONEJOB, 0))
         {
-            NDRX_LOG(log_error, "Already run queued...");
+            NDRX_LOG(log_debug, "Already run queued...");
         }
     }
     
@@ -542,9 +560,6 @@ out:
 
 /**
  * Enqueue the message for delayed send.
- * @param call
- * @param len
- * @param from_q
  * @return 
  */
 expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
