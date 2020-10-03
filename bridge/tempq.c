@@ -172,7 +172,7 @@ expublic int br_process_error(char *buf, int len, int err,
     if (NULL==el && NULL!=destqstr)
     {
         /* This will be processed by queue runner */
-        if (EAGAIN==err)
+        if (EAGAIN==err || EINTR==err)
         {
             /* Put stuff in queue */
             br_add_to_q(buf, len, pack_type, destqstr);
@@ -210,7 +210,7 @@ expublic int br_process_error(char *buf, int len, int err,
         /* just in case if it is first attempt and service does not exists in shm... 
          * discard immediately and thus el does not exist
          */
-        if (NULL!=el)
+        if (NULL!=el && NULL!=qhash)
         {
             RM_MSG(qhash);
         }
@@ -345,9 +345,9 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
                      * or do the retry if queue is full, otherwise we drop the msg.
                      */
 
-                    if (ENOENT==ret)
+                    if (EAGAIN!=ret && EINTR!=ret)
                     {
-                       NDRX_LOG(log_error, "Dest queue is missing - service call failed");
+                       NDRX_LOG(log_error, "Dest queue is broken");
 
                        br_process_error((char *)el->buffer, el->len, EXFAIL, 
                                 el, el->pack_type, el->destqstr, qhash);
@@ -567,7 +567,7 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     int ret=EXSUCCEED;
     in_msg_t *msg;
     in_msg_hash_t *qhash;
-    
+    int dropmsg = EXFALSE;
     if (NULL==(msg=NDRX_FPMALLOC(sizeof(in_msg_t), 0)))
     {
         NDRX_ERR_MALLOC(sizeof(in_msg_t));
@@ -593,7 +593,7 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     ndrx_stopwatch_reset(&msg->updatetime);
     
     /* Bug #465 moved  after the adding to Q */
-    NDRX_LOG(log_warn, "Message %p/%d [%s] added to in-mem queue "
+    NDRX_LOG(log_warn, "About to add %p/%d [%s] to in-mem queue "
             "for late delivery...", msg->buffer, msg->len, msg->destqstr);
     
     /* search for Q def */
@@ -606,25 +606,61 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
         EXFAIL_OUT(ret);
     }
     
-    M_msgs_in_q++;
-    qhash->nrmsg++;
-    DL_APPEND(qhash->msgs, msg);
-    
-    /* notify that new message has arrived... */
-    pthread_cond_signal(&M_wakup_queue_runner);
+    if (G_bridge_cfg.qfullaction == QUEUE_ACTION_DROP && M_msgs_in_q+1 > G_bridge_cfg.qsize)
+    {
+        NDRX_LOG(log_error, "Temporary queue full (max: %d, new size: %d) "
+                "and action is to drop",
+                G_bridge_cfg.qsize, M_msgs_in_q+1);
+        dropmsg=EXTRUE;
+    }
+    else if (G_bridge_cfg.qfullactionsvc == QUEUE_ACTION_DROP && qhash->nrmsg+1 > G_bridge_cfg.qsizesvc)
+    {
+        NDRX_LOG(log_error, "Temporary service queue is full (max: %d, new size: %d) "
+                "and action is to drop",
+                G_bridge_cfg.qsizesvc, qhash->nrmsg+1);
+        dropmsg=EXTRUE;
+    }
+    else
+    {
+        M_msgs_in_q++;
+        qhash->nrmsg++;
+
+        DL_APPEND(qhash->msgs, msg);
+        
+        /* notify that new message has arrived... */
+        pthread_cond_signal(&M_wakup_queue_runner);
+    }
     
     MUTEX_UNLOCK_V(M_in_q_lock);
     
-    /* issue the queue runner job */
-    ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void*)br_run_q_th, 
-            NULL, NDRX_THPOOL_ONEJOB, 0);
+    if (dropmsg)
+    {
+        br_process_error(buf, len, EXFAIL, 
+                                msg, pack_type, destq, NULL);
+        NDRX_FPFREE(msg->buffer);
+        NDRX_FPFREE(msg);
+    }
+    else
+    {
+        /* issue the queue runner job */
+        ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void*)br_run_q_th, 
+                NULL, NDRX_THPOOL_ONEJOB, 0);
+    }
     
 out:
 
     /* if not checking for ret, the queue sender may be already processed the msg... */
-    if (EXSUCCEED!=ret && NULL==msg->buffer && NULL!=msg)
+    if (EXSUCCEED!=ret)
     {
-        NDRX_FPFREE(msg);
+        if (NULL!=msg->buffer)
+        {
+            NDRX_FPFREE(msg->buffer);
+        }
+        
+        if (NULL!=msg)
+        {
+            NDRX_FPFREE(msg);
+        }
     }
 
     return ret;

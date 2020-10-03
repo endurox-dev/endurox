@@ -483,7 +483,7 @@ expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
 }
 
 /**
- * Generic server commandj call & response processing.
+ * Generic server command call & response processing.
  * @param p_cmd_map
  * @param argc
  * @param argv

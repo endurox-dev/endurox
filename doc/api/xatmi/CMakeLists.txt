@@ -137,6 +137,7 @@ set(MAN3_NAMES
         tpsvrthrdone
         tpencrypt
         tpdecrypt
+        tpexit
 )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

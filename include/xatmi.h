@@ -87,8 +87,8 @@ extern "C" {
 #define TPFAIL		0x00000001
 /** rval in tpreturn - Service Succeed */
 #define TPSUCCESS	0x00000002
-/** rval in tpreturn - RFU */
-#define TPEXIT          0x08000000
+/** rval in tpreturn - Service failed, shutdown requested */
+#define TPEXIT      0x08000000
 
 /**
  * Posix Queue processing path prefixes
@@ -659,6 +659,7 @@ extern NDRX_API int tpunadvertise(char *svcname);
  * Extension functions
  */
 extern NDRX_API void tpforward (char *svc, char *data, long len, long flags);
+extern NDRX_API void tpexit(void);
 extern NDRX_API int tpabort (long flags);
 extern NDRX_API int tpscmt(long flags);
 extern NDRX_API int tpbegin (unsigned long timeout, long flags);

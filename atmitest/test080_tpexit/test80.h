@@ -1,6 +1,7 @@
 /**
+ * @brief TPEXIT and tpexit() tests - common header
  *
- * @file cltlib.c
+ * @file testtest080_tpexit.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -11,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- *
+ * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -22,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc.,
+ * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -30,55 +31,20 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
+#ifndef TEST80_H
+#define TEST80_H
 
-#include <ndrstandard.h>
-#include <atmi.h>
-#include <tperror.h>
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
-#include "ndebug.h"
-/**
- * Currently do nothing, just for build
- */
-void __dummy(void)
-{
 
+#define VALUE_EXPECTED "Hello EnduroX"
+
+#ifdef  __cplusplus
 }
+#endif
 
-
-/**
- * API function tpreturn - TP Proto
- * @param rval
- * @param rcode
- * @param data
- * @param len
- * @param flags
- */
-expublic void     tpreturn (int rval, long rcode, char *data, long len, long flags)
-{
-    ndrx_TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
-    return;
-}
-
-/**
- * API function of tpforward - TP Proto
- * @param svc
- * @param data
- * @param len
- * @param flags
- */
-expublic void tpforward (char *svc, char *data, long len, long flags)
-{
-    ndrx_TPset_error_fmt(TPEPROTO, "tpforward - not available for clients!!!");
-    return;
-}
-
-/**
- * exit from XATMI server - not for clients
- * For clients just terminate the process
- */
-expublic void tpexit (void)
-{
-    exit(EXFAIL);
-}
+#endif  /* TEST80_H */
 
 /* vim: set ts=4 sw=4 et smartindent: */

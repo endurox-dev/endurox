@@ -190,8 +190,15 @@ exprivate void * br_netin_run(void *arg)
     int err, ret = EXSUCCEED;
     pollextension_rec_t *ext;
     
-    
     NDRX_LOG(log_error, "br_netin_run starting...");
+    
+    
+    /* Allocate network buffer */
+    if (EXSUCCEED!=exnet_net_init(&G_bridge_cfg.net))
+    {
+        NDRX_LOG(log_error, "Failed to allocate data buffer!");
+        EXFAIL_OUT(ret);
+    }
     
     /* add custom pipe for shutdown? */
     
@@ -293,12 +300,12 @@ out:
     tpterm();
 
 
-    /* TODO: Maybe better send self-shutdown notification? for clean termination ? */
-    if (EXSUCCEED!=ret)
+    /* clean shutdown requested... */
+    if (!M_shutdown_req && EXSUCCEED!=ret)
     {
-        exit(EXFAIL);
+        tpexit();
     }
-    
+
     return NULL;
 }
 
