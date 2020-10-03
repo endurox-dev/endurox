@@ -51,9 +51,9 @@ extern NDRX_API "C" {
 #include <exthpool.h>
 #include <thlock.h>
 /*---------------------------Externs------------------------------------*/
-extern NDRX_API long G_libatmisrv_flags; /* present in integra.c or standard.c */
-extern NDRX_API int G_atmisrv_reply_type; /* ATMI server return value (no long jump) */
-
+extern NDRX_API long G_libatmisrv_flags; /**< present in integra.c or standard.c */
+extern NDRX_API int G_atmisrv_reply_type; /**< ATMI server return value (no long jump) */
+extern NDRX_API int G_shutdown_req; /**< is shutdown requested? */
 /* system call for server init */
 extern int (*ndrx_G_tpsvrinit_sys)(int, char **);
 

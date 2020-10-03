@@ -263,6 +263,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     char *p;
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int thpoolcfg = 0;
+    int qaction=EXFAIL;
     NDRX_LOG(log_debug, "tpsvrinit called");
     
     /* Reset network structs */
@@ -270,6 +271,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     G_bridge_cfg.nodeid = EXFAIL;
     G_bridge_cfg.qsize = EXFAIL;
+    G_bridge_cfg.qsizesvc = EXFAIL;
     G_bridge_cfg.qttl= EXFAIL;
     G_bridge_cfg.qmaxsleep= EXFAIL;
     G_bridge_cfg.qminsleep= EXFAIL;
@@ -278,18 +280,18 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     G_bridge_cfg.check_interval=EXFAIL;
     G_bridge_cfg.threadpoolbufsz=EXFAIL;
+    G_bridge_cfg.qfullaction = EXFAIL;
+    G_bridge_cfg.qfullactionsvc = EXFAIL;
     
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:L:M:B:m:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:q:L:M:B:m:A:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
         {
             case '6':
-                
                 NDRX_LOG(log_debug, "Using IPv6 addresses");
                 G_bridge_cfg.net.is_ipv6=EXTRUE;
-                
                 break;
             case 'r':
                 NDRX_LOG(log_debug, "Will send refersh to node.");
@@ -303,6 +305,16 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             case 'Q':
                 G_bridge_cfg.qsize=(short)atoi(optarg);
                 NDRX_LOG(log_debug, "Temporary queue size, -Q = [%d]", G_bridge_cfg.qsize);
+                break;
+            case 'q':
+                G_bridge_cfg.qsizesvc=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Temporary service queue size, -q = [%d]", 
+                        G_bridge_cfg.qsizesvc);
+                break;
+            case 'A':
+                qaction=(short)atoi(optarg);
+                NDRX_LOG(log_debug, "Temp queue action, -A = [%d]", 
+                        qaction);
                 break;
             case 'L':
                 G_bridge_cfg.qttl=(short)atoi(optarg);
@@ -326,7 +338,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                         G_bridge_cfg.threadpoolbufsz);
                 break;
             case 'i':
-                
                 if (EXEOS!=G_bridge_cfg.net.addr[0])
                 {
                     NDRX_LOG(log_error, "ERROR! Connection address already set "
@@ -435,6 +446,26 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_bridge_cfg.qsize = DEFAULT_QUEUE_SIZE;
     }
     
+    if (G_bridge_cfg.qsizesvc <= 0)
+    {
+        NDRX_LOG(log_debug, "Defaulting service queue size");
+        G_bridge_cfg.qsizesvc = G_bridge_cfg.qsize / 2;
+        
+        if ( G_bridge_cfg.qsizesvc < 1)
+        {
+            G_bridge_cfg.qsizesvc=1;
+        }
+    }
+    
+    /* there is no sense to have service queue bigger than global limit */
+    if (G_bridge_cfg.qsize < G_bridge_cfg.qsizesvc)
+    {
+        NDRX_LOG(log_error, "Error: Global temp queue size shorter than "
+                "service queue size: -Q (%d) <  -q (%d)", 
+                G_bridge_cfg.qsize, G_bridge_cfg.qsizesvc);
+        EXFAIL_OUT(ret);
+    }
+    
     if (G_bridge_cfg.qmaxsleep <= 0)
     {
         NDRX_LOG(log_debug, "Defaulting queue max sleep");
@@ -471,8 +502,39 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     {
         G_bridge_cfg.check_interval=5;
     }
-
+    
+    /* configure action */
+    switch (qaction)
+    {
+        case EXFAIL:
+        case QUEUE_FLAG_ACTION_BLKIGN:
+            G_bridge_cfg.qfullaction = QUEUE_ACTION_BLOCK;
+            G_bridge_cfg.qfullactionsvc = QUEUE_ACTION_IGNORE;
+            NDRX_LOG(log_warn, "Queue action: temp full - block, svc full - ignore");
+            break;
+        case QUEUE_FLAG_ACTION_BLKDROP:
+            G_bridge_cfg.qfullaction = QUEUE_ACTION_BLOCK;
+            G_bridge_cfg.qfullactionsvc = QUEUE_ACTION_DROP;
+            NDRX_LOG(log_warn, "Queue action: temp full - block, svc full - drop");
+            break;
+        case QUEUE_FLAG_ACTION_DROPDROP:
+            G_bridge_cfg.qfullaction = QUEUE_ACTION_BLOCK;
+            G_bridge_cfg.qfullactionsvc = QUEUE_ACTION_DROP;
+            NDRX_LOG(log_warn, "Queue action: temp full - drop, svc full - drop");
+            break;
+        default:
+            
+            NDRX_LOG(log_error, "Invalid -A value: %d, supported: %d %d %d default: %d",
+                    QUEUE_FLAG_ACTION_BLKIGN, QUEUE_FLAG_ACTION_BLKDROP, 
+                    QUEUE_FLAG_ACTION_DROPDROP,
+                    QUEUE_FLAG_ACTION_DROPDROP);
+            EXFAIL_OUT(ret);
+            
+            break;
+    }
+    
     NDRX_LOG(log_warn, "Temporary queue size set to: %d", G_bridge_cfg.qsize);
+    NDRX_LOG(log_warn, "Temporary service queue size set to: %d", G_bridge_cfg.qsizesvc);
     NDRX_LOG(log_warn, "Temporary queue ttl set to: %d", G_bridge_cfg.qttl);
     NDRX_LOG(log_warn, "Temporary queue max sleep set to: %d", G_bridge_cfg.qmaxsleep);
     NDRX_LOG(log_warn, "Temporary queue min sleep set to: %d", G_bridge_cfg.qminsleep);
@@ -515,13 +577,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    /* Allocate network buffer */
-    if (EXSUCCEED!=exnet_net_init(&G_bridge_cfg.net))
-    {
-        NDRX_LOG(log_error, "Failed to allocate data buffer!");
-        EXFAIL_OUT(ret);
-    }
-        
     br_tempq_init();
     
     /* Install call-backs */
@@ -549,8 +604,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise(G_bridge_cfg.svc, TPBRIDGE))
     {
         NDRX_LOG(log_error, "Failed to advertise %s service!", G_bridge_cfg.svc);
-        ret=EXFAIL;
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
     if (NULL==(G_bridge_cfg.thpool_tonet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
@@ -633,15 +687,18 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     
     /* close if not server connection...  */
-    if (NULL!=G_bridge_cfg.con && (&G_bridge_cfg.net)!=G_bridge_cfg.con)
-        
+    if (NULL!=G_bridge_cfg.con && (&G_bridge_cfg.net)!=G_bridge_cfg.con)   
     {
+        /* we do not have a locks... */
+        exnet_rwlock_read(G_bridge_cfg.con);
         exnet_close_shut(G_bridge_cfg.con);
     }
     
     /* If we were server, then close server socket too */
     if (G_bridge_cfg.net.is_server)
     {
+        /* we do not have a locks... */
+        exnet_rwlock_read(&G_bridge_cfg.net);
         exnet_close_shut(&G_bridge_cfg.net);
     }
     

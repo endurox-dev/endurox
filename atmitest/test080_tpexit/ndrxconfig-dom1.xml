@@ -9,7 +9,7 @@
         program have been stopped.
         In Seconds.
         -->
-        <checkpm>5</checkpm>
+        <checkpm>1</checkpm>
         <!--  <sanity> timer, end -->
         <!-- ALL BELLOW ONES USES <respawn> periodical timer  -->
         <!-- Do process reset after 1 sec -->
@@ -38,12 +38,12 @@
         <!--
         Ping server in every X sanity units
         -->
-        <pingtime>1</pingtime>
+        <pingtime>9</pingtime>
         <!--
         Max number of sanity units in which server must respond.
         The granularity is sanity time.
         -->
-        <ping_max>5</ping_max>
+        <ping_max>40</ping_max>
         <!--
         Max time to wait until process should exit on shutdown
         -->
@@ -53,17 +53,11 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-        <server name="atmi.sv72">
+        <server name="atmi.sv80">
             <min>1</min>
             <max>1</max>
             <srvid>10</srvid>
-            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -sTEST1:TESTSV -sGETINFOS1:GETINFOS -sTEST11:TESTSVB -sGETINFOS11:GETINFOSB</sysopt>
-        </server>
-        <server name="tpbridge">
-            <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P6 -A${TEST_ACTION}</appopt>
+            <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
         </server>
     </servers>
 </endurox>
