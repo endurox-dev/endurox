@@ -280,13 +280,16 @@ int ndrx_thpool_add_work2(thpool_* thpool_p, void (*function_p)(void*, int *), v
             gettimeofday(&now,NULL);
 
             wait_time.tv_sec = now.tv_sec+1;
-            wait_time.tv_nsec = now.tv_usec;
+            wait_time.tv_nsec = now.tv_usec*1000;
 
             if (EXSUCCEED!=(ret=pthread_cond_timedwait(&thpool_p->proc_one, 
                     &thpool_p->thcount_lock, &wait_time)))
             {
                 NDRX_LOG(log_error, "Waiting for %d jobs (current: %d) but expired... (err: %s)", 
                         max_len, thpool_p->jobqueue.len, strerror(ret));            
+                
+                /* allow to continue... */
+                break;
             }
         }
     }

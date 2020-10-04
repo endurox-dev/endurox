@@ -1,7 +1,7 @@
 /**
- * @brief Both sites max send, avoid deadlock of full sockets - client
+ * @brief TPEXIT and tpexit() tests - client
  *
- * @file atmiclt72.c
+ * @file atmiclt80.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -46,7 +46,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <nstdutil.h>
-#include "test72.h"
+#include <exassert.h>
+#include "test80.h"
+#include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -62,96 +64,43 @@ int main(int argc, char** argv)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
+    char svcnm[MAXTIDENT+1];
+    
     int ret=EXSUCCEED;
-    long sent=0;
-    long sentread=0;
-    long t;
-    char *action = getenv("TEST_ACTION");
-    ndrx_stopwatch_t w;
     
-    /* send msg for 5 min.... */
-    
-    if (argc < 2)
+    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
     {
-        fprintf(stderr, "Usage: %s <Service_name>\n", argv[0]);
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
     }
     
-    if (NULL==action)
+    if (argc==1)
     {
-        fprintf(stderr, "Missing env TEST_ACTION!");
-        EXFAIL_OUT(ret);
+        NDRX_STRCPY_SAFE(svcnm, "TESTSV");
+    }
+    else
+    {
+        NDRX_STRCPY_SAFE(svcnm, "TESTSV2");
     }
     
-    ndrx_stopwatch_reset(&w);
-    
-    /* have shorter test on RPI/32bit sys */
-#if EX_SIZEOF_LONG==4
-    while (ndrx_stopwatch_get_delta_sec(&w) < 5)
-#else
-    while (ndrx_stopwatch_get_delta_sec(&w) < 200)
-#endif
+    if (EXSUCCEED == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
-        if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
-        {
-            NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-            EXFAIL_OUT(ret);
-        }    
-
-        /* do the sync call... */
-        if (EXFAIL == tpacall(argv[1], (char *)p_ub, 0L, TPNOREPLY))
-        {
-            NDRX_LOG(log_error, "%s failed: %s", argv[1], tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-        
-        sent++;
-    }
+        NDRX_LOG(log_error, "TESTERROR: Expected service failure for %s got SUCCESS", 
+                svcnm);
+        ret=EXFAIL;
+        goto out;
+    }    
     
-    
-    /* wait for leftover from queue, if service was unable to cope with the traffic */
-    ndrx_stopwatch_reset(&w);
-    
-    /* wait 300 sec... , tout is 310...*/
-    while (sentread!=sent && (t=ndrx_stopwatch_get_delta_sec(&w)) < 300)
-    {
-        NDRX_LOG(log_warn, "Waiting sent=%ld got=%ld for queues to flush at bridges... (spent: %lds)",
-                sentread, sent, t);
-        
-        /* maybe call different service ... 
-         * an few minutes to get the right number, before give up?
-         */
-        if (EXFAIL == tpcall(argv[2], (char *)p_ub, 0L, (char **)&p_ub, &rsplen, 0))
-        {
-            NDRX_LOG(log_error, "%s failed: %s", argv[2], tpstrerror(tperrno));
-            EXFAIL_OUT(ret);
-        }
-
-        /* read the value */
-        if (EXSUCCEED!=Bget(p_ub, T_LONG_FLD, 0, (char *)&sentread, 0L))
-        {
-            NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", Bstrerror(Berror));
-            EXFAIL_OUT(ret);
-        }
-        
-        sleep(1);
-    }
-    
-    if (sentread!=sent)
-    {
-        NDRX_LOG(log_error, "error: sent: %ld but server have seen: %ld", 
-                sent, sentread);
-        userlog("testcl finished - failed");
-        
-        if ('1' == action[0])
-        {
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    userlog("testcl finished - OK");
+    NDRX_ASSERT_TP_OUT(tperrno==TPESVCFAIL, "Expected TPESVCFAIL error");
     
 out:
+    
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 

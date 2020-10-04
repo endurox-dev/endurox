@@ -276,12 +276,14 @@ expublic int exnet_send_sync(exnetcon_t *net, char *hdr_buf, int hdr_len,
 		if (rcvtim < 1 || poll(&ufd, 1, rcvtim * 1000) < 0 || ufd.revents & POLLERR)
 		{
                     NDRX_LOG(log_error, "ERROR! Failed to send, socket full: %s "
-                            "time spent: %d, max: %d short: %hd rcvtim: %d", 
-                        strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim);
+                            "time spent: %d, max: %d short: %hd rcvtim: %d (POLLERR: %d)", 
+                        strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim,
+                            (ufd.revents & POLLERR));
                     
                     userlog("ERROR! Failed to send, socket full: %s "
-                            "time spent: %d, max: %d short: %hd rcvtim: %d",
-                        strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim);
+                            "time spent: %d, max: %d short: %hd rcvtim: %d (POLLERR: %d)",
+                            strerror(err), spent, net->rcvtimeout, ufd.revents, rcvtim,
+                            (ufd.revents & POLLERR));
                     
                     net->schedule_close = EXTRUE;
                     ret=EXFAIL;

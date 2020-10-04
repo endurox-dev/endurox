@@ -172,7 +172,7 @@ expublic int br_process_error(char *buf, int len, int err,
     if (NULL==el && NULL!=destqstr)
     {
         /* This will be processed by queue runner */
-        if (EAGAIN==err)
+        if (EAGAIN==err || EINTR==err)
         {
             /* Put stuff in queue */
             br_add_to_q(buf, len, pack_type, destqstr);
@@ -210,7 +210,7 @@ expublic int br_process_error(char *buf, int len, int err,
         /* just in case if it is first attempt and service does not exists in shm... 
          * discard immediately and thus el does not exist
          */
-        if (NULL!=el)
+        if (NULL!=el && NULL!=qhash)
         {
             RM_MSG(qhash);
         }
@@ -276,6 +276,13 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     in_msg_hash_t *qhash, *qhashtmp;
     int msg_deleted;
     int cur_was_ok;
+
+    /* wait for conditional... so that we get quick wakeups
+    * in case if sleeping for long and some msgs is being added...
+    */
+    int cret;
+    struct timespec wait_time;
+    struct timeval now;
     
 #define NEVER_SLEEP (G_bridge_cfg.qmaxsleep+1)
     /**
@@ -292,10 +299,12 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     /* loop runs in locked mode.. */
     sleep_time=NEVER_SLEEP;
         
+    NDRX_LOG(log_debug, "br_run_q_th enter");
+    
     MUTEX_LOCK_V(M_in_q_lock);
     EXHASH_ITER(hh, M_qstr_hash, qhash, qhashtmp)
     {
-        
+        NDRX_LOG(log_debug, "Checking queue: [%s]", qhash->qstr);
         cur_was_ok=EXFALSE;
         /* process until we get the error... */
         DL_FOREACH_SAFE(qhash->msgs, el, elt)
@@ -313,7 +322,10 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             {
                 long time_left = el->next_try_ms-spent_from_last_upd;
                 
-                if (time_left > sleep_time)
+                NDRX_LOG(log_debug, "Time left for %s is: %ld", 
+                        el->destqstr, time_left);
+                        
+                if (time_left < sleep_time)
                 {
                     sleep_time = time_left;
                 }
@@ -326,9 +338,11 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             msg_deleted=EXFALSE;
             time_in_q = ndrx_stopwatch_get_delta(&(el->addedtime));
             el->tries++;
-            NDRX_LOG(log_warn, "Processing late delivery of %p/%d [%s] try %d/%d time_in_q %ld ms (ttl: %d)", 
+            NDRX_LOG(log_warn, "Processing late delivery of %p/%d [%s] "
+                    "try %d/%d nrmsg: %d time_in_q %ld ms (ttl: %d) next_try_ms %ld ms", 
                     el->buffer, el->len, el->destqstr, el->tries, 
-                    G_bridge_cfg.qretries, time_in_q, G_bridge_cfg.qttl);
+                    G_bridge_cfg.qretries, qhash->nrmsg, time_in_q, G_bridge_cfg.qttl,
+                    el->next_try_ms);
 
             /* if ttl is used, then check time-out too */
             if (el->tries <= G_bridge_cfg.qretries && time_in_q<=G_bridge_cfg.qttl)
@@ -345,9 +359,9 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
                      * or do the retry if queue is full, otherwise we drop the msg.
                      */
 
-                    if (ENOENT==ret)
+                    if (EAGAIN!=ret && EINTR!=ret)
                     {
-                       NDRX_LOG(log_error, "Dest queue is missing - service call failed");
+                       NDRX_LOG(log_error, "Dest queue is broken");
 
                        br_process_error((char *)el->buffer, el->len, EXFAIL, 
                                 el, el->pack_type, el->destqstr, qhash);
@@ -485,27 +499,21 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
              * so that if new msg is enqueued, checks can be performed?
              */
             MUTEX_LOCK_V(M_in_q_lock);
-            if (M_msgs_in_q > G_bridge_cfg.qsize && !M_stopped)
-            {
 
-                /* wait for conditional... so that we get quick wakeups
-                * in case if sleeping for long and some msgs is being added...
-                */
-            
-                struct timespec wait_time;
-                struct timeval now;
+            gettimeofday(&now, NULL);
 
-                gettimeofday(&now, NULL);
+            wait_time.tv_sec = now.tv_sec;
+            /* convert to ms: */
+            wait_time.tv_nsec = now.tv_usec*1000;
 
-                wait_time.tv_sec = now.tv_sec;
-                wait_time.tv_nsec = now.tv_usec;
+            ndrx_timespec_plus(&wait_time, sleep_time);
+
+            /* sleep or wait event.. */
+            cret=pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
+
+            NDRX_LOG(log_debug, "pthread_cond_timedwait returns %d: %s", 
+                    cret, strerror(cret));
             
-                ndrx_timespec_plus(&wait_time, sleep_time);
-            
-                /* sleep or wait event.. */
-                pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
-            
-            }
             MUTEX_UNLOCK_V(M_in_q_lock);
         }
 
@@ -567,7 +575,7 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     int ret=EXSUCCEED;
     in_msg_t *msg;
     in_msg_hash_t *qhash;
-    
+    int dropmsg = EXFALSE;
     if (NULL==(msg=NDRX_FPMALLOC(sizeof(in_msg_t), 0)))
     {
         NDRX_ERR_MALLOC(sizeof(in_msg_t));
@@ -593,7 +601,7 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
     ndrx_stopwatch_reset(&msg->updatetime);
     
     /* Bug #465 moved  after the adding to Q */
-    NDRX_LOG(log_warn, "Message %p/%d [%s] added to in-mem queue "
+    NDRX_LOG(log_warn, "About to add %p/%d [%s] to in-mem queue "
             "for late delivery...", msg->buffer, msg->len, msg->destqstr);
     
     /* search for Q def */
@@ -606,25 +614,67 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
         EXFAIL_OUT(ret);
     }
     
-    M_msgs_in_q++;
-    qhash->nrmsg++;
-    DL_APPEND(qhash->msgs, msg);
-    
-    /* notify that new message has arrived... */
-    pthread_cond_signal(&M_wakup_queue_runner);
+    if (G_bridge_cfg.qfullaction == QUEUE_ACTION_DROP && M_msgs_in_q+1 > G_bridge_cfg.qsize)
+    {
+        NDRX_LOG(log_error, "Temporary queue full (max: %d, new size: %d) "
+                "and action is to drop",
+                G_bridge_cfg.qsize, M_msgs_in_q+1);
+        dropmsg=EXTRUE;
+    }
+    else if (G_bridge_cfg.qfullactionsvc == QUEUE_ACTION_DROP && qhash->nrmsg+1 > G_bridge_cfg.qsizesvc)
+    {
+        NDRX_LOG(log_error, "Temporary service queue is full (max: %d, new size: %d) "
+                "and action is to drop",
+                G_bridge_cfg.qsizesvc, qhash->nrmsg+1);
+        dropmsg=EXTRUE;
+    }
+    else
+    {
+        M_msgs_in_q++;
+        qhash->nrmsg++;
+
+        DL_APPEND(qhash->msgs, msg);
+        
+        /* wake up if current queue has just added...
+         * otherwise the time for hash run is already scheduled
+         */
+        if (qhash->nrmsg==1)
+        {
+            /* notify that new message has arrived... */
+            pthread_cond_signal(&M_wakup_queue_runner);
+        }
+    }
     
     MUTEX_UNLOCK_V(M_in_q_lock);
     
-    /* issue the queue runner job */
-    ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void*)br_run_q_th, 
-            NULL, NDRX_THPOOL_ONEJOB, 0);
+    if (dropmsg)
+    {
+        br_process_error(buf, len, EXFAIL, 
+                                msg, pack_type, destq, NULL);
+        NDRX_FPFREE(msg->buffer);
+        NDRX_FPFREE(msg);
+    }
+    else
+    {
+        /* issue the queue runner job */
+        ndrx_thpool_add_work2(G_bridge_cfg.thpool_queue, (void*)br_run_q_th, 
+                NULL, NDRX_THPOOL_ONEJOB, 0);
+    }
     
 out:
 
     /* if not checking for ret, the queue sender may be already processed the msg... */
-    if (EXSUCCEED!=ret && NULL==msg->buffer && NULL!=msg)
+    if (EXSUCCEED!=ret)
     {
-        NDRX_FPFREE(msg);
+        if (NULL!=msg->buffer)
+        {
+            NDRX_FPFREE(msg->buffer);
+        }
+        
+        if (NULL!=msg)
+        {
+            NDRX_FPFREE(msg);
+        }
     }
 
     return ret;

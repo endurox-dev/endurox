@@ -170,7 +170,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     /* will override later */
     call->rcode = rcode;
     /* prepare reply buffer */
-    if (TPFAIL==rval || TPSUCCESS==rval)
+    if (TPFAIL==rval || TPSUCCESS==rval || TPEXIT==rval)
     {
         /* try convert the data */
         if (NULL==(buffer_info = ndrx_find_buffer(data)))
@@ -240,7 +240,16 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         /* no data in reply */
         call->data_len = 0;
     }
-    call->rval = rval;
+    
+    /* Feature #594 */
+    if (TPEXIT==rval)
+    {
+        call->rval = TPFAIL;
+    }
+    else
+    {
+        call->rval = rval;
+    }
 
     data_len = sizeof(tp_command_call_t)+call->data_len;
     call->command_id = ATMI_COMMAND_TPREPLY;
@@ -371,12 +380,24 @@ out:
         else
         {
             NDRX_LOG(log_debug, "%s about to jump to main()", fn);
+            
+            /* initiate shutdown ... if requested so ... */
+            if (TPEXIT==rval)
+            {
+                tpexit();
+            }
             longjmp(G_atmi_tls->call_ret_env, return_status);
         }
     }
     else
     {
         NDRX_LOG(log_debug, "Thread ending...");
+    }
+
+    /* initiate shutdown ... if requested so.. */
+    if (TPEXIT==rval)
+    {
+        tpexit();
     }
 
     return;

@@ -52,6 +52,12 @@ field is used by user program, to return back the specific value to caller.
 *TPFAIL* service terminated with failure. In case of global transaction, this 
 return value will mark it as abort only.
 
+*TPEXIT* functionality is the same as with *TPFAIL*, but additionally process 
+performs shutdown after service returns. The shutdown is performed in clean 
+way with corresponding invocations of *tpsvrdone(3)* and *tpsvrthrdone(3)*. 
+Once binary exits, the *ndrxd(8)* process will restart the server process, 
+if configured so. See *tpexit(3)* for more details.
+
 *'flags'* values:
 
 *TPSOFTTIMEOUT* soft timeout occurred. This can be used to simulate *TPETIME* 
@@ -83,7 +89,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tpforward(3)* *tpcall(3)*
+*tpforward(3)* *tpcall(3)* *tpexit(3)*
 
 COPYING
 -------
