@@ -71,7 +71,7 @@
                     NDRX_FPFREE(el);\
                     M_msgs_in_q--;\
                     QHASH->nrmsg--;\
-                    if (0==QHASH->nrmsg) {EXHASH_DEL(M_qstr_hash, QHASH); DRX_FPFREE(QHASH);}\
+                    if (0==QHASH->nrmsg) {EXHASH_DEL(M_qstr_hash, QHASH); NDRX_FPFREE(QHASH);}\
                     MUTEX_UNLOCK_V(M_in_q_lock);\
                 } while (0);
                 
