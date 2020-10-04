@@ -259,7 +259,7 @@ extern NDRX_API volatile int G_ndrx_debug_first;
                 (*strp)=NULL;\
             }\
         }\
-    }
+    }\
     while (0)
 #endif
 
