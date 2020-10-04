@@ -60,14 +60,23 @@ extern "C" {
          }
     
 #define DEFAULT_QUEUE_SIZE          100    /**< max nr of queued messages dflt */
-#define DEFAULT_QUEUE_MAXSLEEP      50     /**< Max number milliseconds to sleep */
-#define DEFAULT_QUEUE_MINSLEEP      10     /**< Mininum sleep between attempts */
-    
+#define DEFAULT_QUEUE_MAXSLEEP      150    /**< Max number milliseconds to sleep */
+#define DEFAULT_QUEUE_MINSLEEP      40     /**< Mininum sleep between attempts */
     
 #define     PACK_TYPE_TONDRXD   1   /**< Send message NDRXD                   */
 #define     PACK_TYPE_TOSVC     2   /**< Send to service, use timer (their)   */
 #define     PACK_TYPE_TORPLYQ   3   /**< Send to reply q, use timer (internal)*/
-
+    
+/* List of queue actions: */
+#define QUEUE_ACTION_BLOCK         0   /**< Block the traffic                 */
+#define QUEUE_ACTION_DROP          1   /**< Drop the msg                      */
+#define QUEUE_ACTION_IGNORE        2   /**< Ignore the condition              */
+    
+/* List of action flags: */
+#define QUEUE_FLAG_ACTION_BLKIGN        1 /* Global queue full - block, svc queue full ignore */
+#define QUEUE_FLAG_ACTION_BLKDROP       2 /* Global queue full - block, svc queue full - drop */
+#define QUEUE_FLAG_ACTION_DROPDROP      3 /* Global queue full - drop, svc queue full - drop  */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*
@@ -83,9 +92,14 @@ typedef struct
     int common_format;            /**< Common platform format. */
     int qretries;                 /**< Queue Resubmit retries */
     int qsize;                    /**< Number of messages stored in memory before blocking */
+    int qsizesvc;                 /**< Single service queue size                */
     int qttl;                     /**< Number of miliseconds for message to live in queue */
     int qmaxsleep;                /**< Max number of millisecionds to sleep between attempts */
     int qminsleep;                /**< Min number of millisecionds to sleep between attempts */
+    
+    int qfullaction;              /**< Action for full queue                  */
+    int qfullactionsvc;           /**< Action One service queue full          */
+    
     int threadpoolbufsz;          /**< Threadpool buffer size, lock after full */
     int threadpoolsize;           /**< Thread pool size */
     int check_interval;           /**< connection checking interval             */
