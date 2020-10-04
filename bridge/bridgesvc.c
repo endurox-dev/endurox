@@ -303,37 +303,37 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 NDRX_LOG(log_debug, "Node ID, -n = [%hd]", G_bridge_cfg.nodeid);
                 break;
             case 'Q':
-                G_bridge_cfg.qsize=(short)atoi(optarg);
+                G_bridge_cfg.qsize=atoi(optarg);
                 NDRX_LOG(log_debug, "Temporary queue size, -Q = [%d]", G_bridge_cfg.qsize);
                 break;
             case 'q':
-                G_bridge_cfg.qsizesvc=(short)atoi(optarg);
+                G_bridge_cfg.qsizesvc=atoi(optarg);
                 NDRX_LOG(log_debug, "Temporary service queue size, -q = [%d]", 
                         G_bridge_cfg.qsizesvc);
                 break;
             case 'A':
-                qaction=(short)atoi(optarg);
+                qaction=(int)atoi(optarg);
                 NDRX_LOG(log_debug, "Temp queue action, -A = [%d]", 
                         qaction);
                 break;
             case 'L':
-                G_bridge_cfg.qttl=(short)atoi(optarg);
+                G_bridge_cfg.qttl=atoi(optarg);
                 NDRX_LOG(log_debug, "Temporary queue TTL, -L = [%d] ms", G_bridge_cfg.qttl);
                 break;
             case 'M':
-                G_bridge_cfg.qmaxsleep=(short)atoi(optarg);
+                G_bridge_cfg.qmaxsleep=atoi(optarg);
                 NDRX_LOG(log_debug, "Temporary queue Max Sleep, -M = [%d] ms", 
                         G_bridge_cfg.qmaxsleep);
                 break;
                 
             case 'm':
-                G_bridge_cfg.qminsleep=(short)atoi(optarg);
+                G_bridge_cfg.qminsleep=atoi(optarg);
                 NDRX_LOG(log_debug, "Temporary queue Min Sleep, -m = [%d] ms", 
                         G_bridge_cfg.qmaxsleep);
                 break;
             
             case 'B':
-                G_bridge_cfg.threadpoolbufsz=(short)atoi(optarg);
+                G_bridge_cfg.threadpoolbufsz=atoi(optarg);
                 NDRX_LOG(log_debug, "Thread pool buffer size, -B = [%d]", 
                         G_bridge_cfg.threadpoolbufsz);
                 break;
@@ -518,7 +518,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
             NDRX_LOG(log_warn, "Queue action: temp full - block, svc full - drop");
             break;
         case QUEUE_FLAG_ACTION_DROPDROP:
-            G_bridge_cfg.qfullaction = QUEUE_ACTION_BLOCK;
+            G_bridge_cfg.qfullaction = QUEUE_ACTION_DROP;
             G_bridge_cfg.qfullactionsvc = QUEUE_ACTION_DROP;
             NDRX_LOG(log_warn, "Queue action: temp full - drop, svc full - drop");
             break;

@@ -116,7 +116,7 @@ exprivate void thread_sleep(int sleep_sec)
     gettimeofday(&now,NULL);
 
     wait_time.tv_sec = now.tv_sec+sleep_sec;
-    wait_time.tv_nsec = now.tv_usec;
+    wait_time.tv_nsec = now.tv_usec*1000;
 
     MUTEX_LOCK_V(M_wait_mutex);
     rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);

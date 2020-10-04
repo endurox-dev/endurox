@@ -60,9 +60,8 @@ extern "C" {
          }
     
 #define DEFAULT_QUEUE_SIZE          100    /**< max nr of queued messages dflt */
-#define DEFAULT_QUEUE_MAXSLEEP      50     /**< Max number milliseconds to sleep */
-#define DEFAULT_QUEUE_MINSLEEP      10     /**< Mininum sleep between attempts */
-    
+#define DEFAULT_QUEUE_MAXSLEEP      150    /**< Max number milliseconds to sleep */
+#define DEFAULT_QUEUE_MINSLEEP      40     /**< Mininum sleep between attempts */
     
 #define     PACK_TYPE_TONDRXD   1   /**< Send message NDRXD                   */
 #define     PACK_TYPE_TOSVC     2   /**< Send to service, use timer (their)   */
