@@ -271,11 +271,11 @@ value is *NDRX_TOUT* env setting converted to millisecond.
 
 [*-m* 'TEMPORARY_QUEUE_MINSLEEP']::
 This is minimum number milliseconds to wait after which schedule next attempt
-of message sending to the XATMI IPC queue. The default is *10*.
+of message sending to the XATMI IPC queue. The default is *40*.
 
 [*-M* 'TEMPORARY_QUEUE_MAXSLEEP']::
 This is maximum number milliseconds to wait after which schedule next attempt
-of message sending to the XATMI IPC queue. The default is *50*.
+of message sending to the XATMI IPC queue. The default is *150*.
 
 [*-B* 'THREADPOOL_BUFFER_SIZE']::
 This is number of messages that either net-out or net-in threads can accumulate

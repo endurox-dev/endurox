@@ -276,6 +276,13 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     in_msg_hash_t *qhash, *qhashtmp;
     int msg_deleted;
     int cur_was_ok;
+
+    /* wait for conditional... so that we get quick wakeups
+    * in case if sleeping for long and some msgs is being added...
+    */
+    int cret;
+    struct timespec wait_time;
+    struct timeval now;
     
 #define NEVER_SLEEP (G_bridge_cfg.qmaxsleep+1)
     /**
@@ -292,10 +299,12 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
     /* loop runs in locked mode.. */
     sleep_time=NEVER_SLEEP;
         
+    NDRX_LOG(log_debug, "br_run_q_th enter");
+    
     MUTEX_LOCK_V(M_in_q_lock);
     EXHASH_ITER(hh, M_qstr_hash, qhash, qhashtmp)
     {
-        
+        NDRX_LOG(log_debug, "Checking queue: [%s]", qhash->qstr);
         cur_was_ok=EXFALSE;
         /* process until we get the error... */
         DL_FOREACH_SAFE(qhash->msgs, el, elt)
@@ -313,7 +322,10 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             {
                 long time_left = el->next_try_ms-spent_from_last_upd;
                 
-                if (time_left > sleep_time)
+                NDRX_LOG(log_debug, "Time left for %s is: %ld", 
+                        el->destqstr, time_left);
+                        
+                if (time_left < sleep_time)
                 {
                     sleep_time = time_left;
                 }
@@ -326,9 +338,11 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             msg_deleted=EXFALSE;
             time_in_q = ndrx_stopwatch_get_delta(&(el->addedtime));
             el->tries++;
-            NDRX_LOG(log_warn, "Processing late delivery of %p/%d [%s] try %d/%d time_in_q %ld ms (ttl: %d)", 
+            NDRX_LOG(log_warn, "Processing late delivery of %p/%d [%s] "
+                    "try %d/%d nrmsg: %d time_in_q %ld ms (ttl: %d) next_try_ms %ld ms", 
                     el->buffer, el->len, el->destqstr, el->tries, 
-                    G_bridge_cfg.qretries, time_in_q, G_bridge_cfg.qttl);
+                    G_bridge_cfg.qretries, qhash->nrmsg, time_in_q, G_bridge_cfg.qttl,
+                    el->next_try_ms);
 
             /* if ttl is used, then check time-out too */
             if (el->tries <= G_bridge_cfg.qretries && time_in_q<=G_bridge_cfg.qttl)
@@ -485,27 +499,21 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
              * so that if new msg is enqueued, checks can be performed?
              */
             MUTEX_LOCK_V(M_in_q_lock);
-            if (M_msgs_in_q > G_bridge_cfg.qsize && !M_stopped)
-            {
 
-                /* wait for conditional... so that we get quick wakeups
-                * in case if sleeping for long and some msgs is being added...
-                */
-            
-                struct timespec wait_time;
-                struct timeval now;
+            gettimeofday(&now, NULL);
 
-                gettimeofday(&now, NULL);
+            wait_time.tv_sec = now.tv_sec;
+            /* convert to ms: */
+            wait_time.tv_nsec = now.tv_usec*1000;
 
-                wait_time.tv_sec = now.tv_sec;
-                wait_time.tv_nsec = now.tv_usec;
+            ndrx_timespec_plus(&wait_time, sleep_time);
+
+            /* sleep or wait event.. */
+            cret=pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
+
+            NDRX_LOG(log_debug, "pthread_cond_timedwait returns %d: %s", 
+                    cret, strerror(cret));
             
-                ndrx_timespec_plus(&wait_time, sleep_time);
-            
-                /* sleep or wait event.. */
-                pthread_cond_timedwait(&M_wakup_queue_runner, &M_in_q_lock, &wait_time);
-            
-            }
             MUTEX_UNLOCK_V(M_in_q_lock);
         }
 
@@ -627,8 +635,14 @@ expublic int br_add_to_q(char *buf, int len, int pack_type, char *destq)
 
         DL_APPEND(qhash->msgs, msg);
         
-        /* notify that new message has arrived... */
-        pthread_cond_signal(&M_wakup_queue_runner);
+        /* wake up if current queue has just added...
+         * otherwise the time for hash run is already scheduled
+         */
+        if (qhash->nrmsg==1)
+        {
+            /* notify that new message has arrived... */
+            pthread_cond_signal(&M_wakup_queue_runner);
+        }
     }
     
     MUTEX_UNLOCK_V(M_in_q_lock);
