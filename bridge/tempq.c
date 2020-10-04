@@ -229,6 +229,7 @@ expublic int br_chk_limit(void)
     
     MUTEX_LOCK_V(ndrx_G_global_br_lock);
     MUTEX_UNLOCK_V(ndrx_G_global_br_lock);
+    return EXSUCCEED;
     
 #else
     int ret;
@@ -410,13 +411,6 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
             
             if (!msg_deleted)
             {
-                /* schedule next run. */
-                
-                if (0==el->next_try_ms)
-                {
-                    el->next_try_ms=1;
-                }
-                
                 /* multiple sleep time by 2 */
                 el->next_try_ms*=2;
                 
@@ -426,7 +420,7 @@ exprivate int br_run_q_th(void *ptr, int *p_finish_off)
                 }
                 else if (el->next_try_ms<G_bridge_cfg.qminsleep)
                 {
-                    el->next_try_ms<G_bridge_cfg.qminsleep;
+                    el->next_try_ms=G_bridge_cfg.qminsleep;
                 }
                 
                 if (el->next_try_ms < sleep_time)
