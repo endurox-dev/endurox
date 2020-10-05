@@ -125,7 +125,6 @@ void TESTSV2 (TPSVCINFO *p_svc)
         NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "shutdown_thread_func thread");
     }
     
-    /* return OK */
     tpreturn(  TPFAIL,
             0L,
             NULL,
