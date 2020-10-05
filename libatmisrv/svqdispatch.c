@@ -1287,9 +1287,9 @@ expublic int sv_wait_for_request(void)
     ndrx_stopwatch_reset(&periodic_cb);
     
     /* THIS IS MAIN SERVER LOOP! */
-    while(EXSUCCEED==ret && (!G_shutdown_req || 
-            /* if shutdown request then wait for all queued jobs to finish. */
-            G_shutdown_nr_got <  G_shutdown_nr_wait))
+    while(EXSUCCEED==ret && (!G_shutdown_req /*|| 
+            if shutdown request then wait for all queued jobs to finish. 
+            G_shutdown_nr_got <  G_shutdown_nr_wait - why? */))
     {
         /* Support for periodical invocation of custom function! */
         

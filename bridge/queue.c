@@ -336,6 +336,10 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
             case ATMI_COMMAND_TPFORWARD:
                 /* not used */
                 break;
+
+            /* maybe move to non-threaded env...
+             * as threads will be stopped by threadpool stop
+             */
             case ATMI_COMMAND_SELF_SD:
                 G_shutdown_nr_got++;
             

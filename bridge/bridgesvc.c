@@ -608,7 +608,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     if (NULL==(G_bridge_cfg.thpool_tonet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
-            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)))
+            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)) || EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "Failed to initialize to-net thread pool (cnt: %d)!", 
                 G_bridge_cfg.threadpoolsize);
@@ -616,15 +616,15 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     }
     
     if (NULL==(G_bridge_cfg.thpool_queue = ndrx_thpool_init(1, 
-            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)))
+            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)) || EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "Failed to initialize queue-runner thread pool (cnt: %d)!", 
-                G_bridge_cfg.threadpoolsize);
+                1);
         EXFAIL_OUT(ret);
     }
     
     if (NULL==(G_bridge_cfg.thpool_fromnet = ndrx_thpool_init(G_bridge_cfg.threadpoolsize, 
-            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)))
+            &ret, ndrx_thpool_thread_init, ndrx_thpool_thread_done, 0, NULL)) || EXSUCCEED!=ret)
     {
         NDRX_LOG(log_error, "Failed to initialize from-net thread pool (cnt: %d)!",
                 G_bridge_cfg.threadpoolsize);

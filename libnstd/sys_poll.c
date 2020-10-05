@@ -156,6 +156,7 @@ typedef struct ndrx_pipe_mqd_hash ndrx_pipe_mqd_hash_t;
 exprivate ndrx_epoll_set_t *M_psets = NULL; /* poll sets  */
 exprivate ndrx_pipe_mqd_hash_t *M_pipe_h = NULL; /* pipe hash */
 
+exprivate int M_shutdown = EXFALSE;	/** Is shutdown requested? */
 
 exprivate MUTEX_LOCKDECL(M_psets_lock);
 /*---------------------------Globals------------------------------------*/
@@ -280,7 +281,7 @@ exprivate int signal_handle_event(void)
     MUTEX_UNLOCK_V(M_psets_lock);
         
 out:
-        return ret;
+    return ret;
 }
 
 /**
@@ -303,9 +304,8 @@ exprivate void * signal_process(void *arg)
     sigemptyset(&blockMask);
     sigaddset(&blockMask, NOTIFY_SIG);
     
-    for (;;)
+    while (!M_shutdown)
     {
-        
         NDRX_LOG(log_debug, "%s - before sigwait()", fn);
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
@@ -316,7 +316,9 @@ exprivate void * signal_process(void *arg)
         NDRX_LOG(log_debug, "%s - after sigwait()", fn);
         
         /* check all queues and pipe down the event... */
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         signal_handle_event();
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
     
 out:
@@ -374,6 +376,7 @@ expublic int ndrx_epoll_sys_init(void)
     
     /* Block the notification signal (do not need it here...) */
     
+    M_shutdown=EXFALSE;
     sigemptyset(&blockMask);
     sigaddset(&blockMask, NOTIFY_SIG);
     
@@ -412,6 +415,7 @@ expublic void ndrx_epoll_sys_uninit(void)
     /* TODO: have a counter for number of sets, so that we can do 
      * un-init...
      */
+    M_shutdown=EXTRUE;
     if (EXSUCCEED!=pthread_cancel(M_signal_thread))
     {
         NDRX_LOG(log_error, "Failed to kill poll signal thread: %s", strerror(errno));
@@ -564,8 +568,6 @@ expublic int ndrx_epoll_ctl(int epfd, int op, int fd, struct ndrx_epoll_event *e
     ndrx_epoll_set_t* set = NULL;
     ndrx_epoll_fds_t * tmp = NULL;
     char *fn = "ndrx_epoll_ctl";
-    
-    
     EX_EPOLL_API_ENTRY;
     
     MUTEX_LOCK_V(M_psets_lock);
@@ -1066,6 +1068,8 @@ expublic int ndrx_epoll_wait(int epfd, struct ndrx_epoll_event *events,
             {
                 ndrx_epoll_set_err(errno, "Failed to get attribs of Q: %d",  m->mqd);
                 NDRX_LOG(log_warn, "Failed to get attribs of Q: %d",  m->mqd);
+	
+                MUTEX_UNLOCK_V(M_psets_lock);
                 EXFAIL_OUT(ret);
             }
 
