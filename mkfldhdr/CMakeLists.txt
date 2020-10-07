@@ -52,4 +52,10 @@ target_link_libraries (mkfldhdr ubf m nstd ${RT_LIB} pthread)
 install (TARGETS 
     mkfldhdr 
     DESTINATION bin)
+
+# Install bin, scripts
+install (PROGRAMS 
+    mkfldhdr32
+    DESTINATION bin)
+
 # vim: set ts=4 sw=4 et smartindent:

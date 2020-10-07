@@ -239,7 +239,7 @@ expublic void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle)
     if (NULL==bin)
     {
         NDRX_LOG(log_error, "Binary [%s] not found in hash - mem error!",
-                binary_path)
+                binary_path);
     }
     else
     {

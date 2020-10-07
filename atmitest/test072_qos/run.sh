@@ -100,47 +100,108 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log ULOG*
-# Any bridges that are live must be killed!
-xadmin killall tpbridge
+#for action in 1 2 3
+#
+# Seems like for System V we cannot exhaust the queue space?
+#
+for action in 1
+do
 
-set_dom1;
-xadmin down -y
-xadmin start -y || go_out 1
+    export TEST_ACTION=$action
+    echo "Testing drop action: $TEST_ACTION"
+
+    rm *dom*.log ULOG*
+    # Any bridges that are live must be killed!
+    xadmin killall tpbridge atmiclt72
+
+    set_dom1;
+    xadmin down -y
+    xadmin start -y || go_out 1
 
 
-set_dom2;
-xadmin down -y
-xadmin start -y || go_out 2
+    set_dom2;
+    xadmin down -y
+    xadmin start -y || go_out 2
 
+    # Have some wait for ndrxd goes in service - wait for connection establishment.
+    sleep 20
+    RET=0
 
-# Have some wait for ndrxd goes in service - wait for connection establishment.
-sleep 20
-RET=0
+    xadmin psc
+    xadmin ppm
+    echo "Running off client - dom2 background"
 
-xadmin psc
-xadmin ppm
-echo "Running off client - dom2 background"
+    set_dom2;
+    (./atmiclt72 TEST1 GETINFOS1 2>&1) > ./atmiclt-dom2.log &
+    (./atmiclt72 TEST11 GETINFOS11 2>&1) > ./atmiclt-dom2_1.log &
 
-set_dom2;
-(./atmiclt72 TEST1 GETINFOS1 2>&1) > ./atmiclt-dom2.log &
+    echo "Running off client - dom1 foreground"
 
-echo "Running off client - dom1 foreground"
+    set_dom1;
+    (./atmiclt72 TEST22 GETINFOS22 2>&1) >> ./atmiclt-dom1_1.log &
+    (./atmiclt72 TEST2 GETINFOS2 2>&1) >> ./atmiclt-dom1.log
 
-set_dom1;
-(./atmiclt72 TEST2 GETINFOS2 2>&1) > ./atmiclt-dom1.log
+    RET=$?
 
-RET=$?
+    if [[ "X$RET" != "X0" ]]; then
 
-if [[ "X$RET" != "X0" ]]; then
-    go_out $RET
-fi
+        go_out $RET
+    fi
 
-# Catch is there is test error!!!
-if [ "X`grep TESTERROR *.log`" != "X" ]; then
-    echo "Test error detected!"
-    RET=-2
-fi
+    # Catch is there is test error!!!
+    if [ "X`grep TESTERROR *.log`" != "X" ]; then
+        echo "Test error detected!"
+        RET=-2
+        go_out $RET
+    fi
+
+    # wait for finish results
+
+    i=`grep "testcl finished" ULOG* | wc -l`
+
+    while [ $i -lt 4 ] && [ $i -lt 65 ]
+    do
+        echo "Wait 5 finish..."
+        sleep 5
+        i=`grep "testcl finished" ULOG* | wc -l`
+    done
+
+    ok=`grep "testcl finished - OK" ULOG* | wc -l`
+    bad=`grep "testcl finished - failed" ULOG* | wc -l`
+    discard=`grep "Discarding message" ULOG* | wc -l`
+
+    echo "ok=$ok bad=$bad discard=$discard"
+
+    if [ $action -eq 1 ]; then
+
+        if [ $ok -ne 4 ]; then
+            echo "Expected OK clients 4 got: $ok bad: $fail"
+            RET=-3
+            go_out $RET
+        fi
+
+        if [ $discard -ne 0 ]; then
+            echo "There must be no discarded messages, but got: $discard"
+            RET=-4
+            go_out $RET
+        fi
+
+    else
+
+        if [ $bad -lt 1 ]; then
+            
+            echo "Expected 1 bad client got: $bad ok: $ok"
+            RET=-3
+            go_out $RET
+        fi
+
+        if [ $discard -eq 0 ]; then
+            echo "There must be discarded messages, but got: $discard"
+            RET=-4
+            go_out $RET
+        fi
+    fi
+done
 
 go_out $RET
 

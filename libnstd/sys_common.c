@@ -772,7 +772,7 @@ expublic int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
     /* get the first token */
     if (NULL==(token = strtok(tmp, "\t ")))
     {
-        NDRX_LOG(log_error, "missing username in ps -ef output")
+        NDRX_LOG(log_error, "missing username in ps -ef output");
         EXFAIL_OUT(ret);
     }
 
@@ -780,7 +780,7 @@ expublic int ndrx_proc_pid_get_from_ps(char *psout, pid_t *pid)
     token = strtok(NULL, "\t ");
     if (NULL==token)
     {
-        NDRX_LOG(log_error, "missing pid in ps -ef output")
+        NDRX_LOG(log_error, "missing pid in ps -ef output");
         EXFAIL_OUT(ret);
     }   
     else
@@ -868,7 +868,7 @@ expublic int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
     /* get the first token */
     if (NULL==(token = strtok(tmp, "\t ")))
     {
-        NDRX_LOG(log_error, "missing username in ps -ef output (1)")
+        NDRX_LOG(log_error, "missing username in ps -ef output (1)");
         EXFAIL_OUT(ret);
     }
 
@@ -876,7 +876,7 @@ expublic int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
     token = strtok(NULL, "\t ");
     if (NULL==token)
     {
-        NDRX_LOG(log_error, "missing pid in ps -ef output (2)")
+        NDRX_LOG(log_error, "missing pid in ps -ef output (2)");
         EXFAIL_OUT(ret);
     }
     
@@ -884,7 +884,7 @@ expublic int ndrx_proc_ppid_get_from_ps(char *psout, pid_t *ppid)
     token = strtok(NULL, "\t ");
     if (NULL==token)
     {
-        NDRX_LOG(log_error, "missing pid in ps -ef output (3)")
+        NDRX_LOG(log_error, "missing pid in ps -ef output (3)");
         EXFAIL_OUT(ret);
     }
     else

@@ -164,7 +164,7 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
         ndrx_TPset_error_fmt(TPEINVAL, "Field [%s] type is %s but object received",
                 fldnm, (Btype(fldtyp)?Btype(fldtyp):"(null)"));
         NDRX_LOG(log_error, "Field [%s] type is %s but object received",
-                fldnm, (Btype(fldtyp)?Btype(fldtyp):"(null)"))
+                fldnm, (Btype(fldtyp)?Btype(fldtyp):"(null)"));
         EXFAIL_OUT(ret);
     }
     

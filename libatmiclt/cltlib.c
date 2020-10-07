@@ -34,6 +34,8 @@
 #include <ndrstandard.h>
 #include <atmi.h>
 #include <tperror.h>
+
+#include "ndebug.h"
 /**
  * Currently do nothing, just for build
  */
@@ -53,9 +55,6 @@ void __dummy(void)
  */
 expublic void     tpreturn (int rval, long rcode, char *data, long len, long flags)
 {
-    /*API_ENTRY;
-
-     return _tpreturn(rval, rcode, data, len, flags); */
     ndrx_TPset_error_fmt(TPEPROTO, "tpreturn - not available for clients!!!");
     return;
 }
@@ -69,11 +68,17 @@ expublic void     tpreturn (int rval, long rcode, char *data, long len, long fla
  */
 expublic void tpforward (char *svc, char *data, long len, long flags)
 {
-    /*API_ENTRY;
-
-    _tpforward (svc, data, len, flags);*/
     ndrx_TPset_error_fmt(TPEPROTO, "tpforward - not available for clients!!!");
     return;
+}
+
+/**
+ * exit from XATMI server - not for clients
+ * For clients just terminate the process
+ */
+expublic void tpexit (void)
+{
+    exit(EXFAIL);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

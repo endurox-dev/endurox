@@ -36,10 +36,13 @@ The other end will receive *TPEV_SENDONLY* event.
 *TPNOBLOCK* Do not block the call if conversational queue is full.
 
 *TPSIGRSTRT* Restart the system call in progress if interrupted by signal handler. 
-This affects only underlaying mq_* function calls.
+This affects only underlying mq_* function calls.
 
 *TPNOBLOCK* Do not block on empty queue, if not messages present, the 
 function returns immediately.
+
+*TPNOTIME* In case if blocking condition exists (queue full), wait indefinitely 
+on queue to send msg.
 
 RETURN VALUE
 ------------

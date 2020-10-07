@@ -58,6 +58,7 @@
 #include <atmi_shm.h>
 #include <sys_unix.h>
 #include <exenvapi.h>
+#include <ndrxdiag.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -315,11 +316,11 @@ exprivate void * check_child_exit(void *arg)
 /**
  * Initialize polling lib
  * not thread safe.
- * @return
+ * @return EXSUCCED/EXFAIL
  */
-expublic void ndrxd_sigchld_init(void)
+expublic int ndrxd_sigchld_init(void)
 {
-    
+    int ret = EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
     char *fn = "ndrxd_sigchld_init";
 
@@ -329,10 +330,18 @@ expublic void ndrxd_sigchld_init(void)
     
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
-    pthread_create(&M_signal_thread, &pthread_custom_attr, 
-            check_child_exit, NULL);
+    
+    if (EXSUCCEED!=pthread_create(&M_signal_thread, &pthread_custom_attr, 
+            check_child_exit, NULL))
+    {
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "ndrxd_sigchld_init");
+        EXFAIL_OUT(ret);
+    }
 
     M_signal_thread_set = EXTRUE;
+    
+out:
+    return ret;
 }
 
 /**

@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
     if (M_err)
     {
         NDRX_LOG(log_error, "TESTERROR! some thread failed");
-        EXFAIL_OUT(ret)
+        EXFAIL_OUT(ret);
     }
 
     ret=tppost("TEST2EV", (char*)p_ub, 0L, TPSIGRSTRT);

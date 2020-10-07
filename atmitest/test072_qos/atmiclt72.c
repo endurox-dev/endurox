@@ -60,13 +60,13 @@
  */
 int main(int argc, char** argv)
 {
-
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
     int ret=EXSUCCEED;
     long sent=0;
     long sentread=0;
     long t;
+    char *action = getenv("TEST_ACTION");
     ndrx_stopwatch_t w;
     
     /* send msg for 5 min.... */
@@ -77,13 +77,19 @@ int main(int argc, char** argv)
         EXFAIL_OUT(ret);
     }
     
+    if (NULL==action)
+    {
+        fprintf(stderr, "Missing env TEST_ACTION!");
+        EXFAIL_OUT(ret);
+    }
+    
     ndrx_stopwatch_reset(&w);
     
     /* have shorter test on RPI/32bit sys */
 #if EX_SIZEOF_LONG==4
     while (ndrx_stopwatch_get_delta_sec(&w) < 5)
 #else
-    while (ndrx_stopwatch_get_delta_sec(&w) < 20)
+    while (ndrx_stopwatch_get_delta_sec(&w) < 200)
 #endif
     {
         if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, VALUE_EXPECTED, 0, BFLD_STRING))
@@ -133,10 +139,17 @@ int main(int argc, char** argv)
     
     if (sentread!=sent)
     {
-        NDRX_LOG(log_error, "TESTERROR: sent: %ld but server have seen: %ld", 
+        NDRX_LOG(log_error, "error: sent: %ld but server have seen: %ld", 
                 sent, sentread);
-        EXFAIL_OUT(ret);
+        userlog("testcl finished - failed");
+        
+        if ('1' == action[0])
+        {
+            EXFAIL_OUT(ret);
+        }
     }
+    
+    userlog("testcl finished - OK");
     
 out:
     tpterm();

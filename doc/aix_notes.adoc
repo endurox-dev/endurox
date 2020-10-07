@@ -169,6 +169,11 @@ export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/freeware/lib:\$HOME/endurox/dist/l
 # UBF/FML field tables
 export FLDTBLDIR=\$HOME/endurox/ubftest/ubftab
 
+# Some AIX version (like 7.2) limits the ulimit -s process wide
+# thus default logic for taking new thread stack size from getrlimit(RLIMIT_STACK)
+# causes pthread_create() to fail with resource limit error.
+export NDRX_THREADSTACKSIZE=8192
+
 ################################################################################
 # In case if building with Postgresql DB database testing support
 # or building endurox-java with Oracle DB tests (03_xapostgres), then
@@ -308,7 +313,7 @@ $ export OBJECT_MODE=64
 $ export CC=xlc 
 $ export CXX=xlC
 $ cd /home/user1/endurox
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON\
+$ cmake -DDEFINE_DISABLEDOC=ON\
       -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make 
 $ make install
@@ -336,7 +341,7 @@ $ export CC=gcc
 $ export CXX=g++
 $ export CFLAGS=-maix64
 $ export CXXFLAGS=-maix64
-$ cmake -DDEFINE_DISABLEPSCRIPT=ON -DDEFINE_DISABLEDOC=ON \
+$ cmake -DDEFINE_DISABLEDOC=ON \
     -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DCMAKE_LIBRARY_PATH=/opt/freeware/lib .
 $ make
 $ make install

@@ -370,7 +370,7 @@ int main(int argc, char** argv)
     
     if (argc<2)
     {
-        NDRX_LOG(log_error, "usage: %s <broadcast|listen|mutted|>")
+        NDRX_LOG(log_error, "usage: %s <broadcast|listen|mutted|>");
         EXFAIL_OUT(ret);
     }
 

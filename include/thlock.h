@@ -41,6 +41,8 @@ extern "C" {
 /*---------------------------Includes-----------------------------------*/
 #include <pthread.h>
 #include <userlog.h>
+
+#include "ndrstandard.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -145,10 +147,21 @@ extern "C" {
     
 /**
  * Spinlock lock
+ * This will ensure that scheduler yield would run
  * @param X name of variable of spinlock
  */
-#define NDRX_SPIN_LOCK_V(X) pthread_spin_lock(&X)
-    
+#define NDRX_SPIN_LOCK_V(X) \
+    while (1)\
+    {\
+        int ndrx_try_counter; int ndrx_try_done=EXFALSE;\
+        for (ndrx_try_counter=0; ndrx_try_counter < 1000; ndrx_try_counter++)\
+        {\
+            if (EXSUCCEED==pthread_spin_trylock(&X)) {ndrx_try_done=EXTRUE; break;}\
+        }\
+        if (ndrx_try_done) {break;}\
+        sched_yield();\
+    }
+
 /**
  * Try lock
  * @param X lock var name

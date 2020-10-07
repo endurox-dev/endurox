@@ -1,0 +1,67 @@
+TPEXIT(3)
+=========
+:doctype: manpage
+
+
+NAME
+----
+tpexit - Terminate server process
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+void tpexit(void);
+
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+This function is designated for use in XATMI servers. Function requests the
+main thread loop to perform XATMI server process shutdown procedure. If server
+process currently serves a service call and in service code tpexit() is called,
+then after service returns, the XATMI server process main loop will terminate
+and will invoke the *tpsvrdone(3)* and *tpsvrthrdone(3)* accordingly. Normally
+tpexit() after the call returns the control to the caller.
+
+Once process is shutdown, the *ndrxd(8)* will restart the process (if restarts of 
+dead are configured).
+
+tpexit() can be called from other threads than main. In that case if server main
+thread is idling, the shutdown process will take a place immediately.
+
+Internally tpexit() sends the administrative shutdown message to it self.
+If admin queue at the moment is full (blocking), the tpexit() will perform direct
+exit(-1) of the process, with out performing clean shutdown i.e. 
+*tpsvrdone(3)* and *tpsvrthrdone(3)* callbacks will not be invoked.
+
+When *tpreturn(3)* is called with *TPEXIT* flag, internally this function is invoked.
+
+If ATMI client process calls this function (i.e. linked with libatmiclt), exit(-1)
+is always called.
+
+
+ERRORS
+------
+N/A
+
+EXAMPLE
+-------
+See *atmitest/test080_tpexit/atmisv80.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpreturn(3)* *ndrxd(8)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

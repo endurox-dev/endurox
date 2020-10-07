@@ -265,7 +265,7 @@ expublic int ndrx_svqshm_init(int attach_only)
         /* Write to ULOG? */
         NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
         userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
-        EXFAIL_OUT(ret)
+        EXFAIL_OUT(ret);
     }
     else
     {

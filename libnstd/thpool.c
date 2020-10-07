@@ -15,8 +15,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <errno.h>
-#include <time.h> 
+#include <sys/time.h> 
 #include <ndebug.h>
+#include <time.h>
 #include <ndrstandard.h>
 #ifdef EX_OS_LINUX
 #include <sys/prctl.h>
@@ -25,6 +26,7 @@
 #include <exthpool.h>
 
 #include <nstdutil.h>
+#include <ndrxdiag.h>
 
 #ifdef THPOOL_DEBUG
 #define THPOOL_DEBUG 1
@@ -87,6 +89,7 @@ typedef struct thpool_
     pthread_mutex_t  thcount_lock;          /**< used for thread count etc  */
     pthread_cond_t  threads_all_idle;       /**< signal to thpool_wait      */
     pthread_cond_t  threads_one_idle;       /**< signal to thpool_wait_one  */
+    pthread_cond_t  proc_one;               /**< One job is processed       */
     int threads_keepalive;
     int num_threads;                        /**< total number of threads    */
     int thread_status;                      /**< if EXTRUE, init OK         */
@@ -179,6 +182,7 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
     pthread_mutex_init(&(thpool_p->thcount_lock), NULL);
     pthread_cond_init(&thpool_p->threads_all_idle, NULL);
     pthread_cond_init(&thpool_p->threads_one_idle, NULL);
+    pthread_cond_init(&thpool_p->proc_one, NULL);
 
     /* Thread init, lets do one by one... and check the final counts... */
     int n;
@@ -189,8 +193,18 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
         MUTEX_LOCK_V(thpool_p->thcount_lock);
         
         /* run off the thread */
-        poolthread_init(thpool_p, &thpool_p->threads[n], n);
-
+        if (EXSUCCEED!=poolthread_init(thpool_p, &thpool_p->threads[n], n))
+        {
+            if (NULL!=p_ret)
+            {
+                *p_ret=EXFAIL;
+            }
+        
+            /* unlock the mutex, as thread failed to init... */
+            MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+            goto out;
+        }
+        
         /* wait for init complete */
         pthread_cond_wait(&thpool_p->threads_one_idle, &thpool_p->thcount_lock);
         
@@ -216,17 +230,18 @@ struct thpool_* ndrx_thpool_init(int num_threads, int *p_ret,
     /* TODO: Wait for threads to initialize 
     while (thpool_p->num_threads_alive != num_threads) {sched_yield();}
      * */
-
+    
+out:
     return thpool_p;
 }
 
-
-/* Add work to the thread pool */
-int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), void* arg_p)
+int ndrx_thpool_add_work2(thpool_* thpool_p, void (*function_p)(void*, int *), void* arg_p, long flags, int max_len)
 {
+    int ret = EXSUCCEED;
     job* newjob;
 
     newjob=(struct job*)NDRX_FPMALLOC(sizeof(struct job), 0);
+    
     if (newjob==NULL)
     {
         err("thpool_add_work(): Could not allocate memory for new job\n");
@@ -236,15 +251,63 @@ int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), vo
     /* add function and argument */
     newjob->function=function_p;
     newjob->arg=arg_p;
-
+    
     /* add job to queue */
     MUTEX_LOCK_V(thpool_p->thcount_lock);
+    
+    if (flags & NDRX_THPOOL_ONEJOB && thpool_p->jobqueue.len > 0)
+    {
+        NDRX_LOG(log_debug, "NDRX_THPOOL_ONEJOB set and queue len is %d - skip this job",
+                thpool_p->jobqueue.len);
+        
+        /* WARNING !!!! Early return! */
+        NDRX_FPFREE(newjob);
+        MUTEX_UNLOCK_V(thpool_p->thcount_lock);
+        return NDRX_THPOOL_ONEJOB;
+    }
+
+    /* wait for pool to process some amount of jobs, before we continue....
+     * otherwise this might cause us to buffer lot of outgoing messages
+     */
+    if (max_len > 0)
+    {
+        while (thpool_p->jobqueue.len > max_len)
+        {
+            /* wait for 1 sec... so that we release some control */
+            struct timespec wait_time;
+            struct timeval now;
+
+            gettimeofday(&now,NULL);
+
+            wait_time.tv_sec = now.tv_sec+1;
+            wait_time.tv_nsec = now.tv_usec*1000;
+
+            if (EXSUCCEED!=(ret=pthread_cond_timedwait(&thpool_p->proc_one, 
+                    &thpool_p->thcount_lock, &wait_time)))
+            {
+                NDRX_LOG(log_error, "Waiting for %d jobs (current: %d) but expired... (err: %s)", 
+                        max_len, thpool_p->jobqueue.len, strerror(ret));            
+                
+                /* allow to continue... */
+                break;
+            }
+        }
+    }
+
     jobqueue_push(&thpool_p->jobqueue, newjob);
+    
     MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 
     return 0;
 }
 
+/* Add work to the thread pool 
+ * default version
+ */
+int ndrx_thpool_add_work(thpool_* thpool_p, void (*function_p)(void*, int *), void* arg_p)
+{
+    return ndrx_thpool_add_work2(thpool_p, function_p, arg_p, 0, 0);
+}
 
 /**
  *  Wait until all jobs have finished 
@@ -365,7 +428,7 @@ void ndrx_thpool_destroy(thpool_* thpool_p)
  */
 static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int id)
 {
-
+    int ret = EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
 
@@ -383,11 +446,15 @@ static int poolthread_init (thpool_* thpool_p, struct poolthread** thread_p, int
     /* have some stack space... */
     ndrx_platf_stack_set(&pthread_custom_attr);
 
-    pthread_create(&(*thread_p)->pthread, &pthread_custom_attr,
-                    (void *)poolthread_do, (*thread_p));
+    if (EXSUCCEED!=pthread_create(&(*thread_p)->pthread, &pthread_custom_attr,
+                    (void *)poolthread_do, (*thread_p)))
+    {
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "poolthread_init");
+        EXFAIL_OUT(ret);
+    }
     /* pthread_detach((*thread_p)->pthread); */
-
-    return 0;
+out:
+    return ret;
 }
 
 /* What each thread is doing
@@ -517,7 +584,10 @@ static void* poolthread_do(struct poolthread* thread_p)
             if (one_idle)
             {  
                 pthread_cond_signal(&thpool_p->threads_one_idle);
-            } 
+            }
+            
+            /* one job is processed... */
+            pthread_cond_signal(&thpool_p->proc_one);
 
             MUTEX_UNLOCK_V(thpool_p->thcount_lock);
 

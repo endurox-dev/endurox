@@ -51,6 +51,7 @@
 #include <userlog.h>
 #include <atmi.h>
 #include <exenvapi.h>
+#include <ndrxdiag.h>
 
 #include "cpmsrv.h"
 #include "../libatmisrv/srv_int.h"
@@ -203,10 +204,11 @@ exprivate void * check_child_exit(void *arg)
 /**
  * Initialize polling lib
  * not thread safe.
- * @return
+ * @return EXSUCCEED/EXFAIL
  */
-expublic void cpm_sigchld_init(void)
+expublic int cpm_sigchld_init(void)
 {
+    int ret = EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
     char *fn = "cpm_sigchld_init";
 
@@ -216,10 +218,16 @@ expublic void cpm_sigchld_init(void)
     
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
-    pthread_create(&M_signal_thread, &pthread_custom_attr, 
-            check_child_exit, NULL);
+    if (EXSUCCEED!=pthread_create(&M_signal_thread, &pthread_custom_attr, 
+            check_child_exit, NULL))
+    {
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "cpm_sigchld_init");
+        EXFAIL_OUT(ret);
+    }
 
     M_signal_thread_set = EXTRUE;
+out:
+    return ret;
 }
 
 

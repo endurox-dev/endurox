@@ -230,7 +230,7 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
     }
     else
     {
-        NDRX_LOG(log_error, "missing pfx")
+        NDRX_LOG(log_error, "missing pfx");
         EXFAIL_OUT(ret);
     }
     
@@ -238,14 +238,14 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
     token = strtok(NULL, NDRX_FMT_SEP_STR);
     if (NULL==token)
     {
-        NDRX_LOG(log_error, "missing clt")
+        NDRX_LOG(log_error, "missing clt");
         EXFAIL_OUT(ret);
     }
     
     token = strtok(NULL, NDRX_FMT_SEP_STR);
     if (NULL==token)
     {
-        NDRX_LOG(log_error, "missing reply")
+        NDRX_LOG(log_error, "missing reply");
         EXFAIL_OUT(ret);
     }
     
@@ -257,7 +257,7 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
     }
     else
     {
-        NDRX_LOG(log_error, "missing proc name")
+        NDRX_LOG(log_error, "missing proc name");
         EXFAIL_OUT(ret);
     }
     
@@ -269,7 +269,7 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
     }
     else
     {
-        NDRX_LOG(log_error, "missing proc pid")
+        NDRX_LOG(log_error, "missing proc pid");
         EXFAIL_OUT(ret);
     }
     
@@ -281,7 +281,7 @@ expublic int ndrx_parse_clt_q(char *q, char *pfx, char *proc, pid_t *pid, long *
     }
     else
     {
-        NDRX_LOG(log_error, "missing proc th")
+        NDRX_LOG(log_error, "missing proc th");
         EXFAIL_OUT(ret);
     }
     

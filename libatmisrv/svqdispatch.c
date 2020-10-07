@@ -159,7 +159,7 @@ expublic int sv_open_queue(void)
             if (EXSUCCEED!=ndrx_mq_unlink(entry->listen_q))
             {
                 NDRX_LOG(log_debug, "debug: Failed to unlink [%s]: %s", entry->listen_q, 
-                        ndrx_poll_strerror(ndrx_epoll_errno()))
+                        ndrx_poll_strerror(ndrx_epoll_errno()));
             }
 #endif
             /* normal operations, each service have it's own queue... */
@@ -1287,9 +1287,9 @@ expublic int sv_wait_for_request(void)
     ndrx_stopwatch_reset(&periodic_cb);
     
     /* THIS IS MAIN SERVER LOOP! */
-    while(EXSUCCEED==ret && (!G_shutdown_req || 
-            /* if shutdown request then wait for all queued jobs to finish. */
-            G_shutdown_nr_got <  G_shutdown_nr_wait))
+    while(EXSUCCEED==ret && (!G_shutdown_req /*|| 
+            if shutdown request then wait for all queued jobs to finish. 
+            G_shutdown_nr_got <  G_shutdown_nr_wait - why? */))
     {
         /* Support for periodical invocation of custom function! */
         
@@ -1401,7 +1401,7 @@ expublic int sv_wait_for_request(void)
             NDRX_LOG(log_debug, "Receiving %d, user data: %d, fd: %d, evmqd: %d, "
                     "is_mq_only: %d, G_pollext=%p",
                     n, G_server_conf.events[n].data.u32, evfd, evmqd, 
-                    is_mq_only, G_pollext);
+                    is_mq_only, ndrx_G_pollext);
             
             if (0==evfd && 0==evmqd)
             {
@@ -1410,7 +1410,7 @@ expublic int sv_wait_for_request(void)
             }
             
             /* Check poller extension */
-            if (NULL!=G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
+            if (NULL!=ndrx_G_pollext && (EXFAIL==is_mq_only || EXFALSE==is_mq_only) )
             {
                 ext=ext_find_poller(evfd);
                 

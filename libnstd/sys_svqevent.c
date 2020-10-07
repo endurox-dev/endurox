@@ -50,7 +50,7 @@
 #include <sys/time.h>
 #include <sys/msg.h>
 #include <pthread.h>
-
+#include <ndrxdiag.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
 #include <nstdutil.h>
@@ -1304,10 +1304,9 @@ exprivate void event_fork_resume(void)
             ndrx_svq_timeout_thread, NULL)))
     {
         M_alive=EXFALSE;
-        NDRX_LOG(log_error, "Failed to create System V Auch thread: %s",
-                strerror(ret));
-        userlog("Failed to create System V Auch thread: %s",
-                strerror(ret));
+        
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "SystemV Event thread");
+        
         EXFAIL_OUT(ret);
     }
     
@@ -1458,8 +1457,7 @@ expublic int ndrx_svq_event_init(void)
         ndrx_svq_timeout_thread, NULL)))
     {
         M_alive=EXFALSE;
-        NDRX_LOG(log_error, "Failed to create monitoring thread: %s", 
-                strerror(errno));
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "SystemV Event thread");
         EXFAIL_OUT(ret);
     }
     

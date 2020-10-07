@@ -61,6 +61,8 @@ add_executable (tpbridge bridgesvc.c
                  clock.c
                  brutils.c
                  rawmain_fpa.c
+                 net_in.c
+                 tempq.c
                 )
 
 IF (CMAKE_OS_NAME STREQUAL "SUNOS")

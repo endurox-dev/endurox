@@ -111,6 +111,7 @@ static NtCloseFunc *NtClose;
 #endif
 
 #include <ndebug.h>
+#include <ndrxdiag.h>
 
 #if defined(__mips) && defined(__linux)
 /* MIPS has cache coherency issues, requires explicit cache control */
@@ -10340,7 +10341,10 @@ edb_env_copyfd1(EDB_env *env, HANDLE fd)
 	my.mc_fd = fd;
 	rc = THREAD_CREATE(thr, edb_env_copythr, &my);
 	if (rc)
+        {
+                NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "edb_env_copyfd1");
 		goto done;
+        }
 
 	rc = edb_txn_begin(env, NULL, EDB_RDONLY, &txn);
 	if (rc)
