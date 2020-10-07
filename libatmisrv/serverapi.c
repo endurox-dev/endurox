@@ -436,4 +436,46 @@ expublic NDRX_API void ndrx_atmisrv_set_flags(long flags)
     NDRX_LOG(log_warn, "ATMI Server flags set to: %lx", G_libatmisrv_flags);
 }
 
+/**
+ * In case if fails to generate exit request, exit is performed immediately
+ * otherwise shutdown is requested to main thread
+ */
+expublic void tpexit(void)
+{
+    int ret = EXSUCCEED;
+    command_call_t call;
+
+    API_ENTRY;
+    
+    memset(&call, 0, sizeof(call));
+    
+    userlog("tpexit requested");
+    
+    G_shutdown_req=EXTRUE;
+    
+    if (EXSUCCEED!=(ret=cmd_generic_call_2(NDRXD_COM_SRVSTOP_RQ, NDRXD_SRC_SERVER,
+                            NDRXD_CALL_TYPE_GENERIC,
+                            &call, sizeof(call),
+                            G_server_conf.service_array[ATMI_SRV_ADMIN_Q]->listen_q,
+                            G_server_conf.service_array[ATMI_SRV_ADMIN_Q]->q_descr,
+                            (mqd_t)EXFAIL,
+                            G_server_conf.service_array[ATMI_SRV_ADMIN_Q]->listen_q,
+                            0, NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            EXFALSE,
+                            EXFALSE,
+                            NULL, NULL, TPNOTIME|TPNOBLOCK, NULL)))
+    {
+        NDRX_LOG(log_error, "Failed to send shutdown notification to admin Q - exiting");    
+        exit(EXFAIL);
+    }
+    
+out:
+    
+    NDRX_LOG(log_warn, "tpexit - shutdown enqueued...");
+}
+
+
 /* vim: set ts=4 sw=4 et smartindent: */

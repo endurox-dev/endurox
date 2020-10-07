@@ -1465,7 +1465,7 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
     if (NULL==list->mem)
     {
         new_size = list->step * list->size;
-        if (NULL==(list->mem = NDRX_MALLOC(list->step * list->size)))
+        if (NULL==(list->mem = NDRX_FPMALLOC(list->step * list->size, 0)))
         {
             userlog("Failed to alloc %d bytes: %s", new_size,
                         strerror(errno));
@@ -1487,7 +1487,7 @@ expublic int ndrx_growlist_add(ndrx_growlist_t *list, void *item, int index)
         NDRX_LOG(log_debug, "realloc: new_size: %d (index: %d items: %d)", 
                 new_size, index, list->items);
         */
-        if (NULL==(list->mem = NDRX_REALLOC(list->mem, new_size)))
+        if (NULL==(list->mem = NDRX_FPREALLOC(list->mem, new_size)))
         {
             userlog("Failed to realloc %d bytes (%d blocks): %s", new_size,
                         next_blocks, strerror(errno));
@@ -2103,6 +2103,28 @@ out:
     }
 
     return ret;
+}
+
+/**
+ * Calculate the due time past and future
+ * @param due time to process
+ * @param ms milliseconds to substract or add
+ */
+expublic void ndrx_timespec_plus(struct timespec *due, long ms)
+{
+    due->tv_sec += (ms / 1000);
+    due->tv_nsec += ((ms % 1000) * 1000000);
+    
+    if (due->tv_nsec >= 1000000000)
+    {
+        due->tv_nsec -= 1000000000;
+        due->tv_sec++;
+    }
+    else if (due->tv_nsec < 0)
+    {
+        due->tv_nsec += 1000000000;
+        due->tv_sec--;
+    }
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

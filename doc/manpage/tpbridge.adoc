@@ -17,7 +17,7 @@ DESCRIPTION
 -----------
 This is special ATMI server which is used to connect local ATMI instances
 over the network. The result is network joined instances which makes
-EnduroX cluster.
+Enduro/X cluster.
 
 Bridge process is used to exchange service lists between two nodes,
 calculate monotonic clock diff (so that later for messages time can
@@ -79,6 +79,86 @@ In case of connecting to address (*client*):
 select next IP, continue with 3.
 
 5. If list of IP addresses are exhausted, start with 1.
+
+
+tpbridge to-network and from-network streams are separated by different threads.
+Thus reading from XATMI queues is doing server main thread. And reading from
+network is done by other thread.
+
+BLOCKING CONDITION SOLVING
+--------------------------
+
+*In case if IPC queues are full:*
+
+In case when messages are received from network, but local queues are blocked (full), e.g
+services are slow to process such amount of incoming requests, tpbridge will try
+to solve situation in following way:
+
+1. In case if sending to XATMI IPC queue bridge gets *EAGAIN* error, message is
+added to internal temporary queue. Queue size is set by *-Q* cli flag (or read
+from *NDRX_MSGMAX* or defaulted to 100, see 'TEMPORARY_QUEUE_SIZE' bellow. 
+When message is queued, special queue sender thread is being activated.
+
+2. In case if queued message count is greater than 
+'TEMPORARY_QUEUE_SIZE', then incoming net-in thread is blocked until 
+queue sender thread will send some messages and queued message count will be less than 
+'TEMPORARY_QUEUE_SIZE'.
+
+3. In case if queue action (*-A*) is set to *2* and new message arrives for 
+single XATMI IPC queue (e.g. service queue, reply queue, etc.) which is full, 
+the message is discarded.
+
+4. In case if queue action (*-A*) is set to *3* and new message arrives for 
+single XATMI IPC queue which is full or message arrives for other queue 
+but overall limit is exceeded of temporary enqueued messages, 
+then message is discarded.
+
+5. In case if bridge was solving conditions with blocking and is blocked,
+once every second net-in thread is unblocked, to process 
+any incoming messages from socket. 
+
+*Queue sender Logic:*
+
+1. Enqueued messages are grouped by single XATMI IPC queue names.
+
+2. Each enqueued message get scheduled next attempt run. Where minimum wait
+time is set by *-m* parameter.
+
+3. On every attempt unsuccessful send attempt, next attempt time is multiplied by 2.
+
+4. If single XATMI IPC queue attempt was successful, the next message of the
+same queue is tried to send immediately, if it fails, the next attempt for the 
+same queue is scheduled and queue runner switches to next different single XATMI
+IPC queue (if any).
+
+5. If attempts are reached or TTL expired (if configured), message is discarded. 
+
+6. In case if message by it self is timed (i.e. tpcall() with out *TPNOTIME* flag)
+and it expire, the message is discarded.
+
+7. In case if queue destination queue is broken (attempt did no end with *EAGAIN* or
+*EINTER*), the message is discarded.
+
+
+*In case if network socket is full:*
+
+1. In case if outgoing socket is being blocked (full), tpbridge stop process 
+outgoing traffic is processed - e.g. "@TPBRIDGEXXX" queue will not be read.
+
+2. To respond to *ndrxd(5)* pings, bridge lets to process 
+one outgoing message per second (i.e. read Enduro/X XATMI server queues).
+
+
+*Message discard strategy*
+
+If message is service call and client is waiting for answer, server 
+error *TPESVCERR* is returned to caller.
+
+All discarded messages are logged with error level *3* (warning) to the bridge
+logs. 
+
+ULOG contains entry "Discarding message" for every discarded message.
+
 
 OPTIONS
 -------
@@ -156,7 +236,53 @@ The default size is *4*.
 [*-R* 'QUEUE_RETRIES']::
 Number of attempts to send message to local queue, if on pervious attempt queue
 was full. The first attempt is done in real time, any further (if this flag allows)
-are performed with 'CONNECTION_CHECK_SEC' interval. Default value is *3*.
+are performed with calculated frequency of: nr_messages_failed_to_send - nr_messages_sent
+in milliseconds. Default value is *999999*. To disable temporary queue, set value
+to *0*.
+
+[*-A* 'TEMPORARY_QUEUE_ACTION']::
+This value indicates the action how tpbridge shall process the cases when temporary
+queue space for unsent / blocking messages are full. Values are following:
+value *1* - if global temp queue is full (*-Q* param) - block the 
+bridge / stop incoming traffic, if single XATMI IPC queue is full (*-q*) - 
+ignore the condition (i.e. let to fill till the *-Q* limit). Value *2* - if 
+global temp queue full - block, if single XATMI IPC queue is full - 
+discarded the message. Value *3* - if global temp queue is full - discarded the message, 
+if single XATMI IPC queue is full - discarded the message. Default is *1*.
+
+[*-Q* 'TEMPORARY_QUEUE_SIZE']::
+This is number of messages that tpbridge can accumulate in case if message is
+received from network and destination queue is full (e.g. service call queue, reply queue, etc).
+If this parameter is not set, then value uses *NDRX_MSGMAX* environment variable setting.
+If env variable is not available, then value is defaulted to *100*. The value
+of temporary queue size is preferred (and not string) as due to parallel processing
+conditions, the number of messages in queue might go over this number until
+the bridge is locked.
+
+[*-q* 'TEMPORARY_QUEUE_SIZE_DEST']::
+This is max number of messages tpbridge can accumulate 
+for single XATMI IPC queue which is full/blocking. 
+This parameter is used in case if queue action (-A) is configure to drop messages, 
+if single XATMI IPC queue temporary space is full.
+
+[*-L* 'TEMPORARY_QUEUE_TTL']::
+This is number of milliseconds for messages to live in temporary queue. Default
+value is *NDRX_TOUT* env setting converted to millisecond.
+
+[*-m* 'TEMPORARY_QUEUE_MINSLEEP']::
+This is minimum number milliseconds to wait after which schedule next attempt
+of message sending to the XATMI IPC queue. The default is *40*.
+
+[*-M* 'TEMPORARY_QUEUE_MAXSLEEP']::
+This is maximum number milliseconds to wait after which schedule next attempt
+of message sending to the XATMI IPC queue. The default is *150*.
+
+[*-B* 'THREADPOOL_BUFFER_SIZE']::
+This is number of messages that either net-out or net-in threads can accumulate
+to corresponding thread job queue. Higher the number, will mean tpbridge will
+start to collect some unprocessed messages, but better would be the pipeline
+for incoming/outgoing main threads and the thread pool workers. The default
+value is half of the 'THREAD_POOL_SIZE'.
 
 EXIT STATUS
 -----------
@@ -172,7 +298,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*xadmin(8)*
+*ex_env(5)* *ndrxconfig.xml(5)* *xadmin(8)* *ndrxd(8)*
 
 COPYING
 -------

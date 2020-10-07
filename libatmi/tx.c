@@ -293,7 +293,7 @@ expublic int tx_info(TXINFO * txinfo)
             }
             
             /* analyze the stage */
-            NDRX_LOG(log_debug, "txstage=%hd", txstage)
+            NDRX_LOG(log_debug, "txstage=%hd", txstage);
             if (txstage >= XA_TX_STAGE_ABORTING  && txstage <=XA_TX_STAGE_ABORTING)
             {
                 NDRX_LOG(log_warn, "TM is rolling back..!");

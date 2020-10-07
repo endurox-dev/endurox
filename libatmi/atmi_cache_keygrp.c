@@ -186,7 +186,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
             /* we got an error while scanning key storage */
             NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to iterate key group items: %s", 
                     __func__, Bstrerror(Berror));
-            EXFAIL_OUT(ret)
+            EXFAIL_OUT(ret);
         }
         
         ret=0;
@@ -207,7 +207,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
                             "for group record of cache item key [%s], groupkey [%s]",
                             __func__, cache->cachedbnm, dptr, cachekey, 
                             key);
-                    EXFAIL_OUT(ret)
+                    EXFAIL_OUT(ret);
                 }
                 
                 break;
@@ -231,7 +231,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
                         "keygroup [%s] db [%s]",
                         __func__, Bfname(bfldid1), bfldid1, 
                         cachekey, cache->keygrpdb->cachedb);
-                EXFAIL_OUT(ret)
+                EXFAIL_OUT(ret);
                 break;
         }
 
@@ -242,7 +242,7 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
         NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Invalid data saved in "
                         "keygroup [%s] db [%s] - missing EX_CACHE_DBNAME!",
                         __func__,  cachekey, cache->keygrpdb->cachedb);
-        EXFAIL_OUT(ret)
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "cachekey_found=%d, cache->keygroupmax=%ld numkeys=%ld",
@@ -443,7 +443,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                 /* we got an error while scanning key storage */
                 NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to iterate key group items: %s", 
                         __func__, Bstrerror(Berror));
-                EXFAIL_OUT(ret)
+                EXFAIL_OUT(ret);
             }
 
             switch (bfldid1)
@@ -462,7 +462,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                                 "for group record of cache item key [%s], groupkey [%s]",
                                 __func__, cache->cachedbnm, dptr, cachekey, 
                                 kg_ptr);
-                        EXFAIL_OUT(ret)
+                        EXFAIL_OUT(ret);
                     }
 
                     break;
@@ -489,7 +489,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                             "keygroup [%s] db [%s]",
                             __func__, Bfname(bfldid1), bfldid1, 
                             cachekey, cache->keygrpdb->cachedb);
-                    EXFAIL_OUT(ret)
+                    EXFAIL_OUT(ret);
                     break;
             }
 
@@ -500,7 +500,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
             NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Invalid data saved in "
                             "keygroup [%s] db [%s] - missing EX_CACHE_DBNAME!",
                             __func__,  cachekey, cache->keygrpdb->cachedb);
-            EXFAIL_OUT(ret)
+            EXFAIL_OUT(ret);
         }
 
         if (!cachekey_found)
@@ -529,7 +529,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
                 NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to delete "
                         "EX_CACHE_OPEXPR[%d]: %s",
                         occ_found, Bstrerror(Berror));
-                EXFAIL_OUT(ret)
+                EXFAIL_OUT(ret);
             }
         }
         else
@@ -548,7 +548,7 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
             {
                 NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to add EX_CACHE_OPEXPR to UBF: %s",
                         Bstrerror(Berror));
-                EXFAIL_OUT(ret)
+                EXFAIL_OUT(ret);
             }
         }
         /* write record off to DB... */
@@ -652,7 +652,7 @@ exprivate int ndrx_cache_invalgroup(ndrx_tpcache_db_t* dbkeygroup,
              /* we got an error while scanning key storage */
              NDRX_CACHE_TPERROR(TPESYSTEM, "%s: Failed to iterate key group items: %s", 
                      __func__, Bstrerror(Berror));
-             EXFAIL_OUT(ret)
+             EXFAIL_OUT(ret);
          }
          
          switch (bfldid1)

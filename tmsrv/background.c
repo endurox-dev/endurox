@@ -58,6 +58,7 @@
 #include "../libatmisrv/srv_int.h"
 #include <xa_cmn.h>
 #include <atmi_int.h>
+#include <ndrxdiag.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -183,7 +184,7 @@ exprivate void thread_sleep(int sleep_sec)
     gettimeofday(&now,NULL);
 
     wait_time.tv_sec = now.tv_sec+sleep_sec;
-    wait_time.tv_nsec = now.tv_usec;
+    wait_time.tv_nsec = now.tv_usec*1000;
 
     MUTEX_LOCK_V(M_wait_mutex);
     rt = pthread_cond_timedwait(&M_wait_cond, &M_wait_mutex, &wait_time);
@@ -318,11 +319,11 @@ expublic void * background_process(void *arg)
 
 /**
  * Initialize background process
- * @return
+ * @return EXSUCCEED/EXFAIL
  */
-expublic void background_process_init(void)
+expublic int background_process_init(void)
 {
-
+    int ret=EXSUCCEED;
     pthread_attr_t pthread_custom_attr;
     pthread_attr_init(&pthread_custom_attr);
     /* clean up resources after exit.. 
@@ -330,8 +331,14 @@ expublic void background_process_init(void)
     */
     /* set some small stacks size, 1M should be fine! */
     ndrx_platf_stack_set(&pthread_custom_attr);
-    pthread_create(&G_bacground_thread, &pthread_custom_attr, 
-            background_process, NULL);
+    if (EXSUCCEED!=pthread_create(&G_bacground_thread, &pthread_custom_attr, 
+            background_process, NULL))
+    {
+        NDRX_PLATF_DIAG(NDRX_DIAG_PTHREAD_CREATE, errno, "background_process_init");
+        EXFAIL_OUT(ret);
+    }
+out:
+    return ret;
       
 }
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -51,6 +51,8 @@
 /*---------------------------Statics------------------------------------*/
 exprivate long M_count = 0; /**< number of calls received, 
                              * platform shall ensure the serialization */
+
+exprivate long M_count2 = 0;
 exprivate NDRX_SPIN_LOCKDECL(M_count_lock);
 /*---------------------------Prototypes---------------------------------*/
 
@@ -76,6 +78,39 @@ void TESTSV (TPSVCINFO *p_svc)
     NDRX_SPIN_LOCK_V(M_count_lock);
     M_count++;
     NDRX_SPIN_UNLOCK_V(M_count_lock);
+    /* usleep(2000); */
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Standard service entry
+ */
+void TESTSVB (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+    
+    p_ub = (UBFH *)tprealloc((char *)p_ub, 1024);
+
+    if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&M_count2, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    NDRX_SPIN_LOCK_V(M_count_lock);
+    M_count2++;
+    NDRX_SPIN_UNLOCK_V(M_count_lock);
+    /* usleep(2000); */
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -101,6 +136,41 @@ void GETINFOS (TPSVCINFO *p_svc)
     NDRX_SPIN_LOCK_V(M_count_lock);
     cnt = M_count;
     NDRX_SPIN_UNLOCK_V(M_count_lock);
+    /* usleep(2000); */
+
+    if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&cnt, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_LONG_FLD: %s", 
+                 Bstrerror(Berror));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+out:
+    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
+                0L,
+                (char *)p_ub,
+                0L,
+                0L);
+}
+
+/**
+ * Query number message processed...
+ */
+void GETINFOSB (TPSVCINFO *p_svc)
+{
+    int ret=EXSUCCEED;
+    long cnt;
+    UBFH *p_ub = (UBFH *)p_svc->data;
+
+    NDRX_LOG(log_debug, "%s got call", __func__);
+    
+    p_ub = (UBFH *)tprealloc((char *)p_ub, 1024);
+    
+    NDRX_SPIN_LOCK_V(M_count_lock);
+    cnt = M_count2;
+    NDRX_SPIN_UNLOCK_V(M_count_lock);
+    /* usleep(2000); */
 
     if (EXFAIL==Bchg(p_ub, T_LONG_FLD, 0, (char *)&cnt, 0))
     {
@@ -137,6 +207,18 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("GETINFOS", GETINFOS))
     {
         NDRX_LOG(log_error, "Failed to initialise GETINFOS!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("TESTSVB", TESTSVB))
+    {
+        NDRX_LOG(log_error, "Failed to initialise TESTSVB!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpadvertise("GETINFOSB", GETINFOSB))
+    {
+        NDRX_LOG(log_error, "Failed to initialise GETINFOSB!");
         EXFAIL_OUT(ret);
     }
     

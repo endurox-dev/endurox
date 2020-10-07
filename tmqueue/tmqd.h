@@ -208,7 +208,7 @@ extern int tex_mq_notify(UBFH *p_ub);
 /* Background API */
 extern int background_read_log(void);
 extern void forward_shutdown_wake(void);
-extern void forward_process_init(void);
+extern int forward_process_init(void);
 extern void forward_lock(void);
 extern void forward_unlock(void);
 extern void thread_shutdown(void *ptr, int *p_finish_off);

@@ -116,8 +116,8 @@ expublic int ndrx_get_rm_name(char *rm_name, ndrx_rm_def_t *p_rmdef)
     FILE *fp = NULL;
     char *config;
     char *tmp;
-    char ndrx_home_rmfile[PATH_MAX]={EXEOS};
-    char buf[PATH_MAX+1];
+    char ndrx_home_rmfile[NDRX_BPATH_MAX]={EXEOS};
+    char buf[NDRX_BPATH_MAX+1];
     
     config=getenv(CONF_NDRX_RMFILE);
     

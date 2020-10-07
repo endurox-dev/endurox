@@ -13,6 +13,14 @@ extern "C" {
 
 /* =================================== API ======================================= */
 
+    
+/**
+ * Add job only if no job queue len exists (flag)
+ * In case if job exists, on return this indicates
+ * that job was not added, due to fact that job was already
+ * in q
+ */
+#define NDRX_THPOOL_ONEJOB          0x00000001
 
 typedef struct thpool_* threadpool;
 
@@ -78,6 +86,17 @@ threadpool ndrx_thpool_init(int num_threads, int *p_ret,
  */
 int ndrx_thpool_add_work(threadpool, void (*function_p)(void*, int *), void* arg_p);
 
+
+/**
+ * Add work with flags
+ * @param thpool_p thread pool on which we operate
+ * @param function_p work callback work callback func
+ * @param arg_p data to func
+ * @param flags
+ * @param max_len if set > 0, then wait until enqueue jobs are less than this number
+ * @return EXSUCCEED/EXFAIL
+ */
+int ndrx_thpool_add_work2(threadpool, void (*function_p)(void*, int *), void* arg_p, long flags, int max_len);
 
 /**
  * @brief Wait for all queued jobs to finish

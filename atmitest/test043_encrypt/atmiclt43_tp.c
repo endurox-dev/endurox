@@ -218,7 +218,7 @@ int main(int argc, char** argv)
     
     /* check invalid arguments */
     
-    NDRX_LOG(log_info, "Checking tpdecrypt invalid values")
+    NDRX_LOG(log_info, "Checking tpdecrypt invalid values");
     len3=sizeof(buf3);
     if (EXSUCCEED==tpdecrypt(NULL, len2, buf3, &len3, 0))
     {

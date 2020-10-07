@@ -41,11 +41,12 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <exthpool.h>
+#include <pthread.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
-#define BR_QRETRIES_DEFAULT             3 /**< Default number of retries    */
-#define BR_DEFAULT_THPOOL_SIZE          2 /**< Default threadpool size      */
+#define BR_QRETRIES_DEFAULT             999999  /**< Default number of retries    */
+#define BR_DEFAULT_THPOOL_SIZE          2       /**< Default threadpool size      */
 #define BR_THREAD_ENTRY if (!G_thread_init) \
          { \
                 if (EXSUCCEED==tpinit(NULL))\
@@ -57,6 +58,25 @@ extern "C" {
                     EXFAIL_OUT(ret);\
                 } \
          }
+    
+#define DEFAULT_QUEUE_SIZE          100    /**< max nr of queued messages dflt */
+#define DEFAULT_QUEUE_MAXSLEEP      150    /**< Max number milliseconds to sleep */
+#define DEFAULT_QUEUE_MINSLEEP      40     /**< Mininum sleep between attempts */
+    
+#define     PACK_TYPE_TONDRXD   1   /**< Send message NDRXD                   */
+#define     PACK_TYPE_TOSVC     2   /**< Send to service, use timer (their)   */
+#define     PACK_TYPE_TORPLYQ   3   /**< Send to reply q, use timer (internal)*/
+    
+/* List of queue actions: */
+#define QUEUE_ACTION_BLOCK         0   /**< Block the traffic                 */
+#define QUEUE_ACTION_DROP          1   /**< Drop the msg                      */
+#define QUEUE_ACTION_IGNORE        2   /**< Ignore the condition              */
+    
+/* List of action flags: */
+#define QUEUE_FLAG_ACTION_BLKIGN        1 /* Global queue full - block, svc queue full ignore */
+#define QUEUE_FLAG_ACTION_BLKDROP       2 /* Global queue full - block, svc queue full - drop */
+#define QUEUE_FLAG_ACTION_DROPDROP      3 /* Global queue full - drop, svc queue full - drop  */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*
@@ -71,11 +91,25 @@ typedef struct
     long long timediff;           /**< Bridge time correction       */
     int common_format;            /**< Common platform format. */
     int qretries;                 /**< Queue Resubmit retries */
+    int qsize;                    /**< Number of messages stored in memory before blocking */
+    int qsizesvc;                 /**< Single service queue size                */
+    int qttl;                     /**< Number of miliseconds for message to live in queue */
+    int qmaxsleep;                /**< Max number of millisecionds to sleep between attempts */
+    int qminsleep;                /**< Min number of millisecionds to sleep between attempts */
+    
+    int qfullaction;              /**< Action for full queue                  */
+    int qfullactionsvc;           /**< Action One service queue full          */
+    
+    int threadpoolbufsz;          /**< Threadpool buffer size, lock after full */
     int threadpoolsize;           /**< Thread pool size */
+    int check_interval;           /**< connection checking interval             */
     threadpool thpool_tonet;      /**< Thread pool by it self */
     /* Support #502, we get deadlock when both nodes all threads attempt to send
      * and there is no one who performs receive, all sockets become full */
     threadpool thpool_fromnet;    /**< Thread pool by it self */
+    
+    threadpool thpool_queue;    /**< Queue runner */
+    
 } bridge_cfg_t;
 
 typedef struct in_msg in_msg_t;
@@ -85,9 +119,21 @@ struct in_msg
     char destqstr[NDRX_MAX_Q_SIZE+1];  /**< Destination queue to which sent msg */
     char *buffer;
     int len;
-    int tries;                  /**< number of attempts for sending msg to Q */
-    ndrx_stopwatch_t trytime;   /**< Time in Q                               */
+    int tries;                    /**< number of attempts for sending msg to Q */
+    ndrx_stopwatch_t addedtime;   /**< Time in Q                               */
+    ndrx_stopwatch_t updatetime;  /**< Last time when msg was processed        */
+    int next_try_ms;              /**< When the next attempt is scheduled      */
     in_msg_t *prev, *next;
+};
+
+
+typedef struct in_msg_hash in_msg_hash_t;
+struct in_msg_hash
+{
+    char qstr[NDRX_MAX_Q_SIZE+1];/**< Posix queue name string                */
+    int nrmsg;                   /**< current number of messages per posix q */
+    in_msg_t  *msgs;             /**< DL list of messages                    */
+    EX_hash_handle hh;
 };
 
 /**
@@ -100,7 +146,6 @@ typedef struct
     char msg_type;
     
 } xatmi_brmessage_t;
-
 
 /**
  * Message received from network and submitted to thread
@@ -116,6 +161,7 @@ typedef struct
 /*---------------------------Globals------------------------------------*/
 extern bridge_cfg_t G_bridge_cfg;
 extern __thread int G_thread_init;
+extern pthread_mutex_t ndrx_G_global_br_lock;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern int br_submit_to_ndrxd(command_call_t *call, int len);
@@ -133,9 +179,16 @@ extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
 extern int br_get_conv_cd(char msg_type, char *buf, int *p_pool);
-extern void br_run_q(void);
-extern int ndrx_br_init_queue(void);
-extern void ndrx_br_uninit_queue(void);
+extern int br_chk_limit(void);
+
+extern int br_netin_setup(void);
+extern void br_netin_shutdown(void);
+
+extern int br_process_error(char *buf, int len, int err, in_msg_t* from_q, 
+        int pack_type, char *destqstr, in_msg_hash_t * qhash);
+
+extern void br_tempq_init(void);
+extern int br_add_to_q(char *buf, int len, int pack_type, char *destq);
 
 #ifdef	__cplusplus
 }

@@ -1407,7 +1407,7 @@ expublic int ndrx_cache_init(int mode)
                 {
                     NDRX_LOG(log_error, "Invalid max keygroup reject tperrno code [%s] %d "
                             "(min: %d, max: %d)", NDRX_TPCACHE_KWC_KEYGRPMAXTPERRNO, 
-                            cache->keygroupmtperrno, TPMINVAL, TPMAXVAL)
+                            cache->keygroupmtperrno, TPMINVAL, TPMAXVAL);
                     EXFAIL_OUT(ret);
                 }
             }

@@ -289,11 +289,12 @@ Mandatory Env. Variables
     that process will permanently use more memory.
 
 *NDRX_THREADSTACKSIZE*='STACKS_SIZE_IN_KB'::
-    This is target stack size for new threads produced by Enduro/X. If value
+    This is target stack size for new threads produced by Enduro/X. If value *0* is
+    is specified, default OS new thread stack size is used. If value
     is not specified, then threads produced by Enduro/X are configured by
     stack size which is set for the program main thread (i.e. current resource
-    limit). If the limit is set to unlimited, then Enduro/X sets thread stack
-    size to *8192* (which is 8 megabytes).
+    limit read by getrlimit(RLIMIT_STACK, ...)). If the limit is set to unlimited, 
+    then Enduro/X sets thread stack size to *8192* (which is 8 megabytes).
 
 *NDRX_SCANUNIT*='SYSVTOUT_THREAD_SCAN_WAIT_MS'::
     This flag is used by *SystemV* polling configuration, for others modes like 
@@ -333,6 +334,7 @@ export NDRX_SHMPATH=/dev/shm
 export NDRX_SRVMAX=10000
 export NDRX_SVCMAX=600
 export NDRX_TOUT=60
+export NDRX_THREADSTACKSIZE=8192
 export NDRX_UBFMAXFLDS=16000
 export NDRX_ULOG=/enduro/tst1/logs
 
@@ -397,6 +399,7 @@ NDRX_SRVMAX=10000
 NDRX_SVCMAX=600
 NDRX_TOUT=60
 NDRX_UBFMAXFLDS=16000
+NDRX_THREADSTACKSIZE=8192
 NDRX_ULOG=/enduro/tst1/logs
 
 #
@@ -436,6 +439,16 @@ NOTES FOR ORACLE DB
 -------------------
 Note that *tmsrv* run with multiple threads. Flag '+Threads=true' MUST be set in
 *NDRX_XA_OPEN_STR*. Otherwise unexpected core dumps can be received from *tmsrv*.
+
+
+NOTES FOR IBM AIX
+-----------------
+For IBM AIX it is recommended that *NDRX_THREADSTACKSIZE* parameter is used.
+If parameter is not set, Enduro/X tries to get new thread stack size from
+getrlimit(RLIMIT_STACK, ...) and is assigning current value to new thread.
+Starting from AIX 7.2, it looks like AIX is summing these stacks and checks
+against the *ulimit -s* (which is the same *RLIMIT_STACK* value), and thus
+new threads fails to create, as total process stack limit is exhausted.
 
 BUGS
 ----

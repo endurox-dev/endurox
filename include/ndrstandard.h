@@ -118,7 +118,7 @@ typedef long ndrx_longptr_t;
 #define N_DIM(a)        (sizeof(a)/sizeof(*(a)))
 
 #ifndef EXFAIL_OUT
-#define EXFAIL_OUT(X)    {X=EXFAIL; goto out;}
+#define EXFAIL_OUT(X)    do {X=EXFAIL; goto out;} while (0)
 #endif
 
 #ifndef EXOFFSET

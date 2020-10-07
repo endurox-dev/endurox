@@ -39,9 +39,6 @@ cmake_minimum_required(VERSION 3.1)
 find_package(BISON)
 find_package(FLEX)
 
-set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")          # .so
-set_property(GLOBAL PROPERTY TARGET_ARCHIVES_MAY_BE_SHARED_LIBS 1)
-
 BISON_TARGET(EXPRPARSER expr.y ${CMAKE_CURRENT_BINARY_DIR}/expr.tab.c)
 FLEX_TARGET(EXPRSCANNER expr.l ${CMAKE_CURRENT_BINARY_DIR}/expr.lex.c)
 

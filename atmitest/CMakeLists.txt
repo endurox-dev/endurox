@@ -132,9 +132,10 @@ add_subdirectory (test076_dispthreadxa)
 add_subdirectory (test077_diedslowstrt)
 add_subdirectory (test078_tpacallmix)
 add_subdirectory (test079_cliquote)
+add_subdirectory (test080_tpexit)
 
 ################################################################################
-# Master test case driver
+# Master test case drivere
 add_executable (atmiunit1 atmiunit1.c)
 ################################################################################
 # Master test case driver

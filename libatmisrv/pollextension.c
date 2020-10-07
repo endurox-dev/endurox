@@ -52,7 +52,8 @@
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
-pollextension_rec_t * G_pollext=NULL;
+pollextension_rec_t * ndrx_G_pollext=NULL;
+exprivate int M_pollsync = EXTRUE; /**< Shall we change the pool struct? */
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
@@ -70,6 +71,18 @@ exprivate int ext_find_poller_cmp(pollextension_rec_t *a, pollextension_rec_t *b
 
 
 /**
+ * Set the poll sync flag.
+ * If set to false, no main poll is changed
+ * (if using custom thread)
+ * @param flag EXTRUE/EXFALSE
+ */
+expublic void ndrx_ext_pollsync(int flag)
+{
+    M_pollsync=flag;
+    NDRX_LOG(log_info, "Extension poll sync flag set to: %d", M_pollsync);
+}
+
+/**
  * Find the buffer in list of known buffers
  * @param ptr
  * @return NULL - buffer not found/ptr - buffer found
@@ -79,7 +92,7 @@ expublic pollextension_rec_t * ext_find_poller(int fd)
     pollextension_rec_t *ret=NULL, eltmp;
 
     eltmp.fd = fd;
-    DL_SEARCH(G_pollext, ret, &eltmp, ext_find_poller_cmp);
+    DL_SEARCH(ndrx_G_pollext, ret, &eltmp, ext_find_poller_cmp);
     
     return ret;
 }
@@ -99,7 +112,7 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     pollextension_rec_t * existing = NULL;
     struct ndrx_epoll_event ev;
     
-    if (NULL==G_server_conf.service_array)
+    if (NULL==G_server_conf.service_array &&  M_pollsync)
     {
         ndrx_TPset_error_fmt(TPEPROTO, "Cannot add custom poller at init stage!");
         ret=EXFAIL;
@@ -125,17 +138,20 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
         goto out;
     }    
     
-    /* We are good to go! Add epoll stuff here */
-    ev.events = events; /* hmmm what to do? */
-    ev.data.fd = fd;
-    
-    if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
-                            fd, &ev))
+    if (M_pollsync)
     {
-        ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", 
-                ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=EXFAIL;
-        goto out;
+        /* We are good to go! Add epoll stuff here */
+        ev.events = events; /* hmmm what to do? */
+        ev.data.fd = fd;
+
+        if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_ADD,
+                                fd, &ev))
+        {
+            ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed: %s", 
+                    ndrx_poll_strerror(ndrx_epoll_errno()));
+            ret=EXFAIL;
+            goto out;
+        }
     }
     
     /* Add stuff to doubly linked list! */
@@ -147,7 +163,7 @@ expublic int _tpext_addpollerfd(int fd, uint32_t events,
     pollext->events = events;
 */
     
-    DL_APPEND(G_pollext, pollext);
+    DL_APPEND(ndrx_G_pollext, pollext);
     NDRX_LOG(log_debug, "Function 0x%lx fd=%d successfully added "
             "for polling", p_pollevent, fd);
     
@@ -174,7 +190,7 @@ expublic int _tpext_delpollerfd(int fd)
     int ret=EXSUCCEED;
     pollextension_rec_t * existing = NULL;
     
-    if (NULL==G_server_conf.service_array)
+    if (NULL==G_server_conf.service_array && M_pollsync)
     {
         ndrx_TPset_error_fmt(TPEPROTO, "Cannot remove custom poller at init stage!");
         ret=EXFAIL;
@@ -190,18 +206,21 @@ expublic int _tpext_delpollerfd(int fd)
         goto out;
     }
 
-    /* OK, stuff found, remove from Epoll */
-    if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
-                        fd, NULL))
+    if (M_pollsync)
     {
-        ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
-                fd, ndrx_poll_strerror(ndrx_epoll_errno()));
-        ret=EXFAIL;
-        goto out;
+        /* OK, stuff found, remove from Epoll */
+        if (EXFAIL==ndrx_epoll_ctl(G_server_conf.epollfd, EX_EPOLL_CTL_DEL,
+                            fd, NULL))
+        {
+            ndrx_TPset_error_fmt(TPEOS, "epoll_ctl failed to remove fd %d from epollfd: %s", 
+                    fd, ndrx_poll_strerror(ndrx_epoll_errno()));
+            ret=EXFAIL;
+            goto out;
+        }
     }
     
     /* Remove from linked list */
-    DL_DELETE(G_pollext, existing);
+    DL_DELETE(ndrx_G_pollext, existing);
     NDRX_FREE(existing);
     
 out:
