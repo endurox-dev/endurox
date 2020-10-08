@@ -752,28 +752,12 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
                 if (EXSUCCEED!=(n=ndrx_pthread_cond_wait(&emqhdr->emqh_wait, 
                         &emqhdr->emqh_lock)))
                 {
-                    int tmp;
-                    /* set nwait atomically... */
-                    if ( (tmp = pthread_mutex_lock(&emqhdr->emqh_lock)) != EXSUCCEED)
-                    {
-                        NDRX_LOG(log_error, "Failed to get pthread_mutex_lock: %s", 
-                                strerror(tmp));
-
-                        userlog("%s: pthread_mutex_lock failed %d: %s", 
-                            __func__, tmp, strerror(tmp));
-
-                        /* no lock */
-                        errno = tmp;
-                    }
-                    else
-                    {
-                        /* have lock */
-                        NDRX_LOG(log_error, "%s: pthread_cond_wait failed %d: %s", 
-                            __func__, n, strerror(n));
-                        userlog("%s: pthread_cond_wait failed %d: %s", 
-                            __func__, n, strerror(n));
-                        errno = n;
-                    }
+                    /* have lock as stated by pthread_cond_wait !*/
+                    NDRX_LOG(log_error, "%s: pthread_cond_wait failed %d: %s", 
+                        __func__, n, strerror(n));
+                    userlog("%s: pthread_cond_wait failed %d: %s", 
+                        __func__, n, strerror(n));
+                    errno = n;
 
                     emqhdr->emqh_nwait--;
                     goto err;
@@ -794,35 +778,18 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
                     
                     if (n!=ETIMEDOUT)
                     {
-                        int tmp;
-                        /* set nwait atomically... */
-                        if ( (tmp = pthread_mutex_lock(&emqhdr->emqh_lock)) != EXSUCCEED)
-                        {
-                            NDRX_LOG(log_error, "Failed to get pthread_mutex_lock: %s", 
-                                    strerror(tmp));
-                            
-                            userlog("%s: pthread_mutex_lock failed %d: %s", 
-                                __func__, tmp, strerror(tmp));
-                            
-                            /* no lock */
-                            errno = tmp;
-                        }
-                        else
-                        {
-                            /* have lock */
-                            NDRX_LOG(log_error, "%s: ndrx_pthread_cond_timedwait failed %d: %s", 
-                                __func__, n, strerror(n));
-                            userlog("%s: ndrx_pthread_cond_timedwait failed %d: %s", 
-                                __func__, n, strerror(n));
-                            errno = n;
-                        }
+                        /* have lock as per pthread_cond_timedwait spec */
+                        NDRX_LOG(log_error, "%s: ndrx_pthread_cond_timedwait failed %d: %s", 
+                            __func__, n, strerror(n));
+                        userlog("%s: ndrx_pthread_cond_timedwait failed %d: %s", 
+                            __func__, n, strerror(n));
                     }
                     else
                     {
                         NDRX_LOG(log_dump, "ETIMEDOUT: attr->mq_curmsgs = %ld", attr->mq_curmsgs);
-                        errno = n;
                     }
 
+                    errno = n;
                     emqhdr->emqh_nwait--;
                     goto err;
                 }
