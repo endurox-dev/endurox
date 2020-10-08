@@ -764,16 +764,18 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
 
                         /* no lock */
                         errno = tmp;
-                        return(-1);
                     }
-                    
-                    /* have lock */
+                    else
+                    {
+                        /* have lock */
+                        NDRX_LOG(log_error, "%s: pthread_cond_wait failed %d: %s", 
+                            __func__, n, strerror(n));
+                        userlog("%s: pthread_cond_wait failed %d: %s", 
+                            __func__, n, strerror(n));
+                        errno = n;
+                    }
+
                     emqhdr->emqh_nwait--;
-                    NDRX_LOG(log_error, "%s: pthread_cond_wait failed %d: %s", 
-                            __func__, n, strerror(n));
-                    userlog("%s: pthread_cond_wait failed %d: %s", 
-                            __func__, n, strerror(n));
-                    errno = n;
                     goto err;
                 }
             }
@@ -804,20 +806,24 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
                             
                             /* no lock */
                             errno = tmp;
-                            return(-1);
                         }
-                        
-                        /* have lock */
-                        emqhdr->emqh_nwait--;
-                        NDRX_LOG(log_error, "%s: ndrx_pthread_cond_timedwait failed %d: %s", 
-                            __func__, n, strerror(n));
-                        userlog("%s: ndrx_pthread_cond_timedwait failed %d: %s", 
+                        else
+                        {
+                            /* have lock */
+                            NDRX_LOG(log_error, "%s: ndrx_pthread_cond_timedwait failed %d: %s", 
                                 __func__, n, strerror(n));
-                        errno = n;
-                        return -1;
+                            userlog("%s: ndrx_pthread_cond_timedwait failed %d: %s", 
+                                __func__, n, strerror(n));
+                            errno = n;
+                        }
                     }
-                    
-                    errno = n;
+                    else
+                    {
+                        NDRX_LOG(log_dump, "ETIMEDOUT: attr->mq_curmsgs = %ld", attr->mq_curmsgs);
+                        errno = n;
+                    }
+
+                    emqhdr->emqh_nwait--;
                     goto err;
                 }
             }
@@ -851,13 +857,15 @@ expublic ssize_t emq_timedreceive(mqd_t emqd, char *ptr, size_t maxlen, unsigned
 
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     
-    NDRX_LOG(log_dump, "emq_timedreceive - got something len=%d", len);
+    NDRX_LOG(log_dump, "emq_timedreceive - got something len=%d stats: %ld wait: %ld",
+            len, attr->mq_curmsgs, emqhdr->emqh_nwait);
     return(len);
 
 err:
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
     n = errno;
-    NDRX_LOG(log_dump, "emq_timedreceive - failed: %s", strerror(errno));
+    NDRX_LOG(log_dump, "emq_timedreceive - failed: %s stats: %ld wait: %ld",
+            strerror(errno), attr->mq_curmsgs, emqhdr->emqh_nwait);
     errno = n;
     
     return(-1);
@@ -910,23 +918,8 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
         errno = EMSGSIZE;
         goto err;
     }
-    if (attr->mq_curmsgs == 0)
-    {
-        if (emqhdr->emqh_pid != 0 && emqhdr->emqh_nwait == 0)
-        {
-            sigev = &emqhdr->emqh_event;
-#if !defined(WIN32)
-            if (sigev->sigev_notify == SIGEV_SIGNAL)
-            {
-                /*sigqueue(emqhdr->emqh_pid, sigev->sigev_signo,
-                                         sigev->sigev_value);*/
-                kill(emqhdr->emqh_pid, sigev->sigev_signo);
-            }
-#endif
-            emqhdr->emqh_pid = 0;             /* unregister */
-        }
-    } 
-    else if (attr->mq_curmsgs >= attr->mq_maxmsg)
+
+    if (attr->mq_curmsgs >= attr->mq_maxmsg)
     {
         /* queue is full */
         if (emqinfo->emqi_flags & O_NONBLOCK)
@@ -971,6 +964,7 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
                         errno = n;
                         return -1;
                     }
+                    NDRX_LOG(log_error, "ETIMEDOUT: attr->mq_curmsgs = %ld", attr->mq_curmsgs);
                     
                     /* we have lock... */
                     errno = n;
@@ -1014,7 +1008,23 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
         nmsghdr->msg_next = 0;
     }
     
-    
+    if (attr->mq_curmsgs == 0)
+    {
+        if (emqhdr->emqh_pid != 0 && emqhdr->emqh_nwait == 0)
+        {
+            sigev = &emqhdr->emqh_event;
+#if !defined(WIN32)
+            if (sigev->sigev_notify == SIGEV_SIGNAL)
+            {
+                /*sigqueue(emqhdr->emqh_pid, sigev->sigev_signo,
+                                         sigev->sigev_value);*/
+                kill(emqhdr->emqh_pid, sigev->sigev_signo);
+            }
+#endif
+            emqhdr->emqh_pid = 0;             /* unregister */
+        }
+    }
+
     /* if configuration of queues are changed, then wake up any one who 
      * is waiting, if not none waiting - no problem
      */
@@ -1022,14 +1032,16 @@ expublic int emq_timedsend(mqd_t emqd, const char *ptr, size_t len, unsigned int
     attr->mq_curmsgs++;
     
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
-    NDRX_LOG(log_dump, "into: emq_timedsend - return 0");
+    NDRX_LOG(log_dump, "into: emq_timedsend - return 0 stats: %ld wait: %ld",
+            attr->mq_curmsgs, emqhdr->emqh_nwait);
     return(0);
 
 err:
     MUTEX_UNLOCK_V(emqhdr->emqh_lock);
 
     n = errno;
-    NDRX_LOG(log_dump, "into: emq_timedsend - return -1: %s", strerror(n));
+    NDRX_LOG(log_dump, "into: emq_timedsend - return -1: %s stats: %ld wait: %ld",
+            strerror(n), attr->mq_curmsgs, emqhdr->emqh_nwait);
     errno = n;
     return(-1);
 }
