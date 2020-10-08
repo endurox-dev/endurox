@@ -563,11 +563,32 @@ again:
         /* initialize mutex & condition variable */
         if ( (i = pthread_mutexattr_init(&mattr)) != 0)
             goto pthreaderr;
-        pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+
+        if ((i=pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED)) < 0)
+        {
+            NDRX_LOG(log_error, "Failed to set attribute PTHREAD_PROCESS_SHARED: %s", strerror(i));
+            userlog("Failed to set attribute PTHREAD_PROCESS_SHARED: %s", strerror(i));
+            goto pthreaderr;
+        }
+
+#if defined(NDRX_MUTEX_DEBUG) || defined(EX_OS_DARWIN)
+        if((i = pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK)) < 0)
+        {
+            NDRX_LOG(log_error, "Failed to set attribute ERRORCHECK: %s", strerror(i));
+            userlog("Failed to set attribute ERRORCHECK: %s", strerror(i));
+            goto pthreaderr;
+        }
+#endif
+
         i = pthread_mutex_init(&emqhdr->emqh_lock, &mattr);
+
         pthread_mutexattr_destroy(&mattr);      /* be sure to destroy */
         if (i != 0)
+        {
+            NDRX_LOG(log_error, "Failed to pthread_mutex_init: %s", strerror(i));
+            userlog("Failed to pthread_mutex_init: %s", strerror(i));
             goto pthreaderr;
+        }
 
         if ( (i = pthread_condattr_init(&cattr)) != 0)
             goto pthreaderr;
