@@ -1540,7 +1540,7 @@ expublic void ndrx_growlist_free(ndrx_growlist_t *list)
 {
     if (NULL!=list->mem)
     {
-        NDRX_FREE(list->mem);
+        NDRX_FPFREE(list->mem);
         list->mem=NULL;
     }
 }
