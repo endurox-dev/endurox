@@ -751,7 +751,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                      * the 2 to get space for 1.
                      * Fixed: moved from Bfind to ndrx_Bgetalloc
                      */
-                    if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, copy_form, len_from)))
+                    if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, copy_form, len_from, Bfldtype(bfldid_from))))
                     {
                         NDRX_FREE(copy_form);
                         EXFAIL_OUT(ret);
