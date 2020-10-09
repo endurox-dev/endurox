@@ -388,7 +388,7 @@ Ensure(test_Bcmp_ptr)
  */
 Ensure(test_Bcmp_view)
 {
-    char fb[1024];
+    char fb[2048];
     char fb_2[2048];
     struct UBTESTVIEW1 v1;
     BVIEWFLD vf1;
