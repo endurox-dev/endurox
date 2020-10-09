@@ -50,9 +50,62 @@
 #include "Exfields.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define NUM_COMP(A, B) do {if ((A) > (B)) {ret=1; goto out;} else if ((A) < (B)) {ret=-1; goto out;}} while (0)
-#define FLOAT_COMP(A, B) do {if (fabs((A)-(B)) > FLOAT_EQUAL) {if ((A) > (B)) {ret=1; goto out;} else {ret=-1; goto out;}}} while (0)
-#define DOUBLE_COMP(A, B) do {if (fabs((A)-(B)) > DOUBLE_EQUAL) {if ((A) > (B)) {ret=1; goto out;} else {ret=-1; goto out;}}} while (0)
+#define NUM_COMP(A, B) \
+        do \
+        {\
+            if ((A) > (B)) \
+            {\
+                ret=1;\
+                UBF_LOG(log_debug, "NUM_COMP non eq cname=[%s] occ=%d (A=%ld > B=%ld)", f->cname, occ, (long)(A), (long)(B));\
+                goto out;\
+            }\
+            else if ((A) < (B)) \
+            {\
+                ret=-1;\
+                UBF_LOG(log_debug, "NUM_COMP non eq cname=[%s] occ=%d (A=%ld< B=%ld)", f->cname, occ, (long)(A), (long)(B));\
+                goto out;\
+            }\
+    } while (0)\
+
+#define FLOAT_COMP(A, B) \
+    do \
+    {\
+        if (fabs((A)-(B)) > FLOAT_EQUAL)\
+        {\
+            if ((A) > (B))\
+            {\
+                ret=1;\
+                UBF_LOG(log_debug, "FLOAT_COMP non eq cname=[%s] occ=%d (A=%f > B=%f)", f->cname, occ, (float)(A), (float)(B));\
+                goto out;\
+            }\
+            else\
+            {\
+                ret=-1;\
+                UBF_LOG(log_debug, "FLOAT_COMP non eq cname=[%s] occ=%d (A=%f < B=%f)", f->cname, occ, (float)(A), (float)(B));\
+                goto out;\
+            }\
+        }\
+    } while (0)
+
+#define DOUBLE_COMP(A, B) \
+    do \
+    {\
+        if (fabs((A)-(B)) > DOUBLE_EQUAL) \
+        {\
+            if ((A) > (B)) \
+            {\
+                ret=1;\
+                UBF_LOG(log_debug, "DOUBLE_COMP non eq cname=[%s] occ=%d (A=%lf > B=%lf)", f->cname, occ, (double)(A), (double)(B));\
+                goto out;\
+            } \
+            else \
+            {\
+                ret=-1;\
+                UBF_LOG(log_debug, "DOUBLE_COMP non eq cname=[%s] occ=%d (A=%lf < B=%lf)", f->cname, occ, (double)(A), (double)(B));\
+                goto out;\
+            }\
+        }\
+     } while (0)
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
