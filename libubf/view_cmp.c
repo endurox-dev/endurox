@@ -257,6 +257,8 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
 
                     if (0!=(ret=strcmp(fld_offs1, fld_offs2)))
                     {
+                        UBF_LOG(log_debug, "STRING COMP cname=[%s] occ=%d (A=[%s] <> B=[%s])", 
+                            f->cname, occ, fld_offs1, fld_offs2);
                         if (ret<-1)
                         {
                             ret=-1;
@@ -292,6 +294,10 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
                     
                     if (0!=(ret=memcmp(fld_offs1, fld_offs2, len_cmp)))
                     {
+
+                        UBF_LOG(log_debug, "CARRAY COMP cname=[%s] occ=%d (A <> B)", 
+                            f->cname, occ);
+
                         if (ret<-1)
                         {
                             ret=-1;

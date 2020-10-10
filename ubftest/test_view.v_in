@@ -33,7 +33,7 @@ carray   tcarray1   T_CARRAY_FLD        1       FS      30      '\0\n\t\f\\\'\"\
 carray   tcarray2   T_CARRAY_2_FLD      1       LFSP    25      '\0\n\t\f\\\'\"\vHELLOWORL\n'
 carray   tcarray3   T_CARRAY_3_FLD      10      FSCLP   30      '\0\\\nABC\t\f\'\vHELLO'
 carray   tcarray4   -                   1       -       5       'ABC'
-carray   tcarray5   -                   1       -       5       -
+carray   tcarray5   -                   1       P       5       'x'
 
 END
 

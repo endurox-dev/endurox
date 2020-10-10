@@ -493,6 +493,8 @@ Ensure(test_Bgetr)
     BFLDLEN len;
     long l;
     UBFH *p_ub_tmp = (UBFH *)buf_tmp;
+    BVIEWFLD vf;
+    struct UBTESTVIEW2 v;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_recursive_data(p_ub);
@@ -561,8 +563,10 @@ Ensure(test_Bgetr)
     assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXSUCCEED);
     do_dummy_data_test(p_ub_tmp);
     
-    //T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[3]
-    
+    vf.data=(char *)&v;
+    len=sizeof(v);
+    assert_equal(Bgetrv (p_ub, (char *)&vf, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_UBF_2_FLD, 0, T_VIEW_3_FLD, 4, BBADFLDOCC), EXSUCCEED);
+    assert_equal(v.tlong1, 200);
     
 }
 
