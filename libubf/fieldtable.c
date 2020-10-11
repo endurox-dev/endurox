@@ -269,7 +269,7 @@ expublic UBF_field_def_t * ndrx_fldnmhash_get(char *key)
 }
 
 /**
- * Initialize bisubf buffer
+ * Initialize UBF buffer
  *
  * Probably we need to build two hashes, one for BFLDID as key
  * And second hash we use field name as key

@@ -79,7 +79,7 @@ struct err_msg
     {UBFE(BERFU0),    "BERFU0"}, /* 1 */
     {UBFE(BALIGNERR), "Bisubf buffer not aligned"}, /* 2 */
     {UBFE(BNOTFLD),   "Buffer not UBF"}, /* 3 */
-    {UBFE(BNOSPACE),  "No space in bisubf buffer"}, /* 4 */
+    {UBFE(BNOSPACE),  "No space in UBF buffer"}, /* 4 */
     {UBFE(BNOTPRES),  "Field not present"}, /* 5 */
     {UBFE(BBADFLD),   "Unknown field number or type"}, /* 6 */
     {UBFE(BTYPERR),   "Illegal field type"}, /* 7 */

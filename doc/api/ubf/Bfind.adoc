@@ -26,6 +26,10 @@ the type length in bytes. Then 'len' is optional. Note that pointer to field
 is valid only that time while the buffer is not changed. If changes occur, 
 then returned pointer might become invalid (point wrong data area).
 
+When Bfind() returns result for *BFLD_VIEW* field, the return value points
+to *BVIEWFLD* structure which resits in thread-local storage. The *data* field
+of structure pointers to UBF buffers actual view data.
+
 RETURN VALUE
 ------------
 On success, *Bfind()* non NULL value is returned; on error, NULL is returned,

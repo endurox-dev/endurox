@@ -170,7 +170,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 /*********************** Basic data type operations ***************************/
 
 /******************************************************************************/
-/* Bellow functions returns data block size in bisubf buffer. This data includes
+/* Bellow functions returns data block size in UBF buffer. This data includes
  * data length it self + service information (BFLDID size, etc..) */
 /******************************************************************************/
 
@@ -208,7 +208,7 @@ exprivate int get_fb_string_size(dtype_str_t *t, char *fb, int *payload_size)
     
 }
 /**
- * Get data size which are placed into bisubf buffer.
+ * Get data size which are placed into UBF buffer.
  * @param t
  * @param data
  * @return
@@ -222,14 +222,14 @@ exprivate int get_fb_carray_size(dtype_str_t *t, char *fb, int *payload_size)
 }
 
 /******************************************************************************/
-/* Put data into bisubf buffer. This initializes all service information
+/* Put data into UBF buffer. This initializes all service information
  * and it copies data itself into buffer */
 /******************************************************************************/
 /**
  * Put data into buffer - default function usable for fixed length data types
  * NOTE: May require split-up for endiannes.
  * @param t data type
- * @param fb pointer to bisubf buffer
+ * @param fb pointer to UBF buffer
  * @param bfldid field ID
  * @param data pointer to data
  * @param len buffer size???
@@ -296,7 +296,7 @@ exprivate int put_data_carray(dtype_str_t *t, char *fb, BFLDID bfldid,
 
 /******************************************************************************/
 /* This function data size including service information, that could cost
- * if added to bisubf buffer. I.e. this returns target size of the data if put
+ * if added to UBF buffer. I.e. this returns target size of the data if put
  * into the buffer */
 /******************************************************************************/
 
@@ -352,7 +352,7 @@ exprivate int get_d_size_carray (struct dtype_str *t, char *data,
 }
 
 /******************************************************************************/
-/* These functions returns the data from bisubf buffer. Buffer lenght is
+/* These functions returns the data from UBF buffer. Buffer lenght is
  * checked. Functions also return size of data copied into destination buffer */
 /******************************************************************************/
 
@@ -503,7 +503,7 @@ exprivate int g_carr_empty(struct dtype_ext1* t)
 }
 
 /******************************************************************************/
-/* Bellow functions puts empty data into bisubf buffer                       */
+/* Bellow functions puts empty data into UBF buffer                           */
 /******************************************************************************/
 
 

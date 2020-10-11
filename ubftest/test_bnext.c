@@ -124,26 +124,16 @@ Ensure(test_fnext_simple)
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     load_fdel_test_data(p_ub);
     
-    len = sizeof(data_buf)-sizeof(BVIEWFLD);
+    len = sizeof(data_buf);
     bfldid = BFIRSTFLDID;
-    
-    vf=(BVIEWFLD *)data_buf;
-    vf->data=data_buf+sizeof(BVIEWFLD);
     
     while(1==Bnext(p_ub, &bfldid, &occ, data_buf, &len))
     {
-        /* Put the data inside of the other buffer... */
-        
-        /* The VIEW data requires that data ptr is set...
-         * thus use the same area...
-         */
-        vf=(BVIEWFLD *)data_buf;
-        vf->data=data_buf+sizeof(BVIEWFLD);
-        
         assert_equal(Bchg(p_ub_2, bfldid, occ, data_buf, len), EXSUCCEED);
         /* Got the value? */
-        len = sizeof(data_buf)-sizeof(BVIEWFLD);
+        len = sizeof(data_buf);
     }
+    
     /* Now do the mem compare (this is not the best way to test,
      * but will be OK for now */
     assert_equal(Bcmp(p_ub, p_ub_2),0);
