@@ -43,17 +43,11 @@
     
 #define  LOCK_Q if ( (n = pthread_mutex_lock(&emqhdr->emqh_lock)) != 0)\
     {\
-        if (EBUSY!=n)\
-        {\
+            NDRX_LOG(log_error, "EMQ: pthread_mutex_lock failed: %s", strerror(n));\
+            userlog("EMQ: pthread_mutex_lock failed: %s", strerror(n));\
             errno = n;\
             return(-1);\
-        }\
-        else\
-        {\
-            NDRX_LOG(log_error, "lock was busy!");\
-        }\
     }
-    
     
 #define MAX_TRIES   10
 exprivate  struct mq_attr defattr = { 0, 128, 1024, 0 };
