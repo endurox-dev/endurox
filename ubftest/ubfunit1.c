@@ -119,6 +119,15 @@ void load_field_table(void)
 }
 
 /**
+ * Basic preparation before the test
+ */
+void std_basic_setup(void)
+{
+    /* set view env... */
+    load_field_table();
+}
+
+/**
  * Fill up buffer with something so that we have more interesting stuff there
  * bigger buffer, etc...
  * @param p_ub

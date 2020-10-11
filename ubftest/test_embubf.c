@@ -45,18 +45,6 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 
-
-/**
- * Preparation before the test
- */
-Ensure(embubf_basic_setup1)
-{
-    /* set view env... */
-    setenv("VIEWDIR", "./", 1);
-    setenv("VIEWFILES", "test_view.V", 1);
-}
-
-
 /**
  * Load the view test data
  * @param v
@@ -191,9 +179,7 @@ expublic void load_recursive_data(UBFH *p_ub)
 
     struct UBTESTVIEW1 v;
     BVIEWFLD vf;
-    
-    char tmp_str[1024];
-    
+        
     memset(buf1, 0, sizeof(buf1));
     memset(buf2, 0, sizeof(buf2));
     memset(buf4, 0, sizeof(buf4));
@@ -717,7 +703,8 @@ TestSuite *ubf_embubf_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
-    set_setup(suite, embubf_basic_setup1);
+    std_basic_setup();
+    
     add_test(suite, test_Bgetr);
     
     add_test(suite, test_CBgetr);

@@ -154,7 +154,7 @@ expublic void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid)
 expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
 {
     int ret = EXSUCCEED;
-    int i, j, len, state, terminator;
+    int i, j, len, state, prev_state, terminator;
     char tmp[PATH_MAX];
     BFLDID parsedid=BBADFLDID;
     BFLDOCC parsedocc;
@@ -187,7 +187,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
         EXFAIL_OUT(ret);
     }
     
-    state=STATE_NONE;
+    prev_state=state=STATE_NONE;
     j=0;
     for (i=0; i<len+1; i++)
     {
@@ -228,15 +228,21 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
                 /* finish field, count occ */
                 tmp[j]=EXEOS;
                 RESOLVE_FIELD;
+                prev_state=state;
                 state=STATE_OCC;
             }
             else if ('.'==rfldidstr[i])
             {
                 /* finish field, got 0 occ */
                 tmp[j]=EXEOS;
-                RESOLVE_FIELD;
-                parsedocc=0;
-                RESOLVE_ADD;
+                
+                /* do not resolve if previous was occurrence */
+                if (STATE_OCC!=prev_state && STATE_OCCANY!=prev_state)
+                {
+                    RESOLVE_FIELD;
+                    parsedocc=0;
+                    RESOLVE_ADD;
+                }
             }
             else
             {
@@ -279,6 +285,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
                 tmp[j]=EXEOS;
                 parsedocc=atoi(tmp);
                 RESOLVE_ADD;
+                prev_state=state;
                 state=STATE_NONE;
             }
             else if (0x0 ==rfldidstr[i])
@@ -309,6 +316,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
             {
                 /* Finish off the field + occ, already parsed.. */
                 RESOLVE_ADD;
+                prev_state=state;
                 state=STATE_NONE;
             }
             else if (0x0 ==rfldidstr[i])

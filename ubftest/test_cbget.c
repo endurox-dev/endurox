@@ -41,15 +41,7 @@
 #include "ubfunit1.h"
 
 
-/**
- * Basic preparation before the test
- */
-Ensure(cbget_basic_setup1)
-{
-    /* set view env... */
-    setenv("VIEWDIR", "./", 1);
-    setenv("VIEWFILES", "test_view.V", 1);
-}
+
 
 /**
  * Original field is BFLD_SHORT => T_SHORT_FLD
@@ -834,7 +826,7 @@ TestSuite *ubf_cfget_tests(void)
 {
     TestSuite *suite = create_test_suite();
     
-    set_setup(suite, cbget_basic_setup1);
+    std_basic_setup();
     
     add_test(suite, test_CBget_short_org);
     add_test(suite, test_CBget_long_org);

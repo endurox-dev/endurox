@@ -63,6 +63,8 @@ extern void load_field_table(void);
 extern void set_up_dummy_data(UBFH *p_ub);
 extern void do_dummy_data_test(UBFH *p_ub);
 extern void randomize_test_data(char *ptr, int size);
+extern void load_recursive_data(UBFH *p_ub);
+extern void std_basic_setup(void);
 
 extern void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 extern void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
