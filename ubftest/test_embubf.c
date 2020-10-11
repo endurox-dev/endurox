@@ -231,7 +231,7 @@ expublic void load_recursive_data(UBFH *p_ub)
     set_up_dummy_data(p_ub);
     
     
-    Bprint(p_ub);
+    /* Bprint(p_ub); */
     
     /*
 T_DOUBLE_3_FLD	1.110000
@@ -517,12 +517,14 @@ Ensure(test_Bgetr)
             tmp, &len), EXFAIL);
     assert_equal(Berror, BTYPERR);
     
-    assert_equal(Bgetrv (p_ub, tmp, &len, T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC), EXFAIL);
+    assert_equal(Bgetrv (p_ub, tmp, &len, 
+            T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BTYPERR);
     
     /* check field not found */
     
-    assert_equal(Bgetrv (p_ub, tmp, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 4, T_STRING_3_FLD, 1, BBADFLDOCC), EXFAIL);
+    assert_equal(Bgetrv (p_ub, tmp, &len, 
+            T_UBF_2_FLD, 1, T_UBF_FLD, 4, T_STRING_3_FLD, 1, BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BNOTPRES);
     
     /* check no space.. */
@@ -538,7 +540,8 @@ Ensure(test_Bgetr)
     len=sizeof(tmp);
     tmp[0]=EXEOS;
     
-    assert_equal(Bgetrv (p_ub, tmp, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_STRING_3_FLD, 1, BBADFLDOCC), EXSUCCEED);
+    assert_equal(Bgetrv (p_ub, tmp, &len, 
+            T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_STRING_3_FLD, 1, BBADFLDOCC), EXSUCCEED);
     assert_string_equal(tmp, "HELLO_CHILD 2");
     assert_equal(len, 14);
 
@@ -556,16 +559,19 @@ Ensure(test_Bgetr)
     
     /* check no space.. */
     len=1;
-    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXFAIL);
+    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, 
+            (char *)p_ub_tmp, &len), EXFAIL);
     assert_equal(Berror, BNOSPACE);
     
     len=sizeof(buf_tmp);
-    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, (char *)p_ub_tmp, &len), EXSUCCEED);
+    assert_equal(Bgetr (p_ub, (int []){ T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,BBADFLDOCC}, 
+            (char *)p_ub_tmp, &len), EXSUCCEED);
     do_dummy_data_test(p_ub_tmp);
     
     vf.data=(char *)&v;
     len=sizeof(v);
-    assert_equal(Bgetrv (p_ub, (char *)&vf, &len, T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_UBF_2_FLD, 0, T_VIEW_3_FLD, 4, BBADFLDOCC), EXSUCCEED);
+    assert_equal(Bgetrv (p_ub, (char *)&vf, &len, 
+            T_UBF_2_FLD, 1, T_UBF_FLD, 0, T_UBF_2_FLD, 0, T_VIEW_3_FLD, 4, BBADFLDOCC), EXSUCCEED);
     assert_equal(v.tlong1, 200);
     
 }
@@ -574,7 +580,7 @@ Ensure(test_CBgetr)
 {
     char buf[56000];
     char buf_tmp[56000];
-    long l=0;
+    BFLDLEN l=0;
     BFLDLEN len;
     UBFH *p_ub = (UBFH *)buf;
     
@@ -582,46 +588,106 @@ Ensure(test_CBgetr)
     load_recursive_data(p_ub);
     
     /* convert ok */
-    assert_equal(CBgetr (p_ub, (int []){T_UBF_FLD,0,T_STRING_9_FLD,1,BBADFLDOCC}, (char *)&l, NULL, BFLD_LONG), EXSUCCEED);
+    assert_equal(CBgetr (p_ub, (int []){T_UBF_FLD,0,T_STRING_9_FLD,1,BBADFLDOCC}, 
+            (char *)&l, NULL, BFLD_LONG), EXSUCCEED);
     assert_equal(l, 20);
     
     /* check no space */
     len=1;
     assert_equal(CBgetrv (p_ub, (char *)buf_tmp, &len, BFLD_STRING, 
-            T_UBF_2_FLD,0,T_UBF_FLD,0,T_STRING_3_FLD,3,BBADFLDOCC), EXFAIL);
+            T_UBF_FLD,0,T_UBF_3_FLD,2,T_STRING_9_FLD,3,BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BNOSPACE);
+    
+    /* check ok */
+    len=sizeof(buf_tmp);
+    assert_equal(CBgetrv (p_ub, (char *)buf_tmp, &len, BFLD_STRING, 
+            T_UBF_FLD,0,T_UBF_3_FLD,2,T_STRING_9_FLD,3,BBADFLDOCC), EXSUCCEED);
+    assert_string_equal(buf_tmp, "HELLO WORLD UB");
     
 }
 
 Ensure(test_Bfindr)
 {
     char buf[56000];
-    char buf_tmp[56000];
+    char *ptr;
+    BVIEWFLD *vf;
+    struct UBTESTVIEW2 *v;
+    BFLDLEN len;
     UBFH *p_ub = (UBFH *)buf;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_recursive_data(p_ub);
+    
+    /* find value OK with len */
+    ptr=Bfindrv(p_ub, &len, T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,T_VIEW_3_FLD,4,BBADFLDOCC);
+    
+    assert_not_equal(ptr, NULL);
+    vf=(BVIEWFLD *)ptr;
+    v=(struct UBTESTVIEW2 *)vf->data;
+    
+    assert_string_equal(vf->vname, "UBTESTVIEW2");
+    assert_equal(len, sizeof(struct UBTESTVIEW2));
+    /* check view values... */
+    assert_string_equal(v->tstring1, "6YY");
+    
+    /* check the error handling.. */
+    ptr=Bfindrv(p_ub, &len, T_UBF_2_FLD,1,T_UBF_FLD,0,T_UBF_2_FLD,0,T_VIEW_3_FLD,10,BBADFLDOCC);
+    assert_equal(ptr, NULL);
+    assert_equal(Berror, BNOTPRES);
     
 }
 
 Ensure(test_CBfindr)
 {
     char buf[56000];
-    char buf_tmp[56000];
+    char *p;
+    BFLDLEN len;
+    long *lv;
     UBFH *p_ub = (UBFH *)buf;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_recursive_data(p_ub);
+    
+    p=CBfindrv(p_ub, &len, BFLD_LONG, T_UBF_FLD,0,T_STRING_9_FLD,2,BBADFLDOCC);
+    assert_not_equal(p, NULL);
+    lv = (long *)p;
+    assert_equal(*lv, 31);
+    assert_equal(len, sizeof(long));
+    
+    /* check error */
+    p=CBfindrv(p_ub, &len, BFLD_LONG, T_UBF_FLD,0,T_STRING_9_FLD,1000,BBADFLDOCC);
+    assert_equal(p, NULL);
+    assert_equal(Berror, BNOTPRES);
 }
 
 Ensure(test_CBvgetr)
 {
     char buf[56000];
     char buf_tmp[56000];
+    BFLDLEN len;
     UBFH *p_ub = (UBFH *)buf;
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_recursive_data(p_ub);
+    
+    /* get view field from recursive buffer */
+    len=sizeof(buf_tmp);
+    assert_equal(CBvgetrv(p_ub, "tstring0", 2, buf_tmp, &len, BFLD_STRING, 0,
+            T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXSUCCEED);
+    assert_string_equal(buf_tmp, "\nABC\n");
+    
+    /* check the error */
+    len=0;
+    assert_equal(CBvgetrv(p_ub, "tstring0", 2, buf_tmp, &len, BFLD_STRING, 0,
+            T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXFAIL);
+    assert_equal(Berror, BNOSPACE);
+    
+    /* check type cast */
+    len=sizeof(buf_tmp);
+    assert_equal(CBvgetrv(p_ub, "tint2", 1, buf_tmp, &len, BFLD_STRING, 0,
+            T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXSUCCEED);
+    assert_string_equal(buf_tmp, "23232");
+    
 }
 
 
@@ -633,10 +699,15 @@ Ensure(test_Bvnullr)
     
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     load_recursive_data(p_ub);
+    
+    /* check null field... */
+    assert_equal(Bvnullrv(p_ub, "tchar2", 0, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXTRUE);
+    assert_equal(Bvnullrv(p_ub, "tchar2", 1, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXFALSE);
+    
+    /* check errors */
+    assert_equal(Bvnullrv(p_ub, "tchar2", 10, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXFAIL);
+    assert_equal(Berror, BEINVAL);
 }
-
-
-
 
 /**
  * Common suite entry

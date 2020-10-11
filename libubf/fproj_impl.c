@@ -369,7 +369,7 @@ expublic int ndrx_Bproj (UBFH * p_ub, BFLDID * fldlist,
             if (CHECK_ALIGN(p, p_ub, hdr))
             {
                 ret=EXFAIL;
-                ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p",
+                ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p",
                                             fn, p);
                 break; /* <<< BREAK; */
             }

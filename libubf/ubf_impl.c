@@ -907,7 +907,7 @@ out:
 
 /**
  * Checks the buffer to so do we have enought place for new data
- * @param p_ub bisubf buffer
+ * @param p_ub UBF buffer
  * @param add_size data to be added
  * @return
  */
@@ -1119,7 +1119,7 @@ expublic int ndrx_Badd (UBFH *p_ub, BFLDID bfldid,
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p "
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p "
                     "(offset: %ld)", fn, p, (long)(p-((char *)hdr)));
             EXFAIL_OUT(ret);
         }
@@ -1690,7 +1690,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         /* Align error */
         if (CHECK_ALIGN(p, p_ub, hdr))
         {
-            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to unbisubf area: %p", fn, p);
+            ndrx_Bset_error_fmt(BALIGNERR, "%s: Pointing to non UBF area: %p", fn, p);
             found=EXFAIL;
             goto out;
         }
@@ -1751,6 +1751,38 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
 
         if (NULL!=buf)
         {
+            
+            /* Prepare layout for view? Assuming data starts after the
+             * header?
+             */
+            if (BFLD_VIEW==type)
+            {
+                /* format the buf accordingly...*/
+                UBF_LOG(log_debug, "Bnext on view -> setting data=%p + d",
+                        buf, sizeof(BVIEWFLD));
+                BVIEWFLD *vf = (BVIEWFLD *)buf;
+                vf->data=buf+sizeof(BVIEWFLD);
+                
+                
+                if (NULL!=len)
+                {
+                    if (*len < sizeof(BVIEWFLD))
+                    {
+                        ndrx_Bset_error_fmt(BNOSPACE, "Minimums size for view is "
+                                "sizeof BVIEWFLD (%d) but have: %d",
+                                sizeof(BVIEWFLD), *len);
+                        found=EXFAIL;
+                        goto out;
+                    }
+                    else
+                    {
+                        /* reduce the output len... */
+                        *len-=sizeof(BVIEWFLD);
+                    }
+                    
+                }
+            }
+            
             if (EXSUCCEED!=dtype->p_get_data(dtype, (char *)p, buf, len))
             {
                 found=EXFAIL;

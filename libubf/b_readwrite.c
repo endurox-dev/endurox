@@ -112,7 +112,7 @@ expublic int ndrx_Bread  (UBFH * p_ub, FILE * inf,
     /* Check header */
     if (0!=strncmp(hdr_src.magic, UBF_MAGIC, UBF_MAGIC_SIZE))
     {
-        ndrx_Bset_error_fmt(BNOTFLD, "%s:Source buffer not bisubf!", __func__);
+        ndrx_Bset_error_fmt(BNOTFLD, "%s: Source buffer not UBF!", __func__);
         EXFAIL_OUT(ret);
     }
 

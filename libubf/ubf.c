@@ -98,7 +98,7 @@ static volatile int M_init = EXFALSE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Initialize bisubf buffer
+ * Initialize UBF buffer
  * Size already includes last BBADFLDID! Which always must stay as BBADFLDID!
  */
 expublic int Binit (UBFH * p_ub, BFLDLEN len)
@@ -1215,7 +1215,7 @@ expublic BFLDOCC Bfldno (BFLDID bfldid)
 }
 
 /**
- * returns TRUE if buffer is bisubf
+ * returns TRUE if buffer is UBF
  * @param p_ub - FB to test.
  * @return TRUE/FALSE
  */
@@ -1815,7 +1815,7 @@ expublic char * Btypcvt (BFLDLEN * to_len, int to_type,
 
 /**
  * API entry for Bextread
- * @param p_ub - bisubf buffer
+ * @param p_ub - UBF buffer
  * @param inf - file to read from 
  * @return SUCCEED/FAIL
  */
