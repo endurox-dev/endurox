@@ -570,6 +570,74 @@ Ensure(test_Bgetr)
     
 }
 
+Ensure(test_CBgetr)
+{
+    char buf[56000];
+    char buf_tmp[56000];
+    long l=0;
+    BFLDLEN len;
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+    
+    /* convert ok */
+    assert_equal(CBgetr (p_ub, (int []){T_UBF_FLD,0,T_STRING_9_FLD,1,BBADFLDOCC}, (char *)&l, NULL, BFLD_LONG), EXSUCCEED);
+    assert_equal(l, 20);
+    
+    /* check no space */
+    len=1;
+    assert_equal(CBgetrv (p_ub, (char *)buf_tmp, &len, BFLD_STRING, 
+            T_UBF_2_FLD,0,T_UBF_FLD,0,T_STRING_3_FLD,3,BBADFLDOCC), EXFAIL);
+    assert_equal(Berror, BNOSPACE);
+    
+}
+
+Ensure(test_Bfindr)
+{
+    char buf[56000];
+    char buf_tmp[56000];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+    
+}
+
+Ensure(test_CBfindr)
+{
+    char buf[56000];
+    char buf_tmp[56000];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+}
+
+Ensure(test_CBvgetr)
+{
+    char buf[56000];
+    char buf_tmp[56000];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+}
+
+
+Ensure(test_Bvnullr)
+{
+    char buf[56000];
+    char buf_tmp[56000];
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    load_recursive_data(p_ub);
+}
+
+
+
+
 /**
  * Common suite entry
  * @return
@@ -581,6 +649,11 @@ TestSuite *ubf_embubf_tests(void)
     set_setup(suite, embubf_basic_setup1);
     add_test(suite, test_Bgetr);
     
+    add_test(suite, test_CBgetr);
+    add_test(suite, test_Bfindr);
+    add_test(suite, test_CBfindr);
+    add_test(suite, test_CBvgetr);
+    add_test(suite, test_Bvnullr);    
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */
