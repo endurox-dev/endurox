@@ -1633,10 +1633,34 @@ Ensure(test_expr_argsval)
     
 }
 
+#define EXPR_TEST_TRUE(EXP) do {\
+    tree=Bboolco (EXP);\
+    assert_not_equal(tree, NULL);\
+    assert_equal(Bboolev(p_ub, tree), EXTRUE);\
+    Btreefree(tree); } while (0)\
+
+/**
+ * Test access to sub-ubf buffers..
+ */
+Ensure(test_expr_recursiv_ubf)
+{
+    char buf[56000];
+    char *tree;
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    load_recursive_data(p_ub);
+
+    EXPR_TEST_TRUE("T_UBF_FLD.T_STRING_10_FLD=='HELLO WORLD5'");
+    EXPR_TEST_TRUE("T_UBF_FLD[0].T_STRING_10_FLD[0]=='HELLO WORLD5'");
+    
+}
 TestSuite *ubf_expr_tests(void)
 {
     TestSuite *suite = create_test_suite();
 
+    std_basic_setup();
     add_test(suite, test_expr_basic);
     add_test(suite, test_expr_basic_logic);
     add_test(suite, test_expr_basic_equality);
@@ -1659,6 +1683,8 @@ TestSuite *ubf_expr_tests(void)
     
     /* #338 */
     add_test(suite, test_expr_argsval);
+    
+    add_test(suite, test_expr_recursiv_ubf);
     
 
     return suite;
