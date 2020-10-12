@@ -69,7 +69,14 @@
 #define IS_VALID_ID(X)  ( X>='a' && X<='z' || X>='0' && X<='9' || X>='A' && X<='Z' || X=='_')
 #define IS_VALID_NUM(X)  ( X>='0' && X<='9' )
 
-#define RESOLVE_FIELD   tmp[j]=EXEOS;\
+#define RESOLVE_FIELD   \
+if (0==j)\
+{\
+    UBF_LOG(log_error, "Missing field name at position %d", i);\
+    ndrx_Bset_error_fmt(BSYNTAX, "Missing field name at position %d", i);\
+    EXFAIL_OUT(ret);\
+}\
+tmp[j]=EXEOS;\
 if (is_view)\
 {\
   rfldid->cname=NDRX_STRDUP(tmp);\
@@ -94,6 +101,7 @@ else \
     {\
         is_view=VIEW_FLD_FOUND;\
     } /* cache last field */\
+    UBF_LOG(log_debug, "Resolved field [%s] to [%d]", tmp, parsedid);\
     rfldid->bfldid=parsedid;\
 }\
 j=0;\
@@ -121,6 +129,7 @@ j=0;
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate int validate_rfield(ndrx_ubf_rfldid_t *rfldid);
 
 /**
  * Free up the rfield parsed data
@@ -144,7 +153,43 @@ expublic void ndrx_ubf_rfldid_free(ndrx_ubf_rfldid_t *rfldid)
 }
 
 /**
+ * Check the rfield before adding
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int validate_rfield(ndrx_ubf_rfldid_t *rfldid)
+{
+    int ret = EXSUCCEED;    
+    BFLDID *grow_fields = (BFLDID *)rfldid->fldidocc.mem;
+
+    /* if we are here, then previous must be BFLD_VIEW or BFLD_UBF (if any)
+     * other sub-fields are not supported!
+     */
+    if (rfldid->fldidocc.maxindexused>-1)
+    {
+        /* first is field, and then occ follows, thus check fieldid */
+        int typ=Bfldtype(grow_fields[rfldid->fldidocc.maxindexused-1]);
+
+        if (BFLD_UBF!=typ && BFLD_VIEW!=typ)
+        {
+            ndrx_Bset_error_fmt(BTYPERR, "Subfield only allowed for ubf or view types, "
+                    "but got type %s at field id position %d",
+                    G_dtype_str_map[typ].fldname, rfldid->fldidocc.maxindexused);
+
+            UBF_LOG(log_error, "Subfield only allowed for ubf or view types, "
+                    "but got type %s at field id position %d",
+                    G_dtype_str_map[typ].fldname, rfldid->fldidocc.maxindexused);
+            EXFAIL_OUT(ret);
+        }
+
+    }
+out:
+    return ret;
+}
+
+/**
  * Parse the field reference
+ * TODO: Add check for invalid sub-field -> it must be UBF, otherwise
+ * give BTYPERR
  * @param rfldidstr field reference: fld[occ].fld[occ].fld.fld[occ]
  * @param rfldid parsed reference
  * @param bfldid leaf field id
@@ -161,12 +206,12 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     int *rfldidseq;
     int nrflds=0;
     int is_view=EXFALSE;
-        
+    
     UBF_LOG(log_debug, "Parsing field id sequence: [%s]", rfldidstr);
     ndrx_growlist_init(&(rfldid->fldidocc), 10, sizeof(int));
     rfldid->cname = NULL;
     rfldid->fldnm = NDRX_STRDUP(rfldidstr);
-    
+        
     if (NULL==rfldid->fldnm)
     {
         int err = errno;
@@ -193,6 +238,27 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     {
         if (STATE_NONE==state)
         {
+            /* error! sub-fields of view not supported */
+            if (tmp[j]==EXEOS)
+            {
+                if (VIEW_FLD_CNAME_PARSED==is_view)
+                {
+                    ndrx_Bset_error_fmt(BSYNTAX, "Subfield for view-field "
+                            "not expected: [%s] nrfld=%d pos=%d", 
+                            rfldidstr, nrflds, i);
+                    UBF_LOG(log_error, "Subfield for view-field not expected: "
+                            "[%s] nrfld=%d pos=%d", 
+                            rfldidstr, nrflds, i);
+                    EXFAIL_OUT(ret);
+                }
+            
+                /* validate that we might have sub-fields at given position. */
+                if (EXSUCCEED!=validate_rfield(rfldid))
+                {
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
             if (0x0 ==rfldidstr[i])
             {
                 if (j>0)
@@ -206,16 +272,6 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
                 
                 /* we are done... */
                 break;
-            }
-            
-            /* error! sub-fields of view not supported */
-            if (VIEW_FLD_CNAME_PARSED==is_view)
-            {
-                ndrx_Bset_error_fmt(BSYNTAX, "Subfield for view-field not expected: [%s] nrfld=%d pos=%d", 
-                        rfldidstr, nrflds, i);
-                UBF_LOG(log_error, "Subfield for view-field not expected: [%s] nrfld=%d pos=%d", 
-                        rfldidstr, nrflds, i);
-                EXFAIL_OUT(ret);
             }
             
             if (IS_VALID_ID(rfldidstr[i]))
@@ -239,9 +295,26 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
                 /* do not resolve if previous was occurrence */
                 if (STATE_OCC!=prev_state && STATE_OCCANY!=prev_state)
                 {
+                    if (EXEOS==tmp[0])
+                    {
+                        /* previous was just dot... (..) thus have a syntax
+                         * error
+                         */
+                        ndrx_Bset_error_fmt(BSYNTAX, "Invalid dot notation (..) at %d", i);
+                        UBF_LOG(log_error, "Invalid dot notation (..) at %d", i);
+                        EXFAIL_OUT(ret);
+                    }
+
                     RESOLVE_FIELD;
                     parsedocc=0;
                     RESOLVE_ADD;
+                }
+                else
+                {
+                    /* reset buffer */
+                    j=0;
+                    /* reset previous state.. */
+                    prev_state=state;
                 }
             }
             else
