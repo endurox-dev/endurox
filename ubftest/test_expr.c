@@ -43,6 +43,7 @@
 #include "test.fd.h"
 #include "ubfunit1.h"
 #include <ndebug.h>
+#include <ubf_int.h>
 
 
 void delete_fb_test_data(UBFH *p_ub)
@@ -1633,11 +1634,64 @@ Ensure(test_expr_argsval)
     
 }
 
-#define EXPR_TEST_TRUE(EXP) do {\
-    tree=Bboolco (EXP);\
-    assert_not_equal(tree, NULL);\
-    assert_equal(Bboolev(p_ub, tree), EXTRUE);\
-    Btreefree(tree); } while (0)\
+/**
+ * Validate expression on test buffer
+ * @param UB ubf buffer on which to execute eval
+ * @param EXP expression to compile
+ * @param ERRNOCOMP compile shall fail with this error
+ * @param ERRNOEVAL expression shall fail with this error
+ * @param RES expected result from Bboolev
+ */
+#define EXPR_TEST(UB, EXP, ERRNOCOMP, ERRNOEVAL, RES) do {\
+        tree=Bboolco (EXP);\
+        if (0 < ERRNOCOMP)\
+        {\
+            assert_equal(tree, NULL);\
+            assert_equal(Berror, ERRNOCOMP);\
+        }\
+        else\
+        {\
+            assert_not_equal(tree, NULL);\
+            assert_equal(Bboolev(UB, tree), RES);\
+            if (0 < ERRNOEVAL)\
+            {\
+                assert_equal(Berror, ERRNOEVAL);\
+            }\
+            Btreefree(tree);\
+        }\
+    } while (0)
+
+
+Ensure(test_expr_recursiv_idpars)
+{
+    /* test ID parser */
+    ndrx_ubf_rfldid_t rfldid;
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("T_UBF_FLD[1]..T_STRING_10_FLD[0]", &rfldid), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse(".", &rfldid), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("[0]ABC", &rfldid), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("T_UBF_FLD[0][1]", &rfldid), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
+    
+    /* check view syntax */
+    
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD", &rfldid), EXSUCCEED);
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello", &rfldid), EXSUCCEED);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello.zero", &rfldid), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
+    
+}
 
 /**
  * Test access to sub-ubf buffers..
@@ -1651,9 +1705,17 @@ Ensure(test_expr_recursiv_ubf)
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     
     load_recursive_data(p_ub);
-
-    EXPR_TEST_TRUE("T_UBF_FLD.T_STRING_10_FLD=='HELLO WORLD5'");
-    EXPR_TEST_TRUE("T_UBF_FLD[0].T_STRING_10_FLD[0]=='HELLO WORLD5'");
+    
+    EXPR_TEST(p_ub, "T_UBF_FLD.T_STRING_10_FLD=='HELLO WORLD5'", 0, 0, EXTRUE);
+    EXPR_TEST(p_ub, "T_UBF_FLD[0].T_STRING_10_FLD[0]=='HELLO WORLD5'", 0, 0, EXTRUE);
+    
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD[0].T_STRING_9_FLD[2]==31", 0, 0, EXTRUE);
+    
+    /* try invalid expression... */
+    EXPR_TEST(p_ub, "T_UBF_FLD[X].T_STRING_10_FLD[0]=='HELLO WORLD5'", BSYNTAX, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD[1]..T_STRING_10_FLD[0]=='HELLO WORLD5'", BSYNTAX, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD..T_STRING_10_FLD=='HELLO WORLD5'", BSYNTAX, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD.T_STRING_10_FLD.T_STRING_10_FLD=='HELLO WORLD5'", BTYPERR, EXFAIL, EXFAIL);
     
 }
 TestSuite *ubf_expr_tests(void)
@@ -1684,6 +1746,8 @@ TestSuite *ubf_expr_tests(void)
     /* #338 */
     add_test(suite, test_expr_argsval);
     
+    
+    add_test(suite, test_expr_recursiv_idpars);
     add_test(suite, test_expr_recursiv_ubf);
     
 
