@@ -1685,11 +1685,38 @@ Ensure(test_expr_recursiv_idpars)
     /* check view syntax */
     
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD", &rfldid), EXSUCCEED);
+    ndrx_ubf_rfldid_free(&rfldid);
+    
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello", &rfldid), EXSUCCEED);
+    assert_equal(rfldid.cname_occ, 0);
+    assert_string_equal(rfldid.cname, "hello");
+    ndrx_ubf_rfldid_free(&rfldid);
+    
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD[1].hello", &rfldid), EXSUCCEED);
+    assert_equal(rfldid.cname_occ, 0);
+    assert_string_equal(rfldid.cname, "hello");
+    ndrx_ubf_rfldid_free(&rfldid);
+    
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello[5]", &rfldid), EXSUCCEED);
+    assert_equal(rfldid.cname_occ, 5);
+    assert_string_equal(rfldid.cname, "hello");
+    ndrx_ubf_rfldid_free(&rfldid);
     
     Berror=0;
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello.zero", &rfldid), EXFAIL);
-    assert_equal(Berror, BSYNTAX);
+    assert_equal(Berror, BTYPERR);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello[0].zero", &rfldid), EXFAIL);
+    assert_equal(Berror, BTYPERR);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD[0].hello.zero", &rfldid), EXFAIL);
+    assert_equal(Berror, BTYPERR);
+    
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD[0].hello.zero[0]", &rfldid), EXFAIL);
+    assert_equal(Berror, BTYPERR);
     
 }
 

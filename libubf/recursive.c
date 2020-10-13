@@ -79,16 +79,23 @@ if (0==j)\
 tmp[j]=EXEOS;\
 if (is_view)\
 {\
-  rfldid->cname=NDRX_STRDUP(tmp);\
-  if (NULL==rfldid->cname)\
-  {\
-    int err;\
-    err=errno;\
-    UBF_LOG(log_error, "Failed to malloc: %s", strerror(errno));\
-    ndrx_Bset_error_fmt(BEUNIX, "Failed to malloc: %s", strerror(errno));\
-    EXFAIL_OUT(ret);\
-  }\
-  is_view=VIEW_FLD_CNAME_PARSED;\
+    if (VIEW_FLD_CNAME_PARSED==is_view)\
+    {\
+        UBF_LOG(log_error, "Sub-fields of view sub-field are not allowed at position %d", i);\
+        ndrx_Bset_error_fmt(BTYPERR, "Sub-fields of view sub-field are not allowed at position %d", i);\
+        EXFAIL_OUT(ret);\
+    }\
+    rfldid->cname=NDRX_STRDUP(tmp);\
+    if (NULL==rfldid->cname)\
+    {\
+        int err;\
+        err=errno;\
+        UBF_LOG(log_error, "Failed to malloc: %s", strerror(errno));\
+        ndrx_Bset_error_fmt(BEUNIX, "Failed to malloc: %s", strerror(errno));\
+        EXFAIL_OUT(ret);\
+    }\
+    is_view=VIEW_FLD_CNAME_PARSED;\
+    UBF_LOG(log_debug, "Parsed view field [%s] is_view=%d", rfldid->cname, is_view);\
 }\
 else \
 {\
@@ -101,7 +108,7 @@ else \
     {\
         is_view=VIEW_FLD_FOUND;\
     } /* cache last field */\
-    UBF_LOG(log_debug, "Resolved field [%s] to [%d]", tmp, parsedid);\
+    UBF_LOG(log_debug, "Resolved field [%s] to [%d] is_view=%d", tmp, parsedid, is_view);\
     rfldid->bfldid=parsedid;\
 }\
 j=0;\
@@ -114,10 +121,10 @@ nrflds++;
  */
 #define RESOLVE_ADD   if (VIEW_FLD_CNAME_PARSED!=is_view)\
 {\
-  ndrx_growlist_append(&(rfldid->fldidocc), &parsedid);\
-  ndrx_growlist_append(&(rfldid->fldidocc), &parsedocc);\
-  rfldid->bfldid=parsedid;\
-  rfldid->occ=parsedocc;\
+    ndrx_growlist_append(&(rfldid->fldidocc), &parsedid);\
+    ndrx_growlist_append(&(rfldid->fldidocc), &parsedocc);\
+    rfldid->bfldid=parsedid;\
+    rfldid->occ=parsedocc;\
 }\
 else \
 {\
@@ -243,7 +250,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
             {
                 if (VIEW_FLD_CNAME_PARSED==is_view)
                 {
-                    ndrx_Bset_error_fmt(BSYNTAX, "Subfield for view-field "
+                    ndrx_Bset_error_fmt(BTYPERR, "Subfield for view-field "
                             "not expected: [%s] nrfld=%d pos=%d", 
                             rfldidstr, nrflds, i);
                     UBF_LOG(log_error, "Subfield for view-field not expected: "
