@@ -82,7 +82,7 @@ if (is_view)\
     if (VIEW_FLD_CNAME_PARSED==is_view)\
     {\
         UBF_LOG(log_error, "Sub-fields of view sub-field are not allowed at position %d", i);\
-        ndrx_Bset_error_fmt(BTYPERR, "Sub-fields of view sub-field are not allowed at position %d", i);\
+        ndrx_Bset_error_fmt(BEBADOP, "Sub-fields of view sub-field are not allowed at position %d", i);\
         EXFAIL_OUT(ret);\
     }\
     rfldid->cname=NDRX_STRDUP(tmp);\
@@ -178,7 +178,7 @@ exprivate int validate_rfield(ndrx_ubf_rfldid_t *rfldid)
 
         if (BFLD_UBF!=typ && BFLD_VIEW!=typ)
         {
-            ndrx_Bset_error_fmt(BTYPERR, "Subfield only allowed for ubf or view types, "
+            ndrx_Bset_error_fmt(BEBADOP, "Subfield only allowed for ubf or view types, "
                     "but got type %s at field id position %d",
                     G_dtype_str_map[typ].fldname, rfldid->fldidocc.maxindexused);
 
@@ -196,7 +196,7 @@ out:
 /**
  * Parse the field reference
  * TODO: Add check for invalid sub-field -> it must be UBF, otherwise
- * give BTYPERR
+ * give BEBADOP
  * @param rfldidstr field reference: fld[occ].fld[occ].fld.fld[occ]
  * @param rfldid parsed reference
  * @param bfldid leaf field id
@@ -213,6 +213,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     int *rfldidseq;
     int nrflds=0;
     int is_view=EXFALSE;
+    BFLDID *grow_fields;
     
     UBF_LOG(log_debug, "Parsing field id sequence: [%s]", rfldidstr);
     ndrx_growlist_init(&(rfldid->fldidocc), 10, sizeof(int));
@@ -250,7 +251,7 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
             {
                 if (VIEW_FLD_CNAME_PARSED==is_view)
                 {
-                    ndrx_Bset_error_fmt(BTYPERR, "Subfield for view-field "
+                    ndrx_Bset_error_fmt(BEBADOP, "Subfield for view-field "
                             "not expected: [%s] nrfld=%d pos=%d", 
                             rfldidstr, nrflds, i);
                     UBF_LOG(log_error, "Subfield for view-field not expected: "
@@ -442,6 +443,10 @@ expublic int ndrx_ubf_rfldid_parse(char *rfldidstr, ndrx_ubf_rfldid_t *rfldid)
     
     rfldid->nrflds=nrflds;
     
+    grow_fields = (BFLDID *)rfldid->fldidocc.mem;
+    /* -1 terminator, -1 occ */
+    rfldid->bfldid = grow_fields[rfldid->fldidocc.maxindexused-2];
+    
 out:
 
     /* free up un-needed resources */
@@ -515,7 +520,7 @@ exprivate UBFH * ndrx_ubf_R_find(UBFH *p_ub, BFLDID *fldidocc,
         {
             UBF_LOG(log_error, "Expected BFLD_UBF (%d) at position %d in "
                     "sequence but got: %d type", BFLD_UBF, pos, typ);
-            ndrx_Bset_error_fmt(BTYPERR, "Expected BFLD_UBF (%d) at "
+            ndrx_Bset_error_fmt(BEBADOP, "Expected BFLD_UBF (%d) at "
                     "position %d in sequence but got: %d type", BFLD_UBF, pos, typ);
             p_ub=NULL;
             goto out;
@@ -853,7 +858,7 @@ expublic int ndrx_CBvgetr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ
     typ = Bfldtype(bfldid);
     if (BFLD_VIEW!=typ)
     {
-        ndrx_Bset_error_fmt(BTYPERR, "Expected BFLD_VIEW(%d) got %d",
+        ndrx_Bset_error_fmt(BEBADOP, "Expected BFLD_VIEW(%d) got %d",
                 BFLD_VIEW, typ);
         UBF_LOG(log_error, "Expected BFLD_VIEW(%d) got %d",
                 BFLD_VIEW, typ);
@@ -917,7 +922,7 @@ expublic int ndrx_Bvnullr(UBFH *p_ub, BFLDID *fldidocc, char *cname, BFLDOCC occ
     typ = Bfldtype(bfldid);
     if (BFLD_VIEW!=typ)
     {
-        ndrx_Bset_error_fmt(BTYPERR, "Expected BFLD_VIEW(%d) got %d",
+        ndrx_Bset_error_fmt(BEBADOP, "Expected BFLD_VIEW(%d) got %d",
                 BFLD_VIEW, typ);
         UBF_LOG(log_error, "Expected BFLD_VIEW(%d) got %d",
                 BFLD_VIEW, typ);

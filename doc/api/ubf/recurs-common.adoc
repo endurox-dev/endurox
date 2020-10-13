@@ -129,9 +129,9 @@ corresponding mapped operation, e.g. *Bget(3)*, *Bfind(3)*, etc.
 
 Following additional errors may be returned by this function:
 
-*BFLDID* Invalid sequence of field identifier, not encoded according the the rules.
+*BBADFLD* Invalid sequence of field identifier, not encoded according the the rules.
 
-*BTYPERR* For view operations (CBvgetr/CBvgetrv/Bvnullr/Bvnullrv), the leaf 
+*BEBADOP* For view operations (CBvgetr/CBvgetrv/Bvnullr/Bvnullrv), the leaf 
 field identifier in sequence does not match the *view* type.
 
 EXAMPLE

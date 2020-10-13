@@ -1704,19 +1704,19 @@ Ensure(test_expr_recursiv_idpars)
     
     Berror=0;
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello.zero", &rfldid), EXFAIL);
-    assert_equal(Berror, BTYPERR);
+    assert_equal(Berror, BEBADOP);
     
     Berror=0;
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD.hello[0].zero", &rfldid), EXFAIL);
-    assert_equal(Berror, BTYPERR);
+    assert_equal(Berror, BEBADOP);
     
     Berror=0;
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD[0].hello.zero", &rfldid), EXFAIL);
-    assert_equal(Berror, BTYPERR);
+    assert_equal(Berror, BEBADOP);
     
     Berror=0;
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD[0].hello.zero[0]", &rfldid), EXFAIL);
-    assert_equal(Berror, BTYPERR);
+    assert_equal(Berror, BEBADOP);
     
 }
 
@@ -1737,14 +1737,45 @@ Ensure(test_expr_recursiv_ubf)
     EXPR_TEST(p_ub, "T_UBF_FLD[0].T_STRING_10_FLD[0]=='HELLO WORLD5'", 0, 0, EXTRUE);
     
     EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD[0].T_STRING_9_FLD[2]==31", 0, 0, EXTRUE);
+
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD[0].T_STRING_9_FLD[2]==32", 0, 0, EXFALSE);
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD[0].T_STRING_9_FLD[2]", 0, 0, EXTRUE);
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD[99].T_STRING_9_FLD[2]", 0, 0, EXFALSE);
     
     /* try invalid expression... */
-    EXPR_TEST(p_ub, "T_UBF_FLD[X].T_STRING_10_FLD[0]=='HELLO WORLD5'", BSYNTAX, EXFAIL, EXFAIL);
-    EXPR_TEST(p_ub, "T_UBF_FLD[1]..T_STRING_10_FLD[0]=='HELLO WORLD5'", BSYNTAX, EXFAIL, EXFAIL);
-    EXPR_TEST(p_ub, "T_UBF_FLD..T_STRING_10_FLD=='HELLO WORLD5'", BSYNTAX, EXFAIL, EXFAIL);
-    EXPR_TEST(p_ub, "T_UBF_FLD.T_STRING_10_FLD.T_STRING_10_FLD=='HELLO WORLD5'", BTYPERR, EXFAIL, EXFAIL);
+    /* bad op, due to fact that it recognizes the token as UBF field and not the invalid occ */
+    EXPR_TEST(p_ub, "T_UBF_FLD[X].T_STRING_10_FLD[0]=='HELLO WORLD5'", BEBADOP, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD[1]..T_STRING_10_FLD[0]=='HELLO WORLD5'", BEBADOP, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD..T_STRING_10_FLD=='HELLO WORLD5'", BEBADOP, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD.T_STRING_10_FLD.T_STRING_10_FLD=='HELLO WORLD5'", BEBADOP, EXFAIL, EXFAIL);
+    EXPR_TEST(p_ub, "T_UBF_FLD.", BEBADOP, EXFAIL, EXFAIL);
+    
+    EXPR_TEST(p_ub, "1==1 && T_STRING_10_FLD==T_STRING_10_FLD && T_UBF_FLD==T_UBF_FLD", BEBADOP, EXFAIL, EXFAIL);
+    
     
 }
+
+/**
+ * Test view access
+ */
+Ensure(test_expr_recursiv_view)
+{
+    char buf[56000];
+    char *tree;
+    UBFH *p_ub = (UBFH *)buf;
+    
+    assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
+    
+    load_recursive_data(p_ub);
+
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[4].tfloat1==400", 0, 0, EXTRUE);
+    
+    /* test failure */
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[4]==400", BEBADOP, EXFAIL, EXFAIL);
+
+}
+
+
 TestSuite *ubf_expr_tests(void)
 {
     TestSuite *suite = create_test_suite();
@@ -1776,6 +1807,7 @@ TestSuite *ubf_expr_tests(void)
     
     add_test(suite, test_expr_recursiv_idpars);
     add_test(suite, test_expr_recursiv_ubf);
+    add_test(suite, test_expr_recursiv_view);
     
 
     return suite;

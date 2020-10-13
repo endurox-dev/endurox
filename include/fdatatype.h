@@ -77,7 +77,8 @@ typedef char UBF_CHAR;
 typedef char* UBF_PTR;
 
     
-struct dtype_str {
+struct dtype_str
+{
     char *fldname;  /**< field type name                    */
     char *altname;  /**< alternate field type name          */
     _UBF_SHORT fld_type;
@@ -94,7 +95,8 @@ typedef struct dtype_str dtype_str_t;
 /**
  * Logically this extension of the dtype_str
  */
-struct dtype_ext1 {
+struct dtype_ext1
+{
     _UBF_SHORT fld_type;
     int (*p_empty_sz) (struct dtype_ext1* t); /* size in bytes of empty entry of the data type */
     /**

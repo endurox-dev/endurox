@@ -402,6 +402,8 @@ Ensure(test_Bcmp_view)
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     assert_equal(Binit(p_ub_2, sizeof(fb_2)), EXSUCCEED);
     
+    memset(&v1, 0, sizeof(v1));
+    memset(&v2, 0, sizeof(v2));
     assert_equal(Bvsinit((char *)&v1, "UBTESTVIEW1"), EXSUCCEED);
     assert_equal(Bvsinit((char *)&v2, "UBTESTVIEW1"), EXSUCCEED);
     
