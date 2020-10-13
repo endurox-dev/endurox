@@ -501,11 +501,11 @@ Ensure(test_Bgetr)
     /* check invalid subfield (i.e subfield of non UBF..) */
     assert_equal(Bgetr (p_ub, (int []){ T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC}, 
             tmp, &len), EXFAIL);
-    assert_equal(Berror, BTYPERR);
+    assert_equal(Berror, BEBADOP);
     
     assert_equal(Bgetrv (p_ub, tmp, &len, 
             T_STRING_8_FLD, 0, T_STRING_10_FLD, 0, BBADFLDOCC), EXFAIL);
-    assert_equal(Berror, BTYPERR);
+    assert_equal(Berror, BEBADOP);
     
     /* check field not found */
     
@@ -566,7 +566,7 @@ Ensure(test_CBgetr)
 {
     char buf[56000];
     char buf_tmp[56000];
-    BFLDLEN l=0;
+    long l=0;
     BFLDLEN len;
     UBFH *p_ub = (UBFH *)buf;
     

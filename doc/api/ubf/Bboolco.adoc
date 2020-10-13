@@ -19,9 +19,11 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Compile boolean expression (in parameter 'expr') and returns the evaluation tree handler.  Following operators are available for expressions:
+Compile boolean expression (in parameter 'expr') and returns the evaluation 
+tree handler.  Following operators are available for expressions:
 
-'%%, !%' - regular expression testing e.g.  "T_STRING_2_FLD %% '58.*'"- will match if T_STRING_2_FLD is set to "58ABC" for example.
+'%%, !%' - regular expression testing e.g. "T_STRING_2_FLD %% '58.*'"- 
+will match if T_STRING_2_FLD is set to "58ABC" for example.
 
 '==, !=, <, <=, >, >=' - compare operations
 
@@ -34,11 +36,13 @@ Compile boolean expression (in parameter 'expr') and returns the evaluation tree
 
 RETURN VALUE
 ------------
-On success, *Bboolco()* return pointer to evaluation tree; on error, NULL is returned, with *Berror* set to indicate the error.
+On success, *Bboolco()* return pointer to evaluation tree; on error, 
+NULL is returned, with *Berror* set to indicate the error.
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
 *BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
 
@@ -53,6 +57,9 @@ Note that *Bstrerror()* returns generic error message plus custom message with d
 *BSYNTAX* Synax error in script.
 
 *BBADNAME* Bad field name specified.
+
+*BEBADOP* Direct field types (i.e with out sub-fields) *BFLD_UBF* and 
+*BFLD_VIEW* are not supported in expressions.
 
 EXAMPLE
 -------
