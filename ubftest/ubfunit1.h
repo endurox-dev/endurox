@@ -69,6 +69,13 @@ extern void std_basic_setup(void);
 extern void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 extern void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 extern void gen_test_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
+
+
+extern void gen_test_ubf_val_dbg(char *file, int line, UBFH *p_ub,  int offset);
+extern void gen_test_ptr_val_dbg(char *file, int line, ndrx_longptr_t ptr,  int offset);
+extern void gen_test_view_val_dbg(char *file, int line, BVIEWFLD *vf, int offset);
+
+
 extern void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 extern void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 extern void gen_load_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
