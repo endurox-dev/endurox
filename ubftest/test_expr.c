@@ -1717,6 +1717,10 @@ Ensure(test_expr_recursiv_idpars)
     Berror=0;
     assert_equal(ndrx_ubf_rfldid_parse("T_VIEW_FLD[0].hello.zero[0]", &rfldid), EXFAIL);
     assert_equal(Berror, BEBADOP);
+
+    Berror=0;
+    assert_equal(ndrx_ubf_rfldid_parse("", &rfldid), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
     
 }
 
@@ -1772,6 +1776,17 @@ Ensure(test_expr_recursiv_view)
     
     /* test failure */
     EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[4]==400", BEBADOP, EXFAIL, EXFAIL);
+
+    /* test field presence */
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_UBF_2_FLD.T_VIEW_3_FLD[4].tfloat1", 0, 0, EXTRUE);
+
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_VIEW_FLD[1].tcarray3[8]", 0, 0, EXTRUE);
+
+    /* test field presence, missing */
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_VIEW_FLD[1].tcarray3[9]", 0, 0, EXFALSE);
+
+    /*inval occurrence shall generate error*/
+    EXPR_TEST(p_ub, "T_UBF_2_FLD[1].T_UBF_FLD.T_VIEW_FLD[1].tcarray3[10]", 0, 0, EXFAIL);
 
 }
 

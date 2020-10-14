@@ -1200,10 +1200,11 @@ exprivate int Bpres_unified(UBFH *p_ub, ndrx_ubf_rfldid_t *rbfldid)
         {
             ret=EXTRUE;
         }
-        else
+        else if (EXTRUE==ret)
         {
             ret=EXFALSE;
         }
+        /*else it is failure*/
     }
     else
     {
