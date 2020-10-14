@@ -5,7 +5,7 @@ BBOOLCO(3)
 
 NAME
 ----
-Bboolco - Compile boolean expression, return evaluation handler
+Bboolco - Compile Boolean expression, return evaluation handler
 
 
 SYNOPSIS
@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Compile boolean expression (in parameter 'expr') and returns the evaluation 
+Compile Boolean expression (in parameter 'expr') and returns the evaluation 
 tree handler.  Following operators are available for expressions:
 
 '%%, !%' - regular expression testing e.g. "T_STRING_2_FLD %% '58.*'"- 
@@ -32,6 +32,56 @@ will match if T_STRING_2_FLD is set to "58ABC" for example.
 '+, -, *, %, /' - mathematical operations
 
 '&&, ||' - logical operations
+
+Enduro/X expressions allows to access sub-ubf buffers or access to *BFLD_VIEW*
+particular view fields. Access to sub-fields are made via dot notation.
+
+For example having following UBF buffer:
+
+--------------------------------------------------------------------------------
+
+T_CARRAY_2_FLD  TEST CARRAY
+T_PTR_3_FLD     0xc7
+T_PTR_3_FLD     0x12b
+T_UBF_FLD
+T_UBF_FLD       
+        T_LONG_3_FLD    88
+        T_LONG_3_FLD    0
+        T_LONG_3_FLD    0
+        T_LONG_3_FLD    889991
+        T_VIEW_3_FLD
+        T_VIEW_3_FLD    UBTESTVIEW2
+                tshort1 100
+                tlong1  200
+                tchar1  Z
+                tfloat1 400.00000
+                tdouble1        500.000000
+                tstring1        6YY
+                tstring1        6ZZ
+                tcarray1        7YY\00\00\00\00\00\00\00
+
+--------------------------------------------------------------------------------
+
+
+To access sub-ubf buffer field:
+
+--------------------------------------------------------------------------------
+
+T_UBF_FLD[1].T_LONG_3_FLD //this reads value "88"
+
+T_UBF_FLD[1].T_LONG_3_FLD[3] //this reads value "889991"
+
+--------------------------------------------------------------------------------
+
+To access view filed:
+
+--------------------------------------------------------------------------------
+
+T_UBF_FLD[1].T_VIEW_3_FLD[1].tstring1 // This read value "6YY"
+
+T_UBF_FLD[1].T_VIEW_3_FLD[1].tstring1[1] // This read value "6ZZ"
+
+--------------------------------------------------------------------------------
 
 
 RETURN VALUE
@@ -54,7 +104,7 @@ with debug info from last function call.
 
 *FMALLOC* Malloc failed.
 
-*BSYNTAX* Synax error in script.
+*BSYNTAX* Syntax error in script.
 
 *BBADNAME* Bad field name specified.
 

@@ -19,7 +19,8 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Evaluate compiled boolean expression in 'tree' against UBF buffer in 'p_ub'.
+Evaluate compiled Boolean expression in 'tree' against UBF buffer in 'p_ub'.
+In case if accessing *BFLD_VIEW* subfields, value is read as *BFLD_STRING*.
 
 RETURN VALUE
 ------------
