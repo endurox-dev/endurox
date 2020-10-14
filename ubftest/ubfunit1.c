@@ -43,6 +43,7 @@
 #include "ubfunit1.h"
 #include "ndebug.h"
 #include <fdatatype.h>
+#include <math.h>
 
 #define DEFAULT_BUFFER  128
 UBFH *M_p_ub = NULL;
@@ -419,7 +420,7 @@ void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
     str[0]='S'+offset;
     str[1]=EXEOS;
     
-    assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+fldoff, 0, str, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+offset, 0, str, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, 0), EXSUCCEED);
     UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
@@ -433,11 +434,9 @@ void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
  */
 void gen_test_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
-    long ptr;
-    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
-    assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0L, BFLD_LONG), EXSUCCEED);
-    assert_equal(ptr, 9000+offset);
-    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
+    ndrx_longptr_t ptr;
+    assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
+    gen_test_ptr_val_dbg(file, line, ptr,  offset);
 }
 
 
@@ -452,7 +451,6 @@ void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset
 {
     struct UBTESTVIEW2 v;
     BVIEWFLD vf;
-    char str[2];
     BFLDLEN len;
     
     UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
@@ -467,21 +465,7 @@ void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset
     assert_equal(Bget(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, &len), EXSUCCEED);
     
     /* Check value of view fields... */
-    
-    assert_equal(v.tshort1, 1+offset);
-    assert_equal(v.tlong1, 2+offset);
-    assert_equal(v.tchar1, '3'+offset);
-    assert_equal(v.tfloat1, 4+offset);
-    assert_equal(v.tdouble1, 5+offset);
-    
-    str[0]='A'+offset;
-    str[1]=EXEOS;
-    assert_string_equal(v.tstring1,str);
-    
-    str[0]='C'+offset;
-    str[1]=EXEOS;
-    assert_string_equal(v.tcarray1, str);
-    assert_string_equal(vf.vname, "UBTESTVIEW2");
+    gen_test_view_val_dbg(file, line, &vf, offset);
     
     UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
@@ -498,7 +482,6 @@ void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
 {
     char tmp[1024];
     UBFH* p_ub_tmp=(UBFH*)tmp;
-    char str[2];
     BFLDLEN len;
     
     UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
@@ -511,9 +494,79 @@ void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
     len=sizeof(tmp);
     assert_equal(Bget(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, &len), EXSUCCEED);
     
+    
+    gen_test_ubf_val_dbg(file, line, p_ub_tmp, offset);
+    
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
+}
+
+/**
+ * Test ptr value
+ * @param file src file
+ * @param line src line
+ * @param ptr data ptr
+ * @param offset data offset to test
+ */
+void gen_test_ptr_val_dbg(char *file, int line, ndrx_longptr_t ptr,  int offset)
+{
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+    assert_equal(ptr, 9000+offset);
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
+}
+
+/**
+ * Validate the data is OK
+ * @param p_ub
+ * @param occ
+ * @param offset
+ * @param fldoff UBF field offset
+ */
+void gen_test_view_val_dbg(char *file, int line, BVIEWFLD *vf, int offset)
+{
+    struct UBTESTVIEW2 *v=(struct UBTESTVIEW2 *)vf->data;
+    char str[2];
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+
+    /* Check value of view fields... */
+    
+    assert_equal(v->tshort1, 1+offset);
+    assert_equal(v->tlong1, 2+offset);
+    assert_equal(v->tchar1, '3'+offset);
+    assert_equal(v->tfloat1, 4+offset);
+    assert_equal(v->tdouble1, 5+offset);
+    
+    str[0]='A'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(v->tstring1,str);
+    
+    str[0]='C'+offset;
+    str[1]=EXEOS;
+    assert_string_equal(v->tcarray1, str);
+    assert_string_equal(vf->vname, "UBTESTVIEW2");
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
+}
+
+
+/**
+ * Check ubf value
+ * @param file src file
+ * @param line src line
+ * @param p_ub UBF value to test
+ * @param offset value offset
+ */
+void gen_test_ubf_val_dbg(char *file, int line, UBFH *p_ub,  int offset)
+{
+    char str[2];
+    
+    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+    
+    /* UBF test */
     str[0]='S'+offset;
     str[1]=EXEOS;
-    assert_string_equal(Bfind(p_ub_tmp, T_STRING_FLD+fldoff, 0, 0L), str);
+    assert_string_equal(Bfind(p_ub, T_STRING_FLD+offset, 0, 0L), str);
     
     UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }

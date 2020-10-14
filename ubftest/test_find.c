@@ -208,9 +208,44 @@ void load_bfindlast_test_data(UBFH *p_ub)
     
 }
 
-/* TODO: Added tests for Bfind */
+/* dded tests for Bfind */
 Ensure(test_bfind)
 {
+    char fb[2048];
+    UBFH *p_ub = (UBFH *)fb;
+    BFLDLEN len=0;
+    char *p;
+
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    load_find_test_data(p_ub);
+    
+    assert_equal(*((short*)Bfind(p_ub, T_SHORT_FLD, 0, &len)), 88);
+    assert_equal(len, sizeof(short));
+    
+    assert_equal(*((long*)Bfind(p_ub, T_LONG_FLD, 0, &len)), -1021);
+    assert_equal(len, sizeof(long));
+    
+    assert_equal(*((char*)Bfind(p_ub, T_CHAR_FLD, 0, &len)), 'c');
+    assert_equal(len, sizeof(char));
+    
+    assert_double_equal(*((float*)Bfind(p_ub, T_FLOAT_FLD, 0, &len)), 17.31);
+    assert_equal(len, sizeof(float));
+
+    assert_string_equal(Bfind(p_ub, T_STRING_FLD, 0, &len), "TEST STR VAL");
+    assert_equal(len, strlen("TEST STR VAL")+1);
+
+    p=Bfind(p_ub, T_CARRAY_FLD, 0, &len);
+    assert_not_equal(p, NULL);
+    assert_equal(memcmp(p, "CARRAY1 TEST STRING DATA", 24), 0);
+    assert_equal(len, 24);
+
+    assert_equal((*(ndrx_longptr_t*)Bfind(p_ub, T_PTR_FLD, 0, &len)), 9000);
+    assert_equal(len, sizeof(ndrx_longptr_t));
+    
+    assert_equal((*(ndrx_longptr_t*)Bfind(p_ub, T_PTR_FLD, 0, &len)), 9000);
+    assert_equal(len, sizeof(ndrx_longptr_t));
+    
+
     
 }
 
