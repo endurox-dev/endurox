@@ -743,6 +743,9 @@ Ensure(test_Bvnullr)
     assert_equal(Bvnullrv(p_ub, "tchar2", 10, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BEINVAL);
 
+    /* check unknown view ? */
+    assert_equal(Bvnullrv(p_ub, "tchar2", 10, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,0,BBADFLDOCC), EXFAIL);
+    assert_equal(Berror, BEINVAL);
 }
 
 /**
