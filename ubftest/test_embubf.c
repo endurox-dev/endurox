@@ -217,9 +217,16 @@ expublic void load_recursive_data(UBFH *p_ub)
     set_up_dummy_data(p_ub);
     
     
-    /* Bprint(p_ub); */
+    /*
+     Bprint(p_ub); 
+     */
     
     /*
+
+T_LONG_3_FLD	0
+T_LONG_3_FLD	0
+T_LONG_3_FLD	0
+T_LONG_3_FLD	889991
 T_DOUBLE_3_FLD	1.110000
 T_DOUBLE_3_FLD	2.412310
 T_STRING_10_FLD	HELLO WORLD5
@@ -238,6 +245,10 @@ T_CARRAY_2_FLD	TEST CARRAY
 T_PTR_3_FLD	0xc7
 T_PTR_3_FLD	0x12b
 T_UBF_FLD	
+	T_LONG_3_FLD	0
+	T_LONG_3_FLD	0
+	T_LONG_3_FLD	0
+	T_LONG_3_FLD	889991
 	T_DOUBLE_3_FLD	1.110000
 	T_DOUBLE_3_FLD	2.412310
 	T_STRING_10_FLD	HELLO WORLD5
@@ -277,7 +288,7 @@ T_UBF_FLD
 		tfloat1	400.00000
 		tdouble1	500.000000
 		tstring1	6XX
-		tcarray1	7XX\00\ff\00\00\00\00D
+		tcarray1	7XX\00\00\00\00\00\00\00
 	T_VIEW_3_FLD	
 	T_VIEW_3_FLD	
 	T_VIEW_3_FLD	
@@ -288,7 +299,7 @@ T_UBF_FLD
 		tfloat1	400.00000
 		tdouble1	500.000000
 		tstring1	6YY
-		tcarray1	7YY\00\ff\00\00\00\00D
+		tcarray1	7YY\00\00\00\00\00\00\00
 T_UBF_2_FLD	
 T_UBF_2_FLD	
 	T_STRING_2_FLD	HELLO_PARENT
@@ -299,6 +310,10 @@ T_UBF_2_FLD
 		T_STRING_3_FLD	HELLO_CHILD 3
 		T_STRING_3_FLD	HELLO_CHILD 4
 		T_UBF_2_FLD	
+			T_LONG_3_FLD	0
+			T_LONG_3_FLD	0
+			T_LONG_3_FLD	0
+			T_LONG_3_FLD	889991
 			T_DOUBLE_3_FLD	1.110000
 			T_DOUBLE_3_FLD	2.412310
 			T_STRING_10_FLD	HELLO WORLD5
@@ -338,7 +353,7 @@ T_UBF_2_FLD
 				tfloat1	400.00000
 				tdouble1	500.000000
 				tstring1	6XX
-				tcarray1	7XX\00\ff\00\00\00\00D
+				tcarray1	7XX\00\00\00\00\00\00\00
 			T_VIEW_3_FLD	
 			T_VIEW_3_FLD	
 			T_VIEW_3_FLD	
@@ -349,37 +364,70 @@ T_UBF_2_FLD
 				tfloat1	400.00000
 				tdouble1	500.000000
 				tstring1	6YY
-				tcarray1	7YY\00\ff\00\00\00\00D
+				tcarray1	7YY\00\00\00\00\00\00\00
 		T_VIEW_FLD	
 		T_VIEW_FLD	UBTESTVIEW1
 			tshort1	15556
+			tshort2	9999
 			tshort2	8888
+			tshort3	7777
 			tshort3	-7777
 			tshort4	-10
 			tlong1	33333333
+			tint2	54545
 			tint2	23232
 			tint3	-100
+			tint4	1010101
 			tint4	989898
 			tchar1	A
+			tchar2	A
+			tchar2	B
+			tchar2	C
+			tchar2	
+
 			tchar2		
-			tchar3	
+			tfloat1	-0.11000
+			tfloat1	-0.22000
+			tfloat1	0.33000
 			tfloat1	0.44000
+			tfloat2	100000.10156
 			tfloat2	200000.20312
 			tfloat3	333333.12500
+			tdouble1	99999.111111
 			tdouble1	11111.999999
 			tdouble2	-999.123000
+			tstring0	HELLO Enduro/X
+			tstring0	
 			tstring0	\0aABC\0a
+			tstring1	Pack my box
+			tstring1	BOX MY PACK
 			tstring1	\0aEnduro/X\0a
+			tstring2	CCCCAAAADDDD
 			tstring2	EEEFFFGGG
+			tstring3	LLLLLL
+			tstring3	MMMMMM
+			tstring3	
 			tstring3	NNNNNN
 			tstring4	Some string
 			tstring5	MEGA TEST
 			tcarray1	\00\01\02\03\04\05\06\07\08\09\0a\0b\0c\0d\0e\0f\10\11\12\13\14\15\16\17\18\19\1a\1b\1c\1d
 			tcarray2	\01\02\03\04\05
+			tcarray3	\02
+			tcarray3	\02\03
+			tcarray3	\02\03\04
+			tcarray3	\02\03\04\05
+			tcarray3	\02\03\04\05\06
+			tcarray3	\02\03\04\05\06\07
+			tcarray3	\02\03\04\05\06\07\08
+			tcarray3	\02\03\04\05\06\07\08\09
 			tcarray3	\02\03\04\05\06\07\08\09\0a
 			tcarray4	\03\04\05\06\07
 			tcarray5	\04\05\06\07\08
 	T_UBF_FLD	
+		T_LONG_3_FLD	0
+		T_LONG_3_FLD	0
+		T_LONG_3_FLD	0
+		T_LONG_3_FLD	889991
 		T_DOUBLE_3_FLD	1.110000
 		T_DOUBLE_3_FLD	2.412310
 		T_STRING_10_FLD	HELLO WORLD5
@@ -419,7 +467,7 @@ T_UBF_2_FLD
 			tfloat1	400.00000
 			tdouble1	500.000000
 			tstring1	6XX
-			tcarray1	7XX\00\ff\00\00\00\00D
+			tcarray1	7XX\00\00\00\00\00\00\00
 		T_VIEW_3_FLD	
 		T_VIEW_3_FLD	
 		T_VIEW_3_FLD	
@@ -430,7 +478,7 @@ T_UBF_2_FLD
 			tfloat1	400.00000
 			tdouble1	500.000000
 			tstring1	6YY
-			tcarray1	7YY\00\ff\00\00\00\00D
+			tcarray1	7YY\00\00\00\00\00\00\00
 T_UBF_3_FLD	
 T_UBF_3_FLD	
 T_UBF_3_FLD	
@@ -453,7 +501,7 @@ T_VIEW_3_FLD	UBTESTVIEW2
 	tfloat1	400.00000
 	tdouble1	500.000000
 	tstring1	6XX
-	tcarray1	7XX\00\ff|\7f\00\00$
+	tcarray1	7XX\00\00\00\00\00\00\00
 T_VIEW_3_FLD	
 T_VIEW_3_FLD	
 T_VIEW_3_FLD	
@@ -464,7 +512,7 @@ T_VIEW_3_FLD	UBTESTVIEW2
 	tfloat1	400.00000
 	tdouble1	500.000000
 	tstring1	6YY
-	tcarray1	7YY\00\ff|\7f\00\00$     
+	tcarray1	7YY\00\00\00\00\00\00\00
      
      */
     
@@ -689,10 +737,12 @@ Ensure(test_Bvnullr)
     /* check null field... */
     assert_equal(Bvnullrv(p_ub, "tchar2", 0, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXTRUE);
     assert_equal(Bvnullrv(p_ub, "tchar2", 1, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXFALSE);
+    assert_equal(Bvnullrv(p_ub, "tcarray3", 9, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXTRUE);
     
     /* check errors */
     assert_equal(Bvnullrv(p_ub, "tchar2", 10, T_UBF_2_FLD,1,T_UBF_FLD,0,T_VIEW_FLD,1,BBADFLDOCC), EXFAIL);
     assert_equal(Berror, BEINVAL);
+
 }
 
 /**

@@ -77,6 +77,8 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
     double *dv;
     int i, j;
     int len;
+    short *C_count;
+
     
     if (f->nullval_none)
     {
@@ -85,6 +87,20 @@ expublic int ndrx_Bvnull_int(ndrx_typedview_t *v, ndrx_typedview_field_t *f,
         goto out;
     }
     
+    /* if counter is available and occ is > than counter, then field is NULL */
+    if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+    {
+        C_count = (short *)(cstruct+f->count_fld_offset);
+
+        if (occ >= *C_count)
+        {
+            UBF_LOG(log_debug, "test occ=%d max count=%hd - false",
+                occ, *C_count);
+            ret=EXTRUE;
+            goto out;
+        }
+    }
+
     switch(f->typecode_full)
     {
         case BFLD_SHORT:
