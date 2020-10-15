@@ -239,13 +239,18 @@ Ensure(test_bfind)
     assert_equal(memcmp(p, "CARRAY1 TEST STRING DATA", 24), 0);
     assert_equal(len, 24);
 
-    assert_equal((*(ndrx_longptr_t*)Bfind(p_ub, T_PTR_FLD, 0, &len)), 9000);
-    assert_equal(len, sizeof(ndrx_longptr_t));
+    p=Bfind(p_ub, T_PTR_FLD, 0, &len);
+    assert_not_equal(p, NULL);
+    gen_test_ptr_val_dbg(__FILE__, __LINE__, *((ndrx_longptr_t *)p), 0, &len);
     
-    assert_equal((*(ndrx_longptr_t*)Bfind(p_ub, T_PTR_FLD, 0, &len)), 9000);
-    assert_equal(len, sizeof(ndrx_longptr_t));
-    
+    p=Bfind(p_ub, T_VIEW_FLD, 0, &len);
+    assert_not_equal(p, NULL);
+    gen_test_view_val_dbg(__FILE__, __LINE__, (BVIEWFLD *)p, 0, &len);
 
+    /* test ubf... */
+    p=Bfind(p_ub, T_UBF_FLD, 0, &len);
+    assert_not_equal(p, NULL);
+    gen_test_ubf_val_dbg(__FILE__, __LINE__, (UBFH *)p, 0, &len);
     
 }
 
