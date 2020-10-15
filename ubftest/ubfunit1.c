@@ -44,7 +44,7 @@
 #include "ndebug.h"
 #include <fdatatype.h>
 #include <math.h>
-
+#include <fdatatype.h>
 #define DEFAULT_BUFFER  128
 UBFH *M_p_ub = NULL;
 
@@ -435,8 +435,9 @@ void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
 void gen_test_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     ndrx_longptr_t ptr;
-    assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, 0L, BFLD_PTR), EXSUCCEED);
-    gen_test_ptr_val_dbg(file, line, ptr,  offset);
+    BFLDLEN len;
+    assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, &len, BFLD_PTR), EXSUCCEED);
+    gen_test_ptr_val_dbg(file, line, ptr, offset, &len);
 }
 
 
@@ -465,7 +466,7 @@ void gen_test_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset
     assert_equal(Bget(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, &len), EXSUCCEED);
     
     /* Check value of view fields... */
-    gen_test_view_val_dbg(file, line, &vf, offset);
+    gen_test_view_val_dbg(file, line, &vf, offset, &len);
     
     UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
@@ -495,7 +496,7 @@ void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
     assert_equal(Bget(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, &len), EXSUCCEED);
     
     
-    gen_test_ubf_val_dbg(file, line, p_ub_tmp, offset);
+    gen_test_ubf_val_dbg(file, line, p_ub_tmp, offset, &len);
     
     
     UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
@@ -507,10 +508,17 @@ void gen_test_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
  * @param line src line
  * @param ptr data ptr
  * @param offset data offset to test
+ * @param len optional len
  */
-void gen_test_ptr_val_dbg(char *file, int line, ndrx_longptr_t ptr,  int offset)
+void gen_test_ptr_val_dbg(char *file, int line, ndrx_longptr_t ptr,  int offset, BFLDLEN *len)
 {
     UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+    
+    if (NULL!=len)
+    {
+        assert_equal(*len, sizeof(ndrx_longptr_t));
+    }
+    
     assert_equal(ptr, 9000+offset);
     UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
@@ -521,13 +529,19 @@ void gen_test_ptr_val_dbg(char *file, int line, ndrx_longptr_t ptr,  int offset)
  * @param occ
  * @param offset
  * @param fldoff UBF field offset
+ * @param len ptr to optional len
  */
-void gen_test_view_val_dbg(char *file, int line, BVIEWFLD *vf, int offset)
+void gen_test_view_val_dbg(char *file, int line, BVIEWFLD *vf, int offset, BFLDLEN *len)
 {
     struct UBTESTVIEW2 *v=(struct UBTESTVIEW2 *)vf->data;
     char str[2];
     
     UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+    
+    if (NULL!=len)
+    {
+        assert_equal(*len, sizeof(struct UBTESTVIEW2));
+    }
 
     /* Check value of view fields... */
     
@@ -556,13 +570,20 @@ void gen_test_view_val_dbg(char *file, int line, BVIEWFLD *vf, int offset)
  * @param line src line
  * @param p_ub UBF value to test
  * @param offset value offset
+ * @param len ptr to len (optional)
  */
-void gen_test_ubf_val_dbg(char *file, int line, UBFH *p_ub,  int offset)
+void gen_test_ubf_val_dbg(char *file, int line, UBFH *p_ub, int offset, BFLDLEN *len)
 {
     char str[2];
     
     UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
-    
+
+    /* check minimum UBF size */
+    if (NULL!=len)
+    {
+        assert_equal( !!(*len >= sizeof(UBF_header_t)), EXTRUE);
+    }
+
     /* UBF test */
     str[0]='S'+offset;
     str[1]=EXEOS;
