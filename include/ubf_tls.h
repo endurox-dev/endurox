@@ -67,6 +67,8 @@ typedef struct
     float tbuf_f; /*=0.0; */
     double tbuf_d; /*=0.0; */
     
+    ndrx_longptr_t tbuf_p;/*=0; */
+    
     char *str_buf_ptr;/* = NULL; */
     int str_dat_len;/* = 0;*/
      

@@ -150,7 +150,7 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
     
     if (0!=(ret=strcmp(view1, view2)))
     {
-        UBF_LOG(log_debug, "Name differs");
+        UBF_LOG(log_debug, "Name differs [%s] vs [%s]", view1, view2);
         
         /* normalize values */
         if (ret<-1)

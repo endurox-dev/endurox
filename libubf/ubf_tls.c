@@ -197,6 +197,7 @@ expublic void * ndrx_ubf_tls_new(int auto_destroy, int auto_set)
     tls->tbuf_c =0;
     tls->tbuf_f =0.0f;
     tls->tbuf_d =0.0f;
+    tls->tbuf_p =0.0f;
     
     tls->str_buf_ptr = NULL;
     tls->str_dat_len = 0;

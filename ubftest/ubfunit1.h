@@ -80,6 +80,8 @@ extern void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int 
 extern void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 extern void gen_load_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff);
 
+extern void gen_set_ubf_dbg(char *file, int line, UBFH *p_ub_tmp, int offset);
+extern void gen_set_view_dbg(char *file, int line, BVIEWFLD *vf, int offset);
 
 #define gen_test_ubf(P_UB, OCC, OFFSET, FLDOFF) gen_test_ubf_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
 #define gen_test_view(P_UB, OCC, OFFSET, FLDOFF) gen_test_view_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
