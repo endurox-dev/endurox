@@ -362,20 +362,16 @@ void gen_load_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
 }
 
 /**
- * Load test data for view
- * @param p_ub buffer where to load
- * @param occ occurrence of data
- * @param offset data offset (value to change from base)
- * @param fldoff field offset (different field set)
+ * Set view data, load into static..
+ * @param file dbg file
+ * @param line db line
+ * @param vf view field struct for output
+ * @param offset data offset for field..
  */
-void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+void gen_set_view_dbg(char *file, int line, BVIEWFLD *vf, int offset)
 {
-    struct UBTESTVIEW2 v;
-    BVIEWFLD vf;
+    static struct UBTESTVIEW2 v;
     char str[2];
-    
-    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
-    load_field_table();
     
     v.tshort1=1+offset;
     v.tlong1=2+offset;
@@ -390,14 +386,45 @@ void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset
     str[1]=EXEOS;
     
     NDRX_STRCPY_SAFE(v.tcarray1, str);
-    vf.data=(char *)&v;
-    vf.vflags=0;
-    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
+    vf->data=(char *)&v;
+    vf->vflags=0;
+    NDRX_STRCPY_SAFE(vf->vname, "UBTESTVIEW2");
     
-    assert_equal(Bchg(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, 0L), EXSUCCEED);
-    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
 }
 
+/**
+ * Load test data for view
+ * @param p_ub buffer where to load
+ * @param occ occurrence of data
+ * @param offset data offset (value to change from base)
+ * @param fldoff field offset (different field set)
+ */
+void gen_load_view_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
+{
+    BVIEWFLD vf;
+    
+    UBF_LOG(log_debug, "Loading %s:%d, start", file, line);
+    
+    gen_set_view_dbg(file, line, &vf, offset);
+    
+    assert_equal(Bchg(p_ub, T_VIEW_FLD+fldoff, occ, (char *)&vf, 0L), EXSUCCEED);
+    UBF_LOG(log_debug, "Loading %s:%d, end", file, line);
+}
+
+/**
+ * Setup the UBF buffer for value
+ * @param file source file
+ * @param line source line
+ * @param p_ub_tmp buffer to init
+ * @param offset data offset
+ */
+void gen_set_ubf_dbg(char *file, int line, UBFH *p_ub_tmp, int offset)
+{
+    char str[2];
+    str[0]='S'+offset;
+    str[1]=EXEOS;
+    assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+offset, 0, str, 0), EXSUCCEED);   
+}
 
 /**
  * Load test data for ubf
@@ -410,19 +437,16 @@ void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
 {
     char tmp[1024];
     UBFH* p_ub_tmp=(UBFH*)tmp;
-    char str[2];
     
-    UBF_LOG(log_debug, "Asserting %s:%d, start", file, line);
+    
+    UBF_LOG(log_debug, "Loading UBF %s:%d, start", file, line);
     
     assert_equal(Binit(p_ub_tmp, sizeof(tmp)), EXSUCCEED);
     
     /* Load some sub-field */
-    str[0]='S'+offset;
-    str[1]=EXEOS;
-    
-    assert_equal(Bchg(p_ub_tmp, T_STRING_FLD+offset, 0, str, 0), EXSUCCEED);
+    gen_set_ubf_dbg(file, line, p_ub_tmp, offset);
     assert_equal(Bchg(p_ub, T_UBF_FLD+fldoff, occ, (char *)p_ub_tmp, 0), EXSUCCEED);
-    UBF_LOG(log_debug, "Asserting %s:%d, end", file, line);
+    UBF_LOG(log_debug, "Loading UBF %s:%d, end", file, line);
 }
 
 /**
@@ -435,7 +459,7 @@ void gen_load_ubf_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset,
 void gen_test_ptr_dbg(char *file, int line, UBFH *p_ub, BFLDOCC occ, int offset, BFLDID32 fldoff)
 {
     ndrx_longptr_t ptr;
-    BFLDLEN len;
+    BFLDLEN len=sizeof(ptr);
     assert_equal(CBget(p_ub, T_PTR_FLD+fldoff, occ, (char *)&ptr, &len, BFLD_PTR), EXSUCCEED);
     gen_test_ptr_val_dbg(file, line, ptr, offset, &len);
 }

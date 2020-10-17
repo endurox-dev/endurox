@@ -97,6 +97,7 @@ exprivate char *tbuf_double (struct dtype_ext1 *t, int len);
 exprivate char *tbuf_string (struct dtype_ext1 *t, int len);
 exprivate char *tbuf_carray (struct dtype_ext1 *t, int len);
 exprivate char *tbuf_int (struct dtype_ext1 *t, int len);
+exprivate char *tbuf_ptr (struct dtype_ext1 *t, int len);
 
 exprivate char *tallocdlft (struct dtype_ext1 *t, int *len);
 
@@ -161,7 +162,7 @@ expublic dtype_ext1_t G_dtype_ext1_map[] =
 {BFLD_INT,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int, NULL},       /* 7 */
 /* TODO - create support functions: */
 {BFLD_RFU0,  g_dflt_empty, put_empty_dftl,  dump_int,   DAO, tbuf_int,   tallocdlft, cmp_int, NULL},      /* 8 */
-{BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, NULL,       tallocdlft, ndrx_cmp_ptr, NULL},/* 9 */
+{BFLD_PTR,  g_dflt_empty, put_empty_dftl, ndrx_dump_ptr,DAO, tbuf_ptr,   tallocdlft, ndrx_cmp_ptr, NULL},/* 9 */
 {BFLD_UBF,  ndrx_g_ubf_empty, ndrx_put_empty_ubf,  ndrx_dump_ubf,   DAO, NULL, tallocdlft, ndrx_cmp_ubf, NULL},/* 10 */
 {BFLD_VIEW,  ndrx_g_view_empty, ndrx_put_empty_view,  ndrx_dump_view,   DVW, NULL,ndrx_talloc_view, ndrx_cmp_view, ndrx_prep_viewp}, /* 11 */
 
@@ -792,6 +793,12 @@ exprivate char *tbuf_int (struct dtype_ext1 *t, int len)
 {
     UBF_TLS_ENTRY;
     return (char *)&G_ubf_tls->tbuf_i;
+}
+
+exprivate char *tbuf_ptr (struct dtype_ext1 *t, int len)
+{
+   UBF_TLS_ENTRY;
+   return (char *)&G_ubf_tls->tbuf_p;
 }
 
 /******************************************************************************/

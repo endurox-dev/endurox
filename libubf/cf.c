@@ -351,7 +351,7 @@ expublic conv_type_t G_conv_fn_ptr[] =
     {BFLD_PTR, BFLD_CARRAY, conv_ptr_carr},
     {BFLD_PTR, BFLD_INT, conv_ptr_carr},
     {BFLD_PTR, BFLD_RFU0, NULL},
-    {BFLD_PTR, BFLD_INT, conv_same},
+    {BFLD_PTR, BFLD_PTR, conv_same},
 };
 
 /**
@@ -1391,9 +1391,17 @@ exprivate char * conv_string_ptr(struct conv_type *t, int cnv_dir, char *input_b
 
     if (NULL!=out_len)
         *out_len = to->size;
-
-    /* LP64 */
-    sscanf (ptr, "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t *)p);
+    
+    if (0!=strncmp(ptr, "0x", 2))
+    {
+        /* set to 0 if format not matching */
+        *((ndrx_longptr_t *)p) = 0;
+    }
+    else
+    {
+        /* LP64 */
+        sscanf (ptr, "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t *)p);
+    }
     
     return output_buf;
 }
@@ -1536,9 +1544,18 @@ exprivate char * conv_carr_ptr(struct conv_type *t, int cnv_dir, char *input_buf
 
     if (NULL!=out_len)
         *out_len = to->size;
+    
+    if (0!=strncmp(tmp, "0x", 2))
+    {
+        /* set to 0 if format not matching */
+        *((ndrx_longptr_t *)p) = 0;
+    }
+    else
+    {
+        /* LP64 */
+        sscanf(tmp, "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t*)p);
+    }
 
-    /* LP64 */
-    sscanf(tmp, "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t*)p);
 
     return output_buf;
 }
