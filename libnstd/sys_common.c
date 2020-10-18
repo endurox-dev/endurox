@@ -1215,6 +1215,8 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
     int ret = EXSUCCEED;
     regex_t linematch;
     int linematch_comp = EXFALSE;
+    int sig_set = EXFALSE;
+    struct sigaction act;
     
     /* init growlist */
     ndrx_growlist_init(list, 256, sizeof(mdrx_sysv_res_t));
@@ -1312,6 +1314,11 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
     
     NDRX_LOG(log_debug, "Listing resources by: [%s]", cmd);
     
+    /* reset to default action */
+    sigaction(SIGCHLD, NULL, &act);
+    signal(SIGCHLD, SIG_DFL);
+    sig_set=EXTRUE;
+    
     fp = popen(cmd, "r");
     
     if (fp == NULL)
@@ -1396,6 +1403,11 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
     if (fp!=NULL)
     {
         pclose(fp);
+    }
+ 
+    if (sig_set)
+    {
+        sigaction(SIGCHLD, &act, NULL);
     }
  
     if (EXSUCCEED!=ret)
