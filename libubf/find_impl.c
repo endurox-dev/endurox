@@ -255,10 +255,10 @@ expublic BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN l
     int iocc=0;
     BFLDID *p_bfldid;
     int cmp_ret;
-    
+    ndrx_ubf_tls_bufval_t tmp_stor;
     UBF_LOG(log_debug, "%s: bfldid: %d", fn, bfldid);
 
-    /* find first occurrance */
+    /* find first occurrence */
     p_fld=get_fld_loc(p_ub, bfldid, 0,
                             &dtype,
                             &last_checked,
@@ -270,12 +270,25 @@ expublic BFLDOCC ndrx_Bfindocc (UBFH *p_ub, BFLDID bfldid, char * buf, BFLDLEN l
     while (NULL!=p_fld)
     {
         dtype_ext1 = &G_dtype_ext1_map[dtype->fld_type];
-        dlen = dtype_ext1->hdr_size;
-        /* Find next occ */
-        p_dat = p_fld+dlen;
+            
         step = dtype->p_next(dtype, p_fld, &dlen);
+        
+        /* get the occ data / support for views / custom prep */
+        if (NULL!=dtype_ext1->p_prep_ubfp)
+        {
+            /* translate to value */
+            p_dat=dtype_ext1->p_prep_ubfp(dtype_ext1, 
+                    &tmp_stor, p_fld);
+        }
+        else
+        {
+           /* Move us to start of the data. */
+            p_dat = p_fld+dtype_ext1->hdr_size;
+        }
+        
         /* Now do compare */
         cmp_ret=dtype_ext1->p_cmp(dtype_ext1, p_dat, dlen, buf, len, 0L);
+        
         if (EXTRUE==cmp_ret)
         {
             UBF_LOG(log_debug, "%s: Found occurrence: %d", fn, iocc);

@@ -798,6 +798,17 @@ Ensure(test_bfindocc)
     assert_equal(Bfindocc(p_ub, T_DOUBLE_FLD, (char*) &d, 0),0);
     assert_equal(Bfindocc(p_ub, T_STRING_FLD, (char*) str, 0),0);
     assert_equal(Bfindocc(p_ub, T_CARRAY_FLD, (char*) carr, 24),0);
+    
+    /* test for PTR, VIEW, UBF */
+    ptr = 9003;
+    assert_equal(Bfindocc(p_ub, T_PTR_FLD, (char*) &ptr, 0),0);
+    
+    assert_equal(Binit(p_ub_tmp, sizeof(buf_tmp)), EXSUCCEED);
+    gen_set_ubf_dbg(__FILE__, __LINE__, p_ub_tmp, 3);
+    assert_equal(Bfindocc(p_ub, T_UBF_FLD, (char*)p_ub_tmp, 0),0);
+    
+    gen_set_view_dbg(__FILE__, __LINE__, &vf, 3);
+    assert_equal(Bfindocc(p_ub, T_VIEW_FLD, (char*)&vf, 0),0);
 
     /* Test regexp version */
     assert_equal(Bchg(p_ub, T_STRING_FLD, 10, "A", 0), EXSUCCEED);
