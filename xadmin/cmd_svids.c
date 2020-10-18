@@ -83,6 +83,8 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print Keys only"},
         {0}
     };
+
+    memset(&list, 0, sizeof(list));
             
     /* parse command line */
     if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
@@ -91,8 +93,6 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         EXFAIL_OUT(ret);
     }
 
-    memset(&list, 0, sizeof(list));
-    
     if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, NDRX_SV_RESTYPE_QUE))
     {
         fprintf(stderr, "Failed to list System V queues\n");
@@ -164,6 +164,8 @@ expublic int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print Keys only"},
         {0}
     };
+
+    memset(&list, 0, sizeof(list));
             
     /* parse command line */
     if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
@@ -172,9 +174,6 @@ expublic int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
         EXFAIL_OUT(ret);
     }
 
-    
-    memset(&list, 0, sizeof(list));
-    
     if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, NDRX_SV_RESTYPE_SEM))
     {
         fprintf(stderr, "Failed to list System V semaphores\n");
