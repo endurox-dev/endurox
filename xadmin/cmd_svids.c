@@ -137,6 +137,7 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
 out:
     ndrx_growlist_free(&list);
 
+    return ret;
 }
 
 /**
