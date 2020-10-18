@@ -384,14 +384,20 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -w\tPrint entries which were used but now free",
                 NULL},
 #endif
-    {"svqids",    cmd_svqids,EXFAIL,            1,  1,  0, 
+    {"svqids",    cmd_svqids,EXFAIL,            1,  3,  0, 
                 "Print System V user queue ids\n"
-                "\tUsage: svqids"
+                "\tUsage: svqids [-i] [-k]\n"
+                "\tOptional arguments: \n"
+                "\t\t -i Print System V Resource IDs only\n"
+                "\t\t -k Print System V Resource Keys only"
                 , NULL},
-    {"svsemids",  cmd_svsemids,EXFAIL,          1,  1,  0, 
+    {"svsemids",  cmd_svsemids,EXFAIL,          1,  3,  0, 
                 "Print System V user semaphore ids\n"
-                "\tUsage: svsemids",
-                NULL},
+                "\tUsage: svsemids [-i] [-k]\n"
+                "\tOptional arguments: \n"
+                "\t\t -i Print System V Resource IDs only\n"
+                "\t\t -k Print System V Resource Keys only\n"
+                , NULL},
     {"pubfdb",    cmd_pubfdb,EXFAIL,            1,  1,  0, 
                 "Print UBF custom fields (from DB)"
                 , NULL},

@@ -1215,9 +1215,11 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
     int ret = EXSUCCEED;
     regex_t linematch;
     int linematch_comp = EXFALSE;
+    int sig_set = EXFALSE;
+    struct sigaction act;
     
     /* init growlist */
-    ndrx_growlist_init(list, 256, sizeof(int));
+    ndrx_growlist_init(list, 256, sizeof(mdrx_sysv_res_t));
     
     if (NDRX_SV_RESTYPE_QUE == res_type)
     {
@@ -1312,6 +1314,11 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
     
     NDRX_LOG(log_debug, "Listing resources by: [%s]", cmd);
     
+    /* reset to default action */
+    sigaction(SIGCHLD, NULL, &act);
+    signal(SIGCHLD, SIG_DFL);
+    sig_set=EXTRUE;
+    
     fp = popen(cmd, "r");
     
     if (fp == NULL)
@@ -1325,7 +1332,9 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
         if (EXSUCCEED==ndrx_regexec(&linematch, path))
         {
             int id;
+            int key;
             int len = strlen(path);
+            mdrx_sysv_res_t res;
             
             if (len > 0 && '\n' == path[len-1])
             {
@@ -1344,13 +1353,46 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
                 EXFAIL_OUT(ret);
             }
          
-            NDRX_LOG(log_debug, "Extract id %d", id);
+            NDRX_LOG(log_debug, "Extract id %u", id);
             
-            /* Add resource to growlist */
-            if (EXSUCCEED!=ndrx_growlist_append(list, (void *)&id))
+#if EX_OS_LINUX
+      
+            /* first column is key */
+            if (1!=ndrx_tokens_extract(path, "%x", &key, sizeof(key), 1, 0, 0))
             {
-                NDRX_LOG(log_error, "Failed to add %d to growlist!", id);
-                userlog("Failed to add %d to growlist!", id);
+                NDRX_LOG(log_error, "Failed to extract resource key from [%s]!",
+                        path);
+                userlog("Failed to extract resource key from [%s]!",
+                        path);
+                EXFAIL_OUT(ret);
+            }
+         
+            NDRX_LOG(log_debug, "Extract key %u", key);
+#else
+            
+            /* first column is key */
+            if (1!=ndrx_tokens_extract(path, "%x", &key, sizeof(key), 1, 2, 2))
+            {
+                NDRX_LOG(log_error, "Failed to extract resource key from [%s]!",
+                        path);
+                userlog("Failed to extract resource key from [%s]!",
+                        path);
+                EXFAIL_OUT(ret);
+            }
+         
+            NDRX_LOG(log_debug, "Extract key %u", key);
+            
+#endif
+            
+            /* extract a key... */
+            res.id=id;
+            res.key = key;
+            res.restyp=res_type;
+            /* Add resource to growlist */
+            if (EXSUCCEED!=ndrx_growlist_append(list, (void *)&res))
+            {
+                NDRX_LOG(log_error, "Failed to add %u/%u to growlist!", id, key);
+                userlog("Failed to add %u/%u to growlist!", id, key);
                 EXFAIL_OUT(ret);
             }
         }
@@ -1361,6 +1403,11 @@ expublic int ndrx_sys_sysv_user_res(ndrx_growlist_t *list, int res_type)
     if (fp!=NULL)
     {
         pclose(fp);
+    }
+ 
+    if (sig_set)
+    {
+        sigaction(SIGCHLD, &act, NULL);
     }
  
     if (EXSUCCEED!=ret)
