@@ -80,14 +80,17 @@ typedef struct
     
     char errbuf[MAX_ERROR_LEN+1];
     
-    /* fieldtable.c */
+    /** fieldtable.c */
     char bfname_buf[64];
     
-    /* ubf.c */
+    /** ubf.c */
     Bnext_state_t bnext_state;
     
-    /* storage for Bfind */
+    /** storage for Bfind */
     ndrx_ubf_tls_bufval_t ndrx_Bfind_tls_stor;
+    
+    /** storage for Bfindlast */
+    ndrx_ubf_tls_bufval_t ndrx_Bfindlast_tls_stor;
     
     int is_auto; /* is this auto-allocated (thus do the auto-free) */
     /* we should have lock inside */

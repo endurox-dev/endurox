@@ -452,8 +452,18 @@ expublic char * ndrx_Bfindlast (UBFH * p_ub, BFLDID bfldid,
 
         dtype_ext1 = &G_dtype_ext1_map[data_type];
         dlen = dtype_ext1->hdr_size;
-        /* Move us to start of the data. */
-        ret+=dlen;
+        
+        if (NULL!=dtype_ext1->p_prep_ubfp)
+        {
+            /* Move to data via tls storage */
+            ret=dtype_ext1->p_prep_ubfp(dtype_ext1, 
+                    &G_ubf_tls->ndrx_Bfindlast_tls_stor, ret);
+        }
+        else
+        {
+            /* Move us to start of the data. */
+            ret+=dlen;
+        }
     }
     else
     {

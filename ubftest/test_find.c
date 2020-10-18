@@ -825,7 +825,7 @@ Ensure(test_bfindocc)
  */
 Ensure(test_cbfindocc)
 {
-    char fb[4096];
+    char fb[8192];
     UBFH *p_ub = (UBFH *)fb;
     short s;
     long l;
@@ -835,8 +835,8 @@ Ensure(test_cbfindocc)
     char *str;
     char *carr;
     BFLDLEN len=0;
-
-
+    ndrx_longptr_t ptr;
+    
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_find_test_data(p_ub);
     
@@ -846,6 +846,11 @@ Ensure(test_cbfindocc)
     assert_equal(CBchg(p_ub, T_DOUBLE_FLD, 13, "99", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub, T_STRING_FLD, 14, "55", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 15, "66", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub, T_PTR_FLD, 16, "0x77", 0, BFLD_STRING), EXSUCCEED);
+    
+    gen_load_ubf(p_ub, 17, 10, 2);
+    gen_load_view(p_ub, 18, 10, 2);
+    
     
     /* Test as short */
     s=88;
@@ -862,6 +867,13 @@ Ensure(test_cbfindocc)
     assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&s, 0, BFLD_SHORT), 14);
     s=66;
     assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&s, 0, BFLD_SHORT), 15);
+    s=0x77;
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&s, 0, BFLD_SHORT), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&s, 0, BFLD_SHORT), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&s, 0, BFLD_SHORT), -1);
+    assert_equal(Berror, BEBADOP);
 
 
     /* Test as long */
@@ -879,6 +891,14 @@ Ensure(test_cbfindocc)
     assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&l, 0, BFLD_LONG), 14);
     l=66;
     assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&l, 0, BFLD_LONG), 15);
+    l=0x77;
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&l, 0, BFLD_LONG), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&l, 0, BFLD_LONG), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&l, 0, BFLD_LONG), -1);
+    assert_equal(Berror, BEBADOP);
+    
 
     /* Test as char */
     c=88;
@@ -899,6 +919,14 @@ Ensure(test_cbfindocc)
     assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&c, 0, BFLD_CHAR), 14);
     c=65;
     assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&c, 0, BFLD_CHAR), 15);
+    c=0x77;
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&c, 0, BFLD_CHAR), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&c, 0, BFLD_CHAR), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&c, 0, BFLD_CHAR), -1);
+    assert_equal(Berror, BEBADOP);
+    
 
     assert_equal(CBchg(p_ub, T_STRING_FLD, 14, "55", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub, T_CARRAY_FLD, 15, "66", 0, BFLD_STRING), EXSUCCEED);
@@ -920,6 +948,14 @@ Ensure(test_cbfindocc)
     assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&f, 0, BFLD_FLOAT), -1);
     f=66;
     assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&f, 0, BFLD_FLOAT), -1);
+    
+    f=0x77;
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&f, 0, BFLD_FLOAT), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&f, 0, BFLD_FLOAT), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&f, 0, BFLD_FLOAT), -1);
+    assert_equal(Berror, BEBADOP);
 
 
     /* Test as double */
@@ -940,6 +976,15 @@ Ensure(test_cbfindocc)
     d=66;
     assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&d, 0, BFLD_DOUBLE), -1);
     
+    d=0x77;
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&d, 0, BFLD_DOUBLE), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&d, 0, BFLD_DOUBLE), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&d, 0, BFLD_DOUBLE), -1);
+    assert_equal(Berror, BEBADOP);
+    
+    
     /* Test as string */
     assert_equal(CBfindocc(p_ub, T_SHORT_FLD, "88", 0, BFLD_STRING), 0);
     assert_equal(CBfindocc(p_ub, T_LONG_FLD, "251", 0, BFLD_STRING), 100);
@@ -949,14 +994,101 @@ Ensure(test_cbfindocc)
     assert_equal(CBfindocc(p_ub, T_STRING_FLD, "55", 0, BFLD_STRING), 14);
     assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, "66", 0, BFLD_STRING), 15);
     
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, "0x77", 0, BFLD_STRING), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, "0x77", 0, BFLD_STRING), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, "0x77", 0, BFLD_STRING), -1);
+    assert_equal(Berror, BEBADOP);
+    
     /* Test as carray */
-    assert_equal(CBfindocc(p_ub, T_SHORT_FLD, "88", 2, BFLD_STRING), 0);
-    assert_equal(CBfindocc(p_ub, T_LONG_FLD, "251", 3, BFLD_STRING), 100);
-    assert_equal(CBfindocc(p_ub, T_CHAR_FLD, "c", 1, BFLD_STRING), 0);
-    assert_equal(CBfindocc(p_ub, T_FLOAT_FLD, "102", 3, BFLD_STRING), 12);
-    assert_equal(CBfindocc(p_ub, T_DOUBLE_FLD, "99", 2, BFLD_STRING), 13);
-    assert_equal(CBfindocc(p_ub, T_STRING_FLD, "55", 2, BFLD_STRING), 14);
-    assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, "66", 2, BFLD_STRING), 15);
+    assert_equal(CBfindocc(p_ub, T_SHORT_FLD, "88", 2, BFLD_CARRAY), 0);
+    assert_equal(CBfindocc(p_ub, T_LONG_FLD, "251", 3, BFLD_CARRAY), 100);
+    assert_equal(CBfindocc(p_ub, T_CHAR_FLD, "c", 1, BFLD_CARRAY), 0);
+    assert_equal(CBfindocc(p_ub, T_FLOAT_FLD, "102", 3, BFLD_CARRAY), 12);
+    assert_equal(CBfindocc(p_ub, T_DOUBLE_FLD, "99", 2, BFLD_CARRAY), 13);
+    assert_equal(CBfindocc(p_ub, T_STRING_FLD, "55", 2, BFLD_CARRAY), 14);
+    assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, "66", 2, BFLD_CARRAY), 15);
+    
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, "0x77", 4, BFLD_CARRAY), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, "0x77", 4, BFLD_CARRAY), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, "0x77", 4, BFLD_CARRAY), -1);
+    assert_equal(Berror, BEBADOP);
+    
+    /* Test as ptr */
+    ptr=88;
+    assert_equal(CBfindocc(p_ub, T_SHORT_FLD, (char *)&ptr, 0, BFLD_PTR), 0);
+    ptr=251;
+    assert_equal(CBfindocc(p_ub, T_LONG_FLD, (char *)&ptr, 0, BFLD_PTR), 100);
+    ptr=99;
+    assert_equal(CBfindocc(p_ub, T_CHAR_FLD, (char *)&ptr, 0, BFLD_PTR), 0);
+    ptr=102;
+    assert_equal(CBfindocc(p_ub, T_FLOAT_FLD, (char *)&ptr, 0, BFLD_PTR), 12);
+    ptr=99;
+    assert_equal(CBfindocc(p_ub, T_DOUBLE_FLD, (char *)&ptr, 0, BFLD_PTR), 13);
+    ptr=55;
+    /* not found as ptr is built as 0x... */
+    assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&ptr, 0, BFLD_PTR), -1);
+    ptr=66;
+    /* not found as ptr is built as 0x... */
+    assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&ptr, 0, BFLD_PTR), -1);
+    ptr=0x77;
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&ptr, 0, BFLD_PTR), 16);
+    
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&ptr, 0, BFLD_PTR), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&ptr, 0, BFLD_PTR), -1);
+    assert_equal(Berror, BEBADOP);
+    
+    /* test as UBF (use some ptr on input data, as there will be error anyway) */
+    assert_equal(CBfindocc(p_ub, T_SHORT_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_LONG_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_CHAR_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_FLOAT_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_DOUBLE_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    /* not found as ptr is built as 0x... */
+    assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    /* not found as ptr is built as 0x... */
+    assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&ptr, 0, BFLD_UBF), -1);
+    assert_equal(Berror, BEBADOP);
+    
+    /* test as view */
+    assert_equal(CBfindocc(p_ub, T_SHORT_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_LONG_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_CHAR_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_FLOAT_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_DOUBLE_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    /* not found as ptr is built as 0x... */
+    assert_equal(CBfindocc(p_ub, T_STRING_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    /* not found as ptr is built as 0x... */
+    assert_equal(CBfindocc(p_ub, T_CARRAY_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_PTR_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_UBF_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
+    assert_equal(CBfindocc(p_ub, T_VIEW_FLD, (char *)&ptr, 0, BFLD_VIEW), -1);
+    assert_equal(Berror, BEBADOP);
     
     /* Now test invalid argument */
     assert_equal(CBfindocc(p_ub, T_SHORT_FLD, "88", 2, 100), -1);
@@ -964,7 +1096,7 @@ Ensure(test_cbfindocc)
 }
 
 /**
- * Test Bgetalloc
+ * Test Bfindlast
  */
 Ensure(test_bfindlast)
 {
@@ -979,7 +1111,10 @@ Ensure(test_bfindlast)
     char *carr1;
     BFLDLEN len=0;
     BFLDOCC occ=-1;
-
+    ndrx_longptr_t *ptr;
+    UBFH *p_ub_tmp = NULL;
+    BVIEWFLD *vf;
+    
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_bfindlast_test_data(p_ub);
 
@@ -1027,6 +1162,28 @@ Ensure(test_bfindlast)
     assert_equal(strncmp(carr1, "CARRAY1 TEST STRING DATA", 24), 0);
     assert_equal(occ, 6);
     
+    /* Test as PTR */
+    len = 1000;
+    occ=-1;
+    assert_not_equal((ptr=(ndrx_longptr_t*)Bfindlast(p_ub, T_PTR_FLD, &occ, &len)), NULL);
+    assert_equal(len, sizeof(ndrx_longptr_t));
+    assert_equal(occ, 7);
+    assert_equal(*ptr, 0x232e);
+    
+    /* Test as UBF */
+    len = 1000;
+    occ=-1;    
+    assert_not_equal((p_ub_tmp=(UBFH*)Bfindlast(p_ub, T_UBF_FLD, &occ, &len)), NULL);
+    assert_equal(occ, 8);
+    gen_test_ubf_val_dbg(__FILE__, __LINE__, p_ub_tmp, 6, &len);
+    
+    /* Test as VIEW */
+    len = 1000;
+    occ=-1;    
+    assert_not_equal((vf=(BVIEWFLD*)Bfindlast(p_ub, T_VIEW_FLD, &occ, &len)), NULL);
+    assert_equal(occ, 9);
+    gen_test_view_val_dbg(__FILE__, __LINE__, vf, 6, &len);
+
     /* Test the case when data is not found! */
     occ=-1;
     assert_equal((str1=Bfindlast(p_ub, T_STRING_2_FLD, &occ, 0)), NULL);

@@ -28,7 +28,7 @@ only for *BFLD_CARRAY* fields.
 Function basically is the same as *Bfindocc(3)*, only this version includes user 
 type conversion to buffer type before compare.
 
-Function operations on field types *BFLD_PTR*, *BFLD_UBF* and *BFLD_VIEW* 
+Function operations on field types *BFLD_UBF* and *BFLD_VIEW* 
 are not supported. This includes type of 'bfldid' or 'usrtype' having any 
 unsupported field types for this function.
 
@@ -54,7 +54,7 @@ debug info from last function call.
 
 *BEINVAL* 'buf' is NULL.
 
-*BEBADOP* Operation not supported (e.g. work with *BFLD_PTR*, *BFLD_UBF* 
+*BEBADOP* Operation not supported (e.g. work with *BFLD_UBF* 
 or *BFLD_VIEW* type fields).
 
 EXAMPLE

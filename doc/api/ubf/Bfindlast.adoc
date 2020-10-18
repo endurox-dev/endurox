@@ -19,7 +19,17 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Function on success returns pointer to data field present in UBF buffer. 'p_ub' is pointer to UBF buffer, 'bfldid' is field id, 'occ' is field occurrence at which last field was found. 'occ' can be NULL, in that case the occurrence value is not returned. 'p_len' is output paramter for indicating the type length in bytes. Then 'len' is optional. Note that pointer to field is valid only that time while the buffer is not changed. If changes occurr, then returned pointer might become invalid (point wrong data area).
+Function on success returns pointer to data field present in UBF buffer. 'p_ub' 
+is pointer to UBF buffer, 'bfldid' is field id, 'occ' is field occurrence at 
+which last field was found. 'occ' can be NULL, in that case the occurrence 
+value is not returned. 'p_len' is output parameter for indicating the type 
+length in bytes. Then 'len' is optional. Note that pointer to field is valid 
+only that time while the buffer is not changed. If changes occur, then 
+returned pointer might become invalid (point wrong data area).
+
+Pointer for *BFLD_VIEW* type has additional limitation - this pointer is only
+valid until there is next call to Bfindlast() as function stores in Thread Local
+Storage initialized *BVIEWFLD* variable.
 
 Difference between *Bfind(3)* is that this function returns the last occurrence in 'occ' variable instead of consuming the 'occ' to return exact field.
 
