@@ -71,9 +71,28 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     int ret=EXSUCCEED;
     ndrx_growlist_t list;
     int i;
+    mdrx_sysv_res_t *p_res;
+    int print_ids=EXFALSE;
+    int print_keys=EXFALSE;
     
+    ncloptmap_t clopt[] =
+    {
+        {'i', BFLD_INT, (void *)&print_ids, sizeof(print_ids), 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print IDs only"},
+        {'k', BFLD_INT, (void *)&print_keys, sizeof(print_keys), 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print Keys only"},
+        {0}
+    };
+
     memset(&list, 0, sizeof(list));
-    
+            
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+
     if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, NDRX_SV_RESTYPE_QUE))
     {
         fprintf(stderr, "Failed to list System V queues\n");
@@ -81,19 +100,43 @@ expublic int cmd_svqids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
         EXFAIL_OUT(ret);
     }
     
-    fprintf(stderr, "MSG QUEUE ID\n");
-    fprintf(stderr, "------------\n");
+    if (print_ids)
+    {
+        fprintf(stderr, "    QUEUE ID\n");
+        fprintf(stderr, "------------\n");
+    }
+    else if (print_keys)
+    {
+        fprintf(stderr, "   IPC KEY\n");
+        fprintf(stderr, "----------\n");
+    }
+    else
+    {
+        fprintf(stderr, "    QUEUE ID    IPC KEY\n");
+        fprintf(stderr, "------------ ----------\n");
+    }
         
+    p_res = (mdrx_sysv_res_t *)list.mem;
+    
     for (i=0; i<=list.maxindexused; i++)
     {
-        fprintf(stdout, "%12d\n", ((int *)list.mem)[i]);
+        if (print_ids)
+        {
+            fprintf(stdout, "%12u\n", p_res[i].id);
+        }
+        else if (print_keys)
+        {
+            fprintf(stdout, "0x%08x\n", p_res[i].key);
+        }
+        else
+        {
+            fprintf(stdout, "%12u 0x%08x\n", p_res[i].id, p_res[i].key);
+        }
     }
     
 out:
-    if (NULL!=list.mem)
-    {
-        NDRX_FREE(list.mem);
-    }
+    ndrx_growlist_free(&list);
+
     return ret;
 }
 
@@ -109,9 +152,28 @@ expublic int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
     int ret=EXSUCCEED;
     ndrx_growlist_t list;
     int i;
+    mdrx_sysv_res_t *p_res;
+    int print_ids=EXFALSE;
+    int print_keys=EXFALSE;
     
+    ncloptmap_t clopt[] =
+    {
+        {'i', BFLD_INT, (void *)&print_ids, sizeof(print_ids), 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print IDs only"},
+        {'k', BFLD_INT, (void *)&print_keys, sizeof(print_keys), 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Print Keys only"},
+        {0}
+    };
+
     memset(&list, 0, sizeof(list));
-    
+            
+    /* parse command line */
+    if (nstd_parse_clopt(clopt, EXTRUE,  argc, argv, EXFALSE))
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
+
     if (EXSUCCEED!=ndrx_sys_sysv_user_res(&list, NDRX_SV_RESTYPE_SEM))
     {
         fprintf(stderr, "Failed to list System V semaphores\n");
@@ -119,19 +181,43 @@ expublic int cmd_svsemids(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *
         EXFAIL_OUT(ret);
     }
     
-    fprintf(stderr, "SEMAPHORE ID\n");
-    fprintf(stderr, "------------\n");
+    if (print_ids)
+    {
+        fprintf(stderr, "SEMAPHORE ID\n");
+        fprintf(stderr, "------------\n");
+    }
+    else if (print_keys)
+    {
+        fprintf(stderr, "   IPC KEY\n");
+        fprintf(stderr, "----------\n");
+    }
+    else
+    {
+        fprintf(stderr, "SEMAPHORE ID    IPC KEY\n");
+        fprintf(stderr, "------------ ----------\n");
+    }
         
+    p_res = (mdrx_sysv_res_t *)list.mem;
+    
     for (i=0; i<=list.maxindexused; i++)
     {
-        fprintf(stdout, "%12d\n", ((int *)list.mem)[i]);
+        if (print_ids)
+        {
+            fprintf(stdout, "%12u\n", p_res[i].id);
+        }
+        else if (print_keys)
+        {
+            fprintf(stdout, "0x%08x\n", p_res[i].key);
+        }
+        else
+        {
+            fprintf(stdout, "%12u 0x%08x\n", p_res[i].id, p_res[i].key);
+        }
     }
     
 out:
-    if (NULL!=list.mem)
-    {
-        NDRX_FREE(list.mem);
-    }
+    ndrx_growlist_free(&list);
+
     return ret;
 }
 

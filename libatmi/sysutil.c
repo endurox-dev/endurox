@@ -295,21 +295,21 @@ out:
 expublic void ndrx_down_userres(void)
 {
     int i;
-    int *sysvres;
+    mdrx_sysv_res_t *sysvres;
     ndrx_growlist_t g;
 
     NDRX_LOG(log_warn, "Remove user specific resources - System V queues");
     memset(&g, 0, sizeof(g));
     if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_QUE))
     {
-        sysvres = (int *)g.mem;
+        sysvres = (mdrx_sysv_res_t *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
         {
-            NDRX_LOG(log_warn, "Removing QID=%d", sysvres[i]);
-            if (EXSUCCEED!=msgctl(sysvres[i], IPC_RMID, NULL))
+            NDRX_LOG(log_warn, "Removing QID=%u", sysvres[i].id);
+            if (EXSUCCEED!=msgctl(sysvres[i].id, IPC_RMID, NULL))
             {
-                NDRX_LOG(log_error, "Failed to remove qid %d: %s",
-                        sysvres[i], strerror(errno));
+                NDRX_LOG(log_error, "Failed to remove qid %u: %s",
+                        sysvres[i].id, strerror(errno));
             }
         }
 
@@ -320,14 +320,14 @@ expublic void ndrx_down_userres(void)
     memset(&g, 0, sizeof(g));
     if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_SEM))
     {
-        sysvres = (int *)g.mem;
+        sysvres = (mdrx_sysv_res_t *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
         {
-            NDRX_LOG(log_warn, "Removing SEM ID=%d", sysvres[i]);
-            if (EXSUCCEED!=semctl(sysvres[i], 0, IPC_RMID))
+            NDRX_LOG(log_warn, "Removing SEM ID=%u", sysvres[i].id);
+            if (EXSUCCEED!=semctl(sysvres[i].id, 0, IPC_RMID))
             {
-                NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
-                        sysvres[i], strerror(errno));
+                NDRX_LOG(log_error, "Failed to remove sem id %u: %s",
+                        sysvres[i].id, strerror(errno));
             }
         }
         ndrx_growlist_free(&g);
@@ -338,14 +338,14 @@ expublic void ndrx_down_userres(void)
     memset(&g, 0, sizeof(g));
     if (EXSUCCEED==ndrx_sys_sysv_user_res(&g, NDRX_SV_RESTYPE_SHM))
     {
-        sysvres = (int *)g.mem;
+        sysvres = (mdrx_sysv_res_t *)g.mem;
         for (i=0; i<=g.maxindexused; i++)
         {
-            NDRX_LOG(log_warn, "Removing SHM ID=%d", sysvres[i]);
-            if (EXSUCCEED!=shmctl(sysvres[i], IPC_RMID, NULL))
+            NDRX_LOG(log_warn, "Removing SHM ID=%u", sysvres[i].id);
+            if (EXSUCCEED!=shmctl(sysvres[i].id, IPC_RMID, NULL))
             {
-                NDRX_LOG(log_error, "Failed to remove sem id %d: %s",
-                        sysvres[i], strerror(errno));
+                NDRX_LOG(log_error, "Failed to remove sem id %u: %s",
+                        sysvres[i].id, strerror(errno));
             }
         }
         ndrx_growlist_free(&g);
