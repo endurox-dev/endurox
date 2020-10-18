@@ -1340,6 +1340,17 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
     char *token;
     char *str_first = str;
     int toks=0;
+    int is_hex;
+    char *int_fmt = "%d";
+    
+    if (strcmp(fmt, "%x"))
+    {
+        is_hex=EXTRUE;
+    }
+    else
+    {   
+        is_hex=EXFALSE;
+    }
     
     if (NULL==str)
     {
@@ -1360,7 +1371,27 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
         {
             if (ret<len)
             {
-                sscanf(token, fmt, tokens);
+                /* special for potential hex columns */
+                if (is_hex)
+                {
+                    if (0==strncmp(token, "0x", 2) || 
+                        0==strncmp(token, "0X", 2))
+                    {    
+                        token+=2;
+                        sscanf(token, fmt, tokens);
+                    }
+                    else
+                    {
+                        /* data is in int fmt... */
+                        sscanf(token, int_fmt, tokens);
+                    }
+                }
+                else
+                {
+                    /* other types */
+                    sscanf(token, fmt, tokens);
+                }
+                
                 tokens+=tokens_elmsz;
             }
             else

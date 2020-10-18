@@ -217,6 +217,17 @@ struct ndrx_proc_info
     long vsz;   /**< virtual memory in kilobytes        */
 };
 
+/**
+ * System V resource ID
+ */
+typedef struct mdrx_sysv_res mdrx_sysv_res_t;
+struct mdrx_sysv_res
+{
+    int restyp; /**< See NDRX_SV_RESTYPE        */
+    int id;     /**< Resource ID                */
+    int key;    /**< Resource Key               */
+};
+
 #ifdef EX_OS_DARWIN
 typedef int clockid_t;
 

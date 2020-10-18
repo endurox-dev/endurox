@@ -360,6 +360,16 @@ COMMANDS
     Remove all System V resources used by user. This includes any of: queues,
     shared memory and semaphores. '-y' is used for confirmation.
 
+*svqids* [-i] [-k]::
+    Print System V queue identifiers allocated for current user. Command outputs
+    Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
+    printed only. If parameter *-k* is set, only keys are printed.
+
+*svsemids* [-i] [-k]::
+    Print System V semaphore identifiers allocated for current user. Command outputs
+    Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
+    printed only. If parameter *-k* is set, only keys are printed.
+
 CONFIGURATION
 -------------
 The following parameters from section *[@xadmin]* or *[@xadmin/<$NDRX_CCTAG>]*
