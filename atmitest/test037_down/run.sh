@@ -351,13 +351,13 @@ fi
 #
 # Test for system v semaphore to be removed...
 #
-echo "**** IPCS ALL ****"
-ipcs
+echo "**** IPCS SEMAPHORE ****"
+xadmin svsemids
 echo "**** IPCS $NDRX_IPCKEY ****"
-ipcs | grep $NDRX_IPCKEY
+xadmin svsemids -k | grep $NDRX_IPCKEY
 echo "**** IPCS END ****"
 
-CNT=`ipcs | grep $NDRX_IPCKEY | wc | awk '{print $1}'`
+CNT=`xadmin svsemids -k | grep $NDRX_IPCKEY | wc -l`
 echo "DOM1 Semaphores (guessed): $CNT"
 if [[ "$CNT" -ne "0" ]]; then 
     echo "TESTERROR! The semaphore with key [$NDRX_IPCKEY] must be removed!!"
@@ -397,8 +397,8 @@ fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
-	echo "Test error detected!"
-	RET=-2
+    echo "Test error detected!"
+    RET=-2
 fi
 
 ################################################################################
@@ -425,7 +425,7 @@ SHMS=`xadmin shms`
 echo "After udown [$SHMS]"
 
 if [ "X$SHMS" != "X" ]; then
-        echo "udown failed to remove resources"
+    echo "udown failed to remove resources"
     go_out -101
 fi
 
