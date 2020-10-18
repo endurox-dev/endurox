@@ -1343,7 +1343,7 @@ expublic int ndrx_tokens_extract(char *str1, char *fmt, void *tokens,
     int is_hex;
     char *int_fmt = "%d";
     
-    if (strcmp(fmt, "%x"))
+    if (0==strcmp(fmt, "%x"))
     {
         is_hex=EXTRUE;
     }
