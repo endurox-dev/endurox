@@ -52,12 +52,15 @@ ENDIF ($ENV{RELEASE_BUILD})
 
 
 add_custom_command(
+  DEPENDS ../viewc/viewc
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT test_view.h test_view.V
   COMMAND ../viewc/viewc -n -L "../libatmi:../libatmiclt:../libnstd:../libubf" 
         -b "../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../include -L../libatmi -L../libatmiclt -L../libnstd -L../libubf'" 
         test_view.v_in
   DEPENDS test_view.v_in)
+
+add_custom_target(ubftestvhdrs DEPENDS test_view.h test_view.V)
 
 # Executables
 add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c 
@@ -72,6 +75,7 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
                 test_nstd_lh.c test_nstd_mtest6.c test_nstd_fpa.c test_embubf.c test_view.h test_view.V)
 
 add_executable (testedbsync test_nstd_msync.c)
+add_dependencies (ubfunit1 ubftestvhdrs)
 
 # Link the executable to the UBF library & others...
 

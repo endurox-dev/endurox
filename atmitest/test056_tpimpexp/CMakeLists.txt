@@ -49,10 +49,13 @@ ELSE ($ENV{RELEASE_BUILD})
 ENDIF ($ENV{RELEASE_BUILD})
 
 add_custom_command(
+  DEPENDS ../../viewc/viewc
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT t56.h t56.V
   COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t56.v_in 
   DEPENDS t56.v_in)
+
+add_custom_target(t56vhdrs DEPENDS t56.h t56.V)
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
@@ -68,6 +71,7 @@ add_executable (atmiclt56
 		t56.h 
 		t56.V)
 
+add_dependencies(atmiclt56 t56vhdrs)
 
 ################################################################################
 ############################# Test - executables ###############################
