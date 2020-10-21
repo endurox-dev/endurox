@@ -45,6 +45,8 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 # Exectuables
 add_executable (viewc viewc.c clang.c golang.c codegen.c)
+# needed for parallel build
+add_dependencies (viewc buildclient)
 
 # Link the executable to the UBF library & others...
 target_link_libraries (viewc atmiclt atmi ubf m nstd ${RT_LIB} pthread)

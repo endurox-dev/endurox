@@ -54,6 +54,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 
 add_custom_command(
+  DEPENDS ../../viewc/viewc
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT t64.h t64.V
   COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" 
@@ -61,9 +62,14 @@ add_custom_command(
             t64.v_in
   DEPENDS t64.v_in)
 
+add_custom_target(t64vhdrs DEPENDS t64.h t64.V)
+
 ############################# Test - executables ###############################
 add_executable (atmi.sv64 atmisv64.c t64.h ../../libatmisrv/rawmain_integra.c)
+add_dependencies(atmi.sv64 t64vhdrs)
+
 add_executable (atmiclt64 atmiclt64.c t64.h)
+add_dependencies(atmiclt64 t64vhdrs)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...

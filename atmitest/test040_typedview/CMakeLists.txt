@@ -54,14 +54,26 @@ add_custom_command(
   COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t40.v_in t40_2.v_in
   DEPENDS t40.v_in t40_2.v_in)
 
+
+add_custom_target(t40vhdrs DEPENDS t40.h t40.V t40_2.h t40_2.V)
+
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 ############################# Test - executables ###############################
+#
+# for parallel builds these should build one by one
+#
 add_executable (viewunit1 viewunit1.c shared.c vaccget.c vaccutil.c
 			vaccset.c t40.h t40.V t40_2.h t40_2.V)
+add_dependencies(viewunit1 t40vhdrs)
+
 add_executable (atmisv40 atmisv40.c shared.c ../../libatmisrv/rawmain_integra.c t40.h t40.V t40_2.h t40_2.V)
+add_dependencies(atmisv40 t40vhdrs)
+
 add_executable (atmiclt40 atmiclt40.c shared.c t40.h t40.V t40_2.h t40_2.V)
+add_dependencies(atmiclt40 t40vhdrs)
+
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...

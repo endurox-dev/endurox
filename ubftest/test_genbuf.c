@@ -80,7 +80,8 @@ Ensure(test_btypcvt)
     float f=1.33341;
     double d=5547;
     char *p;
-
+    ndrx_longptr_t ptr;
+    
     /* Convert to short validation */
     assert_not_equal((p=Btypcvt(&len, BFLD_SHORT, (char *)&s, BFLD_SHORT, 0)), NULL);
     assert_equal(*((short *)p), -11);
@@ -104,7 +105,19 @@ Ensure(test_btypcvt)
     assert_not_equal((p=Btypcvt(&len, BFLD_SHORT, (char *)"12801", BFLD_CARRAY, 5)), NULL);
     assert_equal(*((short *)p), 12801);
     free(p);
-
+    
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_SHORT, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    assert_equal(*((short *)p), 66);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_SHORT, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_SHORT, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    
     /* Convert to long validation */
     assert_not_equal((p=Btypcvt(&len, BFLD_LONG, (char *)&s, BFLD_SHORT, 0)), NULL);
     assert_equal(*((long *)p), -11);
