@@ -148,7 +148,6 @@ Ensure(test_btypcvt)
     assert_equal(*((long *)p), 12801123);
     free(p);
     
-    
     ptr=66;
     assert_not_equal((p=Btypcvt(&len, BFLD_LONG, (char *)&ptr, BFLD_PTR, 0)), NULL);
     assert_equal(*((long *)p), 66);
@@ -347,10 +346,52 @@ Ensure(test_btypcvt)
     assert_equal(Btypcvt(&len, BFLD_CARRAY, (char *)&ptr, BFLD_VIEW, 0), NULL);
     assert_equal(Berror, BEBADOP);
     
-    /* TODO: test ptr conv */
+    /* Convert to long validation */
+    s=9999;
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)&s, BFLD_SHORT, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 9999);
+    free(p);
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)&l, BFLD_LONG, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 111);
+    free(p);
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)&c, BFLD_CHAR, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 51);
+    free(p);
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)&f, BFLD_FLOAT, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 1);
+    free(p);
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)&d, BFLD_DOUBLE, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 5547);
+    free(p);
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)"0x12701123", BFLD_STRING, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 0x12701123);
     
-    /* TODO: test one UBF dst conv and VIEW dst conv */
+    assert_equal(len, sizeof(ndrx_longptr_t));
 
+    free(p);
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)"0x444441", BFLD_CARRAY, 8)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 0x444441);
+    free(p);
+    
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_PTR, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    assert_equal(*((ndrx_longptr_t *)p), 66);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_PTR, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_PTR, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    /* test UBF (not supported) */
+    assert_equal(Btypcvt(&len, BFLD_UBF, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    /* test VIEW (not supported) */
+    assert_equal(Btypcvt(&len, BFLD_VIEW, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
     /* test invalid types */
     assert_equal((p=Btypcvt(&len, 12, (char *)"TEST CARRAY", BFLD_CARRAY, 11)), NULL);
     assert_equal(Berror, BTYPERR);
@@ -361,29 +402,15 @@ Ensure(test_btypcvt)
 }
 
 /**
- * Test data structures by it self
- */
-Ensure(ubf_test_struct)
-{
-    /* test data structures  -why?
-    assert_equal(sizeof(UBF_header_t), 48);
-    */
-}
-
-/**
  * Common suite entry
  * @return
  */
 TestSuite *ubf_genbuf_tests(void)
 {
     TestSuite *suite = create_test_suite();
-/*
-    setup_(suite, basic_setup1);
-    teardown_(suite, basic_teardown1);
-*/
+    
     add_test(suite, test_Bcpy);
     add_test(suite, test_btypcvt);
-    add_test(suite, ubf_test_struct);
 
     return suite;
 }
