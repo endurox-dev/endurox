@@ -24,6 +24,16 @@ are available:
 most preferred transport mechanism when available. True on queue multiple
 servers mechanism is supported for different services across different XATMI
 server binaries (transport code "epoll" for GNU/Linux and "kqueue" for FreeBSD).
+In case of EPOLL on Linux kernels newer than version 4.5, Enduro/X uses *EPOLLEXCLUSIVE*
+flag, so that if on the same XATMI Service queue multiple processes waits
+for service call, only one process will be waken up. For FreeBSD, there is no
+such flag, thus in case of load balanced processes there might be extra
+wakeups (wasted CPU cycles) if multiple idle processes waits/advertises for 
+the same service call. The wasted CPU cycles are small (process wakes up, tries
+to receive message, gets *EAGAIN* error and goes back to poll).
+The resource wasting might be noticeable if the service TPS load is very high 
+and actual work time for the service is short, and service is load balanced in 
+very high number of processes (for example 250).
 
 - SVAPOLL - This mode is almost equivalent to EPOLL mode, except that System V
 queues are used. This mode is suitable only for IBM AIX, for which poll() system
@@ -34,6 +44,10 @@ msgid. Queue string names are used internally by Enduro/X. In this mode operatio
 and configuration at the Enduro/X level is the same as with epoll mode. Each binary
 may advertise arbitrary number of services, where each service is shared queue,
 that may be shared between several other processes which advertise that service.
+As IBM AIX also does not have equivalent functionality of the Linux *EPOLLEXCLUSIVE* flag, 
+IBM AIX is prone to the same CPU wasting at specific workloads as with FreeBSD
+(described above). Mavimax have made change-request to IBM for adding Linux
+like poll-exclusive flags (https://www.ibm.com/developerworks/rfe/execute?use_case=viewRfe&CR_ID=144545).
 
 -  System V message queues, this is generally second best transport available
 on Linux and Unix operating systems. One queue multiple servers mechanism is
@@ -44,6 +58,9 @@ additional thread per XATMI participant for handling message send/receive time-o
 In case if XATMI server, additional more thread is used for administrative message
 handling and dispatching to main server thread. Thus compiler must support
 the multi-threaded operations for user applications (transport code "SystemV").
+SystemV Enduro/X builds can be used as alternative for *kqueue* or *svapoll* modes,
+to avoid the CPU wasting associate with extra wakups for idle load balanced
+same XATMI service servers.
 
 - The third option if POLL over the Posix queues. This uses round-robin approach
 for message delivery to load balanced servers. One additional thread is used
