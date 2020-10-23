@@ -81,6 +81,7 @@ Ensure(test_btypcvt)
     double d=5547;
     char *p;
     ndrx_longptr_t ptr;
+    char tmp[128];
     
     /* Convert to short validation */
     assert_not_equal((p=Btypcvt(&len, BFLD_SHORT, (char *)&s, BFLD_SHORT, 0)), NULL);
@@ -146,6 +147,18 @@ Ensure(test_btypcvt)
     assert_not_equal((p=Btypcvt(&len, BFLD_LONG, (char *)"12801123", BFLD_CARRAY, 8)), NULL);
     assert_equal(*((long *)p), 12801123);
     free(p);
+    
+    
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_LONG, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    assert_equal(*((long *)p), 66);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_LONG, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_LONG, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
 
     /* Convert to char validation */
     s=111;
@@ -176,6 +189,18 @@ Ensure(test_btypcvt)
     assert_equal(*((char *)p), 'c');
     free(p);
 
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_CHAR, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    assert_equal(*((char *)p), 66);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_CHAR, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_CHAR, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+
+    
 
     /* Convert to float validation */
     assert_not_equal((p=Btypcvt(&len, BFLD_FLOAT, (char *)&s, BFLD_SHORT, 0)), NULL);
@@ -201,6 +226,17 @@ Ensure(test_btypcvt)
     assert_double_equal(*((float *)p), 128.1);
     free(p);
 
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_FLOAT, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    assert_double_equal(*((float *)p), (float)66);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_FLOAT, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_FLOAT, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
 
     /* Convert to double validation */
     assert_not_equal((p=Btypcvt(&len, BFLD_DOUBLE, (char *)&s, BFLD_SHORT, 0)), NULL);
@@ -225,6 +261,17 @@ Ensure(test_btypcvt)
     assert_not_equal((p=Btypcvt(&len, BFLD_DOUBLE, (char *)"128.1", BFLD_CARRAY, 5)), NULL);
     assert_double_equal(*((double *)p), 128.1);
     free(p);
+    
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_DOUBLE, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    assert_double_equal(*((double *)p), 66);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_DOUBLE, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_DOUBLE, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
 
 
     /* Convert to string validation */
@@ -242,6 +289,23 @@ Ensure(test_btypcvt)
     free(p);
     assert_string_equal((p=Btypcvt(&len, BFLD_STRING, (char *)"TEST CARRAY", BFLD_CARRAY, 11)), "TEST CARRAY");
     free(p);
+    
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_STRING, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    
+    /* check the output format 0x.... ? */
+    snprintf(tmp, sizeof(tmp), "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t)66);
+    assert_equal(len, strlen(tmp)+1);
+    
+    assert_string_equal(p, tmp);
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_STRING, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_STRING, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
     
     /* Convert to string validation */
     assert_not_equal((p=Btypcvt(&len, BFLD_CARRAY, (char *)&s, BFLD_SHORT, 0)), NULL);
@@ -266,6 +330,26 @@ Ensure(test_btypcvt)
     assert_equal(strncmp(p, "TEST CARRAY", 11), 0);
     assert_equal(len, 11);
     free(p);
+    
+    ptr=66;
+    assert_not_equal((p=Btypcvt(&len, BFLD_CARRAY, (char *)&ptr, BFLD_PTR, 0)), NULL);
+    
+    /* check the output format 0x.... ? */
+    snprintf(tmp, sizeof(tmp), "0x" NDRX_LONGPTR_HEX, (ndrx_longptr_t)66);
+    assert_equal(strncmp(p, tmp, strlen(tmp)), 0);
+    assert_equal(len, strlen(tmp));
+    
+    free(p);
+    
+    assert_equal(Btypcvt(&len, BFLD_CARRAY, (char *)&ptr, BFLD_UBF, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(Btypcvt(&len, BFLD_CARRAY, (char *)&ptr, BFLD_VIEW, 0), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    /* TODO: test ptr conv */
+    
+    /* TODO: test one UBF dst conv and VIEW dst conv */
 
     /* test invalid types */
     assert_equal((p=Btypcvt(&len, 12, (char *)"TEST CARRAY", BFLD_CARRAY, 11)), NULL);
