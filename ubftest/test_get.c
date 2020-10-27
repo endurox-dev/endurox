@@ -61,6 +61,10 @@ void load_get_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 0, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ptr(p_ub, 0, 0, 0);
+    gen_load_ubf(p_ub, 0, 0, 0);
+    gen_load_view(p_ub, 0, 0, 0);
 
     /* Make second copy of field data (another for not equal test)*/
     s = 88;
@@ -79,6 +83,11 @@ void load_get_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 1, (char *)"TEST STRING ARRAY2", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 1, (char *)carr, len), EXSUCCEED);
 
+    gen_load_ptr(p_ub, 1, 1, 0);    
+    gen_load_ubf(p_ub, 1, 1, 0);
+    gen_load_view(p_ub, 1, 1, 0);
+
+
     l = 888;
     assert_equal(Bchg(p_ub, T_LONG_FLD, 4, (char *)&l, 0), EXSUCCEED);
 
@@ -95,6 +104,11 @@ void load_get_test_data(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_2_FLD, 0, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_2_FLD, 0, (char *)"XTEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_2_FLD, 0, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ptr(p_ub, 0, 2, 1);    
+    gen_load_ubf(p_ub, 0, 2, 1);
+    gen_load_view(p_ub, 0, 2, 1);
+    
 }
 
 /**
@@ -118,6 +132,10 @@ void load_get_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_DOUBLE_FLD, 4, (char *)&d, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_STRING_FLD, 5, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 6, (char *)carr, len), EXSUCCEED);
+    
+    gen_load_ptr(p_ub, 0, 2, 1);    
+    gen_load_ubf(p_ub, 0, 2, 1);
+    gen_load_view(p_ub, 0, 2, 1);
 
 }
 
@@ -130,13 +148,18 @@ Ensure(test_cbgetalloc)
     UBFH *p_ub = (UBFH *)fb;
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_find_test_data(p_ub);
-    short *s1,*s2,*s3,*s4,*s5,*s6,*s7;
-    long *l1,*l2,*l3,*l4,*l5,*l6,*l7;
-    char *c1,*c2,*c3,*c4,*c5,*c6,*c7;
-    float *f1,*f2,*f3,*f4,*f5,*f6,*f7;
-    double *d1,*d2,*d3,*d4,*d5,*d6,*d7;
-    char *str1,*str2,*str3,*str4,*str5,*str6,*str7;
-    char *carr1,*carr2,*carr3,*carr4,*carr5,*carr6,*carr7;
+    short *s1,*s2,*s3,*s4,*s5,*s6,*s7,*s8,*s9,*s10;
+    long *l1,*l2,*l3,*l4,*l5,*l6,*l7,*l8,*l9,*l10;
+    char *c1,*c2,*c3,*c4,*c5,*c6,*c7,*c8,*c9,*c10;
+    float *f1,*f2,*f3,*f4,*f5,*f6,*f7,*f8,*f9,*f10;
+    double *d1,*d2,*d3,*d4,*d5,*d6,*d7,*d8,*d9,*d10;
+    char *str1,*str2,*str3,*str4,*str5,*str6,*str7,*str8,*str9,*str10;
+    char *carr1,*carr2,*carr3,*carr4,*carr5,*carr6,*carr7,*carr8,*carr9,*carr10;
+    ndrx_longptr_t *p1,*p2,*p3,*p4,*p5,*p6,*p7,*p8,*p9,*p10;
+    
+    /* not supported modes: */
+    UBFH *u1;
+    BVIEWFLD *v1;
     BFLDLEN len=0;
 
     /* Test as short */
@@ -147,6 +170,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((s5=(short *)CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_SHORT, 0)), NULL);
     assert_not_equal((s6=(short *)CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_SHORT, 0)), NULL);
     assert_not_equal((s7=(short *)CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_SHORT, 0)), NULL);
+    assert_not_equal((s8=(short *)CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_SHORT, 0)), NULL);
+    assert_equal((s9=(short *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_SHORT, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((s10=(short *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_SHORT, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    
     assert_equal(*s1, 88);
     assert_equal(*s2, -1021);
     assert_equal(*s3, 99);
@@ -154,9 +183,10 @@ Ensure(test_cbgetalloc)
     assert_equal(*s5, 12312);
     assert_equal(*s6, 0);
     assert_equal(*s7, 0);
+    assert_equal(*s8, 9000);
 
     /* Free up memory */
-    free(s1);free(s2);free(s3);free(s4);free(s5);free(s6);free(s7);
+    free(s1);free(s2);free(s3);free(s4);free(s5);free(s6);free(s7);free(s8);
 
     /* Test as long */
     assert_not_equal((l1=(long *)CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_LONG, 0)), NULL);
@@ -167,6 +197,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((l6=(long *)CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_LONG, 0)), NULL);
     assert_not_equal((l7=(long *)CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_LONG, 0)), NULL);
 
+    assert_not_equal((l8=(long *)CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_LONG, 0)), NULL);
+    assert_equal((l9=(long *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_LONG, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((l10=(long *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_LONG, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    
     assert_equal(*l1, 88);
     assert_equal(*l2, -1021);
     assert_equal(*l3, 99);
@@ -174,10 +210,11 @@ Ensure(test_cbgetalloc)
     assert_equal(*l5, 12312);
     assert_equal(*l6, 0);
     assert_equal(*l7, 0);
+    assert_equal(*l8, 9000);
 
-    free(l1);free(l2);free(l3);free(l4);free(l5);free(l6);free(l7);
+    free(l1);free(l2);free(l3);free(l4);free(l5);free(l6);free(l7);free(l8);
 
-     /* Test as char */
+    /* Test as char */
     assert_not_equal((c1=(char *)CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_CHAR, 0)), NULL);
     assert_not_equal((c2=(char *)CBgetalloc(p_ub, T_LONG_FLD, 0, BFLD_CHAR, 0)), NULL);
     assert_not_equal((c3=(char *)CBgetalloc(p_ub, T_CHAR_FLD, 0, BFLD_CHAR, 0)), NULL);
@@ -186,6 +223,11 @@ Ensure(test_cbgetalloc)
     assert_not_equal((c6=(char *)CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_CHAR, 0)), NULL);
     assert_not_equal((c7=(char *)CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_CHAR, 0)), NULL);
 
+    assert_not_equal((c8=(char *)CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_CHAR, 0)), NULL);
+    assert_equal((c9=(char *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_CHAR, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((c10=(char *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_CHAR, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
 
     assert_equal(*c1, 'X');
     assert_equal(*c2, 3); /* may be incorrect due to data size*/
@@ -194,8 +236,9 @@ Ensure(test_cbgetalloc)
     assert_equal(*c5, 24); /* May be incorrect dute to data size*/
     assert_equal(*c6, 'T');
     assert_equal(*c7, 'C');
+    assert_equal(*c8, 40); /* mod 256 */
 
-    free(c1);free(c2);free(c3);free(c4);free(c5);free(c6);free(c7);
+    free(c1);free(c2);free(c3);free(c4);free(c5);free(c6);free(c7);free(c8);
 
     /* Test as float */
     assert_not_equal((f1=(float *)CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_FLOAT, 0)), NULL);
@@ -206,6 +249,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((f6=(float *)CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_FLOAT, 0)), NULL);
     assert_not_equal((f7=(float *)CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_FLOAT, 0)), NULL);
 
+    assert_not_equal((f8=(float *)CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_FLOAT, 0)), NULL);
+    assert_equal((f9=(float *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_FLOAT, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((f10=(float *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_FLOAT, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    
     assert_double_equal(*f1, 88);
     assert_double_equal(*f2, -1021);
     assert_double_equal(*f3, 99);
@@ -213,8 +262,9 @@ Ensure(test_cbgetalloc)
     assert_double_equal(*f5, 12312.1111);
     assert_double_equal(*f6, 0);
     assert_double_equal(*f7, 0);
+    assert_double_equal(*f8, 9000);
 
-    free(f1);free(f2);free(f3);free(f4);free(f5);free(f6);free(f7);
+    free(f1);free(f2);free(f3);free(f4);free(f5);free(f6);free(f7);free(f8);
 
     assert_not_equal((d1=(double *)CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_DOUBLE, 0)), NULL);
     assert_not_equal((d2=(double *)CBgetalloc(p_ub, T_LONG_FLD, 0, BFLD_DOUBLE, 0)), NULL);
@@ -224,6 +274,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((d6=(double *)CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_DOUBLE, 0)), NULL);
     assert_not_equal((d7=(double *)CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_DOUBLE, 0)), NULL);
 
+    assert_not_equal((d8=(double *)CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_DOUBLE, 0)), NULL);
+    assert_equal((d9=(double *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_DOUBLE, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((d10=(double *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_DOUBLE, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    
     /* Test as double */
     assert_double_equal(*d1, 88);
     assert_double_equal(*d2, -1021);
@@ -232,8 +288,9 @@ Ensure(test_cbgetalloc)
     assert_double_equal(*d5, 12312.1111);
     assert_double_equal(*d6, 0);
     assert_double_equal(*d7, 0);
+    assert_double_equal(*d8, 9000);
 
-    free(d1);free(d2);free(d3);free(d4);free(d5);free(d6);free(d7);
+    free(d1);free(d2);free(d3);free(d4);free(d5);free(d6);free(d7);free(d8);
 
     /* Test as string */
     assert_not_equal((str1=CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_STRING, 0)), NULL);
@@ -243,6 +300,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((str5=CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_not_equal((str6=CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_STRING, 0)), NULL);
     assert_not_equal((str7=CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_STRING, 0)), NULL);
+    
+    assert_not_equal((str8=CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_STRING, 0)), NULL);
+    assert_equal((str9=CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_STRING, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((str10=CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_STRING, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
 
     assert_string_equal(str1, "88");
     assert_string_equal(str2, "-1021");
@@ -251,8 +314,9 @@ Ensure(test_cbgetalloc)
     assert_equal(strncmp(str5, "12312.1111", 10), 0);
     assert_string_equal(str6, "TEST STR VAL");
     assert_string_equal(str7, "CARRAY1 TEST STRING DATA");
+    assert_string_equal(str8, "0x2328");
 
-    free(str1);free(str2);free(str3);free(str4);free(str5);free(str6);free(str7);
+    free(str1);free(str2);free(str3);free(str4);free(str5);free(str6);free(str7);free(str8);
 
     /* Test as carray */
     assert_not_equal((carr1=CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_CARRAY, 0)), NULL);
@@ -262,6 +326,12 @@ Ensure(test_cbgetalloc)
     assert_not_equal((carr5=CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_CARRAY, 0)), NULL);
     assert_not_equal((carr6=CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_CARRAY, 0)), NULL);
     assert_not_equal((carr7=CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_CARRAY, 0)), NULL);
+    
+    assert_not_equal((carr8=CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_CARRAY, 0)), NULL);
+    assert_equal((carr9=CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_CARRAY, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((carr10=CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_CARRAY, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
 
     assert_equal(strncmp(carr1, "88", 2), 0);
     assert_equal(strncmp(carr2, "-1021", 5), 0);
@@ -270,11 +340,49 @@ Ensure(test_cbgetalloc)
     assert_equal(strncmp(carr5, "12312.1111", 10), 0);
     assert_equal(strncmp(carr6, "TEST STR VAL", 12), 0);
     assert_equal(strncmp(carr7, "CARRAY1 TEST STRING DATA", 24), 0);
+    assert_equal(strncmp(carr8, "0x2328", 6), 0);
 
-    free(carr1);free(carr2);free(carr3);free(carr4);free(carr5);free(carr6);free(carr7);
+    free(carr1);free(carr2);free(carr3);free(carr4);free(carr5);free(carr6);free(carr7);free(carr8);
+    
+    /* Check ptr */
+    
+    assert_not_equal((p1=(ndrx_longptr_t *)CBgetalloc(p_ub, T_SHORT_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_not_equal((p2=(ndrx_longptr_t *)CBgetalloc(p_ub, T_LONG_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_not_equal((p3=(ndrx_longptr_t *)CBgetalloc(p_ub, T_CHAR_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_not_equal((p4=(ndrx_longptr_t *)CBgetalloc(p_ub, T_FLOAT_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_not_equal((p5=(ndrx_longptr_t *)CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_PTR, 0)), NULL);
+    
+    /* these will not parse: */
+    assert_not_equal((p6=(ndrx_longptr_t *)CBgetalloc(p_ub, T_STRING_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_not_equal((p7=(ndrx_longptr_t *)CBgetalloc(p_ub, T_CARRAY_FLD, 0, BFLD_PTR, 0)), NULL);
+
+    assert_not_equal((p8=(ndrx_longptr_t *)CBgetalloc(p_ub, T_PTR_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_equal((p9=(ndrx_longptr_t *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    assert_equal((p10=(ndrx_longptr_t *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_PTR, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    assert_equal(*p1, 88);
+    assert_equal(*p2, -1021);
+    assert_equal(*p3, 99);
+    assert_equal(*p4, 17);
+    assert_equal(*p5, 12312);
+    assert_equal(*p6, 0);
+    assert_equal(*p7, 0);
+    assert_equal(*p8, 9000);
+
+    free(p1);free(p2);free(p3);free(p4);free(p5);free(p6);free(p7);free(p8);
+    
+    /* Check ubf */
+    assert_equal((u1=(UBFH *)CBgetalloc(p_ub, T_UBF_FLD, 0, BFLD_UBF, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
+    
+    /* Check view */
+    assert_equal((v1=(BVIEWFLD *)CBgetalloc(p_ub, T_VIEW_FLD, 0, BFLD_VIEW, 0)), NULL);
+    assert_equal(Berror, BEBADOP);
 
     /* Now test the thing that we have different pointers for each of the data type
-     * also fields will corss match their types.
+     * also fields will cross match their types.
      */
     assert_not_equal((s1=(short *)CBgetalloc(p_ub, T_FLOAT_FLD, 0, BFLD_SHORT, 0)), NULL);
     assert_not_equal((l1=(long *)CBgetalloc(p_ub, T_DOUBLE_FLD, 0, BFLD_LONG, 0)), NULL);
@@ -411,7 +519,7 @@ Ensure(test_bgetalloc)
 }
 
 /**
- * Test Bgetalloc
+ * Test Bgetlast
  */
 Ensure(test_bgetlast)
 {
@@ -483,7 +591,7 @@ Ensure(test_bgetlast)
 
 
 /**
- * Test Test cahced fields
+ * Test Test cached fields
  */
 Ensure(test_cached_flds)
 {
