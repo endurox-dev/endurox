@@ -68,7 +68,6 @@ void open_test_temp(char *mode)
  */
 void open_test_temp_for_read(char *mode)
 {
-
     assert_not_equal((M_test_temp_file=fopen(M_test_temp_filename, mode)), NULL);
 }
 
@@ -81,7 +80,7 @@ void write_to_temp(char **data)
     int i;
     for (i=0; NULL!=data[i]; i++)
     {
-         assert_equal(fwrite (data[i] , 1 , strlen(data[i]) , M_test_temp_file ), strlen(data[i]));
+        assert_equal(fwrite (data[i] , 1 , strlen(data[i]) , M_test_temp_file ), strlen(data[i]));
     }
 }
 
