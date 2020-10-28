@@ -25,6 +25,9 @@ parameter 'extralen'. On input it indicates the additional space that shall be
 allocated, on output it indicates the data length loaded into allocated memory. 
 The 'extralen' can be NULL, in that case no extra memory is allocated.
 
+For *BFLD_VIEW* type fields, returned value points to allocated/initialized 
+*BVIEWFLD* structure.
+
 RETURN VALUE
 ------------
 On success, *Bgetalloc()* pointer to allocated memory block; on error, *NULL* is returned, 
