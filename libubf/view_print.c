@@ -105,6 +105,12 @@ exprivate int ndrx_viewocc_get(ndrx_viewocc_t **hhandle, char *fld)
         EXHASH_ADD_STR( (*hhandle), fldnm, el);
         occ=el->occ;
     }
+    else
+    {
+        el->occ++;
+        occ=el->occ;
+    }
+    
 out:
     return occ;
 }
