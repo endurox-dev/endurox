@@ -133,9 +133,9 @@ void load_get_test_data_2(UBFH *p_ub)
     assert_equal(Bchg(p_ub, T_STRING_FLD, 5, (char *)"TEST STR VAL", 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_CARRAY_FLD, 6, (char *)carr, len), EXSUCCEED);
     
-    gen_load_ptr(p_ub, 0, 2, 1);    
-    gen_load_ubf(p_ub, 0, 2, 1);
-    gen_load_view(p_ub, 0, 2, 1);
+    gen_load_ptr(p_ub, 7, 2, 0);    
+    gen_load_ubf(p_ub, 8, 2, 0);
+    gen_load_view(p_ub, 9, 2, 0);
 
 }
 
@@ -443,7 +443,10 @@ Ensure(test_bgetalloc)
     char *carr1;
     char test17[BGETALLOC_TEST_17]; /* have some random memory data. */
     BFLDLEN len=0;
-
+    ndrx_longptr_t *p1;
+    BVIEWFLD *v1;
+    UBFH *u1;
+    
     randomize_test_data(test17, sizeof(test17));
 
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
@@ -496,6 +499,28 @@ Ensure(test_bgetalloc)
     assert_equal(strcmp(carr1, BIG_TEST_STRING), 0);
 
     free(carr1);
+    
+    /* test as ptr */
+    len=100;
+    assert_not_equal((p1=(ndrx_longptr_t *)Bgetalloc(p_ub, T_PTR_FLD, 0, &len)), NULL);
+    gen_test_ptr_val_dbg(__FILE__, __LINE__, *p1,  0, &len);
+    free(p1);
+    
+    /* test as ubf */
+    len=100;
+    assert_not_equal((u1=(UBFH *)Bgetalloc(p_ub, T_UBF_FLD, 0, &len)), NULL);
+    gen_test_ubf_val_dbg(__FILE__, __LINE__, u1,  0, &len);
+    
+    /* check memory access beyond the data size */
+    memset((char *)u1+len, 255, 100);
+    free(u1);
+    
+    /* test as view */
+    len=100;
+    assert_not_equal((v1=(BVIEWFLD *)Bgetalloc(p_ub, T_VIEW_FLD, 0, &len)), NULL);
+    gen_test_view_val_dbg(__FILE__, __LINE__, v1,  0, &len);
+    memset((char *)v1+len, 255, 100);
+    free(v1);
 
     /* Test the case when data is not found! */
     assert_equal((str1=Bgetalloc(p_ub, T_STRING_FLD, 20, 0)), NULL);
@@ -523,7 +548,7 @@ Ensure(test_bgetalloc)
  */
 Ensure(test_bgetlast)
 {
-    char fb[1024];
+    char fb[2048];
     UBFH *p_ub = (UBFH *)fb;
     short s1;
     long l1;
@@ -534,7 +559,14 @@ Ensure(test_bgetlast)
     char carr1[64];
     BFLDLEN len;
     BFLDOCC occ;
+    ndrx_longptr_t p1;
+    struct UBTESTVIEW2 vdata;
+    BVIEWFLD v1;
+    char tmp[1024];
+    UBFH *u1=(UBFH *)tmp;
 
+    assert_equal(Binit(u1, sizeof(tmp)), EXSUCCEED);
+    
     assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
     load_get_test_data_2(p_ub);
 
@@ -581,7 +613,29 @@ Ensure(test_bgetlast)
     assert_equal(len, 24);
     assert_equal(strncmp(carr1, "CARRAY1 TEST STRING DATA", 24), 0);
     assert_equal(occ, 6);
-
+    
+    
+    /* test as ptr */
+    occ=-1;
+    assert_not_equal(Bgetlast(p_ub, T_PTR_FLD, &occ, (char *)&p1, &len), EXFAIL);
+    assert_equal(occ, 7);
+    gen_test_ptr_val_dbg(__FILE__, __LINE__, p1, 2, &len);
+    
+    /* test as ubf */
+    occ=-1;
+    len=sizeof(tmp);
+    assert_not_equal(Bgetlast(p_ub, T_UBF_FLD, &occ, (char *)u1, &len), EXFAIL);
+    assert_equal(occ, 8);
+    gen_test_ubf_val_dbg(__FILE__, __LINE__, u1,  2, &len);
+    
+    /* test as view */
+    v1.data=(char *)&vdata;
+    occ=-1;
+    len=sizeof(vdata);
+    assert_not_equal(Bgetlast(p_ub, T_VIEW_FLD, &occ, (char *)&v1, &len), EXFAIL);
+    assert_equal(occ, 9);
+    gen_test_view_val_dbg(__FILE__, __LINE__, &v1,  2, &len);
+    
     /* Test the case when data is not found! */
     occ=-1;
     assert_equal(Bgetlast(p_ub, T_STRING_2_FLD, &occ, str1, 0), EXFAIL);
