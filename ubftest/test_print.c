@@ -59,11 +59,11 @@ char *ref_print[]= {
 "T_LONG_2_FLD\t0\n",
 "T_LONG_2_FLD\t0\n",
 "T_LONG_2_FLD\t212\n",
-"T_CHAR_FLD\tc\n",
+"T_CHAR_FLD\t\\0a\n",
 "T_CHAR_FLD\t.\n",
-"T_CHAR_2_FLD\t\n",
-"T_CHAR_2_FLD\t\n",
-"T_CHAR_2_FLD\t\n",
+"T_CHAR_2_FLD\t\\00\n",
+"T_CHAR_2_FLD\t\\00\n",
+"T_CHAR_2_FLD\t\\00\n",
 "T_CHAR_2_FLD\tb\n",
 "T_FLOAT_FLD\t17.31000\n",
 "T_FLOAT_FLD\t1.31000\n",
@@ -161,7 +161,7 @@ void load_print_test_data(UBFH *p_ub)
 {
     short s = 88;
     long l = -1021;
-    char c = 'c';
+    char c = '\n';
     float f = 17.31;
     double d = 12312.1111;
     char carr[] = "CARRAY1 TEST \\STRING DATA";
@@ -602,7 +602,19 @@ Ensure(test_bextread_chk_errors)
         NULL
     };
     
-    /* TODO: Check error with invalid tabs to sub-level... */
+    /* Check view does not exists */
+    char *invalid_view[]= {
+        "T_VIEW_FLD\tNO_SUCH_VIEW\n",
+        NULL
+    };
+    
+    /* Check subfield for non-non ubf type */
+    char *invalid_sub_buffer[]= {
+        "T_STRING_FLD\t\n",
+        "\tT_STRING_FLD\tXXX\n",
+        "\tT_STRING_FLD\tYYY\n",
+        NULL
+    };
         
     /* load field table */
     load_field_table();
@@ -732,6 +744,37 @@ Ensure(test_bextread_chk_errors)
     /* now open the file */
     remove_test_temp();
 
+    /*--------------------------------------------------------*/
+    /* Invalid view */
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    open_test_temp("w");
+    write_to_temp(invalid_view);
+    close_test_temp();
+
+    /* syntax error should fail */
+    open_test_temp_for_read("r");
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
+    assert_equal(Berror, BBADVIEW);
+    close_test_temp();
+    /* now open the file */
+    remove_test_temp();
+    
+    
+    /*--------------------------------------------------------*/
+    /* Invalid sub-buffer */
+    assert_equal(Binit(p_ub, sizeof(fb)), EXSUCCEED);
+    open_test_temp("w");
+    write_to_temp(invalid_sub_buffer);
+    close_test_temp();
+
+    /* syntax error should fail */
+    open_test_temp_for_read("r");
+    assert_equal(Bextread(p_ub, M_test_temp_file), EXFAIL);
+    assert_equal(Berror, BSYNTAX);
+    close_test_temp();
+    /* now open the file */
+    remove_test_temp();
+    
     
 }
 
@@ -938,14 +981,29 @@ Ensure(test_bextread_eq)
         "T_FLOAT_FLD\t777.11\n",
         "T_STRING_FLD\tABC\n",
         "T_CARRAY_FLD\tEFGH\n",
+        "T_PTR_FLD\t0x2329\n",
+        "T_UBF_FLD\t\n",
+        "\tT_STRING_2_FLD\tT\n",
+        "T_VIEW_FLD\tUBTESTVIEW2\n",
+        "\ttshort1\t2\n",
+        "\ttlong1\t3\n",
+        "\ttchar1\t4\n",
+        "\ttfloat1\t5.00000\n",
+        "\ttdouble1\t6.000000\n",
+        "\ttstring1\tB\n",
+        "\ttcarray1\tD\\00\\00\\00\\00\\00\\00\\00\\00\\00\n",
         /* Value will be copied to FLD2 */
         "= T_SHORT_2_FLD\tT_SHORT_FLD\n",
         "= T_LONG_2_FLD\tT_LONG_FLD\n",
         "= T_CHAR_2_FLD\tT_CHAR_FLD\n",
         "= T_DOUBLE_2_FLD\tT_DOUBLE_FLD\n",
         "= T_FLOAT_2_FLD\tT_FLOAT_FLD\n",
-        "= T_STRING_2_FLD\tT_FLOAT_FLD\n",
+        "= T_STRING_2_FLD\tT_STRING_FLD\n",
         "= T_CARRAY_2_FLD\tT_CARRAY_FLD\n",
+        "= T_PTR_2_FLD\tT_PTR_FLD\n",
+        /* well in this case we shall not search for view, but just take value of  */
+        "= T_VIEW_2_FLD\tT_VIEW_FLD\n",
+        "= T_UBF_2_FLD\tT_UBF_FLD\n",
         NULL
     };
 
@@ -965,7 +1023,7 @@ Ensure(test_bextread_eq)
     remove_test_temp();
 
     /* Load reference data into buffer 2 */
-    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "t999", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_SHORT_FLD, 0, "999", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_LONG_FLD, 0, "124545", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_CHAR_FLD, 0, "a", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_FLOAT_FLD, 0, "777.11", 0, BFLD_STRING), EXSUCCEED);
@@ -973,17 +1031,25 @@ Ensure(test_bextread_eq)
     assert_equal(CBchg(p_ub2, T_STRING_FLD, 0, "ABC", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_CARRAY_FLD, 0, "EFGH", 0, BFLD_STRING), EXSUCCEED);
 
-    assert_equal(CBchg(p_ub2, T_SHORT_2_FLD, 0, "t999", 0, BFLD_STRING), EXSUCCEED);
+    assert_equal(CBchg(p_ub2, T_SHORT_2_FLD, 0, "999", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_LONG_2_FLD, 0, "124545", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_CHAR_2_FLD, 0, "a", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_FLOAT_2_FLD, 0, "777.11", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_DOUBLE_2_FLD, 0, "888", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_STRING_2_FLD, 0, "ABC", 0, BFLD_STRING), EXSUCCEED);
     assert_equal(CBchg(p_ub2, T_CARRAY_2_FLD, 0, "EFGH", 0, BFLD_STRING), EXSUCCEED);
-
-    /* Compare buffers now should be equal  - ignore for now...
-    assert_equal(memcmp(p_ub, p_ub2, sizeof(fb)), NULL);
-    */
+    
+    /* prepare data */
+    gen_load_ptr(p_ub2, 0, 1, 0);
+    gen_load_ubf(p_ub2, 0, 1, 0);
+    gen_load_view(p_ub2, 0, 1, 0);
+    
+    gen_load_ptr(p_ub2, 0, 1, 1);
+    gen_load_ubf(p_ub2, 0, 1, 1);
+    gen_load_view(p_ub2, 0, 1, 1);
+    
+    assert_equal(Bcmp(p_ub, p_ub2), 0);
+    
 }
 
 /**
@@ -1050,7 +1116,6 @@ TestSuite *ubf_print_tests(void)
     add_test(suite, test_bextread_eq);
     add_test(suite, test_bextread_eq_err);
     add_test(suite, test_bextreadcb);
-
 
     return suite;
 }

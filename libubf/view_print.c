@@ -372,7 +372,8 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
         UBF_LOG(log_debug, "field [%s] next occ=%d type=%d", cname, occ, fldtype);
         
         /* Check field type */
-        if ((BFLD_STRING == fldtype || BFLD_CARRAY == fldtype) && '='!=flag)
+        if ((BFLD_STRING == fldtype || BFLD_CARRAY == fldtype || 
+                BFLD_CHAR == fldtype) && '='!=flag)
         {
             if (EXFAIL==ndrx_normalize_string(value, &len))
             {
@@ -494,6 +495,7 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
     int i;
     Bvnext_state_t bprint_state;
     char *p_view = view;
+    int temp_len;
     
     /* Indicators.. */
     short *C_count;
@@ -527,12 +529,11 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
     NDRX_STRCAT_S(fmt_wdata, sizeof(fmt_wdata), "%s\t%s\n");
     NDRX_STRCAT_S(fmt_ndata, sizeof(fmt_ndata), "%s\t\n");
     
-    bfldid = BFIRSTFLDID;
+    bfldid = 0;
 
     DL_FOREACH(v->fields, f)
     {
         p_view=NULL;
-        
 
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
@@ -562,6 +563,9 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
             BFLDLEN dim_size = f->fldsize/f->count;
             p = cstruct+f->offset+occ*dim_size;
             
+            /* just increment the field id for view.. */
+            bfldid++;
+            
             /* get the carray length  */
             if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
             {
@@ -577,8 +581,6 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
             /* print the field... */
             if (BFLD_STRING==f->typecode_full || BFLD_CARRAY==f->typecode_full)
             {
-                int temp_len;
-
                 /* For strings we must count off trailing EOS */
                 if (BFLD_STRING==f->typecode_full)
                 {
@@ -633,6 +635,28 @@ expublic int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
                 else
                 {
                     p=cnv_buf;
+                }
+                
+                /* escape char data... */
+                if (BFLD_CHAR==f->typecode_full &&
+                        (temp_len = ndrx_get_nonprintable_char_tmpspace(p, cnv_len)) &&
+                        temp_len!=cnv_len)
+                {
+                    UBF_LOG(log_debug, "Containing special characters -"
+                                    " needs to temp buffer for prefixing");
+                    cnv_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
+                    if (NULL==cnv_buf)
+                    {
+                        ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ",
+                                __func__, temp_len+1);
+                        EXFAIL_OUT(ret);
+                    }
+
+                    /* build the printable string */
+                    ndrx_build_printable_string(cnv_buf, temp_len+1, p, len);
+                    
+                    NDRX_FREE(p);
+                    p = cnv_buf;
                 }
 
                 len=cnv_len;

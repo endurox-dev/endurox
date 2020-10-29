@@ -38,6 +38,18 @@ T_DOUBLE_FLD    444.000000
 T_STRING_FLD    HELLO WORLD
 T_CARRAY_FLD    \00\01\02\03HELLO BINARY\04\05\00\\
 ((BFLDID32)167772261)   HELLOSVC
+T_PTR_FLD   0xffff
+T_UBF_FLD
+    T_STRING_FLD    HELLO WORLD SUB FIELD
+    T_FLOAT_FLD     1.33000
+T_VIEW_FLD  UBTESTVIEW2
+    tshort1 4
+    tlong1  5
+    tchar1  6
+    tfloat1 7.00000
+    tdouble1    8.000000
+    tstring1    D
+    tcarray1    F\00\00\00\00\00\00\00\00\00
 --------------------------------------------------------------------------------
 
 'p_ub' is buffer to write the data to, 'inf' is input stream.
@@ -93,6 +105,8 @@ debug info from last function call.
 *BSYNTAX* Missing tab between field id or missing newline.
 
 *BBADNAME* Field not found in field table.
+
+*BBADVIEW* View not found (specified in view field)
 
 EXAMPLE
 -------

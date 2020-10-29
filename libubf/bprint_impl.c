@@ -103,6 +103,7 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
     int i;
     BVIEWFLD *vdata;
     Bnext_state_t bprint_state;
+    int temp_len;
     
     UBF_TLS_ENTRY;
     
@@ -171,13 +172,31 @@ expublic int ndrx_Bfprint (UBFH *p_ub, FILE * outf,
                 p=cnv_buf;
             }
             
+            /* escape char data... */
+            if (BFLD_CHAR==fldtype &&
+                    (temp_len = ndrx_get_nonprintable_char_tmpspace(p, cnv_len)) &&
+                    temp_len!=cnv_len)
+            {
+                UBF_LOG(log_debug, "Containing special characters -"
+                                " needs to temp buffer for prefixing");
+                tmp_buf=NDRX_MALLOC(temp_len+1); /* adding +1 for EOS */
+                if (NULL==tmp_buf)
+                {
+                    ndrx_Bset_error_fmt(BMALLOC, "%s: Failed to allocate ",
+                            __func__, temp_len+1);
+                    EXFAIL_OUT(ret);
+                }
+
+                /* build the printable string */
+                ndrx_build_printable_string(tmp_buf, temp_len+1, p, len);
+                p = tmp_buf;
+            }
+            
             len=cnv_len;
         }
         /* now check are we printable? */
         else if (BFLD_STRING==fldtype || BFLD_CARRAY==fldtype)
         {
-            int temp_len;
-            
             /* For strings we must count off trailing EOS */
             if (BFLD_STRING==fldtype)
             {
@@ -588,7 +607,8 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
         }
         
         /* Check field type */
-        if ((BFLD_STRING == fldtype || BFLD_CARRAY == fldtype) && '='!=flag)
+        if ((BFLD_STRING == fldtype || 
+                BFLD_CARRAY == fldtype || BFLD_CHAR == fldtype) && '='!=flag)
         {
             if (EXFAIL==ndrx_normalize_string(value, &len))
             {
@@ -597,7 +617,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 EXFAIL_OUT(ret);
             }
         }
-        else if (BFLD_UBF == fldtype)
+        else if (BFLD_UBF == fldtype && '='!=flag)
         {
             /* init the buffer */
             if (EXSUCCEED!=Binit((UBFH*)value, value_len))
@@ -621,7 +641,7 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                 is_eof=EXTRUE;
             }
         }
-        else if (BFLD_VIEW == fldtype)
+        else if (BFLD_VIEW == fldtype && '='!=flag)
         {
             /* now parse the view  
              * So where do we load?
@@ -751,7 +771,18 @@ expublic int ndrx_Bextread (UBFH * p_ub, FILE *inf,
                      * the 2 to get space for 1.
                      * Fixed: moved from Bfind to ndrx_Bgetalloc
                      */
-                    if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, copy_form, len_from, Bfldtype(bfldid_from))))
+                    
+                    /* to work with view/ubf we need Bchg() in place */
+                    if (Bfldtype(bfldid_from) == fldtype)
+                    {
+                        if (EXSUCCEED!=(ret=Bchg(p_ub, bfldid, 0, copy_form, len_from)))
+                        {
+                            NDRX_FREE(copy_form);
+                            EXFAIL_OUT(ret);
+                        }
+                    }
+                    else if (EXSUCCEED!=(ret=CBchg(p_ub, bfldid, 0, copy_form, 
+                            len_from, Bfldtype(bfldid_from))))
                     {
                         NDRX_FREE(copy_form);
                         EXFAIL_OUT(ret);

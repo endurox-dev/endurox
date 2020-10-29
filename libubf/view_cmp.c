@@ -316,7 +316,7 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
     
 out:
     
-    NDRX_LOG(log_debug, "Result %d", ret);
+    UBF_LOG(log_debug, "Result %d", ret);
     return ret;
 
 }
