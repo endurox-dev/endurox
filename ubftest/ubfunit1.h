@@ -91,6 +91,8 @@ extern void gen_set_view_dbg(char *file, int line, BVIEWFLD *vf, int offset);
 #define gen_load_view(P_UB, OCC, OFFSET, FLDOFF) gen_load_view_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
 #define gen_load_ptr(P_UB, OCC, OFFSET, FLDOFF) gen_load_ptr_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
 
+extern void init_UBTESTVIEW1(struct UBTESTVIEW1 *v);
+
 extern void open_test_temp(char *mode);
 extern void open_test_temp_for_read(char *mode);
 extern void write_to_temp(char **data);
@@ -112,6 +114,7 @@ extern TestSuite *ubf_fconcat_tests(void);
 extern TestSuite *ubf_find_tests(void);
 extern TestSuite *ubf_get_tests(void);
 extern TestSuite *ubf_print_tests(void);
+extern TestSuite *ubf_printv_tests(void);
 extern TestSuite *ubf_macro_tests(void);
 extern TestSuite *ubf_readwrite_tests(void);
 extern TestSuite *ubf_mkfldhdr_tests(void);
