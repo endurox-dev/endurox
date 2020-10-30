@@ -106,7 +106,7 @@ is higher than dimensions for array).
 
 EXAMPLE
 -------
-See *ubftest/test_embubf.c* for sample code.
+See *ubftest/test_printv.c* for sample code.
 
 BUGS
 ----
