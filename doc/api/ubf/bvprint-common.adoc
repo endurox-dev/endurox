@@ -8,7 +8,7 @@ int Bvprint (char * 'cstruct', char * 'view');
 
 int Bvfprint (char * 'cstruct', char * 'view', FILE * 'outf');
 
-int Bvfprintcb (char * 'cstruct', char * 'view', ndrx_plugin_tplogprintubf_hook_t 'p_writef', void *'dataptr1');
+int Bvfprintcb (char * 'cstruct', char * 'view', ndrx_plugin_tplogprintubf_hook_t 'p_writef', void * 'dataptr1');
 
 
 Link with '-lubf -lnstd -lm -lpthread'
@@ -31,7 +31,8 @@ The callback receives 'buffer' parameter with ASCII chars to print. The 'datalen
 indicates the data length in the 'buffer', this includes a newline and EOS byte.
 'dataptr1' is forwarded from the *Bvfprintcb()* call to callback. Parameters:
 'do_write', 'outf' are not used. 'fid' is set field number starting from *0* which
-is being printed.
+is being printed. On return callback function shall return *0* in case of success.
+In case of failure, non *0* value shall be returned.
 
 Data format for printing to *stdout* or *FILE* stream is following:
 "<FIELD><TAB><VALUE><NEW_LINE>". When printing to callback, additionally EOS (0x00)
@@ -42,11 +43,25 @@ When printing char, strings or carray data output is escaped with following rule
 if given ASCII chars is not *isprint()* or is *iscntrl()*, then data is escaped
 as "\xx", where xx is hex number of byte, in lower case.
 
-
-Example output:
+View structure:
 --------------------------------------------------------------------------------
-tshort4	-10
-tlong1	33333333
+VIEW UBTESTVIEW1
+#type    cname      fbname              count   flag    size    null
+
+int      tint2      T_LONG_2_FLD        2       FS       -       0
+int      tint3      -                   1       -       -       -1
+int      tint4      -                   2       -       -       -1
+
+char     tchar1     T_CHAR_FLD          1       F       -       '\n'
+char     tchar2     T_CHAR_2_FLD        5       SC      -       'A'
+carray   tcarray2   T_CARRAY_2_FLD      1       LFSP    25      '\0\n\t\f\\\'\"\vHELLOWORL\n'
+
+END
+--------------------------------------------------------------------------------
+
+Would be printed as:
+--------------------------------------------------------------------------------
+
 tint2	54545
 tint2	23232
 tint3	-100
@@ -58,35 +73,24 @@ tchar2	B
 tchar2	C
 tchar2	\0a
 tchar2	\09
-tfloat1	-0.11000
-tfloat1	-0.22000
-tfloat1	0.33000
-tfloat1	0.44000
-tfloat2	100000.10156
-tfloat2	200000.20312
-tfloat3	333333.12500
-tdouble1	99999.111111
-tdouble1	11111.999999
-tdouble2	-999.123000
-tstring0	HELLO Enduro/X
 tcarray2	\01\02\03\04\05
 --------------------------------------------------------------------------------
 
-Following logic is applied for NULL view fields when printing:
-
-...
+When array fields are printed, if they have "C" count indicator, then this number of fields
+are printed (i.e. may be printed less fields than actually defined in array). If "L" length
+indicator is present for field definition for carray type, then only number of bytes set in
+lenght indictor is printed.
 
 
 RETURN VALUE
 ------------
-On success, *Bgetr()* and *Bgetrv()* return zero; on error, -1 is returned, with *Berror* set to 
-indicate the error.
+On success, *Bvprint()*, *Bvfprint()* and *Bvfprintcb()* return zero; on error, 
+-1 is returned, with *Berror* set to indicate the error.
 
 ERRORS
 ------
 Note that *Bstrerror()* returns generic error message plus custom message with 
-debug info from last function call. Function my return errors from *Bfind(3)* and
-corresponding mapped operation, e.g. *Bget(3)*, *Bfind(3)*, etc.
+debug info from last function call.
 
 Following additional errors may be returned by this function:
 
