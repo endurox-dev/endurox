@@ -146,6 +146,13 @@ set(MAN3_NAMES
     CBfindrv
     Bpresr
     Bpresrv
+    CBvgetr
+    CBvgetrv
+    Bvnullr
+    Bvnullrv
+    Bvprint
+    Bvfprint
+    Bvfprintcb
    )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

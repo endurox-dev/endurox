@@ -1,0 +1,10 @@
+BVPRINT(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bvprint - Print view to *stdout*
+
+include::bvprint-common.adoc[]

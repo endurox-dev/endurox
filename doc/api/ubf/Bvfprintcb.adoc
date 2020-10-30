@@ -1,0 +1,10 @@
+BVFPRINTCB(3)
+=============
+:doctype: manpage
+
+
+NAME
+----
+Bvfprintcb - Print view to callback function
+
+include::bvprint-common.adoc[]

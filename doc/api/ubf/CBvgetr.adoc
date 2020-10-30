@@ -1,0 +1,10 @@
+CBVGETR(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+CBvgetr - Get view sub-field from VIEW present in UBF (sub-)buffer
+
+include::recurs-common.adoc[]
