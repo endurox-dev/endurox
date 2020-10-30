@@ -36,7 +36,7 @@ In case of failure, non *0* value shall be returned.
 
 Data format for printing to *stdout* or *FILE* stream is following:
 "<FIELD><TAB><VALUE><NEW_LINE>". When printing to callback, additionally EOS (0x00)
-byte is added for each of the lines printed in '\*buffer'.
+byte is added for each of the lines printed in '*buffer'.
 
 
 When printing char, strings or carray data output is escaped with following rules,
