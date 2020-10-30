@@ -4,11 +4,11 @@ SYNOPSIS
 #include <ubf.h>
 
 
-int Bvprint (char *'cstruct', char *'view');
+int Bvprint (char * 'cstruct', char * 'view');
 
-int Bvfprint (char *'cstruct', char *'view', FILE *'outf');
+int Bvfprint (char * 'cstruct', char * 'view', FILE * 'outf');
 
-int Bvfprintcb (char *'cstruct', char *'view', ndrx_plugin_tplogprintubf_hook_t 'p_writef', void *'dataptr1');
+int Bvfprintcb (char * 'cstruct', char * 'view', ndrx_plugin_tplogprintubf_hook_t 'p_writef', void *'dataptr1');
 
 
 Link with '-lubf -lnstd -lm -lpthread'
