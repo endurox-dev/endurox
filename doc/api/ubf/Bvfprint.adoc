@@ -1,0 +1,10 @@
+BVFPRINT(3)
+===========
+:doctype: manpage
+
+
+NAME
+----
+Bvfprint - Print view to file stream
+
+include::bvprint-common.adoc[]

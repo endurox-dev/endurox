@@ -79,7 +79,7 @@ tcarray2	\01\02\03\04\05
 When array fields are printed, if they have "C" count indicator, then this number of fields
 are printed (i.e. may be printed less fields than actually defined in array). If "L" length
 indicator is present for field definition for carray type, then only number of bytes set in
-lenght indictor is printed.
+length indicator is printed.
 
 
 RETURN VALUE
@@ -94,7 +94,7 @@ debug info from last function call.
 
 Following additional errors may be returned by this function:
 
-*BEINVAL* 'cstruct', 'view' or 'p_writef' is NULL.
+*BEINVAL* 'cstruct', 'view' or 'p_writef' is NULL. 'p_writef' callback failed (returned non 0).
 
 *BBADVIEW* View name specified in 'view' is not found in *VIEWFILES* env config.
 

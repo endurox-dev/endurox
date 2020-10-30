@@ -1,0 +1,10 @@
+BVNULLR(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+Bvnullr - Check is view field NULL, in UBF (sub-) buffer
+
+include::recurs-common.adoc[]
