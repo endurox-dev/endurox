@@ -1718,7 +1718,7 @@ expublic int tpimport(char *istr, long ilen, char **obuf, long *olen, long flags
         EXFAIL_OUT(ret);
     }
 
-    ret=ndrx_tpimportex(NULL, istr, ilen, obuf, olen, flags);
+    ret=ndrx_tpimportex(NULL, istr, ilen, obuf, olen, flags, NULL);
 
 out:
     return ret;
@@ -1759,7 +1759,7 @@ expublic int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **
         EXFAIL_OUT(ret);
     }
 
-    ret=ndrx_tpimportex(bufctl, istr, ilen, obuf, olen, flags);
+    ret=ndrx_tpimportex(bufctl, istr, ilen, obuf, olen, flags, NULL);
 
 out:
     return ret;
@@ -1799,7 +1799,7 @@ extern int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags)
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags);
+    ret=ndrx_tpexportex(NULL, ibuf, ilen, ostr, olen, flags, NULL);
 
 out:
     return ret;
@@ -1846,7 +1846,7 @@ extern int tpexportex(ndrx_expbufctl_t *bufctl,
         EXFAIL_OUT(ret);
     }
 
-    ret=ndrx_tpexportex(bufctl, ibuf, ilen, ostr, olen, flags);
+    ret=ndrx_tpexportex(bufctl, ibuf, ilen, ostr, olen, flags, NULL);
 
 out:
     return ret;

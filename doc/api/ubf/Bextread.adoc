@@ -19,7 +19,7 @@ Link with '-lubf -lnstd -lm -lpthread'
 
 DESCRIPTION
 -----------
-Restore the buffer from text populated by *Bprint(3)* or *Bprintf(3)*.
+Restore the buffer from text populated by *Bprint(3)*, *Bfprint(3)* or *Bfprintcb(3)*
 
 The read format is "[COMMAND]<FIELD><TAB><VALUE><NEW_LINE>". Input also 
 support fields by id, then format for <FIELD> is "((BFLDID32)<FIELD_ID>)"
@@ -118,7 +118,7 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*Bextreadcb(3)* *Bfprint(3)* *Bprint(3)* *Bread(3)* *Bwrite(3)* *ud(8)*
+*Bextreadcb(3)* *Bfprint(3)* *Bprint(3)* *Bfprintcb(3)* *Bread(3)* *Bwrite(3)* *ud(8)*
 
 COPYING
 -------

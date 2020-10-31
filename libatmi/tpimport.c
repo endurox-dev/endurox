@@ -70,10 +70,12 @@
  * @param obuf
  * @param olen
  * @param flags
+ * @param data_object if buffer is part of UBF buffer import
  * @return 
  */
 expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
-        char *istr, long ilen, char **obuf, long *olen, long flags)
+        char *istr, long ilen, char **obuf, long *olen, long flags,
+        EXJSON_Object *data_object)
 {
     int ret=EXSUCCEED;
     char *buftype;
@@ -95,7 +97,6 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     EXJSON_Value *root_value=NULL;
     EXJSON_Object *root_object=NULL;
     EXJSON_Value *data_value=NULL;
-    EXJSON_Object *data_object=NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
 

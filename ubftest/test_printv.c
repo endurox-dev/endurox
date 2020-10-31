@@ -44,6 +44,116 @@
 #include "atmi_int.h"
 
 /**
+ * Test - test plus command
+ */
+Ensure(test_bvextread_plus)
+{
+    struct UBTESTVIEW2 v;
+    
+    /* Check with sub-fields */
+    char *test_plus[]= {
+        "tshort1\t1\n",
+	"tlong1\t2\n",
+	"+ tshort1\t2\n",
+	"+ tlong1\t99999\n",
+        NULL
+    };
+    
+    memset(&v, 0, sizeof(v));
+    
+    /* load field table */
+    load_field_table();
+
+    open_test_temp("w");
+    write_to_temp(test_plus);
+    close_test_temp();
+
+    open_test_temp_for_read("r");
+    assert_equal(Bvextread((char *)&v, "UBTESTVIEW2", M_test_temp_file), EXSUCCEED);
+    close_test_temp();
+    /* now open the file */
+    remove_test_temp();
+    
+    /* check the view contents  for those fields shall be 2 & 3*/
+    assert_equal(v.tshort1, 2);
+    assert_equal(v.tlong1, 99999);
+}
+
+
+/**
+ * Test - test minus command
+ */
+Ensure(test_bvextread_minus)
+{
+    struct UBTESTVIEW2 v;
+    
+    /* Check with sub-fields */
+    char *test_plus[]= {
+        "tshort1\t8888\n",
+	"tlong1\t2\n",
+	"- tshort1\t\n",
+	"- tlong1\t\n",
+        NULL
+    };
+    
+    memset(&v, 0, sizeof(v));
+    
+    /* load field table */
+    load_field_table();
+
+    open_test_temp("w");
+    write_to_temp(test_plus);
+    close_test_temp();
+
+    open_test_temp_for_read("r");
+    assert_equal(Bvextread((char *)&v, "UBTESTVIEW2", M_test_temp_file), EXSUCCEED);
+    close_test_temp();
+    /* now open the file */
+    remove_test_temp();
+    
+    /* check the view contents  for those fields shall be 2 & 3*/
+    assert_equal(v.tshort1, 2000);
+    assert_equal(v.tlong1, 5);
+}
+
+
+/**
+ * Test - test assign command
+ */
+Ensure(test_bvextread_assign)
+{
+    struct UBTESTVIEW2 v;
+    
+    /* Check with sub-fields */
+    char *test_plus[]= {
+        "tshort1\t8888\n",
+	"tlong1\t7771\n",
+	"= tshort1\ttlong1\n",
+        NULL
+    };
+    
+    memset(&v, 0, sizeof(v));
+    
+    /* load field table */
+    load_field_table();
+
+    open_test_temp("w");
+    write_to_temp(test_plus);
+    close_test_temp();
+
+    open_test_temp_for_read("r");
+    assert_equal(Bvextread((char *)&v, "UBTESTVIEW2", M_test_temp_file), EXSUCCEED);
+    close_test_temp();
+    /* now open the file */
+    remove_test_temp();
+    
+    /* check the view contents  for those fields shall be 2 & 3*/
+    assert_equal(v.tshort1, 7771);
+    
+}
+
+
+/**
  * Test Bvfprint
  */
 Ensure(test_bvfprint)
@@ -227,7 +337,9 @@ TestSuite *ubf_printv_tests(void)
     add_test(suite, test_bvprint);
     add_test(suite, test_bvfprint);
     add_test(suite, test_bvfprintcb);
-    
+    add_test(suite, test_bvextread_plus);
+    add_test(suite, test_bvextread_minus);
+    add_test(suite, test_bvextread_assign);
     return suite;
 }
 /* vim: set ts=4 sw=4 et smartindent: */

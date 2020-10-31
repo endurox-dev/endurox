@@ -433,7 +433,7 @@ expublic int ndrx_Bvextread (char *cstruct, char *view, FILE *inf,
                 EXFAIL_OUT(ret);
             }
             
-            if (EXSUCCEED!=(ret=ndrx_CBvchg_int(cstruct, v, f, occ, copysrcbuf, 
+            if (EXSUCCEED!=(ret=ndrx_CBvchg_int(cstruct, v, f, 0, copysrcbuf, 
                     copysrcbuf_len, fsrc->typecode_full)))
             {
                 EXFAIL_OUT(ret);

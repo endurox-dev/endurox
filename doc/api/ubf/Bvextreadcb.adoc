@@ -1,0 +1,10 @@
+BVEXTREADCB(3)
+==============
+:doctype: manpage
+
+
+NAME
+----
+Bvextreadcb - Read the view contents from callback
+
+include::bvextread-common.adoc[]

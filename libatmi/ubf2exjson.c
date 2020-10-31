@@ -129,6 +129,10 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
                 fldnm, fldid, p_ub);
 
     }
+    else if (BFLD_PTR!=fldtyp)
+    {
+        /* TODO: Load as PTR / NEW block */
+    }
     else if (BFLD_VIEW!=fldtyp)
     {
         BVIEWFLD vdata;
@@ -594,7 +598,6 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
     
     if ( NULL == data_object )
     {
-        /* TOOD: Refactor for view? */
         root_value = exjson_value_init_object();
         
         if (NULL==root_value)
@@ -695,6 +698,10 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     EXFAIL_OUT(ret);
                 }
             }
+            else if (BFLD_PTR==fldtyp)
+            {
+                /* export whole buffer... run as new tpexport */
+            }
             else
             {
                 /* if this is a view... needs to get view struct data... */
@@ -707,6 +714,8 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     EXFAIL_OUT(ret);
                 }
             }
+            
+            
         }
         else
         {
