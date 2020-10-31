@@ -563,19 +563,20 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
                     /* create array */
                     is_array = EXTRUE;
                     /* add array to document... */
-                    if (EXJSONSuccess!=exjson_object_set_value(view_object, cname, exjson_value_init_array()))
+                    if (EXJSONSuccess!=exjson_object_set_value(view_object, cname, 
+                            exjson_value_init_array()))
                     {
-                            NDRX_LOG(log_error, "exjson: Failed to add Array to root object!!");
-                            ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to add "
-                                    "Array to root object!!");
-                            EXFAIL_OUT(ret);
+                        NDRX_LOG(log_error, "exjson: Failed to add Array to root object!!");
+                        ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to add "
+                                "Array to root object!!");
+                        EXFAIL_OUT(ret);
                     }
                     if (NULL == (jarr=exjson_object_get_array(view_object, cname)))
                     {
-                            NDRX_LOG(log_error, "Failed to initialize array!!");
+                        NDRX_LOG(log_error, "Failed to initialize array!!");
 
-                            ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array");
-                            EXFAIL_OUT(ret);                    
+                        ndrx_TPset_error_msg(TPESYSTEM, "Failed to initialize array");
+                        EXFAIL_OUT(ret);                    
                     }
                 }
                 else
@@ -649,36 +650,36 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
 
             if (is_array)
             {
-                    /* Add array element 
-                    exjson_object_set_value */
+                /* Add array element 
+                exjson_object_set_value */
 
-                    /* Add normal element */
-                    if (is_num)
+                /* Add normal element */
+                if (is_num)
+                {
+                    if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
                     {
-                        if (EXJSONSuccess!=exjson_array_append_number(jarr, d_val))
-                        {
-                            NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
-                                    d_val);
+                        NDRX_LOG(log_error, "Failed to set array elem to [%lf]!", 
+                                d_val);
 
-                            ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                    "elem to [%lf]!", d_val);
+                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                                "elem to [%lf]!", d_val);
 
-                            EXFAIL_OUT(ret);
-                        }
+                        EXFAIL_OUT(ret);
                     }
-                    else
+                }
+                else
+                {
+                    if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
                     {
-                        if (EXJSONSuccess!=exjson_array_append_string(jarr, s_ptr))
-                        {
-                            NDRX_LOG(log_error, "Failed to set array elem to [%s]!", 
-                                    s_ptr);
+                        NDRX_LOG(log_error, "Failed to set array elem to [%s]!", 
+                                s_ptr);
 
-                            ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
-                                    "elem to [%s]!", s_ptr);
+                        ndrx_TPset_error_fmt(TPESYSTEM, "exjson: Failed to set array "
+                                "elem to [%s]!", s_ptr);
 
-                            EXFAIL_OUT(ret);
-                        }
+                        EXFAIL_OUT(ret);
                     }
+                }
 
             }
             else

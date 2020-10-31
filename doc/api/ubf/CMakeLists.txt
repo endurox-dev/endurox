@@ -153,6 +153,8 @@ set(MAN3_NAMES
     Bvprint
     Bvfprint
     Bvfprintcb
+    Bvextread
+    Bvextreadcb
    )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

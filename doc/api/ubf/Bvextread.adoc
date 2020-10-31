@@ -1,0 +1,10 @@
+BVEXTREAD(3)
+============
+:doctype: manpage
+
+
+NAME
+----
+Bvextread - Read the view contents from file stream
+
+include::bvextread-common.adoc[]

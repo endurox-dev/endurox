@@ -1,0 +1,120 @@
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bvextread(char * 'cstruct', char * 'view', FILE * 'inf');
+
+int Bvextreadcb(char * 'cstruct', char * 'view', 
+        long (* 'p_readf')(char * 'buffer', long 'bufsz', void * 'dataptr1'), void * 'dataptr1');
+
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+
+Restore the buffer from text populated by *Bvprint(3)*, *Bvfprint(3)* 
+or *Bvfprintcb(3)*.
+
+The input data each line must be in following format: "[COMMAND]<VIEW_CNAME><TAB><VALUE><NEW_LINE>".
+When reading by *Bvextreadcb()* additionally each read line string must be terminated
+with EOS (0x00 byte).
+
+Having view structure as:
+--------------------------------------------------------------------------------
+VIEW UBTESTVIEW1
+#type    cname      fbname              count   flag    size    null
+
+int      tint2      T_LONG_2_FLD        2       FS       -       0
+int      tint3      -                   1       -       -       -1
+int      tint4      -                   2       -       -       -1
+
+char     tchar1     T_CHAR_FLD          1       F       -       '\n'
+char     tchar2     T_CHAR_2_FLD        5       SC      -       'A'
+carray   tcarray2   T_CARRAY_2_FLD      1       LFSP    25      '\0\n\t\f\\\'\"\vHELLOWORL\n'
+
+END
+--------------------------------------------------------------------------------
+
+Data shall be formated as (example):
+--------------------------------------------------------------------------------
+
+tint2	54545
+tint2	23232
+tint3	-100
+tint4	1010101
+tint4	989898
+tchar1	A
+tchar2	A
+tchar2	B
+tchar2	C
+tchar2	\0a
+tchar2	\09
+tcarray2	\01\02\03\04\05
+--------------------------------------------------------------------------------
+
+When view is read, initially structure is initialized to NULL values. The read
+process will read and setup the fields till the EOF.
+
+When reading with Bvextreadcb(), 'p_readf' is function from which to read
+the line by line data. Each call to callback shall return zero (0x00 byte) terminated 
+line with exactly one field, value and newline in the end. 
+
+The 'bufsz' denotes the buffer size of 'buffer', where data shall be put. 
+In case if success, the 'p_readf' must return number bytes written to 'buffer'.
+At the end of the buffer (EOF), the 'p_readf' must return *0*. In case of error, callback
+function shall return *-1*. The *dataptr1* passed to *Bextreadcb()* is forwarded
+to callback function and is meant to be used by user specific purposes. Field
+is optional and may be set to NULL, if not used by callback.
+
+Input format supports also macro commands. This is optional *COMMAND* block, 
+that can have following values:
+
+*+* set the field value at array occurrence 0.
+
+*-* initialize array occurrence 0 to NULL value.
+
+*=* copy the field value from field name which is stored at <VALUE>.
+
+*#* comment, line ignored
+
+RETURN VALUE
+------------
+On success, *Bextreadcb()* return zero; on error, -1 is returned, with *Berror* 
+set to indicate the error.
+
+ERRORS
+------
+Note that *Bvextread()* and *Bvextreadcb()* returns generic error message 
+plus custom message with debug info from last function call.
+
+*BEINVAL* 'cstruct' is NULL, 'view' is NULL or EOS, 'inf' is NULL, 'p_readf' is NULL.
+
+*BBADVIEW* View not recognized (check the *VIEWFILES* env config).
+
+*BEINVAL* 'p_readf' is NULL.
+
+*BSYNTAX* Missing tab between field id or missing newline. Space does not follow
+the command. Invalid string escape.
+
+*BEUNIX* Malloc failed for temp buffers.
+
+*BNOCNAME* cname field not found in view definition.
+
+EXAMPLE
+-------
+See *ubftest/test_printv.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bvprint(3)* *Bvfprint(3)* *Bvfprintcb(3)* *Bextread(3)* 
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

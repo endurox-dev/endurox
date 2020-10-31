@@ -69,10 +69,11 @@
  * @param ostr
  * @param olen
  * @param flags
+ * @param data_object if exporting this as sub-buffer (PTR) in already in progress export
  * @return 
  */
 extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, 
-            char *ibuf, long ilen, char *ostr, long *olen, long flags)
+            char *ibuf, long ilen, char *ostr, long *olen, long flags, EXJSON_Object *data_object)
 {
     int ret=EXSUCCEED;
     char buftype[16+1]={EXEOS};
@@ -81,14 +82,30 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     char *b64_buf=NULL;
     long size_existing=EXFAIL;
 
-    EXJSON_Value *root_value = exjson_value_init_object();
-    EXJSON_Object *root_object = exjson_value_get_object(root_value);
+    EXJSON_Value *root_value = NULL;
+    EXJSON_Object *root_object = NULL;
     char *serialized_string = NULL;
 
     EXJSON_Value *data_value = NULL;
-    EXJSON_Object *data_object = NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
+    
+    if ( NULL == data_object )
+    {
+        root_value = exjson_value_init_object();
+        
+        if (NULL==root_value)
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, "Failed to init json object value - mem issue?");
+            EXFAIL_OUT(ret);
+        }
+        
+        root_object = exjson_value_get_object(root_value);
+    }
+    else
+    {
+        root_object = data_object;
+    }
     
     b64_buf=NDRX_MALLOC(CARR_BUFFSIZE_B64_EOS);
     
