@@ -69,11 +69,12 @@
  * @param ostr
  * @param olen
  * @param flags
- * @param data_object if exporting this as sub-buffer (PTR) in already in progress export
+ * @param parent_root_object if exporting this as sub-buffer (PTR) in already in progress export
  * @return 
  */
 extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, 
-            char *ibuf, long ilen, char *ostr, long *olen, long flags, EXJSON_Object *data_object)
+            char *ibuf, long ilen, char *ostr, long *olen, long flags, 
+            EXJSON_Object *parent_root_object)
 {
     int ret=EXSUCCEED;
     char buftype[16+1]={EXEOS};
@@ -84,9 +85,11 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
 
     EXJSON_Value *root_value = NULL;
     EXJSON_Object *root_object = NULL;
-    char *serialized_string = NULL;
-
+    
     EXJSON_Value *data_value = NULL;
+    EXJSON_Object *data_object = NULL;
+    
+    char *serialized_string = NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
     
@@ -104,7 +107,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
     }
     else
     {
-        root_object = data_object;
+        root_object = parent_root_object;
     }
     
     b64_buf=NDRX_MALLOC(CARR_BUFFSIZE_B64_EOS);
@@ -252,33 +255,40 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
         EXFAIL_OUT(ret);
     }
 
-    serialized_string = exjson_serialize_to_string(root_value);
-    if (strlen(serialized_string) < *olen)
+    if (NULL==parent_root_object)
     {
-        NDRX_LOG(log_debug, "Return JSON: [%s]", serialized_string);
-        
-        if ( TPEX_STRING == flags )
+        serialized_string = exjson_serialize_to_string(root_value);
+        if (strlen(serialized_string) < *olen)
         {
-            NDRX_LOG(log_debug, "convert to b64");
-            outlen = *olen;
-            if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, 
-                        strlen(serialized_string), &outlen, ostr))
+            NDRX_LOG(log_debug, "Return JSON: [%s]", serialized_string);
+
+            if ( TPEX_STRING == flags )
             {
-                NDRX_LOG(log_error, "Failed to convert to b64!");
-                EXFAIL_OUT(ret);
+                NDRX_LOG(log_debug, "convert to b64");
+                outlen = *olen;
+                if (NULL==ndrx_base64_encode((unsigned char *)serialized_string, 
+                            strlen(serialized_string), &outlen, ostr))
+                {
+                    NDRX_LOG(log_error, "Failed to convert to b64!");
+                    EXFAIL_OUT(ret);
+                }
+            }
+            else
+            {
+                NDRX_STRCPY_SAFE_DST(ostr, serialized_string, *olen);
+                *olen = strlen(ostr)+1;
             }
         }
         else
         {
-            NDRX_STRCPY_SAFE_DST(ostr, serialized_string, *olen);
-            *olen = strlen(ostr)+1;
+            NDRX_LOG(log_error, "olen too short: ostr size: [%d] olen size: [%d]", 
+                    strlen(serialized_string)+1, *olen);
+            EXFAIL_OUT(ret);
         }
     }
     else
     {
-        NDRX_LOG(log_error, "olen too short: ostr size: [%d] olen size: [%d]", 
-                strlen(serialized_string)+1, *olen);
-        EXFAIL_OUT(ret);
+        NDRX_LOG(log_debug, "Not serializing as having parent_root_object");
     }
 
 out:

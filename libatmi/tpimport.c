@@ -70,12 +70,12 @@
  * @param obuf
  * @param olen
  * @param flags
- * @param data_object if buffer is part of UBF buffer import
+ * @param parent_root_object if buffer is part of UBF buffer import
  * @return 
  */
 expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
         char *istr, long ilen, char **obuf, long *olen, long flags,
-        EXJSON_Object *data_object)
+        EXJSON_Object *parent_root_object)
 {
     int ret=EXSUCCEED;
     char *buftype;
@@ -97,49 +97,59 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     EXJSON_Value *root_value=NULL;
     EXJSON_Object *root_object=NULL;
     EXJSON_Value *data_value=NULL;
+    EXJSON_Object *data_object=NULL;
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
 
-    /* Check flag if base64 then decode from base64 */
-    if ( TPEX_STRING == flags )
+    if (NULL!=parent_root_object)
     {
-        if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
-        {
-            NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(istr));
-            EXFAIL_OUT(ret);
-        }
-
-        if (NULL==ndrx_base64_decode(istr, strlen(istr), &bufsz, istrtemp))
-        {
-            NDRX_LOG(log_error, "Failed to decode CARRAY");
-            EXFAIL_OUT(ret);
-        }
-        istrtemp[bufsz]=0;
+        NDRX_LOG(log_debug, "Parsing from parent_root_object");
+        root_object = parent_root_object;
     }
     else
     {
-        istrtemp = istr;
+        /* Check flag if base64 then decode from base64 */
+        if ( TPEX_STRING == flags )
+        {
+            if (NULL==(istrtemp = NDRX_MALLOC(bufsz)))
+            {
+                NDRX_LOG(log_error, "Failed to allocate %ld bytes", strlen(istr));
+                EXFAIL_OUT(ret);
+            }
+
+            if (NULL==ndrx_base64_decode(istr, strlen(istr), &bufsz, istrtemp))
+            {
+                NDRX_LOG(log_error, "Failed to decode CARRAY");
+                EXFAIL_OUT(ret);
+            }
+            istrtemp[bufsz]=0;
+        }
+        else
+        {
+            istrtemp = istr;
+        }
+
+        NDRX_LOG(log_debug, "Parsing buffer: [%s] len =[%ld]", istrtemp, bufsz);
+
+        if ( NULL == (root_value = exjson_parse_string_with_comments(istrtemp)))
+        {
+            NDRX_LOG(log_error, "Failed to parse istrtemp");
+            EXFAIL_OUT(ret);
+        }
+        type = exjson_value_get_type(root_value);
+        NDRX_LOG(log_error, "Type is %d", type);
+
+        if (exjson_value_get_type(root_value) != EXJSONObject)
+        {
+            NDRX_LOG(log_error, "Failed to parse root element");
+            ndrx_TPset_error_fmt(TPEINVAL, 
+                                 "tpimport: Failed to parse json root element");
+            EXFAIL_OUT(ret);
+        }
+
+        root_object = exjson_value_get_object(root_value);
     }
-
-    NDRX_LOG(log_debug, "Parsing buffer: [%s] len =[%ld]", istrtemp, bufsz);
-
-    if ( NULL == (root_value = exjson_parse_string_with_comments(istrtemp)))
-    {
-        NDRX_LOG(log_error, "Failed to parse istrtemp");
-        EXFAIL_OUT(ret);
-    }
-    type = exjson_value_get_type(root_value);
-    NDRX_LOG(log_error, "Type is %d", type);
-
-    if (exjson_value_get_type(root_value) != EXJSONObject)
-    {
-        NDRX_LOG(log_error, "Failed to parse root element");
-        ndrx_TPset_error_fmt(TPEINVAL, 
-                             "tpimport: Failed to parse json root element");
-        EXFAIL_OUT(ret);
-    }
-
-    root_object = exjson_value_get_object(root_value);
+    
     if (NULL==(buftype = (char *)exjson_object_get_string(root_object, "buftype" )))
     {
         ndrx_TPset_error_fmt(TPEINVAL, 
