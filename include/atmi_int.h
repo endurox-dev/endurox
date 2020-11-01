@@ -900,11 +900,11 @@ extern NDRX_API tp_conversation_control_t *ndrx_get_G_accepted_connection(void);
 
 /* tpimport() functions */
 extern NDRX_API int tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags);
-extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags, EXJSON_Object *data_object);
+extern NDRX_API int ndrx_tpimportex(ndrx_expbufctl_t *bufctl, char *istr, long ilen, char **obuf, long *olen, long flags, EXJSON_Object *parent_root_object);
 
 /* tpexport() functions */
 extern NDRX_API int tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags);
-extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags, EXJSON_Object *data_object);
+extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl, char *ibuf, long ilen, char *ostr, long *olen, long flags, EXJSON_Object *parent_root_object);
 
 /* export the symbol */
 extern NDRX_API struct xa_switch_t * ndrx_xa_builtin_get(void);

@@ -131,7 +131,27 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
     }
     else if (BFLD_PTR!=fldtyp)
     {
-        /* TODO: Load as PTR / NEW block */
+        char *allocptr = NULL;
+        long len;
+        
+        if (EXSUCCEED!=ndrx_tpimportex(NULL, NULL, 0, &allocptr, &len, 0, innerobj))
+        {
+            NDRX_LOG(log_error, "Failed to parse PTR object");
+            EXFAIL_OUT(ret);
+        }
+        
+        NDRX_LOG(log_debug, "Got PTR field: %p", allocptr);
+        
+        if (EXSUCCEED!=Bchg(p_ub, fldid, occ, (char *)&allocptr, 0L))
+        {
+            ndrx_TPset_error_fmt(TPESYSTEM, 
+                    "Failed to add to parent UBF inner PTR field [%p] [%s] (fldid=%d): %s", 
+                    fldnm, allocptr, fldid, Bstrerror(Berror));
+            NDRX_LOG(log_error, 
+                    "Failed to add to parent UBF inner PTR field [%p] [%s] (fldid=%d): %s", 
+                    fldnm, allocptr, fldid, Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
     }
     else if (BFLD_VIEW!=fldtyp)
     {
@@ -701,7 +721,12 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             else if (BFLD_PTR==fldtyp)
             {
                 /* export whole buffer... run as new tpexport */
-
+                if (EXSUCCEED!=ndrx_tpexportex(NULL, 
+                        d_ptr, 0, NULL, NULL, 0, emb_object))
+                {
+                    NDRX_LOG(log_error, "Failed to export PTR (%p)!", d_ptr);
+                    EXFAIL_OUT(ret);
+                }
             }
             else
             {
@@ -715,8 +740,6 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     EXFAIL_OUT(ret);
                 }
             }
-            
-            
         }
         else
         {
