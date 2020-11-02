@@ -273,6 +273,7 @@ extern NDRX_API int Bwritecb (UBFH *p_ub,
 extern NDRX_API void Btreefree (char *tree);
 /* Callback function that can be used from expressions */
 extern NDRX_API int Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+extern NDRX_API int Bboolsetcbf2 (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname, char *arg1));
 extern NDRX_API int Badds (UBFH *p_ub, BFLDID bfldid, char *buf);
 extern NDRX_API int Bchgs (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);
 extern NDRX_API int Bgets (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ, char *buf);

@@ -1485,6 +1485,34 @@ long callback_function_value(UBFH *p_ub, char *funcname)
 }
 
 
+long callback_w_args_HELLO(UBFH *p_ub, char *funcname, char *arg1)
+{
+    assert_string_equal(funcname, "callback_w_args_HELLO");
+    
+    assert_equal(Bisubf(p_ub), EXTRUE);
+    assert_string_equal(arg1, "HELLO WORLD");
+    
+    return 1;
+}
+
+long callback_w_args_empty(UBFH *p_ub, char *funcname, char *arg1)
+{
+    assert_string_equal(funcname, "callback_w_args_empty");
+    
+    assert_equal(Bisubf(p_ub), EXTRUE);
+    assert_string_equal(arg1, "");
+    
+    return 1;
+}
+
+long callback_w_args_pars(UBFH *p_ub, char *funcname, char *arg1)
+{
+    assert_equal(Bisubf(p_ub), EXTRUE);
+    
+    return atol(arg1);
+}
+
+
 /**
  * Test callback functions
  */
@@ -1503,9 +1531,12 @@ Ensure(test_cbfunc)
     assert_equal(Bboolsetcbf ("callback_function_false", callback_function_false), EXSUCCEED);
     assert_equal(Bboolsetcbf ("callback_function_cond", callback_function_cond), EXSUCCEED);
     assert_equal(Bboolsetcbf ("callback_function_value", callback_function_value), EXSUCCEED);
+    assert_equal(Bboolsetcbf2 ("callback_w_args_HELLO", callback_w_args_HELLO), EXSUCCEED);
+    assert_equal(Bboolsetcbf2 ("callback_w_args_empty", callback_w_args_empty), EXSUCCEED);
+    assert_equal(Bboolsetcbf2 ("callback_w_args_pars", callback_w_args_pars), EXSUCCEED);
+    assert_equal(Bboolsetcbf2 ("e", callback_w_args_pars), EXSUCCEED);
     
-
-
+    
     short_val = 137;
     assert_equal(Badd(p_ub, T_SHORT_FLD, (char *)&short_val, 0), EXSUCCEED);
     long_val = 177788;
@@ -1596,6 +1627,60 @@ Ensure(test_cbfunc)
         assert_equal(tree, NULL);
         Btreefree(tree);
     /*----------------------------------------------------------*/
+        
+        /* Check string arguments */
+        tree=Bboolco ("callback_w_args_HELLO('HELLO WORLD')==1");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
+        Btreefree(tree);
+        
+        /* Check string arguments, empty */
+        tree=Bboolco ("callback_w_args_empty('')==1");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
+        Btreefree(tree);
+        
+        /* Check string arguments, echo to long */
+        tree=Bboolco ("callback_w_args_pars('998871')==998871");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
+        Btreefree(tree);
+        
+        tree=Bboolco ("e('777')==777");
+        assert_not_equal(tree, NULL);
+        assert_equal(Bboolev(p_ub, tree), EXTRUE);
+        Btreefree(tree);
+        
+        
+        /* try bad syntax */
+        tree=Bboolco ("callback_w_args_empty('HELLO==1");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
+
+        tree=Bboolco ("callback_w_args_empty(''");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
+        
+        tree=Bboolco ("callback_w_args_empty(ABC)");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
+        
+        /* should fail too long */
+        tree=Bboolco ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffzz('ABC')");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
+        
+        
+        /* too long arg */
+        tree=Bboolco ("zz('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
         
 }
 /* -------------------------------------------------------------------------- */

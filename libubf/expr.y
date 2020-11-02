@@ -51,7 +51,7 @@ extern int yylex (void);
   int fn;			/* which function */
   ndrx_ubf_rfldid_t fld;
   char strval[MAX_TEXT+1]; /* String value */
-  char  funcname[MAX_FUNC_NAME]; /* Function name */
+  ndrx_symbfunc_t  *funccall; /* Function name */
 }
 
 %locations
@@ -71,7 +71,7 @@ extern int yylex (void);
 %token <l> ULONG
 %token <strval> STRING
 %token <fld> FLDREF
-%token <funcname> FUNCREF
+%token <funccall> FUNCREF
 %token META
 %token OP
 %token CP

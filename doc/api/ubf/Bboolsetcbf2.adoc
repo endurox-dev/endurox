@@ -1,0 +1,11 @@
+BBOOLSETCBF2(3)
+===============
+:doctype: manpage
+
+
+NAME
+----
+Bboolsetcbf2 - Set callback function for Boolean expressions with argument
+
+include::bboolsetcbf-common.adoc[]
+

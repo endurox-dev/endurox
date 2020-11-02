@@ -2158,4 +2158,40 @@ expublic void ndrx_timespec_plus(struct timespec *due, long ms)
     }
 }
 
+/**
+ * Copy to destination with dest size set.
+ * Use this where macros does not work (.y/.l)
+ * @param dest dest buffer
+ * @param src source buffer
+ * @param dst_size dest len
+ */
+expublic void ndrx_strcpy_safe_dst(char *dest, const char *src, size_t dst_size)
+{
+    NDRX_STRCPY_SAFE_DST(dest, src, dst_size);
+}
+
+/**
+ * Copy number of chars, ensure that string is terminated with EOS
+ * Ensure that dest buffer does not go over. Ensure for EOS
+ * @param dest dest buffer
+ * @param src source buffer
+ * @param n number chars to copy
+ * @param dst_size dest buffer size
+ */
+expublic void ndrx_strncpy_eos(char *dest, const char *src, size_t n, size_t dst_size)
+{
+    NDRX_STRNCPY_EOS(dest, src, n, dst_size);
+}
+
+/**
+ * Safe strcat with dest buffer checking
+ * @param dest dst buffer
+ * @param dst_size dest size
+ * @param src source buffer to copy from
+ */
+expublic void ndrx_strcat_s(char *dest, size_t dst_size, const char *src)
+{
+    NDRX_STRCAT_S(dest, dst_size, src);
+    
+}
 /* vim: set ts=4 sw=4 et smartindent: */
