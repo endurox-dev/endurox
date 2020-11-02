@@ -128,7 +128,7 @@ extern int ndrx_Bread  (UBFH * p_ub, FILE * inf,
 extern int ndrx_Bwrite (UBFH *p_ub, FILE * outf,
         long (*p_writef)(char *buffer, long bufsz, void *dataptr1), void *dataptr1);
 extern int ndrx_Blen (UBFH *p_ub, BFLDID bfldid, BFLDOCC occ);
-extern int ndrx_Bboolsetcbf (char *funcname, long (*functionPtr)(UBFH *p_ub, char *funcname));
+extern int ndrx_Bboolsetcbf2 (char *funcname, void *funcptr, int functype);
 
 extern int ndrx_Bcmp(UBFH *p_ubf1, UBFH *p_ubf2);
 extern int ndrx_Bsubset(UBFH *p_ubf1, UBFH *p_ubf2);

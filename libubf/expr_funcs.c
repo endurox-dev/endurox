@@ -89,14 +89,6 @@ static __thread struct list_node *M_cur_mem;
 static __thread struct list_node *M_first_mem;
 /* Compile time stuff only, end */
 
-/* Hash list for function callback pointers */
-struct func_hash {
-    char name[MAX_FUNC_NAME+1];/* key (string is WITHIN the structure) */
-    functionPtr_t fptr;        /* Pointer to function                  */             
-    EX_hash_handle hh;         /* makes this structure hashable        */
-};
-typedef struct func_hash func_hash_t;
-
 func_hash_t *M_func_hash = NULL;    /* Hash of customer functions regi */
 /*---------------------------Statics------------------------------------*/
 
@@ -290,7 +282,8 @@ expublic void _Btreefree_no_recurse (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
-
+    struct ast_func *a_func;
+    
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
 
@@ -314,6 +307,15 @@ expublic void _Btreefree_no_recurse (char *tree)
             break;
         case NODE_TYPE_LONG:
             /* nothing to do */
+            break;
+        case NODE_TYPE_FUNC:
+            a_func = (struct ast_func *)tree;
+            
+            if (NULL!=a_func->funcall)
+            {
+                NDRX_FPFREE(a_func->funcall);
+                
+            }
             break;
         default:
             /* nothing to do */
@@ -421,12 +423,12 @@ out:
 /*
  * Get Function name
  */
-functionPtr_t get_func(char *funcname)
+func_hash_t * get_func(char *funcname)
 {
     func_hash_t *r = NULL;
     EXHASH_FIND_STR( M_func_hash, funcname, r);
     if (NULL!=r)
-        return r->fptr;
+        return r;
     else
         return NULL;
 }
@@ -435,7 +437,7 @@ functionPtr_t get_func(char *funcname)
  * Set function pointer by user.
  * This is API function. If function ptr is NULL, func is removed from hash.
  */
-int set_func(char *funcname, functionPtr_t functionPtr)
+int set_func(char *funcname, void* functionPtr, int functype)
 {
     int ret=EXSUCCEED;
     func_hash_t *tmp;
@@ -467,6 +469,7 @@ int set_func(char *funcname, functionPtr_t functionPtr)
 
         NDRX_STRCPY_SAFE(tmp->name, funcname);
         tmp->fptr = functionPtr;
+        tmp->functype = functype;
         EXHASH_ADD_STR( M_func_hash, name, tmp );
     }
     
@@ -475,65 +478,72 @@ out:
 }
 
 /* Function call-back */
-struct ast * newfunc(char *funcname)
+struct ast *newfunc(ndrx_symbfunc_t *funccall)
 {
-  int len;
-  struct ast_func *a = NDRX_MALLOC(sizeof(struct ast_func));
-  memset(a, 0, sizeof(struct ast_func));
+    int len;
+    int ret = EXSUCCEED;
+    struct ast_func *a = NDRX_MALLOC(sizeof(struct ast_func));
+    memset(a, 0, sizeof(struct ast_func));
 
-  if(!a)
-  {
-    yyerror("out of space");
-    ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast_func");
-    return NULL;
-  }
-  else
-  {
-      if (EXSUCCEED!=add_resource((char *)a))
-      {
-          yyerror("out of space");
-          ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
-          return NULL;
-      }
-  }
+    if(!a)
+    {
+        yyerror("out of space");
+        ndrx_Bset_error_msg(BMALLOC, "out of memory for new ast_func");
+        return NULL;
+    }
+    else
+    {
+        if (EXSUCCEED!=add_resource((char *)a))
+        {
+            yyerror("out of space");
+            ndrx_Bset_error_msg(BMALLOC, "out of memory for resource list");
+            return NULL;
+        }
+    }
 
-  a->nodetype = NODE_TYPE_FUNC;
-  a->sub_type = NODE_SUB_TYPE_DEF;
-  a->nodeid = G_node_count;
-  
-  len = strlen(funcname);
-  
-  /* Resolve field function */
-  if (len<3)
-  {
-      yyerror("Function name too short!");
-      ndrx_Bset_error_fmt(BBADNAME, "Full function name too short [%s]", funcname);
-      /* Not sure is this good? If we do free get stack coruption/double free */
-      goto out;
-  }
-  
-  NDRX_STRNCPY(a->funcname, funcname, len-2);
-  a->funcname[len-2] = EXEOS;
-  
-  G_node_count++;
+    a->nodetype = NODE_TYPE_FUNC;
+    a->sub_type = NODE_SUB_TYPE_DEF;
+    a->nodeid = G_node_count;
 
-  /* Resolve field function */
-  if (NULL==(a->f=get_func(a->funcname)))
-  {
-      yyerror("Bad function name");
-      ndrx_Bset_error_fmt(BBADNAME, "Bad function name for [%s]", a->funcname);
-      /* Not sure is this good? If we do free get stack coruption/double free */
-      goto out;
-  }
-  
-  UBF_LOG(log_debug, "ast_func id: %02d, type: %s, sub-type:%s "
-                            "value: [func: [%s]]",
-                        a->nodeid,
-                        M_nodetypes[a->nodetype],
-                        M_subtypes[a->sub_type],
-                        a->funcname);
-  out:
-  return (struct ast *)a;
+    len = strlen(funccall->funcname);
+
+    /* Resolve field function */
+    if (len<1)
+    {
+        yyerror("Function name too short!");
+        ndrx_Bset_error_fmt(BBADNAME, "Full function name too short [%s]", funccall->funcname);
+        /* Not sure is this good? If we do free get stack coruption/double free */
+        EXFAIL_OUT(ret);
+    }
+
+    a->funcall = funccall;
+
+    /* Resolve field function */
+    if (NULL==(a->f=get_func(a->funcall->funcname)))
+    {
+        yyerror("Bad function name");
+        
+        ndrx_Bset_error_fmt(BBADNAME, "Bad function name for [%s]", a->funcall);
+        /* Not sure is this good? If we do free get stack coruption/double free */
+        EXFAIL_OUT(ret);
+    }
+
+    UBF_LOG(log_debug, "ast_func id: %02d, type: %s, sub-type:%s "
+                              "value: [func: [%s]]",
+                          a->nodeid,
+                          M_nodetypes[a->nodetype],
+                          M_subtypes[a->sub_type],
+                          a->funcall);
+    G_node_count++;
+out:
+            
+    if (EXSUCCEED!=ret)
+    {
+        a->funcall=NULL;
+        NDRX_FPFREE(funccall);
+    }
+    
+    return (struct ast *)a;
 }
 
 struct ast * newstring(char *str)
@@ -1267,11 +1277,26 @@ int read_unary_func(UBFH *p_ub, struct ast *a, value_block_t * v)
     char *fn = "read_unary_func";
 
     UBF_LOG(log_debug, "Entering %s func: [%s]",
-                                    fn, func->funcname);
+                                    fn, func->funcall);
     
     /* Call the function... */
     v->value_type=VALUE_TYPE_LONG;
-    v->longval=func->f(p_ub, func->funcname);
+    
+    if (NDRX_CBFUNTYPE_ARG1==func->f->functype)
+    {
+        functionPtr2_t fcall = (functionPtr2_t)func->f->fptr;
+        UBF_LOG(log_debug, "Arg1 func call");
+        
+        v->longval = fcall(p_ub, func->funcall->funcname, func->funcall->arg1);
+        
+    }
+    else
+    {
+        functionPtr_t fcall = (functionPtr_t)func->f->fptr;
+        UBF_LOG(log_debug, "No args call %d", func->f->functype);
+        
+        v->longval = fcall(p_ub, func->funcall->funcname);
+    }
 
     if (v->longval)
         v->boolval=EXTRUE;
@@ -1948,6 +1973,7 @@ expublic void ndrx_Btreefree (char *tree)
 {
     struct ast *a = (struct ast *)tree;
     struct ast_string *a_string = (struct ast_string *)tree;
+    struct ast_func *a_func;    
 
     if (NULL==tree)
         return; /* <<<< RETURN! Nothing to do! */
@@ -1955,9 +1981,6 @@ expublic void ndrx_Btreefree (char *tree)
     UBF_LOG(6, "Free up buffer %p nodeid=%d nodetype=%d", tree, a->nodeid, a->nodetype);
     switch (a->nodetype)
     {
-        case NODE_TYPE_FUNC:
-            /* nothing to do */
-            break;
         case NODE_TYPE_FLD:
             /* nothing to do */
             break;
@@ -1972,6 +1995,13 @@ expublic void ndrx_Btreefree (char *tree)
             break;
         case NODE_TYPE_FLOAT:
             /* nothing to do */
+            break;
+        case NODE_TYPE_FUNC:
+            a_func = (struct ast_func *)tree;
+            if (NULL!=a_func->funcall)
+            {
+                NDRX_FPFREE(a_func->funcall);
+            }
             break;
         case NODE_TYPE_LONG:
             /* nothing to do */
@@ -2044,7 +2074,7 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf,
                 /* print func */
                 struct ast_func *a_func = (struct ast_func *)tree;
                 
-                NDRX_BBOOLPR_FMT("%s()", a_func->funcname);
+                NDRX_BBOOLPR_FMT("%s(%s)", a_func->funcall->funcname, a_func->funcall->arg1);
                 
             }
             break;
@@ -2099,11 +2129,14 @@ expublic void ndrx_Bboolpr (char * tree, FILE *outf,
     }
 }
 
-/*
+/**
  * Set callback function
+ * With additional argument
+ * @param funcptr pointer to callback, either functionPtr_t or functionPtr2_t
+ * @param functype NDRX_CBFUNTYPE_NOARGS or NDRX_CBFUNTYPE_ARG1
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_Bboolsetcbf (char *funcname, 
-        long (*functionPtr)(UBFH *p_ub, char *funcname))
+expublic int ndrx_Bboolsetcbf2 (char *funcname, void *funcptr, int functype)
 {
 
     int ret=EXSUCCEED;
@@ -2111,16 +2144,16 @@ expublic int ndrx_Bboolsetcbf (char *funcname,
     int len;
     
     UBF_LOG(log_debug, "%s: setting callback function [%s]:%p", fn, 
-            funcname, functionPtr);
+            funcname, funcptr);
 
-    if (NULL==funcname || (len=strlen(funcname)) < 3 || len > MAX_FUNC_NAME-2)
+    if (NULL==funcname || (len=strlen(funcname)) < 1 || len > MAX_FUNC_NAME-1)
     {
         ndrx_Bset_error_fmt(BBADNAME, "Bad function name passed [%s]", funcname);
         ret=EXFAIL;
         goto out;
     }
     
-    ret = set_func(funcname, functionPtr);
+    ret = set_func(funcname, funcptr, functype);
     
 out:
     UBF_LOG(log_debug, "%s: return %p", fn, ret);

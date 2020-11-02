@@ -35,6 +35,7 @@
 %option noyywrap nodefault yylineno
 /* Context for reading field */
 %x FLDNM 
+%x FUNCNM
 
 %{
 #include "expr.h"
@@ -53,7 +54,7 @@
 /* float exponent */
 EXP	([Ee][-+]?[0-9]+)
 FLD	([_a-zA-Z][_a-zA-Z0-9]*)
-FUNC ([_a-zA-Z][_a-zA-Z0-9]*"()")
+FUNC ([_a-zA-Z][_a-zA-Z0-9]*)\(
 %%
  /* single character ops */
 "("				{ return OP; }
@@ -86,115 +87,163 @@ FUNC ([_a-zA-Z][_a-zA-Z0-9]*"()")
 "/"				{ yylval.fn = MULOP_DIV;   return MULTOP; }
 "\%"			{ yylval.fn = MULOP_MOD;   return MULTOP; }
 '[^']*'			{
-					{
-						int len = strlen(yytext);
-						if (len>MAX_TEXT)
-						{
-							yyerror("String constant too long!"); yyterminate();
-						}
-						else
-						{
-							/* stripping off leading ' */
-							strncpy(yylval.strval, yytext+1, len-1);
-							yylval.strval[len-2] = '\0';
-						}
-						return STRING;
-					}
-				}
+                            {
+                                int len = strlen(yytext);
+                                if (len>MAX_TEXT)
+                                {
+                                    yyerror("String constant too long!"); 
+                                    yyterminate();
+                                }
+                                else
+                                {
+                                    /* stripping off leading ' */
+                                    strncpy(yylval.strval, yytext+1, len-1);
+                                    yylval.strval[len-2] = '\0';
+                                }
+                                return STRING;
+                            }
+                        }
  /* Numbers - float*/
 [0-9]+			{
-					yylval.l = atol(yytext);
-					return ULONG;
-				}
+                            yylval.l = atol(yytext);
+                            return ULONG;
+                        }
 [0-9]+"."[0-9]*{EXP}? |
-"."?[0-9]+{EXP}? {
-                                        /* TODO: fix sperator according to locale */
-					yylval.d = ndrx_atof(yytext); 
-                                        
-                                        UBF_LOG(log_debug, "FLOAT: (%s): %lf %lf %lf %lf",
-                                                yytext, yylval.d, atof(yytext), atof("1.3"), atof("1,3"));
-                                        return UFLOAT;
-				}
+"."?[0-9]+{EXP}?        {
+                            /* TODO: fix sperator according to locale */
+                            yylval.d = ndrx_atof(yytext); 
+
+                            UBF_LOG(log_debug, "FLOAT: (%s): %lf %lf %lf %lf",
+                                    yytext, yylval.d, atof(yytext), atof("1.3"), atof("1,3"));
+                            return UFLOAT;
+                        }
  /* Custom function */
-{FUNC}          {
+{FUNC}        {
                     {
-						int len = strlen(yytext);
+                        int len = strlen(yytext);
+                        
+                        /* -1 for (, +1 for EOS */
                         if (len>MAX_FUNC_NAME)
                         {
-                            yyerror("Function name too long!"); yyterminate();
+                            yyerror("Function name too long (max: %d)!", (MAX_FUNC_NAME-1)); 
+                            yyterminate();
                         }
                         else
-                        {
-                            strncpy(yylval.funcname, yytext, BF_LENGTH);
-                            yylval.funcname[BF_LENGTH]='\0';
-                            UBF_LOG(log_debug, "got function (%s)\n",
-                                                yylval.funcname);
+                        {    
+                            yylval.funccall = ndrx_fpmalloc(sizeof(ndrx_symbfunc_t), 0);
+                            
+                            if (NULL==yylval.funccall)
+                            {
+                                yyerror("Failed to malloc funccall: %s", strerror(errno));
+                                yyterminate();
+                            }
+                            
+                            yylval.funccall->arg1[0]=EXEOS;
+                            
+                            /* strip off () at the end of func */
+                            
+                            ndrx_strncpy_eos(yylval.funccall->funcname, yytext, len-1,
+                                    sizeof(yylval.funccall->funcname));
+                            
+                            UBF_LOG(log_debug, "got function call [%s]", 
+                                    yylval.funccall->funcname);
+                            
                         }
                     }
-					return FUNCREF;
+                    BEGIN FUNCNM;
                 }
+
+<FUNCNM>\)      {
+                    /* pure func. */
+                    BEGIN INITIAL;
+                    return FUNCREF;
+                }
+
+<FUNCNM>\'[^']*\'\) {
+        
+                    int len = strlen(yytext);
+
+                    /* -3 chars + 1 EOS */
+                    if (len-2>MAX_TEXT)
+                    {
+                        yyerror("Function arg1 too long (max: %d)!", MAX_TEXT-1); 
+                        yyterminate();
+                    }
+                    else
+                    {
+                        UBF_LOG(log_debug, "Arg value raw [%s]", yytext);
+                        ndrx_strncpy_eos(yylval.funccall->arg1, yytext+1, 
+                            strlen(yytext)-3, sizeof(yylval.funccall->arg1));
+                        BEGIN INITIAL;
+                        return FUNCREF;
+                    }
+                }
+ /* Fix out bad occurrence */
+<FUNCNM>.|\n		{
+                            ndrx_fpfree(yylval.funccall);
+                            yyerror("Incomplete function call", yytext);
+                            yyterminate();
+                        }
  /* Field names */
 {FLD}			{
-					strncpy(yylval.fld.fldnm, yytext, BF_LENGTH);
-					yylval.fld.fldnm[BF_LENGTH]='\0';
-					yylval.fld.occ=0;
-					UBF_LOG(log_debug, "got FLD (%s[%d])\n",
-										yylval.fld.fldnm, yylval.fld.occ);
-					return FLDREF;
-				}
+                            strncpy(yylval.fld.fldnm, yytext, BF_LENGTH);
+                            yylval.fld.fldnm[BF_LENGTH]='\0';
+                            yylval.fld.occ=0;
+                            UBF_LOG(log_debug, "got FLD (%s[%d])\n",
+                                        yylval.fld.fldnm, yylval.fld.occ);
+                            return FLDREF;
+                        }
  /* Parse out field name */
 {FLD}\[			{
-					{
-						int len = strlen(yytext);
-						/* Copy only first `actual' characters from field name */
-						if (len>BF_LENGTH)
-						{
-							strncpy(yylval.fld.fldnm, yytext, BF_LENGTH);
-							yylval.fld.fldnm[BF_LENGTH]='\0';
-							UBF_LOG(log_debug, "got FLD %s stripped "
-									"off - was too long!\n", yylval.fld.fldnm);
-						}
-						else  /* Extract out the name with/out trailing [*/
-						{
-							strncpy(yylval.fld.fldnm, yytext, len-1);
-							yylval.fld.fldnm[len-1]='\0';
-						};
-					}
-					BEGIN FLDNM;
-				}
- /* Parse out occurrance */
+                            {
+                                int len = strlen(yytext);
+                                /* Copy only first `actual' characters from field name */
+                                if (len>BF_LENGTH)
+                                {
+                                        strncpy(yylval.fld.fldnm, yytext, BF_LENGTH);
+                                        yylval.fld.fldnm[BF_LENGTH]='\0';
+                                        UBF_LOG(log_debug, "got FLD %s stripped "
+                                                        "off - was too long!\n", yylval.fld.fldnm);
+                                }
+                                else  /* Extract out the name with/out trailing [*/
+                                {
+                                        strncpy(yylval.fld.fldnm, yytext, len-1);
+                                        yylval.fld.fldnm[len-1]='\0';
+                                };
+                            }
+                            BEGIN FLDNM;
+                        }
+ /* Parse out occurrence */
 <FLDNM>\?\]		{
-					yylval.fld.occ=OCC_ANY;
-					UBF_LOG(log_debug, "got FLD (%s[%d])",
-								yylval.fld.fldnm, yylval.fld.occ);
-					BEGIN INITIAL;
-					yyerror("Any occurrance [?] - not yet supported!");
-					yyterminate();
+                            yylval.fld.occ=OCC_ANY;
+                            UBF_LOG(log_debug, "got FLD (%s[%d])",
+                                                    yylval.fld.fldnm, yylval.fld.occ);
+                            BEGIN INITIAL;
+                            yyerror("Any occurrance [?] - not yet supported!");
+                            yyterminate();
 
-					return FLDREF;
-				}
-<FLDNM>[0-9]*\]	{
-					yylval.fld.occ=atoi(yytext);
-					UBF_LOG(log_debug, "got FLD (%s[%d])",
-							yylval.fld.fldnm, yylval.fld.occ);
-					BEGIN INITIAL;
-					return FLDREF;
-				}
- /* Fix out bad occurrance */
+                            return FLDREF;
+                        }
+<FLDNM>[0-9]*\]         {
+                            yylval.fld.occ=atoi(yytext);
+                            UBF_LOG(log_debug, "got FLD (%s[%d])",
+                                            yylval.fld.fldnm, yylval.fld.occ);
+                            BEGIN INITIAL;
+                            return FLDREF;
+                         }
+ /* Fix out bad occurrence */
 <FLDNM>.|\n		{
-					{
-						yyerror("Bad occurrance - [%64.64s]", yytext);
-						yyterminate();
-					}
-				}
+                            yyerror("Bad occurrence - [%64.64s]", yytext);
+                            yyterminate();
+                        }
 [ \t]   /* ignore white space */ 
 
 "\n"			{
-					return EOL;
-				}
-.				{
-					yyerror("Unknown character [%c]", *yytext); yyterminate();
-				}
+                            return EOL;
+                        }
+.                       {
+                            yyerror("Unknown character [%c]", *yytext); yyterminate();
+                        }
 %%
 
 /* yylex_destroy() is missing on older bison versions */

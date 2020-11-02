@@ -1,0 +1,89 @@
+SYNOPSIS
+--------
+
+#include <ubf.h>
+
+int Bboolsetcbf (char *'funcname', long (*'functionPtr')(UBFH *'p_ub', char *'funcname'));
+
+int Bboolsetcbf2 (char *'funcname', long (*'functionPtr')(UBFH *'p_ub', char *'funcname', char *'arg1'));
+
+Link with '-lubf -lnstd -lm -lpthread'
+
+DESCRIPTION
+-----------
+Register callback function to Boolean expression evaluator. The function name 
+which appears in UBF expression is set in 'funcname' argument in callback. 
+The callback function by it is self is set in 'functionPtr'. The callback 
+function receives the buffer on which it is being evaluated in 'p_ub', 
+and callback receives the function name too in 'funcname'.
+
+In case if using Bboolsetcbf2() additionally 'arg1' argument is received from
+Boolean expression script.
+
+Min length for function name is 1 symbols and max length is 64.
+
+Example:
+
+--------------------------------------------------------------------------------
+
+long callback_no_args(UBFH p_ub, char funcname)
+{
+    return 888;
+}
+
+long callback_with_args(UBFH p_ub, char funcname, char *arg1)
+{
+    if (0==strcmp(arg1, "OK"))
+     return 0;
+    else
+     return 1;
+}
+
+
+Bboolsetcbf ("callback_no_args", callback_no_args);
+
+Bboolsetcbf2 ("callback_with_args", callback_with_args);
+
+tree=Bboolco ("callback_no_args()==888 && callback_with_args('OK')==0 && callback_with_args('NOK')==1");
+
+--------------------------------------------------------------------------------
+
+If calling *Bboolsetcbf()* or *Bboolsetcbf2()* with *NULL* function pointer, the
+function is removed from callback mappings. But this cannot be done in case if
+some tree is already compiled, as it holds the pointer to function map entry
+and this pointer is compiled tree is not reset. This shall be controlled by
+developer, otherwise if removing mapping for already compiled tree and tree
+is being evaluated, the segmentation fault is possible.
+
+'arg1' for *Bboolsetcbf2()* is passed in callback function in single quotes.
+The single quotes cannot be escaped, other C escapes are not processed too.
+Argument data escaping is subject for future changes.
+
+RETURN VALUE
+------------
+On success, *Bboolsetcbf()* returns *0*. On error *-1* is returned, with 
+*Berror* set to indicate the error.
+
+ERRORS
+------
+Note that *Bstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
+
+*BBADNAME* Invalid function name
+
+EXAMPLE
+-------
+See *ubftest/test_expr.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*Bboolco(3)* *Bfloatev(3)* *Btreefree(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

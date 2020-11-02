@@ -371,6 +371,21 @@ extern NDRX_API void ndrx_str_trim_single_left(char *input, char symb);
 extern NDRX_API void ndrx_str_unescape(char *input, char *symbs);
 extern NDRX_API char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs);
 
+
+/* String handling, where macros does not work: */
+
+/**
+ * This is string handling functions, use of macros prefered
+ * @defgroup stringops stirng handling funcs
+ * @{
+ */
+
+extern NDRX_API void ndrx_strcpy_safe_dst(char *dest, const char *src, size_t dst_size);
+extern NDRX_API void ndrx_strncpy_eos(char *dest, const char *src, size_t n, size_t dst_size);
+extern NDRX_API void ndrx_strcat_s(char *dest, size_t dst_size, const char *src);
+
+/** @} */ /* end of stringops */
+
 #ifdef	__cplusplus
 }
 #endif
