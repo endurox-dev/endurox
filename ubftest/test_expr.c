@@ -1663,6 +1663,24 @@ Ensure(test_cbfunc)
         tree=Bboolco ("callback_w_args_empty(ABC)");
         assert_equal(tree, NULL);
         assert_equal(Berror, BSYNTAX);
+        
+        /* should fail too long */
+        tree=Bboolco ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaffzz('ABC')");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
+        
+        
+        /* too long arg */
+        tree=Bboolco ("zz('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')");
+        assert_equal(tree, NULL);
+        assert_equal(Berror, BSYNTAX);
+        
 }
 /* -------------------------------------------------------------------------- */
 

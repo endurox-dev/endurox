@@ -17,10 +17,12 @@ The callback function by it is self is set in 'functionPtr'. The callback
 function receives the buffer on which it is being evaluated in 'p_ub', 
 and callback receives the function name too in 'funcname'.
 
-In case if using Bboolsetcbf2() additionally 'arg1' argument is received from
+In case if using *Bboolsetcbf2()* additionally 'arg1' argument is received from
 Boolean expression script.
 
 Min length for function name is 1 symbols and max length is 64.
+
+Min 'arg1' length is 0 (just two single quotes) and 'arg1' length is 510.
 
 Example:
 
