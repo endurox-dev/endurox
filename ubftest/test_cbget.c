@@ -807,7 +807,7 @@ Ensure(test_CBget_ptr_org)
     /* test carray */
     len=sizeof(test_string);
     assert_equal(CBget(p_ub, T_PTR_FLD, 0, (char *)test_carray, &len, BFLD_CARRAY), EXSUCCEED);
-    assert_equal(strncmp(test_carray, "0x2c", 6), 0);
+    assert_equal(strncmp(test_carray, "0x2c", 4), 0);
     assert_equal(len, 4);
     
     /* may be cast to PTR */
