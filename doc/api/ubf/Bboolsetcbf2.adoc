@@ -5,7 +5,7 @@ BBOOLSETCBF2(3)
 
 NAME
 ----
-Bboolsetcbf - Set callback function for Boolean expressions with argument
+Bboolsetcbf2 - Set callback function for Boolean expressions with argument
 
 include::bboolsetcbf-common.adoc[]
 
