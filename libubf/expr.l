@@ -35,6 +35,7 @@
 %option noyywrap nodefault yylineno
 /* Context for reading field */
 %x FLDNM 
+%x FUNCNM
 
 %{
 #include "expr.h"
@@ -53,10 +54,10 @@
 /* float exponent */
 EXP	([Ee][-+]?[0-9]+)
 FLD	([_a-zA-Z][_a-zA-Z0-9]*)
-FUNC    ([_a-zA-Z][_a-zA-Z0-9]*"()")
+FUNC ([_a-zA-Z][_a-zA-Z0-9]*)\(
 
 /* Recursive field syntax FIELD[OCC].FIELD2.FIELD3[OCC], etc.. 
- * TODO: Needs a parsers to build field sequence
+ * Needs a parsers to build field sequence
  */
 FLDREF    ([_a-zA-Z][_a-zA-Z0-9]*(\[[0-9\?]+\]){0,1}((\.[_a-zA-Z][_a-zA-Z0-9]*(\[[0-9\?]+\]){0,1})+)*)
 
@@ -123,24 +124,73 @@ FLDREF    ([_a-zA-Z][_a-zA-Z0-9]*(\[[0-9\?]+\]){0,1}((\.[_a-zA-Z][_a-zA-Z0-9]*(\
                             return UFLOAT;
                         }
  /* Custom function */
-{FUNC}                  {
-                            {
-                                int len = strlen(yytext);
-                                if (len>MAX_FUNC_NAME)
-                                {
-                                    yyerror("Function name too long!"); 
-                                    yyterminate();
-                                }
-                                else
-                                {
-                                    strncpy(yylval.funcname, yytext, BF_LENGTH);
-                                    yylval.funcname[BF_LENGTH]='\0';
-                                    UBF_LOG(log_debug, "got function (%s)\n",
-                                                        yylval.funcname);
-                                }
-                            }
-                            return FUNCREF;
+{FUNC}        {
+                    {
+                        int len = strlen(yytext);
+                        
+                        /* -1 for (, +1 for EOS */
+                        if (len>MAX_FUNC_NAME)
+                        {
+                            yyerror("Function name too long (max: %d)!", (MAX_FUNC_NAME-1)); 
+                            yyterminate();
                         }
+                        else
+                        {    
+                            yylval.funccall = ndrx_fpmalloc(sizeof(ndrx_symbfunc_t), 0);
+                            
+                            if (NULL==yylval.funccall)
+                            {
+                                yyerror("Failed to malloc funccall: %s", strerror(errno));
+                                yyterminate();
+                            }
+                            
+                            yylval.funccall->arg1[0]=EXEOS;
+                            
+                            /* strip off () at the end of func */
+                            
+                            ndrx_strncpy_eos(yylval.funccall->funcname, yytext, len-1,
+                                    sizeof(yylval.funccall->funcname));
+                            
+                            UBF_LOG(log_debug, "got function call [%s]", 
+                                    yylval.funccall->funcname);
+                            
+                        }
+                    }
+                    BEGIN FUNCNM;
+                }
+
+<FUNCNM>\)      {
+                    /* pure func. */
+                    BEGIN INITIAL;
+                    return FUNCREF;
+                }
+
+<FUNCNM>\'[^']*\'\) {
+        
+                    int len = strlen(yytext);
+
+                    /* -3 chars + 1 EOS */
+                    if (len-2>MAX_TEXT)
+                    {
+                        yyerror("Function arg1 too long (max: %d)!", MAX_TEXT-1); 
+                        yyterminate();
+                    }
+                    else
+                    {
+                        UBF_LOG(log_debug, "Arg value raw [%s]", yytext);
+                        ndrx_strncpy_eos(yylval.funccall->arg1, yytext+1, 
+                            strlen(yytext)-3, sizeof(yylval.funccall->arg1));
+                        BEGIN INITIAL;
+                        return FUNCREF;
+                    }
+                }
+ /* Fix out bad occurrence */
+<FUNCNM>.|\n		{
+                            ndrx_fpfree(yylval.funccall);
+                            yyerror("Incomplete function call", yytext);
+                            yyterminate();
+                        }
+
  /* Field names */
 {FLDREF}                {
                             if (EXSUCCEED!=ndrx_ubf_rfldid_parse(yytext, &yylval.fld))

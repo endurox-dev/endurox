@@ -94,6 +94,7 @@ set(MAN3_NAMES
     Bwritecb
     Btreefree
     Bboolsetcbf
+    Bboolsetcbf2
     Badds
     Bchgs
     Bgets
