@@ -47,6 +47,7 @@ extern "C" {
 #include <regex.h>
 #include <ubf_int.h>
 #include <exhash.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #ifndef EXTRUE
@@ -126,34 +127,22 @@ typedef long (*functionPtr2_t)(UBFH *p_ub, char *funcname, char *arg1);
 /*---------------------------Typedefs-----------------------------------*/
 
 /**
-<<<<<<< HEAD
- *  symbol table 
- */
-struct symbol 
-{		/* a variable name */
-=======
  * Function callback argument
  */
 typedef struct {
     char funcname[MAX_FUNC_NAME+1]; /**< Function name */
     char arg1[MAX_TEXT+1]; /**< Callback argument (if any) */
 } ndrx_symbfunc_t;
-
-/* symbol table */
-struct symbol {		/* a variable name */
->>>>>>> master
+/**
+ *  symbol table 
+ */
+struct symbol 
+{		/* a variable name */
     char *name;
     double value;
-#if 0
-    struct ast *func;	/* stmt for the function */
-    struct symlist *syms; /* list of dummy args */
-#endif
+
     char strval[MAX_TEXT+1];
-<<<<<<< HEAD
     ndrx_ubf_rfldid_t fld;
-    char  funcname[MAX_FUNC_NAME+1]; /* Function name */
-=======
-    bfldid_t fld;
     ndrx_symbfunc_t *funccall;
 };
 
@@ -163,7 +152,6 @@ struct func_hash {
     void *fptr;                 /**< Pointer to function                  */
     int functype;               /**< See NDRX_CBFUNTYPE_                  */
     EX_hash_handle hh;          /**< makes this structure hashable        */
->>>>>>> master
 };
 typedef struct func_hash func_hash_t;
 
