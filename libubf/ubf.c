@@ -2084,12 +2084,36 @@ expublic int Bboolsetcbf (char *funcname,
     MUTEX_LOCK;
     {
         int ret;
-        ret = ndrx_Bboolsetcbf (funcname, functionPtr);
+        ret = ndrx_Bboolsetcbf2 (funcname, functionPtr, NDRX_CBFUNTYPE_NOARGS);
         MUTEX_UNLOCK;
         return ret;
     }
     }
 }
+
+/**
+ * Set callback function that can be used in expressions for long value.
+ * Version with one argument in callback from script
+ * @param funcname
+ * @param functionPtr
+ * @return SUCCEED/FAIL
+ */
+expublic int Bboolsetcbf2 (char *funcname, 
+            long (*functionPtr)(UBFH *p_ub, char *funcname, char *arg1))
+{
+    API_ENTRY;
+    {
+/* Lock the region */
+    MUTEX_LOCK;
+    {
+        int ret;
+        ret = ndrx_Bboolsetcbf2 (funcname, functionPtr, NDRX_CBFUNTYPE_ARG1);
+        MUTEX_UNLOCK;
+        return ret;
+    }
+    }
+}
+
 
 /**
  * VIEW - test is field is NULL

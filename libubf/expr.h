@@ -45,7 +45,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <sys/types.h>
 #include <regex.h>
-
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #ifndef EXTRUE
@@ -61,7 +61,11 @@ extern "C" {
 #define OCC_ANY		-2
 #define MAX_FUNC_NAME   66      /* Maximum function name len */
     
+#define NDRX_CBFUNTYPE_NOARGS  1       /**< Callback with out arguments */
+#define NDRX_CBFUNTYPE_ARG1    2       /**< Callback with arg1          */
+    
 typedef long (*functionPtr_t)(UBFH *p_ub, char *funcname);
+typedef long (*functionPtr2_t)(UBFH *p_ub, char *funcname, char *arg1);
 
 
 /***************** AST NODE TYPES **************/
@@ -128,16 +132,35 @@ typedef struct {
     BFLDOCC occ;
 } bfldid_t;
 
+/**
+ * Function callback argument
+ */
+typedef struct {
+    char funcname[MAX_FUNC_NAME+1]; /**< Function name */
+    char arg1[MAX_TEXT+1]; /**< Callback argument (if any) */
+} ndrx_symbfunc_t;
+
 /* symbol table */
 struct symbol {		/* a variable name */
     char *name;
     double value;
+#if 0
     struct ast *func;	/* stmt for the function */
     struct symlist *syms; /* list of dummy args */
+#endif
     char strval[MAX_TEXT+1];
     bfldid_t fld;
-    char  funcname[MAX_FUNC_NAME+1]; /* Function name */
+    ndrx_symbfunc_t *funccall;
 };
+
+/** Hash list for function callback pointers */
+struct func_hash {
+    char name[MAX_FUNC_NAME+1]; /**< key (string is WITHIN the structure) */
+    void *fptr;                 /**< Pointer to function                  */
+    int functype;               /**< See NDRX_CBFUNTYPE_                  */
+    EX_hash_handle hh;          /**< makes this structure hashable        */
+};
+typedef struct func_hash func_hash_t;
 
 /* nodes in the Abstract Syntax Tree */
 /* all have common initial nodetype */
@@ -167,8 +190,8 @@ struct ast_func {
     int nodetype;
     int sub_type;
     int nodeid;
-    functionPtr_t f;
-    char  funcname[MAX_FUNC_NAME]; /* Function name */
+    func_hash_t *f;
+    ndrx_symbfunc_t* funcall;
 };
 
 struct ast_string {
@@ -222,7 +245,7 @@ struct ast *newfld(bfldid_t f);
 struct ast *newstring(char *str);
 struct ast *newfloat(double d);
 struct ast *newlong(long l);
-struct ast *newfunc(char *funcname);
+struct ast *newfunc(ndrx_symbfunc_t *funcname);
 
 /* evaluate an AST */
 int eval(UBFH *p_ub, struct ast *a, value_block_t *v);
