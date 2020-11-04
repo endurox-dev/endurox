@@ -3,9 +3,9 @@ SYNOPSIS
 
 #include <ubf.h>
 
-int Bboolsetcbf (char *'funcname', long (*'functionPtr')(UBFH *'p_ub', char *'funcname'));
+int Bboolsetcbf (char +++*+++ 'funcname', long (* 'functionPtr')(UBFH * 'p_ub', char * 'funcname'));
 
-int Bboolsetcbf2 (char *'funcname', long (*'functionPtr')(UBFH *'p_ub', char *'funcname', char *'arg1'));
+int Bboolsetcbf2 (char +++*+++ 'funcname', long (* 'functionPtr')(UBFH * 'p_ub', char * 'funcname', char * 'arg1'));
 
 Link with '-lubf -lnstd -lm -lpthread'
 
@@ -28,12 +28,12 @@ Example:
 
 --------------------------------------------------------------------------------
 
-long callback_no_args(UBFH p_ub, char funcname)
+long callback_no_args(UBFH *p_ub, char *funcname)
 {
     return 888;
 }
 
-long callback_with_args(UBFH p_ub, char funcname, char *arg1)
+long callback_with_args(UBFH *p_ub, char *funcname, char *arg1)
 {
     if (0==strcmp(arg1, "OK"))
      return 0;
