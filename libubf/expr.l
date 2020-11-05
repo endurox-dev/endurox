@@ -34,7 +34,6 @@
 
 %option noyywrap nodefault yylineno
 /* Context for reading field */
-%x FLDNM 
 %x FUNCNM
 
 %{
