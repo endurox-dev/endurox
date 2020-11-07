@@ -252,7 +252,8 @@ exprivate int ndrx_load_string(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
     }
     else
     {
-        str_len = strlen(s_ptr);
+        s_ptr = str_val;
+        str_len = strlen(str_val);
     }
 
     if (EXSUCCEED!=CBchg(p_ub, fldid, occ, s_ptr, str_len, BFLD_CARRAY))
@@ -348,10 +349,6 @@ expublic int ndrx_tpjsontoubf(UBFH *p_ub, char *buffer, EXJSON_Object *data_obje
                 str_val = (char *)exjson_object_get_string(root_object, name);
                 NDRX_LOG(log_debug, "Str Value: [%s]", str_val);
                 
-                /* Read string to UBF */
-                
-                str_val = (char *)exjson_array_get_string(array, j);
-
                 if (EXSUCCEED!=ndrx_load_string(p_ub, name, fid, fldtyp, 
                         bin_buf, bin_buf_len, str_val, 0))
                 {
