@@ -93,7 +93,7 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
 
     NDRX_LOG(log_debug, "%s: enter", __func__);
     
-    if ( NULL == data_object )
+    if ( NULL == parent_root_object )
     {
         root_value = exjson_value_init_object();
         
