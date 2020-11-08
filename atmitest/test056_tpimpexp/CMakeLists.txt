@@ -68,6 +68,7 @@ add_executable (atmiclt56
 		atmiclt56_view.c 
 		atmiclt56_json.c 
 		atmiclt56_carray.c 
+                atmiclt56_embbuf.c
 		t56.h 
 		t56.V)
 

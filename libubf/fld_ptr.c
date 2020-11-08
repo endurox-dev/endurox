@@ -54,61 +54,6 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-
-/**
- * Put data, we use data ptr directly
- * @param t field type descriptor
- * @param fb UBF buffer pointer
- * @param bfldid field id to install
- * @param data data ptr (use just ptr)
- * @param len data len, not used
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_put_data_ptr(dtype_str_t *t, char *fb, BFLDID bfldid, 
-        char *data, int len)
-{
-    UBF_ptr_t *ptr = (UBF_ptr_t *)fb;
-    /* int align; */
-    ptr->bfldid = bfldid;
-    ptr->ptr = data;
-    
-    return EXSUCCEED;
-}
-
-/**
- * Return character array data
- * @param t field type descriptor
- * @param fb UBF position of data
- * @param buf output buffer
- * @param len optional data len
- * @return EXSUCCEED/EXFAIL
- */
-expublic int ndrx_get_data_ptr (struct dtype_str *t, char *fb, char *buf, int *len)
-{
-    UBF_ptr_t *ptr = (UBF_ptr_t *)fb;
-    int ret=EXSUCCEED;
-
-    if (NULL!=len && *len>0 && *len < t->size)
-    {
-        /* Set error, that string buffer too short */
-        ndrx_Bset_error_fmt(BNOSPACE, "output buffer too short. Data len %d in buf, "
-                                "output: %d", t->size, *len);
-        EXFAIL_OUT(ret);
-    }
-    else
-    {
-        /* copy the data */
-        memcpy(buf, &(ptr->ptr), t->size);
-        /* Bug #495 */
-        if (NULL!=len)
-        {
-            *len=t->size;
-        }
-    }
-out:
-    return ret;
-}
-
 /**
  * Compare two pointers
  * @param t type descriptor

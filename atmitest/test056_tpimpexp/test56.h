@@ -48,6 +48,7 @@ extern NDRX_API int test_impexp_ubf();
 extern NDRX_API int test_impexp_view();
 extern NDRX_API int test_impexp_json();
 extern NDRX_API int test_impexp_carray();
+extern NDRX_API int test_impexp_testemb();
 
 #ifdef  __cplusplus
 }

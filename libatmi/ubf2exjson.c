@@ -129,7 +129,7 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
                 fldnm, fldid, p_ub);
 
     }
-    else if (BFLD_PTR!=fldtyp)
+    else if (BFLD_PTR==fldtyp)
     {
         char *allocptr = NULL;
         long len;
@@ -153,7 +153,7 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
             EXFAIL_OUT(ret);
         }
     }
-    else if (BFLD_VIEW!=fldtyp)
+    else if (BFLD_VIEW==fldtyp)
     {
         BVIEWFLD vdata;
         vdata.vflags=0;
@@ -689,7 +689,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             is_num = EXTRUE;
             NDRX_LOG(log_debug, "Numeric value: %lf", d_val);
         }
-        else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp)
+        else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp || BFLD_PTR==fldtyp)
         {
             if (NULL==(emb_value = exjson_value_init_object()))
             {
@@ -718,20 +718,27 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
             else if (BFLD_PTR==fldtyp)
             {
                 /* export whole buffer... run as new tpexport */
+                
+                ndrx_longptr_t *ptr =(ndrx_longptr_t *)d_ptr;
+                NDRX_LOG(log_debug, "About to export ptr: [%p]", (char *)*ptr);
+                
                 if (EXSUCCEED!=ndrx_tpexportex(NULL, 
-                        d_ptr, 0, NULL, NULL, 0, emb_object))
+                        (char *)*ptr, 0, NULL, NULL, 0, emb_object))
                 {
-                    NDRX_LOG(log_error, "Failed to export PTR (%p)!", d_ptr);
+                    NDRX_LOG(log_error, "Failed to export PTR (%p)!", *ptr);
                     EXFAIL_OUT(ret);
                 }
+                
+                NDRX_LOG(log_debug, "Export ptr returns: [%p]", (char *)*ptr);
+                /* set value? */
             }
             else
             {
                 /* if this is a view... needs to get view struct data... */
-                ndrx_ubf_tls_bufval_t *bufval = (ndrx_ubf_tls_bufval_t *)d_ptr;
+                ndrx_ubf_tls_bufval_t *vf = (ndrx_ubf_tls_bufval_t *)d_ptr;
                 
-                if (EXSUCCEED!=ndrx_tpviewtojson(bufval->vdata.data, 
-                        bufval->vdata.vname, NULL, 0, BVACCESS_NOTNULL, emb_object))
+                if (EXSUCCEED!=ndrx_tpviewtojson(vf->vdata.data, 
+                        vf->vdata.vname, NULL, 0, BVACCESS_NOTNULL, emb_object))
                 {
                     NDRX_LOG(log_error, "Failed to build embedded data object from VIEW!");
                     EXFAIL_OUT(ret);
@@ -822,7 +829,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     EXFAIL_OUT(ret);
                 }
             }
-            else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp)
+            else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp || BFLD_PTR==fldtyp)
             {
                 /* append  */
                 if (EXJSONSuccess!=exjson_array_append_value(jarr, emb_value))
@@ -871,7 +878,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
                     EXFAIL_OUT(ret);
                 }
             }
-            else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp)
+            else if (BFLD_UBF==fldtyp || BFLD_VIEW==fldtyp || BFLD_PTR==fldtyp)
             {
                 if (EXJSONSuccess!=exjson_object_set_value(root_object, nm, emb_value))
                 {

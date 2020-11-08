@@ -299,9 +299,6 @@ extern UBFH * ndrx_Brealloc (UBFH *p_ub, BFLDOCC f, BFLDLEN v, long len_set);
 extern long ndrx_Bneeded(BFLDOCC nrfields, BFLDLEN totsize);
 
 /* FLD_PTR support: */
-extern NDRX_API int ndrx_put_data_ptr(dtype_str_t *t, char *fb, BFLDID bfldid, 
-        char *data, int len);
-extern NDRX_API int ndrx_get_data_ptr (struct dtype_str *t, char *fb, char *buf, int *len);
 extern NDRX_API int ndrx_cmp_ptr (struct dtype_ext1 *t, char *val1, BFLDLEN len1, 
         char *val2, BFLDLEN len2, long mode);
 extern NDRX_API void ndrx_dump_ptr (struct dtype_ext1 *t, char *text, char *data, int *len);

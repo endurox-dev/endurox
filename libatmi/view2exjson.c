@@ -519,7 +519,8 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==(ret=Bvnext(&state, view, cname, &fldtype, &maxocc, &dim_size)))
+    if (EXEOS!=view[0] && EXFAIL==(ret=Bvnext(&state, view, cname, 
+            &fldtype, &maxocc, &dim_size)))
     {
         NDRX_LOG(log_error, "Failed to iterate VIEW: %s", Bstrerror(Berror));
         ndrx_TPset_error_fmt(TPESYSTEM, "Failed to iterate VIEW: %s",  
@@ -527,7 +528,7 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
         EXFAIL_OUT(ret);
     }
     
-    while (ret)
+    while (ret && EXEOS!=cname[0])
     {
         int fulloccs;
         int realoccs;

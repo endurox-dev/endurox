@@ -26,8 +26,8 @@ optional fields. 'len' on input indicate the buffer length, on output it indicat
 length of data loaded. If 'len' is set to NULL, then it is assumed that on input buffer is 
 large enough to store data. The state of iteration is stored in thread local storage (TLS).
 
-When Bnext steps onto *BFLD_VIEW* type field, Bnext initializes the 'buf' as assuming
-it is *BVIEWFLD* with trailing data. Thus the BVIEWFLD.data is set to memory address of 
+When Bnext steps onto *BFLD_VIEW* type field, Bnext initializes the 'buf' as *BVIEWFLD* 
+with trailing data. Thus the BVIEWFLD.data is set to memory address of 
 'buf' + sizeof(BVIEWFLD). If 'len' was specified, before returning the data 'len' is
 reduced by sizeof(BVIEWFLD).
 
