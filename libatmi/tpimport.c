@@ -91,7 +91,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     long new_size=EXFAIL;
     char *obuftemp=NULL;
     char *istrtemp=NULL;
-    size_t bufsz = strlen(istr);
+    size_t bufsz;
     int type;
     char *str_val;
     EXJSON_Value *root_value=NULL;
@@ -108,6 +108,8 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     }
     else
     {
+        bufsz = strlen(istr);
+                
         /* Check flag if base64 then decode from base64 */
         if ( TPEX_STRING == flags )
         {
@@ -257,7 +259,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
             NDRX_LOG(log_error, "Failed get data for VIEW import");
             EXFAIL_OUT(ret);
         }
-        obuftemp=ndrx_tpjsontoview(subtype, NULL, data_object);
+        obuftemp=ndrx_tpjsontoview(subtype, NULL, data_object, NULL);
         if ( NULL==obuftemp )
         {
             NDRX_LOG(log_error, "Failed to import VIEW");

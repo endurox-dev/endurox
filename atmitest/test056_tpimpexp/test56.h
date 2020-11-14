@@ -49,7 +49,7 @@ extern NDRX_API int test_impexp_view();
 extern NDRX_API int test_impexp_json();
 extern NDRX_API int test_impexp_carray();
 extern NDRX_API int test_impexp_testemb();
-
+extern NDRX_API int test_impexp_testemb_syntax(void);
 #ifdef  __cplusplus
 }
 #endif

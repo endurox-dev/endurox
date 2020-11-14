@@ -74,11 +74,13 @@ exprivate long round_long( double r ) {
 
 /**
  * Convert JSON text buffer to UBF
- * @param p_ub - UBF buffer to fill data in
+ * @param view - Extracted view name
  * @param buffer - json text to parse
- * @return SUCCEED/FAIL
+ * @param p_null_view_ind is set to EXTRUE in case if view is empty.
+ *  optional param.
+ * @return NULL on failure (or p_null_view_ind indicated that view is empty)
  */
-expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_object)
+expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_object, int * p_null_view_ind)
 {
     int ret = EXSUCCEED;
     EXJSON_Value *root_value=NULL;
@@ -136,6 +138,20 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
         EXFAIL_OUT(ret);
     }
     
+    /* have some safe copy, assume buffer size */
+    NDRX_STRCPY_SAFE_DST(view, name, NDRX_VIEW_NAME_LEN+1);
+    
+    /* It is normal to have empty view / due to embedded, thus
+     * have an indicator to return that view actually is NULL / empty
+     * (in certain cases)
+     */
+    if (NULL!=p_null_view_ind && EXEOS==name[0])
+    {
+        NDRX_LOG(log_info, "Importing NULL (empty) view");
+        *p_null_view_ind=EXTRUE;
+        goto out;
+    }
+        
     vsize = Bvsizeof(name);
     
     if (vsize < 0)
@@ -159,8 +175,6 @@ expublic char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_o
         /* error must be set already! */
         EXFAIL_OUT(ret);
     }
-
-    strcpy(view, name);
     
     view_object = exjson_object_get_object(root_object, name);
     
@@ -793,7 +807,7 @@ expublic int typed_xcvt_json2view(buffer_obj_t **buffer)
     
     /* Do the convert */
     ndrx_TPunset_error();
-    if (NULL==(tmp=ndrx_tpjsontoview(view, (*buffer)->buf, NULL)))
+    if (NULL==(tmp=ndrx_tpjsontoview(view, (*buffer)->buf, NULL, NULL)))
     {
         NDRX_LOG(log_error, "Failed to convert JSON->VIEW: %s", 
                 tpstrerror(tperrno));

@@ -160,7 +160,7 @@ struct ndrx_typedview_field
 typedef struct ndrx_typedview ndrx_typedview_t;
 struct ndrx_typedview
 {
-    char vname[NDRX_VIEW_NAME_LEN];
+    char vname[NDRX_VIEW_NAME_LEN+1];
     char filename[PATH_MAX+1];
     uint32_t cksum;                 /* 32bit checksum */
     long ssize;                     /* structure size */

@@ -32,6 +32,8 @@ is based on following principles:
 . For *CARRAY* if length indicator is used, then it is matched in first place, 
 if differ, result is returned.
 
+. Null fields according to view file are equal.
+
 All function arguments must not be *NULL*. In case of error (for example view
 is not defined), value *-2* is returned.
 

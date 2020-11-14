@@ -873,10 +873,10 @@ out:
 /**
  * Return type information to caller.
  * The buffer must be allocated by tpalloc.
- * @param ptr
- * @param type
- * @param subtype
- * @return 
+ * @param ptr ATMI buffer to test
+ * @param type unload type to ()
+ * @param subtype unload sub-type to
+ * @return number of bytes allocated (or -1 on failure)
  */
 expublic long tptypes (char *ptr, char *type, char *subtype)
 {
@@ -1634,7 +1634,7 @@ expublic char* tpjsontoview(char *view, char *buffer)
         EXFAIL_OUT(ret);
     }
     
-    ret_ptr=ndrx_tpjsontoview(view, buffer, NULL);
+    ret_ptr=ndrx_tpjsontoview(view, buffer, NULL, NULL);
     
 out:
     if (EXSUCCEED==ret)

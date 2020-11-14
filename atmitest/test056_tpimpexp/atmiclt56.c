@@ -65,6 +65,12 @@ int main(int argc, char** argv)
 
     int ret = EXSUCCEED;
     
+    if (EXSUCCEED!=test_impexp_testemb_syntax())
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to test embedded buffers syntax!!!");
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXSUCCEED!=test_impexp_testemb())
     {
         NDRX_LOG(log_error, "TESTERROR: Failed to test embedded buffers!!!");

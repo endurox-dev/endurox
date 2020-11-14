@@ -47,7 +47,7 @@
 extern int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer, 
         int bufsize, long flags, EXJSON_Object *data_object);
 
-extern char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_object);
+extern char* ndrx_tpjsontoview(char *view, char *buffer, EXJSON_Object *data_object, int * p_null_view_ind);
 
 #endif /* VIEW2EXJSON_H_ */
 
