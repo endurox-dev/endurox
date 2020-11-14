@@ -214,6 +214,16 @@ expublic int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char *view2
             char *fld_offs2 = cstruct2+f->offset+occ*dim_size;
             
             
+            /* check if both are NULL, then structures matches... and
+             * we do not continue. This might apply to un-init strings
+             * and carrays.
+             */
+            if (ndrx_Bvnull_int(v, f, occ, cstruct1) &&
+                    ndrx_Bvnull_int(v, f, occ, cstruct2))
+            {
+                continue;
+            }
+            
             switch(f->typecode_full)
             {
                 case BFLD_SHORT:

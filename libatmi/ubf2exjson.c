@@ -156,9 +156,11 @@ exprivate int ndrx_load_object(UBFH *p_ub, char *fldnm, BFLDID fldid, int fldtyp
     else if (BFLD_VIEW==fldtyp)
     {
         BVIEWFLD vdata;
+        int null_view=EXFALSE;
         vdata.vflags=0;
-
-        if (NULL==(vdata.data=ndrx_tpjsontoview(vdata.vname, NULL, innerobj)))
+        
+        if (NULL==(vdata.data=ndrx_tpjsontoview(vdata.vname, NULL, innerobj, 
+                &null_view)) && !null_view)
         {
             NDRX_LOG(log_error, "Failed to parse UBF json at field [%s]", 
                     fldnm);
