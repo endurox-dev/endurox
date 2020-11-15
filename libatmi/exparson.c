@@ -1682,7 +1682,10 @@ EXJSON_Status exjson_array_append_null(EXJSON_Array *array) {
     }
     return EXJSONSuccess;
 }
-
+/**
+ * Well shouldn't this free up the values existing object? Assuming it is gone
+ * now, as becoming part of this master object? 
+ */
 EXJSON_Status exjson_object_set_value(EXJSON_Object *object, const char *name, EXJSON_Value *value) {
     size_t i = 0;
     EXJSON_Value *old_value;

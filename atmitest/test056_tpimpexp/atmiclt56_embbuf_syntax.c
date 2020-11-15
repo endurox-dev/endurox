@@ -53,6 +53,7 @@
 #include "test56.h"
 #include "t56.h"
 #include "expr.h"
+#include "odebug.h"
 #include <exbase64.h>
 #include <exassert.h>
 /*---------------------------Externs------------------------------------*/
@@ -108,6 +109,9 @@ expublic int test_impexp_testemb_syntax(void)
     int i;
     long rsplen;
     UBFH *obuf=NULL;
+    UBFH *p1_ubf=NULL;
+    UBFH *p2_ubf=NULL;
+    UBFH *p3_ubf=NULL;
     char *json_ubf_in = 
         "{"
             "\"buftype\":\"UBF\","
@@ -127,6 +131,8 @@ expublic int test_impexp_testemb_syntax(void)
                     "},"
                     "{"
                         "\"T_STRING_FLD\":\"HELLO WORLD INNER 2\""
+                    "},"
+                    "{"
                     "}"
                 "],"
                 /* Test single view import */
@@ -142,8 +148,84 @@ expublic int test_impexp_testemb_syntax(void)
                        "\"tstring1\":\"ABC\","
                        "\"tcarray1\":\"SEVMTE8AAAAAAA==\""
                    "}"
-                "}"
-                /* Test single array of views import */
+                "},"
+                /* Test view array: */
+                "\"T_VIEW_2_FLD\": ["
+                    "{"
+                       "\"MYVIEW56\":"
+                       "{"
+                           "\"tshort1\":1,"
+                           "\"tlong1\":2,"
+                           "\"tchar1\":\"A\","
+                           "\"tfloat1\":1,"
+                           "\"tdouble1\":21,"
+                           "\"tstring1\":\"ABC_2\","
+                           "\"tcarray1\":\"SEVMTE8AAAAAAA==\""
+                       "}"
+                    "},"
+                    "{"
+                       "\"\":{}"
+                    "},"
+                    "{"
+                       "\"MYVIEW56\":"
+                       "{"
+                           "\"tshort1\":1,"
+                           "\"tlong1\":2,"
+                           "\"tchar1\":\"A\","
+                           "\"tfloat1\":1,"
+                           "\"tdouble1\":21,"
+                           "\"tstring1\":\"ABC_3\","
+                           "\"tcarray1\":\"SEVMTE8AAAAAAA==\""
+                       "}"
+                    "}"
+                "],"
+                /* Test single ptr: */
+                "\"T_PTR_FLD\":"
+                "{"
+                    "\"buftype\":\"UBF\","
+                    "\"version\":1,"
+                    "\"data\":"
+                    "{"
+                        "\"T_SHORT_FLD\":1765,"
+                        "\"T_LONG_FLD\":[115,2],"
+                        "\"T_CHAR_FLD\":\"A\","
+                        "\"T_FLOAT_FLD\":1,"
+                        "\"T_DOUBLE_FLD\":[1111.220000,333,444],"
+                        "\"T_STRING_FLD\":\"HELLO WORLD\","
+                        "\"T_CARRAY_FLD\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\""
+                    "}"
+                "},"
+                /* Test array of ptr: */
+                "\"T_PTR_2_FLD\": ["
+                    "{"
+                        "\"buftype\":\"UBF\","
+                        "\"version\":1,"
+                        "\"data\":"
+                        "{"
+                            "\"T_SHORT_FLD\":1765,"
+                            "\"T_LONG_FLD\":[1111,2],"
+                            "\"T_CHAR_FLD\":\"A\","
+                            "\"T_FLOAT_FLD\":1,"
+                            "\"T_DOUBLE_FLD\":[1111.220000,333,444],"
+                            "\"T_STRING_FLD\":\"HELLO WORLD 22\","
+                            "\"T_CARRAY_FLD\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\""
+                        "}"
+                    "},"
+                    "{"
+                        "\"buftype\":\"UBF\","
+                        "\"version\":1,"
+                        "\"data\":"
+                        "{"
+                            "\"T_SHORT_FLD\":1765,"
+                            "\"T_LONG_FLD\":[4444,2],"
+                            "\"T_CHAR_FLD\":\"A\","
+                            "\"T_FLOAT_FLD\":1,"
+                            "\"T_DOUBLE_FLD\":[1111.220000,333,444],"
+                            "\"T_STRING_FLD\":\"HELLO WORLD 44\","
+                            "\"T_CARRAY_FLD\":\"AAECA0hFTExPIEJJTkFSWQQFAA==\""
+                        "}"
+                    "}"
+                "]"
             "}"
         "}";
     
@@ -168,6 +250,7 @@ expublic int test_impexp_testemb_syntax(void)
             NDRX_LOG(log_error, "TESTERROR: Failed to import JSON UBF!!!!");
             EXFAIL_OUT(ret);
         }
+        
         ndrx_debug_dump_UBF(log_debug, "JSON UBF imported. Return obuf", (UBFH *)obuf);
         
         /* check the values */
@@ -180,8 +263,38 @@ expublic int test_impexp_testemb_syntax(void)
         NDRX_ASSERT_VAL_OUT(EXTRUE==q_eval(obuf, "T_UBF_2_FLD[1].T_STRING_FLD=='HELLO WORLD INNER 2'"), 
                 "Array UBF[1] inval value");
         
+        NDRX_ASSERT_VAL_OUT(EXTRUE==q_eval(obuf, "T_VIEW_FLD[0].tstring1=='ABC'"), 
+                "Single T_VIEW_FLD[0].tstring1 inval value");
+        
+        NDRX_ASSERT_VAL_OUT(EXTRUE==q_eval(obuf, "T_VIEW_2_FLD[2].tstring1=='ABC_3'"), 
+                "Array T_VIEW_2_FLD[2].tstring1 inval value");
+        
+        /* read of the pointer allocs */
+        NDRX_ASSERT_UBF_OUT(EXSUCCEED==Bget(obuf, T_PTR_FLD, 0, (char *)&p1_ubf, 0L), 
+                "Failed to get T_PTR_FLD");
+        
+        NDRX_ASSERT_VAL_OUT(EXTRUE==q_eval(p1_ubf, "T_STRING_FLD=='HELLO WORLD' && T_LONG_FLD[0]==115 && T_LONG_FLD[1]==2"), 
+                "Invalid p1_ubf");
+        
+        NDRX_ASSERT_UBF_OUT(EXSUCCEED==Bget(obuf, T_PTR_2_FLD, 0, (char *)&p2_ubf, 0L), 
+                "Failed to get T_PTR_2_FLD[0]");
+        
+        NDRX_ASSERT_VAL_OUT(EXTRUE==q_eval(p2_ubf, "T_STRING_FLD=='HELLO WORLD 22' && T_LONG_FLD[0]==1111 && T_LONG_FLD[1]==2"), 
+                "Invalid p2_ubf");
+        
+        NDRX_ASSERT_UBF_OUT(EXSUCCEED==Bget(obuf, T_PTR_2_FLD, 1, (char *)&p3_ubf, 0L), 
+                "Failed to get T_PTR_2_FLD[1]");
+        
+        NDRX_ASSERT_VAL_OUT(EXTRUE==q_eval(p3_ubf, "T_STRING_FLD=='HELLO WORLD 44' && T_LONG_FLD[0]==4444 && T_LONG_FLD[1]==2"), 
+                "Invalid p3_ubf");
+        
         /* delete the buffer */
         tpfree((char *)obuf);
+        
+        tpfree((char *)p1_ubf);
+        tpfree((char *)p2_ubf);
+        tpfree((char *)p3_ubf);
+        
         obuf=NULL;
     }
     

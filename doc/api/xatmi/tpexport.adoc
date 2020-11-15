@@ -29,6 +29,10 @@ described by type.
 then JSON buffer will be converted to base64.
 'olen' define maximum size for 'ostr'
 
+Function supports exporting of sub buffers for *UBF*. The *PTR*, *VIEW* and *UBF*
+sub-fields are supported in export. Also empty *UBF* and *VIEW* data types are
+handled as empty JSON objects. See examples bellow.
+
 *JSON tags in the exported file:*
 
 - *buftype* - which type of buffer exported (STRING, UBF, VIEW, CARRAY, JSON)
@@ -38,6 +42,10 @@ then JSON buffer will be converted to base64.
 - *subtype* - contains name of VIEW buffer, used only for exported VIEWs
 
 - *data* - contains JSON formatted data 
+
+
+EXAMPLES 
+--------
 
 For example following UBF buffer 
 
@@ -179,6 +187,175 @@ Will be imported into following JSON
 
 String type data such as string VIEW fields, UBF *BFLD_STRING* fields or *STRING* buffers
 must correspond to *UTF-8* encoding.
+
+Following UBF buffer (with sub-buffers):
+
+--------------------------------------------------------------------------------
+T_SHORT_FLD     55
+T_PTR_FLD       0x619000003280
+T_PTR_2_FLD     0x61900000be80
+T_PTR_2_FLD     0x619000002d80
+T_UBF_FLD       
+        T_STRING_FLD    HELLO WORLD INNER
+T_UBF_2_FLD     
+        T_STRING_FLD    HELLO WORLD INNER 1
+T_UBF_2_FLD     
+        T_STRING_FLD    HELLO WORLD INNER 2
+T_UBF_2_FLD     
+T_VIEW_FLD      MYVIEW56
+        tshort1 1
+        tlong1  2
+        tchar1  A
+        tfloat1 1.00000
+        tdouble1        21.000000
+        tstring1        ABC
+        tcarray1        HELLO\00\00\00\00\00
+T_VIEW_2_FLD    MYVIEW56
+        tshort1 1
+        tlong1  2
+        tchar1  A
+        tfloat1 1.00000
+        tdouble1        21.000000
+        tstring1        ABC_2
+        tcarray1        HELLO\00\00\00\00\00
+T_VIEW_2_FLD    
+T_VIEW_2_FLD    MYVIEW56
+        tshort1 1
+        tlong1  2
+        tchar1  A
+        tfloat1 1.00000
+        tdouble1        21.000000
+        tstring1        ABC_3
+        tcarray1        HELLO\00\00\00\00\00
+--------------------------------------------------------------------------------
+
+would be exported as:
+
+--------------------------------------------------------------------------------
+{
+   "buftype":"UBF",
+   "version":1,
+   "data":{
+      "T_SHORT_FLD":55,
+      "T_UBF_FLD":{
+         "T_STRING_FLD":"HELLO WORLD INNER"
+      },
+      "T_UBF_2_FLD":[
+         {
+            "T_STRING_FLD":"HELLO WORLD INNER 1"
+         },
+         {
+            "T_STRING_FLD":"HELLO WORLD INNER 2"
+         },
+         {
+            
+         }
+      ],
+      "T_VIEW_FLD":{
+         "MYVIEW56":{
+            "tshort1":1,
+            "tlong1":2,
+            "tchar1":"A",
+            "tfloat1":1,
+            "tdouble1":21,
+            "tstring1":"ABC",
+            "tcarray1":"SEVMTE8AAAAAAA=="
+         }
+      },
+      "T_VIEW_2_FLD":[
+         {
+            "MYVIEW56":{
+               "tshort1":1,
+               "tlong1":2,
+               "tchar1":"A",
+               "tfloat1":1,
+               "tdouble1":21,
+               "tstring1":"ABC_2",
+               "tcarray1":"SEVMTE8AAAAAAA=="
+            }
+         },
+         {
+            "":{
+               
+            }
+         },
+         {
+            "MYVIEW56":{
+               "tshort1":1,
+               "tlong1":2,
+               "tchar1":"A",
+               "tfloat1":1,
+               "tdouble1":21,
+               "tstring1":"ABC_3",
+               "tcarray1":"SEVMTE8AAAAAAA=="
+            }
+         }
+      ],
+      "T_PTR_FLD":{
+         "buftype":"UBF",
+         "version":1,
+         "data":{
+            "T_SHORT_FLD":1765,
+            "T_LONG_FLD":[
+               115,
+               2
+            ],
+            "T_CHAR_FLD":"A",
+            "T_FLOAT_FLD":1,
+            "T_DOUBLE_FLD":[
+               1111.220000,
+               333,
+               444
+            ],
+            "T_STRING_FLD":"HELLO WORLD",
+            "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+         }
+      },
+      "T_PTR_2_FLD":[
+         {
+            "buftype":"UBF",
+            "version":1,
+            "data":{
+               "T_SHORT_FLD":1765,
+               "T_LONG_FLD":[
+                  1111,
+                  2
+               ],
+               "T_CHAR_FLD":"A",
+               "T_FLOAT_FLD":1,
+               "T_DOUBLE_FLD":[
+                  1111.220000,
+                  333,
+                  444
+               ],
+               "T_STRING_FLD":"HELLO WORLD 22",
+               "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+            }
+         },
+         {
+            "buftype":"UBF",
+            "version":1,
+            "data":{
+               "T_SHORT_FLD":1765,
+               "T_LONG_FLD":[
+                  4444,
+                  2
+               ],
+               "T_CHAR_FLD":"A",
+               "T_FLOAT_FLD":1,
+               "T_DOUBLE_FLD":[
+                  1111.220000,
+                  333,
+                  444
+               ],
+               "T_STRING_FLD":"HELLO WORLD 44",
+               "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+            }
+         }
+      ]
+   }
+}
+--------------------------------------------------------------------------------
 
 RETURN VALUE
 ------------
