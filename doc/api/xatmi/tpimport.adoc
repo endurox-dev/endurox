@@ -28,6 +28,13 @@ with *tpalloc()* call. If the allocated buffer size is shorter then received one
 then Enduro/X will automatically realloc 
 the buffer to new size. If 'olen' not NULL there will be stored imported buffer length.
 
+tpimport support embedded UBF sub-buffers: *sub-UBF*, *sub-VIEW*, *sub-PTR*. The
+*VIEW* and *UBF* data is imported within the master *UBF* buffer. However *PTR*
+json fields will initiated allocation of new XATMI buffer, and pointer to XATMI
+buffer will be installed in master UBF. As UBF may have null occurrences, the
+same applies to VIEWS. The empty view name indicates that this is NULL view
+and will generate NULL/empty occurrence in UBF. See samples bellow.
+
 *Valid flags*
 
 If *TPEX_STRING* flag is set then input JSON formatted buffer is in base64. 
@@ -44,10 +51,13 @@ then error *TPEINVAL* is returned.
 
 - *subtype* - contains name of VIEW buffer, used only to import VIEW buffer
 
-- *data* - contains JSON formated data
+- *data* - contains JSON formatted data
 
 
-For example following JSON formated text 
+EXAMPLES 
+--------
+
+Imported JSON as:
 
 --------------------------------------------------------------------------------
 {
@@ -55,7 +65,7 @@ For example following JSON formated text
     "version":1,
     "data":
     {
-        "T_SHORT_FLD:1765,
+        "T_SHORT_FLD":1765,
         "T_LONG_FLD":[3333111,2],
         "T_CHAR_FLD":"A",
         "T_FLOAT_FLD":1,
@@ -85,12 +95,12 @@ For example following JSON formatted text
 
 --------------------------------------------------------------------------------
 {
-    "buftype\":\"VIEW\",
-    "version\":1,
-    "subtype\":\"MYVIEW56\",
-    "data\":
+    "buftype":"VIEW",
+    "version":1,
+    "subtype":"MYVIEW56",
+    "data":
     {
-        "MYVIEW56\":
+        "MYVIEW56":
         {
             "tshort1":1,
             "tlong1":2,
@@ -120,11 +130,11 @@ END
 --------------------------------------------------------------------------------
 
 
-For example following JSON formated text 
+For example following JSON formatted text 
 
 --------------------------------------------------------------------------------
 {
-    "buftype\":"STRING",
+    "buftype":"STRING",
     "version":1,
     "data":"HELLO WORLD"
 }
@@ -136,8 +146,7 @@ Will be imported into following STRING buffer
 HELLO WORLD
 --------------------------------------------------------------------------------
 
-
-For example following JSON formatted text 
+For example following JSON formatted text
 
 --------------------------------------------------------------------------------
 {
@@ -183,6 +192,186 @@ Will be imported into following JSON buffer
     "T_STRING_FLD":"HELLO WORLD",
     "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
 }
+--------------------------------------------------------------------------------
+
+Importing data with sub-buffers this example contains:
+
+- sub-ubf single occurrence (T_UBF_FLD)
+
+- two occurrence UBF buffers (T_UBF_2_FLD)
+
+- single occurrence VIEW buffers (T_VIEW_FLD)
+
+- three occurrence VIEW buffers (T_VIEW_2_FLD) with empty view in the 1 occ
+
+- single occurrence PTR (T_PTR_FLD) - this pointers to another UBF data buffer
+
+- two occurrence PTR (T_PTR_2_FLD) - this pointers to other UBF data buffers
+
+--------------------------------------------------------------------------------
+{
+   "buftype":"UBF",
+   "version":1,
+   "data":{
+      "T_SHORT_FLD":55,
+      "T_UBF_FLD":{
+         "T_STRING_FLD":"HELLO WORLD INNER"
+      },
+      "T_UBF_2_FLD":[
+         {
+            "T_STRING_FLD":"HELLO WORLD INNER 1"
+         },
+         {
+            "T_STRING_FLD":"HELLO WORLD INNER 2"
+         },
+         {
+            
+         }
+      ],
+      "T_VIEW_FLD":{
+         "MYVIEW56":{
+            "tshort1":1,
+            "tlong1":2,
+            "tchar1":"A",
+            "tfloat1":1,
+            "tdouble1":21,
+            "tstring1":"ABC",
+            "tcarray1":"SEVMTE8AAAAAAA=="
+         }
+      },
+      "T_VIEW_2_FLD":[
+         {
+            "MYVIEW56":{
+               "tshort1":1,
+               "tlong1":2,
+               "tchar1":"A",
+               "tfloat1":1,
+               "tdouble1":21,
+               "tstring1":"ABC_2",
+               "tcarray1":"SEVMTE8AAAAAAA=="
+            }
+         },
+         {
+            "":{
+               
+            }
+         },
+         {
+            "MYVIEW56":{
+               "tshort1":1,
+               "tlong1":2,
+               "tchar1":"A",
+               "tfloat1":1,
+               "tdouble1":21,
+               "tstring1":"ABC_3",
+               "tcarray1":"SEVMTE8AAAAAAA=="
+            }
+         }
+      ],
+      "T_PTR_FLD":{
+         "buftype":"UBF",
+         "version":1,
+         "data":{
+            "T_SHORT_FLD":1765,
+            "T_LONG_FLD":[
+               115,
+               2
+            ],
+            "T_CHAR_FLD":"A",
+            "T_FLOAT_FLD":1,
+            "T_DOUBLE_FLD":[
+               1111.220000,
+               333,
+               444
+            ],
+            "T_STRING_FLD":"HELLO WORLD",
+            "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+         }
+      },
+      "T_PTR_2_FLD":[
+         {
+            "buftype":"UBF",
+            "version":1,
+            "data":{
+               "T_SHORT_FLD":1765,
+               "T_LONG_FLD":[
+                  1111,
+                  2
+               ],
+               "T_CHAR_FLD":"A",
+               "T_FLOAT_FLD":1,
+               "T_DOUBLE_FLD":[
+                  1111.220000,
+                  333,
+                  444
+               ],
+               "T_STRING_FLD":"HELLO WORLD 22",
+               "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+            }
+         },
+         {
+            "buftype":"UBF",
+            "version":1,
+            "data":{
+               "T_SHORT_FLD":1765,
+               "T_LONG_FLD":[
+                  4444,
+                  2
+               ],
+               "T_CHAR_FLD":"A",
+               "T_FLOAT_FLD":1,
+               "T_DOUBLE_FLD":[
+                  1111.220000,
+                  333,
+                  444
+               ],
+               "T_STRING_FLD":"HELLO WORLD 44",
+               "T_CARRAY_FLD":"AAECA0hFTExPIEJJTkFSWQQFAA=="
+            }
+         }
+      ]
+   }
+}
+--------------------------------------------------------------------------------
+
+The imported UBF would render as:
+
+--------------------------------------------------------------------------------
+T_SHORT_FLD     55
+T_PTR_FLD       0x619000003280
+T_PTR_2_FLD     0x61900000be80
+T_PTR_2_FLD     0x619000002d80
+T_UBF_FLD       
+        T_STRING_FLD    HELLO WORLD INNER
+T_UBF_2_FLD     
+        T_STRING_FLD    HELLO WORLD INNER 1
+T_UBF_2_FLD     
+        T_STRING_FLD    HELLO WORLD INNER 2
+T_UBF_2_FLD     
+T_VIEW_FLD      MYVIEW56
+        tshort1 1
+        tlong1  2
+        tchar1  A
+        tfloat1 1.00000
+        tdouble1        21.000000
+        tstring1        ABC
+        tcarray1        HELLO\00\00\00\00\00
+T_VIEW_2_FLD    MYVIEW56
+        tshort1 1
+        tlong1  2
+        tchar1  A
+        tfloat1 1.00000
+        tdouble1        21.000000
+        tstring1        ABC_2
+        tcarray1        HELLO\00\00\00\00\00
+T_VIEW_2_FLD    
+T_VIEW_2_FLD    MYVIEW56
+        tshort1 1
+        tlong1  2
+        tchar1  A
+        tfloat1 1.00000
+        tdouble1        21.000000
+        tstring1        ABC_3
 --------------------------------------------------------------------------------
 
 

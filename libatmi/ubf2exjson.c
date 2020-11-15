@@ -609,7 +609,6 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
     EXJSON_Object *emb_object = NULL;
     Bnext_state_t state;
     char *nm;
-    EXJSON_Value *jarr_value=NULL;
     EXJSON_Array *jarr=NULL;
     
     NDRX_MALLOC_OUT(strval, strval_len, char);
@@ -941,14 +940,9 @@ out:
     }
 
     /* kill the root value if any... */
-    if (NULL!=root_value)
+    if (NULL==data_object && NULL!=root_value)
     {
         exjson_value_free(root_value);
-    }
-
-    if ( NULL != jarr_value )
-    {
-        exjson_value_free(jarr_value);
     }
 
     if (NULL!=strval)

@@ -238,12 +238,13 @@ extern NDRX_API int ndrx_tpexportex(ndrx_expbufctl_t *bufctl,
             NDRX_LOG(log_error, "Failed to parse ibuf");
             EXFAIL_OUT(ret);
         }
-
+/*
         if (NULL==(data_object = exjson_value_get_object(data_value)))
         {
             NDRX_LOG(log_error, "Failed to init data_object");
             EXFAIL_OUT(ret);
         }
+ */
         if (EXJSONSuccess!=exjson_object_set_value(root_object,"data",data_value))
         {
             NDRX_LOG(log_error, "Failed to set data object with JSON!!!!");
@@ -300,7 +301,7 @@ out:
         exjson_free_serialized_string(serialized_string);
     }
 
-    if (NULL!=root_value)
+    if (NULL==parent_root_object && NULL!=root_value)
     {
         exjson_value_free(root_value);
     }

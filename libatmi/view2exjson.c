@@ -506,6 +506,12 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
     
     EXJSON_Value *root_value = NULL;
     EXJSON_Object *root_object = data_object;
+    EXJSON_Value *view_value = NULL;
+    EXJSON_Object *view_object = NULL;
+    
+    char *serialized_string = NULL;
+    BFLDOCC oc;
+    EXJSON_Array *jarr=NULL;
     
     NDRX_MALLOC_OUT(strval, strval_len, char);
     NDRX_MALLOC_OUT(b64_buf, b64_buf_len, char);
@@ -516,18 +522,19 @@ expublic int ndrx_tpviewtojson(char *cstruct, char *view, char *buffer,
         root_object = exjson_value_get_object(root_value);
     }
     
-    EXJSON_Value *view_value = exjson_value_init_object();
-    EXJSON_Object *view_object = exjson_value_get_object(view_value);
+    view_value = exjson_value_init_object();
+    view_object = exjson_value_get_object(view_value);
     
     
-    char *serialized_string = NULL;
-    BFLDOCC oc;
-
-    EXJSON_Value *jarr_value=NULL;
-    EXJSON_Array *jarr=NULL;
-    
-    if( EXJSONSuccess != exjson_object_dotset_value(root_object, view, view_value) )
+    if( EXJSONSuccess != exjson_object_set_value(root_object, view, view_value) )
     {	
+        
+        if (NULL!=view_value)
+        {
+            exjson_value_free(view_value);
+        }
+
+        
         NDRX_LOG(log_error, "exjson: Failed to set root value");
         ndrx_TPset_error_msg(TPESYSTEM, "exjson: Failed to set root value");
         EXFAIL_OUT(ret);
@@ -767,14 +774,9 @@ out:
         exjson_free_serialized_string(serialized_string);
     }
 
-    if (NULL!=root_value)
+    if (NULL==data_object && NULL!=root_value)
     {
         exjson_value_free(root_value);
-    }
-
-    if (NULL!=jarr_value )
-    {
-        exjson_value_free(jarr_value);
     }
 
     if (NULL!=strval)
