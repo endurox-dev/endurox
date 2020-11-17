@@ -244,6 +244,24 @@ extern "C" {
     
 /** The 31 bit on, indicates that connection is servers accept one */
 #define NDRX_CONV_SRVMASK       0x40000000
+
+
+/**
+ * Multibuf related constants
+ * @defgroup multibuf
+ * @{
+ */
+    
+#define NDRX_MBUF_TBITS             4   /**< Number of type id bits             */
+
+#define NDRX_MBUF_FLAG_NOCALLINFO   0x00000001  /**< Do not serialize callinfo  */
+
+#define NDRX_MBUF_TAG_CALLINFO      0   /**< Call info reserved tag             */
+#define NDRX_MBUF_TAG_BASE          1   /**< Base buffer                        */
+/* Tags 2+ - are virtual pointers */
+    
+/** @} */ /* end of multibuf */
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -570,7 +588,6 @@ struct tp_notif_call
 
     long data_len;
     char data[0];
-    
 };
 typedef struct tp_notif_call tp_notif_call_t;
 
@@ -734,6 +751,56 @@ struct ndrx_expbufctl
 };
 
 typedef struct ndrx_expbufctl ndrx_expbufctl_t;
+
+
+/**
+ * Multi buffer (sending multiple buffers between processes) related structure
+ * @defgroup multibuf Multibuffer support
+ * @{
+ */
+
+/**
+ * This is multibuf TLV entry
+ * The buffer type needs to be stored here too.
+ * Ta
+ */
+typedef struct
+{
+    /**< This is logical tag number started from 0, 
+     * last 4 bit are buffer type    
+     */
+    unsigned int tag;
+    unsigned int len; /**< this is data length                           */
+    
+    /** Memory data of the buffer padded up 
+     * till the modulus of EX_ALIGNMENT_BYTES is 0 
+     */
+    char data[0];
+} ndrx_mbuf_tlv_t;
+
+/**
+ * This is list of virtual pointers descriptors
+ */
+typedef struct
+{
+    int vptr;   /**< this matches index in growlist         */
+    char *data; /**< pointer to allocated memory block      */
+} ndrx_mbuf_vptrs_t;
+
+/**
+ * In case if we export ptr field, we firstly add new ptr to growlist
+ * and in second time we verify that this pointer is already exported
+ * If already exported, use already mapped vptr.
+ * (this is hash of real pointers)
+ */
+typedef struct
+{
+    char *ptr;                              /**< pointer to atmi buffer     */
+    ndrx_mbuf_vptrs_t *vptr;                /**< mapped virtual pointer     */
+    
+    EX_hash_handle hh;         /**< makes this structure hashable           */
+} ndrx_mbuf_ptrs_t;
+/** @} */ /* end of multibuf */
 
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API atmi_lib_env_t G_atmi_env; /* global access to env configuration */
