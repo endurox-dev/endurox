@@ -636,6 +636,7 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
     for (fldid = BFIRSTFLDID, oc = 0;
             1 == (ret = ndrx_Bnext(&state, p_ub, &fldid, &oc, NULL, &fldlen, &d_ptr));)
     {
+        is_num=EXFALSE;
         /* Feature #232 return ID if field not found in tables... */
         nm = ndrx_Bfname_int(fldid);
         NDRX_LOG(log_debug, "Field: [%s] occ %d id: %d", nm, oc, fldid);
@@ -748,7 +749,6 @@ expublic int ndrx_tpubftojson(UBFH *p_ub, char *buffer, int bufsize, EXJSON_Obje
         }
         else
         {
-            is_num = EXFALSE;
             flen = strval_len;
             if (EXSUCCEED!=CBget(p_ub, fldid, oc, strval, &flen, BFLD_CARRAY))
             {
