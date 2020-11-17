@@ -139,7 +139,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
             EXFAIL_OUT(ret);
         }
         type = exjson_value_get_type(root_value);
-        NDRX_LOG(log_error, "Type is %d", type);
+        NDRX_LOG(log_info, "Type is %d", type);
 
         if (exjson_value_get_type(root_value) != EXJSONObject)
         {
@@ -326,7 +326,7 @@ expublic int ndrx_tpimportex(ndrx_expbufctl_t *bufctl,
     {
         new_size = size_used;
     }
-    NDRX_LOG(log_error, "new_size=[%ld] size_used=[%ld] size_existing=[%ld]",
+    NDRX_LOG(log_debug, "new_size=[%ld] size_used=[%ld] size_existing=[%ld]",
          new_size, size_used, size_existing);
     
     if (EXFAIL!=new_size && NULL==(obuftemp = ndrx_tprealloc(obuftemp, new_size)))
