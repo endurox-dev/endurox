@@ -42,6 +42,7 @@
 #include "thlock.h"
 #include "userlog.h"
 #include "utlist.h"
+#include <typed_buf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -332,6 +333,11 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     tls->tx_commit_return = TX_COMMIT_COMPLETED;
     tls->tx_transaction_control = TX_UNCHAINED;
     tls->tx_transaction_timeout = 0;
+    
+    tls->nullbuf.autoalloc = EXFALSE;
+    tls->nullbuf.size=0;
+    tls->nullbuf.subtype[0]=EXEOS;
+    tls->nullbuf.type_id=BUF_TYPE_NULL;
     
     memset(&tls->integpriv, 0, sizeof(tls->integpriv));
     
