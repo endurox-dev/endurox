@@ -1,5 +1,7 @@
 /**
  * @brief Multi-buffer serialization handler
+ *  call info, primary buffer and other sub-ptrs buffers are all written off
+ *  in TLV master blob.
  *
  * @file multibuf.c
  */
@@ -94,6 +96,8 @@ exprivate ndrx_mbuf_ptrs_t * ndrx_mbuf_ptr_add(ndrx_mbuf_ptrs_t **ptrs, char *pt
     ret->ptr = ptr;
     ret->tag = tag;
     
+    NDRX_LOG(log_debug, "pointer %p mapped to tag %d", ptr, tag);
+    
     EXHASH_ADD_PTR((*ptrs), ptr, ret);
     
 out:
@@ -137,6 +141,122 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
         long *olen, long flags, long mflags)
 {
     int ret = EXSUCCEED;
+    ndrx_growlist_t list;
+    ndrx_mbuf_tlv_t *tlv_hdr;
+    long tlv_pos;
+    unsigned int tag_exp=0;
+    ndrx_mbuf_vptrs_t current_vptr;
+    ndrx_mbuf_vptrs_t *access_vptr;
+    typed_buffer_descr_t *descr;
+    int primary_loaded = EXFALSE;
+    
+    /* parse the TLV and load into growlist with index of VPTRs */
+    ndrx_growlist_init(&list, 50, sizeof(ndrx_mbuf_vptrs_t));
+    
+    /* OK load the stuff ... */
+    NDRX_LOG(log_debug, "Parse incoming buffer TLV");
+    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len), tag_exp++)
+    {
+        int is_callinfo;
+        unsigned int tag;
+        int btype;
+        
+        tlv_hdr=(ndrx_mbuf_tlv_t *)rcv_data + tlv_pos;
+        
+        tag = NDRX_MBUF_TAGTAG(tlv_hdr->tag);
+        btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
+        is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
+        
+        NDRX_LOG(log_debug, "Received buffer tag: %u type: %d callinfo: %d",
+                tag, btype, is_callinfo);
+        
+        if (tag!=tag_exp)
+        {
+            NDRX_LOG(log_error, "ERROR: Expected tag %u but got %u", tag_exp, tag);
+            userlog("ERROR: Expected tag %u but got %u", tag_exp, tag);
+            ndrx_TPset_error_fmt(TPESYSTEM, "ERROR: Expected tag %u but got %u", 
+                    tag_exp, tag);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* get the work area: */
+        descr = &G_buf_descr[btype];
+
+        /* set the primary data, if any */
+        if (!primary_loaded && !is_callinfo)
+        {
+            current_vptr.data=*odata;
+            current_vptr.len=*olen;
+        }
+        else
+        {
+            current_vptr.data=NULL;
+            current_vptr.len=0;
+        }
+                
+        /* check is this primary or not? */
+        ret=descr->pf_prepare_incoming(descr,
+                tlv_hdr->data,
+                tlv_hdr->len,
+                &current_vptr.data,
+                &current_vptr.len,
+                flags);
+        
+        if (EXSUCCEED!=ret)
+        {
+            NDRX_LOG(log_error, "Failed to prepare incoming buffer tag: %u type: %d callinfo: %d",
+                tag, btype, is_callinfo);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* add buffer to vptr list */
+        if (EXSUCCEED!=ndrx_growlist_append(&list, &current_vptr))
+        {
+            NDRX_LOG(log_error, "Failed to append vptr list with tag: %u addr: %p len: %ld - OOM?",
+                    tag, current_vptr.data, current_vptr.len);
+            ndrx_TPset_error_fmt(TPEOS, "Failed to append vptr list with tag: %u addr: %p len: %ld - OOM?",
+                    tag, current_vptr.data, current_vptr.len);
+            EXFAIL_OUT(ret);
+        }
+        
+        /* check the primary buffer status */
+        if (!primary_loaded && !is_callinfo)
+        {
+            *odata = current_vptr.data;
+            *olen = current_vptr.len;   
+            
+            /* get buffer object, assoc new call header, destroy oldone if
+             * existed */
+            if (1==tag)
+            {
+                buffer_obj_t * buffer_info = ndrx_find_buffer(*odata);
+                
+                if (NULL!=buffer_info->callinfobuf)
+                {
+                    tpfree(buffer_info->callinfobuf);
+                }
+                access_vptr = (ndrx_mbuf_vptrs_t *)list.mem;
+                buffer_info->callinfobuf = access_vptr->data;
+                buffer_info->callinfobuf_len = access_vptr->len;
+            }
+            
+            primary_loaded=EXTRUE;
+        }
+        
+        if (primary_loaded && is_callinfo)
+        {
+            NDRX_LOG(log_error, "Call info expected only for primary buffer, "
+                    "but at the tag %u", tag);
+            ndrx_TPset_error_fmt(TPESYSTEM, "Call info expected only for primary buffer, "
+                    "but at the tag %u", tag);
+            EXFAIL_OUT(ret);
+        }
+        
+    }
+    
+    NDRX_LOG(log_debug, "Remap the vptrs (tags) to real pointers");
+    
+    /* TODO: */
     
 out:
     return ret;
@@ -243,43 +363,85 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
 {
     int ret = EXSUCCEED;
     Bnext_state_t state;
-    BFLDID fldid;
+    BFLDID bfldid;
     BFLDOCC occ;
     char *d_ptr;
-    ndrx_longptr_t *lptr;
-    
-    memset(&state, 0, sizeof(state));
-    
-    while (EXSUCCEED==(ret=ndrx_Bnext(&state, p_ub, &fldid, &occ, NULL, NULL, &d_ptr)))
-    {
-        if (BFLD_PTR==Bfldtype(fldid))
-        {
-            lptr=(ndrx_longptr_t *)d_ptr;
+    char **lptr;
+    ndrx_longptr_t tmp_ptr;
+    ndrx_mbuf_ptrs_t *hptr; /* hash pointer */
+    UBF_header_t *ub_hdr = (UBF_header_t *)p_ub;
+    int ftyp;
 
-            /* TOOD: map the pointer (add to hash the tag, or resolve the 
-             * existing tag, and just update the UBF buffer)
-             */
-             *p_tag=*p_tag+1;
+    state.p_cur_bfldid = &ub_hdr->cache_ptr_off;
+    state.cur_occ = 0;
+    state.p_ub = p_ub;
+    state.size = ub_hdr->bytes_used;
+
+    while (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
+    {
+        ftyp = bfldid >> EFFECTIVE_BITS;
+        
+        if (BFLD_PTR==ftyp)
+        {
+            lptr=(char **)d_ptr;
             
-            NDRX_LOG(log_debug, "fldid=%d occ=%d ptr to %p -> serialize to tag %d",
-                    fldid, occ, (char *)*lptr, *p_tag);
+            if (NULL==(hptr = ndrx_mbuf_ptr_find(ptrs, *lptr)))
+            {
+                /* map the pointer (add to hash the tag, or resolve the 
+                 * existing tag, and just update the UBF buffer)
+                 */
+                *p_tag=*p_tag+1;
+                
+                hptr = ndrx_mbuf_ptr_add(ptrs, *lptr, *p_tag);
+                
+                if (NULL==hptr)
+                {
+                    NDRX_LOG(log_error, "Failed to allocate ptr hash element");
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
+            NDRX_LOG(log_debug, "fldid=%d occ=%d ptr to %p -> serialize to tag %u",
+                    bfldid, occ, *lptr, *p_tag);
+            
             /* how about buffer len? we do not know what is used len, so
              * needs to extract from types? */
             if (EXSUCCEED!=ndrx_mbuf_tlv_do((char *)*lptr, EXFAIL, obuf, 
-                    olen_max, olen_used, *p_tag, flags))
+                    olen_max, olen_used, hptr->tag, flags))
             {
-                NDRX_LOG(log_error, "Failed to add ptr %p to export data tag=%d",
+                NDRX_LOG(log_error, "Failed to add ptr %p to export data tag=%u",
                         (char *)*lptr, *p_tag);
                 EXFAIL_OUT(ret);
             }
             
-            /* TODO: update ubf buffer with tag */
-            
+            /* update ubf buffer with tag */
+            tmp_ptr=hptr->tag;
+            *lptr = (char *)tmp_ptr;
+        }
+        else if (BFLD_UBF==ftyp)
+        {
+            NDRX_LOG(log_debug, "Processing sub-buffer field %d", bfldid);
+            if (EXSUCCEED!=ndrx_mbuf_ptrs_map_out(ptrs, (UBFH *)d_ptr,
+                obuf, olen_max, olen_used, p_tag, flags))
+            {
+                NDRX_LOG(log_error, "Sub-buffer for fld %d failed to map");
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            /* we are done */
+            break;
         }
     }
             
-    
 out:
+
+    if (NULL!=ptrs)
+    {
+        ndrx_mbuf_ptr_free(ptrs);
+    }
+
     return ret;
 }
 
@@ -308,6 +470,9 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     long used=0;
     /* pointer mapping hash */
     ndrx_mbuf_ptrs_t *ptrs=NULL;
+    long tlv_pos;
+    ndrx_mbuf_tlv_t *tlv_hdr;
+    unsigned int ptr_tag=0;
     
     if (NULL==ndrx_find_buffer)
     {
@@ -320,25 +485,56 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     if (NULL!=ibuf->callinfobuf && (mflags & NDRX_MBUF_FLAG_NOCALLINFO))
     {
         if (EXSUCCEED!=ndrx_mbuf_tlv_do(ibuf->callinfobuf, ibuf->callinfobuf_len, obuf, 
-            *olen, &used, NDRX_MBUF_TAG_CALLINFO, flags))
+            *olen, &used, ptr_tag | NDRX_MBUF_CALLINFOBIT, flags))
         {
             NDRX_LOG(log_error, "Failed to run TLV on callinfo");
         }
+        ptr_tag++;
     }
     
     /* serialize main buffer to TLV */
-    
     if (EXSUCCEED!=ndrx_mbuf_tlv_do(idata, ilen, obuf, *olen, &used, 
-            NDRX_MBUF_TAG_BASE, flags))
+            ptr_tag, flags))
     {
         NDRX_LOG(log_error, "Failed to run TLV on base buffer");
+        EXFAIL_OUT(ret);
     }
     
+    ptr_tag++;
+    
     /* iterate over the main buffer, remap the pointers on the fly 
-     * looping shall be done in outer function to suport the recursion
-     */
+     * looping shall be done in outer function to support the recursion
+     */ 
+    for (tlv_pos=0; tlv_pos<used; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len))
+    {
+        int is_callinfo;
+        
+        tlv_hdr=(ndrx_mbuf_tlv_t *)obuf + tlv_pos;
+        is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
+       
+        NDRX_LOG(log_debug, "Post-processing (vptr mapping) tag: %d typed: %d callinfo: %d", 
+               NDRX_MBUF_TAGTAG(tlv_hdr->tag), NDRX_MBUF_TYPE(tlv_hdr->tag), is_callinfo);
+       
+        /* check the buffer type, if it is UBF, then run the mapping... */
+        if (BFLD_UBF == NDRX_MBUF_TYPE(tlv_hdr->tag))
+        {
+           if (EXSUCCEED!=ndrx_mbuf_ptrs_map_out(&ptrs, (UBFH *)tlv_hdr->data,
+                obuf, *olen, &used, &ptr_tag, flags))
+           {
+                NDRX_LOG(log_debug, "Post-processing (vptr mapping) for tag: %d typed: %d failed callinfo: %d", 
+                    NDRX_MBUF_TAGTAG(tlv_hdr->tag), NDRX_MBUF_TYPE(tlv_hdr->tag), is_callinfo);
+                EXFAIL_OUT(ret);
+           }
+        }
+    }
+    
+    /* finally set the data len */
+    *olen = used;
     
 out:
+    
+    NDRX_LOG(log_debug, "%ld data bytes", *olen);
+
     return ret;
 }
 

@@ -180,6 +180,9 @@ typedef struct
    /* hook tpacall no service... */
     int (*pf_tpacall_noservice_hook)(char *svc, char *data,
                 long len, long flags); 
+    
+    buffer_obj_t  nullbuf; /**< so that we have place where to set call infos */
+    
 } atmi_tls_t;
 /*---------------------------Globals------------------------------------*/
 extern NDRX_API __thread atmi_tls_t *G_atmi_tls; /* Enduro/X standard library TLS */

@@ -1763,7 +1763,6 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
                 BVIEWFLD *vf = (BVIEWFLD *)buf;
                 vf->data=buf+sizeof(BVIEWFLD);
                 
-                
                 if (NULL!=len)
                 {
                     if (*len < sizeof(BVIEWFLD))

@@ -52,6 +52,8 @@
 #include <typed_view.h>
 #include <tperror.h>
 #include <tpadm.h>
+
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -94,15 +96,6 @@ expublic typed_buffer_descr_t G_buf_descr[] =
 };
 
 /*---------------------------Statics------------------------------------*/
-
-/**
- * This is generic NULL buffer object
- */
-exprivate buffer_obj_t M_nullbuf = {.autoalloc = EXFALSE, 
-        .buf = NULL, 
-        .size=0, 
-        .subtype="", 
-        .type_id=BUF_TYPE_NULL};
     
 /*---------------------------Prototypes---------------------------------*/
 
@@ -164,7 +157,7 @@ expublic buffer_obj_t * ndrx_find_buffer(char *ptr)
    
     if (NULL==ptr)
     {
-        return &M_nullbuf;
+        return &G_atmi_tls->nullbuf;
     }
     
     MUTEX_LOCK_V(M_lock);
@@ -193,7 +186,7 @@ exprivate buffer_obj_t * find_buffer_int(char *ptr)
     
     if (NULL==ptr)
     {
-        return &M_nullbuf;
+        return &G_atmi_tls->nullbuf;
     }
     
     EXHASH_FIND_PTR( ndrx_G_buffers, ((void **)&ptr), ret);
