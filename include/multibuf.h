@@ -51,10 +51,12 @@ extern "C" {
 #define NDRX_MBUF_OFFSET            (sizeof(int)*8-NDRX_MBUF_TBITS)
 /** get the buffer type encoded as last bits */
 #define NDRX_MBUF_TYPE(X)            (X>>(sizeof(int)*8-NDRX_MBUF_TBITS))
-/** get the tag */
-#define NDRX_MBUF_TAGTAG(X)          (X & (0x7FFFFFF))
+    
 /** get the call info bit */
-#define NDRX_MBUF_CALLINFOBIT        0x8000000
+#define NDRX_MBUF_CALLINFOBIT        0x4000000
+
+/** get the tag */
+#define NDRX_MBUF_TAGTAG(X)          (X & (0x3FFFFFF))
 
 #define NDRX_MBUF_TAG_CALLINFO      0   /**< Call info reserved tag             */
 #define NDRX_MBUF_TAG_PRIMARY       1   /**< Base buffer                        */

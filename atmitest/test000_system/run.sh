@@ -57,11 +57,19 @@ xadmin qrmall test000
 rm *.log 2>/dev/null
 
 # cleanup any running clients...
-xadmin killall atmisv0 2>/dev/null
+xadmin killall atmisv0 atmiunit0 2>/dev/null
 xadmin killall atmiclt0 2>/dev/null
 xadmin killall atmiclt0_ 2>/dev/null
 
 RET=0
+
+# ATMI unit
+./atmiunit0 &
+TMP=$?
+if [ $TMP != 0 ]; then
+    echo "Failed to start ./atmiunit0"
+    RET=-1
+fi
 
 # check locking..
 ./atmiclt0_locks &

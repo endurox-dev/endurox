@@ -178,6 +178,12 @@ extern "C" {
 #define ALIGNED_SIZE_T(TNAME, DSIZE) \
     ((sizeof(TNAME) + DSIZE + DEFAULT_ALIGN -1 ) / DEFAULT_ALIGN * DEFAULT_ALIGN)
 
+/**
+ * Generic data alignment to default system ALGIN setting
+ * @param DSIZE data on which to calc alignment
+ */
+#define ALIGNED_GEN(DSIZE) \
+    ((DSIZE + DEFAULT_ALIGN -1 ) / DEFAULT_ALIGN * DEFAULT_ALIGN)
     
 #define VIEW_ENTRY if (EXSUCCEED!=ndrx_view_init()) {EXFAIL_OUT(ret);}
 #define VIEW_ENTRY2 if (EXSUCCEED!=ndrx_view_init()) {ret=-2; goto out;}

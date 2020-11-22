@@ -509,19 +509,19 @@ out:
 /**
  * Set call info
  * @param typed buffer to which associate meta-data
- * @param obuf input buffer (must be UBF)
+ * @param cibuf input buffer (must be UBF)
  * @param flags call flags, not used must be set to 0
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags)
+expublic int ndrx_tpsetcallinfo(const char *msg, UBFH *cibuf, long flags)
 {
     int ret = EXSUCCEED;
     buffer_obj_t * node_msg;
-    typed_buffer_descr_t *callbuf = &G_buf_descr[BUF_TYPE_UBF];
+    typed_buffer_descr_t *descr = &G_buf_descr[BUF_TYPE_UBF];
     
     
     NDRX_LOG(log_debug, "Setting call info primary buffer msg=%p, obuf=%p, flags=%ld",
-            msg, obuf, flags);
+            msg, cibuf, flags);
     
     /* Check the call buffer */
     if (NULL==(node_msg=ndrx_find_buffer((char *)msg)))
@@ -531,8 +531,9 @@ expublic int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags)
     }
 
     /* now try to receive -> setup data from incoming UBF... */
-    if (EXSUCCEED!=callbuf->pf_prepare_incoming(callbuf, (char *)obuf, Bused(obuf), 
-            &node_msg->callinfobuf, &node_msg->callinfobuf_len, 0))
+    NDRX_LOG(log_error, "YOPT callinfobuf: %p", node_msg->callinfobuf);
+    if (EXSUCCEED!=descr->pf_prepare_incoming(descr, (char *)cibuf, Bused(cibuf), 
+            &(node_msg->callinfobuf), &node_msg->callinfobuf_len, 0))
     {
         NDRX_LOG(log_error, "Failed to setup call info buffer: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
