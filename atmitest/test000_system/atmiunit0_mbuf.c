@@ -65,77 +65,169 @@ exprivate void basic_teardown(void)
  */
 Ensure(test_mbuf)
 {
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
-    UBFH *p_ub2 = (UBFH *)tpalloc("UBF", NULL, 1024);
-    UBFH *p_ub3 = (UBFH *)tpalloc("UBF", NULL, 1024);
-    UBFH *p_ub4 = (UBFH *)tpalloc("UBF", NULL, 1024);
+    int i;
     
-    UBFH *p_ub5 = NULL;
-       
-    UBFH *p_callinfo = (UBFH *)tpalloc("UBF", NULL, 1024);
-    BVIEWFLD vf;
-    char buf[8096];
-    long buf_len;
-    long olen;
-    assert_not_equal(p_ub, NULL);
-    assert_not_equal(p_ub2, NULL);
-    assert_not_equal(p_ub3, NULL);
-    assert_not_equal(p_ub4, NULL);
-    assert_not_equal(p_callinfo, NULL);
-    
-    
-    /* load CI fields */
-    assert_equal(Bchg(p_callinfo, T_STRING_10_FLD, 0, "HELLO CALL INFO", 0L), EXSUCCEED);
-    assert_equal(CBchg(p_callinfo, T_LONG_FLD, 0, "255266", 0L, BFLD_STRING), EXSUCCEED);
-    
-    assert_equal(tpsetcallinfo((char *)p_ub, p_callinfo, 0), EXSUCCEED);
-    
-    /* load some-sub-sub fields */
-    assert_equal(Bchg(p_ub4, T_STRING_FLD, 0, "HELLO 4", 0L), EXSUCCEED);
-    assert_equal(CBchg(p_ub4, T_SHORT_FLD, 0, "777", 0L, BFLD_STRING), EXSUCCEED);
-    
-    
-    /* Load sub-ubf to 3 */
-    assert_equal(Bchg(p_ub3, T_UBF_FLD, 0, (char *)p_ub4, 0L), EXSUCCEED);
-    assert_equal(Bchg(p_ub4, T_STRING_2_FLD, 0, "HELLO 4 PTR", 0L), EXSUCCEED);
-    assert_equal(CBchg(p_ub4, T_SHORT_FLD, 0, "999", 0L, BFLD_STRING), EXSUCCEED);
-    
-    /* set PTR */
-    assert_equal(Bchg(p_ub3, T_PTR_FLD, 0, (char *)&p_ub4, 0L), EXSUCCEED);
-    assert_equal(Bchg(p_ub2, T_PTR_FLD, 3, (char *)&p_ub3, 0L), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_PTR_FLD, 3, (char *)&p_ub2, 0L), EXSUCCEED);
-    
-    /* load some buffer at tome level too... */
-    assert_equal(CBchg(p_ub, T_SHORT_3_FLD, 3, "22", 0L, BFLD_STRING), EXSUCCEED);
-    assert_equal(Bchg(p_ub, T_UBF_2_FLD, 3, (char *)p_ub4, 0L), EXSUCCEED);
-    
-    /* have some view as terminator */
-    memset(&vf, 0, sizeof(vf));
-    assert_equal(Bchg(p_ub, T_VIEW_FLD, 3, (char *)&vf, 0L), EXSUCCEED);
-    
-    /* OK drive out */
-    buf_len=sizeof(buf);
-    
-    /* print the source buf */
-    fprintf(stdout, "Source buf:\n");
-    Bprint(p_ub);
-    
-    assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, buf, &buf_len, 0, 0), EXSUCCEED);
-    
-    /* OK dump the output */
-    ndrx_mbuf_tlv_debug(buf, buf_len);
-    
-    
-    olen=0;
-    assert_equal(ndrx_mbuf_prepare_incoming (buf, buf_len, (char **)&p_ub5, &olen, 0, 0), EXSUCCEED);
-    
-    /* print the buffer, shall be the same as first one... */
-    fprintf(stdout, "Parsed buf:\n");
-    Bprint(p_ub5);
-    
-    /* TODO: Free up.. */
+    for (i=0; i<40; i++)
+    {
+        UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+        UBFH *p_ub2 = (UBFH *)tpalloc("UBF", NULL, 1024);
+        UBFH *p_ub3 = (UBFH *)tpalloc("UBF", NULL, 1024);
+        UBFH *p_ub4 = (UBFH *)tpalloc("UBF", NULL, 1024);
+
+        UBFH *p_ub5 = NULL;
+
+        /* RCV ptrs: */
+        UBFH *p_ub5_2 = NULL;
+        UBFH *p_ub5_3 = NULL;
+        UBFH *p_ub5_4 = NULL;
+
+        UBFH *p_callinfo = (UBFH *)tpalloc("UBF", NULL, 1024);
+        BVIEWFLD vf;
+        char buf[8096];
+        long buf_len;
+        long olen;
+        assert_not_equal(p_ub, NULL);
+        assert_not_equal(p_ub2, NULL);
+        assert_not_equal(p_ub3, NULL);
+        assert_not_equal(p_ub4, NULL);
+        assert_not_equal(p_callinfo, NULL);
+
+
+        /* load CI fields */
+        assert_equal(Bchg(p_callinfo, T_STRING_10_FLD, 0, "HELLO CALL INFO", 0L), EXSUCCEED);
+        assert_equal(CBchg(p_callinfo, T_LONG_FLD, 0, "255266", 0L, BFLD_STRING), EXSUCCEED);
+
+        assert_equal(tpsetcallinfo((char *)p_ub, p_callinfo, 0), EXSUCCEED);
+
+        /* load some-sub-sub fields */
+        assert_equal(Bchg(p_ub4, T_STRING_FLD, 0, "HELLO 4", 0L), EXSUCCEED);
+        assert_equal(CBchg(p_ub4, T_SHORT_FLD, 0, "777", 0L, BFLD_STRING), EXSUCCEED);
+
+
+        /* Load sub-ubf to 3 */
+        assert_equal(Bchg(p_ub3, T_UBF_FLD, 0, (char *)p_ub4, 0L), EXSUCCEED);
+        assert_equal(Bchg(p_ub3, T_STRING_5_FLD, 0, "This is string 5 ub3", 0L), EXSUCCEED);
+
+        assert_equal(Bchg(p_ub4, T_STRING_2_FLD, 0, "HELLO 4 PTR", 0L), EXSUCCEED);
+        assert_equal(CBchg(p_ub4, T_SHORT_FLD, 0, "999", 0L, BFLD_STRING), EXSUCCEED);
+
+        /* set PTR */
+        assert_equal(Bchg(p_ub3, T_PTR_2_FLD, 0, (char *)&p_ub4, 0L), EXSUCCEED);
+        assert_equal(Bchg(p_ub3, T_PTR_3_FLD, 0, (char *)&p_ub4, 0L), EXSUCCEED);
+        assert_equal(Bchg(p_ub2, T_PTR_FLD, 3, (char *)&p_ub3, 0L), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_PTR_FLD, 3, (char *)&p_ub2, 0L), EXSUCCEED);
+
+        /* load some buffer at tome level too... */
+        assert_equal(CBchg(p_ub, T_SHORT_3_FLD, 3, "22", 0L, BFLD_STRING), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_UBF_2_FLD, 3, (char *)p_ub4, 0L), EXSUCCEED);
+
+        /* have some view as terminator */
+        memset(&vf, 0, sizeof(vf));
+        assert_equal(Bchg(p_ub, T_VIEW_FLD, 3, (char *)&vf, 0L), EXSUCCEED);
+
+        /* OK drive out */
+        buf_len=sizeof(buf);
+
+        /* print the source buf 
+        fprintf(stdout, "Source buf:\n");
+        Bprint(p_ub);*/
+
+        assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, buf, &buf_len, 0, 0), EXSUCCEED);
+
+        /* OK dump the output */
+        ndrx_mbuf_tlv_debug(buf, buf_len);
+
+
+        olen=0;
+        assert_equal(ndrx_mbuf_prepare_incoming (buf, buf_len, (char **)&p_ub5, &olen, 0, 0), EXSUCCEED);
+
+        /* print the buffer, shall be the same as first one... 
+        fprintf(stdout, "Parsed buf:\n");
+        Bprint(p_ub5);
+        */
+        
+        /* Check the occurrences */
+        assert_equal(Bget(p_ub5, T_PTR_FLD, 0, (char *)&p_ub5_2, 0L), EXSUCCEED);
+        assert_equal(p_ub5_2, NULL);
+
+        assert_equal(Bget(p_ub5, T_PTR_FLD, 1, (char *)&p_ub5_2, 0L), EXSUCCEED);
+        assert_equal(p_ub5_2, NULL);
+
+        assert_equal(Bget(p_ub5, T_PTR_FLD, 2, (char *)&p_ub5_2, 0L), EXSUCCEED);
+        assert_equal(p_ub5_2, NULL);
+
+        assert_equal(Bget(p_ub5, T_PTR_FLD, 3, (char *)&p_ub5_2, 0L), EXSUCCEED);
+        assert_not_equal(p_ub5_2, NULL);
+
+
+        /* ptr T_PTR_FLD 3 pos again in buf 2 */
+
+        assert_equal(Bget(p_ub5_2, T_PTR_FLD, 0, (char *)&p_ub5_3, 0L), EXSUCCEED);
+        assert_equal(p_ub5_3, NULL);
+
+        assert_equal(Bget(p_ub5_2, T_PTR_FLD, 1, (char *)&p_ub5_3, 0L), EXSUCCEED);
+        assert_equal(p_ub5_3, NULL);
+
+        assert_equal(Bget(p_ub5_2, T_PTR_FLD, 2, (char *)&p_ub5_3, 0L), EXSUCCEED);
+        assert_equal(p_ub5_3, NULL);
+
+        assert_equal(Bget(p_ub5_2, T_PTR_FLD, 4, (char *)&p_ub5_3, 0L), EXFAIL);
+        assert_equal(p_ub5_3, NULL);
+
+        assert_equal(Bget(p_ub5_2, T_PTR_FLD, 3, (char *)&p_ub5_3, 0L), EXSUCCEED);
+        assert_not_equal(p_ub5_3, NULL);
+
+        /* ptr T_PTR_FLD 4 pos again in buf 3 */
+        assert_equal(Bget(p_ub5_3, T_PTR_2_FLD, 0, (char *)&p_ub5_4, 0L), EXSUCCEED);
+        assert_not_equal(p_ub5_4, NULL);
+
+        /* check the contents of ptr5 buf */
+        assert_equal(Bcmp(p_ub5_4, p_ub4), 0);
+
+        /* clean up 3 & compare */
+
+        Bprint(p_ub5_3);
+
+        assert_equal(Bdel(p_ub3, T_PTR_2_FLD, 0), EXSUCCEED);
+        Bprint(p_ub5_3);
+        assert_equal(Bdel(p_ub5_3, T_PTR_2_FLD, 0), EXSUCCEED);
+
+        assert_equal(Bdel(p_ub3, T_PTR_3_FLD, 0), EXSUCCEED);
+        assert_equal(Bdel(p_ub5_3, T_PTR_3_FLD, 0), EXSUCCEED);
+
+        assert_equal(Bcmp(p_ub5_3, p_ub3), 0);
+
+        /* cleanup level 2 & compare */
+
+        assert_equal(Bdel(p_ub2, T_PTR_FLD, 3), EXSUCCEED);
+        assert_equal(Bdel(p_ub5_2, T_PTR_FLD, 3), EXSUCCEED);
+        assert_equal(Bcmp(p_ub5_2, p_ub2), 0);
+
+
+        /* cleanup level 1 & compare */
+
+        assert_equal(Bdel(p_ub, T_PTR_FLD, 3), EXSUCCEED);
+        assert_equal(Bdel(p_ub5, T_PTR_FLD, 3), EXSUCCEED);
+        assert_equal(Bcmp(p_ub5, p_ub), 0);
+
+        /* free up buffers... */
+        tpfree((char *)p_ub);
+        tpfree((char *)p_ub2);
+        tpfree((char *)p_ub3);
+        tpfree((char *)p_ub4);
+        tpfree((char *)p_ub5);
+        tpfree((char *)p_ub5_2);
+        tpfree((char *)p_ub5_3);
+        tpfree((char *)p_ub5_4);
+    }
     
 }
+
+/* TODO:
+ * 
+ * - Test ptr re-use (some big msg, size does not multiply)
+ * - Test output buffer full byte by byte grow ...
+ */
 
 /**
  * Standard library tests
