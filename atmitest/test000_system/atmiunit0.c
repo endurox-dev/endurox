@@ -45,6 +45,9 @@
 #include "xatmi.h"
 #include <fdatatype.h>
 
+
+extern TestSuite *atmiunit0_mbuf(void);
+
 /**
  * Basic preparation before the test
  */
@@ -184,6 +187,19 @@ Ensure(test_tpcallinfo)
     assert_equal(tpterm(), EXSUCCEED);
 }
 
+/**
+ * Base ATMI tests
+ * @return
+ */
+TestSuite *atmiunit0_base(void)
+{
+    TestSuite *suite = create_test_suite();
+
+    add_test(suite, test_tpcallinfo);
+    
+    return suite;
+}
+
 /*
  * Main test entry.
  */
@@ -192,7 +208,8 @@ int main(int argc, char** argv)
     TestSuite *suite = create_test_suite();
     int ret;
 
-    add_test(suite, test_tpcallinfo);
+    add_suite(suite, atmiunit0_base());
+    add_suite(suite, atmiunit0_mbuf());
 
     if (argc > 1)
     {

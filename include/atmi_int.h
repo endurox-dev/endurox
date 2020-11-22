@@ -245,6 +245,8 @@ extern "C" {
 /** The 31 bit on, indicates that connection is servers accept one */
 #define NDRX_CONV_SRVMASK       0x40000000
     
+    
+#define NDRX_MBUF_FLAG_NOCALLINFO   0x00000001  /**< Do not serialize callinfo  for mbuf*/
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -915,6 +917,13 @@ extern NDRX_API int ndrx_tpsetcallinfo(const char *msg, UBFH *obuf, long flags);
 /* tp encryption functions */
 extern NDRX_API int tpencrypt_int(char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int tpdecrypt_int(char *input, long ilen, char *output, long *olen, long flags);
+
+
+extern NDRX_API void ndrx_mbuf_tlv_debug (char *rcv_data, long rcv_len);
+extern NDRX_API int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, long *olen, 
+        long flags, long mflags);
+extern NDRX_API int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **odata, 
+        long *olen, long flags, long mflags);
 
 #ifdef	__cplusplus
 }
