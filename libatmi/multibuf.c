@@ -128,18 +128,20 @@ exprivate int ndrx_mbuf_ptrs_map_in(ndrx_growlist_t *list, UBFH *p_ub)
 {
     int ret = EXSUCCEED;
     Bnext_state_t state;
-    BFLDID bfldid;
+    BFLDID bfldid=BBADFLDOCC;
     BFLDOCC occ;
     char *d_ptr;
     char **lptr;
     ndrx_mbuf_vptrs_t *access_vptr;
-    UBF_header_t *ub_hdr = (UBF_header_t *)p_ub;
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
     int ftyp;
     unsigned int tag;
-    state.p_cur_bfldid = &ub_hdr->cache_ptr_off;
+    BFLDID   *p_bfldid_start = &hdr->bfldid;
+    
+    state.p_cur_bfldid = (BFLDID *)(((char *)p_bfldid_start) + hdr->cache_ptr_off);
     state.cur_occ = 0;
     state.p_ub = p_ub;
-    state.size = ub_hdr->bytes_used;
+    state.size = hdr->bytes_used;
 
     while (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
     {
@@ -178,8 +180,18 @@ exprivate int ndrx_mbuf_ptrs_map_in(ndrx_growlist_t *list, UBFH *p_ub)
         else
         {
             /* we are done */
+            ret=EXSUCCEED;
             break;
         }
+    }
+    
+    NDRX_LOG(log_error, "YOPT! END OF SCAN");
+    
+    if (EXFAIL==ret)
+    {
+        NDRX_LOG(log_error, "Failed to loop ubf: %s", Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to loop ubf: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
     }
             
 out:
@@ -223,13 +235,13 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
     
     /* OK load the stuff ... */
     NDRX_LOG(log_debug, "Parse incoming buffer TLV");
-    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t), tag_exp++)
+    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=(ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t)), tag_exp++)
     {
         int is_callinfo;
         unsigned int tag;
         int btype;
         
-        tlv_hdr=(ndrx_mbuf_tlv_t *)rcv_data + tlv_pos;
+        tlv_hdr=(ndrx_mbuf_tlv_t *)(rcv_data + tlv_pos);
         
         tag = NDRX_MBUF_TAGTAG(tlv_hdr->tag);
         btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
@@ -367,12 +379,13 @@ exprivate int ndrx_mbuf_tlv_do(char *idata, long ilen, char *obuf,
 {
     int ret = EXSUCCEED;
     ndrx_mbuf_tlv_t *hdr;
-    long new_used = ALIGNED_SIZE(*olen_used);
+    long new_used = ALIGNED_GEN(*olen_used);
     int pad=*olen_used-new_used;
-    char *work_buf = obuf + new_used;
     long tmp_olen;
     buffer_obj_t * buffer_info = ndrx_find_buffer(idata);
     typed_buffer_descr_t *descr;
+    
+    NDRX_LOG(log_error, "YOPT TAG START: %u", tag);
     
     if (NULL==buffer_info)
     {
@@ -387,6 +400,11 @@ exprivate int ndrx_mbuf_tlv_do(char *idata, long ilen, char *obuf,
         ilen=buffer_info->size;
     }
     
+    NDRX_LOG(log_error, "YOPT new_use=%ld", new_used);
+    
+    /* put the header down */
+    hdr = (ndrx_mbuf_tlv_t *)(obuf+new_used);
+    
     /* get get aligned size*/
     new_used += sizeof(ndrx_mbuf_tlv_t);
     
@@ -397,31 +415,27 @@ exprivate int ndrx_mbuf_tlv_do(char *idata, long ilen, char *obuf,
         ret=EXFAIL;
         goto out;
     }
-            
-    /* put the header down */
-    hdr = (ndrx_mbuf_tlv_t *)work_buf;
-    hdr->tag = tag | (buffer_info->type_id << NDRX_MBUF_OFFSET);
-    /* get the buffer type */
     
+    hdr->tag = tag | (buffer_info->type_id << NDRX_MBUF_OFFSET);
+    
+    
+    /* get the buffer type */    
     /* calculate the amount left */
     tmp_olen = olen_max-new_used;
-    
-    /* move next.. */
-    work_buf+=new_used;
     
     descr = &G_buf_descr[buffer_info->type_id];
     
     /* prepare buffer for call */
     NDRX_LOG(log_debug, "Preparing buffer tag: %u (typed %u, type %d). Source buffer %p, "
             "dest master buffer %p (work place header %p data %p) olen_max=%ld new_used=%ld pad=%d", 
-            tag, hdr->tag, buffer_info->type_id, idata, obuf, hdr, work_buf, olen_max, new_used, pad);
+            tag, hdr->tag, buffer_info->type_id, idata, obuf, hdr, hdr->data, olen_max, new_used, pad);
     
-    if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, idata, ilen, work_buf, 
+    if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, idata, ilen, hdr->data, 
             &tmp_olen, flags))
     {
         NDRX_LOG(log_error, "Failed to prepare buffer tag: %u (typed %u, type %d). Source buffer %p, "
             "dest master buffer %p (work place header %p data %p) olen_max=%ld new_used=%ld pad=%d", 
-            tag, hdr->tag, buffer_info->type_id, idata, obuf, hdr, work_buf, olen_max, new_used, pad);
+            tag, hdr->tag, buffer_info->type_id, idata, obuf, hdr, hdr->data, olen_max, new_used, pad);
         EXFAIL_OUT(ret);
     }
     hdr->len = tmp_olen;
@@ -451,24 +465,28 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
 {
     int ret = EXSUCCEED;
     Bnext_state_t state;
-    BFLDID bfldid;
+    BFLDID bfldid=BBADFLDOCC;
     BFLDOCC occ;
     char *d_ptr;
     char **lptr;
     ndrx_longptr_t tmp_ptr;
     ndrx_mbuf_ptrs_t *hptr; /* hash pointer */
-    UBF_header_t *ub_hdr = (UBF_header_t *)p_ub;
+    UBF_header_t *hdr = (UBF_header_t *)p_ub;
     int ftyp;
-
-    state.p_cur_bfldid = &ub_hdr->cache_ptr_off;
+    BFLDID   *p_bfldid_start = &hdr->bfldid;
+    
+    NDRX_LOG(log_error, "YOPT ptr offet: %d", hdr->cache_ptr_off);
+    
+    state.p_cur_bfldid = (BFLDID *)(((char *)p_bfldid_start) + hdr->cache_ptr_off);
     state.cur_occ = 0;
     state.p_ub = p_ub;
-    state.size = ub_hdr->bytes_used;
+    state.size = hdr->bytes_used;
 
     while (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
     {
         ftyp = bfldid >> EFFECTIVE_BITS;
         
+        NDRX_LOG(log_error, "YOPT GOT FLD: %d typ %d", bfldid, ftyp);
         if (BFLD_PTR==ftyp)
         {
             lptr=(char **)d_ptr;
@@ -487,19 +505,19 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
                     NDRX_LOG(log_error, "Failed to allocate ptr hash element");
                     EXFAIL_OUT(ret);
                 }
-            }
-            
-            NDRX_LOG(log_debug, "fldid=%d occ=%d ptr to %p -> serialize to tag %u",
-                    bfldid, occ, *lptr, *p_tag);
-            
-            /* how about buffer len? we do not know what is used len, so
-             * needs to extract from types? */
-            if (EXSUCCEED!=ndrx_mbuf_tlv_do((char *)*lptr, EXFAIL, obuf, 
-                    olen_max, olen_used, hptr->tag, flags))
-            {
-                NDRX_LOG(log_error, "Failed to add ptr %p to export data tag=%u",
-                        (char *)*lptr, *p_tag);
-                EXFAIL_OUT(ret);
+                
+                NDRX_LOG(log_debug, "fldid=%d occ=%d ptr to %p -> serialize to tag %u",
+                        bfldid, occ, *lptr, *p_tag);
+
+                /* how about buffer len? we do not know what is used len, so
+                 * needs to extract from types? */
+                if (EXSUCCEED!=ndrx_mbuf_tlv_do((char *)*lptr, EXFAIL, obuf, 
+                        olen_max, olen_used, hptr->tag, flags))
+                {
+                    NDRX_LOG(log_error, "Failed to add ptr %p to export data tag=%u",
+                            (char *)lptr, *p_tag);
+                    EXFAIL_OUT(ret);
+                }
             }
             
             /* update ubf buffer with tag */
@@ -519,8 +537,18 @@ exprivate int ndrx_mbuf_ptrs_map_out(ndrx_mbuf_ptrs_t **ptrs, UBFH *p_ub,
         else
         {
             /* we are done */
+            ret=EXSUCCEED;
             break;
         }
+    }
+    
+    NDRX_LOG(log_error, "YOPT! END OF SCAN");
+    
+    if (EXFAIL==ret)
+    {
+        NDRX_LOG(log_error, "Failed to loop ubf: %s", Bstrerror(Berror));
+        ndrx_TPset_error_fmt(TPESYSTEM, "Failed to loop ubf: %s", Bstrerror(Berror));
+        EXFAIL_OUT(ret);
     }
             
 out:
@@ -570,7 +598,7 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     }
     
     /* check for call info, if any, serialize to TLV */
-    if (NULL!=ibuf->callinfobuf && (mflags & NDRX_MBUF_FLAG_NOCALLINFO))
+    if (NULL!=ibuf->callinfobuf && !(mflags & NDRX_MBUF_FLAG_NOCALLINFO))
     {
         if (EXSUCCEED!=ndrx_mbuf_tlv_do(ibuf->callinfobuf, ibuf->callinfobuf_len, obuf, 
             *olen, &used, ptr_tag | NDRX_MBUF_CALLINFOBIT, flags))
@@ -588,20 +616,19 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
         EXFAIL_OUT(ret);
     }
     
-    ptr_tag++;
-    
     /* iterate over the main buffer, remap the pointers on the fly 
      * looping shall be done in outer function to support the recursion
      */ 
-    for (tlv_pos=0; tlv_pos<used; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t))
+    for (tlv_pos=0; tlv_pos<used; tlv_pos+=(ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t)))
     {
         int is_callinfo;
         
-        tlv_hdr=(ndrx_mbuf_tlv_t *)obuf + tlv_pos;
+        tlv_hdr=(ndrx_mbuf_tlv_t *) (obuf + tlv_pos);
         is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
        
-        NDRX_LOG(log_debug, "Post-processing (vptr mapping) tag: %d typed: %d callinfo: %d", 
-               NDRX_MBUF_TAGTAG(tlv_hdr->tag), NDRX_MBUF_TYPE(tlv_hdr->tag), is_callinfo);
+        NDRX_LOG(log_error, "YOPT TAG: %x %u", tlv_hdr->tag, NDRX_MBUF_TAGTAG(tlv_hdr->tag));
+        NDRX_LOG(log_debug, "Post-processing (vptr mapping) tag: %u typed: %d callinfo: %d offset: %ld", 
+               NDRX_MBUF_TAGTAG(tlv_hdr->tag), NDRX_MBUF_TYPE(tlv_hdr->tag), is_callinfo, tlv_pos);
        
         /* check the buffer type, if it is UBF, then run the mapping... */
         if (BUF_TYPE_UBF == NDRX_MBUF_TYPE(tlv_hdr->tag))
@@ -633,32 +660,27 @@ out:
  */
 expublic void ndrx_mbuf_tlv_debug (char *rcv_data, long rcv_len)
 {
-    int ret = EXSUCCEED;
-    ndrx_growlist_t list;
     ndrx_mbuf_tlv_t *tlv_hdr;
     long tlv_pos;
     unsigned int tag_exp=0;
-    ndrx_mbuf_vptrs_t current_vptr;
-    ndrx_mbuf_vptrs_t *access_vptr;
-    typed_buffer_descr_t *descr;
 
     
     /* OK load the stuff ... */
     NDRX_LOG(log_debug, "** DUMP TLV START **");
-    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t), tag_exp++)
+    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=(ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t)), tag_exp++)
     {
         int is_callinfo;
         unsigned int tag;
         int btype;
         
-        tlv_hdr=(ndrx_mbuf_tlv_t *)rcv_data + tlv_pos;
+        tlv_hdr=(ndrx_mbuf_tlv_t *)(rcv_data + tlv_pos);
         
         tag = NDRX_MBUF_TAGTAG(tlv_hdr->tag);
         btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
         is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
         
         NDRX_LOG(log_debug, "Buffer tag: %u type: %d callinfo: %d len: %u aligned: %d",
-                tag, btype, is_callinfo, tlv_hdr->len, ALIGNED_SIZE(tlv_hdr->len));
+                tag, btype, is_callinfo, tlv_hdr->len, ALIGNED_GEN(tlv_hdr->len));
         
         if (tag!=tag_exp)
         {

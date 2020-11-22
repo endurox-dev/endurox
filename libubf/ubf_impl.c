@@ -1666,6 +1666,11 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         state->size = hdr->bytes_used;
         p = (char *)&hdr->bfldid;
     }
+    else if (*bfldid==BBADFLDOCC)
+    {
+        /* used internally to search from particular positions */
+        p = (char *)state->p_cur_bfldid;
+    }
     else
     {
         /* Get current field type */
@@ -1676,7 +1681,7 @@ expublic int ndrx_Bnext(Bnext_state_t *state, UBFH *p_ub, BFLDID *bfldid,
         /* Align error */
         if (IS_TYPE_INVALID(type))
         {
-            ndrx_Bset_error_fmt(BALIGNERR, "%s: Invalid data type: %d", type, fn);
+            ndrx_Bset_error_fmt(BALIGNERR, "Invalid data type: %d", type);
             found=EXFAIL;
             goto out;
         }
