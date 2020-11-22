@@ -55,9 +55,7 @@ extern "C" {
 #define NDRX_MBUF_TAGTAG(X)          (X & (0x7FFFFFF))
 /** get the call info bit */
 #define NDRX_MBUF_CALLINFOBIT        0x8000000
-    
 
-#define NDRX_MBUF_FLAG_NOCALLINFO   0x00000001  /**< Do not serialize callinfo  */
 #define NDRX_MBUF_TAG_CALLINFO      0   /**< Call info reserved tag             */
 #define NDRX_MBUF_TAG_PRIMARY       1   /**< Base buffer                        */
 #define NDRX_MBUF_TAG_PTR_BASE      2   /**< Virtual pointer base tag (start)   */
@@ -92,6 +90,7 @@ typedef struct
 {
     char *data; /**< pointer to allocated memory block      */
     long len;   /**< buffer len                             */
+    int btype;      /**< cached buffer type                 */
 } ndrx_mbuf_vptrs_t;
 
 /**

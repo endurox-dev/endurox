@@ -118,6 +118,74 @@ exprivate void ndrx_mbuf_ptr_free(ndrx_mbuf_ptrs_t **ptrs)
         NDRX_FPFREE(el);
     }
 }
+/**
+ * Remap the buffer back to real pointers
+ * @param list list of ptrs by index
+ * @param p_ub ubf to scan (recursively)
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int ndrx_mbuf_ptrs_map_in(ndrx_growlist_t *list, UBFH *p_ub)
+{
+    int ret = EXSUCCEED;
+    Bnext_state_t state;
+    BFLDID bfldid;
+    BFLDOCC occ;
+    char *d_ptr;
+    char **lptr;
+    ndrx_mbuf_vptrs_t *access_vptr;
+    UBF_header_t *ub_hdr = (UBF_header_t *)p_ub;
+    int ftyp;
+    unsigned int tag;
+    state.p_cur_bfldid = &ub_hdr->cache_ptr_off;
+    state.cur_occ = 0;
+    state.p_ub = p_ub;
+    state.size = ub_hdr->bytes_used;
+
+    while (EXTRUE==(ret=ndrx_Bnext(&state, p_ub, &bfldid, &occ, NULL, NULL, &d_ptr)))
+    {
+        ftyp = bfldid >> EFFECTIVE_BITS;
+        
+        
+        if (BFLD_PTR==ftyp)
+        {
+            
+            /* if we get field, then this needs to be updated with real
+             * ptr. Also in this case we shall reprocess the field
+             * if it is UBF (but also if there are several ptrs to one
+             * field, we shall do it once)
+             */
+            
+            /* resolve the VPTR */
+            lptr=(char **)d_ptr;
+            access_vptr = (ndrx_mbuf_vptrs_t *)(list->mem + ((long)(*lptr))*sizeof(ndrx_mbuf_vptrs_t));
+            
+            NDRX_LOG(log_debug, "Mapping tag %ld to %p", (long)*lptr, access_vptr->data);
+            
+            tag = (unsigned int)(ndrx_longptr_t)*lptr;
+            *lptr = access_vptr->data;
+
+        }
+        else if (BFLD_UBF==ftyp)
+        {
+            /* process the sub-buffer... (re-map sub-fields) */
+            if (EXSUCCEED!=ndrx_mbuf_ptrs_map_in(list, (UBFH *)d_ptr))
+            {
+                NDRX_LOG(log_error, "Failed to re-map master buffer %p "
+                        "sub-field (UBF) %d", p_ub, bfldid);
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            /* we are done */
+            break;
+        }
+    }
+            
+out:
+
+    return ret;
+}
 
 /**
  * receive TLV data with several buffers
@@ -149,13 +217,13 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
     ndrx_mbuf_vptrs_t *access_vptr;
     typed_buffer_descr_t *descr;
     int primary_loaded = EXFALSE;
-    
+    int i;
     /* parse the TLV and load into growlist with index of VPTRs */
     ndrx_growlist_init(&list, 50, sizeof(ndrx_mbuf_vptrs_t));
     
     /* OK load the stuff ... */
     NDRX_LOG(log_debug, "Parse incoming buffer TLV");
-    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len), tag_exp++)
+    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t), tag_exp++)
     {
         int is_callinfo;
         unsigned int tag;
@@ -167,8 +235,8 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
         btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
         is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
         
-        NDRX_LOG(log_debug, "Received buffer tag: %u type: %d callinfo: %d",
-                tag, btype, is_callinfo);
+        NDRX_LOG(log_debug, "Received buffer tag: %u type: %d callinfo: %d len: %u",
+                tag, btype, is_callinfo, tlv_hdr->len);
         
         if (tag!=tag_exp)
         {
@@ -182,6 +250,7 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
         /* get the work area: */
         descr = &G_buf_descr[btype];
 
+        current_vptr.btype = btype;/**< cache buffer type               */
         /* set the primary data, if any */
         if (!primary_loaded && !is_callinfo)
         {
@@ -235,6 +304,7 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
                 {
                     tpfree(buffer_info->callinfobuf);
                 }
+                /* callinfos are at pos 0 */
                 access_vptr = (ndrx_mbuf_vptrs_t *)list.mem;
                 buffer_info->callinfobuf = access_vptr->data;
                 buffer_info->callinfobuf_len = access_vptr->len;
@@ -256,9 +326,27 @@ expublic int ndrx_mbuf_prepare_incoming (char *rcv_data, long rcv_len, char **od
     
     NDRX_LOG(log_debug, "Remap the vptrs (tags) to real pointers");
     
-    /* TODO: */
+    /* go over the list of tags, and perform map-in operation on each of it */
+    
+    for (i=0; i<=list.maxindexused; i++)
+    {
+        
+        access_vptr = (ndrx_mbuf_vptrs_t *)(list.mem + (i)*sizeof(ndrx_mbuf_vptrs_t));
+        
+        if (BUF_TYPE_UBF==access_vptr->btype)
+        {
+            if (EXSUCCEED!=ndrx_mbuf_ptrs_map_in(&list, (UBFH *)access_vptr->data))
+            {
+                NDRX_LOG(log_error, "Failed to re-map tag %i", i);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
     
 out:
+    
+    ndrx_growlist_free(&list);
+    
     return ret;
 }
 
@@ -505,7 +593,7 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     /* iterate over the main buffer, remap the pointers on the fly 
      * looping shall be done in outer function to support the recursion
      */ 
-    for (tlv_pos=0; tlv_pos<used; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len))
+    for (tlv_pos=0; tlv_pos<used; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t))
     {
         int is_callinfo;
         
@@ -516,7 +604,7 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
                NDRX_MBUF_TAGTAG(tlv_hdr->tag), NDRX_MBUF_TYPE(tlv_hdr->tag), is_callinfo);
        
         /* check the buffer type, if it is UBF, then run the mapping... */
-        if (BFLD_UBF == NDRX_MBUF_TYPE(tlv_hdr->tag))
+        if (BUF_TYPE_UBF == NDRX_MBUF_TYPE(tlv_hdr->tag))
         {
            if (EXSUCCEED!=ndrx_mbuf_ptrs_map_out(&ptrs, (UBFH *)tlv_hdr->data,
                 obuf, *olen, &used, &ptr_tag, flags))
@@ -537,5 +625,53 @@ out:
 
     return ret;
 }
+
+/**
+ * Dump the TLV data
+ * @param rcv_data serialized buffer
+ * @param rcv_len total buffer len
+ */
+expublic void ndrx_mbuf_tlv_debug (char *rcv_data, long rcv_len)
+{
+    int ret = EXSUCCEED;
+    ndrx_growlist_t list;
+    ndrx_mbuf_tlv_t *tlv_hdr;
+    long tlv_pos;
+    unsigned int tag_exp=0;
+    ndrx_mbuf_vptrs_t current_vptr;
+    ndrx_mbuf_vptrs_t *access_vptr;
+    typed_buffer_descr_t *descr;
+
+    
+    /* OK load the stuff ... */
+    NDRX_LOG(log_debug, "** DUMP TLV START **");
+    for (tlv_pos=0; tlv_pos<rcv_len; tlv_pos+=ALIGNED_SIZE(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t), tag_exp++)
+    {
+        int is_callinfo;
+        unsigned int tag;
+        int btype;
+        
+        tlv_hdr=(ndrx_mbuf_tlv_t *)rcv_data + tlv_pos;
+        
+        tag = NDRX_MBUF_TAGTAG(tlv_hdr->tag);
+        btype = NDRX_MBUF_TYPE(tlv_hdr->tag);
+        is_callinfo = !!(tlv_hdr->tag & NDRX_MBUF_CALLINFOBIT);
+        
+        NDRX_LOG(log_debug, "Buffer tag: %u type: %d callinfo: %d len: %u aligned: %d",
+                tag, btype, is_callinfo, tlv_hdr->len, ALIGNED_SIZE(tlv_hdr->len));
+        
+        if (tag!=tag_exp)
+        {
+            NDRX_LOG(log_error, "ERROR: Expected tag %u but got %u", tag_exp, tag);
+            return;
+        }
+        
+        NDRX_DUMP(log_debug, "TAG data", tlv_hdr->data, tlv_hdr->len);
+        
+    }
+    NDRX_LOG(log_debug, "** DUMP TLV END **");
+    
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

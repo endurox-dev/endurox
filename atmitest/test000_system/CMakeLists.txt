@@ -54,7 +54,7 @@ add_executable (atmiclt0 atmiclt0.c)
 add_executable (atmiclt0_locks atmiclt0_locks.c)
 add_executable (atmiclt0_mqsv atmiclt0_mqsv.c)
 add_executable (atmiclt0_mqcl atmiclt0_mqcl.c)
-add_executable (atmiunit0 atmiunit0.c)
+add_executable (atmiunit0 atmiunit0.c atmiunit0_mbuf.c)
 
 ################################################################################
 ############################# Test - executables ###############################

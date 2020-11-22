@@ -406,6 +406,14 @@ expublic void ndrx_tpfree (char *buf, buffer_obj_t *known_buffer)
         /* Remove it! */
         buf_type->pf_free(buf_type, elt->buf);
         
+        /* remove any call infos */
+        
+        if (NULL!=elt->callinfobuf)
+        {
+            NDRX_LOG(log_debug, "Removing call info buffer %p", elt->callinfobuf);
+            ndrx_tpfree(elt->callinfobuf, NULL);
+        }
+        
         /* Remove that stuff from our linked list!! */
         /* DL_DELETE(G_buffers,elt); */
         MUTEX_LOCK_V(M_lock);
