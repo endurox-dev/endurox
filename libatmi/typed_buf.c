@@ -519,8 +519,7 @@ expublic int ndrx_tpsetcallinfo(const char *msg, UBFH *cibuf, long flags)
     buffer_obj_t * node_msg;
     typed_buffer_descr_t *descr = &G_buf_descr[BUF_TYPE_UBF];
     
-    
-    NDRX_LOG(log_debug, "Setting call info primary buffer msg=%p, obuf=%p, flags=%ld",
+    NDRX_LOG(log_debug, "Setting call info primary buffer msg=%p, cibuf=%p, flags=%ld",
             msg, cibuf, flags);
     
     /* Check the call buffer */
@@ -546,11 +545,11 @@ out:
 /**
  * Retrieve meta data
  * @param msg call buffer
- * @param obuf metadata
+ * @param cibuf metadata
  * @param flags
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **obuf, long flags)
+expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **cibuf, long flags)
 {
     int ret = EXSUCCEED;
     buffer_obj_t * node_msg;
@@ -558,7 +557,7 @@ expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **obuf, long flags)
     long olen=0;
     
     NDRX_LOG(log_debug, "Setting call info primary buffer msg=%p, obuf=%p, flags=%ld",
-            msg, obuf, flags);
+            msg, cibuf, flags);
     
     /* Check the call buffer */
     if (NULL==(node_msg=ndrx_find_buffer((char *)msg)))
@@ -566,10 +565,16 @@ expublic int ndrx_tpgetcallinfo(const char *msg, UBFH **obuf, long flags)
         ndrx_TPset_error_fmt(TPEINVAL, "msg buffer %p is not know to system", msg);
         EXFAIL_OUT(ret);
     }
-
+    
+    if (NULL==node_msg->callinfobuf)
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM, "No call info buffer is associated with message");
+        EXFAIL_OUT(ret);
+    }
+    
     /* now try to receive -> setup data from incoming UBF... */
     if (EXSUCCEED!=callbuf->pf_prepare_incoming(callbuf, node_msg->callinfobuf, 
-            node_msg->callinfobuf_len, (char **)obuf, &olen, 0))
+            node_msg->callinfobuf_len, (char **)cibuf, &olen, 0))
     {
         NDRX_LOG(log_error, "Failed to retrieve call infos: %s", tpstrerror(tperrno));
         EXFAIL_OUT(ret);
