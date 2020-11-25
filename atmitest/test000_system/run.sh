@@ -64,7 +64,7 @@ xadmin killall atmiclt0_ 2>/dev/null
 RET=0
 
 # ATMI unit
-./atmiunit0 &
+./atmiunit0 test_mbuf_buf_full
 TMP=$?
 if [ $TMP != 0 ]; then
     echo "Failed to start ./atmiunit0"
@@ -72,7 +72,7 @@ if [ $TMP != 0 ]; then
 fi
 
 # check locking..
-./atmiclt0_locks &
+./atmiclt0_locks
 TMP=$?
 if [ $TMP != 0 ]; then
     echo "Failed to start ./atmiclt0_locks"
