@@ -213,6 +213,12 @@ EX_IF_REQDATA               531         carray -        Request data / body
 EX_IF_RSPDATA               532         carray -        Response data / body
 EX_IF_METHOD                540         string -        HTTP method
 
+EX_IF_REQFILEDISK           541         string -        file on HDD, temporary, multi occ
+EX_IF_REQFILENAME           542         string -        file name in upload form
+EX_IF_REQFILEMIME           543         string -        content type, multi occ
+EX_IF_REQFILEFORM           544         string -        form field name, multi occ
+EX_IF_RSPFILEACTION         545         string -        occurrence on action, multi-occ
+
 ################################################################################
 # TCP Inter-connecting
 ################################################################################
