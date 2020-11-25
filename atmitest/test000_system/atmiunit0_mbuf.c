@@ -236,11 +236,6 @@ Ensure(test_mbuf)
     
 }
 
-/* TODO:
- * - Test output buffer full byte by byte grow ...
- * - Test no call info flag
- */
-
 Ensure(test_mbuf_nocallinfo)
 {
     UBFH *p_ub = NULL;
@@ -286,8 +281,133 @@ Ensure(test_mbuf_nocallinfo)
     
 }
 
+/**
+ * Test that output buffer is filled gradually
+ */
 Ensure(test_mbuf_buf_full)
 {
+    int ret=EXSUCCEED;
+    UBFH *p_ub = NULL;
+    UBFH *p_ub2 = NULL;
+    char buf[4096];
+    char blob[5000];
+    long buf_len;
+    int i;
+    int fail1, fail2;
+    
+    for (i=0; i<10000; i++)
+    {
+        p_ub = (UBFH *)tpalloc("UBF", NULL, 10000);
+        
+        if (NULL==p_ub)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to alloc: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        p_ub2 = (UBFH *)tpalloc("UBF", NULL, 10000);
+        
+        if (NULL==p_ub2)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to alloc 2: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=Bchg(p_ub, T_CARRAY_2_FLD, 0, blob, i+1))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to add blob: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        if (EXSUCCEED!=Bchg(p_ub2, T_CARRAY_2_FLD, 0, blob, i+1))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to add blob: %s", Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        /* set buffer 1 ptr */
+        if (EXSUCCEED!=Bchg(p_ub, T_PTR_FLD, 0, (char *)&p_ub2, 0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to add blob PTR: %s", 
+                    Bstrerror(Berror));
+            EXFAIL_OUT(ret);
+        }
+        
+        fail1=EXFALSE;
+        
+        /* convert out... 2x fails first ... */
+        buf_len=sizeof(buf);
+        ret=ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, buf, &buf_len, 0, 0);
+        
+        if (EXFAIL==ret)
+        {
+            /* had some OK loops */
+            if (tperrno==TPEINVAL && i> 1000)
+            {
+                ret=EXSUCCEED;
+                fail1=EXTRUE;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to prep outgoing loop %d: %s",
+                        i, tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        /* check 2nd buffer, shall not fail if first fails (as 2x less usage) */
+        fail2=EXFALSE;
+        buf_len=sizeof(buf);
+        ret=ndrx_mbuf_prepare_outgoing ((char *)p_ub2, 0, buf, &buf_len, 0, 0);
+        
+        if (EXFAIL==ret)
+        {
+            /* had some OK loops */
+            if (tperrno==TPEINVAL && i> 1000)
+            {
+                ret=EXSUCCEED;
+                fail2=EXTRUE;
+            }
+            else
+            {
+                NDRX_LOG(log_error, "Failed to prep outgoing loop %d: %s",
+                        i, tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+        }
+        
+        if (!fail1 && fail2)
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected fail1 && !fail2");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (fail1 && fail2)
+        {
+            break;
+        }
+    
+        tpfree((char *)p_ub);
+        tpfree((char *)p_ub2);
+        p_ub = NULL;
+        p_ub2 = NULL;
+    }
+    
+out:
+    
+    if (NULL!=p_ub)
+    {
+        tpfree((char *)p_ub);
+    }
+
+    if (NULL!=p_ub2)
+    {
+        tpfree((char *)p_ub2);
+    }
+
+    assert_equal(ret, EXSUCCEED);
+    assert_equal(fail1, EXTRUE);
+    assert_equal(fail2, EXTRUE);
     
 }
 
@@ -340,6 +460,7 @@ TestSuite *atmiunit0_mbuf(void)
     add_test(suite, test_mbuf);
     add_test(suite, test_mbuf_reuse);
     add_test(suite, test_mbuf_nocallinfo);
+    add_test(suite, test_mbuf_buf_full);
     
     return suite;
 }
