@@ -21,8 +21,8 @@ Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthrea
 DESCRIPTION
 -----------
 Advertise service is done by function 'tpadvertise_full'. 'svcnm' is service name, 
-services cannot start with reserved symbol '@', which are intended for 
-Enduro/X system use. Service name cannot conntain symbols ',' and '/'. 
+services cannot contain reserved symbol '@' and cannot start with '.', which are intended for 
+Enduro/X system use. Service name cannot contain symbols ',' and '/'. 
 Max service name length is defined by *MAXTIDENT* constant. If length is 
 longer, it will be truncated. 'func' is a pointer to service function. 
 'funcname' is name of the function that will be shown in *xadmin psc* listings. 
@@ -71,6 +71,9 @@ ERRORS
 ------
 Note that *tpstrerror()* for returns generic error message plus custom message 
 with debug info from last call.
+
+*TPEINVAL* '_SVCNM' is empty or NULL. Service length is longer than *MAXTIDENT*.
+'_FNADDR' is NULL.
 
 *TPELIMIT* Service count limit reached. This can be *48* services per server binary
 which is implied limit by Enduro/X.

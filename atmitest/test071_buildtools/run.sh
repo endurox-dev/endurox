@@ -199,7 +199,7 @@ echo "************************************************************************"
 
 buildserver -o atmi.sv71 -rTestSw -a atmisv71_1.c -l atmisv71_2.c -v -f "$ADDFLAGS" \
     -s A,B,C:TESTSV -sECHOSV -s:TESTSV -sZ:ECHOSV -f atmisv71_3.c -l atmisv71_4.c \
-    -s @advertise_file.txt
+    -s @advertise_file.txt -s:DUMFUNC
 
 RET=$?
 
