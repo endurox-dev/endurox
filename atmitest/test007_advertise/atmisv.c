@@ -128,14 +128,108 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     if (EXSUCCEED!=tpadvertise("DOADV", DOADV))
     {
         NDRX_LOG(log_error, "Failed to initialize DOADV!");
-        ret=EXFAIL;
-    }
-    else if (EXSUCCEED!=tpadvertise("UNADV", UNADV))
-    {
-        NDRX_LOG(log_error, "Failed to initialize UNADV (first)!");
-        ret=EXFAIL;
+        EXFAIL_OUT(ret);
     }
     
+    /* OK continue as normal */
+    
+    if (EXSUCCEED!=tpadvertise("UNADV", UNADV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize UNADV (first)!");
+        EXFAIL_OUT(ret);
+    }
+    
+    NDRX_LOG(log_debug, "Checking advertise exceptions:");
+    
+    
+        /* Do it twice..., same func all OK */
+    if (EXSUCCEED!=tpadvertise("DOADV", DOADV))
+    {
+        NDRX_LOG(log_error, "Failed to initialize DOADV!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Do it twice..., ptrs different -> match error */
+    if (EXSUCCEED==tpadvertise("DOADV", UNADV))
+    {
+        NDRX_LOG(log_error, "TESTERROR: re-advertise different func must fail!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEMATCH!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected %d (TPEMATCH) but got %d err!",
+                TPEMATCH, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* try empty */
+    if (EXSUCCEED==tpadvertise("", UNADV))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Empty advertise not allowed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEINVAL!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected %d (TPEINVAL) but got %d err!",
+                TPEINVAL, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* try NULL */
+    if (EXSUCCEED==tpadvertise(NULL, UNADV))
+    {
+        NDRX_LOG(log_error, "TESTERROR: NULL advertise not allowed");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEINVAL!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected %d (TPEINVAL) but got %d err!",
+                TPEINVAL, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    /* try too long name  */
+    if (EXSUCCEED==tpadvertise("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB", UNADV))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Must fail with too long svcnm");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEINVAL!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected %d (TPEINVAL) but got %d err!",
+                TPEINVAL, tperrno);
+        EXFAIL_OUT(ret);
+    }
+    
+    
+    /* try long name */
+    if (EXSUCCEED!=tpadvertise("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", UNADV))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Long name (30 symb) shall be OK!");
+        EXFAIL_OUT(ret);
+    }
+
+    /* try NULL func  */
+    if (EXSUCCEED==tpadvertise("AAAAAAAAAA", NULL))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Null func adv shall fail");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (TPEINVAL!=tperrno)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected %d (TPEINVAL) but got %d err!",
+                TPEINVAL, tperrno);
+        EXFAIL_OUT(ret);
+    }
+
+    
+    
+out:
     return ret;
 }
 

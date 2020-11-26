@@ -525,16 +525,46 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
 {
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
+    int len;
     
     ndrx_TPunset_error();
     ndrx_sv_advertise_lock();
+
+    /* Check arguments Bug #610 */
+    if (NULL==svc_nm || EXEOS ==svc_nm[0])
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "svc_nm is NULL or empty string");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==fn_nm || EXEOS ==fn_nm[0])
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "fn_nm is NULL or empty string");
+        EXFAIL_OUT(ret);
+    }
+    
+    len=strlen(svc_nm);
+    if (MAXTIDENT < len)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "svc_nm len is %d but max is %d (MAXTIDENT)",
+                len, MAXTIDENT);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==p_func)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "Service function is NULL (p_func)");
+        EXFAIL_OUT(ret);
+    }
+    
+
     /* allocate memory for entry */
     if ( (entry = (svc_entry_fn_t*)NDRX_CALLOC(1, sizeof(svc_entry_fn_t))) == NULL)
     {
-            ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
-                                sizeof(svc_entry_fn_t));
-            ret=EXFAIL;
-            goto out;
+        ndrx_TPset_error_fmt(TPEOS, "Failed to allocate %d bytes while parsing -s",
+                            sizeof(svc_entry_fn_t));
+        ret=EXFAIL;
+        goto out;
     }
     else
     {
