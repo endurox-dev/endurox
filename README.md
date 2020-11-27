@@ -510,6 +510,10 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.5.8 released on 26/11/2020 (stable) Bug #610
 
+- Version 7.0.44 released on 27/11/2020 (stable) Feature #606
+
+- Version 7.5.10 released on 27/11/2020 (stable) Feature #606
+
 # Build configurations
 
 ## Configure make with: 
