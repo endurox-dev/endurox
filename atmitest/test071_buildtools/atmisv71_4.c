@@ -110,5 +110,14 @@ void SERV (TPSVCINFO *p_svc)
     ECHOSV(p_svc);
 }
 
+/**
+ * Dummy / no service
+ */
+void DUMFUNC (TPSVCINFO *p_svc)
+{
+    ECHOSV(p_svc);
+}
+
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
