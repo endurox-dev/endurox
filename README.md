@@ -487,6 +487,8 @@ Bug #523, Bug #521, Bug #515, Support #512, Bug #507, Support #503
 
 - Version 7.0.42 released on 13/08/2020 (stable) Bug #572, Bug #578, Feature #581
 
+- Version 7.0.44 released on 27/11/2020 (stable) Feature #606
+
 # Build configurations
 
 ## Configure make with: 
