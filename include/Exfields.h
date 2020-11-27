@@ -108,6 +108,7 @@
 #define	EX_TPERRNO	((BFLDID32)33554882)	/* number: 450	 type: long */
 #define	EX_TPURCODE	((BFLDID32)33554883)	/* number: 451	 type: long */
 #define	EX_TPSTRERROR	((BFLDID32)167772612)	/* number: 452	 type: string */
+#define	EX_TPERRSRC	((BFLDID32)67109317)	/* number: 453	 type: char */
 #define	EX_CC_CMD	((BFLDID32)67109364)	/* number: 500	 type: char */
 #define	EX_CC_RESOURCE	((BFLDID32)167772661)	/* number: 501	 type: string */
 #define	EX_CC_LOOKUPSECTION	((BFLDID32)167772662)	/* number: 502	 type: string */
@@ -143,6 +144,13 @@
 #define	EX_IF_REQDATA	((BFLDID32)201327223)	/* number: 631	 type: carray */
 #define	EX_IF_RSPDATA	((BFLDID32)201327224)	/* number: 632	 type: carray */
 #define	EX_IF_METHOD	((BFLDID32)167772800)	/* number: 640	 type: string */
+#define	EX_IF_REQFILEDISK	((BFLDID32)167772801)	/* number: 641	 type: string */
+#define	EX_IF_REQFILENAME	((BFLDID32)167772802)	/* number: 642	 type: string */
+#define	EX_IF_REQFILEMIME	((BFLDID32)167772803)	/* number: 643	 type: string */
+#define	EX_IF_REQFILEFORM	((BFLDID32)167772804)	/* number: 644	 type: string */
+#define	EX_IF_RSPFILEACTION	((BFLDID32)167772805)	/* number: 645	 type: string */
+#define	EX_IF_TPURCODE	((BFLDID32)33555078)	/* number: 646	 type: long */
+#define	EX_IF_ERRSRC	((BFLDID32)67109511)	/* number: 647	 type: char */
 #define	EX_NETDATA	((BFLDID32)201327242)	/* number: 650	 type: carray */
 #define	EX_NETGATEWAY	((BFLDID32)167772811)	/* number: 651	 type: string */
 #define	EX_NETCONNID	((BFLDID32)33555084)	/* number: 652	 type: long */
