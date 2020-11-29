@@ -284,7 +284,7 @@ Ensure(test_mbuf_nocallinfo)
 /**
  * Test that output buffer is filled gradually
  */
-Ensure(test_mbuf_buf_full)
+Ensure(test_mbuf_buf_full_ubf)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -411,6 +411,113 @@ out:
     
 }
 
+
+/**
+ * Test that output buffer is filled gradually
+ */
+Ensure(test_mbuf_buf_full_any)
+{
+    int ret=EXSUCCEED;
+    char buf[4096];
+    long buf_len;
+    int j, i, k;
+    char *p_buf=NULL;
+    char *btypes[] = {"STRING", "CARRAY", "JSON"};
+    int btypes_ok[3];
+    
+    memset(btypes_ok, 0, sizeof(btypes_ok));
+    
+    for (i=0; i<N_DIM(btypes); i++)
+    {
+        for (j=0; j<10000; j++)
+        {
+            p_buf = tpalloc(btypes[i], NULL, 10000);
+
+            if (NULL==p_buf)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Failed to alloc %s: %s", 
+                        btypes[i], tpstrerror(tperrno));
+                EXFAIL_OUT(ret);
+            }
+            
+            memset(p_buf, 0, sizeof(j));
+            
+            for (k=0; k<j; k++)
+            {
+                p_buf[k]=' '; /* fill space, OK for all buffers we test */
+            }
+
+            buf_len=sizeof(buf);
+            ret=ndrx_mbuf_prepare_outgoing (p_buf, j, buf, &buf_len, 0, 0);
+
+            if (EXFAIL==ret)
+            {
+                /* had some OK loops */
+                if (tperrno==TPEINVAL)
+                {
+                    ret=EXSUCCEED;
+                    btypes_ok[i]=EXTRUE;
+                }
+                else
+                {
+                    NDRX_LOG(log_error, "Failed to prep outgoing loop %d: %s",
+                            j, tpstrerror(tperrno));
+                    EXFAIL_OUT(ret);
+                }
+            }
+            
+            tpfree(p_buf);
+            p_buf=NULL;
+
+        }
+    }
+    
+out:
+    
+    if (NULL!=p_buf)
+    {
+        tpfree(p_buf);
+    }
+    assert_equal(ret, EXSUCCEED);
+    assert_equal(btypes_ok[0], EXTRUE);
+    assert_equal(btypes_ok[1], EXTRUE);
+    assert_equal(btypes_ok[2], EXTRUE);
+    
+}
+
+/**
+ * Check that we use ilen for primary buffers
+ */
+Ensure(test_mbuf_buf_carray_ilen)
+{
+    int ret=EXSUCCEED;
+    char buf[4096];
+    long buf_len;
+    char *p_buf=NULL;
+    
+    p_buf = tpalloc("CARRAY", NULL, 50000);
+    
+    if (NULL==p_buf)
+    {
+        NDRX_LOG(log_error, "TESTERROR: Failed to alloc CARRAY: %s", tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    buf_len=sizeof(buf);
+    ret=ndrx_mbuf_prepare_outgoing (p_buf, 1000, buf, &buf_len, 0, 0);
+    
+    assert_equal(ret, EXSUCCEED);
+    /* with TLV header we shall be there */
+    assert_equal(!! (buf_len < 1100), EXTRUE);
+    
+out:
+
+    if (NULL!=p_buf)
+    {
+        tpfree(p_buf);
+    }
+}
+
 /**
  * Check the ptr re-use works
  * i.e. same pointer is not serialize twice
@@ -460,7 +567,9 @@ TestSuite *atmiunit0_mbuf(void)
     add_test(suite, test_mbuf);
     add_test(suite, test_mbuf_reuse);
     add_test(suite, test_mbuf_nocallinfo);
-    add_test(suite, test_mbuf_buf_full);
+    add_test(suite, test_mbuf_buf_full_ubf);
+    add_test(suite, test_mbuf_buf_full_any);
+    add_test(suite, test_mbuf_buf_carray_ilen);
     
     return suite;
 }

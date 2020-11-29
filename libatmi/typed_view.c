@@ -224,7 +224,7 @@ expublic int VIEW_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, lo
     
     ilen = v->ssize + sizeof(ndrx_view_header);
     
-    if (NULL!=olen && 0!=*olen && *olen < ilen)
+    if (NULL!=olen && *olen < ilen)
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Internal buffer space: %d, "
                 "but requested: %d", *olen, ilen);

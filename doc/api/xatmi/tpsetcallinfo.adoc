@@ -1,0 +1,79 @@
+TPSETCALLINFO(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+tpsetcallinfo - Set call headers for the primary data buffer
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsetcallinfo(const char *'msg', UBFH *'cibuf', long flags)
+
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used to associate UBF format based meta data storage buffer in present
+in variable 'cibuf' to the main XATMI buffer given in 'msg' field. 'msg' buffer
+must be allocated with *tpalloc(3)*.
+
+When using the 'msg' buffer for calling services, the associated call info buffer
+will be transported to other processes too. Deallocation of associated meta
+data is performed in the same time when 'msg' buffer is freed.
+
+'cibuf' may be used for purposes like storing header data (like headers for HTTP
+protocol) or other call relevant data, which shall travel with original call
+through the system (i.e. *tpcall(3)*, *tpacall(3)*, *tpconnect(3)*, *tpforward(3)*, 
+*tpnotify(3)*, *tpbroadcast(3)*, *tpsent(3)*, *tprecv(3)*, *tpenqueue(3)*, *tpdequeue(3)*,
+*tpgetrply(3)*).
+
+'flags' parameter is reserved for future use and shall be set to *0*.
+
+For *NULL* buffers ('msg' is *NULL*), call info cannot be set.
+
+When receiving data which has the call infos over the XATMI buffer for which 
+also have the call info associated (for example *tpgetrply(3)* call), the existing
+call info are replaced with received call info. If receiving data has not call
+info, the existing association continues to exist.
+
+When  using smart cache, the call info data not cached.
+
+RETURN VALUE
+------------
+On success, *tpsetcallinfo()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* 'cibuf' is not UBF format. Flags is not *0*. 'msg' is NULL. 'msg'
+does not point to XATMI allocated buffer.
+
+*TPEOS* Failed to malloc or System failure occurred during serving. 
+See logs i.e. user log, or debugs for more info.
+
+EXAMPLE
+-------
+See *atmitest/test017_srvthread/atmisv17.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpgetcallinfo(3)* tpcall(3)* *tpacall(3)* *tpgetrply(3)* *tpforward(3)* 
+*tpnotify(3)* *tpbroadcast(3)* *tpenqueue(3)* *tpdequeue(3)* *tpconnect(3)* 
+*tpsent(3)* *tprecv(3)* 
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
