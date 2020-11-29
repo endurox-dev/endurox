@@ -70,8 +70,8 @@ expublic int STRING_prepare_outgoing (typed_buffer_descr_t *descr, char *idata, 
     
     str_used = strlen(idata)+1; /* include EOS */
     
-    /* Check that we have space enought to prepare for send */
-    if (NULL!=olen && 0!=*olen && *olen < str_used)
+    /* Check that we have space enough to prepare for send */
+    if (NULL!=olen && *olen < str_used)
     {
         ndrx_TPset_error_fmt(TPEINVAL, "%s: Internal buffer space: %d, "
                 "but requested: %d", fn, *olen, str_used);

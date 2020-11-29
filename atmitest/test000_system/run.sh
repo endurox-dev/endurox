@@ -64,7 +64,7 @@ xadmin killall atmiclt0_ 2>/dev/null
 RET=0
 
 # ATMI unit
-./atmiunit0 test_mbuf_buf_full
+./atmiunit0
 TMP=$?
 if [ $TMP != 0 ]; then
     echo "Failed to start ./atmiunit0"

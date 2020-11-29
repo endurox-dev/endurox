@@ -1357,7 +1357,9 @@ expublic int tpsetcallinfo(const char *msg, UBFH *cibuf, long flags)
 {
     long ret=EXSUCCEED;
     int entry_status=EXSUCCEED;
-    API_ENTRY;
+    
+    /* reset the error & allocate TLS if needed */
+    ndrx_TPunset_error();
 
     if (EXSUCCEED!=entry_status)
     {

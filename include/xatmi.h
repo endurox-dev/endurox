@@ -699,8 +699,8 @@ extern NDRX_API int tpimport(char *istr, long ilen, char **obuf, long *olen, lon
 extern NDRX_API int tpexport(char *ibuf, long ilen, char *ostr, long *olen, long flags);
 extern NDRX_API void* tpgetconn(void);
 extern NDRX_API char *tuxgetenv(char *envname);
-extern NDRX_API int tpgetcallinfo(const char *msg, UBFH **obuf, long flags);
-extern NDRX_API int tpsetcallinfo(const char *msg, UBFH *obuf, long flags);
+extern NDRX_API int tpgetcallinfo(const char *msg, UBFH **cibuf, long flags);
+extern NDRX_API int tpsetcallinfo(const char *msg, UBFH *cibuf, long flags);
 
 /* in external application: */
 extern NDRX_API void tpsvrdone(void);

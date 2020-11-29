@@ -530,7 +530,6 @@ expublic int ndrx_tpsetcallinfo(const char *msg, UBFH *cibuf, long flags)
     }
 
     /* now try to receive -> setup data from incoming UBF... */
-    NDRX_LOG(log_error, "YOPT callinfobuf: %p", node_msg->callinfobuf);
     if (EXSUCCEED!=descr->pf_prepare_incoming(descr, (char *)cibuf, Bused(cibuf), 
             &(node_msg->callinfobuf), &node_msg->callinfobuf_len, 0))
     {
