@@ -1,7 +1,7 @@
 /**
- * @brief tpimport()/tpexport() function tests - client
+ * @brief Shared test functions
  *
- * @file atmiclt56.c
+ * @file extest.h
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -31,23 +31,16 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <math.h>
 
-#include <atmi.h>
-#include <ubf.h>
-#include <ndebug.h>
-#include <test.fd.h>
-#include <ndrstandard.h>
-#include <nstopwatch.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <nstdutil.h>
-#include <ubfutil.h>
-#include "test56.h"
+#ifndef EXTEST_H
+#define	EXTEST_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*---------------------------Includes-----------------------------------*/
+#include "test_view.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -56,57 +49,12 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
-/**
- * Do the test call to the server
- */
-int main(int argc, char** argv)
-{
+extern void extest_init_UBTESTVIEW1(struct UBTESTVIEW1 *v);
 
-    int ret = EXSUCCEED;
-    
-    if (EXSUCCEED!=test_impexp_testemb_syntax())
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to test embedded buffers syntax!!!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=test_impexp_testemb())
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to test embedded buffers!!!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if ( EXSUCCEED!=test_impexp_string() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export STRING!!!!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if ( EXSUCCEED!=test_impexp_ubf() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export UBF!!!!");
-        EXFAIL_OUT(ret);
-    }
-
-    if ( EXSUCCEED!=test_impexp_view() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export VIEW!!!!");
-        EXFAIL_OUT(ret);
-    }
-
-    if ( EXSUCCEED!=test_impexp_carray() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export CARRAY!!!!");
-        EXFAIL_OUT(ret);
-    }
-    if ( EXSUCCEED!=test_impexp_json() )
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to import/export JSON !!!!");
-        EXFAIL_OUT(ret);
-    }
-
-out:
-
-    return ret;
+#ifdef	__cplusplus
 }
+#endif
+
+#endif	/* EXTEST_H */
+
 /* vim: set ts=4 sw=4 et smartindent: */

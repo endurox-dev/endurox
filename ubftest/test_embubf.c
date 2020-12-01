@@ -79,7 +79,7 @@ expublic void load_recursive_data(UBFH *p_ub)
     assert_equal(Badd(p_ub1, T_STRING_4_FLD, "HELLO_PARENT 2", 0), EXSUCCEED);
 
     /* Load view data: */    
-    init_UBTESTVIEW1(&v);
+    extest_init_UBTESTVIEW1(&v);
     vf.data=(char *)&v;
     vf.vflags=0;
     NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW1");

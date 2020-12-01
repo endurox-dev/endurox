@@ -1249,10 +1249,10 @@ expublic int ndrx_view_load_directory(char *dir)
     if (n < 0)
     {
         int err = errno;
-        UBF_LOG(log_error, "Failed to scan q directory [%s]: %s", 
+        UBF_LOG(log_error, "Failed to scan view directory [%s]: %s", 
                dir, strerror(err));
        
-        ndrx_Bset_error_fmt(BEUNIX, "Failed to scan q directory [%s]: %s", 
+        ndrx_Bset_error_fmt(BEUNIX, "Failed to scan view directory [%s]: %s", 
                dir, strerror(err));
        
         EXFAIL_OUT(ret);

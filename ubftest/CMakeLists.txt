@@ -37,7 +37,8 @@
 # Make sure the compiler can find include files from UBF library
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
-					 ${ENDUROX_SOURCE_DIR}/libnstd)
+					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/libextest)
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
@@ -49,18 +50,6 @@ IF ($ENV{RELEASE_BUILD})
 ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D UBF_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
-
-
-add_custom_command(
-  DEPENDS ../viewc/viewc
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  OUTPUT test_view.h test_view.V
-  COMMAND ../viewc/viewc -n -L "../libatmi:../libatmiclt:../libnstd:../libubf" 
-        -b "../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../include -L../libatmi -L../libatmiclt -L../libnstd -L../libubf'" 
-        test_view.v_in
-  DEPENDS test_view.v_in)
-
-add_custom_target(ubftestvhdrs DEPENDS test_view.h test_view.V)
 
 # Executables
 add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c 
@@ -76,11 +65,10 @@ add_executable (ubfunit1 ubfunit1.c test_badd.c test_genbuf.c test_cbchg.c
                 test_printv.c)
 
 add_executable (testedbsync test_nstd_msync.c)
-add_dependencies (ubfunit1 ubftestvhdrs)
 
 # Link the executable to the UBF library & others...
 
-target_link_libraries (ubfunit1 ubf cgreen m nstd ${RT_LIB} pthread)
+target_link_libraries (ubfunit1 extest ubf cgreen m nstd ${RT_LIB} pthread)
 target_link_libraries (testedbsync ubf cgreen m nstd ${RT_LIB} pthread)
 
 set_target_properties(ubfunit1 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

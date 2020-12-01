@@ -105,8 +105,8 @@ rm *dom*.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
 
-export VIEWDIR=.
-export VIEWFILES=t64.V
+export VIEWDIR=../../libextest
+export VIEWFILES=test_view.V
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1

@@ -170,7 +170,7 @@ Ensure(test_bvfprint)
     memset(&v1, 0, sizeof(v1));
     memset(&v2, 0, sizeof(v2));
     
-    init_UBTESTVIEW1(&v1);
+    extest_init_UBTESTVIEW1(&v1);
     /*
     Bvprint((char *)&v1, "UBTESTVIEW1");
     
@@ -216,7 +216,7 @@ Ensure(test_bvprint)
     
     memset(&v1, 0, sizeof(v1));
     memset(&v2, 0, sizeof(v2));
-    init_UBTESTVIEW1(&v1);
+    extest_init_UBTESTVIEW1(&v1);
     
     assert_not_equal(mkstemp(filename), EXFAIL);
     
@@ -311,7 +311,7 @@ Ensure(test_bvfprintcb)
     
     memset(&v1, 0, sizeof(v1));
     memset(&v2, 0, sizeof(v2));
-    init_UBTESTVIEW1(&v1);
+    extest_init_UBTESTVIEW1(&v1);
     
     memset(&data, 0, sizeof(data));
     

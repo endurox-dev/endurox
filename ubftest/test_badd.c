@@ -74,12 +74,8 @@ Ensure(basic_setup1)
         fprintf(stderr, "Binit failed 3!\n");
     }
 
-    setenv("FLDTBLDIR", "./ubftab", 1);
-    setenv("FIELDTBLS", "Exfields,test.fd", 1);
-    
-    /* set view env... */
-    setenv("VIEWDIR", "./", 1);
-    setenv("VIEWFILES", "test_view.V", 1);
+    /* shared load */
+    load_field_table();
 }
 
 void basic_teardown1(void)

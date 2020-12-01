@@ -49,7 +49,7 @@
 #include <nstdutil.h>
 #include <ubfutil.h>
 #include "test56.h"
-#include "t56.h"
+#include <extest.h>
 #include <exbase64.h>
 #include <exassert.h>
 /*---------------------------Externs------------------------------------*/
@@ -71,9 +71,9 @@ exprivate int test_impexp_testemb_int(void)
     UBFH *p_ub1=NULL;
     UBFH *p_ub2=NULL;
     UBFH *p_ub3=NULL;
-    struct MYVIEW56 *v=NULL;
-    struct MYVIEW56 *v2=NULL;
-    struct MYVIEW56 *v3=NULL;
+    struct UBTESTVIEW2 *v=NULL;
+    struct UBTESTVIEW2 *v2=NULL;
+    struct UBTESTVIEW2 *v3=NULL;
     
     UBFH *p_ub4=NULL;
     UBFH *p_ub5=NULL;
@@ -95,7 +95,7 @@ exprivate int test_impexp_testemb_int(void)
     NDRX_ASSERT_TP_OUT((NULL!=p_ub3), "Failed to alloc p_ub3");
     
     
-    v = (struct MYVIEW56 *)tpalloc("VIEW", "MYVIEW56", sizeof(struct MYVIEW56));
+    v = (struct UBTESTVIEW2 *)tpalloc("VIEW", "UBTESTVIEW2", sizeof(struct UBTESTVIEW2));
     
     
     memset(v, 0, sizeof(*v));
@@ -111,7 +111,7 @@ exprivate int test_impexp_testemb_int(void)
     v->tcarray1[1]=1;
     v->tcarray1[2]=2;
     
-    NDRX_ASSERT_TP_OUT((NULL!=p_ub2), "Failed to alloc MYVIEW56");
+    NDRX_ASSERT_TP_OUT((NULL!=p_ub2), "Failed to alloc UBTESTVIEW2");
     
     /* Load some fields in sub-buffer  */
     NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bchg(p_ub2, T_STRING_FLD, 3, "HELLO STRING", 0)), 
@@ -122,7 +122,7 @@ exprivate int test_impexp_testemb_int(void)
     
     vf.data = (char *)v;
     vf.vflags=0;
-    NDRX_STRCPY_SAFE(vf.vname, "MYVIEW56");
+    NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW2");
     NDRX_ASSERT_UBF_OUT((EXSUCCEED==Bchg(p_ub2, T_VIEW_FLD, 5, (char *)&vf, 0)), 
             "Failed to set T_VIEW_FLD[5]");
     
@@ -223,7 +223,7 @@ exprivate int test_impexp_testemb_int(void)
     }
     
     NDRX_ASSERT_VAL_OUT(0==strcmp(vtyp, "VIEW"), "Expected VIEW");
-    NDRX_ASSERT_VAL_OUT(0==strcmp(vsubtyp, "MYVIEW56"), "Expected MYVIEW56");
+    NDRX_ASSERT_VAL_OUT(0==strcmp(vsubtyp, "UBTESTVIEW2"), "Expected UBTESTVIEW2");
     
     
     /* check that that v3 has view type */
@@ -235,11 +235,11 @@ exprivate int test_impexp_testemb_int(void)
     }
     
     NDRX_ASSERT_VAL_OUT(0==strcmp(vtyp, "VIEW"), "Expected VIEW");
-    NDRX_ASSERT_VAL_OUT(0==strcmp(vsubtyp, "MYVIEW56"), "Expected MYVIEW56");
+    NDRX_ASSERT_VAL_OUT(0==strcmp(vsubtyp, "UBTESTVIEW2"), "Expected UBTESTVIEW2");
     
-    NDRX_ASSERT_UBF_OUT(Bvcmp((char *)v, "MYVIEW56", (char *)v2, "MYVIEW56")==0, 
+    NDRX_ASSERT_UBF_OUT(Bvcmp((char *)v, "UBTESTVIEW2", (char *)v2, "UBTESTVIEW2")==0, 
             "Failed to compare v vs v2");
-    NDRX_ASSERT_UBF_OUT(Bvcmp((char *)v, "MYVIEW56", (char *)v3, "MYVIEW56")==0, 
+    NDRX_ASSERT_UBF_OUT(Bvcmp((char *)v, "UBTESTVIEW2", (char *)v3, "UBTESTVIEW2")==0, 
             "Failed to compare v vs v3");
     
 out:

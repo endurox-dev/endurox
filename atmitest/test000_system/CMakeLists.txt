@@ -37,7 +37,8 @@ cmake_minimum_required(VERSION 2.8)
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
-					 ${ENDUROX_SOURCE_DIR}/ubftest)
+					 ${ENDUROX_SOURCE_DIR}/ubftest
+                                         ${ENDUROX_SOURCE_DIR}/libextest)
 # Add debug options
 # By default if RELEASE_BUILD is not defined, then we run in debug!
 IF ($ENV{RELEASE_BUILD})
@@ -63,7 +64,7 @@ target_link_libraries (atmiclt0  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt0_locks  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt0_mqsv  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt0_mqcl  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
-target_link_libraries (atmiunit0 atmiclt atmi ubf cgreen m nstd ${RT_LIB} pthread)
+target_link_libraries (atmiunit0 atmiclt atmi extest ubf cgreen m nstd ${RT_LIB} pthread)
 
 set_target_properties(atmiclt0 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt0_locks PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

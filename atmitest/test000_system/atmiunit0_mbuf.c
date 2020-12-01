@@ -40,13 +40,13 @@
 #include <ndrstandard.h>
 #include <string.h>
 #include "test.fd.h"
-/*#include "ubfunit1.h"*/
 #include "ndebug.h"
 #include "xatmi.h"
 #include "atmi_int.h"
 #include <fdatatype.h>
 #include <nstdutil.h>
 #include <typed_buf.h>
+#include <extest.h>
 
 /**
  * Basic preparation before the test
@@ -72,7 +72,7 @@ Ensure(test_mbuf)
     for (i=0; i<40; i++)
     {
         ndrx_growlist_t list;
-        UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 1024);
+        UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 2048);
         UBFH *p_ub2 = (UBFH *)tpalloc("UBF", NULL, 1024);
         UBFH *p_ub3 = (UBFH *)tpalloc("UBF", NULL, 1024);
         UBFH *p_ub4 = (UBFH *)tpalloc("UBF", NULL, 1024);
@@ -90,11 +90,31 @@ Ensure(test_mbuf)
         char buf[8096];
         long buf_len;
         long olen;
+        struct UBTESTVIEW1 vdata;
+        struct UBTESTVIEW1 *vdata2 = (struct UBTESTVIEW1 *)tpalloc("VIEW", 
+                "UBTESTVIEW1", sizeof(struct UBTESTVIEW1));
+        
+        struct UBTESTVIEW1 *vdata21 = (struct UBTESTVIEW1 *)tpalloc("VIEW", 
+                "UBTESTVIEW1", sizeof(struct UBTESTVIEW1));
+        
+        struct UBTESTVIEW1 *vdata5_2 = NULL;
+        struct UBTESTVIEW1 *vdata5_21 = NULL;
+        
+        extest_init_UBTESTVIEW1(&vdata);
+        extest_init_UBTESTVIEW1(vdata2);
+        extest_init_UBTESTVIEW1(vdata21);
+        
+        /* change some values */
+        vdata2->tchar1='Z';
+        vdata21->tchar1='Y';
+        
         assert_not_equal(p_ub, NULL);
         assert_not_equal(p_ub2, NULL);
         assert_not_equal(p_ub3, NULL);
         assert_not_equal(p_ub4, NULL);
         assert_not_equal(p_callinfo, NULL);
+        assert_not_equal(vdata2, NULL);
+        
 
 
         /* load CI fields */
@@ -128,7 +148,22 @@ Ensure(test_mbuf)
         /* have some view as terminator */
         memset(&vf, 0, sizeof(vf));
         assert_equal(Bchg(p_ub, T_VIEW_FLD, 3, (char *)&vf, 0L), EXSUCCEED);
+        
+        /* Load another normal view */
+        
+        memset(&vf, 0, sizeof(vf));
+        
+        vf.data=(char *)&vdata;
+        vf.vflags=0;
+        NDRX_STRCPY_SAFE(vf.vname, "UBTESTVIEW1");
+        
+        /* Load the view... there */
+        assert_equal(Bchg(p_ub, T_VIEW_3_FLD, 3, (char *)&vf, 0L), EXSUCCEED);
 
+        /* have some real  view for compare */
+        assert_equal(Bchg(p_ub, T_PTR_3_FLD, 0, (char *)&vdata2, 0L), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_PTR_3_FLD, 1, (char *)&vdata21, 0L), EXSUCCEED);
+        
         /* OK drive out */
         buf_len=sizeof(buf);
 
@@ -161,8 +196,13 @@ Ensure(test_mbuf)
 
         assert_equal(Bget(p_ub5, T_PTR_FLD, 3, (char *)&p_ub5_2, 0L), EXSUCCEED);
         assert_not_equal(p_ub5_2, NULL);
-
-
+        
+        assert_equal(Bget(p_ub5, T_PTR_3_FLD, 0, (char *)&vdata5_2, 0L), EXSUCCEED);
+        assert_not_equal(vdata5_2, NULL);
+        
+        assert_equal(Bget(p_ub5, T_PTR_3_FLD, 1, (char *)&vdata5_21, 0L), EXSUCCEED);
+        assert_not_equal(vdata5_21, NULL);
+        
         /* ptr T_PTR_FLD 3 pos again in buf 2 */
 
         assert_equal(Bget(p_ub5_2, T_PTR_FLD, 0, (char *)&p_ub5_3, 0L), EXSUCCEED);
@@ -211,7 +251,18 @@ Ensure(test_mbuf)
 
         assert_equal(Bdel(p_ub, T_PTR_FLD, 3), EXSUCCEED);
         assert_equal(Bdel(p_ub5, T_PTR_FLD, 3), EXSUCCEED);
+        
+        assert_equal(Bdel(p_ub, T_PTR_3_FLD, 1), EXSUCCEED);
+        assert_equal(Bdel(p_ub5, T_PTR_3_FLD, 1), EXSUCCEED);
+        
+        assert_equal(Bdel(p_ub, T_PTR_3_FLD, 0), EXSUCCEED);
+        assert_equal(Bdel(p_ub5, T_PTR_3_FLD, 0), EXSUCCEED);
+        
         assert_equal(Bcmp(p_ub5, p_ub), 0);
+        
+        /* match the views extracted ptr */
+        assert_equal(Bvcmp((char *)vdata2, "UBTESTVIEW1", (char *)vdata5_2, "UBTESTVIEW1"), 0);
+        assert_equal(Bvcmp((char *)vdata21, "UBTESTVIEW1", (char *)vdata5_21, "UBTESTVIEW1"), 0);
         
         /* Test call infos for buffer 1 */
         assert_equal(tpgetcallinfo((char *)p_ub5, (UBFH **)&p_callinfo5, 0), EXSUCCEED);
@@ -223,11 +274,16 @@ Ensure(test_mbuf)
         tpfree((char *)p_ub3);
         tpfree((char *)p_ub4);
         tpfree((char *)p_ub5);
+        tpfree((char *)vdata2);
+        tpfree((char *)vdata21);
+        
         tpfree((char *)p_ub5_2);
         tpfree((char *)p_ub5_3);
         tpfree((char *)p_ub5_4);
         tpfree((char *)p_callinfo);
         tpfree((char *)p_callinfo5);
+        tpfree((char *)vdata5_2);
+        tpfree((char *)vdata5_21);
         
         /* check that all buffers are free */
         assert_equal(ndrx_buffer_list(&list), EXSUCCEED);

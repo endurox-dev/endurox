@@ -49,7 +49,7 @@
 #include <ubfutil.h>
 #include <atmi_int.h>
 #include "test56.h"
-#include "t56.h"
+#include <extest.h>
 #include <exbase64.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -74,10 +74,10 @@ expublic int test_impexp_view(void)
         "{"
             "\"buftype\":\"VIEW\","
             "\"version\":1,"
-            "\"subtype\":\"MYVIEW56\","
+            "\"subtype\":\"UBTESTVIEW2\","
             "\"data\":"
             "{"
-                "\"MYVIEW56\":"
+                "\"UBTESTVIEW2\":"
                 "{"
                     "\"tshort1\":1,"
                     "\"tlong1\":2,"
@@ -90,12 +90,12 @@ expublic int test_impexp_view(void)
             "}"
         "}";
     char json_view_out[1024];
-    struct MYVIEW56 *v;
+    struct UBTESTVIEW2 *v;
     char *istrtemp=NULL;
     size_t bufsz = 0;
 
     NDRX_LOG(log_info, "JSON VIEW IN: [%s]", json_view_in);
-    v = (struct MYVIEW56 *)tpalloc("VIEW", "MYVIEW56", sizeof(struct MYVIEW56));
+    v = (struct UBTESTVIEW2 *)tpalloc("VIEW", "UBTESTVIEW2", sizeof(struct UBTESTVIEW2));
     if (NULL == v)
     {
         NDRX_LOG(log_error, "Failed to allocate VIEW %ld bytes: %s",

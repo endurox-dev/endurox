@@ -37,7 +37,8 @@ cmake_minimum_required(VERSION 2.8)
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
-					 ${ENDUROX_SOURCE_DIR}/ubftest)
+					 ${ENDUROX_SOURCE_DIR}/ubftest
+					 ${ENDUROX_SOURCE_DIR}/libextest)
 
 
 # Add debug options
@@ -47,15 +48,6 @@ IF ($ENV{RELEASE_BUILD})
 ELSE ($ENV{RELEASE_BUILD})
 	ADD_DEFINITIONS("-D NDRX_DEBUG")
 ENDIF ($ENV{RELEASE_BUILD})
-
-add_custom_command(
-  DEPENDS ../../viewc/viewc
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  OUTPUT t56.h t56.V
-  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" -b "../../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" t56.v_in 
-  DEPENDS t56.v_in)
-
-add_custom_target(t56vhdrs DEPENDS t56.h t56.V)
 
 # Make sure the linker can find the UBF library once it is built.
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
@@ -68,17 +60,13 @@ add_executable (atmiclt56
 		atmiclt56_view.c 
 		atmiclt56_json.c 
 		atmiclt56_carray.c 
-                atmiclt56_embbuf.c
-                atmiclt56_embbuf_syntax.c
-		t56.h 
-		t56.V)
-
-add_dependencies(atmiclt56 t56vhdrs)
+        atmiclt56_embbuf.c
+        atmiclt56_embbuf_syntax.c)
 
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmiclt56 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt56 atmiclt atmi extest ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmiclt56 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

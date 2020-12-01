@@ -47,7 +47,7 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test64.h"
-#include "t64.h"
+#include <extest.h>
 #include <tpadm.h>
 #include <typed_buf.h>
 /*---------------------------Externs------------------------------------*/
@@ -107,7 +107,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
     }
     else if (0==strcmp(input_type, "VIEW"))
     {
-        struct MYVIEW1 *vv = (struct MYVIEW1 *)data;
+        struct UBTESTVIEW1 *vv = (struct UBTESTVIEW1 *)data;
         strcpy(vv->tstring3[2], "HELLO VIEW");
     }
     else if (0==strcmp(input_type, "UBF"))
@@ -210,7 +210,7 @@ exprivate int tester(char *svc, char *input_type, char *input_sub,
     }
     else if (0==strcmp(output_type, "VIEW"))
     {
-        struct MYVIEW2 *v = (struct MYVIEW2 *)data;
+        struct UBTESTVIEW2 *v = (struct UBTESTVIEW2 *)data;
         
         if (0!=strcmp(v->tstring1, "TEST 55"))
         {
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
     
     if (0==strcmp(argv[1], "VIEW"))
     {
-        NDRX_STRCPY_SAFE(osubtyp, "MYVIEW2");
+        NDRX_STRCPY_SAFE(osubtyp, "UBTESTVIEW2");
     }
     else
     {
@@ -300,7 +300,7 @@ int main(int argc, char** argv)
             int ret_err = 0;
             if (0==strcmp(*p, "VIEW"))
             {
-                NDRX_STRCPY_SAFE(subtyp, "MYVIEW1");
+                NDRX_STRCPY_SAFE(subtyp, "UBTESTVIEW1");
             }
             else
             {
