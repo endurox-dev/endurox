@@ -114,6 +114,7 @@ set(MAN3_NAMES
         tpconvert
         tpurcode
         tptoutset
+        tptoutget
         tpimport
         tpexport
         ndrx_fork
