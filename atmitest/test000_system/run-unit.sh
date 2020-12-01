@@ -51,6 +51,9 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export NDRX_DEBUG_CONF=$TESTDIR/debug.conf
 export NDRX_ULOG=$TESTDIR
 export NDRX_SILENT=Y
+export VIEWDIR=../../libextest
+export VIEWFILES=test_view.V
+                
 
 # clean up the env for processing...
 xadmin down -y

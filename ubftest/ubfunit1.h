@@ -41,7 +41,7 @@ extern "C" {
 
 #include <cgreen/cgreen.h>
 #include <ubf.h>
-#include "test_view.h"
+#include <extest.h>
 
 
 #define BIG_TEST_STRING \
@@ -90,8 +90,6 @@ extern void gen_set_view_dbg(char *file, int line, BVIEWFLD *vf, int offset);
 #define gen_load_ubf(P_UB, OCC, OFFSET, FLDOFF) gen_load_ubf_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
 #define gen_load_view(P_UB, OCC, OFFSET, FLDOFF) gen_load_view_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
 #define gen_load_ptr(P_UB, OCC, OFFSET, FLDOFF) gen_load_ptr_dbg(__FILE__, __LINE__, P_UB, OCC, OFFSET, FLDOFF)
-
-extern void init_UBTESTVIEW1(struct UBTESTVIEW1 *v);
 
 extern void open_test_temp(char *mode);
 extern void open_test_temp_for_read(char *mode);

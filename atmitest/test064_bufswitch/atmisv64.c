@@ -42,7 +42,7 @@
 #include <unistd.h>
 #include "test64.h"
 #include <tpadm.h>
-#include "t64.h"
+#include <extest.h>
 #include <typed_buf.h>
 
 /*---------------------------Externs------------------------------------*/
@@ -138,13 +138,13 @@ out:
 void VIEWRSP(TPSVCINFO *p_svc)
 {
     int ret = TPSUCCESS;   
-    struct MYVIEW2 *v = NULL;
+    struct UBTESTVIEW2 *v = NULL;
     
     
-    if (NULL==(v = (struct MYVIEW2 *)tpalloc("VIEW", "MYVIEW2", 
-            sizeof(struct MYVIEW2))))
+    if (NULL==(v = (struct UBTESTVIEW2 *)tpalloc("VIEW", "UBTESTVIEW2", 
+            sizeof(struct UBTESTVIEW2))))
     {
-        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc MYVIEW2 data!");
+        NDRX_LOG(log_error, "TESTERROR ! Failed to alloc UBTESTVIEW2 data!");
         ret = TPFAIL;
         goto out;
     }

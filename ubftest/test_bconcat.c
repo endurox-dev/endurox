@@ -46,9 +46,8 @@
  */
 Ensure(bconcat_basic_setup1)
 {
-    /* set view env... */
-    setenv("VIEWDIR", "./", 1);
-    setenv("VIEWFILES", "test_view.V", 1);
+    /* shared load */
+    load_field_table(); 
 }
 
 void load_concat_test_data(UBFH *p_ub)

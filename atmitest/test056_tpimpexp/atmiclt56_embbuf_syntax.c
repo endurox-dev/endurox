@@ -51,7 +51,7 @@
 #include <nstdutil.h>
 #include <ubfutil.h>
 #include "test56.h"
-#include "t56.h"
+#include <extest.h>
 #include "expr.h"
 #include "odebug.h"
 #include <exbase64.h>
@@ -138,7 +138,7 @@ expublic int test_impexp_testemb_syntax(void)
                 /* Test single view import */
                 "\"T_VIEW_FLD\":"
                 "{"
-                   "\"MYVIEW56\":"
+                   "\"UBTESTVIEW2\":"
                    "{"
                        "\"tshort1\":1,"
                        "\"tlong1\":2,"
@@ -152,7 +152,7 @@ expublic int test_impexp_testemb_syntax(void)
                 /* Test view array: */
                 "\"T_VIEW_2_FLD\": ["
                     "{"
-                       "\"MYVIEW56\":"
+                       "\"UBTESTVIEW2\":"
                        "{"
                            "\"tshort1\":1,"
                            "\"tlong1\":2,"
@@ -167,7 +167,7 @@ expublic int test_impexp_testemb_syntax(void)
                        "\"\":{}"
                     "},"
                     "{"
-                       "\"MYVIEW56\":"
+                       "\"UBTESTVIEW2\":"
                        "{"
                            "\"tshort1\":1,"
                            "\"tlong1\":2,"

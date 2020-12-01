@@ -53,9 +53,8 @@ export PATH=$PATH:$TESTDIR
 #
 # Set view tables
 #
-export VIEWDIR=.
-
-export VIEWFILES=t56.V
+export VIEWDIR=../../libextest
+export VIEWFILES=test_view.V
 
 xadmin killall atmiclt56 2>/dev/null
 

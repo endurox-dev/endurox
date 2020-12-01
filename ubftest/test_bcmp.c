@@ -50,9 +50,8 @@ exprivate char *M_some_ptr2 = "HELLOptr";
  */
 Ensure(cmp_basic_setup1)
 {
-    /* set view env... */
-    setenv("VIEWDIR", "./", 1);
-    setenv("VIEWFILES", "test_view.V", 1);
+    /* shared load */
+    load_field_table(); 
 }
 
 

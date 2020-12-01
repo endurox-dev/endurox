@@ -420,16 +420,16 @@ exprivate int ndrx_mbuf_tlv_do(char *idata, long ilen, char *obuf,
     descr = &G_buf_descr[buffer_info->type_id];
     
     /* prepare buffer for call */
-    NDRX_LOG(log_debug, "Preparing buffer tag: %u (typed %u, type %d). Source buffer %p, "
-            "dest master buffer %p (work place header %p data %p) olen_max=%ld new_used=%ld pad=%d buffer_left=%d", 
-            tag, hdr->tag, buffer_info->type_id, idata, obuf, hdr, hdr->data, olen_max, new_used, pad, tmp_olen);
+    NDRX_LOG(log_debug, "Prep tag: %u (ttag %u, type %d). Src %p, "
+            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%d", 
+            tag, hdr->tag, buffer_info->type_id, idata, obuf, olen_max, new_used, pad, tmp_olen);
     
     if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, idata, ilen, hdr->data, 
             &tmp_olen, flags))
     {
-        NDRX_LOG(log_error, "Failed to prepare buffer tag: %u (typed %u, type %d). Source buffer %p, "
-            "dest master buffer %p (work place header %p data %p) olen_max=%ld new_used=%ld pad=%d buffer_left=%d", 
-            tag, hdr->tag, buffer_info->type_id, idata, obuf, hdr, hdr->data, olen_max, new_used, pad, tmp_olen);
+        NDRX_LOG(log_error, "Prep tag: %u (ttag %u, type %d). Src %p, "
+            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%d", 
+            tag, hdr->tag, buffer_info->type_id, idata, obuf, olen_max, new_used, pad, tmp_olen);
         EXFAIL_OUT(ret);
     }
     hdr->len = tmp_olen;

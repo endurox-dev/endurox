@@ -475,6 +475,7 @@ add_subdirectory (xadrv) # XA Drivers for RMs
 add_subdirectory (cconfsrv) # Common-Config server
 add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (enctools) # XA Drivers for RMs
+add_subdirectory (libextest) # Shared test resource library
 add_subdirectory (ubftest) # UBF library testing
 add_subdirectory (atmitest) #  ATMI testing
 

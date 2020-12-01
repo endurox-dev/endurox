@@ -38,6 +38,7 @@ cmake_minimum_required(VERSION 2.8)
 include_directories (${ENDUROX_SOURCE_DIR}/libubf
 					 ${ENDUROX_SOURCE_DIR}/include
 					 ${ENDUROX_SOURCE_DIR}/libnstd
+					 ${ENDUROX_SOURCE_DIR}/libextest
 					 ${ENDUROX_SOURCE_DIR}/ubftest)
 
 
@@ -53,28 +54,14 @@ ENDIF ($ENV{RELEASE_BUILD})
 link_directories (${ENDUROX_BINARY_DIR}/libubf) 
 
 
-add_custom_command(
-  DEPENDS ../../viewc/viewc
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  OUTPUT t64.h t64.V
-  COMMAND ../../viewc/viewc -n -L "../../libatmi:../../libatmiclt:../../libnstd:../../libubf" 
-            -b "../../buildtools/buildclient -a '${CMAKE_C_FLAGS} -I../../include -L../../libatmi -L../../libatmiclt -L../../libnstd -L../../libubf'" 
-            t64.v_in
-  DEPENDS t64.v_in)
-
-add_custom_target(t64vhdrs DEPENDS t64.h t64.V)
-
 ############################# Test - executables ###############################
-add_executable (atmi.sv64 atmisv64.c t64.h ../../libatmisrv/rawmain_integra.c)
-add_dependencies(atmi.sv64 t64vhdrs)
-
-add_executable (atmiclt64 atmiclt64.c t64.h)
-add_dependencies(atmiclt64 t64vhdrs)
+add_executable (atmi.sv64 atmisv64.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmiclt64 atmiclt64.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
-target_link_libraries (atmi.sv64 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
-target_link_libraries (atmiclt64 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv64 atmisrvinteg atmi extest ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt64 atmiclt atmi extest ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv64 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt64 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
