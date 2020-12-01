@@ -140,6 +140,7 @@ EX_NREQLOGFILE           302         string -        Request log file
 EX_TPERRNO               350         long -          TP error number
 EX_TPURCODE              351         long -          TP user return code
 EX_TPSTRERROR            352         string -        TP error message
+EX_TPERRSRC              353         char -          TP error source code
 ################################################################################
 # Fields for Common Config Server (ccsrv)
 # Config commands:
@@ -212,6 +213,15 @@ EX_IF_URCODE                530         long  -         User return code
 EX_IF_REQDATA               531         carray -        Request data / body
 EX_IF_RSPDATA               532         carray -        Response data / body
 EX_IF_METHOD                540         string -        HTTP method
+
+EX_IF_REQFILEDISK           541         string -        file on HDD, temporary, multi occ
+EX_IF_REQFILENAME           542         string -        file name in upload form
+EX_IF_REQFILEMIME           543         string -        content type, multi occ
+EX_IF_REQFILEFORM           544         string -        form field name, multi occ
+EX_IF_RSPFILEACTION         545         string -        occurrence on action, multi-occ
+
+EX_IF_TPURCODE              546         long   -        user code in response from svc call
+EX_IF_ERRSRC                547         char   -        Error source
 
 ################################################################################
 # TCP Inter-connecting

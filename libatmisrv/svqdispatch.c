@@ -134,6 +134,11 @@ expublic int sv_open_queue(void)
         {
             use_sem = EXTRUE;
         }
+        else
+        {
+            /* Bug #610 */
+            use_sem = EXFALSE;
+        }
         
         if (use_sem && EXSUCCEED!=ndrx_lock_svc_op(__func__))
         {
@@ -205,7 +210,7 @@ expublic int sv_open_queue(void)
         }
 
         /* Release semaphore! */
-        if (G_shm_srv && EXEOS!=entry->svc_nm[0]) ndrx_unlock_svc_op(__func__);
+        if (use_sem) ndrx_unlock_svc_op(__func__);
         /* ###################### CRITICAL SECTION, END ########################## */
         
         if (EXSUCCEED!=ret)
