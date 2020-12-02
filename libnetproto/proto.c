@@ -1596,7 +1596,12 @@ out:
 
 /**
  * Convert Enduro/X internal format to Network Format.
- * @param 
+ * @param ex_buf Enduro/X data buffer machine dependent, C struct
+ * @param ex_len data len of the C struct
+ * @param proto_buf where to serialize the data
+ * @param proto_len output len 
+ * @param proto_bufsz output buffer size
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf, 
         long *proto_len, long proto_bufsz)
