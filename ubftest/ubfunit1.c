@@ -111,7 +111,7 @@ void load_field_table(void)
         setenv("FLDTBLDIR", "./ubftab", 1);
         setenv("FIELDTBLS", "test.fd,Exfields", 1);
 
-        setenv("VIEWDIR", "../extest", 1);
+        setenv("VIEWDIR", "../libextest", 1);
         setenv("VIEWFILES", "test_view.V", 1);
         M_has_init=EXTRUE;
     }

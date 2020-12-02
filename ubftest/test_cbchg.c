@@ -841,7 +841,7 @@ Ensure(test_Bchg_view_org)
     /* init */
     assert_equal(Binit(p_ub, sizeof(buf)), EXSUCCEED);
     
-    (p_ub);
+    set_up_dummy_data(p_ub);
     
     /* load some UBF */
     assert_equal(Badd(p_ub, T_VIEW_FLD, (char *)&vf, 0), EXSUCCEED);
