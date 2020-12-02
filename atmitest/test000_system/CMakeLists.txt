@@ -55,7 +55,7 @@ add_executable (atmiclt0 atmiclt0.c)
 add_executable (atmiclt0_locks atmiclt0_locks.c)
 add_executable (atmiclt0_mqsv atmiclt0_mqsv.c)
 add_executable (atmiclt0_mqcl atmiclt0_mqcl.c)
-add_executable (atmiunit0 atmiunit0.c atmiunit0_mbuf.c)
+add_executable (atmiunit0 atmiunit0.c atmiunit0_mbuf.c atmiunit0_exproto.c)
 
 ################################################################################
 ############################# Test - executables ###############################
@@ -64,7 +64,7 @@ target_link_libraries (atmiclt0  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt0_locks  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt0_mqsv  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
 target_link_libraries (atmiclt0_mqcl  atmiclt atmi ubf nstd m ${RT_LIB} pthread)
-target_link_libraries (atmiunit0 atmiclt atmi extest ubf cgreen m nstd ${RT_LIB} pthread)
+target_link_libraries (atmiunit0 atmiclt netproto atmi extest ubf cgreen m nstd ${RT_LIB} pthread)
 
 set_target_properties(atmiclt0 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt0_locks PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")

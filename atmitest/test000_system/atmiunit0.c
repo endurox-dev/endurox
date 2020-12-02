@@ -47,6 +47,7 @@
 
 
 extern TestSuite *atmiunit0_mbuf(void);
+extern TestSuite *atmiunit0_exproto(void);
 
 /**
  * Basic preparation before the test
@@ -208,6 +209,7 @@ int main(int argc, char** argv)
     TestSuite *suite = create_test_suite();
     int ret;
 
+    add_suite(suite, atmiunit0_exproto());
     add_suite(suite, atmiunit0_base());
     add_suite(suite, atmiunit0_mbuf());
 

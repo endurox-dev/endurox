@@ -1,7 +1,7 @@
 /**
- * @brief Shared test functions
+ * @brief Protocol converter unit tests
  *
- * @file extest.h
+ * @file atmiunit0_exproto.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -32,44 +32,81 @@
  * -----------------------------------------------------------------------------
  */
 
-#ifndef EXTEST_H
-#define	EXTEST_H
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*---------------------------Includes-----------------------------------*/
-#include <test_view.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <cgreen/cgreen.h>
 #include <ubf.h>
-/*---------------------------Externs------------------------------------*/
+#include <ndrstandard.h>
+#include <string.h>
+#include "test.fd.h"
+#include "ndebug.h"
+#include "xatmi.h"
+#include "atmi_int.h"
+#include <fdatatype.h>
+#include <nstdutil.h>
+#include <typed_buf.h>
+#include <extest.h>
+#include <atmi_int.h>
+#include <exproto.h>
 
 /**
- * Flags used for setting test modes
- * @defgroup testflags 
- * @{
+ * Basic preparation before the test
  */
-#define EXTEST_PROC_PTR             0x00000001  /**< Process PTR        */
-#define EXTEST_PROC_UBF             0x00000002  /**< Process UBF        */
-#define EXTEST_PROC_VIEW            0x00000004  /**< Process VIEW       */
-
-/** @} */ /* end of testflags */
-
-/*---------------------------Macros-------------------------------------*/
-/*---------------------------Enums--------------------------------------*/
-/*---------------------------Typedefs-----------------------------------*/
-/*---------------------------Globals------------------------------------*/
-/*---------------------------Statics------------------------------------*/
-/*---------------------------Prototypes---------------------------------*/
-
-extern void extest_init_UBTESTVIEW1(struct UBTESTVIEW1 *v);
-void extest_ubf_set_up_dummy_data(UBFH *p_ub, long flags);
-void extest_ubf_do_dummy_data_test(UBFH *p_ub, long flags);
-
-#ifdef	__cplusplus
+exprivate void basic_setup(void)
+{
+    
 }
-#endif
 
-#endif	/* EXTEST_H */
+exprivate void basic_teardown(void)
+{
+    
+}
+
+/**
+ * Convert UBF call two way
+ */
+Ensure(test_proto_ubfcall)
+{
+    /* allocate FB & load data, convert out... (i.e.) alloc the tpcall struct */
+    char buf[2048];
+    char proto_out[2048];
+    long proto_len;
+    UBFH *p_ub;
+    tp_command_call_t *call = (tp_command_call_t *)buf;
+    
+    /* reset call header */
+    memset(call, 0, sizeof(*call));
+    
+    /* init the fb */
+    p_ub = (UBFH *)call->data;
+    
+    assert_equal(Binit(p_ub, 1024), EXSUCCEED);
+    
+    /* Load some buffer fields (standard mode currently */
+    extest_ubf_set_up_dummy_data(p_ub, 0);
+    
+    call->data_len=Bused(p_ub);
+    
+    proto_len = 0;
+    
+    /* try to serialize */
+    assert_equal(exproto_ex2proto(buf, sizeof(*call)+call->data_len, 
+	proto_out, &proto_len, sizeof(proto_out)), EXSUCCEED);
+    
+}
+
+/**
+ * Standard library tests
+ * @return
+ */
+TestSuite *atmiunit0_exproto(void)
+{
+    TestSuite *suite = create_test_suite();
+
+    add_test(suite, test_proto_ubfcall);
+    
+    return suite;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
