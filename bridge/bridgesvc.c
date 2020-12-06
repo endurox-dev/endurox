@@ -485,7 +485,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_bridge_cfg.qttl = tptoutget()*1000;
     }
     
-     if (G_bridge_cfg.threadpoolsize < 1)
+    if (G_bridge_cfg.threadpoolsize < 1)
     {
         NDRX_LOG(log_warn, "Thread pool size (-P) have invalid value "
                 "(%d) defaulting to %d", 

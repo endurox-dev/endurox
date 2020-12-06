@@ -68,7 +68,7 @@ RET=0
 # Run unit test
 #(./atmiunit0 2>&1) > ./atmiunit0.log
 
-./atmiunit0
+./atmiunit0 test_proto_ubfcall
 
 TMP=$?
 if [ $TMP != 0 ]; then

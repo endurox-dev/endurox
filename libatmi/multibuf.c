@@ -651,7 +651,6 @@ expublic void ndrx_mbuf_tlv_debug (char *rcv_data, long rcv_len)
     ndrx_mbuf_tlv_t *tlv_hdr;
     long tlv_pos;
     unsigned int tag_exp=0;
-
     
     /* OK load the stuff ... */
     NDRX_LOG(log_debug, "** DUMP TLV START **");

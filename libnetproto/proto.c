@@ -66,131 +66,15 @@
 #include <math.h>
 #include <xatmi.h>
 #include <userlog.h>
+#include <multibuf.h>
 
 #include "fdatatype.h"
+#include "exnetproto.h"
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-
-#define PMSGMAX -2 /* special case for max buffer size */
-
-#define TAG_BYTES   2   /* Number of bytes used in tag */
-#define LEN_BYTES   4   /* Number of bytes used in len */
-
-#define MKSIGN char sign = '0';\
-            if (*tmp<0)\
-            {\
-                sign = '1';\
-            }
-
-#define OFSZ(s,e)   EXOFFSET(s,e), EXELEM_SIZE(s,e)
-#define OFSZ0       0,0
-
-#define XFLD           0x01               /* Normal field           */
-#define XSUB           0x02               /* Dummy field/subfield   */
-#define XSBL           0x03               /* Dummy field/subfield len*/
-#define XINC           0x04               /* Include table          */
-#define XLOOP          0x05               /* Loop construction      */
-#define XATMIBUF       0x06               /* ATMI buffer type...    */
-
-#define XTAB1(e1)           1, e1, NULL, NULL, NULL
-#define XTAB2(e1,e2)        2, e1, e2, NULL, NULL
-#define XTAB3(e1,e2,e3)     3, e1, e2, e3, NULL
-#define XTAB4(e1,e2,e3,e4)  4, e1, e2, e3, e4
-
-/*
- * Standard check for output buffer space
- */
-#define CHECK_PROTO_BUFSZ(RET, CURSIZE, MAXSIZE, TO_WRITE) \
-    if ((CURSIZE) + TO_WRITE > MAXSIZE) \
-    {\
-        NDRX_LOG(log_error, "ERROR ! EX2NET: Message size in bytes max: %ld, at "\
-                    "current state: %ld, about "\
-                    "to write: %ld (new total: %d) - EXCEEDS message size. "\
-                    "Please increase NDRX_MSGSIZEMAX!", \
-                    (long)MAXSIZE, (long)(CURSIZE), (long)TO_WRITE, (long)(CURSIZE) + (long)TO_WRITE);\
-        userlog("ERROR ! EX2NET: Message size in bytes max: %ld, at current state: %ld, about "\
-                    "to write: %ld (new total: %d) - EXCEEDS message size. "\
-                    "Please increase NDRX_MSGSIZEMAX!", \
-                    (long)MAXSIZE, (long)(CURSIZE), (long)TO_WRITE, (long)(CURSIZE) + (long)TO_WRITE);\
-        EXFAIL_OUT(RET);\
-    }
-/*
- *  Check the internal incoming buffers, for data overrun
- */
-#define CHECK_EX_BUFSZ(RET, CUROFFSZ, FLD_OFFSZ, MAXSIZE, TO_WRITE) \
-if ((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE) > MAXSIZE) \
-    {\
-        NDRX_LOG(log_error, "ERROR ! NET2EX: Incomming buffer size in bytes: %ld, incoming "\
-                            "message is larger %ld (offset: %ld, fld_offs: %ld, "\
-                            "datasize: %ld) - dropping, please increase NDRX_MSGSIZEMAX!",\
-                    (long)MAXSIZE, (long)((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE)),\
-                    (long)(CUROFFSZ), (long)(FLD_OFFSZ), (long)(TO_WRITE)\
-                    );\
-        userlog("ERROR ! NET2EX: Incomming buffer size in bytes: %ld, incoming "\
-                            "message is larger %ld (offset: %ld, fld_offs: %ld, "\
-                            "datasize: %ld) - dropping, please increase NDRX_MSGSIZEMAX!",\
-                    (long)MAXSIZE, (long)((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE)),\
-                    (long)(CUROFFSZ), (long)(FLD_OFFSZ), (long)(TO_WRITE));\
-        EXFAIL_OUT(RET);\
-    }
-
-#define CHECK_EX_BUFSZ_SIMPLE(RET, MAXSIZE, TO_WRITE) \
-if ((TO_WRITE) > MAXSIZE) \
-    {\
-        NDRX_LOG(log_error, "ERROR ! NET2EX: Incomming buffer size in bytes: %ld"\
-                                "data size: %ld - dropping, please increase NDRX_MSGSIZEMAX!",\
-                MAXSIZE, (TO_WRITE));\
-        userlog( "ERROR ! NET2EX: Incomming buffer size in bytes: %ld"\
-                                "data size: %ld - dropping, please increase NDRX_MSGSIZEMAX!",\
-                MAXSIZE, (TO_WRITE));\
-        EXFAIL_OUT(RET);\
-    }
-
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/* map between C structure and parm bnlock fields */
-typedef struct cproto cproto_t;
-typedef struct xmsg xmsg_t;
-
-struct cproto
-{
-    int     tableid;            /* table id. */
-    long    tag;                /* TLV tag */
-    char*   cname;              /* c field name */
-    long    offset;             /* offset in structure */
-    int     len;                /* len in bytes */
-    int     fld_type;           /* field type */
-    short   type;               /* field type:  XFLD or XSUB */
-    int     min_len;            /* min data len in chars */
-    int     max_len;            /* max data len in chars */
-    cproto_t *include;          /* include sub_structure */
-    long    counter_offset;     /* counter offset... */
-    long    elem_size;          /* size of array element. */
-    /* During parsing returns conv struct for XSUB */
-    xmsg_t * (*p_classify_fn) (char *ex_buf, long ex_len); 
-    
-    size_t  buftype_offset;     /* buffer type offset */
-};
-
-/* Table used to define network messages. */
-struct xmsg
-{
-    char    msg_type;
-    int     command;            /* Id of the command... */    
-    char    *descr;             /* Descr of the message */
-    /* Extra tables to drive sub-elements. */
-    int     tabcnt;
-    cproto_t    *tab[4];        /* Recursive/linear tables for sub buffers. */
-};
-
-/* protocol table info */
-struct ptinfo
-{
-    int idx;
-    int dim;
-};
-typedef struct ptinfo ptinfo_t;
-
 /*---------------------------Globals------------------------------------*/
 
 exprivate xmsg_t * classify_netcall (char *ex_buf, long ex_len);
@@ -289,18 +173,6 @@ static cproto_t M_bridge_refresh_x[] =
 };
 
 /******************** STUFF FOR UBF *******************************************/
-/* Internal structure for driving UBF fields. */
-typedef struct proto_ufb_fld proto_ufb_fld_t;
-struct proto_ufb_fld
-{
-    int bfldid;
-    int bfldlen;
-#if EX_ALIGNMENT_BYTES == 8
-    long         padding1;
-#endif
-    char buf[0];
-};
-
 /**
  * Table bellow at index is UBF field type
  * the value is type data tag in protocol buffer.
@@ -369,7 +241,7 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11DC,  "msgseq",    OFSZ(tp_command_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
     {TTC, 0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
     {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
-    {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
                            EXOFFSET(tp_command_call_t,data_len), EXFAIL, NULL, EXOFFSET(tp_command_call_t,buffer_type_id)},
     {TTC, 0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 0, (NDRX_XID_SERIAL_BUFSIZE+1)},
@@ -413,11 +285,26 @@ static cproto_t M_tp_notif_call_x[] =
     {TPN, 0x12FD,  "msgseq",    OFSZ(tp_notif_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
     {TPN, 0x1307,  "timer",     OFSZ(tp_notif_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
     {TPN, 0x1311,  "data_len",  OFSZ(tp_notif_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
-    {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                 /* WARNING! Using counter offset here are length FLD offset! */
                EXOFFSET(tp_notif_call_t,data_len), EXFAIL, NULL, EXOFFSET(tp_notif_call_t,buffer_type_id)},
     {TPN, 0x1325,  "destnodeid",OFSZ(tp_notif_call_t,destnodeid),    EXF_LONG,   XFLD, 1, 20},
     {TPN, EXFAIL}
+};
+
+/**
+ * This drives master buffer
+ */
+#define MBU        9 /* multi-buffer */
+expublic cproto_t ndrx_G_ndrx_mbuf_tlv_x[] = 
+{
+    {MBU, 0x1325,  "tag",   OFSZ(ndrx_mbuf_tlv_t, tag),  EXF_UINT,   XFLD, 10, 6},
+    {MBU, 0x1325,  "len",   OFSZ(ndrx_mbuf_tlv_t, len), EXF_UINT,   XFLD, 10, 6},
+    /* Typed fields... */
+    {MBU, 0x131B,  "data",  OFSZ(ndrx_mbuf_tlv_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+                /* using uint len and full tag (from which at offset we extract the buffer type) */
+            EXOFFSET(ndrx_mbuf_tlv_t,len), EXFAIL, NULL, EXOFFSET(ndrx_mbuf_tlv_t,tag)},
+    {MBU, EXFAIL}
 };
 
 /**
@@ -451,11 +338,6 @@ static xmsg_t M_ndrxd_x[] =
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
-        char *ex_buf, long ex_len, long *max_struct, int level, 
-        UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz);
-
-
 #define FIX_SIGND(x) if ('1'==bdc_sign) *x = -1 * (*x);
 #define FIX_SIGNF(x) if ('1'==bdc_sign) *x = -1.0 * (*x);
 
@@ -1065,7 +947,7 @@ exprivate int read_net_int(char *buf, long *proto_buf_offset)
  * @param buf - start of the buffer
  * @param proto_buf_offset - current offset of buffer
  */
-exprivate int write_tag(short tag, char *buf, long *proto_buf_offset, 
+expublic int ndrx_write_tag(short tag, char *buf, long *proto_buf_offset, 
         long proto_bufsz)
 {
     int ret = EXSUCCEED;
@@ -1089,7 +971,7 @@ out:
  * @param buf - start of the buffer
  * @param proto_buf_offset - current offset of buffer
  */
-exprivate int write_len(int len, char *buf, long *proto_buf_offset, 
+expublic int ndrx_write_len(int len, char *buf, long *proto_buf_offset, 
         long proto_bufsz)
 {
     int ret = EXSUCCEED;
@@ -1145,7 +1027,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
         if (NULL!=accept_tags)
         {
             int accept = EXFALSE;
-            /* Check acceptable tags... */
+            /* Check acceptable tags... TODO: do binary search!*/
             p_accept = accept_tags;
             
             while (EXFAIL!=*p_accept)
@@ -1178,7 +1060,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 long off_stop;
                 
                 /* This is sub tlv/ thus put tag... */
-                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, proto_buf_offset, 
+                if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, proto_buf_offset, 
                         proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
@@ -1223,12 +1105,11 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* Write data off */
                 
-                if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
+                if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset, 
                         proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
                 }
-                
                 
             }
                 break;
@@ -1243,7 +1124,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 NDRX_LOG(log_debug, "XSUB enter: tag: %x proto offset: %ld, c struct off: %ld", 
                         (int)p->tag, *proto_buf_offset, offset+p->offset);
                 /* This is sub tlv/ thus put tag... */
-                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, proto_buf_offset, 
+                if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, proto_buf_offset, 
                         proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
@@ -1274,7 +1155,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 /* Put back len there.. */
                 len_written = (int)(off_stop - off_start);
                 /* this should be ok, but check anyway */
-                if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
+                if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset, 
                         proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
@@ -1305,7 +1186,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 /* <sub tlv> */
                 /* This is sub tlv/ thus put tag... */
-                if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
                         proto_buf_offset, proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
@@ -1342,7 +1223,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 NDRX_LOG(log_debug, "len_written=%d len_offset=%ld", 
                         len_written, len_offset);
                 
-                if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset, 
+                if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset, 
                         proto_bufsz))
                 {
                     EXFAIL_OUT(ret);
@@ -1373,7 +1254,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     long off_stop;
 
                     /* This is sub tlv/ thus put tag... */
-                    if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
                             proto_buf_offset, proto_bufsz))
                     {
                         EXFAIL_OUT(ret);
@@ -1407,7 +1288,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* Put back len there.. */
                     len_written = (int)(off_stop - off_start);
                     
-                    if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset,
+                    if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
                             proto_bufsz))
                     {
                         EXFAIL_OUT(ret);
@@ -1418,11 +1299,23 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             }
                 break;
                 
+            case XMASTERBUF:
+                
+                NDRX_LOG(log_debug, "Enter into master buffer out");
+                
+                if (EXSUCCEED!=exproto_build_ex2proto_mbuf(p, level, offset,
+                            ex_buf, ex_len, proto_buf, proto_buf_offset,
+                                accept_tags, p_ub_data, proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                
+                break;
             case XATMIBUF:
             {
                 /* This is special driver for ATMI buffer */
                 short *buffer_type = (short *)(ex_buf+offset+p->buftype_offset);
-                long *buf_len = (long *)(ex_buf+offset+p->counter_offset);
+                unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
                 char *data = (char *)(ex_buf+offset+p->offset);
                 int f_type;
                 
@@ -1455,7 +1348,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     f =  (proto_ufb_fld_t *)f_data_buf;
 
                     /* This is sub tlv/ thus put tag... */
-                    if (EXSUCCEED!=write_tag((short)p->tag, proto_buf, 
+                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
                             proto_buf_offset, proto_bufsz))
                     {
                         NDRX_SYSBUF_FREE(f_data_buf);
@@ -1516,7 +1409,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     off_stop = *proto_buf_offset;
                     /* Put back len there.. */
                     len_written = (short)(off_stop - off_start);
-                    if (EXSUCCEED!=write_len(len_written, proto_buf, &len_offset,
+                    if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
                             proto_bufsz))
                     {
                         NDRX_SYSBUF_FREE(f_data_buf);
@@ -1530,13 +1423,13 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* Should work for string buffers too, if EOS counts in len! */
                     NDRX_LOG(log_debug, "Processing data block buffer");
                     
-                    if (EXSUCCEED!=write_tag((short)p->tag, 
+                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, 
                             proto_buf, proto_buf_offset, proto_bufsz))
                     {
                         EXFAIL_OUT(ret);
                     }
                     
-                    if (EXSUCCEED!=write_len((int)*buf_len, proto_buf, 
+                    if (EXSUCCEED!=ndrx_write_len((int)*buf_len, proto_buf, 
                             proto_buf_offset, proto_bufsz))
                     {
                         EXFAIL_OUT(ret);
@@ -1750,12 +1643,13 @@ expublic int exproto_proto2ex(char *proto_buf, long proto_len,
  * Deblock the network message...
  * Hm Also we need to get total len of message, in c structure?
  * @param ex_buf - Enduro/X machine specific C strutures data
- * @param ex_offset - current offset in machine specific C struct
+ * @param ex_offset - current offset of the processing structure (not the current
+ *  field). Current field is set in int_pos
  * @param proto_buf - procol received from net
  * @param proto_len - block len received
  * @return 
  */
-exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
+expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
         char *ex_buf, long ex_offset, long *max_struct, int level, 
         UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz)
 {
@@ -1789,6 +1683,9 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     NDRX_SYSBUF_MALLOC_OUT(tmpf, tmpf_len, ret);
     
     f=(proto_ufb_fld_t *)tmpf;
+    
+    /* reset the f, as it may be used for mbuf purposes too */
+    memset(f, 0, sizeof(proto_ufb_fld_t));
     
     while (int_pos < proto_len)
     {
@@ -1953,11 +1850,23 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     loop_keeper++;
                 }
                     break;
+
+                case XMASTERBUF:
+                
+                    NDRX_LOG(log_debug, "Enter into master buffer in");
+
+                    if (EXSUCCEED!=_exproto_proto2ex_mbuf(fld, proto_buf, proto_len, 
+                            ex_buf, &ex_offset, max_struct, level, 
+                            p_x_fb, p_ub_data, ex_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
                     
+                break;                    
                 case XATMIBUF:
                 {
                     short *buffer_type = (short *)(ex_buf+ex_offset+fld->buftype_offset);
-                    long *buf_len = (long *)(ex_buf+ex_offset+fld->counter_offset);
+                    unsigned *buf_len = (unsigned *)(ex_buf+ex_offset+fld->counter_offset);
                     char *data = (char *)(ex_buf+ex_offset+fld->offset);
                     
                     
@@ -2015,12 +1924,12 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 			ndrx_debug_dump_UBF(log_debug, "Restored buffer", p_ub);
                         
                         /*  have some debug */
-                            more_debug = 
-                                (tp_command_call_t *)(ex_buf + sizeof(cmd_br_net_call_t));
-                        
-                            if (ATMI_COMMAND_TPCALL == more_debug->command_id || 
-                                    ATMI_COMMAND_CONNECT == more_debug->command_id)
-                            {
+                        more_debug = 
+                            (tp_command_call_t *)(ex_buf + sizeof(cmd_br_net_call_t));
+
+                        if (ATMI_COMMAND_TPCALL == more_debug->command_id || 
+                                ATMI_COMMAND_CONNECT == more_debug->command_id)
+                        {
                             NDRX_LOG(log_debug, "timer = (%ld %ld) %d", 
                                     more_debug->timer.t.tv_sec, 
                                     more_debug->timer.t.tv_nsec,
@@ -2043,7 +1952,7 @@ exprivate int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         
                         *buf_len = net_len;
                         NDRX_LOG(log_debug, "XATMIBUF - other type buffer, "
-                                                "just copy memory... (%d bytes)!", 
+                                                "just copy memory... (%u bytes)!", 
                                                 *buf_len);
                         /* Validate output buffer sizes */
                         

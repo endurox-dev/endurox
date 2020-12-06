@@ -1,0 +1,7 @@
+* WORK IS BASED ON https://sourceforge.net/projects/libuuid/files/ libuuid 1.0.3 *
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the Modified BSD License.
+
+The complete text of the license is available at the
+Documentation/licenses/COPYING.BSD-3 file.
