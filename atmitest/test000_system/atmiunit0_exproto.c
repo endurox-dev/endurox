@@ -72,28 +72,76 @@ Ensure(test_proto_ubfcall)
     char buf[2048];
     char proto_out[2048];
     long proto_len;
-    UBFH *p_ub;
-    tp_command_call_t *call = (tp_command_call_t *)buf;
+    tp_command_call_t *call = (tp_command_call_t *)(buf + sizeof(cmd_br_net_call_t));
+    cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)buf;
+    ndrx_stopwatch_t w;
+    time_t t;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 1024);
+    UBFH *p_ub5 = NULL;
+    long olen;
+    assert_not_equal(p_ub, NULL);
     
     /* reset call header */
     memset(call, 0, sizeof(*call));
+    call->command_id = ATMI_COMMAND_TPCALL;
+    NDRX_STRCPY_SAFE(call->name, "HELLOSVC");
     
-    /* init the fb */
-    p_ub = (UBFH *)call->data;
+    ndrx_stopwatch_reset(&w);
+    t=time(NULL);
     
-    assert_equal(Binit(p_ub, 1024), EXSUCCEED);
+    call->timer = w;
+    call->cd = 999;
+    call->timestamp = t;
+    call->buffer_type_id = BUF_TYPE_UBF;
+    netcall->br_magic=BR_NET_CALL_MAGIC;
+    netcall->command_id=ATMI_COMMAND_TPCALL;
+    netcall->msg_type=BR_NET_CALL_MSG_TYPE_ATMI;
+    netcall->len=sizeof(*call)+call->data_len;
+
+    
     
     /* Load some buffer fields (standard mode currently */
     extest_ubf_set_up_dummy_data(p_ub, 0);
-    
-    call->data_len=Bused(p_ub);
+    call->data_len=sizeof(buf)-sizeof(*call)-sizeof(*netcall);
+    assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
+            &call->data_len, 0, 0), EXSUCCEED);
     
     proto_len = 0;
-    
     /* try to serialize */
     assert_equal(exproto_ex2proto(buf, sizeof(*call)+call->data_len, 
 	proto_out, &proto_len, sizeof(proto_out)), EXSUCCEED);
     
+    
+    memset(buf, 0, sizeof(buf));
+    
+    /* deserialize the buffer back... */
+    proto_len=0;
+    assert_equal(exproto_proto2ex(proto_out, proto_len, 
+        buf, &proto_len, sizeof(buf)), EXSUCCEED);
+    
+    /* Check the output... */
+    assert_equal(netcall->br_magic, BR_NET_CALL_MAGIC);
+    assert_equal(netcall->command_id, ATMI_COMMAND_TPCALL);
+    assert_equal(netcall->msg_type, BR_NET_CALL_MSG_TYPE_ATMI);
+    assert_equal(netcall->len, sizeof(*call)+call->data_len);
+    
+    assert_equal(call->cd, 999);
+    assert_string_equal(call->name, "HELLOSVC");
+    assert_equal(call->command_id, ATMI_COMMAND_TPCALL);
+    assert_equal(call->timer.t.tv_nsec, call->timer.t.tv_nsec);
+    assert_equal(call->timer.t.tv_sec, call->timer.t.tv_sec);
+    assert_equal(call->timestamp, call->timestamp);
+    
+    /* TODO: read the buffer? */
+    olen=0;
+    assert_equal(ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
+            (char **)&p_ub5, &olen, 0, 0), EXSUCCEED);
+    
+    assert_equal(Bcmp(p_ub, p_ub5), 0);
+    
+    tpfree((char *)p_ub);
+    tpfree((char *)p_ub5);
+ 
 }
 
 /**
