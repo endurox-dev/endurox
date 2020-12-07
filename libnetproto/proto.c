@@ -298,10 +298,10 @@ static cproto_t M_tp_notif_call_x[] =
 #define MBU        9 /* multi-buffer */
 expublic cproto_t ndrx_G_ndrx_mbuf_tlv_x[] = 
 {
-    {MBU, 0x1325,  "tag",   OFSZ(ndrx_mbuf_tlv_t, tag),  EXF_UINT,   XFLD, 10, 6},
-    {MBU, 0x1325,  "len",   OFSZ(ndrx_mbuf_tlv_t, len), EXF_UINT,   XFLD, 10, 6},
+    {MBU, 0x132F,  "tag",   OFSZ(ndrx_mbuf_tlv_t, tag),  EXF_UINT,   XFLD, 1, 10},
+    {MBU, 0x1339,  "len",   OFSZ(ndrx_mbuf_tlv_t, len), EXF_UINT,   XFLD, 1, 10},
     /* Typed fields... */
-    {MBU, 0x131B,  "data",  OFSZ(ndrx_mbuf_tlv_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {MBU, 0x1343,  "data",  OFSZ(ndrx_mbuf_tlv_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
             EXOFFSET(ndrx_mbuf_tlv_t,len), EXFAIL, NULL, EXOFFSET(ndrx_mbuf_tlv_t,tag)},
     {MBU, EXFAIL}
@@ -320,7 +320,9 @@ static ptinfo_t M_ptinfo[] =
     {TBR, N_DIM(M_bridge_refresh_x)},
     {TUF, N_DIM(M_ubf_field)},
     {TTC, N_DIM(M_tp_command_call_x)},
-    {TPN, N_DIM(M_tp_notif_call_x)}
+    {TPN, N_DIM(M_tp_notif_call_x)},
+    {MBU, N_DIM(ndrx_G_ndrx_mbuf_tlv_x)}
+    
 };
 
 /* Message conversion tables */
@@ -1314,16 +1316,18 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             case XATMIBUF:
             {
                 /* This is special driver for ATMI buffer */
-                short *buffer_type = (short *)(ex_buf+offset+p->buftype_offset);
+                unsigned buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
                 unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
                 char *data = (char *)(ex_buf+offset+p->offset);
                 int f_type;
                 
-                NDRX_LOG(log_debug, "Buffer type is: %hd", 
-                        *buffer_type);
+                buffer_type = NDRX_MBUF_TYPE(buffer_type);
+                        
+                NDRX_LOG(log_debug, "Buffer type is: %u", 
+                        buffer_type);
                 
-                if (BUF_TYPE_UBF==*buffer_type ||
-                        BUF_TYPE_VIEW==*buffer_type)
+                if (BUF_TYPE_UBF==buffer_type ||
+                        BUF_TYPE_VIEW==buffer_type)
                 {
                     UBFH *p_ub = (UBFH *)data;
                     
@@ -1855,7 +1859,8 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 
                     NDRX_LOG(log_debug, "Enter into master buffer in");
 
-                    if (EXSUCCEED!=_exproto_proto2ex_mbuf(fld, proto_buf, proto_len, 
+                    if (EXSUCCEED!=_exproto_proto2ex_mbuf(fld, 
+                            (char *)(proto_buf+int_pos), net_len, 
                             ex_buf, &ex_offset, max_struct, level, 
                             p_x_fb, p_ub_data, ex_bufsz))
                     {
