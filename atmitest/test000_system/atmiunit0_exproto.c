@@ -106,6 +106,9 @@ Ensure(test_proto_ubfcall)
     assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
             &call->data_len, 0, 0), EXSUCCEED);
     
+    
+    ndrx_mbuf_tlv_debug(call->data, call->data_len);
+    
     proto_len = 0;
     /* try to serialize */
     assert_equal(exproto_ex2proto(buf, sizeof(*call)+call->data_len, 
@@ -115,7 +118,6 @@ Ensure(test_proto_ubfcall)
     memset(buf, 0, sizeof(buf));
     
     /* deserialize the buffer back... */
-    proto_len=0;
     assert_equal(exproto_proto2ex(proto_out, proto_len, 
         buf, &proto_len, sizeof(buf)), EXSUCCEED);
     

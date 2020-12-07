@@ -78,7 +78,7 @@
  * 
  * @param fld Current proto field
  * @param level recursion level
- * @param offset offset in C struct
+ * @param offset offset in C struct (not to the field)
  * @param ex_buf start of the C struct ptr
  * @param ex_len C len
  * @param proto_buf output buffer
@@ -97,7 +97,7 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
     long tlv_pos;
     unsigned int tag_exp=0;
     int ret = EXSUCCEED;
-    long *buf_len = (long *)(ex_buf+offset+fld->offset);
+    long *buf_len = (long *)(ex_buf+offset+fld->counter_offset);
     xmsg_t tmp_cv;
     long len_offset;
     long off_start;
@@ -113,8 +113,9 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
         EXFAIL_OUT(ret);
     }
 
-    NDRX_LOG(log_debug, "XINC tag: 0x%x, current offset=%ld, new=%ld", 
-            fld->tag, offset, fld->offset);
+    NDRX_DUMP(log_error, "YOPT EXBUF", ex_buf+offset+fld->offset, ex_len-(offset+fld->offset));
+    NDRX_LOG(log_debug, "XINC tag: 0x%x (%s), current offset=%ld fld=%ld", 
+            fld->tag, fld->cname, offset, offset+fld->offset);
 
     /* remember the TLV offset in protobuf  */
     len_offset = *proto_buf_offset;
@@ -122,9 +123,6 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
     *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
 
     off_start = *proto_buf_offset; 
-
-    NDRX_LOG(log_debug, "XINC tag: 0x%x, current offset=%ld, new=%ld", 
-            fld->tag, offset, fld->offset);
     
     /* temp table */
     tmp_cv.descr="MBUF";
@@ -134,7 +132,7 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
     /* OK load the stuff ... */
     NDRX_LOG(log_debug, "** TLV START **");
     /* so from current position  till then current position + buffer len... */
-    for (tlv_pos=offset; tlv_pos< (offset+*buf_len); 
+    for (tlv_pos=offset+fld->offset; tlv_pos< (offset+fld->offset+*buf_len); 
             tlv_pos+=(ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t)), tag_exp++)
     {
         int is_callinfo;
@@ -160,7 +158,7 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
         
         /* Write off the TLV to proto TLV */
         ret = exproto_build_ex2proto(&tmp_cv, 0, 
-                tlv_pos + sizeof(ndrx_mbuf_tlv_t), /* < where the data starts*/
+                tlv_pos, /* < where the data starts*/
                 ex_buf, ex_len, proto_buf, proto_buf_offset,
                 accept_tags, p_ub_data, proto_bufsz);
         
@@ -216,7 +214,7 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
 {
     
     /* got to de-serialize current tag.... (this is parent) */
-    long *buf_len = (long *)(ex_buf+(*max_struct)+fld->offset);
+    long *buf_len = (long *)(ex_buf+(*max_struct)+fld->counter_offset);
     unsigned step_size;
     int ret = EXSUCCEED;
     ndrx_mbuf_tlv_t *tlv_hdr = (ndrx_mbuf_tlv_t *)(ex_buf+(*max_struct)+fld->offset);
