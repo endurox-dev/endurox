@@ -199,8 +199,8 @@ out:
  *  this points to our data. The data now again is our MBUF TLV in EXPROTO
  * @param proto_len buffer len (current tag len)
  * @param ex_buf Enduro/X output buffer C
- * @param ex_offset current offset in C, updated to offset after data unload
- *  ptr
+ * @param ex_offset current offset in C (, updated to offset after data unload
+ *  ptr. Also this means that dynamic field shall be last in C struct.
  * @param max_struct where we are currently. As
  * @param level recursion level
  * @param p_x_fb current UBF building (not used here)
@@ -209,21 +209,26 @@ out:
  * @return EXSUCCED/EXFAIL
  */
 expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_len, 
-        char *ex_buf, long *ex_offset, long *max_struct, int level, 
+        char *ex_buf, long ex_offset, long *max_struct, int level, 
         UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz)
 {
     
     /* got to de-serialize current tag.... (this is parent) */
-    long *buf_len = (long *)(ex_buf+(*max_struct)+fld->counter_offset);
+    long *buf_len = (long *)(ex_buf+ex_offset+fld->counter_offset);
     unsigned step_size;
+    unsigned ex_offset_dyn;
     int ret = EXSUCCEED;
     ndrx_mbuf_tlv_t *tlv_hdr = (ndrx_mbuf_tlv_t *)(ex_buf+(*max_struct)+fld->offset);
     
+    /* use cached len */
+    /* bfldlen is current master buf offset, for several blocks.. */
+    ex_offset_dyn = fld->offset + p_ub_data->bfldlen;
+            
     /*
      * The same C offset, yet nothing unloaded.
      */
-    ret = _exproto_proto2ex(ndrx_G_ndrx_mbuf_tlv_x, proto_buf, proto_len, 
-            ex_buf, *ex_offset, max_struct, 
+    ret = _exproto_proto2ex_atmibuf(ndrx_G_ndrx_mbuf_tlv_x, proto_buf, proto_len, 
+            ex_buf, ex_offset+ex_offset_dyn, max_struct, 
             0, NULL, NULL, ex_bufsz);
 
     if (EXSUCCEED!=ret)
@@ -236,10 +241,12 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     
     /* we might get several calls here */
     p_ub_data->bfldlen+=step_size;
-    (*ex_offset)+=step_size;
+    
+    NDRX_LOG(log_error, "YOPT step size: %u %d", 
+            p_ub_data->bfldlen, tlv_hdr->len);
     
     /* update the call mater len */
-    (*buf_len)+=p_ub_data->bfldlen;
+    *buf_len= p_ub_data->bfldlen;
     
 out:
     
