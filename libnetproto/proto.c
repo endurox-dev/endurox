@@ -108,9 +108,9 @@ static cproto_t M_cmd_br_net_call_x[] =
     {TNC, 0x1005, "br_magic",  OFSZ(cmd_br_net_call_t,br_magic),   EXF_LONG, XFLD, 6, 6, NULL},
     {TNC, 0x100F, "msg_type",  OFSZ(cmd_br_net_call_t,msg_type),   EXF_CHAR, XFLD, 1, 1},
     {TNC, 0x1019, "command_id",OFSZ(cmd_br_net_call_t,command_id), EXF_INT,  XFLD, 1, 5},
-    {TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10},
+    {TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10}, /**< Not used ???? */
     {TNC, 0x102D, "buf",       OFSZ(cmd_br_net_call_t,buf),        EXF_NONE, XSUB, 0, PMSGMAX, 
-                                                NULL, EXFAIL, EXFAIL, classify_netcall},
+                       NULL, EXOFFSET(cmd_br_net_call_t,len), EXFAIL, classify_netcall},
     {TNC, EXFAIL}
 };
 
@@ -1313,141 +1313,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 }
                 
                 break;
-            case XATMIBUF:
-            {
-                /* This is special driver for ATMI buffer */
-                unsigned buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
-                unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
-                char *data = (char *)(ex_buf+offset+p->offset);
-                int f_type;
                 
-                buffer_type = NDRX_MBUF_TYPE(buffer_type);
-                        
-                NDRX_LOG(log_debug, "Buffer type is: %u", 
-                        buffer_type);
-                
-                if (BUF_TYPE_UBF==buffer_type ||
-                        BUF_TYPE_VIEW==buffer_type)
-                {
-                    UBFH *p_ub = (UBFH *)data;
-                    
-                    /* char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];*/
-                    char *f_data_buf;
-                    ssize_t f_data_buf_len;
-                    proto_ufb_fld_t *f;
-                    BFLDOCC occ;
-                    
-                    short accept_tags[] = {UBF_TAG_BFLDID, UBF_TAG_BFLDLEN, 0, EXFAIL};
-                    
-                    /* Reserve space for Tag/Length */
-                    /* <sub tlv> */
-                    long len_offset;
-                    long off_start;
-                    long off_stop;
-                    
-                    xmsg_t tmp_cv;
-                    
-                    NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
-                    
-                    f =  (proto_ufb_fld_t *)f_data_buf;
-
-                    /* This is sub tlv/ thus put tag... */
-                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
-                            proto_buf_offset, proto_bufsz))
-                    {
-                        NDRX_SYSBUF_FREE(f_data_buf);
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    len_offset = *proto_buf_offset;
-                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
-                    *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
-                    
-                    off_start = *proto_buf_offset;
-                    /* </sub tlv> */
-                    memcpy(&tmp_cv, cv, sizeof(tmp_cv));
-                    tmp_cv.tab[0] = M_ubf_field;
-
-                    /* <process field by field> */
-                    NDRX_LOG(log_debug, "Processing UBF buffer");
-                    
-                    /* loop over the buffer & process field by field */
-                    /*memset(f.buf, 0, sizeof(f.buf));  <<< HMMM Way too slow!!! */
-                    
-                    f->bfldlen = NDRX_MSGSIZEMAX - sizeof(*f);
-                    f->bfldid = BFIRSTFLDID;
-                    while(1==Bnext(p_ub, &f->bfldid, &occ, f->buf, &f->bfldlen))
-                    {
-                        f_type = Bfldtype(f->bfldid);
-                        
-                        accept_tags[2] = M_ubf_proto_tag_map[f_type];
-                        
-                        NDRX_LOG(log_debug, "UBF type %d mapped to "
-                                "tag %hd", f_type, accept_tags[2]);
-                        
-                        /* Hmm lets drive our structure? */
-                        
-                        ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
-                            (char *)f, f_data_buf_len, proto_buf, 
-                            proto_buf_offset,  accept_tags, f, proto_bufsz);
-                    
-                        if (EXSUCCEED!=ret)
-                        {
-                            NDRX_LOG(log_error, "Failed to convert "
-                                    "sub/tag %x: [%s] %ld"
-                                    "at offset %ld", 
-                                    p->tag, p->cname, p->offset);
-                            NDRX_SYSBUF_FREE(f_data_buf);
-                            EXFAIL_OUT(ret);
-                        }
-                        /*
-                         * why?
-                        memset(f.buf, 0, sizeof(f.buf));
-                         */
-                        f->bfldlen = f_data_buf_len - sizeof(*f);
-                    }
-                    
-                    /* </process field by field> */
-                    
-                    /* <sub tlv> */
-                    off_stop = *proto_buf_offset;
-                    /* Put back len there.. */
-                    len_written = (short)(off_stop - off_start);
-                    if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
-                            proto_bufsz))
-                    {
-                        NDRX_SYSBUF_FREE(f_data_buf);
-                        EXFAIL_OUT(ret);
-                    }
-                    /* </sub tlv> */
-                    NDRX_SYSBUF_FREE(f_data_buf);
-                }
-                else
-                {
-                    /* Should work for string buffers too, if EOS counts in len! */
-                    NDRX_LOG(log_debug, "Processing data block buffer");
-                    
-                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, 
-                            proto_buf, proto_buf_offset, proto_bufsz))
-                    {
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    if (EXSUCCEED!=ndrx_write_len((int)*buf_len, proto_buf, 
-                            proto_buf_offset, proto_bufsz))
-                    {
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    len_written = *buf_len;
-                    
-                    /* Put data on network */
-                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, *buf_len);
-                    memcpy(proto_buf+(*proto_buf_offset), data, *buf_len);
-                    *proto_buf_offset=*proto_buf_offset + *buf_len;
-                }
-            }
-                break;
+                /* case ATMIBUF is processed as part of master buffer  */
         }
         
         /* Verify data length (currently at warning level!) - it should be
@@ -1676,21 +1543,17 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     char *tmpf = NULL;
     size_t tmpf_len;
     proto_ufb_fld_t *f;
+    proto_ufb_fld_t tmpdata; /* temporary field infos storage */
+
+    tmpdata.bfldid=0;
+    tmpdata.bfldlen=0;
 
     NDRX_LOG(log_debug, "Enter field: [%s] max_struct: %ld ex_buf: %p", 
                         cur->cname, *max_struct, ex_buf);
     
     NDRX_DUMP(log_debug, "_exproto_proto2ex enter", 
                     proto_buf, proto_len);
-    
-    
-    NDRX_SYSBUF_MALLOC_OUT(tmpf, tmpf_len, ret);
-    
-    f=(proto_ufb_fld_t *)tmpf;
-    
-    /* reset the f, as it may be used for mbuf purposes too */
-    memset(f, 0, sizeof(proto_ufb_fld_t));
-    
+        
     while (int_pos < proto_len)
     {
         /* Read tag */
@@ -1815,6 +1678,17 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         }
                         
                     }
+                    
+                    
+                    /* If there is length indicator available, restore it... */
+                    
+                    if (fld->counter_offset>EXFAIL)
+                    {
+                        long *buf_len = (long *)(ex_buf+ex_offset+fld->counter_offset);
+                        *buf_len = *max_struct - fld->offset;
+                        NDRX_LOG(log_debug, "Restored len: %ld", *buf_len);
+                    }
+                    
                 }
                     break;
                     
@@ -1856,17 +1730,17 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     break;
 
                 case XMASTERBUF:
-                
+                {
                     NDRX_LOG(log_debug, "Enter into master buffer in");
 
                     if (EXSUCCEED!=_exproto_proto2ex_mbuf(fld, 
                             (char *)(proto_buf+int_pos), net_len, 
-                            ex_buf, &ex_offset, max_struct, level, 
-                            p_x_fb, p_ub_data, ex_bufsz))
+                            ex_buf, ex_offset, max_struct, level, 
+                            NULL, &tmpdata, ex_bufsz))
                     {
                         EXFAIL_OUT(ret);
                     }
-                    
+                }   
                 break;                    
                 case XATMIBUF:
                 {
@@ -1876,6 +1750,9 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     
                     
                     NDRX_LOG(log_debug, "Processing XATMIBUF");
+                    NDRX_SYSBUF_MALLOC_OUT(tmpf, tmpf_len, ret);
+    
+                    f=(proto_ufb_fld_t *)tmpf;
                     
                     if (*buffer_type == BUF_TYPE_UBF || 
                             *buffer_type == BUF_TYPE_VIEW)
@@ -1912,6 +1789,11 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                     max_struct, level,
                                     p_ub, f, tmpf_len);
                         
+                        /* clean up temp buffer.. */
+                        NDRX_FPFREE(tmpf);
+                        tmpf=NULL;
+                        f=NULL;
+                        
                         if (EXSUCCEED!=ret)
                         {
                             goto out;
@@ -1923,6 +1805,7 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         xatmi_fld_len = hdr->buf_len;
                         p_fld_len = &xatmi_fld_len;
                         
+                        NDRX_LOG(log_error, "YOPT BUFLEN I: %d", hdr->buf_len);
                         *buf_len = hdr->buf_len;
                                 
                         /* Bprint(p_ub); Bug #120 */

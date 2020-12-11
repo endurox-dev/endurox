@@ -79,6 +79,7 @@ Ensure(test_proto_ubfcall)
     UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 1024);
     UBFH *p_ub5 = NULL;
     long olen;
+    long call_len_org;
     assert_not_equal(p_ub, NULL);
     
     /* reset call header */
@@ -96,15 +97,18 @@ Ensure(test_proto_ubfcall)
     netcall->br_magic=BR_NET_CALL_MAGIC;
     netcall->command_id=ATMI_COMMAND_TPCALL;
     netcall->msg_type=BR_NET_CALL_MSG_TYPE_ATMI;
-    netcall->len=sizeof(*call)+call->data_len;
-
-    
     
     /* Load some buffer fields (standard mode currently */
     extest_ubf_set_up_dummy_data(p_ub, 0);
     call->data_len=sizeof(buf)-sizeof(*call)-sizeof(*netcall);
     assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
             &call->data_len, 0, 0), EXSUCCEED);
+    
+    call_len_org=call->data_len;
+    netcall->len=sizeof(*call)+call_len_org;
+    
+    NDRX_LOG(log_error, "YOPT len %ld call len: %ld", 
+            netcall->len, call_len_org);
     
     
     ndrx_mbuf_tlv_debug(call->data, call->data_len);
@@ -121,11 +125,14 @@ Ensure(test_proto_ubfcall)
     assert_equal(exproto_proto2ex(proto_out, proto_len, 
         buf, &proto_len, sizeof(buf)), EXSUCCEED);
     
+    NDRX_LOG(log_debug, "protolen: %ld", proto_len);
+    
     /* Check the output... */
     assert_equal(netcall->br_magic, BR_NET_CALL_MAGIC);
     assert_equal(netcall->command_id, ATMI_COMMAND_TPCALL);
     assert_equal(netcall->msg_type, BR_NET_CALL_MSG_TYPE_ATMI);
     assert_equal(netcall->len, sizeof(*call)+call->data_len);
+    assert_equal(call->data_len, call_len_org);
     
     assert_equal(call->cd, 999);
     assert_string_equal(call->name, "HELLOSVC");
@@ -139,6 +146,8 @@ Ensure(test_proto_ubfcall)
     assert_equal(ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
             (char **)&p_ub5, &olen, 0, 0), EXSUCCEED);
     
+    Bprint(p_ub);
+    Bprint(p_ub5);
     assert_equal(Bcmp(p_ub, p_ub5), 0);
     
     tpfree((char *)p_ub);
