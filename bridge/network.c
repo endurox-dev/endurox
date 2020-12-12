@@ -212,7 +212,7 @@ exprivate int br_process_msg_th(void *ptr, int *p_finish_off)
         NDRX_LOG(log_debug, "Convert message from network... (tmp buf = %p, size: %ld)", 
                 tmp, NDRX_MSGSIZEMAX);
         
-        if (EXSUCCEED!=exproto_proto2ex(p_netmsg->buf, tmp_len,  tmp, &tmp_len, 
+        if (EXFAIL==exproto_proto2ex(p_netmsg->buf, tmp_len,  tmp, &tmp_len, 
                 NDRX_MSGSIZEMAX))
         {
             NDRX_LOG(log_error, "Failed to convert incoming message!");

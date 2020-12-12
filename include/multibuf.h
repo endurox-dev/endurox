@@ -51,7 +51,7 @@ extern "C" {
 #define NDRX_MBUF_OFFSET            (sizeof(int)*8-NDRX_MBUF_TBITS)
 /** get the buffer type encoded as last bits */
 #define NDRX_MBUF_TYPE(X)            (X>>(sizeof(int)*8-NDRX_MBUF_TBITS))
-    
+
 /** get the call info bit */
 #define NDRX_MBUF_CALLINFOBIT        0x4000000
 
