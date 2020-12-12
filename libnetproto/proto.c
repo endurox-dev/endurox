@@ -184,6 +184,12 @@ static cproto_t M_bridge_refresh_x[] =
 #define UBF_TAG_BFLD_DOUBLE         0x113B
 #define UBF_TAG_BFLD_STRING         0x1145
 #define UBF_TAG_BFLD_CARRAY         0x114F
+#define UBF_TAG_BFLD_INT            0x1150 /**< RFU */
+#define UBF_TAG_BFLD_RFU0           0x1151 /**< RFU */
+#define UBF_TAG_BFLD_PTR            0x1152
+#define UBF_TAG_BFLD_UBF            0x1153
+#define UBF_TAG_BFLD_VIEW           0x1154
+
 static short M_ubf_proto_tag_map[] = 
 {
     0x1113, /* BFLD_SHORT- 0   */
@@ -192,7 +198,13 @@ static short M_ubf_proto_tag_map[] =
     0x1131, /* BFLD_FLOAT - 3  */
     0x113B, /* BFLD_DOUBLE - 4 */
     0x1145, /* BFLD_STRING - 5 */
-    0x114F, /* BFLD_CARRAY - 6 */  
+    0x114F, /* BFLD_CARRAY - 6 */
+    
+    0x1150, /* BFLD_INT - 7 */
+    0x1151, /* BFLD_RFU0 - 8 */
+    0x1152, /* BFLD_PTR - 9 */
+    0x1153, /* BFLD_UBF - 10 */
+    0x1154, /* BFLD_VIEW - 11 */
 };
 
 #define UBF_TAG_BFLDID     0x10FF
@@ -214,6 +226,16 @@ static cproto_t M_ubf_field[] =
     {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
                             /* Using counter offset as carry len field... */
                             NULL, EXOFFSET(proto_ufb_fld_t,bfldlen), EXFAIL, NULL},
+    {TUF, 0x1152,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
+                            
+    {TUF, 0x1153,  "ubf",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+                /* using uint len and full tag (from which at offset we extract the buffer type) */
+            EXOFFSET(proto_ufb_fld_t,typelen), EXFAIL, NULL, EXOFFSET(proto_ufb_fld_t,typetag)},
+    
+    {TUF, 0x1154,  "view",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+                /* using uint len and full tag (from which at offset we extract the buffer type) */
+            EXOFFSET(proto_ufb_fld_t,typelen), EXFAIL, NULL, EXOFFSET(proto_ufb_fld_t,typetag)},
+                            
     {TUF, EXFAIL}
 };
 
@@ -376,7 +398,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     int i;
     int conv_bcd = EXFALSE;
     char numbuf[1024];
-    
+    int len=0; /* increment len */
     /* Bug #182 added ABS fix. */
     switch (fld->fld_type)
     {
@@ -406,6 +428,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             proto_buf[*proto_buf_offset] = *tmp;
             proto_buf[*proto_buf_offset+1] = 0; /* later for strcpy */
             *proto_buf_offset += 1;
+            len=1;
             
         }
             break;
@@ -444,7 +467,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_STRING:
         {
             /* EOS must be present in c struct! */
-            int len = strlen(c_buf_in);
+            len = strlen(c_buf_in);
             
             CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, len+1);
             
@@ -481,7 +504,8 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             unsigned *tmp = (unsigned *)c_buf_in;
             snprintf(numbuf, sizeof(numbuf), "%u", *tmp);
             conv_bcd = EXTRUE;
-        }    
+        }   
+            break;
         case EXF_USHORT:
         {
             unsigned short *tmp = (unsigned short *)c_buf_in;
@@ -512,6 +536,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             
             memcpy(proto_buf+*proto_buf_offset, c_buf_in, c_buf_in_len);
             *proto_buf_offset += c_buf_in_len;
+            len = c_buf_in_len;
             
             /* Built representation for user... for debug purposes... */
             if (debug_get_ndrx_level() >= log_debug)
@@ -539,7 +564,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         }
         else if (EXF_CARRAY!=fld->fld_type)
         {
-            NDRX_STRCPY_SAFE_DST(debug_buf, proto_buf + (*proto_buf_offset), debug_bufsz);
+            NDRX_STRCPY_SAFE_DST(debug_buf, proto_buf + (*proto_buf_offset)-len, debug_bufsz);
         }
     }
     /* else should be set up already by carray func! */
@@ -575,7 +600,7 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
             NDRX_STRCPY_SAFE(tmp_char_buf, bcd_tmp+j);
             sscanf(tmp_char_buf, "%x", &hex_dec);
             
-            /*NDRX_LOG(6, "got hex 0x%x", hex_dec);*/
+            /*NDRX_LOG(log_error, "got hex 0x%x (org: %s)", hex_dec, numbuf);*/
             
             proto_buf[(*proto_buf_offset) + bcd_pos] = (char)(hex_dec & 0xff);
             /*NDRX_LOG(6, "put[%d] %x",bcd_pos, c_buf_out[bcd_pos]);*/
@@ -1313,7 +1338,163 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 }
                 
                 break;
+            case XATMIBUF:
+            {
+                /* This is special driver for ATMI buffer */
+                unsigned buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
+                unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
+                char *data = (char *)(ex_buf+offset+p->offset);
+                int f_type;
+                Bnext_state_t state;
                 
+                buffer_type = NDRX_MBUF_TYPE(buffer_type);
+                        
+                NDRX_LOG(log_debug, "Buffer type is: %u", 
+                        buffer_type);
+                
+                if (BUF_TYPE_UBF==buffer_type ||
+                        BUF_TYPE_VIEW==buffer_type)
+                {
+                    UBFH *p_ub = (UBFH *)data;
+                    
+                    /* char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];*/
+                    char *f_data_buf;
+                    ssize_t f_data_buf_len;
+                    proto_ufb_fld_t *f;
+                    BFLDOCC occ;
+                    
+                    short accept_tags[] = {UBF_TAG_BFLDID, UBF_TAG_BFLDLEN, 0, EXFAIL};
+                    
+                    /* Reserve space for Tag/Length */
+                    /* <sub tlv> */
+                    long len_offset;
+                    long off_start;
+                    long off_stop;
+                    
+                    xmsg_t tmp_cv;
+                    
+                    NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
+                    
+                    f =  (proto_ufb_fld_t *)f_data_buf;
+
+                    /* This is sub tlv/ thus put tag... */
+                    NDRX_LOG(log_debug, "START YOPT %x TAGOFF=%d", p->tag, *proto_buf_offset);
+                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
+                            proto_buf_offset, proto_bufsz))
+                    {
+                        NDRX_SYSBUF_FREE(f_data_buf);
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    len_offset = *proto_buf_offset;
+                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
+                    *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
+                    
+                    off_start = *proto_buf_offset;
+                    /* </sub tlv> */
+                    memcpy(&tmp_cv, cv, sizeof(tmp_cv));
+                    tmp_cv.tab[0] = M_ubf_field;
+
+                    /* <process field by field> */
+                    NDRX_LOG(log_debug, "Processing UBF buffer");
+                    
+                    /* loop over the buffer & process field by field */
+                    /*memset(f.buf, 0, sizeof(f.buf));  <<< HMMM Way too slow!!! */
+                    
+                    f->bfldlen = NDRX_MSGSIZEMAX - sizeof(*f);
+                    f->bfldid = BFIRSTFLDID;
+                    
+                    memset(&state, 0, sizeof(state));
+                    /* optimization: TODO: we could replace get with ptr to data? */
+                    while(1==ndrx_Bnext(&state, p_ub, &f->bfldid, &occ, f->buf, &f->bfldlen, NULL))
+                    {
+                        f_type = Bfldtype(f->bfldid);
+                        
+                        accept_tags[2] = M_ubf_proto_tag_map[f_type];
+                        
+                        f->typetag = 0; /* default not used */
+                        
+                        /* check the buffer fields view / ubf */
+                        
+                        if (BFLD_UBF==f_type)
+                        {
+                            f->typetag =  BUF_TYPE_UBF << NDRX_MBUF_OFFSET;
+                        }
+                        else if (BFLD_VIEW==f_type)
+                        {
+                            f->typetag =  BUF_TYPE_VIEW << NDRX_MBUF_OFFSET;
+                        }
+                        
+                        NDRX_LOG(log_debug, "UBF type %d mapped to "
+                                "tag %hd", f_type, accept_tags[2]);
+                        
+                        /* Hmm lets drive our structure? */
+                        ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
+                            (char *)f, f_data_buf_len, proto_buf, 
+                            proto_buf_offset,  accept_tags, f, proto_bufsz);
+                    
+                        if (EXSUCCEED!=ret)
+                        {
+                            NDRX_LOG(log_error, "Failed to convert "
+                                    "sub/tag %x: [%s] %ld"
+                                    "at offset %ld", 
+                                    p->tag, p->cname, p->offset);
+                            NDRX_SYSBUF_FREE(f_data_buf);
+                            EXFAIL_OUT(ret);
+                        }
+                        /*
+                         * why?
+                        memset(f.buf, 0, sizeof(f.buf));
+                         */
+                        f->bfldlen = f_data_buf_len - sizeof(*f);
+                    }
+                    
+                    /* </process field by field> */
+                    
+                    /* <sub tlv> */
+                    off_stop = *proto_buf_offset;
+                    /* Put back len there.. */
+                    len_written = (short)(off_stop - off_start);
+                    NDRX_LOG(log_debug, "YOPT TAGOFF=%d", len_offset);
+                    if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
+                            proto_bufsz))
+                    {
+                        NDRX_SYSBUF_FREE(f_data_buf);
+                        EXFAIL_OUT(ret);
+                    }
+                    NDRX_LOG(log_error, "YOPT ! len_written=%d", len_written);
+                    
+                    NDRX_DUMP(log_error, "YOPT YOPT",proto_buf, *proto_buf_offset);
+                    
+                    /* </sub tlv> */
+                    NDRX_SYSBUF_FREE(f_data_buf);
+                }
+                else
+                {
+                    /* Should work for string buffers too, if EOS counts in len! */
+                    NDRX_LOG(log_debug, "Processing data block buffer");
+                    
+                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, 
+                            proto_buf, proto_buf_offset, proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    if (EXSUCCEED!=ndrx_write_len((int)*buf_len, proto_buf, 
+                            proto_buf_offset, proto_bufsz))
+                    {
+                        EXFAIL_OUT(ret);
+                    }
+                    
+                    len_written = *buf_len;
+                    
+                    /* Put data on network */
+                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, *buf_len);
+                    memcpy(proto_buf+(*proto_buf_offset), data, *buf_len);
+                    *proto_buf_offset=*proto_buf_offset + *buf_len;
+                }
+            }
+                break;
                 /* case ATMIBUF is processed as part of master buffer  */
         }
         
@@ -1520,12 +1701,11 @@ expublic int exproto_proto2ex(char *proto_buf, long proto_len,
  * @param proto_len - block len received
  * @return 
  */
-expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
+expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
         char *ex_buf, long ex_offset, long *max_struct, int level, 
         UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz)
 {
     int ret=EXSUCCEED;
-    char *fn = "exproto_proto2ex";
     xmsg_t *cv = NULL;
     /* Current conv table: */
     cproto_t *fld = NULL;
@@ -1544,6 +1724,7 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     size_t tmpf_len;
     proto_ufb_fld_t *f;
     proto_ufb_fld_t tmpdata; /* temporary field infos storage */
+    int done=EXFALSE;
 
     tmpdata.bfldid=0;
     tmpdata.bfldlen=0;
@@ -1554,13 +1735,15 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     NDRX_DUMP(log_debug, "_exproto_proto2ex enter", 
                     proto_buf, proto_len);
         
-    while (int_pos < proto_len)
+    while (int_pos < proto_len && !done)
     {
         /* Read tag */
         net_tag = read_net_short(proto_buf, &int_pos);
         
         /* Read len */
         net_len = read_net_int(proto_buf, &int_pos);
+        
+        NDRX_LOG(log_error, "YOPT TAG=%x LEN=%d", net_tag, net_len);
         /*
         NDRX_LOG(log_debug, "Got tag: %x, got len: %x (%hd)", 
                 net_tag, net_len, net_len);
@@ -1629,7 +1812,8 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             UBF_TAG_BFLD_FLOAT == net_tag ||
                             UBF_TAG_BFLD_DOUBLE == net_tag ||
                             UBF_TAG_BFLD_STRING == net_tag ||
-                            UBF_TAG_BFLD_CARRAY == net_tag))
+                            UBF_TAG_BFLD_CARRAY == net_tag || 
+                            UBF_TAG_BFLD_PTR == net_tag))
                     {
                         
                         NDRX_LOG(log_debug, "Installing FB field: "
@@ -1667,16 +1851,13 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     }
                     else
                     {
-                        ret = _exproto_proto2ex(cv->tab[level+1], 
+                        if (EXFAIL==_exproto_proto2ex(cv->tab[level+1], 
                                     (char *)(proto_buf+int_pos), net_len, 
                                     ex_buf, ex_offset+fld->offset,
-                                    max_struct, level+1, NULL, NULL, ex_bufsz);
-                        
-                        if (EXSUCCEED!=ret)
+                                    max_struct, level+1, NULL, NULL, ex_bufsz))
                         {
-                            goto out;
+                            EXFAIL_OUT(ret);
                         }
-                        
                     }
                     
                     
@@ -1698,15 +1879,15 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     NDRX_LOG(log_debug, "XINC");
                     /* Go level deeper & use included table */
                     
-                    ret = _exproto_proto2ex(fld->include, 
+                    if (EXFAIL==_exproto_proto2ex(fld->include, 
                                     (char *)(proto_buf+int_pos), net_len, 
                                     ex_buf, ex_offset+fld->offset,
-                                    max_struct, level+1, NULL, NULL, ex_bufsz);
-
-                    if (EXSUCCEED!=ret)
+                                    max_struct, level+1, NULL, NULL, ex_bufsz))
                     {
-                        goto out;
+                        EXFAIL_OUT(ret);
                     }
+
+                    
                     NDRX_LOG(log_debug, "return from XINC...");
                 }
                     break;
@@ -1715,14 +1896,12 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 {
                     NDRX_LOG(log_debug, "XLOOP, array elem: %d", 
                             loop_keeper);
-                    ret = _exproto_proto2ex(fld->include, 
+                    if (EXFAIL==_exproto_proto2ex(fld->include, 
                                     (char *)(proto_buf+int_pos), net_len, 
                                     ex_buf, (ex_offset+fld->offset + fld->elem_size*loop_keeper),
-                                    max_struct, level+1, NULL, NULL, ex_bufsz);
-                    
-                    if (EXSUCCEED!=ret)
+                                    max_struct, level+1, NULL, NULL, ex_bufsz))
                     {
-                        goto out;
+                        EXFAIL_OUT(ret);
                     }
 
                     loop_keeper++;
@@ -1744,18 +1923,21 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 break;                    
                 case XATMIBUF:
                 {
-                    short *buffer_type = (short *)(ex_buf+ex_offset+fld->buftype_offset);
+                    unsigned *p_buffer_type = (unsigned*)(ex_buf+ex_offset+fld->buftype_offset);
                     unsigned *buf_len = (unsigned *)(ex_buf+ex_offset+fld->counter_offset);
                     char *data = (char *)(ex_buf+ex_offset+fld->offset);
+                    unsigned buffer_type;
                     
+                    buffer_type = NDRX_MBUF_TYPE(*p_buffer_type);
+                        
                     
                     NDRX_LOG(log_debug, "Processing XATMIBUF");
                     NDRX_SYSBUF_MALLOC_OUT(tmpf, tmpf_len, ret);
     
                     f=(proto_ufb_fld_t *)tmpf;
                     
-                    if (*buffer_type == BUF_TYPE_UBF || 
-                            *buffer_type == BUF_TYPE_VIEW)
+                    if (buffer_type == BUF_TYPE_UBF || 
+                            buffer_type == BUF_TYPE_VIEW)
                     {   
                         UBFH *p_ub = (UBFH *)(ex_buf+ex_offset+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
@@ -1780,14 +1962,17 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         }
                         
                         /* OK, we have a FB now process field by field...? */
-                        ret = _exproto_proto2ex(M_ubf_field,  
+                        if (EXFAIL==_exproto_proto2ex(M_ubf_field,  
                                     (char *)(proto_buf+int_pos), net_len, 
                                     /* Drive over internal variable + we should 
                                      * have callback when data completed, so that
                                      * we can install them in FB! */
                                     (char *)f, 0,
                                     max_struct, level,
-                                    p_ub, f, tmpf_len);
+                                    p_ub, f, tmpf_len))
+                        {
+                            EXFAIL_OUT(ret);
+                        }
                         
                         /* clean up temp buffer.. */
                         NDRX_FPFREE(tmpf);
@@ -1805,7 +1990,7 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         xatmi_fld_len = hdr->buf_len;
                         p_fld_len = &xatmi_fld_len;
                         
-                        NDRX_LOG(log_error, "YOPT BUFLEN I: %d", hdr->buf_len);
+                        NDRX_LOG(log_error, "YOPT BUFLEN I: %d ptr %p", hdr->buf_len, buf_len);
                         *buf_len = hdr->buf_len;
                                 
                         /* Bprint(p_ub); Bug #120 */
@@ -1834,6 +2019,21 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                     more_debug->name);
                         }
                         
+                        /**
+                         * if there was master UBF present, then this
+                         * is inner buffer... thus add the field.
+                         * optimization: addfast
+                         */
+                        if (NULL!=p_x_fb && EXSUCCEED!=Badd(p_x_fb, p_ub_data->bfldid, 
+                                p_ub_data->buf, 0))
+                        {
+                            NDRX_LOG(log_error, "Failed to setup field %s:%s",
+                                    Bfname(p_ub_data->bfldid), Bstrerror(Berror));
+                            
+                            ret=EXFAIL;
+                            goto out;
+                        }
+                        
                     }
                     else
                     {
@@ -1851,6 +2051,14 @@ expublic int _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         
                         xatmi_fld_len = *buf_len;
                         p_fld_len = &xatmi_fld_len;
+                    }
+                    
+                    /* if restoring inner buffers, then continue
+                     * for master buffer, TLV will deblock this again...
+                     */
+                    if (!p_x_fb)
+                    {
+                        done=EXTRUE;
                     }
                     
                 }
@@ -1892,6 +2100,13 @@ out:
     {
         NDRX_SYSBUF_FREE(tmpf);
     }
+
+    /* return the bytes processed... */
+    if (EXFAIL!=ret)
+    {
+        ret=int_pos;
+    }
+
     return ret;
 }
 

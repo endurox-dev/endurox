@@ -49,6 +49,7 @@
 #include <extest.h>
 #include <atmi_int.h>
 #include <exproto.h>
+#include <atmi_tls.h>
 
 /**
  * Basic preparation before the test
@@ -77,10 +78,14 @@ Ensure(test_proto_ubfcall)
     ndrx_stopwatch_t w;
     time_t t;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 1024);
+    UBFH *p_ci = (UBFH *)tpalloc("UBF", 0, 1024);
     UBFH *p_ub5 = NULL;
+    UBFH *p_ci5 = NULL;
     long olen;
     long call_len_org;
     assert_not_equal(p_ub, NULL);
+    
+    ATMI_TLS_ENTRY;
     
     /* reset call header */
     memset(call, 0, sizeof(*call));
@@ -98,8 +103,14 @@ Ensure(test_proto_ubfcall)
     netcall->command_id=ATMI_COMMAND_TPCALL;
     netcall->msg_type=BR_NET_CALL_MSG_TYPE_ATMI;
     
-    /* Load some buffer fields (standard mode currently */
-    extest_ubf_set_up_dummy_data(p_ub, 0);
+    /* set call infos */
+    assert_equal(Bchg(p_ci, T_STRING_6_FLD, 4, "HELLO CALL INFO", 0), EXSUCCEED);
+    
+    /* load primary data.., including sub-ubf buf */
+    extest_ubf_set_up_dummy_data(p_ub, EXTEST_PROC_UBF);
+    
+    assert_equal(tpsetcallinfo((char *)p_ub, p_ci, 0), EXSUCCEED);
+    
     call->data_len=sizeof(buf)-sizeof(*call)-sizeof(*netcall);
     assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
             &call->data_len, 0, 0), EXSUCCEED);
@@ -122,8 +133,12 @@ Ensure(test_proto_ubfcall)
     memset(buf, 0, sizeof(buf));
     
     /* deserialize the buffer back... */
-    assert_equal(exproto_proto2ex(proto_out, proto_len, 
-        buf, &proto_len, sizeof(buf)), EXSUCCEED);
+    assert_not_equal(exproto_proto2ex(proto_out, proto_len, 
+        buf, &proto_len, sizeof(buf)), EXFAIL);
+    
+    
+    ndrx_mbuf_tlv_debug(call->data, call->data_len);
+    
     
     NDRX_LOG(log_debug, "protolen: %ld", proto_len);
     
@@ -150,8 +165,16 @@ Ensure(test_proto_ubfcall)
     Bprint(p_ub5);
     assert_equal(Bcmp(p_ub, p_ub5), 0);
     
+    /* read the call infos ! */
+    assert_equal(tpgetcallinfo((char *)p_ub5, &p_ci5, 0), EXSUCCEED);
+    assert_equal(Bcmp(p_ci, p_ci5), 0);
+    
+
     tpfree((char *)p_ub);
     tpfree((char *)p_ub5);
+    
+    tpfree((char *)p_ci);
+    tpfree((char *)p_ci5);
  
 }
 

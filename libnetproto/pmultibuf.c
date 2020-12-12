@@ -218,35 +218,51 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     unsigned step_size;
     unsigned ex_offset_dyn;
     int ret = EXSUCCEED;
-    ndrx_mbuf_tlv_t *tlv_hdr = (ndrx_mbuf_tlv_t *)(ex_buf+(*max_struct)+fld->offset);
+    long int_pos=0;
+    ndrx_mbuf_tlv_t *tlv_hdr;
     
     /* use cached len */
     /* bfldlen is current master buf offset, for several blocks.. */
-    ex_offset_dyn = fld->offset + p_ub_data->bfldlen;
-            
     /*
      * The same C offset, yet nothing unloaded.
+     * So here we need loop over... the proto_len
+     * as there might be several buffers,
+     * and each mbuf terminator is xatmi buf, which terminates the loop
+     * within
      */
-    ret = _exproto_proto2ex_atmibuf(ndrx_G_ndrx_mbuf_tlv_x, proto_buf, proto_len, 
-            ex_buf, ex_offset+ex_offset_dyn, max_struct, 
-            0, NULL, NULL, ex_bufsz);
-
-    if (EXSUCCEED!=ret)
+    do
     {
-        goto out;
-    }
+        NDRX_LOG(log_error, "YOPT offf ex_offset = %ld fld->offset= %ld p_ub_data->bfldlen=%d", 
+            ex_offset, fld->offset, p_ub_data->bfldlen);
+        
+        ex_offset_dyn = ex_offset+fld->offset + p_ub_data->bfldlen;
+        tlv_hdr =  (ndrx_mbuf_tlv_t *)(ex_buf+ex_offset_dyn);
 
-    /* add the master-len value (i.e. increment the f and publish to  buf_len */
-    step_size=ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t);
+        ret = _exproto_proto2ex(ndrx_G_ndrx_mbuf_tlv_x, proto_buf+int_pos, proto_len, 
+                ex_buf, ex_offset_dyn, max_struct, 
+                0, NULL, NULL, ex_bufsz);
+        
+        if (EXFAIL==ret)
+        {
+            goto out;
+        }
+        
+        int_pos+=ret;
+        ret=EXSUCCEED;
+        
+        /* add the master-len value (i.e. increment the f and publish to  buf_len */
+        step_size=ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t);
+
+        /* we might get several calls here */
+        p_ub_data->bfldlen+=step_size;
+
+        NDRX_LOG(log_error, "YOPT step size: %u %d %p", 
+                p_ub_data->bfldlen, tlv_hdr->len, &tlv_hdr->len);
+
+        /* update the call mater len */
+        *buf_len= p_ub_data->bfldlen;
     
-    /* we might get several calls here */
-    p_ub_data->bfldlen+=step_size;
-    
-    NDRX_LOG(log_error, "YOPT step size: %u %d", 
-            p_ub_data->bfldlen, tlv_hdr->len);
-    
-    /* update the call mater len */
-    *buf_len= p_ub_data->bfldlen;
+    } while (int_pos < proto_len);
     
 out:
     

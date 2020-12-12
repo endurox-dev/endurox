@@ -50,8 +50,7 @@ include_directories (. ${ENDUROX_SOURCE_DIR}/include ${ENDUROX_SOURCE_DIR}/libns
 # The extension is already found. Any number of sources could be listed here. 
 add_library (netproto SHARED
    	        proto.c
-                pmultibuf.c
-                pxatmibuf.c)
+                pmultibuf.c)
 
 if(CMAKE_OS_NAME STREQUAL "CYGWIN")
     target_link_libraries(netproto nstd ubf)
