@@ -215,7 +215,7 @@ static short M_ubf_proto_tag_map[] =
 static cproto_t M_ubf_field[] = 
 {
     {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
-    {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 6},
+    {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
     /* Typed fields... */
     {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLD, 1, 6},
     {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
@@ -226,7 +226,7 @@ static cproto_t M_ubf_field[] =
     {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
                             /* Using counter offset as carry len field... */
                             NULL, EXOFFSET(proto_ufb_fld_t,bfldlen), EXFAIL, NULL},
-    {TUF, 0x1152,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
+    {TUF, 0x1152,  "ptr",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
                             
     {TUF, 0x1153,  "ubf",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
@@ -327,6 +327,30 @@ expublic cproto_t ndrx_G_ndrx_mbuf_tlv_x[] =
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
             EXOFFSET(ndrx_mbuf_tlv_t,len), EXFAIL, NULL, EXOFFSET(ndrx_mbuf_tlv_t,tag)},
     {MBU, EXFAIL}
+};
+
+/* Helper driver table for VIEW buffer. */
+#define TVF         10 /* view field */
+static cproto_t M_view_field[] = 
+{
+    {TUF, 0x10FF,  "cname", OFSZ(proto_ufb_fld_t, cname),  EXF_STRING,   XFLD, 1, NDRX_VIEW_CNAME_LEN+1},
+    /* For UBF we could optimize this out? Do not send it at times? */
+    {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
+    
+    /* Typed fields... */
+    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLD, 1, 6},
+    /* int padded with sign in front */
+    {TUF, 0x1113,  "int",   OFSZ(proto_ufb_fld_t, buf), EXF_INT,     XFLD, 1, 12},
+    
+    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
+    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLD, 1, 1},
+    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLD, 1, 40},
+    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLD, 1, 40},
+    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLD, 0, PMSGMAX},
+    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
+                            /* Using counter offset as carry len field... */
+                            NULL, EXOFFSET(proto_ufb_fld_t,bfldlen), EXFAIL, NULL},
+    {TUF, EXFAIL}
 };
 
 /**
@@ -1345,18 +1369,35 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
                 char *data = (char *)(ex_buf+offset+p->offset);
                 int f_type;
-                Bnext_state_t state;
-                
+                long len_offset;
+                long off_start;
+                long off_stop;
+                    
                 buffer_type = NDRX_MBUF_TYPE(buffer_type);
                         
                 NDRX_LOG(log_debug, "Buffer type is: %u", 
                         buffer_type);
                 
-                if (BUF_TYPE_UBF==buffer_type ||
-                        BUF_TYPE_VIEW==buffer_type)
+                
+                /* TAG START / KEEP POS */
+                NDRX_LOG(log_debug, "START YOPT %x TAGOFF=%d", p->tag, *proto_buf_offset);
+
+                if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
+                        proto_buf_offset, proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                len_offset = *proto_buf_offset;
+                CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
+                *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
+                off_start = *proto_buf_offset;
+                /* TAG START / KEEP POS (END) */
+                
+                /* TODO: Add common length start */
+                if (BUF_TYPE_UBF==buffer_type)
                 {
                     UBFH *p_ub = (UBFH *)data;
-                    
+                    Bnext_state_t state;
                     /* char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];*/
                     char *f_data_buf;
                     ssize_t f_data_buf_len;
@@ -1367,32 +1408,15 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     
                     /* Reserve space for Tag/Length */
                     /* <sub tlv> */
-                    long len_offset;
-                    long off_start;
-                    long off_stop;
-                    
                     xmsg_t tmp_cv;
                     
                     NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
                     
                     f =  (proto_ufb_fld_t *)f_data_buf;
-
-                    /* This is sub tlv/ thus put tag... */
-                    NDRX_LOG(log_debug, "START YOPT %x TAGOFF=%d", p->tag, *proto_buf_offset);
-                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
-                            proto_buf_offset, proto_bufsz))
-                    {
-                        NDRX_SYSBUF_FREE(f_data_buf);
-                        EXFAIL_OUT(ret);
-                    }
                     
-                    len_offset = *proto_buf_offset;
-                    CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, LEN_BYTES);
-                    *proto_buf_offset=*proto_buf_offset+LEN_BYTES;
-                    
-                    off_start = *proto_buf_offset;
                     /* </sub tlv> */
                     memcpy(&tmp_cv, cv, sizeof(tmp_cv));
+                    tmp_cv.descr = "UBFFLD";
                     tmp_cv.tab[0] = M_ubf_field;
 
                     /* <process field by field> */
@@ -1410,6 +1434,9 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     {
                         f_type = Bfldtype(f->bfldid);
                         
+                        /* TODO: Optimize out the length field for fixed
+                         * data types
+                         */
                         accept_tags[2] = M_ubf_proto_tag_map[f_type];
                         
                         f->typetag = 0; /* default not used */
@@ -1450,49 +1477,37 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     }
                     
                     /* </process field by field> */
-                    
-                    /* <sub tlv> */
-                    off_stop = *proto_buf_offset;
-                    /* Put back len there.. */
-                    len_written = (short)(off_stop - off_start);
-                    NDRX_LOG(log_debug, "YOPT TAGOFF=%d", len_offset);
-                    if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
-                            proto_bufsz))
-                    {
-                        NDRX_SYSBUF_FREE(f_data_buf);
-                        EXFAIL_OUT(ret);
-                    }
-                    NDRX_LOG(log_error, "YOPT ! len_written=%d", len_written);
-                    
-                    NDRX_DUMP(log_error, "YOPT YOPT",proto_buf, *proto_buf_offset);
-                    
-                    /* </sub tlv> */
                     NDRX_SYSBUF_FREE(f_data_buf);
                 }
+                else if (BUF_TYPE_VIEW==buffer_type)
+                {
+                    NDRX_LOG(log_debug, "Converting view out");
+                    
+                    /* TODO: */
+                }    
                 else
                 {
                     /* Should work for string buffers too, if EOS counts in len! */
-                    NDRX_LOG(log_debug, "Processing data block buffer");
-                    
-                    if (EXSUCCEED!=ndrx_write_tag((short)p->tag, 
-                            proto_buf, proto_buf_offset, proto_bufsz))
-                    {
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    if (EXSUCCEED!=ndrx_write_len((int)*buf_len, proto_buf, 
-                            proto_buf_offset, proto_bufsz))
-                    {
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    len_written = *buf_len;
-                    
+                    NDRX_LOG(log_debug, "Processing data block buffer");                    
                     /* Put data on network */
                     CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, *buf_len);
                     memcpy(proto_buf+(*proto_buf_offset), data, *buf_len);
                     *proto_buf_offset=*proto_buf_offset + *buf_len;
                 }
+                
+                /* <sub tlv - common lenght (real data) > */
+                off_stop = *proto_buf_offset;
+                /* Put back len there.. */
+                len_written = (short)(off_stop - off_start);
+                NDRX_LOG(log_debug, "YOPT TAGOFF=%d", len_offset);
+                if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
+                        proto_bufsz))
+                {
+                    EXFAIL_OUT(ret);
+                }
+                /* </sub tlv> */
+
+                
             }
                 break;
                 /* case ATMIBUF is processed as part of master buffer  */
