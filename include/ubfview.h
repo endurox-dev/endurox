@@ -183,6 +183,18 @@ typedef struct
     char data[0];                       /**< pointer to view structure  */ 
 } ndrx_view_header;
 
+
+/**
+ * View occurrence counter
+ */
+typedef struct ndrx_viewocc ndrx_viewocc_t;
+struct ndrx_viewocc
+{
+    char fldnm[NDRX_VIEW_CNAME_LEN+1];  /**< field name */
+    int occ;            /**< Current field occurrence */
+    EX_hash_handle hh; /**< makes this structure hashable (for msgid)        */
+};
+
 /*---------------------------Globals------------------------------------*/
 extern ndrx_typedview_t *ndrx_G_view_hash;
 /*---------------------------Statics------------------------------------*/
@@ -262,6 +274,11 @@ extern NDRX_API int ndrx_Bvcmp(char *cstruct1, char *view1, char *cstruct2, char
 
 extern NDRX_API int ndrx_Bvfprint (char *cstruct, char *view, FILE * outf,
           ndrx_plugin_tplogprintubf_hook_t p_writef, void *dataptr1, int level);
+
+/* hash-map for getting field occurrence when reading fields in: */
+extern NDRX_API int ndrx_viewocc_get(ndrx_viewocc_t **hhandle, char *fld);
+extern NDRX_API void ndrx_viewocc_free(ndrx_viewocc_t **hhandle);
+
 
 #ifdef	__cplusplus
 }

@@ -189,6 +189,7 @@ struct proto_ufb_fld
     int bfldlen;    /**< used also as indicator for total buffer len in mbuf */
     unsigned typetag;/**< type in mbuf bits                                  */
     unsigned typelen;/**< used for sub-buffers                               */
+    char cname [NDRX_VIEW_CNAME_LEN+1]; /**< used by views                   */
 #if EX_ALIGNMENT_BYTES == 8
     long         padding1;
 #endif

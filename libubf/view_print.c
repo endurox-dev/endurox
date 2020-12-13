@@ -60,18 +60,6 @@
 #define OUTPUT_FORMAT_NDATA fmt_ndata, f->cname
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/**
- * View occurrence counter
- */
-typedef struct ndrx_viewocc ndrx_viewocc_t;
-struct ndrx_viewocc
-{
-    char fldnm[NDRX_VIEW_CNAME_LEN+1];  /**< field name */
-    int occ;            /**< Current field occurrence */
-    EX_hash_handle hh; /**< makes this structure hashable (for msgid)        */
-};
-
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -82,7 +70,7 @@ struct ndrx_viewocc
  * the hash
  * @return -1 if failed (malloc), >=0 occurrence
  */
-exprivate int ndrx_viewocc_get(ndrx_viewocc_t **hhandle, char *fld)
+expublic int ndrx_viewocc_get(ndrx_viewocc_t **hhandle, char *fld)
 {
     ndrx_viewocc_t *el;
     int occ=EXFAIL;
@@ -119,7 +107,7 @@ out:
  * free occ counter hash
  * @param hhandle hash handle
  */
-exprivate void ndrx_viewocc_free(ndrx_viewocc_t **hhandle)
+expublic void ndrx_viewocc_free(ndrx_viewocc_t **hhandle)
 {
     ndrx_viewocc_t * el = NULL;
     ndrx_viewocc_t * tmp = NULL;
