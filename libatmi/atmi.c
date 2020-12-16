@@ -1328,11 +1328,13 @@ expublic int tpgetcallinfo(const char *msg, UBFH **cibuf, long flags)
         EXFAIL_OUT(ret);   
     }
     
+    /* we will realloc correspondingly
     if (NULL==cibuf)
     {
         ndrx_TPset_error_fmt(TPEINVAL, "obuf cannot be null NULL", msg);
         EXFAIL_OUT(ret);   
     }
+    */
     
     if (0!=flags)
     {

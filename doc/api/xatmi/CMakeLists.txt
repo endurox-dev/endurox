@@ -139,6 +139,7 @@ set(MAN3_NAMES
         tpdecrypt
         tpexit
         tpsetcallinfo
+        tpgetcallinfo
 )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 
