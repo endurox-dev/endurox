@@ -55,7 +55,7 @@ export PATH=$PATH:$TESTDIR
 
 # fallback to default compiler
 if [ "X$CC" == "X" ]; then
-	export CC=cc
+    export CC=cc
 fi
 
 export NDRX_TOUT=10
@@ -114,12 +114,36 @@ rm ULOG* 2>/dev/null
 
 UNAME=`uname -s`
 
-###############################################################################
-echo "Configure environment..."
-###############################################################################
+
+function comp_version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3); }'; }
+#
+# Support #612 test c++ support
+#
+for TEST_COMP in "cc" "c++"; do
+
 
 # must have flags
 COMPFLAGS=""
+
+if [ $TEST_COMP == "c++" ]; then
+
+    if [ "$UNAME" != "Linux" ]; then
+        echo "c++ Only available for linux (thus done)"
+    fi
+
+    # detect compiler version
+    if [ $(comp_version `gcc --version | awk '/gcc/ {print $(NF-1)}'`) -ge $(comp_version "4.3.4") ]; then
+        COMPFLAGS="-Wno-write-strings"
+    fi
+
+    echo "Switching to C++"
+    export CC=c++
+
+fi
+
+###############################################################################
+echo "Configure environment..."
+###############################################################################
 
 # Additional, application specific
 ADDFLAGS=""
@@ -495,15 +519,18 @@ fi
 # Check: Buildserver thread option says single-threaded, but MINDISPATCHTHREADS=5 MAXDISPATCHTHREADS=5
 if [ "X`grep 'falling back to single thread mode' ULOG*`" == "X" ]; then
     echo "Missing single-thread warning!"
-    RET=-14
+    go_out -14
 fi
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
-    RET=-20
+    go_out -20
 fi
 
-go_out $RET
+
+done
+
+go_out 0
 
 # vim: set ts=4 sw=4 et smartindent:

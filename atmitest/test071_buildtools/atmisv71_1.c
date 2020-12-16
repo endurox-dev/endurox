@@ -42,6 +42,11 @@
 #include <unistd.h>
 #include "test71.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*---------------------------Externs------------------------------------*/
 extern void TESTSV (TPSVCINFO *p_svc);
 /*---------------------------Macros-------------------------------------*/
@@ -76,4 +81,7 @@ out:
     return ret;
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 /* vim: set ts=4 sw=4 et smartindent: */

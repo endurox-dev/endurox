@@ -34,7 +34,7 @@
 
 cmake_minimum_required (VERSION 3.1) 
 project (ENDUROX) 
-set(VERSION "7.5.10")
+set(VERSION "7.5.12")
 set(PROJ_NAME "Enduro/X")
 set(RELEASE "1")
 
@@ -656,6 +656,7 @@ endif()
 
 set(CPACK_PACKAGE_CONTACT "contact@mavimax.com")
 set(CPACK_PACKAGE_VERSION ${VERSION})
+set(CPACK_PACKAGE_VENDOR "Mavimax Ltd")
 set(CPACK_RPM_PACKAGE_RELEASE ${RELEASE})
 set(CPACK_RPM_PACKAGE_RELEASE_DIST ${RELEASE})
 set(CPACK_DEBIAN_PACKAGE_RELEASE ${RELEASE})

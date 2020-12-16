@@ -54,6 +54,9 @@ used also from 'atmisrvinteg' library. The default version of *tpsvrthrdone(3)* 
 
 This only applies to XATMI servers.
 
+In case if using C++ compiler, function must be defined without name mangling,
+thus extern "C" prefix shall be used.
+
 RETURN VALUE
 ------------
 Not available as function is void.
