@@ -50,6 +50,12 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test71.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*---------------------------Externs------------------------------------*/
 extern int run_tran_services(void);
 extern int run_echo_services(void);
@@ -84,4 +90,7 @@ out:
     return ret;
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 /* vim: set ts=4 sw=4 et smartindent: */

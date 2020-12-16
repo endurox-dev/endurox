@@ -42,6 +42,11 @@
 #include <unistd.h>
 #include "test71.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*---------------------------Externs------------------------------------*/
 extern int __write_to_tx_file(char *buf);
 /*---------------------------Macros-------------------------------------*/
@@ -119,5 +124,8 @@ void DUMFUNC (TPSVCINFO *p_svc)
 }
 
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /* vim: set ts=4 sw=4 et smartindent: */

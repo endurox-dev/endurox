@@ -50,6 +50,12 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test71.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -113,5 +119,9 @@ out:
 
     return ret;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /* vim: set ts=4 sw=4 et smartindent: */

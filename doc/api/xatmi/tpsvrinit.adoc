@@ -53,6 +53,9 @@ used also from 'atmisrvinteg' library. The default version of *tpsvrthrinit(3)* 
 
 This only applies to XATMI servers.
 
+In case if using C++ compiler, function must be defined without name mangling,
+thus extern "C" prefix shall be used.
+
 RETURN VALUE
 ------------
 If application failed to initialize, the user shall return non 0 value. 

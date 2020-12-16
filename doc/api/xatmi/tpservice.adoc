@@ -51,6 +51,9 @@ is allocated by Enduro/X in current process scope. Note that is service was invo
 'appkey' is reserved for future use.  'cltid'  is reserved for future use. 
 'fname' is service function name which was invoked.
 
+In case if using C++ compiler, function must be defined without name mangling,
+thus extern "C" prefix shall be used.
+
 RETURN VALUE
 ------------
 The function does not return any value. But according to XATMI specification, 

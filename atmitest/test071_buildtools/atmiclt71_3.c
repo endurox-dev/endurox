@@ -58,6 +58,11 @@
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * Do the test call to the server
  */
@@ -141,5 +146,9 @@ out:
 
     return ret;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /* vim: set ts=4 sw=4 et smartindent: */

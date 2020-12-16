@@ -90,6 +90,12 @@ expublic int ndrx_buildsrv_generate_code(FILE **f, char *cfile, int thread_optio
     
     fprintf(*f, "/*---------------------------Externs------------------------------------*/\n");
     fprintf(*f, "/* Buildserver auto generated extern service list */\n");
+    
+    /* Support #612: */
+    fprintf(*f, "#ifdef __cplusplus\n");
+    fprintf(*f, "    extern \"C\"\n");
+    fprintf(*f, "{\n");
+    fprintf(*f, "#endif\n");
 
     /* Generate definitions */
     if (EXEOS!=p_rmdef->structname[0])
@@ -160,7 +166,11 @@ expublic int ndrx_buildsrv_generate_code(FILE **f, char *cfile, int thread_optio
         fprintf(*f, "    return( _tmstartserver( argc, argv, &tmsvrargs ));\n");
         fprintf(*f, "}\n");
     }
-
+    
+    fprintf(*f, "#ifdef __cplusplus\n");
+    fprintf(*f, "} // extern \"C\"\n");
+    fprintf(*f, "#endif\n");
+    
 out:
 
     if (NULL!=*f)
@@ -188,6 +198,12 @@ expublic int ndrx_buildclt_generate_code(FILE **f, char *cfile, ndrx_rm_def_t *p
     fprintf(*f, "#include <atmi.h>\n");
     fprintf(*f, "#include <xa.h>\n");
     
+    /* Support #612: */
+    fprintf(*f, "#ifdef __cplusplus\n");
+    fprintf(*f, "    extern \"C\"\n");
+    fprintf(*f, "{\n");
+    fprintf(*f, "#endif\n");
+    
     /* we shall export the "ndrx_G_tmsvrargs" in case if running on windows... */
     fprintf(*f, "#if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)\n");
     fprintf(*f, "#define NDRX_API_EXPORT __declspec(dllexport)\n");
@@ -210,6 +226,12 @@ expublic int ndrx_buildclt_generate_code(FILE **f, char *cfile, ndrx_rm_def_t *p
     fprintf(*f, "{\n");
     fprintf(*f, "    return ndrx_xa_builtin_get();\n");
     fprintf(*f, "}\n");
+    
+    
+    fprintf(*f, "#ifdef __cplusplus\n");
+    fprintf(*f, "} // extern \"C\"\n");
+    fprintf(*f, "#endif\n");
+    
 out:
 
     if (NULL!=*f)
