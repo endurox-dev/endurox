@@ -1,0 +1,66 @@
+TPGETCALLINFO(3)
+================
+:doctype: manpage
+
+
+NAME
+----
+tpgetcallinfo - Read the associated call headers
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpgetcallinfo(const char *'msg', UBFH **'cibuf', long 'flags');
+
+Link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Function is used to retrieve any call header information associated with 'msg'
+XATMI buffer. Both buffers 'msg' and 'cibuf' must be allocated by *tpalloc(3)*
+calls. The 'msg' may be a NULL buffer (null), in that 'cibuf' will be allocated
+to UBF buffer. Once function called, any call infos are copied to 'cibuf' (with
+reallocation, if there is not enough space in 'cibuf').
+
+'flags' is reserved for future use, and shall be set to *0*.
+
+Call information to XATMI buffer is set by *tpsetcallinfo(3)* call, and is associated
+with 'msg' buffer through the call path, i.e. IPC between processes, such as
+*tpcall(3)*. For more details see *tpsetcallinfo(3)* description.
+
+RETURN VALUE
+------------
+On success, *tpgetcallinfo()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* 'msg' is NULL, 'msg' is not XATMI buffer, flags is not *0*. 'cibuf'
+is not XATMI buffer.
+
+*TPESYSTEM* No call infos are associated with 'msg' buffer.
+
+*TPEOS* System failure occurred during serving. See logs i.e. user log, or debugs for more info.
+Also used in cases in case of memory condition.
+
+EXAMPLE
+-------
+See *atmitest/test000_system/atmiunit0.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpsetcallinfo(3)* *tpcall(3)* *tpalloc(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

@@ -61,7 +61,7 @@ See logs i.e. user log, or debugs for more info.
 
 EXAMPLE
 -------
-See *atmitest/test017_srvthread/atmisv17.c* for sample code.
+See *atmitest/test000_system/atmiunit0.c* for sample code.
 
 BUGS
 ----

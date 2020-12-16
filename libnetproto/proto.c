@@ -1126,12 +1126,14 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 if ( UBF_TAG_BFLD_CARRAY == p->tag)
                 {
+                    /* TODO: dereference pointer: */
                     ret = x_ctonet(p, ex_buf+offset+p->offset, proto_buf, 
                             proto_bufsz, proto_buf_offset, debug, sizeof(debug), 
                             p_ub_data->bfldlen);
                 }
                 else
                 {
+                    /* TODO: Dereference ptr, have option? */
                     ret = x_ctonet(p, ex_buf+offset+p->offset, proto_buf, proto_bufsz,
                             proto_buf_offset, debug, sizeof(debug), 0);
                 }
