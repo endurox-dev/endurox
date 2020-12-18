@@ -41,8 +41,10 @@ default *tpsrvinit()* will invoke the *tpsvrthrinit()*.
 To start program as multi-threaded *ndrxconfig.xml(5)* in server section 
 *<mindispatchthreads>* and *<maxdispatchthreads>* must be greater than 1.
 
-
 This only applies to XATMI servers.
+
+In case if using C++ compiler, function must be defined without name mangling,
+thus extern "C" prefix shall be used.
 
 RETURN VALUE
 ------------
