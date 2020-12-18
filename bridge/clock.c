@@ -66,6 +66,56 @@ exprivate time_t M_timediff_tstamp;      /**< UTC tstamp when msg was sent  for 
 exprivate unsigned long M_seq;         /**< Last sequence sent                          */
 
 /**
+ * This returns lock infos to admin requester to have some metrics about
+ * bridge internals
+ * @param call message from queue
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int br_clock_infos(command_call_t *call)
+{
+    int ret=EXSUCCEED;
+    long long diff;
+    command_reply_brclockinfo_t infos; /* currently one ... */
+    
+    memset(&infos, 0, sizeof(infos)); /* not mission critical, so can set mem */
+    
+    /* form up the reply */
+    infos.rply.magic = NDRX_MAGIC;
+    infos.rply.command = call->command+1; /* Make reponse */
+    NDRX_LOG(log_debug, "Reply command: %d", infos.rply.command);
+    infos.rply.msg_type = NDRXD_CALL_TYPE_BRBCLOCKINFO;
+    infos.rply.msg_src = NDRXD_SRC_BRIDGE; /* from NDRXD */
+    
+    /* Response flags, echo back request flags too... */
+    infos.rply.flags = call->flags;
+    infos.rply.error_code = 0;
+    
+    /* have some consistency */
+    MUTEX_LOCK_V(M_timediff_lock);
+    
+    infos.conseq =0; /* increase with new conns / multi con hanlder */
+    infos.lastsync = ndrx_stopwatch_get_delta_sec(&G_bridge_cfg.timediff_ourt);
+    infos.locnodeid = tpgetnodeid();
+    infos.remnodeid = G_bridge_cfg.nodeid;
+    
+    /* read in fast way */
+    pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+    diff = G_bridge_cfg.timediff;
+    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+        
+    /* convert to seconds*/
+    infos.timediffs = (long)(diff/1000);
+    infos.roundtrip = G_bridge_cfg.timediff_roundtrip;
+    
+    MUTEX_UNLOCK_V(M_timediff_lock);
+    
+    ret = ndrx_generic_q_send_2(call->reply_queue, 
+            (char *)&infos, sizeof(infos), 0, BR_ADMININFO_TOUT, 0);
+    
+out:
+    return ret;
+}
+/**
  * Initialize clock diff.
  * @param call
  * @return 

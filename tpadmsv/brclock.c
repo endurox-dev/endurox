@@ -60,43 +60,30 @@
 /*---------------------------Typedefs-----------------------------------*/
     
 /**
- * + OID HASH
- * Image of the service group / dynamic service info
+ * Clock infos metrics from connected bridges
  */
 typedef struct 
 {
-    char servicename[MAXTIDENT+1];      /**< Service name                     */
-    char srvgrp[MAXTIDENT+1];           /**< Server group                     */
-    char state[3+1];                    /**< Current service state, "ACT" const */
-    char lmid[MAXTIDENT+1];             /**< Node id                          */
-    long srvid;                         /**< Server process id                */
-    char svcrname[MAXTIDENT+1];         /**< Function name                    */
-    long ncompleted;                    /**< Requests completed succ + fail   */
-    long totsuccnum;                    /**< Total success calls              */
-    long totsfailnum;                   /**< Total number failures            */
-    long lastexectimeusec;              /**< Last exec time                   */
-    long maxexectimeusec;               /**< max exec time                    */
-    long minexectimeusec;               /**< min exec time                    */
-} ndrx_adm_svcgrp_t;
+    long locnodeid; /**< local node id                      */
+    long remnodeid; /**< remove node id                     */
+    long conseq;    /**< connection sequence                */
+    long lastsync;  /**< last sync time ago (seconds)       */
+    long timediffs; /**< time diff in seconds between hosts */
+    long roundtrip; /**< roundtrip in milliseconds          */
+} ndrx_adm_brclock_t;
 
 /**
- * Service group class infos mapping table
+ * Bridge clock data
  */
-expublic ndrx_adm_elmap_t ndrx_G_svcgrp_map[] =
+expublic ndrx_adm_elmap_t ndrx_G_brclock_map[] =
 {  
     /* Driving of the Preparing: */
-     {TA_LMID,                  TPADM_EL(ndrx_adm_svcgrp_t, lmid)}
-    ,{TA_SERVICENAME,            TPADM_EL(ndrx_adm_svcgrp_t, servicename)}
-    ,{TA_SRVGRP,                TPADM_EL(ndrx_adm_svcgrp_t, srvgrp)}
-    ,{TA_STATE,                 TPADM_EL(ndrx_adm_svcgrp_t, state)}
-    ,{TA_SRVID,                 TPADM_EL(ndrx_adm_svcgrp_t, srvid)}
-    ,{TA_SVCRNAM,               TPADM_EL(ndrx_adm_svcgrp_t, svcrname)}
-    ,{TA_NCOMPLETED,            TPADM_EL(ndrx_adm_svcgrp_t, ncompleted)}
-    ,{TA_TOTSUCCNUM,            TPADM_EL(ndrx_adm_svcgrp_t, totsuccnum)}
-    ,{TA_TOTSFAILNUM,           TPADM_EL(ndrx_adm_svcgrp_t, totsfailnum)}
-    ,{TA_LASTEXECTIMEUSEC,      TPADM_EL(ndrx_adm_svcgrp_t, lastexectimeusec)}
-    ,{TA_MAXEXECTIMEUSEC,       TPADM_EL(ndrx_adm_svcgrp_t, maxexectimeusec)}
-    ,{TA_MINEXECTIMEUSEC,       TPADM_EL(ndrx_adm_svcgrp_t, minexectimeusec)}
+     {TA_LOCNODEID,           TPADM_EL(ndrx_adm_brclock_t, locnodeid)}
+    ,{TA_REMNODEID,           TPADM_EL(ndrx_adm_brclock_t, remnodeid)}
+    ,{TA_SEQUENCE,            TPADM_EL(ndrx_adm_brclock_t, conseq)}
+    ,{TA_EVTIME,              TPADM_EL(ndrx_adm_brclock_t, lastsync)}
+    ,{TA_TIMEDIFF,            TPADM_EL(ndrx_adm_brclock_t, timediffs)}
+    ,{TA_ROUNDTRIP,           TPADM_EL(ndrx_adm_brclock_t, roundtrip)}
     ,{BBADFLDID}
 };
 
@@ -104,77 +91,74 @@ expublic ndrx_adm_elmap_t ndrx_G_svcgrp_map[] =
 /*---------------------------Statics------------------------------------*/
 
 exprivate ndrx_adm_cursors_t *M_cursnew;
-exprivate int M_idx = 0;    /**< Current growlist index */
+exprivate int M_idx;    /**< Current growlist index             */
+exprivate string_list_t *M_qlist; /**< list of admin queues  */
+
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Fill any cluster data here, filter by bridge processes
+ * Process actual infos from bridge
+ * @param reply
+ * @param reply_len
+ * @return EXSUCCED/EXFAIL
+ */
+exprivate int ndrx_adm_brclockinfo_proc_list(command_reply_t *reply, size_t reply_len)
+{
+    command_reply_brclockinfo_t * info = (command_reply_brclockinfo_t*)reply;
+    int ret = EXSUCCEED;
+    ndrx_adm_brclock_t brclock;
+    
+    if (NDRXD_CALL_TYPE_BRBCLOCKINFO!=reply->msg_type)
+    {
+        /* not payload */
+        goto out;
+    }
+
+    /* call the bridge */
+    memset(&brclock, 0, sizeof(brclock));
+    
+    brclock.locnodeid = info->locnodeid;
+    brclock.remnodeid = info->remnodeid;
+    brclock.conseq = info->conseq;
+    brclock.lastsync = info->lastsync;
+    brclock.timediffs = info->timediffs;
+    brclock.roundtrip = info->roundtrip;
+       
+    if (EXSUCCEED!=ndrx_growlist_add(&M_cursnew->list, (void *)&brclock, M_idx))
+    {
+        NDRX_LOG(log_error, "Growlist failed - out of memory?");
+        EXFAIL_OUT(ret);
+    }
+
+    M_idx++;
+    
+out:
+    return ret;
+}
+
+/**
+ * Bridge admin Q listing
  * @param reply
  * @param reply_len
  * @return 
  */
-exprivate int ndrx_adm_svcgrp_proc_list(command_reply_t *reply, size_t reply_len)
+exprivate int ndrx_adm_blist_proc_list(command_reply_t *reply, size_t reply_len)
 {
-    command_reply_psc_t * psc_info = (command_reply_psc_t*)reply;
+    command_reply_blist_t * blist_info = (command_reply_blist_t*)reply;
     int ret = EXSUCCEED;
-    int i;
-    if (NDRXD_CALL_TYPE_SVCINFO!=reply->msg_type)
+
+    if (NDRXD_CALL_TYPE_BLIST!=reply->msg_type)
     {
         /* not payload */
         goto out;
     }
     
-    NDRX_LOG(log_debug, "psc out srvid: [%d]", psc_info->srvid);
-    
-    for (i=0; i<psc_info->svc_count; i++)
-    {
-        
-        ndrx_adm_svcgrp_t svc;
-        memset(&svc, 0, sizeof(svc));
-        
-        NDRX_STRCPY_SAFE(svc.servicename, psc_info->svcdet[i].svc_nm);
-        snprintf(svc.srvgrp, sizeof(svc.srvgrp), "%d/%d", psc_info->nodeid, 
-                psc_info->srvid);
-        NDRX_STRCPY_SAFE(svc.state, "ACT");
-        snprintf(svc.lmid, sizeof(svc.lmid), "%d", psc_info->nodeid);
-        svc.srvid = psc_info->srvid;
-        NDRX_STRCPY_SAFE(svc.svcrname,psc_info->svcdet[i].fn_nm);
-        svc.ncompleted = psc_info->svcdet[i].done+psc_info->svcdet[i].fail;
-        
-        if (svc.ncompleted < -1)
-        {
-            svc.ncompleted = -1;
-        }
-        svc.totsuccnum = psc_info->svcdet[i].done;
-        svc.totsfailnum = psc_info->svcdet[i].fail;
-        svc.lastexectimeusec = psc_info->svcdet[i].last *1000; /* msec -> usec */
-        svc.maxexectimeusec = psc_info->svcdet[i].max*1000; /* msec -> usec */
-        svc.minexectimeusec = psc_info->svcdet[i].min*1000; /* msec -> usec */
-        
-        if (svc.lastexectimeusec < -1)
-        {
-            svc.lastexectimeusec = -1;
-        }
-        
-        if (svc.maxexectimeusec < -1)
-        {
-            svc.maxexectimeusec = -1;
-        }
-        
-        if (svc.minexectimeusec < -1)
-        {
-            svc.minexectimeusec = -1;
-        }
-        
-        if (EXSUCCEED!=ndrx_growlist_add(&M_cursnew->list, (void *)&svc, M_idx))
-        {
-            NDRX_LOG(log_error, "Growlist failed - out of memory?");
-            EXFAIL_OUT(ret);
-        }
+    NDRX_LOG(log_debug, "Got admin Q for bridge: [%s]", blist_info->qstr);
 
-        NDRX_LOG(log_debug, "Service added [%s] / [%s]", svc.servicename, svc.srvgrp);
-        M_idx++;
-        
+    if (EXSUCCEED!=ndrx_string_list_add(&M_qlist, blist_info->qstr))
+    {
+        NDRX_LOG(log_error, "Failed to populate string list");
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -196,19 +180,33 @@ out:
 expublic int ndrx_adm_brclock_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags)
 {
     int ret = EXSUCCEED;
+    string_list_t *qstr;
     
     /* init cursor */
     M_idx = 0;
+    M_qlist = NULL;
     
-    ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_svcgrp_t));
+    ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_brclock_t));
     
     M_cursnew = cursnew;
-    cursnew->map = ndrx_G_svcgrp_map;
+    cursnew->map = ndrx_G_brclock_map;
     
-    if (EXSUCCEED!=ndrx_adm_psc_call(ndrx_adm_svcgrp_proc_list))
+    if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_blist_proc_list, 
+            NDRXD_COM_BLIST_RQ, NDRXD_COM_BLIST_RP, ndrx_get_G_atmi_conf()->ndrxd_q_str))
     {
-        NDRX_LOG(log_error, "Failed to call PSC");
+        NDRX_LOG(log_error, "Failed to call blist");
         EXFAIL_OUT(ret);
+    }
+    
+    LL_FOREACH(M_qlist, qstr)
+    {
+        /* process the lists */
+        if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_brclockinfo_proc_list, 
+                NDRXD_COM_BRCLOCKINFO_RQ, NDRXD_COM_BRCLOCKINFO_RP, qstr->qname))
+        {
+            NDRX_LOG(log_error, "Failed to call brclockinfo");
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
@@ -217,6 +215,9 @@ out:
     {
         ndrx_growlist_free(&M_cursnew->list);
     }
+
+    /* free up the list */
+    ndrx_string_list_free(M_qlist);
 
     return ret;
 }

@@ -161,10 +161,13 @@ extern "C" {
 #define NDRXD_COM_DSLEEP_RQ         70   /**< tprecover ndrxd ping, req, int    */
 #define NDRXD_COM_DSLEEP_RP         71   /**< tprecover ndrxd ping, req, int    */
     
-#define NDRXD_COM_BRLISTQ_RQ        72   /**< bridge admin queue listing, req, int */
-#define NDRXD_COM_BRLISTQ_RP        73   /**< bridge admin queue listing, rsp int  */
+#define NDRXD_COM_BLIST_RQ          72   /**< bridge admin queue listing, req, int */
+#define NDRXD_COM_BLIST_RP          73   /**< bridge admin queue listing, rsp int  */
+    
+#define NDRXD_COM_BRCLOCKINFO_RQ    74   /**< return bridge clock infos, req int */
+#define NDRXD_COM_BRCLOCKINFO_RP    75   /**< return bridge clock infos, rsp int */
 
-#define NDRXD_COM_MAX               73
+#define NDRXD_COM_MAX               75
     
 /** This is sqv admin thread shutdown priv */
 #define NDRXD_COM_SVQADMIN_PRIV     NDRX_COM_SVQ_PRIV
@@ -224,6 +227,7 @@ extern "C" {
 #define NDRXD_CALL_TYPE_DPING           18  /**< NDRXD ping response type     */
 #define NDRXD_CALL_TYPE_DSLEEP          19  /**< Put NDRXD in sleep mode      */
 #define NDRXD_CALL_TYPE_BLIST           20  /**< List bridge admin queues     */
+#define NDRXD_CALL_TYPE_BRBCLOCKINFO    21  /**< Clock info messages          */
 
 #define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
@@ -655,6 +659,24 @@ typedef struct
     command_reply_t rply;
     char qstr[NDRX_MAX_Q_SIZE+1];  /**< Queueu name                    */
 } command_reply_blist_t;
+
+
+/**
+ * Bridge clock infos
+ */
+typedef struct
+{
+    command_reply_t rply;
+    
+    long locnodeid; /**< local node id                      */
+    long remnodeid; /**< remove node id                     */
+    long conseq;    /**< connection sequence                */
+    long lastsync;  /**< last sync time ago (seconds)       */
+    long timediffs; /**< time diff in seconds between hosts */
+    long roundtrip; /**< roundtrip in milliseconds          */
+    
+} command_reply_brclockinfo_t;
+
 
 /**
  * Reply for ppm (print process model) command

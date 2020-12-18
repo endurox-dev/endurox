@@ -791,5 +791,10 @@
 #define	TA_WSHNAME	((BFLDID32)167775416)	/* number: 3256	 type: string */
 #define	TA_WSPROTO	((BFLDID32)33557707)	/* number: 3275	 type: long */
 #define	TA_XID	((BFLDID32)167775463)	/* number: 3303	 type: string */
+#define	TA_LOCNODEID	((BFLDID32)33558032)	/* number: 3600	 type: long */
+#define	TA_REMNODEID	((BFLDID32)33558033)	/* number: 3601	 type: long */
+#define	TA_EVTIME	((BFLDID32)33558034)	/* number: 3602	 type: long */
+#define	TA_TIMEDIFF	((BFLDID32)33558035)	/* number: 3603	 type: long */
+#define	TA_ROUNDTRIP	((BFLDID32)33558036)	/* number: 3604	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */
