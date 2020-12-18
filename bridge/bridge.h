@@ -57,8 +57,9 @@ extern "C" {
                     EXFAIL_OUT(ret);\
                 } \
          }
-#define BR_MAX_ROUNDTRIP        200 /**< Allow 200 ms roundtrip for time default for timesync */
-#define BR_PERIODIC_CLOCK_SND   600 /**< Send clocks every 10 minutes         */
+#define BR_MAX_ROUNDTRIP        200 /**< Allow 200 ms roundtrip for time default for timesync   */
+#define BR_PERIODIC_CLOCK_SND   600 /**< Send clocks every 10 minutes                           */
+#define BR_ADMININFO_TOUT       3   /**< Allow 3 seconds on full reply queue for metrics..      */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -142,6 +143,7 @@ extern int br_process_msg(exnetcon_t *net, char *buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
 
 extern int br_calc_clock_diff(command_call_t *call);
+extern int br_clock_infos(command_call_t *call);
 extern int br_send_clock(int mode, cmd_br_time_sync_t *rcv);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 

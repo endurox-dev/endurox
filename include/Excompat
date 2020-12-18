@@ -792,5 +792,12 @@ TA_WSHCLIENTID                   1255  string   -     imported for compatiblity.
 TA_WSHNAME                       1256  string   -     imported for compatiblity...
 TA_WSPROTO                       1275  long     -     imported for compatiblity...
 TA_XID                           1303  string   -     imported for compatiblity...
+
+TA_LOCNODEID                     1600   long    -     local cluster node id
+TA_REMNODEID                     1601   long    -     remove cluster node id
+TA_EVTIME                        1602   long    -     even time
+TA_TIMEDIFF                      1603   long    -     time difference
+TA_ROUNDTRIP                     1604   long    -     rountrip time
+
 $#endif
 $/* vim: set ts=4 sw=4 et smartindent: */
