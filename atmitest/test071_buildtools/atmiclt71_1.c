@@ -50,6 +50,12 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test71.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*---------------------------Externs------------------------------------*/
 extern int run_loop(int argc, char** argv);
 /*---------------------------Macros-------------------------------------*/
@@ -66,5 +72,9 @@ int main(int argc, char** argv)
 {
     return run_loop(argc, argv);
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 /* vim: set ts=4 sw=4 et smartindent: */

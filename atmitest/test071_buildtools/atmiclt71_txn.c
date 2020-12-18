@@ -55,6 +55,11 @@
 
 #include <dlfcn.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*---------------------------Externs------------------------------------*/
 extern int __write_to_tx_file(char *buf);
 /*---------------------------Macros-------------------------------------*/
@@ -120,4 +125,9 @@ out:
     return ret;
         
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 /* vim: set ts=4 sw=4 et smartindent: */
