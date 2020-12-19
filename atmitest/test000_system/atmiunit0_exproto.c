@@ -161,7 +161,9 @@ Ensure(test_proto_ubfcall)
     assert_equal(ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
             (char **)&p_ub5, &olen, 0, 0), EXSUCCEED);
     
+    fprintf(stdout, "YOPT p_ub:\n");
     Bprint(p_ub);
+    fprintf(stdout, "YOPT p_ub5:\n");
     Bprint(p_ub5);
     assert_equal(Bcmp(p_ub, p_ub5), 0);
     

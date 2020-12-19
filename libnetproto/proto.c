@@ -217,24 +217,24 @@ static cproto_t M_ubf_field[] =
     {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
     {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
     /* Typed fields... */
-    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLD, 1, 6},
-    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
-    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLD, 1, 1},
-    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLD, 1, 40},
-    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLD, 1, 40},
-    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLD, 0, PMSGMAX},
-    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
+    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
+    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
+    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLDPTR, 1, 1},
+    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLDPTR, 1, 40},
+    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLDPTR, 1, 40},
+    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLDPTR, 0, PMSGMAX},
+    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLDPTR, 0, PMSGMAX,
                             /* Using counter offset as carry len field... */
                             NULL, EXOFFSET(proto_ufb_fld_t,bfldlen), EXFAIL, NULL},
-    {TUF, 0x1152,  "ptr",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
+    {TUF, 0x1152,  "ptr",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
                             
-    {TUF, 0x1153,  "ubf",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {TUF, 0x1153,  "ubf",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUFPTR, 0, PMSGMAX, NULL, 
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
-            EXOFFSET(proto_ufb_fld_t,typelen), EXFAIL, NULL, EXOFFSET(proto_ufb_fld_t,typetag)},
+            EXOFFSET(proto_ufb_fld_t,typelen), EXFAIL, NULL, EXOFFSET(proto_ufb_fld_t,bfldid)},
     
-    {TUF, 0x1154,  "view",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {TUF, 0x1154,  "view",  OFSZ(proto_ufb_fld_t,buf),  EXF_NONE,  XATMIBUFPTR, 0, PMSGMAX, NULL, 
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
-            EXOFFSET(proto_ufb_fld_t,typelen), EXFAIL, NULL, EXOFFSET(proto_ufb_fld_t,typetag)},
+            EXOFFSET(proto_ufb_fld_t,typelen), EXFAIL, NULL, EXOFFSET(proto_ufb_fld_t,bfldid)},
                             
     {TUF, EXFAIL}
 };
@@ -338,16 +338,16 @@ static cproto_t M_view_field[] =
     {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
     
     /* Typed fields... */
-    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLD, 1, 6},
+    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
     /* int padded with sign in front */
-    {TUF, 0x1113,  "int",   OFSZ(proto_ufb_fld_t, buf), EXF_INT,     XFLD, 1, 12},
+    {TUF, 0x1113,  "int",   OFSZ(proto_ufb_fld_t, buf), EXF_INT,     XFLDPTR, 1, 12},
     
-    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLD, 1, 20},
-    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLD, 1, 1},
-    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLD, 1, 40},
-    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLD, 1, 40},
-    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLD, 0, PMSGMAX},
-    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLD, 0, PMSGMAX,
+    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
+    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLDPTR, 1, 1},
+    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLDPTR, 1, 40},
+    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLDPTR, 1, 40},
+    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLDPTR, 0, PMSGMAX},
+    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLDPTR, 0, PMSGMAX,
                             /* Using counter offset as carry len field... */
                             NULL, EXOFFSET(proto_ufb_fld_t,bfldlen), EXFAIL, NULL},
     {TUF, EXFAIL}
@@ -1099,6 +1099,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
         /* Check the type and process accordingly... */
         switch (p->type)
         {
+            case XFLDPTR:
             case XFLD:
             {
                 /* This is field... */
@@ -1109,6 +1110,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 long len_offset;
                 long off_start;
                 long off_stop;
+                char *dataptr;
                 
                 /* This is sub tlv/ thus put tag... */
                 if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, proto_buf_offset, 
@@ -1124,17 +1126,31 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 off_start = *proto_buf_offset;
                 
+                
+                if (XFLDPTR==p->type)
+                {
+                    /* pointer is stored in the buffer 
+                     * For outgoings this is perfectly fine
+                     * as data is somewhere in the RAM in acceptable
+                     * format.
+                     * No need to copy again to some temp buffers like for UBF
+                     */
+                    dataptr=*((char **)(ex_buf+offset+p->offset));
+                }
+                else
+                {
+                    dataptr=ex_buf+offset+p->offset;
+                }
+                
                 if ( UBF_TAG_BFLD_CARRAY == p->tag)
                 {
-                    /* TODO: dereference pointer: */
-                    ret = x_ctonet(p, ex_buf+offset+p->offset, proto_buf, 
+                    ret = x_ctonet(p, dataptr, proto_buf, 
                             proto_bufsz, proto_buf_offset, debug, sizeof(debug), 
                             p_ub_data->bfldlen);
                 }
                 else
                 {
-                    /* TODO: Dereference ptr, have option? */
-                    ret = x_ctonet(p, ex_buf+offset+p->offset, proto_buf, proto_bufsz,
+                    ret = x_ctonet(p, dataptr, proto_buf, proto_bufsz,
                             proto_buf_offset, debug, sizeof(debug), 0);
                 }
                 
@@ -1364,19 +1380,49 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 }
                 
                 break;
+            case XATMIBUFPTR:
             case XATMIBUF:
             {
                 /* This is special driver for ATMI buffer */
-                unsigned buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
                 unsigned *buf_len = (unsigned *)(ex_buf+offset+p->counter_offset);
-                char *data = (char *)(ex_buf+offset+p->offset);
+                char *data;
                 int f_type;
                 long len_offset;
                 long off_start;
                 long off_stop;
+                unsigned buffer_type;
+                
+                if (XATMIBUFPTR==p->type)
+                {
+                    BFLDID *p_fldid = (BFLDID*)(ex_buf+offset+p->buftype_offset);
+                    int typ = Bfldtype(*p_fldid);
                     
-                buffer_type = NDRX_MBUF_TYPE(buffer_type);
+                    if (BFLD_UBF == typ)
+                    {
+                        buffer_type = BUF_TYPE_UBF;
+                    }
+                    else if (BFLD_VIEW == typ)
+                    {
+                        buffer_type = BUF_TYPE_VIEW;
+                    }
+                    else
+                    {
+                        NDRX_LOG(log_debug, "Invalid sub-xatmi buffer field type %d",
+                                typ);
+                        EXFAIL_OUT(ret);
+                    }
                         
+                    /* dereference stored pointer */
+                    data = *((char **)(ex_buf+offset+p->offset));
+                }
+                else
+                {
+                    buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
+                    
+                    data = (char *)(ex_buf+offset+p->offset);
+                }
+                
+                buffer_type = NDRX_MBUF_TYPE(buffer_type);
                 NDRX_LOG(log_debug, "Buffer type is: %u", 
                         buffer_type);
                 
@@ -1401,7 +1447,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     UBFH *p_ub = (UBFH *)data;
                     Bnext_state_t state;
                     /* char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];*/
-                    char *f_data_buf;
+                    char f_data_buf[sizeof(proto_ufb_fld_t)+sizeof(char *)]; /* just store ptr */
                     ssize_t f_data_buf_len;
                     proto_ufb_fld_t *f;
                     BFLDOCC occ;
@@ -1412,8 +1458,9 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* <sub tlv> */
                     xmsg_t tmp_cv;
                     
-                    NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
+                    /* as we store here pointers only  */
                     
+                    f_data_buf_len = sizeof(f_data_buf);
                     f =  (proto_ufb_fld_t *)f_data_buf;
                     
                     /* </sub tlv> */
@@ -1427,12 +1474,14 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     /* loop over the buffer & process field by field */
                     /*memset(f.buf, 0, sizeof(f.buf));  <<< HMMM Way too slow!!! */
                     
-                    f->bfldlen = NDRX_MSGSIZEMAX - sizeof(*f);
+                    f->bfldlen = 0;
                     f->bfldid = BFIRSTFLDID;
                     
                     memset(&state, 0, sizeof(state));
+                    
+                    NDRX_LOG(log_error, "YOPT START !!!!!!!!!!!!!!!!!!!!");
                     /* optimization: TODO: we could replace get with ptr to data? */
-                    while(1==ndrx_Bnext(&state, p_ub, &f->bfldid, &occ, f->buf, &f->bfldlen, NULL))
+                    while(1==ndrx_Bnext(&state, p_ub, &f->bfldid, &occ, NULL, &f->bfldlen, (char **)&f->buf))
                     {
                         f_type = Bfldtype(f->bfldid);
                         
@@ -1440,11 +1489,10 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                          * data types
                          */
                         accept_tags[2] = M_ubf_proto_tag_map[f_type];
-                        
+#if 0
                         f->typetag = 0; /* default not used */
                         
                         /* check the buffer fields view / ubf */
-                        
                         if (BFLD_UBF==f_type)
                         {
                             f->typetag =  BUF_TYPE_UBF << NDRX_MBUF_OFFSET;
@@ -1456,6 +1504,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         
                         NDRX_LOG(log_debug, "UBF type %d mapped to "
                                 "tag %hd", f_type, accept_tags[2]);
+#endif
                         
                         /* Hmm lets drive our structure? */
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
@@ -1468,7 +1517,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                                     "sub/tag %x: [%s] %ld"
                                     "at offset %ld", 
                                     p->tag, p->cname, p->offset);
-                            NDRX_SYSBUF_FREE(f_data_buf);
+                           /* NDRX_SYSBUF_FREE(f_data_buf);*/
                             EXFAIL_OUT(ret);
                         }
                         /*
@@ -1479,7 +1528,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     }
                     
                     /* </process field by field> */
-                    NDRX_SYSBUF_FREE(f_data_buf);
+                    /*NDRX_SYSBUF_FREE(f_data_buf);*/
                 }
                 else if (BUF_TYPE_VIEW==buffer_type)
                 {
@@ -1501,7 +1550,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 off_stop = *proto_buf_offset;
                 /* Put back len there.. */
                 len_written = (short)(off_stop - off_start);
-                NDRX_LOG(log_debug, "YOPT TAGOFF=%d", len_offset);
+                NDRX_LOG(log_debug, "TAG=%x YOPT TAGOFF=%d len_written=%d", 
+                        (int)p->tag, len_offset, len_written);
                 if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
                         proto_bufsz))
                 {
@@ -1806,6 +1856,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 
             switch (fld->type)
             {
+                case XFLDPTR:
                 case XFLD:
                 case XSBL:
                 {
@@ -1847,7 +1898,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         }
                     }
                     
-                    NDRX_LOG(6, "net2ex: tag: [0x%x]\t[%s]\t len: %ld (0x%04lx) type:"
+                    NDRX_LOG(log_debug, "net2ex: tag: [0x%x]\t[%s]\t len: %ld (0x%04lx) type:"
                         " [%s]\t data: [%s]"/*" netbuf (data start): %p"*/, 
                         net_tag, fld->cname, net_len, net_len, M_type[fld->fld_type], 
                             debug/*, (proto_buf+int_pos)*/ );
@@ -1938,17 +1989,43 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     }
                 }   
                 break;                    
+                case XATMIBUFPTR:
                 case XATMIBUF:
                 {
-                    unsigned *p_buffer_type = (unsigned*)(ex_buf+ex_offset+fld->buftype_offset);
                     unsigned *buf_len = (unsigned *)(ex_buf+ex_offset+fld->counter_offset);
                     char *data = (char *)(ex_buf+ex_offset+fld->offset);
                     unsigned buffer_type;
                     
-                    buffer_type = NDRX_MBUF_TYPE(*p_buffer_type);
+                    /* PTR is used only by sub-UBF fields */
+                    if (XATMIBUFPTR==fld->type)
+                    {
+                        BFLDID *p_fldid = (BFLDID*)(ex_buf+ex_offset+fld->buftype_offset);
+                        int typ = Bfldtype(*p_fldid);
                         
+                        if (BFLD_UBF == typ)
+                        {
+                            buffer_type = BUF_TYPE_UBF;
+                        }
+                        else if (BFLD_VIEW == typ)
+                        {
+                            buffer_type = BUF_TYPE_VIEW;
+                        }
+                        else
+                        {
+                            NDRX_LOG(log_error, "Invalid sub-XATMI buffer field type: %d", 
+                                    typ);
+                            EXFAIL_OUT(ret);
+                        }
+                        
+                        NDRX_LOG(log_debug, ">>>>YOPT INNER UBF: %u", buffer_type);
+                    }
+                    else
+                    {
+                        unsigned *p_buffer_type = (unsigned*)(ex_buf+ex_offset+fld->buftype_offset);
+                        buffer_type = NDRX_MBUF_TYPE(*p_buffer_type);
+                    }
                     
-                    NDRX_LOG(log_debug, "Processing XATMIBUF");
+                    NDRX_LOG(log_debug, "Processing XATMIBUF type: %u", buffer_type);
                     NDRX_SYSBUF_MALLOC_OUT(tmpf, tmpf_len, ret);
     
                     f=(proto_ufb_fld_t *)tmpf;
