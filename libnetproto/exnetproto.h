@@ -62,6 +62,8 @@
 #define XLOOP          0x05     /**< Loop construction                      */
 #define XATMIBUF       0x06     /**< ATMI buffer type...                    */
 #define XMASTERBUF     0x07     /**< internal C tlv list of XATMIBUFS       */
+#define XFLDPTR        0x08     /**< Field is pointer to data block         */
+#define XATMIBUFPTR    0x09     /**< This is pointer to XATMI buf           */
 
 #define XTAB1(e1)           1, e1, NULL, NULL, NULL
 #define XTAB2(e1,e2)        2, e1, e2, NULL, NULL

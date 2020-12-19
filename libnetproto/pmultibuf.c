@@ -220,6 +220,11 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     int ret = EXSUCCEED;
     long int_pos=0;
     ndrx_mbuf_tlv_t *tlv_hdr;
+    char *f_data_buf;
+    ssize_t f_data_buf_len;
+    proto_ufb_fld_t *f =  (proto_ufb_fld_t *)f_data_buf;
+    
+    NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
     
     /* use cached len */
     /* bfldlen is current master buf offset, for several blocks.. */
@@ -265,6 +270,12 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     } while (int_pos < proto_len);
     
 out:
+    
+    /* free up the temp */
+    if (NULL!=f_data_buf)
+    {
+        NDRX_SYSBUF_FREE(f_data_buf);
+    }
     
     return ret;    
 }
