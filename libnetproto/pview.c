@@ -76,6 +76,9 @@
 /**
  * Convert view XATMI buffer to protocol
  * Loop over the view, read the non null fields
+ * NOTE: In case if this MBUF, then view data is encapsulated 
+ * in ndrx_view_header 
+ * If view comes from UBF then it is BVIEWFLD
  * @param fld Current proto field
  * @param level recursion level
  * @param offset offset in C struct (not to the field)
@@ -90,44 +93,78 @@
  */
 expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
         char *ex_buf, long ex_len, char *proto_buf, long *proto_buf_offset,
-        short *accept_tags, proto_ufb_fld_t *p_ub_data, 
         long proto_bufsz)
 {
     int ret = EXSUCCEED;
     BFLDID bfldid;
-    BFLDLEN  len;
     BFLDOCC occ;
     char *p;
-    int i;
-    Bvnext_state_t bprint_state;
     /* Indicators.. */
     short *C_count;
     short C_count_stor;
     unsigned short *L_length; /* will transfer as long */
-    BVIEWFLD *vdata = (ex_buf+offset+fld->offset);
     ndrx_typedview_t *v;
     ndrx_typedview_field_t *f;
-    char *cstruct = vdata->data;
+    char *cstruct;
+    char f_data_buf[sizeof(proto_ufb_fld_t)+sizeof(char *)]; /* just store ptr */
+    ssize_t f_data_buf_len;
+    proto_ufb_fld_t *fldata = (proto_ufb_fld_t*)f_data_buf;
+    short accept_tags[] = {VIEW_TAG_CNAME, VIEW_TAG_BFLDLEN, 0, EXFAIL};
+    xmsg_t tmp_cv;
+    BVIEWFLD vheader;
+    
+    f_data_buf_len = sizeof(f_data_buf);
     
     UBF_LOG(log_debug, "%s enter at level %d", __func__, level);
     
-    memset(&bprint_state, 0, sizeof(bprint_state));
+    if (XATMIBUFPTR==fld->type)
+    {
+        BVIEWFLD *vdata = (BVIEWFLD *)ex_buf;
+            
+        NDRX_STRCPY_SAFE(vheader.vname, vdata->vname);
+        vheader.vflags = vdata->vflags;
+    }
+    else
+    {
+        ndrx_view_header *p_hdr = (ndrx_view_header *)ex_buf;
+        
+        /* Resolve view descriptor */
+        NDRX_STRCPY_SAFE(vheader.vname, p_hdr->vname);
+        vheader.vflags = p_hdr->vflags;
+        
+    }
     
-    /* TODO: Process empty view... (just put no data... what so ever) */
+    /* write off header... */
+    tmp_cv.descr = "VIEWHDR";
+    tmp_cv.tab[0] = ndrx_G_view;
+    tmp_cv.tabcnt=1;
+    tmp_cv.command = 0; /* not used... */
     
-    if (EXEOS==vdata->vname[0])
+    if (EXSUCCEED!=exproto_build_ex2proto(&tmp_cv, 0, 0,(char *)&vheader, 
+        sizeof(vheader), proto_buf, proto_buf_offset,  
+        NULL, fldata, proto_bufsz))
+    {
+        NDRX_LOG(log_error, "Failed to emit view[%s] header", vheader.vname);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==vheader.vname[0])
     {
         NDRX_LOG(log_debug, "Empty view - no data conv");
         goto out;
     }
-    
-    /* Resolve view descriptor */
-    if (NULL==(v = ndrx_view_get_view(vdata->vname)))
+
+    if (NULL==(v = ndrx_view_get_view(vheader.vname)))
     {
-        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", vdata->vname);
+        ndrx_Bset_error_fmt(BBADVIEW, "View [%s] not found!", vheader.vname);
         EXFAIL_OUT(ret);
     }
     
+    tmp_cv.descr = "VIEWLFLD";
+    tmp_cv.tab[0] = ndrx_G_view_field;
+    tmp_cv.tabcnt=1;
+    tmp_cv.command = 0; /* not used... */
+        
     DL_FOREACH(v->fields, f)
     {
         if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
@@ -153,6 +190,9 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
             EXFAIL_OUT(ret);
         }
         
+        NDRX_STRCPY_SAFE(fldata->cname, f->cname);
+        
+
         for (occ=0; occ<*C_count; occ++)
         {
             BFLDLEN dim_size = f->fldsize/f->count;
@@ -166,20 +206,37 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
             {
                 L_length = (unsigned short *)(cstruct+f->length_fld_offset+
                             occ*sizeof(unsigned short));
-                len = (BFLDLEN)*L_length;
+                fldata->bfldlen= (BFLDLEN)*L_length;
             }
             else
             {
-                len=dim_size;
+                fldata->bfldlen=dim_size;
             }
             
-            /* TODO: Do we need to print nulls? */
+            /* Optimize out the length field for fixed
+             * data types
+             */
+            accept_tags[2] = ndrx_G_ubf_proto_tag_map[f->typecode_full];
+            
+            /* put the pointer value there */
+            memcpy(fldata->buf, p, sizeof(char *));
+            
+            /* lets drive our structure? */
+            ret = exproto_build_ex2proto(&tmp_cv, 0, 0,(char *)f, 
+                    f_data_buf_len, proto_buf, proto_buf_offset,  
+                    accept_tags, fldata, proto_bufsz);
+
+            if (EXSUCCEED!=ret)
+            {
+                NDRX_LOG(log_error, "Failed to convert sub/tag %x: view: [%s] "
+                        "cname: [%s] occ: %d"
+                    "at offset %ld", fld->tag, v->vname, f->cname, occ);
+                EXFAIL_OUT(ret);
+            }
         }
     }
     
-  
 out:
-    NDRX_LOG(log_debug, "** TLV END %d **", ret);
             
     return ret;
 }

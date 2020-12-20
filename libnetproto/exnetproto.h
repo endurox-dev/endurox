@@ -64,6 +64,7 @@
 #define XMASTERBUF     0x07     /**< internal C tlv list of XATMIBUFS       */
 #define XFLDPTR        0x08     /**< Field is pointer to data block         */
 #define XATMIBUFPTR    0x09     /**< This is pointer to XATMI buf           */
+#define XFLDLAST       0x0A     /**< Normal field, last (term the loop      */
 
 #define XTAB1(e1)           1, e1, NULL, NULL, NULL
 #define XTAB2(e1,e2)        2, e1, e2, NULL, NULL
@@ -85,6 +86,9 @@
 
 #define UBF_TAG_BFLDID     0x10FF
 #define UBF_TAG_BFLDLEN    0x1109
+
+#define VIEW_TAG_CNAME     0x134D
+#define VIEW_TAG_BFLDLEN   0x1357
 
 /*
  * Standard check for output buffer space
@@ -192,16 +196,20 @@ struct proto_ufb_fld
     unsigned typetag;/**< type in mbuf bits                                  */
     unsigned typelen;/**< used for sub-buffers                               */
     char cname [NDRX_VIEW_CNAME_LEN+1]; /**< used by views                   */
+    Bfld_loc_info_t next_fld;          /**< fast add pointers                */
+    
 #if EX_ALIGNMENT_BYTES == 8
     long         padding1;
 #endif
     char buf[0];
 };
 
-
 /*---------------------------Globals------------------------------------*/
 
 extern cproto_t ndrx_G_ndrx_mbuf_tlv_x[];
+extern short ndrx_G_ubf_proto_tag_map[];
+extern cproto_t ndrx_G_view_field[];
+extern cproto_t ndrx_G_view[];
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -229,6 +237,11 @@ extern int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
 extern long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
         char *ex_buf, long ex_offset, long *max_struct, int level, 
         UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz);
+
+
+extern int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
+        char *ex_buf, long ex_len, char *proto_buf, long *proto_buf_offset,
+        long proto_bufsz);
 
 #endif	/* EXNETPROTO_H */
 

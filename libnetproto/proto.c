@@ -70,6 +70,7 @@
 
 #include "fdatatype.h"
 #include "exnetproto.h"
+#include "ubfview.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -190,7 +191,7 @@ static cproto_t M_bridge_refresh_x[] =
 #define UBF_TAG_BFLD_UBF            0x1153
 #define UBF_TAG_BFLD_VIEW           0x1154
 
-static short M_ubf_proto_tag_map[] = 
+expublic short ndrx_G_ubf_proto_tag_map[] = 
 {
     0x1113, /* BFLD_SHORT- 0   */
     0x111D, /* BFLD_LONG - 1	 */
@@ -331,26 +332,37 @@ expublic cproto_t ndrx_G_ndrx_mbuf_tlv_x[] =
 
 /* Helper driver table for VIEW buffer. */
 #define TVF         10 /* view field */
-static cproto_t M_view_field[] = 
+expublic cproto_t ndrx_G_view_field[] = 
 {
-    {TUF, 0x10FF,  "cname", OFSZ(proto_ufb_fld_t, cname),  EXF_STRING,   XFLD, 1, NDRX_VIEW_CNAME_LEN+1},
+    {TVF, 0x134D,  "cname", OFSZ(proto_ufb_fld_t, cname),  EXF_STRING,   XFLD, 1, NDRX_VIEW_CNAME_LEN},
     /* For UBF we could optimize this out? Do not send it at times? */
-    {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
+    {TVF, 0x1357,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
     
     /* Typed fields... */
-    {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
+    {TVF, 0x1361,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
     /* int padded with sign in front */
-    {TUF, 0x1113,  "int",   OFSZ(proto_ufb_fld_t, buf), EXF_INT,     XFLDPTR, 1, 12},
+    {TVF, 0x136B,  "int",   OFSZ(proto_ufb_fld_t, buf), EXF_INT,     XFLDPTR, 1, 12},
     
-    {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
-    {TUF, 0x1127,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLDPTR, 1, 1},
-    {TUF, 0x1131,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLDPTR, 1, 40},
-    {TUF, 0x113B,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLDPTR, 1, 40},
-    {TUF, 0x1145,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLDPTR, 0, PMSGMAX},
-    {TUF, 0x114F,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLDPTR, 0, PMSGMAX,
+    {TVF, 0x1375,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
+    {TVF, 0x137F,  "char",  OFSZ(proto_ufb_fld_t, buf), EXF_CHAR,    XFLDPTR, 1, 1},
+    {TVF, 0x1389,  "float", OFSZ(proto_ufb_fld_t, buf), EXF_FLOAT,   XFLDPTR, 1, 40},
+    {TVF, 0x1393,  "double",OFSZ(proto_ufb_fld_t, buf), EXF_DOUBLE,  XFLDPTR, 1, 40},
+    {TVF, 0x139D,  "string",OFSZ(proto_ufb_fld_t, buf), EXF_STRING,  XFLDPTR, 0, PMSGMAX},
+    {TVF, 0x13A7,  "carray",OFSZ(proto_ufb_fld_t, buf), EXF_CARRAY,  XFLDPTR, 0, PMSGMAX,
                             /* Using counter offset as carry len field... */
                             NULL, EXOFFSET(proto_ufb_fld_t,bfldlen), EXFAIL, NULL},
-    {TUF, EXFAIL}
+    {TVF, EXFAIL}
+};
+
+/**
+ * View header data
+ */
+#define TVH         10 /* view */
+expublic cproto_t ndrx_G_view[] = 
+{
+    {TVH, 0x13B1, "vname", OFSZ(BVIEWFLD, vname),       EXF_STRING,   XFLD,     0, NDRX_VIEW_NAME_LEN},
+    {TVH, 0x13BB, "vflags", OFSZ(BVIEWFLD, vflags),     EXF_UINT  ,   XFLDLAST, 1, 10},
+    {TVH, EXFAIL}
 };
 
 /**
@@ -367,8 +379,9 @@ static ptinfo_t M_ptinfo[] =
     {TUF, N_DIM(M_ubf_field)},
     {TTC, N_DIM(M_tp_command_call_x)},
     {TPN, N_DIM(M_tp_notif_call_x)},
-    {MBU, N_DIM(ndrx_G_ndrx_mbuf_tlv_x)}
-    
+    {MBU, N_DIM(ndrx_G_ndrx_mbuf_tlv_x)},
+    {TVF, N_DIM(ndrx_G_view_field)},
+    {TVH, N_DIM(ndrx_G_view)},
 };
 
 /* Message conversion tables */
@@ -1100,6 +1113,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
         switch (p->type)
         {
             case XFLDPTR:
+            case XFLDLAST:
             case XFLD:
             {
                 /* This is field... */
@@ -1446,7 +1460,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 {
                     UBFH *p_ub = (UBFH *)data;
                     Bnext_state_t state;
-                    /* char f_data_buf[sizeof(proto_ufb_fld_t) + NDRX_MSGSIZEMAX + NDRX_PADDING_MAX];*/
                     char f_data_buf[sizeof(proto_ufb_fld_t)+sizeof(char *)]; /* just store ptr */
                     ssize_t f_data_buf_len;
                     proto_ufb_fld_t *f;
@@ -1488,25 +1501,9 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         /* TODO: Optimize out the length field for fixed
                          * data types
                          */
-                        accept_tags[2] = M_ubf_proto_tag_map[f_type];
-#if 0
-                        f->typetag = 0; /* default not used */
-                        
-                        /* check the buffer fields view / ubf */
-                        if (BFLD_UBF==f_type)
-                        {
-                            f->typetag =  BUF_TYPE_UBF << NDRX_MBUF_OFFSET;
-                        }
-                        else if (BFLD_VIEW==f_type)
-                        {
-                            f->typetag =  BUF_TYPE_VIEW << NDRX_MBUF_OFFSET;
-                        }
-                        
-                        NDRX_LOG(log_debug, "UBF type %d mapped to "
-                                "tag %hd", f_type, accept_tags[2]);
-#endif
-                        
-                        /* Hmm lets drive our structure? */
+                        accept_tags[2] = ndrx_G_ubf_proto_tag_map[f_type];
+
+                        /* lets drive our structure? */
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
                             (char *)f, f_data_buf_len, proto_buf, 
                             proto_buf_offset,  accept_tags, f, proto_bufsz);
@@ -1517,14 +1514,10 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                                     "sub/tag %x: [%s] %ld"
                                     "at offset %ld", 
                                     p->tag, p->cname, p->offset);
-                           /* NDRX_SYSBUF_FREE(f_data_buf);*/
                             EXFAIL_OUT(ret);
                         }
-                        /*
-                         * why?
-                        memset(f.buf, 0, sizeof(f.buf));
-                         */
-                        f->bfldlen = f_data_buf_len - sizeof(*f);
+                        
+                        f->bfldlen = 0;
                     }
                     
                     /* </process field by field> */
@@ -1534,7 +1527,13 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 {
                     NDRX_LOG(log_debug, "Converting view out");
                     
-                    /* TODO: */
+                    if (EXSUCCEED!=exproto_build_ex2proto_view(p, 0, 0,
+                        data, 0, proto_buf, proto_buf_offset, proto_bufsz))
+                    {
+                        NDRX_LOG(log_error, "Failed to serialize VIEW");
+                        EXFAIL_OUT(ret);
+                    }
+                    
                 }    
                 else
                 {
@@ -1856,6 +1855,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 
             switch (fld->type)
             {
+                case XFLDLAST:
                 case XFLDPTR:
                 case XFLD:
                 case XSBL:
@@ -1887,8 +1887,10 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         NDRX_LOG(log_debug, "Installing FB field: "
                                 "id=%d, len=%d", p_ub_data->bfldid, bfldlen);
                         
-                        if (EXSUCCEED!=Badd(p_x_fb, p_ub_data->bfldid, 
-                                p_ub_data->buf, bfldlen))
+                        NDRX_LOG(log_error, "YOPT: next: %p", p_ub_data->next_fld.last_checked);
+                        
+                        if (EXSUCCEED!=Baddfast(p_x_fb, p_ub_data->bfldid, 
+                                p_ub_data->buf, bfldlen, &p_ub_data->next_fld))
                         {
                             NDRX_LOG(log_error, "Failed to setup field %s:%s",
                                     Bfname(p_ub_data->bfldid), Bstrerror(Berror));
@@ -1902,6 +1904,12 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         " [%s]\t data: [%s]"/*" netbuf (data start): %p"*/, 
                         net_tag, fld->cname, net_len, net_len, M_type[fld->fld_type], 
                             debug/*, (proto_buf+int_pos)*/ );
+                    
+                    /* if last field, termiante */
+                    if (XFLDLAST==fld->type)
+                    {
+                        done=EXTRUE;
+                    }
                 }
                     break;
                 case XSUB:
@@ -2030,8 +2038,11 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     
                     f=(proto_ufb_fld_t *)tmpf;
                     
-                    if (buffer_type == BUF_TYPE_UBF || 
-                            buffer_type == BUF_TYPE_VIEW)
+                    /* reset the header */
+                    memset(tmpf, 0, sizeof(proto_ufb_fld_t));
+                    
+                    
+                    if (buffer_type == BUF_TYPE_UBF)
                     {   
                         UBFH *p_ub = (UBFH *)(ex_buf+ex_offset+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
@@ -2056,6 +2067,9 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         }
                         
                         /* OK, we have a FB now process field by field...? */
+                        
+                        NDRX_LOG(log_error, "YOPTEL !!! %p", f->next_fld.last_checked);
+                        
                         if (EXFAIL==_exproto_proto2ex(M_ubf_field,  
                                     (char *)(proto_buf+int_pos), net_len, 
                                     /* Drive over internal variable + we should 
@@ -2068,13 +2082,11 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             EXFAIL_OUT(ret);
                         }
                         
-                        /* clean up temp buffer.. */
-                        NDRX_FPFREE(tmpf);
-                        tmpf=NULL;
-                        f=NULL;
-                        
                         if (EXSUCCEED!=ret)
                         {
+                            NDRX_FPFREE(tmpf);
+                            tmpf=NULL;
+                            f=NULL;
                             goto out;
                         }
                         
@@ -2118,15 +2130,90 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                          * is inner buffer... thus add the field.
                          * optimization: addfast
                          */
-                        if (NULL!=p_x_fb && EXSUCCEED!=Badd(p_x_fb, p_ub_data->bfldid, 
-                                p_ub_data->buf, 0))
+                        if (NULL!=p_x_fb && EXSUCCEED!=Baddfast(p_x_fb, p_ub_data->bfldid, 
+                                p_ub_data->buf, 0, &p_ub_data->next_fld))
                         {
                             NDRX_LOG(log_error, "Failed to setup field %s:%s",
                                     Bfname(p_ub_data->bfldid), Bstrerror(Berror));
-                            
+                         
+                            /* clean up temp buffer.. */
+                            NDRX_FPFREE(tmpf);
+                            tmpf=NULL;
+                            f=NULL;
+
                             ret=EXFAIL;
                             goto out;
                         }
+                        
+                        /* clean up temp buffer.. */
+                        NDRX_FPFREE(tmpf);
+                        tmpf=NULL;
+                        f=NULL;
+                        
+                    }
+                    else if (buffer_type == BUF_TYPE_VIEW)
+                    {
+                        /* for XATMIBUFPTR header is BVIEWFLD */
+                        /* for XATMIBUF header is ndrx_view_header */
+                        
+                        /* Firstly we need to extract the header infos
+                         * then we can start to restore the view
+                         */
+                        long tmpret;
+                        BVIEWFLD vheader; /* read header tags */
+                        char *vdata;
+                        
+                        memset(&vheader, 0, sizeof(vheader));
+                        
+                        if (EXFAIL==(tmpret=_exproto_proto2ex(M_ubf_field,
+                                    (char *)(proto_buf+int_pos), net_len, 
+                                    (char *)&vheader, 0,
+                                    max_struct, 0,
+                                    NULL, NULL, tmpf_len)))
+                        {
+                            EXFAIL_OUT(ret);
+                        }
+                        
+                        NDRX_LOG(log_debug, "Deserialize view: [%s]", vheader.vname);
+                        
+                        int_pos+=tmpret;
+                        
+                        /* OK, read next, if have anything... */
+                        
+                        if (XATMIBUFPTR==fld->type)
+                        {
+                            BVIEWFLD *vf =(BVIEWFLD *)(ex_buf + ex_offset);
+                            NDRX_STRCPY_SAFE(vf->vname, vheader.vname);
+                            vf->vflags = vheader.vflags;
+                            
+                            /* prepare field offset -> temp space should
+                             * have enough space for header, thus no checking here
+                             */
+                            vf->data = (ex_buf + ex_offset + sizeof(BVIEWFLD));
+                            vdata = vf->data;
+                        }
+                        else
+                        {
+                            ndrx_view_header * p_hdr = (ndrx_view_header *)(ex_buf + ex_offset);
+                            /* data buffer unload */
+                            
+                            /* TODO: Check the space available in data buffer */
+                            NDRX_STRCPY_SAFE(p_hdr->vname, vheader.vname);
+                            p_hdr->vflags = vheader.vflags;
+                            p_hdr->cksum  = 0; /* no checksum */
+                            
+                            
+                            /* static array addr is OK */
+                            vdata = p_hdr->data;
+                        }
+                        
+                        /* TODO: Start to drive the view fields
+                         * have another f
+                         * the field functions shall detect that we work
+                         * with view, thus use View add funcs.
+                         * Also the hashmap needs to be driven for counting
+                         * the field occurrences.
+                         */
                         
                     }
                     else
