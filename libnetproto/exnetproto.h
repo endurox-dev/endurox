@@ -38,6 +38,7 @@
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
+#include <ubfview.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -76,6 +77,10 @@
  * Table bellow at index is UBF field type
  * the value is type data tag in protocol buffer.
  */
+/**
+ * Table bellow at index is UBF field type
+ * the value is type data tag in protocol buffer.
+ */
 #define UBF_TAG_BFLD_SHORT          0x1113 
 #define UBF_TAG_BFLD_LONG           0x111D
 #define UBF_TAG_BFLD_CHAR           0x1127
@@ -83,12 +88,27 @@
 #define UBF_TAG_BFLD_DOUBLE         0x113B
 #define UBF_TAG_BFLD_STRING         0x1145
 #define UBF_TAG_BFLD_CARRAY         0x114F
+#define UBF_TAG_BFLD_INT            0x1150 /**< RFU */
+#define UBF_TAG_BFLD_RFU0           0x1151 /**< RFU */
+#define UBF_TAG_BFLD_PTR            0x1152
+#define UBF_TAG_BFLD_UBF            0x1153
+#define UBF_TAG_BFLD_VIEW           0x1154
 
 #define UBF_TAG_BFLDID     0x10FF
 #define UBF_TAG_BFLDLEN    0x1109
 
 #define VIEW_TAG_CNAME     0x134D
 #define VIEW_TAG_BFLDLEN   0x1357
+
+
+#define VIEW_TAG_SHORT      0x1360
+#define VIEW_TAG_LONG       0x1361
+#define VIEW_TAG_CHAR       0x1362
+#define VIEW_TAG_FLOAT      0x1363
+#define VIEW_TAG_DOUBLE     0x1364
+#define VIEW_TAG_STRING     0x1365
+#define VIEW_TAG_CARRAY     0x1366
+#define VIEW_TAG_INT        0x1367
 
 /*
  * Standard check for output buffer space
@@ -186,7 +206,6 @@ struct ptinfo
 };
 typedef struct ptinfo ptinfo_t;
 
-
 /* Internal structure for driving UBF fields. */
 typedef struct proto_ufb_fld proto_ufb_fld_t;
 struct proto_ufb_fld
@@ -197,10 +216,9 @@ struct proto_ufb_fld
     unsigned typelen;/**< used for sub-buffers                               */
     char cname [NDRX_VIEW_CNAME_LEN+1]; /**< used by views                   */
     Bfld_loc_info_t next_fld;          /**< fast add pointers                */
+    ndrx_typedview_t *v;               /**< keep the ptr to current view     */
+    ndrx_viewocc_t *vocc;               /**< view occurrence handler for deserialize */
     
-#if EX_ALIGNMENT_BYTES == 8
-    long         padding1;
-#endif
     char buf[0];
 };
 
@@ -236,7 +254,7 @@ extern int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
 
 extern long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
         char *ex_buf, long ex_offset, long *max_struct, int level, 
-        UBFH *p_x_fb, proto_ufb_fld_t *p_ub_data, long ex_bufsz);
+        char *p_typedbuf, proto_ufb_fld_t *p_ub_data, long ex_bufsz);
 
 
 extern int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
