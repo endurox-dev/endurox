@@ -132,6 +132,7 @@ Ensure(test_proto_ubfcall)
     
     memset(buf, 0, sizeof(buf));
     
+    NDRX_LOG(log_error, "YOPT DATA PTR: %p", buf);
     /* deserialize the buffer back... */
     assert_not_equal(exproto_proto2ex(proto_out, proto_len, 
         buf, &proto_len, sizeof(buf)), EXFAIL);
