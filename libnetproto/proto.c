@@ -1411,18 +1411,22 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         
                     /* dereference stored pointer */
                     data = *((char **)(ex_buf+offset+p->offset));
+                    
+                    NDRX_LOG(log_error, "YOPT XATMIBUFPTR => %d", buffer_type);
                 }
                 else
                 {
                     buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
                     
                     data = (char *)(ex_buf+offset+p->offset);
+                    
+                    NDRX_LOG(log_error, "YOPT XATMIBUF => %d", buffer_type);
+                    
+                    buffer_type = NDRX_MBUF_TYPE(buffer_type);
                 }
                 
-                buffer_type = NDRX_MBUF_TYPE(buffer_type);
                 NDRX_LOG(log_debug, "Buffer type is: %u", 
                         buffer_type);
-                
                 
                 /* TAG START / KEEP POS */
                 NDRX_LOG(log_debug, "START YOPT %x TAGOFF=%d", p->tag, *proto_buf_offset);

@@ -70,15 +70,15 @@ exprivate void basic_teardown(void)
 Ensure(test_proto_ubfcall)
 {
     /* allocate FB & load data, convert out... (i.e.) alloc the tpcall struct */
-    char buf[2048];
-    char proto_out[2048];
+    char buf[4048];
+    char proto_out[4048];
     long proto_len;
     tp_command_call_t *call = (tp_command_call_t *)(buf + sizeof(cmd_br_net_call_t));
     cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)buf;
     ndrx_stopwatch_t w;
     time_t t;
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 1024);
-    UBFH *p_ci = (UBFH *)tpalloc("UBF", 0, 1024);
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 2024);
+    UBFH *p_ci = (UBFH *)tpalloc("UBF", 0, 2024);
     UBFH *p_ub5 = NULL;
     UBFH *p_ci5 = NULL;
     long olen;
@@ -107,7 +107,7 @@ Ensure(test_proto_ubfcall)
     assert_equal(Bchg(p_ci, T_STRING_6_FLD, 4, "HELLO CALL INFO", 0), EXSUCCEED);
     
     /* load primary data.., including sub-ubf buf */
-    extest_ubf_set_up_dummy_data(p_ub, EXTEST_PROC_UBF);
+    extest_ubf_set_up_dummy_data(p_ub, EXTEST_PROC_UBF | EXTEST_PROC_VIEW);
     
     assert_equal(tpsetcallinfo((char *)p_ub, p_ci, 0), EXSUCCEED);
     
