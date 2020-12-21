@@ -167,6 +167,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+
 'ndrxconfig.xml' holds the application domain configuration. It describes the ATMI
 servers which needs to be started. Counts of the, how much to start. Also it
 describes sanity times i.e. period after which system sanity checks should be made.
@@ -631,6 +632,72 @@ Process would receive arguments:
 
 Above applies to 'CLT_COMMAND_LINE', 'ATMI_SERVER_SYSTEM_OPTIONS' and 
 'ATMI_SERVER_APPLICATION_OPTIONS'.
+
+
+XML INCLUDE
+-----------
+ndrxconfig.xml supports entity substitution, thus effectively, portions of XMLs
+may be included from other files.
+
+For example having *ndrxconfig.xml*:
+
+--------------------------------------------------------------------------------
+<?xml version="1.0" ?>
+<!DOCTYPE doc [
+<!ENTITY defaults SYSTEM "ndrxconfig.xml.defaults">
+]>
+<endurox>
+    <appconfig>
+        <sanity>10</sanity>
+        <brrefresh>6</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+    </appconfig>
+
+    &defaults;
+
+    <servers>
+    </servers>
+</endurox>
+--------------------------------------------------------------------------------
+
+and 
+
+*ndrxconfig.xml.defaults*:
+
+--------------------------------------------------------------------------------
+    <defaults>
+        <min>1</min>
+        <max>2</max>
+    </defaults>
+--------------------------------------------------------------------------------
+
+would make final config for *ndrxd(8)* and *cpmsrv(8)* look like:
+
+--------------------------------------------------------------------------------
+<?xml version="1.0" ?>
+<endurox>
+    <appconfig>
+        <sanity>10</sanity>
+        <brrefresh>6</brrefresh>
+        <restart_min>1</restart_min>
+        <restart_step>1</restart_step>
+        <restart_max>5</restart_max>
+        <restart_to_check>20</restart_to_check>
+    </appconfig>
+
+    <defaults>
+        <min>1</min>
+        <max>2</max>
+    </defaults>
+
+    <servers>
+    </servers>
+</endurox>
+--------------------------------------------------------------------------------
+
 
 EXAMPLE
 -------
