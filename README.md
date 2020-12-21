@@ -520,6 +520,8 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.5.12 released on 16/12/2020 (stable) Support #612, Support #611
 
+- Version 7.5.14 released on 21/12/2020 (stable) Feature #613
+
 
 # Build configurations
 

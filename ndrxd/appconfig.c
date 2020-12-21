@@ -1485,7 +1485,7 @@ expublic int load_config(config_t *config, char *config_file)
     
     xmlSetStructuredErrorFunc	(NULL, ndrx_xmlStructuredErrorFunc);
     
-    doc = xmlReadFile(config_file, NULL, 0);
+    doc = xmlReadFile(config_file, NULL, XML_PARSE_NOENT);
 
     if (!doc)
     {
