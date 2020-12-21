@@ -214,7 +214,8 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
             }
             
             /* Optimize out the length field for fixed
-             * data types
+             * data types.
+             * TODO: new mapping table needed:
              */
             accept_tags[2] = ndrx_G_ubf_proto_tag_map[f->typecode_full];
             
