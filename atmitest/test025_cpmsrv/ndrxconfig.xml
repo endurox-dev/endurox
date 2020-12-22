@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<!DOCTYPE doc [
+<!ENTITY include SYSTEM "ndrxconfig.xml.include">
+]>
+
+<!-- This is testing of Feature #613 both ndrxd & cpmsrv --> 
+<endurox>
+&include;
+</endurox>
