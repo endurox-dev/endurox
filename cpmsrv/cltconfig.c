@@ -855,7 +855,7 @@ expublic int load_xml_config(char *config_file)
     xmlDocPtr doc;
     xmlNodePtr root;
     
-    doc = xmlReadFile(config_file, NULL, 0);
+    doc = xmlReadFile(config_file, NULL, XML_PARSE_NOENT);
 
     if (!doc)
     {
