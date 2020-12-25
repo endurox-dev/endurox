@@ -66,6 +66,7 @@
 #define XFLDPTR        0x08     /**< Field is pointer to data block         */
 #define XATMIBUFPTR    0x09     /**< This is pointer to XATMI buf           */
 #define XFLDLAST       0x0A     /**< Normal field, last (term the loop      */
+#define XSUBPTR        0x0B     /**< Ptr to buffer, for doing ex2proto      */
 
 #define XTAB1(e1)           1, e1, NULL, NULL, NULL
 #define XTAB2(e1,e2)        2, e1, e2, NULL, NULL
