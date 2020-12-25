@@ -191,6 +191,22 @@ expublic short ndrx_G_ubf_proto_tag_map[] =
     0x1154, /* BFLD_VIEW - 11 */
 };
 
+/**
+ * View field type mapping table
+ * typecode to tag
+ */
+expublic short ndrx_G_view_proto_tag_map[] = 
+{
+    0x1360, /* BFLD_SHORT- 0   */
+    0x1361, /* BFLD_LONG - 1	 */
+    0x1362, /* BFLD_CHAR - 2	 */
+    0x1363, /* BFLD_FLOAT - 3  */
+    0x1364, /* BFLD_DOUBLE - 4 */
+    0x1365, /* BFLD_STRING - 5 */
+    0x1366, /* BFLD_CARRAY - 6 */
+    0x1367, /* BFLD_INT - 7 */
+};
+
 #define UBF_TAG_BFLDID     0x10FF
 #define UBF_TAG_BFLDLEN    0x1109
 
@@ -340,7 +356,7 @@ expublic cproto_t ndrx_G_view_field[] =
 /**
  * View header data
  */
-#define TVH         10 /* view */
+#define TVH         11 /* view */
 expublic cproto_t ndrx_G_view[] = 
 {
     {TVH, 0x13B1, "vname", OFSZ(BVIEWFLD, vname),       EXF_STRING,   XFLD,     0, NDRX_VIEW_NAME_LEN},
@@ -1139,7 +1155,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     dataptr=ex_buf+offset+p->offset;
                 }
                 
-                if ( UBF_TAG_BFLD_CARRAY == p->tag)
+                if ( UBF_TAG_BFLD_CARRAY == p->tag ||
+                        VIEW_TAG_CARRAY == p->tag)
                 {
                     ret = x_ctonet(p, dataptr, proto_buf, 
                             proto_bufsz, proto_buf_offset, debug, sizeof(debug), 
@@ -1796,7 +1813,8 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
         /* Read len */
         net_len = read_net_int(proto_buf, &int_pos);
         
-        NDRX_LOG(log_error, "YOPT TAG=%x LEN=%d", net_tag, net_len);
+        NDRX_LOG(log_error, "YOPT TAG=%x LEN=%d (int_pos=%ld proto_len=%ld", 
+                net_tag, net_len, int_pos, proto_len);
         /*
         NDRX_LOG(log_debug, "Got tag: %x, got len: %x (%hd)", 
                 net_tag, net_len, net_len);
@@ -2163,6 +2181,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         {
                             NDRX_LOG(log_error, "YOPT ADDING INNER!");
                             
+                            /* buf is current field offset */
                             if (EXSUCCEED!=Baddfast((UBFH *)p_typedbuf, p_ub_data->bfldid, 
                                     p_ub_data->buf, 0, &p_ub_data->next_fld))
                             {
@@ -2185,6 +2204,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         long tmpret;
                         BVIEWFLD vheader; /* read header tags */
                         char *vdata;
+                        BVIEWFLD *vf;
                         
                         memset(&vheader, 0, sizeof(vheader));
                         
@@ -2197,15 +2217,15 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             EXFAIL_OUT(ret);
                         }
                         
-                        NDRX_LOG(log_debug, "Deserialize view: [%s]", vheader.vname);
-                        
-                        int_pos+=tmpret;
+                        NDRX_LOG(log_debug, "Deserialize view: [%s] (header len: %ld)", 
+                                vheader.vname, tmpret);
                         
                         /* OK, read next, if have anything... */
                         
                         if (XATMIBUFPTR==fld->type)
                         {
-                            BVIEWFLD *vf =(BVIEWFLD *)(ex_buf + ex_offset);
+                            /* we are part of UBF... */
+                            vf =(BVIEWFLD *)(ex_buf + ex_offset+fld->offset);
                             NDRX_STRCPY_SAFE(vf->vname, vheader.vname);
                             vf->vflags = vheader.vflags;
                             
@@ -2217,7 +2237,8 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         }
                         else
                         {
-                            ndrx_view_header * p_hdr = (ndrx_view_header *)(ex_buf + ex_offset);
+                            /* we work with clean FB */
+                            ndrx_view_header * p_hdr = (ndrx_view_header *)(ex_buf + ex_offset+fld->offset);
                             /* data buffer unload */
                             CHECK_EX_BUFSZ(ret, ex_offset, EXOFFSET(ndrx_view_header, vname), 
                                     ex_bufsz, (NDRX_VIEW_NAME_LEN+1));
@@ -2256,9 +2277,12 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             }
                         }
                         
+                        /* TODO: run Bvinit() to setup stuff to 0 */
+                        
                         /* OK start to drive */
                         if (EXFAIL==_exproto_proto2ex(ndrx_G_view_field,  
-                                    (char *)(proto_buf+int_pos), net_len, 
+                                    /* reduce the tag len.. header already read */
+                                    (char *)(proto_buf+int_pos+tmpret), net_len-tmpret,
                                     /* Drive over internal variable + we should 
                                      * have callback when data completed, so that
                                      * we can install them in FB! */
@@ -2267,6 +2291,27 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                     vdata, f, tmpf_len))
                         {
                             EXFAIL_OUT(ret);
+                        }
+                        
+                        /**
+                         * if there was master UBF present, then this
+                         * is inner buffer... thus add the field.
+                         * optimization: addfast
+                         */
+                        if (NULL!=p_typedbuf)
+                        {
+                            NDRX_LOG(log_error, "YOPT ADDING INNER!");
+                            
+                            
+                            /* buf is current field offset */
+                            if (EXSUCCEED!=Baddfast((UBFH *)p_typedbuf, p_ub_data->bfldid, 
+                                    p_ub_data->buf, 0, &p_ub_data->next_fld))
+                            {
+                                NDRX_LOG(log_error, "Failed to setup field %s:%s",
+                                        Bfname(p_ub_data->bfldid), Bstrerror(Berror));
+                                ret=EXFAIL;
+                                goto out;
+                            }
                         }
                     }
                     else
