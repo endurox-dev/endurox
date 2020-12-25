@@ -124,6 +124,11 @@ Ensure(test_proto_ubfcall)
     
     ndrx_mbuf_tlv_debug(call->data, call->data_len);
     
+    
+    fprintf(stdout, "YOPT ORG p_ub:\n");
+    Bprint(p_ub);
+    
+    
     proto_len = 0;
     /* try to serialize */
     assert_equal(exproto_ex2proto(buf, sizeof(*call)+call->data_len, 

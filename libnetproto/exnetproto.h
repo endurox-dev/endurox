@@ -226,6 +226,7 @@ struct proto_ufb_fld
 
 extern cproto_t ndrx_G_ndrx_mbuf_tlv_x[];
 extern short ndrx_G_ubf_proto_tag_map[];
+extern short ndrx_G_view_proto_tag_map[];
 extern cproto_t ndrx_G_view_field[];
 extern cproto_t ndrx_G_view[];
 

@@ -86,7 +86,6 @@
  * @param ex_len C len
  * @param proto_buf output buffer
  * @param proto_buf_offset current offset at output buf
- * @param accept_tags which flags shall be generated in output
  * @param p_ub_data not used
  * @param proto_bufsz output buffer size
  * @return EXSUCCEED/EXFAIL
@@ -104,7 +103,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     short C_count_stor;
     unsigned short *L_length; /* will transfer as long */
     ndrx_typedview_t *v;
-    ndrx_typedview_field_t *f;
+    ndrx_typedview_field_t *vf;
     char *cstruct;
     char f_data_buf[sizeof(proto_ufb_fld_t)+sizeof(char *)]; /* just store ptr */
     ssize_t f_data_buf_len;
@@ -112,9 +111,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     short accept_tags[] = {VIEW_TAG_CNAME, VIEW_TAG_BFLDLEN, 0, EXFAIL};
     xmsg_t tmp_cv;
     BVIEWFLD vheader;
-    
-    f_data_buf_len = sizeof(f_data_buf);
-    
+                    
     UBF_LOG(log_debug, "%s enter at level %d", __func__, level);
     
     if (XATMIBUFPTR==fld->type)
@@ -123,6 +120,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
             
         NDRX_STRCPY_SAFE(vheader.vname, vdata->vname);
         vheader.vflags = vdata->vflags;
+        cstruct = vdata->data;
     }
     else
     {
@@ -131,7 +129,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
         /* Resolve view descriptor */
         NDRX_STRCPY_SAFE(vheader.vname, p_hdr->vname);
         vheader.vflags = p_hdr->vflags;
-        
+        cstruct = p_hdr->data;
     }
     
     /* write off header... */
@@ -165,46 +163,46 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     tmp_cv.tabcnt=1;
     tmp_cv.command = 0; /* not used... */
         
-    DL_FOREACH(v->fields, f)
+    DL_FOREACH(v->fields, vf)
     {
-        if (f->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+        if (vf->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
         {
-            C_count = (short *)(cstruct+f->count_fld_offset);
+            C_count = (short *)(cstruct+vf->count_fld_offset);
         }
         else
         {
-            C_count_stor=f->count; 
+            C_count_stor=vf->count; 
             C_count = &C_count_stor;
         }
         
         /* extra check: */
-        if (*C_count > f->count)
+        if (*C_count > vf->count)
         {
             UBF_LOG(log_error, "Invalid count for field %s.%s in "
-                    "view %hd, specified: %hd", v->vname, f->cname, 
-                    f->count, *C_count);
+                    "view %hd, specified: %hd", v->vname, vf->cname, 
+                    vf->count, *C_count);
             
             ndrx_Bset_error_fmt(BNOCNAME, "Invalid count for field %s.%s in "
-                    "view %hd, specified: %hd", v->vname, f->cname, 
-                    f->count, *C_count);
+                    "view %hd, specified: %hd", v->vname, vf->cname, 
+                    vf->count, *C_count);
             EXFAIL_OUT(ret);
         }
         
-        NDRX_STRCPY_SAFE(fldata->cname, f->cname);
+        NDRX_STRCPY_SAFE(fldata->cname, vf->cname);
         
 
         for (occ=0; occ<*C_count; occ++)
         {
-            BFLDLEN dim_size = f->fldsize/f->count;
-            p = cstruct+f->offset+occ*dim_size;
+            BFLDLEN dim_size = vf->fldsize/vf->count;
+            p = cstruct+vf->offset+occ*dim_size;
             
             /* just increment the field id for view.. */
             bfldid++;
             
             /* get the carray length  */
-            if (f->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
+            if (vf->flags & NDRX_VIEW_FLAG_LEN_INDICATOR_L)
             {
-                L_length = (unsigned short *)(cstruct+f->length_fld_offset+
+                L_length = (unsigned short *)(cstruct+vf->length_fld_offset+
                             occ*sizeof(unsigned short));
                 fldata->bfldlen= (BFLDLEN)*L_length;
             }
@@ -217,13 +215,16 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
              * data types.
              * TODO: new mapping table needed:
              */
-            accept_tags[2] = ndrx_G_ubf_proto_tag_map[f->typecode_full];
+            NDRX_LOG(log_error, "YOPT TYPECODE %d", vf->typecode_full);
+            accept_tags[2] = ndrx_G_view_proto_tag_map[vf->typecode_full];
             
             /* put the pointer value there */
-            memcpy(fldata->buf, p, sizeof(char *));
+            memcpy(fldata->buf, &p, sizeof(char *));
+            
+            f_data_buf_len = sizeof(f_data_buf);
             
             /* lets drive our structure? */
-            ret = exproto_build_ex2proto(&tmp_cv, 0, 0,(char *)f, 
+            ret = exproto_build_ex2proto(&tmp_cv, 0, 0,(char *)fldata, 
                     f_data_buf_len, proto_buf, proto_buf_offset,  
                     accept_tags, fldata, proto_bufsz);
 
@@ -231,7 +232,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
             {
                 NDRX_LOG(log_error, "Failed to convert sub/tag %x: view: [%s] "
                         "cname: [%s] occ: %d"
-                    "at offset %ld", fld->tag, v->vname, f->cname, occ);
+                    "at offset %ld", fld->tag, v->vname, vf->cname, occ);
                 EXFAIL_OUT(ret);
             }
         }
