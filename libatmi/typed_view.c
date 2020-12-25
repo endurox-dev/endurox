@@ -390,7 +390,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
     }
     
     
-    /* Verify checksum */
+    /* Verify checksum 
     if (v->cksum!=p_hdr->cksum)
     {
         NDRX_LOG(log_error, "Invalid checksum for VIEW [%s] received. Our cksum: "
@@ -403,7 +403,7 @@ expublic int VIEW_prepare_incoming (typed_buffer_descr_t *descr, char *rcv_data,
                 v->vname, (long)v->cksum, (long)p_hdr->cksum);
         EXFAIL_OUT(ret);
     }
-    
+    */
     /* copy off the data */
     memcpy(*odata, p_hdr->data, v->ssize);
     

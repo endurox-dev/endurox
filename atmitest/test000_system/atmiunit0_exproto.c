@@ -70,8 +70,8 @@ exprivate void basic_teardown(void)
 Ensure(test_proto_ubfcall)
 {
     /* allocate FB & load data, convert out... (i.e.) alloc the tpcall struct */
-    char buf[4048];
-    char proto_out[4048];
+    char buf[6048];
+    char proto_out[6048];
     long proto_len;
     tp_command_call_t *call = (tp_command_call_t *)(buf + sizeof(cmd_br_net_call_t));
     cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)buf;
@@ -83,9 +83,19 @@ Ensure(test_proto_ubfcall)
     UBFH *p_ci5 = NULL;
     long olen;
     long call_len_org;
+    struct UBTESTVIEW1 *vptr;
+    struct UBTESTVIEW1 *vptr5;
+    
     assert_not_equal(p_ub, NULL);
     
+    /* have some ptr to VIEW... */
+    
     ATMI_TLS_ENTRY;
+    
+    vptr=(struct UBTESTVIEW1 *)tpalloc("VIEW", "UBTESTVIEW1", sizeof(struct UBTESTVIEW1));
+    assert_not_equal(vptr, NULL);
+    
+    extest_init_UBTESTVIEW1(vptr);
     
     /* reset call header */
     memset(call, 0, sizeof(*call));
@@ -111,6 +121,10 @@ Ensure(test_proto_ubfcall)
     
     assert_equal(tpsetcallinfo((char *)p_ub, p_ci, 0), EXSUCCEED);
     
+    
+    /* Load view ptr... */
+    assert_equal(Bchg(p_ub, T_PTR_FLD, 0, (char *)&vptr, 0), EXSUCCEED);
+    
     call->data_len=sizeof(buf)-sizeof(*call)-sizeof(*netcall);
     assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
             &call->data_len, 0, 0), EXSUCCEED);
@@ -118,8 +132,8 @@ Ensure(test_proto_ubfcall)
     call_len_org=call->data_len;
     netcall->len=sizeof(*call)+call_len_org;
     
-    NDRX_LOG(log_error, "YOPT len %ld call len: %ld", 
-            netcall->len, call_len_org);
+    NDRX_LOG(log_error, "YOPT len %ld call len: %ld sizeofcall: %d", 
+            netcall->len, call_len_org, sizeof(*call));
     
     
     ndrx_mbuf_tlv_debug(call->data, call->data_len);
@@ -171,7 +185,24 @@ Ensure(test_proto_ubfcall)
     Bprint(p_ub);
     fprintf(stdout, "YOPT p_ub5:\n");
     Bprint(p_ub5);
+    
+    /* read ptr */
+    assert_equal(Bget(p_ub5, T_PTR_FLD, 0, (char *)&vptr5, 0), EXSUCCEED);
+    
+    /* ptr, as it will be different */
+    Bdel(p_ub, T_PTR_FLD, 0);
+    Bdel(p_ub5, T_PTR_FLD, 0);
+    
     assert_equal(Bcmp(p_ub, p_ub5), 0);
+    
+    
+    fprintf(stdout, "YOPT vptr:\n");
+    Bvprint((char *)vptr, "UBTESTVIEW1");
+    
+    fprintf(stdout, "YOPT vptr5:\n");
+    Bvprint((char *)vptr5, "UBTESTVIEW1");
+    
+    assert_equal(Bvcmp((char *)vptr, "UBTESTVIEW1", (char *)vptr5, "UBTESTVIEW1"), 0);
     
     /* read the call infos ! */
     assert_equal(tpgetcallinfo((char *)p_ub5, &p_ci5, 0), EXSUCCEED);
