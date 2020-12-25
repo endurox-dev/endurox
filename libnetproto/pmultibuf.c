@@ -223,7 +223,7 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     char *f_data_buf;
     ssize_t f_data_buf_len;
     proto_ufb_fld_t *f =  (proto_ufb_fld_t *)f_data_buf;
-    
+    int loop=0;
     NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
     
     /* use cached len */
@@ -237,6 +237,7 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
      */
     do
     {
+        loop++;
         NDRX_LOG(log_error, "YOPT offf ex_offset = %ld fld->offset= %ld p_ub_data->bfldlen=%d", 
             ex_offset, fld->offset, p_ub_data->bfldlen);
         
@@ -261,8 +262,8 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
         /* we might get several calls here */
         p_ub_data->bfldlen+=step_size;
 
-        NDRX_LOG(log_error, "YOPT step size: %u %d %p", 
-                p_ub_data->bfldlen, tlv_hdr->len, &tlv_hdr->len);
+        NDRX_LOG(log_error, "YOPT step size: %u %d %p step: %u loop: %d", 
+                p_ub_data->bfldlen, tlv_hdr->len, &tlv_hdr->len, step_size, loop);
 
         /* update the call mater len */
         *buf_len= p_ub_data->bfldlen;

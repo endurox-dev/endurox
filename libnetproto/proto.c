@@ -2033,10 +2033,12 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 {
                     NDRX_LOG(log_debug, "Enter into master buffer in");
 
-                    if (EXSUCCEED!=_exproto_proto2ex_mbuf(fld, 
+                    /* as we loop over the several MBUFs,
+                     * we need to update the net len too... */
+                    if (EXFAIL==(net_len=_exproto_proto2ex_mbuf(fld, 
                             (char *)(proto_buf+int_pos), net_len, 
                             ex_buf, ex_offset, max_struct, level, 
-                            NULL, &tmpdata, ex_bufsz))
+                            NULL, &tmpdata, ex_bufsz)))
                     {
                         EXFAIL_OUT(ret);
                     }
@@ -2272,12 +2274,19 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                             if (NULL==f->v)
                             {
                                 NDRX_LOG(log_error, "VIEW [%s] NOT FOUND!", vheader.vname);
-                                userlog("VIEW [%s] NOT FOUND!", vheader.vname);
+                                userlog("ERROR ! VIEW [%s] NOT FOUND!", vheader.vname);
+                                EXFAIL_OUT(ret);
+                            }
+                            
+                            if (EXFAIL==Bvsinit(vdata, vheader.vname))
+                            {
+                                NDRX_LOG(log_error, "Failed to init view [%s] at %p: %s", 
+                                        vheader.vname, vdata, Bstrerror(Berror));
+                                userlog("Failed to init view [%s] at %p: %s", 
+                                        vheader.vname, vdata, Bstrerror(Berror));
                                 EXFAIL_OUT(ret);
                             }
                         }
-                        
-                        /* TODO: run Bvinit() to setup stuff to 0 */
                         
                         /* OK start to drive */
                         if (EXFAIL==_exproto_proto2ex(ndrx_G_view_field,  
@@ -2302,7 +2311,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         {
                             NDRX_LOG(log_error, "YOPT ADDING INNER!");
                             
-                            
                             /* buf is current field offset */
                             if (EXSUCCEED!=Baddfast((UBFH *)p_typedbuf, p_ub_data->bfldid, 
                                     p_ub_data->buf, 0, &p_ub_data->next_fld))
@@ -2312,6 +2320,12 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                 ret=EXFAIL;
                                 goto out;
                             }
+                        }
+                        else
+                        {
+                            /* in master buffer we step by size of view + header */
+                            xatmi_fld_len = sizeof (ndrx_view_header) + f->v->ssize;
+                            p_fld_len = &xatmi_fld_len;
                         }
                     }
                     else
@@ -2361,10 +2375,14 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 if ((fld->offset + ex_offset + *p_fld_len) > *max_struct)
                 {
                     *max_struct = fld->offset +ex_offset+ *p_fld_len;
-                    /*
-                    NDRX_LOG(log_debug, "max len=>%ld", *max_struct);
-                     */
+                    
+                    NDRX_LOG(log_debug, "YOPT max_sturct=>%ld", *max_struct);
                 }
+                else
+                {
+                    NDRX_LOG(log_debug, "YOPT existing max_sturct=>%ld", *max_struct);
+                }
+                    
             }
             
             if (NULL!=tmpf)

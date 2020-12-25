@@ -100,10 +100,9 @@ expublic void extest_init_UBTESTVIEW1(struct UBTESTVIEW1 *v)
     v->tfloat1[2]=0.33;	/* null=1.1 */
     v->tfloat1[3]=0.44;	/* null=1.1 */
 
-    v->tfloat2[0]=100000.1;	/* null=1.1 */
-    v->tfloat2[1]=200000.2;	/* null=1.1 */
-
-    v->tfloat3=333333.111;	/* null=9999.99 */
+    v->tfloat2[0]=100.1;	/* null=1.1 */
+    v->tfloat2[1]=200.2;	/* null=1.1 */
+    v->tfloat3=333.111;	/* null=9999.99 */
 
     v->tdouble1[0]=99999.111111;	/* null=55555.99 */
     v->tdouble1[1]=11111.999999;	/* null=55555.99 */
