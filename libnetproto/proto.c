@@ -110,7 +110,7 @@ static cproto_t M_cmd_br_net_call_x[] =
     {TNC, 0x100F, "msg_type",  OFSZ(cmd_br_net_call_t,msg_type),   EXF_CHAR, XFLD, 1, 1},
     {TNC, 0x1019, "command_id",OFSZ(cmd_br_net_call_t,command_id), EXF_INT,  XFLD, 1, 5},
     {TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10}, /**< Not used ???? */
-    {TNC, 0x102D, "buf",       OFSZ(cmd_br_net_call_t,buf),        EXF_NONE, XSUB, 0, PMSGMAX, 
+    {TNC, 0x102D, "buf",       OFSZ(cmd_br_net_call_t,buf),        EXF_NONE, XSUBPTR, 0, PMSGMAX, 
                        NULL, EXOFFSET(cmd_br_net_call_t,len), EXFAIL, classify_netcall},
     {TNC, EXFAIL}
 };
@@ -1196,6 +1196,8 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
             }
                 break;
+                
+            case XSUBPTR:
             case XSUB:
             {
                 /* <sub tlv> */
@@ -1222,9 +1224,19 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 /* </sub tlv> */
                 
                 /* This is sub field, we should run it from subtable... */
-                ret = exproto_build_ex2proto(cv, level+1, offset+p->offset,
-                        ex_buf, ex_len, proto_buf, proto_buf_offset, NULL, NULL,
-                        proto_bufsz);
+                if (XSUBPTR==p->type)
+                {
+                    char *ex_buf_ptr = *((char **)(ex_buf+offset+p->offset));
+                    ret = exproto_build_ex2proto(cv, level+1, 0,
+                            ex_buf_ptr, ex_len, proto_buf, proto_buf_offset, NULL, NULL,
+                            proto_bufsz);
+                }
+                else
+                {
+                    ret = exproto_build_ex2proto(cv, level+1, offset+p->offset,
+                            ex_buf, ex_len, proto_buf, proto_buf_offset, NULL, NULL,
+                            proto_bufsz);
+                }
                 
                 if (EXSUCCEED!=ret)
                 {
@@ -1957,6 +1969,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     }
                 }
                     break;
+                case XSUBPTR:
                 case XSUB:
                 {
                     loop_keeper = 0;

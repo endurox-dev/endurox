@@ -73,8 +73,9 @@ Ensure(test_proto_ubfcall)
     char buf[6048];
     char proto_out[6048];
     long proto_len;
-    tp_command_call_t *call = (tp_command_call_t *)(buf + sizeof(cmd_br_net_call_t));
-    cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)buf;
+    tp_command_call_t *call = (tp_command_call_t *)buf;
+    char smallbuf[sizeof(cmd_br_net_call_t) + sizeof(char *)];
+    cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)smallbuf;
     ndrx_stopwatch_t w;
     time_t t;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 2024);
@@ -109,9 +110,13 @@ Ensure(test_proto_ubfcall)
     call->cd = 999;
     call->timestamp = t;
     call->buffer_type_id = BUF_TYPE_UBF;
+    
     netcall->br_magic=BR_NET_CALL_MAGIC;
     netcall->command_id=ATMI_COMMAND_TPCALL;
     netcall->msg_type=BR_NET_CALL_MSG_TYPE_ATMI;
+    
+    /* set out-buffer ptr, avoid mem copy */
+    memcpy(netcall->buf, &call, sizeof(char *));
     
     /* set call infos */
     assert_equal(Bchg(p_ci, T_STRING_6_FLD, 4, "HELLO CALL INFO", 0), EXSUCCEED);
@@ -125,7 +130,7 @@ Ensure(test_proto_ubfcall)
     /* Load view ptr... */
     assert_equal(Bchg(p_ub, T_PTR_FLD, 0, (char *)&vptr, 0), EXSUCCEED);
     
-    call->data_len=sizeof(buf)-sizeof(*call)-sizeof(*netcall);
+    call->data_len=sizeof(buf)-sizeof(*call);
     assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
             &call->data_len, 0, 0), EXSUCCEED);
     
@@ -145,11 +150,14 @@ Ensure(test_proto_ubfcall)
     
     proto_len = 0;
     /* try to serialize */
-    assert_equal(exproto_ex2proto(buf, sizeof(*call)+call->data_len, 
+    assert_equal(exproto_ex2proto((char *)netcall, sizeof(*call)+call->data_len, 
 	proto_out, &proto_len, sizeof(proto_out)), EXSUCCEED);
     
-    
+    /* when we parse in, the buf is the netcall, ptr optimization is only for outgoing ... */
+    netcall = (cmd_br_net_call_t *)buf;
     memset(buf, 0, sizeof(buf));
+    call = (tp_command_call_t *)(buf + sizeof(cmd_br_net_call_t));
+    /* memset(smallbuf, 0, sizeof(smallbuf)); */
     
     NDRX_LOG(log_error, "YOPT DATA PTR: %p", buf);
     /* deserialize the buffer back... */
