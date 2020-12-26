@@ -219,12 +219,13 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     unsigned ex_offset_dyn;
     int ret = EXSUCCEED;
     long int_pos=0;
-    ndrx_mbuf_tlv_t *tlv_hdr;
+    ndrx_mbuf_tlv_t *tlv_hdr=NULL;
     char *f_data_buf;
     ssize_t f_data_buf_len;
     proto_ufb_fld_t *f =  (proto_ufb_fld_t *)f_data_buf;
     int loop=0;
     NDRX_SYSBUF_MALLOC_OUT(f_data_buf, f_data_buf_len, ret);
+    int trailing_align = 0;
     
     /* use cached len */
     /* bfldlen is current master buf offset, for several blocks.. */
@@ -244,7 +245,7 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
         ex_offset_dyn = ex_offset+fld->offset + p_ub_data->bfldlen;
         tlv_hdr =  (ndrx_mbuf_tlv_t *)(ex_buf+ex_offset_dyn);
 
-        ret = _exproto_proto2ex(ndrx_G_ndrx_mbuf_tlv_x, proto_buf+int_pos, proto_len, 
+        ret = _exproto_proto2ex(ndrx_G_ndrx_mbuf_tlv_x, proto_buf+int_pos, proto_len-int_pos, 
                 ex_buf, ex_offset_dyn, max_struct, 
                 0, NULL, NULL, ex_bufsz);
         
@@ -256,7 +257,10 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
         int_pos+=ret;
         ret=EXSUCCEED;
         
-        /* add the master-len value (i.e. increment the f and publish to  buf_len */
+        /* add the master-len value (i.e. increment the f and publish to  buf_len 
+         * if the buffer was last, then we shall not count in the alignment
+         */
+        trailing_align = ALIGNED_GEN(tlv_hdr->len) - tlv_hdr->len;
         step_size=ALIGNED_GEN(tlv_hdr->len)+sizeof(ndrx_mbuf_tlv_t);
 
         /* we might get several calls here */
@@ -269,6 +273,11 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
         *buf_len= p_ub_data->bfldlen;
     
     } while (int_pos < proto_len);
+    
+    
+    /* delete trailing alignment bytes */
+    p_ub_data->bfldlen-=trailing_align;
+    *buf_len-=trailing_align;
     
 out:
     

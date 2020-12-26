@@ -262,7 +262,7 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
     {TTC, 0x11DC,  "msgseq",    OFSZ(tp_command_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
     {TTC, 0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
-    {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
+    /* {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10}, - machine dependent (not need to send) */
     {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
                            EXOFFSET(tp_command_call_t,data_len), EXFAIL, NULL, EXOFFSET(tp_command_call_t,buffer_type_id)},
@@ -306,7 +306,7 @@ static cproto_t M_tp_notif_call_x[] =
     {TPN, 0x12F3,  "callseq",   OFSZ(tp_notif_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
     {TPN, 0x12FD,  "msgseq",    OFSZ(tp_notif_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
     {TPN, 0x1307,  "timer",     OFSZ(tp_notif_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
-    {TPN, 0x1311,  "data_len",  OFSZ(tp_notif_call_t,data_len), EXF_LONG,   XSBL, 1, 10},
+    /* {TPN, 0x1311,  "data_len",  OFSZ(tp_notif_call_t,data_len), EXF_LONG,   XSBL, 1, 10}, -machine dependent, no need to send */
     {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                 /* WARNING! Using counter offset here are length FLD offset! */
                EXOFFSET(tp_notif_call_t,data_len), EXFAIL, NULL, EXOFFSET(tp_notif_call_t,buffer_type_id)},
@@ -321,7 +321,7 @@ static cproto_t M_tp_notif_call_x[] =
 expublic cproto_t ndrx_G_ndrx_mbuf_tlv_x[] = 
 {
     {MBU, 0x132F,  "tag",   OFSZ(ndrx_mbuf_tlv_t, tag),  EXF_UINT,   XFLD, 1, 10},
-    {MBU, 0x1339,  "len",   OFSZ(ndrx_mbuf_tlv_t, len), EXF_UINT,   XFLD, 1, 10},
+    /* {MBU, 0x1339,  "len",   OFSZ(ndrx_mbuf_tlv_t, len), EXF_UINT,   XFLD, 1, 10}, - platform dependent... */
     /* Typed fields... */
     {MBU, 0x1343,  "data",  OFSZ(ndrx_mbuf_tlv_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
@@ -1481,7 +1481,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     proto_ufb_fld_t *f;
                     BFLDOCC occ;
                     
-                    short accept_tags[] = {UBF_TAG_BFLDID, UBF_TAG_BFLDLEN, 0, EXFAIL};
+                    short accept_tags[] = {UBF_TAG_BFLDID, 0, 0, EXFAIL};
                     
                     /* Reserve space for Tag/Length */
                     /* <sub tlv> */
@@ -1514,10 +1514,20 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     {
                         f_type = Bfldtype(f->bfldid);
                         
-                        /* TODO: Optimize out the length field for fixed
+                        /* Optimize out the length field for fixed
                          * data types
                          */
-                        accept_tags[2] = ndrx_G_ubf_proto_tag_map[f_type];
+                        accept_tags[1] = ndrx_G_ubf_proto_tag_map[f_type];
+                        
+                        /*  only for carrays needs len to be present from Bapi perspective */
+                        if (BFLD_CARRAY==f_type)
+                        {
+                            accept_tags[2] = UBF_TAG_BFLDLEN;
+                        }
+                        else
+                        {
+                            accept_tags[2] = EXFAIL;
+                        }
 
                         /* lets drive our structure? */
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
@@ -2048,10 +2058,11 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 
                     /* as we loop over the several MBUFs,
                      * we need to update the net len too... */
-                    if (EXFAIL==(net_len=_exproto_proto2ex_mbuf(fld, 
+                    //if (EXFAIL==(net_len=_exproto_proto2ex_mbuf(fld, 
+                    if (EXFAIL==_exproto_proto2ex_mbuf(fld, 
                             (char *)(proto_buf+int_pos), net_len, 
                             ex_buf, ex_offset, max_struct, level, 
-                            NULL, &tmpdata, ex_bufsz)))
+                            NULL, &tmpdata, ex_bufsz))
                     {
                         EXFAIL_OUT(ret);
                     }
@@ -2337,7 +2348,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         else
                         {
                             /* in master buffer we step by size of view + header */
-                            xatmi_fld_len = sizeof (ndrx_view_header) + f->v->ssize;
+                            *buf_len  = xatmi_fld_len = sizeof (ndrx_view_header) + f->v->ssize;
                             p_fld_len = &xatmi_fld_len;
                         }
                     }

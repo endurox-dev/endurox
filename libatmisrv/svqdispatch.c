@@ -330,8 +330,9 @@ expublic int sv_serve_call(int *service, int *status,
             generate_rply = EXTRUE;
             goto out;
         }
-        call_type = &G_buf_descr[call->buffer_type_id];
+        /* call_type = &G_buf_descr[call->buffer_type_id]; */
         
+        /*
         ret=call_type->pf_prepare_incoming(call_type,
                         call->data,
                         call->data_len,
@@ -339,6 +340,10 @@ expublic int sv_serve_call(int *service, int *status,
                         &req_len,
                         0L);
 
+         */
+        ret = ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
+                        &request_buffer, &req_len, 0, 0);
+        
         if (EXSUCCEED!=ret)
         {
 
@@ -598,15 +603,21 @@ expublic int sv_serve_connect(int *service, int *status,
     /* We can have data len 0! */
     if (call->data_len > 0)
     {
+        /*
         call_type = &G_buf_descr[call->buffer_type_id];
 
+        
         ret=call_type->pf_prepare_incoming(call_type,
                         call->data,
                         call->data_len,
                         &request_buffer,
                         &req_len,
                         0L);
-    
+        */
+        ret = ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
+                        &request_buffer, &req_len, 0, 0);
+        
+        
         if (EXSUCCEED!=ret)
         {
 
@@ -900,9 +911,6 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
                 tp_notif_call_t *notif = (tp_notif_call_t*)*call_buf;
                 char *request_buffer = NULL;
                 long req_len = 0;
-                typed_buffer_descr_t *call_type;
-                
-                call_type = &G_buf_descr[notif->buffer_type_id];
                 
                 NDRX_LOG(log_info, "Doing local %s... (buffer type %hd)",
                      (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"),
@@ -911,12 +919,21 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
                 /* How about prepare incoming buffer? */
                 
                 if (0==notif->data_len ||
+                        /*
                         EXSUCCEED==call_type->pf_prepare_incoming(call_type,
                         notif->data,
                         notif->data_len,
                         &request_buffer,
                         &req_len,
-                        0L))
+                        0L)
+                        */
+                        EXSUCCEED==ndrx_mbuf_prepare_incoming(notif->data,
+                        notif->data_len,
+                        &request_buffer,
+                        &req_len,
+                        0L, 0L)
+                        
+                        )
                 {
                     NDRX_LOG(log_debug, "ATMI Command id: %d", 
                             gen_command->command_id);

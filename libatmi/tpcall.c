@@ -553,6 +553,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
 
     if (NULL!=data)
     {
+        
+#if 0
         descr = &G_buf_descr[buffer_info->type_id];
         /* prepare buffer for call */
         if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
@@ -561,6 +563,15 @@ expublic int ndrx_tpacall (char *svc, char *data,
             /* not good - error should be already set */
             EXFAIL_OUT(ret);
         }
+#endif
+        
+        if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (data, 0, call->data, 
+                &data_len, flags, 0))
+        {
+            /* not good - error should be already set */
+            EXFAIL_OUT(ret);
+        }
+        
     }
     else
     {
@@ -984,12 +995,16 @@ expublic int ndrx_tpgetrply (int *cd,
                 
                 call_type = &G_buf_descr[rply->buffer_type_id];
 
+#if 0
                 ret=call_type->pf_prepare_incoming(call_type,
                                 rply->data,
                                 rply->data_len,
                                 data,
                                 len,
                                 flags);
+#endif
+                ret = ndrx_mbuf_prepare_incoming (rply->data, rply->data_len, 
+                        data, len, flags, 0);
                 
                 /* put rcode in global */
                 G_atmi_tls->M_svc_return_code = rply->rcode;

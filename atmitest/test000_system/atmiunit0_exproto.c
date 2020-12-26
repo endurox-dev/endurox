@@ -70,8 +70,8 @@ exprivate void basic_teardown(void)
 Ensure(test_proto_ubfcall)
 {
     /* allocate FB & load data, convert out... (i.e.) alloc the tpcall struct */
-    char buf[6048];
-    char proto_out[6048];
+    char buf[7048];
+    char proto_out[7048];
     long proto_len;
     tp_command_call_t *call = (tp_command_call_t *)buf;
     char smallbuf[sizeof(cmd_br_net_call_t) + sizeof(char *)];
@@ -86,6 +86,9 @@ Ensure(test_proto_ubfcall)
     long call_len_org;
     struct UBTESTVIEW1 *vptr;
     struct UBTESTVIEW1 *vptr5;
+    long netcall_len_org;
+    char *vptr_2;
+    char *vptr5_2;
     
     assert_not_equal(p_ub, NULL);
     
@@ -95,6 +98,13 @@ Ensure(test_proto_ubfcall)
     
     vptr=(struct UBTESTVIEW1 *)tpalloc("VIEW", "UBTESTVIEW1", sizeof(struct UBTESTVIEW1));
     assert_not_equal(vptr, NULL);
+    
+    vptr_2=tpalloc("CARRAY", NULL, 567);
+    assert_not_equal(vptr_2, NULL);
+    
+    memset(vptr_2, 'Z', 567);
+    vptr_2[0]='A';
+    vptr_2[499]='A';
     
     extest_init_UBTESTVIEW1(vptr);
     
@@ -127,21 +137,25 @@ Ensure(test_proto_ubfcall)
     assert_equal(tpsetcallinfo((char *)p_ub, p_ci, 0), EXSUCCEED);
     
     
-    /* Load view ptr... */
-    assert_equal(Bchg(p_ub, T_PTR_FLD, 0, (char *)&vptr, 0), EXSUCCEED);
+    /* Load view ptr..., at pos 0 we will have NULL buffer ... */
+    assert_equal(Bchg(p_ub, T_PTR_FLD, 1, (char *)&vptr, 0), EXSUCCEED);
+    assert_equal(Bchg(p_ub, T_PTR_FLD, 2, (char *)&vptr_2, 0), EXSUCCEED);
     
     call->data_len=sizeof(buf)-sizeof(*call);
     assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
             &call->data_len, 0, 0), EXSUCCEED);
     
     call_len_org=call->data_len;
-    netcall->len=sizeof(*call)+call_len_org;
+    netcall_len_org = netcall->len=sizeof(*call)+call_len_org;
     
     NDRX_LOG(log_error, "YOPT len %ld call len: %ld sizeofcall: %d", 
             netcall->len, call_len_org, sizeof(*call));
     
     
     ndrx_mbuf_tlv_debug(call->data, call->data_len);
+    
+    
+    NDRX_DUMP(log_error, "YOPT SENDING", call->data, call->data_len);
     
     
     fprintf(stdout, "YOPT ORG p_ub:\n");
@@ -174,7 +188,7 @@ Ensure(test_proto_ubfcall)
     assert_equal(netcall->br_magic, BR_NET_CALL_MAGIC);
     assert_equal(netcall->command_id, ATMI_COMMAND_TPCALL);
     assert_equal(netcall->msg_type, BR_NET_CALL_MSG_TYPE_ATMI);
-    assert_equal(netcall->len, sizeof(*call)+call->data_len);
+    assert_equal(netcall->len, netcall_len_org);
     assert_equal(call->data_len, call_len_org);
     
     assert_equal(call->cd, 999);
@@ -195,11 +209,19 @@ Ensure(test_proto_ubfcall)
     Bprint(p_ub5);
     
     /* read ptr */
-    assert_equal(Bget(p_ub5, T_PTR_FLD, 0, (char *)&vptr5, 0), EXSUCCEED);
+    assert_equal(Bget(p_ub5, T_PTR_FLD, 1, (char *)&vptr5, 0), EXSUCCEED);
+    assert_equal(Bget(p_ub5, T_PTR_FLD, 2, (char *)&vptr5_2, 0), EXSUCCEED);
     
     /* ptr, as it will be different */
+    Bdel(p_ub, T_PTR_FLD, 2);
+    Bdel(p_ub5, T_PTR_FLD, 2);
+    Bdel(p_ub, T_PTR_FLD, 1);
+    Bdel(p_ub5, T_PTR_FLD, 1);
+    
+    /* leave null buffers
     Bdel(p_ub, T_PTR_FLD, 0);
     Bdel(p_ub5, T_PTR_FLD, 0);
+    */
     
     assert_equal(Bcmp(p_ub, p_ub5), 0);
     
@@ -211,6 +233,9 @@ Ensure(test_proto_ubfcall)
     Bvprint((char *)vptr5, "UBTESTVIEW1");
     
     assert_equal(Bvcmp((char *)vptr, "UBTESTVIEW1", (char *)vptr5, "UBTESTVIEW1"), 0);
+    
+    
+    assert_equal(memcmp(vptr_2, vptr5_2, 567), 0);
     
     /* read the call infos ! */
     assert_equal(tpgetcallinfo((char *)p_ub5, &p_ci5, 0), EXSUCCEED);
