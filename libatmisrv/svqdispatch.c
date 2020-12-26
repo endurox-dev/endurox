@@ -278,7 +278,6 @@ expublic int sv_serve_call(int *service, int *status,
     char *request_buffer = NULL;
     long req_len = 0;
     int reply_type;
-    typed_buffer_descr_t *call_type;
     tp_command_call_t *call = (tp_command_call_t*)*call_buf;
     buffer_obj_t *outbufobj=NULL; /* Have a reference to allocated buffer */
     long call_age;
@@ -311,57 +310,29 @@ expublic int sv_serve_call(int *service, int *status,
         *status=EXFAIL;
         goto out;
     }
+    
+    ret = ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
+                    &request_buffer, &req_len, 0, 0);
 
-    /* Prepare the call buffer */
-    if (call->data_len > 0)
+    if (EXSUCCEED!=ret)
     {
-        /* Assume that received data is valid. */
-	/* 20/08/2014 - have some more debugs - we get core dumps here! */
-        NDRX_LOG(6, "Received len = %ld buffer_type_id = %hd", 
-			call->data_len, call->buffer_type_id);
-	/* Validate buffer type id, otherwise we get core */
-        if (call->buffer_type_id < BUF_TYPE_MIN || 
-            call->buffer_type_id  > BUF_TYPE_MAX )
-        {
-            NDRX_LOG(log_always, "Invalid buffer type received %hd"
-                                        "min = %d max %d",
-                            call->buffer_type_id, BUF_TYPE_MIN, BUF_TYPE_MAX);
-            *status=EXFAIL;
-            generate_rply = EXTRUE;
-            goto out;
-        }
-        /* call_type = &G_buf_descr[call->buffer_type_id]; */
-        
-        /*
-        ret=call_type->pf_prepare_incoming(call_type,
-                        call->data,
-                        call->data_len,
-                        &request_buffer,
-                        &req_len,
-                        0L);
 
-         */
-        ret = ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
-                        &request_buffer, &req_len, 0, 0);
-        
-        if (EXSUCCEED!=ret)
-        {
-
-            /* TODO: Reply with failure - TPEOTYPE - type not supported! */
-            *status=EXFAIL;
-            generate_rply = EXTRUE;
-            goto out;
-        }
-        else
-        {
-            /* this must succeed */
-            outbufobj=ndrx_find_buffer(request_buffer);
-            outbufobj->autoalloc = 1; /* We have stuff autoallocated! */
-            NDRX_LOG(log_debug, "Buffer=%p autoalloc=%hd", 
-                    outbufobj->buf, outbufobj->autoalloc);
-        }
+        /* TODO: Reply with failure - TPEOTYPE - type not supported! */
+        *status=EXFAIL;
+        generate_rply = EXTRUE;
+        goto out;
     }
-
+    else
+    {
+        /* this must succeed */
+        outbufobj=ndrx_find_buffer(request_buffer);
+        
+        /* how about NULL buffer? */
+        outbufobj->autoalloc = 1; /* We have stuff autoallocated! */
+        NDRX_LOG(log_debug, "Buffer=%p autoalloc=%hd", 
+                outbufobj->buf, outbufobj->autoalloc);
+    }
+    
     /* Now we should call the service by it self, also we should check was reply back or not */
 
     if (G_libatmisrv_flags & ATMI_SRVLIB_NOLONGJUMP ||
@@ -574,11 +545,9 @@ expublic int sv_serve_connect(int *service, int *status,
     char *request_buffer = NULL;
     long req_len = 0;
     int reply_type;
-    typed_buffer_descr_t *call_type;
     tp_command_call_t *call = (tp_command_call_t*)*call_buf;
     *status=EXSUCCEED;
     long call_age;
-    atmi_lib_env_t *env = ndrx_get_G_atmi_env();
     tp_command_call_t * last_call = ndrx_get_G_last_call();
 
     *status=EXSUCCEED;
@@ -601,31 +570,17 @@ expublic int sv_serve_connect(int *service, int *status,
     /* Prepare the call buffer */
     /* TODO: Check buffer type - if invalid this should raise segfault! */
     /* We can have data len 0! */
-    if (call->data_len > 0)
+    ret = ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
+                    &request_buffer, &req_len, 0, 0);
+
+
+    if (EXSUCCEED!=ret)
     {
-        /*
-        call_type = &G_buf_descr[call->buffer_type_id];
 
-        
-        ret=call_type->pf_prepare_incoming(call_type,
-                        call->data,
-                        call->data_len,
-                        &request_buffer,
-                        &req_len,
-                        0L);
-        */
-        ret = ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
-                        &request_buffer, &req_len, 0, 0);
-        
-        
-        if (EXSUCCEED!=ret)
-        {
-
-            /* TODO: Reply with failure - TPEOTYPE - type not supported! */
-            goto out;
-        }
-
+        /* TODO: Reply with failure - TPEOTYPE - type not supported! */
+        goto out;
     }
+
 
     /* Now we should call the service by it self, also we should check was reply back or not */
 
@@ -912,27 +867,16 @@ expublic int sv_server_request(char **call_buf, long call_len, int call_no)
                 char *request_buffer = NULL;
                 long req_len = 0;
                 
-                NDRX_LOG(log_info, "Doing local %s... (buffer type %hd)",
-                     (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"),
-                        notif->buffer_type_id);
+                NDRX_LOG(log_info, "Doing local %s...",
+                     (ATMI_COMMAND_TPNOTIFY==gen_command->command_id?"tpnotify":"tpbroadcast"));
                 
                 /* How about prepare incoming buffer? */
                 
-                if (0==notif->data_len ||
-                        /*
-                        EXSUCCEED==call_type->pf_prepare_incoming(call_type,
-                        notif->data,
+                if (EXSUCCEED==ndrx_mbuf_prepare_incoming(notif->data,
                         notif->data_len,
                         &request_buffer,
                         &req_len,
-                        0L)
-                        */
-                        EXSUCCEED==ndrx_mbuf_prepare_incoming(notif->data,
-                        notif->data_len,
-                        &request_buffer,
-                        &req_len,
-                        0L, 0L)
-                        
+                        0L, 0L)    
                         )
                 {
                     NDRX_LOG(log_debug, "ATMI Command id: %d", 

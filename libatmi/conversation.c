@@ -592,10 +592,8 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 {
     int ret=EXSUCCEED;
     int cd=EXFAIL;
-    char fn[] = "_tpconnect";
-    typed_buffer_descr_t *descr;
-    buffer_obj_t *buffer_info;
     char *buf=NULL;
+    char *queuebuf=NULL;
     size_t buf_len;
     long data_len = MAX_CALL_DATA_SIZE;
     tp_command_call_t *call;
@@ -649,31 +647,14 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     /*
      * Prepare some data if have something to prepare
      */
-    if (NULL!=data)
-    {
-        /* fill up the details */
-        if (NULL==(buffer_info = ndrx_find_buffer(data)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", __func__);
-            ret=EXFAIL;
-            goto out;
-        }
 
-        descr = &G_buf_descr[buffer_info->type_id];
-
-        /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
-                &data_len, flags))
-        {
-            /* not good - error should be already set */
-            ret=EXFAIL;
-            goto out;
-        }
-        call->buffer_type_id = buffer_info->type_id;
-    }
-    else
+    /* prepare buffer for call */
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, call->data, 
+            &data_len, flags, 0))
     {
-        data_len=0; /* no data */
+        /* not good - error should be already set */
+        ret=EXFAIL;
+        goto out;
     }
     /* OK, now fill up the details */
     call->data_len = data_len;
@@ -773,7 +754,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     /* So now, we shall receive back handshake, by receiving private queue 
      * id on which we can reach the server!
      */
-    if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
+    if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&queuebuf, &data_len, 0L, &revent, &command_id))
     {
         /* We should have */
         if (ATMI_COMMAND_CONNRPLY!=command_id)
@@ -785,7 +766,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
         }
     }
     /* EOS is already included, where q name is set by ndrx_tpsend() */ 
-    NDRX_STRCPY_SAFE(conv->reply_q_str, buf);
+    NDRX_STRCPY_SAFE(conv->reply_q_str, queuebuf);
     if (is_bridge)
     {
         NDRX_LOG(log_warn, "Service is bridge");
@@ -820,6 +801,11 @@ out:
     if (NULL!=buf)
     {
         NDRX_SYSBUF_FREE(buf);
+    }
+
+    if (NULL!=queuebuf)
+    {
+        tpfree(queuebuf);
     }
 
     /* Kill conversation if FAILED!!!! */
@@ -948,7 +934,6 @@ expublic int ndrx_tprecv (int cd, char **data,
     size_t rply_bufsz;
     char *rply_buf = NULL; /* Allocate dynamically! */
     tp_command_call_t *rply;
-    typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
     tp_conversation_control_t *conv;
     ndrx_stopwatch_t t;
@@ -1108,26 +1093,18 @@ inject_message:
                 ret=EXFAIL; /* anyway! */
                 ndrx_TPset_error(TPEEVENT); /* We have event! */
             }
-            else if (ATMI_COMMAND_CONNRPLY==rply->command_id)
-            {
-                /* We have reply queue already in
-                 * This is really used only for handshaking internally
-                 * so we do not use buffer managment here!
-                 */
-                strcpy((char *)*data, rply->data); /* return reply queue */
-            }
             else
             {
-                NDRX_LOG(log_debug, "Buffer type id: %d", rply->buffer_type_id);
-                
-                call_type = &G_buf_descr[rply->buffer_type_id];
-
-                ret=call_type->pf_prepare_incoming(call_type,
-                                rply->data,
+                /*ATMI_COMMAND_CONNRPLY:
+                 *  We have reply queue already in
+                 * This is really used only for handshaking internally
+                 * so we do not use buffer management here!
+                 */
+                ret=ndrx_mbuf_prepare_incoming(rply->data,
                                 rply->data_len,
                                 data,
                                 len,
-                                flags);
+                                flags, 0L);
 
                 /* TODO: Check buffer acceptance or do it inside of prepare_incoming? */
                 if (ret==EXFAIL)
@@ -1135,15 +1112,6 @@ inject_message:
                     goto out;
                 }
                 
-#if 0
-                /* if all OK, then finally check the reply answer */
-                if (TPSUCCESS!=rply->rval)
-                {
-                    ndrx_TPset_error_fmt(TPESVCFAIL, "Service returned %d", rply->rval);
-                    ret=EXFAIL;
-                    goto out;
-                }
-#endif
                 /* Normal connection shutdown */
                 if (ATMI_COMMAND_TPREPLY==rply->command_id)
                 {
@@ -1277,9 +1245,8 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
                             short command_id)
 {
     int ret=EXSUCCEED;
-    typed_buffer_descr_t *descr;
-    buffer_obj_t *buffer_info=NULL;
     char *buf=NULL;
+    char *data_q = NULL;
     size_t buf_len;
     long data_len = MAX_CALL_DATA_SIZE;
     tp_command_call_t *call;
@@ -1365,36 +1332,34 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
      */
     if (ATMI_COMMAND_CONNRPLY==command_id)
     {
-        /* We send them conversion related Q 
-        strcpy(call->conv_related_q_str, conv->my_listen_q_str);
-        */
+#if 0
+        /* TODO: Prepare string outgoing ... . */
         /* Indicate that this is string buffer! */
-        call->buffer_type_id = BUF_TYPE_STRING;
         strcpy(call->data, conv->my_listen_q_str);
         data_len = strlen(call->data) + 1; /* Include EOS... */
-    }
-    else
-    {
-        /* fill up the details */
-        if (NULL==(buffer_info = ndrx_find_buffer(data)))
+#endif   
+        len = strlen(call->data) + 1;
+        data_q=data=tpalloc("STRING", NULL, data_len);
+        
+        if (NULL==data)
         {
-            ndrx_TPset_error_fmt(TPEINVAL, "Buffer %p not known to system!", data);
-            ret=EXFAIL;
-            goto out;
-        }
-
-        descr = &G_buf_descr[buffer_info->type_id];
-
-        /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
-                &data_len, flags))
-        {
-            /* not good - error should be already set */
+            NDRX_LOG(log_error, "Failed to alloc: %s", tpstrerror(tperrno));
             EXFAIL_OUT(ret);
         }
-
-        call->buffer_type_id = buffer_info->type_id;
+        
+        strcpy(data, conv->my_listen_q_str);
+        
     }
+    
+    /* prepare buffer for call */
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, call->data, 
+            &data_len, flags, 0L))
+    {
+        /* not good - error should be already set */
+        EXFAIL_OUT(ret);
+    }
+   
+
     /* OK, now fill up the details */
     call->data_len = data_len;
 
@@ -1479,6 +1444,11 @@ out:
     if (NULL!=buf)
     {
         NDRX_SYSBUF_FREE(buf);
+    }
+
+    if (NULL!=data_q)
+    {
+        tpfree(data_q);
     }
 
     /* TODO: Kill conversation if FAILED!!!! */

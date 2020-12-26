@@ -158,8 +158,8 @@ expublic int ndrx_cache_keygrp_lookup(ndrx_tpcallcache_t *cache,
      * this is just list 
      */
     
-    if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-                exdata->atmi_buf_len, (char **)&p_ub_keys, &rsplen, 0))
+    if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(exdata->atmi_buf, 
+                exdata->atmi_buf_len, (char **)&p_ub_keys, &rsplen, 0, 0))
     {
         /* the error shall be set already */
         NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", key);
@@ -415,8 +415,8 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
          * this is just list 
          */
 
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-                    exdata->atmi_buf_len, (char **)&p_ub_keys, &rsplen, 0))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(exdata->atmi_buf, 
+                    exdata->atmi_buf_len, (char **)&p_ub_keys, &rsplen, 0, 0))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", kg_ptr);
@@ -580,8 +580,8 @@ expublic int ndrx_cache_keygrp_addupd(ndrx_tpcallcache_t *cache,
         exdata->atmi_type_id = buf_type->type_id;
         exdata->atmi_buf_len = NDRX_MSGSIZEMAX - sizeof(ndrx_tpcache_data_t);
     
-        if (EXSUCCEED!=buf_type->pf_prepare_outgoing (buf_type, (char *)p_ub_keys, 
-                    0, exdata->atmi_buf, &exdata->atmi_buf_len, 0L))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing((char *)p_ub_keys, 
+                    0, exdata->atmi_buf, &exdata->atmi_buf_len, 0L, NDRX_MBUF_FLAG_NOCALLINFO))
         {
             userlog("Failed to prepare buffer for saving in keygroup: %s", 
                     tpstrerror(tperrno));
@@ -736,7 +736,6 @@ exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn,
     int ret = EXSUCCEED;
     EDB_val cachedata;
     ndrx_tpcache_data_t *exdata;
-    typed_buffer_descr_t *buf_type = &G_buf_descr[BUF_TYPE_UBF];
     long rsplen;
     int align;
     char *defer_free = NULL;
@@ -762,8 +761,8 @@ exprivate int ndrx_cache_keygrp_getgroup(ndrx_tpcache_db_t* db, EDB_txn *txn,
     /* Receive data as UBF buffer, so that we can test it... 
      * this is just list 
      */
-    if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-                exdata->atmi_buf_len, (char **)pp_ub, &rsplen, 0))
+    if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(exdata->atmi_buf, 
+                exdata->atmi_buf_len, (char **)pp_ub, &rsplen, 0, 0))
     {
         /* the error shall be set already */
         NDRX_LOG(log_error, "Failed to read keygroup record for [%s]", key);

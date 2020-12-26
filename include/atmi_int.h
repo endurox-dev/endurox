@@ -470,8 +470,6 @@ struct tp_command_call
     char proto_ver[4];
     int proto_magic;
     /* </standard comms header> */
-    
-    short buffer_type_id;
     char name[XATMI_SERVICE_NAME_LENGTH+1];
     char reply_to[NDRX_MAX_Q_SIZE+1];
     /** Zero terminated string... (might contain special symbols)*/
@@ -544,7 +542,6 @@ struct tp_notif_call
     char cltname[MAXTIDENT*2]; /**< In case of using regex */
     int cltname_isnull;        /**< Is NULL */
     
-    short buffer_type_id;
     /** See clientid_t, same fields, end */
     char reply_to[NDRX_MAX_Q_SIZE+1];
     /** Zero terminated string... (might contain special symbols)*/

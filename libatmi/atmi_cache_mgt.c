@@ -245,20 +245,16 @@ expublic int ndrx_cache_mgt_ubf2data(UBFH *p_ub, ndrx_tpcache_data_t *cdata,
             EXFAIL_OUT(ret);
         }
         
+        /* TODO: what shall we do with FLD_PTR? */
         /* prepare incoming data if ptr present */
-        
-        if (odata!=NULL)
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(*blob, 
+            len, odata, olen, 0, 0))
         {
-            typed_buffer_descr_t *buf_type = &G_buf_descr[cdata->atmi_type_id];
-            
-            if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, *blob, 
-                len, odata, olen, 0))
-            {
-                /* the error shall be set already */
-                NDRX_LOG(log_error, "Failed to prepare incoming buffer");
-                EXFAIL_OUT(ret);
-            }
+            /* the error shall be set already */
+            NDRX_LOG(log_error, "Failed to prepare incoming buffer");
+            EXFAIL_OUT(ret);
         }
+        
     }
     
     if (NULL!=keydata)

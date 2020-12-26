@@ -91,7 +91,6 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
     char *buf=NULL;
     size_t buf_len;
     tp_notif_call_t *call;
-    typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
     long data_len = MAX_CALL_DATA_SIZE;
     char send_q[NDRX_MAX_Q_SIZE+1];
@@ -193,31 +192,18 @@ expublic int ndrx_tpnotify(CLIENTID *clientid, TPMYID *p_clientid_myid,
         }
     }
 
-    if (NULL!=data)
+    /* prepare buffer for call */
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, call->data, 
+            &data_len, flags, 0L))
     {
-        descr = &G_buf_descr[buffer_info->type_id];
-        /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
-                &data_len, flags))
-        {
-            /* not good - error should be already set */
-            EXFAIL_OUT(ret);
-        }
-    }
-    else
-    {
-        data_len=0;
+        /* not good - error should be already set */
+        EXFAIL_OUT(ret);
     }
 
     /* OK, now fill up the details */
     call->data_len = data_len;
     
     data_len+=sizeof(tp_notif_call_t);
-
-    if (NULL==data)
-        call->buffer_type_id = BUF_TYPE_NULL;
-    else
-        call->buffer_type_id = buffer_info->type_id;
 
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
     
@@ -328,7 +314,6 @@ expublic void ndrx_process_notif(char *buf, ssize_t len)
     int ret = EXSUCCEED;
     char *odata = NULL;
     long olen = 0;
-    typed_buffer_descr_t *call_type;
     expublic buffer_obj_t * typed_buf = NULL;
     tp_notif_call_t *notif = (tp_notif_call_t *) buf;
     
@@ -348,29 +333,20 @@ expublic void ndrx_process_notif(char *buf, ssize_t len)
     }
     
     /* Convert only if we have data */
-    if (notif->data_len > 0)
+    NDRX_LOG(log_debug, "%s: data received", __func__);
+    
+    if (EXSUCCEED==(ndrx_mbuf_prepare_incoming(notif->data,
+                    notif->data_len,
+                    &odata,
+                    &olen,
+                    0L, 0L)))
     {
-        NDRX_LOG(log_debug, "%s: data received", __func__);
-        call_type = &G_buf_descr[notif->buffer_type_id];
-
-        if (EXSUCCEED==(call_type->pf_prepare_incoming(call_type,
-                        notif->data,
-                        notif->data_len,
-                        &odata,
-                        &olen,
-                        0L)))
-        {
-            typed_buf = ndrx_find_buffer(odata);
-        }
-        else
-        {
-            NDRX_LOG(log_error, "Failed to prepare incoming unsolicited notification");
-            EXFAIL_OUT(ret);
-        }
+        typed_buf = ndrx_find_buffer(odata);
     }
     else
     {
-        NDRX_LOG(log_debug, "%s: no data received - empty invocation", __func__);
+        NDRX_LOG(log_error, "Failed to prepare incoming unsolicited notification");
+        EXFAIL_OUT(ret);
     }
     
     NDRX_LOG(log_debug, "Unsol handler set to %p - invoking (buffer: %p)", 

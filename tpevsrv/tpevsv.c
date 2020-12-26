@@ -130,6 +130,7 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     long flags;
     int locked = EXFALSE;
     tp_command_call_t * last_call;
+    buffer_obj_t *bo;
     
     /* Support #279 */
     string_hash_t *dup_chk = NULL;
@@ -164,7 +165,11 @@ exprivate void process_postage(TPSVCINFO *p_svc, int dispatch_over_bridges)
     {
         /* Get type */
         typed_buffer_descr_t *descr;
-        descr = &G_buf_descr[last_call->buffer_type_id];
+        
+        /* this must be in place as otherwise service would not receive any data*/
+        bo = ndrx_find_buffer(p_svc->data);
+        
+        descr = &G_buf_descr[bo->type_id];
 
         NDRX_LOG(log_debug, "Checking Nr: %d, event [%s]",
                                 elt->subscriberNr, elt->eventexpr);

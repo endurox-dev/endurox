@@ -95,7 +95,6 @@ expublic void ndrx_dump_call_struct(int lev, tp_command_call_t *call)
         NDRX_LOG(lev, "proto_ver=[%c%c%c%c]", call->proto_ver[0], call->proto_ver[1],
             call->proto_ver[2], call->proto_ver[3]);
         NDRX_LOG(lev, "proto_magic=[%d]", call->proto_magic);
-        NDRX_LOG(lev, "buffer_type_id=[%hd]", call->buffer_type_id);
         NDRX_LOG(lev, "name=[%s]", call->name);
         NDRX_LOG(lev, "reply_to=[%s]", call->reply_to);
         NDRX_LOG(lev, "callstack=[%s]", call->callstack);
@@ -416,8 +415,6 @@ expublic int ndrx_tpacall (char *svc, char *data,
     char *buf=NULL;
     size_t buf_len;
     tp_command_call_t *call;
-    typed_buffer_descr_t *descr;
-    buffer_obj_t *buffer_info;
     long data_len = MAX_CALL_DATA_SIZE;
     char send_q[NDRX_MAX_Q_SIZE+1];
     time_t timestamp;
@@ -541,53 +538,19 @@ expublic int ndrx_tpacall (char *svc, char *data,
     /* Might want to remove in future... but it might be dangerous!*/
     memset(call, 0, sizeof(tp_command_call_t));
      
-    if (NULL!=data)
+        
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (data, 0, call->data, 
+            &data_len, flags, 0))
     {
-        if (NULL==(buffer_info = ndrx_find_buffer(data)))
-        {
-            ndrx_TPset_error_fmt(TPEINVAL, "%s: Buffer %p not known to system!",
-                __func__, data);
-            EXFAIL_OUT(ret);
-        }
+        /* not good - error should be already set */
+        EXFAIL_OUT(ret);
     }
 
-    if (NULL!=data)
-    {
-        
-#if 0
-        descr = &G_buf_descr[buffer_info->type_id];
-        /* prepare buffer for call */
-        if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, 
-                &data_len, flags))
-        {
-            /* not good - error should be already set */
-            EXFAIL_OUT(ret);
-        }
-#endif
-        
-        if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (data, 0, call->data, 
-                &data_len, flags, 0))
-        {
-            /* not good - error should be already set */
-            EXFAIL_OUT(ret);
-        }
-        
-    }
-    else
-    {
-        data_len=0;
-    }
 
     /* OK, now fill up the details */
     call->data_len = data_len;
     
     data_len+=sizeof(tp_command_call_t);
-
-    if (NULL==data)
-        call->buffer_type_id = BUF_TYPE_NULL;
-    else
-        call->buffer_type_id = buffer_info->type_id;
-    
     call->clttout = G_atmi_env.time_out;
 
     NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_atmi_conf.reply_q_str);
@@ -813,7 +776,6 @@ expublic int ndrx_tpgetrply (int *cd,
     unsigned prio;
     size_t pbuf_len;
     tp_command_call_t *rply;
-    typed_buffer_descr_t *call_type;
     int answ_ok = EXFALSE;
     int is_abort_only = EXFALSE; /* Should we abort global tx (if open) */
     ATMI_TLS_ENTRY;
@@ -957,9 +919,8 @@ expublic int ndrx_tpgetrply (int *cd,
                 }
 
                 NDRX_LOG(log_info, "Reply cd: %d, timestamp :%d callseq: %u from "
-                        "%s type_id: %hd (%s) - expected OK!",
-                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to,
-                        rply->buffer_type_id, (G_buf_descr[rply->buffer_type_id].type));
+                        "%s - expected OK!",
+                        rply->cd, rply->timestamp, rply->callseq, rply->reply_to);
                 answ_ok=EXTRUE;
                 /* Free up call descriptor!! */
                 unlock_call_descriptor(rply->cd, CALL_NOT_ISSUED);
@@ -992,17 +953,6 @@ expublic int ndrx_tpgetrply (int *cd,
             else
             {
                 /* Convert all, including NULL buffers  */
-                
-                call_type = &G_buf_descr[rply->buffer_type_id];
-
-#if 0
-                ret=call_type->pf_prepare_incoming(call_type,
-                                rply->data,
-                                rply->data_len,
-                                data,
-                                len,
-                                flags);
-#endif
                 ret = ndrx_mbuf_prepare_incoming (rply->data, rply->data_len, 
                         data, len, flags, 0);
                 

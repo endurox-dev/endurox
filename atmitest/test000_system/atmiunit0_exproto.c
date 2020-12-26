@@ -119,7 +119,6 @@ Ensure(test_proto_ubfcall)
     call->timer = w;
     call->cd = 999;
     call->timestamp = t;
-    call->buffer_type_id = BUF_TYPE_UBF;
     
     netcall->br_magic=BR_NET_CALL_MAGIC;
     netcall->command_id=ATMI_COMMAND_TPCALL;

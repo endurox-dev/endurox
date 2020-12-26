@@ -320,8 +320,8 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
     
     if (cache->flags & NDRX_TPCACHE_TPCF_REPL)
     {
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-                exdata->atmi_buf_len, odata, olen, flags))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(exdata->atmi_buf, 
+                exdata->atmi_buf_len, odata, olen, flags, 0))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
@@ -344,8 +344,8 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
         
         /* we cannot do this way, because stored format is different than UBF... */
         
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, exdata->atmi_buf, 
-                exdata->atmi_buf_len, (char **)&p_ub_cache, &olen_merge, flags))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(exdata->atmi_buf, 
+                exdata->atmi_buf_len, (char **)&p_ub_cache, &olen_merge, flags, 0))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
@@ -353,8 +353,8 @@ expublic int ndrx_cache_get_ubf (ndrx_tpcallcache_t *cache,
         }
         
         /* prepare incoming of output buffer from the input buffer... */
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, idata, 
-                Bused((UBFH *)idata), (char **)odata, olen, flags))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(idata, 
+                Bused((UBFH *)idata), (char **)odata, olen, flags, 0))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare incoming buffer ibuf");
@@ -562,7 +562,6 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
         long ilen, long flags)
 {
     int ret = EXSUCCEED;
-    UBFH *p_ub =(UBFH *)idata;
     char *buf_to_save;
     
     if (EXSUCCEED!=ndrx_cache_prepproj_ubf (cache, &cache->saveproj,
@@ -577,8 +576,9 @@ expublic int ndrx_cache_put_ubf (ndrx_tpcallcache_t *cache,
     
     ndrx_debug_dump_UBF(log_debug, "Saving to cache", (UBFH *)buf_to_save);
     
-    if (EXSUCCEED!=descr->pf_prepare_outgoing (descr, buf_to_save, 
-                0, exdata->atmi_buf, &exdata->atmi_buf_len, flags))
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (buf_to_save, 
+                0, exdata->atmi_buf, &exdata->atmi_buf_len, flags, 
+            NDRX_MBUF_FLAG_NOCALLINFO))
     {
         NDRX_LOG(log_error, "Failed to prepare buffer for saving");
         userlog("Failed to prepare buffer for saving: %s", tpstrerror(tperrno));
@@ -906,8 +906,8 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
             EXFAIL_OUT(ret);
         }
 #endif
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_rej_ub, 
-                Bused(p_rej_ub), odata, olen, flags))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming((char *)p_rej_ub, 
+                Bused(p_rej_ub), odata, olen, flags, 0))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");
@@ -924,8 +924,8 @@ expublic int ndrx_cache_maxreject_ubf(ndrx_tpcallcache_t *cache, char *idata, lo
         
         /* Ensure that in buffer we have enough space */
         
-        if (EXSUCCEED!=buf_type->pf_prepare_incoming(buf_type, (char *)p_ub, 
-                Bused(p_ub), odata, olen, flags))
+        if (EXSUCCEED!=ndrx_mbuf_prepare_incoming((char *)p_ub, 
+                Bused(p_ub), odata, olen, flags, 0))
         {
             /* the error shall be set already */
             NDRX_LOG(log_error, "Failed to prepare data from cache to buffer");

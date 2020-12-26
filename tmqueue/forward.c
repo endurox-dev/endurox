@@ -257,16 +257,18 @@ expublic void thread_process_forward (void *ptr, int *p_finish_off)
     /* Alloc the buffer of the message type according to size (use prepare incoming?)
      */
     
-    descr = &G_buf_descr[msg->buftyp];
-
-    if (EXSUCCEED!=descr->pf_prepare_incoming(descr,
-                    msg->msg,
+    /* TODO: Cleanup any ptrs... alloc'd now and received back
+     * This means that different buffer shall be received back
+     * and pointers from both buffers must be cleaned up.!!!!!
+     * !!!!!!
+     */
+    if (EXSUCCEED!=ndrx_mbuf_prepare_incoming(msg->msg,
                     msg->len,
                     &call_buf,
                     &call_len,
-                    0))
+                    0, 0))
     {
-        NDRX_LOG(log_always, "Failed to allocate buffer type %hd!", msg->buftyp);
+        NDRX_LOG(log_always, "Failed to allocate buffer");
         EXFAIL_OUT(ret);
     }
     
