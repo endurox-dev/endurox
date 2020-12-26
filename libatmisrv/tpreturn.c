@@ -76,7 +76,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     tp_command_call_t *call;
     char fn[] = "_tpreturn";
     buffer_obj_t *buffer_info;
-    typed_buffer_descr_t *descr;
     NDRX_LOG(log_debug, "%s enter", fn);
     long data_len;
     int return_status=0;
@@ -218,11 +217,8 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             
             if (EXFAIL!=ret)
             {
-                /* descr = &G_buf_descr[buffer_info->type_id]; */
                 /* build reply data here */
-                if (EXFAIL==/*descr->pf_prepare_outgoing(descr, data, 
-                        len, call->data, &call->data_len, flags)*/
-                        ndrx_mbuf_prepare_outgoing (data, 
+                if (EXFAIL==ndrx_mbuf_prepare_outgoing (data, 
                             len, call->data, &call->data_len, flags, 0)
                         )
                 {
@@ -230,10 +226,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
                     call->sysflags |=SYS_FLAG_REPLY_ERROR;
                     call->rcode = TPESYSTEM;
                     ret=EXFAIL;
-                }
-                else
-                {
-                    call->buffer_type_id = buffer_info->type_id;
                 }
             }
         }
@@ -422,7 +414,6 @@ expublic void _tpforward (char *svc, char *data,
     char *buf = NULL;
     size_t buf_len;
     tp_command_call_t *call;
-    typed_buffer_descr_t *descr;
     buffer_obj_t *buffer_info;
     char fn[] = "_tpforward";
     long data_len = MAX_CALL_DATA_SIZE;
@@ -506,13 +497,10 @@ expublic void _tpforward (char *svc, char *data,
             }
         }
     }
-    
-    /* descr = &G_buf_descr[buffer_info->type_id]; */
 
     /* prepare buffer for call 
      * TODO: should we check call/buf (buf_len) buffer output size?
      */
-    /*if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))*/
     if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, call->data, &data_len, flags, 0L))
     {
         /* not good - error should be already set */
@@ -525,7 +513,6 @@ expublic void _tpforward (char *svc, char *data,
 
     data_len+=sizeof(tp_command_call_t);
 
-    call->buffer_type_id = (short)buffer_info->type_id; /* < caused core dumps! */
     NDRX_STRCPY_SAFE(call->reply_to, last_call->reply_to); /* <<< main difference from call! */
     
     call->clttout = last_call->clttout; /* store the client timeout setting */
@@ -587,8 +574,8 @@ expublic void _tpforward (char *svc, char *data,
         _tp_srv_disassoc_tx();
     }
 
-    NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
-                    call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
+    NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s",
+                    call->cd, call->timestamp, call->callseq, send_q);
         
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
     {

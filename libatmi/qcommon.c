@@ -359,12 +359,9 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     int ret = EXSUCCEED;
     long rsplen;
     char cmd = TMQ_CMD_ENQUEUE;
-    typed_buffer_descr_t *descr;
-    buffer_obj_t *buffer_info;
     char *tmp=NULL;
     long tmp_len;
     UBFH *p_ub = NULL;
-    short buftype;
     atmi_error_t errbuf;
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
     
@@ -406,24 +403,9 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
         EXFAIL_OUT(ret);
     }
     
-
-    if (NULL==(buffer_info = ndrx_find_buffer(data)))
-    {
-        ndrx_TPset_error_fmt(TPEINVAL, "Buffer not known to system!");
-        EXFAIL_OUT(ret);
-    }
-
-    if (NULL==(descr = &G_buf_descr[buffer_info->type_id]))
-    {
-        ndrx_TPset_error_fmt(TPEINVAL, "Invalid buffer id");
-        EXFAIL_OUT(ret);
-        
-    }
-    
-    buftype = buffer_info->type_id;
-    
     /* prepare buffer for call */
-    if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, tmp, &tmp_len, 0))
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, tmp, &tmp_len, 0, 
+            NDRX_MBUF_FLAG_NOCALLINFO))
     {
         /* not good - error should be already set */
         EXFAIL_OUT(ret);
@@ -453,13 +435,6 @@ expublic int ndrx_tpenqueue (char *qspace, short nodeid, short srvid, char *qnam
     {
         ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set data field: %s", 
                 Bstrerror(Berror), __func__);
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=Bchg(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftype, 0L))
-    {
-        ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to set buftyp field: %s", 
-                __func__, Bstrerror(Berror));
         EXFAIL_OUT(ret);
     }
     
@@ -575,8 +550,6 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
     int ret = EXSUCCEED;
     long rsplen;
     char cmd = TMQ_CMD_DEQUEUE;
-    short buftyp;
-    typed_buffer_descr_t *descr;
     atmi_error_t errbuf;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", "", TMQ_DEFAULT_BUFSZ);
     char qspacesvc[XATMI_SERVICE_NAME_LENGTH+1]; /* real service name */
@@ -692,35 +665,18 @@ expublic int ndrx_tpdequeue (char *qspace, short nodeid, short srvid, char *qnam
         
         ndrx_debug_dump_UBF(log_debug, "QSPACE dequeue response buffer", p_ub);
         
-        if (EXSUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&buftyp, 0L))
-        {
-            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to get EX_DATA_BUFTYP: %s", 
-                    __func__, Bstrerror(Berror));
-            EXFAIL_OUT(ret);
-        }
-        
         if (NULL==(data_extra=Bgetalloc(p_ub, EX_DATA, 0, &len_extra)))
         {
             ndrx_TPset_error_fmt(TPESYSTEM,  "%s: Failed to get EX_DATA: %s", 
                     __func__, Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
-        
-        if (!BUF_IS_TYPEID_VALID(buftyp))
-        {
-            ndrx_TPset_error_fmt(TPESYSTEM,  "%s: invalid buffer type id received %hd", 
-                    __func__, buftyp);
-            EXFAIL_OUT(ret);
-        }
-        
-        descr = &G_buf_descr[buftyp];
 
-        ret=descr->pf_prepare_incoming(descr,
-                        data_extra,
+        ret=ndrx_mbuf_prepare_incoming(data_extra,
                         len_extra,
                         data,
                         len,
-                        flags);
+                        flags, 0);
         if (EXSUCCEED!=ret)
         {
             ndrx_TPset_error_fmt(TPEINVAL,  "%s: Failed to prepare incoming buffer: %s", 

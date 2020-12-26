@@ -103,7 +103,6 @@ typedef struct
     uint64_t lockthreadid;  /* Locked thread id */
     char status;            /* Status of the message */
     long trycounter;        /* try counter */
-    short buftyp;           /* ATMI buffer type id */
     long msgtstamp;         /* epoch up to second */
     long msgtstamp_usec;    /* 1/10^6 sec */
     int msgtstamp_cntr;     /* Message counter for same time interval */

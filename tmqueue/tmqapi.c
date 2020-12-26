@@ -170,16 +170,6 @@ expublic int tmq_enqueue(UBFH *p_ub)
         EXFAIL_OUT(ret);
     }
     
-    if (EXSUCCEED!=Bget(p_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
-    {
-        NDRX_LOG(log_error, "tmq_enqueue: failed to get EX_DATA_BUFTYP");
-        
-        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_enqueue: failed to get EX_DATA_BUFTYP!");
-        qctl_out.diagnostic = QMEINVAL;
-        
-        EXFAIL_OUT(ret);
-    }
-    
     /* Restore back the C structure */
     if (EXSUCCEED!=tmq_tpqctl_from_ubf_enqreq(p_ub, &p_msg->qctl))
     {
@@ -439,18 +429,6 @@ expublic int tmq_dequeue(UBFH **pp_ub)
         NDRX_LOG(log_error, "Failed to unlock msg!");
         EXFAIL_OUT(ret);
     }
-    
-    if (EXSUCCEED!=Bchg(*pp_ub, EX_DATA_BUFTYP, 0, (char *)&p_msg->buftyp, 0))
-    {
-        NDRX_LOG(log_error, "tmq_dequeue: failed to set EX_DATA_BUFTYP");
-        
-        NDRX_STRCPY_SAFE(qctl_out.diagmsg, "tmq_dequeue: failed to "
-                "set EX_DATA_BUFTYP!");
-        qctl_out.diagnostic = QMEINVAL;
-        
-        EXFAIL_OUT(ret);
-    }
-    
     
 out:
 

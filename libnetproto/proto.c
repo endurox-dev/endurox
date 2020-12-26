@@ -244,7 +244,6 @@ static cproto_t M_ubf_field[] =
 static cproto_t M_tp_command_call_x[] = 
 {
     {TTC, 0x1159,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
-    {TTC, 0x1163,  "buffer_type_id",OFSZ(tp_command_call_t,buffer_type_id),EXF_SHORT,   XFLD, 1, 5},
     {TTC, 0x116D,  "name",      OFSZ(tp_command_call_t,name),     EXF_STRING, XFLD, 0, XATMI_SERVICE_NAME_LENGTH},
     {TTC, 0x1177,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
     {TTC, 0x1181,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
@@ -265,7 +264,7 @@ static cproto_t M_tp_command_call_x[] =
     /* {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10}, - machine dependent (not need to send) */
     {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
-                           EXOFFSET(tp_command_call_t,data_len), EXFAIL, NULL, EXOFFSET(tp_command_call_t,buffer_type_id)},
+                           EXOFFSET(tp_command_call_t,data_len), EXFAIL, NULL, EXFAIL},
     {TTC, 0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 0, (NDRX_XID_SERIAL_BUFSIZE+1)},
     {TTC, 0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 0, 6},
     {TTC, 0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 0, 6},
@@ -292,7 +291,6 @@ static cproto_t M_tp_notif_call_x[] =
     {TPN, 0x127B,  "cltname",      OFSZ(tp_notif_call_t,cltname),     EXF_STRING, XFLD, 0, MAXTIDENT*2},
     {TPN, 0x1285,  "cltname_isnull",  OFSZ(tp_notif_call_t,cltname_isnull), EXF_INT, XFLD, 1, 1},
     
-    {TPN, 0x128F,  "buffer_type_id",OFSZ(tp_notif_call_t,buffer_type_id),EXF_SHORT,   XFLD, 1, 5},
     {TPN, 0x1299,  "reply_to",  OFSZ(tp_notif_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
     
     {TPN, 0x12A3,  "callstack", OFSZ(tp_notif_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
@@ -309,7 +307,7 @@ static cproto_t M_tp_notif_call_x[] =
     /* {TPN, 0x1311,  "data_len",  OFSZ(tp_notif_call_t,data_len), EXF_LONG,   XSBL, 1, 10}, -machine dependent, no need to send */
     {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                 /* WARNING! Using counter offset here are length FLD offset! */
-               EXOFFSET(tp_notif_call_t,data_len), EXFAIL, NULL, EXOFFSET(tp_notif_call_t,buffer_type_id)},
+               EXOFFSET(tp_notif_call_t,data_len), EXFAIL, NULL, EXFAIL},
     {TPN, 0x1325,  "destnodeid",OFSZ(tp_notif_call_t,destnodeid),    EXF_LONG,   XFLD, 1, 20},
     {TPN, EXFAIL}
 };
