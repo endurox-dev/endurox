@@ -218,10 +218,13 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             
             if (EXFAIL!=ret)
             {
-                descr = &G_buf_descr[buffer_info->type_id];
+                /* descr = &G_buf_descr[buffer_info->type_id]; */
                 /* build reply data here */
-                if (EXFAIL==descr->pf_prepare_outgoing(descr, data, 
-                        len, call->data, &call->data_len, flags))
+                if (EXFAIL==/*descr->pf_prepare_outgoing(descr, data, 
+                        len, call->data, &call->data_len, flags)*/
+                        ndrx_mbuf_prepare_outgoing (data, 
+                            len, call->data, &call->data_len, flags, 0)
+                        )
                 {
                     /* set reply fail FLAG */
                     call->sysflags |=SYS_FLAG_REPLY_ERROR;
@@ -504,12 +507,13 @@ expublic void _tpforward (char *svc, char *data,
         }
     }
     
-    descr = &G_buf_descr[buffer_info->type_id];
+    /* descr = &G_buf_descr[buffer_info->type_id]; */
 
     /* prepare buffer for call 
      * TODO: should we check call/buf (buf_len) buffer output size?
      */
-    if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))
+    /*if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, data, len, call->data, &data_len, flags))*/
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing(data, len, call->data, &data_len, flags, 0L))
     {
         /* not good - error should be already set */
         ret=EXFAIL;

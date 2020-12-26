@@ -108,7 +108,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     char f_data_buf[sizeof(proto_ufb_fld_t)+sizeof(char *)]; /* just store ptr */
     ssize_t f_data_buf_len;
     proto_ufb_fld_t *fldata = (proto_ufb_fld_t*)f_data_buf;
-    short accept_tags[] = {VIEW_TAG_CNAME, VIEW_TAG_BFLDLEN, 0, EXFAIL};
+    short accept_tags[] = {VIEW_TAG_CNAME, 0, 0, EXFAIL};
     xmsg_t tmp_cv;
     BVIEWFLD vheader;
                     
@@ -216,7 +216,18 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
              * TODO: new mapping table needed:
              */
             NDRX_LOG(log_error, "YOPT TYPECODE %d", vf->typecode_full);
-            accept_tags[2] = ndrx_G_view_proto_tag_map[vf->typecode_full];
+            accept_tags[1] = ndrx_G_view_proto_tag_map[vf->typecode_full];
+            
+            /*  only for carrays needs len to be present */
+            if (BFLD_CARRAY==vf->typecode_full)
+            {
+                accept_tags[2] = VIEW_TAG_BFLDLEN;
+            }
+            else
+            {
+                accept_tags[2] = EXFAIL;
+            }
+
             
             /* put the pointer value there */
             memcpy(fldata->buf, &p, sizeof(char *));
