@@ -50,6 +50,7 @@
 #include <atmi_int.h>
 #include <exproto.h>
 #include <atmi_tls.h>
+#include <exassert.h>
 
 /**
  * Basic preparation before the test
@@ -65,30 +66,178 @@ exprivate void basic_teardown(void)
 }
 
 /**
+ * Perform network call (wrapper from c->net->c)
+ * Function is used to validate transportation of different kind of ATMI buffers
+ * @param req_buf input ATMI buffer
+ * @param req_len input len
+ * @param obuf output buffer ATMI
+ * @param olen output buffer len
+ * @param mbufsz mutli-buffer size (output tlv)
+ * @param netbufsz network output buffer size
+ * @param cback_size C buffer size when parsing msg in (from net)
+ * @return EXSUCCEED/EXFAIL
+ */
+exprivate int netcallconv(char *req_buf, long req_len, char **obuf, long *olen, 
+        long mbufsz, long netbufsz, long cback_size)
+{
+    int ret = EXSUCCEED;
+    tp_command_call_t *call=NULL;
+    tp_command_call_t *callpars=NULL;
+    char smallbuf[sizeof(cmd_br_net_call_t) + sizeof(char *)];
+    cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)smallbuf;
+    long call_len_org;
+    long netcall_len_org;
+    long proto_len;
+    char *proto_out=NULL;
+    char *cbuf_back = NULL;
+    long max_struct = 0;
+    ndrx_stopwatch_t w;
+    time_t t;
+    /* prepare call, dynamic buffer */
+    call = (tp_command_call_t *)NDRX_MALLOC(mbufsz);
+    
+    if (NULL==call)
+    {
+        NDRX_LOG(log_error, "Failed to malloc call: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    memset(call, 0, sizeof(*call));
+    /* netcall buf bytes are set to dynamic call buffer */
+    memcpy(netcall->buf, &call, sizeof(char *));
+    
+    call->data_len=mbufsz-sizeof(*call);
+    
+    /* prepare MBUF for output */
+    if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (req_buf, req_len, call->data, 
+            &call->data_len, 0, 0), EXSUCCEED)
+    {
+        NDRX_LOG(log_error, "Failed to prepare outgoing data: %s", 
+                tpstrerror(tperrno));
+        EXFAIL_OUT(ret);
+    }
+    
+    call_len_org=call->data_len;
+    netcall_len_org = netcall->len=sizeof(*call)+call_len_org;
+    
+    if (NULL==(proto_out=NDRX_MALLOC(netbufsz)))
+    {
+        NDRX_LOG(log_error, "Failed to malloc %ld bytes: %s", netbufsz, strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* setup some minimum constant values: */
+    
+    ndrx_stopwatch_reset(&w);
+    t=time(NULL);
+    
+    call->timer = w;
+    call->cd = 999;
+    call->timestamp = t;
+    call->command_id=ATMI_COMMAND_TPCALL;
+    NDRX_STRCPY_SAFE(call->name, "HELLOSVC");
+    
+    netcall->br_magic=BR_NET_CALL_MAGIC;
+    netcall->command_id=ATMI_COMMAND_TPCALL;
+    netcall->msg_type=BR_NET_CALL_MSG_TYPE_ATMI;
+    
+    proto_len=0;
+    if (EXSUCCEED!=exproto_ex2proto((char *)netcall, sizeof(*call)+call->data_len, 
+	proto_out, &proto_len, netbufsz))
+    {
+        NDRX_LOG(log_error, "Failed to convert to convert to net-proto");
+        EXFAIL_OUT(ret);
+    }
+    
+    cbuf_back = NDRX_MALLOC(cback_size);
+    
+    if (NULL==cbuf_back)
+    {
+        NDRX_LOG(log_error, "Failed to malloc back parse buffer: %s", strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    netcall = (cmd_br_net_call_t *)cbuf_back;
+            
+    callpars = (tp_command_call_t *)(cbuf_back + sizeof(cmd_br_net_call_t));
+    
+    if (EXFAIL==exproto_proto2ex(proto_out, proto_len, 
+        cbuf_back, &max_struct, cback_size))
+    {
+        NDRX_LOG(log_error, "Failed to convert proto -> EX");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=ndrx_mbuf_prepare_incoming (call->data, call->data_len, obuf, olen, 
+            0, 0), EXSUCCEED)
+    {
+        NDRX_LOG(log_error, "Failed to prepare incoming buffers");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* minimalistic verification: */
+    NDRX_ASSERT_VAL_OUT((netcall->br_magic==BR_NET_CALL_MAGIC), "Invalid netcall->br_magic %ld vs %ld", 
+            netcall->br_magic, BR_NET_CALL_MAGIC);
+    
+    NDRX_ASSERT_VAL_OUT((netcall->command_id==ATMI_COMMAND_TPCALL), "%d vs %d", 
+            netcall->command_id, ATMI_COMMAND_TPCALL);
+    NDRX_ASSERT_VAL_OUT((netcall->msg_type==BR_NET_CALL_MSG_TYPE_ATMI), "%x vs %x", 
+            (int)netcall->command_id, (int)ATMI_COMMAND_TPCALL);
+    
+    NDRX_ASSERT_VAL_OUT((netcall->len==netcall_len_org), "%ld vs %ld", 
+            netcall->len, netcall_len_org);
+    NDRX_ASSERT_VAL_OUT((callpars->data_len==call_len_org), "%ld vs %ld", 
+            callpars->data_len, call_len_org);
+    
+    NDRX_ASSERT_VAL_OUT((callpars->cd==999), "%d vs %d", callpars->cd, 999);
+    NDRX_ASSERT_VAL_OUT((0==strcmp(callpars->name, "HELLOSVC")), "%s vs %s", callpars->name, "HELLOSVC");
+    
+    NDRX_ASSERT_VAL_OUT((callpars->command_id==ATMI_COMMAND_TPCALL), "%hd vs %hd", 
+            callpars->command_id, ATMI_COMMAND_TPCALL);
+    
+    NDRX_ASSERT_VAL_OUT((callpars->timer.t.tv_nsec==call->timer.t.tv_nsec), "%ld vs %ld", 
+            (long)callpars->timer.t.tv_nsec, (long)call->timer.t.tv_nsec);
+    
+    NDRX_ASSERT_VAL_OUT((callpars->timer.t.tv_sec==call->timer.t.tv_sec), "%ld vs %ld",
+            (long)callpars->timer.t.tv_sec, (long)call->timer.t.tv_sec);
+    
+    NDRX_ASSERT_VAL_OUT((callpars->timestamp==call->timestamp), "%ld vs %ld",
+            (long)callpars->timestamp, (long)call->timestamp);
+    
+out:
+    
+    if (NULL!=call)
+    {
+        NDRX_FREE(call);
+    }
+
+    if (NULL!=proto_out)
+    {
+        NDRX_FREE(proto_out);
+    }
+
+    if (NULL!=cbuf_back)
+    {
+        NDRX_FREE(cbuf_back);
+    }
+
+    return ret;    
+}
+
+/**
  * Convert UBF call two way
  */
 Ensure(test_proto_ubfcall)
 {
-    /* allocate FB & load data, convert out... (i.e.) alloc the tpcall struct */
-    char buf[7048];
-    char proto_out[7048];
-    long proto_len;
-    tp_command_call_t *call = (tp_command_call_t *)buf;
-    char smallbuf[sizeof(cmd_br_net_call_t) + sizeof(char *)];
-    cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)smallbuf;
-    ndrx_stopwatch_t w;
-    time_t t;
     UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 2024);
     UBFH *p_ci = (UBFH *)tpalloc("UBF", 0, 2024);
     UBFH *p_ub5 = NULL;
     UBFH *p_ci5 = NULL;
-    long olen;
-    long call_len_org;
     struct UBTESTVIEW1 *vptr;
     struct UBTESTVIEW1 *vptr5;
-    long netcall_len_org;
     char *vptr_2;
     char *vptr5_2;
+    long olen;
     
     assert_not_equal(p_ub, NULL);
     
@@ -108,25 +257,6 @@ Ensure(test_proto_ubfcall)
     
     extest_init_UBTESTVIEW1(vptr);
     
-    /* reset call header */
-    memset(call, 0, sizeof(*call));
-    call->command_id = ATMI_COMMAND_TPCALL;
-    NDRX_STRCPY_SAFE(call->name, "HELLOSVC");
-    
-    ndrx_stopwatch_reset(&w);
-    t=time(NULL);
-    
-    call->timer = w;
-    call->cd = 999;
-    call->timestamp = t;
-    
-    netcall->br_magic=BR_NET_CALL_MAGIC;
-    netcall->command_id=ATMI_COMMAND_TPCALL;
-    netcall->msg_type=BR_NET_CALL_MSG_TYPE_ATMI;
-    
-    /* set out-buffer ptr, avoid mem copy */
-    memcpy(netcall->buf, &call, sizeof(char *));
-    
     /* set call infos */
     assert_equal(Bchg(p_ci, T_STRING_6_FLD, 4, "HELLO CALL INFO", 0), EXSUCCEED);
     
@@ -140,70 +270,12 @@ Ensure(test_proto_ubfcall)
     assert_equal(Bchg(p_ub, T_PTR_FLD, 1, (char *)&vptr, 0), EXSUCCEED);
     assert_equal(Bchg(p_ub, T_PTR_FLD, 2, (char *)&vptr_2, 0), EXSUCCEED);
     
-    call->data_len=sizeof(buf)-sizeof(*call);
-    assert_equal(ndrx_mbuf_prepare_outgoing ((char *)p_ub, 0, call->data, 
-            &call->data_len, 0, 0), EXSUCCEED);
-    
-    call_len_org=call->data_len;
-    netcall_len_org = netcall->len=sizeof(*call)+call_len_org;
-    
-    NDRX_LOG(log_error, "YOPT len %ld call len: %ld sizeofcall: %d", 
-            netcall->len, call_len_org, sizeof(*call));
-    
-    
-    ndrx_mbuf_tlv_debug(call->data, call->data_len);
-    
-    
-    NDRX_DUMP(log_error, "YOPT SENDING", call->data, call->data_len);
-    
-    
     fprintf(stdout, "YOPT ORG p_ub:\n");
     Bprint(p_ub);
     
-    
-    proto_len = 0;
-    /* try to serialize */
-    assert_equal(exproto_ex2proto((char *)netcall, sizeof(*call)+call->data_len, 
-	proto_out, &proto_len, sizeof(proto_out)), EXSUCCEED);
-    
-    /* when we parse in, the buf is the netcall, ptr optimization is only for outgoing ... */
-    netcall = (cmd_br_net_call_t *)buf;
-    memset(buf, 0, sizeof(buf));
-    call = (tp_command_call_t *)(buf + sizeof(cmd_br_net_call_t));
-    /* memset(smallbuf, 0, sizeof(smallbuf)); */
-    
-    NDRX_LOG(log_error, "YOPT DATA PTR: %p", buf);
-    /* deserialize the buffer back... */
-    assert_not_equal(exproto_proto2ex(proto_out, proto_len, 
-        buf, &proto_len, sizeof(buf)), EXFAIL);
-    
-    
-    ndrx_mbuf_tlv_debug(call->data, call->data_len);
-    
-    
-    NDRX_LOG(log_debug, "protolen: %ld", proto_len);
-    
-    /* Check the output... */
-    assert_equal(netcall->br_magic, BR_NET_CALL_MAGIC);
-    assert_equal(netcall->command_id, ATMI_COMMAND_TPCALL);
-    assert_equal(netcall->msg_type, BR_NET_CALL_MSG_TYPE_ATMI);
-    assert_equal(netcall->len, netcall_len_org);
-    assert_equal(call->data_len, call_len_org);
-    
-    assert_equal(call->cd, 999);
-    assert_string_equal(call->name, "HELLOSVC");
-    assert_equal(call->command_id, ATMI_COMMAND_TPCALL);
-    assert_equal(call->timer.t.tv_nsec, call->timer.t.tv_nsec);
-    assert_equal(call->timer.t.tv_sec, call->timer.t.tv_sec);
-    assert_equal(call->timestamp, call->timestamp);
-    
-    /* TODO: read the buffer? */
     olen=0;
-    assert_equal(ndrx_mbuf_prepare_incoming (call->data, call->data_len, 
-            (char **)&p_ub5, &olen, 0, 0), EXSUCCEED);
-    
-    fprintf(stdout, "YOPT p_ub:\n");
-    Bprint(p_ub);
+    assert_equal(netcallconv((char *)p_ub, 0, (char **)&p_ub5, &olen, 9000, 9000, 9000), EXSUCCEED);
+            
     fprintf(stdout, "YOPT p_ub5:\n");
     Bprint(p_ub5);
     
@@ -217,10 +289,6 @@ Ensure(test_proto_ubfcall)
     Bdel(p_ub, T_PTR_FLD, 1);
     Bdel(p_ub5, T_PTR_FLD, 1);
     
-    /* leave null buffers
-    Bdel(p_ub, T_PTR_FLD, 0);
-    Bdel(p_ub5, T_PTR_FLD, 0);
-    */
     
     assert_equal(Bcmp(p_ub, p_ub5), 0);
     
@@ -249,6 +317,83 @@ Ensure(test_proto_ubfcall)
  
 }
 
+Ensure(test_proto_nullcall)
+{
+    char *null_buf = NULL;
+    long olen = 0;
+    char *null_out = NULL;
+    ATMI_TLS_ENTRY;
+    
+    assert_equal(netcallconv(null_buf, 0, (char **)&null_out, &olen, 1024, 1024, 1024), 
+            EXSUCCEED);
+    
+    assert_equal(null_buf, NULL);
+    assert_equal(null_out, NULL);
+    assert_equal(olen, 0);
+    
+}
+
+Ensure(test_proto_carraycall)
+{
+    char *carray_buf = NULL;
+    long olen = 0;
+    char *carray_out = NULL;
+    char rndbuf[1028];
+    
+    ATMI_TLS_ENTRY; /* otherwise mbuf cannot work with NULL buffers */
+    
+    carray_buf=tpalloc("CARRAY", NULL, 1028);
+    
+    memcpy(carray_buf, rndbuf, sizeof(rndbuf));
+    
+    assert_equal(netcallconv(carray_buf, 1028, (char **)&carray_out, &olen, 2000, 2000, 2000), 
+            EXSUCCEED);
+    assert_equal(memcmp(carray_buf, carray_out, sizeof(rndbuf)), 0);
+    
+    tpfree(carray_buf);
+    tpfree(carray_out);
+}
+
+/**
+ * Perform no-space tests (i.e. buffer too for the operation)
+ * Check that any of converting parts go over the allocated memory...
+ */
+Ensure(test_proto_nospace)
+{
+    int i,j,k;
+    UBFH *p_ub = (UBFH *)tpalloc("UBF", 0, 2048);
+    UBFH *buf_out;
+    long olen;
+    int ret = EXSUCCEED;
+    int callsize=sizeof(cmd_br_net_call_t)+sizeof(tp_command_call_t);
+    
+    assert_not_equal(p_ub, NULL);
+
+    extest_ubf_set_up_dummy_data(p_ub, EXTEST_PROC_UBF | EXTEST_PROC_VIEW);
+    
+    for (i=callsize; i<3000; i+=56)
+        for (j=callsize; j<3000; j+=56)
+            for (k=callsize; k<3000; k+=56)
+            {
+                olen=0;
+                buf_out=NULL;
+                netcallconv((char *)p_ub, 0, (char **)&buf_out, &olen, i, j, k);
+                
+                if (NULL!=p_ub)
+                {
+                    NDRX_ASSERT_UBF_OUT((0==Bcmp(p_ub, buf_out)), "Buffer does not match");
+                    
+                    tpfree((char *)buf_out);
+                }
+                
+            }
+    
+out:
+            
+    assert_equal(ret, EXSUCCEED);
+            
+}
+
 /**
  * Standard library tests
  * @return
@@ -258,6 +403,9 @@ TestSuite *atmiunit0_exproto(void)
     TestSuite *suite = create_test_suite();
 
     add_test(suite, test_proto_ubfcall);
+    add_test(suite, test_proto_nullcall);
+    add_test(suite, test_proto_carraycall);
+    add_test(suite, test_proto_nospace);
     
     return suite;
 }

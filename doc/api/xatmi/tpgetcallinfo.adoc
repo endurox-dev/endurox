@@ -20,9 +20,9 @@ DESCRIPTION
 -----------
 Function is used to retrieve any call header information associated with 'msg'
 XATMI buffer. Both buffers 'msg' and 'cibuf' must be allocated by *tpalloc(3)*
-calls. The 'msg' may be a NULL buffer (null), in that 'cibuf' will be allocated
-to UBF buffer. Once function called, any call infos are copied to 'cibuf' (with
-reallocation, if there is not enough space in 'cibuf').
+calls. The 'msg' cannot be NULL buffer (null). 'cibuf' most point to XATMI buffer
+or *NULL*. Once function called, any call infos are copied to 'cibuf' (with
+type reallocation, if there is not enough space in 'cibuf' or not a UBF buffer).
 
 'flags' is reserved for future use, and shall be set to *0*.
 
@@ -41,7 +41,7 @@ Note that *tpstrerror()* returns generic error message plus custom message with
 debug info from last function call.
 
 *TPEINVAL* 'msg' is NULL, 'msg' is not XATMI buffer, flags is not *0*. 'cibuf'
-is not XATMI buffer.
+is NULL or not pointing to valid XATMI buffer.
 
 *TPESYSTEM* No call infos are associated with 'msg' buffer.
 

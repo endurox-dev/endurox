@@ -66,9 +66,17 @@ xadmin killall atmiunit0 2>/dev/null
 RET=0
 
 # Run unit test
-#(./atmiunit0 2>&1) > ./atmiunit0.log
 
-./atmiunit0 test_proto_ubfcall
+
+if [ $# -eq 0 ]; then
+
+(./atmiunit0 2>&1) > ./atmiunit0.log
+
+else
+
+./atmiunit0 $@
+
+fi
 
 TMP=$?
 if [ $TMP != 0 ]; then
