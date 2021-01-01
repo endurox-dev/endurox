@@ -1338,7 +1338,7 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
         strcpy(call->data, conv->my_listen_q_str);
         data_len = strlen(call->data) + 1; /* Include EOS... */
 #endif   
-        len = strlen(call->data) + 1;
+        data_len = strlen(conv->my_listen_q_str) + 1;
         data_q=data=tpalloc("STRING", NULL, data_len);
         
         if (NULL==data)
@@ -1448,7 +1448,10 @@ out:
 
     if (NULL!=data_q)
     {
+        atmi_error_t err;
+        ndrx_TPsave_error(&err);
         tpfree(data_q);
+        ndrx_TPrestore_error(&err);
     }
 
     /* TODO: Kill conversation if FAILED!!!! */

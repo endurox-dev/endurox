@@ -1168,7 +1168,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 
                 if (EXSUCCEED!=ret)
                 {
-                    NDRX_LOG(log_error, "Failed to convert tag %x: [%s] %ld"
+                    NDRX_LOG(log_error, "Failed to convert tag %x: [%s] %ld "
                             "at offset %ld", p->tag, p->cname, p->offset);
                     ret=EXFAIL;
                     goto out;
