@@ -1,0 +1,188 @@
+Enduro/X Machine Independent network cluster protocol
+=====================================================
+:doctype: book
+
+== About manual
+
+This document describes the network data encoding protocol used for connecting
+Enduro/X instances between machines of different architectures. Enduro/X is
+operating with the same type of machine architectures and operating systems, then
+native format network protocol is recommended to be used, which is sending direct
+C structures between the Enduro/X instances.
+
+How ever in cases when Enduro/X application is run on different type of machines
+and cluster link is needed between those instances, machine independent format
+shall be used. This format can activated by setting flag "-f" in *tpbridge(8)*
+command line arguments for both end points.
+
+Protocol is constructed as Tag Length Value (TLV) encoded data, where Tag and Length
+has fixed length. Data part may be encoded as Binary Coded Decimal (BCD), ASCII
+or Binary data.
+
+Protocol by it self operates in asynchronous fashion and is loosely coupled with
+the call semantics (i.e. when the reply is required, etc), it is out of the scope
+for protocol it self. How ever this document will present basic work flows for
+the messaging sessions.
+
+Currently over the one server:port end-point only one TCP/IP socket is handled.
+Each end-point represents a node in Enduro/X cluster with configured / unique 
+within cluster Node ID.
+
+== Abbreviations
+
+.Used Abbreviations
+|=========================================================
+|Abbreviation |Description
+|BCD | Binary Coded Decimal. The way how numbers are encoded. The decimal number
+is encoded in hex representation. It is more compact than ASCII, but still
+manageable to debug in hex dump.
+|TLV | Tag Length value
+|=========================================================
+
+== Physical network connection
+
+To establish physical network connection with Enduro/X application server, asynchronous
+socket shall be used. Each message sent in socket is prefixed with 4 bytes length
+indicator. The length bytes does not include length bytes by it self, but it indicates
+the number of bytes that are part of the incoming message. After the length indicator
+bytes the data bytes follows. Length bytes are order in network order, which is big
+endian. Thus if message length with out length bytes are in decimal is 15888, 
+then following frame bytes shall be sent:
+
+. 0x00
+
+. 0x00
+
+. 0x10
+
+. 0x3e
+
+For keep-a-live, zero length messages are supported. Thus Enduro/X bridge periodically
+may be configured to emit the zero length messages. If configured so, bridge will
+wait corresponding idle messages too. If not received in configured time, the
+connection is restarted.
+
+== Data types encoding
+
+This section lists data types used in message protocol and their specifics.
+
+=== Numbers
+
+Numbers in messages are encoded as binary coded decimals. Binary coded decimal
+means that value is encoded in ASCII representation of hex value. Thus when analyzing
+the message dumps in hex format, the encoded values can be clearly seen. For example
+if value of unsigned integer 43219 needs to be transmitted over the protocol,
+the number will be encoded in 3 bytes as follows: 0x04,0x32,0x19.
+
+If the number is signed, then last in left-to-right order char encodes the sign. 
+"0" is positive or  zero, "1" is negative number. For example having Signed Integer 
+type value -717711, it will be encoded as 0x07, 0x17, 0x71, 0x11.
+
+Floats and doubles are encoded with fixed implied resolution. For Floats 5 digits
+decimal fraction is encoded in BCD value. For Doubles 6 digits are encoded in
+trailer. So for example, having Double value 654.999812, would be encoded in
+BCD as following bytes: 0x06, 0x50, x40, x90, x99, 0x81, 0x20 (note as number
+is not negative, it is terminated with 0).
+
+=== Strings and blobs (Carray)
+
+Strings and blobs are encoded as generic byte array. String data may not contain
+0x00 byte, where carray can. The length is encoded in TLV Length component.
+
+=== Enduro/X time field
+
+Enduro/X internally uses *NTIMER* data type which represents transportation
+of number of seconds (20 digits) and number of nanoseconds (20 digits). Thus
+Total length of the field is 40 digits, which in BCD is 20 bytes. This field
+is used
+
+
+=== Legend of all data type presentation
+
+For numeric types variable length fields length is specified logical digits. 
+For signed numeric types this does not include sign digit. Numeric type length 
+does not include zero prefix for BCD in case if odd number of digits are present 
+in final BCD representation. 
+
+Field length for strings, blobs (carrays) and sub-structures is specified in
+number of bytes.
+
+.List of basic data types
+|=========================================================
+|Type name |Description
+|<Type>..X | Field length form 0 to X.
+|<Type>X..Y |  Field length from X to Y.
+|<Type>X | Fixed field length X.
+|SHORT | Signed short field. Recommended storage is 2 bytes.
+|LONG | Signed long field. Recommended storage for 32 bit systems is 4 bytes,
+For 64bit systems it is 8 bytes. If interconnecting 32/64bit systems, developers
+shall use 32bit identifiers in order to correctly exchange data between systems.
+|CHAR | One byte ASCII char. Shall not contain 0x00 terminator byte. In that
+case field TLV length shall be 0.
+|=========================================================
+
+== Multi-buffer encoding
+...
+
+=== XATMI buffer
+...
+
+==== UBF data
+...
+
+===== Embedded VIEW
+...
+
+===== Embedded UBF
+...
+
+==== View Data
+...
+
+==== Other data buffers
+...
+
+===== String data
+...
+
+===== JSON data
+...
+
+===== NULL buffer
+...
+
+== Common Message header
+...
+
+== Message blocks
+...
+
+== General work flow
+
+Establishing connection - time adjustment
+
+=== Network call header
+...
+
+=== Standard call header
+...
+
+=== Time adjustment exchange
+...
+
+=== Service table refresh
+...
+
+=== Generic command call
+...
+
+=== TP Call / TP Reply
+...
+
+=== TP Notify / TP Broadcast
+...
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////

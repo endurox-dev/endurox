@@ -323,7 +323,8 @@ extern "C" {
 #define EXF_NTIMER      11      /**< Data type - n_timer_t */ 
 #define EXF_TIMET       12      /**< Data type - time_t */ 
 #define EXF_USHORT      13      /**< Data type - unsigned short */ 
-#define EXF_MAX         13      /**< Maximum suported type */
+#define EXF_CARRAYFIX   14      /**< Fixed length carray, use MIN len */ 
+#define EXF_MAX         14      /**< Maximum suported type */
 
 
 #define PQ_LEN                  12        /**< The len of last print queue data */    

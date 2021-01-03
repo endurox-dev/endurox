@@ -411,9 +411,11 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     
     if (G_bridge_cfg.common_format)
     {
-        /* get away from this memcpy somehow? */
-        memcpy(call->buf, buf, len);
-        snd_len = len+sizeof(cmd_br_net_call_t);
+        /* get away from this memcpy somehow? 
+         * Enduro/X 8.0 - no mem copy anymore!
+         */
+        memcpy(call->buf, &buf, sizeof(char *));
+        snd_len = len;
         snd = &tmp;
     }
     else
