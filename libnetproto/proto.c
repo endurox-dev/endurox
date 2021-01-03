@@ -109,7 +109,7 @@ static cproto_t M_cmd_br_net_call_x[] =
     {TNC, 0x1005, "br_magic",  OFSZ(cmd_br_net_call_t,br_magic),   EXF_LONG, XFLD, 6, 6, NULL},
     {TNC, 0x100F, "msg_type",  OFSZ(cmd_br_net_call_t,msg_type),   EXF_CHAR, XFLD, 1, 1},
     {TNC, 0x1019, "command_id",OFSZ(cmd_br_net_call_t,command_id), EXF_INT,  XFLD, 1, 5},
-    {TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10}, /**< Not used ???? */
+    /*{TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10}, *< Not used ???? */
     {TNC, 0x102D, "buf",       OFSZ(cmd_br_net_call_t,buf),        EXF_NONE, XSUBPTR, 0, PMSGMAX, 
                        NULL, EXOFFSET(cmd_br_net_call_t,len), EXFAIL, classify_netcall},
     {TNC, EXFAIL}
@@ -120,7 +120,7 @@ static cproto_t M_cmd_br_net_call_x[] =
 static cproto_t M_stdhdr_x[] = 
 {
     {TSH, 0x1037, "command_id",    OFSZ(command_call_t,command_id),     EXF_SHORT, XFLD, 1, 4},
-    {TSH, 0x1041, "proto_ver",     OFSZ(command_call_t,proto_ver),      EXF_CHAR, XFLD, 1, 1},
+    {TSH, 0x1041, "proto_ver",     OFSZ(command_call_t,proto_ver),      EXF_CARRAYFIX, XFLD, 4, 4},
     /* it should be 0 AFAIK... */
     {TSH, 0x104B, "proto_magic",   OFSZ(command_call_t,proto_magic),    EXF_INT,  XFLD, 0, 2},
     {TSH, EXFAIL}
@@ -424,7 +424,7 @@ static xmsg_t M_ndrxd_x[] =
  * @param c_buf_in_len - data len, only for carray.
  * @return 
  */
-exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,  
+exprivate inline int x_ctonet(cproto_t *fld, char *c_buf_in,  
                         char *proto_buf, int proto_bufsz, long *proto_buf_offset,
                         char *debug_buf, int debug_bufsz, int c_buf_in_len)
 {
@@ -456,13 +456,16 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         case EXF_CHAR:
         {
             char *tmp = (char *)c_buf_in;
-            
             CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, 2);
             
             proto_buf[*proto_buf_offset] = *tmp;
             proto_buf[*proto_buf_offset+1] = 0; /* later for strcpy */
+            
+            //len = strlen(&(proto_buf[*proto_buf_offset]));
+            //*proto_buf_offset += len;
             *proto_buf_offset += 1;
-            len=1;
+            len=1; /* - maybe zero len field... */
+            
             
         }
             break;
@@ -581,6 +584,25 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         }    
             break;
                 
+        case EXF_CARRAYFIX:
+            
+            /* fixed len carray */
+            
+            CHECK_PROTO_BUFSZ(ret, *proto_buf_offset, proto_bufsz, fld->min_len);
+            
+            memcpy(proto_buf+*proto_buf_offset, c_buf_in, fld->min_len);
+            *proto_buf_offset += fld->min_len;
+            len = fld->min_len;
+            
+            /* Built representation for user... for debug purposes... */
+            if (debug_get_ndrx_level() >= log_debug)
+            {
+                ndrx_build_printable_string(debug_buf, debug_bufsz, 
+                        proto_buf, fld->min_len);
+            }
+            
+            break;
+            
         case EXF_NONE:
         default:
             NDRX_LOG(log_error, "I do not know how to convert %d "
@@ -595,8 +617,8 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
         if (conv_bcd)
         {
             NDRX_STRCPY_SAFE_DST(debug_buf, numbuf, debug_bufsz);
-        }
-        else if (EXF_CARRAY!=fld->fld_type)
+        } /* for carrays debug infos is already built */
+        else if (EXF_CARRAY!=fld->fld_type && EXF_CARRAYFIX!=fld->fld_type)
         {
             NDRX_STRCPY_SAFE_DST(debug_buf, proto_buf + (*proto_buf_offset)-len, debug_bufsz);
         }
@@ -608,7 +630,6 @@ exprivate int x_ctonet(cproto_t *fld, char *c_buf_in,
     {
         char bcd_tmp[1024];
         char tmp_char_buf[3];
-        char c;
         int hex_dec;
         int j;
         int bcd_tmp_len;
@@ -657,7 +678,7 @@ out:
  * @param c_buf_out - c structure where data should be written
  * @return SUCCEED/FAIL
  */
-exprivate int x_nettoc(cproto_t *fld, 
+exprivate inline int x_nettoc(cproto_t *fld, 
                     char *net_buf, long net_buf_offset, int tag_len, /* in */
                     char *c_buf_out, BFLDLEN *p_bfldlen, char *debug_buf, 
                     int debug_len, long c_bufsz) /* out */
@@ -932,6 +953,7 @@ exprivate int x_nettoc(cproto_t *fld,
         }    
             break;
         case EXF_CARRAY:
+        case EXF_CARRAYFIX:
         {
             NDRX_LOG(log_debug, "carray tag len: %d (out buf: %p)", 
                     tag_len, c_buf_out);
@@ -968,7 +990,7 @@ out:
  * @param proto_buf_offset - offset where data starts
  * @return 
  */
-exprivate short read_net_short(char *buf, long *proto_buf_offset)
+exprivate inline short read_net_short(char *buf, long *proto_buf_offset)
 {
     short net_val;
     short ret;
@@ -988,7 +1010,7 @@ exprivate short read_net_short(char *buf, long *proto_buf_offset)
  * @param proto_buf_offset - offset where data starts
  * @return 
  */
-exprivate int read_net_int(char *buf, long *proto_buf_offset)
+exprivate inline int read_net_int(char *buf, long *proto_buf_offset)
 {
     int net_val;
     int ret;
@@ -1008,7 +1030,7 @@ exprivate int read_net_int(char *buf, long *proto_buf_offset)
  * @param buf - start of the buffer
  * @param proto_buf_offset - current offset of buffer
  */
-expublic int ndrx_write_tag(short tag, char *buf, long *proto_buf_offset, 
+expublic inline int ndrx_write_tag(short tag, char *buf, long *proto_buf_offset, 
         long proto_bufsz)
 {
     int ret = EXSUCCEED;
@@ -1032,7 +1054,7 @@ out:
  * @param buf - start of the buffer
  * @param proto_buf_offset - current offset of buffer
  */
-expublic int ndrx_write_len(int len, char *buf, long *proto_buf_offset, 
+expublic inline int ndrx_write_len(int len, char *buf, long *proto_buf_offset, 
         long proto_bufsz)
 {
     int ret = EXSUCCEED;
@@ -1727,7 +1749,7 @@ out:
  * @param tag
  * @return 
  */
-exprivate cproto_t * get_descr_from_tag(cproto_t *cur, short tag)
+exprivate inline cproto_t * get_descr_from_tag(cproto_t *cur, short tag)
 {
    int first, last, middle;
    int search = tag;
@@ -1789,7 +1811,8 @@ expublic int exproto_proto2ex(char *proto_buf, long proto_len,
  *  field). Current field is set in int_pos
  * @param proto_buf - procol received from net
  * @param proto_len - block len received
- * @return 
+ * @param ex_bufsz buffer size for c block
+ * @return EXFAIL or current offset in parsed buf
  */
 expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len, 
         char *ex_buf, long ex_offset, long *max_struct, int level, 
@@ -1824,14 +1847,31 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
     
     NDRX_DUMP(log_debug, "_exproto_proto2ex enter", 
                     proto_buf, proto_len);
-        
-    while (int_pos < proto_len && !done)
+    
+    /* +2 is tag +  4 is len ... thus that is minimum read. */
+    while (int_pos+6 <= proto_len && !done)
     {
         /* Read tag */
+        /* Check that we have enough positions to read... */
+        
         net_tag = read_net_short(proto_buf, &int_pos);
         
         /* Read len */
         net_len = read_net_int(proto_buf, &int_pos);
+        
+        if (net_len < 0)
+        {
+            /* this is invalid lens */
+            NDRX_LOG(log_error, "ERROR: Invalid data len <0 - FAIL");
+            EXFAIL_OUT(ret);
+        }
+        
+        if (net_len > proto_len - int_pos)
+        {
+            NDRX_LOG(log_error, "ERROR: Invalid length - larger than buffer left: net_len: %d, left: %d",
+                    net_len, proto_len - int_pos);
+            EXFAIL_OUT(ret);
+        }
         
         NDRX_LOG(log_error, "YOPT TAG=%x LEN=%d (int_pos=%ld proto_len=%ld", 
                 net_tag, net_len, int_pos, proto_len);
@@ -1863,19 +1903,17 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 max_len = NDRX_MSGSIZEMAX;
             }
             
+            /* TODO: Check in bytes or in logical symbols? */
             if (net_len<fld->min_len || net_len>max_len)
             {
-                NDRX_LOG(log_error, "Experimental verification: WARNING! "
-                        "INVALID LEN! tag: 0x%x (%s) "
-                        "min_len=%ld max_len=%ld but got: %hd",
+                NDRX_LOG(log_error, "ERROR! INVALID LEN! tag: 0x%x (%s) "
+                        "min_len=%ld max_len=%ld but got: %d - dropping msg",
                         fld->tag, fld->cname, fld->min_len, max_len, net_len);
                 
                 NDRX_DUMP(log_debug, "Invalid chunk:", 
                                 (char *)(proto_buf + int_pos - 6), 
                                 net_len + 6 /* two byte tag, two byte len */);
-                /* TODO: Might consider to ret=FAIL; goto out; - 
-                 * When all will be debugged!
-                 */
+                EXFAIL_OUT(ret);
             }
 
             switch (fld->type)
@@ -2117,7 +2155,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     {   
                         UBFH *p_ub = (UBFH *)(ex_buf+ex_offset+fld->offset);
                         UBF_header_t *hdr  = (UBF_header_t *)p_ub;
-                        int tmp_buf_size = /*PMSGMAX*/NDRX_MSGSIZEMAX - ex_offset - fld->offset;
+                        int tmp_buf_size = /*PMSGMAX*/ex_bufsz - ex_offset - fld->offset;
 
                         
                         NDRX_DUMP(log_debug, "Got UBF buffer", 

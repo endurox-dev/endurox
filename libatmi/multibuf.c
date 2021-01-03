@@ -593,6 +593,7 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
             *olen, &used, ptr_tag | NDRX_MBUF_CALLINFOBIT, flags))
         {
             NDRX_LOG(log_error, "Failed to run TLV on callinfo");
+            EXFAIL_OUT(ret);
         }
         ptr_tag++;
     }
@@ -636,7 +637,7 @@ expublic int ndrx_mbuf_prepare_outgoing (char *idata, long ilen, char *obuf, lon
     
 out:
     
-    NDRX_LOG(log_debug, "%ld data bytes", *olen);
+    NDRX_LOG(log_debug, "%ld data bytes ret=%d", *olen, ret);
 
     return ret;
 }

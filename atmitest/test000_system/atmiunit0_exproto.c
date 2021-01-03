@@ -51,7 +51,7 @@
 #include <exproto.h>
 #include <atmi_tls.h>
 #include <exassert.h>
-
+#include <nstd_shm.h>
 /**
  * Basic preparation before the test
  */
@@ -110,7 +110,7 @@ exprivate int netcallconv(char *req_buf, long req_len, char **obuf, long *olen,
     
     /* prepare MBUF for output */
     if (EXSUCCEED!=ndrx_mbuf_prepare_outgoing (req_buf, req_len, call->data, 
-            &call->data_len, 0, 0), EXSUCCEED)
+            &call->data_len, 0, 0))
     {
         NDRX_LOG(log_error, "Failed to prepare outgoing data: %s", 
                 tpstrerror(tperrno));
@@ -169,7 +169,7 @@ exprivate int netcallconv(char *req_buf, long req_len, char **obuf, long *olen,
     }
     
     if (EXSUCCEED!=ndrx_mbuf_prepare_incoming (call->data, call->data_len, obuf, olen, 
-            0, 0), EXSUCCEED)
+            0, 0))
     {
         NDRX_LOG(log_error, "Failed to prepare incoming buffers");
         EXFAIL_OUT(ret);
@@ -375,11 +375,12 @@ Ensure(test_proto_nospace)
         for (j=callsize; j<3000; j+=56)
             for (k=callsize; k<3000; k+=56)
             {
+                /* try 3x combinations... */
                 olen=0;
                 buf_out=NULL;
                 netcallconv((char *)p_ub, 0, (char **)&buf_out, &olen, i, j, k);
                 
-                if (NULL!=p_ub)
+                if (NULL!=buf_out)
                 {
                     NDRX_ASSERT_UBF_OUT((0==Bcmp(p_ub, buf_out)), "Buffer does not match");
                     
@@ -394,6 +395,72 @@ out:
             
 }
 
+#define LEVEL_MAX   100
+ndrx_shm_t M_testmem;
+
+
+int brute_force_protocol(int level)
+{
+    int ret = EXSUCCEED;
+    int i;
+    
+    if (LEVEL_MAX==level)
+    {
+        char obuf[1024];
+        long len;
+        
+        /* just run the asan... */
+        exproto_proto2ex((char *)M_testmem.mem, LEVEL_MAX, obuf, &len, 1024);
+    }
+    else for (i=M_testmem.mem[level]; i<255; i++)
+    {
+        M_testmem.mem[level]=(char) (i & 0xff);
+        brute_force_protocol(level+1);
+    }
+
+out:
+    return ret;
+}
+
+/**
+ * Needs to have shm, so that we can restart when looped with out
+ * log files.
+ */
+Ensure(test_proto_rndparse)
+{
+    int i;
+    
+    memset(&M_testmem, 0, sizeof(M_testmem));
+    M_testmem.size=LEVEL_MAX;
+    M_testmem.key = 0x00aabbcc;
+    
+    NDRX_STRCPY_SAFE(M_testmem.path, "/test");
+    
+    
+    if (EXSUCCEED==ndrx_shm_open(&M_testmem, EXFALSE))
+    {
+        /* start here... */
+        fprintf(stderr, "Creating new...\n");
+        memset(M_testmem.mem, 0, LEVEL_MAX);
+    }
+    else
+    {
+        fprintf(stderr, "Continuing...\n");
+        assert_equal(ndrx_shm_open(&M_testmem, EXTRUE), EXSUCCEED);
+    }
+            
+    /*
+    srand(time(NULL));
+    
+    for (i=0; i<LEVEL_MAX; i++)
+    {
+        M_msg[i] = (char)(rand() % 255);
+    }*/
+    
+    
+    assert_equal(brute_force_protocol(0), EXSUCCEED);
+}
+
 /**
  * Standard library tests
  * @return
@@ -406,6 +473,7 @@ TestSuite *atmiunit0_exproto(void)
     add_test(suite, test_proto_nullcall);
     add_test(suite, test_proto_carraycall);
     add_test(suite, test_proto_nospace);
+    /* add_test(suite, test_proto_rndparse); - too long...*/
     
     return suite;
 }
