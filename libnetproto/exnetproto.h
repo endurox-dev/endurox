@@ -42,10 +42,10 @@
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
-#define PMSGMAX -2 /* special case for max buffer size */
+#define PMSGMAX -2      /**< special case for max buffer size */
 
-#define TAG_BYTES   2   /* Number of bytes used in tag */
-#define LEN_BYTES   4   /* Number of bytes used in len */
+#define TAG_BYTES   2   /**< Number of bytes used in tag */
+#define LEN_BYTES   4   /**< Number of bytes used in len */
 
 #define MKSIGN char sign = '0';\
             if (*tmp<0)\
@@ -56,6 +56,11 @@
 #define OFSZ(s,e)   EXOFFSET(s,e), EXELEM_SIZE(s,e)
 #define OFSZ0       0,0
 
+/**
+ * Field mode types for cproto_t.type
+ * @defgroup modetype
+ * @{
+ */
 #define XFLD           0x01     /**< Normal field                           */
 #define XSUB           0x02     /**< Dummy field/subfield                   */
 #define XSBL           0x03     /**< Dummy field/subfield len               */
@@ -65,14 +70,24 @@
 #define XMASTERBUF     0x07     /**< internal C tlv list of XATMIBUFS       */
 #define XFLDPTR        0x08     /**< Field is pointer to data block         */
 #define XATMIBUFPTR    0x09     /**< This is pointer to XATMI buf           */
-#define XFLDLAST       0x0A     /**< Normal field, last (term the loop      */
 #define XSUBPTR        0x0B     /**< Ptr to buffer, for doing ex2proto      */
+#define XTYPE(X)       (X & 0xff) /**< Extract type infos                   */
+
+/** @} */ /* end of modetype */
+
+/**
+ * Additional flags for mode types
+ * @defgroup modetype_flags
+ * @{
+ */
+#define XFLAST         0x0100   /**< Terminat parse after this field        */
+
+/** @} */ /* end of modetype_flags */
 
 #define XTAB1(e1)           1, e1, NULL, NULL, NULL
 #define XTAB2(e1,e2)        2, e1, e2, NULL, NULL
 #define XTAB3(e1,e2,e3)     3, e1, e2, e3, NULL
 #define XTAB4(e1,e2,e3,e4)  4, e1, e2, e3, e4
-
 
 /**
  * Table bellow at index is UBF field type
@@ -170,18 +185,18 @@ typedef struct xmsg xmsg_t;
 
 struct cproto
 {
-    int     tableid;            /* table id. */
-    long    tag;                /* TLV tag */
-    char*   cname;              /* c field name */
-    long    offset;             /* offset in structure */
-    int     len;                /* len in bytes */
-    int     fld_type;           /* field type */
-    short   type;               /* field type:  XFLD or XSUB */
-    int     min_len;            /* min data len in chars */
-    int     max_len;            /* max data len in chars */
-    cproto_t *include;          /* include sub_structure */
-    long    counter_offset;     /* counter offset... */
-    long    elem_size;          /* size of array element. */
+    int     tableid;            /**< table id.                      */
+    long    tag;                /**< TLV tag                        */
+    char*   cname;              /**< c field name                   */
+    long    offset;             /**< offset in structure            */
+    int     len;                /**< len in bytes                   */
+    int     fld_type;           /**< field type                     */
+    short   type;               /**< field type:  XFLD or XSUB      */
+    int     min_len;            /**< min data len in chars          */
+    int     max_len;            /**< max data len in chars          */
+    cproto_t *include;          /**< include sub_structure          */
+    long    counter_offset;     /**< counter offset...              */
+    long    elem_size;          /**< size of array element.         */
     /* During parsing returns conv struct for XSUB */
     xmsg_t * (*p_classify_fn) (char *ex_buf, long ex_len); 
     
@@ -192,11 +207,11 @@ struct cproto
 struct xmsg
 {
     char    msg_type;
-    int     command;            /* Id of the command... */    
-    char    *descr;             /* Descr of the message */
-    /* Extra tables to drive sub-elements. */
+    int     command;            /**< Id of the command... */    
+    char    *descr;             /**< Descr of the message */
+    /** Extra tables to drive sub-elements. */
     int     tabcnt;
-    cproto_t    *tab[4];        /* Recursive/linear tables for sub buffers. */
+    cproto_t    *tab[4];        /**< Recursive/linear tables for sub buffers. */
 };
 
 /* protocol table info */

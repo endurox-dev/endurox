@@ -62,10 +62,24 @@ may be configured to emit the zero length messages. If configured so, bridge wil
 wait corresponding idle messages too. If not received in configured time, the
 connection is restarted.
 
-== Data types encoding
+== General structures data layout
+
+All the exchanged messages within protocol as is based on the structures principles.
+Where we can look on structure like a complex data type. Each structure may
+consist of basic data types or complex data types. Which makes messages a
+hierarchical tree of the structures. Where leaf structures always consists of
+basic data types.???
+
+
+>>> TODO: Have some diagram of the tpcall <<<
+
+
+== Basic Data type encoding
 
 This section lists data types used in message protocol and their specifics.
 
+
+[[numbers-anchor]]
 === Numbers
 
 Numbers in messages are encoded as binary coded decimals. Binary coded decimal
@@ -78,23 +92,35 @@ If the number is signed, then last in left-to-right order char encodes the sign.
 "0" is positive or  zero, "1" is negative number. For example having Signed Integer 
 type value -717711, it will be encoded as 0x07, 0x17, 0x71, 0x11.
 
-Floats and doubles are encoded with fixed implied resolution. For Floats 5 digits
+*Floats* and *doubles* are encoded with fixed implied resolution. For Floats 5 digits
 decimal fraction is encoded in BCD value. For Doubles 6 digits are encoded in
 trailer. So for example, having Double value 654.999812, would be encoded in
-BCD as following bytes: 0x06, 0x50, x40, x90, x99, 0x81, 0x20 (note as number
+BCD as following bytes:x65, x49, x99, 0x81, 0x20 (note as number
 is not negative, it is terminated with 0).
+
+Enduro/X may run on 32bit (LP32) and 64bit (LP64) platforms. Some data types differ between
+these platforms, particularity *long* and *unsigned long* as they corresponds
+to platform bits. Internally Enduro/X uses values which in case
+of longs does not go over 32bit values, but user application for example may
+send in UBF field 64bit long value. In that particular case C function sscanf()
+may overflow if maximum 64bit value is sent to 32bit value. End result is value
+which was returned by sscanf().
+
 
 === Strings and blobs (Carray)
 
 Strings and blobs are encoded as generic byte array. String data may not contain
 0x00 byte, where carray can. The length is encoded in TLV Length component.
 
+
+[[time-anchor]]
 === Enduro/X time field
 
 Enduro/X internally uses *NTIMER* data type which represents transportation
 of number of seconds (20 digits) and number of nanoseconds (20 digits). Thus
-Total length of the field is 40 digits, which in BCD is 20 bytes. This field
-is used
+Total length of the field is 40 digits, which in BCD is 20 bytes. The "time since"
+is relate and exact start time source is specified with the particular field
+use.
 
 
 === Legend of all data type presentation
@@ -113,12 +139,19 @@ number of bytes.
 |<Type>..X | Field length form 0 to X.
 |<Type>X..Y |  Field length from X to Y.
 |<Type>X | Fixed field length X.
-|SHORT | Signed short field. Recommended storage is 2 bytes.
-|LONG | Signed long field. Recommended storage for 32 bit systems is 4 bytes,
-For 64bit systems it is 8 bytes. If interconnecting 32/64bit systems, developers
-shall use 32bit identifiers in order to correctly exchange data between systems.
+|SHORT | Signed short field. 16bit value.
+|LONG | Signed long field. 32bit or 64bit value.
 |CHAR | One byte ASCII char. Shall not contain 0x00 terminator byte. In that
 case field TLV length shall be 0.
+|FLOAT | Floating point value. See <<numbers-anchor>> for encoding rules.
+|DOUBLE | Double precision value. See <<numbers-anchor>> for encoding rules.
+|STRING | String value. May contains all ASCII characters, except 0x00 byte.
+|CARRAY | This is blob type, may contain any bytes.
+|INT | Signed integer type, 32bit type.
+|ULONG | Unsigned long. 32 or 64 bit value.
+|NTIMER | Time field. seconds and nano-seconds. See <<time-anchor>>. Field is
+fixed length of 40 digits.
+|USHOR | 16bit unsigned value.
 |=========================================================
 
 == Multi-buffer encoding
