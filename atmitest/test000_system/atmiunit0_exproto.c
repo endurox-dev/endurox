@@ -157,6 +157,7 @@ exprivate int netcallconv(char *req_buf, long req_len, char **obuf, long *olen,
         EXFAIL_OUT(ret);
     }
     
+    memset(cbuf_back, 0, sizeof(cmd_br_net_call_t) + sizeof(tp_command_call_t));
     netcall = (cmd_br_net_call_t *)cbuf_back;
             
     callpars = (tp_command_call_t *)(cbuf_back + sizeof(cmd_br_net_call_t));

@@ -114,7 +114,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
                     
     UBF_LOG(log_debug, "%s enter at level %d", __func__, level);
     
-    if (XATMIBUFPTR==fld->type)
+    if (XATMIBUFPTR==XTYPE(fld->type))
     {
         BVIEWFLD *vdata = (BVIEWFLD *)ex_buf;
             

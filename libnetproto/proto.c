@@ -95,7 +95,8 @@ static char *M_type[] = {
 "EXF_UINT",     /* 10 */
 "EXF_NTIMER",   /* 11 */
 "EXF_TIMET",    /* 12 */
-"EXF_USHORT"    /* 13 */
+"EXF_USHORT",   /* 13 */
+"EXF_CARRAYFIX" /* 14 */
 };
 
 /* TODO: Add table_id filed, so that from each row we can identify table descriptor
@@ -321,7 +322,7 @@ expublic cproto_t ndrx_G_ndrx_mbuf_tlv_x[] =
     {MBU, 0x132F,  "tag",   OFSZ(ndrx_mbuf_tlv_t, tag),  EXF_UINT,   XFLD, 1, 10},
     /* {MBU, 0x1339,  "len",   OFSZ(ndrx_mbuf_tlv_t, len), EXF_UINT,   XFLD, 1, 10}, - platform dependent... */
     /* Typed fields... */
-    {MBU, 0x1343,  "data",  OFSZ(ndrx_mbuf_tlv_t,data),     EXF_NONE,  XATMIBUF, 0, PMSGMAX, NULL, 
+    {MBU, 0x1343,  "data",  OFSZ(ndrx_mbuf_tlv_t,data),     EXF_NONE,  XATMIBUF|XFLAST, 0, PMSGMAX, NULL, 
                 /* using uint len and full tag (from which at offset we extract the buffer type) */
             EXOFFSET(ndrx_mbuf_tlv_t,len), EXFAIL, NULL, EXOFFSET(ndrx_mbuf_tlv_t,tag)},
     {MBU, EXFAIL}
@@ -357,8 +358,8 @@ expublic cproto_t ndrx_G_view_field[] =
 #define TVH         11 /* view */
 expublic cproto_t ndrx_G_view[] = 
 {
-    {TVH, 0x13B1, "vname", OFSZ(BVIEWFLD, vname),       EXF_STRING,   XFLD,     0, NDRX_VIEW_NAME_LEN},
-    {TVH, 0x13BB, "vflags", OFSZ(BVIEWFLD, vflags),     EXF_UINT  ,   XFLDLAST, 1, 10},
+    {TVH, 0x13B1, "vname", OFSZ(BVIEWFLD, vname),       EXF_STRING,   XFLD,            0, NDRX_VIEW_NAME_LEN},
+    {TVH, 0x13BB, "vflags", OFSZ(BVIEWFLD, vflags),     EXF_UINT  ,   XFLD|XFLAST, 1, 10},
     {TVH, EXFAIL}
 };
 
@@ -461,6 +462,7 @@ exprivate inline int x_ctonet(cproto_t *fld, char *c_buf_in,
             proto_buf[*proto_buf_offset] = *tmp;
             proto_buf[*proto_buf_offset+1] = 0; /* later for strcpy */
             
+            //TODO:
             //len = strlen(&(proto_buf[*proto_buf_offset]));
             //*proto_buf_offset += len;
             *proto_buf_offset += 1;
@@ -1129,10 +1131,9 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             }
         }
         /* Check the type and process accordingly... */
-        switch (p->type)
+        switch (XTYPE(p->type))
         {
             case XFLDPTR:
-            case XFLDLAST:
             case XFLD:
             {
                 /* This is field... */
@@ -1160,7 +1161,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 off_start = *proto_buf_offset;
                 
                 
-                if (XFLDPTR==p->type)
+                if (XFLDPTR==XTYPE(p->type))
                 {
                     /* pointer is stored in the buffer 
                      * For outgoings this is perfectly fine
@@ -1244,7 +1245,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 /* </sub tlv> */
                 
                 /* This is sub field, we should run it from subtable... */
-                if (XSUBPTR==p->type)
+                if (XSUBPTR==XTYPE(p->type))
                 {
                     char *ex_buf_ptr = *((char **)(ex_buf+offset+p->offset));
                     ret = exproto_build_ex2proto(cv, level+1, 0,
@@ -1438,7 +1439,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 long off_stop;
                 unsigned buffer_type;
                 
-                if (XATMIBUFPTR==p->type)
+                if (XATMIBUFPTR==XTYPE(p->type))
                 {
                     BFLDID *p_fldid = (BFLDID*)(ex_buf+offset+p->buftype_offset);
                     int typ = Bfldtype(*p_fldid);
@@ -1620,7 +1621,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             max_len = NDRX_MSGSIZEMAX;
         }
         
-        if ((len_written < p->min_len  || len_written > max_len) && p->type != XSBL)
+        if ((len_written < p->min_len  || len_written > max_len) && XTYPE(p->type) != XSBL)
         {
             NDRX_LOG(log_error, "Experimental verification: WARNING! INVALID LEN!"
                     " tag: 0x%x (%s)"
@@ -1636,6 +1637,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
              * When all will be debugged!
              */
             
+            /* TODO: Validate the length according to protocol rules */
             if (len_written < 0)
             {
                 EXFAIL_OUT(ret);
@@ -1916,9 +1918,8 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 EXFAIL_OUT(ret);
             }
 
-            switch (fld->type)
+            switch (XTYPE(fld->type))
             {
-                case XFLDLAST:
                 case XFLDPTR:
                 case XFLD:
                 case XSBL:
@@ -2007,12 +2008,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         " [%s]\t data: [%s]"/*" netbuf (data start): %p"*/, 
                         net_tag, fld->cname, net_len, net_len, M_type[fld->fld_type], 
                             debug/*, (proto_buf+int_pos)*/ );
-                    
-                    /* if last field, termiante */
-                    if (XFLDLAST==fld->type)
-                    {
-                        done=EXTRUE;
-                    }
                 }
                     break;
                 case XSUBPTR:
@@ -2112,7 +2107,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                     unsigned buffer_type;
                     
                     /* PTR is used only by sub-UBF fields */
-                    if (XATMIBUFPTR==fld->type)
+                    if (XATMIBUFPTR==XTYPE(fld->type))
                     {
                         BFLDID *p_fldid = (BFLDID*)(ex_buf+ex_offset+fld->buftype_offset);
                         int typ = Bfldtype(*p_fldid);
@@ -2284,7 +2279,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         
                         /* OK, read next, if have anything... */
                         
-                        if (XATMIBUFPTR==fld->type)
+                        if (XATMIBUFPTR==XTYPE(fld->type))
                         {
                             /* we are part of UBF... */
                             vf =(BVIEWFLD *)(ex_buf + ex_offset+fld->offset);
@@ -2405,15 +2400,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         xatmi_fld_len = *buf_len;
                         p_fld_len = &xatmi_fld_len;
                     }
-                    
-                    /* if restoring inner buffers, then continue
-                     * for master buffer, TLV will deblock this again...
-                     */
-                    if (NULL==p_typedbuf)
-                    {
-                        done=EXTRUE;
-                    }
-                    
                 }
                     break;
                 
@@ -2456,6 +2442,12 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 
                 NDRX_SYSBUF_FREE(tmpf);
                 tmpf=NULL;
+            }
+            
+            /* terminate if requested so */
+            if (fld->type & XFLAST)
+            {
+                done=EXTRUE;
             }
             
         }
