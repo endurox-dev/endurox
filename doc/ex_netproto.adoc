@@ -62,17 +62,22 @@ may be configured to emit the zero length messages. If configured so, bridge wil
 wait corresponding idle messages too. If not received in configured time, the
 connection is restarted.
 
+== Message TLV Encoding rules
+
+TODO:
+
 == General structures data layout
 
 All the exchanged messages within protocol as is based on the structures principles.
 Where we can look on structure like a complex data type. Each structure may
 consist of basic data types or complex data types. Which makes messages a
 hierarchical tree of the structures. Where leaf structures always consists of
-basic data types.???
+basic data types. This document uses term "block", "typed block" and "structures" 
+with the same meaning.
 
+Typical message layout would be:
 
->>> TODO: Have some diagram of the tpcall <<<
-
+image:ex_netproto_msgexample.png[caption="Figure 1: ", title="tpcall() message layout"]
 
 == Basic Data type encoding
 
@@ -154,8 +159,27 @@ fixed length of 40 digits.
 |USHOR | 16bit unsigned value.
 |=========================================================
 
-== Multi-buffer encoding
-...
+== Multi-buffer block (array of)
+As Enduro/X may send several buffers with one request, for reasons of call info
+data, primary buffer and and primary buffer is UBF it might have embedded VIEW,
+UBF objects or UBF might contain pointer to other buffers. Thus multiple XATMI
+buffers are serialized.
+
+Multi-buffer block is array of 0..N XATMI buffer typed blocks. Each Multi-buffer
+block encodes MBUF tag. Which by it self holds the information about what type
+of XATMI buffer it represents. And any additional flags, such as is this Multi-buffer
+block a call info. Or is it Primary buffer, or a UBF pointer to buffer (i.e.
+virtual pointer).
+
+Layout of the block is following:
+
+image:ex_netproto_multibuf.png[caption="Figure 2: ", title="Multi-buffer array"]
+
+.List of basic data types
+|=========================================================
+|TLV TAG |Format |Condition |Description
+|
+|
 
 === XATMI buffer
 ...
@@ -184,8 +208,6 @@ fixed length of 40 digits.
 ===== NULL buffer
 ...
 
-== Common Message header
-...
 
 == Message blocks
 ...
@@ -194,25 +216,25 @@ fixed length of 40 digits.
 
 Establishing connection - time adjustment
 
-=== Network call header
+=== Network call block
 ...
 
-=== Standard call header
+=== Standard call block
 ...
 
-=== Time adjustment exchange
+=== Time adjustment exchange block
 ...
 
-=== Service table refresh
+=== Service table refresh block
 ...
 
-=== Generic command call
+=== Generic command call block
 ...
 
-=== TP Call / TP Reply
+=== TP Call / TP Reply block
 ...
 
-=== TP Notify / TP Broadcast
+=== TP Notify / TP Broadcast block
 ...
 
 ////////////////////////////////////////////////////////////////

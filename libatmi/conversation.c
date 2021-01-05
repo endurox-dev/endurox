@@ -260,7 +260,7 @@ expublic int accept_connection(void)
     if (EXSUCCEED!=ndrx_tpsend(G_atmi_tls->G_last_call.cd, NULL, 0, 0, &revent,
                             ATMI_COMMAND_CONNRPLY))
     {
-        NDRX_LOG(log_error, "Failed to reply for acceptance!");
+        NDRX_LOG(log_error, "Failed to reply for acceptance: %s", tpstrerror(tperrno));
         ret=EXFAIL;
 
     }
@@ -1338,8 +1338,8 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
         strcpy(call->data, conv->my_listen_q_str);
         data_len = strlen(call->data) + 1; /* Include EOS... */
 #endif   
-        data_len = strlen(conv->my_listen_q_str) + 1;
-        data_q=data=tpalloc("STRING", NULL, data_len);
+        len = strlen(conv->my_listen_q_str) + 1;
+        data_q=data=tpalloc("STRING", NULL, len);
         
         if (NULL==data)
         {
