@@ -216,7 +216,7 @@ expublic short ndrx_G_view_proto_tag_map[] =
 static cproto_t M_ubf_field[] = 
 {
     {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
-    {TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
+    /*{TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},--not needed, as encoded in TLV */
     /* Typed fields... */
     {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
     {TUF, 0x111D,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
@@ -336,7 +336,7 @@ expublic cproto_t ndrx_G_view_field[] =
 {
     {TVF, 0x134D,  "cname", OFSZ(proto_ufb_fld_t, cname),  EXF_STRING,   XFLD, 1, NDRX_VIEW_CNAME_LEN},
     /* For UBF we could optimize this out? Do not send it at times? */
-    {TVF, 0x1357,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},
+    /* {TVF, 0x1357,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10}, this is encoded in tag len*/
     /* Typed fields... */
     {TVF, 0x1360,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
     {TVF, 0x1361,  "long",  OFSZ(proto_ufb_fld_t, buf), EXF_LONG,    XFLDPTR, 1, 20},
@@ -1502,7 +1502,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     proto_ufb_fld_t *f;
                     BFLDOCC occ;
                     
-                    short accept_tags[] = {UBF_TAG_BFLDID, 0, 0, EXFAIL};
+                    short accept_tags[] = {UBF_TAG_BFLDID, 0, EXFAIL};
                     
                     /* Reserve space for Tag/Length */
                     /* <sub tlv> */
@@ -1539,16 +1539,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                          * data types
                          */
                         accept_tags[1] = ndrx_G_ubf_proto_tag_map[f_type];
-                        
-                        /*  only for carrays needs len to be present from Bapi perspective */
-                        if (BFLD_CARRAY==f_type)
-                        {
-                            accept_tags[2] = UBF_TAG_BFLDLEN;
-                        }
-                        else
-                        {
-                            accept_tags[2] = EXFAIL;
-                        }
 
                         /* lets drive our structure? */
                         ret = exproto_build_ex2proto(&tmp_cv, 0, 0,
@@ -1621,6 +1611,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             max_len = NDRX_MSGSIZEMAX;
         }
         
+        /* TODO: */
         if ((len_written < p->min_len  || len_written > max_len) && XTYPE(p->type) != XSBL)
         {
             NDRX_LOG(log_error, "Experimental verification: WARNING! INVALID LEN!"

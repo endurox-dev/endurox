@@ -427,9 +427,10 @@ exprivate int ndrx_mbuf_tlv_do(char *idata, long ilen, char *obuf,
     if (EXSUCCEED!=descr->pf_prepare_outgoing(descr, idata, ilen, hdr->data, 
             &tmp_olen, flags))
     {
-        NDRX_LOG(log_error, "Prep tag: %u (ttag %u, type %d). Src %p, "
-            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%d", 
-            tag, hdr->tag, buffer_info->type_id, idata, obuf, olen_max, new_used, pad, tmp_olen);
+        NDRX_LOG(log_error, "ERROR: pf_prepare_outgoing failed: %u (ttag %u, type %d). Src %p, "
+            "dst %p olen_max=%ld new_used=%ld pad=%d buffer_left=%d: %s", 
+            tag, hdr->tag, buffer_info->type_id, idata, obuf, olen_max, new_used, pad, tmp_olen,
+                tpstrerror(tperrno));
         EXFAIL_OUT(ret);
     }
     hdr->len = tmp_olen;
@@ -562,7 +563,8 @@ out:
  * and embedded buffers with pointer to atmi buffers
  * @param ilen input buffer used space
  * @param obuf output buffer
- * @param olen output buffer size
+ * @param olen output buffer size, on input it is buffer size of output
+ *  in output it returns the bytes written for send
  * @param flags atmi flags
  * @param mflags MBUF flags
  * @return EXSUCCEED/EXFAIL
