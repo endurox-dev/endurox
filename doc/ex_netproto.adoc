@@ -64,7 +64,16 @@ connection is restarted.
 
 == Message TLV Encoding rules
 
-TODO:
+Messages are encoded with:
+
+- Two byte TAG which identifies simple data type or complex data structure. Bytes
+are encoded in network order big-endian.
+
+- 4 byte (unsigned) data length identifier.
+
+- Data block which corresponds to the TAG meaning.
+
+Data alignment is not used for encoded message.
 
 == General structures data layout
 
@@ -72,8 +81,12 @@ All the exchanged messages within protocol as is based on the structures princip
 Where we can look on structure like a complex data type. Each structure may
 consist of basic data types or complex data types. Which makes messages a
 hierarchical tree of the structures. Where leaf structures always consists of
-basic data types. This document uses term "block", "typed block" and "structures" 
-with the same meaning.
+basic data types. This document uses term "block", "complex data typed block", "message blocks" 
+and "structures" with the same meaning.
+
+Basically network messages consists of the message blocks. These message blocks
+then are constructed basic data types and complex data type blocks.
+
 
 Typical message layout would be:
 
@@ -154,12 +167,34 @@ case field TLV length shall be 0.
 |CARRAY | This is blob type, may contain any bytes.
 |INT | Signed integer type, 32bit type.
 |ULONG | Unsigned long. 32 or 64 bit value.
+|UINT | 32bit usinged integer.
 |NTIMER | Time field. seconds and nano-seconds. See <<time-anchor>>. Field is
 fixed length of 40 digits.
-|USHOR | 16bit unsigned value.
+|USHORT | 16bit unsigned value.
 |=========================================================
 
-== Multi-buffer block (array of)
+
+=== Field optionality
+
+All fields in all blocks (unless field is array) are mandatory. However default
+value (which usually is 0) is specified for each of the tags, if any. Thus in
+that particular case, if field is not received form network, the default value
+is used.
+
+
+== Complex data type blocks
+
+This section list complex data type blocks which are later incorporated in the
+message blocks.
+
+=== Network call block
+...
+
+=== Standard call block
+...
+
+=== Multi-buffer block (array of) for XATMI call data transport
+
 As Enduro/X may send several buffers with one request, for reasons of call info
 data, primary buffer and and primary buffer is UBF it might have embedded VIEW,
 UBF objects or UBF might contain pointer to other buffers. Thus multiple XATMI
@@ -175,11 +210,22 @@ Layout of the block is following:
 
 image:ex_netproto_multibuf.png[caption="Figure 2: ", title="Multi-buffer array"]
 
-.List of basic data types
+.Multi-buffer block
 |=========================================================
-|TLV TAG |Format |Condition |Description
-|
-|
+|TLV TAG |Name |Format |Default value| Description
+|0x132F |tag |UINT1..10 |N/A | This is Multi-buffer tag. Not to confuse with
+TLV tag. This tag is used to identify the particular Multi-buffer. The tag
+consists of first 26 bits of this 32bit unsigned-integer. If bit No *27.* is set
+to *1*. This means that particular buffer is *tpsetcallinfo(3)* associated buffer
+with primary buffer. The call info bit must be set only for tag *0*. If call
+info bit is set, then call primary buffer is at tag *1*. If call info bit 27 is
+not set, then primary buffer is at tag *0*. Any other tags are virtual pointer,
+i.e. primary buffer in that case must be *UBF* typed and it must hold a *BFLD_PTR*
+with references to these tags. Buffer type is by it self is encoded at bits 28..32.
+Currently following buffer types are supported: *0* - *UBF* buffer, *2* - *TPINIT*
+buffer, *3* - *NULL* buffer, *4* - *STRING* buffer, *5* - *CARRAY* buffer, *6* - 
+*JSON* buffer, *7* - *VIEW* buffer.
+|=========================================================
 
 === XATMI buffer
 ...
@@ -208,19 +254,12 @@ image:ex_netproto_multibuf.png[caption="Figure 2: ", title="Multi-buffer array"]
 ===== NULL buffer
 ...
 
-
 == Message blocks
 ...
 
-== General work flow
+=== General work flow
 
 Establishing connection - time adjustment
-
-=== Network call block
-...
-
-=== Standard call block
-...
 
 === Time adjustment exchange block
 ...
