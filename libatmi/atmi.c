@@ -631,7 +631,7 @@ out:
  * @param command_id
  * @return
  */
-expublic int tprecv (int cd, char * *data,
+expublic int tprecv (int cd, char **data,
                         long *len, long flags, long *revent)
 {
     int ret=EXSUCCEED;
@@ -641,6 +641,21 @@ expublic int tprecv (int cd, char * *data,
 
     if (EXSUCCEED!=entry_status)
     {
+        ret=EXFAIL;
+        goto out;
+    }
+
+    /* Check some other parameters */
+    if (data==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "data cannot be null");
+        ret=EXFAIL;
+        goto out;
+    }
+
+    if (len==NULL)
+    {
+        ndrx_TPset_error_msg(TPEINVAL, "len cannot be null");
         ret=EXFAIL;
         goto out;
     }

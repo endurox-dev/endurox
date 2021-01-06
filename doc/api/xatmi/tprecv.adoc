@@ -25,6 +25,8 @@ Receive message from open conversation, which is opened by *tpconnect()*.
 The incoming  buffer 'data' must be allocated with *tpalloc()*. If conversation 
 receives disconnect (*TPEV_DISCONIMM*), service error (*TPEV_SVCERR*) or 
 service failure (*TPEV_SVCFAIL*), then global transaction if one in progress is aborted.
+'data' and 'len' are mandatory arguments which are used for receiving the XATMI
+buffer.
 
 *Valid flags*
 
@@ -64,7 +66,7 @@ ERRORS
 Note that *tpstrerror()* returns generic error message plus 
 custom message with debug info from last function call.
 
-*TPEINVAL* Invalid call descriptor 'cd' passed in.
+*TPEINVAL* Invalid call descriptor 'cd' passed in. 'data' or 'len' is NULL.
 
 *TPETIME* Service did not reply in given time ('NDRX_TOUT'). 
 

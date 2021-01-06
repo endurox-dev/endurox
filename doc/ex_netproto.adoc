@@ -45,8 +45,8 @@ To establish physical network connection with Enduro/X application server, async
 socket shall be used. Each message sent in socket is prefixed with 4 bytes length
 indicator. The length bytes does not include length bytes by it self, but it indicates
 the number of bytes that are part of the incoming message. After the length indicator
-bytes the data bytes follows. Length bytes are order in network order, which is big
-endian. Thus if message length with out length bytes are in decimal is 15888, 
+bytes the data bytes follows. Length bytes are order in network order, which is 
+big-endian. Thus if message length with out length bytes are in decimal is 15888, 
 then following frame bytes shall be sent:
 
 . 0x00
@@ -69,11 +69,13 @@ Messages are encoded with:
 - Two byte TAG which identifies simple data type or complex data structure. Bytes
 are encoded in network order big-endian.
 
-- 4 byte (unsigned) data length identifier.
+- 4 byte (unsigned) data length identifier, also encoded in network order of
+big-endian. Length specifies number of is used by data.
 
 - Data block which corresponds to the TAG meaning.
 
-Data alignment is not used for encoded message.
+Data alignment is not used for encoded message. When parsing a protocol, any 
+un-recognized tags shall be ignored.
 
 == General structures data layout
 
