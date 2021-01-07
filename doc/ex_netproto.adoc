@@ -194,6 +194,8 @@ message blocks.
 
 *Type code: MBUF*
 
+*Complex type block code: MBUF*
+
 As Enduro/X may send several buffers with one request, for reasons of call info
 data, primary buffer and and primary buffer is UBF it might have embedded VIEW,
 UBF objects or UBF might contain pointer to other buffers. Thus multiple XATMI
