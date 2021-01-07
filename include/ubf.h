@@ -196,6 +196,7 @@ typedef struct Bvnext_state Bvnext_state_t;
 typedef struct
 {
     BFLDID *last_checked;
+    BFLDID last_Baddfast; /** last field used by Baddfast */
 } Bfld_loc_info_t;
 
 /*---------------------------Globals------------------------------------*/

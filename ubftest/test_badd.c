@@ -430,6 +430,31 @@ Ensure(test_Baddfast2)
 }
 
 /**
+ * Test invalid sequence of the fields, add string by fastadd, then then short
+ */
+Ensure(test_Baddfast3)
+{
+    Bfld_loc_info_t state;
+    char buf1[56000];
+    short s;
+    UBFH *p_ub1 = (UBFH *)buf1;
+    
+    
+    memset(buf1, 0, sizeof(buf1));
+    memset(&state, 0, sizeof(state));
+    assert_equal(Binit(p_ub1, sizeof(buf1)), EXSUCCEED);
+    
+    
+    assert_equal(Baddfast(p_ub1, T_STRING_FLD, "DUM1", 0, &state), EXSUCCEED);
+    assert_equal(Baddfast(p_ub1, T_STRING_FLD, "DUM2", 0, &state), EXSUCCEED);
+    
+    /* so what happens? */
+    s=991;
+    assert_equal(Baddfast(p_ub1, T_SHORT_FLD, (char *)&s, 0, &state), EXFAIL);
+    assert_equal(Berror, BEINVAL);
+    
+}
+/**
  * Common suite entry
  * @return
  */
@@ -443,6 +468,8 @@ TestSuite *ubf_Badd_tests(void)
     add_test(suite, test_Badd_str);
     add_test(suite, test_Baddfast1);
     add_test(suite, test_Baddfast2);
+    add_test(suite, test_Baddfast3);
+    
     add_test(suite, test_Badd_ubf);
     
 

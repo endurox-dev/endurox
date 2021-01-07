@@ -45,9 +45,11 @@ with *Berror* set to indicate the error.
 
 ERRORS
 ------
-Note that *Bstrerror()* returns generic error message plus custom message with debug info from last function call.
+Note that *Bstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
 
-*BEINVAL* 'next_fld' is NULL
+*BEINVAL* 'next_fld' is NULL. *bfldid* is less than *bfldid* used in previous
+Baddfast() call.
 
 *BALIGNERR* Corrupted buffer or pointing to not aligned memory area.
 
