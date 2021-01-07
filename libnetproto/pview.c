@@ -178,11 +178,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
         /* extra check: */
         if (*C_count > vf->count)
         {
-            UBF_LOG(log_error, "Invalid count for field %s.%s in "
-                    "view %hd, specified: %hd", v->vname, vf->cname, 
-                    vf->count, *C_count);
-            
-            ndrx_Bset_error_fmt(BNOCNAME, "Invalid count for field %s.%s in "
+            NDRX_LOG(log_error, "Invalid count for field %s.%s in "
                     "view %hd, specified: %hd", v->vname, vf->cname, 
                     vf->count, *C_count);
             EXFAIL_OUT(ret);
@@ -213,9 +209,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
             
             /* Optimize out the length field for fixed
              * data types.
-             * TODO: new mapping table needed:
              */
-            NDRX_LOG(log_error, "YOPT TYPECODE %d", vf->typecode_full);
             accept_tags[1] = ndrx_G_view_proto_tag_map[vf->typecode_full];
             
             /* put the pointer value there */

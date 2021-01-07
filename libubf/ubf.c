@@ -174,6 +174,7 @@ expublic int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
  * ending. the next_fld shall be used only if adding occurrences of the same field
  * to buffer. Or you are sure that you are adding new fldid, which is greater than
  * fldid in last add operation
+ * TODO: Add some checks against invalid add..
  * @param p_ub UBF buffer
  * @param bfldid field to add
  * @param buf value to add
@@ -184,6 +185,8 @@ expublic int Badd (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len)
 expublic int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len, 
 	Bfld_loc_info_t *next_fld)
 {
+    int ret = EXSUCCEED;
+    
     API_ENTRY;
     if (EXSUCCEED!=validate_entry(p_ub, bfldid, 0, 0))
     {
@@ -197,7 +200,22 @@ expublic int Baddfast (UBFH *p_ub, BFLDID bfldid, char *buf, BFLDLEN len,
         return EXFAIL;
     }
     
-    return ndrx_Badd (p_ub, bfldid, buf, len, NULL, next_fld);
+    /* check that rules are OK */
+    if (BBADFLDID!=next_fld->last_Baddfast &&
+            bfldid < next_fld->last_Baddfast)
+    {
+        ndrx_Bset_error_fmt(BEINVAL, "bfldid (%u) < next_fld->last_Baddfast (%u)!",
+                bfldid, next_fld->last_Baddfast);
+        return EXFAIL;
+    }
+    
+    if (EXSUCCEED==(ret=ndrx_Badd (p_ub, bfldid, buf, len, NULL, next_fld)))
+    {
+        /* Support #622 save the result */
+        next_fld->last_Baddfast = bfldid;
+    }
+    
+    return ret;
 }
 
 /**

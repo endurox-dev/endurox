@@ -1936,7 +1936,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         NDRX_LOG(log_debug, "Installing FB field: "
                                 "id=%d, len=%d", p_ub_data->bfldid, bfldlen);
                         
-                        /* empty strings????? & data not reset? */
+                        /* empty strings????? & data not reset? */                        
                         if (EXSUCCEED!=Baddfast((UBFH *)p_typedbuf, p_ub_data->bfldid, 
                                 p_ub_data->buf, bfldlen, &p_ub_data->next_fld))
                         {
