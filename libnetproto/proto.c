@@ -215,7 +215,7 @@ expublic short ndrx_G_view_proto_tag_map[] =
 #define TUF         6 /* ubf field */
 static cproto_t M_ubf_field[] = 
 {
-    {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_INT,   XFLD, 1, 6},
+    {TUF, 0x10FF,  "bfldid", OFSZ(proto_ufb_fld_t, bfldid),  EXF_UINT,   XFLD, 1, 9},
     /*{TUF, 0x1109,  "bfldlen",OFSZ(proto_ufb_fld_t, bfldlen), EXF_INT,   XSBL, 1, 10},--not needed, as encoded in TLV */
     /* Typed fields... */
     {TUF, 0x1113,  "short", OFSZ(proto_ufb_fld_t, buf), EXF_SHORT,   XFLDPTR, 1, 6},
