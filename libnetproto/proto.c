@@ -99,7 +99,7 @@ static char *M_type[] = {
 "EXF_CARRAYFIX" /* 14 */
 };
 
-/* TODO: Add table_id filed, so that from each row we can identify table descriptor
+/* table_id filed, so that from each row we can identify table descriptor
  * we need a NR of elements in table so that we can perform binary search for descriptor.
  */
 
@@ -147,7 +147,7 @@ static cproto_t M_command_call_x[] =
 static cproto_t M_cmd_br_time_sync_x[] = 
 {
     {TST, 0x10A5,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
-    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 20, 20},
+    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 40, 40},
     {TST, EXFAIL}
 };
 
@@ -261,7 +261,7 @@ static cproto_t M_tp_command_call_x[] =
     {TTC, 0x11D1,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
     {TTC, 0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
     {TTC, 0x11DC,  "msgseq",    OFSZ(tp_command_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
-    {TTC, 0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
+    {TTC, 0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 40, 40},
     /* {TTC, 0x11EF,  "data_len",  OFSZ(tp_command_call_t,data_len), EXF_LONG,   XSBL, 1, 10}, - machine dependent (not need to send) */
     {TTC, 0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                             /* WARNING! Using counter offset here are length FLD offset! */
@@ -304,7 +304,7 @@ static cproto_t M_tp_notif_call_x[] =
     {TPN, 0x12E9,  "timestamp", OFSZ(tp_notif_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
     {TPN, 0x12F3,  "callseq",   OFSZ(tp_notif_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
     {TPN, 0x12FD,  "msgseq",    OFSZ(tp_notif_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
-    {TPN, 0x1307,  "timer",     OFSZ(tp_notif_call_t,timer),    EXF_NTIMER, XFLD, 20, 20},
+    {TPN, 0x1307,  "timer",     OFSZ(tp_notif_call_t,timer),    EXF_NTIMER, XFLD, 40, 40},
     /* {TPN, 0x1311,  "data_len",  OFSZ(tp_notif_call_t,data_len), EXF_LONG,   XSBL, 1, 10}, -machine dependent, no need to send */
     {TPN, 0x131B,  "data",      OFSZ(tp_notif_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
                 /* WARNING! Using counter offset here are length FLD offset! */
@@ -359,7 +359,7 @@ expublic cproto_t ndrx_G_view_field[] =
 expublic cproto_t ndrx_G_view[] = 
 {
     {TVH, 0x13B1, "vname", OFSZ(BVIEWFLD, vname),       EXF_STRING,   XFLD,            0, NDRX_VIEW_NAME_LEN},
-    {TVH, 0x13BB, "vflags", OFSZ(BVIEWFLD, vflags),     EXF_UINT  ,   XFLD|XFLAST, 1, 10},
+    {TVH, 0x13BB, "vflags", OFSZ(BVIEWFLD, vflags),     EXF_UINT  ,   XFLD|XFLAST, 1, 1},
     {TVH, EXFAIL}
 };
 
@@ -397,6 +397,9 @@ static xmsg_t M_ndrxd_x[] =
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start);
+
 #define FIX_SIGND(x) if ('1'==bdc_sign) *x = -1 * (*x);
 #define FIX_SIGNF(x) if ('1'==bdc_sign) *x = -1.0 * (*x);
 
@@ -462,12 +465,8 @@ exprivate inline int x_ctonet(cproto_t *fld, char *c_buf_in,
             proto_buf[*proto_buf_offset] = *tmp;
             proto_buf[*proto_buf_offset+1] = 0; /* later for strcpy */
             
-            //TODO:
-            //len = strlen(&(proto_buf[*proto_buf_offset]));
-            //*proto_buf_offset += len;
-            *proto_buf_offset += 1;
-            len=1; /* - maybe zero len field... */
-            
+            len = strlen(&(proto_buf[*proto_buf_offset]));
+            *proto_buf_offset += len;
             
         }
             break;
@@ -1074,6 +1073,101 @@ out:
 }
 
 /**
+ * Validate the field data
+ * @param fld field descr
+ * @param net_len actual payload data len ( W/O tag/len)
+ * @param data_start actual data to analyze  W/O tag/len
+ * @return EXSUCCEED/EXFAIL (invalid data)
+ */
+exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start)
+{
+    int abstract_len=0;
+    char *p = data_start;
+    int i;
+    unsigned int tmp;
+    int ret = EXSUCCEED;
+    
+    /* configure leading len */
+    switch (fld->fld_type)
+    {
+        case EXF_SHORT:
+        case EXF_LONG:
+        case EXF_FLOAT:
+        case EXF_DOUBLE:
+        case EXF_INT:
+        /* unsigned - do not count leading zero (as bcd requires spare one) */
+        case EXF_ULONG:
+        case EXF_UINT:
+        case EXF_USHORT:
+            
+            /* strip off leading zeros */
+            abstract_len = net_len*2;
+            p=data_start;
+            for (i=0; i<net_len; i++)
+            {
+                tmp = (unsigned char)*p;
+                
+                if ( (tmp >> 4) == 0 )
+                {
+                    abstract_len--;
+                
+                    if ( (tmp & 0xf) == 0 )
+                    {
+                        abstract_len--;
+                    }
+                    else
+                    {
+                        /* stop to strip */
+                        break;
+                    }
+                }
+                else
+                {
+                    /* stop to strip */
+                    break;
+                }
+            }
+            
+            break;
+        case EXF_NTIMER:
+            
+            /* just get the numbers - we know that it is even number
+             * thus aligns over the 20 bytes / 40 bcd digits.
+             */
+            abstract_len = net_len*2;
+            
+            break;
+        default:
+            abstract_len = net_len;
+    }
+    
+    if (EXF_SHORT==fld->fld_type ||
+        EXF_LONG==fld->fld_type ||
+        EXF_FLOAT==fld->fld_type ||
+        EXF_DOUBLE==fld->fld_type ||
+        EXF_INT==fld->fld_type)
+    {
+        /* remove the sign... */
+        abstract_len--;
+    }
+    
+    /* test the output... */
+    if ((abstract_len < fld->min_len  || abstract_len > fld->max_len))
+    {
+        NDRX_LOG(log_error, "WARNING! INVALID LEN! tag: 0x%x (%s) "
+                "min_len=%ld max_len=%ld but got: %d",
+                fld->tag, fld->cname, fld->min_len, fld->max_len, abstract_len);
+        NDRX_DUMP(log_debug, "Invalid chunk:", 
+                data_start-(TAG_BYTES + LEN_BYTES), 
+                net_len + (TAG_BYTES + LEN_BYTES));
+    }
+    
+out:
+            
+    return ret;    
+}
+
+/**
  * Build network message by using xmsg record, this table is recursive...
  * TODO: Might we can avoid tmp -> directly write to ex_buf?!
  * @param cv
@@ -1112,7 +1206,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
         if (NULL!=accept_tags)
         {
             int accept = EXFALSE;
-            /* Check acceptable tags... TODO: do binary search!*/
+            /* Check acceptable tags... */
             p_accept = accept_tags;
             
             while (EXFAIL!=*p_accept)
@@ -1137,9 +1231,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             case XFLD:
             {
                 /* This is field... */
-                
-                /* TODO: Move to direct buffer setup. Including estimating of
-                 * max fixed data type sizes... */
                 
                 long len_offset;
                 long off_start;
@@ -1492,7 +1583,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 off_start = *proto_buf_offset;
                 /* TAG START / KEEP POS (END) */
                 
-                /* TODO: Add common length start */
                 if (BUF_TYPE_UBF==buffer_type)
                 {
                     UBFH *p_ub = (UBFH *)data;
@@ -1530,7 +1620,7 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     memset(&state, 0, sizeof(state));
                     
                     NDRX_LOG(log_error, "YOPT START !!!!!!!!!!!!!!!!!!!!");
-                    /* optimization: TODO: we could replace get with ptr to data? */
+                    
                     while(1==ndrx_Bnext(&state, p_ub, &f->bfldid, &occ, NULL, &f->bfldlen, (char **)&f->buf))
                     {
                         f_type = Bfldtype(f->bfldid);
@@ -1611,28 +1701,12 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
             max_len = NDRX_MSGSIZEMAX;
         }
         
-        /* TODO: */
-        if ((len_written < p->min_len  || len_written > max_len) && XTYPE(p->type) != XSBL)
+        /* check the generated len finally */
+        if (EXFAIL==exproto_cklen(p, len_written, proto_buf+(*proto_buf_offset) - len_written))
         {
-            NDRX_LOG(log_error, "Experimental verification: WARNING! INVALID LEN!"
-                    " tag: 0x%x (%s)"
-                    " min_len=%ld max_len=%ld but got: %d",
-                    p->tag, p->cname, p->min_len, max_len, len_written);
-            
-            NDRX_DUMP(log_debug, "Invalid chunk:", 
-                    /* Get to the start of the buffer: */
-                    (char *) (proto_buf+(*proto_buf_offset) - len_written - (TAG_BYTES + LEN_BYTES)), 
-                    len_written + (TAG_BYTES + LEN_BYTES) /* two byte tag, two byte len */);
-            
-            /* TODO: Might consider to ret=FAIL; goto out; - 
-             * When all will be debugged!
-             */
-            
-            /* TODO: Validate the length according to protocol rules */
-            if (len_written < 0)
-            {
-                EXFAIL_OUT(ret);
-            }
+            NDRX_LOG(log_error, "Bridge protocol error: Invalid network data has been generated");
+            userlog("Bridge protocol error: Invalid network data has been generated");
+            EXFAIL_OUT(ret);
         }
         
 tag_continue:
@@ -1895,17 +1969,11 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
             {
                 max_len = NDRX_MSGSIZEMAX;
             }
-            
-            /* TODO: Check in bytes or in logical symbols? */
-            if (net_len<fld->min_len || net_len>max_len)
+
+            /* validate that we got valid record in length */
+            if (EXFAIL==exproto_cklen(fld, net_len, (proto_buf+int_pos) - net_len))
             {
-                NDRX_LOG(log_error, "ERROR! INVALID LEN! tag: 0x%x (%s) "
-                        "min_len=%ld max_len=%ld but got: %d - dropping msg",
-                        fld->tag, fld->cname, fld->min_len, max_len, net_len);
-                
-                NDRX_DUMP(log_debug, "Invalid chunk:", 
-                                (char *)(proto_buf + int_pos - 6), 
-                                net_len + 6 /* two byte tag, two byte len */);
+                NDRX_LOG(log_error, "Bridge protocol error: Invalid network data has been received");
                 EXFAIL_OUT(ret);
             }
 
@@ -2080,7 +2148,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
 
                     /* as we loop over the several MBUFs,
                      * we need to update the net len too... */
-                    //if (EXFAIL==(net_len=_exproto_proto2ex_mbuf(fld, 
                     if (EXFAIL==_exproto_proto2ex_mbuf(fld, 
                             (char *)(proto_buf+int_pos), net_len, 
                             ex_buf, ex_offset, max_struct, level, 
@@ -2401,7 +2468,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
             }
             
             /* Increase the max struct size... 
-             * TODO: Here maybe tricks with array?
              */
             if (NULL==p_ub_data) /* Do not process in case if we have FB processing.! */
             {

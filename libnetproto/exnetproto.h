@@ -166,10 +166,10 @@ if ((CUROFFSZ) + (FLD_OFFSZ) + (TO_WRITE) > MAXSIZE) \
 #define CHECK_EX_BUFSZ_SIMPLE(RET, MAXSIZE, TO_WRITE) \
 if ((TO_WRITE) > MAXSIZE) \
     {\
-        NDRX_LOG(log_error, "ERROR ! NET2EX: Incomming buffer size in bytes: %ld"\
+        NDRX_LOG(log_error, "ERROR ! NET2EX: Incomming buffer size in bytes: %ld "\
                                 "data size: %ld - dropping, please increase NDRX_MSGSIZEMAX!",\
                 MAXSIZE, (TO_WRITE));\
-        userlog( "ERROR ! NET2EX: Incomming buffer size in bytes: %ld"\
+        userlog( "ERROR ! NET2EX: Incomming buffer size in bytes: %ld "\
                                 "data size: %ld - dropping, please increase NDRX_MSGSIZEMAX!",\
                 MAXSIZE, (TO_WRITE));\
         EXFAIL_OUT(RET);\
