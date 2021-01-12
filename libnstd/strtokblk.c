@@ -176,10 +176,10 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
             {
 		    
                 /* terminate only if not escaped.. */
-		if (consecutive_escapes%2==0)
-		{   
+                if (consecutive_escapes%2==0)
+                {   
                     in_block = 0;
-		}
+                }
             }
             consecutive_escapes=0;
             
@@ -188,19 +188,18 @@ expublic char *ndrx_strtokblk ( char *input, char *delimit, char *qotesymbs)
         }
         
         /*no open if previous is \, then replace escaped quotes to single*/
-	else if (( block_sym = strchr ( qotesymbs, *p)) != NULL)
-	{
+        else if (( block_sym = strchr ( qotesymbs, *p)) != NULL)
+        {
             if (consecutive_escapes%2==0)
             {
                 in_block = 1;
                 block_sym_index = block_sym - qotesymbs;
-                //token++;
                 p++;
                 continue;
             }
             /* escape is spent... */
             consecutive_escapes=0;
-	}
+        }
 
         if ( strchr ( delimit, *p) != NULL)
         {

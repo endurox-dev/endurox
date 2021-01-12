@@ -186,7 +186,9 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
         
         NDRX_STRCPY_SAFE(fldata->cname, vf->cname);
         
-
+        /* TODO: Count the max non null occurrence. We shall not send
+         * null values over, to save some space.
+         */
         for (occ=0; occ<*C_count; occ++)
         {
             BFLDLEN dim_size = vf->fldsize/vf->count;

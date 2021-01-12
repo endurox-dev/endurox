@@ -398,11 +398,17 @@ void extest_ubf_set_up_dummy_data(UBFH *p_ub, long flags)
         assert_equal(Bchg(p_ub_tmp, T_STRING_9_FLD, 3, "HELLO WORLD UB", 0L), EXSUCCEED);
         assert_equal(Bchg(p_ub, T_UBF_3_FLD, 2, (char *)p_ub_tmp, 0L), EXSUCCEED);
 
-        assert_equal(Bchg(p_ub_tmp, T_STRING_7_FLD, 2, "ANOTHER UB", 0L), EXSUCCEED);
-        assert_equal(Bchg(p_ub, T_UBF_3_FLD, 3, (char *)p_ub_tmp, 0L), EXSUCCEED);
-
+        
         l=889991;
+        assert_equal(Bchg(p_ub_tmp, T_LONG_3_FLD, 3, (char *)&l, 0L), EXSUCCEED);
+        
+        assert_equal(Bchg(p_ub_tmp, T_STRING_7_FLD, 2, "ANOTHER UB", 0L), EXSUCCEED);
+        assert_equal(CBchg(p_ub_tmp, T_DOUBLE_FLD, 0, "3.14159", 0L, BFLD_STRING), EXSUCCEED);
+        assert_equal(Bchg(p_ub, T_UBF_3_FLD, 3, (char *)p_ub_tmp, 0L), EXSUCCEED);
+        
+        
         assert_equal(Bchg(p_ub, T_LONG_3_FLD, 3, (char *)&l, 0L), EXSUCCEED);
+        
     }
     
 }
