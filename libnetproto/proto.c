@@ -107,7 +107,7 @@ static char *M_type[] = {
 /* Converter for cmd_br_net_call_t */
 static cproto_t M_cmd_br_net_call_x[] = 
 {
-    {TNC, 0x1005, "br_magic",  OFSZ(cmd_br_net_call_t,br_magic),   EXF_LONG, XFLD, 6, 6, NULL},
+    {TNC, 0x1005, "br_magic",  OFSZ(cmd_br_net_call_t,br_magic),   EXF_LONG, XFLD, 10, 10, NULL},
     {TNC, 0x100F, "msg_type",  OFSZ(cmd_br_net_call_t,msg_type),   EXF_CHAR, XFLD, 1, 1},
     {TNC, 0x1019, "command_id",OFSZ(cmd_br_net_call_t,command_id), EXF_INT,  XFLD, 1, 5},
     /*{TNC, 0x1023, "len",       OFSZ(cmd_br_net_call_t,len),        EXF_LONG, XSBL, 1, 10}, *< Not used ???? */
@@ -1102,6 +1102,13 @@ exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start)
             
             /* strip off leading zeros */
             abstract_len = net_len*2;
+            
+            if (0==abstract_len)
+            {
+                /* nothing to do if no data data received at all */
+                break;
+            }
+            
             p=data_start;
             for (i=0; i<net_len; i++)
             {
@@ -1126,6 +1133,24 @@ exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start)
                     /* stop to strip */
                     break;
                 }
+            }            
+            
+            if (EXF_SHORT==fld->fld_type ||
+                EXF_LONG==fld->fld_type ||
+                EXF_FLOAT==fld->fld_type ||
+                EXF_DOUBLE==fld->fld_type ||
+                EXF_INT==fld->fld_type)
+            {
+                /* remove the sign... */
+                abstract_len--;
+            }
+            
+            /* if value was zero +, then 00 is stipped to  abstract_len and then
+             * -1. Thus as some value 0 was then we get then we abs len 1.
+             */
+            if (abstract_len<=0)
+            {
+                abstract_len=1;
             }
             
             break;
@@ -1141,18 +1166,10 @@ exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start)
             abstract_len = net_len;
     }
     
-    if (EXF_SHORT==fld->fld_type ||
-        EXF_LONG==fld->fld_type ||
-        EXF_FLOAT==fld->fld_type ||
-        EXF_DOUBLE==fld->fld_type ||
-        EXF_INT==fld->fld_type)
-    {
-        /* remove the sign... */
-        abstract_len--;
-    }
-    
     /* test the output... */
-    if ((abstract_len < fld->min_len  || abstract_len > fld->max_len))
+    if (abstract_len < fld->min_len  || 
+            PMSGMAX == fld->max_len && abstract_len > NDRX_MSGSIZEMAX ||
+            PMSGMAX != fld->max_len && abstract_len > fld->max_len)
     {
         NDRX_LOG(log_error, "WARNING! INVALID LEN! tag: 0x%x (%s) "
                 "min_len=%ld max_len=%ld but got: %d",
@@ -1160,6 +1177,7 @@ exprivate inline int exproto_cklen(cproto_t *fld, int net_len, char *data_start)
         NDRX_DUMP(log_debug, "Invalid chunk:", 
                 data_start-(TAG_BYTES + LEN_BYTES), 
                 net_len + (TAG_BYTES + LEN_BYTES));
+        EXFAIL_OUT(ret);
     }
     
 out:
@@ -1971,7 +1989,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
             }
 
             /* validate that we got valid record in length */
-            if (EXFAIL==exproto_cklen(fld, net_len, (proto_buf+int_pos) - net_len))
+            if (EXFAIL==exproto_cklen(fld, net_len, (proto_buf+int_pos)))
             {
                 NDRX_LOG(log_error, "Bridge protocol error: Invalid network data has been received");
                 EXFAIL_OUT(ret);

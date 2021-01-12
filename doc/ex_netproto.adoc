@@ -290,6 +290,52 @@ UBF field id bits 26+ meaning:
 |=========================================================
 
 
+===== Example data block
+
+Having UBF buffer as:
+
+--------------------------------------------------------------------------------
+
+T_LONG_3_FLD    0
+T_LONG_3_FLD    0
+T_LONG_3_FLD    0
+T_LONG_3_FLD    889991
+T_DOUBLE_FLD    3.141590
+T_STRING_7_FLD  
+T_STRING_7_FLD  
+T_STRING_7_FLD  ANOTHER UB
+T_STRING_9_FLD  
+T_STRING_9_FLD  
+T_STRING_9_FLD  
+T_STRING_9_FLD  HELLO WORLD UB
+
+--------------------------------------------------------------------------------
+
+With field IDs defined as:
+
+
+--------------------------------------------------------------------------------
+*base 1000
+T_LONG_3_FLD            33      long    - 1 Long test field 3
+T_DOUBLE_FLD            51      double  - 1 Double test field 1
+T_STRING_7_FLD          67      string  - 1 String test field 7
+T_STRING_9_FLD          69      string  - 1 String test field 9
+--------------------------------------------------------------------------------
+
+
+The serialized data would look like:
+
+--------------------------------------------------------------------------------
+  0370                                               10                 .
+  0380  ff 00 00 00 05 01 67 77 32 29 11 45 00 00 00 00  ......gw2).E....
+  0390  10 ff 00 00 00 05 01 67 77 32 29 11 45 00 00 00  .......gw2).E...
+  03a0  00 10 ff 00 00 00 05 01 67 77 32 29 11 45 00 00  ........gw2).E..
+  03b0  00 00 10 ff 00 00 00 05 01 67 77 32 29 11 45 00  .........gw2).E.
+  03c0  00 00 0e 48 45 4c 4c 4f 20 57 4f 52 4c 44 20 55  ...HELLO WORLD U
+  03d0  42
+--------------------------------------------------------------------------------
+
+
 ==== View Data (array of)
 
 VIEW buffer data is encoded as array. But with exception VIEW meta data
@@ -308,31 +354,76 @@ Following blocks repeats with each of the view field occurrence:
 .VIEW Buffer type block (array of)
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Description
-|0x134D |
-|0x1360 |
-|0x1361 |
-|0x1362 |
-|0x1363 |
-|0x1364 |
-|0x1365 |
-|0x1366 |
-|0x1367 |
+|0x134D |cname |STRING1..256    |N/A |View field name
+|0x1360 |short |SHORT1..6       |N/A |Short value
+|0x1361 |long |LONG1..20        |N/A |Long value
+|0x1362 |char |CHAR             |N/A |ASCII char byte
+|0x1363 |float |FLOAT1..40      |N/A |Float value
+|0x1364 |double |DOUBLE1..40    |N/A |Double
+|0x1365 |string |STRING0..PMSGMAX   |N/A |String value
+|0x1366 |carray |CARRAY0..PMSGMAX   |N/A |Carray (blob) value
+|0x1367 |int |INT1..12              |N/A |Integer value
 |=========================================================
 
+===== Example data block
+
+Having VIEW C struct as:
+
+--------------------------------------------------------------------------------
+
+struct UBTESTVIEW2 {
+        short   tshort1;
+        long    tlong1;
+        char    tchar1;
+        float   tfloat1;
+        double  tdouble1;
+        char    tstring1[15];
+        char    tcarray1[10];
+};
+
+--------------------------------------------------------------------------------
+
+The VIEW is serialized in the following XATMI buffer block:
+
+--------------------------------------------------------------------------------
+
+  0330  13 b1 00 00 00 0b 55 42 54 45 53 54 56 49 45 57  ......UBTESTVIEW
+  0340  32 13 bb 00 00 00 01 00 13 4d 00 00 00 07 74 73  2........M....ts
+  0350  68 6f 72 74 31 13 60 00 00 00 02 10 00 13 4d 00  hort1.`.......M.
+  0360  00 00 06 74 6c 6f 6e 67 31 13 61 00 00 00 02 20  ...tlong1.a.... 
+  0370  00 13 4d 00 00 00 06 74 63 68 61 72 31 13 62 00  ..M....tchar1.b.
+  0380  00 00 01 47 13 4d 00 00 00 07 74 66 6c 6f 61 74  ...G.M....tfloat
+  0390  31 13 63 00 00 00 05 04 00 00 00 00 13 4d 00 00  1.c..........M..
+  03a0  00 08 74 64 6f 75 62 6c 65 31 13 64 00 00 00 05  ..tdouble1.d....
+  03b0  50 00 00 00 00 13 4d 00 00 00 08 74 73 74 72 69  P.....M....tstri
+  03c0  6e 67 31 13 65 00 00 00 03 36 58 58 13 4d 00 00  ng1.e....6XX.M..
+  03d0  00 08 74 63 61 72 72 61 79 31 13 66 00 00 00 0a  ..tcarray1.f....
+  03e0  37 58 58 00 00 00 00 00 00 10                    7XX.............
+
+--------------------------------------------------------------------------------
+
 ==== Other data buffers
-...
+
+Other buffers basically includes generic byte array of data.
 
 ===== String data
-...
+
+String buffer data normally does not include 0x00 terminating EOS symbol. Empty
+strings or string termination is identified by TLV length component.
 
 ===== JSON data
-...
+
+JSON buffer data is processed in the same way as string buffer data.
 
 ===== NULL buffer
-...
+
+For null buffers TLV length component always contains 0. And no data follows.
 
 == Message blocks
-...
+
+Message blocks are actual business messages which are used for exchanging the
+information between cluster instances. Message blocks uses basic and complex data
+type blocks previously described to construct the messages.
 
 === General work flow
 
