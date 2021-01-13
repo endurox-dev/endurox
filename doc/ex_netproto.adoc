@@ -185,7 +185,31 @@ This section list complex data type blocks which are later incorporated in the
 message blocks.
 
 === Network call block
-...
+
+All messages sent via protocol starts with this block.
+
+.Network call block
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x1005 |br_magic |LONG10 |Mand |N/A |Network protocol identifier constant. Hex
+value is *0x6A12CC51L* which corresponds to decimal value *1779616849* actually
+present in message (encoded in BCD)
+|0x100F |msg_type |CHAR |MAND |N/A |Network message type. Following values
+are supported:
+
+
+. "N" - XATMI Notification message (i.e. call of *tpnotify(3)* or *tpbroadcast(3)*.
+
+. "A" - Any other XATMI message (e.g. *tpcall(3)* or reply from *tpreturn(3)*, etc.).
+
+. "X" - Administrative message from *ndrxd(8)* or other parts. (i.e. clock sync, 
+service table update).
+
+
+|0x1019 |command_id |INT1..5 |Mand |N/A |Command code within the message type. TODO - list of commands.
+|0x102D |buf |MESSAGE0..PMSGMAX |Mand |N/A | Message data block which corresponds to msg_type / command_id.
+Body described in <<message-anchor>> section.
+|=========================================================
 
 === Standard call block
 ...
@@ -420,6 +444,10 @@ JSON buffer data is processed in the same way as string buffer data.
 For null buffers TLV length component always contains 0. And no data follows.
 
 == Message blocks
+
+[[message-anchor]]
+
+*Abstract type code: MESSAGE*
 
 Message blocks are actual business messages which are used for exchanging the
 information between cluster instances. Message blocks uses basic and complex data
