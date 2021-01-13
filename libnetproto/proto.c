@@ -123,7 +123,7 @@ static cproto_t M_stdhdr_x[] =
     {TSH, 0x1037, "command_id",    OFSZ(command_call_t,command_id),     EXF_SHORT, XFLD, 1, 4},
     {TSH, 0x1041, "proto_ver",     OFSZ(command_call_t,proto_ver),      EXF_CARRAYFIX, XFLD, 4, 4},
     /* it should be 0 AFAIK... */
-    {TSH, 0x104B, "proto_magic",   OFSZ(command_call_t,proto_magic),    EXF_INT,  XFLD, 0, 2},
+    {TSH, 0x104B, "proto_magic",   OFSZ(command_call_t,proto_magic),    EXF_INT,  XFLD, 1, 1},
     {TSH, EXFAIL}
 };
 

@@ -186,6 +186,9 @@ message blocks.
 
 === Network call block
 
+[[block-netcall]]
+*Type code: NETCALL*
+
 All messages sent via protocol starts with this block.
 
 .Network call block
@@ -198,21 +201,108 @@ present in message (encoded in BCD)
 are supported:
 
 
-. "N" - XATMI Notification message (i.e. call of *tpnotify(3)* or *tpbroadcast(3)*.
+. *N* - XATMI Notification message (i.e. call of *tpnotify(3)* or *tpbroadcast(3)*.
 
-. "A" - Any other XATMI message (e.g. *tpcall(3)* or reply from *tpreturn(3)*, etc.).
+. *A* - Any other XATMI message (e.g. *tpcall(3)* or reply from *tpreturn(3)*, etc.).
 
-. "X" - Administrative message from *ndrxd(8)* or other parts. (i.e. clock sync, 
+. *X* - Administrative message from *ndrxd(8)* or other parts. (i.e. clock sync, 
 service table update).
 
 
-|0x1019 |command_id |INT1..5 |Mand |N/A |Command code within the message type. TODO - list of commands.
+|0x1019 |command_id |INT1..5 |Mand |N/A |Command code within the message type.
+
+Commands of 'msg_type' = *A*:
+
+. *1* - tpcall/tpacall message. Message type code *TPCALL*, see <<message-tpcall>>
+
+. *2* - tpreturn message. Message type code *TPCALL*, see <<message-tpcall>>
+
+. *3* - tpforward message. Message type code *TPCALL*, see <<message-tpcall>>
+
+. *4* - tpconnect message. Message type code *TPCALL*, see <<message-tpcall>>
+
+. *5* - conversational data. Message type code *TPCALL*, see <<message-tpcall>>
+
+. *6* - tpconnect accept reply message from server. Message type code *TPCALL*, see <<message-tpcall>>
+
+. *7* - tpdiscon message. Message type code *TPCALL*, see <<message-tpcall>>
+
+Commands for 'msg_type' = *N*:
+
+. *13* tpnotify message. Message type code *TPNOTIF*, see <<message-tpnotif>>
+
+. *14* tpbroadcast message. Message type code *TPNOTIF*, see <<message-tpnotif>>
+
+Commands for 'msg_type' = *X*:
+
+. *46* Service table exchange message. Message type code *REFRESH*, see <<message-refresh>>
+
+. *48* bridge, monotonic clock exchange, request. Message type code *TIMESYNC*, see <<message-timesync>>
+
 |0x102D |buf |MESSAGE0..PMSGMAX |Mand |N/A | Message data block which corresponds to msg_type / command_id.
 Body described in <<message-anchor>> section.
 |=========================================================
 
 === Standard call block
-...
+
+*Type code: STDHDR*
+
+All messages includes field "stdhdr" where similarly as with network call header
+generic details about message is kept.
+
+.Standard call header block
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x1037 |command_id |SHORT1..4 |Mand |N/A | The same value as in <<block-netcall>> tag 0x1019 ('command_id')
+|0x1041 |proto_ver |CARRAY4 |Mand |N/A | Fixed bytes: *0x00*, *0x00*, *0x00*, *0x00*.
+|0x104B |proto_magic |INT1 |Mand |N/A | Fixed value: *0*
+|=========================================================
+
+=== Command call block
+
+*Type code: CMDCALL*
+
+This block is used for non XATMI messages, i.e. *0x100F* of <<block-netcall> is *X*.
+
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x1055 |stdhdr         |STDHDR1..PMSGMAX |Mand| N/A| Standard call header
+|0x105F |magic          |ULONG5     |Mand |N/A| Command call magic: 
+Hex value *0x62327700* which corresponds to *1647474432*.
+|0x1069 |command        |INT1..2    |Mand | N/A| The same value as in <<block-netcall>> tag 0x1019 ('command_id')
+|0x1073 |msg_type       |SHORT1..2  |Mand | N/A| Message type code:
+
+. *12* - Bridge services, used for *REFRESH* messages.
+
+. *13* - Bridge clock info, used for *TIMESYNC* messages.
+
+|0x107D |msg_src        |SHORT1     |Mand | N/A| Message source:
+
+. *0* - Call source is daemon.
+
+. *1* - Call source is administrative command line utility.
+
+. *2* - Call source is administrative command line utility.
+
+|0x1087 |reply_queue    |STRING1..128|Mand | N/A| Reply queue string (local queue id)
+|0x1091 |flags          |INT1..10   |Mand | N/A|Bitwise flags combined value in decimal.
+Encodes following flags:
+
+. *0* - no flags set.
+
+. *0x0001* - Reply queue is dead.
+
+. *0x0002* - Second call from caller.
+
+. *0x0004* - have more message.
+
+As part of the network messages, no flags are used. And always shall set to *0*.
+
+
+|0x109B |caller_nodeid  |INT1..3    |Mand | N/A| Enduro/X cluster node id on which
+message was initiated.
+|=========================================================
+
 
 === Multi-buffer block (array of) for XATMI call data transport (MBUF)
 
@@ -396,13 +486,13 @@ Having VIEW C struct as:
 --------------------------------------------------------------------------------
 
 struct UBTESTVIEW2 {
-        short   tshort1;
-        long    tlong1;
-        char    tchar1;
-        float   tfloat1;
-        double  tdouble1;
-        char    tstring1[15];
-        char    tcarray1[10];
+    short   tshort1;
+    long    tlong1;
+    char    tchar1;
+    float   tfloat1;
+    double  tdouble1;
+    char    tstring1[15];
+    char    tcarray1[10];
 };
 
 --------------------------------------------------------------------------------
@@ -446,7 +536,6 @@ For null buffers TLV length component always contains 0. And no data follows.
 == Message blocks
 
 [[message-anchor]]
-
 *Abstract type code: MESSAGE*
 
 Message blocks are actual business messages which are used for exchanging the
@@ -458,18 +547,57 @@ type blocks previously described to construct the messages.
 Establishing connection - time adjustment
 
 === Time adjustment exchange block
-...
+
+[[message-timesync]]
+
+*Type code: TIMESYNC*
+
+When bridge establishes connection between cluster each node sends to other node
+it's monotonic clock value. Each bridge end-point remembers this value and performs
+any adjustments on *TPCALL* message, tag 0x11E5 (timer). The value when *TPCALL*
+message is received, is adjusted to make the time field to appear to be relevant
+to local monotonic clock.
+
+Message starts with *NETCALL*. NETCALL tag 0x1019 (command_id) is set to *48*.
+Under the tag *0x102D* (buf) follows the time sync message:
+
+.Time sync message
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x10A5 |call |CMDCALL1..PMSGMAX |Mand |N/A | Generic call information with following specifics:
+
+. STDHDR tag 0x1037 (command_id) is set to *48*
+
+. CMDCALL tag 0x1069 (command) is set to *48*
+
+. CMDCALL tag 0x1073 (msg_type) is set to *13*
+
+|0x10AF |time |NTIMER |Mand |N/A |Local monotonic time.
+|=========================================================
+
+
+>>> TODO Sequence diagram of the msgs <<< 
+
 
 === Service table refresh block
-...
 
-=== Generic command call block
+[[message-refresh]]
+*Type code: REFRESH*
+
 ...
 
 === TP Call / TP Reply block
+
+[[message-tpcall]]
+*Type code: TPCALL*
+
 ...
 
 === TP Notify / TP Broadcast block
+
+[[message-tpnotif]]
+*Type code: TPNOTIF*
+
 ...
 
 ////////////////////////////////////////////////////////////////
