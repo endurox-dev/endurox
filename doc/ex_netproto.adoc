@@ -267,7 +267,7 @@ This block is used for non XATMI messages, i.e. *0x100F* of <<block-netcall> is 
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Description
 |0x1055 |stdhdr         |STDHDR1..PMSGMAX |Mand| N/A| Standard call header
-|0x105F |magic          |ULONG5     |Mand |N/A| Command call magic: 
+|0x105F |magic          |ULONG10    |Mand |N/A| Command call magic: 
 Hex value *0x62327700* which corresponds to *1647474432*.
 |0x1069 |command        |INT1..2    |Mand | N/A| The same value as in <<block-netcall>> tag 0x1019 ('command_id')
 |0x1073 |msg_type       |SHORT1..2  |Mand | N/A| Message type code:
@@ -468,16 +468,18 @@ Following blocks repeats with each of the view field occurrence:
 .VIEW Buffer type block (array of)
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Description
-|0x134D |cname |STRING1..256    |N/A |View field name
-|0x1360 |short |SHORT1..6       |N/A |Short value
-|0x1361 |long |LONG1..20        |N/A |Long value
-|0x1362 |char |CHAR             |N/A |ASCII char byte
-|0x1363 |float |FLOAT1..40      |N/A |Float value
-|0x1364 |double |DOUBLE1..40    |N/A |Double
-|0x1365 |string |STRING0..PMSGMAX   |N/A |String value
-|0x1366 |carray |CARRAY0..PMSGMAX   |N/A |Carray (blob) value
-|0x1367 |int |INT1..12              |N/A |Integer value
+|0x134D |cname |STRING1..256    |Mand |N/A |View field name
+|0x1360 |short |SHORT1..6       |C1 |N/A |Short value
+|0x1361 |long |LONG1..20        |C1 |N/A |Long value
+|0x1362 |char |CHAR             |C1 |N/A |ASCII char byte
+|0x1363 |float |FLOAT1..40      |C1 |N/A |Float value
+|0x1364 |double |DOUBLE1..40    |C1 |N/A |Double
+|0x1365 |string |STRING0..PMSGMAX   |C1 |N/A |String value
+|0x1366 |carray |CARRAY0..PMSGMAX   |C1 |N/A |Carray (blob) value
+|0x1367 |int |INT1..12              |C1 |N/A |Integer value
 |=========================================================
+
+C1 - One of the fields must be present according to view field type.
 
 ===== Example data block
 
