@@ -201,11 +201,11 @@ present in message (encoded in BCD)
 are supported:
 
 
-. *N* - XATMI Notification message (i.e. call of *tpnotify(3)* or *tpbroadcast(3)*.
+*N* - XATMI Notification message (i.e. call of *tpnotify(3)* or *tpbroadcast(3)*.
 
-. *A* - Any other XATMI message (e.g. *tpcall(3)* or reply from *tpreturn(3)*, etc.).
+*A* - Any other XATMI message (e.g. *tpcall(3)* or reply from *tpreturn(3)*, etc.).
 
-. *X* - Administrative message from *ndrxd(8)* or other parts. (i.e. clock sync, 
+*X* - Administrative message from *ndrxd(8)* or other parts. (i.e. clock sync, 
 service table update).
 
 
@@ -213,31 +213,31 @@ service table update).
 
 Commands of 'msg_type' = *A*:
 
-. *1* - tpcall/tpacall message. Message type code *TPCALL*, see <<message-tpcall>>
+*1* - tpcall/tpacall message. Message type code *TPCALL*, see <<message-tpcall>>
 
-. *2* - tpreturn message. Message type code *TPCALL*, see <<message-tpcall>>
+*2* - tpreturn message. Message type code *TPCALL*, see <<message-tpcall>>
 
-. *3* - tpforward message. Message type code *TPCALL*, see <<message-tpcall>>
+*3* - tpforward message. Message type code *TPCALL*, see <<message-tpcall>>
 
-. *4* - tpconnect message. Message type code *TPCALL*, see <<message-tpcall>>
+*4* - tpconnect message. Message type code *TPCALL*, see <<message-tpcall>>
 
-. *5* - conversational data. Message type code *TPCALL*, see <<message-tpcall>>
+*5* - conversational data. Message type code *TPCALL*, see <<message-tpcall>>
 
-. *6* - tpconnect accept reply message from server. Message type code *TPCALL*, see <<message-tpcall>>
+*6* - tpconnect accept reply message from server. Message type code *TPCALL*, see <<message-tpcall>>
 
-. *7* - tpdiscon message. Message type code *TPCALL*, see <<message-tpcall>>
+*7* - tpdiscon message. Message type code *TPCALL*, see <<message-tpcall>>
 
 Commands for 'msg_type' = *N*:
 
-. *13* tpnotify message. Message type code *TPNOTIF*, see <<message-tpnotif>>
+*13* tpnotify message. Message type code *TPNOTIF*, see <<message-tpnotif>>
 
-. *14* tpbroadcast message. Message type code *TPNOTIF*, see <<message-tpnotif>>
+*14* tpbroadcast message. Message type code *TPNOTIF*, see <<message-tpnotif>>
 
 Commands for 'msg_type' = *X*:
 
-. *46* Service table exchange message. Message type code *REFRESH*, see <<message-refresh>>
+*46* Service table exchange message. Message type code *REFRESH*, see <<message-refresh>>
 
-. *48* bridge, monotonic clock exchange, request. Message type code *TIMESYNC*, see <<message-timesync>>
+*48* bridge, monotonic clock exchange, request. Message type code *TIMESYNC*, see <<message-timesync>>
 
 |0x102D |buf |MESSAGE0..PMSGMAX |Mand |N/A | Message data block which corresponds to msg_type / command_id.
 Body described in <<message-anchor>> section.
@@ -272,29 +272,29 @@ Hex value *0x62327700* which corresponds to *1647474432*.
 |0x1069 |command        |INT1..2    |Mand | N/A| The same value as in <<block-netcall>> tag 0x1019 ('command_id')
 |0x1073 |msg_type       |SHORT1..2  |Mand | N/A| Message type code:
 
-. *12* - Bridge services, used for *REFRESH* messages.
+*12* - Bridge services, used for *REFRESH* messages.
 
-. *13* - Bridge clock info, used for *TIMESYNC* messages.
+*13* - Bridge clock info, used for *TIMESYNC* messages.
 
 |0x107D |msg_src        |SHORT1     |Mand | N/A| Message source:
 
-. *0* - Call source is daemon.
+*0* - Call source is daemon.
 
-. *1* - Call source is administrative command line utility.
+*1* - Call source is administrative command line utility.
 
-. *2* - Call source is administrative command line utility.
+*2* - Call source is administrative command line utility.
 
 |0x1087 |reply_queue    |STRING1..128|Mand | N/A| Reply queue string (local queue id)
 |0x1091 |flags          |INT1..10   |Mand | N/A|Bitwise flags combined value in decimal.
 Encodes following flags:
 
-. *0* - no flags set.
+*0* - no flags set.
 
-. *0x0001* - Reply queue is dead.
+*0x0001* - Reply queue is dead.
 
-. *0x0002* - Second call from caller.
+*0x0002* - Second call from caller.
 
-. *0x0004* - have more message.
+*0x0004* - have more message.
 
 As part of the network messages, no flags are used. And always shall set to *0*.
 
@@ -303,6 +303,19 @@ As part of the network messages, no flags are used. And always shall set to *0*.
 message was initiated.
 |=========================================================
 
+=== Service block (array of)
+
+*Type code: SERVICE*
+
+Service block consists of series of repeated following blocks:
+
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x10B9 |mode         |CHAR         |Mand| N/A| Mode *D* - differential, *F* - full replace
+|0x10C3 |svc_nm       |STRING1..30  |Mand |N/A| XATMI service name
+|0x10CD |count        |INT1..6      |Mand |N/A| Signed count. For diff mode might be with minus
+sign (number of service server instances added or reduced).
+|=========================================================
 
 === Multi-buffer block (array of) for XATMI call data transport (MBUF)
 
@@ -343,6 +356,7 @@ buffer, *3* - *NULL* buffer, *4* - *STRING* buffer, *5* - *CARRAY* buffer, *6* -
 |0x1343 | data | XATMIBUF0..PMSGMAX | Mand | N/A |This is actual XATMI buffer data. Encoded
 according to data type specified at bits 28..32 in* 0x132F* tag value (mbuf tag field name).
 |=========================================================
+
 
 === XATMI buffer (XATMIBUF)
 
@@ -463,7 +477,7 @@ For "emtpy" occurrences when embedded in UBF sub-field
 |0x13BB |vflags |UINT1 |Opt |0 |View flags. Not used and must be sent as *0*
 |=========================================================
 
-Following blocks repeats with each of the view field occurrence:
+Following block repeats with each of the view field occurrence:
 
 .VIEW Buffer type block (array of)
 |=========================================================
@@ -568,25 +582,57 @@ Under the tag *0x102D* (buf) follows the time sync message:
 |TLV TAG | Name | Format | Cond | Default value | Description
 |0x10A5 |call |CMDCALL1..PMSGMAX |Mand |N/A | Generic call information with following specifics:
 
-. STDHDR tag 0x1037 (command_id) is set to *48*
+- STDHDR tag 0x1037 (command_id) is set to *48*
 
-. CMDCALL tag 0x1069 (command) is set to *48*
+- CMDCALL tag 0x1069 (command) is set to *48*
 
-. CMDCALL tag 0x1073 (msg_type) is set to *13*
+- CMDCALL tag 0x1073 (msg_type) is set to *13*
 
 |0x10AF |time |NTIMER |Mand |N/A |Local monotonic time.
 |=========================================================
 
+image:ex_netproto_timesync.png[caption="Figure 3: ", title="TIMESYNC sequence diagram"]
 
->>> TODO Sequence diagram of the msgs <<< 
 
+System can be configured so that during the idle time (no traffic is sent overt
+the bridges, a time sync messages are delivered periodically).
+
+==== Example message
+
+>>>TODO<<<
 
 === Service table refresh block
 
 [[message-refresh]]
 *Type code: REFRESH*
 
-...
+Service table refresh messages are used to notify other cluster node with the
+XATMI services locally advertised. Service tables are send periodically and
+asynchronously. Messages includes two modes - *FULL* mode, where full service
+tables is sent, or *DIFFERENTIAL* service table is sent, which only holds the
+updates about services number of instances add / removed.
+
+.Service tables refresh messages
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x10A5 |call |CMDCALL1..PMSGMAX |Mand |N/A | Generic call information with following specifics:
+
+. STDHDR tag 0x1037 (command_id) is set to *46*
+
+. CMDCALL tag 0x1069 (command) is set to *46*
+
+. CMDCALL tag 0x1073 (msg_type) is set to *12*
+
+|0x10E1 |mode |CHAR |Mand |N/A |*F* - full, *D* - differential.
+|0x10EB |count |INT1..6 |Mand |N/A |Number of services in *0x10F5*(svcs) field
+|0x10F5 |svcs |SERVICE0..PMSGMAX |Mand |N/A |Services block (array of)
+|=========================================================
+
+
+==== Example message
+
+>>>TODO<<<
+
 
 === TP Call / TP Reply block
 
@@ -595,12 +641,21 @@ Under the tag *0x102D* (buf) follows the time sync message:
 
 ...
 
+==== Example message
+
+>>>TODO<<<
+
+
 === TP Notify / TP Broadcast block
 
 [[message-tpnotif]]
 *Type code: TPNOTIF*
 
 ...
+
+==== Example message
+
+>>>TODO<<<
 
 ////////////////////////////////////////////////////////////////
 The index is normally left completely empty, it's contents being

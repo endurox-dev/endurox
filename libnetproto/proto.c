@@ -155,7 +155,7 @@ static cproto_t M_cmd_br_time_sync_x[] =
 #define TRS     4 /* Refresh services */     
 static cproto_t Mbridge_refresh_svc_x[] = 
 {
-    {TRS, 0x10B9,  "mode",       OFSZ(bridge_refresh_svc_t,mode),    EXF_CHAR,    XFLD, 1, 6},
+    {TRS, 0x10B9,  "mode",       OFSZ(bridge_refresh_svc_t,mode),    EXF_CHAR,    XFLD, 1, 1},
     {TRS, 0x10C3,  "svc_nm",     OFSZ(bridge_refresh_svc_t,svc_nm),  EXF_STRING,  XFLD, 1, MAXTIDENT},
     {TRS, 0x10CD,  "count",      OFSZ(bridge_refresh_svc_t,count),   EXF_INT,     XFLD, 1, 6},
     {TRS, EXFAIL}
@@ -166,7 +166,7 @@ static cproto_t Mbridge_refresh_svc_x[] =
 static cproto_t M_bridge_refresh_x[] = 
 {
     {TBR, 0x10D7,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
-    {TBR, 0x10E1,  "mode",       OFSZ(bridge_refresh_t,mode),        EXF_INT,    XFLD, 1, 6},
+    {TBR, 0x10E1,  "mode",       OFSZ(bridge_refresh_t,mode),        EXF_CHAR,   XFLD, 1, 1},
     {TBR, 0x10EB,  "count",      OFSZ(bridge_refresh_t,count),       EXF_INT,    XFLD, 1, 6},
     /* We will provide integer as counter for array:  */
     {TBR, 0x10F5,  "svcs",       OFSZ(bridge_refresh_t,svcs),        EXF_NONE,   XLOOP, 0, PMSGMAX, Mbridge_refresh_svc_x, 

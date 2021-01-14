@@ -550,7 +550,7 @@ typedef struct
 typedef struct
 {
     command_call_t call;
-    int mode;   /**< Refresh mode, full or partial??? */
+    char mode;   /**< Refresh mode, full or partial??? */
     int count; /**< count of bellow entries */
     bridge_refresh_svc_t svcs[0]; /**< The entries. */
 } bridge_refresh_t;
