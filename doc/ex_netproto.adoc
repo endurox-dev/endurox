@@ -558,9 +558,8 @@ Message blocks are actual business messages which are used for exchanging the
 information between cluster instances. Message blocks uses basic and complex data
 type blocks previously described to construct the messages.
 
-=== General work flow
+image:ex_netproto_envelope.png[caption="Figure 3: ", title="Standard message layout (envelope)"]
 
-Establishing connection - time adjustment
 
 === Time adjustment exchange block
 
@@ -591,7 +590,8 @@ Under the tag *0x102D* (buf) follows the time sync message:
 |0x10AF |time |NTIMER |Mand |N/A |Local monotonic time.
 |=========================================================
 
-image:ex_netproto_timesync.png[caption="Figure 3: ", title="TIMESYNC sequence diagram"]
+
+image:ex_netproto_timesync.png[caption="Figure 4: ", title="TIMESYNC sequence diagram"]
 
 
 System can be configured so that during the idle time (no traffic is sent overt
@@ -612,6 +612,10 @@ asynchronously. Messages includes two modes - *FULL* mode, where full service
 tables is sent, or *DIFFERENTIAL* service table is sent, which only holds the
 updates about services number of instances add / removed.
 
+
+Message starts with *NETCALL*. NETCALL tag 0x1019 (command_id) is set to *46*.
+Under the tag *0x102D* (buf) follows the time sync message:
+
 .Service tables refresh messages
 |=========================================================
 |TLV TAG | Name | Format | Cond | Default value | Description
@@ -627,6 +631,7 @@ updates about services number of instances add / removed.
 |0x10EB |count |INT1..6 |Mand |N/A |Number of services in *0x10F5*(svcs) field
 |0x10F5 |svcs |SERVICE0..PMSGMAX |Mand |N/A |Services block (array of)
 |=========================================================
+
 
 
 ==== Example message
