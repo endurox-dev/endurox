@@ -99,8 +99,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     BFLDOCC occ;
     char *p;
     /* Indicators.. */
-    short *C_count;
-    short C_count_stor;
+    BFLDOCC realocc;
     unsigned short *L_length; /* will transfer as long */
     ndrx_typedview_t *v;
     ndrx_typedview_field_t *vf;
@@ -111,6 +110,7 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     short accept_tags[] = {VIEW_TAG_CNAME, 0, EXFAIL};
     xmsg_t tmp_cv;
     BVIEWFLD vheader;
+    long dim_size;
                     
     UBF_LOG(log_debug, "%s enter at level %d", __func__, level);
     
@@ -164,34 +164,29 @@ expublic int exproto_build_ex2proto_view(cproto_t *fld, int level, long offset,
     tmp_cv.command = 0; /* not used... */
         
     DL_FOREACH(v->fields, vf)
-    {
-        if (vf->flags & NDRX_VIEW_FLAG_ELEMCNT_IND_C)
+    {        
+        NDRX_STRCPY_SAFE(fldata->cname, vf->cname);
+           
+        /* send only up till last non null field.. */
+        if (EXFAIL==ndrx_Bvoccur_int(cstruct, v, 
+                vf, NULL, &realocc, 
+                &dim_size, NULL))
         {
-            C_count = (short *)(cstruct+vf->count_fld_offset);
-        }
-        else
-        {
-            C_count_stor=vf->count; 
-            C_count = &C_count_stor;
-        }
-        
-        /* extra check: */
-        if (*C_count > vf->count)
-        {
-            NDRX_LOG(log_error, "Invalid count for field %s.%s in "
-                    "view %hd, specified: %hd", v->vname, vf->cname, 
-                    vf->count, *C_count);
+            /* currently error is not returned... */
+            NDRX_LOG(log_error, "Bvoccur() failed: %s", Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
         
-        NDRX_STRCPY_SAFE(fldata->cname, vf->cname);
-        
-        /* TODO: Count the max non null occurrence. We shall not send
-         * null values over, to save some space.
-         */
-        for (occ=0; occ<*C_count; occ++)
+        if (realocc > vf->count)
         {
-            BFLDLEN dim_size = vf->fldsize/vf->count;
+            NDRX_LOG(log_error, "Invalid count for field %s.%s in "
+                    "view %hd, specified: %hd", v->vname, vf->cname, 
+                    vf->count, realocc);
+            EXFAIL_OUT(ret);
+        }
+
+        for (occ=0; occ<realocc; occ++)
+        {
             p = cstruct+vf->offset+occ*dim_size;
             
             /* just increment the field id for view.. */
