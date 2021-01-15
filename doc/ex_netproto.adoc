@@ -641,19 +641,19 @@ Under the tag '0x102D' (buf) follows the service table refresh message:
 >>>TODO<<<
 
 
-=== TP Call / TP Reply block
+=== TP Call / TP Reply message block
 
 [[message-tpcall]]
 *Type code: TPCALL*
 
-...
+Tpcall message block is used for lot of XATMI messaging purposes. 
 
 ==== Example message
 
 >>>TODO<<<
 
 
-=== TP Notify / TP Broadcast block
+=== TP Notify / TP Broadcast message block
 
 [[message-tpnotif]]
 *Type code: TPNOTIF*

@@ -367,17 +367,14 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
 {
     int ret=EXSUCCEED;
     char *fn = "br_send_to_net";
-    char *tmp = NULL;
-    size_t tmp_len;
     char *tmp2 = NULL;
     size_t tmp2_len;
-    char *tmp_enc = NULL; /* Not the best way, but we atleas we are clear... */
-    int tmp_enc_len;
     char **snd;
     long snd_len;
     int use_hdr = EXFALSE;
+    char smallbuf[sizeof(cmd_br_net_call_t) + sizeof(char *)];
+    cmd_br_net_call_t *call = (cmd_br_net_call_t *)smallbuf;
     
-    cmd_br_net_call_t *call;
     NDRX_LOG(log_debug, "%s: sending %d bytes", fn, len);
     
     if (NULL==G_bridge_cfg.con)
@@ -386,28 +383,11 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         EXFAIL_OUT(ret);
     }
     
-    NDRX_SYSBUF_MALLOC_OUT(tmp, tmp_len, ret);
-    
-    call = (cmd_br_net_call_t *)tmp;
-    
     /*do some optimisation memset(tmp, 0, sizeof(tmp)); */
     call->br_magic = BR_NET_CALL_MAGIC;
     call->msg_type = msg_type;
     call->command_id = command_id;
     call->len = len;
-    
-    if (len > tmp_len - sizeof(call))
-    {
-        NDRX_LOG(log_error, "%s: Sending more than buf can handle: "
-                "len=%d, (outbufsz: %ld)", __func__, 
-                len, (long)(tmp_len - sizeof(call)));
-        
-        userlog("%s: Sending more than buf can handle: "
-                "len=%d, (outbufsz: %ld)", __func__, 
-                len, (long)(tmp_len - sizeof(call)));
-        
-        EXFAIL_OUT(ret);
-    }
     
     if (G_bridge_cfg.common_format)
     {
@@ -415,8 +395,22 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
          * Enduro/X 8.0 - no mem copy anymore!
          */
         memcpy(call->buf, &buf, sizeof(char *));
-        snd_len = len;
-        snd = &tmp;
+            
+        NDRX_LOG(log_debug, "Convert message to network...");
+        /* do some more optimization: memset(tmp2, 0, sizeof(tmp2)); */
+        NDRX_SYSBUF_MALLOC_OUT(tmp2, tmp2_len, ret);
+        
+        snd = &tmp2;
+        snd_len = 0;
+        
+        /* Set the output buffer size border. */
+        if (EXSUCCEED!=exproto_ex2proto((char *)call, len, tmp2, 
+                &snd_len, tmp2_len))
+        {
+            ret=EXFAIL;
+            goto out;
+        }
+        
     }
     else
     {
@@ -424,28 +418,6 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         use_hdr=EXTRUE;
     }
     
-    /* use common format */
-    if (G_bridge_cfg.common_format)
-    {
-        NDRX_LOG(log_debug, "Convert message to network...");
-        /* do some more optimization: memset(tmp2, 0, sizeof(tmp2)); */
-        
-        NDRX_SYSBUF_MALLOC_OUT(tmp2, tmp2_len, ret);
-        
-        snd = &tmp2;
-        
-        snd_len = 0;
-        /* TODO: Set the output buffer size border. */
-        if (EXSUCCEED!=exproto_ex2proto((char *)call, snd_len, tmp2, 
-                &snd_len, tmp2_len))
-        {
-            ret=EXFAIL;
-            goto out;
-        }
-        
-        NDRX_SYSBUF_FREE(tmp);
-        tmp = NULL;
-    }
     
     /* Might want to move this stuff to Q */
     
@@ -502,19 +474,10 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
     }
     
 out:
-    if (NULL!=tmp)
-    {
-        NDRX_SYSBUF_FREE(tmp);
-    }
-
+                
     if (NULL!=tmp2)
     {
         NDRX_SYSBUF_FREE(tmp2);
-    }
-
-    if (NULL!=tmp_enc)
-    {
-        NDRX_SYSBUF_FREE(tmp_enc);
     }
 
     return ret;
