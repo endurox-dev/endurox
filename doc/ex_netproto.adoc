@@ -616,7 +616,7 @@ updates about services number of instances add / removed.
 
 Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to *46*.
 Tag '0x100F' ('msg_type') is set to *X*.
-Under the tag '0x102D' (buf) follows the time sync message:
+Under the tag '0x102D' (buf) follows the service table refresh message:
 
 .Service tables refresh messages
 |=========================================================
