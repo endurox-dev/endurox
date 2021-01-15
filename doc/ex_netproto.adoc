@@ -628,7 +628,7 @@ Under the tag *0x102D* (buf) follows the time sync message:
 . CMDCALL tag 0x1073 (msg_type) is set to *12*
 
 |0x10E1 |mode |CHAR |Mand |N/A |*F* - full, *D* - differential.
-|0x10EB |count |INT1..6 |Mand |N/A |Number of services in *0x10F5*(svcs) field
+|0x10EB |count |INT1..6 |Mand |N/A |Number of SERVICE blocks in *0x10F5*(svcs) field
 |0x10F5 |svcs |SERVICE0..PMSGMAX |Mand |N/A |Services block (array of)
 |=========================================================
 
