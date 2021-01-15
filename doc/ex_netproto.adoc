@@ -573,8 +573,9 @@ any adjustments on *TPCALL* message, tag 0x11E5 (timer). The value when *TPCALL*
 message is received, is adjusted to make the time field to appear to be relevant
 to local monotonic clock.
 
-Message starts with *NETCALL*. NETCALL tag 0x1019 (command_id) is set to *48*.
-Under the tag *0x102D* (buf) follows the time sync message:
+Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to *48*.
+Tag '0x100F' ('msg_type') is set to *X*.
+Under the tag '0x102D' (buf) follows the time sync message:
 
 .Time sync message
 |=========================================================
@@ -613,8 +614,9 @@ tables is sent, or *DIFFERENTIAL* service table is sent, which only holds the
 updates about services number of instances add / removed.
 
 
-Message starts with *NETCALL*. NETCALL tag 0x1019 (command_id) is set to *46*.
-Under the tag *0x102D* (buf) follows the time sync message:
+Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to *46*.
+Tag '0x100F' ('msg_type') is set to *X*.
+Under the tag '0x102D' (buf) follows the time sync message:
 
 .Service tables refresh messages
 |=========================================================
