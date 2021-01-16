@@ -314,16 +314,16 @@ expublic void ndrx_debug_dump_UBF_hdr_ubflogger(int lev, char *title, UBFH *p_ub
                 hdr->opts, EXOFFSET(UBF_header_t, opts));
         UBF_LOG(lev, "%s: UBF_header_t.bytes_used=[%d] offset=%d", title,
                 hdr->bytes_used, EXOFFSET(UBF_header_t, bytes_used));
-    #if EX_ALIGNMENT_BYTES == 8
-        UBF_LOG(lev, "%s: UBF_header_t.padding1=[%ld] offset=%d", title
+#if EX_ALIGNMENT_BYTES == 8
+        UBF_LOG(lev, "%s: UBF_header_t.padding1=[%ld] offset=%d", title,
                 hdr->padding1, EXOFFSET(UBF_header_t, padding1));
-    #endif
+#endif
         UBF_LOG(lev, "%s: UBF_header_t.bfldid=[%d] offset=%d", title,
                 hdr->bfldid, EXOFFSET(UBF_header_t, buffer_type));
-    #if EX_ALIGNMENT_BYTES == 8
+#if EX_ALIGNMENT_BYTES == 8
         UBF_LOG(lev, "%s: UBF_header_t.passing2=[%d] offset=%d", title,
                 hdr->passing2, EXOFFSET(UBF_header_t, passing2));
-    #endif
+#endif
         UBF_LOG(lev, "******************** END OF %p UBF HEADER ******************", p_ub);
     }
 }
