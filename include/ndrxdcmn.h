@@ -160,8 +160,11 @@ extern "C" {
     
 #define NDRXD_COM_DSLEEP_RQ         70   /**< tprecover ndrxd ping, req, int    */
 #define NDRXD_COM_DSLEEP_RP         71   /**< tprecover ndrxd ping, req, int    */
+    
+#define NDRXD_COM_BRLISTQ_RQ        72   /**< bridge admin queue listing, req, int */
+#define NDRXD_COM_BRLISTQ_RP        73   /**< bridge admin queue listing, rsp int  */
 
-#define NDRXD_COM_MAX               71
+#define NDRXD_COM_MAX               73
     
 /** This is sqv admin thread shutdown priv */
 #define NDRXD_COM_SVQADMIN_PRIV     NDRX_COM_SVQ_PRIV
@@ -220,6 +223,7 @@ extern "C" {
 #define NDRXD_CALL_TYPE_APPCONFIG       17  /**< Response to appconfig command*/
 #define NDRXD_CALL_TYPE_DPING           18  /**< NDRXD ping response type     */
 #define NDRXD_CALL_TYPE_DSLEEP          19  /**< Put NDRXD in sleep mode      */
+#define NDRXD_CALL_TYPE_BLIST           20  /**< List bridge admin queues     */
 
 #define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
@@ -642,6 +646,15 @@ typedef struct
     int svc_count;        /**< count of services (for belloow array)*/
     command_reply_psc_det_t svcdet[0];
 } command_reply_psc_t;
+
+/**
+ * Queue list 
+ */
+typedef struct
+{
+    command_reply_t rply;
+    char qstr[NDRX_MAX_Q_SIZE+1];  /**< Queueu name                    */
+} command_reply_blist_t;
 
 /**
  * Reply for ppm (print process model) command
