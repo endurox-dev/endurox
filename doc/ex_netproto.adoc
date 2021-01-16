@@ -592,7 +592,7 @@ Under the tag '0x102D' (buf) follows the time sync message:
 |=========================================================
 
 
-image:ex_netproto_timesync.png[caption="Figure 4: ", title="TIMESYNC sequence diagram"]
+image:ex_netproto_timesync.png[caption="Figure 4: ", title="TIMESYNC sequence diagram",  alt="TIMESYNC sequence diagram"]
 
 
 System can be configured so that during the idle time (no traffic is sent overt
@@ -600,7 +600,22 @@ the bridges, a time sync messages are delivered periodically).
 
 ==== Example message
 
->>>TODO<<<
+--------------------------------------------------------------------------------
+
+0000  10 05 00 00 00 06 01 77 96 16 84 90 10 0f 00 00  .......w........
+0010  00 01 58 10 19 00 00 00 02 04 80 10 2d 00 00 00  ..X.........-...
+0020  95 10 a5 00 00 00 75 10 55 00 00 00 19 10 37 00  ......u.U.....7.
+0030  00 00 02 04 80 10 41 00 00 00 04 00 00 00 00 10  ......A.........
+0040  4b 00 00 00 01 00 10 5f 00 00 00 05 16 47 47 44  K......_.....GGD
+0050  32 10 69 00 00 00 02 04 80 10 73 00 00 00 02 01  2.i.......s.....
+0060  30 10 7d 00 00 00 01 30 10 87 00 00 00 20 2f 64  0.}....0..... /d
+0070  6f 6d 31 2c 63 6c 74 2c 72 65 70 6c 79 2c 74 70  om1,clt,reply,tp
+0080  62 72 69 64 67 65 2c 31 33 35 37 31 2c 37 10 91  bridge,13571,7..
+0090  00 00 00 01 00 10 9b 00 00 00 01 10 10 af 00 00  ................
+00a0  00 14 00 00 00 00 00 00 00 15 07 21 00 00 00 00  ...........!....
+00b0  00 07 55 67 18 84                                ..Ug..
+
+--------------------------------------------------------------------------------
 
 === Service table refresh block
 
@@ -612,7 +627,6 @@ XATMI services locally advertised. Service tables are send periodically and
 asynchronously. Messages includes two modes - *FULL* mode, where full service
 tables is sent, or *DIFFERENTIAL* service table is sent, which only holds the
 updates about services number of instances add / removed.
-
 
 Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to *46*.
 Tag '0x100F' ('msg_type') is set to *X*.
@@ -634,11 +648,43 @@ Under the tag '0x102D' (buf) follows the service table refresh message:
 |0x10F5 |svcs |SERVICE0..PMSGMAX |Mand |N/A |Services block (array of)
 |=========================================================
 
+Messages are sent asynchronously and each site can decide at what frequency send
+the messages. Normally full service tables are sent when link is established and
+periodically at configured interval. Differential service tables are sent to 
+other node, when locally in service table listings changes hash happened.
+
+image:ex_netproto_refresh.png[caption="Figure 5: ", title="REFRESH sequence diagram",  alt="REFRESH sequence diagram"]
 
 
 ==== Example message
 
->>>TODO<<<
+--------------------------------------------------------------------------------
+
+0000  10 05 00 00 00 06 01 77 96 16 84 90 10 0f 00 00  .......w........
+0010  00 01 58 10 19 00 00 00 02 04 60 10 2d 00 00 01  ..X.......`.-...
+0020  42 10 d7 00 00 00 66 10 55 00 00 00 18 10 37 00  B.....f.U.....7.
+0030  00 00 01 00 10 41 00 00 00 04 00 00 00 00 10 4b  .....A.........K
+0040  00 00 00 01 00 10 5f 00 00 00 05 16 47 47 44 32  ......_.....GGD2
+0050  10 69 00 00 00 02 04 60 10 73 00 00 00 02 01 20  .i.....`.s..... 
+0060  10 7d 00 00 00 01 10 10 87 00 00 00 12 2f 64 6f  .}.........../do
+0070  6d 32 2c 73 79 73 2c 62 67 2c 6e 64 72 78 64 10  m2,sys,bg,ndrxd.
+0080  91 00 00 00 01 00 10 9b 00 00 00 01 20 10 e1 00  ............ ...
+0090  00 00 01 46 10 eb 00 00 00 01 60 10 f5 00 00 00  ...F......`.....
+00a0  1d 10 b9 00 00 00 01 46 10 c3 00 00 00 09 54 49  .......F......TI
+00b0  4d 45 4f 55 54 53 56 10 cd 00 00 00 01 10 10 f5  MEOUTSV.........
+00c0  00 00 00 1a 10 b9 00 00 00 01 46 10 c3 00 00 00  ..........F.....
+00d0  06 54 45 53 54 53 56 10 cd 00 00 00 01 10 10 f5  .TESTSV.........
+00e0  00 00 00 1a 10 b9 00 00 00 01 46 10 c3 00 00 00  ..........F.....
+00f0  06 4e 55 4c 4c 53 56 10 cd 00 00 00 01 10 10 f5  .NULLSV.........
+0100  00 00 00 18 10 b9 00 00 00 01 46 10 c3 00 00 00  ..........F.....
+0110  04 45 43 48 4f 10 cd 00 00 00 01 10 10 f5 00 00  .ECHO...........
+0120  00 1f 10 b9 00 00 00 01 46 10 c3 00 00 00 0b 52  ........F......R
+0130  45 54 53 4f 4d 45 44 41 54 41 10 cd 00 00 00 01  ETSOMEDATA......
+0140  10 10 f5 00 00 00 1c 10 b9 00 00 00 01 46 10 c3  .............F..
+0150  00 00 00 08 53 4f 46 54 54 4f 55 54 10 cd 00 00  ....SOFTTOUT....
+0160  00 01 10                                         ...
+
+--------------------------------------------------------------------------------
 
 
 === TP Call / TP Reply message block
@@ -646,11 +692,44 @@ Under the tag '0x102D' (buf) follows the service table refresh message:
 [[message-tpcall]]
 *Type code: TPCALL*
 
-Tpcall message block is used for lot of XATMI messaging purposes. 
+Tpcall message block is used for lot of XATMI messaging purposes. It services
+as call for *tpcall(3)*, *tpacall(3)*, 
 
 ==== Example message
 
->>>TODO<<<
+Message starts with *NETCALL*. NETCALL tag '0x1019' ('command_id') is set to value
+in range from *1* - *7*. Tag '0x100F' ('msg_type') is set to *A*.
+Under the tag '0x102D' (buf) follows the service table refresh message:
+
+.XATMI call
+|=========================================================
+|TLV TAG | Name | Format | Cond | Default value | Description
+|0x1159,  "stdhdr",    OFSZ0,                            EXF_NONE,    XINC, 1, PMSGMAX, M_stdhdr_x},
+|0x116D,  "name",      OFSZ(tp_command_call_t,name),     EXF_STRING, XFLD, 0, XATMI_SERVICE_NAME_LENGTH},
+|0x1177,  "reply_to",  OFSZ(tp_command_call_t,reply_to), EXF_STRING, XFLD, 0, NDRX_MAX_Q_SIZE},
+|0x1181,  "callstack", OFSZ(tp_command_call_t,callstack),EXF_STRING, XFLD, 0, CONF_NDRX_NODEID_COUNT},
+|0x118B,  "my_id",     OFSZ(tp_command_call_t,my_id),    EXF_STRING, XFLD, 0, NDRX_MAX_ID_SIZE},
+|0x1195,  "sysflags",  OFSZ(tp_command_call_t,sysflags), EXF_LONG,   XFLD, 1, 20},
+|0x119F,  "cd",        OFSZ(tp_command_call_t,cd),       EXF_INT,    XFLD, 1, 10},
+|0x11A9,  "rval/usr1", OFSZ(tp_command_call_t,rval),     EXF_INT,    XFLD, 1, 10},
+|0x11B3,  "rcode/usr2",OFSZ(tp_command_call_t,rcode),    EXF_LONG,   XFLD, 1, 20},
+|0x11B4,  "user3",     OFSZ(tp_command_call_t,user3),    EXF_INT,    XFLD, 1, 10},
+|0x11B5,  "user4",     OFSZ(tp_command_call_t,user4),    EXF_LONG,   XFLD, 1, 20},
+|0x11B6,  "clttout",   OFSZ(tp_command_call_t,clttout),  EXF_INT,   XFLD, 1, 10},
+|0x11BD,  "extradata", OFSZ(tp_command_call_t,extradata),EXF_STRING, XFLD, 0, 31},
+|0x11C7,  "flags",     OFSZ(tp_command_call_t,flags),    EXF_LONG,   XFLD, 1, 20},
+|0x11D1,  "timestamp", OFSZ(tp_command_call_t,timestamp),EXF_LONG,   XFLD, 1, 20},
+|0x11DB,  "callseq",   OFSZ(tp_command_call_t,callseq),  EXF_USHORT,   XFLD, 1, 5},
+|0x11DC,  "msgseq",    OFSZ(tp_command_call_t,msgseq),   EXF_USHORT,   XFLD, 1, 5},
+|0x11E5,  "timer",     OFSZ(tp_command_call_t,timer),    EXF_NTIMER, XFLD, 40, 40},
+|0x11F9,  "data",      OFSZ(tp_command_call_t,data),     EXF_NONE,  XMASTERBUF, 0, PMSGMAX, NULL, 
+|0x1203,  "tmxid",  OFSZ(tp_command_call_t,tmxid),    EXF_STRING, XFLD, 0, (NDRX_XID_SERIAL_BUFSIZE+1)},
+|0x120D,  "tmrmid", OFSZ(tp_command_call_t, tmrmid), EXF_SHORT,   XFLD, 0, 6},
+|0x1217,  "tmnodeid", OFSZ(tp_command_call_t, tmnodeid), EXF_SHORT,   XFLD, 0, 6},
+|0x1221,  "tmsrvid", OFSZ(tp_command_call_t, tmsrvid), EXF_SHORT,   XFLD, 0, 6},
+|0x122B,  "tmknownrms",OFSZ(tp_command_call_t,tmknownrms),    EXF_STRING, XFLD, 0, (NDRX_MAX_RMS+1)},
+|0x1235,  "tmtxflags", OFSZ(tp_command_call_t, tmtxflags), EXF_SHORT,   XFLD, 1, 1},
+|=========================================================
 
 
 === TP Notify / TP Broadcast message block

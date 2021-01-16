@@ -113,7 +113,6 @@ expublic int exproto_build_ex2proto_mbuf(cproto_t *fld, int level, long offset,
         EXFAIL_OUT(ret);
     }
 
-    NDRX_DUMP(log_error, "YOPT EXBUF", ex_buf+offset+fld->offset, ex_len-(offset+fld->offset));
     NDRX_LOG(log_debug, "XINC tag: 0x%x (%s), current offset=%ld fld=%ld", 
             fld->tag, fld->cname, offset, offset+fld->offset);
 
@@ -239,9 +238,6 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
     do
     {
         loop++;
-        NDRX_LOG(log_error, "YOPT offf ex_offset = %ld fld->offset= %ld p_ub_data->bfldlen=%d", 
-            ex_offset, fld->offset, p_ub_data->bfldlen);
-        
         ex_offset_dyn = ex_offset+fld->offset + p_ub_data->bfldlen;
         tlv_hdr =  (ndrx_mbuf_tlv_t *)(ex_buf+ex_offset_dyn);
 
@@ -265,9 +261,6 @@ expublic int _exproto_proto2ex_mbuf(cproto_t *fld, char *proto_buf, long proto_l
 
         /* we might get several calls here */
         p_ub_data->bfldlen+=step_size;
-
-        NDRX_LOG(log_error, "YOPT step size: %u %d %p step: %u loop: %d", 
-                p_ub_data->bfldlen, tlv_hdr->len, &tlv_hdr->len, step_size, loop);
 
         /* update the call mater len */
         *buf_len= p_ub_data->bfldlen;
