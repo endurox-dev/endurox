@@ -474,6 +474,12 @@ out:
 expublic void cmd_generic_init(int ndrxd_cmd, int msg_src, int msg_type,
                             command_call_t *call, char *reply_q)
 {
+    call->proto_ver[0]=0;
+    call->proto_ver[1]=0;
+    call->proto_ver[2]=0;
+    call->proto_ver[3]=0;
+
+    call->command_id = ndrxd_cmd;
     call->command = ndrxd_cmd;
     call->magic = NDRX_MAGIC;
     call->msg_src = msg_src;

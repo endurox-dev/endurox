@@ -463,6 +463,76 @@ Ensure(test_proto_rndparse)
 }
 
 /**
+ * Check the time sync conv operations
+ */
+Ensure(test_proto_timesync)
+{
+    cmd_br_time_sync_t *ptr_tmsg;
+    char smallbuf[sizeof(cmd_br_net_call_t) + sizeof(cmd_br_time_sync_t)];
+    cmd_br_net_call_t *netcall = (cmd_br_net_call_t *)smallbuf;
+    char proto_out[1024];
+    long proto_len;
+    long max_struct = 0;
+    cmd_br_time_sync_t *tmsg_back;
+    cmd_br_time_sync_t tmsg;
+    char *tmp_ptr;
+
+    memset(&tmsg, 0, sizeof(tmsg));
+    
+    tmsg.call.msg_type=NDRXD_CALL_TYPE_BRBCLOCK;
+    tmsg.call.command = NDRXD_COM_BRCLOCK_RQ;
+    tmsg.call.caller_nodeid=1;
+    tmsg.call.msg_src = NDRXD_SRC_ADMIN;
+    tmsg.call.magic=NDRX_MAGIC;
+    
+    NDRX_STRCPY_SAFE(tmsg.call.reply_queue, "Helloqueue");
+    
+    /* set local time */
+    ndrx_stopwatch_reset(&tmsg.time);
+    
+    netcall->br_magic=BR_NET_CALL_MAGIC;
+    netcall->command_id=NDRXD_COM_BRCLOCK_RQ;
+    netcall->msg_type=BR_NET_CALL_MSG_TYPE_NDRXD;
+        
+    tmp_ptr = (char *)&tmsg;
+    memcpy(netcall->buf, &tmp_ptr, sizeof(char *));
+    assert_not_equal(&tmsg, NULL);
+    assert_equal(*(cmd_br_time_sync_t **)netcall->buf, &tmsg);
+    
+    ptr_tmsg = *((cmd_br_time_sync_t **)netcall->buf);
+    
+    assert_equal(ptr_tmsg, &tmsg);
+    assert_equal(ptr_tmsg->call.command, tmsg.call.command);
+    
+    proto_len=0;
+    assert_not_equal(exproto_ex2proto((char *)netcall, 0, proto_out, &proto_len, 
+            sizeof(proto_out)), EXFAIL);
+    
+    memset(smallbuf, 0, sizeof(smallbuf));
+    assert_not_equal(exproto_proto2ex(proto_out, proto_len, smallbuf, 
+            &max_struct, sizeof(smallbuf)), EXFAIL);
+    
+    /* OK check the fields... */
+    tmsg_back = (cmd_br_time_sync_t *)netcall->buf;
+    
+    assert_equal(netcall->br_magic, BR_NET_CALL_MAGIC);
+    assert_equal(netcall->command_id, NDRXD_COM_BRCLOCK_RQ);
+    assert_equal(netcall->msg_type, BR_NET_CALL_MSG_TYPE_NDRXD);
+    
+    /* check call fields*/
+    assert_equal(tmsg_back->call.command, NDRXD_COM_BRCLOCK_RQ);
+    assert_equal(tmsg_back->call.caller_nodeid, 1);
+    assert_equal(tmsg_back->call.msg_type, NDRXD_CALL_TYPE_BRBCLOCK);
+    assert_equal(tmsg_back->call.msg_src, NDRXD_SRC_ADMIN);
+    assert_equal(tmsg_back->call.magic, NDRX_MAGIC);
+    assert_string_equal(tmsg_back->call.reply_queue, "Helloqueue");
+    
+    /* finally check the payload */
+    assert_equal(ndrx_stopwatch_diff(&tmsg.time, &tmsg_back->time), 0);
+    
+}
+
+/**
  * Standard library tests
  * @return
  */
@@ -475,6 +545,8 @@ TestSuite *atmiunit0_exproto(void)
     add_test(suite, test_proto_carraycall);
     add_test(suite, test_proto_nospace);
     /* add_test(suite, test_proto_rndparse); - too long...*/
+    
+    add_test(suite, test_proto_timesync);
     
     return suite;
 }

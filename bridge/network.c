@@ -404,7 +404,7 @@ expublic int br_send_to_net(char *buf, int len, char msg_type, int command_id)
         snd_len = 0;
         
         /* Set the output buffer size border. */
-        if (EXSUCCEED!=exproto_ex2proto((char *)call, len, tmp2, 
+        if (EXSUCCEED!=exproto_ex2proto((char *)call, len + sizeof(*call), tmp2, 
                 &snd_len, tmp2_len))
         {
             ret=EXFAIL;

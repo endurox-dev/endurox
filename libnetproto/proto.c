@@ -174,6 +174,8 @@ static cproto_t M_bridge_refresh_x[] =
     {TBR, EXFAIL}
 };
 
+/* TODO: Add T table for testing all data types and their ranges */
+
 /******************** STUFF FOR UBF *******************************************/
 expublic short ndrx_G_ubf_proto_tag_map[] = 
 {
@@ -580,7 +582,7 @@ exprivate inline int x_ctonet(cproto_t *fld, char *c_buf_in,
             if (debug_get_ndrx_level() >= log_debug)
             {
                 ndrx_build_printable_string(debug_buf, debug_bufsz, 
-                        proto_buf, c_buf_in_len);
+                        proto_buf+*proto_buf_offset-c_buf_in_len, c_buf_in_len);
             }
         }    
             break;
@@ -599,7 +601,7 @@ exprivate inline int x_ctonet(cproto_t *fld, char *c_buf_in,
             if (debug_get_ndrx_level() >= log_debug)
             {
                 ndrx_build_printable_string(debug_buf, debug_bufsz, 
-                        proto_buf, fld->min_len);
+                        proto_buf+*proto_buf_offset-fld->min_len, fld->min_len);
             }
             
             break;
@@ -1570,16 +1572,12 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         
                     /* dereference stored pointer */
                     data = *((char **)(ex_buf+offset+p->offset));
-                    
-                    NDRX_LOG(log_error, "YOPT XATMIBUFPTR => %d", buffer_type);
                 }
                 else
                 {
                     buffer_type = *((unsigned*)(ex_buf+offset+p->buftype_offset));
                     
                     data = (char *)(ex_buf+offset+p->offset);
-                    
-                    NDRX_LOG(log_error, "YOPT XATMIBUF => %d", buffer_type);
                     
                     buffer_type = NDRX_MBUF_TYPE(buffer_type);
                 }
@@ -1588,8 +1586,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                         buffer_type);
                 
                 /* TAG START / KEEP POS */
-                NDRX_LOG(log_debug, "START YOPT %x TAGOFF=%d", p->tag, *proto_buf_offset);
-
                 if (EXSUCCEED!=ndrx_write_tag((short)p->tag, proto_buf, 
                         proto_buf_offset, proto_bufsz))
                 {
@@ -1636,8 +1632,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                     f->bfldid = BFIRSTFLDID;
                     
                     memset(&state, 0, sizeof(state));
-                    
-                    NDRX_LOG(log_error, "YOPT START !!!!!!!!!!!!!!!!!!!!");
                     
                     while(1==ndrx_Bnext(&state, p_ub, &f->bfldid, &occ, NULL, &f->bfldlen, (char **)&f->buf))
                     {
@@ -1694,8 +1688,6 @@ expublic int exproto_build_ex2proto(xmsg_t *cv, int level, long offset,
                 off_stop = *proto_buf_offset;
                 /* Put back len there.. */
                 len_written = (short)(off_stop - off_start);
-                NDRX_LOG(log_debug, "TAG=%x YOPT TAGOFF=%d len_written=%d", 
-                        (int)p->tag, len_offset, len_written);
                 if (EXSUCCEED!=ndrx_write_len(len_written, proto_buf, &len_offset,
                         proto_bufsz))
                 {
@@ -1755,8 +1747,8 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf,
     xmsg_t *cv;
     
     /* Field used in search: */
-    char msg_type; /* Identify our message type... */
-    int     command;
+    char msg_type=0; /* Identify our message type... */
+    int     command=EXFAIL;
     /* /Field used in search: */
     
     NDRX_LOG(log_debug, "%s - enter", fn);
@@ -1766,7 +1758,7 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf,
         case BR_NET_CALL_MSG_TYPE_ATMI:
             /* This is NDRXD message */
         {
-            tp_command_generic_t *call = (tp_command_generic_t *)msg->buf;
+            tp_command_generic_t *call = *(tp_command_generic_t **)msg->buf;
             command = call->command_id;
             msg_type = 'A';
         }
@@ -1774,7 +1766,7 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf,
         case BR_NET_CALL_MSG_TYPE_NDRXD:
             /* This is ATMI message */
         {
-            command_call_t *call = (command_call_t *)msg->buf;
+            command_call_t *call = *((command_call_t **)msg->buf);
             
             msg_type = 'X';
             command = call->command;
@@ -1784,7 +1776,7 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf,
         case BR_NET_CALL_MSG_TYPE_NOTIF:
             /* This is NDRXD message */
         {
-            tp_command_generic_t *call = (tp_command_generic_t *)msg->buf;
+            tp_command_generic_t *call = *(tp_command_generic_t **)msg->buf;
             command = call->command_id;
             msg_type = 'N';
         }
@@ -1814,8 +1806,8 @@ expublic int exproto_ex2proto(char *ex_buf, long ex_len, char *proto_buf,
 
     if (EXFAIL==cv->command)
     {
-        NDRX_LOG(log_error, "No conv table for ndrxd command: %d"
-                " - FAIL", cv->command);
+        NDRX_LOG(log_error, "No conv table for ndrxd command: %c/%d"
+                " - FAIL", msg_type, command);
         ret=EXFAIL;
         goto out;
     }
@@ -1958,8 +1950,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
             EXFAIL_OUT(ret);
         }
         
-        NDRX_LOG(log_error, "YOPT TAG=%x LEN=%d (int_pos=%ld proto_len=%ld", 
-                net_tag, net_len, int_pos, proto_len);
         /*
         NDRX_LOG(log_debug, "Got tag: %x, got len: %x (%hd)", 
                 net_tag, net_len, net_len);
@@ -2202,8 +2192,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                                     typ);
                             EXFAIL_OUT(ret);
                         }
-                        
-                        NDRX_LOG(log_debug, ">>>>YOPT INNER UBF: %u", buffer_type);
                     }
                     else
                     {
@@ -2248,8 +2236,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         
                         /* OK, we have a FB now process field by field...? */
                         
-                        NDRX_LOG(log_error, "YOPTEL !!! %p", f->next_fld.last_checked);
-                        
                         if (EXFAIL==_exproto_proto2ex(M_ubf_field,  
                                     (char *)(proto_buf+int_pos), net_len, 
                                     /* Drive over internal variable + we should 
@@ -2276,7 +2262,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                         xatmi_fld_len = hdr->buf_len;
                         p_fld_len = &xatmi_fld_len;
                         
-                        NDRX_LOG(log_error, "YOPT BUFLEN I: %d ptr %p", hdr->buf_len, buf_len);
                         *buf_len = hdr->buf_len;
                                 
                         /* Bprint(p_ub); Bug #120 */
@@ -2312,8 +2297,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                          */
                         if (NULL!=p_typedbuf)
                         {
-                            NDRX_LOG(log_error, "YOPT ADDING INNER!");
-                            
                             /* buf is current field offset */
                             if (EXSUCCEED!=Baddfast((UBFH *)p_typedbuf, p_ub_data->bfldid, 
                                     p_ub_data->buf, 0, &p_ub_data->next_fld))
@@ -2440,8 +2423,6 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                          */
                         if (NULL!=p_typedbuf)
                         {
-                            NDRX_LOG(log_error, "YOPT ADDING INNER!");
-                            
                             /* buf is current field offset */
                             if (EXSUCCEED!=Baddfast((UBFH *)p_typedbuf, p_ub_data->bfldid, 
                                     p_ub_data->buf, 0, &p_ub_data->next_fld))
@@ -2497,13 +2478,7 @@ expublic long _exproto_proto2ex(cproto_t *cur, char *proto_buf, long proto_len,
                 {
                     *max_struct = fld->offset +ex_offset+ *p_fld_len;
                     
-                    NDRX_LOG(log_debug, "YOPT max_sturct=>%ld", *max_struct);
                 }
-                else
-                {
-                    NDRX_LOG(log_debug, "YOPT existing max_sturct=>%ld", *max_struct);
-                }
-                    
             }
             
             if (NULL!=tmpf)
