@@ -59,6 +59,12 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+
+MUTEX_LOCKDECL(M_timediff_lock);
+exprivate ndrx_stopwatch_t M_timediff_sent; /**< for roundtrip calc                     */
+exprivate time_t M_timediff_tstamp;      /**< UTC tstamp when msg was sent  for matching*/
+exprivate unsigned long M_seq;         /**< Last sequence sent                          */
+
 /**
  * Initialize clock diff.
  * @param call
@@ -69,25 +75,97 @@ expublic int br_calc_clock_diff(command_call_t *call)
     int ret=EXSUCCEED;
     ndrx_stopwatch_t our_time;
     cmd_br_time_sync_t *their_time = (cmd_br_time_sync_t *)call;
+    long long diff=EXFAIL;
+    long rountrip=0;
+    int load_time=EXFALSE;
     
+    /* if got request, just send reply */
+    if (NDRX_BRCLOCK_MODE_REQ==their_time->mode)
+    {
+        /* just send data back */
+        NDRX_LOG(log_debug, "Reply with timestamp");
+        return br_send_clock(NDRX_BRCLOCK_MODE_RSP, their_time);
+    }
+    
+    /* update the timestamps... stored locally -> the last sync 
+     * once we move to multi-connections, all clock data needs to be associated
+     * with connections.s
+     */
+    MUTEX_LOCK_V(M_timediff_lock);
+        
     /* So we have their time let timer lib, to get diff */
     ndrx_stopwatch_reset(&our_time);
     
+    if (NDRX_BRCLOCK_MODE_ASYNC==their_time->mode)
+    {
+        load_time=EXTRUE;
+    }
+    else if (NDRX_BRCLOCK_MODE_RSP==their_time->mode)
+    {
+
+        /* check the vars... */
+       
+        rountrip = (long)ndrx_stopwatch_diff(&our_time, &M_timediff_sent);
+        
+        if (their_time->orig_seq==M_seq
+                && rountrip <= G_bridge_cfg.max_roundtrip
+                && their_time->orig_nodeid == tpgetnodeid()
+                && their_time->orig_timestamp == M_timediff_tstamp
+                )
+        {
+            load_time=EXTRUE;
+        }
+        else
+        {
+            NDRX_LOG(log_error, "DROP time sync echo data: "
+                    "seq_rcv: %lu vs seq_our: %lu, "
+                    "rountrip: %ld vs max allow: %ld, "
+                    "nodeid_rcv: %d vs nodeid_our: %d, "
+                    "tstamp_rcv: %lld vs tstamp_our: %lld",
+                    their_time->orig_seq, M_seq,
+                    rountrip, G_bridge_cfg.max_roundtrip,
+                    their_time->orig_nodeid, tpgetnodeid(),
+                    their_time->orig_timestamp, M_timediff_tstamp
+                    );
+        }    
+    }
     
-    G_bridge_cfg.timediff = ndrx_stopwatch_diff(&their_time->time, &our_time);
-    NDRX_LOG(log_warn, "Monotonic clock time correction between us "
-            "and node %d is: %lld msec (%d) ", 
-            call->caller_nodeid, G_bridge_cfg.timediff, sizeof(G_bridge_cfg.timediff));
+    if (load_time)
+    {
+        diff=ndrx_stopwatch_diff(&their_time->time, &our_time);
     
+        NDRX_LOG(log_warn, "Monotonic clock time correction between us "
+                "and node %d is: %lld msec (%d), roundtrip: %ld ms, seq: %ld, data mode: %d", 
+                call->caller_nodeid, diff, sizeof(diff), rountrip, M_seq, their_time->mode);
+        
+        
+        /* so if admin tool reads the stuff needs to have spin + to get all readings... */
+        pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+        G_bridge_cfg.timediff=diff;
+        pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+        
+        /* normally there shall be now time updates in the row
+         * and the bellow infos are use only for admin tool
+         * thus do not keep the spinlock for al long...
+         */
+        G_bridge_cfg.timediff_ourt = our_time;
+        G_bridge_cfg.timediff_roundtrip = rountrip;
+        
+    }
+    MUTEX_UNLOCK_V(M_timediff_lock);
+    
+out:
     return ret;
 }
 
 
 /**
  * Send or clock to server.
- * @return 
+ * @param mode see NDRX_BRCLOCK_MODE_* consts
+ * @param in case of NDRX_BRCLOCK_MODE_RSP this holds the original request
+ * @return EXSUCCEED/EXFAIL 
  */
-expublic int br_send_clock(void)
+expublic int br_send_clock(int mode, cmd_br_time_sync_t *rcv)
 {
     char *fn = "br_send_clock";
     cmd_br_time_sync_t ourtime;
@@ -100,6 +178,31 @@ expublic int br_send_clock(void)
     cmd_generic_init(NDRXD_COM_BRCLOCK_RQ, NDRXD_SRC_BRIDGE, NDRXD_CALL_TYPE_BRBCLOCK,
                             (command_call_t *)&ourtime, ndrx_get_G_atmi_conf()->reply_q_str);
     ndrx_stopwatch_reset(&ourtime.time);
+    
+    if (NDRX_BRCLOCK_MODE_RSP==mode)
+    {
+        /* reply with original data  */
+        ourtime.orig_nodeid = rcv->orig_nodeid;
+        ourtime.orig_timestamp = rcv->orig_timestamp;
+        ourtime.orig_seq = rcv->orig_seq;
+    }
+    else
+    {
+        /* make new request async at startup or request */
+        ourtime.orig_nodeid = tpgetnodeid();
+        
+        MUTEX_LOCK_V(M_timediff_lock);
+        /* have tstamp for correlation.. */
+        ourtime.orig_timestamp = time(NULL);
+        M_timediff_tstamp = ourtime.orig_timestamp;
+        ndrx_stopwatch_reset(&M_timediff_sent);
+        /* let if overflow, no problem... */
+        M_seq++;
+        ourtime.orig_seq = M_seq;
+        MUTEX_UNLOCK_V(M_timediff_lock);
+    }
+    
+    ourtime.mode=mode;
     
     ret=br_send_to_net((char*)&ourtime, sizeof(ourtime), BR_NET_CALL_MSG_TYPE_NDRXD, 
             ourtime.call.command);
@@ -117,6 +220,12 @@ out:
  */
 expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 {
+    long long diff;
+    
+    pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+    diff = G_bridge_cfg.timediff;
+    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+    
     N_TIMER_DUMP(log_info, "Call timer: ", call->timer);    
 #if CLOCK_DEBUG
     ndrx_stopwatch_t our_time;
@@ -126,14 +235,14 @@ expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 #endif
     if (is_out)
     {
-        ndrx_stopwatch_plus(&call->timer, G_bridge_cfg.timediff);
+        ndrx_stopwatch_plus(&call->timer, diff);
     }
     else
     {
-        ndrx_stopwatch_minus(&call->timer, G_bridge_cfg.timediff);
+        ndrx_stopwatch_minus(&call->timer, diff);
     }
         
-    NDRX_LOG(log_debug, "Clock diff: %lld ms", G_bridge_cfg.timediff);
+    NDRX_LOG(log_debug, "Clock diff: %lld ms", diff);
     N_TIMER_DUMP(log_info, "Adjusted call timer: ", call->timer);
     
 #if CLOCK_DEBUG

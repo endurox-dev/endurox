@@ -710,6 +710,17 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
             net->p_snd_zero_len(net);
         }
         
+        if (net->p_snd_clock_sync && net->periodic_clock_time && 
+                ndrx_stopwatch_get_delta_sec(&net->periodic_stopwatch) > net->periodic_clock_time)
+        {
+            NDRX_LOG(log_info, "About to issue clock sync "
+                    "message on fd %d", net->sock);
+            net->p_snd_clock_sync(net);
+            
+            /* reset the stopwatch... */
+            ndrx_stopwatch_reset(&net->periodic_stopwatch);
+        }
+        
         if (net->recv_activity_timeout && 
                 (rcvt=exnet_stopwatch_get_delta_sec(net, &net->last_rcv)) > net->recv_activity_timeout)
         {
@@ -1027,7 +1038,8 @@ out:
 */
 expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
-                int (*p_snd_zero_len)(exnetcon_t *net))
+                int (*p_snd_zero_len)(exnetcon_t *net),
+                int (*p_snd_clock_sync)(exnetcon_t *net))
 {
     int ret=EXSUCCEED;
 
@@ -1035,6 +1047,7 @@ expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *
     net->p_connected = p_connected;
     net->p_disconnected = p_disconnected;
     net->p_snd_zero_len = p_snd_zero_len;
+    net->p_snd_clock_sync = p_snd_clock_sync;
 
 out:
     return ret;
@@ -1046,11 +1059,13 @@ out:
  *  is found on socket.
  * @param recv_activity_timeout number of seconds in which some socket receive 
  *  activity must exist (i.e. some bytes received).
+ * @param periodic_clock number of seconds after which send a clock message
+ *  (i.e. clock callback) if have connection open
  * 
  */
 expublic int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
         int len_pfx, int is_server, int backlog, int max_cons, int periodic_zero,
-        int recv_activity_timeout)
+        int recv_activity_timeout, int periodic_clock)
 {
     int ret=EXSUCCEED;
 
@@ -1067,6 +1082,7 @@ expublic int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short 
     net->max_cons = max_cons;
     net->periodic_zero = periodic_zero;
     net->recv_activity_timeout =recv_activity_timeout;
+    net->periodic_clock_time = periodic_clock;
     
     if (!is_server)
     {
@@ -1247,6 +1263,9 @@ expublic int exnet_net_init(exnetcon_t *net)
     MUTEX_VAR_INIT(net->sendlock);
     MUTEX_VAR_INIT(net->rcvlock);
     MUTEX_VAR_INIT(net->flagslock);
+    
+    ndrx_stopwatch_reset(&net->periodic_stopwatch);
+    
     
     /* acquire read lock */
     if (EXSUCCEED!=(err=pthread_rwlock_rdlock(&(net->rwlock))))

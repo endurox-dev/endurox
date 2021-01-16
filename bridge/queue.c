@@ -471,6 +471,10 @@ expublic int br_got_message_from_q(char *buf, int len, char msg_type)
     int finish_off = EXFALSE;
     char *fn = "br_got_message_from_q";
     
+    /* TODO: Check, if this admin request for clocks
+     * then return current stats...
+     */
+    
     if (0==G_bridge_cfg.threadpoolsize)
     {
         xatmi_brmessage_t thread_data_stat;

@@ -124,7 +124,7 @@ expublic int br_connected(exnetcon_t *net)
     NDRX_LOG(log_debug, "Net=%p", G_bridge_cfg.net);
     
     /* Send our clock to other node. */
-    if (EXSUCCEED==br_send_clock())
+    if (EXSUCCEED==br_send_clock(NDRX_BRCLOCK_MODE_ASYNC, NULL))
     {
         ret=br_send_status(EXTRUE);
     }
@@ -182,6 +182,16 @@ exprivate int br_snd_zero_len_th(void *ptr, int *p_finish_off)
 exprivate int br_snd_zero_len(exnetcon_t *net)
 {
     thpool_add_work(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, (void *)net);
+    return EXSUCCEED;
+}
+
+/**
+ * Send periodic clocks
+ * @return EXUSCCEED
+ */
+exprivate int br_snd_clock_sync(exnetcon_t *net)
+{
+    br_send_clock(NDRX_BRCLOCK_MODE_REQ, NULL);
     return EXSUCCEED;
 }
 
@@ -259,6 +269,8 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     int flags = SRV_KEY_FLAGS_BRIDGE; /* This is bridge */
     int check=5;  /* Connection check interval, seconds */
     int periodic_zero = 0; /* send zero length messages periodically */
+    int periodic_clock = BR_PERIODIC_CLOCK_SND; /* Send clock sync periodically */
+    
     int recv_activity_timeout = EXFAIL;
     int thpoolcfg = 0;
     NDRX_LOG(log_debug, "tpsvrinit called");
@@ -267,12 +279,27 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.timediff = 0;
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
+    G_bridge_cfg.max_roundtrip = BR_MAX_ROUNDTRIP;
+    
+    
+    /* init the spinlock... */
+    if (EXSUCCEED!=(ret=pthread_spin_init(&G_bridge_cfg.timediff_lock, PTHREAD_PROCESS_PRIVATE)))
+    {
+        NDRX_LOG(log_error, "Failed to init spinlock: %s", strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:k:K:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
         {
+            case 'k':
+                G_bridge_cfg.max_roundtrip = atol(optarg);
+                break;
+            case 'K':
+                periodic_clock = atoi(optarg);
             case 'r':
                 NDRX_LOG(log_debug, "Will send refersh to node.");
                 /* Will send refersh */
@@ -372,6 +399,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE;
     }
     
+    NDRX_LOG(log_debug, "Bridge clock sync rountrip: %ld ms", G_bridge_cfg.max_roundtrip);
+    NDRX_LOG(log_debug, "Bridge clock sync period: %d s", periodic_clock);
+    
+    
     NDRX_LOG(log_warn, "Threadpool size set to: from-net=%d to-net=%d (cfg=%d)",
             G_bridge_cfg.threadpoolsize, G_bridge_cfg.threadpoolsize, thpoolcfg);
     
@@ -415,14 +446,14 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         
     /* Install call-backs */
     exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, 
-            br_disconnected, br_snd_zero_len);
+            br_disconnected, br_snd_zero_len, br_snd_clock_sync);
     
     ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
     
     /* Then configure the lib - we will have only one client session! */
     if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
         NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero,
-            recv_activity_timeout))
+            recv_activity_timeout, periodic_clock))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");
         EXFAIL_OUT(ret);
@@ -545,6 +576,8 @@ void NDRX_INTEGRA(tpsvrdone)(void)
         exnet_close_shut(&G_bridge_cfg.net);
     }
     
+    /* terminate spinlock.. */
+    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

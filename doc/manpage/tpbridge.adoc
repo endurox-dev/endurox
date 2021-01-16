@@ -131,6 +131,19 @@ Number of attempts to send message to local queue, if on pervious attempt queue
 was full. The first attempt is done in real time, any further (if this flag allows)
 are performed with 'CONNECTION_CHECK_SEC' interval. Default value is *3*.
 
+[*-k* 'CLOCKSYNC_ROUNDTRIP']::
+Maximum periodic clock sync message rountrip from local host to remote host nad
+back in milliseconds for accepting the remote hosts monontonic clock value 
+for time adjustments. If roundtrip time for clock request is greater than this
+value, the response with remote hosts monotonic clock value is ignored. 
+Default is *200*.
+
+[*-K* 'CLOCKSYNC_PERIOD']::
+Number of seconds to send the request from clock synchronization. Value *0* disables
+this functionality. Default value is *600*. Checking is performed with
+the granularity of the 'CONNECTION_CHECK_SEC'.
+
+
 EXIT STATUS
 -----------
 *0*::

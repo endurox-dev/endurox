@@ -278,8 +278,12 @@ expublic int sv_serve_call(int *service, int *status)
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, client timeout = %d s", call_age, call->clttout);
+        NDRX_LOG(log_error, "Received call already expired! "
+                "call age = %ld s, client timeout = %d s, caller: %s",
+                call_age, call->clttout, call->my_id);
+        userlog("Received call already expired! "
+                "call age = %ld s, client timeout = %d s, caller: %s",
+                 call_age, call->clttout, call->my_id);
         *status=EXFAIL;
         goto out;
     }
@@ -543,8 +547,13 @@ expublic int sv_serve_connect(int *service, int *status)
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_warn, "Received call already expired! "
-                "call age = %ld s, client timeout = %d s", call_age, call->clttout);
+        NDRX_LOG(log_warn, "Received connect already expired! "
+                "call age = %ld s, client timeout = %d s, caller: %s",
+                call_age, call->clttout, call->my_id);
+
+        userlog("Received connect already expired! "
+                "call age = %ld s, client timeout = %d s, caller: %s",
+                call_age, call->clttout, call->my_id);
         *status=EXFAIL;
         goto out;
     }
@@ -805,7 +814,10 @@ expublic int sv_server_request(char *buf, int len)
         case ATMI_COMMAND_CONNRPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-                NDRX_LOG(log_warn, "Dropping unsolicited/event reply "
+                NDRX_LOG(log_error, "Dropping unsolicited/event reply "
+                                        "cd: %d callseq: %u timestamp: %d",
+                        call->cd, call->callseq, call->timestamp);
+                userlog("Dropping unsolicited/event reply "
                                         "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
                 /* Register as completed (if not cancelled) */
@@ -815,12 +827,14 @@ expublic int sv_server_request(char *buf, int len)
         case ATMI_COMMAND_TPREPLY:
             {
                 tp_command_call_t *call = (tp_command_call_t*)G_server_conf.last_call.buf_ptr;
-                NDRX_LOG(log_warn, "Dropping unsolicited reply "
-                                        "cd: %d callseq: %u timestamp: %d",
+                NDRX_LOG(log_error, "Dropping unsolicited reply "
+                                    "cd: %d callseq: %u timestamp: %d",
                         call->cd, call->callseq, call->timestamp);
-                
                 NDRX_DUMP(log_error, "Command content", G_server_conf.last_call.buf_ptr,  
                         G_server_conf.last_call.len);
+                userlog("Dropping unsolicited reply "
+                                    "cd: %d callseq: %u timestamp: %d",
+                        call->cd, call->callseq, call->timestamp);
                 
                 ndrx_dump_call_struct(log_error, call);
             }
