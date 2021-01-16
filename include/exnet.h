@@ -99,6 +99,10 @@ struct exnetcon
     int periodic_zero;              /**< send zero length message in seconds*/
     int recv_activity_timeout;      /**< max time into which we must rcv something */
     
+    ndrx_stopwatch_t periodic_stopwatch; /**< Time interval for clocks             */
+    int periodic_clock_time;              /**< Send clock sync periodically, sec    */
+    
+    
     ndrx_stopwatch_t last_rcv;      /**< Stop watch from last receive from soc */
     ndrx_stopwatch_t last_snd;      /**< Stop watch from last send to soc */
     
@@ -118,6 +122,7 @@ struct exnetcon
     int (*p_connected)(exnetcon_t *net); 	/**< Callback on even when we are connected */
     int (*p_disconnected)(exnetcon_t *net); 	/**< Callback on even when we are disconnected */
     int (*p_snd_zero_len)(exnetcon_t *net); 	/**< Callback for sending zero len msg */
+    int (*p_snd_clock_sync)(exnetcon_t *net); 	/**< Callback for sending clock sync msg */
     
     /* Stuff for linked list... */
     exnetcon_t *next, *prev;
@@ -137,11 +142,12 @@ extern int exnet_periodic(void);
 
 extern int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char *buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
-                int (*p_snd_zero_len)(exnetcon_t *net));
+                int (*p_snd_zero_len)(exnetcon_t *net),
+                int (*p_snd_clock_sync)(exnetcon_t *net));
 
 extern int exnet_configure(exnetcon_t *net, int rcvtimeout, char *addr, short port, 
         int len_pfx, int is_server, int backlog, int max_cons, 
-        int periodic_zero, int recv_activity_timeout);
+        int periodic_zero, int recv_activity_timeout, int periodic_clock);
 
 extern int exnet_is_connected(exnetcon_t *net);
 extern int exnet_close_shut(exnetcon_t *net);

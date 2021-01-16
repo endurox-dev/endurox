@@ -314,7 +314,13 @@ extern "C" {
 
 
 #define PQ_LEN                  12        /**< The len of last print queue data */    
-#define EX_ENV_MAX              4096      /**< max env name/value size */          
+#define EX_ENV_MAX              4096      /**< max env name/value size */
+    
+
+#define NDRX_BRCLOCK_MODE_ASYNC       1   /**< Async clock data               */
+#define NDRX_BRCLOCK_MODE_REQ         2   /**< Request for clock data         */
+#define NDRX_BRCLOCK_MODE_RSP         3   /**< Response clock data            */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -550,6 +556,10 @@ typedef struct
     /* Clock sync */
     command_call_t call;
     ndrx_stopwatch_t time;
+    int mode;           /**< 1 - async, 2 - request, 3 - reply                      */
+    long orig_seq;           /**< sequence number for the request (if with reply         */
+    int orig_nodeid;    /**< originator of the message (or caller in case of reply  */
+    time_t orig_timestamp;/**< Originatic clock (for the reply match)               */
 } cmd_br_time_sync_t;
 
 /**

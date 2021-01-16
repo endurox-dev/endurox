@@ -57,9 +57,12 @@ extern "C" {
                     EXFAIL_OUT(ret);\
                 } \
          }
+#define BR_MAX_ROUNDTRIP        200 /**< Allow 200 ms roundtrip for time default for timesync */
+#define BR_PERIODIC_CLOCK_SND   600 /**< Send clocks every 10 minutes         */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/*
+
+/**
  * Bridge ndrx_config.handler
  */
 typedef struct
@@ -68,7 +71,13 @@ typedef struct
     exnetcon_t net;               /**< Network handler, might be client or server...  */
     exnetcon_t *con;              /**< Real working connection  */
     char svc[XATMI_SERVICE_NAME_LENGTH+1];  /**< Service name used by this bridge */
-    long long timediff;           /**< Bridge time correction       */
+    
+    long long timediff;                 /**< Bridge time correction           */
+    ndrx_stopwatch_t timediff_ourt;     /**< Our stopwatch value              */
+    pthread_spinlock_t timediff_lock;   /**< diff read/write fast update      */
+    long timediff_roundtrip;       /**< roundript ms for time data ping echo  */
+    long max_roundtrip;            /**< Max allowed roundtrip for tdiff       */
+    
     int common_format;            /**< Common platform format. */
     char gpg_recipient[33];       /**< PGP Encryption recipient */
     char gpg_signer[33];          /**< PGP Encryption signer */
@@ -133,7 +142,7 @@ extern int br_process_msg(exnetcon_t *net, char *buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
 
 extern int br_calc_clock_diff(command_call_t *call);
-extern int br_send_clock(void);
+extern int br_send_clock(int mode, cmd_br_time_sync_t *rcv);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
