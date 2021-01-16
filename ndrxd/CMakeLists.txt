@@ -90,6 +90,7 @@ add_executable (ndrxd   ndrxd.c
                         cmd_dping.c
                         reloadonchange.c
                         ${ADDSANITY1}
+                        cmd_blist.c
             )
 
 # Link the executable to the UBF library & others...
