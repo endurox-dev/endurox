@@ -289,27 +289,28 @@ expublic int sv_serve_call(int *service, int *status,
     
     call_age = ndrx_stopwatch_get_delta_sec(&call->timer);
 
-    NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d (id: %d%d) callseq: %u, "
+    NDRX_LOG(log_debug, "got call, cd: %d timestamp: %d callseq: %u, "
 			"svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
                         " reply_to: %s, clttout: %d",
-                    	call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, 
+                    	call->cd, call->timestamp, call->callseq, 
 			call->name, call->flags, call_age, call->data_len,
                         call->my_id, call->reply_to, call->clttout);
     
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_error, "Received call already expired!  call age = %ld s, client timeout = %d "
-                        "cd: %d timestamp: %d (id: %d%d) callseq: %u, "
-			            "svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
-                        " reply_to: %s, call_stack: %s",
-                        call_age, call->clttout,
-                    	call->cd, call->timestamp, call->cd, call->timestamp, call->callseq, 
-			            call->name, call->flags, call_age, call->data_len,
-                        call->my_id, call->reply_to, call->callstack);
-        userlog("Received call already expired! "
-                "call age = %ld s, client timeout = %d s, caller: %s",
-                 call_age, call->clttout, call->my_id);
+        NDRX_LOG(log_error, "Recieved expired call - drop, cd: %d timestamp: %d callseq: %u, "
+		    "svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
+                        " reply_to: %s, clttout: %d",
+                    	call->cd, call->timestamp, call->callseq, 
+		    call->name, call->flags, call_age, call->data_len,
+                        call->my_id, call->reply_to, call->clttout);
+        userlog("Recieved expired call - drop, cd: %d timestamp: %d callseq: %u, "
+		    "svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
+                        " reply_to: %s, clttout: %d",
+                    	call->cd, call->timestamp, call->callseq, 
+		    call->name, call->flags, call_age, call->data_len,
+                        call->my_id, call->reply_to, call->clttout);
         *status=EXFAIL;
         goto out;
     }
@@ -589,7 +590,7 @@ expublic int sv_serve_connect(int *service, int *status,
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_warn, "Received connect already expired! "
+        NDRX_LOG(log_error, "Received connect already expired! "
                 "call age = %ld s, client timeout = %d s, caller: %s",
                 call_age, call->clttout, call->my_id);
 
