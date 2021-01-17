@@ -57,7 +57,7 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 # Generate library from our source files
 add_library (tpadm STATIC ../libatmisrv/rawmain_integra.c
             tpadmerror.c client.c snapshoot.c client.c domain.c machine.c
-            queue.c server.c service.c commons.c svcgrp.c)
+            queue.c server.c service.c commons.c svcgrp.c brcon.c)
 
 
 ############################# Executables ######################################

@@ -85,7 +85,7 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     char tmpbuf[1024];
     BFLDLEN flen;
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
-    BFLDID fldid = 0;
+    long fldid = 0;
     long error_code = 0;
     ndrx_adm_class_map_t *clazz_descr;
     ndrx_growlist_t table;
@@ -203,56 +203,56 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             EXFAIL_OUT(ret);
         }
         
+	    if (first)
+	    {
+		    /* print headers.. for selected class ... */
+		    for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
+		    {
+		        long typ;
+		        
+		        if (machine_fmt)
+		        {
+		            fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
+		        }
+		        else
+		        {
+		            /* Load into linked list... */
+		            if (EXSUCCEED!=ndrx_tab_add_col(&table, i, 
+		                    clazz_descr->fields_map[i].name))
+		            {
+		                fprintf(stderr, "Failed to prepare results\n");
+		            }
+		            
+		            typ = Bfldtype(clazz_descr->fields_map[i].fid);
+		            
+		            if (TA_DOMAINID==clazz_descr->fields_map[i].fid ||
+		                    TA_LMID==clazz_descr->fields_map[i].fid)
+		            {
+		                /* Enduro/X machine id is number */
+		                typ=BFLD_SHORT;
+		            }
+		            
+		            /* set column types */
+		            if (EXSUCCEED!=ndrx_growlist_add(&coltypes, (char *)&typ, 
+		                    coltypes.maxindexused+1))
+		            {
+		                NDRX_LOG(log_error, "Failed to add column type code");
+		                fprintf(stderr, "Failed to add column type code\n");
+		                EXFAIL_OUT(ret);
+		            }
+		        }
+		    }
+		
+		    if (machine_fmt)
+		    {
+		        fprintf(stderr, "\n");
+		    }
+		
+		    first = EXFALSE;
+	    }
+
         if (cnt > 0)
         {
-            if (first)
-            {
-                /* print headers.. for selected class ... */
-                for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
-                {
-                    long typ;
-                    
-                    if (machine_fmt)
-                    {
-                        fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
-                    }
-                    else
-                    {
-                        /* Load into linked list... */
-                        if (EXSUCCEED!=ndrx_tab_add_col(&table, i, 
-                                clazz_descr->fields_map[i].name))
-                        {
-                            fprintf(stderr, "Failed to prepare results\n");
-                        }
-                        
-                        typ = Bfldtype(clazz_descr->fields_map[i].fid);
-                        
-                        if (TA_DOMAINID==clazz_descr->fields_map[i].fid ||
-                                TA_LMID==clazz_descr->fields_map[i].fid)
-                        {
-                            /* Enduro/X machine id is number */
-                            typ=BFLD_SHORT;
-                        }
-                        
-                        /* set column types */
-                        if (EXSUCCEED!=ndrx_growlist_add(&coltypes, (char *)&typ, 
-                                coltypes.maxindexused+1))
-                        {
-                            NDRX_LOG(log_error, "Failed to add column type code");
-                            fprintf(stderr, "Failed to add column type code\n");
-                            EXFAIL_OUT(ret);
-                        }
-                    }
-                }
-                
-                if (machine_fmt)
-                {
-                    fprintf(stderr, "\n");
-                }
-                
-                first = EXFALSE;
-            }
-            
             /* print the results on screen... */
             for (i=0; i<cnt; i++)
             {

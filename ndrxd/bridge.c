@@ -517,7 +517,9 @@ expublic void brd_del_svc_from_hash(char *svc)
             0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVSUBS) ||
             0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVUNSUBS) ||
             0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVPOST) ||
-            0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVDOPOST)
+            0==strcmp(svc, NDRX_SYS_SVC_PFX EV_TPEVDOPOST) ||
+            /* no reason to export on other node */
+            0==strcmp(svc, NDRX_SVC_TMIB)
         )
     {
         NDRX_LOG(log_debug, "del: IGNORING %s", svc);
@@ -555,7 +557,9 @@ expublic int brd_add_svc_to_hash(char *svc)
             0==strncmp(svc, NDRX_SYS_SVC_PFX EV_TPEVPOST, 
                                 strlen(NDRX_SYS_SVC_PFX EV_TPEVPOST)) ||
             /* Also have to skip recovery service for bridges. */
-            0==strcmp(svc, NDRX_SYS_SVC_PFX TPRECOVERSVC)
+            0==strcmp(svc, NDRX_SYS_SVC_PFX TPRECOVERSVC) ||
+            
+            0==strcmp(svc, NDRX_SVC_TMIB)
     )
     {
         NDRX_LOG(log_debug, "IGNORING %s", svc);

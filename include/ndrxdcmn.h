@@ -160,8 +160,14 @@ extern "C" {
     
 #define NDRXD_COM_DSLEEP_RQ         70   /**< tprecover ndrxd ping, req, int    */
 #define NDRXD_COM_DSLEEP_RP         71   /**< tprecover ndrxd ping, req, int    */
+    
+#define NDRXD_COM_BLIST_RQ          72   /**< bridge admin queue listing, req, int */
+#define NDRXD_COM_BLIST_RP          73   /**< bridge admin queue listing, rsp int  */
+    
+#define NDRXD_COM_BRCONINFO_RQ      74   /**< return bridge connection infos, req int */
+#define NDRXD_COM_BRCONINFO_RP      75   /**< return bridge connection infos, rsp int */
 
-#define NDRXD_COM_MAX               71
+#define NDRXD_COM_MAX               75
     
 /** This is sqv admin thread shutdown priv */
 #define NDRXD_COM_SVQADMIN_PRIV     NDRX_COM_SVQ_PRIV
@@ -226,6 +232,8 @@ extern "C" {
 #define NDRXD_CALL_TYPE_APPCONFIG       17  /**< Response to appconfig command*/
 #define NDRXD_CALL_TYPE_DPING           18  /**< NDRXD ping response type     */
 #define NDRXD_CALL_TYPE_DSLEEP          19  /**< Put NDRXD in sleep mode      */
+#define NDRXD_CALL_TYPE_BLIST           20  /**< List bridge admin queues     */
+#define NDRXD_CALL_TYPE_BRCONINFO       21  /**< Connection info messages     */
 
 #define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
@@ -327,7 +335,17 @@ extern "C" {
 
 
 #define PQ_LEN                  12        /**< The len of last print queue data */    
-#define EX_ENV_MAX              4096      /**< max env name/value size */          
+#define EX_ENV_MAX              4096      /**< max env name/value size */
+    
+
+#define NDRX_BRCLOCK_MODE_ASYNC       1   /**< Async clock data               */
+#define NDRX_BRCLOCK_MODE_REQ         2   /**< Request for clock data         */
+#define NDRX_BRCLOCK_MODE_RSP         3   /**< Response clock data            */
+
+    
+#define NDRX_CONMODE_ACTIVE         'A'         /**< This is client */
+#define NDRX_CONMODE_PASSIVE        'P'         /**< This is server */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -564,6 +582,10 @@ typedef struct
     /* Clock sync */
     command_call_t call;
     ndrx_stopwatch_t time;
+    int mode;           /**< 1 - async, 2 - request, 3 - reply                      */
+    long orig_seq;           /**< sequence number for the request (if with reply         */
+    int orig_nodeid;    /**< originator of the message (or caller in case of reply  */
+    time_t orig_timestamp;/**< Originatic clock (for the reply match)               */
 } cmd_br_time_sync_t;
 
 /**
@@ -646,6 +668,36 @@ typedef struct
     int svc_count;        /**< count of services (for belloow array)*/
     command_reply_psc_det_t svcdet[0];
 } command_reply_psc_t;
+
+/**
+ * Queue list 
+ */
+typedef struct
+{
+    command_reply_t rply;
+    char qstr[NDRX_MAX_Q_SIZE+1];  /**< Queueu name                    */
+} command_reply_blist_t;
+
+
+/**
+ * Bridge infos
+ */
+typedef struct
+{
+    command_reply_t rply;
+    long locnodeid; /**< local node id                      */
+    int srvid;      /**< Server id generating resposne      */
+    long remnodeid; /**< remove node id                     */
+    char mode;      /**< Connection mode                    */   
+    int fd;         /**< socket FD number                   */
+    
+    /* Clock infos: */
+    long lastsync;  /**< last sync time ago (seconds)       */
+    long timediffs; /**< time diff in seconds between hosts */
+    long roundtrip; /**< roundtrip in milliseconds          */
+    
+} command_reply_brconinfo_t;
+
 
 /**
  * Reply for ppm (print process model) command
