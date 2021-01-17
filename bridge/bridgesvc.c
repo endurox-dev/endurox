@@ -125,7 +125,7 @@ expublic int br_connected(exnetcon_t *net)
     NDRX_LOG(log_debug, "Net=%p", G_bridge_cfg.net);
     
     /* Send our clock to other node. */
-    if (EXSUCCEED==br_send_clock())
+    if (EXSUCCEED==br_send_clock(NDRX_BRCLOCK_MODE_ASYNC, NULL))
     {
         ret=br_send_status(EXTRUE);
     }
@@ -187,6 +187,16 @@ exprivate int br_snd_zero_len(exnetcon_t *net)
      */
     ndrx_thpool_add_work2(G_bridge_cfg.thpool_tonet, (void *)br_snd_zero_len_th, 
             (void *)net, NDRX_THPOOL_ONEJOB, 0);
+    return EXSUCCEED;
+}
+
+/**
+ * Send periodic clocks
+ * @return EXUSCCEED
+ */
+exprivate int br_snd_clock_sync(exnetcon_t *net)
+{
+    br_send_clock(NDRX_BRCLOCK_MODE_REQ, NULL);
     return EXSUCCEED;
 }
 
@@ -282,6 +292,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.threadpoolbufsz=EXFAIL;
     G_bridge_cfg.qfullaction = EXFAIL;
     G_bridge_cfg.qfullactionsvc = EXFAIL;
+    G_bridge_cfg.net.periodic_clock_time = BR_PERIODIC_CLOCK_SND; /* Send clock sync periodically */
     
     /* Parse command line  */
     while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:q:L:M:B:m:A:")) != -1)
@@ -289,6 +300,12 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
         {
+            case 'k':
+                G_bridge_cfg.max_roundtrip = atol(optarg);
+                break;
+            case 'K':
+                G_bridge_cfg.net.periodic_clock_time = atoi(optarg);
+                break;
             case '6':
                 NDRX_LOG(log_debug, "Using IPv6 addresses");
                 G_bridge_cfg.net.is_ipv6=EXTRUE;
@@ -581,7 +598,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Install call-backs */
     exnet_install_cb(&G_bridge_cfg.net, br_process_msg, br_connected, 
-            br_disconnected, br_snd_zero_len);
+            br_disconnected, br_snd_zero_len, br_snd_clock_sync);
     
     ndrx_set_report_to_ndrxd_cb(br_report_to_ndrxd_cb);
     

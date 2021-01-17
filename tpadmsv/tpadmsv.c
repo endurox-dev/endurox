@@ -62,7 +62,8 @@ expublic ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
 
 /*---------------------------Prototypes---------------------------------*/
 
-expublic char ndrx_G_svcnm2[MAXTIDENT+1]; /** our service name, per instance. */
+expublic char ndrx_G_svcnm_node[MAXTIDENT+1]; /**< node based entry */
+expublic char ndrx_G_svcnm2[MAXTIDENT+1]; /**< our service name, per instance. */
 
 /**
  * MIB Service
@@ -376,8 +377,11 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_LOG(log_info, "Cursor housekeep: %d sec", 
             ndrx_G_adm_config.scantime);
     
-    snprintf(ndrx_G_svcnm2, sizeof(ndrx_G_svcnm2), NDRX_SVC_TMIBNODE, 
+    snprintf(ndrx_G_svcnm2, sizeof(ndrx_G_svcnm2), NDRX_SVC_TMIBNODESV, 
             tpgetnodeid(), tpgetsrvid());
+    
+    snprintf(ndrx_G_svcnm_node, sizeof(ndrx_G_svcnm_node), NDRX_SVC_TMIBNODE, 
+            tpgetnodeid());
 
     if (EXSUCCEED!=tpadvertise(NDRX_SVC_TMIB, MIB))
     {
@@ -389,8 +393,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialize [%s]!", ndrx_G_svcnm2);
         EXFAIL_OUT(ret);
     }
+    else if (EXSUCCEED!=tpadvertise(ndrx_G_svcnm_node, MIB))
+    {
+        NDRX_LOG(log_error, "Failed to initialize [%s]!", ndrx_G_svcnm_node);
+        EXFAIL_OUT(ret);
+    }
     
-        /* Register timer check.... */
+    /* Register timer check.... */
     if (EXSUCCEED==ret &&
             EXSUCCEED!=tpext_addperiodcb(ndrx_G_adm_config.scantime, 
             ndrx_adm_curs_housekeep))

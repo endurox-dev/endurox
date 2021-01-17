@@ -147,7 +147,20 @@ static cproto_t M_command_call_x[] =
 static cproto_t M_cmd_br_time_sync_x[] = 
 {
     {TST, 0x10A5,  "call",       OFSZ0,                              EXF_NONE,   XINC, 1, PMSGMAX, M_command_call_x},
+<<<<<<< HEAD
     {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 40, 40},
+||||||| merged common ancestors
+    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 20, 20},
+=======
+    {TST, 0x10AF,  "time",       OFSZ(cmd_br_time_sync_t,time),      EXF_NTIMER, XFLD, 20, 20},
+    
+    /* Support #623 */
+    {TST, 0x10B0,  "mode",       OFSZ(cmd_br_time_sync_t,mode),             EXF_INT, XFLD, 1, 1},
+    {TST, 0x10B1,  "seq",        OFSZ(cmd_br_time_sync_t,orig_seq),         EXF_LONG,XFLD, 1, 20},
+    {TST, 0x10B2,  "orig_nodeid",OFSZ(cmd_br_time_sync_t,orig_nodeid),      EXF_INT, XFLD, 1, 3},
+    {TST, 0x11B3,  "orig_timestamp", OFSZ(cmd_br_time_sync_t,orig_timestamp),EXF_LONG,XFLD, 1, 20},
+    
+>>>>>>> master
     {TST, EXFAIL}
 };
 

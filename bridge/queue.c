@@ -368,14 +368,28 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
     else if (msg_type==BR_NET_CALL_MSG_TYPE_NDRXD)
     {
         command_call_t *call = (command_call_t *)buf;
-        NDRX_LOG(log_debug, "Got from Q NDRXD message");
-        /* I guess we can forward these directly but firstly check the type
-         * we do not want to send any spam to other machine, do we?
-         * Hmm but lets try out?
-         */
-        if (EXSUCCEED!=br_send_to_net(buf, len, msg_type, call->command))
+        
+        /* request for clock infos */
+        if (NDRXD_COM_BRCONINFO_RQ==call->command)
         {
-            EXFAIL_OUT(ret);
+            NDRX_LOG(log_debug, "Clock infos request");
+            
+            if (EXSUCCEED!=br_coninfo(call))
+            {
+                EXFAIL_OUT(ret);
+            }
+        }
+        else
+        {
+            NDRX_LOG(log_debug, "Got from Q NDRXD message");
+            /* I guess we can forward these directly but firstly check the type
+             * we do not want to send any spam to other machine, do we?
+             * Hmm but lets try out?
+             */
+            if (EXSUCCEED!=br_send_to_net(buf, len, msg_type, call->command))
+            {
+                EXFAIL_OUT(ret);
+            }
         }
     }
 out:

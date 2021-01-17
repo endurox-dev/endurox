@@ -75,7 +75,8 @@
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/bridge-dom2.log -r</sysopt>
-            <appopt>-f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0</appopt>
+	    <!-- Do not accept any roundrip, .e.g -1 -->
+            <appopt>-f -n1 -r -i 0.0.0.0 -p 20003 -tP -z30 -P0 -K1 -k-1</appopt>
         </server>
         
         <!-- Disconnected member node -->

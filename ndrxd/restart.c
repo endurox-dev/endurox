@@ -82,7 +82,7 @@ expublic int do_restart_actions(void)
         goto out;
     }
 
-    sprintf(server_prefix, NDRX_ADMIN_FMT_PFX, G_sys_config.qprefix);
+    snprintf(server_prefix, sizeof(server_prefix), NDRX_ADMIN_FMT_PFX, G_sys_config.qprefix);
     server_prefix_len=strlen(server_prefix);
     NDRX_LOG(log_debug, "server_prefix=[%s]/%d", server_prefix, 
                         server_prefix_len);

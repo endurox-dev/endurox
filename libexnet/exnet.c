@@ -1125,11 +1125,12 @@ out:
  * @param p_disconnected	called when we are disconnected
  * @param p_send_zero_len callback func for zero length msg sending
  *  (normally via thread pool)
+ * @param p_snd_clock_sync periodic clock sync msg callback
  * @return EXSUCCEED 
 */
 expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *net, char **buf, int len),
 		int (*p_connected)(exnetcon_t *net), int (*p_disconnected)(exnetcon_t *net),
-                int (*p_snd_zero_len)(exnetcon_t *net))
+                int (*p_snd_zero_len)(exnetcon_t *net), int (*p_snd_clock_sync)(exnetcon_t *net))
 {
     int ret=EXSUCCEED;
 
@@ -1137,6 +1138,7 @@ expublic int exnet_install_cb(exnetcon_t *net, int (*p_process_msg)(exnetcon_t *
     net->p_connected = p_connected;
     net->p_disconnected = p_disconnected;
     net->p_snd_zero_len = p_snd_zero_len;
+    net->p_snd_clock_sync = p_snd_clock_sync;
 
 out:
     return ret;

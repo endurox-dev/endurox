@@ -199,7 +199,8 @@ expublic int ndrx_adm_svcgrp_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     M_cursnew = cursnew;
     cursnew->map = ndrx_G_svcgrp_map;
     
-    if (EXSUCCEED!=ndrx_adm_psc_call(ndrx_adm_svcgrp_proc_list))
+    if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_svcgrp_proc_list, 
+            NDRXD_COM_PSC_RQ, NDRXD_COM_PSC_RP, ndrx_get_G_atmi_conf()->ndrxd_q_str))
     {
         NDRX_LOG(log_error, "Failed to call PSC");
         EXFAIL_OUT(ret);

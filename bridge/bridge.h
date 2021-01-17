@@ -58,7 +58,6 @@ extern "C" {
                     EXFAIL_OUT(ret);\
                 } \
          }
-    
 #define DEFAULT_QUEUE_SIZE          100    /**< max nr of queued messages dflt */
 #define DEFAULT_QUEUE_MAXSLEEP      150    /**< Max number milliseconds to sleep */
 #define DEFAULT_QUEUE_MINSLEEP      40     /**< Mininum sleep between attempts */
@@ -77,9 +76,13 @@ extern "C" {
 #define QUEUE_FLAG_ACTION_BLKDROP       2 /* Global queue full - block, svc queue full - drop */
 #define QUEUE_FLAG_ACTION_DROPDROP      3 /* Global queue full - drop, svc queue full - drop  */
     
+#define BR_MAX_ROUNDTRIP        200 /**< Allow 200 ms roundtrip for time default for timesync   */
+#define BR_PERIODIC_CLOCK_SND   600 /**< Send clocks every 10 minutes                           */
+#define BR_ADMININFO_TOUT       3   /**< Allow 3 seconds on full reply queue for metrics..      */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-/*
+
+/**
  * Bridge ndrx_config.handler
  */
 typedef struct
@@ -88,7 +91,13 @@ typedef struct
     exnetcon_t net;               /**< Network handler, might be client or server...  */
     exnetcon_t *con;              /**< Real working connection  */
     char svc[XATMI_SERVICE_NAME_LENGTH+1];  /**< Service name used by this bridge */
-    long long timediff;           /**< Bridge time correction       */
+    
+    long long timediff;                 /**< Bridge time correction           */
+    ndrx_stopwatch_t timediff_ourt;     /**< Our stopwatch value              */
+    pthread_spinlock_t timediff_lock;   /**< diff read/write fast update      */
+    long timediff_roundtrip;       /**< roundript ms for time data ping echo  */
+    long max_roundtrip;            /**< Max allowed roundtrip for tdiff       */
+    
     int common_format;            /**< Common platform format. */
     int qretries;                 /**< Queue Resubmit retries */
     int qsize;                    /**< Number of messages stored in memory before blocking */
@@ -104,6 +113,8 @@ typedef struct
     int threadpoolsize;           /**< Thread pool size */
     int check_interval;           /**< connection checking interval             */
     threadpool thpool_tonet;      /**< Thread pool by it self */
+    
+    int is_server;                /**< Is server a client ? */
     /* Support #502, we get deadlock when both nodes all threads attempt to send
      * and there is no one who performs receive, all sockets become full */
     threadpool thpool_fromnet;    /**< Thread pool by it self */
@@ -174,7 +185,8 @@ extern int br_process_msg(exnetcon_t *net, char **buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
 
 extern int br_calc_clock_diff(command_call_t *call);
-extern int br_send_clock(void);
+extern int br_coninfo(command_call_t *call);
+extern int br_send_clock(int mode, cmd_br_time_sync_t *rcv);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 
 extern int br_tpcall_pushstack(tp_command_call_t *call);
