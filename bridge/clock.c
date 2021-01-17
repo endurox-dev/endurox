@@ -200,7 +200,7 @@ expublic int br_calc_clock_diff(command_call_t *call)
     
     if (load_time)
     {
-        diff=ndrx_stopwatch_diff(&their_time->time, &our_time);
+        diff=ndrx_stopwatch_diff(&our_time, &their_time->time);
     
         NDRX_LOG(log_warn, "Monotonic clock time correction between us "
                 "and node %d is: %lld msec (%d), roundtrip: %ld ms, seq: %ld, data mode: %d", 
@@ -303,11 +303,11 @@ expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 #endif
     if (is_out)
     {
-        ndrx_stopwatch_plus(&call->timer, diff);
+        ndrx_stopwatch_minus(&call->timer, diff);
     }
     else
     {
-        ndrx_stopwatch_minus(&call->timer, diff);
+        ndrx_stopwatch_plus(&call->timer, diff);
     }
         
     NDRX_LOG(log_debug, "Clock diff: %lld ms", diff);
