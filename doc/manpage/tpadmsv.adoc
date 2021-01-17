@@ -32,7 +32,10 @@ and is used only to provide a solid framework for gathering system information.
 
 Every instance of *tmadmsv* will advertise following list of services:
 
-1. .TMIB - command load balanced service for informational services
+1. .TMIB - command load balanced service for informational services. This is not
+exported over the *tpbridge(8)*.
+
+2. .TMIB-<NODE ID> - used for initiating the requests over the *tpbridge(8)*.
 
 2. .TMIB-<NODE ID>-<SERVER ID> - particular instance for fetching the next window
 of cursor data.

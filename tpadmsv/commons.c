@@ -73,6 +73,7 @@ expublic ndrx_adm_class_map_t ndrx_G_class_map[] =
     ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get, ndrx_G_server_map}
     ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get, ndrx_G_service_map}
     ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get, ndrx_G_svcgrp_map}
+    ,{NDRX_TA_CLASS_BRCON,      "BC",       &ndrx_adm_brcon_get, ndrx_G_brcon_map}
     ,{NULL}
 };
 
@@ -81,11 +82,15 @@ expublic ndrx_adm_class_map_t ndrx_G_class_map[] =
 /**
  * Generic ppm call
  * @param p_rsp_process callback of ppm
+ * @param req_cmd NDRXD_COM_*_RQ
+ * @param rsp_cmd NDRXD_COM_*_RP
+ * @param dst_qstr dest queue ndrxd, bridge, etc...
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len))
+expublic int ndrx_adm_list_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len), 
+        int req_cmd, int resp_cmd, char *dst_qstr)
 {
-        int ret = EXSUCCEED;
+    int ret = EXSUCCEED;
     command_call_t call;
     gencall_args_t call_args[NDRXD_COM_XAPPM_RQ+2];
     
@@ -93,15 +98,15 @@ expublic int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size
     
     memset(&call, 0, sizeof(call));
     
-    call_args[NDRXD_COM_XAPPM_RQ].ndrxd_cmd = NDRXD_COM_XAPPM_RQ;
-    call_args[NDRXD_COM_XAPPM_RQ].p_rsp_process = p_rsp_process;
-    call_args[NDRXD_COM_XAPPM_RQ].p_put_output = NULL;
-    call_args[NDRXD_COM_XAPPM_RQ].need_reply = EXTRUE;
+    call_args[req_cmd].ndrxd_cmd = req_cmd;
+    call_args[req_cmd].p_rsp_process = p_rsp_process;
+    call_args[req_cmd].p_put_output = NULL;
+    call_args[req_cmd].need_reply = EXTRUE;
     
-    call_args[NDRXD_COM_XAPPM_RP].ndrxd_cmd = NDRXD_COM_XAPPM_RP;
-    call_args[NDRXD_COM_XAPPM_RP].p_rsp_process = NULL;
-    call_args[NDRXD_COM_XAPPM_RP].p_put_output = NULL;
-    call_args[NDRXD_COM_XAPPM_RP].need_reply = EXFALSE;
+    call_args[resp_cmd].ndrxd_cmd = resp_cmd;
+    call_args[resp_cmd].p_rsp_process = NULL;
+    call_args[resp_cmd].p_put_output = NULL;
+    call_args[resp_cmd].need_reply = EXFALSE;
 
     /* set queue to blocked */
     memset(&org_attr, 0, sizeof(org_attr));
@@ -129,13 +134,13 @@ expublic int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size
 
     /* This will scan the service list and return the machines connected */
         /* Then get listing... */
-    ret = cmd_generic_listcall(NDRXD_COM_XAPPM_RQ, NDRXD_SRC_SERVER,
+    ret = cmd_generic_listcall(req_cmd, NDRXD_SRC_SERVER,
                         NDRXD_CALL_TYPE_GENERIC,
                         &call, sizeof(call),
                         ndrx_get_G_atmi_conf()->reply_q_str,
                         ndrx_get_G_atmi_conf()->reply_q,
                         (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
-                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
+                        dst_qstr /*ndrx_get_G_atmi_conf()->ndrxd_q_str*/,
                         0, NULL,
                         NULL,
                         call_args,
@@ -156,93 +161,7 @@ expublic int ndrx_adm_ppm_call(int (*p_rsp_process)(command_reply_t *reply, size
     
     if (EXSUCCEED!=ret)
     {
-        NDRX_LOG(log_error, "Failed to call `ndrxd' to collect PPM infos");
-        EXFAIL_OUT(ret);
-    }
-    
-out:
-    return ret;
-}
-
-/**
- * PSC Admin call
- * @param p_rsp_process
- * @return 
- */
-expublic int ndrx_adm_psc_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len))
-{
-        int ret = EXSUCCEED;
-    command_call_t call;
-    gencall_args_t call_args[NDRXD_COM_PSC_RQ+2];
-    
-    struct mq_attr new_attr, org_attr;
-    
-    memset(&call, 0, sizeof(call));
-    
-    call_args[NDRXD_COM_PSC_RQ].ndrxd_cmd = NDRXD_COM_PSC_RQ;
-    call_args[NDRXD_COM_PSC_RQ].p_rsp_process = p_rsp_process;
-    call_args[NDRXD_COM_PSC_RQ].p_put_output = NULL;
-    call_args[NDRXD_COM_PSC_RQ].need_reply = EXTRUE;
-    
-    call_args[NDRXD_COM_PSC_RP].ndrxd_cmd = NDRXD_COM_PSC_RP;
-    call_args[NDRXD_COM_PSC_RP].p_rsp_process = NULL;
-    call_args[NDRXD_COM_PSC_RP].p_put_output = NULL;
-    call_args[NDRXD_COM_PSC_RP].need_reply = EXFALSE;
-
-    /* set queue to blocked */
-    memset(&org_attr, 0, sizeof(org_attr));
-    
-    if (EXSUCCEED!=ndrx_mq_getattr(ndrx_get_G_atmi_conf()->reply_q, 
-                &org_attr))
-    {
-        NDRX_LOG(log_error, "Failed to get attr: %s", strerror(errno));
-        EXFAIL_OUT(ret);
-    }
-    
-    memcpy(&new_attr, &org_attr, sizeof(new_attr));
-    new_attr.mq_flags &= ~O_NONBLOCK; /* remove non block flag */
-    
-    if (new_attr.mq_flags!=org_attr.mq_flags)
-    {
-        NDRX_LOG(log_error, "change attr to blocked");
-        if (EXSUCCEED!=ndrx_mq_setattr(ndrx_get_G_atmi_conf()->reply_q, 
-                &new_attr, NULL))
-        {
-            NDRX_LOG(log_error, "Failed to set new attr: %s", strerror(errno));
-            EXFAIL_OUT(ret);
-        }
-    }
-
-    /* This will scan the service list and return the machines connected */
-        /* Then get listing... */
-    ret = cmd_generic_listcall(NDRXD_COM_PSC_RQ, NDRXD_SRC_SERVER,
-                        NDRXD_CALL_TYPE_GENERIC,
-                        &call, sizeof(call),
-                        ndrx_get_G_atmi_conf()->reply_q_str,
-                        ndrx_get_G_atmi_conf()->reply_q,
-                        (mqd_t)EXFAIL,   /* do not keep open ndrxd q open */
-                        ndrx_get_G_atmi_conf()->ndrxd_q_str,
-                        0, NULL,
-                        NULL,
-                        call_args,
-                        EXFALSE,
-                        0);
-    
-    /* set queue back to unblocked. */
-    if (new_attr.mq_flags!=org_attr.mq_flags)
-    {
-        NDRX_LOG(log_error, "change attr to non blocked");
-        if (EXSUCCEED!=ndrx_mq_setattr(ndrx_get_G_atmi_conf()->reply_q, 
-                &org_attr, NULL))
-        {
-            NDRX_LOG(log_error, "Failed to set old attr: %s", strerror(errno));
-            EXFAIL_OUT(ret);
-        }
-    }
-    
-    if (EXSUCCEED!=ret)
-    {
-        NDRX_LOG(log_error, "Failed to call `ndrxd' to collect PPM infos");
+        NDRX_LOG(log_error, "Failed to call `%s' to collect infos", dst_qstr);
         EXFAIL_OUT(ret);
     }
     

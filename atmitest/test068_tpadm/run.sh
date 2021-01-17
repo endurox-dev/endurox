@@ -117,7 +117,7 @@ xadmin start -y || go_out 2
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 echo "Sleep 60 for domain to establish..."
-sleep 60
+sleep 10
 RET=0
 
 xadmin psc
@@ -308,6 +308,41 @@ if [ "X$TESTSVC1G" == "X" ]; then
     echo "TESTSVC1G not found!"
     go_out -26
 fi
+
+
+echo "*** T_BRCON (dom1) ***"
+
+echo "Sleep 20 - have some time sync"
+sleep 20
+
+echo "dom1 does dynamic time-sync"
+
+set_dom1;
+xadmin mibget -c T_BRCON
+xadmin mibget -c T_BRCON -m
+
+LAST_SYNC=`xadmin mibget -c T_BRCON -m | cut -f 6 -d '|'`
+
+if [[ $LAST_SYNC -ge 20 ]]; then
+    echo "Periodic sync does not work ($LAST_SYNC) must be liter than 20!"
+    go_out -26
+fi
+
+echo "*** T_BRCON (dom2) ***"
+
+echo "dom2 does not do dynamic time-sync"
+
+set_dom2;
+xadmin mibget -c T_BRCON
+xadmin mibget -c T_BRCON -m
+
+LAST_SYNC=`xadmin mibget -c T_BRCON -m | cut -f 6 -d '|'`
+
+if [[ $LAST_SYNC -lt 20 ]]; then
+    echo "Last sync liter than 20 ($LAST_SYNC)!"
+    go_out -26
+fi
+
 
 RET=$?
 

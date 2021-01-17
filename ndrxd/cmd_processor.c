@@ -161,7 +161,9 @@ command_map_t M_command_map [] =
     {NDRXD_COM_DPING_RQ,    cmd_dping,         "dping",  ",-1,", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_DPING_RP,    cmd_dummy,         "dping",  ",-1,", 0,NDRXD_CTX_NOCHG},
     {NDRXD_COM_DSLEEP_RQ,   cmd_dsleep,        "dsleep",  ",-1,", 0,NDRXD_CTX_NOCHG},
-    {NDRXD_COM_DSLEEP_RP,   cmd_dummy,         "dsleep",  ",-1,", 0,NDRXD_CTX_NOCHG}
+    {NDRXD_COM_DSLEEP_RP,   cmd_dummy,         "dsleep",  ",-1,", 0,NDRXD_CTX_NOCHG},
+    {NDRXD_COM_BLIST_RQ,    cmd_blist,         "blist",   ",-1,", 0,NDRXD_CTX_NOCHG},
+    {NDRXD_COM_BLIST_RP,    cmd_dummy,         "blist",   "",  0,NDRXD_CTX_NOCHG}
     
 };
 

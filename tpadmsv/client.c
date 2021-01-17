@@ -146,6 +146,7 @@ expublic int ndrx_adm_client_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     /* seems we need to go over twice, because we might get conversational q first */
     LL_FOREACH(qlist,elt)
     {
+        
         /* parse the queue..., extract clients.. */
         
         /* if not print all, then skip this queue */

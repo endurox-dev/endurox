@@ -180,7 +180,8 @@ expublic int ndrx_adm_server_get(char *clazz, ndrx_adm_cursors_t *cursnew, long 
     M_cursnew = cursnew;
     cursnew->map = ndrx_G_server_map;
     
-    if (EXSUCCEED!=ndrx_adm_ppm_call(ndrx_adm_server_proc_list))
+    if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_server_proc_list, 
+            NDRXD_COM_XAPPM_RQ, NDRXD_COM_XAPPM_RP, ndrx_get_G_atmi_conf()->ndrxd_q_str))
     {
         NDRX_LOG(log_error, "Failed to call PPM");
         EXFAIL_OUT(ret);
