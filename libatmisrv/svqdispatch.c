@@ -547,7 +547,7 @@ expublic int sv_serve_connect(int *service, int *status)
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_warn, "Received connect already expired! "
+        NDRX_LOG(log_error, "Received connect already expired! "
                 "call age = %ld s, client timeout = %d s, caller: %s",
                 call_age, call->clttout, call->my_id);
 
