@@ -85,6 +85,8 @@ typedef struct
     int qretries;                 /**< Queue Resubmit retries */
     int threadpoolsize;           /**< Thread pool size */
     threadpool thpool_tonet;      /**< Thread pool by it self */
+    
+    int is_server;                /**< Is server a client ? */
     /* Support #502, we get deadlock when both nodes all threads attempt to send
      * and there is no one who performs receive, all sockets become full */
     threadpool thpool_fromnet;    /**< Thread pool by it self */
@@ -143,7 +145,7 @@ extern int br_process_msg(exnetcon_t *net, char *buf, int len);
 extern int br_send_to_net(char *buf, int len, char msg_type, int command_id);
 
 extern int br_calc_clock_diff(command_call_t *call);
-extern int br_clock_infos(command_call_t *call);
+extern int br_coninfo(command_call_t *call);
 extern int br_send_clock(int mode, cmd_br_time_sync_t *rcv);
 extern void br_clock_adj(tp_command_call_t *call, int is_out);
 

@@ -634,11 +634,11 @@ exprivate int br_got_message_from_q_th(void *ptr, int *p_finish_off)
         command_call_t *call = (command_call_t *)buf;
         
         /* request for clock infos */
-        if (NDRXD_COM_BRCLOCKINFO_RQ==call->command)
+        if (NDRXD_COM_BRCONINFO_RQ==call->command)
         {
             NDRX_LOG(log_debug, "Clock infos request");
             
-            if (EXSUCCEED!=br_clock_infos(call))
+            if (EXSUCCEED!=br_coninfo(call))
             {
                 EXFAIL_OUT(ret);
             }

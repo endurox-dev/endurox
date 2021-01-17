@@ -351,8 +351,8 @@ COMMANDS
 *mibget* [-c <CLASS>] [-m]::
     This returns lists the *tm_mib(5)* objects in command line. The object classes
     are set in -c argument, where possible values are *T_CLIENT*, *T_DOMAIN*,
-    *T_MACHINE*, *T_QUEUE*, *T_SERVER*, *T_SERVICE* and *T_SVCGRP*. The parameter
-    *-m* returns the output in machine readable format.
+    *T_MACHINE*, *T_QUEUE*, *T_SERVER*, *T_SERVICE*, *T_SVCGRP* and *T_BRCON*. 
+    The parameter *-m* returns the output in machine readable format.
 
 *udown* [-y]::
     Remove all System V resources used by user. This includes any of: queues,

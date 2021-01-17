@@ -793,11 +793,13 @@ TA_WSHNAME                       1256  string   -     imported for compatiblity.
 TA_WSPROTO                       1275  long     -     imported for compatiblity...
 TA_XID                           1303  string   -     imported for compatiblity...
 
-TA_LOCNODEID                     1600   long    -     local cluster node id
-TA_REMNODEID                     1601   long    -     remove cluster node id
-TA_EVTIME                        1602   long    -     even time
-TA_TIMEDIFF                      1603   long    -     time difference
-TA_ROUNDTRIP                     1604   long    -     rountrip time
+TA_EX_NODEID                     1600   long    -     local cluster node id
+TA_EX_REMNODEID                  1601   long    -     remove cluster node id
+TA_EX_LASTSYNC                   1602   long    -     when synchronization has happended
+TA_EX_TIMEDIFF                   1603   long    -     time difference
+TA_EX_ROUNDTRIP                  1604   long    -     rountrip time
+TA_EX_FD                         1605   long    -     File descriptor
+TA_EX_CONMODE                    1606   char    -     Connection mode
 
 $#endif
 $/* vim: set ts=4 sw=4 et smartindent: */

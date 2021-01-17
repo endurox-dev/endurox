@@ -124,7 +124,7 @@ extern NDRX_API ndrx_adm_elmap_t ndrx_G_queue_map[];
 extern NDRX_API ndrx_adm_elmap_t ndrx_G_server_map[];
 extern NDRX_API ndrx_adm_elmap_t ndrx_G_service_map[];
 extern NDRX_API ndrx_adm_elmap_t ndrx_G_svcgrp_map[];
-extern NDRX_API ndrx_adm_elmap_t ndrx_G_brclock_map[];
+extern NDRX_API ndrx_adm_elmap_t ndrx_G_brcon_map[];
 /*---------------------------Statics------------------------------------*/
 
 extern ndrx_adm_conf_t ndrx_G_adm_config;   /**< admin server config    */
@@ -142,7 +142,7 @@ extern NDRX_API int ndrx_adm_queue_get(char *clazz, ndrx_adm_cursors_t *cursnew,
 extern NDRX_API int ndrx_adm_server_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 extern NDRX_API int ndrx_adm_service_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 extern NDRX_API int ndrx_adm_svcgrp_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
-extern NDRX_API int ndrx_adm_brclock_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
+extern NDRX_API int ndrx_adm_brcon_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags);
 
 extern NDRX_API int ndrx_adm_list_call(int (*p_rsp_process)(command_reply_t *reply, size_t reply_len),
         int req_cmd, int resp_cmd, char *dst_qstr);

@@ -85,7 +85,7 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     char tmpbuf[1024];
     BFLDLEN flen;
     char msg[MAX_TP_ERROR_LEN+1] = {EXEOS};
-    BFLDID fldid = 0;
+    long fldid = 0;
     long error_code = 0;
     ndrx_adm_class_map_t *clazz_descr;
     ndrx_growlist_t table;
@@ -200,78 +200,74 @@ expublic int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
             fprintf(stderr, "Failed to get TA_MORE: %s\n", Bstrerror(Berror));
             EXFAIL_OUT(ret);
         }
-        
-        if (cnt > 0)
+        if (first)
         {
-            if (first)
+            /* print headers.. for selected class ... */
+            for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
             {
-                /* print headers.. for selected class ... */
-                for (i=0; BBADFLDID!=clazz_descr->fields_map[i].fid; i++)
-                {
-                    if (machine_fmt)
-                    {
-                        fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
-                    }
-                    else
-                    {
-                        /* Load into linked list... */
-                        if (EXSUCCEED!=ndrx_tab_add_col(&table, i, 
-                                clazz_descr->fields_map[i].name))
-                        {
-                            fprintf(stderr, "Failed to prepare results\n");
-                        }
-                    }
-                }
-                
                 if (machine_fmt)
                 {
-                    fprintf(stderr, "\n");
+                    fprintf(stderr, "%s|", clazz_descr->fields_map[i].name);
                 }
-                
-                first = EXFALSE;
+                else
+                {
+                    /* Load into linked list... */
+                    if (EXSUCCEED!=ndrx_tab_add_col(&table, i, 
+                            clazz_descr->fields_map[i].name))
+                    {
+                        fprintf(stderr, "Failed to prepare results\n");
+                    }
+                }
             }
-            
-            /* print the results on screen... */
-            for (i=0; i<cnt; i++)
+
+            if (machine_fmt)
             {
-                for (j=0; BBADFLDID!=clazz_descr->fields_map[j].fid; j++)
-                {
-                    flen = sizeof(tmpbuf);
-                    
-                    if (EXSUCCEED!=CBget(p_ub_rsp, clazz_descr->fields_map[j].fid, 
-                            i, tmpbuf, &flen, BFLD_STRING))
-                    {
-                        
-                        NDRX_LOG(log_error, "Failed to get [%s] at %d occ: %s",
-                                Bfname(clazz_descr->fields_map[j].fid), i, 
-                                Bstrerror(Berror));
-                        /* Bfname resets Berror! */
-                        fprintf(stderr, "Failed to get [%s] at %d occ\n",
-                                Bfname(clazz_descr->fields_map[j].fid), i);
-                        EXFAIL_OUT(ret);
-                    }
-                    
-                    if (machine_fmt)
-                    {
-                        fprintf(stdout, "%s|", tmpbuf);
-                    }
-                    else
-                    {
-                        /* Load into linked list... */
-                        if (EXSUCCEED!=ndrx_tab_add_col(&table, j, tmpbuf))
-                        {
-                            fprintf(stderr, "Failed to prepare results\n");
-                        }
-                    }
-                }
-                
-                if (machine_fmt)
-                {
-                    fprintf(stdout, "\n");
-                }
+                fprintf(stderr, "\n");
             }
+
+            first = EXFALSE;
         }
         
+        /* print the results on screen... */
+        for (i=0; i<cnt; i++)
+        {
+            for (j=0; BBADFLDID!=clazz_descr->fields_map[j].fid; j++)
+            {
+                flen = sizeof(tmpbuf);
+
+                if (EXSUCCEED!=CBget(p_ub_rsp, clazz_descr->fields_map[j].fid, 
+                        i, tmpbuf, &flen, BFLD_STRING))
+                {
+
+                    NDRX_LOG(log_error, "Failed to get [%s] at %d occ: %s",
+                            Bfname(clazz_descr->fields_map[j].fid), i, 
+                            Bstrerror(Berror));
+                    /* Bfname resets Berror! */
+                    fprintf(stderr, "Failed to get [%s] at %d occ\n",
+                            Bfname(clazz_descr->fields_map[j].fid), i);
+                    EXFAIL_OUT(ret);
+                }
+
+                if (machine_fmt)
+                {
+                    fprintf(stdout, "%s|", tmpbuf);
+                }
+                else
+                {
+                    /* Load into linked list... */
+                    if (EXSUCCEED!=ndrx_tab_add_col(&table, j, tmpbuf))
+                    {
+                        fprintf(stderr, "Failed to prepare results\n");
+                    }
+                }
+            }
+
+            if (machine_fmt)
+            {
+                fprintf(stdout, "\n");
+            }
+        }
+
         if (have_more)
         {
             char cursid[MAXTIDENT+1];

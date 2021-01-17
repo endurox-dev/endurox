@@ -870,7 +870,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     
 out:
     /* TODO: Kill conversation if FAILED!!!! */
-    NDRX_LOG(log_debug, "%s: ret= %d cd=%d",  __func__, ret);
+    NDRX_LOG(log_debug, "%s: ret= %d cd=%d",  __func__, ret, cd);
 
     if (EXFAIL!=ret)
     	return cd;

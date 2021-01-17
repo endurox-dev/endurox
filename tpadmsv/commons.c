@@ -73,7 +73,7 @@ expublic ndrx_adm_class_map_t ndrx_G_class_map[] =
     ,{NDRX_TA_CLASS_SERVER,     "SR",       &ndrx_adm_server_get, ndrx_G_server_map}
     ,{NDRX_TA_CLASS_SERVICE,    "SC",       &ndrx_adm_service_get, ndrx_G_service_map}
     ,{NDRX_TA_CLASS_SVCGRP,     "SG",       &ndrx_adm_svcgrp_get, ndrx_G_svcgrp_map}
-    ,{NDRX_TA_CLASS_BRCLOCK,     "SG",       &ndrx_adm_brclock_get, ndrx_G_brclock_map}
+    ,{NDRX_TA_CLASS_BRCON,      "BC",       &ndrx_adm_brcon_get, ndrx_G_brcon_map}
     ,{NULL}
 };
 

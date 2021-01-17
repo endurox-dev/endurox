@@ -66,16 +66,16 @@ exprivate time_t M_timediff_tstamp;      /**< UTC tstamp when msg was sent  for 
 exprivate unsigned long M_seq;         /**< Last sequence sent                          */
 
 /**
- * This returns lock infos to admin requester to have some metrics about
+ * Connection infos
  * bridge internals
  * @param call message from queue
  * @return EXSUCCEED/EXFAIL
  */
-expublic int br_clock_infos(command_call_t *call)
+expublic int br_coninfo(command_call_t *call)
 {
     int ret=EXSUCCEED;
     long long diff;
-    command_reply_brclockinfo_t infos; /* currently one ... */
+    command_reply_brconinfo_t infos; /* currently one ... */
     
     memset(&infos, 0, sizeof(infos)); /* not mission critical, so can set mem */
     
@@ -83,7 +83,7 @@ expublic int br_clock_infos(command_call_t *call)
     infos.rply.magic = NDRX_MAGIC;
     infos.rply.command = call->command+1; /* Make reponse */
     NDRX_LOG(log_debug, "Reply command: %d", infos.rply.command);
-    infos.rply.msg_type = NDRXD_CALL_TYPE_BRBCLOCKINFO;
+    infos.rply.msg_type = NDRXD_CALL_TYPE_BRCONINFO;
     infos.rply.msg_src = NDRXD_SRC_BRIDGE; /* from NDRXD */
     
     /* Response flags, echo back request flags too... */
@@ -93,11 +93,29 @@ expublic int br_clock_infos(command_call_t *call)
     /* have some consistency */
     MUTEX_LOCK_V(M_timediff_lock);
     
-    infos.conseq =0; /* increase with new conns / multi con hanlder */
     infos.lastsync = ndrx_stopwatch_get_delta_sec(&G_bridge_cfg.timediff_ourt);
     infos.locnodeid = tpgetnodeid();
     infos.remnodeid = G_bridge_cfg.nodeid;
+    infos.srvid = tpgetsrvid();
     
+    if (G_bridge_cfg.is_server)
+    {
+        infos.mode = NDRX_CONMODE_PASSIVE;
+    }
+    else
+    {
+        infos.mode = NDRX_CONMODE_ACTIVE;
+    }
+    
+    if (NULL!=G_bridge_cfg.con)
+    {
+        infos.fd = G_bridge_cfg.con->sock;
+    }
+    else
+    {
+        infos.fd=EXFAIL;
+    }
+
     /* read in fast way */
     pthread_spin_lock(&G_bridge_cfg.timediff_lock);
     diff = G_bridge_cfg.timediff;
