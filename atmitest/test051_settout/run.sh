@@ -143,7 +143,7 @@ echo "sleep 6"
 sleep 6
 echo "Check logs for expiry"
 
-EXP=`grep "Received call already expired" atmisv-dom2.log`
+EXP=`grep "Recieved expired call" atmisv-dom2.log`
 
 if [[ "X$EXP" == "X" ]]; then
         echo "Missing [Received call already expired] in atmisv-dom2.log!!!"
