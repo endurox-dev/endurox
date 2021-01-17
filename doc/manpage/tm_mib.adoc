@@ -26,6 +26,8 @@ Management classes:
 
 - *T_SVCGRP* - XATMI service instances
 
+- *T_BRCON* - tpbridge connection information
+
 
 DESCRIPTION
 -----------
@@ -309,6 +311,35 @@ service instance call.
 
 - Field *TA_MINEXECTIMEUSEC* (long): Minimum microseconds spent for particular 
 service instance call.
+
+
+T_BRCON CLASS
+-------------
+This class returns information about active *tpbridge(8)* connections. Cursor
+data includes data from all bridge processes present in Enduro/X instance. 
+Information is provided only from bridges which have established connection.
+
+Object fields returned for *T_BRCON* class are following:
+
+- Field *TA_EX_NODEID* (long): Enduro/X Cluster Node ID.
+
+- Field *TA_SRVID* (long): Bridge Server ID which provides the service.
+
+- Field *TA_EX_REMNODEID* (long): Remote connected Enduro/X Cluster Node ID.
+
+- Field *TA_EX_FD* (long): Connect file descriptor in the bridge process.
+
+- Field *TA_EX_CONMODE* (char): Connection mode *A* - client (active), *P* - server
+(passive).
+
+- Field *TA_EX_LASTSYNC* (long): Number of seconds after the time synchronization
+has happened.
+
+- Field *TA_EX_TIMEDIFF* (long): Monotonic clock time difference between us and
+remote node (i.e. our time minus remote time). Use for time correction of the bridge messages.
+
+- Field *TA_EX_ROUNDTRIP* (long): Time sync message round trip in milliseconds. Present
+only if dynamic clock exchange has happened over the connection.
 
 
 EXAMPLE SESSION OF INFORMATION FETCHING
