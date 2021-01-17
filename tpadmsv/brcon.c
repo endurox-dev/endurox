@@ -1,7 +1,7 @@
 /**
- * @brief Return connect bridge clock infos
+ * @brief Return connection infos
  *
- * @file brclock.c
+ * @file brcon.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -64,26 +64,36 @@
  */
 typedef struct 
 {
-    long locnodeid; /**< local node id                      */
+    long nodeid;   /**< local node id                      */
+    long srvid;     /**< Server id generating resposne      */
     long remnodeid; /**< remove node id                     */
+    char mode;      /**< Connection mode                    */   
+    long fd;         /**< socket FD number                   */
+    /* Clock: */
     long conseq;    /**< connection sequence                */
     long lastsync;  /**< last sync time ago (seconds)       */
-    long timediffs; /**< time diff in seconds between hosts */
+    long timediff; /**< time diff in seconds between hosts */
     long roundtrip; /**< roundtrip in milliseconds          */
-} ndrx_adm_brclock_t;
+    
+    
+} ndrx_adm_brcon_t;
 
 /**
  * Bridge clock data
  */
-expublic ndrx_adm_elmap_t ndrx_G_brclock_map[] =
+expublic ndrx_adm_elmap_t ndrx_G_brcon_map[] =
 {  
     /* Driving of the Preparing: */
-     {TA_LOCNODEID,           TPADM_EL(ndrx_adm_brclock_t, locnodeid)}
-    ,{TA_REMNODEID,           TPADM_EL(ndrx_adm_brclock_t, remnodeid)}
-    ,{TA_SEQUENCE,            TPADM_EL(ndrx_adm_brclock_t, conseq)}
-    ,{TA_EVTIME,              TPADM_EL(ndrx_adm_brclock_t, lastsync)}
-    ,{TA_TIMEDIFF,            TPADM_EL(ndrx_adm_brclock_t, timediffs)}
-    ,{TA_ROUNDTRIP,           TPADM_EL(ndrx_adm_brclock_t, roundtrip)}
+     {TA_EX_NODEID,            TPADM_EL(ndrx_adm_brcon_t, nodeid)}
+    ,{TA_SRVID,                TPADM_EL(ndrx_adm_brcon_t, srvid)}
+    ,{TA_EX_REMNODEID,         TPADM_EL(ndrx_adm_brcon_t, remnodeid)}
+    
+    ,{TA_EX_FD,                TPADM_EL(ndrx_adm_brcon_t, fd)}
+    ,{TA_EX_CONMODE,           TPADM_EL(ndrx_adm_brcon_t, mode)}
+    
+    ,{TA_EX_LASTSYNC,            TPADM_EL(ndrx_adm_brcon_t, lastsync)}
+    ,{TA_EX_TIMEDIFF,          TPADM_EL(ndrx_adm_brcon_t, timediff)}
+    ,{TA_EX_ROUNDTRIP,         TPADM_EL(ndrx_adm_brcon_t, roundtrip)}
     ,{BBADFLDID}
 };
 
@@ -102,29 +112,31 @@ exprivate string_list_t *M_qlist; /**< list of admin queues  */
  * @param reply_len
  * @return EXSUCCED/EXFAIL
  */
-exprivate int ndrx_adm_brclockinfo_proc_list(command_reply_t *reply, size_t reply_len)
+exprivate int ndrx_adm_brconinfo_proc_list(command_reply_t *reply, size_t reply_len)
 {
-    command_reply_brclockinfo_t * info = (command_reply_brclockinfo_t*)reply;
+    command_reply_brconinfo_t * info = (command_reply_brconinfo_t*)reply;
     int ret = EXSUCCEED;
-    ndrx_adm_brclock_t brclock;
+    ndrx_adm_brcon_t brcon;
     
-    if (NDRXD_CALL_TYPE_BRBCLOCKINFO!=reply->msg_type)
+    if (NDRXD_CALL_TYPE_BRCONINFO!=reply->msg_type)
     {
         /* not payload */
         goto out;
     }
 
     /* call the bridge */
-    memset(&brclock, 0, sizeof(brclock));
+    memset(&brcon, 0, sizeof(brcon));
     
-    brclock.locnodeid = info->locnodeid;
-    brclock.remnodeid = info->remnodeid;
-    brclock.conseq = info->conseq;
-    brclock.lastsync = info->lastsync;
-    brclock.timediffs = info->timediffs;
-    brclock.roundtrip = info->roundtrip;
+    brcon.nodeid = info->locnodeid;
+    brcon.srvid = info->srvid;
+    brcon.fd = info->fd;
+    brcon.mode = info->mode; 
+    brcon.remnodeid = info->remnodeid;
+    brcon.lastsync = info->lastsync;
+    brcon.timediff = info->timediffs;
+    brcon.roundtrip = info->roundtrip;
        
-    if (EXSUCCEED!=ndrx_growlist_add(&M_cursnew->list, (void *)&brclock, M_idx))
+    if (EXSUCCEED!=ndrx_growlist_add(&M_cursnew->list, (void *)&brcon, M_idx))
     {
         NDRX_LOG(log_error, "Growlist failed - out of memory?");
         EXFAIL_OUT(ret);
@@ -177,7 +189,7 @@ out:
  * @param cursnew this is new cursor domain model
  * @param flags not used
  */
-expublic int ndrx_adm_brclock_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags)
+expublic int ndrx_adm_brcon_get(char *clazz, ndrx_adm_cursors_t *cursnew, long flags)
 {
     int ret = EXSUCCEED;
     string_list_t *qstr;
@@ -186,10 +198,10 @@ expublic int ndrx_adm_brclock_get(char *clazz, ndrx_adm_cursors_t *cursnew, long
     M_idx = 0;
     M_qlist = NULL;
     
-    ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_brclock_t));
+    ndrx_growlist_init(&cursnew->list, 100, sizeof(ndrx_adm_brcon_t));
     
     M_cursnew = cursnew;
-    cursnew->map = ndrx_G_brclock_map;
+    cursnew->map = ndrx_G_brcon_map;
     
     if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_blist_proc_list, 
             NDRXD_COM_BLIST_RQ, NDRXD_COM_BLIST_RP, ndrx_get_G_atmi_conf()->ndrxd_q_str))
@@ -201,8 +213,8 @@ expublic int ndrx_adm_brclock_get(char *clazz, ndrx_adm_cursors_t *cursnew, long
     LL_FOREACH(M_qlist, qstr)
     {
         /* process the lists */
-        if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_brclockinfo_proc_list, 
-                NDRXD_COM_BRCLOCKINFO_RQ, NDRXD_COM_BRCLOCKINFO_RP, qstr->qname))
+        if (EXSUCCEED!=ndrx_adm_list_call(ndrx_adm_brconinfo_proc_list, 
+                NDRXD_COM_BRCONINFO_RQ, NDRXD_COM_BRCONINFO_RP, qstr->qname))
         {
             NDRX_LOG(log_error, "Failed to call brclockinfo");
             EXFAIL_OUT(ret);

@@ -260,8 +260,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
 {
     int ret=EXSUCCEED;
     int c;
-    int i;
-    int is_server = EXFAIL;
     char addr[EXNET_ADDR_LEN] = {EXEOS};
     int port=EXFAIL;
     int rcvtimeout = ndrx_get_G_atmi_env()->time_out;
@@ -280,7 +278,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.threadpoolsize = BR_DEFAULT_THPOOL_SIZE; /* will be reset to default */
     G_bridge_cfg.qretries = BR_QRETRIES_DEFAULT;
     G_bridge_cfg.max_roundtrip = BR_MAX_ROUNDTRIP;
-    
+    G_bridge_cfg.is_server = EXFAIL;
     
     /* init the spinlock... */
     if (EXSUCCEED!=(ret=pthread_spin_init(&G_bridge_cfg.timediff_lock, PTHREAD_PROCESS_PRIVATE)))
@@ -371,13 +369,13 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
                 {
                     NDRX_LOG(log_debug, "Server mode enabled - "
                             "will wait for call");
-                    is_server = EXTRUE;
+                    G_bridge_cfg.is_server = EXTRUE;
                 }
                 else
                 {
                     NDRX_LOG(log_debug, "Client mode enabled - "
                             "will connect to server");
-                    is_server = EXFALSE;
+                    G_bridge_cfg.is_server = EXFALSE;
                 }
                 break;
             default:
@@ -428,7 +426,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         EXFAIL_OUT(ret);
     }
     
-    if (EXFAIL==is_server)
+    if (EXFAIL==G_bridge_cfg.is_server)
     {
         NDRX_LOG(log_error, "Flag -T not set!");
         EXFAIL_OUT(ret);
@@ -452,7 +450,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     
     /* Then configure the lib - we will have only one client session! */
     if (EXSUCCEED!=exnet_configure(&G_bridge_cfg.net, rcvtimeout, addr, port, 
-        NET_LEN_PFX_LEN, is_server, backlog, 1, periodic_zero,
+        NET_LEN_PFX_LEN, G_bridge_cfg.is_server, backlog, 1, periodic_zero,
             recv_activity_timeout, periodic_clock))
     {
         NDRX_LOG(log_error, "Failed to configure network lib!");

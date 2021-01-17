@@ -164,8 +164,8 @@ extern "C" {
 #define NDRXD_COM_BLIST_RQ          72   /**< bridge admin queue listing, req, int */
 #define NDRXD_COM_BLIST_RP          73   /**< bridge admin queue listing, rsp int  */
     
-#define NDRXD_COM_BRCLOCKINFO_RQ    74   /**< return bridge clock infos, req int */
-#define NDRXD_COM_BRCLOCKINFO_RP    75   /**< return bridge clock infos, rsp int */
+#define NDRXD_COM_BRCONINFO_RQ      74   /**< return bridge connection infos, req int */
+#define NDRXD_COM_BRCONINFO_RP      75   /**< return bridge connection infos, rsp int */
 
 #define NDRXD_COM_MAX               75
     
@@ -227,7 +227,7 @@ extern "C" {
 #define NDRXD_CALL_TYPE_DPING           18  /**< NDRXD ping response type     */
 #define NDRXD_CALL_TYPE_DSLEEP          19  /**< Put NDRXD in sleep mode      */
 #define NDRXD_CALL_TYPE_BLIST           20  /**< List bridge admin queues     */
-#define NDRXD_CALL_TYPE_BRBCLOCKINFO    21  /**< Clock info messages          */
+#define NDRXD_CALL_TYPE_BRCONINFO       21  /**< Connection info messages     */
 
 #define NDRXD_SRC_NDRXD                 0   /**< Call source is daemon       */
 #define NDRXD_SRC_ADMIN                 1   /**< Call source is admin utility*/
@@ -328,6 +328,10 @@ extern "C" {
 #define NDRX_BRCLOCK_MODE_ASYNC       1   /**< Async clock data               */
 #define NDRX_BRCLOCK_MODE_REQ         2   /**< Request for clock data         */
 #define NDRX_BRCLOCK_MODE_RSP         3   /**< Response clock data            */
+
+    
+#define NDRX_CONMODE_ACTIVE         'A'         /**< This is client */
+#define NDRX_CONMODE_PASSIVE        'P'         /**< This is server */
 
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -662,20 +666,23 @@ typedef struct
 
 
 /**
- * Bridge clock infos
+ * Bridge infos
  */
 typedef struct
 {
     command_reply_t rply;
-    
     long locnodeid; /**< local node id                      */
+    int srvid;      /**< Server id generating resposne      */
     long remnodeid; /**< remove node id                     */
-    long conseq;    /**< connection sequence                */
+    char mode;      /**< Connection mode                    */   
+    int fd;         /**< socket FD number                   */
+    
+    /* Clock infos: */
     long lastsync;  /**< last sync time ago (seconds)       */
     long timediffs; /**< time diff in seconds between hosts */
     long roundtrip; /**< roundtrip in milliseconds          */
     
-} command_reply_brclockinfo_t;
+} command_reply_brconinfo_t;
 
 
 /**

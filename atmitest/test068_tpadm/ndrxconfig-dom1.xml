@@ -60,12 +60,18 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r -sTESTSV:TESTSV -N</sysopt>
         </server>
+        
+        <server name="tpadmsv">
+            <max>1</max>
+            <srvid>21</srvid>
+            <sysopt>-e ${TESTDIR}/tpadmsv-dom1.log -r</sysopt>
+        </server>
 
         <server name="tpbridge">
             <max>1</max>
             <srvid>101</srvid>
             <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
+            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0 -k20 -K1</appopt>
         </server>
     </servers>
 </endurox>

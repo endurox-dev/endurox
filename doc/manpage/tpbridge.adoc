@@ -37,7 +37,19 @@ solve that.
 
 When connection is established, clock diff and service lists are exchanged,
 then 'bridge' is used to serve ATMI actions over the machines. I.e. 'tpcall()',
-'tpforward()', conversations, etc.
+'tpforward()', conversations, etc. At connection established clocks are send
+in asynchronous fashion and time spent during the message in network is ignored,
+as connection is fresh and no data flows. But it might happen that over the time
+the monotonic clocks of connected hosts drift away, the difference measured at
+startup is not actual, and the messages receive or sent from one node might look
+like expired on other node. To solve this issue tpbridge periodically sends
+dynamic clock exchange between nodes, in synchronous fashion. The round trip time
+is measured (just like a ping time) and if it is within acceptable boundaries, the
+time from other host is accepted and time correction value is updated. The max
+rountrip time is set by '-k' flag (default 200ms), and interval is set by '-K' flag
+(600 sec). To monitor the clock status, TM_MIB class *T_BRCON* can be used
+for this purpose, e.g. "$ xadmin -c T_BRCON" call.
+
 
 When connection is stopped. This is reported to 'ndrxd' daemon which
 removes services from shared memory accordingly.
