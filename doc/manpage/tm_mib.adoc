@@ -336,7 +336,7 @@ Object fields returned for *T_BRCON* class are following:
 has happened.
 
 - Field *TA_EX_TIMEDIFF* (long): Monotonic clock time difference between us and
-remote node. Use for time correction of the bridge messages.
+remote node (i.e. our time minus remote time). Use for time correction of the bridge messages.
 
 - Field *TA_EX_ROUNDTRIP* (long): Time sync message round trip in milliseconds. Present
 only if dynamic clock exchange has happened over the connection.
