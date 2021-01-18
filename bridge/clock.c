@@ -123,9 +123,9 @@ expublic int br_coninfo(command_call_t *call)
     }
 
     /* read in fast way */
-    pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_LOCK_V(G_bridge_cfg.timediff_lock);
     diff = G_bridge_cfg.timediff;
-    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_UNLOCK_V(G_bridge_cfg.timediff_lock);
         
     /* convert to seconds*/
     infos.timediffs = (long)(diff/1000);
@@ -215,9 +215,9 @@ expublic int br_calc_clock_diff(command_call_t *call)
         
         
         /* so if admin tool reads the stuff needs to have spin + to get all readings... */
-        pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+        NDRX_SPIN_LOCK_V(G_bridge_cfg.timediff_lock);
         G_bridge_cfg.timediff=diff;
-        pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+        NDRX_SPIN_UNLOCK_V(G_bridge_cfg.timediff_lock);
         
         /* normally there shall be now time updates in the row
          * and the bellow infos are use only for admin tool
@@ -297,9 +297,9 @@ expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 {
     long long diff;
     
-    pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_LOCK_V(G_bridge_cfg.timediff_lock);
     diff = G_bridge_cfg.timediff;
-    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_UNLOCK_V(G_bridge_cfg.timediff_lock);
     
     N_TIMER_DUMP(log_info, "Call timer: ", call->timer);    
 #if CLOCK_DEBUG
