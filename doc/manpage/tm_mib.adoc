@@ -332,6 +332,10 @@ Object fields returned for *T_BRCON* class are following:
 - Field *TA_EX_CONMODE* (char): Connection mode *A* - client (active), *P* - server
 (passive).
 
+- Field *TA_EX_TIME* (long): Local monotonic clock, seconds.
+
+- Field *TA_EX_TIMEF* (long): Local monotonic clock, milliseconds fraction.
+
 - Field *TA_EX_LASTSYNC* (long): Number of seconds after the time synchronization
 has happened.
 

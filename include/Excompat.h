@@ -799,5 +799,7 @@
 #define	TA_EX_FD	((BFLDID32)33558037)	/* number: 3605	 type: long */
 #define	TA_EX_CONMODE	((BFLDID32)67112470)	/* number: 3606	 type: char */
 #define	TA_EX_TIMEDIFFF	((BFLDID32)33558039)	/* number: 3607	 type: long */
+#define	TA_EX_TIME	((BFLDID32)33558040)	/* number: 3608	 type: long */
+#define	TA_EX_TIMEF	((BFLDID32)33558041)	/* number: 3609	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */
