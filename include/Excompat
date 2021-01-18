@@ -800,6 +800,7 @@ TA_EX_TIMEDIFF                   1603   long    -     time difference
 TA_EX_ROUNDTRIP                  1604   long    -     rountrip time
 TA_EX_FD                         1605   long    -     File descriptor
 TA_EX_CONMODE                    1606   char    -     Connection mode
+TA_EX_TIMEDIFFF                  1607   long    -     time difference, fraction
 
 $#endif
 $/* vim: set ts=4 sw=4 et smartindent: */

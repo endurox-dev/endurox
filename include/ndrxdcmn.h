@@ -680,6 +680,7 @@ typedef struct
     /* Clock infos: */
     long lastsync;  /**< last sync time ago (seconds)       */
     long timediffs; /**< time diff in seconds between hosts */
+    long timediffms; /**< time diff in milliseconds between hosts */
     long roundtrip; /**< roundtrip in milliseconds          */
     
 } command_reply_brconinfo_t;
