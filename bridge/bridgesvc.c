@@ -575,7 +575,7 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     }
     
     /* terminate spinlock.. */
-    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+    pthread_spin_destroy(&G_bridge_cfg.timediff_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
