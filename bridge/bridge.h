@@ -43,6 +43,7 @@ extern "C" {
 #include <sys_unix.h>
 #include <exthpool.h>
 #include <pthread.h>
+#include <thlock.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
@@ -95,7 +96,7 @@ typedef struct
     
     long long timediff;                 /**< Bridge time correction           */
     ndrx_stopwatch_t timediff_ourt;     /**< Our stopwatch value              */
-    pthread_spinlock_t timediff_lock;   /**< diff read/write fast update      */
+    NDRX_SPIN_LOCKDECL(timediff_lock);   /**< diff read/write fast update      */
     long timediff_roundtrip;       /**< roundript ms for time data ping echo  */
     long max_roundtrip;            /**< Max allowed roundtrip for tdiff       */
     

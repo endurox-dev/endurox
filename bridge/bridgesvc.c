@@ -293,7 +293,10 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     G_bridge_cfg.qfullaction = EXFAIL;
     G_bridge_cfg.qfullactionsvc = EXFAIL;
     G_bridge_cfg.net.periodic_clock_time = BR_PERIODIC_CLOCK_SND; /* Send clock sync periodically */
-    
+
+    /* init the spinlock... */
+    NDRX_SPIN_INIT_V(G_bridge_cfg.timediff_lock);
+
     /* Parse command line  */
     while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:q:L:M:B:m:A:")) != -1)
     {
