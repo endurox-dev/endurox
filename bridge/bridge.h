@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 /*---------------------------Includes-----------------------------------*/
+#include <sys_unix.h>
 #include <exthpool.h>
 #include <pthread.h>
 /*---------------------------Externs------------------------------------*/
