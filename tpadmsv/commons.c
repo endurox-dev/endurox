@@ -92,7 +92,7 @@ expublic int ndrx_adm_list_call(int (*p_rsp_process)(command_reply_t *reply, siz
 {
     int ret = EXSUCCEED;
     command_call_t call;
-    gencall_args_t call_args[NDRXD_COM_XAPPM_RQ+2];
+    gencall_args_t call_args[NDRXD_COM_MAX];
     
     struct mq_attr new_attr, org_attr;
     
