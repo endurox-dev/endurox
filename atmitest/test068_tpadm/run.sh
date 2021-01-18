@@ -321,7 +321,7 @@ set_dom1;
 xadmin mibget -c T_BRCON
 xadmin mibget -c T_BRCON -m
 
-LAST_SYNC=`xadmin mibget -c T_BRCON -m | cut -f 6 -d '|'`
+LAST_SYNC=`xadmin mibget -c T_BRCON -m | cut -f 8 -d '|'`
 
 if [[ $LAST_SYNC -ge 20 ]]; then
     echo "Periodic sync does not work ($LAST_SYNC) must be liter than 20!"
@@ -336,7 +336,7 @@ set_dom2;
 xadmin mibget -c T_BRCON
 xadmin mibget -c T_BRCON -m
 
-LAST_SYNC=`xadmin mibget -c T_BRCON -m | cut -f 6 -d '|'`
+LAST_SYNC=`xadmin mibget -c T_BRCON -m | cut -f 8 -d '|'`
 
 if [[ $LAST_SYNC -lt 20 ]]; then
     echo "Last sync liter than 20 ($LAST_SYNC)!"
