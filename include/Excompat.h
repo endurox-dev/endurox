@@ -798,5 +798,6 @@
 #define	TA_EX_ROUNDTRIP	((BFLDID32)33558036)	/* number: 3604	 type: long */
 #define	TA_EX_FD	((BFLDID32)33558037)	/* number: 3605	 type: long */
 #define	TA_EX_CONMODE	((BFLDID32)67112470)	/* number: 3606	 type: char */
+#define	TA_EX_TIMEDIFFF	((BFLDID32)33558039)	/* number: 3607	 type: long */
 #endif
 /* vim: set ts=4 sw=4 et smartindent: */

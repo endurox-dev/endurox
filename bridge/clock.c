@@ -123,6 +123,7 @@ expublic int br_coninfo(command_call_t *call)
         
     /* convert to seconds*/
     infos.timediffs = (long)(diff/1000);
+    infos.timediffms = (long)(diff%1000);
     infos.roundtrip = G_bridge_cfg.timediff_roundtrip;
     
     MUTEX_UNLOCK_V(M_timediff_lock);
