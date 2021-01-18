@@ -76,9 +76,12 @@ expublic int br_coninfo(command_call_t *call)
     int ret=EXSUCCEED;
     long long diff;
     command_reply_brconinfo_t infos; /* currently one ... */
+    ndrx_stopwatch_t our_time;
     
     memset(&infos, 0, sizeof(infos)); /* not mission critical, so can set mem */
     
+    
+    ndrx_stopwatch_reset(&our_time);
     /* form up the reply */
     infos.rply.magic = NDRX_MAGIC;
     infos.rply.command = call->command+1; /* Make reponse */
@@ -89,6 +92,9 @@ expublic int br_coninfo(command_call_t *call)
     /* Response flags, echo back request flags too... */
     infos.rply.flags = call->flags;
     infos.rply.error_code = 0;
+    
+    infos.time = our_time.t.tv_sec;
+    infos.timems = (long)(our_time.t.tv_nsec / 1000000);
     
     /* have some consistency */
     MUTEX_LOCK_V(M_timediff_lock);

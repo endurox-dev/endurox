@@ -677,6 +677,9 @@ typedef struct
     char mode;      /**< Connection mode                    */   
     int fd;         /**< socket FD number                   */
     
+    long time;      /**< local monotonic time sec           */
+    long timems;    /**< local monotonic time ms            */
+    
     /* Clock infos: */
     long lastsync;  /**< last sync time ago (seconds)       */
     long timediffs; /**< time diff in seconds between hosts */

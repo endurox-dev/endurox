@@ -69,6 +69,10 @@ typedef struct
     long remnodeid; /**< remove node id                     */
     char mode;      /**< Connection mode                    */   
     long fd;        /**< socket FD number                   */
+    
+    long time;      /**< local monotonic time s             */
+    long timems;   /**< local monotonic time ms            */
+    
     /* Clock: */
     long conseq;    /**< connection sequence                */
     long lastsync;  /**< last sync time ago (seconds)       */
@@ -90,6 +94,8 @@ expublic ndrx_adm_elmap_t ndrx_G_brcon_map[] =
     ,{TA_EX_REMNODEID,         TPADM_EL(ndrx_adm_brcon_t, remnodeid)}
     ,{TA_EX_FD,                TPADM_EL(ndrx_adm_brcon_t, fd)}
     ,{TA_EX_CONMODE,           TPADM_EL(ndrx_adm_brcon_t, mode)}
+    ,{TA_EX_TIME,              TPADM_EL(ndrx_adm_brcon_t, time)}
+    ,{TA_EX_TIMEF,             TPADM_EL(ndrx_adm_brcon_t, timems)}
     ,{TA_EX_LASTSYNC,          TPADM_EL(ndrx_adm_brcon_t, lastsync)}
     ,{TA_EX_TIMEDIFF,          TPADM_EL(ndrx_adm_brcon_t, timediff)}
     ,{TA_EX_TIMEDIFFF,         TPADM_EL(ndrx_adm_brcon_t, timediffms)}
@@ -136,6 +142,9 @@ exprivate int ndrx_adm_brconinfo_proc_list(command_reply_t *reply, size_t reply_
     brcon.timediff = info->timediffs;
     brcon.timediffms = info->timediffms;
     brcon.roundtrip = info->roundtrip;
+    
+    brcon.time = info->time;
+    brcon.timems = info->timems;
        
     if (EXSUCCEED!=ndrx_growlist_add(&M_cursnew->list, (void *)&brcon, M_idx))
     {
