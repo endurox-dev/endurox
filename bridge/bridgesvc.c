@@ -725,6 +725,8 @@ void NDRX_INTEGRA(tpsvrdone)(void)
     /* erase addresses... */
     exnet_unconfigure(&G_bridge_cfg.net);
     
+    /* terminate spinlock.. */
+    NDRX_SPIN_DESTROY_V(G_bridge_cfg.timediff_lock);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
