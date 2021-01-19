@@ -117,7 +117,7 @@ xadmin start -y || go_out 2
 
 # Have some wait for ndrxd goes in service - wait for connection establishment.
 echo "Sleep 60 for domain to establish..."
-sleep 10
+sleep 60
 RET=0
 
 xadmin psc
