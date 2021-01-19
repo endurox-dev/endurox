@@ -538,6 +538,7 @@ restart:
     if (!reply_only)
     {
         call->command = ndrxd_cmd;
+        call->command_id = ndrxd_cmd;
         call->magic = NDRX_MAGIC;
         call->msg_src = msg_src;
         call->msg_type = msg_type;
