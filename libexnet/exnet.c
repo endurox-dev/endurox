@@ -1476,6 +1476,9 @@ expublic int exnet_net_init(exnetcon_t *net)
     MUTEX_VAR_INIT(net->rcvlock);
     MUTEX_VAR_INIT(net->flagslock);
     
+    
+    ndrx_stopwatch_reset(&net->periodic_stopwatch);
+    
     /* acquire read lock */
     if (EXSUCCEED!=(err=pthread_rwlock_rdlock(&(net->rwlock))))
     {
