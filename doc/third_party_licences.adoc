@@ -1,5 +1,5 @@
-Third parity library licenses used by Enduro/X
-==============================================
+Third party library licenses used by Enduro/X
+=============================================
 
 :sectnums:
 :chapter-label:
