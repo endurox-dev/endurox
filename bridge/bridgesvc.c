@@ -298,7 +298,7 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
     NDRX_SPIN_INIT_V(G_bridge_cfg.timediff_lock);
 
     /* Parse command line  */
-    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:q:L:M:B:m:A:")) != -1)
+    while ((c = getopt(argc, argv, "frn:i:p:t:T:z:c:g:s:P:R:a:6h:Q:q:L:M:B:m:A:k:K:")) != -1)
     {
         /* NDRX_LOG(log_debug, "%c = [%s]", c, optarg); - on solaris gets cores? */
         switch(c)
