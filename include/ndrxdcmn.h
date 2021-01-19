@@ -692,9 +692,13 @@ typedef struct
     char mode;      /**< Connection mode                    */   
     int fd;         /**< socket FD number                   */
     
+    long time;      /**< local monotonic time sec           */
+    long timems;    /**< local monotonic time ms            */
+    
     /* Clock infos: */
     long lastsync;  /**< last sync time ago (seconds)       */
     long timediffs; /**< time diff in seconds between hosts */
+    long timediffms; /**< time diff in milliseconds between hosts */
     long roundtrip; /**< roundtrip in milliseconds          */
     
 } command_reply_brconinfo_t;

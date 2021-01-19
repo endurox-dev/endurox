@@ -18,8 +18,8 @@ open (FILE, "> $outfile") || die "problem opening $outfile\n";
 
 
 print FILE <<EOS;
-Third parity library licenses used by Enduro/X
-==============================================
+Third party library licenses used by Enduro/X
+=============================================
 
 :sectnums:
 :chapter-label:

@@ -76,9 +76,12 @@ expublic int br_coninfo(command_call_t *call)
     int ret=EXSUCCEED;
     long long diff;
     command_reply_brconinfo_t infos; /* currently one ... */
+    ndrx_stopwatch_t our_time;
     
     memset(&infos, 0, sizeof(infos)); /* not mission critical, so can set mem */
     
+    
+    ndrx_stopwatch_reset(&our_time);
     /* form up the reply */
     infos.rply.magic = NDRX_MAGIC;
     infos.rply.command = call->command+1; /* Make reponse */
@@ -89,6 +92,9 @@ expublic int br_coninfo(command_call_t *call)
     /* Response flags, echo back request flags too... */
     infos.rply.flags = call->flags;
     infos.rply.error_code = 0;
+    
+    infos.time = our_time.t.tv_sec;
+    infos.timems = (long)(our_time.t.tv_nsec / 1000000);
     
     /* have some consistency */
     MUTEX_LOCK_V(M_timediff_lock);
@@ -117,12 +123,13 @@ expublic int br_coninfo(command_call_t *call)
     }
 
     /* read in fast way */
-    pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_LOCK_V(G_bridge_cfg.timediff_lock);
     diff = G_bridge_cfg.timediff;
-    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_UNLOCK_V(G_bridge_cfg.timediff_lock);
         
     /* convert to seconds*/
     infos.timediffs = (long)(diff/1000);
+    infos.timediffms = (long)(diff%1000);
     infos.roundtrip = G_bridge_cfg.timediff_roundtrip;
     
     MUTEX_UNLOCK_V(M_timediff_lock);
@@ -208,9 +215,9 @@ expublic int br_calc_clock_diff(command_call_t *call)
         
         
         /* so if admin tool reads the stuff needs to have spin + to get all readings... */
-        pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+        NDRX_SPIN_LOCK_V(G_bridge_cfg.timediff_lock);
         G_bridge_cfg.timediff=diff;
-        pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+        NDRX_SPIN_UNLOCK_V(G_bridge_cfg.timediff_lock);
         
         /* normally there shall be now time updates in the row
          * and the bellow infos are use only for admin tool
@@ -290,9 +297,9 @@ expublic void br_clock_adj(tp_command_call_t *call, int is_out)
 {
     long long diff;
     
-    pthread_spin_lock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_LOCK_V(G_bridge_cfg.timediff_lock);
     diff = G_bridge_cfg.timediff;
-    pthread_spin_unlock(&G_bridge_cfg.timediff_lock);
+    NDRX_SPIN_UNLOCK_V(G_bridge_cfg.timediff_lock);
     
     N_TIMER_DUMP(log_info, "Call timer: ", call->timer);    
 #if CLOCK_DEBUG

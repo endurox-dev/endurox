@@ -752,6 +752,17 @@ expublic int exnet_poll_cb(int fd, uint32_t events, void *ptr1)
             net->p_snd_zero_len(net);
         }
         
+        if (net->p_snd_clock_sync && net->periodic_clock_time && 
+                ndrx_stopwatch_get_delta_sec(&net->periodic_stopwatch) > net->periodic_clock_time)
+        {
+            NDRX_LOG(log_info, "About to issue clock sync "
+                    "message on fd %d", net->sock);
+            net->p_snd_clock_sync(net);
+            
+            /* reset the stopwatch... */
+            ndrx_stopwatch_reset(&net->periodic_stopwatch);
+        }
+        
         if (net->recv_activity_timeout && 
                 (rcvt=exnet_stopwatch_get_delta_sec(net, &net->last_rcv)) > net->recv_activity_timeout)
         {
@@ -1464,6 +1475,9 @@ expublic int exnet_net_init(exnetcon_t *net)
     MUTEX_VAR_INIT(net->sendlock);
     MUTEX_VAR_INIT(net->rcvlock);
     MUTEX_VAR_INIT(net->flagslock);
+    
+    
+    ndrx_stopwatch_reset(&net->periodic_stopwatch);
     
     /* acquire read lock */
     if (EXSUCCEED!=(err=pthread_rwlock_rdlock(&(net->rwlock))))
