@@ -40,6 +40,10 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
+#include <linux/limits.h>
+#include <sys/types.h>
+#include <nstopwatch.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /** Number of pages used to flip-flop the active DDR routing SHM area   */
@@ -60,8 +64,12 @@ extern "C" {
  */
 typedef struct
 {
-    
-} ndrx_lcf_libconfig_t;
+    char *qprefix;      /**< Queue prefix used by mappings  */
+    long queuesmax;     /**< Max number of queues           */
+    int  readersmax;    /**< Max number of concurrent lckrds*/
+    int  lcfmax;        /**< Max number of LCF commands     */
+    key_t ipckey;       /**< Semphoare key                  */
+} ndrx_nstd_libconfig_t;
 
 /* LCF will provide shared memory block */
 
@@ -116,6 +124,9 @@ typedef struct
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
+
+extern int ndrx_lcf_init(void);
 
 #if defined(__cplusplus)
 }

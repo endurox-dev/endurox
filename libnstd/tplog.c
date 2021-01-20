@@ -219,11 +219,11 @@ exprivate void logfile_change_prepare(ndrx_debug_t *l)
  */
 exprivate void logfile_change_done(ndrx_debug_t *l)
 {
-	if ( l->swait > 0 && (l->flags & LOG_FACILITY_PROCESS) )
-	{
-		G_ndrx_debug_first=EXFALSE;
-		ndrx_dbg_unlock();
-	}
+    if ( l->swait > 0 && (l->flags & LOG_FACILITY_PROCESS) )
+    {
+        G_ndrx_debug_first=EXFALSE;
+        ndrx_dbg_unlock();
+    }
 }
 
 /**

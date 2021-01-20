@@ -65,6 +65,7 @@
 #include "utlist.h"
 #include <expluginbase.h>
 #include <sys_test.h>
+#include <lcf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -749,6 +750,7 @@ expublic void ndrx_init_debug(void)
     ndrx_inicfg_section_keyval_t *conf = NULL, *cc;
     ndrx_inicfg_t *cconfig = NULL;
     char hostname[PATH_MAX];
+    char buf[PATH_MAX*2];
     
     ndrx_dbg_intlock_set();
     
@@ -794,7 +796,6 @@ expublic void ndrx_init_debug(void)
         if (NULL!=cfg_file &&
                 NULL!=(f=fopen(cfg_file, "r")))
         {
-            char buf[PATH_MAX*2];
 
             /* process line by line */
             while (NULL!=fgets(buf, sizeof(buf), f))
@@ -895,6 +896,9 @@ expublic void ndrx_init_debug(void)
     G_ndrx_debug_first = EXFALSE;
     
     ndrx_dbg_intlock_unset();
+    
+    /* LCF */
+    ndrx_lcf_init();
     
 }
 
