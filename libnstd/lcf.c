@@ -35,17 +35,27 @@
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
+#include <lcf.h>
+#include <ndebug.h>
+#include <nstd_shm.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define MAX_LCFMAX_DFLT         20      /**< Default max commands       */
+#define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
+#define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
+expublic ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 /*---------------------------Statics------------------------------------*/
-
-exprivate ndrx_shm_t M_map_lcf = {.fd=0, .path=""};   /**< Shared memory for settings       */
-exprivate ndrx_sem_t M_map_lcf = {.semid=0};          /**< RW semaphore for SHM protection  */
-
+exprivate ndrx_shm_t M_lcf_shm = {.fd=0, .path=""};   /**< Shared memory for settings       */
+exprivate ndrx_sem_t M_lcf_sem = {.semid=0};          /**< RW semaphore for SHM protection  */
 /*---------------------------Prototypes---------------------------------*/
+
+/*
+ * - installcb
+ * - install cli infos (command_str, id, args A|B, descr) -> 
+ */
 
 /**
  * Load the LCF settings. Attach semaphores and shared memory.
@@ -57,7 +67,154 @@ exprivate ndrx_sem_t M_map_lcf = {.semid=0};          /**< RW semaphore for SHM 
  */
 expublic int ndrx_lcf_init(void)
 {
+    int ret = EXSUCCEED;
+    char *tmp;
     
+    memset(&ndrx_G_libnstd_cfg, 0, sizeof(ndrx_G_libnstd_cfg));
+    
+   /* Load some minimum env for shared mem processing */
+    ndrx_G_libnstd_cfg.qprefix = getenv(CONF_NDRX_QPREFIX);
+    if (NULL==ndrx_G_libnstd_cfg.qprefix)
+    {
+        /* Write to ULOG? */
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
+        EXFAIL_OUT(ret);
+    }
+
+    /* get number of concurrent threads */
+    tmp = getenv(CONF_NDRX_SVQREADERSMAX);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.readersmax = MAX_READERS_DFLT;
+        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
+                CONF_NDRX_SVQREADERSMAX, ndrx_G_libnstd_cfg.readersmax);
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.readersmax = atol(tmp);
+    }
+    
+    /* get number of concurrent threads */
+    tmp = getenv(CONF_NDRX_LCFMAX);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.readersmax = MAX_LCFMAX_DFLT;
+        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
+                CONF_NDRX_LCFMAX, ndrx_G_libnstd_cfg.lcfmax);
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.lcfmax = atol(tmp);
+    }
+    
+    /* get queues max */
+    tmp = getenv(CONF_NDRX_MSGQUEUESMAX);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.queuesmax = MAX_QUEUES_DLFT;
+        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
+                CONF_NDRX_MSGQUEUESMAX, ndrx_G_libnstd_cfg.queuesmax);
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.queuesmax = atol(tmp);
+    }
+    
+    /* Get SV5 IPC */
+    tmp = getenv(CONF_NDRX_IPCKEY);
+    if (NULL==tmp)
+    {
+        /* Write to ULOG? */
+        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        EXFAIL_OUT(ret);
+    }
+    else
+    {
+	int tmpkey;
+        
+        sscanf(tmp, "%x", &tmpkey);
+	ndrx_G_libnstd_cfg.ipckey = tmpkey;
+
+        NDRX_LOG(log_debug, "(sysv queues): SystemV IPC Key set to: [%x]",
+                            ndrx_G_libnstd_cfg.ipckey);
+    }
+    
+    /* Open up settings shared memory... */
+    NDRX_LOG(log_debug, "Opening LCF shared memory...");
+    
+    /* We always create, thus if nstd library is loaded, we open semaphore
+     * attach to settings memory
+     */
+    
+    M_lcf_shm.fd = EXFAIL;
+    M_lcf_shm.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SHM_LCF_KEYOFSZ;
+    
+    if (EXSUCCEED!=ndrx_shm_open(&M_lcf_shm, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to open LCF shared memory");
+        userlog("Failed to open LCF shared memory");
+        EXFAIL_OUT(ret);
+    }
+    
+    M_lcf_sem.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_LCFLOCKS;
+    
+    /*
+     * Currently using single semaphore.
+     * But from balancing when searching entries, we could use multiple sems.. 
+     * to protect both shared mems...
+     * If we use different two sems one for p2s and another for s2p we could
+     * easily run into deadlock. Semop allows atomically work with multiple
+     * semaphores, so maybe this can be used to increase performance.
+     */
+    M_lcf_sem.nrsems = 1;
+    M_lcf_sem.maxreaders = ndrx_G_libnstd_cfg.readersmax;
+    
+    
+    if (EXSUCCEED!=ndrx_sem_open(&M_lcf_sem, EXTRUE))
+    {
+        NDRX_LOG(log_error, "Failed to open LCF semaphore");
+        userlog("Failed to open LCF semaphore");
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    /* cannot continue if basic config is missing */
+    if (EXSUCCEED!=ret)
+    {
+        NDRX_LOG(log_always, "ERROR: Enduro/X configuration is missing - terminating with failure\n");
+        userlog("ERROR: Enduro/X configuration is missing - terminating with failure");
+        exit(1);
+    }
+    
+    return ret;    
+}
+
+/**
+ * Detach and remove resources
+ * @param force
+ * @return 
+ */
+expublic int ndrx_lcf_down(int force)
+{
+    
+}
+
+
+expublic void ndrx_svqshm_detach(void)
+{
+    /* process disconnects from shared settings memory
+     * This somehow needs to be done when the debug is closed too.
+     * Not?
+     * So probably we need to add fork handler to close shared mem here after the
+     * fork. Mark the debug-as non init.
+     * Close the log file descriptors.
+     * 
+     * So if forked process continues to do some works, then debug-init will
+     * start life again and attach to shm
+     */
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

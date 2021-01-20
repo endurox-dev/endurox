@@ -54,6 +54,7 @@
 #include "nstd_shm.h"
 #include <sys_svq.h>
 #include <ndrx_config.h>
+#include <lcf.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -81,8 +82,6 @@ if (!ndrx_G_svqshm_init) \
         }\
     }
 
-#define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
-#define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /**
  * Default time for queue to live after removal.
  * After this time in seconds, ndrxd will zap the queue. This is needed
@@ -111,11 +110,6 @@ exprivate ndrx_shm_t M_map_s2p = {.fd=0, .path=""};   /**< System V to Posix map
 exprivate ndrx_sem_t M_map_sem = {.semid=0};/**< RW semaphore for SHM protection */
 
 /* Also we need some array of semaphores for RW locking */
-
-exprivate char *M_qprefix = NULL;       /**< Queue prefix used by mappings  */
-exprivate long M_queuesmax = 0;         /**< Max number of queues           */
-exprivate int  M_readersmax = 0;        /**< Max number of concurrent lckrds*/
-exprivate key_t M_ipckey = 0;          /**< Semphoare key                  */
 
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -151,7 +145,7 @@ expublic int ndrx_svqshm_down(int force)
         svq = (ndrx_svq_map_t *) M_map_p2s.mem;
 
         /* remove any queues left open...! */
-        for (i=0; i<M_queuesmax; i++)
+        for (i=0; i<ndrx_G_libnstd_cfg.queuesmax; i++)
         {
             el = NDRX_SVQ_INDEX(svq, i);
 
@@ -220,63 +214,10 @@ out:
 expublic int ndrx_svqshm_init(int attach_only)
 {
     int ret = EXSUCCEED;
-    char *tmp;
     
-    /* Load some minimum env for shared mem processing */
-    M_qprefix = getenv(CONF_NDRX_QPREFIX);
-    if (NULL==M_qprefix)
-    {
-        /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        EXFAIL_OUT(ret);
-    }
-
-    /* get number of concurrent threads */
-    tmp = getenv(CONF_NDRX_SVQREADERSMAX);
-    if (NULL==tmp)
-    {
-        M_readersmax = MAX_READERS_DFLT;
-        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_SVQREADERSMAX, M_readersmax);
-    }
-    else
-    {
-        M_readersmax = atol(tmp);
-    }
-    
-    /* get queues max */
-    tmp = getenv(CONF_NDRX_MSGQUEUESMAX);
-    if (NULL==tmp)
-    {
-        M_queuesmax = MAX_QUEUES_DLFT;
-        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_MSGQUEUESMAX, M_queuesmax);
-    }
-    else
-    {
-        M_queuesmax = atol(tmp);
-    }
-    
-    /* Get SV5 IPC */
-    tmp = getenv(CONF_NDRX_IPCKEY);
-    if (NULL==tmp)
-    {
-        /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
-        userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
-        EXFAIL_OUT(ret);
-    }
-    else
-    {
-	int tmpkey;
-        
-        sscanf(tmp, "%x", &tmpkey);
-	M_ipckey = tmpkey;
-
-        NDRX_LOG(log_debug, "(sysv queues): SystemV IPC Key set to: [%x]",
-                            M_ipckey);
-    }
+    /* pull-in LCF init */
+    NDRX_LOG(log_debug, "SystemV queue init...");
+ 
     
     memset(&M_map_p2s, 0, sizeof(M_map_p2s));
     memset(&M_map_s2p, 0, sizeof(M_map_s2p));
@@ -284,16 +225,16 @@ expublic int ndrx_svqshm_init(int attach_only)
     /* fill in shared memory details, path + size */
     
     M_map_p2s.fd = EXFAIL;
-    M_map_p2s.key = M_ipckey + NDRX_SHM_P2S_KEYOFSZ;
+    M_map_p2s.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SHM_P2S_KEYOFSZ;
     
-    snprintf(M_map_p2s.path, sizeof(M_map_p2s.path), NDRX_SHM_P2S, M_qprefix);
-    M_map_p2s.size = sizeof(ndrx_svq_map_t)*M_queuesmax;
+    snprintf(M_map_p2s.path, sizeof(M_map_p2s.path), NDRX_SHM_P2S, ndrx_G_libnstd_cfg.qprefix);
+    M_map_p2s.size = sizeof(ndrx_svq_map_t)*ndrx_G_libnstd_cfg.queuesmax;
     
     M_map_s2p.fd = EXFAIL;
-    M_map_s2p.key = M_ipckey + NDRX_SHM_S2P_KEYOFSZ;
+    M_map_s2p.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SHM_S2P_KEYOFSZ;
     
-    snprintf(M_map_s2p.path, sizeof(M_map_s2p.path), NDRX_SHM_S2P, M_qprefix);
-    M_map_s2p.size = sizeof(ndrx_svq_map_t)*M_queuesmax;
+    snprintf(M_map_s2p.path, sizeof(M_map_s2p.path), NDRX_SHM_S2P, ndrx_G_libnstd_cfg.qprefix);
+    M_map_s2p.size = sizeof(ndrx_svq_map_t)*ndrx_G_libnstd_cfg.queuesmax;
     
     
     if (attach_only)
@@ -334,7 +275,7 @@ expublic int ndrx_svqshm_init(int attach_only)
     memset(&M_map_sem, 0, sizeof(M_map_sem));
     
     /* Service queue ops */
-    M_map_sem.key = M_ipckey + NDRX_SEM_SV5LOCKS;
+    M_map_sem.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_SV5LOCKS;
     
     /*
      * Currently using single semaphore.
@@ -345,10 +286,10 @@ expublic int ndrx_svqshm_init(int attach_only)
      * semaphores, so maybe this can be used to increase performance.
      */
     M_map_sem.nrsems = 1;
-    M_map_sem.maxreaders = M_readersmax;
+    M_map_sem.maxreaders = ndrx_G_libnstd_cfg.readersmax;
     
     NDRX_LOG(log_debug, "Using service semaphore key: %d max readers: %d", 
-            M_map_sem.key, M_readersmax);
+            M_map_sem.key, ndrx_G_libnstd_cfg.readersmax);
     
     /* OK, either create or attach... */
     if (attach_only)
@@ -441,7 +382,7 @@ expublic int ndrx_svqshm_shmres_get(ndrx_shm_t **map_p2s, ndrx_shm_t **map_s2p,
     *map_p2s = &M_map_p2s;
     *map_s2p = &M_map_s2p;
     *map_sem = &M_map_sem;
-    *queuesmax = M_queuesmax;
+    *queuesmax = ndrx_G_libnstd_cfg.queuesmax;
     
     return ndrx_G_svqshm_init;
 }
@@ -516,7 +457,7 @@ exprivate int position_get_qstr(char *pathname, int oflag, int *pos,
     
     if (first)
     {
-        conf.elmmax = M_queuesmax;
+        conf.elmmax = ndrx_G_libnstd_cfg.queuesmax;
         conf.elmsz = sizeof(ndrx_svq_map_t);
         conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
         conf.memptr = (void **)&(M_map_p2s.mem);
@@ -592,7 +533,7 @@ exprivate int position_get_qid(int qid, int oflag, int *pos,
     
     if (first)
     {
-        conf.elmmax = M_queuesmax;
+        conf.elmmax = ndrx_G_libnstd_cfg.queuesmax;
         conf.elmsz = sizeof(ndrx_svq_map_t);
         conf.flags_offset = EXOFFSET(ndrx_svq_map_t, flags);
         conf.memptr = (void **)&(M_map_s2p.mem);
@@ -620,7 +561,7 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
         int qid, int *pos, int *have_value)
 {
     int ret=SHM_ENT_NONE;
-    int try = qid % M_queuesmax;
+    int try = qid % ndrx_G_libnstd_cfg.queuesmax;
     int start = try;
     int overflow = EXFALSE;
     int iterations = 0;
@@ -664,7 +605,7 @@ expublic int ndrx_svqshm_get_status(ndrx_svq_status_t *status,
          * Feature #139 mvitolin, 09/05/2017
          * Fix potential overflow issues at the border... of SHM...
          */
-        if (try>=M_queuesmax)
+        if (try>=ndrx_G_libnstd_cfg.queuesmax)
         {
             try = 0;
             overflow=EXTRUE;
@@ -1221,7 +1162,7 @@ expublic string_list_t* ndrx_sys_mqueue_list_make_svq(char *qpath, int *return_s
     
     have_lock = EXTRUE;
     
-    for (i=0;i<M_queuesmax;i++)
+    for (i=0;i<ndrx_G_libnstd_cfg.queuesmax;i++)
     {
         pm = NDRX_SVQ_INDEX(svq, i);
         
@@ -1257,7 +1198,7 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
 {
     int ret = EXSUCCEED;
     ndrx_svq_status_t* block = NULL;
-    int sz = sizeof(ndrx_svq_status_t) * M_queuesmax;
+    int sz = sizeof(ndrx_svq_status_t) * ndrx_G_libnstd_cfg.queuesmax;
     int err;
     int have_lock = EXFALSE;
     int i=0;
@@ -1274,7 +1215,7 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
         EXFAIL_OUT(ret);
     }
     
-    *len = M_queuesmax;
+    *len = ndrx_G_libnstd_cfg.queuesmax;
     
     /* ###################### CRITICAL SECTION ############################### */
     if (EXSUCCEED!=ndrx_sem_rwlock(&M_map_sem, 0, NDRX_SEM_TYP_READ))
@@ -1284,7 +1225,7 @@ expublic ndrx_svq_status_t* ndrx_svqshm_statusget(int *len, int ttl)
     
     have_lock = EXTRUE;
     
-    for (i=0;i<M_queuesmax;i++)
+    for (i=0;i<ndrx_G_libnstd_cfg.queuesmax;i++)
     {
         pm = NDRX_SVQ_INDEX(svq, i);
         block[i].flags = pm->flags;
