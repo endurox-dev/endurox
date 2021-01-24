@@ -451,6 +451,15 @@ expublic int ndrx_init(int argc, char** argv)
                     {
                         userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
                     }
+                    
+                    /* Set the log file, so that stderr / stdout would redirect
+                     * to file via logger (so that we can logrotate) */
+
+                    if (EXSUCCEED!=setenv(CONF_NDRX_DFLTLOG, G_server_conf.err_output, EXTRUE))
+                    {
+                        userlog("Failed to set server [%s] env", CONF_NDRX_DFLTLOG);
+                    }
+
                 }
                 else
                 {

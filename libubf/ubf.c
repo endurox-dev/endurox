@@ -61,6 +61,7 @@
 #include <ubfutil.h>
 
 #include "expluginbase.h"
+#include <ndebugcmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -1693,7 +1694,12 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
         else
         {
             /* use plugin callback */
-            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL);
+            
+            /* on entry... we need to perform locks */
+            ndrx_debug_lock(dbg->dbg_f_ptr);
+            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr->fp, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL);
+            ndrx_debug_unlock(dbg->dbg_f_ptr);
+            /* on exit we need to perform unlocks */
         }
     }
 }

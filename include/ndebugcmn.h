@@ -1,5 +1,6 @@
 /**
  * @brief Debug commons
+ *  TOOD: mark as internal -> do not include in distribution
  *
  * @file ndebugcmn.h
  */
@@ -43,9 +44,20 @@ extern "C" {
 #include <limits.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <thlock.h>
+#include <exhash.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_LOG_MODULE_LEN     4   /**< Module name field length       */
+    
+#define NDRX_LOG_FPROC        0x00001 /**< This is process level logger */
+#define NDRX_LOG_FOSHSTDERR   0x00004 /**< This is OS handler, stderr   */
+#define NDRX_LOG_FOSHSTDOUT   0x00008 /**< This is OS handler, stdout   */
+#define NDRX_LOG_FLOCK        0x00010 /**< Perform locking when write to file */
+        
+#define NDRX_LOG_OSSTDERR     "/dev/stderr" /**< This OS handler, stderr*/
+#define NDRX_LOG_OSSTDOUT     "/dev/stdout" /**< This OS handler, stdout*/
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -60,13 +72,44 @@ struct ndrx_memlogger
     ndrx_memlogger_t *next, *prev;
 };
 
+/**
+ * Logging file sink.
+ * Hashing by file names. If process opens a log it shall search this file sink
+ * and if file exists, the use it, or create new.
+ * 
+ * After normally forced logging close shall done. Which would include
+ * un-init of the LCF.
+ * 
+ * If some thread at some point gets the sink, it shall be valid
+ * as it must have reference to it perior work. And it will not be removed
+ * if refcount > 0.
+ */
+typedef struct 
+{
+    char fname[PATH_MAX+1];  /**< The actual file name   */
+    int writters;   /**< Number of concurrent writters      */
+    int chwait;     /**< Some thread waits for on wait_cond */
+    FILE *fp; /**< actual file open for writting            */
+    
+    NDRX_SPIN_LOCKDECL (writters_lock);   /**< writters/chwait update spinlock */
+    MUTEX_LOCKDECLN(busy_lock);          /**< Object is busy, for entry        */
+    MUTEX_LOCKDECLN(change_lock);        /**< If doing chagnes to the object   */
+    pthread_cond_t   change_wait;  /**< wait on this if have writters          */
+    
+    int refcount;  /**< Number of logger have references, protected by change_lock */
+    long flags;     /**< is this process level? Use mutex?  */
+    
+    EX_hash_handle hh; /**< makes this structure hashable               */
+    
+} ndrx_debug_file_sink_t;
+
 /* Create main debug structure */
 typedef struct
 {
     int   level;
-    FILE *dbg_f_ptr;
+    ndrx_debug_file_sink_t *dbg_f_ptr; /**< Ptr to file sink                 */
     char filename[PATH_MAX];
-    char filename_th_template[PATH_MAX]; /* template for thread logging... */
+    char filename_th_template[PATH_MAX]; /**< template for thread logging... */
     pid_t pid;
     /** Hashed hostname */
     unsigned long hostnamecrc32;
@@ -83,11 +126,24 @@ typedef struct
     long flags;             /**< logger code initially                      */
     long swait;             /**< sync wait for close log files, ms          */
     ndrx_memlogger_t *memlog;
+    unsigned version;        /**< This is settigns version (inherit by thread/req */
 } ndrx_debug_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
+extern NDRX_API ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, int do_lock, 
+        ndrx_debug_t *dbg_ptr);
+extern NDRX_API void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink);
+extern NDRX_API void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink);
+extern NDRX_API int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, int force);
+extern NDRX_API void ndrx_debug_addref(ndrx_debug_file_sink_t* mysink);
+
+/* handle which does updates: */
+extern NDRX_API void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_ptr);
+extern NDRX_API void ndrx_debug_force_closeall(void);
+extern NDRX_API void ndrx_debug_refcount(int *sinks, int *refs);
+
 #ifdef	__cplusplus
 }
 #endif

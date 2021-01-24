@@ -74,12 +74,12 @@
     if (dbg_p->lines_written >= dbg_p->buf_lines)\
     {\
         dbg_p->lines_written = 0;\
-        fflush(dbg_p->dbg_f_ptr);\
+        fflush(dbg_p->dbg_f_ptr->fp);\
     }
 
 #define BUFFERED_PRINT_LINE(dbg_p, line)\
-    fputs(line, dbg_p->dbg_f_ptr);\
-    fputs("\n", dbg_p->dbg_f_ptr);\
+    fputs(line, dbg_p->dbg_f_ptr->fp);\
+    fputs("\n", dbg_p->dbg_f_ptr->fp);\
     BUFFER_CONTROL(dbg_p)
 
 
@@ -255,6 +255,7 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
 {
     static __thread int recursive = EXFALSE;
     long flags = 0;
+    char new_file[PATH_MAX];
     /* If tls is enabled and we run threaded modes */
     if (NULL!=G_nstd_tls && !recursive)
     {
@@ -272,8 +273,6 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
                 )
             )
         {
-            char new_file[PATH_MAX];
-
             /* format new line... */
             snprintf(new_file, sizeof(new_file), dbg_ptr->filename_th_template, 
                     (unsigned)G_nstd_tls->M_threadnr);
@@ -331,10 +330,12 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
  * ndrxdebug.conf mode: tok1 !=NULL tok2 == NULL
  * @param tok1 (full string for ndrxdebug.conf, for CConfig binary name
  * @param tok2 (config string for CConfig or update mode)
+ * @param tmpfname file name if not using dbg_ptr
+ * @param tmpfnamesz buffer size for file
  * @return 
  */
 expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2, 
-        int *p_finish_off, ndrx_debug_t *dbg_ptr)
+        int *p_finish_off, ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz)
 {
     int ret = EXSUCCEED;
     char *saveptr=NULL;
@@ -523,9 +524,10 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 }
                 else
                 {
-                    NDRX_STRCPY_SAFE(G_tp_debug.filename, p+1);
+                    /*NDRX_STRCPY_SAFE(G_tp_debug.filename, p+1);
                     NDRX_STRCPY_SAFE(G_ubf_debug.filename, p+1);
-                    NDRX_STRCPY_SAFE(G_ndrx_debug.filename, p+1);
+                    NDRX_STRCPY_SAFE(G_ndrx_debug.filename, p+1);*/
+                    NDRX_STRCPY_SAFE_DST(tmpfname, (p+1), tmpfnamesz);
                 }
             } /* Feature #167 */
             else if (0==strncmp("threaded", tok, cmplen))
@@ -568,6 +570,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ndrx_debug.is_mkdir = val;
                 }
             }
+            /*
             else if (0==strncmp("swait", tok, cmplen))
             {
                 int val = atoi(p+1);
@@ -582,7 +585,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                     G_ubf_debug.swait = val;
                     G_ndrx_debug.swait = val;
                 }
-            }
+            }*/
             
             tok=strtok_r (NULL,"\t ", &saveptr);
         }
@@ -657,12 +660,14 @@ out:
 /**
  * Open file for debug, if enabled mkdir and we get NOENT error,
  * try to recursively create the directory
- * @param[in] dbg_ptr debug information
  * @param[in] filename debug file name
  * @param[in] mode mode string for fopen
+
+ * @param[] dbg_ptr debug pointer which opens the file
  * @return ptr to FILE or NULL and errno set
  */
-expublic FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char *mode)
+expublic FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode,
+        ndrx_debug_t *dbg_ptr)
 {
     FILE *ret = NULL;
     int got_dir = EXFALSE;
@@ -670,7 +675,8 @@ expublic FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char 
     
     ret = NDRX_FOPEN(filename, mode);
     
-    if (!dbg_ptr->is_mkdir)
+    /* if have recursive setting, then continue  */
+    if (!(dbg_ptr->is_mkdir))
     {
         goto out;
     }
@@ -734,6 +740,20 @@ expublic FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char 
     }
     
 out:
+    
+    if (NULL!=ret)
+    {
+        /* close descriptors of fork: Bug #176 */
+        if (EXSUCCEED!=fcntl(fileno(ret), F_SETFD, FD_CLOEXEC))
+        {
+            userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
+        }
+        /* just use process level ndrx buffer size 
+         * as files are shared between loggers
+         */
+        setvbuf(ret, NULL, _IOFBF, dbg_ptr->buffer_size);
+    }
+
     return ret;
 }
 
@@ -751,6 +771,8 @@ expublic void ndrx_init_debug(void)
     ndrx_inicfg_t *cconfig = NULL;
     char hostname[PATH_MAX];
     char buf[PATH_MAX*2];
+    char *tmp;
+    char tmpname[PATH_MAX+1]={EXEOS};
     
     ndrx_dbg_intlock_set();
     
@@ -773,11 +795,18 @@ expublic void ndrx_init_debug(void)
     
     cconfig = ndrx_get_G_cconfig();
     
-    /* Initialize with defaults.. */
-    G_ndrx_debug.dbg_f_ptr = stderr;
-    G_ubf_debug.dbg_f_ptr = stderr;
-    G_tp_debug.dbg_f_ptr = stderr;
-    G_stdout_debug.dbg_f_ptr = stdout;
+    /* Initialize with defaults.. 
+     * Set to NULL.
+     */
+    G_ndrx_debug.dbg_f_ptr = NULL;
+    G_ubf_debug.dbg_f_ptr = NULL;
+    G_tp_debug.dbg_f_ptr = NULL;
+    G_stdout_debug.dbg_f_ptr = NULL;
+    
+    G_ndrx_debug.version = 0;
+    G_ubf_debug.version = 0;
+    G_tp_debug.version = 0;
+    G_stdout_debug.version = 0;
     
     
     /* static coinf */
@@ -810,7 +839,7 @@ expublic void ndrx_init_debug(void)
                     buf[strlen(buf)-1]=EXEOS;
                 }
 
-                ndrx_init_parse_line(buf, NULL, &finish_off, NULL);
+                ndrx_init_parse_line(buf, NULL, &finish_off, NULL, tmpname, sizeof(tmpname));
 
                 if (finish_off)
                 {
@@ -841,39 +870,47 @@ expublic void ndrx_init_debug(void)
             /* 1. get he line by common & process */
             if (NULL!=(cc=ndrx_keyval_hash_get(conf, "*")))
             {
-                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL);
+                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
+                        tmpname, sizeof(tmpname));
             }
             
             /* 2. get the line by binary name  */
             if (NULL!=(cc=ndrx_keyval_hash_get(conf, (char *)EX_PROGNAME)))
             {
-                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL);
+                ndrx_init_parse_line(cc->key, cc->val, &finish_off, NULL,
+                        tmpname, sizeof(tmpname));
             }   
         }
     }
     
     /* open debug file.. */
-    if (EXEOS!=G_ndrx_debug.filename[0])
-    {        
-        ndrx_str_env_subs_len(G_ndrx_debug.filename, sizeof(G_ndrx_debug.filename));
-        /* Opens the file descriptors */
-        if (!(G_ndrx_debug.dbg_f_ptr = ndrx_dbg_fopen_mkdir(&G_ndrx_debug, 
-                G_ndrx_debug.filename, "a")))
+    if (EXEOS==tmpname[0])
+    {
+        /* try to get from env -> override... */
+        tmp = getenv(CONF_NDRX_DFLTLOG);
+        
+        if (NULL!=tmp)
         {
-            fprintf(stderr,"Failed to open [%s]: %s\n",G_ndrx_debug.filename, strerror(errno));
-            G_tp_debug.dbg_f_ptr = G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr=stderr;
-        }
-        else
-        {   
-            /* close descriptors of fork: Bug #176 */
-	    if (EXSUCCEED!=fcntl(fileno(G_ndrx_debug.dbg_f_ptr), F_SETFD, FD_CLOEXEC))
-            {
-                userlog("WARNING: Failed to set FD_CLOEXEC: %s", strerror(errno));
-            }
-            setvbuf(G_ndrx_debug.dbg_f_ptr, NULL, _IOFBF, G_ndrx_debug.buffer_size);
-            G_tp_debug.dbg_f_ptr = G_ubf_debug.dbg_f_ptr=G_ndrx_debug.dbg_f_ptr;
+            NDRX_STRCPY_SAFE(tmpname, tmp);
         }
     }
+        
+    if (EXEOS==tmpname[0])
+    {
+        NDRX_STRCPY_SAFE(tmpname, NDRX_LOG_OSSTDERR);
+    }
+    
+    /* propagate to other loggers too... */
+    NDRX_STRCPY_SAFE(G_stdout_debug.filename, NDRX_LOG_OSSTDOUT);
+    
+    /* get handles now in feedback we get the actual file name open */
+    ndrx_debug_get_sink(tmpname, EXTRUE, &G_ndrx_debug);
+    ndrx_debug_get_sink(tmpname, EXTRUE, &G_ubf_debug);
+    ndrx_debug_get_sink(tmpname, EXTRUE, &G_tp_debug);
+    ndrx_debug_get_sink(G_stdout_debug.filename, EXTRUE, 
+            &G_stdout_debug);
+
+    /* if file is not found, then try CONF_NDRX_DFLTLOG, if this not found, open stderr */
 
     /*
      Expected file syntax is:
@@ -1010,6 +1047,8 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
         return; /* nothing todo... */
     }
     
+    ndrx_debug_lock(dbg_ptr->dbg_f_ptr);
+    
     for (i = 0; i < len; i++)
     {
         if ((i % 16) == 0)
@@ -1022,15 +1061,15 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
                 if (0!=strcmp(print_line, print_line2))
                 {
                     /* print line 1 */
-                    fputs("<", dbg_ptr->dbg_f_ptr);
-                    fputs(print_line, dbg_ptr->dbg_f_ptr);
-                    fputs("\n", dbg_ptr->dbg_f_ptr);
+                    fputs("<", dbg_ptr->dbg_f_ptr->fp);
+                    fputs(print_line, dbg_ptr->dbg_f_ptr->fp);
+                    fputs("\n", dbg_ptr->dbg_f_ptr->fp);
                     BUFFER_CONTROL(dbg_ptr);
                     
                     /* print line 2 */
-                    fputs(">", dbg_ptr->dbg_f_ptr);
-                    fputs(print_line2, dbg_ptr->dbg_f_ptr);
-                    fputs("\n", dbg_ptr->dbg_f_ptr);
+                    fputs(">", dbg_ptr->dbg_f_ptr->fp);
+                    fputs(print_line2, dbg_ptr->dbg_f_ptr->fp);
+                    fputs("\n", dbg_ptr->dbg_f_ptr->fp);
                     BUFFER_CONTROL(dbg_ptr);
                 }
 
@@ -1079,20 +1118,21 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
     if (0!=strcmp(print_line, print_line2))
     {
         /* print line 1 */
-        fputs("<", dbg_ptr->dbg_f_ptr);
-        fputs(print_line, dbg_ptr->dbg_f_ptr);
-        fputs("\n", dbg_ptr->dbg_f_ptr);
+        fputs("<", dbg_ptr->dbg_f_ptr->fp);
+        fputs(print_line, dbg_ptr->dbg_f_ptr->fp);
+        fputs("\n", dbg_ptr->dbg_f_ptr->fp);
         BUFFER_CONTROL(dbg_ptr);
 
         /* print line 2 */
-        fputs(">", dbg_ptr->dbg_f_ptr);
-        fputs(print_line2, dbg_ptr->dbg_f_ptr);
-        fputs("\n", dbg_ptr->dbg_f_ptr);
+        fputs(">", dbg_ptr->dbg_f_ptr->fp);
+        fputs(print_line2, dbg_ptr->dbg_f_ptr->fp);
+        fputs("\n", dbg_ptr->dbg_f_ptr->fp);
         BUFFER_CONTROL(dbg_ptr);
     }
     print_line[0] = 0;
     print_line2[0] = 0;
     
+    ndrx_debug_unlock(dbg_ptr->dbg_f_ptr);
 }
 
 /**
@@ -1135,6 +1175,10 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
         return; /* nothing todo... */
     }
 
+    /* fast locking for file name changing.. */
+    
+    ndrx_debug_lock(dbg_ptr->dbg_f_ptr);
+    
     for (i = 0; i < len; i++)
     {
         if ((i % 16) == 0)
@@ -1171,6 +1215,9 @@ expublic void __ndrx_debug_dump__(ndrx_debug_t *dbg_ptr, int lev, const char *fi
     sprintf (print_line + strlen(print_line), "  %s", buf);
     BUFFERED_PRINT_LINE(dbg_ptr, print_line);
     print_line[0] = 0;
+    
+    ndrx_debug_unlock(dbg_ptr->dbg_f_ptr);
+    
 }
 
 /**
@@ -1248,16 +1295,24 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
             (int)dbg_ptr->pid, (unsigned long long)(ostid), thread_nr, ldate, ltime, 
         (int)(lusec), func_last, line_print, line);
     
+    /* lock the sink */
+    
     if (!M_is_initlock_owner)
     {
-        fputs(line_start, dbg_ptr->dbg_f_ptr);
+        
+        /* last locking */
+        ndrx_debug_lock(dbg_ptr->dbg_f_ptr);
+        
+        fputs(line_start, dbg_ptr->dbg_f_ptr->fp);
         va_start(ap, fmt);    
-        (void) vfprintf(dbg_ptr->dbg_f_ptr, fmt, ap);
+        (void) vfprintf(dbg_ptr->dbg_f_ptr->fp, fmt, ap);
         va_end(ap);
-        fputs("\n", dbg_ptr->dbg_f_ptr);
+        fputs("\n", dbg_ptr->dbg_f_ptr->fp);
         
         /* Handle some buffering... */
         BUFFER_CONTROL(dbg_ptr);
+        
+        ndrx_debug_unlock(dbg_ptr->dbg_f_ptr);
     }
     else
     {

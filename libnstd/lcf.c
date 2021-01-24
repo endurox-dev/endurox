@@ -38,6 +38,10 @@
 #include <lcf.h>
 #include <ndebug.h>
 #include <nstd_shm.h>
+#include <ndebugcmn.h>
+#include <sys_unix.h>
+
+#include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_LCFMAX_DFLT         20      /**< Default max commands       */
@@ -50,8 +54,10 @@ expublic ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_shm_t M_lcf_shm = {.fd=0, .path=""};   /**< Shared memory for settings       */
 exprivate ndrx_sem_t M_lcf_sem = {.semid=0};          /**< RW semaphore for SHM protection  */
-/*---------------------------Prototypes---------------------------------*/
 
+exprivate ndrx_lcf_command_seen_t *M_locl_lcf=NULL;   /**< Local LCFs seen */
+/*---------------------------Prototypes---------------------------------*/
+exprivate void lcf_fork_resume_child(void);
 /*
  * - installcb
  * - install cli infos (command_str, id, args A|B, descr) -> 
@@ -151,6 +157,10 @@ expublic int ndrx_lcf_init(void)
     M_lcf_shm.fd = EXFAIL;
     M_lcf_shm.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SHM_LCF_KEYOFSZ;
     
+    /* calculate the size of the LCF */
+    M_lcf_shm.size = sizeof(ndrx_lcf_shmcfg_t) + sizeof(ndrx_lcf_command_t) * 
+            ndrx_G_libnstd_cfg.lcfmax;
+    
     if (EXSUCCEED!=ndrx_shm_open(&M_lcf_shm, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open LCF shared memory");
@@ -171,13 +181,26 @@ expublic int ndrx_lcf_init(void)
     M_lcf_sem.nrsems = 1;
     M_lcf_sem.maxreaders = ndrx_G_libnstd_cfg.readersmax;
     
-    
     if (EXSUCCEED!=ndrx_sem_open(&M_lcf_sem, EXTRUE))
     {
         NDRX_LOG(log_error, "Failed to open LCF semaphore");
         userlog("Failed to open LCF semaphore");
         EXFAIL_OUT(ret);
     }
+#if 0
+    /* when we fork....
+     * detach from LCF...
+     * and close all loggers
+     */
+    if (EXSUCCEED!=(ret=ndrx_atfork(NULL, NULL, lcf_fork_resume_child)))
+    {
+        userlog("Failed to register fork handlers: %s", strerror(ret));
+        EXFAIL_OUT(ret);
+    }
+    
+#endif
+    
+    /* Sync the LCFs? -> Copy actual state as executed.. */
     
 out:
     
@@ -194,16 +217,32 @@ out:
 
 /**
  * Detach and remove resources
- * @param force
- * @return 
  */
-expublic int ndrx_lcf_down(int force)
+expublic int ndrx_lcf_down(void)
 {
+    int ret = EXSUCCEED;
+    
+    ndrx_lcf_detach();
+    
+    
+    if (EXSUCCEED!=ndrx_shm_remove(&M_lcf_shm))
+    {
+        ret = EXFAIL;
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_remove(&M_lcf_sem, EXTRUE))
+    {
+        ret = EXFAIL;
+    }
+    
+    return ret;
     
 }
 
-
-expublic void ndrx_svqshm_detach(void)
+/**
+ * Once we detach, we shall close all loggers...
+ */
+expublic void ndrx_lcf_detach(void)
 {
     /* process disconnects from shared settings memory
      * This somehow needs to be done when the debug is closed too.
@@ -215,6 +254,14 @@ expublic void ndrx_svqshm_detach(void)
      * So if forked process continues to do some works, then debug-init will
      * start life again and attach to shm
      */
+    ndrx_shm_close(&M_lcf_shm);
+    ndrx_sem_close(&M_lcf_sem);
+    
+    /* de init the debug finally 
+    ndrx_debug_force_closeall();
+     * ? after exec shms and sems are released.
+     * */
+
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
