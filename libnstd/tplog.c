@@ -400,7 +400,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
              */
             NDRX_STRCPY_SAFE(tmp_filename, l->filename);
             if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, 
-                    NULL, l, NULL, 0)))
+                    NULL, l, l->filename, sizeof(l->filename))))
             {
                 _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
                 EXFAIL_OUT(ret);
