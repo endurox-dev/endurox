@@ -337,6 +337,10 @@ Ensure(test_Bmkfldid)
 
 Ensure(test_Bmkfldid_multidir)
 {
+    /* load_field_table(); */
+    setenv("FLDTBLDIR", "./ubftab_test:./ubftab", 1);
+    setenv("FIELDTBLS", "test.fd,test1.fd,Exfields", 1);
+    
     /* from test.fd */
     assert_equal(strcmp(Bfname(T_STRING_FLD), "T_STRING_FLD"), 0);
     /* from test1.fd */
@@ -639,21 +643,6 @@ TestSuite *ubf_basic_tests() {
 TestSuite *ubf_bmkfldid_multidir_tests(void) {
     TestSuite *suite = create_test_suite();
     
-    if (NULL!=M_p_ub)
-    {
-        NDRX_FREE(M_p_ub);
-    }
-    
-    M_p_ub = NDRX_MALLOC(DEFAULT_BUFFER);
-    
-    memset(M_p_ub, 255, DEFAULT_BUFFER);
-    if (EXFAIL==Binit(M_p_ub, DEFAULT_BUFFER))
-    {
-        fprintf(stderr, "Binit failed!\n");
-    }
-
-    setenv("FLDTBLDIR", "./ubftab_test:./ubftab", 1);
-    setenv("FIELDTBLS", "test.fd,test1.fd,Exfields", 1);
 
     add_test(suite, test_Bmkfldid_multidir);
 
