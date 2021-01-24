@@ -46,6 +46,7 @@
  */
 Ensure(test_mkfldhdr)
 {
+    load_field_table();
     assert_equal(system("./test_mkfldhdr_cmd.sh"), EXSUCCEED);
     assert_equal(system("./test_mkfldhdr_env.sh"), EXSUCCEED);
     assert_equal(system("./test_mkfldhdr_env_multidir.sh"), EXSUCCEED);
