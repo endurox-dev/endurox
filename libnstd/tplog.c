@@ -1,6 +1,7 @@
 /**
  * @brief TP LOG, full feature logging system for user, mainly for exporting to
  *   to other languages. C/C++ can use ndebug.h
+ *   TODO: tplog* func shall have pull in of init in case if they are called first
  *
  * @file tplog.c
  */
@@ -107,63 +108,6 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger);
-/**
- * Close the file if only one logger is using that
- * Well, we close all the files for from visibility of
- * one thread. If several threads reference save base logger file
- * pointer, then we might close it, and we can cause corruption in other threads.
- * 
- * WARNING ! This requires locks to other threads to get closed fptr!
- * @param p
- */
-exprivate void logfile_close(FILE **p)
-{
-    ndrx_debug_t *fd_arr[9];
-    int i;
-    int cnt = 0;
-    int num;
-    /*API_ENTRY;  set TLS too work with out context... */
-    
-    if (*p == stdout || *p == stderr)
-    {
-        return; /* nothing todo. */
-    }
-    
-    fd_arr[0] = &G_ndrx_debug;
-    fd_arr[1] = &G_ubf_debug;
-    fd_arr[2] = &G_tp_debug;
-    num = 3;
-    if (NULL!=G_nstd_tls)
-    {
-        fd_arr[3] = &G_nstd_tls->threadlog_tp;
-        fd_arr[4] = &G_nstd_tls->requestlog_tp;
-        
-        
-        fd_arr[5] = &G_nstd_tls->threadlog_ndrx;
-        fd_arr[6] = &G_nstd_tls->requestlog_ndrx;
-        
-        fd_arr[7] = &G_nstd_tls->threadlog_ubf;
-        fd_arr[8] = &G_nstd_tls->requestlog_ubf;
-        
-        num = 9;
-    }
-    
-    for (i=0; i<num; i++)
-    {
-        if (fd_arr[i]->dbg_f_ptr == *p)
-        {
-            cnt++;
-        }
-    }
-    
-    if (cnt<2)
-    {
-        NDRX_FCLOSE(*p);
-    }
-    
-    *p = NULL;
-    
-}
 
 /**
  * Close any TLS loggers if open
@@ -178,136 +122,16 @@ expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
     
     while (NULL!=logger[i])
     {
-        if (NULL!=logger[i]->dbg_f_ptr && stderr!=logger[i]->dbg_f_ptr)
+        if (NULL!=logger[i]->dbg_f_ptr)
         {
-            /* Close intelligently to avoid closing  */
-            if (logger[i]->dbg_f_ptr!=G_ndrx_debug.dbg_f_ptr &&
-                    logger[i]->dbg_f_ptr!=G_ubf_debug.dbg_f_ptr &&
-                    logger[i]->dbg_f_ptr!=G_tp_debug.dbg_f_ptr)
-            {
-                NDRX_FCLOSE(logger[i]->dbg_f_ptr);
-                logger[i]->dbg_f_ptr = NULL;
-            }
+            ndrx_debug_unset_sink(logger[i]->dbg_f_ptr, EXTRUE, EXFALSE);
+            logger[i]->dbg_f_ptr=NULL;
+            /* clear the file names */
+            logger[i]->filename[0]=EXEOS;
+            logger[i]->level = EXFAIL;
         }
         i++;
     }
-    
-}
-
-
-/**
- * Prepare for log file change
- * Only if it is not request file
- * @param l logger
- */
-exprivate void logfile_change_prepare(ndrx_debug_t *l)
-{
-    if ( l->swait > 0 && (l->flags & LOG_FACILITY_PROCESS) )
-    {
-        ndrx_dbg_lock();
-        G_ndrx_debug_first=EXTRUE;
-        /* move to logger config... 
-         * !!!! NOTE: In future we might want to move to RW locks
-         * - so that when we write to log we get read lock.
-         * - when we are doing log file change, we get read lock
-         */
-        usleep(l->swait*1000);
-    }
-}
-/**
- * Return logging back to the systems
- */
-exprivate void logfile_change_done(ndrx_debug_t *l)
-{
-    if ( l->swait > 0 && (l->flags & LOG_FACILITY_PROCESS) )
-    {
-        G_ndrx_debug_first=EXFALSE;
-        ndrx_dbg_unlock();
-    }
-}
-
-/**
- * Set the thread based log file
- * TODO: Later we need a wrapper to set file from buffer.
- * NOTE: changed file name must be different from base logger.
- * So that threads or requests does not switch to process log files.
- * Otherwise if process log files are changed, we might get leave
- * other threads with dead pointers to closed process files,
- * due to same file name usage during their configuration.
- * 
- * @param l logging sub-system/facility
- * @param file full path to file (optional) if present, does compare
- * @return 
- */
-exprivate int logfile_change_name(ndrx_debug_t *l, char *filename)
-{
-    int ret = EXSUCCEED;
-    
-    API_ENTRY; /* set TLS too */
-    
-    if (NULL!=filename)
-    {
-        NDRX_LOG(log_debug, "Logger = %c/%s change name to: [%s]", l->code, 
-                l->module, filename);
-        if (0==strcmp(l->filename, filename))
-        {
-            goto out;
-        }
-        else
-        {
-            NDRX_STRCPY_SAFE(l->filename, filename);
-        }
-    }
-    else
-    {
-        NDRX_LOG(log_debug, "Logger = %c/%s change name to: [%s]", l->code, 
-                l->module, l->filename);
-    }
-    
-    /* Prepare for logger change 
-     * LOG LOCKED SEGMENT!
-     */
-    logfile_change_prepare(l);
-    
-    /* name already changed no need to compare 
-     * the caller must decide that.
-     */
-    if (l->dbg_f_ptr)
-    {
-        logfile_close(&l->dbg_f_ptr);
-    }
-
-    /* open the file */
-    if (EXEOS==l->filename[0])
-    {
-        /* log to stderr. */
-        l->dbg_f_ptr = stderr;
-    }
-    else if (NULL==(l->dbg_f_ptr = ndrx_dbg_fopen_mkdir(l, l->filename, "a")))
-    {
-        int err = errno;
-        userlog("Failed to open %s: %s",l->filename, strerror(err));
-        
-        _Nset_error_fmt(NESYSTEM, "Failed to open %s: %s", 
-                l->filename, strerror(err));
-        
-        l->filename[0] = EXEOS;
-        l->dbg_f_ptr = stderr;
-    }
-    else
-    {   
-        setvbuf(l->dbg_f_ptr, NULL, _IOFBF, l->buffer_size);
-    }
-     
-   /* Prepare for logger change 
-    * LOG LOCKED SEGMENT END!
-    */
-   logfile_change_done(l);
-   
-out:
-    NDRX_LOG(log_debug, "Logger = %c/%s logging to: [%s]", 
-        l->code, l->module, l->filename);
-    return ret;
     
 }
 
@@ -323,12 +147,14 @@ out:
  */
 expublic void tplogsetreqfile_direct(char *filename)
 {
+    debug_map_t map[] = LOGGER_MAP;
+    int i, dosetup=EXFALSE;
+        
     API_ENTRY; /* set TLS too */
     /* have a scope: */
     do 
     {
-        debug_map_t map[] = LOGGER_MAP;
-        int i;
+        
         LOGGER_SAVE_FIELDS_DEF;
 
         for (i=0; i<N_DIM(map); i++)
@@ -342,27 +168,52 @@ expublic void tplogsetreqfile_direct(char *filename)
                 if (NULL!=map[i].th->dbg_f_ptr)
                 {
                     memcpy(map[i].req, map[i].th, sizeof(ndrx_debug_t));
+                    ndrx_debug_addref(map[i].req->dbg_f_ptr);
                 }
                 else
                 {
                     /* Copy from TPlog */
                     memcpy(map[i].req, map[i].proc, sizeof(ndrx_debug_t));
+                    ndrx_debug_addref(map[i].req->dbg_f_ptr);
                 }
-
+    
                 /* restore the fields... */
                 LOGGER_RESTORE_FIELDS(map[i].req);
+                dosetup=EXTRUE;
+            }
+            else if (0!=strcmp(map[i].req->filename, filename))
+            {
+                dosetup=EXTRUE;
             }
         }
 
-        /* ok now open then file */
-        logfile_change_name(&G_nstd_tls->requestlog_tp, filename);
-
+        /* setup only once, if was setup, ignore the function call */
         /* copy off the pointers, use the same file pointer... */
-        for (i=1; i<3; i++)
+        if (dosetup)
         {
-            /* Well, this needs to be locked too, not? */
-            map[i].req->dbg_f_ptr = map[0].req->dbg_f_ptr;
-            NDRX_STRCPY_SAFE(map[i].req->filename, map[0].req->filename);
+            for (i=0; i<3; i++)
+            {
+                /* register sinks for each of the loggers, inherit the flags, if any...
+                 * What here we can inherit mkdir & flock
+                 *  
+                 */
+                /* swithc loggers if any...  */
+                
+                if (NULL==map[i].req->dbg_f_ptr)
+                {
+                    ndrx_debug_get_sink(filename, EXTRUE, map[i].req);
+                }
+                else
+                {
+                    /* leave sink and open new name */
+                    ndrx_debug_changename(filename, EXTRUE, map[i].req);
+                }
+                
+                /* set final name -?
+                NDRX_STRCPY_SAFE(map[i].req->filename, map[i].req->filename);
+                 * */
+
+            }
         }
     } while(0);
 }
@@ -396,7 +247,13 @@ exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger)
                 /* thread logger inherits from base */
                 memcpy(map[i].th, map[i].proc, sizeof(ndrx_debug_t));
 
+                /* increment usage
+                 * proc is stable never removed, thus can surely reference it
+                 */
+                ndrx_debug_addref(map[i].th->dbg_f_ptr);
+                
                 LOGGER_RESTORE_FIELDS(map[i].th);
+                
             }
             ret = map[i].th;
             break;
@@ -413,12 +270,18 @@ exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger)
                 if (NULL!=map[i].th->dbg_f_ptr)
                 {
                     memcpy(map[i].req, map[i].th, sizeof(ndrx_debug_t));
+                    
+                    /* our thread, thus logger always will have reference */
+                    ndrx_debug_addref(map[i].req->dbg_f_ptr);
                 }
                 else
                 {
                     memcpy(map[i].req, map[i].proc, sizeof(ndrx_debug_t));
+                    
+                    /* process loggers are never removed */
+                    ndrx_debug_addref(map[i].req->dbg_f_ptr);
                 }
-
+                
                 LOGGER_RESTORE_FIELDS(map[i].req);
             }
             ret = map[i].req;
@@ -437,6 +300,7 @@ out:
  */
 expublic void tplogclosereqfile(void)
 {
+    int i;
     /* Only if we have a TLS... */
     if (G_nstd_tls)
     {
@@ -446,13 +310,17 @@ expublic void tplogclosereqfile(void)
             ,{&G_nstd_tls->requestlog_ubf}
         };
         
-        int i;
-        
         for (i=0; i<N_DIM(map); i++)
         {
             if (map[i].req->dbg_f_ptr)
             {
-                logfile_close(&map[i].req->dbg_f_ptr);
+                /* 
+                 * OK we leave the sink
+                 */
+                ndrx_debug_unset_sink(map[i].req->dbg_f_ptr, EXTRUE, EXFALSE);
+                map[i].req->dbg_f_ptr = NULL;
+                map[i].req->level = EXFAIL;
+                
             }
             map[i].req->filename[0] = EXEOS;
         }
@@ -474,6 +342,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
 {
     int ret = EXSUCCEED;
     ndrx_debug_t *l;
+    long new_flags;
     char tmp_filename[PATH_MAX];
     int loggers[] = {LOG_FACILITY_NDRX, 
                     LOG_FACILITY_UBF, 
@@ -530,7 +399,8 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
              * close the old file & open newone...
              */
             NDRX_STRCPY_SAFE(tmp_filename, l->filename);
-            if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, NULL, l)))
+            if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, 
+                    NULL, l, NULL, 0)))
             {
                 _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
                 EXFAIL_OUT(ret);
@@ -540,12 +410,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (0!=strcmp(tmp_filename, l->filename) && 
                     (NULL==new_file || EXEOS==new_file[0]))
             {
-                /* open new log file... (to what ever level we run...) */
-                if (EXSUCCEED!=(ret = logfile_change_name(l, NULL)))
-                {
-                    _Nset_error_msg(NESYSTEM, "Failed to change log name");
-                    EXFAIL_OUT(ret);
-                }
+                ndrx_debug_changename(l->filename, EXTRUE, l);
             }
         }
 
@@ -557,13 +422,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
         /* new file passed in: */
         if (NULL!=new_file && EXEOS!=new_file[0] && 0!=strcmp(new_file, l->filename))
         {            
-            /* open new log file... (to what ever level we run...) */
-            NDRX_STRCPY_SAFE(l->filename, new_file);
-            if (EXSUCCEED!=(ret = logfile_change_name(l, NULL)))
-            {
-                _Nset_error_msg(NESYSTEM, "Failed to change log name");
-                EXFAIL_OUT(ret);
-            }
+            ndrx_debug_changename(new_file, EXTRUE, l);
         }
 
     }
@@ -574,16 +433,33 @@ out:
 
 /**
  * Close thread logger (if open)
- * @return 
  */
 expublic void tplogclosethread(void)
 {
-    if (NULL!=G_nstd_tls && NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
+    int i;
+    /* Only if we have a TLS... */
+    if (G_nstd_tls)
     {
-        logfile_close(&G_nstd_tls->threadlog_tp.dbg_f_ptr);
-        G_nstd_tls->threadlog_tp.level = EXFAIL;
-        G_nstd_tls->threadlog_tp.filename[0] = EXEOS;
-        G_nstd_tls->threadlog_tp.dbg_f_ptr = NULL;
+        debug_map_t map[] = {
+            {&G_nstd_tls->threadlog_tp}
+            ,{&G_nstd_tls->threadlog_ubf}
+            ,{&G_nstd_tls->threadlog_ndrx}
+        };
+        
+        for (i=0; i<N_DIM(map); i++)
+        {
+            if (map[i].req->dbg_f_ptr)
+            {
+                /* 
+                 * OK we leave the sink
+                 */
+                ndrx_debug_unset_sink(map[i].req->dbg_f_ptr, EXTRUE, EXFALSE);
+                map[i].req->dbg_f_ptr = NULL;
+                map[i].req->level = EXFAIL;
+                
+            }
+            map[i].req->filename[0] = EXEOS;
+        }
     }
 }
 

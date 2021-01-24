@@ -427,8 +427,10 @@ extern NDRX_API void ndrx_dbg_pid_update(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
 extern NDRX_API int ndrx_dbg_intlock_isset(void);
-extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(ndrx_debug_t *dbg_ptr, char *filename, char *mode);
-extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, ndrx_debug_t *dbg_ptr);
+extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
+        ndrx_debug_t *dbg_ptr);
+extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, 
+        ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz);
 
 /* TPLOG: */
 

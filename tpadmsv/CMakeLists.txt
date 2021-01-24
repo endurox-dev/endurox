@@ -55,13 +55,13 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 ############################# Libraries ########################################
 
 # Generate library from our source files
-add_library (tpadm STATIC ../libatmisrv/rawmain_integra.c
+add_library (tpadm STATIC
             tpadmerror.c client.c snapshoot.c client.c domain.c machine.c
             queue.c server.c service.c commons.c svcgrp.c brcon.c)
 
 
 ############################# Executables ######################################
-add_executable (tpadmsv tpadmsv.c)
+add_executable (tpadmsv tpadmsv.c ../libatmisrv/rawmain_integra.c)
 target_link_libraries (tpadmsv tpadm atmisrvinteg atmi ubf nstd ${RT_LIB} m pthread)
 set_target_properties(tpadmsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################

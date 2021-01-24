@@ -356,6 +356,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SVPPID         "NDRX_SVPPID" 
 /** Server ID */
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
+#define CONF_NDRX_DFLTLOG        "NDRX_DFLTLOG"        /**< Default logging output if none defined conf */
+#define CONF_NDRX_CMDSTARTDEL    "NDRX_STARTCMDEXP"    /**< LCF startup command expiry */
+
 /** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
  * state required by command
  */
