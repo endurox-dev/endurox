@@ -332,7 +332,7 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
  * @param tok2 (config string for CConfig or update mode)
  * @param tmpfname file name if not using dbg_ptr
  * @param tmpfnamesz buffer size for file
- * @return 
+ * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2, 
         int *p_finish_off, ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz)
@@ -518,17 +518,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
             }
             else if (0==strncmp("file", tok, cmplen))
             {
-                if (NULL!=dbg_ptr)
-                {
-                    NDRX_STRCPY_SAFE(dbg_ptr->filename, p+1);
-                }
-                else
-                {
-                    /*NDRX_STRCPY_SAFE(G_tp_debug.filename, p+1);
-                    NDRX_STRCPY_SAFE(G_ubf_debug.filename, p+1);
-                    NDRX_STRCPY_SAFE(G_ndrx_debug.filename, p+1);*/
-                    NDRX_STRCPY_SAFE_DST(tmpfname, (p+1), tmpfnamesz);
-                }
+                NDRX_STRCPY_SAFE_DST(tmpfname, (p+1), tmpfnamesz);
             } /* Feature #167 */
             else if (0==strncmp("threaded", tok, cmplen))
             {
@@ -591,6 +581,9 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         }
     }
     
+    
+    ndrx_str_env_subs_len(tmpfname, tmpfnamesz);
+    
     if (NULL!=dbg_ptr)
     {
         tmp_ptr = dbg_ptr;
@@ -603,7 +596,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
     /* Configure template for threads...
      * Feature #167
      */
-    if (tmp_ptr->is_threaded && EXEOS!=tmp_ptr->filename[0])
+    if (tmp_ptr->is_threaded && EXEOS!=tmpfname[0])
     {
         int len;
         int len2;
@@ -612,9 +605,11 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
         len = strlen(tmp_ptr->filename_th_template);
         len2 = 3; /* len of .%u */
 
-        if (len+len2 <= sizeof(tmp_ptr->filename))
+        if (len+len2 <= sizeof(tmpfname))
         {
-            NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmp_ptr->filename);
+            /* Use the name */
+            NDRX_STRCPY_SAFE(tmp_ptr->filename_th_template, tmpfname);
+            
             ndrx_str_env_subs_len(tmp_ptr->filename_th_template, 
                     sizeof(tmp_ptr->filename_th_template));
             
@@ -632,7 +627,8 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                         sizeof(tmp_ptr->filename_th_template), ".%u");
             }
             
-            if (NULL!=dbg_ptr)
+            /* set template to standard loggers */
+            if (NULL==dbg_ptr)
             {
                 NDRX_STRCPY_SAFE(G_ubf_debug.filename_th_template, 
                         G_ndrx_debug.filename_th_template);
@@ -640,6 +636,7 @@ expublic int ndrx_init_parse_line(char *in_tok1, char *in_tok2,
                 NDRX_STRCPY_SAFE(G_tp_debug.filename_th_template, 
                         G_ndrx_debug.filename_th_template);
             }
+            
         }
     }
 
