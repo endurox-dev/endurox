@@ -54,7 +54,7 @@
 #include "nstd_shm.h"
 #include <sys_svq.h>
 #include <ndrx_config.h>
-#include <lcf.h>
+#include <lcfint.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/

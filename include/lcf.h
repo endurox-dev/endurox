@@ -1,5 +1,5 @@
 /**
- * @brief Latent command framework. Part of the Enduro/X standard library
+ * @brief LCF API (published)
  *
  * @file lcf.h
  */
@@ -55,7 +55,6 @@ extern "C" {
 #define NDRX_LCF_ADMINCMD_MAX          64   /**< Admin command max lenght     */
 #define NDRX_LCF_ADMINDSCR_MAX         128  /**< Max description for admin cmd */
 
-
 #define NDRX_LCF_FLAG_PIDREX        0x00000001   /**< Interpret PID as regexp */
 #define NDRX_LCF_FLAG_BINREX        0x00000002   /**< Interpret BINNAME as regexp */
 #define NDRX_LCF_FLAG_ALL           0x00000004   /**< Apply to all processes  */
@@ -73,26 +72,13 @@ extern "C" {
 #define NDRX_LCF_CMD_LOGROTATE          1   /**< Perfrom logrotated         */
 #define NDRX_LCF_CMD_LOGCHG             2   /**< Change logger params       */
 #define NDRX_LCF_CMD_MAX_PROD           999 /**< Maximum product command    */    
+    
+#define NDRX_LCF_CMD_MIN_CUST           1000 /**< Minimum user command code */
+    
 #define NDRX_LCF_CMD_MAX_CUST           1999 /**< Maximum user command code */
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
-
-/* LCF will provide generic settings library settings for internal use */
-
-
-/**
- * Standard library configuration managed by lcf
- */
-typedef struct
-{
-    char *qprefix;      /**< Queue prefix used by mappings  */
-    long queuesmax;     /**< Max number of queues           */
-    int  readersmax;    /**< Max number of concurrent lckrds*/
-    int  lcfmax;        /**< Max number of LCF commands     */
-    key_t ipckey;       /**< Semphoare key                  */
-    int  startcmdexp;   /**< Startup command delay          */
-} ndrx_nstd_libconfig_t;
 
 /* LCF will provide shared memory block */
 
@@ -108,7 +94,7 @@ typedef struct
 {
     /* The command: */
     int    version;         /**< Version number of the c struct                         */
-    int    cmdversion;         /**< command version, so that if we switch the logs check that
+    unsigned  cmdversion;   /**< command version, so that if we switch the logs check that
                              * command is not changed (i.e. we want to update the stats) */
     ndrx_stopwatch_t publtim;/**< Time when command was published                    */
     int    command;         /**< Command code                                        */
@@ -130,33 +116,6 @@ typedef struct
     
 } ndrx_lcf_command_t;
 
-/**
- * This is local list of commands seen & processed
- * During the program startup we do no process any commands
- * Except logrotates 
- */
-typedef struct
-{
-    int    cmdversion;         /**< command version, so that if we switch the logs check that
-                             * command is not changed (i.e. we want to update the stats) */
-    ndrx_stopwatch_t publtim;/**< Time when command was published                    */
-    int    command;         /**< Command code                                        */
-} ndrx_lcf_command_seen_t;
-
-/**
- * Shared memory settings
- */
-typedef struct
-{
-    unsigned version;       /**< Monitor the version, if changed run LCF with readlock */
-    int use_ddr;            /**< Should DDR be used by callers                         */
-    long ddr_page;          /**< DDR page number  0 or 1, version not changes, using long for align */
-    char reserved[NDRX_LCF_RESVR];  /**< reserved space for future updates             */
-    
-    /**< Array of LCF commands */
-    ndrx_lcf_command_t commands[0];
-} ndrx_lcf_shmcfg_t;
-    
 
 /**
  * Standard library configuration managed by lcf
@@ -180,48 +139,19 @@ typedef struct
  */
 typedef struct
 {
-    int version;    /**< API version            */
-    int command;    /**< lcf comand code        */
-    char cmdstr[NDRX_LCF_ADMINCMD_MAX]; /**< Command code $ xadmin lcf <code> */
-    char helpstr[NDRX_LCF_ADMINDSCR_MAX]; /**< Help text for command */
-    long flags;     /**< PIDREX, BINREX, ALL, ARGA, ARGB, DOSTARTUP, DOSTARTUPDEL */
+    int version;    /**< API version                                              */
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX]; /**< Command code $ xadmin lcf <code>     */
+    int command;    /**< lcf comand code                                          */
+    char helpstr[NDRX_LCF_ADMINDSCR_MAX]; /**< Help text for command              */
+    long flags;     /**< ARGA, ARGB, DOSTARTUP, DOSTARTUPDEL                      */
+    int dfltslot;   /**< Default slot numbere wher command shall be installed     */
 } ndrx_lcf_reg_xadmin_t;
 
-
-/**
- * Needs hash for function registration data -> hash by name 
- */
-typedef struct 
-{
-    int command;    /**< lcf comand code        */
-    ndrx_lcf_reg_func_t cfunc;
-    EX_hash_handle hh; /**< makes this structure hashable               */
-} ndrx_lcf_reg_funch_t;
-
-/**
- * Needs hash with callback data, hash by command code       
- * This is used by xadmin lookups
- */
-typedef struct 
-{
-    char cmdstr[NDRX_LCF_ADMINCMD_MAX]; /**< Command code */
-    ndrx_lcf_reg_xadmin_t xfunc;
-    EX_hash_handle hh; /**< makes this structure hashable               */
-} ndrx_lcf_reg_xadminh_t;
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 
-extern NDRX_API int ndrx_lcf_init(void);
-extern NDRX_API void ndrx_lcf_detach(void);
-
-/** Register callback for command code */
-extern NDRX_API int ndrx_lcf_regcallback(ndrx_lcf_reg_func_t *cbreg);
-
-/** Register command with xadmin       */
-extern NDRX_API int ndrx_lcf_regxadmin(ndrx_lcf_reg_xadmin_t *xadminreg);
 
 
 #if defined(__cplusplus)

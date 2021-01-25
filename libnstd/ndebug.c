@@ -65,7 +65,7 @@
 #include "utlist.h"
 #include <expluginbase.h>
 #include <sys_test.h>
-#include <lcf.h>
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
