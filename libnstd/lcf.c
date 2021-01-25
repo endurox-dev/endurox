@@ -35,11 +35,14 @@
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrstandard.h>
-#include <lcf.h>
 #include <ndebug.h>
+#include <lcf.h>
+#include <lcfint.h>
 #include <nstd_shm.h>
 #include <ndebugcmn.h>
 #include <sys_unix.h>
+#include <nerror.h>
+#include <exhash.h>
 
 #include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
@@ -51,17 +54,219 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
+expublic ndrx_lcf_shmcfg_t *ndrx_G_shmcfg=NULL;        /**< Shared mem config, full          */
+expublic ndrx_lcf_shmcfg_ver_t *ndrx_G_shmcfg_ver=NULL;/**< Only version handling            */
+
+expublic unsigned ndrx_G_shmcfgver_chk = 0;            /**< Last checked shared mem cfg vers */
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_shm_t M_lcf_shm = {.fd=0, .path=""};   /**< Shared memory for settings       */
 exprivate ndrx_sem_t M_lcf_sem = {.semid=0};          /**< RW semaphore for SHM protection  */
 
-exprivate ndrx_lcf_command_seen_t *M_locl_lcf=NULL;   /**< Local LCFs seen */
+exprivate ndrx_lcf_command_seen_t *M_locl_lcf=NULL;   /**< Local LCFs seen, set when mmap   */
+
+exprivate ndrx_lcf_reg_funch_t *M_funcs=NULL;         /**< functions registered for LCF     */
+exprivate ndrx_lcf_reg_xadminh_t *M_xadmin_cmds=NULL; /**< xadmin commands registered       */
+
 /*---------------------------Prototypes---------------------------------*/
 exprivate void lcf_fork_resume_child(void);
 /*
  * - installcb
  * - install cli infos (command_str, id, args A|B, descr) -> 
  */
+
+/**
+ * Find the command in hash (internal version)
+ * @param cmdstr command name
+ * @return hash object or NULL
+ */
+expublic ndrx_lcf_reg_xadminh_t* ndrx_lcf_xadmin_find_int(char *cmdstr)
+{
+    ndrx_lcf_reg_xadminh_t *ret = NULL;
+    
+    EXHASH_FIND_STR( M_xadmin_cmds, cmdstr, ret);
+    
+    return ret;
+}
+
+/**
+ * Delete xadmin command (internal version)
+ * @param h hash handle of the command
+ */
+expublic void ndrx_lcf_xadmin_del_int(ndrx_lcf_reg_xadminh_t *h)
+{
+    EXHASH_DEL( M_xadmin_cmds, h);
+}
+
+/**
+ * Delete command by string code.
+ * This does not allow to delete internal Enduro/X commands.
+ * @param cmdstr command text code
+ * @param EXSUCCEED (delete ok, found), EXFAIL(not found)
+ */
+expublic int ndrx_lcf_xadmin_delstr_int(char *cmdstr)
+{
+    int ret=EXSUCCEED;
+    
+    ndrx_lcf_reg_xadminh_t *h = ndrx_lcf_xadmin_find_int(cmdstr);
+    
+    if (NULL==h)
+    {
+        _Nset_error_msg(NENOENT, "Command not registered.");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (h->xcmd.command < NDRX_LCF_CMD_MIN_CUST)
+    {
+        _Nset_error_msg(NESUPPORT, "Cannot delete internal commands");
+        EXFAIL_OUT(ret);
+    }
+    
+    ndrx_lcf_xadmin_del_int(h);
+    
+out:    
+    return ret;
+}
+
+/**
+ * If command not found -> add
+ * if command is found -> Replace
+ * NOTE! we cannot use log functions. Only NDRX_LOG_EARLY allowed
+ * as plugins may register the functions 
+ * @param xcmd Xadmin function definition
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_lcf_xadmin_add_int(ndrx_lcf_reg_xadmin_t *xcmd)
+{
+    int ret = EXSUCCEED;
+    ndrx_lcf_reg_xadminh_t *h;
+    
+    h = ndrx_lcf_xadmin_find_int(xcmd->cmdstr);
+    
+    if (NULL!=h)
+    {
+        NDRX_LOG_EARLY(log_debug, "Replacing [%s] xadmin lcf command", xcmd->cmdstr);
+        ndrx_lcf_xadmin_del_int(h);
+    }
+    else
+    {
+        NDRX_LOG_EARLY(log_debug, "Adding [%s] xadmin lcf command", xcmd->cmdstr);
+    }
+    
+    /* OK now add */
+    h = NDRX_FPMALLOC(sizeof(ndrx_lcf_reg_xadminh_t), 0);
+    
+    if (NULL==h)
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to malloc %d bytes (xadmin lcf cmd hash): %s",
+                sizeof(ndrx_lcf_reg_xadminh_t), strerror(errno));
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc %d bytes (xadmin lcf cmd hash): %s",
+                sizeof(ndrx_lcf_reg_xadminh_t), strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    memcpy(&h->xcmd, xcmd, sizeof(ndrx_lcf_reg_xadmin_t));
+    NDRX_STRCPY_SAFE(h->cmdstr, xcmd->cmdstr);
+    EXHASH_ADD_STR(M_xadmin_cmds, cmdstr, h);
+    
+out:
+    return ret;
+}
+
+/**
+ * Find the command in hash (internal version)
+ * @param command command code
+ * @return hash object or NULL
+ */
+expublic ndrx_lcf_reg_funch_t* ndrx_lcf_func_find_int(int command)
+{
+    ndrx_lcf_reg_funch_t *ret = NULL;
+    
+    EXHASH_FIND_INT( M_funcs, &command, ret);
+    
+    return ret;
+}
+
+/**
+ * Delete func command (internal version)
+ * @param h hash handle of the command
+ */
+expublic void ndrx_lcf_func_del_int(ndrx_lcf_reg_funch_t *h)
+{
+    EXHASH_DEL( M_funcs, h);
+}
+
+/**
+ * Delete command by string code.
+ * This does not allow to delete internal Enduro/X commands.
+ * @param cmdstr command text code
+ * @param EXSUCCEED (delete ok, found), EXFAIL(not found)
+ */
+expublic int ndrx_lcf_func_delcmd_int(int command)
+{
+    int ret=EXSUCCEED;
+    
+    ndrx_lcf_reg_funch_t *h = ndrx_lcf_func_find_int(command);
+    
+    if (NULL==h)
+    {
+        _Nset_error_msg(NENOENT, "Command not registered.");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (h->cfunc.command < NDRX_LCF_CMD_MIN_CUST)
+    {
+        _Nset_error_fmt(NESUPPORT, "Cannot delete internal commands (%d)", 
+                h->cfunc.command);
+        EXFAIL_OUT(ret);
+    }
+    
+    ndrx_lcf_func_del_int(h);
+    
+out:    
+    return ret;
+}
+
+/**
+ * Register callback commands
+ * @param xcmd
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_lcf_func_add_int(ndrx_lcf_reg_func_t *cfunc)
+{
+    int ret = EXSUCCEED;
+    ndrx_lcf_reg_funch_t *h;
+    
+    h = ndrx_lcf_func_find_int(cfunc->command);
+    
+    if (NULL!=h)
+    {
+        NDRX_LOG_EARLY(log_debug, "Replacing [%d] func lcf command", cfunc->command);
+        ndrx_lcf_func_del_int(h);
+    }
+    else
+    {
+        NDRX_LOG_EARLY(log_debug, "Adding [%d] func lcf command", cfunc->command);
+    }
+    
+    /* OK now add */
+    h = NDRX_FPMALLOC(sizeof(ndrx_lcf_reg_funch_t), 0);
+    
+    if (NULL==h)
+    {
+        NDRX_LOG_EARLY(log_error, "Failed to malloc %d bytes (func lcf cmd hash): %s",
+                sizeof(ndrx_lcf_reg_funch_t), strerror(errno));
+        _Nset_error_fmt(NEMALLOC, "Failed to malloc %d bytes (func lcf cmd hash): %s",
+                sizeof(ndrx_lcf_reg_funch_t), strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    memcpy(&h->cfunc, cfunc, sizeof(ndrx_lcf_reg_func_t));
+    h->command = cfunc->command;
+    EXHASH_ADD_INT(M_funcs, command, h);
+    
+out:
+    return ret;
+}
 
 /**
  * Load the LCF settings. Attach semaphores and shared memory.
@@ -168,6 +373,10 @@ expublic int ndrx_lcf_init(void)
         EXFAIL_OUT(ret);
     }
     
+    /* assign the mem */
+    ndrx_G_shmcfg = (ndrx_lcf_shmcfg_t*)M_lcf_shm.mem;
+    ndrx_G_shmcfg_ver = (ndrx_lcf_shmcfg_ver_t*)M_lcf_shm.mem;
+    
     M_lcf_sem.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_LCFLOCKS;
     
     /*
@@ -187,6 +396,9 @@ expublic int ndrx_lcf_init(void)
         userlog("Failed to open LCF semaphore");
         EXFAIL_OUT(ret);
     }
+    
+    /* TODO: Alloc M_locl_lcf -> to keep the local results */
+    
 #if 0
     /* when we fork....
      * detach from LCF...
@@ -213,6 +425,27 @@ out:
     }
     
     return ret;    
+}
+
+/**
+ * Process all relevant CLF commands
+ * and save the results
+ * @param is_startup is this startup run? or run detected by NDRX_LOG?
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_lcf_run(int is_startup)
+{
+    /* TODO: hard work! */
+    
+    /* TOOD: Read lock */
+    
+    /* TOOD: Read unlock (when executing) */
+    
+    
+    /* TODO: Write lock -> update results */
+    
+    /* TODO: Write lock -> update results, think about this..., as at 
+     * heavy loads writes may cause stall? */
 }
 
 /**

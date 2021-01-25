@@ -659,6 +659,10 @@ expublic int cpm_exec(cpm_process_t *c)
             close(fd_stderr);
         }
         
+        /**
+         * todo: set NDRX_DFLTLOG to stderr file, so that logrotate
+         * can be done on these
+         */
         /* reset signal handlers */
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);

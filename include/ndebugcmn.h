@@ -129,8 +129,21 @@ typedef struct
     unsigned version;        /**< This is settigns version (inherit by thread/req */
 } ndrx_debug_t;
 
+/**
+ * This is opaque interface for detecting current LCF command 
+ */
+typedef struct
+{
+    unsigned shmcfgver;         /**< Current version in shared mem of the config */
+} ndrx_lcf_shmcfg_ver_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+/** Current shared memory published configuration version */
+extern NDRX_API ndrx_lcf_shmcfg_ver_t *ndrx_G_shmcfg_ver;
+/** Last checked shared mem cfg version                   */
+extern NDRX_API unsigned              ndrx_G_shmcfgver_chk;
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, int do_lock, 
         ndrx_debug_t *dbg_ptr);
