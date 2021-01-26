@@ -50,6 +50,7 @@
 #include <userlog.h>
 #include <regex.h>
 #include <ndebug.h>
+#include <exregex.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -57,7 +58,7 @@
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-        
+
 /**
  * Compile the regular expression rules
  * @param p_re struct of regex
@@ -165,6 +166,26 @@ expublic void ndrx_regasc_cpyesc(char *dest, char *src,
     }
     
     *p=EXEOS;
+}
+
+/**
+ * Quick exec, compile & test & free
+ * @param expr regular expression
+ * @param data data to test
+ * @return EXSUCCEED if matched
+ */
+expublic int ndrx_regqexec(const char *expr, const char *data)
+{
+    int ret = EXFAIL;
+    regex_t re;
+    
+    if (EXSUCCEED==ndrx_regcomp(&re, (char *)expr))
+    {
+        ret = ndrx_regexec(&re, (char *)data);
+        ndrx_regfree(&re);
+    }
+    
+    return ret;
 }
 
 /*

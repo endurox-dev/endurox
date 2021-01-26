@@ -85,6 +85,7 @@ extern NDRX_API int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg,
 
 extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 
+extern NDRX_API void ndrx_init_fail_banner(void);
 #ifdef	__cplusplus
 }
 #endif

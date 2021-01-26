@@ -59,6 +59,7 @@
 #include <cconfig.h>
 #include <typed_view.h>
 #include <atmi_cache.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
@@ -184,21 +185,7 @@ expublic int ndrx_load_common_env(void)
     
     if (NULL==p)
     {
-        fprintf(stderr, "********************************************************************************\n");
-        fprintf(stderr, "**                         CONFIGURATION ERROR !                              **\n");
-        fprintf(stderr, "**                         ... now worry                                      **\n");
-        fprintf(stderr, "**                                                                            **\n");
-        fprintf(stderr, "** Enduro/X Application server is not in proper environment or not configured **\n");
-        fprintf(stderr, "**                                                                            **\n");
-        fprintf(stderr, "** Possible causes:                                                           **\n");
-        fprintf(stderr, "** - Classical environment variables are not loaded (see ex_env(5) man page)  **\n");
-        fprintf(stderr, "** - Or Common-Config NDRX_CCONFIG env variable is not set                    **\n");
-        fprintf(stderr, "** See \"Getting Started Tutorial\" in order to get system up-and-running       **\n");
-        fprintf(stderr, "** More info can be found here http://www.endurox.org/dokuwiki                **\n");
-        fprintf(stderr, "**                                                                            **\n");
-        fprintf(stderr, "** Process is now terminating with failure                                    **\n");
-        fprintf(stderr, "********************************************************************************\n");
-        exit(EXFAIL);
+        ndrx_init_fail_banner(); /* NOTE ! this termiantes the binary */
     }
     
     if (NULL==p)

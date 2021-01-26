@@ -61,7 +61,9 @@ typedef struct
 {
     char *qprefix;      /**< Queue prefix used by mappings  */
     long queuesmax;     /**< Max number of queues           */
-    int  readersmax;    /**< Max number of concurrent lckrds*/
+    int  svqreadersmax;    /**< Max number of concurrent lckrds*/
+    int  lcfreadersmax; /**< Max number of concurrent lckrds*/
+    
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */
     int  startcmdexp;   /**< Startup command delay          */
@@ -119,6 +121,7 @@ typedef struct
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
+
 extern NDRX_API int ndrx_lcf_init(void);
 extern NDRX_API void ndrx_lcf_detach(void);
 

@@ -318,7 +318,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_MSGSIZEMAX     "NDRX_MSGSIZEMAX" /**< Maximum size of message for posixq */
 #define CONF_NDRX_MSGQUEUESMAX   "NDRX_MSGQUEUESMAX"/**< Max number of Queues (for sysv)  */
 #define CONF_NDRX_SVQREADERSMAX  "NDRX_SVQREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
+#define CONF_NDRX_LCFREADERSMAX  "NDRX_LCFREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
 #define CONF_NDRX_LCFMAX         "NDRX_LCFMAX" /**< Max number of latent command framework commands  */
+#define CONF_NDRX_LCFCMDSTARTDEL "NDRX_LCFSTARTCMDEXP"    /**< LCF startup command expiry */
 #define CONF_NDRX_SANITY         "NDRX_SANITY"     /**< Time in seconds after which do sanity check for dead processes */
 #define CONF_NDRX_QPATH          "NDRX_QPATH"      /**< Path to place on fs where queues lives */
 #define CONF_NDRX_IPCKEY         "NDRX_IPCKEY"     /**< IPC Key for shared memory */
@@ -357,7 +359,6 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 /** Server ID */
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
 #define CONF_NDRX_DFLTLOG        "NDRX_DFLTLOG"        /**< Default logging output if none defined conf */
-#define CONF_NDRX_CMDSTARTDEL    "NDRX_STARTCMDEXP"    /**< LCF startup command expiry */
 
 /** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
  * state required by command

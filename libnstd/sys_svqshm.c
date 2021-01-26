@@ -222,6 +222,21 @@ expublic int ndrx_svqshm_init(int attach_only)
     memset(&M_map_p2s, 0, sizeof(M_map_p2s));
     memset(&M_map_s2p, 0, sizeof(M_map_s2p));
     
+    
+    /* check mandatory config presence loaded by LCF! */
+    
+    if (!ndrx_G_libnstd_cfg.qprefix[0])
+    {
+        NDRX_LOG(log_error, "%s is not set!", CONF_NDRX_QPREFIX);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (!ndrx_G_libnstd_cfg.ipckey)
+    {
+        NDRX_LOG(log_error, "%s is not set!", CONF_NDRX_IPCKEY);
+        EXFAIL_OUT(ret);
+    }
+    
     /* fill in shared memory details, path + size */
     
     M_map_p2s.fd = EXFAIL;
@@ -286,10 +301,10 @@ expublic int ndrx_svqshm_init(int attach_only)
      * semaphores, so maybe this can be used to increase performance.
      */
     M_map_sem.nrsems = 1;
-    M_map_sem.maxreaders = ndrx_G_libnstd_cfg.readersmax;
+    M_map_sem.maxreaders = ndrx_G_libnstd_cfg.svqreadersmax;
     
     NDRX_LOG(log_debug, "Using service semaphore key: %d max readers: %d", 
-            M_map_sem.key, ndrx_G_libnstd_cfg.readersmax);
+            M_map_sem.key, ndrx_G_libnstd_cfg.svqreadersmax);
     
     /* OK, either create or attach... */
     if (attach_only)
