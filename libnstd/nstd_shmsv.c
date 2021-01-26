@@ -123,7 +123,7 @@ expublic int ndrx_shm_is_attached(ndrx_shm_t *shm)
  * in the same time and they attempt to create a shared memory blocks.
  * of course it is not normal mode of operations, we use that only for testing
  * thus be aware, maybe some test cases needs to be tuned with some sleep periods.
- * 
+ * NOTE ! We need early logger, as this is open from LCF init.
  * @param shm shm handler. path and size must be set.
  * @param attach_on_exists if shm exists, perform attach instead of failure
  * @return EXSUCCEED/EXFAIL
@@ -143,12 +143,12 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
         
         if (EEXIST==err && attach_on_exists)
         {
-            NDRX_LOG(log_info, "Shared memory exists [%s]/%x - attaching",
+            NDRX_LOG_EARLY(log_info, "Shared memory exists [%s]/%x - attaching",
                     shm->path, shm->key);
             return ndrx_shm_attach(shm);
         }
         
-        NDRX_LOG(log_error, "Failed to create shm [%s]: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to create shm [%s]: %s",
                             shm->path, strerror(err));
         EXFAIL_OUT(ret);
     }
@@ -157,7 +157,7 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
     
     if ((void *)EXFAIL==shm->mem)
     {
-        NDRX_LOG(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %d: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %d: %s",
                             shm->path, shm->fd, shm->key, shm->size, strerror(errno));
         EXFAIL_OUT(ret);
     }
@@ -165,7 +165,7 @@ expublic int ndrx_shm_open(ndrx_shm_t *shm, int attach_on_exists)
     /* Reset SHM */
     memset(shm->mem, 0, shm->size);
     
-    NDRX_LOG(log_debug, "Shm: [%s] %d/%x created size: %d mem: %p", 
+    NDRX_LOG_EARLY(log_debug, "Shm: [%s] %d/%x created size: %d mem: %p", 
             shm->path, shm->fd, shm->key, shm->size, shm->mem);
     
 out:
@@ -177,7 +177,7 @@ out:
         ndrx_shm_remove(shm);
     }
 
-    NDRX_LOG(log_debug, "return %d", ret);
+    NDRX_LOG_EARLY(log_debug, "return %d", ret);
 
     return ret;
 }
@@ -193,7 +193,7 @@ expublic int ndrx_shm_attach(ndrx_shm_t *shm)
     
     if (ndrx_shm_is_attached(shm))
     {
-        NDRX_LOG(log_debug, "shm [%s] %d/%x size: %d already attached", shm->path,
+        NDRX_LOG_EARLY(log_debug, "shm [%s] %d/%x size: %d already attached", shm->path,
                 shm->fd, shm->key, shm->size);
         goto out;
     }
@@ -203,7 +203,7 @@ expublic int ndrx_shm_attach(ndrx_shm_t *shm)
 
     if (shm->fd < 0) 
     {
-        NDRX_LOG(log_error, "Failed to shmget/attach shm key=%x [%s]: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to shmget/attach shm key=%x [%s]: %s",
                             shm->key, shm->path, strerror(errno));
         EXFAIL_OUT(ret);
     }
@@ -212,12 +212,12 @@ expublic int ndrx_shm_attach(ndrx_shm_t *shm)
     
     if (MAP_FAILED==shm->mem)
     {
-        NDRX_LOG(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %d: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to shmat memory for [%s] fd %d/%x bytes %d: %s",
                             shm->path, shm->fd, shm->key, shm->size, strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-    NDRX_LOG(log_debug, "Shm: [%s] %d/%x attach size: %d mem: %p", 
+    NDRX_LOG_EARLY(log_debug, "Shm: [%s] %d/%x attach size: %d mem: %p", 
             shm->path, shm->fd, shm->key, shm->size, shm->mem);
 
 out:
@@ -230,7 +230,7 @@ out:
     }
     */
             
-    NDRX_LOG(log_debug, "return %d", ret);
+    NDRX_LOG_EARLY(log_debug, "return %d", ret);
 
     return ret;
 }
@@ -279,14 +279,14 @@ expublic int ndrx_shm_remove(ndrx_shm_t *shm)
     {
         if (EXSUCCEED!=shmctl(fd, IPC_RMID, NULL))
         {
-            NDRX_LOG(log_error, "Failed to IPC_RMID %d/%x: [%s]: %s",
+            NDRX_LOG_EARLY(log_error, "Failed to IPC_RMID %d/%x: [%s]: %s",
                             fd, shm->key, shm->path, strerror(errno));
             ret = EXFAIL;
         }
     }
     else
     {
-        NDRX_LOG(log_warn, "Failed to remove: [%s] %x", shm->path, shm->key);
+        NDRX_LOG_EARLY(log_warn, "Failed to remove: [%s] %x", shm->path, shm->key);
     }
     
     return ret;

@@ -128,6 +128,29 @@ exprivate MUTEX_LOCKDECL(M_memlog_lock);
 /*---------------------------Prototypes---------------------------------*/
 
 /**
+ * Standard banner if configuration have failed
+ */
+expublic void ndrx_init_fail_banner(void)
+{
+    
+    fprintf(stderr, "********************************************************************************\n");
+    fprintf(stderr, "**                         CONFIGURATION ERROR !                              **\n");
+    fprintf(stderr, "**                         ... now worry                                      **\n");
+    fprintf(stderr, "**                                                                            **\n");
+    fprintf(stderr, "** Enduro/X Application server is not in proper environment or not configured **\n");
+    fprintf(stderr, "**                                                                            **\n");
+    fprintf(stderr, "** Possible causes:                                                           **\n");
+    fprintf(stderr, "** - Classical environment variables are not loaded (see ex_env(5) man page)  **\n");
+    fprintf(stderr, "** - Or Common-Config NDRX_CCONFIG env variable is not set                    **\n");
+    fprintf(stderr, "** See \"Getting Started Tutorial\" in order to get system up-and-running       **\n");
+    fprintf(stderr, "** More info can be found here http://www.endurox.org/dokuwiki                **\n");
+    fprintf(stderr, "**                                                                            **\n");
+    fprintf(stderr, "** Process is now terminating with failure                                    **\n");
+    fprintf(stderr, "********************************************************************************\n");
+    exit(EXFAIL);
+}
+
+/**
  * Reply the cached log to the real/initilaized logger
  * @param dbg logger (after init)
  */
@@ -770,6 +793,7 @@ expublic void ndrx_init_debug(void)
     char buf[PATH_MAX*2];
     char *tmp;
     char tmpname[PATH_MAX+1]={EXEOS};
+    int lcf_status=EXFAIL;
     
     ndrx_dbg_intlock_set();
     
@@ -927,12 +951,23 @@ expublic void ndrx_init_debug(void)
     /* Initialize system test sub-system */
     ndrx_systest_init();
     
+    /* init must be done before debug opens
+     * as we map the check are to shared memory it might conflict
+     * with some other thread starting up and reading some incomplete pointer
+     */
+    lcf_status = ndrx_lcf_init();
+    
+    
     G_ndrx_debug_first = EXFALSE;
     
     ndrx_dbg_intlock_unset();
     
-    /* LCF */
-    ndrx_lcf_init();
+    /* print the standard errors */
+    if (EXSUCCEED!=lcf_status)
+    {
+        /* ndrx_init_fail_banner(); this termiantes the binary */
+        NDRX_LOG(log_warn, "LCF startup failed -> LCF commands will not be processed");
+    }
     
 }
 

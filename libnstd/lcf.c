@@ -43,21 +43,30 @@
 #include <sys_unix.h>
 #include <nerror.h>
 #include <exhash.h>
-
+#include <exregex.h>
 #include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_LCFMAX_DFLT         20      /**< Default max commands       */
 #define MAX_READERS_DFLT        50      /**< Max readers for RW lock... */
+#define MAX_LCFREADERS_DFLT     1000    /**< Lcf readers max this is priority */
+#define MAX_LCFSTARTMAX_DFLT    60      /**< Apply 60 seconds old commands */
+
 #define MAX_QUEUES_DLFT         20000   /**< Max number of queues, dflt */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 expublic ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 expublic ndrx_lcf_shmcfg_t *ndrx_G_shmcfg=NULL;        /**< Shared mem config, full          */
-expublic ndrx_lcf_shmcfg_ver_t *ndrx_G_shmcfg_ver=NULL;/**< Only version handling            */
+expublic ndrx_lcf_shmcfg_ver_t M_ver_start = {.shmcfgver=1};
 
-expublic unsigned ndrx_G_shmcfgver_chk = 0;            /**< Last checked shared mem cfg vers */
+/** 
+ * During the init we will change the ptrs ... 
+ * value 1 will initiate the pull-in
+ */
+expublic volatile ndrx_lcf_shmcfg_ver_t *ndrx_G_shmcfg_ver=&M_ver_start;/**< Only version handling            */
+
+expublic volatile unsigned ndrx_G_shmcfgver_chk = 0;            /**< Last checked shared mem cfg vers */
 /*---------------------------Statics------------------------------------*/
 exprivate ndrx_shm_t M_lcf_shm = {.fd=0, .path=""};   /**< Shared memory for settings       */
 exprivate ndrx_sem_t M_lcf_sem = {.semid=0};          /**< RW semaphore for SHM protection  */
@@ -66,6 +75,8 @@ exprivate ndrx_lcf_command_seen_t *M_locl_lcf=NULL;   /**< Local LCFs seen, set 
 
 exprivate ndrx_lcf_reg_funch_t *M_funcs=NULL;         /**< functions registered for LCF     */
 exprivate ndrx_lcf_reg_xadminh_t *M_xadmin_cmds=NULL; /**< xadmin commands registered       */
+
+exprivate MUTEX_LOCKDECL(M_lcf_run);
 
 /*---------------------------Prototypes---------------------------------*/
 exprivate void lcf_fork_resume_child(void);
@@ -274,12 +285,15 @@ out:
  *  with slot 2 used for LCF
  * - Add new shared memory block for LCF commands and general real time settings
  *  like current page of DDR routing data
+ * We need early logging here, because once debug flag is open, the LCF is ready
+ * to start to consume the commands.
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_lcf_init(void)
 {
     int ret = EXSUCCEED;
     char *tmp;
+    size_t sz;
     
     memset(&ndrx_G_libnstd_cfg, 0, sizeof(ndrx_G_libnstd_cfg));
     
@@ -288,57 +302,75 @@ expublic int ndrx_lcf_init(void)
     if (NULL==ndrx_G_libnstd_cfg.qprefix)
     {
         /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
-        userlog("Missing config key %s - FAIL", CONF_NDRX_QPREFIX);
+        NDRX_LOG_EARLY(log_info, "Missing config key %s", CONF_NDRX_QPREFIX);
         EXFAIL_OUT(ret);
     }
+    
+    NDRX_LOG_EARLY(log_info, "%s set to %s", CONF_NDRX_QPREFIX, 
+            ndrx_G_libnstd_cfg.qprefix);
 
     /* get number of concurrent threads */
     tmp = getenv(CONF_NDRX_SVQREADERSMAX);
     if (NULL==tmp)
     {
-        ndrx_G_libnstd_cfg.readersmax = MAX_READERS_DFLT;
-        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_SVQREADERSMAX, ndrx_G_libnstd_cfg.readersmax);
+        ndrx_G_libnstd_cfg.svqreadersmax = MAX_READERS_DFLT;
     }
     else
     {
-        ndrx_G_libnstd_cfg.readersmax = atol(tmp);
+        ndrx_G_libnstd_cfg.svqreadersmax = atol(tmp);
     }
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_SVQREADERSMAX, 
+            ndrx_G_libnstd_cfg.svqreadersmax);
+    
     
     /* get number of concurrent threads */
+    tmp = getenv(CONF_NDRX_LCFREADERSMAX);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.lcfreadersmax = MAX_LCFREADERS_DFLT;
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.lcfreadersmax = atol(tmp);
+    }
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFREADERSMAX, 
+            ndrx_G_libnstd_cfg.lcfreadersmax);
+    
+    
+    /* Max number of LCF commands */
     tmp = getenv(CONF_NDRX_LCFMAX);
     if (NULL==tmp)
     {
-        ndrx_G_libnstd_cfg.readersmax = MAX_LCFMAX_DFLT;
-        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
-                CONF_NDRX_LCFMAX, ndrx_G_libnstd_cfg.lcfmax);
+        ndrx_G_libnstd_cfg.lcfmax = MAX_LCFMAX_DFLT;
     }
     else
     {
         ndrx_G_libnstd_cfg.lcfmax = atol(tmp);
     }
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFMAX, 
+            ndrx_G_libnstd_cfg.lcfmax);
     
     /* get queues max */
     tmp = getenv(CONF_NDRX_MSGQUEUESMAX);
     if (NULL==tmp)
     {
         ndrx_G_libnstd_cfg.queuesmax = MAX_QUEUES_DLFT;
-        NDRX_LOG(log_info, "Missing config key %s - defaulting to %d", 
+        NDRX_LOG_EARLY(log_info, "Missing config key %s - defaulting to %d", 
                 CONF_NDRX_MSGQUEUESMAX, ndrx_G_libnstd_cfg.queuesmax);
     }
     else
     {
         ndrx_G_libnstd_cfg.queuesmax = atol(tmp);
     }
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_MSGQUEUESMAX, 
+            ndrx_G_libnstd_cfg.queuesmax);
     
     /* Get SV5 IPC */
     tmp = getenv(CONF_NDRX_IPCKEY);
     if (NULL==tmp)
     {
         /* Write to ULOG? */
-        NDRX_LOG(log_error, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
-        userlog("Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
+        NDRX_LOG_EARLY(log_info, "Missing config key %s - FAIL", CONF_NDRX_IPCKEY);
         EXFAIL_OUT(ret);
     }
     else
@@ -348,17 +380,30 @@ expublic int ndrx_lcf_init(void)
         sscanf(tmp, "%x", &tmpkey);
 	ndrx_G_libnstd_cfg.ipckey = tmpkey;
 
-        NDRX_LOG(log_debug, "(sysv queues): SystemV IPC Key set to: [%x]",
+        NDRX_LOG_EARLY(log_info, "(sysv queues): SystemV IPC Key set to: [%x]",
                             ndrx_G_libnstd_cfg.ipckey);
     }
     
+    /* LCF Startup expiry for published commands (seconds) */
+    tmp = getenv(CONF_NDRX_LCFCMDSTARTDEL);
+    if (NULL==tmp)
+    {
+        ndrx_G_libnstd_cfg.startcmdexp = MAX_LCFSTARTMAX_DFLT;
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.lcfreadersmax = atol(tmp);
+    }
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFCMDSTARTDEL, 
+            ndrx_G_libnstd_cfg.startcmdexp);
+    
+    
     /* Open up settings shared memory... */
-    NDRX_LOG(log_debug, "Opening LCF shared memory...");
+    NDRX_LOG_EARLY(log_info, "Opening LCF shared memory...");
     
     /* We always create, thus if nstd library is loaded, we open semaphore
      * attach to settings memory
      */
-    
     M_lcf_shm.fd = EXFAIL;
     M_lcf_shm.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SHM_LCF_KEYOFSZ;
     
@@ -368,14 +413,9 @@ expublic int ndrx_lcf_init(void)
     
     if (EXSUCCEED!=ndrx_shm_open(&M_lcf_shm, EXTRUE))
     {
-        NDRX_LOG(log_error, "Failed to open LCF shared memory");
-        userlog("Failed to open LCF shared memory");
+        NDRX_LOG_EARLY(log_info, "Failed to open LCF shared memory");
         EXFAIL_OUT(ret);
     }
-    
-    /* assign the mem */
-    ndrx_G_shmcfg = (ndrx_lcf_shmcfg_t*)M_lcf_shm.mem;
-    ndrx_G_shmcfg_ver = (ndrx_lcf_shmcfg_ver_t*)M_lcf_shm.mem;
     
     M_lcf_sem.key = ndrx_G_libnstd_cfg.ipckey + NDRX_SEM_LCFLOCKS;
     
@@ -388,41 +428,39 @@ expublic int ndrx_lcf_init(void)
      * semaphores, so maybe this can be used to increase performance.
      */
     M_lcf_sem.nrsems = 1;
-    M_lcf_sem.maxreaders = ndrx_G_libnstd_cfg.readersmax;
+    M_lcf_sem.maxreaders = ndrx_G_libnstd_cfg.lcfreadersmax;
     
     if (EXSUCCEED!=ndrx_sem_open(&M_lcf_sem, EXTRUE))
     {
-        NDRX_LOG(log_error, "Failed to open LCF semaphore");
-        userlog("Failed to open LCF semaphore");
+        NDRX_LOG_EARLY(log_error, "Failed to open LCF semaphore");
         EXFAIL_OUT(ret);
     }
     
-    /* TODO: Alloc M_locl_lcf -> to keep the local results */
+    sz = sizeof(ndrx_lcf_command_seen_t)*ndrx_G_libnstd_cfg.lcfmax;
+     
+    M_locl_lcf = NDRX_FPMALLOC(sz, 0);
     
-#if 0
-    /* when we fork....
-     * detach from LCF...
-     * and close all loggers
-     */
-    if (EXSUCCEED!=(ret=ndrx_atfork(NULL, NULL, lcf_fork_resume_child)))
+    if (NULL==M_locl_lcf)
     {
-        userlog("Failed to register fork handlers: %s", strerror(ret));
+        NDRX_LOG_EARLY(log_error, "Failed to malloc local LCF storage (%d bytes): %s",
+                sz, strerror(errno));
         EXFAIL_OUT(ret);
     }
     
-#endif
+    /* default init... */
+    memset(M_locl_lcf, 0, sizeof(M_locl_lcf));
     
-    /* Sync the LCFs? -> Copy actual state as executed.. */
+    /* assign the mem -> do as last step, as in case of LCF failure, we
+     * ignore the condition
+     */
+    ndrx_G_shmcfg = (ndrx_lcf_shmcfg_t*)M_lcf_shm.mem;
+    
+    /* swap the pointers --> This aspect makes as to have G_ndrx_debug_first in
+     * debug macros
+     * as otherwise we could just relay on shm config version */
+    ndrx_G_shmcfg_ver = (ndrx_lcf_shmcfg_ver_t*)M_lcf_shm.mem;
     
 out:
-    
-    /* cannot continue if basic config is missing */
-    if (EXSUCCEED!=ret)
-    {
-        NDRX_LOG(log_always, "ERROR: Enduro/X configuration is missing - terminating with failure\n");
-        userlog("ERROR: Enduro/X configuration is missing - terminating with failure");
-        exit(1);
-    }
     
     return ret;    
 }
@@ -435,17 +473,161 @@ out:
  */
 expublic int ndrx_lcf_run(int is_startup)
 {
-    /* TODO: hard work! */
+    int ret = EXSUCCEED;
+    int func_ret;
+    long flags;
+    int i;
+    long apply;
+    ndrx_lcf_command_t *cur;
+    char tmpbuf[32];
+    long cmdage;
+    ndrx_lcf_reg_funch_t* cbfunc;
     
-    /* TOOD: Read lock */
+    /* avoid run by other threads..., thus lock them, but as already
+     * as possible we update the shared memory version so that threads
+     * does not stuck here, but do the work instead
+     */
     
-    /* TOOD: Read unlock (when executing) */
+    MUTEX_LOCK_V(M_lcf_run);
     
+    if (ndrx_G_shmcfgver_chk==ndrx_G_shmcfg_ver->shmcfgver)
+    {
+        goto out;
+    }
     
-    /* TODO: Write lock -> update results */
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_lcf_sem, 0, NDRX_SEM_TYP_READ))
+    {
+        EXFAIL_OUT(ret);
+    }
     
-    /* TODO: Write lock -> update results, think about this..., as at 
-     * heavy loads writes may cause stall? */
+    /* mark the current version, not other threads will not pass to this func */
+    ndrx_G_shmcfgver_chk=ndrx_G_shmcfg_ver->shmcfgver;
+    
+    for (i=0; i<ndrx_G_libnstd_cfg.lcfmax; i++)
+    {
+        if (ndrx_G_shmcfg->commands[i].cmdversion!=M_locl_lcf[i].cmdversion ||
+              ndrx_G_shmcfg->commands[i].command !=M_locl_lcf[i].command ||
+                0!=ndrx_stopwatch_diff(& ndrx_G_shmcfg->commands[i].publtim, &M_locl_lcf[i].publtim)
+                )
+        {
+            cur = &ndrx_G_shmcfg->commands[i];
+
+            apply = 0;
+            /* Does affect us ? */
+            if (cur->flags & NDRX_LCF_FLAG_ALL)
+            {
+                apply=EXTRUE;
+            }
+            else if (cur->flags & NDRX_LCF_FLAG_PID)
+            {
+                
+                /* test the pid regex */
+                if (cur->flags & NDRX_LCF_FLAG_DOREX)
+                {
+                    snprintf(tmpbuf, sizeof(tmpbuf), "%d", (int)getpid());
+                    if (EXSUCCEED==ndrx_regqexec(cur->procid, tmpbuf))
+                    {
+                        apply++;
+                    }
+                }
+                else
+                {
+                    pid_t pp = (pid_t)atoi (cur->procid);
+                    
+                    if (pp==getpid())
+                    {
+                        apply++;
+                    }
+                }
+            }
+            else if (cur->flags & NDRX_LCF_FLAG_BIN)
+            {
+                /* test the binary regex */
+                
+                if (cur->flags & NDRX_LCF_FLAG_DOREX)
+                {                    
+                    if (EXSUCCEED==ndrx_regqexec(cur->procid, EX_PROGNAME))
+                    {
+                        apply++;
+                    }
+                }
+                else if (0==strcmp(cur->procid, EX_PROGNAME))
+                {
+                    apply++;
+                }
+            }
+            
+            /* stage 2 filter: */
+            cmdage = ndrx_stopwatch_get_delta_sec(&cur->publtim);
+            
+            if (is_startup)
+                
+            {
+                if ( (cur->flags & NDRX_LCF_FLAG_DOSTARTUPEXP) && 
+                    cmdage <= ndrx_G_libnstd_cfg.startcmdexp)
+                {
+                    apply++;
+                }
+                else if (cur->flags & NDRX_LCF_FLAG_DOSTARTUP)
+                {
+                    apply++;
+                }
+            }
+            else
+            {
+                apply++;
+            }
+            
+            if (2==apply && NULL!=(cbfunc =ndrx_lcf_func_find_int(cur->command)))
+            {
+                apply++;
+            }
+            
+            /* write the log only if startup & apply */
+            
+            if (is_startup && apply==3 || !is_startup)
+            {
+                NDRX_LOG(log_debug, "LCF: Slot %d changed command code %d (%s) version %u"
+                        "apply: %d flags: 0x%lx age: %ld apply: %d (%s)", 
+                        i, cur->command, cur->version, cur->cmdstr, apply, 
+                        cur->flags, cmdage, apply, apply==3?"apply":"ignore");
+            }
+            
+            if (apply==3)
+            {
+                /* lookup for command code... & exec */    
+                flags=0;
+                if (EXSUCCEED!=cbfunc->cfunc.pf_callback(cur))
+                {
+                    cur->failed++;
+                }
+                else
+                {
+                    cur->applied++;
+                }
+            }
+            else
+            {
+                cur->seen++;
+            }
+            
+            /* mark command as processed */
+            M_locl_lcf[i].cmdversion = cur->cmdversion;
+            M_locl_lcf[i].command = cur->command;
+            M_locl_lcf[i].publtim = cur->publtim;
+        }
+    }
+    
+    if (EXSUCCEED!=ndrx_sem_rwunlock(&M_lcf_sem, 0, NDRX_SEM_TYP_READ))
+    {
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    
+    MUTEX_UNLOCK_V(M_lcf_run);
+    
+    return ret;
 }
 
 /**

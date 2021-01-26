@@ -52,19 +52,17 @@ extern "C" {
 #define NDRX_LCFCNT_DEFAULT            20   /**< Default count of LCF commands                                 */
 #define NDRX_LCF_STARTCMDEXP           60   /**< Number of secs for exiting command to be expired for new proc */
 #define NDRX_LCF_FEEDBACK_BUF          64   /**< ASCII feedback buffer from command */
-#define NDRX_LCF_ADMINCMD_MAX          64   /**< Admin command max lenght     */
+#define NDRX_LCF_ADMINCMD_MAX          32   /**< Admin command max lenght     */
 #define NDRX_LCF_ADMINDSCR_MAX         128  /**< Max description for admin cmd */
 
-#define NDRX_LCF_FLAG_PIDREX        0x00000001   /**< Interpret PID as regexp */
-#define NDRX_LCF_FLAG_BINREX        0x00000002   /**< Interpret BINNAME as regexp */
-#define NDRX_LCF_FLAG_ALL           0x00000004   /**< Apply to all processes  */
-#define NDRX_LCF_FLAG_ARGA          0x00000008   /**< Arg A required          */
-#define NDRX_LCF_FLAG_ARGB          0x00000010   /**< Arg B required          */
-#define NDRX_LCF_FLAG_DOSTARTUP     0x00000020   /**< Execute command at startup */
-#define NDRX_LCF_FLAG_DOSTARTUPEXP  0x00000040   /**< Execute at startup, having w expiry */
-#define NDRX_LCF_FLAG_FBACKCODE     0x00000100   /**< Feedback code loaded    */
-#define NDRX_LCF_FLAG_FBACKMSG      0x00000200   /**< Feedback message loaded */
-    
+#define NDRX_LCF_FLAG_PID           0x00000001   /**< Interpret PID as regexp, xadmin */
+#define NDRX_LCF_FLAG_BIN           0x00000002   /**< Interpret BINNAME as regexp, xadmin */
+#define NDRX_LCF_FLAG_ALL           0x00000004   /**< Apply to all processes, xadmin  */
+#define NDRX_LCF_FLAG_ARGA          0x00000008   /**< Arg A required, xadmin reg, chk args   */
+#define NDRX_LCF_FLAG_ARGB          0x00000010   /**< Arg B required, xadmin reg, chk args   */
+#define NDRX_LCF_FLAG_DOSTARTUP     0x00000020   /**< Execute command at startup, xadmin, xadmin reg default+ */
+#define NDRX_LCF_FLAG_DOSTARTUPEXP  0x00000040   /**< Execute at startup, having w expiry, xadmin reg default+ */
+#define NDRX_LCF_FLAG_DOREX         0x00000080   /**< Check BIN or PID by regexp */
     
 #define NDRX_LCF_CMD_VERSION            1   /**< Current version number */
 #define NDRX_LCF_CMD_MIN                0   /**< minimum accepted command   */
@@ -96,6 +94,9 @@ typedef struct
     int    version;         /**< Version number of the c struct                         */
     unsigned  cmdversion;   /**< command version, so that if we switch the logs check that
                              * command is not changed (i.e. we want to update the stats) */
+    
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX]; /**< Command code $ xadmin lcf <code>     */
+    
     ndrx_stopwatch_t publtim;/**< Time when command was published                    */
     int    command;         /**< Command code                                        */
     char   arg1[PATH_MAX];  /**< Argument 1                                          */
@@ -103,16 +104,15 @@ typedef struct
     long   flags;           /**< LCF Command flags                                   */
     
     /* To whom: */
-    char   pid[NAME_MAX];   /**< str/regexp buffer for checking the PID              */
-    char   bin[NAME_MAX];   /**< str/regexp buffer for checking the binary name      */
+    char   procid[NAME_MAX];  /**< PID or program name                               */
     
     /* To metrics: */
     
     int    applied;         /**< binaries applied the command                        */
     int    failed;          /**< either regexp failed, or the target callback failed */
     int    seen;            /**< Number of processes seen, but not matched           */
-    long   fbackcode;       /**< Feedback code from last who executed                */
-    char   fbackmsg[NDRX_LCF_FEEDBACK_BUF];    /**< Feedback message from who executed*/
+    long   fbackcode;       /**< Feedback code from last who executed, user changed  */
+    char   fbackmsg[NDRX_LCF_FEEDBACK_BUF];    /**< Feedback message, user chnaged   */
     
 } ndrx_lcf_command_t;
 
@@ -126,11 +126,12 @@ typedef struct
     int command;    /**< lcf comand code        */
     
     /** API receives copy (snapshoot) of mem block 
-     * @param cmd memory snapshoot
-     * @param flags output flags about feedback: NDRX_LCF_FLAG_FBACK*
+     * @param cmd this is constant and must not be changed by process
+     *  it is data from shared memory directly.
+     * @param flags output flags about feedback: NDRX_LCF_FLAG_FBACK*. On input value is 0.
      * @return EXSUCCEED/EXFAIL
      */
-    int (*pf_callback)(ndrx_lcf_command_t *cmd, long *flags);
+    int (*pf_callback)(const ndrx_lcf_command_t *cmd);
     
 } ndrx_lcf_reg_func_t;
 

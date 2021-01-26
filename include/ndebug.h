@@ -139,11 +139,22 @@ extern NDRX_API volatile int G_ndrx_debug_first;
 #define NDRX_LOG_SWAIT_DEFAULT      2000
 
 #define NDRX_DBG_MAX_LEV log_dump
-/* Have double check on G_ndrx_debug_first, as on after getting first mutex, object
+
+/**
+ * Have double check on G_ndrx_debug_first, as on after getting first mutex, object
  * might be already initialized
+ * Maybe want to think of checking only ndrx_G_shmcfg_ver, but then we need atomic
+ * pointer swap during the init to avoid any concurrent threads reading the
+ * memory address and getting some partial pointer. 
+ * Thus G_ndrx_debug_first can be set to OK, only when shmcfg init is completed.
  */
-#define NDRX_DBG_INIT_ENTRY    if (G_ndrx_debug_first) {ndrx_dbg_lock(); \
-    if (G_ndrx_debug_first) {ndrx_init_debug();} ndrx_dbg_unlock();}
+#define NDRX_DBG_INIT_ENTRY    if (NDRX_UNLIKELY(G_ndrx_debug_first) || NDRX_UNLIKELY(ndrx_G_shmcfgver_chk!=ndrx_G_shmcfg_ver->shmcfgver)) \
+    {\
+        if (NDRX_UNLIKELY(G_ndrx_debug_first)) {\
+        ndrx_dbg_lock();\
+        if (G_ndrx_debug_first) {ndrx_init_debug();}\
+        ndrx_dbg_unlock(); ndrx_lcf_run(EXTRUE);} else {ndrx_lcf_run(EXFALSE);}\
+    }
 
 #define UBF_DBG_INIT(X) (ndrx_dbg_init X )
 #define NDRX_DBG_INIT(X) (ndrx_dbg_init X )
@@ -478,6 +489,8 @@ extern NDRX_API char *ndrx_strdup_dbg(char *ptr, long line, const char *file, co
 extern NDRX_API int ndrx_dbg_intlock_isset(void);
 extern NDRX_API void ndrx_dbg_intlock_set(void);
 extern NDRX_API void ndrx_dbg_intlock_unset(void);
+
+extern NDRX_API int ndrx_lcf_run(int is_startup);
 
 #ifdef	__cplusplus
 }
