@@ -59,7 +59,7 @@
 #include <limits.h>
 #include <sys_unix.h>
 #include <cconfig.h>
-
+#include <nstd_int.h>
 #include "nstd_tls.h"
 #include "userlog.h"
 #include "utlist.h"
@@ -682,21 +682,36 @@ out:
  * try to recursively create the directory
  * @param[in] filename debug file name
  * @param[in] mode mode string for fopen
-
- * @param[] dbg_ptr debug pointer which opens the file
+ * @param[in,out] dbg_ptr debug pointer which opens the file, optional
+ * @param[in,out] fsink file sink to use if dbg_ptr is not available.
  * @return ptr to FILE or NULL and errno set
  */
 expublic FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode,
-        ndrx_debug_t *dbg_ptr)
+        ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink)
 {
     FILE *ret = NULL;
     int got_dir = EXFALSE;
     int fallbacks = 0;
     
+    int is_mkdir;
+    int buffer_size;
+    
     ret = NDRX_FOPEN(filename, mode);
     
     /* if have recursive setting, then continue  */
-    if (!(dbg_ptr->is_mkdir))
+    
+    if (NULL!=dbg_ptr)
+    {
+        is_mkdir = dbg_ptr->is_mkdir;
+        buffer_size = dbg_ptr->buffer_size;
+    }
+    else
+    {
+        is_mkdir = fsink->org_is_mkdir;
+        buffer_size = fsink->org_buffer_size;
+    }
+    
+    if (!is_mkdir)
     {
         goto out;
     }
@@ -771,7 +786,14 @@ out:
         /* just use process level ndrx buffer size 
          * as files are shared between loggers
          */
-        setvbuf(ret, NULL, _IOFBF, dbg_ptr->buffer_size);
+        setvbuf(ret, NULL, _IOFBF, buffer_size);
+        
+        /* copy off the settings */
+        if (NULL!=dbg_ptr && NULL!=fsink)
+        {
+            fsink->org_is_mkdir = dbg_ptr->is_mkdir;
+            fsink->org_buffer_size = dbg_ptr->buffer_size;
+        }        
     }
 
     return ret;
@@ -925,11 +947,11 @@ expublic void ndrx_init_debug(void)
     NDRX_STRCPY_SAFE(G_stdout_debug.filename, NDRX_LOG_OSSTDOUT);
     
     /* get handles now in feedback we get the actual file name open */
-    ndrx_debug_get_sink(tmpname, EXTRUE, &G_ndrx_debug);
-    ndrx_debug_get_sink(tmpname, EXTRUE, &G_ubf_debug);
-    ndrx_debug_get_sink(tmpname, EXTRUE, &G_tp_debug);
+    ndrx_debug_get_sink(tmpname, EXTRUE, &G_ndrx_debug, NULL);
+    ndrx_debug_get_sink(tmpname, EXTRUE, &G_ubf_debug, NULL);
+    ndrx_debug_get_sink(tmpname, EXTRUE, &G_tp_debug, NULL);
     ndrx_debug_get_sink(G_stdout_debug.filename, EXTRUE, 
-            &G_stdout_debug);
+            &G_stdout_debug, NULL);
 
     /* if file is not found, then try CONF_NDRX_DFLTLOG, if this not found, open stderr */
 

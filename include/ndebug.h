@@ -439,7 +439,7 @@ extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
 extern NDRX_API int ndrx_dbg_intlock_isset(void);
 extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
-        ndrx_debug_t *dbg_ptr);
+        ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink);
 extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, 
         ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz);
 
@@ -468,6 +468,7 @@ extern NDRX_API void ubflog(int lev, char *message);
 
 extern NDRX_API int tploggetreqfile(char *filename, int bufsize);
 extern NDRX_API int tplogconfig(int logger, int lev, char *debug_string, char *module, char *new_file);
+extern NDRX_API int tplogreopen(void);
 extern NDRX_API void tplogclosereqfile(void);
 extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);

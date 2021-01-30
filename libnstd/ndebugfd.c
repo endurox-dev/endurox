@@ -57,7 +57,7 @@
 #include <nstdutil.h>
 #include <limits.h>
 #include <sys_unix.h>
-#include <cconfig.h>
+#include <nstd_int.h>
 
 #include "nstd_tls.h"
 #include "userlog.h"
@@ -90,10 +90,11 @@ exprivate ndrx_debug_file_sink_t *M_sink_hash = NULL; /** list of sinks */
  * @param fname full path to file
  * @param do_lock shall we perform locking?
  * @param dbg_ptr set the logger name atomically
+ * @param[out] p_ret return status if EXFAIL, then logger was flipped to stderr
  * @return file sink
  */
 expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, 
-        int do_lock, ndrx_debug_t *dbg_ptr)
+        int do_lock, ndrx_debug_t *dbg_ptr, int *p_ret)
 {
     ndrx_debug_file_sink_t *ret = NULL;
     long flags=0;
@@ -123,25 +124,39 @@ expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname,
         {
             ret->fp=stdout;
             flags |=NDRX_LOG_FOSHSTDOUT;
+            ret->fname_org[0] = EXEOS;
         }
         else if (0==strcmp(fname, NDRX_LOG_OSSTDERR))
         {
             ret->fp=stderr;
             flags |=NDRX_LOG_FOSHSTDERR;
+            ret->fname_org[0] = EXEOS;
         }
         else
         {
-            ret->fp = ndrx_dbg_fopen_mkdir(fname, "a", dbg_ptr);
+            ret->fp = ndrx_dbg_fopen_mkdir(fname, "a", dbg_ptr, ret);
         
             if (NULL==ret->fp)
             {
-                 userlog("Failed to to open [%s]: %d/%s", fname,
+                /* We got an error */
+                if (NULL!=p_ret)
+                {
+                    *p_ret=EXFAIL;
+                }
+                userlog("Failed to to open [%s]: %d/%s - fallback to stderr", fname,
                                     errno, strerror(errno));
-                /* Fallback to stderr */
-                MUTEX_UNLOCK_V(M_sink_lock);
-                NDRX_FPFREE(ret);
+                ret->fp=stderr;
+                ret->flags|=NDRX_LOG_FOSHSTDERR;
                 
-                return ndrx_debug_get_sink(NDRX_LOG_OSSTDERR, EXTRUE, dbg_ptr); /*<<< RETURN! */
+                /* save for logrotate */
+                NDRX_STRCPY_SAFE(ret->fname_org, fname);
+                fname = NDRX_LOG_OSSTDERR;
+                
+            }
+            else
+            {
+                /* no handle saved, as open OK */
+                ret->fname_org[0] = EXEOS;
             }
         }
         
@@ -171,7 +186,6 @@ expublic ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname,
         {
             ret->flags |=NDRX_LOG_FPROC;
         }
-        
     }
     
 out:
@@ -359,24 +373,43 @@ expublic void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink)
  * if file name is the same, it just closes & open (thus may be used for logrotate)
  * Warning ! files descrs cannot be changed from logging area
  * 
- * If changing process level 
+ * TODO: Might want to report status - files opened OK, or some failed?
  * 
  * @param toname new filename
  * @param do_lock shall locking be performed, e.g. not needed if wrapped
  * @param logger_flags logger code for which changes are made
  * @param dbg_ptr -> here the final file name is written
- * @return EXSUCCEED/EXFAIL
+ * @param fileupdate file update object (present if doing log-rotate)
+ * @return EXSUCCEED/EXFAIL (some files did not open and was forwarded to stderr)
  */
-expublic void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_ptr)
+expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_ptr, 
+        ndrx_debug_file_sink_t* fileupdate)
 {
+    int ret = EXSUCCEED;
     int writters;
-    ndrx_debug_file_sink_t** mysink = &dbg_ptr->dbg_f_ptr;
+    ndrx_debug_file_sink_t** mysink;
+    
+    if (NULL==dbg_ptr)
+    {
+        mysink = &dbg_ptr->dbg_f_ptr;
+    }
+    else
+    {
+        mysink=&fileupdate;
+    }
 
-          
     if (do_lock)
     {
         /* only one at the time please! */
         MUTEX_LOCK_V(M_sink_lock);
+    }
+    
+    /* Use org filename if present, to avoid cases when we switched to stderr
+     * and we want to try again to use original file name
+     */
+    if (fileupdate && EXEOS!=fileupdate->fname_org[0])
+    {
+        toname = fileupdate->fname_org;
     }
     
     /* In case if changing the name, and we have more references
@@ -390,14 +423,14 @@ expublic void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg
      *   if we just change the 
      * 
      */
-    if ( !(LOG_FACILITY_PROCESS & dbg_ptr->flags) &&
+    if ( NULL!=dbg_ptr && !(LOG_FACILITY_PROCESS & dbg_ptr->flags) &&
             (*mysink)->refcount > 1 && 0!=strcmp((*mysink)->fname, toname))
     {
         /* remove process level indication  */
         ndrx_debug_unset_sink(*mysink, EXFALSE, EXFALSE);
         
         /* at this moment we could stream in the debug buffer? */
-        *mysink = ndrx_debug_get_sink(toname, EXFALSE, dbg_ptr);
+        *mysink = ndrx_debug_get_sink(toname, EXFALSE, dbg_ptr, &ret);
         
         /* we are done, ptrs are set & file names */
         goto out_final;
@@ -458,7 +491,14 @@ expublic void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg
     }
     else
     {
-        (*mysink)->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr);
+        if (NULL!=dbg_ptr)
+        {
+            (*mysink)->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr, dbg_ptr->dbg_f_ptr);
+        }
+        else
+        {
+            (*mysink)->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr, fileupdate);
+        }
 
         if (NULL==(*mysink)->fp)
         {
@@ -467,11 +507,23 @@ expublic void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg
 
             (*mysink)->fp=stderr;
             (*mysink)->flags|=NDRX_LOG_FOSHSTDERR;
+            
+            /* save the org name so that we can use it during logrotate */
+            NDRX_STRCPY_SAFE((*mysink)->fname_org, toname);
             NDRX_STRCPY_SAFE((*mysink)->fname, NDRX_LOG_OSSTDERR);
+            
+            /* save original file name? if try to re-open, so that we can
+             * switch back?
+             * - thus if doing re-open (logrotate), then use org-filename
+             * if set?
+             */
+            
+            ret=EXFAIL;
         }
         else
         {
             /* OK New name is set */
+            (*mysink)->fname_org[0] = EXEOS;
             NDRX_STRCPY_SAFE((*mysink)->fname, toname);
         }
     }
@@ -485,15 +537,18 @@ expublic void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg
 out:
     
     /* no errors, just update to actual logger */
-    NDRX_STRCPY_SAFE(dbg_ptr->filename, (*mysink)->fname);
+    if (NULL!=dbg_ptr)
+    {
+        NDRX_STRCPY_SAFE(dbg_ptr->filename, (*mysink)->fname);
+    }
 
 out_final:
+    
     if (do_lock)
     {
         /* only one at the time please! */
         MUTEX_UNLOCK_V(M_sink_lock);
     }
-    
 }
 
 /**
@@ -510,6 +565,7 @@ expublic void ndrx_debug_force_closeall(void)
     
     EXHASH_ITER(hh, M_sink_hash, el, elt)
     {
+
         ndrx_debug_unset_sink(el, EXFALSE, EXTRUE);
     }
     
@@ -521,6 +577,53 @@ expublic void ndrx_debug_force_closeall(void)
     
 }
 
+/**
+ * Reopen all log files
+ * Used for logrotate
+ */
+expublic int ndrx_debug_reopen_all(void)
+{
+    int ret = EXSUCCEED;
+    char *fname;
+    int do_run;
+    ndrx_debug_file_sink_t* el, *elt;
+    
+    MUTEX_LOCK_V(M_sink_lock);
+    
+    EXHASH_ITER(hh, M_sink_hash, el, elt)
+    {
+        /* if it is stdout or stderr, then nothing todo */
+        if (EXEOS!=el->fname_org[0])
+        {
+            fname = el->fname_org;
+            do_run = EXTRUE;
+        }
+        else
+        {
+            fname = el->fname;
+            
+            if (el->flags & NDRX_LOG_FOSHSTDERR || el->flags & NDRX_LOG_FOSHSTDOUT)
+            {
+                do_run=EXFALSE;
+            }
+            else
+            {
+                do_run=EXTRUE;
+            }
+        }
+        
+        if (do_run && EXSUCCEED!=ndrx_debug_changename(fname, EXFALSE, NULL, el))
+        {
+            ret=EXFAIL;
+        }
+    }
+    
+    MUTEX_UNLOCK_V(M_sink_lock);
+    
+out:
+    return ret;
+    
+}
 
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -445,19 +445,38 @@ cmd_mapping_t M_command_map[] =
                 "\tOptional arguments: \n"
                 "\t\t -c\tNumber of pings (default 4)"
                 , NULL},
-    {"dpid", cmd_dpid,EXFAIL,                1,  1,  1,  
+    {"dpid", cmd_dpid,EXFAIL,                   1,  1,  1,  
                 "Print ndrxd PID from pid file"
                 , NULL},
-    {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,              1,  1,  1,  
+    {"dsleep", cmd_dsleep,NDRXD_COM_DSLEEP_RQ,  1,  1,  1,  
                 "Put ndrxd in sleep (disable activity for time period), for debug\n"
                 "\tUsage: dsleep SLEEP_SECONDS"
                 , NULL},
-    {"mibget",     cmd_mibget,EXFAIL,                1,  3,  1, 
+    {"mibget",     cmd_mibget,EXFAIL,           1,  3,  1, 
                 "Dump message in cache\n"
                 "\t args: mibget -c <T_CLASS> [-m]\n"
                 "\t\t -m\tMachine output\n"
                 "\t\t -c\tT_CLIENT|T_DOMAIN|T_MACHINE|T_QUEUE|T_SERVER|T_SERVICE|T_SVCGRP|T_BRCON"
-                , NULL}
+                , NULL},
+    {"lcf",     cmd_lcf, EXFAIL,                 1,  3,  0, 
+                "Latent Command management\n"
+                "\tUsage: lcf [COMMAND] [OPTION]...\n"
+                "\tWhen COMMAND is not present, binary prints the shared memory output\n"
+                "\tBuilt in COMMANDs:\n"
+                "\t\t -1\tPrint page 1 of LCF memory (default) \n"
+                "\t\t -2\tPrint page 2 of LCF memory\n"
+                "\t\t -3\tPrint page 3 of LCF memory\n"
+                "\tOptional arguments: \n"
+                "\t\t -P\tApply to PID\n"
+                "\t\t -E\tApply to BINARY\n"
+                "\t\t -R\tPID or BINARY is regular expression\n"
+                "\t\t -A\tApply to all binaries in application domain\n"
+                "\t\t -a\tArgument a to command\n"
+                "\t\t -b\tArgument b to command\n"
+                "\t\t -N\tExecute COMMAND on binary startup\n"
+                "\t\t -E\tEXecute COMMAND on binary startup with command expiry\n"
+                "\t\t -S <SLOT>\tSlot number for command"
+                , cmd_lcf_help},
 };
 
 /*
@@ -1176,6 +1195,16 @@ expublic int ndrx_init(int need_init)
     {
         NDRX_LOG(log_error, "Failed to setup Console input history: %s", 
                 strerror(errno));
+        EXFAIL_OUT(ret);
+    }
+    
+    /* pull-in LCFs only at later stage...
+     * so that we process none at startup, to have some management if
+     * commands are broken
+     */
+    if (EXSUCCEED!=ndrx_xadmin_lcf_init())
+    {
+        NDRX_LOG(log_error, "Failed to register LCF commands");
         EXFAIL_OUT(ret);
     }
     

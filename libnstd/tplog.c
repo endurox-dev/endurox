@@ -50,6 +50,7 @@
 #include <userlog.h>
 #include <nstd_tls.h>
 #include <errno.h>
+#include <nstd_int.h>
 
 #include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
@@ -201,12 +202,12 @@ expublic void tplogsetreqfile_direct(char *filename)
                 
                 if (NULL==map[i].req->dbg_f_ptr)
                 {
-                    ndrx_debug_get_sink(filename, EXTRUE, map[i].req);
+                    ndrx_debug_get_sink(filename, EXTRUE, map[i].req, NULL);
                 }
                 else
                 {
                     /* leave sink and open new name */
-                    ndrx_debug_changename(filename, EXTRUE, map[i].req);
+                    ndrx_debug_changename(filename, EXTRUE, map[i].req, NULL);
                 }
                 
                 /* set final name -?
@@ -329,7 +330,6 @@ expublic void tplogclosereqfile(void)
 
 /**
  * Reconfigure loggers.
- * TODO: Add fallback re-initialize the same way as done in tplogsetreqfile_direct()
  * @param logger See LOG_FACILITY_*
  * @param lev 0..5 (if -1 (FAIL) then ignored)
  * @param config_line ndrx config line (if NULL/empty then ignored)
@@ -342,7 +342,6 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
 {
     int ret = EXSUCCEED;
     ndrx_debug_t *l;
-    long new_flags;
     char tmp_filename[PATH_MAX];
     int loggers[] = {LOG_FACILITY_NDRX, 
                     LOG_FACILITY_UBF, 
@@ -410,7 +409,7 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (0!=strcmp(tmp_filename, l->filename) && 
                     (NULL==new_file || EXEOS==new_file[0]))
             {
-                ndrx_debug_changename(l->filename, EXTRUE, l);
+                ndrx_debug_changename(l->filename, EXTRUE, l, NULL);
             }
         }
 
@@ -422,13 +421,23 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
         /* new file passed in: */
         if (NULL!=new_file && EXEOS!=new_file[0] && 0!=strcmp(new_file, l->filename))
         {            
-            ndrx_debug_changename(new_file, EXTRUE, l);
+            ndrx_debug_changename(new_file, EXTRUE, l, NULL);
         }
 
     }
     
 out:
     return ret;
+}
+
+/**
+ * Reopen log handles (may be used after log files are rotated)
+ */
+expublic int tplogreopen(void)
+{
+    API_ENTRY;
+    NDRX_DBG_INIT_ENTRY;
+    ndrx_debug_reopen_all();
 }
 
 /**

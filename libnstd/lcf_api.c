@@ -61,7 +61,7 @@
 expublic int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd)
 {
     int ret = EXSUCCEED;
-    
+    long allow_flags;
     API_ENTRY;
     
     if (NULL==xcmd)
@@ -71,10 +71,42 @@ expublic int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd)
         EXFAIL_OUT(ret);
     }
     
+    if (xcmd->version < NDRX_LCF_XCMD_VERSION)
+    {
+        _Nset_error_fmt(NEVERSION, "Invalid argument version minimum: %d got: %d",
+                NDRX_LCF_XCMD_VERSION, xcmd->version);
+        NDRX_LOG_EARLY(log_error, "Invalid argument version minimum: %d got: %d",
+                NDRX_LCF_XCMD_VERSION, xcmd->version);
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXEOS==xcmd->cmdstr[0])
     {
         _Nset_error_fmt(NEINVAL, "xcmd->cmdstr cannot be empty");
         NDRX_LOG_EARLY(log_error, "ERROR: xcmd->cmdstr cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXTRUE!=ndrx_str_valid_cid(xcmd->cmdstr, NDRX_LCF_ADMINCMD_MAX))
+    {
+        _Nset_error_fmt(NEINVAL, "xcmd->cmdstr has invalid characters or empty val");
+        NDRX_LOG_EARLY(log_error, "xcmd->cmdstr has invalid characters or empty val");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* check flags */
+    allow_flags = NDRX_LCF_FLAG_ALL
+            |NDRX_LCF_FLAG_ARGA
+            |NDRX_LCF_FLAG_ARGB
+            |NDRX_LCF_FLAG_DOSTARTUP
+            |NDRX_LCF_FLAG_DOSTARTUPEXP;
+    
+    allow_flags = ~allow_flags;
+    
+    if (xcmd->dltflags & allow_flags)
+    {
+        _Nset_error_fmt(NEINVAL, "Invalid flags given: 0x%lx", xcmd->dltflags & allow_flags);
+        NDRX_LOG_EARLY(log_error, "Invalid flags given: 0x%lx", xcmd->dltflags & allow_flags);
         EXFAIL_OUT(ret);
     }
     
@@ -94,46 +126,134 @@ out:
     
 }
 
-/**
- * Delete command by string
- * @param cmdsr registered command code (only user codes)
- */
-expublic int ndrx_lcf_xadmin_del(char *cmdstr)
-{
-    int ret = EXSUCCEED;
-    API_ENTRY;
-    
-    if (NULL==cmdstr || EXEOS==cmdstr[0])
-    {
-        _Nset_error_fmt(NEINVAL, "cmdstr cannot be NULL or empty");
-        NDRX_LOG_EARLY(log_error, "ERROR: cmdstr cannot be NULL or empty");
-        EXFAIL_OUT(ret);
-    }
-    
-    ret = ndrx_lcf_xadmin_delstr_int(cmdstr);
-    
-out:
-    return ret;
-}
 
 /**
- * Register callback function
+ * Register callback function. Uses may only add the functions.
+ * No chance to delete to avoid any issues with threads performing the lookups
  * @param cfunc callback def with command code
  * @return EXSUCCEED/EXFAIL
  */
 expublic int ndrx_lcf_func_add(ndrx_lcf_reg_func_t *cfunc)
 {
-    /* TODO: */
+    int ret = EXSUCCEED;
+    API_ENTRY;
+
+    if (NULL==cfunc)
+    {
+        _Nset_error_fmt(NEINVAL, "cfunc cannot be NULL");
+        NDRX_LOG_EARLY(log_error, "cfunc cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (cfunc->version < NDRX_LCF_CCMD_VERSION)
+    {
+        _Nset_error_fmt(NEVERSION, "Invalid argument version minimum: %d got: %d",
+                NDRX_LCF_CCMD_VERSION, cfunc->version);
+        NDRX_LOG_EARLY(log_error, "Invalid argument version minimum: %d got: %d",
+                NDRX_LCF_CCMD_VERSION, cfunc->version);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cfunc->pf_callback)
+    {
+        _Nset_error_fmt(NEINVAL, "pf_callback cannot be NULL");
+        NDRX_LOG_EARLY(log_error, "pf_callback cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (NULL==cfunc->cmdstr)
+    {
+        _Nset_error_fmt(NEINVAL, "cmdstr cannot be NULL");
+        NDRX_LOG_EARLY(log_error, "cmdstr cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXTRUE!=ndrx_str_valid_cid(cfunc->cmdstr, NDRX_LCF_ADMINCMD_MAX))
+    {
+        _Nset_error_fmt(NEINVAL, "xcmd->cmdstr has invalid characters or empty val");
+        NDRX_LOG_EARLY(log_error, "xcmd->cmdstr has invalid characters or empty val");
+        EXFAIL_OUT(ret);
+    }
+        
+    ret = ndrx_lcf_func_add_int(cfunc);
+    
+out:
+    return ret;
+    
 }
 
 /**
- * Delete callback function by command code
- * @param command
- * @return EXSUCCEED/EXFAIL(was not found)
+ * Public API function for publishing LCF command
+ * @param slot slot number where to publish. Note
+ * @param cmd
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_lcf_func_del(int command)
+expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
 {
-    /* TODO: */
+    int ret = EXSUCCEED;
+    API_ENTRY;
+    /* pull in the debug init, as LCF must be open */
+    NDRX_DBG_INIT_ENTRY;
+    
+    if (cmd->version < NDRX_LCF_LCMD_VERSION)
+    {
+        _Nset_error_fmt(NEVERSION, "Invalid argument version minimum: %d got: %d",
+                NDRX_LCF_CCMD_VERSION, cmd->version);
+        NDRX_LOG_EARLY(log_error, "Invalid argument version minimum: %d got: %d",
+                NDRX_LCF_CCMD_VERSION, cmd->version);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==cmd->cmdstr[0])
+    {
+        _Nset_error_msg(NEINVAL, "cmd->cmdstr is empty");
+        NDRX_LOG_EARLY(log_error, "cmd->cmdstr is empty");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* check that buffers are OK, maybe this process will die
+     * but at least others will be safe and sound
+     */
+    if (strlen(cmd->cmdstr) > NDRX_LCF_ADMINCMD_MAX)
+    {
+        _Nset_error_msg(NEINVAL, "cmd->cmdstr invalid length");
+        NDRX_LOG_EARLY(log_error, "cmd->cmdstr invalid length");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (strlen(cmd->arg_a) > PATH_MAX)
+    {
+        _Nset_error_msg(NEINVAL, "cmd->arg_a invalid length");
+        NDRX_LOG_EARLY(log_error, "cmd->arg_a invalid length");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (strlen(cmd->arg_b) > NAME_MAX)
+    {
+        _Nset_error_msg(NEINVAL, "cmd->arg_b invalid length");
+        NDRX_LOG_EARLY(log_error, "cmd->arg_b invalid length");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (strlen(cmd->procid) > NAME_MAX)
+    {
+        _Nset_error_msg(NEINVAL, "cmd->procid invalid length");
+        NDRX_LOG_EARLY(log_error, "cmd->procid invalid length");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (strlen(cmd->fbackmsg) > NDRX_LCF_FEEDBACK_BUF-1)
+    {
+        _Nset_error_msg(NEINVAL, "cmd->fbackmsg invalid length");
+        NDRX_LOG_EARLY(log_error, "cmd->fbackmsg invalid length");
+        EXFAIL_OUT(ret);
+    }
+    
+    ret = ndrx_lcf_publish_int(slot, cmd);
+    
+out:
+    return ret;
 }
+
 
 /* vim: set ts=4 sw=4 et smartindent: */
