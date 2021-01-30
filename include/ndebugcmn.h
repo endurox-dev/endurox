@@ -87,6 +87,8 @@ struct ndrx_memlogger
 typedef struct 
 {
     char fname[PATH_MAX+1];  /**< The actual file name   */
+    char fname_org[PATH_MAX+1];  /**< Org filename, before switching to stderr  */
+    
     int writters;   /**< Number of concurrent writters      */
     int chwait;     /**< Some thread waits for on wait_cond */
     FILE *fp; /**< actual file open for writting            */
@@ -99,7 +101,9 @@ typedef struct
     int refcount;  /**< Number of logger have references, protected by change_lock */
     long flags;     /**< is this process level? Use mutex?  */
     
-    EX_hash_handle hh; /**< makes this structure hashable               */
+    int org_is_mkdir;   /**< initial setting of mkdir, used for logrotate      */
+    int org_buffer_size;/**< initail setting of io buffer size                 */
+    EX_hash_handle hh; /**< makes this structure hashable                      */
     
 } ndrx_debug_file_sink_t;
 
@@ -145,17 +149,8 @@ extern NDRX_API volatile ndrx_lcf_shmcfg_ver_t *ndrx_G_shmcfg_ver;
 /** Last checked shared mem cfg version                   */
 extern NDRX_API volatile unsigned              ndrx_G_shmcfgver_chk;
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, int do_lock, 
-        ndrx_debug_t *dbg_ptr);
 extern NDRX_API void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink);
 extern NDRX_API void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink);
-extern NDRX_API int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, int force);
-extern NDRX_API void ndrx_debug_addref(ndrx_debug_file_sink_t* mysink);
-
-/* handle which does updates: */
-extern NDRX_API void ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_ptr);
-extern NDRX_API void ndrx_debug_force_closeall(void);
-extern NDRX_API void ndrx_debug_refcount(int *sinks, int *refs);
 
 #ifdef	__cplusplus
 }

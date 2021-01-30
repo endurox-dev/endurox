@@ -87,7 +87,9 @@ struct err_msg
     {STDE(NENOENT),       "No such file or directory"}, /* 14 */
     {STDE(NEWRITE),       "Failed to opten/write to file"}, /* 15 */
     {STDE(NEEXEC),        "Failed to execute"}, /* 16 */
-    {STDE(NESUPPORT),     "Command not supported"} /* 17 */
+    {STDE(NESUPPORT),     "Command not supported"}, /* 17 */
+    {STDE(NEEXISTS),      "Element exists"}, /* 18 */
+    {STDE(NEVERSION),     "Invalid version"} /* 19 */
 };
 /*---------------------------Prototypes---------------------------------*/
 /**

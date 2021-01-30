@@ -48,6 +48,12 @@ extern "C" {
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+#define NDRX_LCF_DDR_PAGES             2 
+#define NDRX_LCF_RESVR                 4096 /**< Reserved space for future commands and seamless update        */
+#define NDRX_LCFCNT_DEFAULT            20   /**< Default count of LCF commands                                 */
+#define NDRX_LCF_STARTCMDEXP           60   /**< Number of secs for exiting command to be expired for new proc */
+
+    
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -112,12 +118,14 @@ typedef struct
  */
 typedef struct 
 {
-    char cmdstr[NDRX_LCF_ADMINCMD_MAX]; /**< Command code */
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX+1]; /**< Command code */
     ndrx_lcf_reg_xadmin_t xcmd;
     EX_hash_handle hh; /**< makes this structure hashable               */
 } ndrx_lcf_reg_xadminh_t;
 
 /*---------------------------Globals------------------------------------*/
+extern NDRX_API ndrx_lcf_shmcfg_t *ndrx_G_shmcfg;
+extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
@@ -127,10 +135,15 @@ extern NDRX_API void ndrx_lcf_detach(void);
 
 /** Register callback for command code */
 extern NDRX_API int ndrx_lcf_xadmin_add_int(ndrx_lcf_reg_xadmin_t *xcmd);
-extern NDRX_API void ndrx_lcf_xadmin_del_int(ndrx_lcf_reg_xadminh_t *h);
+extern NDRX_API int ndrx_lcf_func_add_int(ndrx_lcf_reg_func_t *cfunc);
 extern NDRX_API ndrx_lcf_reg_xadminh_t* ndrx_lcf_xadmin_find_int(char *cmdstr);
-extern NDRX_API int ndrx_lcf_xadmin_delstr_int(char *cmdstr);
+extern NDRX_API int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd);
+extern NDRX_API void ndrx_lcf_xadmin_list(void (*pf_callback)(ndrx_lcf_reg_xadminh_t *xcmd));
 
+extern NDRX_API int ndrx_lcf_read_lock(void);
+extern NDRX_API int ndrx_lcf_read_unlock(void);
+extern NDRX_API int ndrx_lcf_supported_int(void);
+extern NDRX_API ndrx_lcf_reg_xadminh_t* ndrx_lcf_xadmin_find_int(char *cmdstr);
 
 #if defined(__cplusplus)
 }

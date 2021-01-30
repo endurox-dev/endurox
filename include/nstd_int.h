@@ -86,6 +86,18 @@ extern NDRX_API int ndrx_inicfg_get_subsect_int(ndrx_inicfg_t *cfg,
 extern NDRX_API void ndrx_fpstats(int poolno, ndrx_fpapool_t *p_stats);
 
 extern NDRX_API void ndrx_init_fail_banner(void);
+
+extern NDRX_API ndrx_debug_file_sink_t* ndrx_debug_get_sink(char *fname, int do_lock, 
+        ndrx_debug_t *dbg_ptr, int *p_ret);
+
+extern NDRX_API int ndrx_debug_changename(char *toname, int do_lock, 
+        ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t* fileupdate);
+extern NDRX_API void ndrx_debug_force_closeall(void);
+extern NDRX_API void ndrx_debug_refcount(int *sinks, int *refs);
+extern NDRX_API int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, int force);
+extern NDRX_API void ndrx_debug_addref(ndrx_debug_file_sink_t* mysink);
+extern NDRX_API int ndrx_debug_reopen_all(void);
+
 #ifdef	__cplusplus
 }
 #endif
