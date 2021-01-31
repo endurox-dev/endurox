@@ -43,6 +43,7 @@ extern "C" {
 #include <ndrstandard.h>
 #include <inicfg.h>
 #include <sys_primitives.h>
+#include <ndebugcmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
     
