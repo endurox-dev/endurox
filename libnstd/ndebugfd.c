@@ -387,15 +387,15 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
 {
     int ret = EXSUCCEED;
     int writters;
-    ndrx_debug_file_sink_t** mysink;
+    ndrx_debug_file_sink_t* mysink;
     
-    if (NULL==dbg_ptr)
+    if (NULL!=dbg_ptr)
     {
-        mysink = &dbg_ptr->dbg_f_ptr;
+        mysink = dbg_ptr->dbg_f_ptr;
     }
     else
     {
-        mysink=&fileupdate;
+        mysink=fileupdate;
     }
 
     if (do_lock)
@@ -424,13 +424,13 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
      * 
      */
     if ( NULL!=dbg_ptr && !(LOG_FACILITY_PROCESS & dbg_ptr->flags) &&
-            (*mysink)->refcount > 1 && 0!=strcmp((*mysink)->fname, toname))
+            mysink->refcount > 1 && 0!=strcmp(mysink->fname, toname))
     {
         /* remove process level indication  */
-        ndrx_debug_unset_sink(*mysink, EXFALSE, EXFALSE);
+        ndrx_debug_unset_sink(mysink, EXFALSE, EXFALSE);
         
         /* at this moment we could stream in the debug buffer? */
-        *mysink = ndrx_debug_get_sink(toname, EXFALSE, dbg_ptr, &ret);
+        dbg_ptr->dbg_f_ptr = ndrx_debug_get_sink(toname, EXFALSE, dbg_ptr, &ret);
         
         /* we are done, ptrs are set & file names */
         goto out_final;
@@ -446,71 +446,71 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
     
     
     /* so firstly sync to none of writters */
-    MUTEX_LOCK_V((*mysink)->busy_lock);
-    MUTEX_LOCK_V((*mysink)->change_lock);
+    MUTEX_LOCK_V(mysink->busy_lock);
+    MUTEX_LOCK_V(mysink->change_lock);
     
     /* We will start wait (if some is in write area */
     /* get spin lock of number of writters */
-    NDRX_SPIN_LOCK_V((*mysink)->writters_lock);
-    (*mysink)->chwait=EXTRUE;
-    writters = (*mysink)->writters;
-    NDRX_SPIN_UNLOCK_V((*mysink)->writters_lock);
+    NDRX_SPIN_LOCK_V(mysink->writters_lock);
+    mysink->chwait=EXTRUE;
+    writters = mysink->writters;
+    NDRX_SPIN_UNLOCK_V(mysink->writters_lock);
     
     assert(writters>=0);
     
     if (writters)
     {
         /* somebody is writing, so when it finishes, let us to wake up! */
-        pthread_cond_wait(&(*mysink)->change_wait, &(*mysink)->change_lock);
+        pthread_cond_wait(&mysink->change_wait, &mysink->change_lock);
     }
     
 
     /* close handler, if it is not OS */
-    if (! ((*mysink)->flags & NDRX_LOG_FOSHSTDERR ||
-            (*mysink)->flags & NDRX_LOG_FOSHSTDOUT)
+    if (! (mysink->flags & NDRX_LOG_FOSHSTDERR ||
+            mysink->flags & NDRX_LOG_FOSHSTDOUT)
             )
     {
-        NDRX_FCLOSE((*mysink)->fp);
+        NDRX_FCLOSE(mysink->fp);
     }
 
     /* remove markings */
-    (*mysink)->flags&=(~NDRX_LOG_FOSHSTDERR);
-    (*mysink)->flags&=(~NDRX_LOG_FOSHSTDOUT);
+    mysink->flags&=(~NDRX_LOG_FOSHSTDERR);
+    mysink->flags&=(~NDRX_LOG_FOSHSTDOUT);
 
 
     /* open if new is not OS, remove or add markings... */
     if (0==strcmp(toname, NDRX_LOG_OSSTDERR))
     {
-        (*mysink)->fp=stderr;
-        (*mysink)->flags|=NDRX_LOG_FOSHSTDERR;
+        mysink->fp=stderr;
+        mysink->flags|=NDRX_LOG_FOSHSTDERR;
     }
     else if (0==strcmp(toname, NDRX_LOG_OSSTDOUT))
     {
-        (*mysink)->fp=stdout;
-        (*mysink)->flags|=NDRX_LOG_FOSHSTDOUT;
+        mysink->fp=stdout;
+        mysink->flags|=NDRX_LOG_FOSHSTDOUT;
     }
     else
     {
         if (NULL!=dbg_ptr)
         {
-            (*mysink)->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr, dbg_ptr->dbg_f_ptr);
+            mysink->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr, dbg_ptr->dbg_f_ptr);
         }
         else
         {
-            (*mysink)->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr, fileupdate);
+            mysink->fp=ndrx_dbg_fopen_mkdir(toname, "a", dbg_ptr, fileupdate);
         }
 
-        if (NULL==(*mysink)->fp)
+        if (NULL==mysink->fp)
         {
             userlog("Failed to set log file to [%s]: %s -> fallback to stderr", 
                     toname, strerror(errno));
 
-            (*mysink)->fp=stderr;
-            (*mysink)->flags|=NDRX_LOG_FOSHSTDERR;
+            mysink->fp=stderr;
+            mysink->flags|=NDRX_LOG_FOSHSTDERR;
             
             /* save the org name so that we can use it during logrotate */
-            NDRX_STRCPY_SAFE((*mysink)->fname_org, toname);
-            NDRX_STRCPY_SAFE((*mysink)->fname, NDRX_LOG_OSSTDERR);
+            NDRX_STRCPY_SAFE(mysink->fname_org, toname);
+            NDRX_STRCPY_SAFE(mysink->fname, NDRX_LOG_OSSTDERR);
             
             /* save original file name? if try to re-open, so that we can
              * switch back?
@@ -523,23 +523,23 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
         else
         {
             /* OK New name is set */
-            (*mysink)->fname_org[0] = EXEOS;
-            NDRX_STRCPY_SAFE((*mysink)->fname, toname);
+            mysink->fname_org[0] = EXEOS;
+            NDRX_STRCPY_SAFE(mysink->fname, toname);
         }
     }
 
     /* unlock originals */
-    (*mysink)->chwait=EXFALSE;
+    mysink->chwait=EXFALSE;
     
-    MUTEX_UNLOCK_V((*mysink)->change_lock);
-    MUTEX_UNLOCK_V((*mysink)->busy_lock);
+    MUTEX_UNLOCK_V(mysink->change_lock);
+    MUTEX_UNLOCK_V(mysink->busy_lock);
     
 out:
     
     /* no errors, just update to actual logger */
     if (NULL!=dbg_ptr)
     {
-        NDRX_STRCPY_SAFE(dbg_ptr->filename, (*mysink)->fname);
+        NDRX_STRCPY_SAFE(dbg_ptr->filename, mysink->fname);
     }
 
 out_final:

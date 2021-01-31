@@ -101,7 +101,7 @@ expublic int ndrx_sem_rwlock(ndrx_sem_t *sem, int sem_num, int typ)
         int err = errno;
         
         /* use buffered log as my conflict with LCF */
-        userlog("semop() failed for type %d lock: %s", 
+        userlog("ndrx_sem_rwlock: semop() failed for type %d lock: %s", 
                 typ, strerror(err));
     }
 
@@ -138,7 +138,7 @@ expublic int ndrx_sem_rwunlock(ndrx_sem_t *sem, int sem_num, int typ)
     {
         int err = errno;
         
-        userlog("semop() failed for %d type lock: %s", 
+        userlog("ndrx_sem_rwunlock: semop() failed for %d type lock: %s", 
                 typ, strerror(err));
     }
     

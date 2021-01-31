@@ -73,6 +73,7 @@ typedef struct
     int  lcfmax;        /**< Max number of LCF commands     */
     key_t ipckey;       /**< Semphoare key                  */
     int  startcmdexp;   /**< Startup command delay          */
+    int lcf_norun;    /**< LCF is disabled                */
 } ndrx_nstd_libconfig_t;
 
 /**
@@ -93,7 +94,7 @@ typedef struct
  */
 typedef struct
 {
-    unsigned shmcfgver;     /**< Monitor the version, if changed run LCF with readlock */
+    unsigned shmcfgver_lcf;     /**< Monitor the version, if changed run LCF with readlock */
     int use_ddr;            /**< Should DDR be used by callers                         */
     long ddr_page;          /**< DDR page number  0 or 1, version not changes, using long for align */
     char reserved[NDRX_LCF_RESVR];  /**< reserved space for future updates             */

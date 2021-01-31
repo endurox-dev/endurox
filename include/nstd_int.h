@@ -45,6 +45,8 @@ extern "C" {
 #include <sys_primitives.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
+    
+#define NDRX_TPLOGCONFIG_VERSION_INC            0x00000001  /**< increment version */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /**
@@ -62,7 +64,6 @@ struct  ndrx_fpablock
 
 /**
  * One size stack for allocator
- * TOOD: Move to internal header
  */
 typedef struct ndrx_fpastack ndrx_fpapool_t;
 struct  ndrx_fpastack
@@ -97,6 +98,9 @@ extern NDRX_API void ndrx_debug_refcount(int *sinks, int *refs);
 extern NDRX_API int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, int force);
 extern NDRX_API void ndrx_debug_addref(ndrx_debug_file_sink_t* mysink);
 extern NDRX_API int ndrx_debug_reopen_all(void);
+
+extern NDRX_API int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
+        char *new_file, long flags);
 
 #ifdef	__cplusplus
 }

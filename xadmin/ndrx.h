@@ -44,7 +44,8 @@ extern "C" {
 #include <atmi.h>
 #include <sys_mqueue.h>
 #include <signal.h>
-
+#include <linenoise.h>
+    
 #include <ndrxdcmn.h>
 #include <gencall.h>
 #include <inicfg.h>
@@ -126,8 +127,7 @@ struct cmd_mapping
     /* command callback */
     int (*p_exec_command) (cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
     int ndrxd_cmd;             /**< EnduroX Daemon command code          */
-    int min_args;              /**< Minimum argument count for command   */
-    int max_args;              /**< Maximum argument count for command   */
+    int has_args;              /**< Does command has arguments?          */
     /**
      * Do we need ndrxd in idle?
      * 0 = no idle needed, no reply queue needed
@@ -289,6 +289,7 @@ extern int cmd_dpid(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have
 extern int cmd_lcf_help(void);
 extern int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 extern int ndrx_xadmin_lcf_init(void);
+extern int cmd_lcf_completion(linenoiseCompletions *lc, char *buf);
 
 /* TMIB: */
 extern int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);

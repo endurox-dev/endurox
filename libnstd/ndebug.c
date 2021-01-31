@@ -107,7 +107,8 @@
     .flags=FLAGS,\
     .memlog=NULL,\
     .hostnamecrc32=0x0,\
-    .swait=NDRX_LOG_SWAIT_DEFAULT\
+    .swait=NDRX_LOG_SWAIT_DEFAULT,\
+    .version=0\
 }
 
 /*---------------------------Enums--------------------------------------*/
@@ -314,30 +315,45 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
             
         }
 
+/** In case if new levels are published by LCF
+ * use them by correspoding loggers
+ */
+#define SYNC_LEVELS(X, Y) if (X.version!=Y.version)\
+                {\
+                    X.version = Y.version;\
+                    X.level = Y.level;\
+                }
+        
         if (NULL!=G_nstd_tls && !recursive)
         {
             if (dbg_ptr == &G_tp_debug && NULL!=G_nstd_tls->requestlog_tp.dbg_f_ptr)
             {
+                SYNC_LEVELS(G_nstd_tls->requestlog_tp, G_tp_debug);
                 return &G_nstd_tls->requestlog_tp;
             }
             else if (dbg_ptr == &G_tp_debug && NULL!=G_nstd_tls->threadlog_tp.dbg_f_ptr)
             {
+                SYNC_LEVELS(G_nstd_tls->threadlog_tp, G_tp_debug);
                 return &G_nstd_tls->threadlog_tp;
             }
             else if (dbg_ptr == &G_ndrx_debug && NULL!=G_nstd_tls->requestlog_ndrx.dbg_f_ptr)
             {
+                SYNC_LEVELS(G_nstd_tls->requestlog_ndrx, G_ndrx_debug);
                 return &G_nstd_tls->requestlog_ndrx;
             }
             else if (dbg_ptr == &G_ndrx_debug && NULL!=G_nstd_tls->threadlog_ndrx.dbg_f_ptr)
             {
+                SYNC_LEVELS(G_nstd_tls->threadlog_ndrx, G_ndrx_debug);
                 return &G_nstd_tls->threadlog_ndrx;
             }
             else if (dbg_ptr == &G_ubf_debug && NULL!=G_nstd_tls->requestlog_ubf.dbg_f_ptr)
             {
+                SYNC_LEVELS(G_nstd_tls->requestlog_ubf, G_ubf_debug);
                 return &G_nstd_tls->requestlog_ubf;
             }
             else if (dbg_ptr == &G_ubf_debug && NULL!=G_nstd_tls->threadlog_ubf.dbg_f_ptr)
             {
+                SYNC_LEVELS(G_nstd_tls->threadlog_ubf, G_ubf_debug);
                 return &G_nstd_tls->threadlog_ubf;
             }
         }

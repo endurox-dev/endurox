@@ -320,7 +320,8 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SVQREADERSMAX  "NDRX_SVQREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
 #define CONF_NDRX_LCFREADERSMAX  "NDRX_LCFREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
 #define CONF_NDRX_LCFMAX         "NDRX_LCFMAX" /**< Max number of latent command framework commands  */
-#define CONF_NDRX_LCFCMDSTARTDEL "NDRX_LCFSTARTCMDEXP"    /**< LCF startup command expiry */
+#define CONF_NDRX_LCFCMDSTARTDEL "NDRX_LCFSTARTCMDEXP"/**< LCF startup command expiry */
+#define CONF_NDRX_LCFNORUN       "NDRX_LCFNORUN" /**< Do not run LCF commands */
 #define CONF_NDRX_SANITY         "NDRX_SANITY"     /**< Time in seconds after which do sanity check for dead processes */
 #define CONF_NDRX_QPATH          "NDRX_QPATH"      /**< Path to place on fs where queues lives */
 #define CONF_NDRX_IPCKEY         "NDRX_IPCKEY"     /**< IPC Key for shared memory */
@@ -365,32 +366,32 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
  */
 #define CONF_NDRX_NORMWAITMAX    "NDRX_NORMWAITMAX"
 /** Default for  NDRX_NORMWAITMAX */    
-#define CONF_NDRX_NORMWAITMAX_DLFT    60
+#define CONF_NDRX_NORMWAITMAX_DLFT      60
     
 /** resource manager override file*/
-#define CONF_NDRX_RMFILE        "NDRX_RMFILE"
+#define CONF_NDRX_RMFILE                "NDRX_RMFILE"
     
 /** Enduro/X MW home               */
-#define CONF_NDRX_HOME          "NDRX_HOME"
+#define CONF_NDRX_HOME                  "NDRX_HOME"
     
 /** Feedback pool allocator options */
-#define CONF_NDRX_FPAOPTS       "NDRX_FPAOPTS"
+#define CONF_NDRX_FPAOPTS               "NDRX_FPAOPTS"
     
 /** Stack size for new threads produced by Enduro/X in kilobytes */
-#define CONF_NDRX_THREADSTACKSIZE   "NDRX_THREADSTACKSIZE"
+#define CONF_NDRX_THREADSTACKSIZE       "NDRX_THREADSTACKSIZE"
 
 /** Minimum number of dispatch threads for ATMI Server */
-#define CONF_NDRX_MINDISPATCHTHREADS   "NDRX_MINDISPATCHTHREADS"
+#define CONF_NDRX_MINDISPATCHTHREADS    "NDRX_MINDISPATCHTHREADS"
 
 /** Maximum number of dispatch threads for ATMI Server (not used currently) */
-#define CONF_NDRX_MAXDISPATCHTHREADS   "NDRX_MAXDISPATCHTHREADS"
+#define CONF_NDRX_MAXDISPATCHTHREADS    "NDRX_MAXDISPATCHTHREADS"
 
 /** Used by System-V tout thread -> sleep period between timeout-scans    
  * in milli-seconds. Default is 1000.
  */
-#define CONF_NDRX_SCANUNIT   "NDRX_SCANUNIT"
-#define CONF_NDRX_SCANUNIT_DFLT   1000
-#define CONF_NDRX_SCANUNIT_MIN    1
+#define CONF_NDRX_SCANUNIT              "NDRX_SCANUNIT"
+#define CONF_NDRX_SCANUNIT_DFLT         1000
+#define CONF_NDRX_SCANUNIT_MIN          1
 
 #define NDRX_CMDLINE_SEP        " \t\n" /**< command line seperators          */
 #define NDRX_CMDLINE_QUOTES     "'\""   /**< Block quotes for non splitting   */

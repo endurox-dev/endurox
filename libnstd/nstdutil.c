@@ -822,7 +822,7 @@ expublic char *ndrx_decode_str(char *str, char *buf, int buf_sz)
     
     NDRX_STRCPY_SAFE_DST(buf, str, buf_sz);
     
-    buf[buf_sz-1]='+';
+    buf[buf_sz-2]='+';
     
     return buf;
 }
