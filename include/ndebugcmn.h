@@ -138,7 +138,7 @@ typedef struct
  */
 typedef struct
 {
-    unsigned shmcfgver;         /**< Current version in shared mem of the config */
+    unsigned shmcfgver_lcf;         /**< Current version in shared mem of the config */
 } ndrx_lcf_shmcfg_ver_t;
 
 /*---------------------------Globals------------------------------------*/

@@ -133,6 +133,7 @@ add_subdirectory (test077_diedslowstrt)
 add_subdirectory (test078_tpacallmix)
 add_subdirectory (test079_cliquote)
 add_subdirectory (test080_tpexit)
+add_subdirectory (test081_lcf)
 
 ################################################################################
 # Master test case drivere

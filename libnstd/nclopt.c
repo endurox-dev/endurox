@@ -33,6 +33,8 @@
  */
 
 /*---------------------------Includes-----------------------------------*/
+#define __USE_POSIX_IMPLICITLY
+
 #include <ndrstandard.h>
 #include <time.h>
 #include <sys/time.h>
@@ -43,7 +45,6 @@
 #include <nstdutil.h>
 #include <nclopt.h>
 #include <ndebug.h>
-
 
 #include <ubf.h>
 
@@ -69,10 +70,10 @@ expublic int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
     int ret = EXSUCCEED;
     char clopt_string[1024]={EXEOS};
     int len=0;
-    signed char c; /* fix for rpi */
+    unsigned char c; /* fix for rpi */
+    int cc; /* fix for rpi */
     ncloptmap_t *p = opts;
-    
-    optind=1; /* reset lib, so that we can scan again. */
+
     
     while (0!=p->key)
     {
@@ -90,9 +91,17 @@ expublic int nstd_parse_clopt(ncloptmap_t *opts, int print_values,
     
     NDRX_LOG(log_debug, "clopt_string built: [%s] argc: [%d]", 
             clopt_string, argc);
-
-    while ((c = getopt(argc, argv, clopt_string)) != EXFAIL)
+    
+#ifdef __GNU_LIBRARY__
+    optind=0; /* reset lib, so that we can scan again. */
+#else
+    optind=1; /* reset lib, so that we can scan again. */
+#endif
+    
+    while ((cc = getopt(argc, argv, clopt_string)) != EXFAIL)
     {
+        /* convert back char */
+        c = (char)cc;
         
         /* search for key... */
         p = opts;

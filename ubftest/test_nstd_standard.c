@@ -394,24 +394,30 @@ Ensure(test_nstd_strtokblk)
     
     do {
         char test1[]="arg1  arg2";
-        chk_token(test1, (char*[]){"arg1", "", "arg2"}, 3);
+        chk_token(test1, (char*[]){"arg1", "arg2"}, 2);
     }while(0);
     
     do {
-        char test1[]="some \\\\ arg";
-        chk_token(test1, (char*[]){"some", "\\", "arg"}, 3);
+        char test1[]="some \\\\ arg3";
+        chk_token(test1, (char*[]){"some", "\\", "arg3"}, 3);
     }while(0);
     
     /* nothing to escape... */
     do {
-        char test1[]="some \\ arg";
-        chk_token(test1, (char*[]){"some", "", "arg"}, 3);
+        char test1[]="some \\ arg4";
+        chk_token(test1, (char*[]){"some", "arg4"}, 2);
     }while(0);
     
     
     do {
         char test1[]="some '\\\\' arg";
         chk_token(test1, (char*[]){"some", "\\", "arg"}, 3);
+    }while(0);
+    
+    
+    do {
+        char test1[]="    ";
+        chk_token(test1, NULL, 0);
     }while(0);
     
 }

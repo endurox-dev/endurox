@@ -107,6 +107,7 @@ typedef struct
 
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+exprivate MUTEX_LOCKDECL(M_proc_lock); /**< lock process level loggers */
 /*---------------------------Prototypes---------------------------------*/
 exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger);
 
@@ -173,8 +174,10 @@ expublic void tplogsetreqfile_direct(char *filename)
                 }
                 else
                 {
-                    /* Copy from TPlog */
+                    /* Copy from TPlog: locking against proc level tplogconfig changes */
+                    MUTEX_LOCK_V(M_proc_lock);
                     memcpy(map[i].req, map[i].proc, sizeof(ndrx_debug_t));
+                    MUTEX_UNLOCK_V(M_proc_lock);
                     ndrx_debug_addref(map[i].req->dbg_f_ptr);
                 }
     
@@ -198,7 +201,7 @@ expublic void tplogsetreqfile_direct(char *filename)
                  * What here we can inherit mkdir & flock
                  *  
                  */
-                /* swithc loggers if any...  */
+                /* switch loggers if any...  */
                 
                 if (NULL==map[i].req->dbg_f_ptr)
                 {
@@ -246,10 +249,16 @@ exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger)
                 LOGGER_SAVE_FIELDS(map[i].th);
 
                 /* thread logger inherits from base */
+                
+                /* locking against proc level*/
+                MUTEX_LOCK_V(M_proc_lock);
                 memcpy(map[i].th, map[i].proc, sizeof(ndrx_debug_t));
-
+                MUTEX_UNLOCK_V(M_proc_lock);
+                
                 /* increment usage
                  * proc is stable never removed, thus can surely reference it
+                 * Also as proc is always is available we do not get
+                 * here and do not deadlock.
                  */
                 ndrx_debug_addref(map[i].th->dbg_f_ptr);
                 
@@ -277,7 +286,12 @@ exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger)
                 }
                 else
                 {
+                    /* if somebody changes process level logger in some
+                     * tread, have correct values down here.
+                     */
+                    MUTEX_LOCK_V(M_proc_lock);
                     memcpy(map[i].req, map[i].proc, sizeof(ndrx_debug_t));
+                    MUTEX_UNLOCK_V(M_proc_lock);
                     
                     /* process loggers are never removed */
                     ndrx_debug_addref(map[i].req->dbg_f_ptr);
@@ -340,9 +354,32 @@ expublic void tplogclosereqfile(void)
 expublic int tplogconfig(int logger, int lev, char *debug_string, char *module, 
         char *new_file)
 {
+    return tplogconfig_int(logger, lev, debug_string, module, new_file, 0);
+}
+
+/**
+ * Reconfigure loggers.
+ * Due to fact that this covers also shared loggers, locking must be employed
+ * i.e. process levels might be changed from other threads in the same time.
+ * 
+ * Well also other threads, might use the main logger as reference, it might
+ * be changed concurrently (i.e. copy made). Thus those copy points
+ * shall be protected too against these changes.
+ * 
+ * @param logger See LOG_FACILITY_*
+ * @param lev 0..5 (if -1 (FAIL) then ignored)
+ * @param config_line ndrx config line (if NULL/empty then ignored)
+ * @param module 4 char module code (which uses the logger)
+ * @param new_file New logging file (this overrides the stuff from debug string)
+ * @param flags internal flags
+ * @return SUCCEED/FAIL
+ */
+expublic int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
+        char *new_file, long flags)
+{
     int ret = EXSUCCEED;
     ndrx_debug_t *l;
-    char tmp_filename[PATH_MAX];
+    char tmp_filename[PATH_MAX+1];
     int loggers[] = {LOG_FACILITY_NDRX, 
                     LOG_FACILITY_UBF, 
                     LOG_FACILITY_TP,
@@ -377,6 +414,12 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
              */
             continue;
         }
+        
+        /* If this is process level logger, do the locking... */
+        if (l->flags & LOG_FACILITY_PROCESS)
+        {
+            MUTEX_LOCK_V(M_proc_lock);
+        }
 
         if (NULL!=module && EXEOS!=module[0] && 
                 loggers[i] != LOG_FACILITY_NDRX &&
@@ -401,6 +444,13 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
             if (EXSUCCEED!= (ret = ndrx_init_parse_line(NULL, debug_string, 
                     NULL, l, l->filename, sizeof(l->filename))))
             {
+                
+                /* unlock process lev */
+                if (l->flags & LOG_FACILITY_PROCESS)
+                {
+                    MUTEX_UNLOCK_V(M_proc_lock);
+                }
+                
                 _Nset_error_msg(NEFORMAT, "Failed to parse debug string");
                 EXFAIL_OUT(ret);
             }
@@ -410,6 +460,15 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
                     (NULL==new_file || EXEOS==new_file[0]))
             {
                 ndrx_debug_changename(l->filename, EXTRUE, l, NULL);
+            }
+            
+            /* assume running in single thread only... */
+            if (flags & NDRX_TPLOGCONFIG_VERSION_INC)
+            {
+                /* so that threads/request loggers can copy the levels
+                 * if version does not match
+                 */
+                l->version++;
             }
         }
 
@@ -422,6 +481,12 @@ expublic int tplogconfig(int logger, int lev, char *debug_string, char *module,
         if (NULL!=new_file && EXEOS!=new_file[0] && 0!=strcmp(new_file, l->filename))
         {            
             ndrx_debug_changename(new_file, EXTRUE, l, NULL);
+        }
+        
+        /* unlock process lev */
+        if (l->flags & LOG_FACILITY_PROCESS)
+        {
+            MUTEX_UNLOCK_V(M_proc_lock);
         }
 
     }

@@ -46,6 +46,7 @@
 #include <gencall.h>
 #include <errno.h>
 #include <lcf.h>
+#include <linenoise.h>
 
 #include "nclopt.h"
 
@@ -63,6 +64,10 @@
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
+
+exprivate linenoiseCompletions *M_lc;   /**< params to callback */
+exprivate char *M_lc_buf; /**< params to callback */
+exprivate int  M_lc_buf_len; /**< params to callback */
 
 /**
  * Perform stock Enduro/X stock LCF command initialization
@@ -165,6 +170,36 @@ exprivate void lcf_print_cmds(ndrx_lcf_reg_xadminh_t *xcmd)
 }
 
 /**
+ * Complete the command here
+ * @param xcmd
+ */
+exprivate void cmd_lcf_completion_add(ndrx_lcf_reg_xadminh_t *xcmd)
+{
+    char tmpbuf[128];
+    snprintf(tmpbuf, sizeof(tmpbuf), "lcf %s", xcmd->cmdstr);
+    
+    if (0==strncmp(tmpbuf, M_lc_buf, M_lc_buf_len))
+    {
+        linenoiseAddCompletion(M_lc, tmpbuf);
+    }
+}
+
+/**
+ * Add completions for lcf
+ * @param lc completion handler
+ * @return 
+ */
+expublic int cmd_lcf_completion(linenoiseCompletions *lc, char *buf)
+{
+    M_lc=lc;
+    M_lc_buf=buf;
+    M_lc_buf_len=strlen(buf);
+    ndrx_lcf_xadmin_list(cmd_lcf_completion_add);
+    
+    return EXSUCCEED;
+}
+
+/**
  * Return the list of LCF commands registered with xadmin
  * @return 
  */
@@ -184,7 +219,7 @@ expublic int cmd_lcf_help(void)
  */
 expublic void print_lcf_data(int page)
 {
-    int i=0;
+    int i, j;
     char flagsstr[64];
     ndrx_lcf_command_t *cur;
     char cmdstr[8+1];
@@ -194,19 +229,19 @@ static const struct {
     char *flagstr;
 
 } flag_map[] = {
-    {  NDRX_LCF_FLAG_PID, "P" },
-    {  NDRX_LCF_FLAG_BIN, "B" }, 
-    {  NDRX_LCF_FLAG_ALL, "A" }, 
-    {  NDRX_LCF_FLAG_ARGA, "a" }, 
-    {  NDRX_LCF_FLAG_ARGB, "b" }, 
-    {  NDRX_LCF_FLAG_DOREX, "R" }, 
-    {  NDRX_LCF_FLAG_DOSTARTUP, "N" }, 
-    {  NDRX_LCF_FLAG_DOSTARTUPEXP, "E" }
+    {  NDRX_LCF_FLAG_PID, "p" },
+    {  NDRX_LCF_FLAG_BIN, "b" }, 
+    {  NDRX_LCF_FLAG_ALL, "a" }, 
+    {  NDRX_LCF_FLAG_ARGA, "A" }, 
+    {  NDRX_LCF_FLAG_ARGB, "B" }, 
+    {  NDRX_LCF_FLAG_DOREX, "r" }, 
+    {  NDRX_LCF_FLAG_DOSTARTUP, "n" }, 
+    {  NDRX_LCF_FLAG_DOSTARTUPEXP, "e" }
 };
 
     if (PAGE_1==page)
     {
-        fprintf(stderr, "SLOT  CID COMMAND  FLAGS    PROCID           #APPL #SEEN #FAIL AGE      FEEDB\n");
+        fprintf(stderr, "SLOT  CID COMMAND  FLAGS    PROCID           #SEEN #APPL #FAIL      AGE FEEDBACK\n");
         fprintf(stderr, "---- ---- -------- -------- ---------------- ----- ----- ----- -------- --------\n");
     }
     else if (PAGE_2==page)
@@ -214,7 +249,7 @@ static const struct {
         fprintf(stderr, "SLOT  CID COMMAND  ARG_A                                      ARG_B\n");
         fprintf(stderr, "---- ---- -------  ------------------------------------------ ------------------\n");
     }
-    else if (PAGE_2==page)
+    else if (PAGE_3==page)
     {
         fprintf(stderr, "SLOT  CID COMMAND  FEEDBACKMSG\n");
         fprintf(stderr, "---- ---- -------  -------------------------------------------------------------\n");
@@ -248,11 +283,11 @@ static const struct {
             /* build flags string */
             flagsstr[0] = EXEOS;
             
-            for (i=0; i<N_DIM(flag_map); i++)
+            for (j=0; j<N_DIM(flag_map); j++)
             {
-                if (cur->flags & flag_map[i].flag)
+                if (cur->flags & flag_map[j].flag)
                 {
-                    NDRX_STRCAT_S(flagsstr, sizeof(flagsstr), flag_map[i].flagstr);
+                    NDRX_STRCAT_S(flagsstr, sizeof(flagsstr), flag_map[j].flagstr);
                 }
             }
             
@@ -319,28 +354,28 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     int exec_start_exp = EXFALSE;
     char arg_a[PATH_MAX+1]="";
     char arg_b[NAME_MAX+1]="";
-    int slot=EXFAIL;
+    short slot=EXFAIL;
     
     /* if no arguments given, then it is print */
     ncloptmap_t clopt[] =
     {
-        {'a', BFLD_STRING, arg_a, sizeof(arg_a), 
+        {'A', BFLD_STRING, arg_a, sizeof(arg_a), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Argument a to COMMAND"},
-        {'b', BFLD_STRING, arg_b, sizeof(arg_b), 
+        {'B', BFLD_STRING, arg_b, sizeof(arg_b), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Argument b to COMMAND"},
-        {'P', BFLD_STRING, pid, sizeof(pid), 
+        {'p', BFLD_STRING, pid, sizeof(pid), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "PID"},
-        {'B', BFLD_STRING, binary, sizeof(binary), 
+        {'b', BFLD_STRING, binary, sizeof(binary), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Executable binary name"},
-        {'R', BFLD_SHORT, (void *)&regex, 0, 
+        {'r', BFLD_SHORT, (void *)&regex, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "PID or Binary name is regexp"}, 
-        {'A', BFLD_SHORT, (void *)&all, 0, 
+        {'a', BFLD_SHORT, (void *)&all, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Apply to all binaries"}, 
-        {'N', BFLD_SHORT, (void *)&exec_start, 0, 
+        {'n', BFLD_SHORT, (void *)&exec_start, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Apply at startup"},
-        {'E', BFLD_SHORT, (void *)&exec_start_exp, 0, 
+        {'e', BFLD_SHORT, (void *)&exec_start_exp, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Apply at startup with expiry"},
-        {'S', BFLD_INT,   (void *)&slot, 0, 
+        {'s', BFLD_SHORT, (void *)&slot, 0, 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Slot number to which publish"},
         {0}
     };
@@ -373,13 +408,10 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     }
     else if (2==argc && 0==strcmp(argv[1], "-3"))
     {
-        print_lcf_data(PAGE_2);
+        print_lcf_data(PAGE_3);
     }
     else
     {
-        /* TODO: Push the command... 
-         * - lookup the command first
-         */
         ndrx_lcf_reg_xadminh_t *xcmd = ndrx_lcf_xadmin_find_int(argv[1]);
         ndrx_lcf_command_t cmd;
                 
@@ -401,14 +433,14 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         /* decide the target, cli has more power over the default */
         if (EXEOS!=pid[0] && EXEOS!=binary[0])
         {
-            _Nset_error_fmt(NEINVAL, "-P and -B cannot be mixed");
+            _Nset_error_fmt(NEINVAL, "-p and -b cannot be mixed");
             EXFAIL_OUT(ret);
         }
         
         /* makes no sense to mix binary with -A (all) flag */
         if ( (EXEOS!=pid[0] || EXEOS!=binary[0]) && all )
         {
-            _Nset_error_fmt(NEINVAL, "-P or -B cannot be mixed with -A");
+            _Nset_error_fmt(NEINVAL, "-p or -b cannot be mixed with -a");
             EXFAIL_OUT(ret);
         }
         
@@ -416,13 +448,11 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         {
             NDRX_STRCPY_SAFE(cmd.procid, pid);
             cmd.flags|=NDRX_LCF_FLAG_PID;
-            EXFAIL_OUT(ret);
         }
         else if (EXEOS!=binary[0])
         {
             NDRX_STRCPY_SAFE(cmd.procid, binary);
             cmd.flags|=NDRX_LCF_FLAG_BIN;
-            EXFAIL_OUT(ret);
         }
         else if (all)
         {
@@ -433,9 +463,11 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
             cmd.flags|= (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ALL);
         }
         
-        if (EXEOS==cmd.procid[0] && !(cmd.flags & NDRX_LCF_FLAG_ALL))
+        /* Except this rule does not affect disable command */
+        if (EXEOS==cmd.procid[0] && !(cmd.flags & NDRX_LCF_FLAG_ALL) &&
+                NDRX_LCF_CMD_DISABLED!=xcmd->xcmd.command)
         {
-            _Nset_error_fmt(NEINVAL, "There is no process target for command (missing -A/-P/-B and not defaults)");
+            _Nset_error_fmt(NEINVAL, "There is no process target for command (missing -a/-p/-b and not defaults)");
             EXFAIL_OUT(ret);
         }
         

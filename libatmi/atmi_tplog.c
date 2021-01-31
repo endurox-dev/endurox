@@ -72,7 +72,6 @@ exprivate int tplog_compare_set_file(char *new_file)
     /* get the current file (if any we have) */
     have_reqfile = tploggetreqfile(cur_filename, sizeof(cur_filename));
     
-    userlog("HAVE REQ FILE [%d]---> [%s] vs [%s]", have_reqfile, new_file, cur_filename);
     if (have_reqfile && 0==strcmp(new_file, cur_filename))
     {
         NDRX_LOG(log_warn, "Already logging to [%s] - not changing...", cur_filename);

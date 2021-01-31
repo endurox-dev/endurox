@@ -148,12 +148,10 @@ extern NDRX_API volatile int G_ndrx_debug_first;
  * memory address and getting some partial pointer. 
  * Thus G_ndrx_debug_first can be set to OK, only when shmcfg init is completed.
  */
-#define NDRX_DBG_INIT_ENTRY    if (NDRX_UNLIKELY(G_ndrx_debug_first) || NDRX_UNLIKELY(ndrx_G_shmcfgver_chk!=ndrx_G_shmcfg_ver->shmcfgver)) \
+#define NDRX_DBG_INIT_ENTRY    if (NDRX_UNLIKELY(G_ndrx_debug_first) || NDRX_UNLIKELY(ndrx_G_shmcfgver_chk!=ndrx_G_shmcfg_ver->shmcfgver_lcf)) \
     {\
-        if (NDRX_UNLIKELY(G_ndrx_debug_first)) {\
-        ndrx_dbg_lock();\
-        if (G_ndrx_debug_first) {ndrx_init_debug();}\
-        ndrx_dbg_unlock(); ndrx_lcf_run(EXTRUE);} else {ndrx_lcf_run(EXFALSE);}\
+        if (NDRX_UNLIKELY(G_ndrx_debug_first)) { ndrx_dbg_lock(); if (G_ndrx_debug_first) { ndrx_init_debug(); } ndrx_dbg_unlock();}\
+        ndrx_lcf_run();\
     }
 
 #define UBF_DBG_INIT(X) (ndrx_dbg_init X )
@@ -491,7 +489,7 @@ extern NDRX_API int ndrx_dbg_intlock_isset(void);
 extern NDRX_API void ndrx_dbg_intlock_set(void);
 extern NDRX_API void ndrx_dbg_intlock_unset(void);
 
-extern NDRX_API int ndrx_lcf_run(int is_startup);
+extern NDRX_API int ndrx_lcf_run();
 
 #ifdef	__cplusplus
 }

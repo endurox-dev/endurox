@@ -245,7 +245,7 @@ expublic int ndrx_shm_close(ndrx_shm_t *shm)
 
     if ((void *)EXFAIL==shm->mem || NULL==shm->mem)
     {
-        NDRX_LOG(log_debug, "[%s] %x already closed", shm->path, shm->key);
+        NDRX_LOG_EARLY(log_debug, "[%s] %x already closed", shm->path, shm->key);
     }
     else 
     {
@@ -253,7 +253,7 @@ expublic int ndrx_shm_close(ndrx_shm_t *shm)
         
         if (EXSUCCEED!=ret)
         {
-            NDRX_LOG(log_error, "Failed to detach shm [%s] %d/%x addr [%p]: %d - %s",
+            NDRX_LOG_EARLY(log_error, "Failed to detach shm [%s] %d/%x addr [%p]: %d - %s",
                         shm->path, shm->fd, shm->key, shm->mem, errno, strerror(errno));
         }
         else
@@ -358,7 +358,7 @@ expublic int ndrx_shm_remove_name(char *path, key_t ipckey)
         {
             if (EXSUCCEED!=shmctl(fd, IPC_RMID, NULL))
             {
-                NDRX_LOG(log_error, "Failed to IPC_RMID %d/%x: [%s]: %s",
+                NDRX_LOG_EARLY(log_error, "Failed to IPC_RMID %d/%x: [%s]: %s",
                                 fd, key, path, strerror(errno));
                 ret = EXFAIL;
             }

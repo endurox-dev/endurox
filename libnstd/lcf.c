@@ -60,7 +60,7 @@
 /*---------------------------Globals------------------------------------*/
 expublic ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 expublic ndrx_lcf_shmcfg_t *ndrx_G_shmcfg=NULL;        /**< Shared mem config, full          */
-expublic ndrx_lcf_shmcfg_ver_t M_ver_start = {.shmcfgver=1};
+expublic ndrx_lcf_shmcfg_ver_t M_ver_start = {.shmcfgver_lcf=0};
 
 /** 
  * During the init we will change the ptrs ... 
@@ -78,6 +78,7 @@ exprivate ndrx_lcf_command_seen_t *M_locl_lcf=NULL;   /**< Local LCFs seen, set 
 exprivate ndrx_lcf_reg_funch_t *M_funcs=NULL;         /**< functions registered for LCF     */
 exprivate ndrx_lcf_reg_xadminh_t *M_xadmin_cmds=NULL; /**< xadmin commands registered       */
 
+exprivate int M_startup_run = EXTRUE;                 /**< First startup run                */
 exprivate MUTEX_LOCKDECL(M_lcf_run);
 
 /*---------------------------Prototypes---------------------------------*/
@@ -249,6 +250,18 @@ expublic int ndrx_lcf_init(void)
     
     memset(&ndrx_G_libnstd_cfg, 0, sizeof(ndrx_G_libnstd_cfg));
     
+    tmp = getenv(CONF_NDRX_LCFNORUN);
+    
+    if (NULL!=tmp && (tmp[0]=='y' || tmp[0]=='Y'))
+    {
+        ndrx_G_libnstd_cfg.lcf_norun=EXTRUE;
+    }
+    else
+    {
+        ndrx_G_libnstd_cfg.lcf_norun=EXFALSE;
+    }
+    
+    
    /* Load some minimum env for shared mem processing */
     ndrx_G_libnstd_cfg.qprefix = getenv(CONF_NDRX_QPREFIX);
     if (NULL==ndrx_G_libnstd_cfg.qprefix)
@@ -419,6 +432,7 @@ expublic int ndrx_lcf_init(void)
     creg.version=NDRX_LCF_CCMD_VERSION;
     creg.pf_callback=ndrx_lcf_logrotate;
     creg.command=NDRX_LCF_CMD_LOGROTATE;
+    NDRX_STRCPY_SAFE(creg.cmdstr, NDRX_LCF_CMDSTR_LOGROTATE);
     
     ndrx_lcf_func_add_int(&creg);
     
@@ -428,10 +442,17 @@ expublic int ndrx_lcf_init(void)
     creg.version=NDRX_LCF_CCMD_VERSION;
     creg.pf_callback=ndrx_lcf_logchg;
     creg.command=NDRX_LCF_CMD_LOGCHG;
+    NDRX_STRCPY_SAFE(creg.cmdstr, NDRX_LCF_CMDSTR_LOGCHG);
     
     ndrx_lcf_func_add_int(&creg);
     
 out:
+    
+    if (EXSUCCEED!=ret)
+    {
+        /* We do not run also... */
+        ndrx_G_libnstd_cfg.lcf_norun=EXTRUE;
+    }
     
     return ret;    
 }
@@ -439,10 +460,9 @@ out:
 /**
  * Process all relevant CLF commands
  * and save the results
- * @param is_startup is this startup run? or run detected by NDRX_LOG?
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_lcf_run(int is_startup)
+expublic int ndrx_lcf_run(void)
 {
     int ret = EXSUCCEED;
     long flags;
@@ -454,14 +474,19 @@ expublic int ndrx_lcf_run(int is_startup)
     ndrx_lcf_reg_funch_t* cbfunc;
     ndrx_lcf_command_t cmd_tmp;
     
+    /* If we get here. */
+    if (ndrx_G_libnstd_cfg.lcf_norun)
+    {
+        return EXSUCCEED; /**< RETURN !!!!!!!!!!!!! */
+    }
+    
     /* avoid run by other threads..., thus lock them, but as already
      * as possible we update the shared memory version so that threads
      * does not stuck here, but do the work instead
      */
-    
     MUTEX_LOCK_V(M_lcf_run);
     
-    if (ndrx_G_shmcfgver_chk==ndrx_G_shmcfg_ver->shmcfgver)
+    if (ndrx_G_shmcfgver_chk==ndrx_G_shmcfg_ver->shmcfgver_lcf)
     {
         goto out;
     }
@@ -472,7 +497,7 @@ expublic int ndrx_lcf_run(int is_startup)
     }
     
     /* mark the current version, not other threads will not pass to this func */
-    ndrx_G_shmcfgver_chk=ndrx_G_shmcfg_ver->shmcfgver;
+    ndrx_G_shmcfgver_chk=ndrx_G_shmcfg_ver->shmcfgver_lcf;
     
     for (i=0; i<ndrx_G_libnstd_cfg.lcfmax; i++)
     {
@@ -531,8 +556,7 @@ expublic int ndrx_lcf_run(int is_startup)
             /* stage 2 filter: */
             cmdage = ndrx_stopwatch_get_delta_sec(&cur->publtim);
             
-            if (is_startup)
-                
+            if (M_startup_run)
             {
                 if ( (cur->flags & NDRX_LCF_FLAG_DOSTARTUPEXP) && 
                     cmdage <= ndrx_G_libnstd_cfg.startcmdexp)
@@ -556,9 +580,9 @@ expublic int ndrx_lcf_run(int is_startup)
             
             /* write the log only if startup & apply */
             
-            if (is_startup && apply==3 || !is_startup)
+            if (apply==3)
             {
-                NDRX_LOG(log_debug, "LCF: Slot %d changed command code %d (%s) version %u"
+                NDRX_LOG(log_debug, "LCF: Slot %d changed command code %d (%s) version %u "
                         "apply: %d flags: 0x%lx age: %ld apply: %d (%s)", 
                         i, cur->command, cur->cmdstr, cur->version, apply, 
                         cur->flags, cmdage, apply, apply==3?"apply":"ignore");
@@ -610,6 +634,9 @@ expublic int ndrx_lcf_run(int is_startup)
     }
     
 out:
+                            
+                            
+    M_startup_run=EXFALSE;
     
     MUTEX_UNLOCK_V(M_lcf_run);
     
@@ -706,8 +733,9 @@ expublic int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd)
 {
     int ret = EXSUCCEED;
     
-    /* check the shared mem config is LCF used at all */
-    
+    /* check the shared mem config is LCF used at all 
+     * If shm is not initialized, we cannot post
+     */
     if (ndrx_G_shmcfg_ver==&M_ver_start)
     {
         _Nset_error_fmt(NESUPPORT, "LCF framework disabled - cannot publish command %d [%s]", 
@@ -740,7 +768,7 @@ expublic int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd)
     
     /* let the processes to see the stuff... */
     memcpy(&ndrx_G_shmcfg->commands[slot], cmd, sizeof(*cmd));
-    ndrx_G_shmcfg->shmcfgver++;
+    ndrx_G_shmcfg->shmcfgver_lcf++;
     
     /* set the age of command */
     ndrx_stopwatch_reset(&ndrx_G_shmcfg->commands[slot].publtim);
