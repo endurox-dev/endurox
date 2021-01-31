@@ -149,7 +149,12 @@ exprivate void lcf_print_cmds(ndrx_lcf_reg_xadminh_t *xcmd)
 
     if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ARGA)
     {
-        fprintf(stdout, "\t\t\t-a parameters is mandatory\n");
+        fprintf(stdout, "\t\t\t-A parameters is mandatory\n");
+    }
+    
+    if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ARGB)
+    {
+        fprintf(stdout, "\t\t\t-B parameters is mandatory\n");
     }
     
     if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ALL)
@@ -395,8 +400,6 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         /* LCF not loaded...! */
         _Nset_error_fmt(NESYSTEM, "LCF Commands disabled");
     }
-    
-    NDRX_LOG(log_error, "YOPT ARGS: %d %s", argc, argv[0]);
     
     if (1==argc || 2==argc && 0==strcmp(argv[1], "-1"))
     {

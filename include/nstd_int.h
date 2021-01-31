@@ -101,6 +101,7 @@ extern NDRX_API int ndrx_debug_reopen_all(void);
 
 extern NDRX_API int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
         char *new_file, long flags);
+extern NDRX_API int ndrx_debug_is_proc_stderr(void);
 
 #ifdef	__cplusplus
 }

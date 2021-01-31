@@ -73,9 +73,9 @@ expublic int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd)
     
     if (xcmd->version < NDRX_LCF_XCMD_VERSION)
     {
-        _Nset_error_fmt(NEVERSION, "Invalid argument version minimum: %d got: %d",
+        _Nset_error_fmt(NEVERSION, "Invalid argument - version minimum: %d got: %d",
                 NDRX_LCF_XCMD_VERSION, xcmd->version);
-        NDRX_LOG_EARLY(log_error, "Invalid argument version minimum: %d got: %d",
+        NDRX_LOG_EARLY(log_error, "Invalid argument - version minimum: %d got: %d",
                 NDRX_LCF_XCMD_VERSION, xcmd->version);
         EXFAIL_OUT(ret);
     }
@@ -119,7 +119,7 @@ expublic int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd)
         EXFAIL_OUT(ret);
     }
     
-    ret=ndrx_lcf_xadmin_add(xcmd);
+    ret=ndrx_lcf_xadmin_add_int(xcmd);
     
 out:
     return ret;

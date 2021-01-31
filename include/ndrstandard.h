@@ -320,7 +320,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SVQREADERSMAX  "NDRX_SVQREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
 #define CONF_NDRX_LCFREADERSMAX  "NDRX_LCFREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
 #define CONF_NDRX_LCFMAX         "NDRX_LCFMAX" /**< Max number of latent command framework commands  */
-#define CONF_NDRX_LCFCMDSTARTDEL "NDRX_LCFSTARTCMDEXP"/**< LCF startup command expiry */
+#define CONF_NDRX_LCFCMDEXP      "NDRX_LCFCMDEXP"/**< LCF startup command expiry */
 #define CONF_NDRX_LCFNORUN       "NDRX_LCFNORUN" /**< Do not run LCF commands */
 #define CONF_NDRX_SANITY         "NDRX_SANITY"     /**< Time in seconds after which do sanity check for dead processes */
 #define CONF_NDRX_QPATH          "NDRX_QPATH"      /**< Path to place on fs where queues lives */

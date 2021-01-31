@@ -659,13 +659,12 @@ expublic int cpm_exec(cpm_process_t *c)
             close(fd_stderr);
         }
 
-        if (EXSUCCEED!=setenv(CONF_NDRX_DFLTLOG, G_server_conf.err_output, EXTRUE))
+        if (EXEOS!=c->stat.log_stderr[0] && EXSUCCEED!=setenv(CONF_NDRX_DFLTLOG, 
+                c->stat.log_stderr, EXTRUE))
         {
             userlog("Failed to set client [%s] env: %s", CONF_NDRX_DFLTLOG, strerror(errno));
         }
 
-
-        
         /**
          * todo: set NDRX_DFLTLOG to stderr file, so that logrotate
          * can be done on these

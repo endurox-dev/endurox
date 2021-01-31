@@ -284,16 +284,20 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
     if (NULL!=G_nstd_tls && !recursive)
     {
         if (dbg_ptr->is_threaded &&
-                ( 
-                  ((dbg_ptr->flags & LOG_FACILITY_NDRX) && NULL==G_nstd_tls->threadlog_ndrx.dbg_f_ptr 
+                (( 
+                  ((dbg_ptr->flags & LOG_FACILITY_NDRX)
                         /* assign target logger */
-                        && (flags = LOG_FACILITY_NDRX_THREAD)) ||
-                  ((dbg_ptr->flags & LOG_FACILITY_UBF) && NULL==G_nstd_tls->threadlog_ubf.dbg_f_ptr 
+                        && (flags = LOG_FACILITY_NDRX_THREAD)
+                        && NULL==G_nstd_tls->threadlog_ndrx.dbg_f_ptr ) ||
+                  ((dbg_ptr->flags & LOG_FACILITY_UBF) 
                         /* assign target logger */
-                        && (flags = LOG_FACILITY_UBF_THREAD)) ||
-                  ((dbg_ptr->flags & LOG_FACILITY_TP) && NULL==G_nstd_tls->threadlog_tp.dbg_f_ptr 
+                        && (flags = LOG_FACILITY_UBF_THREAD)
+                        && NULL==G_nstd_tls->threadlog_ubf.dbg_f_ptr) ||
+                  ((dbg_ptr->flags & LOG_FACILITY_TP)
                          /* assign target logger */
-                        && (flags = LOG_FACILITY_TP_THREAD))
+                        && (flags = LOG_FACILITY_TP_THREAD)
+                        && NULL==G_nstd_tls->threadlog_tp.dbg_f_ptr )
+                ) || (G_nstd_tls->M_threadnr_logopen != G_nstd_tls->M_threadnr)
                 )
             )
         {
@@ -302,8 +306,10 @@ exprivate ndrx_debug_t * get_debug_ptr(ndrx_debug_t *dbg_ptr)
                     (unsigned)G_nstd_tls->M_threadnr);
             
             /* configure the thread based logger.. */
+            G_nstd_tls->M_threadnr_logopen = G_nstd_tls->M_threadnr;
             
             recursive = EXTRUE; /* forbid recursive function call.. when doing some logging... */
+            
             if (EXFAIL==tplogconfig(flags, 
                     dbg_ptr->level, NULL, dbg_ptr->module, new_file))
             {

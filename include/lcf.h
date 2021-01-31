@@ -141,7 +141,7 @@ typedef struct
      * @param flags output flags about feedback: NDRX_LCF_FLAG_FBACK*. On input value is 0.
      * @return EXSUCCEED/EXFAIL
      */
-    int (*pf_callback)(const ndrx_lcf_command_t *cmd, long *p_flags);
+    int (*pf_callback)(ndrx_lcf_command_t *cmd, long *p_flags);
     
 } ndrx_lcf_reg_func_t;
 

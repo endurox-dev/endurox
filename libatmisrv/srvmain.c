@@ -51,6 +51,7 @@
 #include <atmi_int.h>
 #include <typed_buf.h>
 #include <atmi_tls.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -451,15 +452,22 @@ expublic int ndrx_init(int argc, char** argv)
                     {
                         userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
                     }
-
-                    /* Set the log file, so that stderr / stdout would redirect
-                     * to file via logger (so that we can logrotate) */
-
-                    if (EXSUCCEED!=setenv(CONF_NDRX_DFLTLOG, G_server_conf.err_output, EXTRUE))
+                        
+                    /* ALSO! reconfigure ndrx/tp/ubf to user this log! 
+                     * if stderr currently is used...
+                     * However not sure what we could do with threads?
+                     * MQ or others if they have chosen to work with stderr
+                     * then those will not rotate...
+                     * Anyway we will do the best.
+                     */
+                    if (ndrx_debug_is_proc_stderr())
                     {
-                        userlog("Failed to set server [%s] env: %s", CONF_NDRX_DFLTLOG, strerror(errno));
+                        if (EXSUCCEED!=tplogconfig(LOG_CODE_UBF|LOG_CODE_NDRX|LOG_CODE_TP, EXFAIL, 
+                                NULL, NULL, G_server_conf.err_output))
+                        {
+                            NDRX_LOG(log_debug, "Failed to re-open logger");
+                        }
                     }
-
                 }
                 else
                 {

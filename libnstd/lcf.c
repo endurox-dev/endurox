@@ -83,8 +83,8 @@ exprivate MUTEX_LOCKDECL(M_lcf_run);
 
 /*---------------------------Prototypes---------------------------------*/
 
-exprivate int ndrx_lcf_logrotate(const ndrx_lcf_command_t *cmd, long *p_flags);
-exprivate int ndrx_lcf_logchg(const ndrx_lcf_command_t *cmd, long *p_flags);
+exprivate int ndrx_lcf_logrotate(ndrx_lcf_command_t *cmd, long *p_flags);
+exprivate int ndrx_lcf_logchg(ndrx_lcf_command_t *cmd, long *p_flags);
 
 /*
  * - installcb
@@ -350,7 +350,7 @@ expublic int ndrx_lcf_init(void)
     }
     
     /* LCF Startup expiry for published commands (seconds) */
-    tmp = getenv(CONF_NDRX_LCFCMDSTARTDEL);
+    tmp = getenv(CONF_NDRX_LCFCMDEXP);
     if (NULL==tmp)
     {
         ndrx_G_libnstd_cfg.startcmdexp = MAX_LCFSTARTMAX_DFLT;
@@ -359,7 +359,7 @@ expublic int ndrx_lcf_init(void)
     {
         ndrx_G_libnstd_cfg.lcfreadersmax = atol(tmp);
     }
-    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFCMDSTARTDEL, 
+    NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFCMDEXP, 
             ndrx_G_libnstd_cfg.startcmdexp);
     
     
@@ -698,7 +698,7 @@ expublic void ndrx_lcf_detach(void)
  * @param p_flags feedback flags
  * @return EXSUCCEED
  */
-exprivate int ndrx_lcf_logrotate(const ndrx_lcf_command_t *cmd, long *p_flags)
+exprivate int ndrx_lcf_logrotate(ndrx_lcf_command_t *cmd, long *p_flags)
 {
     return ndrx_debug_reopen_all();
     
@@ -711,13 +711,14 @@ exprivate int ndrx_lcf_logrotate(const ndrx_lcf_command_t *cmd, long *p_flags)
  * @param p_flags feedback flags
  * @return EXSUCCEED/EXFAIL
  */
-exprivate int ndrx_lcf_logchg(const ndrx_lcf_command_t *cmd, long *p_flags)
+exprivate int ndrx_lcf_logchg(ndrx_lcf_command_t *cmd, long *p_flags)
 {
     /* Update loggers to have dynamic config version
      * WARNING! After this all loggers will switch to process level settings
      */
-    return tplogconfig(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 
-            EXFAIL, (char *)cmd->arg_a, NULL, NULL);
+    return tplogconfig_int(LOG_FACILITY_NDRX|LOG_FACILITY_UBF|LOG_FACILITY_TP, 
+            EXFAIL, (char *)cmd->arg_a, NULL, NULL, NDRX_TPLOGCONFIG_VERSION_INC);
+    
     
     return EXSUCCEED;
 }
