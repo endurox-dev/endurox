@@ -63,7 +63,8 @@ typedef struct
     int magic; /* have some magic for context data */
     
     /* ndebug.c */
-    long M_threadnr; /* Current thread nr */
+    long M_threadnr; /**< Current thread nr */
+    long M_threadnr_logopen; /**< Current thread nr, this is where log is open */
     
     /* nerror.c */
     char M_nstd_error_msg_buf[MAX_ERROR_LEN+1];

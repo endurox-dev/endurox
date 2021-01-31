@@ -54,15 +54,33 @@ link_directories (${ENDUROX_BINARY_DIR}/libubf)
 
 ############################# Test - executables ###############################
 add_executable (atmi.sv81 atmisv81.c ../../libatmisrv/rawmain_integra.c)
+add_executable (atmi.sv81b atmisv81.c ../../libatmisrv/rawmain_integra.c)
 add_executable (atmiclt81 atmiclt81.c)
+add_executable (atmiclt81b atmiclt81b.c)
 ################################################################################
 ############################# Test - executables ###############################
 # Link the executable to the ATMI library & others...
 target_link_libraries (atmi.sv81 atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmi.sv81b atmisrvinteg atmi ubf nstd m pthread ${RT_LIB})
 target_link_libraries (atmiclt81 atmiclt atmi ubf nstd m pthread ${RT_LIB})
+target_link_libraries (atmiclt81b atmiclt atmi ubf nstd m pthread ${RT_LIB})
 
 set_target_properties(atmi.sv81 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 set_target_properties(atmiclt81 PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
+set_target_properties(atmiclt81b PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 ################################################################################
 
+############################# Test - plugin ####################################
+add_library (custom_lcf SHARED
+                custom_lcf.c
+            )
+if(CMAKE_OS_NAME STREQUAL "CYGWIN")
+    target_link_libraries(custom_lcf atmi ubf nstd)
+elseif(CMAKE_OS_NAME STREQUAL "DARWIN")
+    target_link_libraries(custom_lcf atmi ubf nstd)
+elseif(CMAKE_OS_NAME STREQUAL "AIX")
+    target_link_libraries(custom_lcf pthread)
+endif()
+
+################################################################################
 # vim: set ts=4 sw=4 et smartindent:

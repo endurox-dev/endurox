@@ -59,12 +59,25 @@
             <srvid>10</srvid>
             <sysopt>-e ${TESTDIR}/atmisv-dom1.log -r</sysopt>
         </server>
-        <server name="tpbridge">
+        
+        <server name="atmi.sv81b">
+            <min>1</min>
             <max>1</max>
-            <srvid>101</srvid>
-            <sysopt>-e ${TESTDIR}/tpbridge-dom1.log -r</sysopt>
-            <appopt>-f -n2 -r -i 127.0.0.1 -p 20003 -tA -z30 -P0</appopt>
+            <srvid>20</srvid>
+            <sysopt>-N -e ${TESTDIR}/atmisvb-dom1.log -r -sTEST2:TESTSV</sysopt>
         </server>
+        
+        <server name="cpmsrv">
+                <srvid>110</srvid>
+                <sysopt>-e ${TESTDIR}/cpmsrv.log -r -- -k3 -i1</sysopt>
+        </server>    
     </servers>
+    
+    <clients>
+        <client cmdline="atmiclt81b">
+                <exec tag="RUN1" autostart="Y" log="main_thread.log"/>
+        </client>
+    </clients>
+    
 </endurox>
 

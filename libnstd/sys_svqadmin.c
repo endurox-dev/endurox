@@ -189,6 +189,10 @@ exprivate void * ndrx_svqadmin_run(void* arg)
     int err;
     ndrx_thstop_command_call_t *p_cmd;
     char *buf = NULL;
+    
+    /* init the TLS thread */
+    _Nunset_error();
+    
     /* Wait for message to arrive
      * and post to main thread if have any..
      */

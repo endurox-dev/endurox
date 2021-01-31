@@ -270,6 +270,7 @@ exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger)
         }
         else if (logger & map[i].req->flags)
         {
+            
             if (EXFAIL==map[i].req->level)
             {
                 LOGGER_SAVE_FIELDS(map[i].req);
@@ -392,7 +393,7 @@ expublic int tplogconfig_int(int logger, int lev, char *debug_string, char *modu
     };
     int i;
     
-    API_ENTRY; /* set TLS too */
+    API_ENTRY; /* set TLS too, might pull in other thread not working under the TLS */
     NDRX_DBG_INIT_ENTRY; /* Do the debug entry (so that we load defaults...) */
  
     for (i=0; i<N_DIM(loggers); i++)
@@ -403,7 +404,7 @@ expublic int tplogconfig_int(int logger, int lev, char *debug_string, char *modu
         {
             continue;
         }
-            
+        
         l = ndrx_tplog_getlogger(curlogger);
 
         if (NULL==l)

@@ -1,7 +1,7 @@
 /**
- * @brief LCF basic tests - client
+ * @brief Custom LCF Command
  *
- * @file atmiclt81.c
+ * @file custom_lcf.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -12,7 +12,7 @@
  * See LICENSE file for full text.
  * -----------------------------------------------------------------------------
  * AGPL license:
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License, version 3 as published
  * by the Free Software Foundation;
@@ -23,7 +23,7 @@
  * for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along 
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * -----------------------------------------------------------------------------
@@ -34,19 +34,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <math.h>
 
-#include <atmi.h>
-#include <ubf.h>
-#include <ndebug.h>
-#include <test.fd.h>
 #include <ndrstandard.h>
-#include <nstopwatch.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <ndebug.h>
 #include <nstdutil.h>
-#include "test81.h"
+#include <expluginbase.h>
+#include <sys_unix.h>
+#include <test.fd.h>
+#include <lcf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -56,49 +51,66 @@
 /*---------------------------Prototypes---------------------------------*/
 
 /**
- * Do the test call to the server
+ * Depending on args will provided OK or NOK or Feedback
  */
-int main(int argc, char** argv)
+exprivate int custom_command(ndrx_lcf_command_t *cmd, long *p_flags)
 {
-
-    UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
-    long rsplen;
-    int i;
-    int ret=EXSUCCEED;
-    char svcnm[64] = "TESTSV";
-    char tmp[1024];
+    NDRX_LOG(log_error, "**************** %s *********************", cmd->arg_a);
     
-    if (argc<2)
+    /* set feedback */
+    cmd->fbackcode=987;
+    NDRX_STRCPY_SAFE(cmd->fbackmsg, cmd->arg_b);
+    *p_flags|=(NDRX_LCF_FLAG_FBACK_CODE|NDRX_LCF_FLAG_FBACK_MSG);
+    
+    if (0==strcmp(cmd->arg_b, "FAIL"))
     {
-        fprintf(stderr, "Usage: %s <number>", argv[0]);
+        cmd->fbackcode=741;
+        return -1;
+    }
+    
+    return 0;
+}
+
+/**
+ * Initialize the plugin
+ * @param provider_name plugin name/provider string
+ * @param provider_name_bufsz provider string buffer size
+ * @return FAIL (in case of error) or OR'ed function flags
+ */
+expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
+{
+    int ret = EXSUCCEED;
+    ndrx_lcf_reg_func_t cfunc;
+    ndrx_lcf_reg_xadmin_t xfunc;
+    
+    memset(&cfunc, 0, sizeof(cfunc));
+    
+    NDRX_STRCPY_SAFE(cfunc.cmdstr, "customz");
+    cfunc.command=1001;
+    cfunc.version=NDRX_LCF_CCMD_VERSION;
+    cfunc.pf_callback=custom_command;
+    
+    if (EXSUCCEED!=ndrx_lcf_func_add(&cfunc))
+    {
+        NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
         EXFAIL_OUT(ret);
     }
     
-    if (argc>2)
+    memset(&xfunc, 0, sizeof(xfunc));
+    NDRX_STRCPY_SAFE(xfunc.cmdstr, "customz");
+    xfunc.command=1001;
+    xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
+    NDRX_STRCPY_SAFE(xfunc.helpstr, "Test command");
+    xfunc.dltflags=(NDRX_LCF_FLAG_DOSTARTUPEXP | NDRX_LCF_FLAG_ARGA | NDRX_LCF_FLAG_ARGB);
+    xfunc.dfltslot=3;
+    if (EXSUCCEED!=ndrx_lcf_xadmin_add(&xfunc))
     {
-        NDRX_STRCPY_SAFE(svcnm, argv[2]);
-    }
-    
-    snprintf(tmp, sizeof(tmp), "Hello %d EnduroX", atoi(argv[1]));
-    
-    if (EXFAIL==CBchg(p_ub, T_STRING_FLD, 0, tmp, 0, BFLD_STRING))
-    {
-        NDRX_LOG(log_debug, "Failed to set T_STRING_FLD[0]: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }    
-    
-    if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
-    {
-        NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
-        ret=EXFAIL;
-        goto out;
+        NDRX_LOG_EARLY(log_error, "TESTERROR: Failed to add func: %s", Nstrerror(Nerror));
+        EXFAIL_OUT(ret);
     }
     
 out:
-    tpterm();
-    fprintf(stderr, "Exit with %d\n", ret);
-
+    /* No functions provided */
     return ret;
 }
 

@@ -552,32 +552,6 @@ out_final:
 }
 
 /**
- * This is force close of all open loggers
- * And this performs de-init of the logging system.
- * Assuming know what your are doing. All threads must be stopped.
- * This can be use when living after the child fork
- */
-expublic void ndrx_debug_force_closeall(void)
-{
-    ndrx_debug_file_sink_t* el, *elt;
-    
-    MUTEX_LOCK_V(M_sink_lock);
-    
-    EXHASH_ITER(hh, M_sink_hash, el, elt)
-    {
-
-        ndrx_debug_unset_sink(el, EXFALSE, EXTRUE);
-    }
-    
-    /* mark debug as non-init */
-    
-    G_ndrx_debug_first=EXFALSE;
-    
-    MUTEX_UNLOCK_V(M_sink_lock);
-    
-}
-
-/**
  * Reopen all log files
  * Used for logrotate
  */
@@ -625,5 +599,24 @@ out:
     
 }
 
+/**
+ * Is proces level writting to stderr? 
+ * @return EXTRUE/EXFALSE
+ */
+expublic int ndrx_debug_is_proc_stderr(void)
+{
+    int ret = EXFALSE;
+    
+    MUTEX_LOCK_V(M_sink_lock);
+    
+    if (G_ndrx_debug.dbg_f_ptr->flags & NDRX_LOG_FOSHSTDERR)
+    {
+        ret=EXTRUE;
+    }
+        
+    MUTEX_UNLOCK_V(M_sink_lock);
+    
+    return ret;
+}
 
 /* vim: set ts=4 sw=4 et smartindent: */
