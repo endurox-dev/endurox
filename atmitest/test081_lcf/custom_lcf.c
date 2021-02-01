@@ -101,7 +101,7 @@ expublic long ndrx_plugin_init(char *provider_name, int provider_name_bufsz)
     xfunc.command=1001;
     xfunc.version = cfunc.version=NDRX_LCF_XCMD_VERSION;
     NDRX_STRCPY_SAFE(xfunc.helpstr, "Test command");
-    xfunc.dltflags=(NDRX_LCF_FLAG_DOSTARTUPEXP | NDRX_LCF_FLAG_ARGA | NDRX_LCF_FLAG_ARGB);
+    xfunc.dfltflags=(NDRX_LCF_FLAG_DOSTARTUPEXP | NDRX_LCF_FLAG_ARGA | NDRX_LCF_FLAG_ARGB);
     xfunc.dfltslot=3;
     if (EXSUCCEED!=ndrx_lcf_xadmin_add(&xfunc))
     {

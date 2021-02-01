@@ -139,6 +139,7 @@ set(MAN3_NAMES
         tpencrypt
         tpdecrypt
         tpexit
+        ndrx_lcf_xadmin_add
 )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

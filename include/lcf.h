@@ -154,7 +154,7 @@ typedef struct
     char cmdstr[NDRX_LCF_ADMINCMD_MAX+1]; /**< Command code $ xadmin lcf <code>     */
     int command;    /**< lcf comand code                                          */
     char helpstr[NDRX_LCF_ADMINDSCR_MAX+1]; /**< Help text for command              */
-    long dltflags;     /**< ARGA, ARGB, DOSTARTUP, DOSTARTUPDEL                      */
+    long dfltflags;     /**< ARGA, ARGB, DOSTARTUP, DOSTARTUPDEL                      */
     int dfltslot;   /**< Default slot numbere wher command shall be installed     */
 } ndrx_lcf_reg_xadmin_t;
 

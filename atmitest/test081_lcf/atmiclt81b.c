@@ -71,7 +71,7 @@ void do_thread_work ( void *ptr )
         i++;
         NDRX_LOG(log_debug, "HELLO LEV 5 - step %d", i);
         NDRX_LOG(log_info, "HELLO LEV 4 - step %d", i);
-        sleep(1);
+        usleep(1000);
     } while (1);
 }
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
         i++;
         NDRX_LOG(log_debug, "HELLO LEV 5 - step %d", i);
         NDRX_LOG(log_info, "HELLO LEV 4 - step %d", i);
-        sleep(1);
+        usleep(1000);
     } while (1);
     
     exit(0);

@@ -104,7 +104,7 @@ expublic int ndrx_xadmin_lcf_init(void)
     xcmd.command = NDRX_LCF_CMD_LOGROTATE;
     NDRX_STRCPY_SAFE(xcmd.cmdstr, NDRX_LCF_CMDSTR_LOGROTATE);
     xcmd.dfltslot = NDRX_LCF_SLOT_LOGROTATE;
-    xcmd.dltflags =NDRX_LCF_FLAG_ALL|NDRX_LCF_FLAG_DOSTARTUPEXP;
+    xcmd.dfltflags =NDRX_LCF_FLAG_ALL|NDRX_LCF_FLAG_DOSTARTUPEXP;
     NDRX_STRCPY_SAFE(xcmd.helpstr, "Perform logrotate");
 
     if (EXSUCCEED!=ndrx_lcf_xadmin_add_int(&xcmd))
@@ -123,7 +123,7 @@ expublic int ndrx_xadmin_lcf_init(void)
     xcmd.dfltslot = NDRX_LCF_SLOT_LOGCHG;
     
     /* first argument is mandatory */
-    xcmd.dltflags = NDRX_LCF_FLAG_ARGA;
+    xcmd.dfltflags = NDRX_LCF_FLAG_ARGA;
     NDRX_STRCPY_SAFE(xcmd.helpstr, "Perform logrotate");
 
     if (EXSUCCEED!=ndrx_lcf_xadmin_add_int(&xcmd))
@@ -147,27 +147,27 @@ exprivate void lcf_print_cmds(ndrx_lcf_reg_xadminh_t *xcmd)
     fprintf(stdout, "\t\t%s\t%s (dslot: %d)\n", xcmd->cmdstr, 
             xcmd->xcmd.helpstr, xcmd->xcmd.dfltslot);
 
-    if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ARGA)
+    if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ARGA)
     {
         fprintf(stdout, "\t\t\t-A parameters is mandatory\n");
     }
     
-    if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ARGB)
+    if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ARGB)
     {
         fprintf(stdout, "\t\t\t-B parameters is mandatory\n");
     }
     
-    if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ALL)
+    if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ALL)
     {
         fprintf(stdout, "\t\t\tApplies to all binaries (-A by default)\n");
     }
     
-    if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_DOSTARTUP)
+    if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_DOSTARTUP)
     {
         fprintf(stdout, "\t\t\tCommand also executes at startup of binaries\n");
     }
     
-    if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_DOSTARTUPEXP)
+    if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_DOSTARTUPEXP)
     {
         fprintf(stdout, "\t\t\tCommand also executes at startup of binaries with expiry\n");
     }
@@ -463,7 +463,7 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         }
         else
         {
-            cmd.flags|= (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ALL);
+            cmd.flags|= (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ALL);
         }
         
         /* Except this rule does not affect disable command */
@@ -476,13 +476,13 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         
         /* Check the mandatory arguments */
         
-        if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ARGA && EXEOS==arg_a[0])
+        if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ARGA && EXEOS==arg_a[0])
         {
             _Nset_error_fmt(NEINVAL, "-a argument is required for command");
             EXFAIL_OUT(ret);
         }
         
-        if (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_ARGB && EXEOS==arg_b[0])
+        if (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_ARGB && EXEOS==arg_b[0])
         {
             _Nset_error_fmt(NEINVAL, "-b argument is required for command");
             EXFAIL_OUT(ret);
@@ -500,14 +500,14 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         
         /* copy defaults */
         
-        cmd.flags|= (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_DOSTARTUP);
+        cmd.flags|= (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_DOSTARTUP);
         
         if (exec_start)
         {
             cmd.flags|=NDRX_LCF_FLAG_DOSTARTUP;
         }
         
-        cmd.flags|= (xcmd->xcmd.dltflags & NDRX_LCF_FLAG_DOSTARTUPEXP);
+        cmd.flags|= (xcmd->xcmd.dfltflags & NDRX_LCF_FLAG_DOSTARTUPEXP);
         
         if (exec_start_exp)
         {

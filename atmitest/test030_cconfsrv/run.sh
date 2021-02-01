@@ -83,7 +83,7 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
+rm *.log
 
 set_dom1;
 xadmin down -y

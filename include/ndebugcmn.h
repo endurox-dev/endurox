@@ -46,7 +46,6 @@ extern "C" {
 #include <unistd.h>
 #include <thlock.h>
 #include <exhash.h>
-#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_LOG_MODULE_LEN     4   /**< Module name field length       */
