@@ -609,7 +609,7 @@ expublic int ndrx_debug_is_proc_stderr(void)
     
     MUTEX_LOCK_V(M_sink_lock);
     
-    if (G_ndrx_debug.dbg_f_ptr->flags & NDRX_LOG_FOSHSTDERR)
+    if (((ndrx_debug_file_sink_t*)G_ndrx_debug.dbg_f_ptr)->flags & NDRX_LOG_FOSHSTDERR)
     {
         ret=EXTRUE;
     }

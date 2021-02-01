@@ -78,6 +78,41 @@ struct  ndrx_fpastack
     NDRX_SPIN_LOCKDECL(spinlock);    /**< spinlock for protecting given size         */
 };
 
+/**
+ * Logging file sink.
+ * Hashing by file names. If process opens a log it shall search this file sink
+ * and if file exists, the use it, or create new.
+ * 
+ * After normally forced logging close shall done. Which would include
+ * un-init of the LCF.
+ * 
+ * If some thread at some point gets the sink, it shall be valid
+ * as it must have reference to it perior work. And it will not be removed
+ * if refcount > 0.
+ */
+typedef struct 
+{
+    char fname[PATH_MAX+1];  /**< The actual file name   */
+    char fname_org[PATH_MAX+1];  /**< Org filename, before switching to stderr  */
+    
+    int writters;   /**< Number of concurrent writters      */
+    int chwait;     /**< Some thread waits for on wait_cond */
+    FILE *fp; /**< actual file open for writting            */
+    
+    NDRX_SPIN_LOCKDECL (writters_lock);   /**< writters/chwait update spinlock */
+    MUTEX_LOCKDECLN(busy_lock);          /**< Object is busy, for entry        */
+    MUTEX_LOCKDECLN(change_lock);        /**< If doing chagnes to the object   */
+    pthread_cond_t   change_wait;  /**< wait on this if have writters          */
+    
+    int refcount;  /**< Number of logger have references, protected by change_lock */
+    long flags;     /**< is this process level? Use mutex?  */
+    
+    int org_is_mkdir;   /**< initial setting of mkdir, used for logrotate      */
+    int org_buffer_size;/**< initail setting of io buffer size                 */
+    EX_hash_handle hh; /**< makes this structure hashable                      */
+    
+} ndrx_debug_file_sink_t;
+
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
@@ -103,6 +138,15 @@ extern NDRX_API int ndrx_debug_reopen_all(void);
 extern NDRX_API int tplogconfig_int(int logger, int lev, char *debug_string, char *module, 
         char *new_file, long flags);
 extern NDRX_API int ndrx_debug_is_proc_stderr(void);
+
+extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
+        ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink);
+extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, 
+        ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz);
+
+extern NDRX_API void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink);
+extern NDRX_API void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink);
+
 
 #ifdef	__cplusplus
 }

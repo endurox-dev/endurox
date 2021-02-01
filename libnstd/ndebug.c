@@ -74,12 +74,12 @@
     if (dbg_p->lines_written >= dbg_p->buf_lines)\
     {\
         dbg_p->lines_written = 0;\
-        fflush(dbg_p->dbg_f_ptr->fp);\
+        fflush( ((ndrx_debug_file_sink_t*)dbg_p->dbg_f_ptr)->fp);\
     }
 
 #define BUFFERED_PRINT_LINE(dbg_p, line)\
-    fputs(line, dbg_p->dbg_f_ptr->fp);\
-    fputs("\n", dbg_p->dbg_f_ptr->fp);\
+    fputs(line, ((ndrx_debug_file_sink_t*)dbg_p->dbg_f_ptr)->fp);\
+    fputs("\n", ((ndrx_debug_file_sink_t*)dbg_p->dbg_f_ptr)->fp);\
     BUFFER_CONTROL(dbg_p)
 
 
@@ -1137,15 +1137,15 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
                 if (0!=strcmp(print_line, print_line2))
                 {
                     /* print line 1 */
-                    fputs("<", dbg_ptr->dbg_f_ptr->fp);
-                    fputs(print_line, dbg_ptr->dbg_f_ptr->fp);
-                    fputs("\n", dbg_ptr->dbg_f_ptr->fp);
+                    fputs("<", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+                    fputs(print_line, ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+                    fputs("\n", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
                     BUFFER_CONTROL(dbg_ptr);
                     
                     /* print line 2 */
-                    fputs(">", dbg_ptr->dbg_f_ptr->fp);
-                    fputs(print_line2, dbg_ptr->dbg_f_ptr->fp);
-                    fputs("\n", dbg_ptr->dbg_f_ptr->fp);
+                    fputs(">", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+                    fputs(print_line2, ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+                    fputs("\n", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
                     BUFFER_CONTROL(dbg_ptr);
                 }
 
@@ -1194,15 +1194,15 @@ expublic void __ndrx_debug_dump_diff__(ndrx_debug_t *dbg_ptr, int lev, const cha
     if (0!=strcmp(print_line, print_line2))
     {
         /* print line 1 */
-        fputs("<", dbg_ptr->dbg_f_ptr->fp);
-        fputs(print_line, dbg_ptr->dbg_f_ptr->fp);
-        fputs("\n", dbg_ptr->dbg_f_ptr->fp);
+        fputs("<", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+        fputs(print_line, ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+        fputs("\n", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
         BUFFER_CONTROL(dbg_ptr);
 
         /* print line 2 */
-        fputs(">", dbg_ptr->dbg_f_ptr->fp);
-        fputs(print_line2, dbg_ptr->dbg_f_ptr->fp);
-        fputs("\n", dbg_ptr->dbg_f_ptr->fp);
+        fputs(">", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+        fputs(print_line2, ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
+        fputs("\n", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
         BUFFER_CONTROL(dbg_ptr);
     }
     print_line[0] = 0;
@@ -1377,13 +1377,13 @@ expublic void __ndrx_debug__(ndrx_debug_t *dbg_ptr, int lev, const char *file,
     {
         
         /* last locking */
-        ndrx_debug_lock(dbg_ptr->dbg_f_ptr);
+        ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr);
         
-        fputs(line_start, dbg_ptr->dbg_f_ptr->fp);
+        fputs(line_start, ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
         va_start(ap, fmt);    
-        (void) vfprintf(dbg_ptr->dbg_f_ptr->fp, fmt, ap);
+        (void) vfprintf(((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp, fmt, ap);
         va_end(ap);
-        fputs("\n", dbg_ptr->dbg_f_ptr->fp);
+        fputs("\n", ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp);
         
         /* Handle some buffering... */
         BUFFER_CONTROL(dbg_ptr);
@@ -1584,6 +1584,28 @@ expublic char *ndrx_strdup_dbg(char *ptr, long line, const char *file, const cha
     errno = errnosv;
     
     return ret;
+}
+
+/**
+ * Get file ptr and lock the handle for write
+ * @param dbg_ptr current logger
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic FILE *ndrx_debug_fp_lock(ndrx_debug_t *dbg_ptr)
+{
+    ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr);
+    
+    return ((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr)->fp;
+}
+
+/**
+ * Release the logger lock
+ * @param dbg_ptr current logger
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic void ndrx_debug_fp_unlock(ndrx_debug_t *dbg_ptr)
+{
+    ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg_ptr->dbg_f_ptr);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

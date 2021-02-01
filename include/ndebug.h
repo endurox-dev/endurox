@@ -436,10 +436,6 @@ extern NDRX_API void ndrx_dbg_pid_update(void);
 extern NDRX_API void ndrx_init_debug(void);
 extern NDRX_API void ndrx_dbg_setthread(long threadnr);
 extern NDRX_API int ndrx_dbg_intlock_isset(void);
-extern NDRX_API FILE *ndrx_dbg_fopen_mkdir(char *filename, char *mode, 
-        ndrx_debug_t *dbg_ptr, ndrx_debug_file_sink_t *fsink);
-extern NDRX_API int ndrx_init_parse_line(char *in_tok1, char *in_tok2, int *p_finish_off, 
-        ndrx_debug_t *dbg_ptr, char *tmpfname, size_t tmpfnamesz);
 
 /* TPLOG: */
 
@@ -472,6 +468,12 @@ extern NDRX_API void tplogclosethread(void);
 extern NDRX_API void tplogsetreqfile_direct(char *filename);
 extern NDRX_API void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls);
 
+/** get access to file pointer */
+extern NDRX_API FILE *ndrx_debug_fp_lock(ndrx_debug_t *dbg_ptr);
+
+/** Release the file pointer (locked for logger) back */
+extern NDRX_API void ndrx_debug_fp_unlock(ndrx_debug_t *dbg_ptr);
+
 /* memory debugging */
 extern NDRX_API void *ndrx_malloc_dbg(size_t size, long line, const char *file, const char *func);
 extern NDRX_API void ndrx_free_dbg(void *ptr, long line, const char *file, const char *func);
@@ -489,7 +491,7 @@ extern NDRX_API int ndrx_dbg_intlock_isset(void);
 extern NDRX_API void ndrx_dbg_intlock_set(void);
 extern NDRX_API void ndrx_dbg_intlock_unset(void);
 
-extern NDRX_API int ndrx_lcf_run();
+extern NDRX_API int ndrx_lcf_run(void);
 
 #ifdef	__cplusplus
 }
