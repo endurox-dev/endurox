@@ -40,7 +40,7 @@ extern "C" {
 
 /*---------------------------Includes-----------------------------------*/
 #include <ndrx_config.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <nstopwatch.h>
 

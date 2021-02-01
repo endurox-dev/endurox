@@ -1,117 +1,153 @@
-TPLOGCONFIG(3)
-==============
+NDRX_LCF_FUNC_ADD(3)
+====================
 :doctype: manpage
 
 
 NAME
 ----
-tplogconfig - Configure logger facilities
+ndrx_lcf_func_add - Register LCF command callback function
 
 
 SYNOPSIS
 --------
-#include <ndebug.h>
+#include <lcf.h>
 
 #include <nerror.h>
 
-int tplogconfig(int 'logger', int 'lev', char *'debug_string', char *'module', char *'new_file');
-
+int ndrx_lcf_func_add(ndrx_lcf_reg_func_t *'cfunc');
 
 Link with '-lnstd -lpthread -lrt -lm'
 
 DESCRIPTION
 -----------
-Function does configure logging facilities - *NDRX* (XATMI internal logs), 
-*UBF* (UBF internal logs( and *TP* (User logs). 
-If not already logger started, then this function will initiate Enduro/X 
-framework to  load the logging settings from [@debug] ini section or from 
-*ndrxdebug.conf(5)*. Then with help of this function user is able to 
-override loaded settings.
+Function is used to add callback handler for LCF command. Command data and callback
+is configured in 'cfunc' argument structure. The commands for any process may be
+registered via Enduro/X plugin interface, see *ex_devguide(guides)*.
 
-Also it is possible to set per thread logging, if facility code used here is 
-*LOG_FACILITY_TP_THREAD*. Or it is possible to configure request based logging 
-from this function, but *tplogsetreqfile_direct(3)* and *tplogsetreqfile(3)* is
-recommended to use instead.
+*Limited use of Enduro/X functions within callback*
 
-The logging facility is set in 'logger' parameter, you may unify settings 
-for multiple facilities with bitwise OR. Th facilities defined are following:
+LCF callback are activated at debug log points at any portion of Enduro/X code
+and also in user code if *tplog(3)* or TP_LOG() macros are used. Thus it is impossible
+to guaranty that current XATMI context will be able to do things like *tpcall(3)*,
+or some UBF buffer manipulations. As callbacks by them selves may be activated 
+from such region. Or from some points where Enduro/X holds mutex locks. That might
+lead to deadlocks or incorrect/corrupted working further working of the process.
+To do some XATMI/UBF related works, it is recommended that new thread is started
+from callback function. Or other option is to set some global variable which later
+is processed by normal user code.
 
--------------------------------------------------------------------------------
+Following list of functions is safe to use from callbacks:
 
-/** settings for ATMI logging        */
-#define LOG_FACILITY_NDRX           0x00000001
-/** settings for UBF logging         */
-#define LOG_FACILITY_UBF            0x00000002
-/** settings for TP logging          */
-#define LOG_FACILITY_TP             0x00000004
-/** settings for TP, thread based logging */
-#define LOG_FACILITY_TP_THREAD      0x00000008
-/** tp, Request logging, thread based*/
-#define LOG_FACILITY_TP_REQUEST     0x00000010
-/** ndrx thread logging              */
-#define LOG_FACILITY_NDRX_THREAD    0x00000020
-/** ubf thread logging               */
-#define LOG_FACILITY_UBF_THREAD     0x00000040
-/** ndrx request logging             */
-#define LOG_FACILITY_NDRX_REQUEST   0x00000080
-/** ubf request logging              */
-#define LOG_FACILITY_UBF_REQUEST    0x00000100
+- Logging: *tplog(3)*, *tplogdump(3)*, *tplogdumpdiff(3)*, *TP_LOG()*, *TP_DUMP()*, *TP_DUMP_DIFF()*
+
+
+*ndrx_lcf_reg_func_t structure is declared as:*
 
 -------------------------------------------------------------------------------
 
-'logger' is mandatory parameter to the function. To configure logging level 
-for given facilities, you may use 'lev' to indicate one of the
-following levels:
+typedef struct
+{
+    int version;
+    int command;
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX+1];
+    int (*pf_callback)(ndrx_lcf_command_t *cmd, long *p_flags);
+} ndrx_lcf_reg_func_t;
 
 -------------------------------------------------------------------------------
-#define log_always      1 
-#define log_error       2
-#define log_warn        3
-#define log_info        4
-#define log_debug       5
-#define log_dump        6 /* this is un-offical level, normally use 1..5 */
+
+Where *ndrx_lcf_reg_xadmin_t* fields shall be filled in following way:
+
+'version' - Actual version is present in macros *NDRX_LCF_CCMD_VERSION* (currently it is *1*).
+
+'command' - This is actual command code. Must be value in range of 
+*NDRX_LCF_CMD_MIN_CUST*..*NDRX_LCF_CMD_MAX_CUST*.
+
+'cmdstr' - Is command string used in xadmin lcf COMMAND. It must be valid C style
+identifier. Max command string length is *32+1*.
+
+'pf_callback' - Callback function. It receives copy of shared memory command
+object present in 'cmd' variable. The callback function can return feedback code
+and feedback message. The values shall be loaded in 'cmd' variable fields (bellow)
+and corresponding flags *NDRX_LCF_FLAG_FBACK_CODE* and/or *NDRX_LCF_FLAG_FBACK_MSG*
+shall be set. In case of success callback shall return *0* which is accounted
+in shared memory statistics for given command.
+
+
+*ndrx_lcf_command_t structure is declared as:*
+
 -------------------------------------------------------------------------------
 
-'lev' is optional parameter, and if not used, then set it to  '-1'. Function 
-accepts optional parameter 'debug_string', which  is Enduro/X standard debug 
-string. If field not set then it might be NULL or empty (EOS). If set, then it
-contains the configuration settings described in *ndrxdebug.conf(5)* or 
-see *ex_devguide(guides)*. One special note here is that, with debug string 
-you may set log levels for *NDRX*, *UBF* and *TP* facilities, thus *ndrx* and 
-*ubf* and "tp" log levels will affect the given logger settings (process/thread/request).
-For example *tp* will change the level of the given logger facility, per process 
-(*LOG_FACILITY_TP*), per thread  (*LOG_FACILITY_TP_THREAD*) or 
-per request (*LOG_FACILITY_TP_REQUEST*).
+typedef struct
+{
+    int    version;
+    unsigned  cmdversion;                         
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX+1];
+    ndrx_stopwatch_t publtim;
+    int    command;
+    char   arg_a[PATH_MAX+1];
+    char   arg_b[NAME_MAX+1];
+    long   flags;
+    char   procid[NAME_MAX];
+    int    applied;
+    int    failed;
+    int    seen;
+    long   fbackcode;
+    char   fbackmsg[NDRX_LCF_FEEDBACK_BUF];
+    
+} ndrx_lcf_command_t;
 
-If the 'lev' parameter is present and it will override the given loggers 
-settings from 'debug_string'. The same applies if 'debug_string'
-contains the logging file, the 'new_file' is present (not NULL and not EOS) 
-will override the output file setting if *file* param is
-present in 'debug_string'.
+-------------------------------------------------------------------------------
 
-'module' module indicates the module code string which is plotted in each 
-logged line. This is valid only for *TP* loggers for
-*NDRX* and *UBF* it is ignored.
+Where *ndrx_lcf_command_t* fields is filled in following way:
 
-As the all logging functions checks the early log level set in process level
-(due to fact that at that point TLS might not be initialized), thus by changing
-thread or request log levels, may only reduce the log level.
-So system might be configured so that, in config process level logs are higher,
-and then threads or requests might request to make the level lower.
+'version' - Version number which structure was posted.
 
-THREAD SAFETY
--------------
-tplogconfig() function is thread safe. Changing the log file name while other
-threads are logging is supported too.
+'cmdversion' - Posting number (to detect that command is runnable).
 
-Due to support of multi-threaded operations is implemented, there is limitation
-that process level loggers (*LOG_FACILITY_NDRX*, *LOG_FACILITY_UBF* and *LOG_FACILITY_TP*)
-cannot have each different output file name. If for one logger file name is changed
-it is automatically replaced for other logger facilities (topics) too.
+'cmdstr' - Command string.
+
+'publtim' - Command age in Enduro/X stopwatch time.
+
+'command' - Command code published.
+
+'arg_a' - Argument -A value passed in xadmin lcf COMMAND -A <VALUE>
+
+'arg_b' - Argument -B value passed in xadmin lcf COMMAND -B <VALUE>
+
+'flags' - Any *NDRX_LCF_FLAG* flags. Except *NDRX_LCF_FLAG_FBACK_CODE* or *NDRX_LCF_FLAG_FBACK_MSG*.
+
+'procid' - Pid if *flags* contains *NDRX_LCF_FLAG_PID* (posting by pid) 
+    or Process name if *flags* contains *NDRX_LCF_FLAG_BIN* (posting by binary name). 
+    In regexp mode *NDRX_LCF_FLAG_DOREX* contains regexp expression.
+
+'applied' - Number of processes applied command, this is up till execution in
+    current binary. *NOTE* for performance reasons, this value is no synchronized between
+    other processes.
+
+'failed' - Number of processes failed to execute command, this is up till execution in
+    current binary. *NOTE* for performance reasons, this value is no synchronized between
+    other processes.
+
+'seen' - Number of processes seen this command but not matched for execution, this is up till execution in
+    current binary. *NOTE* for performance reasons, this value is no synchronized between
+    other processes.
+
+'fbackcode' - this field may be used by callback function to return the value to
+    and store it in shared memory. Value is copied to shm in case if *p_flags* is
+    set to *NDRX_LCF_FLAG_FBACK_CODE*. NOTE! value copy is not synchronized between
+    processes and latest process (if several are doing feedback) will survive in
+    results.
+
+'fbackmsg' - this field may be used by callback function to return the value to
+    and store it in shared memory. Value is copied to shm in case if *p_flags* is
+    set to *NDRX_LCF_FLAG_FBACK_MSG*. Buffer size is *64*. The data returned must
+    be zero terminated string. NOTE! value copy is not synchronized between
+    processes and latest process (if several are doing feedback) will survive in
+    results.
 
 RETURN VALUE
 ------------
-On success, *tplogconfig()* returns 0. On error, -1 is returned, with 
+On success, *ndrx_lcf_func_add()* returns 0. On error, -1 is returned, with 
 *Nerror* set to indicate the error.
 
 ERRORS
@@ -119,14 +155,21 @@ ERRORS
 Note that *Nstrerror()* returns generic error message plus custom message 
 with debug info from last function call.
 
-*NEFORMAT* Invalid format for 'debug_string'.
+*NEINVAL* 'cfunc' is NULL. 'cfunc->cmdstr' is NULL. 'cfunc->pf_callback' is NULL.
 
-*NESYSTEM* System error occurred. See the logs for more info.
+*NEVERSION* Invalid version specified in structure.
 
+*NEEXISTS* Callback for command code in 'cfunc->command' is already registered.
+
+*NEMALLOC* Malloc failed.
+
+THREAD SAFETY
+-------------
+*ndrx_lcf_func_add()* function is thread safe.
 
 EXAMPLE
 -------
-See *atmitest/test031_logging/atmiclt31.c* for sample code.
+See *atmitest/test081_lcf/custom_lcf.c* for sample code.
 
 BUGS
 ----
@@ -134,8 +177,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* 
-*tplogsetreqfile(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)* *tplogqinfo(3)*
+*ndrx_lcf_xadmin_add(3)* *ndrx_lcf_publish(3)* *ex_devguide(guides)* *ex_env(5)*
+*xadmin(8)*
 
 COPYING
 -------
