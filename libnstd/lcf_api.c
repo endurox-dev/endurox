@@ -83,7 +83,7 @@ expublic int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd)
     if (EXEOS==xcmd->cmdstr[0])
     {
         _Nset_error_fmt(NEINVAL, "xcmd->cmdstr cannot be empty");
-        NDRX_LOG_EARLY(log_error, "ERROR: xcmd->cmdstr cannot be NULL");
+        NDRX_LOG_EARLY(log_error, "xcmd->cmdstr cannot be NULL");
         EXFAIL_OUT(ret);
     }
     
@@ -161,10 +161,10 @@ expublic int ndrx_lcf_func_add(ndrx_lcf_reg_func_t *cfunc)
         EXFAIL_OUT(ret);
     }
     
-    if (NULL==cfunc->cmdstr)
+    if (EXEOS==cfunc->cmdstr[0])
     {
-        _Nset_error_fmt(NEINVAL, "cmdstr cannot be NULL");
-        NDRX_LOG_EARLY(log_error, "cmdstr cannot be NULL");
+        _Nset_error_fmt(NEINVAL, "cfunc->cmdstr cannot be empty");
+        NDRX_LOG_EARLY(log_error, "cfunc->cmdstr cannot be NULL");
         EXFAIL_OUT(ret);
     }
     
@@ -195,6 +195,13 @@ expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
     /* pull in the debug init, as LCF must be open */
     NDRX_DBG_INIT_ENTRY;
     
+    if (NULL==cmd)
+    {
+        _Nset_error_msg(NEINVAL, "cmd cannot be NULL");
+        NDRX_LOG(log_error, "cmd cannot be NULL");
+        EXFAIL_OUT(ret);
+    }
+    
     if (cmd->version < NDRX_LCF_LCMD_VERSION)
     {
         _Nset_error_fmt(NEVERSION, "Invalid argument version minimum: %d got: %d",
@@ -204,10 +211,34 @@ expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
         EXFAIL_OUT(ret);
     }
     
+    /* flags shall not contain feedback fields */
+    
+    if ((cmd->flags & NDRX_LCF_FLAG_FBACK_CODE) ||
+            (cmd->flags & NDRX_LCF_FLAG_FBACK_MSG))
+    {
+        _Nset_error_fmt(NEINVAL, "Found feedback flags - not allowed in publishing");
+        NDRX_LOG(log_error, "Found feedback flags - not allowed in publishing");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (0!=cmd->fbackcode)
+    {
+        _Nset_error_fmt(NEINVAL, "cmd->fbackcode is not 0 (%ld)", cmd->fbackcode);
+        NDRX_LOG(log_error, "cmd->fbackcode is not 0 (%ld)", cmd->fbackcode);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS!=cmd->fbackmsg[0])
+    {
+        _Nset_error_fmt(NEINVAL, "cmd->fbackmsg is not empty");
+        NDRX_LOG(log_error, "cmd->fbackmsg is not empty");
+        EXFAIL_OUT(ret);
+    }
+    
     if (EXEOS==cmd->cmdstr[0])
     {
         _Nset_error_msg(NEINVAL, "cmd->cmdstr is empty");
-        NDRX_LOG_EARLY(log_error, "cmd->cmdstr is empty");
+        NDRX_LOG(log_error, "cmd->cmdstr is empty");
         EXFAIL_OUT(ret);
     }
     
@@ -217,35 +248,49 @@ expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
     if (strlen(cmd->cmdstr) > NDRX_LCF_ADMINCMD_MAX)
     {
         _Nset_error_msg(NEINVAL, "cmd->cmdstr invalid length");
-        NDRX_LOG_EARLY(log_error, "cmd->cmdstr invalid length");
+        NDRX_LOG(log_error, "cmd->cmdstr invalid length");
         EXFAIL_OUT(ret);
     }
     
     if (strlen(cmd->arg_a) > PATH_MAX)
     {
         _Nset_error_msg(NEINVAL, "cmd->arg_a invalid length");
-        NDRX_LOG_EARLY(log_error, "cmd->arg_a invalid length");
+        NDRX_LOG(log_error, "cmd->arg_a invalid length");
         EXFAIL_OUT(ret);
     }
     
     if (strlen(cmd->arg_b) > NAME_MAX)
     {
         _Nset_error_msg(NEINVAL, "cmd->arg_b invalid length");
-        NDRX_LOG_EARLY(log_error, "cmd->arg_b invalid length");
+        NDRX_LOG(log_error, "cmd->arg_b invalid length");
         EXFAIL_OUT(ret);
     }
     
     if (strlen(cmd->procid) > NAME_MAX)
     {
         _Nset_error_msg(NEINVAL, "cmd->procid invalid length");
-        NDRX_LOG_EARLY(log_error, "cmd->procid invalid length");
+        NDRX_LOG(log_error, "cmd->procid invalid length");
         EXFAIL_OUT(ret);
     }
     
-    if (strlen(cmd->fbackmsg) > NDRX_LCF_FEEDBACK_BUF-1)
+    if (EXEOS==cmd->procid[0] && !(cmd->flags & NDRX_LCF_FLAG_ALL))
     {
-        _Nset_error_msg(NEINVAL, "cmd->fbackmsg invalid length");
-        NDRX_LOG_EARLY(log_error, "cmd->fbackmsg invalid length");
+        _Nset_error_msg(NEINVAL, "Target is not selected (not NDRX_LCF_FLAG_ALL and procid empty)");
+        NDRX_LOG(log_error, "Target is not selected (not NDRX_LCF_FLAG_ALL and procid empty)");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS==cmd->procid[0] && (cmd->flags & NDRX_LCF_FLAG_DOREX))
+    {
+        _Nset_error_msg(NEINVAL, "procid is empty, cannot have NDRX_LCF_FLAG_DOREX");
+        NDRX_LOG(log_error, "procid is empty, cannot have NDRX_LCF_FLAG_DOREX");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (cmd->applied || cmd->failed ||cmd->seen)
+    {
+        _Nset_error_msg(NEINVAL, "applied/failed/seen must contain 0");
+        NDRX_LOG(log_error, "applied/failed/seen must contain 0");
         EXFAIL_OUT(ret);
     }
     

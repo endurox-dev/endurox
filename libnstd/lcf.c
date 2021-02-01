@@ -746,21 +746,21 @@ expublic int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd)
         _Nset_error_fmt(NESUPPORT, "LCF framework disabled - cannot publish command %d [%s]", 
                 cmd->command, cmd->cmdstr);
         
-        NDRX_LOG_EARLY(log_error, "LCF framework disabled - cannot publish command %d [%s]", 
+        NDRX_LOG(log_error, "LCF framework disabled - cannot publish command %d [%s]", 
                 cmd->command, cmd->cmdstr);
         EXFAIL_OUT(ret);
     }
     
     if (slot >=ndrx_G_libnstd_cfg.lcfmax)
     {
-        _Nset_error_fmt(NESYSTEM, "Invalid command slot number, max slot: %d got: %d", 
+        _Nset_error_fmt(NELIMIT, "Invalid command slot number, max slot: %d got: %d", 
                 ndrx_G_libnstd_cfg.lcfmax-1, slot);
         EXFAIL_OUT(ret);
     }
     
     if (slot < 0 )
     {
-        _Nset_error_fmt(NESYSTEM, "Invalid command slot number, min slot: %d got: %d", 
+        _Nset_error_fmt(NEINVAL, "Invalid command slot number, min slot: %d got: %d", 
                 0, slot);
         EXFAIL_OUT(ret);
     }
@@ -775,7 +775,7 @@ expublic int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd)
     memcpy(&ndrx_G_shmcfg->commands[slot], cmd, sizeof(*cmd));
     ndrx_G_shmcfg->shmcfgver_lcf++;
     
-    /* set the age of command */
+    /* set the age of command, we have write lock, so no worry */
     ndrx_stopwatch_reset(&ndrx_G_shmcfg->commands[slot].publtim);
     
     if (EXSUCCEED!=ndrx_sem_rwunlock(&M_lcf_sem, 0, NDRX_SEM_TYP_WRITE))

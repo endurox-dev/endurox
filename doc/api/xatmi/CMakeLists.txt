@@ -140,6 +140,8 @@ set(MAN3_NAMES
         tpdecrypt
         tpexit
         ndrx_lcf_xadmin_add
+        ndrx_lcf_func_add
+        ndrx_lcf_publish
 )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

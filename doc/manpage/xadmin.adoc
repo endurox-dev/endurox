@@ -370,8 +370,50 @@ COMMANDS
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
 
-*lcf* [COMMAND] []::
-    
+*lcf* [COMMAND] [-p <PID>] [-b <BINARY>] [-r] [-a] [-n] [-e] [-s <SLOT>] [-A <ARG_A>] [-B <ARG_B>]::
+    This is administrative interface to Latent Command Framework. When command
+    is run with out arguments, it prints *page 1* information. Build in commands 
+    given in *COMMAND* is *-1* (*page 1* infos), *-2* (*page 2* infos), *-3* (*page 3* infos).
+    Note that statistics printed are not synchronized between processes. Arguments:
+    *-p* is used for passing PID to command. *-b* is used to pass binary name
+    to command. *-r* says that pid or binary name is regular expression to match
+    several processes. *-a* says that command shall be applied to all application
+    instance binaries.  *-p*, *-b*, *-a* are exclusive.
+    *-n* says that apply command also to new binaries (just started)
+    too. *-e* says that command shall be applied to new binaries too, but command
+    for new binaries expires after *NDRX_LCFCMDEXP* time (default *60* sec). *-n*
+    and *-e* are incremental and appends default flags of the command.
+    *-A* is argument to command. *-B* is argument to command. Enduro/X provided
+    LCF commands are listed bellow. Under this xadmin command new commands might
+    appear if plugins are registering them with *ndrx_lcf_xadmin_add(3)* API
+    calls.
+
+ENDURO/X LCF COMMANDS
+---------------------
+*lcf disable*::
+    Disable the command at given slot. Default SLOT (*-s*) is *0*. Note by default
+    when instance is started all commands are initialized as *disable* and are
+    not executed by any binary.
+
+*lcf logrotate*::
+    Perform logrotate. Default is *-a* all binaries. And by default *-e* flag is
+    set, so that if logrotate is issued, and at particular moment some process
+    is forking, so that new process would still be able to connect to new log files,
+    as ones during the fork might be concurrently rotated away. Logrotate reopens
+    any currently open logger file. Note that *mkdir* and *bufsz* settings are
+    kept as they were defined at the point when log file was open.
+
+*lcf logchg* -A <DEBUG_STRING>::
+    Change the logging settings for process logger. The 
+    format for DEBUG_STRING is as is defined
+    for *ndrxdebug.conf(5)* debug configuration. Log facility/topic levels (*ndrx*, *tp*, *ubf*)
+    affects loggers immediately. Also levels are back propagated to thread and
+    request loggers, if those are configured with different level settings. *file* name
+    can be changed too, but this only affects only process logger output. 
+    *bufsz* and *mkdir* only affects if file name is changed, or at next file name change / reopen by
+    process logger. Note that FILE handles are shared between threads thus if process
+    is switching to some existing file open by other thread, then 
+    *bufsz* and *mkdir* is still the same as with already open file.
 
 CONFIGURATION
 -------------

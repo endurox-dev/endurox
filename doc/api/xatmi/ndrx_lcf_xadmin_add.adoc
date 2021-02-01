@@ -29,10 +29,10 @@ of the function are encoded in 'xcmd' parameter. This structure also includes
 with xadmin is purely only needed for xadmin user execution. For processes which
 performs the LCF command, this registration is not required. Instead processes
 requires *ndrx_lcf_func_add(3)* callbacks to be registered with. Callback to xadmin
-can be registered via Enduor/X plugin interface, i.e. use ndrx_plugin_init() entry
-point. See *ex_devguide(guides)* for plugin development
+can be registered via Enduro/X plugin interface, i.e. use ndrx_plugin_init() entry
+point. See *ex_devguide(guides)* for plugin development.
 
-*Structure is declared as:*
+*ndrx_lcf_reg_xadmin_t structure is declared as:*
 
 -------------------------------------------------------------------------------
 
@@ -50,22 +50,22 @@ typedef struct
 
 Where *ndrx_lcf_reg_xadmin_t* fields shall be filled in following way:
 
-*version* - Actual version is present in macros *NDRX_LCF_XCMD_VERSION* (currently it is *1*).
+'version' - Actual version is present in macros *NDRX_LCF_XCMD_VERSION* (currently it is *1*).
 
-*cmdstr* - Is command string used in xadmin lcf COMMAND. It must be valid C style
-identifier. Max command string length is *32* (excluding 0x00 terminator).
+'cmdstr' - Is command string used in xadmin lcf COMMAND. It must be valid C style
+identifier. Max command string length is *32+1*.
 
-*command* - This is actual command code. Must be value in range of 
+'command' - This is actual command code. Must be value in range of 
 *NDRX_LCF_CMD_MIN_CUST*..*NDRX_LCF_CMD_MAX_CUST*.
 
-*helpstr* - This is help text appearing in $ xadmin help lcf. Max length of text
-is *128* (excluding 0x00 terminator).
+'helpstr' - This is help text appearing in $ xadmin help lcf. Max length of text
+is *128+1*.
 
-*dltflags* - These are default bitwise flags used by command. These flags also affects
+'dltflags' - These are default bitwise flags used by command. These flags also affects
 the checking of mandatory arguments (*-A* and/or *-B*) to be required when command
 is issued. See value bellow.
 
-*dfltslot* - Default slot number to which publish this command. May override by
+'dfltslot' - Default slot number to which publish this command. May override by
 xadmin *-s* argument. Note that slot number must be lower than *NDRX_LCFMAX* env
 variable.
 
@@ -100,14 +100,12 @@ ERRORS
 Note that *Nstrerror()* returns generic error message plus custom message 
 with debug info from last function call.
 
-*NEFORMAT* Invalid format for 'debug_string'.
-
-*NEINVAL* *cmdstr* is empty, invalid flags specified. *command* field is out of
-range of the range.
+*NEINVAL* 'xcmd->cmdstr' is empty, invalid flags specified. *command* field is out of
+range of the range. 'xcmd' is NULL. 'xcmd->cmdstr' is not valid identifier.
 
 *NEVERSION* Invalid version specified in structure.
 
-*NEEXISTS* Command with given *cmdstr* is already registered.
+*NEEXISTS* Command with given 'xcmd->cmdstr' is already registered.
 
 *NEMALLOC* Malloc failed.
 

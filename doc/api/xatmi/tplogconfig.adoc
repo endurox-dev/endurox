@@ -99,6 +99,8 @@ thread or request log levels, may only reduce the log level.
 So system might be configured so that, in config process level logs are higher,
 and then threads or requests might request to make the level lower.
 
+If process for fails to open log file, logger is switched to *stderr*.
+
 THREAD SAFETY
 -------------
 tplogconfig() function is thread safe. Changing the log file name while other
