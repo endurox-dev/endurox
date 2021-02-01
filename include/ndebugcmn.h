@@ -46,6 +46,7 @@ extern "C" {
 #include <unistd.h>
 #include <thlock.h>
 #include <exhash.h>
+#include <sys_unix.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_LOG_MODULE_LEN     4   /**< Module name field length       */
@@ -72,46 +73,11 @@ struct ndrx_memlogger
     ndrx_memlogger_t *next, *prev;
 };
 
-/**
- * Logging file sink.
- * Hashing by file names. If process opens a log it shall search this file sink
- * and if file exists, the use it, or create new.
- * 
- * After normally forced logging close shall done. Which would include
- * un-init of the LCF.
- * 
- * If some thread at some point gets the sink, it shall be valid
- * as it must have reference to it perior work. And it will not be removed
- * if refcount > 0.
- */
-typedef struct 
-{
-    char fname[PATH_MAX+1];  /**< The actual file name   */
-    char fname_org[PATH_MAX+1];  /**< Org filename, before switching to stderr  */
-    
-    int writters;   /**< Number of concurrent writters      */
-    int chwait;     /**< Some thread waits for on wait_cond */
-    FILE *fp; /**< actual file open for writting            */
-    
-    NDRX_SPIN_LOCKDECL (writters_lock);   /**< writters/chwait update spinlock */
-    MUTEX_LOCKDECLN(busy_lock);          /**< Object is busy, for entry        */
-    MUTEX_LOCKDECLN(change_lock);        /**< If doing chagnes to the object   */
-    pthread_cond_t   change_wait;  /**< wait on this if have writters          */
-    
-    int refcount;  /**< Number of logger have references, protected by change_lock */
-    long flags;     /**< is this process level? Use mutex?  */
-    
-    int org_is_mkdir;   /**< initial setting of mkdir, used for logrotate      */
-    int org_buffer_size;/**< initail setting of io buffer size                 */
-    EX_hash_handle hh; /**< makes this structure hashable                      */
-    
-} ndrx_debug_file_sink_t;
-
 /* Create main debug structure */
 typedef struct
 {
     int   level;
-    ndrx_debug_file_sink_t *dbg_f_ptr; /**< Ptr to file sink                 */
+    void *dbg_f_ptr;   /**< Ptr to file sink, opaque                         */
     char filename[PATH_MAX];
     char filename_th_template[PATH_MAX]; /**< template for thread logging... */
     pid_t pid;
@@ -149,8 +115,6 @@ extern NDRX_API volatile ndrx_lcf_shmcfg_ver_t *ndrx_G_shmcfg_ver;
 /** Last checked shared mem cfg version                   */
 extern NDRX_API volatile unsigned              ndrx_G_shmcfgver_chk;
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API void ndrx_debug_lock(ndrx_debug_file_sink_t* mysink);
-extern NDRX_API void ndrx_debug_unlock(ndrx_debug_file_sink_t* mysink);
 
 #ifdef	__cplusplus
 }

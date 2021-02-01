@@ -47,7 +47,7 @@
 #include <ubf_int.h>
 #include <ubfutil.h>
 #include <fdatatype.h>
-#include <ndebugcmn.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define IS_NOT_PRINTABLE(X) !(isprint(X) && !iscntrl(X))
@@ -250,9 +250,9 @@ expublic void ndrx_debug_dump_UBF(int lev, char *title, UBFH *p_ub)
     {
         NDRX_LOG(lev, "%s", title);
         
-        ndrx_debug_lock(dbg->dbg_f_ptr);
-        Bfprint(p_ub, dbg->dbg_f_ptr->fp);
-        ndrx_debug_unlock(dbg->dbg_f_ptr);
+        ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
+        Bfprint(p_ub, ((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr)->fp);
+        ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
     }
 }
 
@@ -270,9 +270,9 @@ expublic void ndrx_debug_dump_UBF_ubflogger(int lev, char *title, UBFH *p_ub)
     {
         UBF_LOG(lev, "%s", title);
         
-        ndrx_debug_lock(dbg->dbg_f_ptr);
-        Bfprint(p_ub, dbg->dbg_f_ptr->fp);
-        ndrx_debug_unlock(dbg->dbg_f_ptr);
+        ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
+        Bfprint(p_ub,((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr)->fp);
+        ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
     }
 }
 
