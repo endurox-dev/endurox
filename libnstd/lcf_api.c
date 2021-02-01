@@ -103,10 +103,10 @@ expublic int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *xcmd)
     
     allow_flags = ~allow_flags;
     
-    if (xcmd->dltflags & allow_flags)
+    if (xcmd->dfltflags & allow_flags)
     {
-        _Nset_error_fmt(NEINVAL, "Invalid flags given: 0x%lx", xcmd->dltflags & allow_flags);
-        NDRX_LOG_EARLY(log_error, "Invalid flags given: 0x%lx", xcmd->dltflags & allow_flags);
+        _Nset_error_fmt(NEINVAL, "Invalid flags given: 0x%lx", xcmd->dfltflags & allow_flags);
+        NDRX_LOG_EARLY(log_error, "Invalid flags given: 0x%lx", xcmd->dfltflags & allow_flags);
         EXFAIL_OUT(ret);
     }
     

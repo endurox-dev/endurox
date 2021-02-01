@@ -303,7 +303,8 @@ Mandatory Env. Variables
     System-V timeouts. The default value is *1000* and minimum is *1*.
 
 *NDRX_LCFREADERSMAX*='NUMBER_OF_SEM_READERS'::
-    This is number of LCF read/write lock readers. Thus this number of processes
+    This is number of Latent Command Framework (LCF) read/write lock readers. 
+    Thus this number of processes
     may process LCF commands while concurrent write (publish to LCF shared memory)
     will wait for readers to complete. The default is *1000*. The number should
     match the number of processes running in system. However it depends on the
@@ -329,7 +330,6 @@ Mandatory Env. Variables
     commands. Default is *n*. This can be useful in case if *xadmin(8)* needs to
     correct some invalid commands which might prevent to run xadmin by it self.
 
-((
 EXAMPLE
 -------
 Sample configuration:

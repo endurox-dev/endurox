@@ -38,11 +38,24 @@ for multiple facilities with bitwise OR. Th facilities defined are following:
 
 -------------------------------------------------------------------------------
 
-#define LOG_FACILITY_NDRX       0x00001 /* settings for ATMI logging, process    */
-#define LOG_FACILITY_UBF        0x00002 /* settings for UBF logging, process     */
-#define LOG_FACILITY_TP         0x00004 /* settings for TP logging, process      */
-#define LOG_FACILITY_TP_THREAD  0x00008 /* settings for TP, thread based logging */
-#define LOG_FACILITY_TP_REQUEST 0x00010 /* Request logging, thread based         */
+/** settings for ATMI logging        */
+#define LOG_FACILITY_NDRX           0x00000001
+/** settings for UBF logging         */
+#define LOG_FACILITY_UBF            0x00000002
+/** settings for TP logging          */
+#define LOG_FACILITY_TP             0x00000004
+/** settings for TP, thread based logging */
+#define LOG_FACILITY_TP_THREAD      0x00000008
+/** tp, Request logging, thread based*/
+#define LOG_FACILITY_TP_REQUEST     0x00000010
+/** ndrx thread logging              */
+#define LOG_FACILITY_NDRX_THREAD    0x00000020
+/** ubf thread logging               */
+#define LOG_FACILITY_UBF_THREAD     0x00000040
+/** ndrx request logging             */
+#define LOG_FACILITY_NDRX_REQUEST   0x00000080
+/** ubf request logging              */
+#define LOG_FACILITY_UBF_REQUEST    0x00000100
 
 -------------------------------------------------------------------------------
 
@@ -88,39 +101,13 @@ and then threads or requests might request to make the level lower.
 
 THREAD SAFETY
 -------------
-Thread safety must be considered carefully with this function:
+tplogconfig() function is thread safe. Changing the log file name while other
+threads are logging is supported too.
 
-. When configuring thread or request logger, the initial setup including open
-file pointers and file names are copied to configured logger.
-
-. If output log file name is not changed, the file pointer is re-used. It could
-copy of process logger file pointer.
-
-. If there are two threads, first configures thread or request logger with process
-file name, and second thread changes process file name, the first thread will
-get closed file pointer which might cause segmentation faults. Thus it is
-recommended that thread and request logger never use process logger file names.
-Or if used, then process level output log file names shall not be changed during
-the process life cycle. This applies to multi-threaded apps. Note that in 'SystemV', 
-'poll' and 'emq' mode Enduro/X builds uses auxiliary threads. Thus even thought
-that app is single threaded, it is multi-threaded.
-
-. To ensure that program does not crash during the change of process logger 
-file pointers (output file name changes), 
-the ndrxdebug.conf(5) introduced *swait* flag which indicates
-the time to wait for other threads to finish their logging. Thus tplogconfig()
-will init-lock the loggers, wait the *swait* time for other threads to finish
-their activity on logging (i.e. using process level file pointers) and then
-process level log pointers are changed. Afterwards logger is unlocked. *NOTE*
-this will lock the whole application. This safety applies to process loggers
-only, but once locked, all loggers will wait.
-
-. If logfile name changing is required, it is better to design multi-threaded
-app to use thread or request logger facilities.
-
-. The above pointers are subject of changes in future Enduro/X versions. It is
-possible that mutex locks, rwlocks or spinlock counters will be used to protect
-the logger.
+Due to support of multi-threaded operations is implemented, there is limitation
+that process level loggers (*LOG_FACILITY_NDRX*, *LOG_FACILITY_UBF* and *LOG_FACILITY_TP*)
+cannot have each different output file name. If for one logger file name is changed
+it is automatically replaced for other logger facilities (topics) too.
 
 RETURN VALUE
 ------------

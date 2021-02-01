@@ -11,6 +11,7 @@ ndrx_lcf_xadmin_add - Register *xadmin(8)* LCF command
 SYNOPSIS
 --------
 #include <lcf.h>
+
 #include <nerror.h>
 
 int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *'xcmd');
@@ -60,10 +61,38 @@ identifier. Max command string length is *32* (excluding 0x00 terminator).
 *helpstr* - This is help text appearing in $ xadmin help lcf. Max length of text
 is *128* (excluding 0x00 terminator).
 
+*dltflags* - These are default bitwise flags used by command. These flags also affects
+the checking of mandatory arguments (*-A* and/or *-B*) to be required when command
+is issued. See value bellow.
+
+*dfltslot* - Default slot number to which publish this command. May override by
+xadmin *-s* argument. Note that slot number must be lower than *NDRX_LCFMAX* env
+variable.
+
+
+DEFAULT FLAGS
+-------------
+
+*NDRX_LCF_FLAG_ALL* - Apply command to all binaries in application instance, same
+as if xadmin lcf COMMAND *-a* flags would be set command.
+
+*NDRX_LCF_FLAG_ARGA* - Argument *-A* is mandatory to have value.
+
+*NDRX_LCF_FLAG_ARGB* - Argument *-B* is mandatory to have value.
+
+*NDRX_LCF_FLAG_DOSTARTUP* - Perform the command at startup of the executable which
+attaches to existing shared memory segments. This is the same as if xadmin lcf COMMAND *-n*
+flag would be set.
+
+*NDRX_LCF_FLAG_DOSTARTUPEXP* - Perform the command at startup of the executable which
+attaches to existing shared memory segments, only when command age is less than
+*NDRX_LCFCMDEXP* (default is *60* seconds). This is the same as if xadmin lcf COMMAND *-e*
+flag would be set.
+
 
 RETURN VALUE
 ------------
-On success, *tplogconfig()* returns 0. On error, -1 is returned, with 
+On success, *ndrx_lcf_xadmin_add()* returns 0. On error, -1 is returned, with 
 *Nerror* set to indicate the error.
 
 ERRORS
@@ -73,16 +102,23 @@ with debug info from last function call.
 
 *NEFORMAT* Invalid format for 'debug_string'.
 
-*NESYSTEM* System error occurred. See the logs for more info.
+*NEINVAL* *cmdstr* is empty, invalid flags specified. *command* field is out of
+range of the range.
+
+*NEVERSION* Invalid version specified in structure.
+
+*NEEXISTS* Command with given *cmdstr* is already registered.
+
+*NEMALLOC* Malloc failed.
 
 
 THREAD SAFETY
 -------------
-ndrx_lcf_xadmin_add() function is thread safe.
+*ndrx_lcf_xadmin_add()* function is thread safe.
 
 EXAMPLE
 -------
-See *atmitest/test031_logging/atmiclt31.c* for sample code.
+See *atmitest/test081_lcf/custom_lcf.c* for sample code.
 
 BUGS
 ----
@@ -90,8 +126,8 @@ Report bugs to support@mavimax.com
 
 SEE ALSO
 --------
-*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* 
-*tplogsetreqfile(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)* *tplogqinfo(3)*
+*ndrx_lcf_func_add(3)* *ndrx_lcf_publish(3)* *ex_devguide(guides)* *ex_env(5)*
+*xadmin(8)*
 
 COPYING
 -------
