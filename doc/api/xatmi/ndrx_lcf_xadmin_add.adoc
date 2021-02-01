@@ -1,0 +1,99 @@
+NDRX_LCF_XADMIN_ADD(3)
+======================
+:doctype: manpage
+
+
+NAME
+----
+ndrx_lcf_xadmin_add - Register *xadmin(8)* LCF command
+
+
+SYNOPSIS
+--------
+#include <lcf.h>
+#include <nerror.h>
+
+int ndrx_lcf_xadmin_add(ndrx_lcf_reg_xadmin_t *'xcmd');
+
+Link with '-lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+This function is used to register *xadmin(8)* Latent Command Framework command.
+Once function is called, command appears under $ xadmin lcf group of functions.
+Function registration maps the administrative utility command string to actual
+command code which is published to configuration shared memory block. All details
+of the function are encoded in 'xcmd' parameter. This structure also includes
+'version' field which is used for forward/backward compatibility. Function registration
+with xadmin is purely only needed for xadmin user execution. For processes which
+performs the LCF command, this registration is not required. Instead processes
+requires *ndrx_lcf_func_add(3)* callbacks to be registered with. Callback to xadmin
+can be registered via Enduor/X plugin interface, i.e. use ndrx_plugin_init() entry
+point. See *ex_devguide(guides)* for plugin development
+
+*Structure is declared as:*
+
+-------------------------------------------------------------------------------
+
+typedef struct
+{
+    int version;
+    char cmdstr[NDRX_LCF_ADMINCMD_MAX+1];
+    int command;
+    char helpstr[NDRX_LCF_ADMINDSCR_MAX+1];
+    long dltflags;
+    int dfltslot;
+} ndrx_lcf_reg_xadmin_t;
+
+-------------------------------------------------------------------------------
+
+Where *ndrx_lcf_reg_xadmin_t* fields shall be filled in following way:
+
+*version* - Actual version is present in macros *NDRX_LCF_XCMD_VERSION* (currently it is *1*).
+
+*cmdstr* - Is command string used in xadmin lcf COMMAND. It must be valid C style
+identifier. Max command string length is *32* (excluding 0x00 terminator).
+
+*command* - This is actual command code. Must be value in range of 
+*NDRX_LCF_CMD_MIN_CUST*..*NDRX_LCF_CMD_MAX_CUST*.
+
+*helpstr* - This is help text appearing in $ xadmin help lcf. Max length of text
+is *128* (excluding 0x00 terminator).
+
+
+RETURN VALUE
+------------
+On success, *tplogconfig()* returns 0. On error, -1 is returned, with 
+*Nerror* set to indicate the error.
+
+ERRORS
+------
+Note that *Nstrerror()* returns generic error message plus custom message 
+with debug info from last function call.
+
+*NEFORMAT* Invalid format for 'debug_string'.
+
+*NESYSTEM* System error occurred. See the logs for more info.
+
+
+THREAD SAFETY
+-------------
+ndrx_lcf_xadmin_add() function is thread safe.
+
+EXAMPLE
+-------
+See *atmitest/test031_logging/atmiclt31.c* for sample code.
+
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tplogdump(3)* *tplogdumpdiff(3)* *tplog(3)* *tplogsetreqfile_direct(3)* 
+*tplogsetreqfile(3)* *ex_devguide(guides)* *ndrxdebug.conf(5)* *tplogqinfo(3)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+
