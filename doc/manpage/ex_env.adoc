@@ -302,6 +302,34 @@ Mandatory Env. Variables
     how long time is spent (in milliseconds) on waits between scanning for 
     System-V timeouts. The default value is *1000* and minimum is *1*.
 
+*NDRX_LCFREADERSMAX*='NUMBER_OF_SEM_READERS'::
+    This is number of LCF read/write lock readers. Thus this number of processes
+    may process LCF commands while concurrent write (publish to LCF shared memory)
+    will wait for readers to complete. The default is *1000*. The number should
+    match the number of processes running in system. However it depends on the
+    commands published, if commands are fast the number could be lower.
+
+*NDRX_LCFMAX*='NUMBER_OF_COMMAND_SLOTS'::
+    This is number of slots in shared memory used for LCF commands. The default is
+    *20*. Number shall be kept low as high number will make all processes to scan
+    throughout the array of commands when any command is published. This setting
+    shall be used as per application instance and not for sub-section configuration.
+    Also this setting affects the configuration shared memory size ('NDRX_IPCKEY' + 6).
+
+*NDRX_LCFCMDEXP*='NUMBER_OF_SECONDS'::
+    When new process is created, it scans and processes LCF commands at startup.
+    This setting affects those commands for which *-e* is given. It sets the
+    time frame within which after the command published it is processed. After
+    this time command expires, and new processes does not run the command.
+    Default value is *60*.
+
+*NDRX_LCFNORUN*='COMMAND_RUN_FLAG'::
+    If variable variable is present and set to 'y' or 'Y', the binary still connects
+    to LCF/Configuration shared memory, but does not execute any of the LCF
+    commands. Default is *n*. This can be useful in case if *xadmin(8)* needs to
+    correct some invalid commands which might prevent to run xadmin by it self.
+
+((
 EXAMPLE
 -------
 Sample configuration:

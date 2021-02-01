@@ -474,18 +474,22 @@ expublic int ndrx_lcf_run(void)
     ndrx_lcf_reg_funch_t* cbfunc;
     ndrx_lcf_command_t cmd_tmp;
     
-    /* If we get here. */
-    if (ndrx_G_libnstd_cfg.lcf_norun)
-    {
-        return EXSUCCEED; /**< RETURN !!!!!!!!!!!!! */
-    }
-    
     /* avoid run by other threads..., thus lock them, but as already
      * as possible we update the shared memory version so that threads
      * does not stuck here, but do the work instead
      */
     MUTEX_LOCK_V(M_lcf_run);
     
+    /* If we get here. */
+    if (ndrx_G_libnstd_cfg.lcf_norun)
+    {
+        /* If we get inconsistent readings (i.e not atomic), at the next run
+         * they will be set to latest value
+         */
+        ndrx_G_shmcfgver_chk=ndrx_G_shmcfg_ver->shmcfgver_lcf;
+        goto out;
+    }
+
     if (ndrx_G_shmcfgver_chk==ndrx_G_shmcfg_ver->shmcfgver_lcf)
     {
         goto out;
