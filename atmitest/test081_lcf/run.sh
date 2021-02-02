@@ -308,6 +308,10 @@ if [[ "X$RET" != "X0" ]]; then
     go_out $RET
 fi
 
+echo "*******************************************"
+grep 'CUSTOM HELLO' atmiclt-dom1.log
+echo "*******************************************"
+
 # atmiclt-dom1.log and atmisv-dom1.log should have the custom entries
 if [ "X`grep 'CUSTOM HELLO' atmiclt-dom1.log`" == "X" ]; then
     echo "[atmiclt-dom1.log] CUSTOM HELLO expected 1!"
@@ -320,10 +324,14 @@ if [ "X`grep 'CUSTOM HELLO' atmisv-dom1.log`" == "X" ]; then
 fi
 
 echo "Wait command to expire..."
-sleep 16
+sleep 17
 
 rm atmiclt-dom1.log
 (./atmiclt81 5 2>&1) > ./atmiclt-dom1.log
+
+echo "*******************************************"
+grep 'CUSTOM HELLO' atmiclt-dom1.log
+echo "*******************************************"
 
 RET=$?
 

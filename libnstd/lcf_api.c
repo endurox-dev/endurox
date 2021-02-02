@@ -273,7 +273,8 @@ expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
         EXFAIL_OUT(ret);
     }
     
-    if (EXEOS==cmd->procid[0] && !(cmd->flags & NDRX_LCF_FLAG_ALL))
+    if (EXEOS==cmd->procid[0] && !(cmd->flags & NDRX_LCF_FLAG_ALL) && 
+            cmd->command!=NDRX_LCF_CMD_DISABLE)
     {
         _Nset_error_msg(NEINVAL, "Target is not selected (not NDRX_LCF_FLAG_ALL and procid empty)");
         NDRX_LOG(log_error, "Target is not selected (not NDRX_LCF_FLAG_ALL and procid empty)");

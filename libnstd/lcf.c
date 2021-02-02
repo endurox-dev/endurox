@@ -357,7 +357,7 @@ expublic int ndrx_lcf_init(void)
     }
     else
     {
-        ndrx_G_libnstd_cfg.lcfreadersmax = atol(tmp);
+        ndrx_G_libnstd_cfg.startcmdexp = atol(tmp);
     }
     NDRX_LOG_EARLY(log_info, "%s set to %d", CONF_NDRX_LCFCMDEXP, 
             ndrx_G_libnstd_cfg.startcmdexp);
@@ -737,7 +737,7 @@ exprivate int ndrx_lcf_logchg(ndrx_lcf_command_t *cmd, long *p_flags)
 expublic int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd)
 {
     int ret = EXSUCCEED;
-    
+    unsigned  cmdversion;
     /* check the shared mem config is LCF used at all 
      * If shm is not initialized, we cannot post
      */
@@ -770,13 +770,22 @@ expublic int ndrx_lcf_publish_int(int slot, ndrx_lcf_command_t *cmd)
         _Nset_error_msg(NESYSTEM, "Failed to lock lcf sem");
         EXFAIL_OUT(ret);
     }
+    /* first have a clean memory, if publisher dies before copy data to dest
+     * thus have full of terminator there.. 
+     */
+    memset(&ndrx_G_shmcfg->commands[slot], 0, sizeof(ndrx_G_shmcfg->commands[slot]));
     
-    /* let the processes to see the stuff... */
+    cmdversion = ndrx_G_shmcfg->commands[slot].cmdversion;
     memcpy(&ndrx_G_shmcfg->commands[slot], cmd, sizeof(*cmd));
-    ndrx_G_shmcfg->shmcfgver_lcf++;
+    
+    cmdversion++;
+    ndrx_G_shmcfg->commands[slot].cmdversion=cmdversion;
     
     /* set the age of command, we have write lock, so no worry */
     ndrx_stopwatch_reset(&ndrx_G_shmcfg->commands[slot].publtim);
+    
+    /* finally let processes to see what we have done: */
+    ndrx_G_shmcfg->shmcfgver_lcf++;
     
     if (EXSUCCEED!=ndrx_sem_rwunlock(&M_lcf_sem, 0, NDRX_SEM_TYP_WRITE))
     {
