@@ -71,7 +71,7 @@ extern "C" {
 #define NDRX_LCF_LCMD_VERSION            1 
     
 #define NDRX_LCF_CMD_MIN                0   /**< minimum accepted command   */
-#define NDRX_LCF_CMD_DISABLED           0   /**< Command is disabled        */
+#define NDRX_LCF_CMD_DISABLE            0   /**< Command is disabled        */
 #define NDRX_LCF_CMD_LOGROTATE          1   /**< Perfrom logrotated         */
 #define NDRX_LCF_CMD_LOGCHG             2   /**< Change logger params       */
 #define NDRX_LCF_CMD_MAX_PROD           999 /**< Maximum product command    */    

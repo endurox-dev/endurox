@@ -83,7 +83,7 @@ expublic int ndrx_xadmin_lcf_init(void)
     memset(&xcmd, 0, sizeof(xcmd));
     
     xcmd.version = NDRX_LCF_XCMD_VERSION;
-    xcmd.command = NDRX_LCF_CMD_DISABLED;
+    xcmd.command = NDRX_LCF_CMD_DISABLE;
     NDRX_STRCPY_SAFE(xcmd.cmdstr, NDRX_LCF_CMDSTR_DISABLE);
     xcmd.dfltslot = 0;
     
@@ -273,7 +273,7 @@ static const struct {
         cur=&ndrx_G_shmcfg->commands[i];
         
         
-        if (NDRX_LCF_CMD_DISABLED==cur->command)
+        if (NDRX_LCF_CMD_DISABLE==cur->command)
         {
             /* no more details for disabled command */
             fprintf(stdout, "%4d %4d %-8.8s\n",
@@ -468,7 +468,7 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         
         /* Except this rule does not affect disable command */
         if (EXEOS==cmd.procid[0] && !(cmd.flags & NDRX_LCF_FLAG_ALL) &&
-                NDRX_LCF_CMD_DISABLED!=xcmd->xcmd.command)
+                NDRX_LCF_CMD_DISABLE!=xcmd->xcmd.command)
         {
             _Nset_error_fmt(NEINVAL, "There is no process target for command (missing -a/-p/-b and not defaults)");
             EXFAIL_OUT(ret);
