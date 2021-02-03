@@ -41,11 +41,11 @@
 #include <sys/sem.h>
 #include <signal.h>
 
+#include <sys_unix.h>
 #include <atmi.h>
 #include <atmi_shm.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 

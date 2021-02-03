@@ -46,6 +46,8 @@ extern "C" {
 #include <nstopwatch.h>
 #include <cconfig.h>
 #include <exenv.h>
+#include <libxml/xmlreader.h>
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define PARSE_SECTION_FAIL         EXFAIL
@@ -279,6 +281,12 @@ typedef struct
     /** Environment group hash */
     ndrx_env_group_t *envgrouphash;
     
+    /** have hash handle for services */
+    ndrx_routcrit_hash_t *cirthash;
+    
+    /** have hash handle for services */
+    ndrx_services_hash_t *services;
+    
 } config_t;
 
 /**
@@ -360,6 +368,9 @@ extern pm_pidhash_t * pid_hash_get(pm_pidhash_t **pid_hash, pid_t pid);
 extern int delete_from_pid_hash(pm_pidhash_t **pid_hash, pm_pidhash_t *pm_pid);
 extern void sign_chld_handler(int sig);
 extern int cmd_close_queue(void);
+
+extern int ndrx_services_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur);
+extern void ndrx_services_free(config_t *config);
 
 /* Sanity & restart */
 extern int do_sanity_check(int isfinal);

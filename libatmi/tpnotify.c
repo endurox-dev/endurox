@@ -48,7 +48,6 @@
 #include <atmi_int.h>
 
 #include "../libatmisrv/srv_int.h"
-#include "ndrxd.h"
 #include "userlog.h"
 #include "exregex.h"
 #include <thlock.h>

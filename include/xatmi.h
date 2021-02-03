@@ -570,8 +570,8 @@ extern NDRX_API int tpsvrthrinit(int argc, char **argv);
 extern NDRX_API void tpsvrthrdone (void);
 
 /* Poller & timer extension: */
-extern NDRX_API int tpext_addpollerfd(int fd, uint32_t events, 
-        void *ptr1, int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
+extern NDRX_API int tpext_addpollerfd(int fd, uint32_t events, void *ptr1,
+        int (*p_pollevent)(int fd, uint32_t events, void *ptr1));
 extern NDRX_API int tpext_delpollerfd(int fd);
 extern NDRX_API int tpext_addperiodcb(int secs, int (*p_periodcb)(void));
 extern NDRX_API int tpext_delperiodcb(void);
@@ -587,7 +587,7 @@ extern NDRX_API int tpubftojson(UBFH *p_ub, char *buffer, int bufsize);
 
 
 /* JSON<->VIEW buffer support */
-extern NDRX_API int tpviewtojson(char *cstruct, char *view, char *buffer,  
+extern NDRX_API int tpviewtojson(char *cstruct, char *view, char *buffer,
         int bufsize, long flags);
 extern NDRX_API char * tpjsontoview(char *view, char *buffer);
 
@@ -599,8 +599,8 @@ extern NDRX_API int tpenqueueex (short nodeid, short srvid, char *qname, TPQCTL 
 extern NDRX_API int tpdequeueex (short nodeid, short srvid, char *qname, TPQCTL *ctl, char **data, long *len, long flags);
 
 extern NDRX_API int ndrx_main(int argc, char **argv); /* exported by atmisrvnomain */
-extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **), 
-            void (*in_tpsvrdone)(void), long flags);
+extern NDRX_API int ndrx_main_integra(int argc, char** argv, int (*in_tpsvrinit)(int, char **),
+        void (*in_tpsvrdone)(void), long flags);
 
 /* for build compatibility: */
 extern NDRX_API int _tmstartserver( int argc, char **argv, struct tmsvrargs_t *tmsvrargs);

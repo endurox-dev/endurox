@@ -51,7 +51,7 @@
 #include <atmi_int.h>
 
 #include "../libatmisrv/srv_int.h"
-#include "ndrxd.h"
+/* #include "ndrxd.h" why? */
 #include "utlist.h"
 #include <thlock.h>
 #include <xa_cmn.h>

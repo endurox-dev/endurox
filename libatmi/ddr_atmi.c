@@ -1,7 +1,7 @@
 /**
- * @brief Standard library error handler
+ * @brief Real time handling routines
  *
- * @file onerror.h
+ * @file ddr_atmi.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -22,7 +22,7 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along
+ * You should have received a copy of the GNU Affero General Public License along 
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
@@ -31,25 +31,20 @@
  * contact@mavimax.com
  * -----------------------------------------------------------------------------
  */
-#ifndef __ONERROR_H
-#define __ONERROR_H
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <errno.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-/*---------------------------Includes-----------------------------------*/
-#include <stdint.h>
-#include <ubf.h>
-#include <atmi.h>
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define ONerror(P_CTXT)   (*O_Nget_Nerror_addr(P_CTXT))
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API char * ONstrerror(TPCONTEXT_T *p_ctxt, int err);
-extern NDRX_API int * O_Nget_Nerror_addr(TPCONTEXT_T *p_ctxt);
-#endif  /* __ONERROR_H */
 
+
+/* vim: set ts=4 sw=4 et smartindent: */

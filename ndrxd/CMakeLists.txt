@@ -91,6 +91,7 @@ add_executable (ndrxd   ndrxd.c
                         reloadonchange.c
                         ${ADDSANITY1}
                         cmd_blist.c
+                        ddr_ndrxd.c
             )
 
 # Link the executable to the UBF library & others...
