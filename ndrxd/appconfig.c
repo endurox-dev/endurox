@@ -161,6 +161,9 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
             NDRX_FREE(elt);
         }
     }
+    
+    /* Free up the services */
+    
 
     if (*process_model_hash)
     {
@@ -1328,7 +1331,10 @@ exprivate int parse_server(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 
 out:
     if (EXFAIL==ret && p_srvnode)
+    {
         NDRX_FREE(p_srvnode);
+    }
+
     return ret;
 }
 /**
@@ -1397,6 +1403,22 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         {
             NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
                     "parse <servers>", G_sys_config.config_file_short);
+            ret=EXFAIL;
+            goto out;
+        }
+        else if (0==strcmp((char*)cur->name, "services")
+                && EXSUCCEED!=ndrx_services_parse(config, doc, cur->children))
+        {
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                    "parse <services>", G_sys_config.config_file_short);
+            ret=EXFAIL;
+            goto out;
+        }
+        else if (0==strcmp((char*)cur->name, "routing")
+                && EXSUCCEED!=ndrx_routing_parse(config, doc, cur->children))
+        {
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
+                    "parse <routing>", G_sys_config.config_file_short);
             ret=EXFAIL;
             goto out;
         }

@@ -36,20 +36,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <memory.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <utlist.h>
-#include <unistd.h>
 
 #include <ndrstandard.h>
-#include <ndrxd.h>
-#include <atmi_int.h>
-#include <nstopwatch.h>
-
 #include <ndebug.h>
-#include <cmd_processor.h>
-#include <signal.h>
 
 #include "userlog.h"
 

@@ -598,7 +598,7 @@ expublic int ndrx_load_common_env(void)
         
         if (G_atmi_env.rtcrtmax<1)
         {
-            G_atmi_env.rtcrtmax = CONF_NDRX_RTCRTMAX;
+            G_atmi_env.rtcrtmax = CONF_NDRX_RTCRTMAX_DFLT;
         }
         
     }
@@ -613,7 +613,7 @@ expublic int ndrx_load_common_env(void)
         
         if (G_atmi_env.rtsvcmax<1)
         {
-            G_atmi_env.rtsvcmax = CONF_NDRX_RTSVCMAX;
+            G_atmi_env.rtsvcmax = CONF_NDRX_RTSVCMAX_DFLT;
         }
         
     }

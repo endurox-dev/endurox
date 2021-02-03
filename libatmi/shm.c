@@ -53,12 +53,14 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include <ndrx_config.h>
+#include <ndrstandard.h>
+#include <sys_unix.h>
 #include <atmi.h>
 #include <atmi_shm.h>
 #include <atmi_tls.h>
-#include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
+#include <ndrx_ddr.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -145,9 +147,9 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,
     NDRX_LOG(log_debug, "ndrx_G_routcrit.size = %d bytes (%d * 2)",
                     ndrx_G_routcrit.size, rtcrtmax);
     
-    ndrx_G_routsvc.size = rtsvcmax * sizeof(ndrx_routsvc_t) * 2;
+    ndrx_G_routsvc.size = rtsvcmax * sizeof(ndrx_services_t) * 2;
     NDRX_LOG(log_debug, "ndrx_G_routsvc.size = %d (%d * %d * 2)",
-                    ndrx_G_routsvc.size, rtsvcmax, sizeof(ndrx_routsvc_t));
+                    ndrx_G_routsvc.size, rtsvcmax, sizeof(ndrx_services_t));
     
     M_init = EXTRUE;
     return EXSUCCEED;
