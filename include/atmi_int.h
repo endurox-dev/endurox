@@ -390,6 +390,9 @@ struct atmi_lib_env
     int     ldbal;       /**< Load balance settings                         */
     int     is_clustered;/**< Will we run in cluster mode or not?           */
     
+    int     rtcrtmax; /**< size of routing criterion shared memory size  (one seg)*/
+    int     rtsvcmax; /**< one segment size of criterion memory        */
+    
     /**
      * @defgroup xa_params XA configuration parameters
      * @{
@@ -800,6 +803,7 @@ extern NDRX_API char * ndrx_tpalloc (typed_buffer_descr_t *known_type,
                     char *type, char *subtype, long len);
 extern NDRX_API void free_auto_buffers(void);
 extern NDRX_API int tp_internal_init(atmi_lib_conf_t *init_data);
+extern NDRX_API void ndrx_libatmi_deinit(void);
 extern NDRX_API int tp_internal_init_upd_replyq(mqd_t reply_q, char *reply_q_str);
 extern NDRX_API void tp_thread_shutdown(void *ptr, int *p_finish_off);
 extern NDRX_API void ndrx_dump_call_struct(int lev, tp_command_call_t *call);

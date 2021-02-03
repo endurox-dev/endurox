@@ -305,6 +305,12 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_QPREFIX        "NDRX_QPREFIX"
 #define CONF_NDRX_SVCMAX         "NDRX_SVCMAX"
 #define CONF_NDRX_SRVMAX         "NDRX_SRVMAX"
+
+#define CONF_NDRX_RTCRTMAX_DFLT   102400         /**< 100KB one buffer routing cirteria space */
+#define CONF_NDRX_RTCRTMAX       "NDRX_RTCRTMAX"
+#define CONF_NDRX_RTSVCMAX_DFLT   100            /**< 100 service slots for one buffer        */
+#define CONF_NDRX_RTSVCMAX       "NDRX_RTSVCMAX"
+
 #define CONF_NDRX_CLTMAX         "NDRX_CLTMAX"     /**< Max number of client, cpm */
 #define CONF_NDRX_CONFIG         "NDRX_CONFIG"
 #define CONF_NDRX_QPATH          "NDRX_QPATH"
@@ -517,16 +523,16 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_SHM_CPM_KEYOFSZ    5                   /**< IPC Key offset                */
 
 #define NDRX_SHM_LCF_SFX        "shm,lcf"           /**< Latent command framework shm  */
-#define NDRX_SHM_LCF            "%s," NDRX_SHM_CPM_SFX
+#define NDRX_SHM_LCF            "%s," NDRX_SHM_LCF_SFX
 #define NDRX_SHM_LCF_KEYOFSZ    6                   /**< IPC Key offset                */
 
-#define NDRX_SHM_RTC_SFX        "shm,rtc"           /**< Routing criteria              */
-#define NDRX_SHM_RTC            "%s," NDRX_SHM_CPM_SFX
-#define NDRX_SHM_RTC_KEYOFSZ    7                   /**< IPC Key offset                */
+#define NDRX_SHM_ROUTCRIT_SFX   "shm,routcrit"      /**< Routing criteria              */
+#define NDRX_SHM_ROUTCRIT        "%s," NDRX_SHM_ROUTCRIT_SFX
+#define NDRX_SHM_ROUTCRIT_KEYOFSZ   7                 /**< IPC Key offset                */
     
-#define NDRX_SHM_RTS_SFX        "shm,rts"           /**< Routing services              */
-#define NDRX_SHM_RTS            "%s," NDRX_SHM_CPM_SFX
-#define NDRX_SHM_RTS_KEYOFSZ    8                   /**< IPC Key offset                */
+#define NDRX_SHM_ROUTSVC_SFX     "shm,routsvc"        /**< Routing services              */
+#define NDRX_SHM_ROUTSVC         "%s," NDRX_SHM_ROUTSVC_SFX
+#define NDRX_SHM_ROUTSVC_KEYOFSZ    8                 /**< IPC Key offset                */
     
 #define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
 

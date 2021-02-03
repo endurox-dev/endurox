@@ -376,9 +376,15 @@ expublic int ndrx_lcf_init(void)
     M_lcf_shm.size = sizeof(ndrx_lcf_shmcfg_t) + sizeof(ndrx_lcf_command_t) * 
             ndrx_G_libnstd_cfg.lcfmax;
     
+    
+    snprintf(M_lcf_shm.path,  sizeof(M_lcf_shm.path), NDRX_SHM_LCF,  ndrx_G_libnstd_cfg.qprefix);
+    
     if (EXSUCCEED!=ndrx_shm_open(&M_lcf_shm, EXTRUE))
     {
-        NDRX_LOG_EARLY(log_info, "Failed to open LCF shared memory");
+        /* cannot attach if settings are different */
+        NDRX_LOG_EARLY(log_error, "Failed to attach to LCF memory");
+        userlog("Failed to open LCF shared memory - possibly changed "
+                "NDRX_LCFMAX, thus use xadmin down -y to restart the app");
         EXFAIL_OUT(ret);
     }
     
@@ -853,4 +859,94 @@ expublic int ndrx_lcf_supported_int(void)
 out:                            
     return ret;
 }
+
+/**
+ * Would disable LCF processing
+ * by switching back to local memory instead of SHM and restoring the version
+ * numbers of LCF checks...
+ * Note this assumes that LCF config is loaded. (i.e. some previous debug
+ * did the pull-in)
+ * @param ipckeybase resolve ipc key base of Enduro/X
+ * @param q_prefix queue prefix used by app
+ */
+expublic void ndrx_lcf_remove(key_t ipckeybase, char *q_prefix)
+{
+    
+    NDRX_LOG(log_debug, "Removing LCF memory");
+    /* Let other threads to lave the lcf runn */
+    MUTEX_LOCK_V(M_lcf_run);
+    
+    ndrx_dbg_intlock_set();
+    
+    /* lock the debug for ptr swap */
+    ndrx_dbg_lock();
+    
+    /* do not allow anybody else to get in the region, but really should
+     * this must be last operations in xadmin down
+     * all threads even system-v queues are terminated
+     */
+    G_ndrx_debug_first=EXTRUE;
+    
+    /* normally no other threads are expected at this point, but let it be
+     */
+    sched_yield();
+    
+    /* mask the LCF is any stuff new stuff is done */
+    ndrx_G_shmcfg_ver=&M_ver_start;
+    ndrx_G_shmcfgver_chk = ndrx_G_shmcfg_ver->shmcfgver_lcf;
+    
+    /* close the shared memory.. */
+    ndrx_lcf_detach();
+    
+    /* remove lcf memory.. - re configure if the init was bad*/
+    M_lcf_shm.key = ipckeybase + NDRX_SHM_LCF_KEYOFSZ;
+    snprintf(M_lcf_shm.path,  sizeof(M_lcf_shm.path), NDRX_SHM_LCF,  q_prefix);
+    
+    ndrx_shm_remove(&M_lcf_shm);
+    /* remove semaphores.. */
+    ndrx_sem_remove(&M_lcf_sem, EXTRUE);
+     
+    G_ndrx_debug_first=EXFALSE;
+    
+    ndrx_dbg_unlock();
+    
+    /* reply the logs finally... */
+    ndrx_dbg_intlock_unset();
+    
+out:
+    MUTEX_UNLOCK_V(M_lcf_run);
+    
+}
+
+/**
+ * Clear the LCF command blocks
+ */
+expublic void ndrx_lcf_reset(void)
+{
+    MUTEX_LOCK_V(M_lcf_run);
+    
+    /* acquire the write lock to shm... */
+    
+    /* if not attached, nothing todo */
+    if (ndrx_G_shmcfg_ver==&M_ver_start)
+    {
+        goto out;
+    }
+    
+    /* full write protect against all others...  */
+    if (EXSUCCEED!=ndrx_sem_rwlock(&M_lcf_sem, 0, NDRX_SEM_TYP_WRITE))
+    {
+        goto out;
+    }
+    
+    /* clean the thing... */
+    memset(ndrx_G_shmcfg->commands, 0, sizeof(ndrx_G_shmcfg->commands[0])*ndrx_G_libnstd_cfg.lcfmax);
+    
+    
+    ndrx_sem_rwunlock(&M_lcf_sem, 0, NDRX_SEM_TYP_WRITE);
+    
+out:
+    MUTEX_UNLOCK_V(M_lcf_run);
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

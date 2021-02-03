@@ -282,6 +282,7 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
     short keep_running_ndrxd = EXFALSE;
     short force_off = EXFALSE;  /* force shutdown (for malfunction/no pid instances) */
     short dummy;
+    short keep_lcf=EXFALSE;
     pid_t pid = EXFAIL;
     ncloptmap_t clopt[] =
     {
@@ -289,7 +290,6 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server ID"},
         {'s', BFLD_STRING, (void *)srvnm, sizeof(srvnm), 
                                 NCLOPT_OPT|NCLOPT_HAVE_VALUE, "Server name"},
-                                
         {'y', BFLD_SHORT, (void *)&confirm, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Confirm"},
         {'c', BFLD_SHORT, (void *)&dummy, 0, 
@@ -298,6 +298,9 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep ndrxd running"},
         {'f', BFLD_SHORT, (void *)&force_off, 0, 
                                 NCLOPT_OPT|NCLOPT_TRUEBOOL, "Force shutdown"},
+        {'l', BFLD_SHORT, (void *)&keep_lcf, 0, 
+                                NCLOPT_OPT|NCLOPT_TRUEBOOL, "Keep lcf commands"},
+
         {0}
     };
         
@@ -404,6 +407,14 @@ expublic int cmd_stop(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_ha
         {
             /* no info of pid, so have some sleep */
             sleep(1);
+        }
+        
+        /* 
+         * clean up the commands... 
+         */
+        if (!keep_lcf)
+        {
+            ndrx_lcf_reset();
         }
     }
 out:

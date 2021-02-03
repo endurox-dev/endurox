@@ -61,7 +61,8 @@ extern NDRX_API int G_max_servers;
 extern NDRX_API ndrx_shm_t G_srvinfo;
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
-extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs);
+extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,
+            int rtcrtmax, int rtsvcmax);
 extern NDRX_API int ndrxd_shm_open_all(void);
 extern NDRX_API int ndrxd_shm_close_all(void);
 extern NDRX_API void ndrxd_shm_srv_fork_status(int srvid, unsigned execerr);

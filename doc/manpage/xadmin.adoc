@@ -77,10 +77,10 @@ COMMANDS
     see *ex_env(5)*.
 *psc*::
     Print services
-*stop* [-y] [-s <server>] [-i <srvid>] [-k] [-f]::
-    Stop application domain. '-y' means do not ask for confirmation. '-s' means
+*stop* [-y] [-s <server>] [-i <srvid>] [-k] [-f] [-l]::
+    Stop application domain. *-y* means do not ask for confirmation. *-s* means
     ATMI servers binary name to be stopped, instead of whole application domain.
-    '-i' means stop specific server instance. '-k' flag will keep 'ndrxd' running,
+    *-i* means stop specific server instance. *-k* flag will keep *ndrxd* running,
     and protected servers will not be shutdown. In case if *ndrxd(8)* process
     is doing start or stop for other xadmin session (or doing internal server
     reloads in case if memory limits reached), then command will perform several
@@ -88,9 +88,15 @@ COMMANDS
     *NDRX_NORMWAITMAX* environment variable. Between attempts, 1 second sleep is
     done. In case if *stop* command was unable to send message to *ndrxd*, command
     will exit with failure, and will not wait for *ndrxd* termination.
-    In case if '-f' force flag is set, the xadmin will wait indefinitely until
+    In case if *-f* force flag is set, the xadmin will wait indefinitely until
     *ndrxd* will not be found in the system. No matter message was sent to ndrxd
-    or not. see *ex_env(5)*.
+    or not. see *ex_env(5)*. When full stop is performed, the Latent Command
+    Framework (LCF) commands are cleared and set to 'disable'. LCF memory is
+    left after the shutdown. If re-reconfiguration of LCF memory segments is
+    required (env setting NDRX_LCFMAX), then run *xadmin down* and then start
+    the application, it will create shm. If after the shutdown commands shall
+    be kept, then use *-l* option, it will leave LCF memory as is with out setting
+    to disable.
 *sreload* [-y] [-s <server>] [-i <srvid>]::
     Reload application domain - restart server instance by instance.
     Configuration be loaded prior.

@@ -46,6 +46,7 @@
 #include <ndrx.h>
 #include <atmi.h>
 #include <userlog.h>
+#include <atmi_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -66,6 +67,9 @@ expublic int ndrx_xadmin_shm_close(void)
     if (M_is_reply_q_open)
     {
         ndrx_epoll_shmdetach();
+
+        /* mark the library that needs to reconnect to shm... */
+        ndrx_libatmi_deinit();
     }
     
     M_is_reply_q_open = EXFALSE;

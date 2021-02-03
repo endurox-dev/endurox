@@ -76,6 +76,7 @@ expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
 /* List of context slots... */
 exprivate long M_contexts[MAX_CONTEXTS];
 exprivate MUTEX_LOCKDECL(M_env_lock);
+exprivate int M_init_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -587,6 +588,43 @@ expublic int ndrx_load_common_env(void)
                 CONF_NDRX_MAXSVCSRVS, G_atmi_env.maxsvcsrvs, CONF_NDRX_MAXSVCSRVS_DFLT);
     
     /* </poll() mode configuration> */
+    
+    
+    /* setup routing data */
+    
+    if (NULL!=(p=getenv(CONF_NDRX_RTCRTMAX)))
+    {
+        G_atmi_env.rtcrtmax = atoi(p);
+        
+        if (G_atmi_env.rtcrtmax<1)
+        {
+            G_atmi_env.rtcrtmax = CONF_NDRX_RTCRTMAX;
+        }
+        
+    }
+    else
+    {
+        G_atmi_env.rtcrtmax = CONF_NDRX_RTCRTMAX_DFLT;
+    }
+    
+    if (NULL!=(p=getenv(CONF_NDRX_RTSVCMAX)))
+    {
+        G_atmi_env.rtcrtmax = atoi(p);
+        
+        if (G_atmi_env.rtsvcmax<1)
+        {
+            G_atmi_env.rtsvcmax = CONF_NDRX_RTSVCMAX;
+        }
+        
+    }
+    else
+    {
+        G_atmi_env.rtsvcmax = CONF_NDRX_RTSVCMAX_DFLT;
+    }
+    
+    NDRX_LOG(log_debug, "routing criterion space: %d bytes, max services: %d", 
+            G_atmi_env.rtcrtmax, G_atmi_env.rtsvcmax);
+    
 
     /* Init the util lib.. */ 
     if (EXSUCCEED!=ndrx_atmiutil_init())
@@ -720,7 +758,6 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
 {
     int ret=EXSUCCEED;
     char fn[]="tp_internal_init";
-    static int first = EXTRUE;
     static int cl_shm = EXFALSE;
     static int sv_shm = EXFALSE;
     static int sem_fail = EXFALSE;
@@ -792,7 +829,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
     /* we attach to shared mem & semaphores only once. */
     MUTEX_LOCK;
     {
-        if (first)
+        if (M_init_first)
         {
             /* Init semaphores first. */
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
@@ -808,7 +845,8 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             
             /* Attach to client shared memory? */
             if (EXSUCCEED==ndrx_shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
-                        G_atmi_env.max_servers, G_atmi_env.max_svcs))
+                        G_atmi_env.max_servers, G_atmi_env.max_svcs, G_atmi_env.rtcrtmax,
+                        G_atmi_env.rtsvcmax))
             {
                 if (init_data->is_client)
                 {
@@ -853,7 +891,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                 EXFAIL_OUT(ret);
             }
             
-            first = EXFALSE;
+            M_init_first = EXFALSE;
         }
         else if (!sv_shm && !init_data->is_client)
         {
@@ -1020,5 +1058,17 @@ expublic ndrx_env_priv_t* ndrx_env_priv_get(void)
 {
     return &G_atmi_env.integpriv;
 }
+
+/**
+ * This is not thread safe
+ * thus only needs to be used from single threaded
+ * apps such as xadmin.
+ */
+expublic void ndrx_libatmi_deinit(void)
+{
+    ndrxd_shm_close_all();
+    M_init_first=EXTRUE;
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

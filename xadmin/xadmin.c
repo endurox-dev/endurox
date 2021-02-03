@@ -134,7 +134,7 @@ cmd_mapping_t M_command_map[] =
                 NULL},
     {"stop",    cmd_stop,  NDRXD_COM_STOP_RQ,   1,  2, 
                 "Stop application domain\n"
-                "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f]"
+                "\t args: stop [-y] [-c]|[-s <server>] [-i <srvid>] [-k] [-f] [-l]"
                 , NULL},
     {"down",    cmd_fdown, EXFAIL,              1,  0, 
                 "Force App Server shutdown & resources cleanup\n"

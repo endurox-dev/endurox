@@ -45,6 +45,8 @@
 #include <atmi_int.h>
 #include <gencall.h>
 #include <nclopt.h>
+
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -94,6 +96,8 @@ expublic int cmd_fdown(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_h
     ndrx_down_sys(G_config.qprefix, G_config.qpath, EXFALSE, user_res);
     /* second loop with TRUE... */
     ndrx_down_sys(G_config.qprefix, G_config.qpath, EXTRUE, user_res);
+    
+    ndrx_lcf_remove(G_config.ipckey, G_config.qprefix);
     
     /* finish off here.. */
     exit(0);
