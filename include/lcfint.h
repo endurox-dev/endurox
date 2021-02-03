@@ -133,6 +133,8 @@ extern NDRX_API ndrx_nstd_libconfig_t ndrx_G_libnstd_cfg;
 
 extern NDRX_API int ndrx_lcf_init(void);
 extern NDRX_API void ndrx_lcf_detach(void);
+extern NDRX_API void ndrx_lcf_remove(key_t ipckeybase, char *q_prefix);
+extern NDRX_API void ndrx_lcf_reset(void);
 
 /** Register callback for command code */
 extern NDRX_API int ndrx_lcf_xadmin_add_int(ndrx_lcf_reg_xadmin_t *xcmd);

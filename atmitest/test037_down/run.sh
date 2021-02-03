@@ -329,21 +329,20 @@ echo "Shared mem objects: "
 
 xadmin shms
 xadmin shms | wc | awk '{print $1}'
-
 SHMS=`xadmin shms | wc | awk '{print $1}'`
 
 echo "DOM1 Shared memories: $SHMS"
 
 if [ `xadmin poller` == "SystemV" ] || [ `xadmin poller` == "svapoll" ]; then
 
-    if [[ "$SHMS" -ne "2" ]]; then 
-        echo "TESTERROR! There must be 2 shared memory objs for dom1 after kill!"
+    if [[ "$SHMS" -ne "3" ]]; then 
+        echo "TESTERROR! There must be 3 shared memory objs for dom1 after kill!"
         go_out 18
     fi
 else
 
-    if [[ "$SHMS" -ne "0" ]]; then 
-        echo "TESTERROR! There must be no shared memory for dom1 after kill!"
+    if [[ "$SHMS" -ne "1" ]]; then 
+        echo "TESTERROR! There must be 1 shared memory for dom1 after kill!"
         go_out 18
     fi
 fi
@@ -420,12 +419,15 @@ fi
 
 xadmin udown -y
 
-SHMS=`xadmin shms`
+xadmin shms
+xadmin shms | wc | awk '{print $1}'
+SHMS=`xadmin shms | wc | awk '{print $1}'`
 
 echo "After udown [$SHMS]"
 
-if [ "X$SHMS" != "X" ]; then
-    echo "udown failed to remove resources"
+# LCF is created again... as we run shms
+if [ "$SHMS" != "1" ]; then
+    echo "udown failed to remove resources (still the LCF shall be leaved)"
     go_out -101
 fi
 

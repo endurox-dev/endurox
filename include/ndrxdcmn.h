@@ -373,6 +373,58 @@ struct shm_srvinfo
 };
 
 /**
+ * Routing information in shared memory
+ */
+typedef struct ndrx_routsvc ndrx_routsvc_t;
+struct ndrx_routsvc
+{
+    char svcnm[MAXTIDENT+1];    /**< service name in linear hash */
+    int prio;                   /**< default call priority       */
+    int cirterionid;            /**< criterion id                */
+    int offset;                 /**< memory offset where criterion id starts int cirt mem */
+    int autotran;               /**< is autotran used?           */
+    int trantout;               /**< transaction timeout time    */
+};
+
+/**
+ * Routing criterion
+ * These might be several in the row if buffer types does not match.
+ * 
+ * So SHM would look like:
+ * 
+ * [ndrx_routcrit_t ndrx_routcritseq_t..N] .. [ndrx_routcrit_t ndrx_routcritseq_t..N]
+ * 
+ * Positions to fields must have aligned access
+ * 
+ */
+typedef struct ndrx_routcrit ndrx_routcrit_t;
+struct ndrx_routcrit
+{
+    int criterionid;            /**< criterion id                    */
+    int len;                    /**< total len of the field including sequences */
+    char field[MAXTIDENT+1];    /**< routing field id                */
+    char buftype[256+1];        /**< buffer type, future support for views */
+    long  fieldid;              /**< resolved field id for UBF, also do align, thus not using BFLDID */
+    char ranges[0];             /**< range offset of the ndrx_routcritseq_t   */
+};
+
+/**
+ * Routing criterion sequence contains the range
+ * Positions to fields must have aligned access
+ */
+typedef struct ndrx_routcritseq ndrx_routcritseq_t;
+struct ndrx_routcritseq
+{
+    long lowerl;      /**< range is number lower part */
+    long upperl;      /**< range is number upper part */
+    
+    int flags;        /**< routing flags MIN, MAX, DFLT */
+    int lowerstr_sz;  /**< first string size incl EOS */
+    int upperstr_sz;  /**< seconds string size incl EOS, followes after lower */
+    char strrange[0]; /**< string ranges */
+};
+
+/**
  * Basic cluster node info
  */
 typedef struct cnodeinfo cnodeinfo_t;

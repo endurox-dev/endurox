@@ -78,6 +78,9 @@ exprivate segmap_t M_map[] = {
         ,{NDRX_SHM_P2S_SFX, NDRX_SHM_P2S_KEYOFSZ}
         ,{NDRX_SHM_S2P_SFX, NDRX_SHM_S2P_KEYOFSZ}
         ,{NDRX_SHM_CPM_SFX, NDRX_SHM_CPM_KEYOFSZ}
+        ,{NDRX_SHM_LCF_SFX, NDRX_SHM_LCF_KEYOFSZ}
+        ,{NDRX_SHM_ROUTCRIT_SFX, NDRX_SHM_ROUTCRIT_KEYOFSZ}
+        ,{NDRX_SHM_ROUTSVC_SFX, NDRX_SHM_ROUTSVC_KEYOFSZ}
         ,{NULL}
     };
 /*---------------------------Prototypes---------------------------------*/    
@@ -275,7 +278,8 @@ expublic int ndrx_shm_remove(ndrx_shm_t *shm)
     int ret=EXSUCCEED;
     int fd;
     
-    if (EXFAIL!=(fd = shmget(shm->key, shm->size, S_IRWXU | S_IRWXG)))
+    /* do not check the size... */
+    if (EXFAIL!=(fd = shmget(shm->key, 0, S_IRWXU | S_IRWXG)))
     {
         if (EXSUCCEED!=shmctl(fd, IPC_RMID, NULL))
         {
