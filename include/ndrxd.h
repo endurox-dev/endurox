@@ -48,6 +48,7 @@ extern "C" {
 #include <exenv.h>
 #include <libxml/xmlreader.h>
 #include <ndrx_ddr.h>
+
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define PARSE_SECTION_FAIL         EXFAIL
@@ -326,10 +327,23 @@ typedef struct
     char  listenq_str[NDRX_MAX_Q_SIZE+1];
     int   context;                      /* Current context */
 } command_state_t;
+
+typedef struct
+{
+    long    flags;      /**< Parser flags                    */
+    char*   min;        /**< Parser min range value          */
+    char*   max;        /**< Parser max range value          */
+    int     error;   /**< error is not set                */
+    ndrx_growlist_t  stringbuffer;   /**< list used for string build */
+    ndrx_routcrit_typehash_t *p_crit;/**< current criterion in parse */
+    
+} ndrx_ddr_parser_t;
+
 /*---------------------------Globals------------------------------------*/
 
-extern config_t     *G_app_config;          /* Running application config   */
-extern sys_config_t  G_sys_config;          /* Self daemon configuration    */
+extern config_t     *G_app_config;          /**< Running application config   */
+extern sys_config_t  G_sys_config;          /**< Self daemon configuration    */
+extern ndrx_ddr_parser_t ndrx_G_ddrp;       /**< range Parsing time attributes */
 
 /* Active configuration:
  * externs from appconfig.c
@@ -371,6 +385,9 @@ extern int cmd_close_queue(void);
 
 extern int ndrx_services_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur);
 extern void ndrx_services_free(config_t *config);
+
+extern int ndrx_routing_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur);
+extern void ddrerror(char *s, ...);
 
 /* Sanity & restart */
 extern int do_sanity_check(int isfinal);
@@ -421,6 +438,8 @@ extern void roc_mark_as_reloaded(char *binary_path, unsigned sanity_cycle);
 extern int self_sreload(pm_node_t *p_pm);
 
 extern int ndrxd_sanity_finally(void);
+
+extern int ndrx_ddr_add_group(char *grpcode);
 
 #ifdef EX_USE_SYSVQ
 extern int do_sanity_check_sysv(int finalchk);
