@@ -328,15 +328,14 @@ typedef struct
     int   context;                      /* Current context */
 } command_state_t;
 
+/**
+ * Support structure for parse time
+ */
 typedef struct
 {
-    long    flags;      /**< Parser flags                    */
-    char*   min;        /**< Parser min range value          */
-    char*   max;        /**< Parser max range value          */
     int     error;   /**< error is not set                */
     ndrx_growlist_t  stringbuffer;   /**< list used for string build */
-    ndrx_routcrit_typehash_t *p_crit;/**< current criterion in parse */
-    
+    ndrx_routcrit_typehash_t *p_crit;/**< current criterion in parse, might be used for type checkings, etc. */
 } ndrx_ddr_parser_t;
 
 /*---------------------------Globals------------------------------------*/
@@ -439,7 +438,7 @@ extern int self_sreload(pm_node_t *p_pm);
 
 extern int ndrxd_sanity_finally(void);
 
-extern int ndrx_ddr_add_group(char *grpcode);
+extern int ndrx_ddr_add_seq(char *grpcode);
 
 #ifdef EX_USE_SYSVQ
 extern int do_sanity_check_sysv(int finalchk);

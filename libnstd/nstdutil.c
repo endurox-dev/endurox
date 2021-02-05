@@ -1595,6 +1595,10 @@ expublic void ndrx_growlist_free(ndrx_growlist_t *list)
     if (NULL!=list->mem)
     {
         NDRX_FPFREE(list->mem);
+        /* reset list to initial state */
+        list->mem=NULL;
+        list->maxindexused=EXFAIL;
+        list->itemsalloc = 0;
     }
 }
 

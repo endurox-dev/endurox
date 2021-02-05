@@ -66,19 +66,26 @@ extern int ddrlex (void);
  * Note that %% and !% works only for string vs string or field vs string.
  */
 group_expression:
-            range_expr COLON RANGEVAL   { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($3)) DDRERROR;  }
-          | range_expr COLON DEFAULT    { ndrx_G_ddrp.flags|=NDRX_DDR_FLAG_DEFAULT_GRP; if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group(NULL)) DDRERROR;}
+            range_expr COLON RANGEVAL   { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, $3)) DDRERROR; }
+          | range_expr COLON DEFAULT    { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, NULL)) DDRERROR; }
+          | range_expr COLON MIN        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, "MIN")) DDRERROR; }
+          | range_expr COLON MAX        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1  "MAX")) DDRERROR; }
 	  ;
 
 /* get the range variants */
 range_expr:
-          RANGEVAL MINUS RANGEVAL       { ndrx_G_ddrp.min = strdup($1); ndrx_G_ddrp.max = strdup($3); if (!ndrx_G_ddrp.min || !ndrx_G_ddrp.max || ndrx_G_ddrp.error) DDRERROR;}
-          | MIN MINUS RANGEVAL          { ndrx_G_ddrp.flags|=NDRX_DDR_FLAG_MIN;  ndrx_G_ddrp.max = strdup($3); if (!ndrx_G_ddrp.max || ndrx_G_ddrp.error) DDRERROR;}
-          | RANGEVAL MINUS MAX          { ndrx_G_ddrp.flags|=NDRX_DDR_FLAG_MAX;  ndrx_G_ddrp.min = strdup($1); if (!ndrx_G_ddrp.min || ndrx_G_ddrp.error) DDRERROR;}
-          | DEFAULT                     { ndrx_G_ddrp.flags|=NDRX_DDR_FLAG_DEFAULT_VAL; if (ndrx_G_ddrp.error) DDRERROR;}
+          range_val MINUS range_val     { $$ = ndrx_ddr_new_rangeexpr($1, $3);    if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
+          | MIN MINUS range_val         { $$ = ndrx_ddr_new_rangeexpr(NULL, $3);  if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
+          | range_val MINUS MAX         { $$ = ndrx_ddr_new_rangeexpr($1, NULL);  if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
+          | DEFAULT                     { $$ = ndrx_ddr_new_rangeexpr(NULL, NULL);if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
+/* get the range variants val */
+range_val:
+          RANGEVAL                      {$$ = ndrx_ddr_new_rangeval($1, 0);      if (!$$|| ndrx_G_ddrp.error) DDRERROR; }
+          | MINUS RANGEVAL              {$$ = ndrx_ddr_new_rangeval($1, EXTRUE); if (!$$|| ndrx_G_ddrp.error) DDRERROR; }
 %%
 
 group_expression: /* nothing */
+    group_expression COMMA {}
   | group_expression EOL {}
  ;
  

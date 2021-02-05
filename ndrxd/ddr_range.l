@@ -82,14 +82,19 @@ EXP	([Ee][-+]?[0-9]+)
 "'"  
                         {
                             BEGIN STRING;
+                            /* clean up the string buffer... */
+                            ndrx_growlist_free(&ndrx_G_ddrp.stringbuffer);
                         }
-<STRING>\\'
+<STRING>\\'|\'
                         {
-                            /* just add ' -> legacy mode */
-                        }
-<STRING>\'
-                        {
-                            /* just add ' */
+                            char c='\'';
+                            /* add string */
+                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
+                            {
+                                ddrerror("Failed to append text: %s to string buffer", 
+                                        ddrtext); 
+                                ddrterminate();
+                            }
                         }
 <STRING>.               {
                             /* add string */
@@ -100,10 +105,10 @@ EXP	([Ee][-+]?[0-9]+)
                                 ddrterminate();
                             }
                         }
-<STRING>'               
+<STRING>'
                         {
-                            /* terminate the string buffer ... TODO: how to clean up?*/
-
+                            BEGIN INITIAL;
+                            return RANGEVAL;
                         }
 
 /* ignore white space */ 
