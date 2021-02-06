@@ -208,8 +208,8 @@ extern "C" {
 #define NDRXD_ECFGAPPCONFIG         21         /**< Invalid appconfig settings   */
 #define NDRXD_EACCES             22         /**< No access to file            */
 #define NDRXD_ESYNTAX            23         /**< Syntax error during parsing  */
-
-#define NDRXD_EMAXVAL            1000
+#define NDRXD_ESYSTEM             24         /**< E/X system failure            */
+#define NDRXD_EMAXVAL            24
 
 /* This section list call types */
 #define NDRXD_CALL_TYPE_GENERIC         0   /**< Generic call type        */

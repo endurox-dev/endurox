@@ -43,83 +43,76 @@
 #include <stdlib.h>
 #include <string.h>
 #include <nstdutil.h>
+#include <ndrx_ddr.h>
+#include <ndrxd.h>
+#include "expr_range.tab.h"
+/* Handle locations */
+int ddrcolumn = 1;
+#define DDR_USER_ACTION ddrlloc.first_column = ddrcolumn; ddrlloc.last_column = ddrcolumn+ddrleng-1; \
+                                               ddrcolumn +=ddrleng;
 
- /* Handle locations */
- int ddrcolumn = 1;
- #define DDR_USER_ACTION ddrlloc.first_column = ddrcolumn; ddrlloc.last_column = ddrcolumn+ddrleng-1; \
-						ddrcolumn +=ddrleng;
 %}
 
-/* float exponent */
-EXP	([Ee][-+]?[0-9]+)
-
 %%
- /* single character ops */
-"*"                     
-                        { 
+"*"                     { 
                             return DEFAULT; 
                         }
-"-"				
-                        { 
+"-"                     { 
                             return MINUS; 
                         }
-":"				
-                        { 
+":"                     { 
                             return COLON; 
                         }
-","			
-                        { 
+","                     { 
                             return COMMA; 
                         }
-/* get the normal text, will parse later the numbers */
-[^\*-:,\n\t \']
-                        {
-                            yylval.val = yytext;
+[^\*-:,\n\t \']+        {
+                            ddrlval.val = ddrtext;
                             return RANGEVAL;
                         }
-
-/* start the string */
-"'"  
-                        {
+"'"                     {
                             BEGIN STRING;
-                            /* clean up the string buffer... */
                             ndrx_growlist_free(&ndrx_G_ddrp.stringbuffer);
                         }
-<STRING>\\'|\'
-                        {
-                            char c='\'';
-                            /* add string */
-                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
-                            {
-                                ddrerror("Failed to append text: %s to string buffer", 
-                                        ddrtext); 
-                                ddrterminate();
-                            }
+<STRING>\\\\'|\\'          {
+                                char c='\'';
+                                if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
+                                {
+                                    ddrerror("Failed to append text to string buffer"); 
+                                    return EOL;
+                                }
                         }
-<STRING>.               {
+<STRING>[^']           {
                             /* add string */
                             if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, ddrtext))
                             {
-                                ddrerror("Failed to append text: %s to string buffer", 
-                                        ddrtext); 
-                                ddrterminate();
+                                ddrerror("Failed to append text to string buffer"); 
+                                return EOL;
                             }
                         }
-<STRING>'
-                        {
+<STRING>'              {
+                            char c='\0';
+                            if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
+                            {
+                                ddrerror("Failed to append text to string buffer"); 
+                                return EOL;
+                            }
+
+                            ddrtext=ndrx_G_ddrp.stringbuffer.mem;
+                            
                             BEGIN INITIAL;
                             return RANGEVAL;
                         }
-
-/* ignore white space */ 
-[ \t]
-
-/* terminate expression */
-"\n"			{
+[ \t]                   {
+                        }
+"\n"                    {
                             return EOL;
                         }
 .                       {
-                            ddrerror("Unknown character [%c]", *ddrtext); ddrterminate();
+                            {
+                                ddrerror("Unknown character [%c]", *ddrtext);
+                                return EOL;
+                            }
                         }
 %%
 
@@ -131,7 +124,7 @@ EXP	([Ee][-+]?[0-9]+)
                       && (!defined(DDR_FLEX_SUBMINOR_VERSION)                  \
                               || DDR_FLEX_SUBMINOR_VERSION < 9))))
 
-#define ddrlex_destroy() ddr_delete_buffer(DDR_CURRENT_BUFFER)
+#define ddrlex_destroy() ddr_delete_buffer(YY_CURRENT_BUFFER)
 
 #endif
 

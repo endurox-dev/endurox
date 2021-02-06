@@ -37,13 +37,15 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <ndrxd.h>
 #include <ndrx_ddr.h>
-
+    
 extern int ddrlex (void);
 %}
 
 %union {
     char *val;
+    ndrx_routcritseq_dl_t *rts;
 }
 
 %locations
@@ -60,33 +62,38 @@ extern int ddrlex (void);
 
 %start group_expression
 
+%type <val> range_val
+%type <rts> range_expr group_expression
+
+
 %%
 
 /*
  * Note that %% and !% works only for string vs string or field vs string.
  */
 group_expression:
-            range_expr COLON RANGEVAL   { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, $3)) DDRERROR; }
-          | range_expr COLON DEFAULT    { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, NULL)) DDRERROR; }
-          | range_expr COLON MIN        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, "MIN")) DDRERROR; }
-          | range_expr COLON MAX        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1  "MAX")) DDRERROR; }
+            range_expr COLON RANGEVAL   { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, $3)) {YYERROR;} }
+          | range_expr COLON DEFAULT    { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, NULL)) {YYERROR;} }
+          | range_expr COLON MIN        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, "MIN")) {YYERROR;} }
+          | range_expr COLON MAX        { if (ndrx_G_ddrp.error || EXSUCCEED!=ndrx_ddr_add_group($1, "MAX")) {YYERROR;} }
 	  ;
 
 /* get the range variants */
 range_expr:
-          range_val MINUS range_val     { $$ = ndrx_ddr_new_rangeexpr($1, $3);    if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
-          | MIN MINUS range_val         { $$ = ndrx_ddr_new_rangeexpr(NULL, $3);  if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
-          | range_val MINUS MAX         { $$ = ndrx_ddr_new_rangeexpr($1, NULL);  if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
-          | DEFAULT                     { $$ = ndrx_ddr_new_rangeexpr(NULL, NULL);if (!$$|| ndrx_G_ddrp.error) DDRERROR;}
+          range_val MINUS range_val     { $$ = ndrx_ddr_new_rangeexpr($1, $3);    if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
+          | MIN MINUS range_val         { $$ = ndrx_ddr_new_rangeexpr(NULL, $3);  if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
+          | range_val MINUS MAX         { $$ = ndrx_ddr_new_rangeexpr($1, NULL);  if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
+          | DEFAULT                     { $$ = ndrx_ddr_new_rangeexpr(NULL, NULL);if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
 /* get the range variants val */
 range_val:
-          RANGEVAL                      {$$ = ndrx_ddr_new_rangeval($1, 0);      if (!$$|| ndrx_G_ddrp.error) DDRERROR; }
-          | MINUS RANGEVAL              {$$ = ndrx_ddr_new_rangeval($1, EXTRUE); if (!$$|| ndrx_G_ddrp.error) DDRERROR; }
-%%
+          RANGEVAL                      {$$ = ndrx_ddr_new_rangeval($1, 0);      if (!$$|| ndrx_G_ddrp.error) {YYERROR; }}
+          | MINUS RANGEVAL              {$$ = ndrx_ddr_new_rangeval($2, EXTRUE); if (!$$|| ndrx_G_ddrp.error) {YYERROR; }}
 
-group_expression: /* nothing */
-    group_expression COMMA {}
-  | group_expression EOL {}
+group_expression:
+    group_expression COMMA
+  | group_expression EOL
  ;
  
+%%
+
 /* vim: set ts=4 sw=4 et smartindent: */
