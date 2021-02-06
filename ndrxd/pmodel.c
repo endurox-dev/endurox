@@ -1370,8 +1370,11 @@ expublic int app_startup(command_startstop_t *call,
     int abort = EXFALSE;
     NDRX_LOG(log_warn, "Starting application domain");
 
+    /*
     if (NULL==G_app_config && EXSUCCEED!=load_active_config(&G_app_config,
                 &G_process_model, &G_process_model_hash, &G_process_model_pid_hash))
+     */
+    if (NULL==G_app_config && EXSUCCEED!=load_active_config_live())
     {
         ret=EXFAIL;
         goto out;

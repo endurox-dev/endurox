@@ -59,6 +59,10 @@ extern NDRX_API int G_max_svcs;
 extern NDRX_API ndrx_shm_t G_svcinfo;
 extern NDRX_API int G_max_servers;
 extern NDRX_API ndrx_shm_t G_srvinfo;
+
+extern NDRX_API ndrx_shm_t ndrx_G_routcrit;    /**< Routing criterions */
+extern NDRX_API ndrx_shm_t ndrx_G_routsvc;     /**< Routing services   */
+
 /*---------------------------Statics------------------------------------*/
 /*---------------------------Prototypes---------------------------------*/
 extern NDRX_API int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,

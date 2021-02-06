@@ -50,7 +50,9 @@
 #include "exsha1.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
-#define     CHECK_PM_DEFAULT              2   /* Check process model on every */
+#define     CHECK_PM_DEFAULT              2   /**< Check process model on every */
+
+#define     DDRREALOAD_DEFAULT           60  /**< Number of seconds route is not reloaded */
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -120,6 +122,9 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
             pm_node_t ***process_model_hash, pm_pidhash_t ***process_model_pid_hash)
 {
     NDRX_LOG(log_debug, "Free up config memory...");
+    
+    
+    
     if (NULL!=*app_config)
     {
         conf_server_node_t *elt, *tmp;
@@ -140,6 +145,9 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
         
         /* kill any env groups */
         ndrx_ndrxconf_envs_groups_free(&(*app_config)->envgrouphash);
+        
+        /* remove any ddr segments */
+        ndrx_ddr_free_all(*app_config);
         
         NDRX_FREE(*app_config);
 
@@ -176,6 +184,26 @@ exprivate void config_free(config_t **app_config, pm_node_t **process_model,
         NDRX_FREE(*process_model_pid_hash);
         *process_model_pid_hash=NULL;
     }
+    
+}
+
+/**
+ * Load live config
+ * @return 
+ */
+expublic int load_active_config_live(void)
+{
+    int ret = EXSUCCEED;
+    ret = load_active_config(&G_app_config, &G_process_model,
+                &G_process_model_hash, &G_process_model_pid_hash);
+    
+    if (EXSUCCEED==ret)
+    {
+        /* apply DDR */
+        ndrx_ddr_apply();
+    }
+    
+    return ret;
 }
 /**
  * Load active configuration.
@@ -724,6 +752,16 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                                                   p, config->rqaddrttl);
                 xmlFree(p);
             }
+            
+            else if (0==strcmp((char*)cur->name, "ddrreload"))
+            {
+                p = (char *)xmlNodeGetContent(cur);
+                config->ddrreload = atoi(p);
+                NDRX_LOG(log_debug, "ddrreload: [%s] - %d sty",
+                                                  p, config->ddrreload);
+                xmlFree(p);
+            }
+            
             last_line=cur->line;
             cur = cur->next;
         } while (cur);
@@ -795,6 +833,13 @@ exprivate int parse_appconfig(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         config->rqaddrttl = DEF_RQADDRTTL;
         NDRX_LOG(log_debug, "`rqaddrtt' not set using "
                 "default %d sty!", config->rqaddrttl);
+    }
+    
+    if (0>= config->ddrreload)
+    {
+        config->ddrreload = DDRREALOAD_DEFAULT;
+        NDRX_LOG(log_debug, "`routereload' not set using "
+                "default %d sty!", config->ddrreload);
     }
 
 out:
@@ -1449,6 +1494,17 @@ exprivate int parse_config(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         ret=EXFAIL;
         goto out;
     }
+    
+    /* gen routing blocks */
+    
+    if (EXSUCCEED!=ndrx_ddr_gen_blocks(config))
+    {
+        NDRX_LOG(log_error, "Failed to generate routing blocks");
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to generate routing blocks",
+                G_sys_config.config_file_short);
+        ret=EXFAIL;
+        goto out;
+    }
 
 out:
     return ret;
@@ -1569,6 +1625,7 @@ expublic int test_config(int reload, command_call_t * call,
     int ret=EXSUCCEED;
     int new_error=EXFALSE;
     int old_error=EXFALSE;
+    int do_free = EXFALSE;
     /*
      * Active monitor configuration
      */
@@ -1608,6 +1665,7 @@ expublic int test_config(int reload, command_call_t * call,
             p_reload_error(call, 0, "", "", ndrxd_errno, 
                     ndrxd_strerror(ndrxd_errno));
         }
+        
         ret=EXFAIL;
         goto out;
     }
@@ -1615,7 +1673,9 @@ expublic int test_config(int reload, command_call_t * call,
     if (NULL==G_app_config)
     {
         NDRX_LOG(log_debug, "Active config not loaded, nothing to do.");
-        return EXSUCCEED;
+        do_free=EXTRUE;
+        /* free up the config otherwise we get leak.. */
+        goto out;
     }
     
     /* I think we need two loops:
@@ -1777,6 +1837,9 @@ expublic int test_config(int reload, command_call_t * call,
         G_process_model = t_process_model;
         G_process_model_hash = t_process_model_hash;
         G_process_model_pid_hash = t_process_model_pid_hash;
+        
+        ndrx_ddr_apply();
+
         /* so that in case of error we do not destroy already master config. */
         t_app_config = NULL;
         t_process_model = NULL;
@@ -1798,7 +1861,7 @@ expublic int test_config(int reload, command_call_t * call,
 
 out:
 
-    if (EXSUCCEED!=ret)
+    if (EXSUCCEED!=ret || do_free)
     {
         config_free(&t_app_config, &t_process_model, &t_process_model_hash, 
                 &t_process_model_pid_hash);

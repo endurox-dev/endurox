@@ -945,6 +945,10 @@ expublic void ndrx_lcf_reset(void)
     
     ndrx_sem_rwunlock(&M_lcf_sem, 0, NDRX_SEM_TYP_WRITE);
     
+    
+    ndrx_G_shmcfg->use_ddr = EXFALSE;
+    ndrx_G_shmcfg->ddr_page=0;
+    
 out:
     MUTEX_UNLOCK_V(M_lcf_run);
 }

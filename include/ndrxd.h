@@ -270,6 +270,8 @@ typedef struct
     int rqaddrttl;
     char default_rqaddr[MAXTIDENT+1];	/**< Default request address */
     
+    int ddrreload;     /**< rote reload setting schedule upload if previous was loaded */
+    
     long default_rssmax; /**< Default max resource memory size in bytes, -1 nochk */
     long default_vszmax; /**< Default max virtual memory size in bytes, -1 nochk */
     
@@ -375,6 +377,7 @@ extern char * get_srv_admin_q(pm_node_t * p_pm);
 extern int load_config(config_t *config, char *config_file);
 extern int load_active_config(config_t **app_config, pm_node_t **process_model,
             pm_node_t ***process_model_hash, pm_pidhash_t ***process_model_pid_hash);
+extern int load_active_config_live(void);
 /* test config or reload */
 extern int test_config(int reload, command_call_t * call, void (*p_reload_error)(command_call_t * call,
                     int srvid, char *old_bin, char *new_bin, int error, char *msg));
@@ -394,6 +397,10 @@ extern void ndrx_services_free(config_t *config);
 
 extern int ndrx_routing_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur);
 extern void ddrerror(char *s, ...);
+
+extern void ndrx_ddr_apply_sanity(void);
+extern void ndrx_ddr_install(void);
+extern void ndrx_ddr_apply(void);
 
 /* Sanity & restart */
 extern int do_sanity_check(int isfinal);
@@ -447,11 +454,13 @@ extern int ndrxd_sanity_finally(void);
 
 
 extern void ndrx_ddr_delete_buffer(void *ptr);
-extern int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp);
+extern int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_mallocd);
 extern ndrx_routcritseq_dl_t * ndrx_ddr_new_rangeexpr(char *range_min, char *range_max);
-extern char *ndrx_ddr_new_rangeval(char *range, int is_negative);
-void ddrerror(char *s, ...);
+extern char *ndrx_ddr_new_rangeval(char *range, int is_negative, int dealloc);
 
+void ddrerror(char *s, ...);
+extern int ndrx_ddr_gen_blocks(config_t *config);
+extern void ndrx_ddr_free_all(config_t *config);
 
 #ifdef EX_USE_SYSVQ
 extern int do_sanity_check_sysv(int finalchk);
