@@ -47,13 +47,19 @@
 #include <ndrxd.h>
 #include "expr_range.tab.h"
 /* Handle locations */
-int ddrcolumn = 1;
-#define DDR_USER_ACTION ddrlloc.first_column = ddrcolumn; ddrlloc.last_column = ddrcolumn+ddrleng-1; \
-                                               ddrcolumn +=ddrleng;
+int ndrx_G_ddrcolumn = 1;
+#define YY_USER_ACTION ddrlloc.first_column = ndrx_G_ddrcolumn; ddrlloc.last_column = ndrx_G_ddrcolumn+ddrleng-1; \
+                                               ndrx_G_ddrcolumn +=ddrleng;
 
 %}
 
 %%
+"MIN"                   { 
+                            return MIN; 
+                        }
+"MAX"                   { 
+                            return MAX; 
+                        }
 "*"                     { 
                             return DEFAULT; 
                         }
@@ -66,8 +72,13 @@ int ddrcolumn = 1;
 ","                     { 
                             return COMMA; 
                         }
-[^\*-:,\n\t \']+        {
-                            ddrlval.val = ddrtext;
+[^\*\-:,\n\t \']+        {
+                            ddrlval.val = NDRX_STRDUP(ddrtext);
+                            if (NULL==ddrlval.val)
+                            {
+                                ddrerror("Failed to copy string - OOM?"); 
+                                return EOL;
+                            }
                             return RANGEVAL;
                         }
 "'"                     {
@@ -82,7 +93,8 @@ int ddrcolumn = 1;
                                     return EOL;
                                 }
                         }
-<STRING>[^']           {
+<STRING>[^'\n]           {
+                            NDRX_LOG(log_error, "ADDING CHAR %c", *ddrtext);
                             /* add string */
                             if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, ddrtext))
                             {
@@ -90,6 +102,10 @@ int ddrcolumn = 1;
                                 return EOL;
                             }
                         }
+<STRING>[\n]           {
+                            ddrerror("Unexpected and of the string"); 
+                            return EOL;
+                       }
 <STRING>'              {
                             char c='\0';
                             if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
@@ -98,21 +114,13 @@ int ddrcolumn = 1;
                                 return EOL;
                             }
 
-                            ddrtext=ndrx_G_ddrp.stringbuffer.mem;
-                            
                             BEGIN INITIAL;
-                            return RANGEVAL;
+                            return STRVAL;
                         }
 [ \t]                   {
                         }
 "\n"                    {
                             return EOL;
-                        }
-.                       {
-                            {
-                                ddrerror("Unknown character [%c]", *ddrtext);
-                                return EOL;
-                            }
                         }
 %%
 
@@ -128,11 +136,5 @@ int ddrcolumn = 1;
 
 #endif
 
-
-/* common function to free up parser */
-void _free_parser(void)
-{
-    ddrlex_destroy();
-}
 
 /* vim: set ts=4 sw=4 et smartindent: */

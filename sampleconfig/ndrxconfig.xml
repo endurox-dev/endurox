@@ -35,6 +35,8 @@
          -->
          <gather_pq_stats>Y</gather_pq_stats>
          
+         <ddrreload>1</ddrreload>
+         
 	</appconfig>
     <defaults>
         <min>1</min>
@@ -145,5 +147,48 @@
                         <exec tag="mongo" autostart="Y"/>
                 </client>
 	</clients>
+
+
+<services>
+	<service svcnm="SERVICE1" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
+	<service svcnm="SERVICE2" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
+	<service svcnm="SERVICE3" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
+</services>
+
+
+<routing>
+
+    <route routing="HELLO">
+	<!-- <field>T_STRING_FLD</field> -->
+	<field>T_LONG_FLD</field>
+	<ranges>MIN-4:GRP1,100-2000:GRP4,1000-22100:GRP5,*:*</ranges>
+	<buftype>UBF</buftype>
+    </route>
+
+    <route routing="HELLO2">
+	<!-- <field>T_STRING_FLD</field> -->
+	<field>T_LONG_FLD</field>
+	<ranges>MIN-4:GRP1,1011-2000:GRP4,1000-22100:GRP5,*:*</ranges>
+	<buftype>UBF</buftype>
+    </route>
+
+    <route routing="HELLO4">
+	<field>T_STRING_FLD</field> 
+	<ranges>AAAA - ZZZZ : GPR1</ranges> 
+<!--	<ranges>1 - 2 : GPR1</ranges>   -->
+<!--	<ranges>'AAAA1'     - 'AzzzzzzzzzzzzzzZZZZZZZZZZZZZZZZZZZZZZ' : OK</ranges> -->
+	<buftype>UBF</buftype>
+    </route>
+
+
+	<!-- bad route  
+    <route routing="HELLO1">
+	<field>T_STRING_FLD</field>
+	<ranges>x-z:f,'jjjj' - '-bbbbbb'  : -'GPD3,'</ranges>
+	<buftype>UBF</buftype>
+    </route> -->
+
+</routing> 
+
 </endurox>
 
