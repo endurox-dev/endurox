@@ -288,6 +288,13 @@ typedef struct
     /** have hash handle for services */
     ndrx_services_hash_t *services;
     
+    /** malloc'd and compiled services memory block     */
+    char *services_block;
+    
+    /** malloc'd an compiled routing blocks             */
+    char *routing_block;
+    
+    
 } config_t;
 
 /**
@@ -438,7 +445,13 @@ extern int self_sreload(pm_node_t *p_pm);
 
 extern int ndrxd_sanity_finally(void);
 
-extern int ndrx_ddr_add_seq(char *grpcode);
+
+extern void ndrx_ddr_delete_buffer(void *ptr);
+extern int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp);
+extern ndrx_routcritseq_dl_t * ndrx_ddr_new_rangeexpr(char *range_min, char *range_max);
+extern char *ndrx_ddr_new_rangeval(char *range, int is_negative);
+void ddrerror(char *s, ...);
+
 
 #ifdef EX_USE_SYSVQ
 extern int do_sanity_check_sysv(int finalchk);
