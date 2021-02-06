@@ -41,6 +41,9 @@
 #include <fcntl.h>
 
 #include "atmi_int.h"
+#include <lcfint.h>
+#include <atmi_shm.h>
+#include <typed_buf.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NDRX_DDRV_SVC_INDEX(MEM, IDX) ((ndrx_services_t*)(((char*)MEM)+(int)(sizeof(ndrx_services_t)*IDX)))
@@ -107,8 +110,8 @@ exprivate int ndrx_ddr_position_get(char *svcnm, int oflag, int *pos,
  */
 expublic int ndrx_ddr_services_put(ndrx_services_t *svc, char *mem, long memmax)
 {
-    int have_value;
-    int pos;
+    int have_value=EXFALSE;
+    int pos=0;
     int ret = EXSUCCEED;
     ndrx_services_t *ptr = (ndrx_services_t *)mem;
     
@@ -128,13 +131,211 @@ out:
     return ret;
 }
 
-/* TODO: Resolve services */
+/**
+ * Get services entry.
+ * Find the entry in current page of the DDR memory.
+ * Thus DDR reloads shall be deferred for as long as possible time.
+ * @param svcnm service name 
+ * @param svc service descriptor
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_ddr_services_get(char *svcnm, ndrx_services_t **svc)
+{
+    int ret = EXFAIL;
+    int have_value=EXFALSE;
+    int pos=0;
+    int page;
+    ndrx_services_t *ptr;
+    /* ddr not used. */
+    if (!ndrx_G_shmcfg->use_ddr)
+    {
+        return EXFAIL;
+    }
+    page = ndrx_G_shmcfg->ddr_page;
+    ptr = (ndrx_services_t *) (ndrx_G_routsvc.mem + page*G_atmi_env.rtsvcmax * sizeof(ndrx_services_t));
+    
+    if (EXSUCCEED==ndrx_ddr_position_get(svcnm, 0, &pos, 
+        &have_value, (char **)&ptr, G_atmi_env.rtsvcmax) && have_value)
+    {
+        *svc = &ptr[pos];
+        
+        NDRX_LOG(log_debug, "Found service [%s] in ddr service table, autotran=%d", 
+                (*svc)->svcnm, (*svc)->autotran);
+        ret=EXSUCCEED;
+    }
 
-/* TODO: Check routing & return group */
+out:
+    return ret;
+}
 
-/* TODO: Resolve service name by routing? */
-
-/* TODO: NDRXD apply config to shared mem with with the timeout setting */
+/**
+ * Get routing group defined for service
+ * Note the page shall not be changed while we work here.
+ * Thus DDR reloads shall be deferred for as long as possible time.
+ * @param svcnm service to route to
+ * @param data data to send to service
+ * @param len dat len to send to service
+ * @param[out] grp group code found
+ * @param[out] grpsz group code buffer size
+ * @return EXSUCCEED -> group not found (or default), EXTRUE group loaded, EXFAIL - not resolved
+ */
+expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size_t grpsz)
+{
+    int ret = EXSUCCEED;
+    ndrx_services_t *svc;
+    int page;
+    ndrx_routcrit_t *ccrit;
+    ndrx_routcritseq_t *range;
+    int offset_step=0;
+    int i;
+    double floatval;
+    char *strval=NULL;
+    buffer_obj_t *buf;
+    char *mem_start;
+    int in_range;
+    
+    if (EXSUCCEED!=ndrx_ddr_services_get(svcnm, &svc))
+    {
+        /* no group defined at all */
+        goto out;
+    }
+    
+    if (EXEOS==svc->criterion[0])
+    {
+        /* criterion not found */
+        goto out;
+    }
+    
+    /* loop over the criterions at the offset 
+     * and match the first buffer type on which we go over the sequence of the
+     * rnages
+     * Get the offset of the criterion stuff...
+     */
+    
+    buf = ndrx_find_buffer(data);
+    if (NULL==buf)
+    {
+        /* nothing todo, just return, probably at later phases error will be generated */
+        goto out;
+    }
+    
+    mem_start = ndrx_G_routcrit.mem + page * G_atmi_env.rtcrtmax+svc->offset; 
+    
+    do
+    {
+        page = ndrx_G_shmcfg->ddr_page;
+        ccrit = (ndrx_routcrit_t *)(mem_start + offset_step);
+        
+        NDRX_LOG(log_debug, "YOPT DDR scanning at %p for [%s]", ccrit, svcnm);
+        
+        if (ccrit->criterionid!=svc->cirterionid)
+        {
+            /* no matching buffer - ok */
+            goto out;
+        }
+        
+        /* check the types, shall match the current buffer */
+        
+        if (buf->type_id == ccrit->buffer_type_id)
+        {
+            /*  OK this is ours to check... */
+            if (BUF_TYPE_UBF==buf->type_id)
+            {
+                if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                {
+                    /* get double for route... 
+                     * What shall we do if field is not present?
+                     */
+                    if (EXSUCCEED==CBget((UBFH *)data, ccrit->fldid, 0, 
+                            (char *)&floatval, 0L, BFLD_DOUBLE))
+                    {
+                        NDRX_LOG(log_debug, "Routing field not found [%s]", ccrit->field);
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                else
+                {
+                    /* alloc string copy with CF or to avoid allocations
+                     * just use sysbuf page? as that size would gurantee that we
+                     * fit in...
+                     */
+                    strval = Bgetsa ((UBFH *)data, ccrit->fldid, 0, NULL);
+                    
+                    if (NULL==strval)
+                    {
+                        NDRX_LOG(log_debug, "Failed to get routing string field");
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                
+            }
+            
+            offset_step+=sizeof(ndrx_routcrit_t);
+            
+            for (i=0; i < ccrit->rangesnr; i++)
+            {
+                /* OK we got the range so loop over... */
+                range = (ndrx_routcritseq_t *)(mem_start + offset_step);
+                
+                /* TODO: check that we are in boundries */
+                
+                if (range->flags & NDRX_DDR_FLAG_DEFAULT_VAL)
+                {
+                    /* ranges OK, return group */
+                    in_range=EXTRUE;
+                }
+                else if (range->flags & NDRX_DDR_FLAG_MIN)
+                {
+                    /* TODO: check that value is bellow max */
+                    
+                }
+                else if (range->flags & NDRX_DDR_FLAG_MAX)
+                {
+                    /* TODO: check that value is above min */
+                }
+                else
+                {
+                    /* TODO: check is it in range */
+                }
+                
+                if (in_range)
+                {
+                    if (range->flags & NDRX_DDR_FLAG_DEFAULT_GRP)
+                    {
+                        NDRX_LOG(log_debug, "Default group matched");
+                        goto out;
+                    }
+                    else
+                    {
+                        /* copy off the group code */
+                        NDRX_STRCPY_SAFE_DST(grp, range->grp, grpsz);
+                        NDRX_LOG(log_debug, "Group [%s]  matched", grp);
+                    }
+                }
+                    
+                /* step to next..., this is aligned step */
+                offset_step+=range->len;
+            }
+            
+        }
+        
+        /* TODO: limit limit of ranges, to avoid handing
+         * in case if doing quick reloads
+         */
+        
+        /* check for next... */
+    } while (svc->offset + offset_step + sizeof(ndrx_routcrit_t) < G_atmi_env.rtcrtmax);
+    
+    
+out:
+    
+    if (NULL!=strval)
+    {
+        NDRX_FREE(strval);
+    }
+    
+    return ret;
+}
 
 
 /* vim: set ts=4 sw=4 et smartindent: */
