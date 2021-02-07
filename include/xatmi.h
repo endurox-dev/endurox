@@ -351,6 +351,10 @@ extern "C" {
 #define TP_CMT_LOGGED              0x04  /**< return after commit has logged   */
 #define TP_CMT_COMPLETE            0x08  /**< return after commit has completed*/
 
+#define NDRX_DDR_CRITMAX             15          /**< Max len of criterion   */
+#define NDRX_DDR_GRP_MAX             15          /**< group code size        */
+#define NDRX_DDR_TRANTIMEDFLT        30          /**< Default transaction timeout */
+
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
@@ -638,6 +642,10 @@ extern NDRX_API void ndrx_atfork_prepare(void);
 
 extern NDRX_API int tpencrypt(char *input, long ilen, char *output, long *olen, long flags);
 extern NDRX_API int tpdecrypt(char *input, long ilen, char *output, long *olen, long flags);
+
+extern NDRX_API int tpsprio(int prio, long flags);
+extern NDRX_API int tpgprio(void);
+
 
 #if defined(__cplusplus)
 }

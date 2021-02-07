@@ -58,6 +58,7 @@
 
 #include "gencall.h"
 #include "userlog.h"
+#include "atmi_tls.h"
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define SLEEP_ON_FULL_Q             170000   /* Sleep 150 ms every batch..... */
@@ -265,8 +266,10 @@ expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long fla
 restart:
 
     SET_TOUT_VALUE;
-    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+
+    /* Internal message including tpsend() will use default priority. */
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, NDRX_MSGPRIO_DEFAULT)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, NDRX_MSGPRIO_DEFAULT, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -366,10 +369,23 @@ restart_send:
         abs_timeout.tv_nsec = timeval.tv_usec*1000;
     }
 
-    NDRX_LOG(6, "use timeout: %d config: %d", 
-                use_tout, G_atmi_env.time_out);
-    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, 0)) ||
-         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, 0, &abs_timeout)))
+    /** override the message priority */
+    if (NULL!=G_atmi_tls && G_atmi_tls->prio)
+    {
+        /* override priority from tpsprio() */
+        msg_prio = G_atmi_tls->prio;
+    }
+
+    if (msg_prio==0)
+    {
+        /* set default prio */
+        msg_prio = NDRX_MSGPRIO_DEFAULT;
+    }
+
+    NDRX_LOG(6, "use timeout: %d config: %d prio: %d", 
+                use_tout, G_atmi_env.time_out, msg_prio);
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, msg_prio)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, msg_prio, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
@@ -396,6 +412,13 @@ restart_close:
             NDRX_LOG(log_warn, "Got signal interrupt, restarting ndrx_mq_close");
             goto restart_close;
         }
+    }
+
+    /** OK, have priority of the last call */
+    if (NULL!=G_atmi_tls)
+    {
+        G_atmi_tls->prio = 0; /* reset the priority setting... */
+        G_atmi_tls->prio_last = msg_prio;
     }
 
     return ret;

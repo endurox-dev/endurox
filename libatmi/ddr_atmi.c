@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
-
+#include <math.h>
 #include <ndrx_ddr.h>
 #include <fcntl.h>
 
@@ -154,7 +154,7 @@ expublic int ndrx_ddr_services_get(char *svcnm, ndrx_services_t **svc)
     page = ndrx_G_shmcfg->ddr_page;
     ptr = (ndrx_services_t *) (ndrx_G_routsvc.mem + page*G_atmi_env.rtsvcmax * sizeof(ndrx_services_t));
     
-    if (EXSUCCEED==ndrx_ddr_position_get(svcnm, 0, &pos, 
+    if (EXTRUE==ndrx_ddr_position_get(svcnm, 0, &pos, 
         &have_value, (char **)&ptr, G_atmi_env.rtsvcmax) && have_value)
     {
         *svc = &ptr[pos];
@@ -172,14 +172,16 @@ out:
  * Get routing group defined for service
  * Note the page shall not be changed while we work here.
  * Thus DDR reloads shall be deferred for as long as possible time.
- * @param svcnm service to route to
- * @param data data to send to service
- * @param len dat len to send to service
- * @param[out] grp group code found
- * @param[out] grpsz group code buffer size
+ * If routing is found, svcnm will be updated
+ * @param[in,out] svcnm service to route, will be updated 
+ * @param[in,out] svcnmsz buffer size of service
+ * @param[in] data data to send to service
+ * @param[in] len dat len to send to service
+ * @param[out] prio if service if found return the priority
  * @return EXSUCCEED -> group not found (or default), EXTRUE group loaded, EXFAIL - not resolved
  */
-expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size_t grpsz)
+expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
+        int *prio)
 {
     int ret = EXSUCCEED;
     ndrx_services_t *svc;
@@ -189,16 +191,33 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
     int offset_step=0;
     int i;
     double floatval;
+    double longval;
     char *strval=NULL;
     buffer_obj_t *buf;
     char *mem_start;
-    int in_range;
+    int in_range=EXFALSE;
+    BFLDID fldid;
+    int checks=0;
+    char fldnm[UBFFLDMAX+1];
+    int len_new;
+    char grp[NDRX_DDR_GRP_MAX+1];
+    
+    
+    /* not attached, nothign to return */
+    if (!ndrx_shm_is_attached(&ndrx_G_routsvc))
+    {
+        goto out;
+    }
     
     if (EXSUCCEED!=ndrx_ddr_services_get(svcnm, &svc))
     {
+        NDRX_LOG(log_debug, "No DDR service for [%s]", svcnm);
         /* no group defined at all */
         goto out;
     }
+    
+    /* return default service call priority */
+    *prio = svc->prio;
     
     if (EXEOS==svc->criterion[0])
     {
@@ -211,27 +230,37 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
      * rnages
      * Get the offset of the criterion stuff...
      */
-    
     buf = ndrx_find_buffer(data);
     if (NULL==buf)
     {
-        /* nothing todo, just return, probably at later phases error will be generated */
-        goto out;
+        NDRX_LOG(log_error, "Cannot route [%s] service - invalid data buffer",
+                svcnm);
+        userlog("Cannot route [%s] service - invalid data buffer",
+                svcnm);
+        ndrx_TPset_error_fmt(TPESYSTEM, "Cannot route [%s] service - invalid data buffer",
+                svcnm);
+        EXFAIL_OUT(ret);
     }
     
     mem_start = ndrx_G_routcrit.mem + page * G_atmi_env.rtcrtmax+svc->offset; 
     
     do
     {
+        checks++;
+        
+        if (checks > 999)
+        {
+            /* something bad has happened */
+            goto out_rej;
+        }
+        
         page = ndrx_G_shmcfg->ddr_page;
         ccrit = (ndrx_routcrit_t *)(mem_start + offset_step);
-        
-        NDRX_LOG(log_debug, "YOPT DDR scanning at %p for [%s]", ccrit, svcnm);
         
         if (ccrit->criterionid!=svc->cirterionid)
         {
             /* no matching buffer - ok */
-            goto out;
+            goto out_rej;
         }
         
         /* check the types, shall match the current buffer */
@@ -241,15 +270,33 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
             /*  OK this is ours to check... */
             if (BUF_TYPE_UBF==buf->type_id)
             {
-                if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                fldid = ccrit->fldid;
+                NDRX_STRCPY_SAFE(fldnm, ccrit->field);
+                if (BFLD_LONG == ccrit->fieldtypeid)
                 {
-                    /* get double for route... 
-                     * What shall we do if field is not present?
-                     */
-                    if (EXSUCCEED==CBget((UBFH *)data, ccrit->fldid, 0, 
+                    if (EXSUCCEED==CBget((UBFH *)data, fldid, 0, 
+                            (char *)&longval, 0L, BFLD_LONG))
+                    {
+                        NDRX_LOG(log_error, "Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        userlog("Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        EXFAIL_OUT(ret);
+                    }
+                }
+                else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                {
+                    if (EXSUCCEED==CBget((UBFH *)data, fldid, 0, 
                             (char *)&floatval, 0L, BFLD_DOUBLE))
                     {
-                        NDRX_LOG(log_debug, "Routing field not found [%s]", ccrit->field);
+                        NDRX_LOG(log_error, "Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        userlog("Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
                         EXFAIL_OUT(ret);
                     }
                 }
@@ -259,11 +306,16 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
                      * just use sysbuf page? as that size would gurantee that we
                      * fit in...
                      */
-                    strval = Bgetsa ((UBFH *)data, ccrit->fldid, 0, NULL);
+                    strval = Bgetsa ((UBFH *)data, fldid, 0, NULL);
                     
                     if (NULL==strval)
                     {
-                        NDRX_LOG(log_debug, "Failed to get routing string field");
+                        NDRX_LOG(log_error, "Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        userlog("Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
+                        ndrx_TPset_error_fmt(TPESYSTEM, "Cannot route [%s] - routing field not found [%s]: %s", 
+                                svcnm, fldnm, Bstrerror(Berror));
                         EXFAIL_OUT(ret);
                     }
                 }
@@ -277,8 +329,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
                 /* OK we got the range so loop over... */
                 range = (ndrx_routcritseq_t *)(mem_start + offset_step);
                 
-                /* TODO: check that we are in boundries */
-                
+                /* check that we are in boundries */
                 if (range->flags & NDRX_DDR_FLAG_DEFAULT_VAL)
                 {
                     /* ranges OK, return group */
@@ -286,20 +337,93 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
                 }
                 else if (range->flags & NDRX_DDR_FLAG_MIN)
                 {
-                    /* TODO: check that value is bellow max */
-                    
+                    /* so if bellow upper or equals then we are in the range */
+                    if (BFLD_LONG == ccrit->fieldtypeid)
+                    {
+                        if (longval <= range->upperl)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
+                    else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                    {    
+                        if (floatval < range->upperd ||
+                                fabs(floatval - range->upperd) < DOUBLE_EQUAL)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
+                    else if (BFLD_STRING == ccrit->fieldtypeid)
+                    {
+                        if (strcmp(strval, range->strrange) <= 0)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
                 }
                 else if (range->flags & NDRX_DDR_FLAG_MAX)
                 {
-                    /* TODO: check that value is above min */
+                    /* so if bellow upper or equals then we are in the range */
+                    if (BFLD_LONG == ccrit->fieldtypeid)
+                    {
+                        if (longval >= range->lowerl)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
+                    else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                    {    
+                        if (floatval > range->lowerd ||
+                                fabs(floatval - range->lowerd) < DOUBLE_EQUAL)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
+                    else if (BFLD_STRING == ccrit->fieldtypeid)
+                    {
+                        if (strcmp(strval, range->strrange) >=0)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
                 }
                 else
                 {
-                    /* TODO: check is it in range */
+                    /* full check not flags... */
+                    if (BFLD_LONG == ccrit->fieldtypeid)
+                    {
+                        if (longval >= range->lowerl &&
+                                longval <= range->upperl)
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
+                    else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                    {    
+                        if ( (floatval > range->lowerd ||
+                                fabs(floatval - range->lowerd) < DOUBLE_EQUAL) &&
+                                
+                                (floatval < range->upperd ||
+                                fabs(floatval - range->upperd) < DOUBLE_EQUAL)
+                                )
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
+                    else if (BFLD_STRING == ccrit->fieldtypeid)
+                    {
+                        if (strcmp(strval, range->strrange) >=0 &&
+                                strcmp(strval, range->strrange+range->strrange_upper) <=0
+                                )
+                        {
+                            in_range=EXTRUE;
+                        }
+                    }
                 }
                 
                 if (in_range)
                 {
+                    ret=EXTRUE;
                     if (range->flags & NDRX_DDR_FLAG_DEFAULT_GRP)
                     {
                         NDRX_LOG(log_debug, "Default group matched");
@@ -308,23 +432,58 @@ expublic int ndrx_ddr_grp_get(char *svcnm, char *data, long len, char *grp, size
                     else
                     {
                         /* copy off the group code */
-                        NDRX_STRCPY_SAFE_DST(grp, range->grp, grpsz);
+                        NDRX_STRCPY_SAFE(grp, range->grp);
                         NDRX_LOG(log_debug, "Group [%s]  matched", grp);
                     }
+                    break;
                 }
                     
                 /* step to next..., this is aligned step */
                 offset_step+=range->len;
             }
-            
         }
         
-        /* TODO: limit limit of ranges, to avoid handing
-         * in case if doing quick reloads
-         */
-        
         /* check for next... */
-    } while (svc->offset + offset_step + sizeof(ndrx_routcrit_t) < G_atmi_env.rtcrtmax);
+    } while (svc->offset + offset_step + sizeof(ndrx_routcrit_t) < G_atmi_env.rtcrtmax && EXSUCCEED==ret);
+    
+    if (EXTRUE==ret)
+    {
+        /* add the group suffx, also check the buffer space 
+         * If there is not enough space, return the error.
+         */
+        len_new =  strlen(svcnm) + strlen(grp) + 2;
+        
+        if (len_new > svcnmsz)
+        {
+            NDRX_LOG(log_error, "Cannot route [%s] - routed service "
+                    "name too long incl 0x00: %d (max: %d)",
+                    svcnm, len_new, svcnmsz);
+            userlog("Cannot route [%s] - routed service "
+                    "name too long incl 0x00: %d (max: %d)",
+                    svcnm, len_new, svcnmsz);
+            ndrx_TPset_error_fmt(TPESYSTEM, "Cannot route [%s] - routed service "
+                    "name too long incl 0x00: %d (max: %d)",
+                    svcnm, len_new, svcnmsz);
+            EXFAIL_OUT(ret);
+        }
+        NDRX_STRCAT_S(svcnm, svcnmsz, NDRX_SYS_SVC_PFX);
+        NDRX_STRCAT_S(svcnm, svcnmsz, grp);    
+    }
+    
+    
+out_rej:
+    
+    /* terminate the request, if was routing, but route  or group / not found */
+    if (EXSUCCEED==ret)
+    {
+        NDRX_LOG(log_error, "Routing criterion for service [%s] buffer type [%s] is not found",
+                svcnm, G_buf_descr[buf->type_id].type);
+        userlog("Routing criterion for service [%s] buffer type [%s] is not found",
+                svcnm, G_buf_descr[buf->type_id].type);
+        ndrx_TPset_error_fmt(TPESYSTEM, "Routing criterion for service [%s] buffer type [%s] is not found",
+                svcnm, G_buf_descr[buf->type_id].type);
+        ret=EXFAIL;
+    }
     
     
 out:
@@ -333,7 +492,39 @@ out:
     {
         NDRX_FREE(strval);
     }
+
+    NDRX_LOG(log_debug, "returns %d [%s]", ret, svcnm);
     
+    return ret;
+}
+
+/**
+ * Lookup the service
+ * and provide settings
+ * @param[in] svcnm service name to lookup
+ * @param[out] autotran auto tran setting from services section
+ * @param[out] trantime transaction timeout setting from services section
+ * @return EXTRUE (loaded), EXFALSE (not found)
+ */
+expublic int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *trantime)
+{
+    ndrx_services_t *svc;
+    int ret = EXFALSE;
+    
+    /* not attached, nothing to return */
+    if (!ndrx_shm_is_attached(&ndrx_G_routsvc))
+    {
+        goto out;
+    }
+    
+    if (EXSUCCEED==ndrx_ddr_services_get(svcnm, &svc))
+    {
+        *autotran = svc->autotran;
+        *trantime = svc->trantime;
+        
+        ret=EXTRUE;
+    }
+out:
     return ret;
 }
 

@@ -367,6 +367,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
 #define CONF_NDRX_DFLTLOG        "NDRX_DFLTLOG"        /**< Default logging output if none defined conf */
 
+#define CONF_NDRX_RTGRP          "NDRX_RTGRP"          /**< Routing group                                */
+
+
 /** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
  * state required by command
  */
@@ -555,6 +558,9 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_CACHE_EV_KILCMD    "@CK"               /**< Kill/drop ache event          */
 #define NDRX_CACHE_EV_MSKDELCMD "@CM"               /**< Delete data by mask, event    */
 #define NDRX_CACHE_EV_KEYDELCMD "@CE"               /**< Delete by key event           */
+
+#define NDRX_MSGPRIO_DEFAULT            50 /**< Default prioity used by tpcall, tpreturn etc. */
+#define NDRX_MSGPRIO_NOTIFY             60 /**< Notification is higher prio                   */
 
 #ifdef	__cplusplus
 }
