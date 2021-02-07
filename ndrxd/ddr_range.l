@@ -94,7 +94,6 @@ int ndrx_G_ddrcolumn = 1;
                                 }
                         }
 <STRING>[^'\n]           {
-                            NDRX_LOG(log_error, "ADDING CHAR %c", *ddrtext);
                             /* add string */
                             if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, ddrtext))
                             {
