@@ -625,6 +625,28 @@ expublic int ndrx_load_common_env(void)
     NDRX_LOG(log_debug, "routing criterion space: %d bytes, max services: %d", 
             G_atmi_env.rtcrtmax, G_atmi_env.rtsvcmax);
     
+    if (NULL!=(p=getenv(CONF_NDRX_RTGRP)))
+    {
+        
+        if (strlen(p)>NDRX_DDR_GRP_MAX)
+        {
+            NDRX_LOG(log_error, "ERROR ! Too long routing group [%s] max %d",
+                    p, NDRX_DDR_GRP_MAX);
+            userlog("ERROR ! Too long routing group [%s] max %d",
+                    p, NDRX_DDR_GRP_MAX);
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        NDRX_STRCPY_SAFE(G_atmi_env.rtgrp, p);
+        NDRX_LOG(log_debug, "Routing group set to [%s]", 
+                G_atmi_env.rtgrp);
+    }
+    else
+    {
+        G_atmi_env.rtgrp[0]=EXEOS;
+        NDRX_LOG(log_debug, "Routing group not used");
+    }
 
     /* Init the util lib.. */ 
     if (EXSUCCEED!=ndrx_atmiutil_init())

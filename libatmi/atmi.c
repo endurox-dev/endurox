@@ -1996,4 +1996,52 @@ out:
     return ret;
 }
 
+/**
+ * Set next call priority.
+ * This affects
+ * - tpcall, tpacall, tpconnect, tpforward, tpnotify
+ * - for tpbroadcast only first matched recipient will be approached with this
+ *   priority.
+ * Default is 50
+ * 
+ * @param prio priority 1..100
+ * @param flags TPABSOLUTE (ignored)
+ * @return 
+ */
+expublic int tpsprio(int prio, long flags)
+{
+    int ret=EXSUCCEED;
+    ndrx_TPunset_error();
+    
+    if (prio < 1 || prio >100)
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "prio must be in range 1..100, got %d", prio);
+        EXFAIL_OUT(ret);
+    }
+    
+    if ( (flags & ~TPABSOLUTE) !=0 )
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Unsupported flags %ld", flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    G_atmi_tls->prio = prio;
+    
+    NDRX_LOG(log_debug, "Next call scheduled with priority %d",  G_atmi_tls->prio);
+
+out:
+    return ret;
+}
+
+/**
+ * Get priority of the last call
+ * If call was not made, default value 50 is returned.
+ * @return priority 1..100
+ */
+expublic int tpgprio(void)
+{
+    ndrx_TPunset_error();
+    return G_atmi_tls->prio_last;
+}
+
 /* vim: set ts=4 sw=4 et smartindent: */

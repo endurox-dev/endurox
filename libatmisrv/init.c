@@ -48,6 +48,7 @@
 #include <atmi_int.h>
 #include <atmi_shm.h>
 #include <xa_cmn.h>
+#include <ndrx_ddr.h>
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -510,32 +511,26 @@ expublic void atmisrv_un_initialize(int fork_uninit)
     ndrx_atmi_tls_new(tls, tls->is_auto, EXTRUE);
 }
 
-/* ===========================================================================*/
-/* =========================API FUNCTIONS=====================================*/
-/* ===========================================================================*/
 /**
- * Advertise service
+ * Advertise service (internal version)
+ * Outer version group groups might do advertise twice
  * OK, logic will be following:
  * -A advertise all services + additional (aliases) by -s
  * if -A missing, then advertise all
  * if -A missing, -s specified, then advertise those by -s only
+ * @param[in] autotran shall we start transaction automatically?
+ * @param[in] trantime how long auto-transaction shall live?
  * @return SUCCEED/FAIL
  */
-expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm,
+        int autotran, unsigned long trantime
+        )
 {
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
     int len;
     
-    ndrx_TPunset_error();
     ndrx_sv_advertise_lock();
-
-    /* Check arguments Bug #610 */
-    if (NULL==svc_nm || EXEOS ==svc_nm[0])
-    {
-        ndrx_TPset_error_fmt(TPEINVAL, "svc_nm is NULL or empty string");
-        EXFAIL_OUT(ret);
-    }
     
     if (NULL==fn_nm || EXEOS ==fn_nm[0])
     {
@@ -577,7 +572,9 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         entry->xcvtflags = ndrx_xcvt_lookup(entry->fn_nm);
         entry->p_func = p_func;
         entry->q_descr = (mqd_t)EXFAIL;
-        
+        entry->autotran = autotran;
+        entry->trantime = trantime; 
+       
         /* search for existing entry */
         NDRX_STRCPY_SAFE(eltmp.svc_nm, entry->svc_nm);
 
@@ -658,13 +655,13 @@ out:
 }
 
 /**
- * Unadvertises service.
+ * Unadvertises service (internal)
  * This will process only last request. All others will expire as queue
  * Possibly will be removed!
  * @param svcname
  * @return 
  */
-expublic int tpunadvertise(char *svcname)
+exprivate int tpunadvertise_int(char *svcname)
 {
     int ret=EXSUCCEED;
     char svc_nm[XATMI_SERVICE_NAME_LENGTH+1] = {EXEOS};
@@ -672,7 +669,6 @@ expublic int tpunadvertise(char *svcname)
     svc_entry_fn_t *existing=NULL;
     char *thisfn="tpunadvertise";
     
-    ndrx_TPunset_error();
     ndrx_sv_advertise_lock();
     /* Validate argument */
     if (NULL==svcname || EXEOS==svcname[0])
@@ -735,6 +731,121 @@ expublic int tpunadvertise(char *svcname)
     
 out:
     ndrx_sv_advertise_unlock();
+    return ret;
+}
+
+
+
+/* ===========================================================================*/
+/* =========================API FUNCTIONS=====================================*/
+/* ===========================================================================*/
+/**
+ * Advertise service
+ * OK, logic will be following:
+ * -A advertise all services + additional (aliases) by -s
+ * if -A missing, then advertise all
+ * if -A missing, -s specified, then advertise those by -s only
+ * This returns error (and terminates)
+ * @return SUCCEED/FAIL
+ */
+expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
+{
+    int ret = EXSUCCEED;
+    char svcn_nm_full[MAXTIDENT*2]={EXEOS};
+    int autotran=0;
+    unsigned long trantime=NDRX_DDR_TRANTIMEDFLT;
+    
+    ndrx_TPunset_error();
+    /* if we live in group, then advertise twice... */
+    
+    /* Check arguments Bug #610 */
+    if (NULL==svc_nm || EXEOS ==svc_nm[0])
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "svc_nm is NULL or empty string");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* lookup the service settings in shm... */
+    
+    if (ndrx_ddr_service_get(svc_nm, &autotran, &trantime))
+    {
+        NDRX_LOG(log_debug, "Service [%s] found in <services> section autotan: %d trantime: %lu",
+                svc_nm, autotran, trantime);
+    }
+    
+    if (EXEOS!=G_atmi_env.rtgrp[0])
+    {
+        NDRX_STRCPY_SAFE(svcn_nm_full, svc_nm);
+        NDRX_STRCAT_S(svcn_nm_full, sizeof(svcn_nm_full), NDRX_SYS_SVC_PFX);
+        NDRX_STRCAT_S(svcn_nm_full, sizeof(svcn_nm_full), G_atmi_env.rtgrp);
+     
+        NDRX_LOG(log_info, "About to advertise group service [%s]", svcn_nm_full);
+        if (EXSUCCEED!=tpadvertise_full_int(svcn_nm_full, p_func, fn_nm,
+                autotran, trantime))
+        {
+            NDRX_LOG(log_error, "Failed to advertises group service [%s]",
+                    svcn_nm_full);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    NDRX_LOG(log_info, "About to advertise default service [%s]", svc_nm);
+    if (EXSUCCEED!=tpadvertise_full_int(svc_nm, p_func, fn_nm,
+                autotran, trantime))
+    {
+        NDRX_LOG(log_error, "Failed to advertises default service [%s]",
+                svcn_nm_full);
+        EXFAIL_OUT(ret);
+    }
+    
+out:
+    return ret;
+}
+
+/**
+ * If living in group, remove two services
+ * This will probe both version to remove. At first
+ * it is group version, then it is normal version
+ * 
+ * @param svcname to unadvertise
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int tpunadvertise(char *svcname)
+{
+    int ret = EXSUCCEED;
+    char svcn_nm_full[MAXTIDENT*2]={EXEOS};
+    ndrx_TPunset_error();
+    
+    if (NULL==svcname || EXEOS ==svcname[0])
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "svc_nm is NULL or empty string");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXEOS!=G_atmi_env.rtgrp[0])
+    {
+        NDRX_STRCPY_SAFE(svcn_nm_full, svcname);
+        NDRX_STRCAT_S(svcn_nm_full, sizeof(svcn_nm_full), NDRX_SYS_SVC_PFX);
+        NDRX_STRCAT_S(svcn_nm_full, sizeof(svcn_nm_full), G_atmi_env.rtgrp);
+     
+        NDRX_LOG(log_info, "About to unadvertise group service [%s]", svcn_nm_full);
+        
+        if (EXSUCCEED!=tpunadvertise_int(svcn_nm_full))
+        {
+            ret=EXFAIL;
+        }
+        
+        /* first erro will stay there */
+    }
+    
+    NDRX_LOG(log_info, "About to unadvertise normal servcie [%s]", svcname);
+    
+    if (EXSUCCEED!=tpunadvertise_int(svcname))
+    {
+        ret=EXFAIL;
+    }
+    
+out:
     return ret;
 }
 

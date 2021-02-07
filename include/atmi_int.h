@@ -182,9 +182,6 @@ extern "C" {
     }\
     __p_bufsz = __buf_size__;\
 }
-    
-#define NDRX_MSGPRIO_DEFAULT            0 /* Default prioity used by tpcall, tpreturn etc. */
-#define NDRX_MSGPRIO_NOTIFY             1 /* Notification is higher prio            */
 
 #define NDRX_XA_FLAG_NOJOIN  "NOJOIN"  /**< XA Switch does not support TMJOIN mode  */
 #define NDRX_XA_FLAG_NOSTARTXID  "NOSTARTXID"  /**< No XID in start call to RM  */
@@ -426,6 +423,8 @@ struct atmi_lib_env
     char    qpath[PATH_MAX+1]; /**< Queue path (common, finally!)               */
     char    ndrxd_pidfile[PATH_MAX];    /**< ndrxd pid file                     */
     ndrx_env_priv_t integpriv;    /**< integration  private data                */
+    
+    char    rtgrp[NDRX_DDR_GRP_MAX+1]; /**< routing grup setting                */
     
 };
 typedef struct  atmi_lib_env atmi_lib_env_t;

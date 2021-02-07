@@ -51,6 +51,7 @@
 #include <userlog.h>
 
 #include "atmi_tls.h"
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -429,11 +430,20 @@ expublic void _tpforward (char *svc, char *data,
     tp_command_call_t * last_call;
     int was_auto_buf = EXFALSE;
     atmi_lib_conf_t *p_atmi_lib_conf = ndrx_get_G_atmi_conf();
-    
+    int prio = NDRX_MSGPRIO_DEFAULT;
     tp_conversation_control_t *p_accept_conn = ndrx_get_G_accepted_connection();
+    char svcddr[XATMI_SERVICE_NAME_LENGTH+1]; /**< routed service name */
     
     NDRX_LOG(log_debug, "%s enter", fn);
     
+    NDRX_STRCPY_SAFE(svcddr, svc);
+    /* try the DDR */
+    if (EXFAIL==ndrx_ddr_grp_get(svcddr, sizeof(svcddr), data, len,
+        &prio))
+    {
+        /* error shall be set */
+        EXFAIL_OUT(ret);
+    }
     
     /* client with last call is acceptable...! 
      * It can be servers companion thread.
@@ -527,7 +537,7 @@ expublic void _tpforward (char *svc, char *data,
     call->clttout = last_call->clttout; /* store the client timeout setting */
     call->command_id = ATMI_COMMAND_TPCALL;
 
-    NDRX_STRNCPY(call->name, svc, XATMI_SERVICE_NAME_LENGTH);
+    NDRX_STRNCPY(call->name, svcddr, XATMI_SERVICE_NAME_LENGTH);
     call->name[XATMI_SERVICE_NAME_LENGTH] = EXEOS;
     call->flags = last_call->flags; /* preserve the original call flags Bug #570 */
     call->cd = last_call->cd; /* <<< another difference from call! */
@@ -586,7 +596,7 @@ expublic void _tpforward (char *svc, char *data,
     NDRX_LOG(log_debug, "Forwarding cd %d, timestamp %d, callseq %u to %s, buffer_type_id %hd",
                     call->cd, call->timestamp, call->callseq, send_q, call->buffer_type_id);
         
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, prio)))
     {
         /* reply FAIL back to caller! */
         int err;

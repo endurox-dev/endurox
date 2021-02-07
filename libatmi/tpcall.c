@@ -58,6 +58,7 @@
 #include <atmi_shm.h>
 #include <atmi_tls.h>
 #include <atmi_cache.h>
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define NOENT_ERR_SHM       1   /**< Service is not available from SHM  */
@@ -425,8 +426,24 @@ expublic int ndrx_tpacall (char *svc, char *data,
     int tpcall_cd;
     int have_shm = EXFALSE;
     int noenterr = EXFALSE;
+    char svcddr[XATMI_SERVICE_NAME_LENGTH+1]; /**< routed service name */
+    int prio = NDRX_MSGPRIO_DEFAULT;
     ATMI_TLS_ENTRY;
+    
     NDRX_LOG(log_debug, "%s enter", __func__);
+    
+    /* if we have SHM then check the DDR options we have 
+     * TODO: Think maybe duplicate shm attached check can be
+     * removed.
+     */
+    NDRX_STRCPY_SAFE(svcddr, svc);
+    /* try the DDR */
+    if (EXFAIL==ndrx_ddr_grp_get(svcddr, sizeof(svcddr), data, len,
+        &prio))
+    {
+        /* error shall be set */
+        EXFAIL_OUT(ret);
+    }
 
     NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
     
@@ -464,9 +481,9 @@ expublic int ndrx_tpacall (char *svc, char *data,
 #endif
         is_bridge=EXTRUE;
     }
-    else if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_q, &is_bridge, &have_shm))
+    else if (EXSUCCEED!=ndrx_shm_get_svc(svcddr, send_q, &is_bridge, &have_shm))
     {
-        NDRX_LOG(log_info, "Service is not available %s by shm", svc);
+        NDRX_LOG(log_info, "Service is not available %s by shm", svcddr);
         noenterr = NOENT_ERR_SHM;
         /* goto out; */
     }
@@ -486,7 +503,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     
     if (!(flags & TPNOCACHELOOK) && NULL!=p_cachectl)
     {
-        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svc, data, len, 
+        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svcddr, data, len, 
                 p_cachectl->odata, p_cachectl->olen, flags, 
                 &p_cachectl->should_cache, 
                 &p_cachectl->saved_tperrno, 
@@ -533,7 +550,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
         }
         
 	    ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by %s", 
-	        __func__, svc, NOENT_ERR_SHM==noenterr?"shm":"queue");
+	        __func__, svcddr, NOENT_ERR_SHM==noenterr?"shm":"queue");
         
         EXFAIL_OUT(ret);
     }
@@ -584,7 +601,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     call->command_id = ATMI_COMMAND_TPCALL;
     
     
-    NDRX_STRCPY_SAFE(call->name, svc);
+    NDRX_STRCPY_SAFE(call->name, svcddr);
     call->flags = flags;
     
     if (NULL!=extradata)
@@ -650,7 +667,7 @@ expublic int ndrx_tpacall (char *svc, char *data,
     
     NDRX_DUMP(log_dump, "Sending away...", (char *)call, data_len);
 
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_q, (char *)call, data_len, flags, prio)))
     {
         int err;
 

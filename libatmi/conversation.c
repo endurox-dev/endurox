@@ -56,6 +56,7 @@
 #include <tperror.h>
 #include <atmi_shm.h>
 #include <atmi_tls.h>
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CONV_TARGET_FLAGS(X)     \
@@ -608,21 +609,32 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     tp_conversation_control_t *conv;
     int is_bridge;
     int err;
+    int prio = NDRX_MSGPRIO_DEFAULT;
+    char svcddr[XATMI_SERVICE_NAME_LENGTH+1]; /**< routed service name */
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s: called", __func__);
+    
+    NDRX_STRCPY_SAFE(svcddr, svc);
+    /* try the DDR */
+    if (EXFAIL==ndrx_ddr_grp_get(svcddr, sizeof(svcddr), data, len,
+        &prio))
+    {
+        /* error shall be set */
+        EXFAIL_OUT(ret);
+    }
     
     NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
     call = (tp_command_call_t *)buf;
 
     /* Check service availability */
-    if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge, NULL))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svcddr, send_qstr, &is_bridge, NULL))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
-                svc);
+                svcddr);
         ret=EXFAIL;
         ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
-                 __func__, svc);
+                 __func__, svcddr);
         goto out;
     }
     
@@ -702,7 +714,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 
     call->command_id = ATMI_COMMAND_CONNECT;
 
-    NDRX_STRCPY_SAFE(call->name, svc);
+    NDRX_STRCPY_SAFE(call->name, svcddr);
     
     call->flags = flags | TPCONV; /* This is conversational call... */
     /* Prepare role flags */
@@ -738,7 +750,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
                         "cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
                         send_qstr, call->cd, call->timestamp, call->callseq, call->reply_to);
     /* And then we call out the service. */
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, prio)))
     {
         int err;
         
