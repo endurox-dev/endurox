@@ -1,5 +1,5 @@
 /**
- * @brief UBF Expression Evaluator.
+ * @brief DDR routing range parser
  *
  * @file ddr_range.y
  */
