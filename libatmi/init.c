@@ -609,7 +609,7 @@ expublic int ndrx_load_common_env(void)
     
     if (NULL!=(p=getenv(CONF_NDRX_RTSVCMAX)))
     {
-        G_atmi_env.rtcrtmax = atoi(p);
+        G_atmi_env.rtsvcmax = atoi(p);
         
         if (G_atmi_env.rtsvcmax<1)
         {
