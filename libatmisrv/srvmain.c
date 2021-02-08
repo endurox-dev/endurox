@@ -153,6 +153,8 @@ expublic void ndrx_skipsvc_delhash(void)
  * -s<New Service1>[,|/]<New Service2>[,|/]..[,|/]<New Service N>:<existing service>
  * e.g.
  * -sNEWSVC1/NEWSVC2:EXISTINGSVC
+ *  TODO: if we are in routing grup, then add @grp automatically for each alias
+ *  - Also check the length of the new service. IF does not fit, then return error.
  * @param msg1 debug msg1
  * @param argc
  * @param argv
