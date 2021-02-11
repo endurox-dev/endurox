@@ -210,7 +210,7 @@ fs.mqueue.msg_max=10000
 # Max message size, to pass unit tests, use 1M+1K
 fs.mqueue.msgsize_max=1049600
 
-# Max number of queues for user
+# Max number of queues system-wide
 fs.mqueue.queues_max=10000
 
 EOF
