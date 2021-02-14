@@ -117,7 +117,8 @@ exprivate svc_entry_fn_t* resolve_service_entry(char *svc)
 exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_entry_fn_t *resolved)
 {
     int ret=EXSUCCEED;
-    
+    int autotran=0;
+    unsigned long trantime=NDRX_DDR_TRANTIMEDFLT;
     svc_entry_fn_t *svc_fn, *entry;
 
     /* resolve alias & add svc entry */
@@ -167,10 +168,20 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
 #endif
 
             /* Add to list! */
+            
+            /* Check the shared memory for autotran & timeout */
+            if (ndrx_ddr_service_get(svn_nm_add, &autotran, &trantime))
+            {
+                entry->autotran = autotran;
+                entry->trantime = trantime;
+            }
+            
             DL_APPEND(G_server_conf.service_list, entry);
             G_server_conf.adv_service_count++;
-            NDRX_LOG(log_debug, "Advertising: SVC: [%s] FN: [%s] ADDR: [%p] QUEUE: [%s]",
-                        entry->svc_nm, entry->fn_nm, entry->p_func, entry->listen_q);
+            NDRX_LOG(log_debug, "Advertising: SVC: [%s] FN: [%s] ADDR: [%p] "
+                    "QUEUE: [%s] AUTOTRAN [%d] TRANTIME [%lu]",
+                        entry->svc_nm, entry->fn_nm, entry->p_func, entry->listen_q,
+                        entry->autotran, entry->trantime);
         }
     }
 
@@ -522,9 +533,7 @@ expublic void atmisrv_un_initialize(int fork_uninit)
  * @param[in] trantime how long auto-transaction shall live?
  * @return SUCCEED/FAIL
  */
-exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm,
-        int autotran, unsigned long trantime
-        )
+exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), char *fn_nm)
 {
     int ret=EXSUCCEED;
     svc_entry_fn_t *entry=NULL, eltmp;
@@ -572,8 +581,6 @@ exprivate int tpadvertise_full_int(char *svc_nm, void (*p_func)(TPSVCINFO *), ch
         entry->xcvtflags = ndrx_xcvt_lookup(entry->fn_nm);
         entry->p_func = p_func;
         entry->q_descr = (mqd_t)EXFAIL;
-        entry->autotran = autotran;
-        entry->trantime = trantime; 
        
         /* search for existing entry */
         NDRX_STRCPY_SAFE(eltmp.svc_nm, entry->svc_nm);
@@ -752,8 +759,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
 {
     int ret = EXSUCCEED;
     char svcn_nm_full[MAXTIDENT*2]={EXEOS};
-    int autotran=0;
-    unsigned long trantime=NDRX_DDR_TRANTIMEDFLT;
+    
     
     ndrx_TPunset_error();
     /* if we live in group, then advertise twice... */
@@ -765,14 +771,6 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         EXFAIL_OUT(ret);
     }
     
-    /* lookup the service settings in shm... */
-    
-    if (ndrx_ddr_service_get(svc_nm, &autotran, &trantime))
-    {
-        NDRX_LOG(log_debug, "Service [%s] found in <services> section autotan: %d trantime: %lu",
-                svc_nm, autotran, trantime);
-    }
-    
     if (EXEOS!=G_atmi_env.rtgrp[0])
     {
         NDRX_STRCPY_SAFE(svcn_nm_full, svc_nm);
@@ -780,8 +778,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         NDRX_STRCAT_S(svcn_nm_full, sizeof(svcn_nm_full), G_atmi_env.rtgrp);
      
         NDRX_LOG(log_info, "About to advertise group service [%s]", svcn_nm_full);
-        if (EXSUCCEED!=tpadvertise_full_int(svcn_nm_full, p_func, fn_nm,
-                autotran, trantime))
+        if (EXSUCCEED!=tpadvertise_full_int(svcn_nm_full, p_func, fn_nm))
         {
             NDRX_LOG(log_error, "Failed to advertises group service [%s]",
                     svcn_nm_full);
@@ -790,8 +787,7 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
     }
     
     NDRX_LOG(log_info, "About to advertise default service [%s]", svc_nm);
-    if (EXSUCCEED!=tpadvertise_full_int(svc_nm, p_func, fn_nm,
-                autotran, trantime))
+    if (EXSUCCEED!=tpadvertise_full_int(svc_nm, p_func, fn_nm))
     {
         NDRX_LOG(log_error, "Failed to advertises default service [%s]",
                 svcn_nm_full);

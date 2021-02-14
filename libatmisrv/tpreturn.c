@@ -130,7 +130,6 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
     /* store the client timeout setting, so that bridge can drop on expiry */
     call->clttout = last_call->clttout;
     call->callseq = last_call->callseq;
-    call->data_len = MAX_CALL_DATA_SIZE;
     call->sysflags = 0; /* reset the flags. */
     
     /* TODO: put our call node id? As source which generated reply? */
@@ -147,19 +146,49 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         return_status|=RETURN_SVC_FAIL;
     }
     
-    
-#if 0
-    - moved to tmisabortonly.
-            
-    /* If we have global transaction & failed. Then set abort only flag */
-    if (ndrx_get_G_atmi_xa_curtx()->txinfo && ndrx_get_G_atmi_xa_curtx()->txinfo->tmisabortonly)
+    if (last_call->sysflags & SYS_FLAG_AUTOTRAN)
     {
-        call->sysflags|=SYS_XA_ABORT_ONLY;
+        /* tpcommit() or tpabort() 
+         * at this point we need to ignore the ownership of the transaction.
+         */
+        if (rval==TPSUCCESS)
+        {
+            /* try to commit */
+            if (EXSUCCEED!=ndrx_tpcommit(0, SYS_FLAG_AUTOTRAN))
+            {
+                NDRX_LOG(log_error, "Auto commit failed: %s - returning TPESVCERR", 
+                        tpstrerror(tperrno));
+                userlog("Auto commit failed: %s - returning TPESVCERR", 
+                        tpstrerror(tperrno));
+                
+                call->sysflags |=SYS_FLAG_REPLY_ERROR;
+                call->rcode = TPESVCERR;
+                ret=EXFAIL;
+                goto out_send;
+                
+            }
+        }
+        else
+        {
+            /* try to abort */
+            if (EXSUCCEED!=ndrx_tpabort(0, SYS_FLAG_AUTOTRAN))
+            {
+                NDRX_LOG(log_error, "Auto abort failed: %s - returning TPESVCERR", 
+                        tpstrerror(tperrno));
+                userlog("Auto abort failed: %s - returning TPESVCERR", 
+                        tpstrerror(tperrno));
+                
+                call->sysflags |=SYS_FLAG_REPLY_ERROR;
+                call->rcode = TPESVCERR;
+                ret=EXFAIL;
+                goto out_send;
+                
+            }
+        }
+        
     }
-#endif
-    
     /* work out the XA data */
-    if (ndrx_get_G_atmi_xa_curtx()->txinfo)
+    else if (ndrx_get_G_atmi_xa_curtx()->txinfo)
     {
         /* Update the list  
         strcpy(call->tmknownrms, ndrx_get_G_atmi_xa_curtx()->txinfo->tmknownrms);
@@ -220,6 +249,9 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
             if (EXFAIL!=ret)
             {
                 descr = &G_buf_descr[buffer_info->type_id];
+                
+                /* otherwise cannot generate error */
+                call->data_len = MAX_CALL_DATA_SIZE;
                 /* build reply data here */
                 if (EXFAIL==descr->pf_prepare_outgoing(descr, data, 
                         len, call->data, &call->data_len, flags))
@@ -242,6 +274,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         call->data_len = 0;
     }
     
+out_send:    
     /* Feature #594 */
     if (TPEXIT==rval)
     {
@@ -544,6 +577,9 @@ expublic void _tpforward (char *svc, char *data,
     call->timestamp = last_call->timestamp;
     call->callseq = last_call->callseq;
     NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
+    
+    /* forward the indication of syste */
+    call->sysflags|= (last_call->sysflags & SYS_FLAG_AUTOTRAN);
     
     /* work out the XA data */
     if (ndrx_get_G_atmi_xa_curtx()->txinfo)

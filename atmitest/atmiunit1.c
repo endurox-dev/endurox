@@ -638,6 +638,13 @@ Ensure(test081_lcf)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test082_autotran)
+{
+    int ret;
+    ret=system_dbg("test082_autotran/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -775,6 +782,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test079_cliquote);
     add_test(suite, test080_tpexit);
     add_test(suite, test081_lcf);
+    add_test(suite, test082_autotran);
  
     return suite;
 }

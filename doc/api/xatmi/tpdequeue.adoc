@@ -136,7 +136,7 @@ message presence in service queue.
 
 *Values for 'TPQCTL.diagnostic'*
 
-*QMEINVAL* Invalid request bugffer.
+*QMEINVAL* Invalid request buffer.
 
 *QMEOS* Operating system problems. Might be insufficient memory.
 

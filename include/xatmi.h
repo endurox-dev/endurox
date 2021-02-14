@@ -243,6 +243,7 @@ extern "C" {
 
 #define SYS_SRV_CVT_JSON2VIEW   0x00000020 /**< Message is converted from JSON to VIEW */
 #define SYS_SRV_CVT_VIEW2JSON   0x00000040 /**< Message is converted from UBF to JSON (non NULL)*/
+#define SYS_FLAG_AUTOTRAN       0x00000100 /**< Auto transaction started               */
     
 /* Test is any flag set */
 #define SYS_SRV_CVT_ANY_SET(X) (X & SYS_SRV_CVT_JSON2UBF || X & SYS_SRV_CVT_UBF2JSON ||\
