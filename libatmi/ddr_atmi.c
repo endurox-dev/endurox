@@ -510,6 +510,27 @@ expublic int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *tra
 {
     ndrx_services_t *svc;
     int ret = EXFALSE;
+    char svcnmtmp[XATMI_SERVICE_NAME_LENGTH+1];
+    char *p;
+    
+    /* Check only part till the @, as we do not not care about the groups
+     * here
+     */
+    NDRX_STRCPY_SAFE(svcnmtmp, svcnm);
+    
+    p = strchr(svcnmtmp, NDRX_SYS_SVC_PFXC);
+    
+    if (NULL!=p)
+    {
+        if (p==svcnmtmp)
+        {
+            /* no service */
+            return EXFALSE;
+        }
+        
+        /* terminate before the group */
+        *p = EXEOS;
+    }
     
     /* not attached, nothing to return */
     if (!ndrx_shm_is_attached(&ndrx_G_routsvc))

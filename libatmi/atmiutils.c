@@ -952,7 +952,7 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     tp_command_call_t call_b;
     tp_command_call_t *call;
     char reply_to[NDRX_MAX_Q_SIZE+1] = {EXEOS};
-
+    
     /* Bug #570 */
     if (last_call->flags & TPNOREPLY)
     {
@@ -983,6 +983,7 @@ expublic int reply_with_failure(long flags, tp_command_call_t *last_call,
     if (EXSUCCEED!=fill_reply_queue(call->callstack, last_call->reply_to, reply_to))
     {
         NDRX_LOG(log_error, "ATTENTION!! Failed to get reply queue");
+        userlog("ATTENTION!! Failed to get reply queue");
         goto out;
     }
 
@@ -1092,50 +1093,6 @@ expublic atmi_svc_list_t* ndrx_get_svc_list(int (*p_filter)(char *svcnm))
 out:
     return ret;
 }
-
-/**
- * Reply back to caller
- * @param tp_call
- * @param flags
- * @param rcode Error code
- * @param reply_to_q Sender id
- */
-expublic void ndrx_reply_with_failure(tp_command_call_t *tp_call, long flags, 
-        long rcode, char *reply_to_q)
-{
-    int ret=EXSUCCEED;
-    char fn[] = "ndrx_reply_with_failure";
-    tp_command_call_t call;
-
-    NDRX_LOG(log_warn, "Replying  back to [%s] with TPESVCERR", 
-            tp_call->reply_to, reply_to_q);
-    
-    NDRX_LOG(log_error, "Dumping original call in queue:");
-    ndrx_dump_call_struct(log_error, tp_call);
-    
-    memset(&call, 0, sizeof(call));
-    call.command_id = ATMI_COMMAND_TPREPLY;
-    call.cd = tp_call->cd;
-    call.timestamp = tp_call->timestamp;
-    call.callseq = tp_call->callseq;
-    /* Give some info which server replied */
-    NDRX_STRCPY_SAFE(call.reply_to, reply_to_q);
-    call.sysflags |=SYS_FLAG_REPLY_ERROR;
-    /* Generate no entry, because we removed the queue
-     * yeah, it might be too late for TPNOENT, but this is real error */
-    call.rcode = rcode;
-    
-    NDRX_LOG(log_error, "Dumping error reply about to send:");
-    ndrx_dump_call_struct(log_error, &call);
-
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(tp_call->reply_to, (char *)&call, 
-            sizeof(call), flags, 0)))
-    {
-        NDRX_LOG(log_error, "%s: Failed to send error reply back, os err: %s", 
-                fn, strerror(ret));
-    }
-}
-
 
 /**
  * Fix queue attributes to match the requested mode.
