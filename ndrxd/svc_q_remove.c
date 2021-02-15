@@ -52,6 +52,7 @@
 #include <ndebug.h>
 #include <cmd_processor.h>
 #include <signal.h>
+#include <gencall.h>
 
 #include "userlog.h"
 
