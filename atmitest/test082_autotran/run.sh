@@ -372,7 +372,7 @@ fi
 
 echo "CONV start fail check count 0"
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l`
 
 RET=$?
 
@@ -385,6 +385,11 @@ if [[ "X$CNT" != "X0" ]]; then
     echo "Got invalid count: $CNT"
     go_out -1
 fi
+
+# print all queues after the failed to connect...
+echo "QUEUES:"
+xadmin pqa
+echo "QUEUES, END"
 
 xadmin start -s tmsrv
 

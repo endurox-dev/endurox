@@ -737,7 +737,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     /* reset queues... */
     conv->my_listen_q = (mqd_t)EXFAIL;
     conv->reply_q = (mqd_t)EXFAIL;
-    
+    conv->reply_q_str[0]=EXEOS;
     memset(call, 0, sizeof(*call));
 
     /* Bug #300 */
@@ -872,15 +872,19 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
      */
     if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
-        /* We should have */
-        if (ATMI_COMMAND_CONNRPLY!=command_id)
-        {
-            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Invalid connect handshake reply %d", 
-                                 __func__, command_id);
-            ret=EXFAIL;
-            goto out;
-        }
+        /* should' error be already set? */
+        EXFAIL_OUT(ret);
     }
+    
+    /* We should have */
+    if (ATMI_COMMAND_CONNRPLY!=command_id)
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Invalid connect handshake reply %d", 
+                             __func__, command_id);
+        ret=EXFAIL;
+        goto out;
+    }
+    
     /* EOS is already included, where q name is set by ndrx_tpsend() */ 
     NDRX_STRCPY_SAFE(conv->reply_q_str, buf);
     if (is_bridge)
