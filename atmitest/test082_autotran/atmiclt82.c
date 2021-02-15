@@ -5,6 +5,8 @@
  *  we control commit or not.
  *  from script we stop the tmsrv at certain points to simulate system
  *  response in case of begin/commit/abort failures.
+ *  TODO: - put second server in the dom2
+ *  TODO: - implement conversation error reply responder.
  *
  * @file atmiclt82.c
  */
@@ -71,7 +73,8 @@ int main(int argc, char** argv)
     int ret=EXSUCCEED;
     long olen;
     char *buf = NULL;
-    int cnt;
+    long revent;
+    int cd;
     
     /* We shall call commands:
      * - Commands are: "OK"
@@ -81,7 +84,7 @@ int main(int argc, char** argv)
     if (argc<2)
     {
         NDRX_LOG(log_error, "Missing command code");
-        fprintf(stderr, "Usage: %s <command>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <command> [C]\n", argv[0]);
         EXFAIL_OUT(ret);
     }
     
@@ -128,20 +131,81 @@ int main(int argc, char** argv)
     }
     else
     {
-        if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+        if (argc>2)
         {
-            NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+            if (EXFAIL == (cd=tpconnect("TESTSV2", (char *)p_ub, 0L, TPRECVONLY)))
+            {
+                NDRX_LOG(log_error, "TESTSV2 failed: %s", tpstrerror(tperrno));
+                /* capture the error code from the script */
+                printf("%s\n", tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+            }
+            
+            /* get event */
+            if (EXFAIL==tprecv(cd, &buf, &olen, 0, &revent))
+            {
+                NDRX_LOG(log_error, "RECV failed: %s %ld", tpstrerror(tperrno), revent);
+                
+                if (TPEEVENT==tperrno)
+                {
+                    if (TPEV_SVCSUCC==revent)
+                    {
+                        /* OK */
+                        goto out;
+                    }
 
-            /* capture the error code from the script */
-            printf("%s\n", tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
+                    switch (revent)
+                    {
+                        case TPEV_DISCONIMM:
+                            printf("TPEV_DISCONIMM\n");
+                            break;
+                        case TPEV_SENDONLY:
+                            printf("TPEV_SENDONLY\n");
+                            break;
+                        case TPEV_SVCERR:
+                            printf("TPEV_SVCERR\n");
+                            break;
+                        case TPEV_SVCFAIL:
+                            printf("TPEV_SVCFAIL\n");
+                            break;
+                        default:
+                            printf("TESTERROR event %ld\n", revent);
+                            break;
+                    }
+                    /* capture the error code from the script */
+                }
+                else
+                {
+                    printf("RECV failed: %s %ld\n", tpstrerror(tperrno), revent);
+                }
+                
+                ret=EXFAIL;
+                goto out;
+            }
+            
+        }
+        else
+        {
+            if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+            {
+                NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
 
+                /* capture the error code from the script */
+                printf("%s\n", tpstrerror(tperrno));
+                ret=EXFAIL;
+                goto out;
+
+            }
         }
     }
     
 out:
     
+    if (NULL!=buf)
+    {
+        tpfree(buf);
+    }
     tpterm();
     fprintf(stderr, "Exit with %d\n", ret);
 

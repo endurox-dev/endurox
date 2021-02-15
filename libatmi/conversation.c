@@ -157,6 +157,91 @@ expublic int have_open_connection(void)
     
 }
 
+/**
+ * Reject connection opening, due to error
+ * This will deliver note to client that connection is rejected
+ * @param err tperrno code
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_reject_connection(int err)
+{
+    char their_qstr[NDRX_MAX_Q_SIZE+1];
+    tp_command_call_t *call;
+    char *buf=NULL;
+    size_t buf_len;
+    int ret = EXSUCCEED;
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_command_call_t *)buf;
+    
+    memset(call, 0, sizeof(*call));
+    
+    if (0!=G_atmi_tls->G_last_call.callstack[0])
+    {
+        br_dump_nodestack(G_atmi_tls->G_last_call.callstack, 
+                "Incoming conversation from bridge,"
+                "using first node from node stack");
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+        /* poll() mode: */
+        {
+            int is_bridge;
+            char tmpsvc[MAXTIDENT+1];
+
+            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, 
+                    (int)G_atmi_tls->G_last_call.callstack[0]);
+
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge,
+                    NULL))
+            {
+                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
+                        tmpsvc);
+                EXFAIL_OUT(ret);
+            }
+        }
+#else
+        snprintf(their_qstr, sizeof(their_qstr),NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, 
+                (int)G_atmi_tls->G_last_call.callstack[0]);
+#endif
+        
+    }
+    else
+    {
+        /* Local conversation  */
+        NDRX_STRCPY_SAFE(their_qstr, G_atmi_tls->G_last_call.reply_to);
+    }
+
+    /* OK, now fill up the details */
+    call->data_len = 0;
+    call->callseq = G_atmi_tls->G_last_call.callseq;
+    call->msgseq = NDRX_CONF_MSGSEQ_START;
+    call->command_id = ATMI_COMMAND_CONNRPLY;
+    call->flags = 0;
+    call->sysflags|=SYS_FLAG_REPLY_ERROR;
+    call->rcode = err;
+    call->clttout = G_atmi_env.time_out;
+    ndrx_stopwatch_reset(&call->timer);
+
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(their_qstr, (char *)call, sizeof(*call), 
+            TPNOBLOCK, 0)))
+    {
+        NDRX_LOG(log_error, "Failed to deliver reject conn status %d to: [%s]",
+                err, their_qstr);
+        userlog("Failed to deliver reject conn status %d to: [%s]",
+                err, their_qstr);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+                                
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
+    return ret;    
+    
+}
 
 /**
  * This assumes that we have already set last call data.
@@ -1124,7 +1209,7 @@ inject_message:
             {
                 /* We have reply queue already in
                  * This is really used only for handshaking internally
-                 * so we do not use buffer managment here!
+                 * so we do not use buffer management here!
                  */
                 strcpy((char *)*data, rply->data); /* return reply queue */
             }
