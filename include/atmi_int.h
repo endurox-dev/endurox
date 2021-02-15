@@ -816,6 +816,7 @@ extern NDRX_API int ndrx_tpisautobuf (char *buf);
 extern NDRX_API void cancel_if_expected(tp_command_call_t *call);
 /* Functions for conversation */
 extern NDRX_API int accept_connection(void);
+extern NDRX_API int ndrx_reject_connection(int err);
 extern NDRX_API int svc_fail_to_start(void);
 extern NDRX_API int normal_connection_shutdown(tp_conversation_control_t *conv, 
         int killq, char *dbgmsg);

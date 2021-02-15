@@ -315,6 +315,126 @@ if [[ "X$CNT" != "X2" ]]; then
     go_out -1
 fi
 
+################################################################################
+echo "*** CONV OK"
+
+export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
+xadmin stop -y
+xadmin start -y
+
+./atmiclt82 OK C
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 OK C failed"
+    go_out $RET
+fi
+
+echo "Checking OK case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X1" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+################################################################################
+echo "*** CONV start fail"
+
+xadmin stop -s tmsrv
+
+OUTERR=`./atmiclt82 OK C`
+
+RET=$?
+
+if [[ "X$RET" == "X0" ]]; then
+    echo "./atmiclt82 OK2 C shall fail, but didn't"
+    go_out $RET
+fi
+
+RET=0
+
+echo "Output: [$OUTERR]"
+
+if [[ $OUTERR != *"TPETRAN"* ]]; then
+    echo "TPETRAN shall be provided as cannot start tran, but was [$OUTERR]"
+    go_out -3
+fi
+
+echo "CONV start fail check count 0"
+# count the results
+CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+xadmin start -s tmsrv
+
+################################################################################
+echo "*** CONV fails to commit.. (timeout)"
+
+OUTERR=`./atmiclt82 SLEEP C`
+
+RET=$?
+
+if [[ "X$RET" == "X0" ]]; then
+    echo "./atmiclt82 SLEEP C shall fail, but didn't"
+    go_out $RET
+fi
+
+RET=0
+
+echo "Output: [$OUTERR]"
+
+if [[ $OUTERR != *"TPEV_SVCERR"* ]]; then
+    echo "TPEV_SVCERR shall be provided as cannot start tran, but was [$OUTERR]"
+    go_out -3
+fi
+
+echo "CONV start fail check count 0"
+
+# count the results
+CNT=`./atmiclt82 COUNT | wc -l`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+################################################################################
+# Catch is there is test error!!!
+if [ "X`grep TESTERROR *.log`" != "X" ]; then
+    echo "Test error detected!"
+    RET=-2
+fi
+
+
+
 
 go_out $RET
 

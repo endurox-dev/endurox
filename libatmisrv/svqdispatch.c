@@ -558,9 +558,9 @@ expublic int sv_serve_call(int *service, int *status,
 out:
 
     if (generate_rply)
-    {
+    {        
         /* Reply back with failure... */
-        reply_with_failure(TPNOBLOCK, call, NULL, NULL, error_code);
+        reply_with_failure(TPNOBLOCK, call, NULL, NULL, error_code);   
     }
 
     /* free_up_buffers(); - services assumes that memory is alloced for all the time
@@ -599,12 +599,9 @@ expublic int sv_serve_connect(int *service, int *status,
     tp_command_call_t *call = (tp_command_call_t*)*call_buf;
     *status=EXSUCCEED;
     long call_age;
-    atmi_lib_env_t *env = ndrx_get_G_atmi_env();
     tp_command_call_t * last_call = ndrx_get_G_last_call();
-    
     int generate_rply = EXFALSE;
     int error_code = TPESVCERR; /**< Default error in case if cannot process */
-    
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     
@@ -702,20 +699,6 @@ expublic int sv_serve_connect(int *service, int *status,
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
                                         call->cd, svcinfo.cd, NDRX_CONV_UPPER_CNT);
 
-
-        /* At this point we should build up conversation queues
-         * Open for read their queue, and open for write our queue to listen
-         * on.
-         */
-        if (EXFAIL==accept_connection())
-        {
-            ret=EXFAIL;
-            
-            *status=EXFAIL;
-            generate_rply=EXTRUE;
-            goto out;
-        }
-
         /* Register global tx */
         if (EXEOS!=call->tmxid[0])
         {
@@ -751,6 +734,19 @@ expublic int sv_serve_connect(int *service, int *status,
             /* auto tran is started */
             last_call->sysflags|=SYS_FLAG_AUTOTRAN;
         }
+        
+        /* At this point we should build up conversation queues
+         * Open for read their queue, and open for write our queue to listen
+         * on.
+         */
+        if (EXFAIL==accept_connection())
+        {
+            ret=EXFAIL;
+            
+            *status=EXFAIL;
+            generate_rply=EXTRUE;
+            goto out;
+        }        
         
         /* If we run in abort only mode and do some forwards & etc.
          * Then we should keep the abort status.
@@ -842,8 +838,7 @@ out:
     /* reply with error if needed */
     if (generate_rply)
     {
-        /* Reply back with failure... */
-        reply_with_failure(TPNOBLOCK, call, NULL, NULL, error_code);
+        ndrx_reject_connection(error_code);
     }
 
     /* free_up_buffers(); - processes manages memory manually!!! */
