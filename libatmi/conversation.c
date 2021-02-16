@@ -1191,8 +1191,17 @@ inject_message:
 
             if (rply->sysflags & SYS_FLAG_REPLY_ERROR)
             {
-                ndrx_TPset_error_msg(rply->rcode, "Server failed to generate reply");
-                conv->revent = *revent = TPEV_SVCERR; /* Server failed. */
+                if (rply->rcode==TPESVCERR)
+                {
+                    conv->revent = *revent = TPEV_SVCERR; /* Server failed. */
+                    ndrx_TPset_error(TPEEVENT); /* We have event! */
+                }
+                else
+                {
+                    ndrx_TPset_error_msg(rply->rcode, "Server failed to generate reply");
+                    /*conv->revent = *revent = TPEV_SVCERR;  Server failed. should we? */
+                }
+                
                 ret=EXFAIL;
                 goto out;
             } /* Forced close received. */

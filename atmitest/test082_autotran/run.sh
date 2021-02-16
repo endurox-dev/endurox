@@ -358,7 +358,7 @@ RET=$?
 
 if [[ "X$RET" == "X0" ]]; then
     echo "./atmiclt82 OK2 C shall fail, but didn't"
-    go_out $RET
+    go_out -1
 fi
 
 RET=0
@@ -402,7 +402,46 @@ RET=$?
 
 if [[ "X$RET" == "X0" ]]; then
     echo "./atmiclt82 SLEEP C shall fail, but didn't"
+    go_out -1
+fi
+
+RET=0
+
+echo "Output: [$OUTERR]"
+
+if [[ $OUTERR != *"TPEV_SVCERR"* ]]; then
+    echo "TPEV_SVCERR shall be provided as cannot start tran, but was [$OUTERR]"
+    go_out -3
+fi
+
+echo "CONV start fail check count 0"
+
+# count the results
+CNT=`./atmiclt82 COUNT | wc -l`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
     go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+
+################################################################################
+echo "*** CONV fails to commit.. (timeout) using tpsend() as event generator"
+
+OUTERR=`./atmiclt82 SLEEP S`
+
+RET=$?
+
+if [[ "X$RET" == "X0" ]]; then
+    echo "./atmiclt82 SLEEP C S shall fail, but didn't"
+    go_out -1
 fi
 
 RET=0
