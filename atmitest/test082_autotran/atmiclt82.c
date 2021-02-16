@@ -69,12 +69,12 @@ int main(int argc, char** argv)
 {
     UBFH *p_ub = (UBFH *)tpalloc("UBF", NULL, 56000);
     long rsplen;
-    int i;
     int ret=EXSUCCEED;
     long olen;
     char *buf = NULL;
     long revent;
     int cd;
+    int tmp;
     
     /* We shall call commands:
      * - Commands are: "OK"
@@ -133,7 +133,16 @@ int main(int argc, char** argv)
     {
         if (argc>2)
         {
-            if (EXFAIL == (cd=tpconnect("TESTSV2", (char *)p_ub, 0L, TPRECVONLY)))
+            if ('C'==argv[2][0])
+            {
+                tmp = TPRECVONLY;
+            }
+            else if ('S'==argv[2][0])
+            {
+                tmp = TPSENDONLY;
+            }
+            
+            if (EXFAIL == (cd=tpconnect("TESTSV2", (char *)p_ub, 0L, tmp)))
             {
                 NDRX_LOG(log_error, "TESTSV2 failed: %s", tpstrerror(tperrno));
                 /* capture the error code from the script */
@@ -143,7 +152,18 @@ int main(int argc, char** argv)
             }
             
             /* get event */
-            if (EXFAIL==tprecv(cd, &buf, &olen, 0, &revent))
+            if ('C'==argv[2][0])
+            {
+                tmp = tprecv(cd, &buf, &olen, 0, &revent);
+            }
+            else if ('S'==argv[2][0])
+            {
+                sleep(3); /* let server to return */
+                /* check with send entry point... */
+                tmp = tpsend(cd, NULL, 0, 0, &revent);
+            }
+            
+            if (EXFAIL==tmp)
             {
                 NDRX_LOG(log_error, "RECV failed: %s %ld", tpstrerror(tperrno), revent);
                 
