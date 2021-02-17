@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
+export NDRX_SILENT=Y
 
 export NDRX_LIBEXT="so"
 if [ "$(uname)" == "Darwin" ]; then
@@ -72,12 +73,28 @@ set_dom1() {
 }
 
 #
+# Domain 2 - here client will live
+#
+set_dom2() {
+    echo "Setting domain 2"
+    . ../dom2.sh
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2.xml
+    export NDRX_DMNLOG=$TESTDIR/ndrxd-dom2.log
+    export NDRX_LOG=$TESTDIR/ndrx-dom2.log
+    export NDRX_DEBUG_CONF=$TESTDIR/debug-dom2.conf
+}
+
+#
 # Generic exit function
 #
 function go_out {
     echo "Test exiting with: $1"
     
     set_dom1;
+    xadmin stop -y
+    xadmin down -y
+
+    set_dom2;
     xadmin stop -y
     xadmin down -y
 
@@ -88,19 +105,49 @@ function go_out {
     exit $1
 }
 
+
 rm -rf ${TESTDIR}/RM1 2>/dev/null
 mkdir ${TESTDIR}/RM1
+
+rm -rf ${TESTDIR}/RM2 2>/dev/null
+mkdir ${TESTDIR}/RM2
+
 rm -rf ${TESTDIR}/QSPACE1 2>/dev/null
 mkdir ${TESTDIR}/QSPACE1
 
 rm *.log
 rm ULOG*
-# Any bridges that are live must be killed!
-xadmin killall tpbridge
 
+
+for TEST_MODE in 2 1
+do
+
+# Clean up the stuff
+xadmin killall tpbridge
+set_dom2;
+xadmin down -y
+
+xadmin killall tpbridge
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
+
+
+if [ $TEST_MODE -eq 2 ]; then
+
+    echo "Testing domain mode..."
+    set_dom2;
+    xadmin start -y
+    echo "Wait for connection..."
+    sleep 30
+    set_dom1;
+
+    # do not use server 2 locally.., only remote
+    xadmin stop -s atmi.sv82_2
+
+fi
+
+xadmin psc
 
 RET=0
 
@@ -282,6 +329,25 @@ export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1-notran.xml
 xadmin stop -y
 xadmin start -y
 
+
+if [ $TEST_MODE -eq 2 ]; then
+    # do not use server 2 locally.., only remote
+    xadmin stop -s atmi.sv82_2
+    echo "Testing domain mode... wait for connection..."
+
+    set_dom2;
+
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2-notran.xml
+    xadmin stop -y
+    xadmin start -y
+    
+    set_dom1;
+    
+    sleep 30
+fi
+
+xadmin psc
+
 echo "*** Normal fail test"
 
 OUTERR=`./atmiclt82 FAIL`
@@ -322,6 +388,23 @@ export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1.xml
 xadmin stop -y
 xadmin start -y
 
+if [ $TEST_MODE -eq 2 ]; then
+    # do not use server 2 locally.., only remote
+    xadmin stop -s atmi.sv82_2
+    echo "Testing domain mode... wait for connection..."
+
+    set_dom2;
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom2.xml
+    xadmin stop -y
+    xadmin start -y
+
+    set_dom1;
+
+    sleep 30
+fi
+
+xadmin psc
+
 ./atmiclt82 OK C
 
 RET=$?
@@ -351,6 +434,12 @@ fi
 echo "*** CONV start fail"
 
 xadmin stop -s tmsrv
+
+if [ $TEST_MODE -eq 2 ]; then
+    set_dom2;
+    xadmin stop -s tmsrv
+    set_dom1;
+fi
 
 OUTERR=`./atmiclt82 OK C`
 
@@ -393,6 +482,12 @@ echo "QUEUES, END"
 
 xadmin start -s tmsrv
 
+if [ $TEST_MODE -eq 2 ]; then
+    set_dom2;
+    xadmin start -s tmsrv
+    set_dom1;
+fi
+
 ################################################################################
 echo "*** CONV fails to commit.. (timeout)"
 
@@ -430,7 +525,6 @@ if [[ "X$CNT" != "X0" ]]; then
     echo "Got invalid count: $CNT"
     go_out -1
 fi
-
 
 ################################################################################
 echo "*** CONV fails to commit.. (timeout) using tpsend() as event generator"
@@ -470,14 +564,15 @@ if [[ "X$CNT" != "X0" ]]; then
     go_out -1
 fi
 
+# master loop 2x configs local and remote...
+done
+
 ################################################################################
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"
     RET=-2
 fi
-
-
 
 
 go_out $RET

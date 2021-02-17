@@ -220,6 +220,7 @@ expublic int ndrx_reject_connection(int err)
     call->sysflags|=SYS_FLAG_REPLY_ERROR;
     call->rcode = err;
     call->clttout = G_atmi_env.time_out;
+    NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_last_call.reply_to);
     ndrx_stopwatch_reset(&call->timer);
 
     if (EXSUCCEED!=(ret=ndrx_generic_q_send(their_qstr, (char *)call, sizeof(*call), 
@@ -1202,6 +1203,10 @@ inject_message:
                     /*conv->revent = *revent = TPEV_SVCERR;  Server failed. should we? */
                 }
                 
+                /* Shutdown connection*/
+                normal_connection_shutdown(conv, EXTRUE, 
+                        "tprecv got SYS_FLAG_REPLY_ERROR");
+                
                 ret=EXFAIL;
                 goto out;
             } /* Forced close received. */
@@ -1353,15 +1358,18 @@ out:
 /**
  * Receive any un-expected messages.
  * With this we catch the cases when server have been illegally made tpreturn!
- * @return
+ * @param cd current conversation descriptor
+ * @param p_revent event value returned in case of if 
+ * @return EXSUCCEED/EXFAIL (event received)
  */
-exprivate void process_unsolicited_messages(int cd)
+exprivate int process_unsolicited_messages(int cd, long *p_revent)
 {
     short command_id=ATMI_COMMAND_CONNUNSOL;
     char *data=NULL;
     long len;
-    long revent;
-
+    long revent=0;
+    int ret = EXSUCCEED;
+    
     /* Flush down all messages */
     while (EXSUCCEED==ndrx_tprecv (cd, &data, &len, TPNOBLOCK, &revent, &command_id))
     {
@@ -1370,7 +1378,21 @@ exprivate void process_unsolicited_messages(int cd)
         tpfree(data);
         data=NULL;
     }
-
+    
+    if (TPEEVENT==tperrno)
+    {
+        *p_revent=revent;
+        ret=EXFAIL;
+    }
+    
+    /* finally if something after the buffer alloc failed */
+    if (NULL!=data)
+    {
+        ndrx_tpfree (data, NULL);
+    }
+    
+    return ret;
+    
 }
 
 /**
@@ -1440,8 +1462,16 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
         goto out;
     }
 
-    /* Check for any messages & process them */
-    process_unsolicited_messages(cd);
+    /* Check for any messages & process them
+     * - if we get any other error than TPEBLOCK
+     *   then error shall be returned together with revent.
+     *   how about changing the 
+     */
+    if (EXSUCCEED!=process_unsolicited_messages(cd, revent))
+    {
+        ret=EXFAIL;
+        goto out;
+    }
     
     /*
      * Check are we still in connection?
