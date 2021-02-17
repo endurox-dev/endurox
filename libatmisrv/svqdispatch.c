@@ -399,6 +399,7 @@ expublic int sv_serve_call(int *service, int *status,
                  */
                 *status=EXFAIL;
                 generate_rply = EXTRUE;
+                error_code = TPETRAN;
                 goto out;
             }
         }
@@ -642,7 +643,7 @@ expublic int sv_serve_connect(int *service, int *status,
         {
 
             /* Reply with failure - TPEITYPE - type not supported! */
-            generate_rply = EXFALSE;
+            generate_rply = EXTRUE;
             error_code = TPEITYPE; /**< Default error in case if cannot process */
             goto out;
         }
@@ -712,6 +713,7 @@ expublic int sv_serve_connect(int *service, int *status,
                  * failed!!!!
                  */
                 *status=EXFAIL;
+                error_code = TPETRAN;
                 generate_rply = EXTRUE;
                 goto out;
             }

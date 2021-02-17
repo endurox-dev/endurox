@@ -77,13 +77,21 @@ and *TPGETANY* flag was not specified.
 *TPESVCFAIL* Service returned 'TPFAIL'. This is application level failure.
 
 *TPESVCERR* System level service failure. Server died during the message presence 
-in service queue.
+in service queue. Or internals of *tpreturn(3)* failed at server code, e.g.
+failed to commit auto-tran.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, or 
 debugs for more info.
+
+*TPETRAN* Called service is configured as auto-tran, but internal *tpbegin(3)*
+at XATMI server code failed. Or server failed to join global transaction. See
+reasons in log file.
+
+*TPEITYPE* There was problem with XATMI data type buffer, not supported by service
+or corrupted.
 
 EXAMPLE
 -------

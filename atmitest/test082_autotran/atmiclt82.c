@@ -158,7 +158,7 @@ int main(int argc, char** argv)
             }
             else if ('S'==argv[2][0])
             {
-                sleep(3); /* let server to return */
+                sleep(8); /* let server to return */
                 /* check with send entry point... */
                 tmp = tpsend(cd, NULL, 0, 0, &revent);
             }
