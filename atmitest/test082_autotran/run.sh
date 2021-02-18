@@ -480,13 +480,72 @@ echo "QUEUES:"
 xadmin pqa
 echo "QUEUES, END"
 
-xadmin start -s tmsrv
-
 if [ $TEST_MODE -eq 2 ]; then
     set_dom2;
     xadmin start -s tmsrv
     set_dom1;
 fi
+
+xadmin start -s tmsrv
+
+################################################################################
+if [ $TEST_MODE -eq 2 ]; then
+    echo "*** CONV start fail (TMSRV1 out of order TMSRV2 OK)"
+
+    xadmin stop -s tmsrv
+
+    OUTERR=`./atmiclt82 OK C`
+
+    RET=$?
+
+    if [[ "X$RET" == "X0" ]]; then
+        echo "./atmiclt82 OK2 C shall fail, but didn't"
+        go_out -1
+    fi
+
+    RET=0
+
+    echo "Output: [$OUTERR]"
+
+    if [[ $OUTERR != *"TPEV_SVCERR"* ]]; then
+        echo "TPEV_SVCERR shall be provided as cannot start tran, but was [$OUTERR]"
+        go_out -3
+    fi
+
+    echo "CONV start fail check count 0"
+    # count the results
+    CNT=`./atmiclt82 COUNT | wc -l`
+
+    RET=$?
+
+    if [[ "X$RET" != "X0" ]]; then
+        echo "Failed to run COUNT"
+        go_out $RET
+    fi
+
+    if [[ "X$CNT" != "X0" ]]; then
+        echo "Got invalid count: $CNT"
+        go_out -1
+    fi
+
+    xadmin start -s tmsrv
+
+    if [ $TEST_MODE -eq 2 ]; then
+        set_dom2;
+        xadmin start -s tmsrv
+        set_dom1;
+    fi
+
+fi
+################################################################################
+
+################################################################################
+# common stats
+################################################################################
+# print all queues after the failed to connect...
+echo "QUEUES:"
+xadmin pqa
+echo "QUEUES, END"
 
 ################################################################################
 echo "*** CONV fails to commit.. (timeout)"

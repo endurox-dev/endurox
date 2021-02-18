@@ -419,7 +419,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     
     
     /* have some debug... */
-    NDRX_LOG(log_debug, "=== Adding Route [%s] group range ===", seq->cseq.grp);
+    NDRX_LOG(log_debug, "--- Adding Route [%s] group range ---", seq->cseq.grp);
     
     NDRX_LOG(log_debug, "CRITERION: %s", ndrx_G_ddrp.p_crit->routcrit.criterion);
     NDRX_LOG(log_debug, "BUFTYPE: %s", ndrx_G_ddrp.p_crit->routcrit.buftype);
@@ -442,7 +442,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     NDRX_LOG(log_debug, "strrange: [%s]", seq->cseq.strrange);
     NDRX_LOG(log_debug, "strrange_upper: [%s]", seq->cseq.strrange+seq->cseq.strrange_upper);
     
-    NDRX_LOG(log_debug, "=====================================");
+    NDRX_LOG(log_debug, "-------------------------------------");
     
     /* add to DL finally */
     DL_APPEND(ndrx_G_ddrp.p_crit->seq, seq)
@@ -1373,7 +1373,7 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     }
     
     
-    NDRX_LOG(log_debug, "=== Adding Route [%s] range ===", p_route->criterion);
+    NDRX_LOG(log_debug, "--- Adding Route [%s] range ---", p_route->criterion);
     
     
     NDRX_LOG(log_debug, "criterion: [%s]", p_crit->routcrit.criterion);
@@ -1389,7 +1389,7 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     NDRX_LOG(log_debug, "fldid: [%d]", p_crit->routcrit.fldid);
     NDRX_LOG(log_debug, "rangesnr: [%ld]", p_crit->routcrit.rangesnr);
     
-    NDRX_LOG(log_debug, "=====================================");
+    NDRX_LOG(log_debug, "-------------------------------------");
     
     /* if parsed ok, add to type hash, not ?  */
     EXHASH_ADD_STR(p_route->btypes, buftype, p_crit);
