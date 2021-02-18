@@ -104,6 +104,7 @@ expublic int tm_prepare_remote_call(atmi_xa_tx_info_t *p_xai, short rmid, long b
             
     /* Call the remote TM.
      * TODO: How about error handling? 
+     * - In case of TPNOENT for some reason we do not abort the transaction!
      */
     p_ub=atmi_xa_call_tm_generic(ATMI_XA_TMPREPARE, EXTRUE, rmid, p_xai, 0L, btid);
 

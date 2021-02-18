@@ -202,11 +202,16 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     int len_new;
     char grp[NDRX_DDR_GRP_MAX+1];
     
-    
     /* not attached, nothign to return */
     if (!ndrx_shm_is_attached(&ndrx_G_routsvc))
     {
         goto out;
+    }
+
+    /* DDR not used system wide */
+    if (!ndrx_G_shmcfg->use_ddr)
+    {
+        return out;
     }
     
     if (EXSUCCEED!=ndrx_ddr_services_get(svcnm, &svc))
