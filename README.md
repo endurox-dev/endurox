@@ -526,6 +526,8 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 
 - Version 7.5.16 released on 17/01/2021 (stable) Support #623
 
+- Version 7.5.18 released on 18/02/2021 (stable) Support #633
+
 # Build configurations
 
 ## Configure make with: 
