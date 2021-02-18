@@ -1351,21 +1351,8 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
             /* In this case it is just a TRUE. */
             else if (BFLD_STRING==fld_type || BFLD_CARRAY==fld_type || BFLD_CHAR==fld_type)
             {
-                BFLDLEN len = MAX_TEXT+1;
-
-                if (NULL==(v->strval=NDRX_MALLOC(len)))
-                {
-                    UBF_LOG(log_error, "Error malloc fail!");
-                    ndrx_Bset_error_fmt(BMALLOC, "Error malloc fail! (cannot allocate %d)", len);
-                    ret=EXFAIL;
-                }
-                else
-                {
-                    v->dyn_alloc = 1; /* ensure that FREE_UP_UB_BUF can capture these */
-                }
-
-                if (EXSUCCEED==ret && EXSUCCEED!=CBget(p_ub, bfldid, occ,
-                                (char *)v->strval, &len, BFLD_STRING))
+                v->dyn_alloc = 0;
+                if (NULL==(v->strval=Bgetsa(p_ub, bfldid, occ, NULL)))
                 {
                     if (BNOTPRES==Berror)
                     {
@@ -1381,20 +1368,15 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
                     {
                         UBF_LOG(log_warn, "Failed to get [%s] - %s",
                             fld->fld.fldnm, Bstrerror(Berror));
-                        ret=EXFAIL;
+                        EXFAIL_OUT(ret);
                     }
-                    /* Lets free memory right right here, why not? */
-
-                    NDRX_FREE(v->strval);
-                    v->dyn_alloc = 0;
-                    v->strval = NULL;
                 }
-                else if (EXSUCCEED==ret)
+                else
                 {
                     v->value_type = VALUE_TYPE_FLD_STR;
                     v->boolval=EXTRUE;
+                    v->dyn_alloc = EXTRUE;
                 }
-
             }
             else if (BFLD_SHORT==fld_type || BFLD_LONG==fld_type)
             {
@@ -1456,7 +1438,8 @@ int read_unary_fb(UBFH *p_ub, struct ast *a, value_block_t * v)
 
     /* Dump out the final value */
     DUMP_VALUE_BLOCK("read_unary_fb", v);
-
+    
+out:
     UBF_LOG(log_debug, "return %s %d", fn, ret);
 
     return ret;
