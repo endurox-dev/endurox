@@ -211,7 +211,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     /* DDR not used system wide */
     if (!ndrx_G_shmcfg->use_ddr)
     {
-        return out;
+        goto out;
     }
     
     if (EXSUCCEED!=ndrx_ddr_services_get(svcnm, &svc))
