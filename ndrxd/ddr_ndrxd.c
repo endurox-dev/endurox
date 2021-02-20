@@ -494,11 +494,11 @@ expublic ndrx_routcritseq_dl_t * ndrx_ddr_new_rangeexpr(char *range_min, char *r
     else
     {
         /* both strings are used */
-        str_max_sz=strlen(range_max)+1;
         str_min_sz=strlen(range_min)+1;
+        str_max_sz=strlen(range_max)+1;
         
-        NDRX_LOG(log_debug, "range_max=[%s]", range_max);
         NDRX_LOG(log_debug, "range_min=[%s]", range_min);
+        NDRX_LOG(log_debug, "range_max=[%s]", range_max);
     }
     
     sz = sizeof(ndrx_routcritseq_dl_t) + str_max_sz + str_min_sz;
@@ -727,9 +727,12 @@ out:
  * @param config current config loading
  * @param doc
  * @param cur
+ * @param is_defaults is this parsing of default
+ * @param p_defaults default settings
  * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
+expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
+        int is_defaults, ndrx_services_hash_t *p_defaults)
 {
     int ret=EXSUCCEED;
     xmlAttrPtr attr;
@@ -738,21 +741,23 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     /* service shall not be defined */
     
-    
-    /* first of all, we need to get server name from attribs */
-    p_svc = NDRX_CALLOC(1, sizeof(ndrx_services_hash_t));
-    if (NULL==p_svc)
+    if (is_defaults)
     {
-        NDRX_LOG(log_error, "malloc failed for ndrx_routsvc_t!");
-        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc failed for srvnode!", 
-                G_sys_config.config_file_short);
-        EXFAIL_OUT(ret);
+        p_svc=p_defaults;
     }
-    
-    
-    /* set default prio */
-    p_svc->routsvc.prio = NDRX_MSGPRIO_DEFAULT;
-    p_svc->routsvc.trantime = NDRX_DDR_TRANTIMEDFLT;
+    else
+    {
+        /* first of all, we need to get server name from attribs */
+        p_svc = NDRX_MALLOC(sizeof(ndrx_services_hash_t));
+        if (NULL==p_svc)
+        {
+            NDRX_LOG(log_error, "malloc failed for ndrx_routsvc_t!");
+            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) malloc failed for srvnode!", 
+                    G_sys_config.config_file_short);
+            EXFAIL_OUT(ret);
+        }
+        memcpy(p_svc, p_defaults, sizeof(ndrx_services_hash_t));
+    }
     
     for (attr=cur->properties; attr; attr = attr->next)
     {
@@ -793,38 +798,42 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         xmlFree(p);
     }
     
-    /* Check service settings */
-    if (EXEOS==p_svc->routsvc.svcnm[0])
+        /* no hashing for defaults */
+    if (!is_defaults)
     {
-        NDRX_LOG(log_error, "(%s) Empty service definition", 
-                G_sys_config.config_file_short);
+        /* Check service settings */
+        if (EXEOS==p_svc->routsvc.svcnm[0])
+        {
+            NDRX_LOG(log_error, "(%s) Empty service definition", 
+                    G_sys_config.config_file_short);
 
-        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty service definition", 
-                G_sys_config.config_file_short);
-        EXFAIL_OUT(ret);
-    }
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty service definition", 
+                    G_sys_config.config_file_short);
+            EXFAIL_OUT(ret);
+        }
     
-    EXHASH_FIND_STR(config->services, p_svc->routsvc.svcnm, elt);
-    
-    if (NULL!=elt)
-    {
-        NDRX_LOG(log_error, "(%s) Service [%s] already defined", 
-                G_sys_config.config_file_short, p_svc->svcnm);
+        EXHASH_FIND_STR(config->services, p_svc->routsvc.svcnm, elt);
 
-        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Service [%s] already defined", 
-                G_sys_config.config_file_short,p_svc->svcnm);
-        EXFAIL_OUT(ret);
+        if (NULL!=elt)
+        {
+            NDRX_LOG(log_error, "(%s) Service [%s] already defined", 
+                    G_sys_config.config_file_short, p_svc->svcnm);
+
+            NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Service [%s] already defined", 
+                    G_sys_config.config_file_short,p_svc->svcnm);
+            EXFAIL_OUT(ret);
+        }
+
+        NDRX_LOG(log_debug, "SERVICES Entry: SVCNM=%s PRIO=%d ROUTING=%s AUTOTRAN=%c TRANTIME=%lu",
+                p_svc->routsvc.svcnm, p_svc->routsvc.prio, p_svc->routsvc.criterion, 
+                p_svc->routsvc.autotran?'Y':'N', p_svc->routsvc.trantime);
+
+        EXHASH_ADD_STR(config->services, svcnm, p_svc);
     }
-    
-    NDRX_LOG(log_debug, "SERVICES Entry: SVCNM=%s PRIO=%d ROUTING=%s AUTOTRAN=%c",
-            p_svc->routsvc.svcnm, p_svc->routsvc.prio, p_svc->routsvc.criterion, 
-            p_svc->routsvc.autotran?'Y':'N');
-    
-    EXHASH_ADD_STR(config->services, svcnm, p_svc);
-    
 out:
-                
-    if (EXFAIL==ret && p_svc)
+    
+    /* defaults are static..  */
+    if (EXFAIL==ret && !is_defaults && p_svc)
     {
         NDRX_FREE(p_svc);
     }
@@ -837,13 +846,26 @@ out:
 expublic int ndrx_services_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
 {
     int ret=EXSUCCEED;
+    ndrx_services_hash_t default_svc;
+    
+    int is_service;
+    int is_defaults;
+    
+    memset(&default_svc, 0, sizeof(default_svc));
+    
+        /* set default prio */
+    default_svc.routsvc.prio = NDRX_MSGPRIO_DEFAULT;
+    default_svc.routsvc.trantime = NDRX_DDR_TRANTIMEDFLT;
     
     for (; cur ; cur=cur->next)
     {
-        if (0==strcmp((char*)cur->name, "service"))
+        is_service= (0==strcmp((char*)cur->name, "service"));
+        is_defaults= (0==strcmp((char*)cur->name, "defaults"));
+        
+        if (is_service || is_defaults)
         {
             /* Get the server name */
-            if (EXSUCCEED!=ndrx_service_parse(config, doc, cur))
+            if (EXSUCCEED!=ndrx_service_parse(config, doc, cur, is_defaults, &default_svc))
             {
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Failed to "
                         "parse <service> section", G_sys_config.config_file_short);
@@ -853,6 +875,7 @@ expublic int ndrx_services_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur
         }
     }
 out:
+                
     return ret;
 }
 
