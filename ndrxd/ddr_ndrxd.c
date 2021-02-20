@@ -115,6 +115,7 @@ expublic void ndrx_ddr_install(void)
         NDRX_LOG(log_info, "Loading NEW DDR, page 0");
         /* copy off just new config, start with page 0*/
         ndrx_G_shmcfg->ddr_page = 0;
+        ndrx_G_shmcfg->ddr_ver1++;
         memcpy(ndrx_G_routcrit.mem, G_app_config->routing_block, G_atmi_env.rtcrtmax);
         memcpy(ndrx_G_routsvc.mem, G_app_config->services_block, G_atmi_env.rtsvcmax * sizeof(ndrx_services_t));
         
@@ -152,6 +153,7 @@ expublic void ndrx_ddr_install(void)
             
             NDRX_LOG(log_info, "DDR Changing configuration into page %d", page);
             
+            ndrx_G_shmcfg->ddr_ver1++;
             memcpy(ndrx_G_routcrit.mem + page*G_atmi_env.rtcrtmax, 
                 G_app_config->routing_block, G_atmi_env.rtcrtmax);
             

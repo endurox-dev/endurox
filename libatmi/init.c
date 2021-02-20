@@ -60,6 +60,7 @@
 #include <typed_view.h>
 #include <atmi_cache.h>
 #include <nstd_int.h>
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
@@ -654,7 +655,17 @@ expublic int ndrx_load_common_env(void)
        NDRX_LOG(log_error, "ndrx_atmiutil_init() failed");
        EXFAIL_OUT(ret);
     }
-   
+    
+    /**
+     * LIB ATMI must work with SHMCFG - thus ensures that it is open
+     */
+    if (!ndrx_lcf_supported_int())
+    {
+        NDRX_LOG(log_error, "ATMI processes must have LCF/SHMCFG configured - "
+                "check in previous logs why %s did not open", NDRX_SHM_LCF_SFX);
+        EXFAIL_OUT(ret);
+    }
+    
     NDRX_LOG(log_debug, "env loaded ok");
     G_is_env_loaded = EXTRUE;
 out:

@@ -387,11 +387,6 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
     
     _Nunset_error();
     
-    if (EXSUCCEED!=ndrx_lcf_supported_int())
-    {
-        EXFAIL_OUT(ret);
-    }
-    
     /* Check the argument count... if no args are given, then print current
      * LCF table, If args are given, parse them up...
      */
@@ -541,6 +536,19 @@ out:
     }
 
     return ret;
+}
+
+/**
+ * Print shared memory configuration.
+ * ndrx_load_common_env() must have attached to shmcfg as whole online operations
+ * depends on this.
+ */
+expublic int cmd_shmcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
+{
+    printf("shmcfgver_lcf = %u\n", (unsigned)ndrx_G_shmcfg->shmcfgver_lcf);
+    printf("use_ddr = %d\n", ndrx_G_shmcfg->use_ddr);
+    printf("ddr_page = %u\n", (unsigned)ndrx_G_shmcfg->ddr_page);
+    printf("ddr_ver1 = %u\n", (unsigned)ndrx_G_shmcfg->ddr_ver1);
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -98,7 +98,6 @@ typedef struct
     int use_ddr;            /**< Should DDR be used by callers                         */
     unsigned char ddr_page;          /**< DDR page number  0 or 1, version not changes, using long for align */
     unsigned char ddr_ver1;          /**< DDR Version when we prepare to install data        */
-    unsigned char ddr_ver2;          /**< DDR Version when we have completed to install data to detect in progress */
     char reserved[NDRX_LCF_RESVR];  /**< reserved space for future updates             */
     
     /**< Array of LCF commands */
