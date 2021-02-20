@@ -168,12 +168,20 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
 #endif
 
             /* Add to list! */
-            
             /* Check the shared memory for autotran & timeout */
-            if (ndrx_ddr_service_get(svn_nm_add, &autotran, &trantime))
+            if (EXTRUE==(ret=ndrx_ddr_service_get(svn_nm_add, &autotran, &trantime)))
             {
                 entry->autotran = autotran;
                 entry->trantime = trantime;
+                ret=EXSUCCEED;
+            }
+            
+            /* if DDR memory changed too intensively
+             * and the deferred setting was low
+             */
+            if (EXFAIL==ret)
+            {
+                EXFAIL_OUT(ret);
             }
             
             DL_APPEND(G_server_conf.service_list, entry);
@@ -184,7 +192,8 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
                         entry->autotran, entry->trantime);
         }
     }
-
+    
+out:
     return ret;
 }
 
@@ -759,7 +768,8 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
 {
     int ret = EXSUCCEED;
     char svcn_nm_full[MAXTIDENT*2]={EXEOS};
-    
+    atmi_error_t err;
+    int grp_ok=EXFALSE;
     
     ndrx_TPunset_error();
     /* if we live in group, then advertise twice... */
@@ -784,6 +794,8 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
                     svcn_nm_full);
             EXFAIL_OUT(ret);
         }
+        
+        grp_ok=EXTRUE;
     }
     
     NDRX_LOG(log_info, "About to advertise default service [%s]", svc_nm);
@@ -795,6 +807,17 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
     }
     
 out:
+    
+    /* 
+     * if failed normal advertise, then unadvertise the group service
+     */
+    if (EXSUCCEED!=ret && grp_ok)
+    {
+        ndrx_TPsave_error(&err);
+        tpunadvertise_int(svcn_nm_full);
+        ndrx_TPrestore_error(&err);
+    }
+
     return ret;
 }
 

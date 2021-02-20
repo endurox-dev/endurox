@@ -469,6 +469,9 @@ cmd_mapping_t M_command_map[] =
                 "\t\t -A\tArgument A to COMMAND\n"
                 "\t\t -B\tArgument B to COMMAND"
                 , cmd_lcf_help},
+    {"shmcfg",  cmd_shmcfg,EXFAIL,             0,  0, 
+                "Print shared memory current configuration"
+                , NULL},
 };
 
 /*

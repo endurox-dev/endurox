@@ -843,17 +843,15 @@ expublic int ndrx_lcf_read_unlock(void)
 
 /**
  * Check is LCF supported
- * @return EXSUCCEED/EXFAIL
+ * @return EXTRUE/EXFALSE
  */
 expublic int ndrx_lcf_supported_int(void)
 {
-    int ret = EXSUCCEED;
+    int ret = EXTRUE;
     
     if (ndrx_G_shmcfg_ver==&M_ver_start)
     {
-        _Nset_error_msg(NESUPPORT, "LCF framework disabled");
-        
-        EXFAIL_OUT(ret);
+        ret=EXFALSE;
     }
     
 out:                            
@@ -948,6 +946,7 @@ expublic void ndrx_lcf_reset(void)
     
     ndrx_G_shmcfg->use_ddr = EXFALSE;
     ndrx_G_shmcfg->ddr_page=0;
+    ndrx_G_shmcfg->ddr_ver1=0;
     
 out:
     MUTEX_UNLOCK_V(M_lcf_run);

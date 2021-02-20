@@ -131,26 +131,54 @@ out:
     return ret;
 }
 
+/** detect that unacceptable change has happened */
+#define DDR_SHM_CHANGED ndrx_G_shmcfg->ddr_ver1!=ver1_ok && ndrx_G_shmcfg->ddr_ver1!=ver2_ok
+
+/*
+ * Detect that system is slow and we cannot detect the service settings
+ */
+#define DDR_SHM_VALIDATE \
+    if (DDR_SHM_CHANGED) \
+    {\
+        NDRX_LOG(log_error, "Unable to get DDR data for [%s] service - increase <ddrreload> "\
+                "time (accepted version: %u,%u current: %u)", \
+                svcnm, ver1_ok, ver2_ok, ndrx_G_shmcfg->ddr_ver1);\
+        userlog("Unable to get DDR data for [%s] service - increase <ddrreload> "\
+                "time (accepted version: %u,%u current: %u)", \
+                svcnm, ver1_ok, ver2_ok, ndrx_G_shmcfg->ddr_ver1);\
+        ndrx_TPset_error_fmt(TPESYSTEM, "Unable to get DDR data for [%s] service - increase <ddrreload> "\
+                "time (accepted version: %u,%u current: %u)", \
+                svcnm, ver1_ok, ver2_ok, ndrx_G_shmcfg->ddr_ver1);\
+        EXFAIL_OUT(ret);\
+    }
+
 /**
  * Get services entry.
  * Find the entry in current page of the DDR memory.
  * Thus DDR reloads shall be deferred for as long as possible time.
  * @param svcnm service name 
  * @param svc service descriptor
- * @return EXSUCCEED/EXFAIL
+ * @return EXSUCCEED/EXFALSE/EXFAIL (tp error loaded)
  */
 expublic int ndrx_ddr_services_get(char *svcnm, ndrx_services_t **svc)
 {
-    int ret = EXFAIL;
+    int ret = EXFALSE;
     int have_value=EXFALSE;
     int pos=0;
     int page;
+    unsigned char ver1_ok;
+    unsigned char ver2_ok;
     ndrx_services_t *ptr;
+    
     /* ddr not used. */
     if (!ndrx_G_shmcfg->use_ddr)
     {
         return EXFAIL;
     }
+    
+    ver1_ok = ndrx_G_shmcfg->ddr_ver1;
+    ver2_ok = ndrx_G_shmcfg->ddr_ver1+1;
+
     page = ndrx_G_shmcfg->ddr_page;
     ptr = (ndrx_services_t *) (ndrx_G_routsvc.mem + page*G_atmi_env.rtsvcmax * sizeof(ndrx_services_t));
     
@@ -161,9 +189,12 @@ expublic int ndrx_ddr_services_get(char *svcnm, ndrx_services_t **svc)
         
         NDRX_LOG(log_debug, "Found service [%s] in ddr service table, autotran=%d", 
                 (*svc)->svcnm, (*svc)->autotran);
-        ret=EXSUCCEED;
+        ret=EXTRUE;
     }
 
+    DDR_SHM_VALIDATE;
+    
+    
 out:
     return ret;
 }
@@ -178,7 +209,7 @@ out:
  * @param[in] data data to send to service
  * @param[in] len dat len to send to service
  * @param[out] prio if service if found return the priority
- * @return EXSUCCEED -> group not found (or default), EXTRUE group loaded, EXFAIL - not resolved
+ * @return EXSUCCEED/EXFALSE -> group not found (or default), EXTRUE group loaded, EXFAIL - error
  */
 expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         int *prio)
@@ -197,12 +228,14 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     char *mem_start;
     int in_range=EXFALSE;
     BFLDID fldid;
-    int checks=0;
+    int  fieldtypeid;
     char fldnm[UBFFLDMAX+1];
     int len_new;
     char grp[NDRX_DDR_GRP_MAX+1];
-    
-    /* not attached, nothign to return */
+    unsigned char ver1_ok;
+    unsigned char ver2_ok;
+
+    /* not attached, nothing to return */
     if (!ndrx_shm_is_attached(&ndrx_G_routsvc))
     {
         goto out;
@@ -214,10 +247,22 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         goto out;
     }
     
-    if (EXSUCCEED!=ndrx_ddr_services_get(svcnm, &svc))
+    ver1_ok = ndrx_G_shmcfg->ddr_ver1;
+    ver2_ok = ndrx_G_shmcfg->ddr_ver1+1;
+    
+    ret=ndrx_ddr_services_get(svcnm, &svc);
+    
+    if (EXTRUE!=ret)
     {
-        NDRX_LOG(log_debug, "No DDR service for [%s]", svcnm);
-        /* no group defined at all */
+        if (EXFALSE==ret)
+        {
+            NDRX_LOG(log_debug, "No DDR service for [%s]", svcnm);
+        }
+        
+        /* no group defined at all - either failure loaded or not found
+         * and we finish off
+         * the ret is configured
+         */
         goto out;
     }
     
@@ -247,24 +292,25 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         EXFAIL_OUT(ret);
     }
     
+    /* OK start to run... */
+    page = ndrx_G_shmcfg->ddr_page;
     mem_start = ndrx_G_routcrit.mem + page * G_atmi_env.rtcrtmax+svc->offset; 
     
     do
     {
-        checks++;
-        
-        if (checks > 999)
-        {
-            /* something bad has happened */
-            goto out_rej;
-        }
-        
-        page = ndrx_G_shmcfg->ddr_page;
+        /* 
+         * Check that we approach un-changed memory
+         */
+        DDR_SHM_VALIDATE;
+
         ccrit = (ndrx_routcrit_t *)(mem_start + offset_step);
         
         if (ccrit->criterionid!=svc->cirterionid)
         {
-            /* no matching buffer - ok */
+            /* no matching buffer - ok, this is finish in the search... 
+             * generate error if memory has changed.
+             */
+            DDR_SHM_VALIDATE;
             goto out_rej;
         }
         
@@ -275,9 +321,14 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
             /*  OK this is ours to check... */
             if (BUF_TYPE_UBF==buf->type_id)
             {
+                fieldtypeid = ccrit->fieldtypeid;
                 fldid = ccrit->fldid;
                 NDRX_STRCPY_SAFE(fldnm, ccrit->field);
-                if (BFLD_LONG == ccrit->fieldtypeid)
+                
+                /* Check that we are still valid here */
+                DDR_SHM_VALIDATE;
+                
+                if (BFLD_LONG == fieldtypeid)
                 {
                     if (EXSUCCEED==CBget((UBFH *)data, fldid, 0, 
                             (char *)&longval, 0L, BFLD_LONG))
@@ -291,7 +342,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                         EXFAIL_OUT(ret);
                     }
                 }
-                else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                else if (BFLD_DOUBLE == fieldtypeid)
                 {
                     if (EXSUCCEED==CBget((UBFH *)data, fldid, 0, 
                             (char *)&floatval, 0L, BFLD_DOUBLE))
@@ -331,6 +382,9 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
             
             for (i=0; i < ccrit->rangesnr; i++)
             {
+                /* check that memory is not changed... */
+                DDR_SHM_VALIDATE;
+                 
                 /* OK we got the range so loop over... */
                 range = (ndrx_routcritseq_t *)(mem_start + offset_step);
                 
@@ -343,14 +397,14 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                 else if (range->flags & NDRX_DDR_FLAG_MIN)
                 {
                     /* so if bellow upper or equals then we are in the range */
-                    if (BFLD_LONG == ccrit->fieldtypeid)
+                    if (BFLD_LONG == fieldtypeid)
                     {
                         if (longval <= range->upperl)
                         {
                             in_range=EXTRUE;
                         }
                     }
-                    else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                    else if (BFLD_DOUBLE == fieldtypeid)
                     {    
                         if (floatval < range->upperd ||
                                 fabs(floatval - range->upperd) < DOUBLE_EQUAL)
@@ -358,7 +412,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                             in_range=EXTRUE;
                         }
                     }
-                    else if (BFLD_STRING == ccrit->fieldtypeid)
+                    else if (BFLD_STRING == fieldtypeid)
                     {
                         if (strcmp(strval, range->strrange) <= 0)
                         {
@@ -369,14 +423,14 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                 else if (range->flags & NDRX_DDR_FLAG_MAX)
                 {
                     /* so if bellow upper or equals then we are in the range */
-                    if (BFLD_LONG == ccrit->fieldtypeid)
+                    if (BFLD_LONG == fieldtypeid)
                     {
                         if (longval >= range->lowerl)
                         {
                             in_range=EXTRUE;
                         }
                     }
-                    else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                    else if (BFLD_DOUBLE == fieldtypeid)
                     {    
                         if (floatval > range->lowerd ||
                                 fabs(floatval - range->lowerd) < DOUBLE_EQUAL)
@@ -384,8 +438,15 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                             in_range=EXTRUE;
                         }
                     }
-                    else if (BFLD_STRING == ccrit->fieldtypeid)
+                    else if (BFLD_STRING == fieldtypeid)
                     {
+                        /* if mem changed it can match or not match
+                         * but anyway, the routing blobs are terminated with
+                         * EOS in last routing block
+                         * or rangesnr is set to 0
+                         * thus it will never overflow.
+                         * Also prior setting the data, memset is performed.
+                         */
                         if (strcmp(strval, range->strrange) >=0)
                         {
                             in_range=EXTRUE;
@@ -395,7 +456,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                 else
                 {
                     /* full check not flags... */
-                    if (BFLD_LONG == ccrit->fieldtypeid)
+                    if (BFLD_LONG == fieldtypeid)
                     {
                         if (longval >= range->lowerl &&
                                 longval <= range->upperl)
@@ -403,7 +464,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                             in_range=EXTRUE;
                         }
                     }
-                    else if (BFLD_DOUBLE == ccrit->fieldtypeid)
+                    else if (BFLD_DOUBLE == fieldtypeid)
                     {    
                         if ( (floatval > range->lowerd ||
                                 fabs(floatval - range->lowerd) < DOUBLE_EQUAL) &&
@@ -415,7 +476,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                             in_range=EXTRUE;
                         }
                     }
-                    else if (BFLD_STRING == ccrit->fieldtypeid)
+                    else if (BFLD_STRING == fieldtypeid)
                     {
                         if (strcmp(strval, range->strrange) >=0 &&
                                 strcmp(strval, range->strrange+range->strrange_upper) <=0
@@ -432,7 +493,6 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                     if (range->flags & NDRX_DDR_FLAG_DEFAULT_GRP)
                     {
                         NDRX_LOG(log_debug, "Default group matched");
-                        goto out;
                     }
                     else
                     {
@@ -451,6 +511,10 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         /* check for next... */
     } while (svc->offset + offset_step + sizeof(ndrx_routcrit_t) < G_atmi_env.rtcrtmax && EXSUCCEED==ret);
     
+    /* Validate that mem is not changed */
+    DDR_SHM_VALIDATE;
+    
+    /* No routing data is found... */
     if (EXTRUE==ret)
     {
         /* add the group suffx, also check the buffer space 
@@ -509,7 +573,7 @@ out:
  * @param[in] svcnm service name to lookup
  * @param[out] autotran auto tran setting from services section
  * @param[out] trantime transaction timeout setting from services section
- * @return EXTRUE (loaded), EXFALSE (not found)
+ * @return EXTRUE (loaded), EXFALSE (not found), EXFAIL (error!)
  */
 expublic int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *trantime)
 {
@@ -543,13 +607,13 @@ expublic int ndrx_ddr_service_get(char *svcnm, int *autotran, unsigned long *tra
         goto out;
     }
     
-    if (EXSUCCEED==ndrx_ddr_services_get(svcnm, &svc))
+    /* not we might get EXFAIL here too.. */
+    if (EXTRUE==(ret=ndrx_ddr_services_get(svcnm, &svc)))
     {
         *autotran = svc->autotran;
         *trantime = svc->trantime;
-        
-        ret=EXTRUE;
     }
+    
 out:
     return ret;
 }

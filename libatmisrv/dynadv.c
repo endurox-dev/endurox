@@ -365,12 +365,19 @@ expublic int dynamic_advertise(svc_entry_fn_t *entry_new,
 #endif
     
     /* lookup the service settings in shm... */
-    if (ndrx_ddr_service_get(svc_nm, &autotran, &trantime))
+    if (EXTRUE==(ret=ndrx_ddr_service_get(svc_nm, &autotran, &trantime)))
     {
         NDRX_LOG(log_debug, "Service [%s] found in <services> section autotran: %d trantime: %lu",
                 svc_nm, autotran, trantime);
         entry_new->autotran = autotran;
         entry_new->trantime = trantime;
+        ret=EXSUCCEED;
+    }
+    
+    if (EXFAIL==ret)
+    {
+        /* routing error is loaded.. */
+        EXFAIL_OUT(ret);
     }
     
     /* We are good to go, open q? */
