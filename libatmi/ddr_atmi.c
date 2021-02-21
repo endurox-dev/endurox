@@ -173,7 +173,8 @@ expublic int ndrx_ddr_services_get(char *svcnm, ndrx_services_t **svc)
     /* ddr not used. */
     if (!ndrx_G_shmcfg->use_ddr)
     {
-        return EXFAIL;
+        /* no DDR settings here... */
+        return EXFALSE;
     }
     
     ver1_ok = ndrx_G_shmcfg->ddr_ver1;
@@ -209,7 +210,7 @@ out:
  * @param[in] data data to send to service
  * @param[in] len dat len to send to service
  * @param[out] prio if service if found return the priority
- * @return EXSUCCEED/EXFALSE -> group not found (or default), EXTRUE group loaded, EXFAIL - error
+ * @return EXFALSE/EXSUCCEED group not found (or default), EXTRUE group loaded, EXFAIL - error
  */
 expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
         int *prio)
@@ -222,7 +223,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     int offset_step=0;
     int i;
     double floatval;
-    double longval;
+    long longval;
     char *strval=NULL;
     buffer_obj_t *buf;
     char *mem_start;
@@ -234,7 +235,8 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     char grp[NDRX_DDR_GRP_MAX+1];
     unsigned char ver1_ok;
     unsigned char ver2_ok;
-
+    int is_default = EXFALSE;
+    
     /* not attached, nothing to return */
     if (!ndrx_shm_is_attached(&ndrx_G_routsvc))
     {
@@ -265,6 +267,8 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
          */
         goto out;
     }
+    
+    ret = EXSUCCEED; /* start to search now... */
     
     /* return default service call priority */
     *prio = svc->prio;
@@ -330,7 +334,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                 
                 if (BFLD_LONG == fieldtypeid)
                 {
-                    if (EXSUCCEED==CBget((UBFH *)data, fldid, 0, 
+                    if (EXSUCCEED!=CBget((UBFH *)data, fldid, 0, 
                             (char *)&longval, 0L, BFLD_LONG))
                     {
                         NDRX_LOG(log_error, "Cannot route [%s] - routing field not found [%s]: %s", 
@@ -344,7 +348,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                 }
                 else if (BFLD_DOUBLE == fieldtypeid)
                 {
-                    if (EXSUCCEED==CBget((UBFH *)data, fldid, 0, 
+                    if (EXSUCCEED!=CBget((UBFH *)data, fldid, 0, 
                             (char *)&floatval, 0L, BFLD_DOUBLE))
                     {
                         NDRX_LOG(log_error, "Cannot route [%s] - routing field not found [%s]: %s", 
@@ -493,6 +497,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                     if (range->flags & NDRX_DDR_FLAG_DEFAULT_GRP)
                     {
                         NDRX_LOG(log_debug, "Default group matched");
+                        is_default=EXTRUE;
                     }
                     else
                     {
@@ -514,8 +519,11 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     /* Validate that mem is not changed */
     DDR_SHM_VALIDATE;
     
-    /* No routing data is found... */
-    if (EXTRUE==ret)
+    /* Route is found, if running default, no additional routing shall be done
+     * Though one issue is that in cluster if sending the default
+     * the bridge will attempt to route again...?
+     */
+    if (EXTRUE==ret && !is_default)
     {
         /* add the group suffx, also check the buffer space 
          * If there is not enough space, return the error.

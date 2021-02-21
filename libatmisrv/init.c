@@ -119,7 +119,7 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
     int ret=EXSUCCEED;
     int autotran=0;
     unsigned long trantime=NDRX_DDR_TRANTIMEDFLT;
-    svc_entry_fn_t *svc_fn, *entry;
+    svc_entry_fn_t *svc_fn, *entry=NULL;
 
     /* resolve alias & add svc entry */
     if (NULL==resolved)
@@ -181,6 +181,7 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
              */
             if (EXFAIL==ret)
             {
+                NDRX_LOG(log_error, "Failed to get DDR infos for [%s]", svn_nm_add);
                 EXFAIL_OUT(ret);
             }
             
@@ -190,10 +191,16 @@ exprivate int sys_advertise_service(char *svn_nm_srch, char *svn_nm_add, svc_ent
                     "QUEUE: [%s] AUTOTRAN [%d] TRANTIME [%lu]",
                         entry->svc_nm, entry->fn_nm, entry->p_func, entry->listen_q,
                         entry->autotran, entry->trantime);
+            entry=NULL;
         }
     }
     
 out:
+    
+    if (NULL!=entry)
+    {
+        NDRX_FREE(entry);
+    }
     return ret;
 }
 
