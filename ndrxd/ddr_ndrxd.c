@@ -52,7 +52,6 @@
 #include "lcfint.h"
 #include <atmi_shm.h>
 #include <lcfint.h>
-#include <math.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -61,11 +60,11 @@
 
 expublic ndrx_ddr_parser_t ndrx_G_ddrp;      /**< Parsing time attributes*/
 /*---------------------------Statics------------------------------------*/
-exprivate regex_t M_floatexp;         /**< float check regexp            */
-exprivate int M_floatexp_comp=EXFALSE;  /**< is float regexp compiled?   */
-
-exprivate int M_was_loaded=EXFALSE;       /**< Was routing loaded?        */
-exprivate int M_do_reload=EXFALSE;        /**< Is reload waiting          */
+exprivate regex_t M_floatexp;       /**< float check regexp             */
+exprivate regex_t M_intexp;         /**< Integer expression             */
+exprivate int M_floatexp_comp=EXFALSE;  /**< is float regexp compiled?  */
+exprivate int M_was_loaded=EXFALSE;       /**< Was routing loaded?      */
+exprivate int M_do_reload=EXFALSE;        /**< Is reload waiting        */
 exprivate int M_do_reload_cycles=EXFAIL;  /**< Number of sanity cycles, till apply */
 
 /*---------------------------Prototypes---------------------------------*/
@@ -220,7 +219,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     int ret = EXSUCCEED;
     int len;
     char *dflt_group = "*";
-    
+    regex_t *p_rex = NULL;
     if (NULL==grp)
     {
         grp = dflt_group;
@@ -240,6 +239,17 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                 G_sys_config.config_file_short);
             EXFAIL_OUT(ret);
         }
+        
+        /* compile for longs too, then select which expression to use */
+        
+        if (EXSUCCEED!=ndrx_regcomp(&M_intexp, "^[+-]?([0-9])+$"))
+        {
+            NDRX_LOG(log_error, "Failed to compile regexp of tag int check");
+            NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to compile regexp of tag int check!", 
+                G_sys_config.config_file_short);
+            EXFAIL_OUT(ret);
+        }
+        
         M_floatexp_comp=EXTRUE;
     }
     
@@ -277,6 +287,16 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
             BFLD_LONG==ndrx_G_ddrp.p_crit->routcrit.routetype
             )
     {
+        
+        if (BFLD_DOUBLE==ndrx_G_ddrp.p_crit->routcrit.routetype)
+        {
+            p_rex=&M_floatexp;
+        }
+        else
+        {
+            p_rex=&M_intexp;
+        }
+        
         /* calculate the final len: 
          */
         seq->cseq.len = sizeof(seq->cseq);
@@ -292,7 +312,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
         {
             /* we can setup max + validate string */
             
-            if (EXSUCCEED!=ndrx_regexec(&M_floatexp, seq->cseq.strrange))
+            if (EXSUCCEED!=ndrx_regexec(p_rex, seq->cseq.strrange))
             {
                 NDRX_LOG(log_error, "Invalid upper range [%s] for grp [%s] "
                         "routing [%s] buffer type [%s]", 
@@ -306,10 +326,11 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
             }
             
             seq->cseq.upperd = ndrx_atof(seq->cseq.strrange);
+            seq->cseq.upperl = atol(seq->cseq.strrange);
         }
         else if (seq->cseq.flags & NDRX_DDR_FLAG_MAX)
         {
-            if (EXSUCCEED!=ndrx_regexec(&M_floatexp, seq->cseq.strrange))
+            if (EXSUCCEED!=ndrx_regexec(p_rex, seq->cseq.strrange))
             {
                 NDRX_LOG(log_error, "Invalid lower range [%s] for grp [%s] "
                         "routing [%s] buffer type [%s]", 
@@ -323,11 +344,12 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
             }
             
             seq->cseq.lowerd = ndrx_atof(seq->cseq.strrange);
+            seq->cseq.lowerl = atol(seq->cseq.strrange);
         }
         else
         {
             
-            if (EXSUCCEED!=ndrx_regexec(&M_floatexp, seq->cseq.strrange))
+            if (EXSUCCEED!=ndrx_regexec(p_rex, seq->cseq.strrange))
             {
                 NDRX_LOG(log_error, "Invalid lower range [%s] for grp [%s] "
                         "routing [%s] buffer type [%s]", 
@@ -340,7 +362,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                 EXFAIL_OUT(ret);
             }
             
-            if (EXSUCCEED!=ndrx_regexec(&M_floatexp, seq->cseq.strrange+seq->cseq.strrange_upper))
+            if (EXSUCCEED!=ndrx_regexec(p_rex, seq->cseq.strrange+seq->cseq.strrange_upper))
             {
                 NDRX_LOG(log_error, "Invalid upper range [%s] for grp [%s] "
                         "routing [%s] buffer type [%s]", 
@@ -354,7 +376,10 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
             }
             
             seq->cseq.lowerd = ndrx_atof(seq->cseq.strrange);
+            seq->cseq.lowerl = atol(seq->cseq.strrange);
+            
             seq->cseq.upperd = ndrx_atof(seq->cseq.strrange+seq->cseq.strrange_upper);
+            seq->cseq.upperl = atol(seq->cseq.strrange+seq->cseq.strrange_upper);
             
             if (seq->cseq.lowerd > seq->cseq.upperd)
             {
@@ -371,9 +396,6 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
                 EXFAIL_OUT(ret);
             }
         }
-        
-        seq->cseq.lowerl = round(seq->cseq.lowerd);
-        seq->cseq.upperl = round(seq->cseq.upperd);
     }
     else
     {
@@ -454,6 +476,12 @@ out:
     if (is_mallocd)
     {
         NDRX_FREE(grp);
+    }
+
+    if (EXSUCCEED!=ret)
+    {
+        /* not added to DL, thus will leak with out doing this... */
+        NDRX_FREE(seq);
     }
     NDRX_LOG(log_error, "ret %d", ret);
     return ret;
@@ -638,7 +666,7 @@ exprivate int ndrx_parse_range(ndrx_routcrit_typehash_t *p_crit)
     
     /* start to parse... */
     
-     ndrx_G_ddrcolumn=0;
+    ndrx_G_ddrcolumn=0;
     NDRX_LOG(log_info, "Parsing range: [%s]", p_crit->ranges);
     ddr_scan_string(p_crit->ranges);
             
@@ -651,14 +679,17 @@ exprivate int ndrx_parse_range(ndrx_routcrit_typehash_t *p_crit)
         /* free parsers... */
         ddrlex_destroy();
         
+        
+        /* well if we hav */
+        
         EXFAIL_OUT(ret);
     }
     ddrlex_destroy();
     
+out:
     /* free up string buffer */
     ndrx_growlist_free(&ndrx_G_ddrp.stringbuffer);
-    
-out:
+
     return ret;    
 }
 
@@ -687,7 +718,7 @@ exprivate ndrx_routcrit_hash_t * ndrx_criterion_get(config_t *config, char *crit
     {
         NDRX_LOG(log_error, "(%s) Empty criterion name",
                 G_sys_config.config_file_short);
-        NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Empty criterion name",
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Empty criterion name",
                 G_sys_config.config_file_short);
         goto out;
     }
@@ -763,9 +794,21 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
     {
         p = (char *)xmlNodeGetContent(attr->children);
         
-            
         if (0==strcmp((char *)attr->name, "svcnm"))
         {
+            /* check the name max */
+            if (strlen(p) > XATMI_SERVICE_NAME_LENGTH)
+            {
+                NDRX_LOG(log_error, "(%s) Too long service name [%s] in <services> section max %d", 
+                    G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH);
+
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Too long service name "
+                        "[%s] in <services> section max %d", 
+                    G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH);
+                
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
             NDRX_STRCPY_SAFE(p_svc->svcnm, p);
             NDRX_STRCPY_SAFE(p_svc->routsvc.svcnm, p);
             
@@ -1191,9 +1234,9 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     {
         NDRX_LOG(log_error, "(%s) Missing `routing' attribute",
                 G_sys_config.config_file_short);
-        NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Missing `routing' attribute",
+        NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Missing `routing' attribute",
                 G_sys_config.config_file_short);
-        goto out;
+        EXFAIL_OUT(ret);
     }
     
     /* allocate criterion, so that we have place to work */
@@ -1203,7 +1246,7 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     {
         NDRX_LOG(log_error, "(%s) Failed to malloc %d bytes", 
                 G_sys_config.config_file_short, *p_crit);
-        NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to malloc %d bytes",
+        NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to malloc %d bytes",
                 G_sys_config.config_file_short, *p_crit);
         goto out;
     }
@@ -1244,7 +1287,7 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 len = strlen(p);
                 NDRX_LOG(log_error, "(%s) Failed to malloc %d bytes", 
                         G_sys_config.config_file_short, len);
-                NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Failed to malloc %d bytes",
+                NDRXD_set_error_fmt(NDRXD_EOS, "(%s) Failed to malloc %d bytes",
                         G_sys_config.config_file_short, len);
                 xmlFree(p);
                 EXFAIL_OUT(ret);
@@ -1325,12 +1368,12 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
         
         if (BBADFLDID==p_crit->routcrit.fldid)
         {
-            NDRX_LOG(log_error, "(%s) Invalid routing field [%s]: %s",
+            NDRX_LOG(log_error, "(%s) Invalid routing field [%s] for route [%s]",
                         G_sys_config.config_file_short, 
-                    p_crit->routcrit.field, Bstrerror(Berror));
-            NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid routing field [%s]: %s",
+                    p_crit->routcrit.field, p_route->criterion);
+            NDRXD_set_error_fmt(NDRXD_EINVAL, "(%s) Invalid routing field [%s] for route [%s]",
                         G_sys_config.config_file_short, 
-                    p_crit->routcrit.field, Bstrerror(Berror));
+                    p_crit->routcrit.field, p_route->criterion);
             EXFAIL_OUT(ret);
         }
         

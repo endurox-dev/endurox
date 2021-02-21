@@ -87,6 +87,7 @@ group_expression:
 range_expr:
           range_val MINUS range_val     { $$ = ndrx_ddr_new_rangeexpr($1, $3);    if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
           | MIN MINUS range_val         { $$ = ndrx_ddr_new_rangeexpr(NULL, $3);  if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
+          | MIN MINUS MAX               { $$ = ndrx_ddr_new_rangeexpr(NULL, NULL);if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
           | range_val MINUS MAX         { $$ = ndrx_ddr_new_rangeexpr($1, NULL);  if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
           | range_val                   { $$ = ndrx_ddr_new_rangeexpr($1, $1);    if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}
           | DEFAULT                     { $$ = ndrx_ddr_new_rangeexpr(NULL, NULL);if (!$$|| ndrx_G_ddrp.error) {YYERROR;}}

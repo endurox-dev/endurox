@@ -116,11 +116,9 @@ int ndrx_G_ddrcolumn = 1;
                             BEGIN INITIAL;
                             return STRVAL;
                         }
-[ \t]                   {
+[ \t \n]                   {
                         }
-"\n"                    {
-                            return EOL;
-                        }
+
 %%
 
 /* yylex_destroy() is missing on older bison versions */
