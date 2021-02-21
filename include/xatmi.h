@@ -387,8 +387,8 @@ typedef struct tp_tranid_t TPTRANID;
 struct tpevctl_t
 {
     long flags;
-    char name1[XATMI_SERVICE_NAME_LENGTH];
-    char name2[XATMI_SERVICE_NAME_LENGTH];
+    char name1[XATMI_SERVICE_NAME_LENGTH]; /**< +1? In next major release */
+    char name2[XATMI_SERVICE_NAME_LENGTH]; /**< +1? In next major release */
 };
 typedef struct tpevctl_t TPEVCTL;
 
@@ -397,7 +397,7 @@ typedef struct tpevctl_t TPEVCTL;
  */
 typedef struct
 {
-    char	name[XATMI_SERVICE_NAME_LENGTH];
+    char	name[XATMI_SERVICE_NAME_LENGTH]; /**< +1? In next major release */
     char	*data;
     long	len;
     long	flags;

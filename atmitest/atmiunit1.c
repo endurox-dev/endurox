@@ -645,6 +645,13 @@ Ensure(test082_autotran)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test083_ddrsyntax)
+{
+    int ret;
+    ret=system_dbg("test083_ddrsyntax/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -783,6 +790,7 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test080_tpexit);
     add_test(suite, test081_lcf);
     add_test(suite, test082_autotran);
+    add_test(suite, test083_ddrsyntax);
  
     return suite;
 }
