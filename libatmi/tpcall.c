@@ -503,7 +503,8 @@ expublic int ndrx_tpacall (char *svc, char *data,
     
     if (!(flags & TPNOCACHELOOK) && NULL!=p_cachectl)
     {
-        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svcddr, data, len, 
+        /* one cache for all groups */
+        if (EXSUCCEED!=(ret=ndrx_cache_lookup(svc, data, len, 
                 p_cachectl->odata, p_cachectl->olen, flags, 
                 &p_cachectl->should_cache, 
                 &p_cachectl->saved_tperrno, 

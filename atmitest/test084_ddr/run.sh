@@ -131,6 +131,13 @@ set_dom1;
 echo "./atmiclt84 -STESTSV -l-200 -gTESTSV@DOM1 -e0 || go_out 1"
 ./atmiclt84 -STESTSV -l-200 -gTESTSV@DOM1 -e0 || go_out 1
 
+echo "./atmiclt84 -STESTSV -l-15 -gTESTSV@DOM2 -e0 || go_out 1"
+./atmiclt84 -STESTSV -l-15 -gTESTSV@DOM2 -e0 || go_out 1
+
+# no routing range:
+echo "./atmiclt84 -STESTSV -l-11 -e12 || go_out 1"
+./atmiclt84 -STESTSV -l-11 -e12 || go_out 1
+
 echo "./atmiclt84 -STESTSV -l1 -gTESTSV@DOM1 -e0 || go_out 2"
 ./atmiclt84 -STESTSV -l1 -gTESTSV@DOM1 -e0 || go_out 2
 

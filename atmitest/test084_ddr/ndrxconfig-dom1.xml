@@ -19,12 +19,13 @@
         <!-- If still not started, then max boot time is a 30 sec. -->
         <restart_max>30</restart_max>
         <!--  <sanity> timer, end -->
-
         <!-- Time after attach when program will start do sanity & respawn checks,
         starts counting after configuration load -->
         <restart_to_check>20</restart_to_check>
         <!-- Send full service table every 5 seconds -->
         <brrefresh>5</brrefresh>
+        <!-- Reload DDR time (1x sanity loop) -->
+        <ddrreload>1</ddrreload>
     </appconfig>
     <defaults>
         <min>1</min>
@@ -53,7 +54,6 @@
         <killtime>20</killtime>
     </defaults>
     <servers>
-        
         
         <server name="atmi.sv84">
             <min>1</min>
@@ -84,7 +84,8 @@
             <field>T_LONG_2_FLD</field>
             <ranges>
                         MIN--20:DOM1
-                        ,-19-5:DOM1
+                        ,-15:DOM2
+                        ,-10-5:DOM1
                         ,6-7:DOM2
                         ,8-MAX:*
             </ranges>
