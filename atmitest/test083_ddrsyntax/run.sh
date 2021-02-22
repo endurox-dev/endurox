@@ -218,6 +218,8 @@ validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "'ZZZ' -
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "'ZZZ - 'MAX':'GRP'" "fail"  "STRING" # quotes fails
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "''ZZZ - 'MAX':'GRP'" "fail"  "STRING" #
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "'AAA\'' - 'BBB\'':'GRP'" "OK"  "STRING" #
+validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "AA:*" "OK"  "STRING" # goes to def group
+validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "-55:G" "OK"  "LONG" # Single value
 
 echo "---------------------------------------------------------------------"
 
