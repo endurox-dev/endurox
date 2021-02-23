@@ -71,11 +71,14 @@ kill -9 $MEMCK_PID
 echo "---- Leak info ----" >> test.out
 cat memck.out >> test.out
 echo "-------------------" >> test.out
-
-# Catch memory leaks...
-if [ "X`grep '>>> LEAK' memck.out`" != "X" ]; then
+if [ "X`xadmin pmode | grep '#define NDRX_SANITIZE'`" != "X" ]; then
+    echo "Sanitizer mode, ignore memck output"
+else
+    echo "Catch memory leaks..."
+    if [ "X`grep '>>> LEAK' memck.out`" != "X" ]; then
         echo "Memory leak detected!"
         RET=-2
+    fi
 fi
 
 #
