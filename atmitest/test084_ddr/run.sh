@@ -83,6 +83,7 @@ set_dom2() {
 # Generic exit function
 #
 function go_out {
+    set +x
     echo "Test exiting with: $1"
     
     set_dom1;
@@ -101,14 +102,16 @@ function go_out {
     exit $1
 }
 
-rm *dom*.log
+rm *.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
+
+# start with long
+cp ndrxconfig-dom1-long.xml ndrxconfig-dom1.xml
 
 set_dom1;
 xadmin down -y
 xadmin start -y || go_out 1
-
 
 set_dom2;
 xadmin down -y
@@ -126,55 +129,68 @@ echo "Running off client"
 set_dom1;
 
 ################################################################################
-# Check routes... (long type)
+echo "*** Check routes... (long type)"
 ################################################################################
-echo "./atmiclt84 -STESTSV -l-200 -gTESTSV@DOM1 -e0 || go_out 1"
+
+set -x
+
 ./atmiclt84 -STESTSV -l-200 -gTESTSV@DOM1 -e0 || go_out 1
 
-echo "./atmiclt84 -STESTSV -l-15 -gTESTSV@DOM2 -e0 || go_out 1"
 ./atmiclt84 -STESTSV -l-15 -gTESTSV@DOM2 -e0 || go_out 1
 
 # no routing range:
-echo "./atmiclt84 -STESTSV -l-11 -e12 || go_out 1"
 ./atmiclt84 -STESTSV -l-11 -e12 || go_out 1
 
-echo "./atmiclt84 -STESTSV -l1 -gTESTSV@DOM1 -e0 || go_out 2"
 ./atmiclt84 -STESTSV -l1 -gTESTSV@DOM1 -e0 || go_out 2
 
 # still in DOM1
-echo "./atmiclt84 -STESTSV -l5 -gTESTSV@DOM1 -e0 || go_out 3"
 ./atmiclt84 -STESTSV -l5 -gTESTSV@DOM1 -e0 || go_out 3
 
 # DOM2
-echo "./atmiclt84 -STESTSV -l6 -gTESTSV@DOM2 -e0 || go_out 4"
 ./atmiclt84 -STESTSV -l6 -gTESTSV@DOM2 -e0 || go_out 4
 
 # DOM2
-echo "./atmiclt84 -STESTSV -l7 -gTESTSV@DOM2 -e0 || go_out 5"
 ./atmiclt84 -STESTSV -l7 -gTESTSV@DOM2 -e0 || go_out 5
 
 # DEFAULT GRP
-echo "./atmiclt84 -STESTSV -l8 -gTESTSV -e0 || go_out 6"
 ./atmiclt84 -STESTSV -l8 -gTESTSV -e0 || go_out 6
 
 # DEFAULT GRP
-echo "./atmiclt84 -STESTSV -l99999 -gTESTSV -e0 || go_out 7"
 ./atmiclt84 -STESTSV -l99999 -gTESTSV -e0 || go_out 7
 
 # Prev match -> no service
-echo "./atmiclt84 -ST2 -l200 -gT2@DOM3 -e6 || go_out 8"
 ./atmiclt84 -ST2 -l200 -gT2@DOM3 -e6 || go_out 8
 
 # DEFAULT MATCH
-echo "./atmiclt84 -ST2 -l201 -gT2 -e0 || go_out 9"
 ./atmiclt84 -ST2 -l201 -gT2 -e0 || go_out 9
 
-# TODO: check error 10 (cannot route)
 
 ################################################################################
-# Check routes... (double type)
+echo "*** Check routes... (double type)"
 ################################################################################
 
+# check with double
+cp ndrxconfig-dom1-double.xml ndrxconfig-dom1.xml
+
+xadmin reload
+
+"Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -d-11 -gTESTSV@DOM1 -e0 || go_out 1
+
+./atmiclt84 -STESTSV -d-1 -e12 || go_out 1
+
+./atmiclt84 -STESTSV -d-1.1 -e0 -gTESTSV@DOM2 || go_out 1
+
+./atmiclt84 -STESTSV -d1.2 -e0 -gTESTSV@DOM1 || go_out 1
+
+./atmiclt84 -STESTSV -d1.011 -e0 -gTESTSV@DOM2 || go_out 1
+
+./atmiclt84 -STESTSV -d9999.555 -e0 -gTESTSV || go_out 1
+
+
+set +x
 ################################################################################
 # Check routes... (string type)
 ################################################################################
