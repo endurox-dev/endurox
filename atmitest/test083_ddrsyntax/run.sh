@@ -223,6 +223,10 @@ validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "-55:G" 
 
 echo "---------------------------------------------------------------------"
 
+# TODO: Test for number of service slots -> must fail on given count reached.
+# TODO: Also test some 200 bytes criterion -> shall 
+
+
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then
     echo "Test error detected!"

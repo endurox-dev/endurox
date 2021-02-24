@@ -189,7 +189,7 @@ sleep 5
 
 
 ################################################################################
-# Check routes... (string type)
+echo "Check routes... (string type)"
 ################################################################################
 
 cp ndrxconfig-dom1-string.xml ndrxconfig-dom1.xml
@@ -209,9 +209,64 @@ sleep 5
 ./atmiclt84 -STESTSV -sO -gTESTSV -e0 || go_out 1
 ./atmiclt84 -STESTSV -sMIN -gTESTSV@DOM4 -e0 || go_out 1
 
-set +x
 ################################################################################
-# Advertise checks.
+echo "Forward tests"
+################################################################################
+
+./atmiclt84 -SFWDSV -s0 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -SFWDSV -sA -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -SFWDSV -sCC -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -SFWDSV -sD -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -SFWDSV -sFF -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -SFWDSV -sMAX -gTESTSV@DOM3 -e0 || go_out 1
+./atmiclt84 -SFWDSV -sN -gTESTSV -e0 || go_out 1
+./atmiclt84 -SFWDSV -sO -gTESTSV -e0 || go_out 1
+./atmiclt84 -SFWDSV -sMIN -gTESTSV@DOM4 -e0 || go_out 1
+
+
+################################################################################
+echo "Connect tests"
+################################################################################
+
+./atmiclt84 -STESTSV -s0 -gTESTSV@DOM1 -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sA -gTESTSV@DOM1 -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sCC -gTESTSV@DOM2 -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sD -gTESTSV@DOM2 -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sFF -gTESTSV@DOM2 -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sMAX -gTESTSV@DOM3 -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sN -gTESTSV -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sO -gTESTSV -e0 -C || go_out 1
+./atmiclt84 -STESTSV -sMIN -gTESTSV@DOM4 -e0 -C || go_out 1
+
+set +x
+
+################################################################################
+echo "Advertise checks"
+################################################################################
+# tpadvertise/unadvertise some service at atmi84sv ->  it must not appear
+# perform dynamic advertise + unadvertise -> via atmicl83 call?
+# 
+
+CNT=`xadmin psc | grep UNASV | wc -l`
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Expected missing UNASV but got $CNT"
+    go_out 1
+fi
+
+# TODO: dynamic adv & un adv - check that errors are processed atomically
+# either full advertise or none - check by advertise till the error
+# and unadvertise all that was not in the error, in the final there shall
+# be no un-expected service
+
+################################################################################
+# Reload tests during high-load
+# Create generic tool -> exbench ? (basic version) call exbenchsv in N threads
+# for X minutes. Meanwhile in background perform intensive reload of ddr.
+# Also ... give some acceptable error codes like TPESYSTEM (and write some log)
+# we could also create at test point like ndrx_G_testpoint_ddr_sleep X seconds
+# thus several versions of DDR could change and then we could get TPESYSTEM
+# ... the other option would be to leave as is and assume that exbenchcl with 
+# out tpesystem shall cover all things
 ################################################################################
 
 
