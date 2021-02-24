@@ -87,6 +87,15 @@ out:
 }
 
 /**
+ * Forward service
+ * @param p_svc
+ */
+void FWDSV (TPSVCINFO *p_svc)
+{
+    tpforward("TESTSV", p_svc->data, p_svc->len, 0);
+}
+
+/**
  * Do initialisation
  */
 int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
@@ -99,6 +108,27 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise TESTSV!");
         EXFAIL_OUT(ret);
     }
+    
+    if (EXSUCCEED!=tpadvertise("FWDSV", FWDSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise FWDSV!");
+        EXFAIL_OUT(ret);
+    }
+    
+    /* Check that "UNASV" is not present by psc */
+    if (EXSUCCEED!=tpadvertise("UNASV", TESTSV))
+    {
+        NDRX_LOG(log_error, "Failed to initialise FWDSV!");
+        EXFAIL_OUT(ret);
+    }
+    
+    if (EXSUCCEED!=tpunadvertise("UNASV"))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to unadvertise!");
+        EXFAIL_OUT(ret);
+    }
+    
+    
 out:
     return ret;
 }

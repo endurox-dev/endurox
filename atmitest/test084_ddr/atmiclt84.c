@@ -69,6 +69,7 @@ int main(int argc, char** argv)
     int c;
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char tmp[1024];
+    int do_conv=EXFALSE;
     
     /* We shall parse cli, so field with will either:
      * -l (long)
@@ -78,10 +79,14 @@ int main(int argc, char** argv)
      * -e <error code expected>
      * -g <group value expected in return>
      */
-    while ((c = getopt(argc, argv, "S:s:l:d:e:g:")) != -1) {
+    while ((c = getopt(argc, argv, "S:s:l:d:e:g:C")) != -1) {
         
         switch (c)
         {
+            case 'C':
+                NDRX_LOG(log_debug, "Doing conv");
+                do_conv=EXTRUE;
+                break;
             case 'S':
                 NDRX_STRCPY_SAFE(svcnm, optarg);
                 break;
@@ -125,7 +130,41 @@ int main(int argc, char** argv)
     tplogprintubf(log_debug, "UBF buffer", p_ub);
 
     /* call the service */
-    if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (do_conv)
+    {
+        long ev;
+        int cd;
+        long rcvlen;
+        /* try to connect */
+        if (EXFAIL == (cd=tpconnect(svcnm, (char *)p_ub, 0L, TPRECVONLY)))
+        {
+            NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
+            /* check error code */
+            if (tperrno!=e)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected error %d got %d", e, tperrno);
+                ret=EXFAIL;
+            }
+            goto out;
+        }
+        
+        if (EXSUCCEED==tprecv(cd, (char **)&p_ub, &rcvlen, 0, &ev))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected con error!");
+            EXFAIL_OUT(ret);
+        }
+        else if (tperrno!=TPEEVENT)
+        {
+            NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
+            /* check error code */
+            if (tperrno!=e)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected error %d got %d", e, tperrno);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    else if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
         
