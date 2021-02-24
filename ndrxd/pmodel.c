@@ -502,7 +502,7 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
 {
     int ret=EXSUCCEED;
     conf_server_node_t *p_conf;
-    pm_node_t   *p_pm;
+    pm_node_t   *p_pm=NULL;
     char tmp[PATH_MAX+1];
     int cnt;
     char *p;
@@ -654,11 +654,16 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
                 DL_APPEND(*p_pm_model, p_pm);
                 /* Add it to the hash */
                 p_pm_hash[p_pm->srvid] = p_pm;
+                p_pm=NULL;
             }
         }/* for */
     } /* DL_FOREACH */
 
 out:
+    if (NULL!=p_pm)
+    {
+        NDRX_FREE(p_pm);
+    }
     NDRX_LOG(log_debug, "build_process_model return %d", ret);
     return ret;
 }

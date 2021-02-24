@@ -171,10 +171,8 @@ echo "*** Check routes... (double type)"
 
 # check with double
 cp ndrxconfig-dom1-double.xml ndrxconfig-dom1.xml
-
 xadmin reload
-
-"Echo wait 5 for DDR update to apply..."
+echo "Echo wait 5 for DDR update to apply..."
 sleep 5
 
 ./atmiclt84 -STESTSV -d-11 -gTESTSV@DOM1 -e0 || go_out 1
@@ -190,11 +188,28 @@ sleep 5
 ./atmiclt84 -STESTSV -d9999.555 -e0 -gTESTSV || go_out 1
 
 
-set +x
 ################################################################################
 # Check routes... (string type)
 ################################################################################
 
+cp ndrxconfig-dom1-string.xml ndrxconfig-dom1.xml
+xadmin reload
+# start G8 server
+xadmin start -y
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -s0 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -sA -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -sCC -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -STESTSV -sD -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -STESTSV -sFF -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -STESTSV -sMAX -gTESTSV@DOM3 -e0 || go_out 1
+./atmiclt84 -STESTSV -sN -gTESTSV -e0 || go_out 1
+./atmiclt84 -STESTSV -sO -gTESTSV -e0 || go_out 1
+./atmiclt84 -STESTSV -sMIN -gTESTSV@DOM4 -e0 || go_out 1
+
+set +x
 ################################################################################
 # Advertise checks.
 ################################################################################
