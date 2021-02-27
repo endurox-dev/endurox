@@ -275,7 +275,7 @@ sleep 5
 
 
 ################################################################################
-echo "*** Check routes... (short string (cast))"
+echo "*** Check routes... (carray string (autocast))"
 ################################################################################
 
 # check with double
@@ -287,6 +287,63 @@ sleep 5
 ./atmiclt84 -STESTSV -cAAA1 -gTESTSV@DOM1 -e0 || go_out 1
 ./atmiclt84 -STESTSV -cAAA9 -gTESTSV@DOM2 -e0 || go_out 1
 ./atmiclt84 -STESTSV -cB -gTESTSV@DOM4 -e0 || go_out 1
+
+
+################################################################################
+echo "*** Check routes... (carray)"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_str2.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -cAAA1 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -cAAA9 -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -STESTSV -cB -gTESTSV@DOM4 -e0 || go_out 1
+
+################################################################################
+echo "*** Check routes... (double)"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_double.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -c1.2 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -c3 -gTESTSV@DOM4 -e0 || go_out 1
+
+
+################################################################################
+echo "*** Check routes... (float)"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_float.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -c1.2 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -c3 -gTESTSV@DOM4 -e0 || go_out 1
+
+
+
+################################################################################
+echo "*** Check routes... (long)"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_long.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -c5 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -c6 -gTESTSV@DOM4 -e0 || go_out 1
 
 set +x
 

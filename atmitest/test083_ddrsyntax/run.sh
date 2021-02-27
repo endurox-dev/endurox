@@ -171,6 +171,7 @@ validate_invalid "ndrxconfig-dupsvc.xml" "Duplicate services is not allowed"
 validate_invalid "ndrxconfig-toolong.xml" "Service name too long" 
 validate_invalid "ndrxconfig-norout.xml" "Routing not defined" 
 validate_invalid "ndrxconfig-emptysvc.xml" "Emtpy service name" 
+validate_invalid "ndrxconfig-invalfield.xml" "Invalid field" 
 
 echo "Testing <routing> tag..."
 
