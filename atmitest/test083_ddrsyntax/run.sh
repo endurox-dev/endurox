@@ -54,6 +54,9 @@ export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
 export NDRX_SILENT=Y
 
+export NDRX_RTSVCMAX=20
+export NDRX_RTCRTMAX=800
+
 #
 # Domain 1 - here client will live
 #
@@ -220,6 +223,12 @@ validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "''ZZZ -
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "'AAA\'' - 'BBB\'':'GRP'" "OK"  "STRING" #
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "AA:*" "OK"  "STRING" # goes to def group
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "-55:G" "OK"  "LONG" # Single value
+
+
+echo "Limits check"
+
+validate_invalid "ndrxconfig-toomanysvcs.xml" "Too many entries in service shm" 
+validate_invalid "ndrxconfig-toomanyroutes.xml" "Too many routing criterions" 
 
 echo "---------------------------------------------------------------------"
 
