@@ -559,8 +559,10 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define NDRX_CACHE_EV_MSKDELCMD "@CM"               /**< Delete data by mask, event    */
 #define NDRX_CACHE_EV_KEYDELCMD "@CE"               /**< Delete by key event           */
 
-#define NDRX_MSGPRIO_DEFAULT            50 /**< Default prioity used by tpcall, tpreturn etc. */
-#define NDRX_MSGPRIO_NOTIFY             60 /**< Notification is higher prio                   */
+#define NDRX_MSGPRIO_DEFAULT            50 /**< Default priority used by tpcall, tpreturn etc. */
+#define NDRX_MSGPRIO_MIN                1  /**< Minimum priority                               */
+#define NDRX_MSGPRIO_MAX                100 /**< Max priority                                  */
+#define NDRX_MSGPRIO_NOTIFY             60 /**< Notification is higher prio                    */
 
 #ifdef	__cplusplus
 }

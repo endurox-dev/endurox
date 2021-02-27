@@ -183,6 +183,7 @@ typedef struct
         
     /** default priority setting used for calls */
     int prio;
+    long prio_flags;
     int prio_last;
     
 } atmi_tls_t;

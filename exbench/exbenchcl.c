@@ -106,7 +106,7 @@ expublic void thread_process(void *ptr, int *p_finish_off)
     {
         if (M_prio!=NDRX_MSGPRIO_DEFAULT)
         {
-            tpsprio(M_prio, 0);
+            tpsprio(M_prio, TPABSOLUTE);
         }
         rcv_buf=NULL;
         if (EXFAIL==tpcall(svcnm, buf, 0, &rcv_buf, &rcvlen, 0))

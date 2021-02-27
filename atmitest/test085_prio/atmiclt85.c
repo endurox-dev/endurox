@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include <nstdutil.h>
 #include "test85.h"
+#include <exassert.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 /*---------------------------Enums--------------------------------------*/
@@ -73,7 +74,27 @@ int main(int argc, char** argv)
         goto out;
     }
     
-    if (EXSUCCEED!=tpsprio(60, 0))
+    /* 
+     * Check Absolute
+     */
+    if (EXSUCCEED==tpsprio(0, TPABSOLUTE))
+    {
+        NDRX_LOG(log_error, "TESTERROR: 0 prio ABS shall fail");
+        ret=EXFAIL;
+        goto out;
+    }
+    NDRX_ASSERT_VAL_OUT(tperrno==TPEINVAL, "INvalid error, expected TPEINVAL got %d", tperrno);
+    
+    if (EXSUCCEED==tpsprio(101, TPABSOLUTE))
+    {
+        NDRX_LOG(log_error, "TESTERROR: 101 prio ABS shall fail");
+        ret=EXFAIL;
+        goto out;
+    }
+    NDRX_ASSERT_VAL_OUT(tperrno==TPEINVAL, "Invalid error, expected TPEINVAL got %d", tperrno);
+    
+    
+    if (EXSUCCEED!=tpsprio(60, TPABSOLUTE))
     {
         NDRX_LOG(log_error, "TESTERROR: failed to set tpsprio()");
         ret=EXFAIL;
@@ -109,8 +130,115 @@ int main(int argc, char** argv)
         ret=EXFAIL;
         goto out;
     }
+    ret=EXSUCCEED;
+    
+    
+    /* Check relative.. */
+    if (EXSUCCEED==tpsprio(101, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: 101 prio rel shall fail");
+        ret=EXFAIL;
+        goto out;
+    }
+    NDRX_ASSERT_VAL_OUT(tperrno==TPEINVAL, "INvalid error, expected TPEINVAL got %d", tperrno);
+    
+    if (EXSUCCEED==tpsprio(-101, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: 101 prio rel shall fail");
+        ret=EXFAIL;
+        goto out;
+    }
+    NDRX_ASSERT_VAL_OUT(tperrno==TPEINVAL, "INvalid error, expected TPEINVAL got %d", tperrno);
+    
+    /* call relative -10 */
+    if (EXSUCCEED!=tpsprio(-10, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to set tpsprio()");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (40!=(ret=tpgprio()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to verify tpgprio() got %d", ret);
+        ret=EXFAIL;
+        goto out;
+    }
     
     ret=EXSUCCEED;
+    
+    /* call relative -99 */
+    if (EXSUCCEED!=tpsprio(-99, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to set tpsprio()");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (1!=(ret=tpgprio()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to verify tpgprio() got %d", ret);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret=EXSUCCEED;
+    
+    
+    /* call relative 99 */
+    if (EXSUCCEED!=tpsprio(99, 0))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to set tpsprio()");
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (100!=(ret=tpgprio()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to verify tpgprio() got %d", ret);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret=EXSUCCEED;
+    
+    if (EXFAIL == tpcall("TESTSV", (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    {
+        NDRX_LOG(log_error, "TESTSV failed: %s", tpstrerror(tperrno));
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (50!=(ret=tpgprio()))
+    {
+        NDRX_LOG(log_error, "TESTERROR: failed to verify tpgprio() got %d", ret);
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    ret=EXSUCCEED;
+
     
 out:
     tpterm();
