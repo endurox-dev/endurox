@@ -49,7 +49,7 @@ fi;
 . ../testenv.sh
 
 export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
-export PATH=$PATH:$TESTDIR
+export PATH=$PATH:$TESTDIR:/../../exbench
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
 export NDRX_SILENT=Y
@@ -450,6 +450,52 @@ fi
 # ... the other option would be to leave as is and assume that exbenchcl with 
 # out tpesystem shall cover all things
 ################################################################################
+
+################################################################################
+echo "*** DDR benchmark/reload"
+################################################################################
+
+# check with double
+export NDRX_BENCH_FILE="bench.log"
+export NDRX_BENCH_CONFIGNAME="test"
+cp ndrxconfig-dom1-benchreload1.xml ndrxconfig-dom1.xml
+xadmin reload
+xadmin start -y
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+exbenchcl -n5 -P  -B "UBF" -t60 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
+BENCHPID_PID=$!
+
+for ((n=0;n<20;n++)); do
+
+    # work in rules 2
+    echo "Rules 2"
+    cp ndrxconfig-dom1-benchreload2.xml ndrxconfig-dom1.xml
+    xadmin reload
+    xadmin psc
+
+    sleep 3;
+
+    # work in rules 1
+    echo "Rules 1"
+    cp ndrxconfig-dom1-benchreload1.xml ndrxconfig-dom1.xml
+    xadmin reload
+    xadmin psc
+
+    sleep 3;
+
+done
+
+echo "Waiting exbench finish..."
+wait $BENCHPID_PID
+ 
+echo "Check for plot results..."
+LINES=`cat bench.log | wc -l`
+if [[ "X$LINES" != "X2" ]]; then
+    echo "Expected 2 line, got: $LINES"
+    go_out 1
+fi
 
 
 # Catch is there is test error!!!
