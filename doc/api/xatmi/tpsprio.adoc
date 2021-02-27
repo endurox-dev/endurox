@@ -62,8 +62,8 @@ Currently priority settings are processed only locally in particular Enduro/X in
 priority setting is not forwarded over the bridge to other nodes (*tpbridge(8)*)
 and if forwarded over the bridge, the call priority is set to *50* at remote node
 prior putting message in queue. This is subject to change and in future 
-releases message received bridge might use local service priority
-from ndrxconfig.xml or use priority from initiation node.
+releases message received by remote bridge might use service priority
+from ndrxconfig.xml at remote node or use priority setting from call initiation node.
 
 Priority settings are used only for Posix queues, thus effective only for following pollers:
 
