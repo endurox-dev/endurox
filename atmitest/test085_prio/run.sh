@@ -52,6 +52,7 @@ export TESTDIR="$NDRX_APPHOME/atmitest/$TESTNAME"
 export PATH=$PATH:$TESTDIR
 export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
+export NDRX_SILENT=Y
 
 #
 # Domain 1 - here client will live
@@ -113,12 +114,15 @@ fi
 
 POLLER=`xadmin poller`
 
-if [[ "$POLLER" == "epoll" ]]; then
+if [[ "$POLLER" == "epoll" || "$POLLER" == "kqueue" ]]; then
 
-    export NDRX_BENCH_FILE="bench.50.log"
+    xadmin psc
+
+    echo "*** Default is lower"
+    export NDRX_BENCH_FILE="bench.def.log"
     export NDRX_BENCH_CONFIGNAME="results"
-    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 -p 50 &
-    BENCHPID50_PID=$!
+    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
+    BENCHPIDDEF_PID=$!
 
     # event this is started later, it shall fill take a priority over...
     export NDRX_BENCH_FILE="bench.70.log"
@@ -127,17 +131,50 @@ if [[ "$POLLER" == "epoll" ]]; then
     BENCHPID70_PID=$!
 
     # wait for pids...
-    wait $BENCHPID50_PID
+    wait $BENCHPIDDEF_PID
     wait $BENCHPID70_PID
 
-    RES50=`cat bench.50.log | grep results | awk '{print $3}'`
+    RESDEF=`cat bench.def.log | grep results | awk '{print $3}'`
     RES70=`cat bench.70.log | grep results | awk '{print $3}'`
 
-    echo "[$RES50] vs [$RES70]"
-    if [[ "$RES50" -ge "$RES70" ]]; then
-        echo "Priority does not work prio 50 processed $RES50 prio 70 processed $RES70"
+    echo "[$RESDEF] vs [$RES70]"
+    if [[ "$RESDEF" -ge "$RES70" ]]; then
+        echo "Priority does not work prio DEF processed $RESDEF (shall be <) prio 70 processed $RES70 (1)"
         go_out 1
     fi
+
+    rm bench.def.log
+    rm bench.70.log
+
+    echo "*** Default is higher"
+    xadmin stop -y
+    export NDRX_CONFIG=$TESTDIR/ndrxconfig-dom1_svcprio.xml
+    xadmin start -y
+
+    export NDRX_BENCH_FILE="bench.def.log"
+    export NDRX_BENCH_CONFIGNAME="results"
+    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 &
+    BENCHPIDDEF_PID=$!
+
+    # event this is started later, it shall fill take a priority over...
+    export NDRX_BENCH_FILE="bench.70.log"
+    export NDRX_BENCH_CONFIGNAME="results"
+    exbenchcl -n5 -P  -B "UBF" -t20 -b "{\"T_LONG_FLD\":5}" -f T_CARRAY_FLD -S1024 -p 70 &
+    BENCHPID70_PID=$!
+
+    # wait for pids...
+    wait $BENCHPIDDEF_PID
+    wait $BENCHPID70_PID
+
+    RESDEF=`cat bench.def.log | grep results | awk '{print $3}'`
+    RES70=`cat bench.70.log | grep results | awk '{print $3}'`
+
+    echo "[$RESDEF] vs [$RES70]"
+    if [[ "$RESDEF" -le "$RES70" ]]; then
+        echo "Priority does not work prio DEF processed $RESDEF (shall be >) prio 70 processed $RES70 (2)"
+        go_out 1
+    fi
+
 
 fi
 
