@@ -102,6 +102,9 @@ function go_out {
     exit $1
 }
 
+
+export NDRX_SVCMAX=43
+
 rm *.log
 # Any bridges that are live must be killed!
 xadmin killall tpbridge
@@ -199,6 +202,8 @@ xadmin start -y
 echo "Echo wait 5 for DDR update to apply..."
 sleep 5
 
+xadmin psc
+
 ./atmiclt84 -STESTSV -s0 -gTESTSV@DOM1 -e0 || go_out 1
 ./atmiclt84 -STESTSV -sA -gTESTSV@DOM1 -e0 || go_out 1
 ./atmiclt84 -STESTSV -sCC -gTESTSV@DOM2 -e0 || go_out 1
@@ -253,10 +258,59 @@ if [[ "X$CNT" != "X0" ]]; then
     go_out 1
 fi
 
-# TODO: dynamic adv & un adv - check that errors are processed atomically
-# either full advertise or none - check by advertise till the error
-# and unadvertise all that was not in the error, in the final there shall
-# be no un-expected service
+echo "Testing dynamic advertise of the groupp:"
+#
+# Needs to test atomic -> needs to have both
+# or needs to have 0
+#
+for ((n=0;n<50;n++)); do
+
+    SVCNM="EXSV$n"
+    echo "About to advertise: $SVCNM"
+
+    #We accept either error 11
+    ./atmiclt84 -SDADV -s$SVCNM -gDADV -e11 || go_out 1
+
+    num_adv=`xadmin psc | grep $SVCNM | wc -l`
+
+    # for lowers it is mandatory to have 2 as slot count is enough
+    if [[ "$n" -lt "9" && "$num_adv" -ne "2" ]]; then
+        echo "Expected for $n to have 2 service of $SVCNM but got: $num_adv"
+        go_out 1
+    fi
+
+    # for uppers, either 0 or 2
+    if [[ "$num_adv" -ne "0" && "$num_adv" -ne "2" ]]; then
+        echo "Expected for $n to have 0 or 2 service of $SVCNM but got: $num_adv"
+        go_out 1
+    fi
+
+done
+
+
+echo "Testing dynamic un-advertise of the groups"
+
+#
+# Needs to test atomic -> needs to have both
+# or needs to have 0
+#
+for ((n=0;n<50;n++)); do
+
+    SVCNM="EXSV$n"
+    echo "About to un-advertise: $SVCNM"
+
+    #We accept either error 11
+    ./atmiclt84 -SDUNA -s$SVCNM -gDUNA -e11 || go_out 1
+
+    num_adv=`xadmin psc | grep $SVCNM | wc -l`
+
+    # for lowers it is mandatory to have 2 as slot count is enough
+    if [[ "$num_adv" -ne "0" ]]; then
+        echo "Expected for $n to have 0 service of $SVCNM but got: $num_adv"
+        go_out 1
+    fi
+
+done
 
 ################################################################################
 # Reload tests during high-load
@@ -269,10 +323,6 @@ fi
 # out tpesystem shall cover all things
 ################################################################################
 
-
-#
-# TODO: Needs tests for unadvertise ... OK
-#
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

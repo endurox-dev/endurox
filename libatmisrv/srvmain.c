@@ -236,8 +236,9 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
             DL_APPEND((*root_svc_list), entry);
 
             NDRX_LOG(log_debug, "%s [%s]:[%s]", msg1, entry->svc_nm, entry->svc_aliasof);
-            p = strtok(NULL, ",/");
         }
+        
+        p = strtok(NULL, ",/");
     }
     
     return EXSUCCEED;
