@@ -74,12 +74,13 @@ int main(int argc, char** argv)
     /* We shall parse cli, so field with will either:
      * -l (long)
      * -s (string)
+     * -c (carray value)
      * -S Service name
      * -d (double)
      * -e <error code expected>
      * -g <group value expected in return>
      */
-    while ((c = getopt(argc, argv, "S:s:l:d:e:g:C")) != -1) {
+    while ((c = getopt(argc, argv, "S:s:l:d:e:g:Cc:")) != -1) {
         
         switch (c)
         {
@@ -108,6 +109,15 @@ int main(int argc, char** argv)
                 if (EXFAIL==CBchg(p_ub, T_STRING_2_FLD, 0, optarg, 0, BFLD_STRING))
                 {
                     NDRX_LOG(log_debug, "Failed to set T_STRING_2_FLD[0]: %s", Bstrerror(Berror));
+                    ret=EXFAIL;
+                    goto out;
+                }
+                break;
+            case 'c':
+                if (EXFAIL==CBchg(p_ub, T_CARRAY_2_FLD, 0, optarg, 0, BFLD_STRING))
+                {
+                    /* load carray... */
+                    NDRX_LOG(log_debug, "Failed to set T_CARRAY_2_FLD[0]: %s", Bstrerror(Berror));
                     ret=EXFAIL;
                     goto out;
                 }

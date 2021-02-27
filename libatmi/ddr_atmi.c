@@ -225,6 +225,7 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
     double floatval;
     long longval;
     char *strval=NULL;
+    int strval_alloc=EXFALSE;
     buffer_obj_t *buf;
     char *mem_start;
     int in_range=EXFALSE;
@@ -366,7 +367,17 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                      * just use sysbuf page? as that size would gurantee that we
                      * fit in...
                      */
-                    strval = Bgetsa ((UBFH *)data, fldid, 0, NULL);
+                    if (BFLD_STRING==Bfldtype(fldid))
+                    {
+                        /* optimization to skip the alloc if types matches. */
+                        strval = Bfind((UBFH *)data, fldid, 0, NULL);
+                    }
+                    else
+                    {
+                        strval = Bgetsa ((UBFH *)data, fldid, 0, NULL);
+                        /* check bellow on null too... */
+                        strval_alloc=EXTRUE;
+                    }
                     
                     if (NULL==strval)
                     {
@@ -379,7 +390,6 @@ expublic int ndrx_ddr_grp_get(char *svcnm, size_t svcnmsz, char *data, long len,
                         EXFAIL_OUT(ret);
                     }
                 }
-                
             }
             
             offset_step+=sizeof(ndrx_routcrit_t);
@@ -565,7 +575,7 @@ out_rej:
     
 out:
     
-    if (NULL!=strval)
+    if (strval_alloc && NULL!=strval)
     {
         NDRX_FREE(strval);
     }

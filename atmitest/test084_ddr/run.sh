@@ -243,6 +243,51 @@ echo "Connect tests"
 ./atmiclt84 -STESTSV -sO -gTESTSV -e0 -C || go_out 1
 ./atmiclt84 -STESTSV -sMIN -gTESTSV@DOM4 -e0 -C || go_out 1
 
+
+
+################################################################################
+echo "*** Check routes... (char type)"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_char.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -cB -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -cD -gTESTSV@DOM4 -e0 || go_out 1
+
+
+################################################################################
+echo "*** Check routes... (short type)"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_short.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -c8 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -c101 -gTESTSV@DOM4 -e0 || go_out 1
+./atmiclt84 -STESTSV -c31000 -gTESTSV@DOM3 -e0 || go_out 1
+
+
+################################################################################
+echo "*** Check routes... (short string (cast))"
+################################################################################
+
+# check with double
+cp ndrxconfig-dom1-carray_str.xml ndrxconfig-dom1.xml
+xadmin reload
+echo "Echo wait 5 for DDR update to apply..."
+sleep 5
+
+./atmiclt84 -STESTSV -cAAA1 -gTESTSV@DOM1 -e0 || go_out 1
+./atmiclt84 -STESTSV -cAAA9 -gTESTSV@DOM2 -e0 || go_out 1
+./atmiclt84 -STESTSV -cB -gTESTSV@DOM4 -e0 || go_out 1
+
 set +x
 
 ################################################################################
