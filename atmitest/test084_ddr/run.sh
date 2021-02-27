@@ -312,6 +312,32 @@ for ((n=0;n<50;n++)); do
 
 done
 
+
+echo "Check xadmin unadvertise (not working in groups):"
+num_adv=`xadmin psc | grep DADV | wc -l`
+
+echo "num_adv=$num_adv"
+if [[ "X$num_adv" -ne  "X2" ]]; then
+    echo "Expected 2 DADV got: $num_adv"
+    go_out 1
+fi
+
+xadmin unadv -i 420 -s DADV
+num_adv=`xadmin psc | grep DADV | wc -l`
+echo "num_adv=$num_adv"
+if [[ "X$num_adv" -ne  "X1" ]]; then
+    echo "Expected 1 DADV got: $num_adv"
+    go_out 1
+fi
+
+xadmin unadv -i 420 -s DADV@DOM4
+num_adv=`xadmin psc | grep DADV | wc -l`
+echo "num_adv=$num_adv"
+if [[ "X$num_adv" -ne  "X0" ]]; then
+    echo "Expected 0 DADV got: $num_adv"
+    go_out 1
+fi
+
 ################################################################################
 # Reload tests during high-load
 # Create generic tool -> exbench ? (basic version) call exbenchsv in N threads
