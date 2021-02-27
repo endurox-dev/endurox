@@ -136,6 +136,7 @@ add_subdirectory (test080_tpexit)
 add_subdirectory (test081_lcf)
 add_subdirectory (test082_autotran)
 add_subdirectory (test084_ddr)
+add_subdirectory (test085_prio)
 
 ################################################################################
 # Master test case drivere
