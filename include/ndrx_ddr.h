@@ -159,7 +159,7 @@ typedef struct
     long offset;                /**< memory offset where criterion id starts int cirt mem */
     int autotran;               /**< is autotran used?           */
     unsigned long trantime;     /**< transaction timeout time    */
-    long flags;                 /**< this is used by linear hash */
+    short flags;                /**< this is used by linear hash */
 } ndrx_services_t;
 
 /**
