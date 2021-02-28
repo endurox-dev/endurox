@@ -396,7 +396,7 @@ expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_hav
         _Nset_error_fmt(NESYSTEM, "LCF Commands disabled");
     }
     
-    if (1==argc || 2==argc && 0==strcmp(argv[1], "-1"))
+    if (1==argc || (2==argc && 0==strcmp(argv[1], "-1")))
     {
         print_lcf_data(PAGE_1);
     }
@@ -549,6 +549,7 @@ expublic int cmd_shmcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_
     printf("use_ddr = %d\n", ndrx_G_shmcfg->use_ddr);
     printf("ddr_page = %u\n", (unsigned)ndrx_G_shmcfg->ddr_page);
     printf("ddr_ver1 = %u\n", (unsigned)ndrx_G_shmcfg->ddr_ver1);
+    return EXSUCCEED;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */
