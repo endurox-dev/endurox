@@ -177,6 +177,7 @@ expublic int main( int argc, char** argv )
     double spent;
     double tps;
     ndrx_stopwatch_t w;
+    char run_ver[512];
     /* parse args: 
      * -n <number_of_threads> 
      * -s <service_to_call> 
@@ -201,6 +202,7 @@ expublic int main( int argc, char** argv )
                 break;
             case 'P':
                 M_doplot = EXTRUE;
+
                 break;
             case 'n':
                 /* this will allocate thread pool... */
@@ -314,7 +316,18 @@ expublic int main( int argc, char** argv )
         }
         
         M_msgsize=Bused((UBFH *)M_master_buf);
-    }    
+    }
+    
+    if (!getenv("NDRX_BENCH_FILE"))
+    {
+        setenv("NDRX_BENCH_FILE", "test.out", EXTRUE);
+    }
+    
+    if (!getenv("NDRX_BENCH_CONFIGNAME"))
+    {
+        snprintf(run_ver, sizeof(run_ver), "msg size: %d", M_msgsize);
+        setenv("NDRX_BENCH_CONFIGNAME", run_ver, EXTRUE);
+    }
     
     M_threads = ndrx_thpool_init(M_runtime,  &ret, NULL, NULL, 0, NULL);
         
