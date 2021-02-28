@@ -143,6 +143,7 @@ set(MAN3_NAMES
         ndrx_lcf_func_add
         ndrx_lcf_publish
         tpsprio
+        tpgprio
 )
 set(HTML_MAN_NAMES ${MAN3_NAMES})
 

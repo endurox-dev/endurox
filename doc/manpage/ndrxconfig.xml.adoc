@@ -161,6 +161,28 @@ SYNOPSIS
             <exec tag="CLT_EXE_TAG2" .../>
         </client>
     <clients>
+    <services>
+        <defaults prio="SRVC_PRIO_DEF" 
+                 routing="SRVC_ROUTE_NAME_DEF" 
+                 autotran="SRVC_AUTOTRAN_DEF"
+                 trantime="SRVC_TRANTIME_DEF"/>
+        ...
+        <service svcnm="SRVC_SERVICE_NAME" 
+                 prio="SRVC_PRIO" 
+                 routing="SRVC_ROUTE_NAME" 
+                 autotran="SRVC_AUTOTRAN"
+                 trantime="SRVC_TRANTIME"/>
+        ...
+    </services>
+    <routing>
+        <route routing="ROUTE_NAME">
+            <field>ROUTE_FIELD</field>
+            <ranges>ROUTE_RANGES</ranges>
+            <buftype>ROUTE_BUFFER</buftype>
+            <fieldtype>ROUTE_FIELDTYPE</fieldtype>           
+        </route>
+        ...
+    </routing>
 </endurox>
 ---------------------------------------------------------------------
 
@@ -566,9 +588,68 @@ PARAMETERS
     SIGKILL (-9), *2* - do kill on SIGTERM and SIGINT child processes.
     The default is *0*.
 
+'SRVC_SERVICE_NAME'::
+    Service name for which settings are being defined. Max service length is
+    *30* symbols.
+
+'SRVC_PRIO'::
+    Service call default priority. If value is not set, then it it is loaded
+    from default value 'SRVC_PRIO_DEF'. If default is not set, then value *50*
+    is used in the Enduro/X system. Priority is valid to be set in range of
+    *1*..*100*.
+
+'SRVC_ROUTE_NAME'::
+    Routing criterion name. Which must reference valid routing definition under the
+    *<routing>/<route>*, value 'ROUTE_NAME'. If value is not specified, value is taken from 
+    'SRVC_ROUTING_NAME_DEF'. This parameter is optional. If not set, then no
+    routing is performed for service and messages are sent to default service.
+    Max routing name length is *15* symbols.
+
+'SRVC_AUTOTRAN'::
+    Automatic transaction mode for service. If parameter is set to *y* or *Y*,
+    then if XATMI service is invoked with out global transaction, the XATMI
+    server will start the transaction automatically. When server process performs
+    *tpreturn(3)*, transaction is committed in case if server returns *TPSUCCESS*
+    otherwise transaction is aborted. If process performs *tpforward(3)*, then
+    receiving server becomes transaction owner. If parameter is not specified value is
+    taken from previously defined 'SRVC_AUTOTRAN_DEF' value. If it was not set,
+    then default is *N* (no auto global transactions used by server).
+    Note that this setting is extracted by XATMI server processes at the startup
+    time. If configuration is change, say from *N* to *Y*, particular XATMI server
+    processes needs to be restarted in order to enable automatic transactions
+    for particular XATMI servers.
+
+'SRVC_TRANTIME'::
+    Automatic transaction life time. This parameter is used by XATMI servers starting
+    when automatic transactions are started. If value is not specified, then
+    value is taken from previously defined 'SRVC_TRANTIME_DEF'. If this value also
+    is not defined, then default value is *30*.
+
+'ROUTE_NAME'::
+    This is route name using for data-dependent-routing (DDR). Route name max
+    length is *15* symbols.
+
+'ROUTE_FIELD'::
+    This is route field name. Currently Enduro/X only supports UBF buffer routing,
+    thus this field must contain valid/resolvable UBF field definition. Field
+    types accepted four routing are *BFLD_SHORT*, *BFLD_CHAR*, *BFLD_LONG*, *BFLD_FLOAT*,
+    *BFLD_DOUBLE*, *BFLD_STRING* and *BFLD_CARRAY*.
+
+'ROUTE_RANGES'::
+    Route ranges definition. Which defines the ranges by which destination service
+    group is selected. See section "ROUTE RANGES" bellow for syntax details.
+
+'ROUTE_BUFFER'::
+    Buffer type accepted for routing. Currently supported buffer type is *UBF*.
+    When service call is performed and routing exists for service, lookup is
+    performed by using key: 'ROUTE_NAME' and 'ROUTE_BUFFER'. Thus for one
+    service several routes might be defined. When service call is made, and
+    no matching route (if was defined any route) and/or no matching range is found,
+    error *TPESYSTEM* is returned for *tpcall(3)*, *tpacall(3)* and related
+    service routines.
+
 VARIABLE SUBSTITUTION
 ---------------------
-
 Several parameters in the ndrxconfig.xml file are processed via substitution 
 engine. Engine processes puts the environment variables or special functions
 in the place-holders. Placeholder is defined as ${'ENV_VARIABLE'} for environment
@@ -768,6 +849,27 @@ Sample configuration:
             <exec tag="TESTENV" autostart="Y"/>
         </client>
     </clients>
+
+    <services>
+            <defaults trantime="600" />
+            <service svcnm="SERVICE1" prio="50" routing="RT1"     autotran="Y"  />
+            <defaults autotran="Y" />
+            <service svcnm="SERVICE2" prio="50" routing="RT2"     trantime="600" />
+    </services>
+    <routing>
+        <route routing="RT1">
+            <field>T_LONG_FLD</field>
+            <ranges>MIN-4:GRP1,100-2000:GRP4,1000-22100:GRP5,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+        <route routing="RT2">
+            <field>T_STRING_FLD</field>
+            <ranges>MIN-AAA:GRP1,'AAB'-'AAD':'GRP4',*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+    </routing>
 </endurox>
 ---------------------------------------------------------------------
 
