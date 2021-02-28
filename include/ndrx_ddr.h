@@ -61,6 +61,7 @@ extern "C" {
 #define DDR_ALIGNED_GEN(DSIZE) \
     ((DSIZE + DDR_DEFAULT_ALIGN -1 ) / DDR_DEFAULT_ALIGN * DDR_DEFAULT_ALIGN)
 
+#define NDRX_DDRV_SVC_INDEX(MEM, IDX) ((ndrx_services_t*)(((char*)MEM)+(int)(sizeof(ndrx_services_t)*IDX)))
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 
