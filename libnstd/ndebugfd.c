@@ -233,7 +233,7 @@ expublic int ndrx_debug_unset_sink(ndrx_debug_file_sink_t* mysink, int do_lock, 
     /* remove only if it is not process level sink... 
      * why not remove proclevel ? if it is fully
      */
-    if (mysink->refcount == 0 && ! (mysink->flags & NDRX_LOG_FPROC) || force)
+    if ((mysink->refcount == 0 && ! (mysink->flags & NDRX_LOG_FPROC)) || force)
     {
         NDRX_FCLOSE(mysink->fp);
         
@@ -549,6 +549,8 @@ out_final:
         /* only one at the time please! */
         MUTEX_UNLOCK_V(M_sink_lock);
     }
+
+    return ret;
 }
 
 /**
