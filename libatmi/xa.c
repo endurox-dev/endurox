@@ -45,7 +45,6 @@
 #include <atmi_shm.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -1112,9 +1111,10 @@ out:
  *
  * @param timeout
  * @param flags TPTXCOMMITDLOG - return when prepared
- * @return 
+ * @param sysflags  internal flags, particularly SYS_FLAG_AUTOTRAN
+ * @return EXSUCCEED/EXFAIL
  */
-expublic int ndrx_tpcommit(long flags)
+expublic int ndrx_tpcommit(long flags, long sysflags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -1151,7 +1151,11 @@ expublic int ndrx_tpcommit(long flags)
         
     }
             
-    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    /* allow commit even, if we are not the initiators,
+     * but for auto-tran this is OK
+     */
+    if (!(sysflags & SYS_FLAG_AUTOTRAN) &&
+            !G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpcommit: Not not initiator");
         ndrx_TPset_error_msg(TPEPROTO,  "tpcommit: Not not initiator");
@@ -1179,7 +1183,7 @@ expublic int ndrx_tpcommit(long flags)
     
     if (do_abort)
     {
-        ret = ndrx_tpabort(0); /*<<<<<<<<<< RETURN!!! */
+        ret = ndrx_tpabort(0, 0); /*<<<<<<<<<< RETURN!!! */
         
         /* in this case the tmsrv might already rolled back
          * thus assume that transaction is aborted.
@@ -1255,9 +1259,10 @@ out:
  * API implementation of tpabort
  * @param timeout
  * @param flags
+ * @param sysflags internal flags, particularly SYS_FLAG_AUTOTRAN
  * @return 
  */
-expublic int ndrx_tpabort(long flags)
+expublic int ndrx_tpabort(long flags, long sysflags)
 {
     int ret=EXSUCCEED;
     UBFH *p_ub = NULL;
@@ -1287,7 +1292,8 @@ expublic int ndrx_tpabort(long flags)
         
     }
             
-    if (!G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
+    if (!(sysflags & SYS_FLAG_AUTOTRAN) &&
+            !G_atmi_tls->G_atmi_xa_curtx.txinfo->is_tx_initiator)
     {
         NDRX_LOG(log_error, "tpabort: Not not initiator");
         ndrx_TPset_error_msg(TPEPROTO,  "tpabort: Not not initiator");

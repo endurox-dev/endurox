@@ -51,6 +51,7 @@
 #include <atmi_int.h>
 #include <typed_buf.h>
 #include <atmi_tls.h>
+#include <nstd_int.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -152,6 +153,8 @@ expublic void ndrx_skipsvc_delhash(void)
  * -s<New Service1>[,|/]<New Service2>[,|/]..[,|/]<New Service N>:<existing service>
  * e.g.
  * -sNEWSVC1/NEWSVC2:EXISTINGSVC
+ *  TODO: if we are in routing group, then add @grp automatically for each alias
+ *  - Also check the length of the new service. IF does not fit, then return error.
  * @param msg1 debug msg1
  * @param argc
  * @param argv
@@ -161,8 +164,12 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
         svc_entry_t **root_svc_list, char *arg)
 {
     char alias_name[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
+    char grpsvc[MAXTIDENT*2]={EXEOS};
     char *p;
     svc_entry_t *entry=NULL;
+    char *grparr[3]={NULL, NULL, NULL};
+    int i;
+    int len;
 
     NDRX_LOG(log_debug, "Parsing %s entry: [%s]", msg1, arg);
     
@@ -181,29 +188,56 @@ expublic int ndrx_parse_svc_arg_cmn(char *msg1,
     p = strtok(arg, ",/");
     while (NULL!=p)
     {
-        /* allocate memory for entry */
-        if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
+        grparr[0]=p;
+        if (G_atmi_env.rtgrp[0])
         {
-            ndrx_TPset_error_fmt(TPMINVAL, 
-                    "Failed to allocate %d bytes while parsing -s",
-                    sizeof(svc_entry_t));
-            return EXFAIL; /* <<< return FAIL! */
+            NDRX_STRCPY_SAFE(grpsvc, p);
+            NDRX_STRCAT_S(grpsvc, sizeof(grpsvc), NDRX_SYS_SVC_PFX);
+            NDRX_STRCAT_S(grpsvc, sizeof(grpsvc), G_atmi_env.rtgrp);
+            grparr[1]=grpsvc;
         }
-
-        NDRX_STRCPY_SAFE(entry->svc_nm, p);
-        entry->svc_aliasof[0]=EXEOS;
-                
-        if (EXEOS!=alias_name[0])
+        else
         {
-            NDRX_STRCPY_SAFE(entry->svc_aliasof, alias_name);
+            grparr[1]=NULL;
         }
         
-        /*
-         * Should we check duplicate names here?
-         */
-        DL_APPEND((*root_svc_list), entry);
+        for (i=0; NULL!=grparr[i]; i++)
+        {
+            
+            len = strlen(grparr[i]);
+            if (len>XATMI_SERVICE_NAME_LENGTH)
+            {
+                ndrx_TPset_error_fmt(TPEINVAL, 
+                        "Invalid service name [%s] too long %d, max allowed %d",
+                        grparr[i], len, XATMI_SERVICE_NAME_LENGTH);
+                return EXFAIL; /* <<< return FAIL! */
+            }
+            
+            /* allocate memory for entry */
+            if ( (entry = (svc_entry_t*)NDRX_MALLOC(sizeof(svc_entry_t))) == NULL)
+            {
+                ndrx_TPset_error_fmt(TPEOS, 
+                        "Failed to allocate %d bytes while parsing -s",
+                        sizeof(svc_entry_t));
+                return EXFAIL; /* <<< return FAIL! */
+            }
 
-        NDRX_LOG(log_debug, "%s [%s]:[%s]", msg1, entry->svc_nm, entry->svc_aliasof);
+            NDRX_STRCPY_SAFE(entry->svc_nm, grparr[i]);
+            entry->svc_aliasof[0]=EXEOS;
+
+            if (EXEOS!=alias_name[0])
+            {
+                NDRX_STRCPY_SAFE(entry->svc_aliasof, alias_name);
+            }
+
+            /*
+             * Should we check duplicate names here?
+             */
+            DL_APPEND((*root_svc_list), entry);
+
+            NDRX_LOG(log_debug, "%s [%s]:[%s]", msg1, entry->svc_nm, entry->svc_aliasof);
+        }
+        
         p = strtok(NULL, ",/");
     }
     
@@ -450,6 +484,22 @@ expublic int ndrx_init(int argc, char** argv)
                     if (EXFAIL==dup(fileno(f)))
                     {
                         userlog("%s: Failed to dup(2): %s", __func__, strerror(errno));
+                    }
+                        
+                    /* ALSO! reconfigure ndrx/tp/ubf to user this log! 
+                     * if stderr currently is used...
+                     * However not sure what we could do with threads?
+                     * MQ or others if they have chosen to work with stderr
+                     * then those will not rotate...
+                     * Anyway we will do the best.
+                     */
+                    if (ndrx_debug_is_proc_stderr())
+                    {
+                        if (EXSUCCEED!=tplogconfig(LOG_CODE_UBF|LOG_CODE_NDRX|LOG_CODE_TP, EXFAIL, 
+                                NULL, NULL, G_server_conf.err_output))
+                        {
+                            NDRX_LOG(log_debug, "Failed to re-open logger");
+                        }
                     }
                 }
                 else

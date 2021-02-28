@@ -126,6 +126,10 @@ struct svc_entry_fn
     mqd_t q_descr; /* queue descriptor */
     ndrx_stopwatch_t qopen_time;
     long xcvtflags; /* Conversion function */
+    
+    /* have flags for transaction -> authtran & timeout */
+    int autotran;       /**< shall we start transaction upport receving msg?  */
+    unsigned long trantime; /**< transaction timeout if doing autotran        */
 };
 
 /*

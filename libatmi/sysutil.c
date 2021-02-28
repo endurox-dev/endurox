@@ -382,10 +382,16 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
     pid_t pid, ppid;
     long th;
     char test_string2[NDRX_MAX_KEY_SIZE+4];
+    
+    /* probably we can configure these directly to use IDS: */
     char srvinfo[NDRX_SHM_PATH_MAX];
     char svcinfo[NDRX_SHM_PATH_MAX];
     char brinfo[NDRX_SHM_PATH_MAX];
-    char *shm[] = {srvinfo, svcinfo, brinfo};
+
+    char routcrit[NDRX_SHM_PATH_MAX];
+    char routsvc[NDRX_SHM_PATH_MAX];
+
+    char *shm[] = {srvinfo, svcinfo, brinfo, routcrit, routsvc};
     char *ndrxd_pid_file = getenv(CONF_NDRX_DPID);
     int max_signals = 2;
     int was_any = EXFALSE;
@@ -401,7 +407,12 @@ expublic int ndrx_down_sys(char *qprefix, char *qpath, int is_force, int user_re
     snprintf(svcinfo, sizeof(svcinfo), NDRX_SHM_SVCINFO, qprefix);
     snprintf(brinfo, sizeof(brinfo),  NDRX_SHM_BRINFO,  qprefix);
     
-     
+    /* how about posix ? shms? remove too...
+     * as processes will detach and finally forget about them
+     */
+    snprintf(routcrit, sizeof(routcrit),NDRX_SHM_ROUTCRIT,  qprefix);
+    snprintf(routsvc, sizeof(routsvc),  NDRX_SHM_ROUTSVC,  qprefix);
+    
     snprintf(test_string2, sizeof(test_string2), "-k %s", G_atmi_env.rnd_key);
     
 

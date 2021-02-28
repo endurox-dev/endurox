@@ -100,9 +100,8 @@ expublic int ndrx_sem_rwlock(ndrx_sem_t *sem, int sem_num, int typ)
     {
         int err = errno;
         
-        NDRX_LOG(log_error, "semop() failed for type %d lock: %s", 
-                typ, strerror(err));
-        userlog("semop() failed for type %d lock: %s", 
+        /* use buffered log as my conflict with LCF */
+        userlog("ndrx_sem_rwlock: semop() failed for type %d lock: %s", 
                 typ, strerror(err));
     }
 
@@ -139,9 +138,7 @@ expublic int ndrx_sem_rwunlock(ndrx_sem_t *sem, int sem_num, int typ)
     {
         int err = errno;
         
-        NDRX_LOG(log_error, "semop() failed for type %d lock: %s", 
-                typ, strerror(err));
-        userlog("semop() failed for %d type lock: %s", 
+        userlog("ndrx_sem_rwunlock: semop() failed for %d type lock: %s", 
                 typ, strerror(err));
     }
     
@@ -260,12 +257,12 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
         
         if (EEXIST==err && attach_on_exists)
         {
-            NDRX_LOG(log_info, "Semaphore exists [%x] - attaching",
+            NDRX_LOG_EARLY(log_info, "Semaphore exists [%x] - attaching",
                     sem->key);
             return ndrx_sem_attach(sem);
         }
         
-        NDRX_LOG(log_error, "Failed to create sem, key[%x]: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to create sem, key[%x]: %s",
                             sem->key, strerror(err));
         ret=EXFAIL;
         goto out;
@@ -277,7 +274,7 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
    
     if (semctl(sem->semid, 0, SETVAL, arg) == -1) 
     {
-        NDRX_LOG(log_error, "Failed to reset to 0, key[%x], semid: %d: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to reset to 0, key[%x], semid: %d: %s",
                             sem->key, sem->semid, strerror(errno));
         ret=EXFAIL;
         goto out;
@@ -285,11 +282,11 @@ expublic int ndrx_sem_open(ndrx_sem_t *sem, int attach_on_exists)
     
     sem->attached = EXTRUE;
     
-    NDRX_LOG(log_warn, "Semaphore for key %x open, id: %d", 
+    NDRX_LOG_EARLY(log_warn, "Semaphore for key %x open, id: %d", 
             sem->key, sem->semid);
 out:
 
-    NDRX_LOG(log_debug, "return %d", ret);
+    NDRX_LOG_EARLY(log_debug, "return %d", ret);
 
     return ret;
 }
@@ -306,10 +303,10 @@ expublic int ndrx_sem_remove(ndrx_sem_t *sem, int force)
     /* Close that one... */
     if ((sem->attached || force) && sem->semid)
     {
-        NDRX_LOG(log_error, "Removing semid: %d", sem->semid);
+        NDRX_LOG_EARLY(log_error, "Removing semid: %d", sem->semid);
         if (EXSUCCEED!= semctl(sem->semid, 0, IPC_RMID))
         {
-            NDRX_LOG(log_warn, "semctl DEL failed err: %s", 
+            NDRX_LOG_EARLY(log_warn, "semctl DEL failed err: %s", 
                     strerror(errno));
             ret=EXFAIL;
         }
@@ -348,11 +345,11 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 {
     int ret=EXSUCCEED;
 
-    NDRX_LOG(log_debug, "enter");
+    NDRX_LOG_EARLY(log_debug, "enter");
     
     if (sem->attached)
     {
-        NDRX_LOG(log_debug, "sem, key %x, id: %d already attached", 
+        NDRX_LOG_EARLY(log_debug, "sem, key %x, id: %d already attached", 
                 sem->key, sem->semid);
         goto out;
     }
@@ -362,17 +359,17 @@ expublic int ndrx_sem_attach(ndrx_sem_t *sem)
 
     if (EXFAIL==sem->semid) 
     {
-        NDRX_LOG(log_error, "Failed to attach sem, key [%d]: %s",
+        NDRX_LOG_EARLY(log_error, "Failed to attach sem, key [%d]: %s",
                             sem->key, strerror(errno));
         ret=EXFAIL;
         goto out;
     }
 
-    NDRX_LOG(log_debug, "sem: [%d] attached", sem->semid);
+    NDRX_LOG_EARLY(log_debug, "sem: [%d] attached", sem->semid);
 
 out:
 
-    NDRX_LOG(log_debug, "return %d", ret);
+    NDRX_LOG_EARLY(log_debug, "return %d", ret);
     return ret;
 }
 

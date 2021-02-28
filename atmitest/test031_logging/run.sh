@@ -48,6 +48,7 @@ fi;
 
 . ../testenv.sh
 
+export NDRX_ULOG=`pwd`
 rm *.log
 
 # Clean up log dir
@@ -85,13 +86,18 @@ if [ "X`grep 'Hello from NDRX' clt-endurox.log`" == "X" ]; then
 	RET=-2
 fi
 
-if [ "X`grep 'THIS IS NDRX IN PROCLOG' clt-endurox.log`" == "X" ]; then
-        echo "error in clt-endurox.log missing 'THIS IS NDRX IN PROCLOG'!"
+#if [ "X`grep 'THIS IS NDRX IN PROCLOG' clt-endurox.log`" == "X" ]; then
+#        echo "error in clt-endurox.log missing 'THIS IS NDRX IN PROCLOG'!"
+
+if [ "X`grep 'THIS IS NDRX IN PROCLOG' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log missing 'THIS IS NDRX IN PROCLOG'!"
 	RET=-2
 fi
 
-if [ "X`grep 'THIS IS UBF IN PROCLOG' clt-endurox.log`" == "X" ]; then
-        echo "error in clt-endurox.log missing 'THIS IS UBF IN PROCLOG'!"
+#if [ "X`grep 'THIS IS UBF IN PROCLOG' clt-endurox.log`" == "X" ]; then
+#        echo "error in clt-endurox.log missing 'THIS IS UBF IN PROCLOG'!"
+if [ "X`grep 'THIS IS UBF IN PROCLOG' clt-tp.log`" == "X" ]; then
+        echo "error in clt-tp.log missing 'THIS IS UBF IN PROCLOG'!"
 	RET=-2
 fi
 

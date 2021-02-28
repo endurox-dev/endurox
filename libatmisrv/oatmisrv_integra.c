@@ -1,7 +1,5 @@
 /**
  * @brief ATMI Server Integration Level Object API code (auto-generated)
- *   oatmisrv_integra.c
- *   /
  *
  * @file oatmisrv_integra.c
  */
@@ -24,7 +22,7 @@
  * PARTICULAR PURPOSE. See the GNU Affero General Public License, version 3
  * for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along 
+ * You should have received a copy of the GNU Affero General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
@@ -45,7 +43,6 @@
 #include <atmi_tls.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 #include <xa_cmn.h>
@@ -60,7 +57,7 @@
 /**
  * Object-API wrapper for ndrx_main_integra() - Auto generated.
  */
-expublic int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **), void (*in_tpsvrdone)(void), long flags) 
+expublic int Ondrx_main_integra(TPCONTEXT_T *p_ctxt, int argc, char** argv, int (*in_tpsvrinit)(int, char **),void (*in_tpsvrdone)(void), long flags) 
 {
     int ret = EXSUCCEED;
     int did_set = EXFALSE;
@@ -133,4 +130,3 @@ out:
 }
 
 
-/* vim: set ts=4 sw=4 et smartindent: */

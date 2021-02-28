@@ -53,7 +53,7 @@
 pthread_rwlock_t M_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 long M_rw_spent[2];
 long M_mutex_spent[2];
-MUTEX_LOCKDECL(M_mutex)
+MUTEX_LOCKDECL(M_mutex);
 volatile long some_glob=0;
 
 /*---------------------------Statics------------------------------------*/

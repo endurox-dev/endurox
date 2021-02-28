@@ -379,7 +379,9 @@ int main_init(int argc, char** argv)
     /* and then shm: initialise shared memory */
     if (EXSUCCEED!=ndrx_shm_init(G_sys_config.qprefix,
                             ndrx_get_G_atmi_env()->max_servers,
-                            ndrx_get_G_atmi_env()->max_svcs))
+                            ndrx_get_G_atmi_env()->max_svcs,
+                            ndrx_get_G_atmi_env()->rtcrtmax,
+                            ndrx_get_G_atmi_env()->rtsvcmax))
     {
         ret=EXFAIL;
         NDRX_LOG(log_error, "Failed to initialise share memory lib");

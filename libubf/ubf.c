@@ -59,8 +59,10 @@
 #include <typed_view.h>
 #include <ubfdb.h>
 #include <ubfutil.h>
+#include <nstd_int.h>
 
 #include "expluginbase.h"
+#include <ndebugcmn.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 
@@ -391,6 +393,12 @@ expublic BFLDID Bfldid (char *fldnm)
     API_ENTRY;
     
     if (EXSUCCEED!=ndrx_prepare_type_tables())
+    {
+        return BBADFLDID;
+    }
+
+    /* no such field */
+    if (NULL==fldnm || EXEOS==fldnm[0])
     {
         return BBADFLDID;
     }
@@ -1693,7 +1701,13 @@ expublic void ndrx_tplogprintubf(int lev, char *title, UBFH *p_ub)
         else
         {
             /* use plugin callback */
-            ndrx_Bfprint (p_ub, dbg->dbg_f_ptr, ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL);
+            
+            /* on entry... we need to perform locks */
+            ndrx_debug_lock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
+            ndrx_Bfprint (p_ub, ((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr)->fp, 
+                    ndrx_G_plugins.p_ndrx_tplogprintubf_hook, NULL);
+            ndrx_debug_unlock((ndrx_debug_file_sink_t*)dbg->dbg_f_ptr);
+            /* on exit we need to perform unlocks */
         }
     }
 }

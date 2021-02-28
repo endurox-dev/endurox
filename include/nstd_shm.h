@@ -48,6 +48,7 @@ extern "C" {
 #define NDRX_SEM_SVC_GLOBAL_NUM      0   /**< Semaphore array for global svc managmenet */
 #define NDRX_SEM_SV5LOCKS            1   /**< System V message queue lockings           */
 #define NDRX_SEM_CPMLOCKS            2   /**< Client process monitor shm lock           */
+#define NDRX_SEM_LCFLOCKS            3   /**< Latent command framework locks            */
     
 #define NDRX_SEM_TYP_READ            0   /**< RW Lock - Read                */
 #define NDRX_SEM_TYP_WRITE           1   /**< RW Lock - Write               */

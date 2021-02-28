@@ -1,0 +1,63 @@
+TPGPRIO(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tpgprio - Get priority used for last service call
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpgprio(void);
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Get service call priority used for last service call. Last call priority is 
+kept in Thread Local Storage and associated with ATMI context. If no call was
+made prior call this function, default value *50* is returned. For next call
+priority can be changed by *tpsprio(3)* or by *ndrxconfig.xml(5)* service settings.
+
+
+LIMITATIONS
+-----------
+Priority settings are used only for Posix queues, thus effective only for following pollers,
+for others values are managed, but they do not affect actual message priority.
+System which processes priority are:
+
+1. *epoll* for Linux OS.
+
+2. *kqueue* for FreeBSD OS.
+
+RETURN VALUE
+------------
+Returns priority from the last call or default value *50* if no call was made
+in the context
+
+ERRORS
+------
+*N/A*
+
+EXAMPLE
+-------
+See *atmitest/test085_prio/atmiclt85.c* for sample code.
+    
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tsgprio(3)* *ndrxconfig.xml(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

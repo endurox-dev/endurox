@@ -185,8 +185,9 @@ local ATMI instance start, stop, configuration test/load/reload, status printing
 | tmenv.h | Enduro/X internal use header for module binding
 | tx.h | TX transactions interface API
 | Uunix.h | Compatibility header
-| expluginbase.h | Enduro/X plugin APIs
+| expluginbase.h | Enduro/X plugin API
 | fpalloc.h | Enduro/X internal use header for module binding
+| lcf.h | Latent Command Framework API
 |==============================================
 
 How system works

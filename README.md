@@ -39,8 +39,8 @@ such as tpforward() and work with distributed transactions (tpbegin(),
 tpcommit(), etc.).
 
 Platform provides X/Open XATMI and XA interfaces/APIs for C/C++ applications. Enduro/X can 
-be considered as replacement for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), 
-Hitachi OpenTP1 and other XATMI middlewares.
+at some level can be considered as replacement 
+for Oracle(R) Tuxedo(R), Jboss Blacktie (Narayan), Hitachi OpenTP1 and other XATMI middlewares.
 
 Dual licensed under Affero General Public License Version 3 for use in Open
 Source project or Commercial license Acquired from Mavimax Ltd 
@@ -110,7 +110,16 @@ Communication types - Synchronous, Asynchronous, Conversational, Publish/subscri
         is gaining overall performance.
 * Support of writing server daemons for multi-threaded servers 
         i.e. tpacall() to self advertised services during tpsvrinit().
-      
+* Support of Data Dependent Routing for UBF buffers.
+* XATMI service auto-transactions are supported.
+* For Linux and FreeBSD platforms call priorities are supported.
+* Enduro/X logger now supports log-rotate calls (to re-open log handles) during
+the runtime.
+* Enduro/X logger now allows to change log levels on the fly for any Enduro/X
+related process.
+* Enduro/X provides Latent Command Framework (LCF), where developers via 
+plugin interface can publish CLI commands in xadmin tool, while any Enduro/X related
+program can receive such commands via callback and perform custom action.
 
 ![Alt text](doc/Endurox-product.jpg?raw=true "Enduro/x overview")
 
@@ -527,6 +536,8 @@ Bug #542, Feature #549, Bug #576, Feature #577, Bug #580, Support #582
 - Version 7.5.16 released on 17/01/2021 (stable) Support #623
 
 - Version 7.5.18 released on 18/02/2021 (stable) Support #633
+
+- Version 7.5.20 released on 18/02/2021 (stable) Feature #213, Feature #286, Feature #401, Bug #608, Support #481
 
 # Build configurations
 

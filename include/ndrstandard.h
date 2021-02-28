@@ -305,6 +305,12 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_QPREFIX        "NDRX_QPREFIX"
 #define CONF_NDRX_SVCMAX         "NDRX_SVCMAX"
 #define CONF_NDRX_SRVMAX         "NDRX_SRVMAX"
+
+#define CONF_NDRX_RTCRTMAX_DFLT   102400         /**< 100KB one buffer routing cirteria space */
+#define CONF_NDRX_RTCRTMAX       "NDRX_RTCRTMAX"
+#define CONF_NDRX_RTSVCMAX_DFLT   1000           /**< 1000 service slots for one buffer       */
+#define CONF_NDRX_RTSVCMAX       "NDRX_RTSVCMAX"
+
 #define CONF_NDRX_CLTMAX         "NDRX_CLTMAX"     /**< Max number of client, cpm */
 #define CONF_NDRX_CONFIG         "NDRX_CONFIG"
 #define CONF_NDRX_QPATH          "NDRX_QPATH"
@@ -318,6 +324,10 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_MSGSIZEMAX     "NDRX_MSGSIZEMAX" /**< Maximum size of message for posixq */
 #define CONF_NDRX_MSGQUEUESMAX   "NDRX_MSGQUEUESMAX"/**< Max number of Queues (for sysv)  */
 #define CONF_NDRX_SVQREADERSMAX  "NDRX_SVQREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
+#define CONF_NDRX_LCFREADERSMAX  "NDRX_LCFREADERSMAX"/**< SysV Shared mem max readers (rwlck)  */
+#define CONF_NDRX_LCFMAX         "NDRX_LCFMAX" /**< Max number of latent command framework commands  */
+#define CONF_NDRX_LCFCMDEXP      "NDRX_LCFCMDEXP"/**< LCF startup command expiry */
+#define CONF_NDRX_LCFNORUN       "NDRX_LCFNORUN" /**< Do not run LCF commands */
 #define CONF_NDRX_SANITY         "NDRX_SANITY"     /**< Time in seconds after which do sanity check for dead processes */
 #define CONF_NDRX_QPATH          "NDRX_QPATH"      /**< Path to place on fs where queues lives */
 #define CONF_NDRX_IPCKEY         "NDRX_IPCKEY"     /**< IPC Key for shared memory */
@@ -355,40 +365,204 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 #define CONF_NDRX_SVPPID         "NDRX_SVPPID" 
 /** Server ID */
 #define CONF_NDRX_SVSRVID        "NDRX_SVSRVID" 
+#define CONF_NDRX_DFLTLOG        "NDRX_DFLTLOG"        /**< Default logging output if none defined conf */
+
+#define CONF_NDRX_RTGRP          "NDRX_RTGRP"          /**< Routing group                                */
+
+
 /** Number of attempts (with 1 sec sleep in between) to wait for ndrxd normal
  * state required by command
  */
 #define CONF_NDRX_NORMWAITMAX    "NDRX_NORMWAITMAX"
 /** Default for  NDRX_NORMWAITMAX */    
-#define CONF_NDRX_NORMWAITMAX_DLFT    60
+#define CONF_NDRX_NORMWAITMAX_DLFT      60
     
 /** resource manager override file*/
-#define CONF_NDRX_RMFILE        "NDRX_RMFILE"
+#define CONF_NDRX_RMFILE                "NDRX_RMFILE"
     
 /** Enduro/X MW home               */
-#define CONF_NDRX_HOME          "NDRX_HOME"
+#define CONF_NDRX_HOME                  "NDRX_HOME"
     
 /** Feedback pool allocator options */
-#define CONF_NDRX_FPAOPTS       "NDRX_FPAOPTS"
+#define CONF_NDRX_FPAOPTS               "NDRX_FPAOPTS"
     
 /** Stack size for new threads produced by Enduro/X in kilobytes */
-#define CONF_NDRX_THREADSTACKSIZE   "NDRX_THREADSTACKSIZE"
+#define CONF_NDRX_THREADSTACKSIZE       "NDRX_THREADSTACKSIZE"
 
 /** Minimum number of dispatch threads for ATMI Server */
-#define CONF_NDRX_MINDISPATCHTHREADS   "NDRX_MINDISPATCHTHREADS"
+#define CONF_NDRX_MINDISPATCHTHREADS    "NDRX_MINDISPATCHTHREADS"
 
 /** Maximum number of dispatch threads for ATMI Server (not used currently) */
-#define CONF_NDRX_MAXDISPATCHTHREADS   "NDRX_MAXDISPATCHTHREADS"
+#define CONF_NDRX_MAXDISPATCHTHREADS    "NDRX_MAXDISPATCHTHREADS"
 
 /** Used by System-V tout thread -> sleep period between timeout-scans    
  * in milli-seconds. Default is 1000.
  */
-#define CONF_NDRX_SCANUNIT   "NDRX_SCANUNIT"
-#define CONF_NDRX_SCANUNIT_DFLT   1000
-#define CONF_NDRX_SCANUNIT_MIN    1
+#define CONF_NDRX_SCANUNIT              "NDRX_SCANUNIT"
+#define CONF_NDRX_SCANUNIT_DFLT         1000
+#define CONF_NDRX_SCANUNIT_MIN          1
 
 #define NDRX_CMDLINE_SEP        " \t\n" /**< command line seperators          */
 #define NDRX_CMDLINE_QUOTES     "'\""   /**< Block quotes for non splitting   */
+
+
+/**
+ * Posix Queue processing path prefixes
+ */
+#define NDRX_FMT_SEP      ','                   /**< Seperator in qnames      */
+#define NDRX_FMT_SEP_STR  ","                   /**< Seperator in qnames      */
+#define NDRX_NDRXD        "%s,sys,bg,ndrxd"
+#define NDRX_QTYPE_NDRXD    1                   /**< ndrxd backend q          */
+#define NDRX_NDRXCLT      "%s,sys,bg,xadmin,%d"
+#define NDRX_NDRXCLT_PFX  "%s,sys,bg,xadmin,"   /**< Prefix for sanity check    */
+
+
+#define NDRX_SVC_QFMT     "%s,svc,%s"            /**< Q format in epoll mode (one q multiple servers) */
+#define NDRX_SVC_QFMT_PFX "%s,svc,"              /**< Service Q prefix */
+#define NDRX_QTYPE_SVC      2                    /**< Service Q */
+#define NDRX_SVC_QFMT_SRVID "%s,svc,%s,%d"       /**< Q format in poll mode (use server id) */
+#define NDRX_ADMIN_FMT    "%s,srv,admin,%s,%d,%d"
+
+#define NDRX_SYS_SVC_PFX          "@"                    /**< Prefix used for system services */
+#define NDRX_SYS_SVC_PFXC         '@'                    /**< Prefix used for system services */
+#define NDRX_SVC_BRIDGE_STATLEN   9                      /**< Static len of bridge name       */
+#define NDRX_SVC_BRIDGE           "@TPBRIDGE%03d"        /**< Bridge service format           */
+#define NDRX_SVC_QBRDIGE          "%s,svc,@TPBRIDGE%03d" /**< Bridge service Q format         */
+    
+#define NDRX_SVC_TPBROAD  "@TPBRDCST%03ld"      /**< notify/broadcast remote dispatcher       */
+#define NDRX_SVC_TMIB     ".TMIB"               /**< Tp Management information base           */
+#define NDRX_SVC_TMIBNODE ".TMIB-%ld"         /**< Tp Management information base, node */
+#define NDRX_SVC_TMIBNODESV ".TMIB-%ld-%d"        /**< Tp Management information base, node, server */
+
+#define NDRX_SVC_RM       "@TM-%d"              /**< resource_id */
+#define NDRX_SVC_TM       "@TM-%d-%d"           /**< Node_idresource_id */
+#define NDRX_SVC_TM_I     "@TM-%d-%d-%d"        /**< Node_id,resource_id,instance/srvid */
+    
+#define NDRX_SVC_TMQ      "@TMQ-%ld-%d"         /**< Node_id,srvid */
+/* QSPACE service format */
+#define NDRX_SVC_QSPACE   "@QSP%s"              /**< Q space format string (for service) */
+    
+#define NDRX_SVC_CPM      "@CPMSVC"             /**< Client Process Monitor svc */
+    
+#define NDRX_SVC_CCONF    "@CCONF"              /**< Common-config server */
+#define NDRX_SVC_ADMIN    "@ADMINSVC"           /**< Admin service for atmiservices, logical */
+#define NDRX_SVC_REPLY    "@REPLYSVC"           /**< Reply service for atmiservices, logical */
+
+#define NDRX_ADMIN_FMT_PFX "%s,srv,admin,"      /**< Prefix for sanity check. */
+#define NDRX_QTYPE_SRVADM   3                   /**< Server Admin Q */
+    
+#define NDRX_SVR_QREPLY   "%s,srv,reply,%s,%d,%d" /**< qpfx, procname, serverid, pid */
+#define NDRX_SVR_QREPLY_PFX "%s,srv,reply," /**< Prefix for sanity check. */
+#define NDRX_QTYPE_SRVRPLY  4                   /**< Server Reply Q */
+    
+/* Used for System V interface */
+#define NDRX_SVR_SVADDR_FMT "%s,srv,addr,%s,%d" /**< Server address, per proc */
+#define NDRX_SVR_RQADDR_FMT "%s,srv,rqaddr,%s" /**< Server request address   */
+/** bridge request addr */
+#define NDRX_SVR_RQADDR_BRDG "%s,srv,rqaddr,@TPBRIDGE%03d"
+
+/* this may end up in "112233-" if client is not properly initialised */
+/* NOTE: Myid contains also node_id, the client Q does not contain it
+ * as it is local
+ */
+#define NDRX_CLT_QREPLY   "%s,clt,reply,%s,%d,%ld" /**< pfx, name, pid, context id*/
+/* client rply q parse  */
+#define NDRX_CLT_QREPLY_PARSE "%s clt reply %s %d %ld" /**< pfx, name, pid, context_id*/
+    
+#define NDRX_CLT_QREPLY_PFX   "%s,clt,reply," /**< Prefix for sanity check */
+#define NDRX_QTYPE_CLTRPLY  5                   /**< Client Reply Q */
+#define NDRX_CLT_QREPLY_CHK   ",clt,reply," /**< (verify that it is reply q) */
+
+#define NDRX_ADMIN_SVC     "%s-%d"
+
+/* This queue basically links two process IDs for conversation */
+#define NDRX_CONV_INITATOR_Q  "%s,cnv,c,%s,%d" /**< Conversation initiator */
+#define NDRX_CONV_INITATOR_Q_PFX "%s,cnv,c," /**< Prefix for sanity check. */
+#define NDRX_QTYPE_CONVINIT 6                   /**< Conv initiator Q */
+#define NDRX_CONV_SRV_Q       "%s,cnv,s,%s,%d,%s" /**< Conversation server Q */
+#define NDRX_CONV_SRV_Q_PFX "%s,cnv,s," /**< Prefix for sanity check. */
+#define NDRX_QTYPE_CONVSRVQ 7                   /**< Conv server Q */
+
+/** binary name, server id, pid, contextid, nodeid */
+#define NDRX_MY_ID_SRV        "srv,%s,%d,%d,%ld,%d"
+/** binary name, server id, pid, contextid, nodeid for parse */
+#define NDRX_MY_ID_SRV_PARSE  "srv %s %d %d %ld %d"
+#define NDRX_MY_ID_SRV_NRSEPS  5 /**< Number of separators in myid of server */
+    
+/** binary name, server id, pid, contextid, nodeid, cd for parse */
+#define NDRX_MY_ID_SRV_CNV_PARSE  "srv %s %d %d %ld %d %d"
+#define NDRX_MY_ID_SRV_CNV_NRSEPS  6 /**< Number of separators in myid of server */
+    
+#define NDRX_MY_ID_CLT        "clt,%s,%d,%ld,%d" /**< cltname, pid, contextid, nodeid */
+#define NDRX_MY_ID_CLT_PARSE  "clt %s %d %ld %d" /**< cltname, pid, contextid, nodeid */
+#define NDRX_MY_ID_CLT_NRSEPS  4 /**< Number of separators in myid of client */
+    
+#define NDRX_MY_ID_CLT_CNV_PARSE  "clt %s %d %ld %d %d" /**< cltname, pid, contextid, nodeid, cd */
+#define NDRX_MY_ID_CLT_CNV_NRSEPS  5 /**< Number of separators in myid of client */
+
+/* Shared memory formats */
+#define NDRX_SHM_SRVINFO_SFX    "shm,srvinfo"       /**< Server info SHM               */
+#define NDRX_SHM_SRVINFO        "%s," NDRX_SHM_SRVINFO_SFX
+#define NDRX_SHM_SRVINFO_KEYOFSZ 0                  /**< IPC Key offset                */
+
+#define NDRX_SHM_SVCINFO_SFX    "shm,svcinfo"       /**< Service info SHM              */
+#define NDRX_SHM_SVCINFO        "%s," NDRX_SHM_SVCINFO_SFX
+#define NDRX_SHM_SVCINFO_KEYOFSZ 1                  /**< IPC Key offset                */
+    
+#define NDRX_SHM_BRINFO_SFX     "shm,brinfo"        /**< Bridge info SHM               */
+#define NDRX_SHM_BRINFO         "%s," NDRX_SHM_BRINFO_SFX
+#define NDRX_SHM_BRINFO_KEYOFSZ 2                   /**< IPC Key offset                */
+    
+#define NDRX_SHM_P2S_SFX        "shm,p2s"           /**< Posix to System V             */
+#define NDRX_SHM_P2S            "%s," NDRX_SHM_P2S_SFX
+#define NDRX_SHM_P2S_KEYOFSZ    3                   /**< IPC Key offset                */
+    
+#define NDRX_SHM_S2P_SFX        "shm,s2p"           /**< System V to Posix             */
+#define NDRX_SHM_S2P            "%s," NDRX_SHM_S2P_SFX
+#define NDRX_SHM_S2P_KEYOFSZ    4                   /**< IPC Key offset                */
+
+#define NDRX_SHM_CPM_SFX        "shm,cpm"           /**< Client process monitor        */
+#define NDRX_SHM_CPM            "%s," NDRX_SHM_CPM_SFX
+#define NDRX_SHM_CPM_KEYOFSZ    5                   /**< IPC Key offset                */
+
+#define NDRX_SHM_LCF_SFX        "shm,lcf"           /**< Latent command framework shm  */
+#define NDRX_SHM_LCF            "%s," NDRX_SHM_LCF_SFX
+#define NDRX_SHM_LCF_KEYOFSZ    6                   /**< IPC Key offset                */
+
+#define NDRX_SHM_ROUTCRIT_SFX   "shm,routcrit"      /**< Routing criteria              */
+#define NDRX_SHM_ROUTCRIT        "%s," NDRX_SHM_ROUTCRIT_SFX
+#define NDRX_SHM_ROUTCRIT_KEYOFSZ   7                 /**< IPC Key offset                */
+    
+#define NDRX_SHM_ROUTSVC_SFX     "shm,routsvc"        /**< Routing services              */
+#define NDRX_SHM_ROUTSVC         "%s," NDRX_SHM_ROUTSVC_SFX
+#define NDRX_SHM_ROUTSVC_KEYOFSZ    8                 /**< IPC Key offset                */
+    
+#define NDRX_SEM_SVCOP          "%s,sem,svcop"      /**< Service operations...         */
+
+#define NDRX_KEY_FMT            "-k %s"             /**< format string for process key */
+
+/* Format @C<P|D>NID/Flags/<Service name> */
+#define NDRX_CACHE_EV_PFXLEN    6                   /**< prefix len @CXNNN             */
+#define NDRX_CACHE_EV_PUT       "@CP%03d/%s/%s"     /**< Put data in cache, event      */
+#define NDRX_CACHE_EV_DEL       "@CD%03d/%s/%s"     /**< Delete data form cache, event */
+#define NDRX_CACHE_EV_KILL      "@CK%03d/%s/%s"     /**< Kill the database             */
+#define NDRX_CACHE_EV_MSKDEL    "@CM%03d/%s/%s"     /**< Delete by mask                */
+#define NDRX_CACHE_EV_KEYDEL    "@CE%03d/%s/%s"     /**< Delete by key                 */
+#define NDRX_CACHE_EVSVC        "@CACHEEV%03ld"     /**< Cache event service, delete   */
+#define NDRX_CACHE_MGSVC        "@CACHEMG%03ld"     /**< Cache managemtn service       */
+    
+#define NDRX_CACHE_EV_LEN       3                   /**< Number of chars in command    */
+    
+#define NDRX_CACHE_EV_PUTCMD    "@CP"               /**< Put command in event          */
+#define NDRX_CACHE_EV_DELCMD    "@CD"               /**< Delete command in event       */
+#define NDRX_CACHE_EV_KILCMD    "@CK"               /**< Kill/drop ache event          */
+#define NDRX_CACHE_EV_MSKDELCMD "@CM"               /**< Delete data by mask, event    */
+#define NDRX_CACHE_EV_KEYDELCMD "@CE"               /**< Delete by key event           */
+
+#define NDRX_MSGPRIO_DEFAULT            50 /**< Default priority used by tpcall, tpreturn etc. */
+#define NDRX_MSGPRIO_MIN                1  /**< Minimum priority                               */
+#define NDRX_MSGPRIO_MAX                100 /**< Max priority                                  */
+#define NDRX_MSGPRIO_NOTIFY             60 /**< Notification is higher prio                    */
 
 #ifdef	__cplusplus
 }

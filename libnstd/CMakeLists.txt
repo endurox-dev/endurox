@@ -109,7 +109,8 @@ add_library (objnstd OBJECT ndebug.c nstdutil.c nstopwatch.c nclopt.c benchmark.
                         exbase64.c crypto.c expluginbase.c lmdb/eidl.c lmdb/edb.c
                         edbutil.c crc32.c nstd_shmsv.c ${NSTD_SYS_4} ${NSTD_SYS_5}
                         nstd_sem.c ${NSTD_SYS_6} emb.c sys_test.c
-                        linearhash.c fpalloc.c thpool.c strtokblk.c)
+                        linearhash.c fpalloc.c thpool.c strtokblk.c lcf.c ndebugfd.c
+                        lcf_api.c)
 
 # shared libraries need PIC
 set_property(TARGET objnstd PROPERTY POSITION_INDEPENDENT_CODE 1)

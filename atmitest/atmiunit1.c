@@ -631,6 +631,41 @@ Ensure(test080_tpexit)
     assert_equal(ret, EXSUCCEED);
 }
 
+Ensure(test081_lcf)
+{
+    int ret;
+    ret=system_dbg("test081_lcf/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test082_autotran)
+{
+    int ret;
+    ret=system_dbg("test082_autotran/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test083_ddrsyntax)
+{
+    int ret;
+    ret=system_dbg("test083_ddrsyntax/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test084_ddr)
+{
+    int ret;
+    ret=system_dbg("test084_ddr/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
+Ensure(test085_prio)
+{
+    int ret;
+    ret=system_dbg("test085_prio/run.sh");
+    assert_equal(ret, EXSUCCEED);
+}
+
 TestSuite *atmi_test_all(void)
 {
     TestSuite *suite = create_test_suite();
@@ -767,6 +802,11 @@ TestSuite *atmi_test_all(void)
     add_test(suite, test078_tpacallmix);
     add_test(suite, test079_cliquote);
     add_test(suite, test080_tpexit);
+    add_test(suite, test081_lcf);
+    add_test(suite, test082_autotran);
+    add_test(suite, test083_ddrsyntax);
+    add_test(suite, test084_ddr);
+    add_test(suite, test085_prio);
  
     return suite;
 }

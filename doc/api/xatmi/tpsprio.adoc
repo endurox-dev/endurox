@@ -1,0 +1,106 @@
+TPSPRIO(3)
+==========
+:doctype: manpage
+
+
+NAME
+----
+tpsprio - Set priority for next service call
+
+
+SYNOPSIS
+--------
+#include <atmi.h>
+
+int tpsprio(int 'prio', long 'flags');
+
+For XATMI client link with '-latmiclt -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+For XATMI server link with '-latmisrv|-latmisrvnomain|-latmisrvinteg -latmi -lubf -lnstd -lpthread -lrt -lm'
+
+DESCRIPTION
+-----------
+Set priority for next service call. Priority is specified in 'prio' argument.
+Priority can relative or absolute. By default 'prio' is used relative value. It
+is either positive or negative number which will affect either default service
+priority *50* or value specified in *<service />* tag *prio* setting 
+in *ndrxconfig.xml(5)*.
+
+Higher number means higher priority. If flag *TPABSOLUTE* is present in 'flags',
+then value is treated as absolute value for service call. No other flags are
+used by this service and in other cases value must be *0*.
+
+Call priority is determined at call point where message is put in the message queue.
+Thus at this point relative priority is calculated, if flag *TPABSOLUTE* is not set.
+When calculating priority value gets bellow *1* it is defaulted to *1* or if value gets greater than *100*, then it is defaulted to *100*.
+
+Priority setting is valid till the message is delivered (or attempted to deliver) to
+message queue. After that settings are reset and default *50* or service setting in
+*ndrxconfig.xml(5)* is used.
+
+Priority setting is kept in Thread Local Storage which is also associated with
+ATMI context.
+
+Actual absolute priority used for particular service call can be determined by
+*tpgprio(3)* API function.
+
+tpsprio() is effective for following API calls:
+
+- *tpcall(3)*
+
+- *tpacall(3)*
+
+- *tpconnect(3)*
+
+- *tpforward(3)*
+
+- *tpenqueue(3)*
+
+- *tpdequeue(3)*
+
+
+LIMITATIONS
+-----------
+Currently priority settings are processed only locally in particular Enduro/X instance, the
+priority setting is not forwarded over the bridge to other nodes (*tpbridge(8)*)
+and if forwarded over the bridge, the call priority is set to *50* at remote node
+prior putting message in queue. This is subject to change and in future 
+releases message received by remote bridge might use service priority
+from ndrxconfig.xml at remote node or use priority setting from call initiation node.
+
+Priority settings are used only for Posix queues, thus effective only for following pollers,
+for others values are managed, but they do not affect actual message priority.
+System which processes priority are:
+
+1. *epoll* for Linux OS.
+
+2. *kqueue* for FreeBSD OS.
+
+RETURN VALUE
+------------
+On success, *tpsprio()* return zero; on error, -1 is returned, with 
+*tperrno* set to indicate the error.
+
+ERRORS
+------
+Note that *tpstrerror()* returns generic error message plus custom message with 
+debug info from last function call.
+
+*TPEINVAL* Value is out of range 1..100 (including bellow -100 for relative mode).
+
+EXAMPLE
+-------
+See *atmitest/test085_prio/atmiclt85.c* for sample code.
+    
+BUGS
+----
+Report bugs to support@mavimax.com
+
+SEE ALSO
+--------
+*tpgprio(3)* *ndrxconfig.xml(5)*
+
+COPYING
+-------
+(C) Mavimax, Ltd
+

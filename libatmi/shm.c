@@ -53,12 +53,14 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include <ndrx_config.h>
+#include <ndrstandard.h>
+#include <sys_unix.h>
 #include <atmi.h>
 #include <atmi_shm.h>
 #include <atmi_tls.h>
-#include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
+#include <ndrx_ddr.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -69,7 +71,10 @@
 /*---------------------------Globals------------------------------------*/
 expublic ndrx_shm_t G_srvinfo;
 expublic ndrx_shm_t G_svcinfo;
-expublic ndrx_shm_t G_brinfo;     /* Info about bridges */
+expublic ndrx_shm_t G_brinfo;     /**< Info about bridges */
+
+expublic ndrx_shm_t ndrx_G_routcrit;    /**< Routing criterions */
+expublic ndrx_shm_t ndrx_G_routsvc;     /**< Routing services   */
 
 expublic int G_max_servers   = EXFAIL;         /* max servers         */
 expublic int G_max_svcs      = EXFAIL;         /* max svcs per server */
@@ -87,11 +92,15 @@ int M_init = EXFALSE;                 /* no init yet done */
  * @param ndrx_prefix
  * @return 
  */
-expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
+expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs,
+        int rtcrtmax, int rtsvcmax)
 {
     memset(&G_srvinfo, 0, sizeof(G_srvinfo));
     memset(&G_svcinfo, 0, sizeof(G_svcinfo));
     memset(&G_brinfo, 0, sizeof(G_brinfo));
+    
+    memset(&ndrx_G_routcrit, 0, sizeof(G_brinfo));
+    memset(&ndrx_G_routsvc, 0, sizeof(G_brinfo));
 
     G_svcinfo.fd = EXFAIL;
     G_svcinfo.key = G_atmi_env.ipckey + NDRX_SHM_SVCINFO_KEYOFSZ;
@@ -102,10 +111,20 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
     G_brinfo.fd = EXFAIL;
     G_brinfo.key = G_atmi_env.ipckey + NDRX_SHM_BRINFO_KEYOFSZ;
     
+    ndrx_G_routcrit.fd = EXFAIL;
+    ndrx_G_routcrit.key = G_atmi_env.ipckey + NDRX_SHM_ROUTCRIT_KEYOFSZ;
+    
+    
+    ndrx_G_routsvc.fd = EXFAIL;
+    ndrx_G_routsvc.key = G_atmi_env.ipckey + NDRX_SHM_ROUTSVC_KEYOFSZ;
+    
     
     snprintf(G_srvinfo.path, sizeof(G_srvinfo.path), NDRX_SHM_SRVINFO, q_prefix);
     snprintf(G_svcinfo.path, sizeof(G_svcinfo.path), NDRX_SHM_SVCINFO, q_prefix);
     snprintf(G_brinfo.path,  sizeof(G_brinfo.path), NDRX_SHM_BRINFO,  q_prefix);
+    
+    snprintf(ndrx_G_routcrit.path,  sizeof(G_brinfo.path), NDRX_SHM_ROUTCRIT,  q_prefix);
+    snprintf(ndrx_G_routsvc.path,  sizeof(G_brinfo.path), NDRX_SHM_ROUTSVC,  q_prefix);
     
     G_max_servers = max_servers;
     G_max_svcs = max_svcs;
@@ -123,7 +142,14 @@ expublic int ndrx_shm_init(char *q_prefix, int max_servers, int max_svcs)
     G_brinfo.size = sizeof(int)*CONF_NDRX_NODEID_COUNT;
     NDRX_LOG(log_debug, "G_brinfo.size = %d (%d * %d)",
                     G_svcinfo.size, sizeof(int), CONF_NDRX_NODEID_COUNT);
-   
+    
+    ndrx_G_routcrit.size = rtcrtmax*2;
+    NDRX_LOG(log_debug, "ndrx_G_routcrit.size = %d bytes (%d * 2)",
+                    ndrx_G_routcrit.size, rtcrtmax);
+    
+    ndrx_G_routsvc.size = rtsvcmax * sizeof(ndrx_services_t) * 2;
+    NDRX_LOG(log_debug, "ndrx_G_routsvc.size = %d (%d * %d * 2)",
+                    ndrx_G_routsvc.size, rtsvcmax, sizeof(ndrx_services_t));
     
     M_init = EXTRUE;
     return EXSUCCEED;
@@ -164,6 +190,18 @@ expublic int ndrxd_shm_open_all(void)
     }
 
     if (EXSUCCEED!=ndrx_shm_open(&G_brinfo, EXTRUE))
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=ndrx_shm_open(&ndrx_G_routcrit, EXTRUE))
+    {
+        ret=EXFAIL;
+        goto out;
+    }
+    
+    if (EXSUCCEED!=ndrx_shm_open(&ndrx_G_routsvc, EXTRUE))
     {
         ret=EXFAIL;
         goto out;
@@ -224,6 +262,12 @@ expublic int ndrxd_shm_close_all(void)
 
     if (EXFAIL==ndrx_shm_close(&G_brinfo))
         ret=EXFAIL;
+    
+    if (EXFAIL==ndrx_shm_close(&ndrx_G_routcrit))
+        ret=EXFAIL;
+    
+    if (EXFAIL==ndrx_shm_close(&ndrx_G_routsvc))
+        ret=EXFAIL;
 out:
     return ret;
 }
@@ -240,6 +284,9 @@ expublic int ndrxd_shm_delete(void)
         ndrx_shm_remove(&G_srvinfo);
         ndrx_shm_remove(&G_svcinfo);
         ndrx_shm_remove(&G_brinfo);
+        
+        ndrx_shm_remove(&ndrx_G_routcrit);
+        ndrx_shm_remove(&ndrx_G_routsvc);
     }
     else
     {
@@ -275,6 +322,18 @@ expublic int ndrx_shm_attach_all(int lev)
    /* Attached to service shared mem */
    if (lev & NDRX_SHM_LEV_SVC &&
            EXSUCCEED!=ndrx_shm_open(&G_svcinfo, EXTRUE))
+   {
+       EXFAIL_OUT(ret);
+   }
+   
+   if (lev & NDRX_SHM_LEV_SVC &&
+           EXSUCCEED!=ndrx_shm_open(&ndrx_G_routcrit, EXTRUE))
+   {
+       EXFAIL_OUT(ret);
+   }
+   
+   if (lev & NDRX_SHM_LEV_SVC &&
+           EXSUCCEED!=ndrx_shm_open(&ndrx_G_routsvc, EXTRUE))
    {
        EXFAIL_OUT(ret);
    }

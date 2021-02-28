@@ -35,6 +35,8 @@
          -->
          <gather_pq_stats>Y</gather_pq_stats>
          
+         <ddrreload>1</ddrreload>
+         
 	</appconfig>
     <defaults>
         <min>1</min>
@@ -92,7 +94,15 @@
 			<srvid>310</srvid>
 			<min>1</min>
 			<max>1</max>
-			<sysopt>-e /tmp/AD -r</sysopt>
+			<envs><env name="NDRX_RTGRP">GT</env></envs>
+			<sysopt>-e /tmp/ADT -r</sysopt>
+		</server>
+		<server name="tpadmsv">
+			<srvid>311</srvid>
+			<min>1</min>
+			<max>1</max>
+			<envs><env name="NDRX_RTGRP">GY</env></envs>
+			<sysopt>-e /tmp/ADY -r</sysopt>
 		</server>
 		<server name="atmi.sv1">
 			<srvid>1400</srvid>
@@ -125,6 +135,14 @@
 			<max>1</max>
 			<sysopt>-e /tmp/CCONF</sysopt>
 		</server>
+
+		<server name="exbenchsv">
+			<srvid>1800</srvid>
+			<min>10</min>
+			<max>10</max>
+			<sysopt>-e /tmp/EXBENCH</sysopt>
+		</server>
+
 		<server name="cpmsrv">
 			<srvid>9999</srvid>
                         <cctag>YOMENT</cctag>
@@ -145,5 +163,56 @@
                         <exec tag="mongo" autostart="Y"/>
                 </client>
 	</clients>
+
+
+<services>
+	<service svcnm="SERVICE1" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
+	<service svcnm="SERVICE2" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
+	<service svcnm="SERVICE3" prio="50" routing="HELLO"	autotran="Y" trantime="600" />
+	<service svcnm="SERVICE4" prio="50" 	autotran="Y" trantime="600" />
+	<service svcnm=".TMIB"    prio="50" routing="MIB"/>
+</services>
+
+
+<routing>
+
+    <route routing="HELLO">
+	<!-- <field>T_STRING_FLD</field> -->
+	<field>T_LONG_FLD</field>
+	<ranges>MIN-4:GRP1,100-2000:GRP4,1000-22100:GRP5,*:*</ranges>
+	<buftype>UBF</buftype>
+    </route>
+
+    <route routing="HELLO2">
+	<!-- <field>T_STRING_FLD</field> -->
+	<field>T_LONG_FLD</field>
+	<ranges>MIN-4:GRP1,1011-2000:GRP4,1000-22100:GRP5,*:*</ranges>
+	<buftype>UBF</buftype>
+    </route>
+
+    <route routing="MIB">
+	<field>TA_CLASS</field>
+	<ranges>'T_CLIENT'-'T_CLIENT':GY,'T_SERVER'-'T_SERVER':GT,T_QUEUE:*</ranges>
+	<buftype>UBF</buftype>
+    </route>
+
+    <route routing="HELLO4">
+	<field>T_STRING_FLD</field> 
+	<ranges>AAAA - ZZZZ : GPR1</ranges> 
+<!--	<ranges>1 - 2 : GPR1</ranges>   -->
+<!--	<ranges>'AAAA1'     - 'AzzzzzzzzzzzzzzZZZZZZZZZZZZZZZZZZZZZZ' : OK</ranges> -->
+	<buftype>UBF</buftype>
+    </route>
+
+
+	<!-- bad route  
+    <route routing="HELLO1">
+	<field>T_STRING_FLD</field>
+	<ranges>x-z:f,'jjjj' - '-bbbbbb'  : -'GPD3,'</ranges>
+	<buftype>UBF</buftype>
+    </route> -->
+
+</routing> 
+
 </endurox>
 
