@@ -32,7 +32,8 @@
  * -----------------------------------------------------------------------------
  */
 
-%define api.prefix {ddr}
+/* %define api.prefix {ddr}*/
+%name-prefix "ddr"
 
 %{
 #include <stdio.h>
