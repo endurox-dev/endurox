@@ -630,7 +630,7 @@ expublic int build_process_model(conf_server_node_t *p_server_conf,
             /* substitute env... - Feature #331, END */
 
             /* now check the hash table for server instance entry */
-            if (p_pm->srvid < 1 || p_pm->srvid>ndrx_get_G_atmi_env()->max_servers)
+            if (p_pm->srvid < 1 || p_pm->srvid > ndrx_get_G_atmi_env()->max_servers-1)
             {
                 /* Invalid srvid  */
                 NDRXD_set_error_fmt(NDRXD_ESRVCIDINV, "(%s) Invalid server id `%d'", 

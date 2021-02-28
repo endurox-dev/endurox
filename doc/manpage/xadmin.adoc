@@ -114,7 +114,10 @@ COMMANDS
 *cat*::
     Attached console to ndrxd user session in progress.
 *reload*::
-    Load new configuration.
+    Load new configuration. Note that *<services>* and *<routing>* tags are reloaded
+    in deferred mode. I.e. changes are applied after certain number sanity cycles
+    have been completed by *ndrxd(8)*. See *ndrxconfig.xml(5)* 
+    tag *<endurox>/<appconfig>/<ddrreload>*.
 *testcfg*::
     Test new configuration.
 *unadv* -i server_id -s service_name::
@@ -361,21 +364,17 @@ COMMANDS
     are set in -c argument, where possible values are *T_CLIENT*, *T_DOMAIN*,
     *T_MACHINE*, *T_QUEUE*, *T_SERVER*, *T_SERVICE*, *T_SVCGRP* and *T_BRCON*. 
     The parameter *-m* returns the output in machine readable format.
-
 *udown* [-y]::
     Remove all System V resources used by user. This includes any of: queues,
     shared memory and semaphores. '-y' is used for confirmation.
-
 *svqids* [-i] [-k]::
     Print System V queue identifiers allocated for current user. Command outputs
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
-
 *svsemids* [-i] [-k]::
     Print System V semaphore identifiers allocated for current user. Command outputs
     Queue identifier and IPC Key. If parameter *-i* is set, identifier is are
     printed only. If parameter *-k* is set, only keys are printed.
-
 *lcf* [COMMAND] [-p <PID>] [-b <BINARY>] [-r] [-a] [-n] [-e] [-s <SLOT>] [-A <ARG_A>] [-B <ARG_B>]::
     This is administrative interface to Latent Command Framework. When command
     is run with out arguments, it prints *page 1* information. Build in commands 
@@ -393,6 +392,14 @@ COMMANDS
     LCF commands are listed bellow. Under this xadmin command new commands might
     appear if plugins are registering them with *ndrx_lcf_xadmin_add(3)* API
     calls.
+*shmcfg*::
+    Command is used to print the shared memory configuration information. The
+    memory segment is the same as for *LCF*, but these settings are used for
+    other purposes. Values *shmcfgver_lcf* - LCF command version, incremented
+    with each command publication. *use_ddr* set to *1* if data-dependent-routing used
+    or per service settings are published. *ddr_page* - current page number used
+    by settings *0* or *1* as double buffering is used for lock-less operations.
+    *ddr_ver1* version number of current DDR setting.
 
 ENDURO/X LCF COMMANDS
 ---------------------

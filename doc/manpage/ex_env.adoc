@@ -330,6 +330,26 @@ Mandatory Env. Variables
     commands. Default is *n*. This can be useful in case if *xadmin(8)* needs to
     correct some invalid commands which might prevent to run xadmin by it self.
 
+*NDRX_RTSVCMAX*='SERVICE_COUNT'::
+    Number of service slots available in shared memory for *<services>* tag. Greater
+    number gives better performance for linear hashing - less probability for collision. 
+    Default value is *1000*.
+
+*NDRX_RTCRTMAX*='CRITERION_BUFFER_SIZE':
+    This is number of bytes available for routing criterion storage. Default
+    value is *102400* which corresponds to *100* KB. One *<route>* tag takes
+    about 300 bytes and one range entry take about 64 bytes (by not including
+    the string data which is dynamic length).
+
+*NDRX_RTGRP*='ROUTING_GROUP':
+    This is routing group code. If environment variable is present for XATMI server
+    process, then any service advertise and unadvertise will operate in bulk with
+    original service name and additionally added suffix of "@<NDRX_RTGRP>". For
+    example if having *NDRX_RTGRP* set to "G5" and process advertises service
+    *DEBIT*, then in total two services will be advertise such as *DEBIT* and
+    *DEBIT@G5*. Afterwards with *<service/>* and *<route/>* settings can be used
+    to route the traffic between default service and service in group.
+
 EXAMPLE
 -------
 Sample configuration:

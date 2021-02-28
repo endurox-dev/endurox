@@ -308,7 +308,7 @@ extern NDRX_API size_t ndrx_strnlen(char *str, size_t max);
 
 #define CONF_NDRX_RTCRTMAX_DFLT   102400         /**< 100KB one buffer routing cirteria space */
 #define CONF_NDRX_RTCRTMAX       "NDRX_RTCRTMAX"
-#define CONF_NDRX_RTSVCMAX_DFLT   100            /**< 100 service slots for one buffer        */
+#define CONF_NDRX_RTSVCMAX_DFLT   1000           /**< 1000 service slots for one buffer       */
 #define CONF_NDRX_RTSVCMAX       "NDRX_RTSVCMAX"
 
 #define CONF_NDRX_CLTMAX         "NDRX_CLTMAX"     /**< Max number of client, cpm */

@@ -38,6 +38,9 @@ Priority setting is valid till the message is delivered (or attempted to deliver
 message queue. After that settings are reset and default *50* or service setting in
 *ndrxconfig.xml(5)* is used.
 
+Priority setting is kept in Thread Local Storage which is also associated with
+ATMI context.
+
 Actual absolute priority used for particular service call can be determined by
 *tpgprio(3)* API function.
 
@@ -65,7 +68,9 @@ prior putting message in queue. This is subject to change and in future
 releases message received by remote bridge might use service priority
 from ndrxconfig.xml at remote node or use priority setting from call initiation node.
 
-Priority settings are used only for Posix queues, thus effective only for following pollers:
+Priority settings are used only for Posix queues, thus effective only for following pollers,
+for others values are managed, but they do not affect actual message priority.
+System which processes priority are:
 
 1. *epoll* for Linux OS.
 
