@@ -102,6 +102,7 @@ exprivate int blist_progress(command_call_t * call, char *qstr)
     
 out:
     NDRX_LOG(log_debug, "blist_progress exit %d", ret);
+    return ret;
 }
 
 /**
