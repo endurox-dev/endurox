@@ -210,7 +210,7 @@ fs.mqueue.msg_max=10000
 # Max message size, to pass unit tests, use 1M+1K
 fs.mqueue.msgsize_max=1049600
 
-# Max number of queues for user
+# Max number of queues system-wide
 fs.mqueue.queues_max=10000
 
 EOF
@@ -321,7 +321,9 @@ not set correctly, some multi-threaded components of Enduro/X might hang during
 the startup, for example *tpbridge(8)*.
 
 --------------------------------------------------------------------------------
-cat << EOF >> /etc/security/limits
+$ su - root
+
+# cat << EOF >> /etc/security/limits
 
 user1:
         stack = 655360
@@ -329,6 +331,33 @@ user1:
         rss = -1
         fsize = -1
 EOF
+--------------------------------------------------------------------------------
+
+If during runtime following errors are faced:
+
+--------------------------------------------------------------------------------
+
+ fork: retry: Resource temporarily unavailable
+
+--------------------------------------------------------------------------------
+
+Check that number of user processes are allowed:
+
+--------------------------------------------------------------------------------
+
+$ su - root
+
+# /usr/sbin/lsattr -E -l sys0 | grep maxuproc
+maxuproc        40                                 Maximum number of PROCESSES allowed per user        True
+
+--------------------------------------------------------------------------------
+
+Updated to *2000*:
+
+--------------------------------------------------------------------------------
+
+# /usr/sbin/chdev -l sys0 -a maxuproc=2000
+
 --------------------------------------------------------------------------------
 
 === Solaris setup

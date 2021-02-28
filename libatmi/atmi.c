@@ -375,7 +375,7 @@ expublic int tpabort (long flags)
         goto out;
     }
     
-    ret=ndrx_tpabort(flags);
+    ret=ndrx_tpabort(flags, 0);
     
 out:
     return ret;
@@ -443,7 +443,7 @@ expublic int tpcommit (long flags)
         goto out;
     }
     
-    ret=ndrx_tpcommit(flags);
+    ret=ndrx_tpcommit(flags, 0);
     
 out:
     return ret;
@@ -1994,6 +1994,70 @@ expublic int tpdecrypt(char *input, long ilen, char *output, long *olen, long fl
     
 out:
     return ret;
+}
+
+/**
+ * Set next call priority.
+ * This affects
+ * - tpcall, tpacall, tpconnect, tpforward, tpnotify
+ * - for tpbroadcast only first matched recipient will be approached with this
+ *   priority.
+ * Default is 50
+ * 
+ * @param prio priority 1..100
+ * @param flags TPABSOLUTE (ignored)
+ * @return 
+ */
+expublic int tpsprio(int prio, long flags)
+{
+    int ret=EXSUCCEED;
+    ndrx_TPunset_error();
+    
+    if ( (flags & ~TPABSOLUTE) !=0 )
+    {
+        ndrx_TPset_error_fmt(TPEINVAL, "Unsupported flags %ld", flags);
+        EXFAIL_OUT(ret);
+    }
+    
+    if (flags & TPABSOLUTE )
+    {
+        if (prio < NDRX_MSGPRIO_MIN || prio >NDRX_MSGPRIO_MAX)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "prio must be in range %d..%d, got %d", 
+                    NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX, prio);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        if (abs(prio) > NDRX_MSGPRIO_MAX)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid relative prio, ABS value "
+                    "shall be less than or equal to %d", prio,
+                    NDRX_MSGPRIO_MAX);
+            EXFAIL_OUT(ret);
+        }
+    }
+    
+    G_atmi_tls->prio = prio;
+    G_atmi_tls->prio_flags = flags;
+    
+    NDRX_LOG(log_debug, "Next call scheduled with priority %d flags %ld",  
+            G_atmi_tls->prio, G_atmi_tls->prio_flags);
+
+out:
+    return ret;
+}
+
+/**
+ * Get priority of the last call
+ * If call was not made, default value 50 is returned.
+ * @return priority 1..100
+ */
+expublic int tpgprio(void)
+{
+    ndrx_TPunset_error();
+    return G_atmi_tls->prio_last;
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

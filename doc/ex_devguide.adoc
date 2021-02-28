@@ -590,7 +590,7 @@ logging which means that each system request (or session) which processes UBF bu
 be logged to separate file. Which basically redirects NDRX, UBF and TPLog (user) to specific
 file. File can be set by *tplogsetreqfile(5)*.
 
-=== Logging facilities 
+=== Logging facilities  (topics)
 
 - 'NDRX', logging facility code 'N' - this is Enduro/X XATMI framework internal debug logging.
 Debug string setting for level is set with keyword 'ndrx'. Facility is defined with macros
@@ -616,6 +616,17 @@ Facility is defined with macros 'LOG_FACILITY_TP_REQUEST'.
 - 'NDRX_REQUEST', logging code 'm' - logs the Enduro/X internals on per request basis.
 
 - 'UBF_REQUEST', logging code 'v' - logs UBF internals on per request basis.
+
+Two objects are defined in the system: logger and file sink. When logger either
+process, thread or request opens then output file, firstly filename is checked in the
+hash list of file sinks (hashed by filename). If file name is found in hashlist,
+the the logger get the file sink object with the properties of *mkdir* and *bufsz*
+as they were configured for logger which actually opened the files (created file
+sink objects).
+
+If doing *$ xadmin logrotate*, then rotation is applied on file sinks and thus
+original *mkdir* and *bufsz* are used at point when files are open.
+
 
 === Hierarchy of the  loggers (facilities)
 

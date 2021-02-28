@@ -340,6 +340,10 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
     /* reset the hook */
     tls->pf_tpacall_noservice_hook = NULL;
     
+    tls->prio = NDRX_MSGPRIO_DEFAULT;
+    tls->prio_flags=0;
+    tls->prio_last = NDRX_MSGPRIO_DEFAULT;
+    
     /* set callback, when thread dies, we need to get the destructor 
      * to be called
      */

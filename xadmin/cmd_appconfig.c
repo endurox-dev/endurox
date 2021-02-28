@@ -87,8 +87,15 @@ expublic int cmd_appconfig(cmd_mapping_t *p_cmd_map, int argc, char **argv, int 
 {
     int ret=EXSUCCEED;
     command_appconfig_t call;
-    
+
+    /* check mandatory args ..., if missing ... print all args...  */
     memset(&call, 0, sizeof(call));
+    
+    if (argc<2)
+    {
+        fprintf(stderr, XADMIN_INVALID_OPTIONS_MSG);
+        EXFAIL_OUT(ret);
+    }
     
     NDRX_STRCPY_SAFE(call.setting, argv[1]);
     

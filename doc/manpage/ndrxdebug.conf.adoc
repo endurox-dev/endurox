@@ -36,7 +36,7 @@ DEBUG CONFIGURATION FILE SYNTAX
     UBF debug level. 0..5. 0=No logging. 1=Fatal, 2=Error, 3=Warning, 4=Program info,
     5=Program detail.
 *TP_DEBUG_LEVEL*::
-    This is tplog(3) user logging level. 0..5. 0=No loging.
+    This is tplog(3) user logging level. 0..5. 0=No logging.
     1=Fatal, 2=Error, 3=Warning, 4=Program info, 5=Program detail.
 *DEBUG_BUFFER_SIZE*::
     Number of lines to buffer before writing out to disk.
@@ -58,7 +58,9 @@ DEBUG CONFIGURATION FILE SYNTAX
     to other cluster node, it can create the exact file name locally with
     performing log file switching.
 *LOG_FILE*::
-    Log file. If empty then 'stderr' will be used.
+    Log file. If empty then 'stderr' will be used. Also special file names
+    are used. The */dev/stderr* represents 'stderr' output and */dev/stdout*
+    represent 'stdout' output.
 *COMMENTS*::
     Commented lines starts with '#'. Empty lines are ignored.
 *INTEGRATION_FLAGS*::

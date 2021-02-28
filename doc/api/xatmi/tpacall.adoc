@@ -69,7 +69,7 @@ NULL or flags does not allow to change the value.
 presence in service queue.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
-or debugs for more info.
+or debugs for more info. DDR route not found or failed.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, 
 or debugs for more info.

@@ -817,6 +817,9 @@ exprivate void * ndrx_svq_timeout_thread(void* arg)
     sigset_t set;
     struct pollfd *fdtabmo_tmp = NULL; /**< Real monitoirng table       */
     
+    /* init the TLS thread */
+    _Nunset_error();
+    
     /* mask all signals except user signal */
     
     if (EXSUCCEED!=sigfillset(&set))

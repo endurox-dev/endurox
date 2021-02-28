@@ -262,7 +262,7 @@ FUNC ([_a-zA-Z][_a-zA-Z0-9]*)\(
 /* common function to free up parser */
 void _free_parser(void)
 {
-	yylex_destroy();
+    yylex_destroy();
 }
 
 /* vim: set ts=4 sw=4 et smartindent: */

@@ -284,6 +284,7 @@ expublic int sv_serve_call(int *service, int *status,
     long call_age;
     int generate_rply = EXFALSE;
     tp_command_call_t * last_call;
+    int error_code = TPESVCERR; /**< Default error in case if cannot process */
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     
@@ -299,13 +300,13 @@ expublic int sv_serve_call(int *service, int *status,
     if (call->clttout > 0 && call_age >= call->clttout && 
             !(call->flags & TPNOTIME))
     {
-        NDRX_LOG(log_error, "Recieved expired call - drop, cd: %d timestamp: %d callseq: %u, "
+        NDRX_LOG(log_error, "Received expired call - drop, cd: %d timestamp: %d callseq: %u, "
 		    "svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
                         " reply_to: %s, clttout: %d",
                     	call->cd, call->timestamp, call->callseq, 
 		    call->name, call->flags, call_age, call->data_len,
                         call->my_id, call->reply_to, call->clttout);
-        userlog("Recieved expired call - drop, cd: %d timestamp: %d callseq: %u, "
+        userlog("Received expired call - drop, cd: %d timestamp: %d callseq: %u, "
 		    "svc: %s, flags: %ld, call age: %ld, data_len: %ld, caller: %s "
                         " reply_to: %s, clttout: %d",
                     	call->cd, call->timestamp, call->callseq, 
@@ -331,6 +332,7 @@ expublic int sv_serve_call(int *service, int *status,
                             call->buffer_type_id, BUF_TYPE_MIN, BUF_TYPE_MAX);
             *status=EXFAIL;
             generate_rply = EXTRUE;
+            error_code = TPEITYPE;
             goto out;
         }
         call_type = &G_buf_descr[call->buffer_type_id];
@@ -345,9 +347,10 @@ expublic int sv_serve_call(int *service, int *status,
         if (EXSUCCEED!=ret)
         {
 
-            /* TODO: Reply with failure - TPEOTYPE - type not supported! */
+            /* TODOReply with failure - TPEITYPE - type not supported! */
             *status=EXFAIL;
             generate_rply = EXTRUE;
+            error_code = TPEITYPE;
             goto out;
         }
         else
@@ -383,18 +386,40 @@ expublic int sv_serve_call(int *service, int *status,
                               * (this does excludes data by default) */
         
         /* Register global tx */
-        if (EXEOS!=call->tmxid[0] && 
-                EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
+        if (EXEOS!=call->tmxid[0])
         {
-            NDRX_LOG(log_error, "Failed to start/join global tx!");
+            if (EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
+            {
+                NDRX_LOG(log_error, "Failed to start/join global tx [%s]!", call->tmxid);
+                userlog("Failed to start/join global tx [%s]!", call->tmxid);
+
+                /* TODO: We have died here... so the dispatcher must
+                 * return TPFAIL, and we should notify master, that this RM is
+                 * failed!!!!
+                 */
+                *status=EXFAIL;
+                generate_rply = EXTRUE;
+                error_code = TPETRAN;
+                goto out;
+            }
+        }
+        else if (G_server_conf.service_array[call_no]->autotran)
+        {
+            if (EXFAIL==tpbegin(G_server_conf.service_array[call_no]->trantime, 0))
+            {
+                NDRX_LOG(log_error, "Failed to start autotran (trantime=%lu): %s", 
+                        G_server_conf.service_array[call_no]->trantime, tpstrerror(tperrno));
+                userlog("Failed to start autotran (trantime=%lu): %s", 
+                        G_server_conf.service_array[call_no]->trantime, tpstrerror(tperrno));
+
+                *status=EXFAIL;
+                generate_rply = EXTRUE; /**< error 14 */
+                error_code = TPETRAN;
+                goto out;
+            }
             
-            /* TODO: We have died here... so the dispatcher must
-             * return TPFAIL, and we should notify master, that this RM is
-             * failed!!!!
-             */
-            *status=EXFAIL;
-            generate_rply = EXTRUE;
-            goto out;
+            /* auto tran is started */
+            last_call->sysflags|=SYS_FLAG_AUTOTRAN;
         }
         
         /* If we run in abort only mode and do some forwards & etc.
@@ -534,10 +559,9 @@ expublic int sv_serve_call(int *service, int *status,
 out:
 
     if (generate_rply)
-    {
+    {        
         /* Reply back with failure... */
-        ndrx_reply_with_failure(call, TPNOBLOCK, TPESVCERR, 
-                ndrx_get_G_atmi_conf()->reply_q_str);
+        reply_with_failure(TPNOBLOCK, call, NULL, NULL, error_code);   
     }
 
     /* free_up_buffers(); - services assumes that memory is alloced for all the time
@@ -576,9 +600,9 @@ expublic int sv_serve_connect(int *service, int *status,
     tp_command_call_t *call = (tp_command_call_t*)*call_buf;
     *status=EXSUCCEED;
     long call_age;
-    atmi_lib_env_t *env = ndrx_get_G_atmi_env();
     tp_command_call_t * last_call = ndrx_get_G_last_call();
-
+    int generate_rply = EXFALSE;
+    int error_code = TPESVCERR; /**< Default error in case if cannot process */
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     
@@ -618,7 +642,9 @@ expublic int sv_serve_connect(int *service, int *status,
         if (EXSUCCEED!=ret)
         {
 
-            /* TODO: Reply with failure - TPEOTYPE - type not supported! */
+            /* Reply with failure - TPEITYPE - type not supported! */
+            generate_rply = EXTRUE;
+            error_code = TPEITYPE; /**< Default error in case if cannot process */
             goto out;
         }
 
@@ -674,7 +700,43 @@ expublic int sv_serve_connect(int *service, int *status,
         NDRX_LOG(log_debug, "Read cd=%d making as %d (+%d - we are server!)",
                                         call->cd, svcinfo.cd, NDRX_CONV_UPPER_CNT);
 
+        /* Register global tx */
+        if (EXEOS!=call->tmxid[0])
+        {
+            if (EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
+            {
+                NDRX_LOG(log_error, "Failed to start/join global tx [%s]!", call->tmxid);
+                userlog("Failed to start/join global tx [%s]!", call->tmxid);
 
+                /* TODO: We have died here... so the dispatcher must
+                 * return TPFAIL, and we should notify master, that this RM is
+                 * failed!!!!
+                 */
+                *status=EXFAIL;
+                error_code = TPETRAN;
+                generate_rply = EXTRUE;
+                goto out;
+            }
+        }
+        else if (G_server_conf.service_array[call_no]->autotran)
+        {
+            if (EXFAIL==tpbegin(G_server_conf.service_array[call_no]->trantime, 0))
+            {
+                NDRX_LOG(log_error, "Failed to start autotran (trantime=%lu): %s", 
+                        G_server_conf.service_array[call_no]->trantime, tpstrerror(tperrno));
+                userlog("Failed to start autotran (trantime=%lu): %s", 
+                        G_server_conf.service_array[call_no]->trantime, tpstrerror(tperrno));
+
+                *status=EXFAIL;
+                generate_rply = EXTRUE; /**< error 14 */
+                error_code = TPETRAN;
+                goto out;
+            }
+            
+            /* auto tran is started */
+            last_call->sysflags|=SYS_FLAG_AUTOTRAN;
+        }
+        
         /* At this point we should build up conversation queues
          * Open for read their queue, and open for write our queue to listen
          * on.
@@ -682,25 +744,11 @@ expublic int sv_serve_connect(int *service, int *status,
         if (EXFAIL==accept_connection())
         {
             ret=EXFAIL;
-
-            /* Try hardly to send SVCFAIL/ERR response back! */
-            reply_with_failure(0, last_call, NULL, NULL, TPESVCERR);
             
-            goto out;
-        }
-
-        /* Register global tx */
-        if (EXEOS!=call->tmxid[0] && 
-                EXSUCCEED!=_tp_srv_join_or_new_from_call(call, EXFALSE))
-        {
-            NDRX_LOG(log_error, "Failed to start/join global tx!");
-            
-            /* TODO: We have died here... so the dispatcher must
-             * return TPFAIL, and we should notify master, that this RM is
-             * failed!!!!
-             */
             *status=EXFAIL;
-        }
+            generate_rply=EXTRUE;
+            goto out;
+        }        
         
         /* If we run in abort only mode and do some forwards & etc.
          * Then we should keep the abort status.
@@ -788,6 +836,12 @@ expublic int sv_serve_connect(int *service, int *status,
     }
     
 out:
+
+    /* reply with error if needed */
+    if (generate_rply)
+    {
+        ndrx_reject_connection(error_code);
+    }
 
     /* free_up_buffers(); - processes manages memory manually!!! */
 /*

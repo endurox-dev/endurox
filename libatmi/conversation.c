@@ -56,6 +56,7 @@
 #include <tperror.h>
 #include <atmi_shm.h>
 #include <atmi_tls.h>
+#include <ndrx_ddr.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define CONV_TARGET_FLAGS(X)     \
@@ -156,6 +157,92 @@ expublic int have_open_connection(void)
     
 }
 
+/**
+ * Reject connection opening, due to error
+ * This will deliver note to client that connection is rejected
+ * @param err tperrno code
+ * @return EXSUCCEED/EXFAIL
+ */
+expublic int ndrx_reject_connection(int err)
+{
+    char their_qstr[NDRX_MAX_Q_SIZE+1];
+    tp_command_call_t *call;
+    char *buf=NULL;
+    size_t buf_len;
+    int ret = EXSUCCEED;
+    
+    NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
+    call = (tp_command_call_t *)buf;
+    
+    memset(call, 0, sizeof(*call));
+    
+    if (0!=G_atmi_tls->G_last_call.callstack[0])
+    {
+        br_dump_nodestack(G_atmi_tls->G_last_call.callstack, 
+                "Incoming conversation from bridge,"
+                "using first node from node stack");
+#if defined(EX_USE_POLL) || defined(EX_USE_SYSVQ)
+        /* poll() mode: */
+        {
+            int is_bridge;
+            char tmpsvc[MAXTIDENT+1];
+
+            snprintf(tmpsvc, sizeof(tmpsvc), NDRX_SVC_BRIDGE, 
+                    (int)G_atmi_tls->G_last_call.callstack[0]);
+
+            if (EXSUCCEED!=ndrx_shm_get_svc(tmpsvc, their_qstr, &is_bridge,
+                    NULL))
+            {
+                NDRX_LOG(log_error, "Failed to get bridge svc: [%s]", 
+                        tmpsvc);
+                EXFAIL_OUT(ret);
+            }
+        }
+#else
+        snprintf(their_qstr, sizeof(their_qstr),NDRX_SVC_QBRDIGE, 
+                G_atmi_tls->G_atmi_conf.q_prefix, 
+                (int)G_atmi_tls->G_last_call.callstack[0]);
+#endif
+        
+    }
+    else
+    {
+        /* Local conversation  */
+        NDRX_STRCPY_SAFE(their_qstr, G_atmi_tls->G_last_call.reply_to);
+    }
+
+    /* OK, now fill up the details */
+    call->data_len = 0;
+    call->callseq = G_atmi_tls->G_last_call.callseq;
+    call->msgseq = NDRX_CONF_MSGSEQ_START;
+    call->command_id = ATMI_COMMAND_CONNRPLY;
+    call->flags = 0;
+    call->sysflags|=SYS_FLAG_REPLY_ERROR;
+    call->rcode = err;
+    call->clttout = G_atmi_env.time_out;
+    NDRX_STRCPY_SAFE(call->reply_to, G_atmi_tls->G_last_call.reply_to);
+    ndrx_stopwatch_reset(&call->timer);
+
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(their_qstr, (char *)call, sizeof(*call), 
+            TPNOBLOCK, 0)))
+    {
+        NDRX_LOG(log_error, "Failed to deliver reject conn status %d to: [%s]",
+                err, their_qstr);
+        userlog("Failed to deliver reject conn status %d to: [%s]",
+                err, their_qstr);
+        EXFAIL_OUT(ret);
+    }
+
+out:
+                                
+    if (NULL!=buf)
+    {
+        NDRX_SYSBUF_FREE(buf);
+    }
+
+    return ret;    
+    
+}
 
 /**
  * This assumes that we have already set last call data.
@@ -608,21 +695,32 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     tp_conversation_control_t *conv;
     int is_bridge;
     int err;
+    int prio = NDRX_MSGPRIO_DEFAULT;
+    char svcddr[XATMI_SERVICE_NAME_LENGTH+1]; /**< routed service name */
     ATMI_TLS_ENTRY;
     
     NDRX_LOG(log_debug, "%s: called", __func__);
+    
+    NDRX_STRCPY_SAFE(svcddr, svc);
+    /* try the DDR */
+    if (EXFAIL==ndrx_ddr_grp_get(svcddr, sizeof(svcddr), data, len,
+        &prio))
+    {
+        /* error shall be set */
+        EXFAIL_OUT(ret);
+    }
     
     NDRX_SYSBUF_MALLOC_WERR_OUT(buf, buf_len, ret);
     call = (tp_command_call_t *)buf;
 
     /* Check service availability */
-    if (EXSUCCEED!=ndrx_shm_get_svc(svc, send_qstr, &is_bridge, NULL))
+    if (EXSUCCEED!=ndrx_shm_get_svc(svcddr, send_qstr, &is_bridge, NULL))
     {
         NDRX_LOG(log_error, "Service is not available %s by shm", 
-                svc);
+                svcddr);
         ret=EXFAIL;
         ndrx_TPset_error_fmt(TPENOENT, "%s: Service is not available %s by shm", 
-                 __func__, svc);
+                 __func__, svcddr);
         goto out;
     }
     
@@ -640,7 +738,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
     /* reset queues... */
     conv->my_listen_q = (mqd_t)EXFAIL;
     conv->reply_q = (mqd_t)EXFAIL;
-    
+    conv->reply_q_str[0]=EXEOS;
     memset(call, 0, sizeof(*call));
 
     /* Bug #300 */
@@ -702,7 +800,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
 
     call->command_id = ATMI_COMMAND_CONNECT;
 
-    NDRX_STRCPY_SAFE(call->name, svc);
+    NDRX_STRCPY_SAFE(call->name, svcddr);
     
     call->flags = flags | TPCONV; /* This is conversational call... */
     /* Prepare role flags */
@@ -738,7 +836,7 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
                         "cd: %d, timestamp :%d, callseq: %hu, reply from [%s]",
                         send_qstr, call->cd, call->timestamp, call->callseq, call->reply_to);
     /* And then we call out the service. */
-    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, 0)))
+    if (EXSUCCEED!=(ret=ndrx_generic_q_send(send_qstr, (char *)call, data_len, flags, prio)))
     {
         int err;
         
@@ -775,15 +873,19 @@ expublic int ndrx_tpconnect (char *svc, char *data, long len, long flags)
      */
     if (EXSUCCEED!=ndrx_tprecv(cd, (char **)&buf, &data_len, 0L, &revent, &command_id))
     {
-        /* We should have */
-        if (ATMI_COMMAND_CONNRPLY!=command_id)
-        {
-            ndrx_TPset_error_fmt(TPESYSTEM, "%s: Invalid connect handshake reply %d", 
-                                 __func__, command_id);
-            ret=EXFAIL;
-            goto out;
-        }
+        /* should' error be already set? */
+        EXFAIL_OUT(ret);
     }
+    
+    /* We should have */
+    if (ATMI_COMMAND_CONNRPLY!=command_id)
+    {
+        ndrx_TPset_error_fmt(TPESYSTEM, "%s: Invalid connect handshake reply %d", 
+                             __func__, command_id);
+        ret=EXFAIL;
+        goto out;
+    }
+    
     /* EOS is already included, where q name is set by ndrx_tpsend() */ 
     NDRX_STRCPY_SAFE(conv->reply_q_str, buf);
     if (is_bridge)
@@ -1090,8 +1192,21 @@ inject_message:
 
             if (rply->sysflags & SYS_FLAG_REPLY_ERROR)
             {
-                ndrx_TPset_error_msg(rply->rcode, "Server failed to generate reply");
-                conv->revent = *revent = TPEV_SVCERR; /* Server failed. */
+                if (rply->rcode==TPESVCERR)
+                {
+                    conv->revent = *revent = TPEV_SVCERR; /* Server failed. */
+                    ndrx_TPset_error(TPEEVENT); /* We have event! */
+                }
+                else
+                {
+                    ndrx_TPset_error_msg(rply->rcode, "Server failed to generate reply");
+                    /*conv->revent = *revent = TPEV_SVCERR;  Server failed. should we? */
+                }
+                
+                /* Shutdown connection*/
+                normal_connection_shutdown(conv, EXTRUE, 
+                        "tprecv got SYS_FLAG_REPLY_ERROR");
+                
                 ret=EXFAIL;
                 goto out;
             } /* Forced close received. */
@@ -1112,7 +1227,7 @@ inject_message:
             {
                 /* We have reply queue already in
                  * This is really used only for handshaking internally
-                 * so we do not use buffer managment here!
+                 * so we do not use buffer management here!
                  */
                 strcpy((char *)*data, rply->data); /* return reply queue */
             }
@@ -1243,15 +1358,18 @@ out:
 /**
  * Receive any un-expected messages.
  * With this we catch the cases when server have been illegally made tpreturn!
- * @return
+ * @param cd current conversation descriptor
+ * @param p_revent event value returned in case of if 
+ * @return EXSUCCEED/EXFAIL (event received)
  */
-exprivate void process_unsolicited_messages(int cd)
+exprivate int process_unsolicited_messages(int cd, long *p_revent)
 {
     short command_id=ATMI_COMMAND_CONNUNSOL;
     char *data=NULL;
     long len;
-    long revent;
-
+    long revent=0;
+    int ret = EXSUCCEED;
+    
     /* Flush down all messages */
     while (EXSUCCEED==ndrx_tprecv (cd, &data, &len, TPNOBLOCK, &revent, &command_id))
     {
@@ -1260,7 +1378,21 @@ exprivate void process_unsolicited_messages(int cd)
         tpfree(data);
         data=NULL;
     }
-
+    
+    if (TPEEVENT==tperrno)
+    {
+        *p_revent=revent;
+        ret=EXFAIL;
+    }
+    
+    /* finally if something after the buffer alloc failed */
+    if (NULL!=data)
+    {
+        ndrx_tpfree (data, NULL);
+    }
+    
+    return ret;
+    
 }
 
 /**
@@ -1330,8 +1462,16 @@ expublic int ndrx_tpsend (int cd, char *data, long len, long flags, long *revent
         goto out;
     }
 
-    /* Check for any messages & process them */
-    process_unsolicited_messages(cd);
+    /* Check for any messages & process them
+     * - if we get any other error than TPEBLOCK
+     *   then error shall be returned together with revent.
+     *   how about changing the 
+     */
+    if (EXSUCCEED!=process_unsolicited_messages(cd, revent))
+    {
+        ret=EXFAIL;
+        goto out;
+    }
     
     /*
      * Check are we still in connection?

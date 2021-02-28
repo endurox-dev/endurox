@@ -44,7 +44,6 @@
 #include <atmi_int.h>
 #include <ndrstandard.h>
 #include <ndebug.h>
-#include <ndrxd.h>
 #include <ndrxdcmn.h>
 #include <userlog.h>
 
@@ -789,6 +788,22 @@ expublic UBFH* atmi_xa_call_tm_generic_fb(char cmd, char *svcnm_spec, int call_a
     {
         NDRX_LOG(log_error, "Failed to call RM: %d:[%s] ", 
                             tperrno, tpstrerror(tperrno));
+        
+        /* If the XA error is not loaded, override the value
+         * to XAER_RMERR
+         */
+        if (!G_atmi_tls->M_atmi_reason)
+        {
+            /* ok, in this case at prepare we shall roll back.. */
+            if (TPENOENT==tperrno)
+            {
+                G_atmi_tls->M_atmi_reason=NDRX_XA_ERSN_TPENOENT;
+            }
+            else
+            {
+                G_atmi_tls->M_atmi_reason=XAER_RMERR;
+            }
+        }
         EXFAIL_OUT(ret);
     }
             

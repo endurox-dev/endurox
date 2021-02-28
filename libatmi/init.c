@@ -59,6 +59,8 @@
 #include <cconfig.h>
 #include <typed_view.h>
 #include <atmi_cache.h>
+#include <nstd_int.h>
+#include <lcfint.h>
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
 #define MAX_CONTEXTS                1000
@@ -75,6 +77,7 @@ expublic int _tmbuilt_with_thread_option = EXFALSE; /**< by default not MT */
 /* List of context slots... */
 exprivate long M_contexts[MAX_CONTEXTS];
 exprivate MUTEX_LOCKDECL(M_env_lock);
+exprivate int M_init_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
 
 /**
@@ -184,21 +187,7 @@ expublic int ndrx_load_common_env(void)
     
     if (NULL==p)
     {
-        fprintf(stderr, "********************************************************************************\n");
-        fprintf(stderr, "**                         CONFIGURATION ERROR !                              **\n");
-        fprintf(stderr, "**                         ... now worry                                      **\n");
-        fprintf(stderr, "**                                                                            **\n");
-        fprintf(stderr, "** Enduro/X Application server is not in proper environment or not configured **\n");
-        fprintf(stderr, "**                                                                            **\n");
-        fprintf(stderr, "** Possible causes:                                                           **\n");
-        fprintf(stderr, "** - Classical environment variables are not loaded (see ex_env(5) man page)  **\n");
-        fprintf(stderr, "** - Or Common-Config NDRX_CCONFIG env variable is not set                    **\n");
-        fprintf(stderr, "** See \"Getting Started Tutorial\" in order to get system up-and-running       **\n");
-        fprintf(stderr, "** More info can be found here http://www.endurox.org/dokuwiki                **\n");
-        fprintf(stderr, "**                                                                            **\n");
-        fprintf(stderr, "** Process is now terminating with failure                                    **\n");
-        fprintf(stderr, "********************************************************************************\n");
-        exit(EXFAIL);
+        ndrx_init_fail_banner(); /* NOTE ! this termiantes the binary */
     }
     
     if (NULL==p)
@@ -600,6 +589,65 @@ expublic int ndrx_load_common_env(void)
                 CONF_NDRX_MAXSVCSRVS, G_atmi_env.maxsvcsrvs, CONF_NDRX_MAXSVCSRVS_DFLT);
     
     /* </poll() mode configuration> */
+    
+    
+    /* setup routing data */
+    
+    if (NULL!=(p=getenv(CONF_NDRX_RTCRTMAX)))
+    {
+        G_atmi_env.rtcrtmax = atoi(p);
+        
+        if (G_atmi_env.rtcrtmax<1)
+        {
+            G_atmi_env.rtcrtmax = CONF_NDRX_RTCRTMAX_DFLT;
+        }
+        
+    }
+    else
+    {
+        G_atmi_env.rtcrtmax = CONF_NDRX_RTCRTMAX_DFLT;
+    }
+    
+    if (NULL!=(p=getenv(CONF_NDRX_RTSVCMAX)))
+    {
+        G_atmi_env.rtsvcmax = atoi(p);
+        
+        if (G_atmi_env.rtsvcmax<1)
+        {
+            G_atmi_env.rtsvcmax = CONF_NDRX_RTSVCMAX_DFLT;
+        }
+        
+    }
+    else
+    {
+        G_atmi_env.rtsvcmax = CONF_NDRX_RTSVCMAX_DFLT;
+    }
+    
+    NDRX_LOG(log_debug, "routing criterion space: %d bytes, max services: %d", 
+            G_atmi_env.rtcrtmax, G_atmi_env.rtsvcmax);
+    
+    if (NULL!=(p=getenv(CONF_NDRX_RTGRP)))
+    {
+        
+        if (strlen(p)>NDRX_DDR_GRP_MAX)
+        {
+            NDRX_LOG(log_error, "ERROR ! Too long routing group [%s] max %d",
+                    p, NDRX_DDR_GRP_MAX);
+            userlog("ERROR ! Too long routing group [%s] max %d",
+                    p, NDRX_DDR_GRP_MAX);
+            ret=EXFAIL;
+            goto out;
+        }
+        
+        NDRX_STRCPY_SAFE(G_atmi_env.rtgrp, p);
+        NDRX_LOG(log_debug, "Routing group set to [%s]", 
+                G_atmi_env.rtgrp);
+    }
+    else
+    {
+        G_atmi_env.rtgrp[0]=EXEOS;
+        NDRX_LOG(log_debug, "Routing group not used");
+    }
 
     /* Init the util lib.. */ 
     if (EXSUCCEED!=ndrx_atmiutil_init())
@@ -607,7 +655,17 @@ expublic int ndrx_load_common_env(void)
        NDRX_LOG(log_error, "ndrx_atmiutil_init() failed");
        EXFAIL_OUT(ret);
     }
-   
+    
+    /**
+     * LIB ATMI must work with SHMCFG - thus ensures that it is open
+     */
+    if (!ndrx_lcf_supported_int())
+    {
+        NDRX_LOG(log_error, "ATMI processes must have LCF/SHMCFG configured - "
+                "check in previous logs why %s did not open", NDRX_SHM_LCF_SFX);
+        EXFAIL_OUT(ret);
+    }
+    
     NDRX_LOG(log_debug, "env loaded ok");
     G_is_env_loaded = EXTRUE;
 out:
@@ -733,7 +791,6 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
 {
     int ret=EXSUCCEED;
     char fn[]="tp_internal_init";
-    static int first = EXTRUE;
     static int cl_shm = EXFALSE;
     static int sv_shm = EXFALSE;
     static int sem_fail = EXFALSE;
@@ -805,7 +862,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
     /* we attach to shared mem & semaphores only once. */
     MUTEX_LOCK;
     {
-        if (first)
+        if (M_init_first)
         {
             /* Init semaphores first. */
             ndrxd_sem_init(G_atmi_tls->G_atmi_conf.q_prefix);
@@ -821,7 +878,8 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
             
             /* Attach to client shared memory? */
             if (EXSUCCEED==ndrx_shm_init(G_atmi_tls->G_atmi_conf.q_prefix, 
-                        G_atmi_env.max_servers, G_atmi_env.max_svcs))
+                        G_atmi_env.max_servers, G_atmi_env.max_svcs, G_atmi_env.rtcrtmax,
+                        G_atmi_env.rtsvcmax))
             {
                 if (init_data->is_client)
                 {
@@ -866,7 +924,7 @@ expublic int tp_internal_init(atmi_lib_conf_t *init_data)
                 EXFAIL_OUT(ret);
             }
             
-            first = EXFALSE;
+            M_init_first = EXFALSE;
         }
         else if (!sv_shm && !init_data->is_client)
         {
@@ -1033,5 +1091,17 @@ expublic ndrx_env_priv_t* ndrx_env_priv_get(void)
 {
     return &G_atmi_env.integpriv;
 }
+
+/**
+ * This is not thread safe
+ * thus only needs to be used from single threaded
+ * apps such as xadmin.
+ */
+expublic void ndrx_libatmi_deinit(void)
+{
+    ndrxd_shm_close_all();
+    M_init_first=EXTRUE;
+}
+
 
 /* vim: set ts=4 sw=4 et smartindent: */

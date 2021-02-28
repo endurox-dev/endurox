@@ -49,13 +49,22 @@ RETURN VALUE
 On success, *tpcall()* return zero; on error, -1 is returned, with *tperrno* 
 set to indicate the error.
 
-*'revent' return values*
-*TPEV_DISCONIMM* Conversation have been terminated by *tpdiscon()*
+*'revent' return values:*
 
-*TPEV_SVCERR* Server died and queue was removed or server did *tpreturn()* 
-with *TPSUCCESS*.
+*TPEV_DISCONIMM* Disconnect received from other conversation end, 
+by issuing *tpdiscon()*. The global transaction in progress is aborted in this case.
+Connection descriptor 'cd' is closed.
 
-*TPEV_SVCFAIL* Server returned *TPFAIL* with *tpreturn()*
+*TPEV_SENDONLY* The sender program issued *tpsend()* with 
+flag *TPEV_SENDONLY*, meaning that we become senders.
+
+*TPEV_SVCERR* Server died or *tpreturn(3)* failed. Connection descriptor 'cd' is closed.
+
+*TPEV_SVCFAIL* Server returned *TPFAIL* with *tpreturn(3)* Connection descriptor 'cd' is closed.
+
+*TPEV_SVCSUCC* Server did *tpreturn()* with *TPSUCCESS*, connection is closed
+automatically after this event. Connection descriptor 'cd' is closed.
+
 
 
 ERRORS

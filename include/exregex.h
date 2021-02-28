@@ -55,7 +55,7 @@ extern NDRX_API int ndrx_regexec(regex_t *p_re, char *data);
 extern NDRX_API int ndrx_regcomp(regex_t *p_re, char *expr);
 extern NDRX_API void ndrx_regasc_cpyesc(char *dest, char *src, 
         char opt_start, char opt_end, char subst_from, char *subst_to);
-
+extern NDRX_API int ndrx_regqexec(const char *expr, char const *data);
     
 #ifdef	__cplusplus
 }

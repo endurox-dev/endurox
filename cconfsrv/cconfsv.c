@@ -611,7 +611,7 @@ exprivate int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
             NDRX_LOG(log_error, "Send data failed [%s] %ld",
                                 tpstrerror(tperrno), revent);
             set_error(p_ub, NESYSTEM, tpstrerror(tperrno));
-                EXFAIL_OUT(ret);
+            EXFAIL_OUT(ret);
                 
         }
         else
@@ -632,12 +632,15 @@ exprivate int config_list(UBFH *p_ub, cconf_req_t *req, int cd)
         }
     }
     
+
+    
+out:
+                    
     if (NULL!=sections)
     {
         ndrx_inicfg_sections_free(sections);
     }
-    
-out:
+
     return ret;
 }
 

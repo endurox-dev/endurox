@@ -74,8 +74,11 @@ expublic int do_restart_actions(void)
     static int     server_prefix_len;
     
     /* Load app config */
+    /*
     if (EXSUCCEED!=(ret = load_active_config(&G_app_config, &G_process_model,
             &G_process_model_hash, &G_process_model_pid_hash)))
+     */
+    if (EXSUCCEED!=(ret = load_active_config_live()))
     {
         NDRX_LOG(log_error, "Failed to load active configuration - "
                 "cannot restart!");
