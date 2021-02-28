@@ -1,5 +1,5 @@
 ##
-## @brief Enduro/X benchmark client (currently not releaseable)
+## @brief Enduro/X benchmark client (currently released expermentally)
 ##
 ## @file CMakeLists.txt
 ##
@@ -64,5 +64,12 @@ set_target_properties(exbenchsv PROPERTIES LINK_FLAGS "$ENV{MYLDFLAGS}")
 
 
 ################################################################################
+
+# Install bin
+install (TARGETS 
+        exbenchsv 
+        exbenchcl
+        DESTINATION bin)
+
 
 # vim: set ts=4 sw=4 et smartindent:

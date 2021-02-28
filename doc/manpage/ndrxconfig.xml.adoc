@@ -23,6 +23,7 @@ SYNOPSIS
         <restart_to_check>NDRXD_RESTART_TO_CHECK</restart_to_check>
         <gather_pq_stats>NDRXD_GATHER_PQ_STATS</gather_pq_stats>
         <rqaddrttl>RQADDRTTL</rqaddrttl>
+        <ddrreload>DDRRELOAD</ddrreload>
     </appconfig>
     <defaults>
         <min>MIN_SERVERS_DEFAULT</min>
@@ -254,6 +255,23 @@ PARAMETERS
     request address queue will be unlinked.
     The value is in seconds. Checks are performed with 'SANITY_SECONDS' intervals.
     Default value is *10* seconds.
+'DDRRELOAD'::
+    This setting identifies the number of sanity cycles used to wait for updating
+    DDR routing tables on the fly with "xadmin reload" command. 
+    Default value is *60*. This deferred approach is used for
+    purpose, that it protects any processes which are in previous version of 
+    DDR routing tables and has not yet completed. Routing details are
+    stored in double buffered routing pages for lock-less operations. If using
+    smaller number of cycles, then it would increase the probability of corrupted routing,
+    if administrator is doing config reload twice in a row with routing config changed. 
+    Thus these cycles give opportunity for any processes to complete routing. 
+    Overall chance that process will get corrupted pages with this approach
+    is very low. As reload must be performed twice, and process shall be stalled
+    for some reason in routing table, which by it self is very fast operation 
+    if *ndrxd* logging is turned off, as routing basically is CPU-RAM operation. 
+    Even if any such process was unable to complete the route, 
+    the error is detected and service call might return *TPESYSTEM* and
+    corresponding ULOG message is written.
 'MIN_SERVERS_DEFAULT'::
     Default minimum number of copies of the server which needs to be started automatically.
     This can be overridden by 'MIN_SERVERS_SRV' per server.
@@ -637,7 +655,7 @@ PARAMETERS
 
 'ROUTE_RANGES'::
     Route ranges definition. Which defines the ranges by which destination service
-    group is selected. See section "ROUTE RANGES" bellow for syntax details.
+    group is selected. See section "DATA DEPENDENT ROUTING" bellow for syntax details.
 
 'ROUTE_BUFFER'::
     Buffer type accepted for routing. Currently supported buffer type is *UBF*.
@@ -647,6 +665,14 @@ PARAMETERS
     no matching route (if was defined any route) and/or no matching range is found,
     error *TPESYSTEM* is returned for *tpcall(3)*, *tpacall(3)* and related
     service routines.
+
+'ROUTE_FIELDTYPE'::
+    This specified how field shall be used in routing. Supported values are
+    *SHORT*, *CHAR*, *LONG*, *FLOAT*, *DOUBLE*, *STRING*. Where the *SHORT*
+    are internally mapped to *LONG* range, *FLOAT* is mapped to *DOUBLE*,
+    *CHAR* is mapped to *STRING*. For UBF routes, this field is optional,
+    and if it is not specified, then field type is extracted from UBF field.
+    Additionally any *BFLD_CARRAY* is mapped to *STRING*. 
 
 VARIABLE SUBSTITUTION
 ---------------------
@@ -666,6 +692,142 @@ Following *FUNC* (functions) are defined:
     Decrypt base64 string in *PARAMETER* and replace the placeholder with the
     value. To get encrypted value, it is possible to use *exencrypt(8)* tool.
 
+DATA DEPENDENT ROUTING
+----------------------
+Enduro/X supports data dependent routing. There are three components which are
+required for routing:
+
+1. Server process shall be put in the group. This can be be assigning group
+code to the *NDRX_RTGRP* environment variable for particular server process.
+This variable might be set in CCTAG group for server process. Or it might
+be assigned for particular process by *<envs>*. Here not that any server process
+which advertises services, will additionally advertise each service with
+suffix "@<NDRX_RTGRP>". Thus *NDRX_RTGRP* shall use short values like 2-3 symbols
+long, as total service name length is limited to *30*, and if routing group
+name is longer, server processes would not be able to advertise. Also note that
+if this environment is present for server process, then any advertise mechanism,
+either alias or compiled service name by *buildserver(8)* or *tpadvertise(3)* call
+will make two services to appear in the system - one is default with out the
+suffix and other is with route group suffix. Only exception when working with
+route groups is that *xadmin unadv* and *xadmin readsv* would operate with single
+service name.
+
+2. Routing criterion i.e. 'SRVC_ROUTE_NAME' must be defined for service in
+*<service />* tag.
+
+3. Routing criterion must be defined in *<route/>* tag.
+
+When all above is defined, the routing will be activated, when client (or servers
+code) would issue:
+
+- *tpacall(3)*
+
+- *tpcall(3)*
+
+- *tpconnect(3)*
+
+- *tpforward(3)*
+
+Also affects any other Enduro/X APIs which internally uses tpcall/tpacall. Such
+as *tpenqueue(3)*, *tpdequeue(3)*, *tpbegin(3)*, etc. but it is not recommended
+to configure routing for Enduro/X system servers or services (or at least with
+out advice from Mavimax).
+
+Routing criterions by it self operate with three data types: *LONG*, *DOUBLE*
+and *STRING*.
+
+Syntax for 'ROUTE_RANGES' is following: <min_value_1>-<max_value_1>:<group_code_1>,...,
+<min_value_N>-<max_value_N>:<group_code_N>. Additional syntax is supported, such as:
+
+- Keyword MIN - this represent any absolute minimum value, thus if value is bellow <max_value>,
+then value is in the range.
+
+- Keyword MAX - this represent any absolute maximum value, thus if value is above the
+<min_value> then value is in the range.
+
+- Single value is supported.
+
+- Keyword * (asterisk) - this presents the any value and represents whole range. This
+keyword can also be used as group, which means - use default group (i.e. it is any
+service, service name with out suffix).
+
+- Values and group names can be put in single string quotes ('). If such single quote
+is needed within the string, it can be escaped with backslash \.
+
+- Ranges supports max_value as negative, in such case syntax as "-100 - -45:GRPN" is supported.
+
+Ranges value are validated and processed as indicated by field typ.  
+*LONG* is limited to:
+
+--------------------------------------------------------------------------------
+
+^[+-]?([0-9])+$
+
+--------------------------------------------------------------------------------
+
+*DOUBLE* type value shall be expressed as:
+
+--------------------------------------------------------------------------------
+
+^[-+]?(([0-9]*[.]?[0-9]+([ed][-+]?[0-9]+)?))$
+
+--------------------------------------------------------------------------------
+
+For *DOUBLE* decimal separator is *.*. Also to check the equality is 
+checked with precision of 0.000001.
+
+*STRING* values may contain any printable character including newline.
+
+When processes is perform routing, first matched range is used to extract the group code.
+If range is not found or buffer type does not match with service for which routing
+is defined *TPESYSTEM* error is returned to caller. Range matching is performed
+form left to right order. Range include the range min/max values. When range is
+defined for *STRING* type, values are compared by *strcmp()* function.
+
+
+*Examples of valid routing configuration:*
+
+--------------------------------------------------------------------------------
+
+<routing>
+
+        <route routing="RT1">
+            <field>T_LONG_FLD</field>
+            <ranges>MIN-4:GRP1,100-200:GRP4,300:GRP6,1000-22100:GRP5,*:*</ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+        <route routing="RT2">
+            <field>T_STRING_FLD</field>
+            <ranges>
+                    MIN-'AAA':GRP1
+                    ,'AAB' - AAC:'GRP4'
+                    ,'HELLO\'' - HELLO5:*
+                    ,'Z' - MAX:GRP6
+            </ranges>
+            <buftype>UBF</buftype>
+        </route>
+
+        <!-- cast value from string to double -->
+        <route routing="RT3">
+            <field>T_STRING_FLD</field>
+            <ranges>
+                    MIN - -1.1:GRP1
+                    ,-1 - 44:'GRP4'
+                    ,'44.1' - 123.15:*
+                    ,*:*
+            </ranges>
+            <buftype>UBF</buftype>
+            <fieldtype>DOUBLE</fieldtype>
+        </route>
+
+<routing>
+
+
+Note that *DDR* settings can be changed on they fly with *xadmin reload*, but
+changes are deferred to certain amount of time. See 'DDRRELOAD'.
+
+--------------------------------------------------------------------------------
 
 COMMAND LINE ARGUMENT ESCAPE
 ----------------------------
@@ -829,8 +991,9 @@ Sample configuration:
             <sysopt>-e /tmp/BRIDGE -r</sysopt>
             <envs>
                 <usegroup>JAVAENV</usegroup>
-                <env name="CLASSPATH">${NDRX_APPHOME}/libs/somelib.jar</env>
+                <env name="NDRX_RTGRP">GRP4</env>
                 <env name="CLASSPATH">${CLASSPATH}:${NDRX_APPHOME}/libs/${NDRX_SVPROCNAME}.jar</env>
+                <env name="CLASSPATH">${NDRX_APPHOME}/libs/somelib.jar</env>
             </envs>
             <cmdline>java</cmdline>
         </server>
@@ -859,7 +1022,7 @@ Sample configuration:
     <routing>
         <route routing="RT1">
             <field>T_LONG_FLD</field>
-            <ranges>MIN-4:GRP1,100-2000:GRP4,1000-22100:GRP5,*:*</ranges>
+            <ranges>MIN-4:GRP1,100-300:GRP4,1000-22100:GRP5,*:*</ranges>
             <buftype>UBF</buftype>
         </route>
 
