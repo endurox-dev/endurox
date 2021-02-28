@@ -87,7 +87,7 @@ in service queue. Or internals of *tpreturn(3)* failed at server code, e.g.
 failed to commit auto-tran.
 
 *TPESYSTEM* System failure occurred during serving. See logs i.e. user log, 
-or debugs for more info.
+or debugs for more info. DDR route not found or failed.
 
 *TPEOS* System failure occurred during serving. See logs i.e. user log, 
 or debugs for more info.
