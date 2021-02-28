@@ -503,7 +503,7 @@ expublic int tplogreopen(void)
 {
     API_ENTRY;
     NDRX_DBG_INIT_ENTRY;
-    ndrx_debug_reopen_all();
+    return ndrx_debug_reopen_all();
 }
 
 /**

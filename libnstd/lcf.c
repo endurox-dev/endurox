@@ -419,7 +419,7 @@ expublic int ndrx_lcf_init(void)
     }
     
     /* default init... */
-    memset(M_locl_lcf, 0, sizeof(M_locl_lcf));
+    memset(M_locl_lcf, 0, sz);
     
     /* assign the mem -> do as last step, as in case of LCF failure, we
      * ignore the condition
