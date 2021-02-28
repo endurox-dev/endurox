@@ -292,6 +292,7 @@ extern int ndrx_xadmin_lcf_init(void);
 extern int cmd_lcf_completion(linenoiseCompletions *lc, char *buf);
 
 extern int cmd_shmcfg(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
+extern int cmd_prtsvc(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);
 
 /* TMIB: */
 extern int cmd_mibget(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next);

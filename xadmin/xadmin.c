@@ -472,6 +472,14 @@ cmd_mapping_t M_command_map[] =
     {"shmcfg",  cmd_shmcfg,EXFAIL,             0,  0, 
                 "Print shared memory current configuration"
                 , NULL},
+    {"prtsvc",     cmd_prtsvc,   EXFAIL,    1,  1, 
+                "Print routing services\n"
+                "\tUsage: prtsvc [OPTION]...\n"
+                "\tOptional arguments: \n"
+                "\t\t -a\tPrint all slots\n"
+                "\t\t -i\tPrint in use slots\n"
+                "\t\t -w\tPrint was in use slots\n",
+                NULL},
 };
 
 /*

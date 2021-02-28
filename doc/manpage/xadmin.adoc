@@ -401,6 +401,12 @@ COMMANDS
     by settings *0* or *1* as double buffering is used for lock-less operations.
     *ddr_ver1* version number of current DDR setting.
 
+*prtsvc*::
+    Print routing services from current shared memory page. Flags *-a* means
+    all slots of linear hash. *-i* only used slots. *-w* slots which was in
+    use. By default only used slots are printed.
+
+
 ENDURO/X LCF COMMANDS
 ---------------------
 *lcf disable*::
