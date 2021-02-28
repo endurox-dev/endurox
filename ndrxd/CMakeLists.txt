@@ -44,6 +44,13 @@ ELSE ($ENV{RELEASE_BUILD})
 ENDIF ($ENV{RELEASE_BUILD})
 
 find_package(LibXml2 REQUIRED)
+
+# Osx has very outdated bison,
+# thus install by brew install bison
+if(PLATFORM STREQUAL "Darwin")
+    set(BISON_EXECUTABLE "/usr/local/opt/bison/bin/bison" CACHE PATH "Bison executable")
+endif()
+
 find_package(BISON)
 find_package(FLEX)
 
