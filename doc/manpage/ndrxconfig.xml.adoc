@@ -749,10 +749,11 @@ then value is in the range.
 
 - Keyword * (asterisk) - this presents the any value and represents whole range. This
 keyword can also be used as group, which means - use default group (i.e. it is any
-service, service name with out suffix).
+service, service name with out "@<GRP>" suffix).
 
 - Values and group names can be put in single string quotes ('). If such single quote
-is needed within the string, it can be escaped with backslash \.
+is needed within the string, it can be escaped with backslash \. Double backslash \\
+is translated to single backslash.
 
 - Ranges supports max_value as negative, in such case syntax as "-100 - -45:GRPN" is supported.
 
