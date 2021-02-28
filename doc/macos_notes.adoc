@@ -55,6 +55,13 @@ other sources
 
 . CMake (https://cmake.org/install/)
 
+. Install latest bison
+
+---------------------------------------------------------------------
+$ brew install bison
+---------------------------------------------------------------------
+
+
 === Getting the source code
 For test purposes we will parepare new user for which Enduro/X will built.
 
@@ -76,7 +83,7 @@ To work with CMake, you need to put the 'cmake' binary into the path. You may do
 
 ---------------------------------------------------------------------
 $ cat << EOF >> ~/.bashrc
-export PATH=$PATH:/Applications/CMake.app/Contents/bin
+export PATH=/usr/local/opt/bison/bin:$PATH:/Applications/CMake.app/Contents/bin
 EOF
 
 $ chmod +x .bashrc
