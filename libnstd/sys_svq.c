@@ -446,7 +446,7 @@ out:
         NDRX_LOG(log_debug, "wait_left: %d qid: %d", wait_left, mqd->qid);
         ret = poll((void *)&msgs, nfd, wait_left);
         err=errno;
-        NDRX_LOG(log_error, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
+        NDRX_LOG(log_debug, "poll ret: %d qid: %d wait_left: %d", ret, mqd->qid, wait_left);
         if (ret>0)
         {
             /* OK, can try to receive something */

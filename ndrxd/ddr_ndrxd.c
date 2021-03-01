@@ -453,7 +453,7 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     
     NDRX_LOG(log_debug, "lowerd: %lf", seq->cseq.lowerd);
     NDRX_LOG(log_debug, "upperd: %lf", seq->cseq.upperd);
-    NDRX_LOG(log_debug, "len: %d (sturct size: %d)", seq->cseq.len, sizeof(seq->cseq));
+    NDRX_LOG(log_debug, "len: %d (struct size: %d)", seq->cseq.len, sizeof(seq->cseq));
     NDRX_LOG(log_debug, "flags: %d", seq->cseq.flags);
     
     
