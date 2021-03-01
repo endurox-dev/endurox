@@ -172,7 +172,7 @@ fi
 
 echo "Checking OK case..."
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -200,7 +200,7 @@ fi
 
 echo "Checking OK2 case..."
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -236,7 +236,7 @@ fi
 
 echo "Checking OK3 case..."
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -272,7 +272,7 @@ fi
 
 echo "Checking SLEEP case..."
 # count the results
-CNT=`./atmiclt82 COUNT | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -308,7 +308,7 @@ fi
 
 echo "Checking FAIL case..."
 # count the results
-CNT=`./atmiclt82 COUNT | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -367,7 +367,7 @@ fi
 
 echo "Checking FAIL case..."
 # count the results
-CNT=`./atmiclt82 COUNT | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -416,7 +416,7 @@ fi
 
 echo "Checking OK case..."
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l`
+CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -461,7 +461,7 @@ fi
 
 echo "CONV start fail check count 0"
 # count the results
-CNT=`./atmiclt82 COUNT | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l| awk '{print $1}'`
 
 RET=$?
 
@@ -514,7 +514,7 @@ if [ $TEST_MODE -eq 2 ]; then
 
     echo "CONV start fail check count 0"
     # count the results
-    CNT=`./atmiclt82 COUNT | wc -l`
+    CNT=`./atmiclt82 COUNT | wc -l | awk '{print $1}'`
 
     RET=$?
 
@@ -571,7 +571,7 @@ fi
 echo "CONV start fail check count 0"
 
 # count the results
-CNT=`./atmiclt82 COUNT | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -609,7 +609,7 @@ fi
 echo "CONV start fail check count 0"
 
 # count the results
-CNT=`./atmiclt82 COUNT | wc -l`
+CNT=`./atmiclt82 COUNT | wc -l | awk '{print $1}'`
 
 RET=$?
 

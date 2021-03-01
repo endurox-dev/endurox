@@ -137,6 +137,7 @@ echo "*** Check routes... (long type)"
 
 set -x
 
+xadmin prtsvc 
 ./atmiclt84 -STESTSV -l-200 -gTESTSV@DOM1 -e0 || go_out 1
 
 ./atmiclt84 -STESTSV -l-15 -gTESTSV@DOM2 -e0 || go_out 1
@@ -354,9 +355,9 @@ echo "Advertise checks"
 # perform dynamic advertise + unadvertise -> via atmicl83 call?
 # 
 
-CNT=`xadmin psc | grep UNASV | wc -l`
+CNT=`xadmin psc | grep UNASV | wc -l | awk '{print $1}'`
 if [[ "X$CNT" != "X0" ]]; then
-    echo "Expected missing UNASV but got $CNT"
+    echo "Expected missing UNASV but got [$CNT]"
     go_out 1
 fi
 
@@ -373,7 +374,7 @@ for ((n=0;n<50;n++)); do
     #We accept either error 11
     ./atmiclt84 -SDADV -s$SVCNM -gDADV -e11 || go_out 1
 
-    num_adv=`xadmin psc | grep $SVCNM | wc -l`
+    num_adv=`xadmin psc | grep $SVCNM | wc -l | awk '{print $1}'`
 
     # for lowers it is mandatory to have 2 as slot count is enough
     if [[ "$n" -lt "9" && "$num_adv" -ne "2" ]]; then
@@ -404,7 +405,7 @@ for ((n=0;n<50;n++)); do
     #We accept either error 11
     ./atmiclt84 -SDUNA -s$SVCNM -gDUNA -e11 || go_out 1
 
-    num_adv=`xadmin psc | grep $SVCNM | wc -l`
+    num_adv=`xadmin psc | grep $SVCNM | wc -l | awk '{print $1}'`
 
     # for lowers it is mandatory to have 2 as slot count is enough
     if [[ "$num_adv" -ne "0" ]]; then
@@ -416,7 +417,7 @@ done
 
 
 echo "Check xadmin unadvertise (not working in groups):"
-num_adv=`xadmin psc | grep DADV | wc -l`
+num_adv=`xadmin psc | grep DADV | wc -l | awk '{print $1}'`
 
 echo "num_adv=$num_adv"
 if [[ "X$num_adv" -ne  "X2" ]]; then
@@ -425,7 +426,7 @@ if [[ "X$num_adv" -ne  "X2" ]]; then
 fi
 
 xadmin unadv -i 420 -s DADV
-num_adv=`xadmin psc | grep DADV | wc -l`
+num_adv=`xadmin psc | grep DADV | wc -l | awk '{print $1}'`
 echo "num_adv=$num_adv"
 if [[ "X$num_adv" -ne  "X1" ]]; then
     echo "Expected 1 DADV got: $num_adv"
@@ -433,7 +434,7 @@ if [[ "X$num_adv" -ne  "X1" ]]; then
 fi
 
 xadmin unadv -i 420 -s DADV@DOM4
-num_adv=`xadmin psc | grep DADV | wc -l`
+num_adv=`xadmin psc | grep DADV | wc -l | awk '{print $1}'`
 echo "num_adv=$num_adv"
 if [[ "X$num_adv" -ne  "X0" ]]; then
     echo "Expected 0 DADV got: $num_adv"
@@ -491,7 +492,7 @@ echo "Waiting exbench finish..."
 wait $BENCHPID_PID
  
 echo "Check for plot results..."
-LINES=`cat bench.log | wc -l`
+LINES=`cat bench.log | wc -l | awk '{print $1}'`
 if [[ "X$LINES" != "X2" ]]; then
     echo "Expected 2 line, got: $LINES"
     go_out 1
