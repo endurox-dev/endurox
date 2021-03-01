@@ -135,6 +135,14 @@
 			<max>1</max>
 			<sysopt>-e /tmp/CCONF</sysopt>
 		</server>
+
+		<server name="exbenchsv">
+			<srvid>1800</srvid>
+			<min>10</min>
+			<max>10</max>
+			<sysopt>-e /tmp/EXBENCH</sysopt>
+		</server>
+
 		<server name="cpmsrv">
 			<srvid>9999</srvid>
                         <cctag>YOMENT</cctag>

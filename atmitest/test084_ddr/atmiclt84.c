@@ -69,19 +69,25 @@ int main(int argc, char** argv)
     int c;
     char svcnm[XATMI_SERVICE_NAME_LENGTH+1]={EXEOS};
     char tmp[1024];
+    int do_conv=EXFALSE;
     
     /* We shall parse cli, so field with will either:
      * -l (long)
      * -s (string)
+     * -c (carray value)
      * -S Service name
      * -d (double)
      * -e <error code expected>
      * -g <group value expected in return>
      */
-    while ((c = getopt(argc, argv, "S:s:l:d:e:g:")) != -1) {
+    while ((c = getopt(argc, argv, "S:s:l:d:e:g:Cc:")) != -1) {
         
         switch (c)
         {
+            case 'C':
+                NDRX_LOG(log_debug, "Doing conv");
+                do_conv=EXTRUE;
+                break;
             case 'S':
                 NDRX_STRCPY_SAFE(svcnm, optarg);
                 break;
@@ -107,6 +113,15 @@ int main(int argc, char** argv)
                     goto out;
                 }
                 break;
+            case 'c':
+                if (EXFAIL==CBchg(p_ub, T_CARRAY_2_FLD, 0, optarg, 0, BFLD_STRING))
+                {
+                    /* load carray... */
+                    NDRX_LOG(log_debug, "Failed to set T_CARRAY_2_FLD[0]: %s", Bstrerror(Berror));
+                    ret=EXFAIL;
+                    goto out;
+                }
+                break;
             case 'd':
                 if (EXFAIL==CBchg(p_ub, T_DOUBLE_2_FLD, 0, optarg, 0, BFLD_STRING))
                 {
@@ -125,7 +140,41 @@ int main(int argc, char** argv)
     tplogprintubf(log_debug, "UBF buffer", p_ub);
 
     /* call the service */
-    if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
+    if (do_conv)
+    {
+        long ev;
+        int cd;
+        long rcvlen;
+        /* try to connect */
+        if (EXFAIL == (cd=tpconnect(svcnm, (char *)p_ub, 0L, TPRECVONLY)))
+        {
+            NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
+            /* check error code */
+            if (tperrno!=e)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected error %d got %d", e, tperrno);
+                ret=EXFAIL;
+            }
+            goto out;
+        }
+        
+        if (EXSUCCEED==tprecv(cd, (char **)&p_ub, &rcvlen, 0, &ev))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Expected con error!");
+            EXFAIL_OUT(ret);
+        }
+        else if (tperrno!=TPEEVENT)
+        {
+            NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
+            /* check error code */
+            if (tperrno!=e)
+            {
+                NDRX_LOG(log_error, "TESTERROR: Expected error %d got %d", e, tperrno);
+                EXFAIL_OUT(ret);
+            }
+        }
+    }
+    else if (EXFAIL == tpcall(svcnm, (char *)p_ub, 0L, (char **)&p_ub, &rsplen,0))
     {
         NDRX_LOG(log_error, "%s failed: %s", svcnm, tpstrerror(tperrno));
         

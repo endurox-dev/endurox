@@ -19,54 +19,71 @@ Mandatory Env. Variables
 ------------------------
 *NDRX_NODEID*='NODE_ID'::
     Cluster Node ID. Should be within 1..32.
+
 *NDRX_CLUSTERISED*='1|0'::
     Do we work in cluster mode or not? '1' - yes, we are in cluster. 
     '0' - no, we are not in cluster.
+
 *NDRX_LDBAL*='LOAD_BALANCE_PERCENT'::
     if LOAD_BALANCE_PERCENT is 0 = means process all locally, 
     if value is set to 100 = process all on remote servers (if svc
     available on remote server). 70% means, process 30% locally
     70% remotely.
+
 *NDRX_TOUT*='TIME_OUT_IN_SECONDS'::
     Global tpcall() timeout, if not called with TPNOTIME flag.
     If process will not return in this time, then TPETIME error
     will be returned.
+
 *NDRX_ULOG*='ULOG_PATH'::
     Writable system path where to write user logs.
+
 *NDRX_QPREFIX*='APP_PREFIX'::
     Prefix used for POSIX IPC resources (shm and queue).
+
 *NDRX_SVCMAX*='MAX_SERVICES'::
     This determines the maximum number of services supported by instance.
     The less is number, then less shared memory is used. However for
     performance reason, number should be much bigger (3-4 times) than
     actual estimated service count. Bigger number might speed up linear
     hashing, i.e. it will be less likely that hash will collide.
+
 *NDRX_SRVMAX*='MAX_SERVERS'::
     Maximum number of servers that will be supported. This affects the
     '-i' flag. Server ID. The max server id will be MAX_SERVERS-1.
+
 *NDRX_CONFIG*='FULL_PATH_TO_CONFIG_FILE'::
     This shows the full path to usual ndrxconfig.xml.
+
 *NDRX_QPATH*='QUEUE_MOUNT_POINT'::
     Full path to directory where POSIX Queue is mounted.
+
 *NDRX_SHMPATH*='SHARED_MEM_MOUNT_POINT'::
     Full path to POSIX Shared memory mount point.
+
 *NDRX_CMDWAIT*='NDRXD_COMMAND_WAIT_SECS'::
     Number of second to wait for commands, after which 'ndrxd' does other checks.
+
 *NDRX_DPID*='PATH_TO_NDRXD_PID_FILE'::
     This is full path to 'ndrxd' PID file.
+
 *NDRX_RNDK*='APP_DOMAIN_RANDOM_KEY'::
     Random key to indentify the processes beloning to
     this app domain (i.e. used in ps ef).
+
 *NDRX_IPCKEY*='SYS_V_SEMAPHORE_KEY'::
     System V Semaphores key number. Used for shared memory locking.
     POSIX semaphores are not used here, because they are not unlocked if process
     dies during acquired semaphore. For System V shared memory IPCKEY+*0..5*
     different keys may be used for shared memory. For System V semaphores IPCKEY+*0..2*
     range is used.
+
 *NDRX_MSGMAX*='MAX_MSGS_PER_QUEUE'::
     Posix queue config attrib. Max number of messages that can be put in one queue.
+
 *NDRX_DQMAX*='NDRXD_ACCESS_Q_MSG_MAX'::
     Enduro/X ATMI daemoni 'ndrxd' access Q size. Bigger is better.
+
 *NDRX_MSGSIZEMAX*='NDRXD_ACCESS_Q_MSG_MAX'::
     Max message size (in bytes). The value is limited to the operating system limits
     of the maximums size of the POSIX queues message size. For example on Linux 
@@ -80,42 +97,57 @@ Mandatory Env. Variables
     is defaulted to 64KB.
     This parameter also affects the opening/creation of the message queue. As the
     message size is specified in mq_open() attributes.
+
 *NDRX_APPHOME*='FULL_PATH_TO_APPDOMAIN_INSTANCE_DIR'::
     This is full path to application (not an Enduro/X directory it self) root directory.
+
 *NDRX_HOME*='FULL_PATH_TO_ENDUROX_ROOT_DIRECTORY'::
     Full path to Enduro/X installaction directory.
+
 *NDRX_DEBUG_CONF*='FULL_PATH_TO_DEBUG_CONFIG_FILE'::
     This sets full path to debug configuration file.
+
 *NDRX_UBFMAXFLDS*='MAX_NUMBER_OF_UBFFIELDS'::
     Max number of UBF fields. Used for hashing. Bigger number is better. 
     The max number is number is 33554432 (25 bit).
+
 *NDRX_DMNLOG*='FULL_PATH_TO_NDRX_DMNLOG'::
-	The full path to 'ndrxd' log file. Used by shell scripts.
+    The full path to 'ndrxd' log file. Used by shell scripts.
+
 *NDRX_DMNLEV*='LOG_LEVEL_OF_NDRXD'::
     Log level of 'ndrxd'. From 1..5. 5 is max. Used by shell scripts.
+
 *NDRX_LOG*='FULL_PATH_TO_XADMIN_LOG_FILE'::
     Full path to 'xadmin' log file. Used by shell scripts.
+
 *NDRX_LEV*='LOG_LEVEL_OF_XADMIN'::
     Log level of 'xadmin'. From 1..5. 5 is max. Used by shell scripts.
+
 *NDRX_XA_RES_ID*='XA_RESOURCE_ID'::
     XA API two phase commit resource id.
     Must be set if using distributed transactions. Valid value is in range
     of 1..255.
+
 *NDRX_XA_OPEN_STR*='XA_OPEN_STRING'::
     This is open string for two phase commit XA driver.
     Must be set if using distributed transactions.
+
 *NDRX_XA_CLOSE_STR*='XA_CLOSE_STRING'::
     This is close string for two phase commit XA driver. This is optional, 
     'NDRX_XA_OPEN_STR' will be used if not set.
+
 *NDRX_XA_DRIVERLIB*='ENDUROX_XA_DRIVER_LIB'::
     This is full path to Enduro/X shared library which loads the XA api.
+
 *NDRX_XA_RMLIB*='RESOURCE_MANAGER_SPECIFIC_DRIVER'::
     This is full path to resource manager's specific driver (shared library).
     Must be set if using distributed transactions.
+
 *NDRX_XA_LAZY_INIT*='LAZY_INIT_FLAG'::
     Set to '1' if XA sub-system should be initialized on first transactions. 
     If not set, then defaulted to '0', meaning initialize XA sub-system on 
     executable startup.
+
 *NDRX_XA_FLAGS*='XADMIN_XA_FLAGS'::
     Special for XA sub-system. It is semicolon separated tags with values.
     currently tags 'RECON', 'NOJOIN' and 'NOSTARTXID' are defined.
@@ -131,6 +163,7 @@ Mandatory Env. Variables
     With 'NOSTARTXID' indicates that transaction session does not start with
     identifier, but only when process disconnects from transaction, it is possible
     to give transaction id for work which has been done to database.
+
 *NDRX_NRSEMS*='NDRX_NRSEMS'::
     Number of semaphores used for protecting shared memory, when Enduro/X 
     running in 'poll()' mode. The minimum is recommended something about 7. 
@@ -139,19 +172,24 @@ Mandatory Env. Variables
     semaphore, by giving the more occurrences in array. The first array entry 
     is used by normal Enduro/X operations, and the others 2..1+NRSEMS is 
     used by 'poll()' mode service protection. Default value is 30.
+
 *NDRX_MAXSVCSRVS*='NDRX_MAXSVCSRVS'::
     Max number of servers can advertise same service. This is used only in 
     'poll()' and 'SystemV' mode.
     The number affects the size of shared memory used for services. Bigger number causes
     more memory to be used for service registry. If the number of servers goes over this number
     for one service, the service entry will be ignored. Default is *30*.
+
 *PATH='PATH'*::
     This is not Enduro/X specific env variable. But Enduro/X distribution bin 
     directory should be included in system PATH env. variable.
+
 *FLDTBLDIR*='FULL_OR_RELATIVE_PATH_OF_UBF_FIELD_DIRS'::
     This is colon separated list of directories where .fd files are located. I.e. UBF field definitions.
+
 *FIELDTBLS*='COMMA_SEPERATED_LIST_OF_FIELD_FILES'::
     This is comma separated list of field files found in FLDTBLDIR.
+
 *NDRX_CCONFIG*='NDRX_COMMON_CONFIG_FILE'::
     If this is set then, all above configuration is read from specified ini
     file in 'NDRX_COMMON_CONFIG_FILE' in [@global] section. The Enduro/X config
@@ -162,6 +200,7 @@ Mandatory Env. Variables
     configuration file can be directory, in that case Enduro/X will search for
     files with mask *.ini, *.cfg, *.conf, *.config files. All will be loaded
     in alphabetical order.
+
 *NDRX_CCTAG*='NDRX_COMMON_CONFIG_TAG'::
     This is basically subsection used for Enduro/X configuration sections
     [@global], [@debug], [@queue]. If the variable is set, then Enduro/X will
@@ -169,28 +208,35 @@ Mandatory Env. Variables
     can contain multiple sections, for example 'server1/RM2'. Enduro/X will lookup
     the variables in each section [@global/server1] and [@global/RM2] for setting
     up the system.
+
 *NDRX_XADMIN_CONFIG*='XADMIN_CONFIG_FILE'::
     This variable is used by *xadmin* read the specific configuration file with
     xadmin's settings. Variable is optional.
+
 *HOME*='UNIX_USER_HOME_DIR'::
     This variable is used by *xadmin* to search for per user configuration file
     when xadmin is started. In home directory search for configuration is done
     by $HOME/.xadmin.config. This file is used in case if 'NDRX_XADMIN_CONFIG'
     is missing. Variable is optional.
+
 *VIEWDIR*='NDRX_VIEW_DIR'::
     This is colon separated list of directories where to search VIEW compiled
     object files. The access to these directories are done only once operations
     with views are performed.
+
 *VIEWFILES*='NDRX_VIEW_FILES'::
     Comma separated list of VIEW object files (typically with extension .V).
     Object files are produced by view compiler *viewc(8)*.
+
 *NDRX_PLUGINS*='NDRX_PLUGINS'::
     This is semicolon separated string which denotes the list Enduro/X
     plugins which needs to be loaded at any XATMI program startup. Following plugins
     are provided with Enduro/X: libcryptohost.so - cryptography key by hostname.
+
 *NDRX_SILENT*='SILENT_SETTING'::
     If environment variable is present (and set to *Y*), the *xadmin* tool
     will not print banner header at startup.
+
 *NDRX_XADMINTOUT*='XADMIN_TOUT'::
     This override of 'NDRX_TOUT' configuration for xadmin queue operations.
     This timeout is used for certain calls to *ndrxd* (for example startup,
@@ -200,27 +246,32 @@ Mandatory Env. Variables
     enable timeout control for communication with *ndrxd* daemon, if parameter
     is not set, the code will work in legacy mode, meaning that list calls
     to ndrxd will never get timeout.
+
 *NDRX_SVPROCNAME*='SERVER_PROC_NAME'::
     Server process name exported by *ndrxd* at XATMI server process boot time.
     The name is either server name extracted by "<server>" or extracted by sub
     tag "<cmdline>".
+
 *NDRX_SVCLOPT*='SERVER_COMMAND_LINE'::
     Server process command line. Generated and exported at the moment of XATMI
     server boot. If no command line options are passed to XATMI server, then
     *libatmisrv* tries to extract the parameter from this environment variable
     before failing, due to missing command line arguments.
+
 *NDRX_SVPPID*='SERVER_PARENT_PID'::
     Parent process PID of server process. This process basically is the one
     which is booted by *ndrxd*. In case if server definition contains some
     wrapper processes (or scripts), then this basically is different than value
     of the real XATMI server. This variable is used by XATMI server library
     to report both PIDs to the *ndrxd*, the parent PID and the real process PID.
+
 *NDRX_SVSRVID*='SERVER_PROCESS_ID'::
     This is XATMI server id set in '<srvid>' tag. The variable can be used
     for example is wrapper scripts to modify some resources used by process.
     For example if booting something like Tomcat app server, the admin TCP ports
     can be adjusted by this environment variable in order to avoid conflicts for
     booting multiple instances.
+
 *NDRX_SVQREADERSMAX*='MAX_SIMULTANEOUS_READERS'::
     This configuration parameter set the maximum parallel readers for System V
     to Posix queues mapping tables. The number is used for read-write locks,
@@ -233,6 +284,7 @@ Mandatory Env. Variables
     Thus this semaphore is used read/write mode to protect the SystemV-to-Posix
     and Posix-to-SystemV mapping tables.
     The default value for this parameter is *50*.
+
 *NDRX_MSGQUEUESMAX*='MAX_IPC_QUEUES'::
     Max number of queues that can be mapped to System V sub-system. This parameter
     defines size for two shared memory chunks which names are '<NDRX_QPREFIX>,shm,p2s'
@@ -242,6 +294,7 @@ Mandatory Env. Variables
     number of queues that will be used on the system, but recommended number is
     something as twice it. Each queue entry requires about 168 bytes.
     The default value for this parameter is *20000*.
+
 *NDRX_CLTTAG*='CLIENT_PROCESS_TAG'::
     This is client process tag exported to *cpmsrv(8)* controlled processes.
     This value can be used also in *ndrxconfig.xml(5)*
@@ -329,6 +382,26 @@ Mandatory Env. Variables
     to LCF/Configuration shared memory, but does not execute any of the LCF
     commands. Default is *n*. This can be useful in case if *xadmin(8)* needs to
     correct some invalid commands which might prevent to run xadmin by it self.
+
+*NDRX_RTSVCMAX*='SERVICE_COUNT'::
+    Number of service slots available in shared memory for *<services>* tag. Greater
+    number gives better performance for linear hashing - less probability for collision. 
+    Default value is *1000*.
+
+*NDRX_RTCRTMAX*='CRITERION_BUFFER_SIZE':
+    This is number of bytes available for routing criterion storage. Default
+    value is *102400* which corresponds to *100* KB. One *<route>* tag takes
+    about 300 bytes and one range entry take about 64 bytes (by not including
+    the string data which is dynamic length).
+
+*NDRX_RTGRP*='ROUTING_GROUP':
+    This is routing group code. If environment variable is present for XATMI server
+    process, then any service advertise and unadvertise will operate in bulk with
+    original service name and additionally added suffix of "@<NDRX_RTGRP>". For
+    example if having *NDRX_RTGRP* set to "G5" and process advertises service
+    *DEBIT*, then in total two services will be advertise such as *DEBIT* and
+    *DEBIT@G5*. Afterwards with *<service/>* and *<route/>* settings can be used
+    to route the traffic between default service and service in group.
 
 EXAMPLE
 -------

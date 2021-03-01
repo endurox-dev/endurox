@@ -54,6 +54,9 @@ export NDRX_ULOG=$TESTDIR
 export NDRX_TOUT=10
 export NDRX_SILENT=Y
 
+export NDRX_RTSVCMAX=20
+export NDRX_RTCRTMAX=800
+
 #
 # Domain 1 - here client will live
 #
@@ -168,6 +171,7 @@ validate_invalid "ndrxconfig-dupsvc.xml" "Duplicate services is not allowed"
 validate_invalid "ndrxconfig-toolong.xml" "Service name too long" 
 validate_invalid "ndrxconfig-norout.xml" "Routing not defined" 
 validate_invalid "ndrxconfig-emptysvc.xml" "Emtpy service name" 
+validate_invalid "ndrxconfig-invalfield.xml" "Invalid field" 
 
 echo "Testing <routing> tag..."
 
@@ -221,7 +225,17 @@ validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "'AAA\''
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "AA:*" "OK"  "STRING" # goes to def group
 validate_syntax "ndrxconfig-rtsyn_start.xml" "ndrxconfig-rtsyn_end.xml" "-55:G" "OK"  "LONG" # Single value
 
+
+echo "Limits check"
+
+validate_invalid "ndrxconfig-toomanysvcs.xml" "Too many entries in service shm" 
+validate_invalid "ndrxconfig-toomanyroutes.xml" "Too many routing criterions" 
+
 echo "---------------------------------------------------------------------"
+
+# TODO: Test for number of service slots -> must fail on given count reached.
+# TODO: Also test some 200 bytes criterion -> shall 
+
 
 # Catch is there is test error!!!
 if [ "X`grep TESTERROR *.log`" != "X" ]; then

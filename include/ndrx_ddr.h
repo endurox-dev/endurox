@@ -114,7 +114,6 @@ typedef struct
     char buftype[256+1];        /**< Buffer type as defined                 */
     char fieldtype[16];         /**< Field type override, mandatory for json*/
     int  fieldtypeid;           /**< Type code of the field                 */
-    int  routetype;             /**< Format by which we route the data      */
     BFLDID fldid;               /**< resolved field id for UBF              */
     long rangesnr;              /**< number of ranges follows               */
     char ranges[0];             /**< range offset of the ndrx_routcritseq_t */

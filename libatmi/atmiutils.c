@@ -297,7 +297,7 @@ out:
  * @param flags
  * @return 
  */
-expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, unsigned int msg_prio)
+expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, int msg_prio)
 {
     return ndrx_generic_q_send_2(queue, data, len, flags, EXFAIL, msg_prio);
 }
@@ -314,7 +314,7 @@ expublic int ndrx_generic_q_send(char *queue, char *data, long len, long flags, 
  * @return SUCCEED/FAIL
  */
 expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags, 
-        long tout, unsigned int msg_prio)
+        long tout, int msg_prio)
 {
     int ret=EXSUCCEED;
     mqd_t q_descr=(mqd_t)EXFAIL;
@@ -323,7 +323,7 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
     long add_flags = 0;
     SET_TOUT_CONF;
 
-    NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld", len);
+    NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld msg_prio: %d", len, msg_prio);
     
     /* Set nonblock flag to system, if provided to EnduroX */
     if (flags & TPNOBLOCK)
@@ -369,17 +369,37 @@ restart_send:
         abs_timeout.tv_nsec = timeval.tv_usec*1000;
     }
 
+    if (0==msg_prio)
+    {
+        /* set default prio */
+        msg_prio = NDRX_MSGPRIO_DEFAULT;
+    }
+
     /** override the message priority */
     if (NULL!=G_atmi_tls && G_atmi_tls->prio)
     {
         /* override priority from tpsprio() */
-        msg_prio = G_atmi_tls->prio;
+        
+        if (G_atmi_tls->prio_flags & TPABSOLUTE)
+        {
+            msg_prio = G_atmi_tls->prio;
+        }
+        else
+        {
+            /* relative change */
+            msg_prio += G_atmi_tls->prio;
+        }
     }
 
-    if (msg_prio==0)
+    if (msg_prio<NDRX_MSGPRIO_MIN)
     {
         /* set default prio */
-        msg_prio = NDRX_MSGPRIO_DEFAULT;
+        msg_prio = NDRX_MSGPRIO_MIN;
+    }
+    else if (msg_prio>NDRX_MSGPRIO_MAX)
+    {
+        /* set default prio */
+        msg_prio = NDRX_MSGPRIO_MAX;
     }
 
     NDRX_LOG(6, "use timeout: %d config: %d prio: %d", 
@@ -418,6 +438,7 @@ restart_close:
     if (NULL!=G_atmi_tls)
     {
         G_atmi_tls->prio = 0; /* reset the priority setting... */
+        G_atmi_tls->prio_flags = 0; /* reset the priority setting... */
         G_atmi_tls->prio_last = msg_prio;
     }
 
