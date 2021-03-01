@@ -259,14 +259,14 @@ expublic int ndrx_lcf_publish(int slot, ndrx_lcf_command_t *cmd)
         EXFAIL_OUT(ret);
     }
     
-    if (strlen(cmd->arg_b) > NAME_MAX)
+    if (strlen(cmd->arg_b) > NDRX_NAME_MAX)
     {
         _Nset_error_msg(NEINVAL, "cmd->arg_b invalid length");
         NDRX_LOG(log_error, "cmd->arg_b invalid length");
         EXFAIL_OUT(ret);
     }
     
-    if (strlen(cmd->procid) > NAME_MAX)
+    if (strlen(cmd->procid) > NDRX_NAME_MAX)
     {
         _Nset_error_msg(NEINVAL, "cmd->procid invalid length");
         NDRX_LOG(log_error, "cmd->procid invalid length");
