@@ -524,7 +524,10 @@ expublic int ndrx_debug_changename(char *toname, int do_lock, ndrx_debug_t *dbg_
         {
             /* OK New name is set */
             mysink->fname_org[0] = EXEOS;
-            NDRX_STRCPY_SAFE(mysink->fname, toname);
+            if (mysink->fname!=toname)
+            {
+                NDRX_STRCPY_SAFE(mysink->fname, toname);
+            }
         }
     }
 

@@ -86,6 +86,7 @@ function go_out {
 rm *.log
 rm ULOG*
 
+UNAME=`uname`
 #
 # export the library path.
 #
