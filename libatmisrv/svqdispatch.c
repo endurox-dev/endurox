@@ -284,7 +284,7 @@ expublic int sv_serve_call(int *service, int *status,
     long call_age;
     int generate_rply = EXFALSE;
     tp_command_call_t * last_call;
-    int error_code = TPESVCERR; /**< Default error in case if cannot process */
+    long error_code = TPESVCERR; /**< Default error in case if cannot process */
     *status=EXSUCCEED;
     G_atmisrv_reply_type = 0;
     

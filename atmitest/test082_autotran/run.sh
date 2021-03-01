@@ -147,7 +147,11 @@ if [ $TEST_MODE -eq 2 ]; then
 
 fi
 
+set_dom1;
 xadmin psc
+set_dom2;
+xadmin psc
+set_dom1;
 
 RET=0
 

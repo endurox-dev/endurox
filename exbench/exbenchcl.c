@@ -329,7 +329,7 @@ expublic int main( int argc, char** argv )
         setenv("NDRX_BENCH_CONFIGNAME", run_ver, EXTRUE);
     }
     
-    M_threads = ndrx_thpool_init(M_runtime,  &ret, NULL, NULL, 0, NULL);
+    M_threads = ndrx_thpool_init(M_nr_threads,  &ret, NULL, NULL, 0, NULL);
         
     if (EXSUCCEED!=ret)
     {

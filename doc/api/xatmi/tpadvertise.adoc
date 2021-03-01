@@ -61,6 +61,11 @@ The logic of static service advertise might change in future Enduro/X releases.
 During the *dynamic* mode advertise, SHM space checks are performed and 
 *TPELIMIT* error is reported correctly.
 
+Race condition is possible if for last service performing *unadvertise(3)* and then
+tpadvertise() again. In such case *ndrxd(8)* might unlink the service queue, while following
+tpadveritse() call would assume that service queue was open OK. Thus some delay
+of few sanity cycles of ndrxd is recommended between such unadvertise and advertise.
+
 RETURN VALUE
 ------------
 On success, *tpadvertise_full()* return zero; on error, -1 is returned, 
