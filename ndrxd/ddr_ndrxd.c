@@ -283,12 +283,12 @@ expublic int ndrx_ddr_add_group(ndrx_routcritseq_dl_t * seq, char *grp, int is_m
     /* 
      * Resolve ranges
      */
-    if (BFLD_DOUBLE==ndrx_G_ddrp.p_crit->routcrit.routetype ||
-            BFLD_LONG==ndrx_G_ddrp.p_crit->routcrit.routetype
+    if (BFLD_DOUBLE==ndrx_G_ddrp.p_crit->routcrit.fieldtypeid ||
+            BFLD_LONG==ndrx_G_ddrp.p_crit->routcrit.fieldtypeid
             )
     {
         
-        if (BFLD_DOUBLE==ndrx_G_ddrp.p_crit->routcrit.routetype)
+        if (BFLD_DOUBLE==ndrx_G_ddrp.p_crit->routcrit.fieldtypeid)
         {
             p_rex=&M_floatexp;
         }
@@ -801,11 +801,9 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
             {
                 NDRX_LOG(log_error, "(%s) Too long service name [%s] in <services> section max %d", 
                     G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH);
-
                 NDRXD_set_error_fmt(NDRXD_ECFGINVLD, "(%s) Too long service name "
                         "[%s] in <services> section max %d", 
                     G_sys_config.config_file_short, p, XATMI_SERVICE_NAME_LENGTH);
-                
                 xmlFree(p);
                 EXFAIL_OUT(ret);
             }
@@ -816,6 +814,23 @@ expublic int ndrx_service_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur,
         else if (0==strcmp((char *)attr->name, "prio"))
         {
             p_svc->routsvc.prio = atoi(p);
+
+            if (p_svc->routsvc.prio<NDRX_MSGPRIO_MIN ||
+                p_svc->routsvc.prio>NDRX_MSGPRIO_MAX)
+            {
+
+                NDRX_LOG(log_error, "(%s) Invalid prio %d in <services> section min %d max %d", 
+                    G_sys_config.config_file_short, p_svc->routsvc.prio,
+                    NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX);
+
+                NDRXD_set_error_fmt(NDRXD_ECFGINVLD,
+                    "(%s) Invalid prio %d in <services> section min %d max %d",    
+                    G_sys_config.config_file_short, p_svc->routsvc.prio,
+                    NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX);
+
+                xmlFree(p);
+                EXFAIL_OUT(ret);
+            }
         }
         else if (0==strcmp((char *)attr->name, "routing"))
         {
@@ -1255,7 +1270,6 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     
     p_crit->routcrit.fieldtypeid=EXFAIL;
     p_crit->routcrit.buffer_type_id=EXFAIL;
-    p_crit->routcrit.routetype=EXFAIL;
     NDRX_STRCPY_SAFE(p_crit->routcrit.criterion, p_route->criterion);
     
     
@@ -1402,19 +1416,20 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
                 || BFLD_LONG == p_crit->routcrit.fieldtypeid
                 )
         {
-            p_crit->routcrit.routetype = BFLD_LONG;
+            p_crit->routcrit.fieldtypeid = BFLD_LONG;
         }
         else if (BFLD_FLOAT == p_crit->routcrit.fieldtypeid
                 || BFLD_DOUBLE == p_crit->routcrit.fieldtypeid
                 )
         {
-            p_crit->routcrit.routetype = BFLD_DOUBLE;
+            p_crit->routcrit.fieldtypeid = BFLD_DOUBLE;
         }
         else if (BFLD_STRING == p_crit->routcrit.fieldtypeid
                 || BFLD_CARRAY == p_crit->routcrit.fieldtypeid
+                || BFLD_CHAR == p_crit->routcrit.fieldtypeid
                 )
         {
-            p_crit->routcrit.routetype = BFLD_STRING;
+            p_crit->routcrit.fieldtypeid = BFLD_STRING;
         }
         else
         {
@@ -1453,7 +1468,6 @@ expublic int ndrx_route_parse(config_t *config, xmlDocPtr doc, xmlNodePtr cur)
     NDRX_LOG(log_debug, "buftype: [%s]", p_crit->routcrit.buftype);
     NDRX_LOG(log_debug, "fieldtype: [%s]", p_crit->routcrit.fieldtype);
     NDRX_LOG(log_debug, "fieldtypeid: [%d]", p_crit->routcrit.fieldtypeid);
-    NDRX_LOG(log_debug, "routetype: [%d]", p_crit->routcrit.routetype);
     NDRX_LOG(log_debug, "fldid: [%d]", p_crit->routcrit.fldid);
     NDRX_LOG(log_debug, "rangesnr: [%ld]", p_crit->routcrit.rangesnr);
     

@@ -1,7 +1,7 @@
 /**
- * @brief DDR functionality tests - server
+ * @brief Test tpsprio, tpgprio - server
  *
- * @file atmisv84.c
+ * @file atmisv85.c
  */
 /* -----------------------------------------------------------------------------
  * Enduro/X Middleware Platform for Distributed Transaction Processing
@@ -40,8 +40,7 @@
 #include <test.fd.h>
 #include <string.h>
 #include <unistd.h>
-#include "test84.h"
-#include "exsha1.h"
+#include "test85.h"
 
 /*---------------------------Externs------------------------------------*/
 /*---------------------------Macros-------------------------------------*/
@@ -57,27 +56,30 @@
 void TESTSV (TPSVCINFO *p_svc)
 {
     int ret=EXSUCCEED;
+    char testbuf[1024];
     UBFH *p_ub = (UBFH *)p_svc->data;
-    
-    /* ensure the size */
-    if (NULL==(p_ub = (UBFH *)tprealloc((char *)p_ub, 1024)))
-    {
-        NDRX_LOG(log_error, "Failed to realloc: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
 
     NDRX_LOG(log_debug, "%s got call", __func__);
-    
+
     /* Just print the buffer */
     Bprint(p_ub);
     
-    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, p_svc->name, 0))
+    if (EXFAIL==Bget(p_ub, T_STRING_FLD, 0, testbuf, 0))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
-                 p_svc->name, Bstrerror(Berror));
+        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_FLD: %s", 
+                 Bstrerror(Berror));
         ret=EXFAIL;
         goto out;
     }
+    
+    if (0!=strcmp(testbuf, VALUE_EXPECTED))
+    {
+        NDRX_LOG(log_error, "TESTERROR: Expected: [%s] got [%s]",
+            VALUE_EXPECTED, testbuf);
+        ret=EXFAIL;
+        goto out;
+    }
+        
     
 out:
     tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
@@ -85,76 +87,6 @@ out:
                 (char *)p_ub,
                 0L,
                 0L);
-}
-
-
-void DYNSV(TPSVCINFO *p_svc)
-{
-    tpreturn(  TPSUCCESS,
-                0L,
-                (char *)p_svc->data,
-                0L,
-                0L);
-}
-
-void DYNADV(TPSVCINFO *p_svc)
-{
-    UBFH *p_ub = (UBFH *)p_svc->data;
-    int ret = EXSUCCEED;
-    char svcnm[XATMI_SERVICE_NAME_LENGTH+1];
-    BFLDLEN len;
-    
-    len = sizeof(svcnm);
-    
-    if (EXFAIL==Bget(p_ub, T_STRING_2_FLD, 0, svcnm, &len))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to get T_STRING_2_FLD: %s", Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-    if (0==strcmp(p_svc->name, "DADV"))
-    {
-        if (EXSUCCEED!=tpadvertise(svcnm, DYNSV))
-        {
-            NDRX_LOG(log_error, "Failed to advertise: %s", tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
-        }
-    }
-    else if (0==strcmp(p_svc->name, "DUNA"))
-    {
-        if (EXSUCCEED!=tpunadvertise(svcnm))
-        {
-            NDRX_LOG(log_error, "Failed to unadvertise: %s", tpstrerror(tperrno));
-            ret=EXFAIL;
-            goto out;
-        }
-    }
-    
-    if (EXFAIL==Bchg(p_ub, T_STRING_FLD, 0, p_svc->name, 0))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to set T_STRING_FLD to [%s]: %s", 
-                 p_svc->name, Bstrerror(Berror));
-        ret=EXFAIL;
-        goto out;
-    }
-    
-out:
-    tpreturn(  ret==EXSUCCEED?TPSUCCESS:TPFAIL,
-                0L,
-                (char *)p_ub,
-                0L,
-                0L);
-}
-
-/**
- * Forward service
- * @param p_svc
- */
-void FWDSV (TPSVCINFO *p_svc)
-{
-    tpforward("TESTSV", p_svc->data, p_svc->len, 0);
 }
 
 /**
@@ -170,33 +102,6 @@ int NDRX_INTEGRA(tpsvrinit)(int argc, char **argv)
         NDRX_LOG(log_error, "Failed to initialise TESTSV!");
         EXFAIL_OUT(ret);
     }
-    
-    if (EXSUCCEED!=tpadvertise("FWDSV", FWDSV))
-    {
-        NDRX_LOG(log_error, "Failed to initialise FWDSV!");
-        EXFAIL_OUT(ret);
-    }
-    
-    /* Check that "UNASV" is not present by psc */
-    if (EXSUCCEED!=tpadvertise("UNASV", TESTSV))
-    {
-        NDRX_LOG(log_error, "Failed to initialise FWDSV!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=tpadvertise("DYNADV", DYNADV))
-    {
-        NDRX_LOG(log_error, "Failed to initialise DYNADV!");
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=tpunadvertise("UNASV"))
-    {
-        NDRX_LOG(log_error, "TESTERROR: failed to unadvertise!");
-        EXFAIL_OUT(ret);
-    }
-    
-    
 out:
     return ret;
 }

@@ -2013,21 +2013,37 @@ expublic int tpsprio(int prio, long flags)
     int ret=EXSUCCEED;
     ndrx_TPunset_error();
     
-    if (prio < 1 || prio >100)
-    {
-        ndrx_TPset_error_fmt(TPEINVAL, "prio must be in range 1..100, got %d", prio);
-        EXFAIL_OUT(ret);
-    }
-    
     if ( (flags & ~TPABSOLUTE) !=0 )
     {
         ndrx_TPset_error_fmt(TPEINVAL, "Unsupported flags %ld", flags);
         EXFAIL_OUT(ret);
     }
     
-    G_atmi_tls->prio = prio;
+    if (flags & TPABSOLUTE )
+    {
+        if (prio < NDRX_MSGPRIO_MIN || prio >NDRX_MSGPRIO_MAX)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "prio must be in range %d..%d, got %d", 
+                    NDRX_MSGPRIO_MIN, NDRX_MSGPRIO_MAX, prio);
+            EXFAIL_OUT(ret);
+        }
+    }
+    else
+    {
+        if (abs(prio) > NDRX_MSGPRIO_MAX)
+        {
+            ndrx_TPset_error_fmt(TPEINVAL, "Invalid relative prio, ABS value "
+                    "shall be less than or equal to %d", prio,
+                    NDRX_MSGPRIO_MAX);
+            EXFAIL_OUT(ret);
+        }
+    }
     
-    NDRX_LOG(log_debug, "Next call scheduled with priority %d",  G_atmi_tls->prio);
+    G_atmi_tls->prio = prio;
+    G_atmi_tls->prio_flags = flags;
+    
+    NDRX_LOG(log_debug, "Next call scheduled with priority %d flags %ld",  
+            G_atmi_tls->prio, G_atmi_tls->prio_flags);
 
 out:
     return ret;

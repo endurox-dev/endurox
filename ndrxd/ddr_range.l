@@ -85,7 +85,15 @@ int ndrx_G_ddrcolumn = 1;
                             BEGIN STRING;
                             ndrx_growlist_free(&ndrx_G_ddrp.stringbuffer);
                         }
-<STRING>\\\\'|\\'          {
+<STRING>\\\\            {
+                                char c='\\';
+                                if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
+                                {
+                                    ddrerror("Failed to append text to string buffer"); 
+                                    return EOL;
+                                }
+                        }
+<STRING>\\'             {
                                 char c='\'';
                                 if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))
                                 {
@@ -93,7 +101,7 @@ int ndrx_G_ddrcolumn = 1;
                                     return EOL;
                                 }
                         }
-<STRING>[^'\n]           {
+<STRING>[^']           {
                             /* add string */
                             if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, ddrtext))
                             {
@@ -101,10 +109,6 @@ int ndrx_G_ddrcolumn = 1;
                                 return EOL;
                             }
                         }
-<STRING>[\n]           {
-                            ddrerror("Unexpected and of the string"); 
-                            return EOL;
-                       }
 <STRING>'              {
                             char c='\0';
                             if (EXSUCCEED!=ndrx_growlist_append(&ndrx_G_ddrp.stringbuffer, &c))

@@ -474,6 +474,7 @@ add_subdirectory (tmqueue) # Persistant Queue server
 add_subdirectory (cpmsrv) # Client Process Monitor
 add_subdirectory (xadrv) # XA Drivers for RMs
 add_subdirectory (cconfsrv) # Common-Config server
+add_subdirectory (exbench) # Enduro/X benchmark tools
 add_subdirectory (plugins) # XA Drivers for RMs
 add_subdirectory (enctools) # XA Drivers for RMs
 add_subdirectory (atmitest) #  ATMI testing

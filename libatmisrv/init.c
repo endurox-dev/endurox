@@ -805,10 +805,10 @@ expublic int tpadvertise_full(char *svc_nm, void (*p_func)(TPSVCINFO *), char *f
         grp_ok=EXTRUE;
     }
     
-    NDRX_LOG(log_info, "About to advertise default service [%s]", svc_nm);
+    NDRX_LOG(log_info, "About to advertise service [%s]", svc_nm);
     if (EXSUCCEED!=tpadvertise_full_int(svc_nm, p_func, fn_nm))
     {
-        NDRX_LOG(log_error, "Failed to advertises default service [%s]",
+        NDRX_LOG(log_error, "Failed to advertises service [%s]",
                 svcn_nm_full);
         EXFAIL_OUT(ret);
     }
