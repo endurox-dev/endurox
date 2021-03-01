@@ -84,6 +84,8 @@ extern "C" {
     
 #define NDRX_LCF_SLOT_LOGROTATE         0   /**< Default command slot for logrotate */
 #define NDRX_LCF_SLOT_LOGCHG            1   /**< Default slot for log re-configure  */
+
+#define NDRX_NAME_MAX			64  /**< Name max	*/
     
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
@@ -110,11 +112,11 @@ typedef struct
     ndrx_stopwatch_t publtim;/**< Time when command was published                    */
     int    command;         /**< Command code                                        */
     char   arg_a[PATH_MAX+1]; /**< Argument a                                        */
-    char   arg_b[NAME_MAX+1]; /**< Argument b, shorter to save some memor            */
+    char   arg_b[NDRX_NAME_MAX+1]; /**< Argument b, shorter to save some memor       */
     long   flags;           /**< LCF Command flags                                   */
     
     /* To whom: */
-    char   procid[NAME_MAX];  /**< PID or program name                               */
+    char   procid[NDRX_NAME_MAX];  /**< PID or program name                          */
     
     /* To metrics: */
     int    applied;         /**< binaries applied the command                        */

@@ -350,15 +350,15 @@ out:
 expublic int cmd_lcf(cmd_mapping_t *p_cmd_map, int argc, char **argv, int *p_have_next)
 {
     int ret = EXSUCCEED;
-    char pid[NAME_MAX]="";
-    char binary[NAME_MAX]="";
+    char pid[NDRX_NAME_MAX]="";
+    char binary[NDRX_NAME_MAX]="";
     int all = EXFALSE;
     
     int regex = EXFALSE;
     int exec_start = EXFALSE;
     int exec_start_exp = EXFALSE;
     char arg_a[PATH_MAX+1]="";
-    char arg_b[NAME_MAX+1]="";
+    char arg_b[NDRX_NAME_MAX+1]="";
     short slot=EXFAIL;
     
     /* if no arguments given, then it is print */
