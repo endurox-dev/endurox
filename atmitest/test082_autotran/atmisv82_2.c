@@ -90,18 +90,25 @@ void TESTSV2 (TPSVCINFO *p_svc)
         sleep(7);
     }
     
-    /* perform dynamic advertise, so that next cases OK works too */
-    
-    if (EXSUCCEED!=tpunadvertise("TESTSV2"))
+    if (0==strcmp(testbuf, "OK"))
     {
-        NDRX_LOG(log_error, "TESTERROR: Failed to unadvertise: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
-    }
-    
-    if (EXSUCCEED!=tpadvertise("TESTSV2", TESTSV2))
-    {
-        NDRX_LOG(log_error, "TESTERROR: Failed to advertise: %s", tpstrerror(tperrno));
-        EXFAIL_OUT(ret);
+        /* perform dynamic advertise, so that next cases OK works too */
+        if (EXSUCCEED!=tpunadvertise("TESTSV2"))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to unadvertise: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+
+        /* let ndrxd to flush the queues
+         * otherwise with next requests the queues are not restored? 
+         */
+        sleep(3);
+
+        if (EXSUCCEED!=tpadvertise("TESTSV2", TESTSV2))
+        {
+            NDRX_LOG(log_error, "TESTERROR: Failed to advertise: %s", tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
     }
     
 out:
