@@ -264,8 +264,8 @@ OUTERR=`./atmiclt82 SLEEP`
 RET=$?
 
 if [[ "X$RET" == "X0" ]]; then
-    echo "./atmiclt82 OK4 must fail, but did not"
-    go_out $RET
+    echo "./atmiclt82 SLEEP must fail, but did not"
+    go_out -1
 fi
 RET=0
 
