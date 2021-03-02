@@ -218,6 +218,65 @@ if [[ "X$CNT" != "X2" ]]; then
     go_out -1
 fi
 
+#
+# We allow to user code to perform commit/aborts, thus check, shal lbe no issues
+#
+################################################################################
+echo "*** Running COMMIT case..."
+
+./atmiclt82 COMMIT
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 OK2 failed"
+    go_out $RET
+fi
+
+echo "Checking COMMIT case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X2" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
+################################################################################
+echo "*** Running ABORT case..."
+
+./atmiclt82 ABORT
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "./atmiclt82 OK2 failed"
+    go_out $RET
+fi
+
+echo "Checking ABORT case..."
+# count the results
+CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
+
+RET=$?
+
+if [[ "X$RET" != "X0" ]]; then
+    echo "Failed to run COUNT"
+    go_out $RET
+fi
+
+if [[ "X$CNT" != "X0" ]]; then
+    echo "Got invalid count: $CNT"
+    go_out -1
+fi
+
 ################################################################################
 echo "*** Checking tmsrv down..."
 

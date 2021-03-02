@@ -89,6 +89,24 @@ void TESTSV2 (TPSVCINFO *p_svc)
     {
         sleep(7);
     }
+    else if (0==strcmp(testbuf, "COMMIT"))
+    {
+        if (EXSUCCEED!=tpcommit(0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpcommit() failed: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
+    else if (0==strcmp(testbuf, "ABORT"))
+    {
+        if (EXSUCCEED!=tpabort(0))
+        {
+            NDRX_LOG(log_error, "TESTERROR: tpabort() failed: %s", 
+                    tpstrerror(tperrno));
+            EXFAIL_OUT(ret);
+        }
+    }
     
     if (0==strcmp(testbuf, "OK"))
     {
