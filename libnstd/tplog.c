@@ -117,20 +117,20 @@ exprivate ndrx_debug_t * ndrx_tplog_getlogger(int logger);
  */
 expublic void ndrx_nstd_tls_loggers_close(nstd_tls_t *tls)
 {
-    ndrx_debug_t *logger[8] = {&tls->threadlog_ndrx, &tls->threadlog_ubf, 
+    ndrx_debug_t *nlogger[] = {&tls->threadlog_ndrx, &tls->threadlog_ubf, 
         &tls->threadlog_tp, &tls->requestlog_ndrx, &tls->requestlog_ubf, 
         &tls->requestlog_tp, NULL};
     int i=0;
     
-    while (NULL!=logger[i])
+    while (NULL!=nlogger[i])
     {
-        if (NULL!=logger[i]->dbg_f_ptr)
+        if (NULL!=nlogger[i]->dbg_f_ptr)
         {
-            ndrx_debug_unset_sink(logger[i]->dbg_f_ptr, EXTRUE, EXFALSE);
-            logger[i]->dbg_f_ptr=NULL;
+            ndrx_debug_unset_sink(nlogger[i]->dbg_f_ptr, EXTRUE, EXFALSE);
+            nlogger[i]->dbg_f_ptr=NULL;
             /* clear the file names */
-            logger[i]->filename[0]=EXEOS;
-            logger[i]->level = EXFAIL;
+            nlogger[i]->filename[0]=EXEOS;
+            nlogger[i]->level = EXFAIL;
         }
         i++;
     }
