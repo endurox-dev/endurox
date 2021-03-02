@@ -55,16 +55,6 @@ exprivate pthread_key_t M_atmi_switch_key; /* switch the structure */
 exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
-exprivate void atmi_buffer_key_destruct( void *value );
-
-/**
- * Thread destructor
- * @param value this is malloced thread TLS
- */
-exprivate void atmi_buffer_key_destruct( void *value )
-{
-    ndrx_atmi_tls_free((void *)value);
-}
 
 /**
  * Unlock, unset G_atmi_tls, return pointer to G_atmi_tls
@@ -266,7 +256,7 @@ expublic void * ndrx_atmi_tls_new(void *tls_in, int auto_destroy, int auto_set)
         if (M_first)
         {
             pthread_key_create( &M_atmi_tls_key, 
-                    &atmi_buffer_key_destruct );
+                    &ndrx_atmi_tls_free );
             
             /* perform first time library inits..., locks, etc  */
             ndrx_tpcall_init_once();
