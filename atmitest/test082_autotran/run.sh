@@ -235,7 +235,7 @@ fi
 
 echo "Checking COMMIT case..."
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
+CNT=`./atmiclt82 COUNT | grep COMMIT | wc -l | awk '{print $1}'`
 
 RET=$?
 
@@ -263,7 +263,7 @@ fi
 
 echo "Checking ABORT case..."
 # count the results
-CNT=`./atmiclt82 COUNT | grep OK | wc -l | awk '{print $1}'`
+CNT=`./atmiclt82 COUNT | grep ABORT | wc -l | awk '{print $1}'`
 
 RET=$?
 

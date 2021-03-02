@@ -375,7 +375,7 @@ expublic int tpabort (long flags)
         goto out;
     }
     
-    ret=ndrx_tpabort(flags, 0);
+    ret=ndrx_tpabort(flags);
     
 out:
     return ret;
@@ -443,7 +443,7 @@ expublic int tpcommit (long flags)
         goto out;
     }
     
-    ret=ndrx_tpcommit(flags, 0);
+    ret=ndrx_tpcommit(flags);
     
 out:
     return ret;

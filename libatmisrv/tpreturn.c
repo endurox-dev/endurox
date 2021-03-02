@@ -146,7 +146,8 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         return_status|=RETURN_SVC_FAIL;
     }
     
-    if (last_call->sysflags & SYS_FLAG_AUTOTRAN)
+    if (last_call->sysflags & SYS_FLAG_AUTOTRAN
+            && tpgetlev()) /* if we are in the transaction. */
     {
         /* tpcommit() or tpabort() 
          * at this point we need to ignore the ownership of the transaction.
@@ -154,7 +155,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         if (rval==TPSUCCESS)
         {
             /* try to commit */
-            if (EXSUCCEED!=ndrx_tpcommit(0, SYS_FLAG_AUTOTRAN))
+            if (EXSUCCEED!=ndrx_tpcommit(0))
             {
                 NDRX_LOG(log_error, "Auto commit failed: %s - returning TPESVCERR", 
                         tpstrerror(tperrno));
@@ -171,7 +172,7 @@ expublic void _tpreturn (int rval, long rcode, char *data, long len, long flags)
         else
         {
             /* try to abort */
-            if (EXSUCCEED!=ndrx_tpabort(0, SYS_FLAG_AUTOTRAN))
+            if (EXSUCCEED!=ndrx_tpabort(0))
             {
                 NDRX_LOG(log_error, "Auto abort failed: %s - returning TPESVCERR", 
                         tpstrerror(tperrno));
@@ -578,7 +579,7 @@ expublic void _tpforward (char *svc, char *data,
     call->callseq = last_call->callseq;
     NDRX_STRCPY_SAFE(call->callstack, last_call->callstack);
     
-    /* forward the indication of syste */
+    /* TODO: forward the indication of syste but only if we are in the transaction at the momment */
     call->sysflags|= (last_call->sysflags & SYS_FLAG_AUTOTRAN);
     
     /* work out the XA data */
