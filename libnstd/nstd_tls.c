@@ -54,17 +54,6 @@ exprivate pthread_key_t M_nstd_tls_key;
 exprivate MUTEX_LOCKDECL(M_thdata_init);
 exprivate int M_first = EXTRUE;
 /*---------------------------Prototypes---------------------------------*/
-exprivate void nstd_buffer_key_destruct( void *value );
-
-/**
- * Thread destructor
- * @param value this is malloced thread TLS
- */
-exprivate void nstd_buffer_key_destruct( void *value )
-{
-    /* Close any open log descriptors... */
-    ndrx_nstd_tls_free((void *)value);
-}
 
 /**
  * Unlock, unset G_nstd_tls, return pointer to G_nstd_tls
@@ -150,7 +139,6 @@ expublic void ndrx_nstd_tls_free(void *data)
         }
         
         /* Close debug loggers? Bug #274 */
-        
         ndrx_nstd_tls_loggers_close((nstd_tls_t *)data);
         
         NDRX_FREE((char*)data);
@@ -176,7 +164,7 @@ expublic void * ndrx_nstd_tls_new(int auto_destroy, int auto_set)
         if (M_first)
         {
             pthread_key_create( &M_nstd_tls_key, 
-                    &nstd_buffer_key_destruct );
+                    &ndrx_nstd_tls_free );
             M_first = EXFALSE;
         }
         MUTEX_UNLOCK_V(M_thdata_init);
