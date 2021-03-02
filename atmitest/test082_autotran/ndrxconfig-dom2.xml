@@ -98,8 +98,8 @@
     </servers>
     
     <services>
-        <service svcnm="TESTSV" autotran="Y" trantime="2"/>
-        <service svcnm="TESTSV2" autotran="Y" trantime="2"/>
+        <service svcnm="TESTSV" autotran="Y" trantime="10"/>
+        <service svcnm="TESTSV2" autotran="Y" trantime="10"/>
     </services>
     
 </endurox>

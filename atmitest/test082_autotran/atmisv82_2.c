@@ -87,7 +87,8 @@ void TESTSV2 (TPSVCINFO *p_svc)
     }
     else if (0==strcmp(testbuf, "SLEEP"))
     {
-        sleep(7);
+        /* make tout */
+        sleep(15);
     }
     
     if (0==strcmp(testbuf, "OK"))
