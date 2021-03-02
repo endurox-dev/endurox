@@ -180,6 +180,15 @@ exprivate void slipSigHandler (int sig);
 exprivate int signal_handle_event(void);
 
 
+/**
+ * Remove any TLS if thread exits, seems due to cancel...
+ */
+exprivate void cleanup_handler(void *arg)
+{
+    ndrx_nstd_tls_free(G_nstd_tls);
+}
+
+
 exprivate void *sigthread_enter(void *arg)
 {
     NDRX_LOG(log_error, "***********SIGNAL THREAD START***********");
@@ -296,11 +305,12 @@ exprivate void * signal_process(void *arg)
     int ret = EXSUCCEED;
     int sig;
     
+    /* issue with asan... */
+    pthread_cleanup_push(cleanup_handler, NULL);
 
     NDRX_LOG(log_debug, "%s - enter", fn);
     
     /* Block the notification signal (do not need it here...) */
-    
     sigemptyset(&blockMask);
     sigaddset(&blockMask, NOTIFY_SIG);
     
@@ -310,7 +320,6 @@ exprivate void * signal_process(void *arg)
         if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
-
         }
         
         NDRX_LOG(log_debug, "%s - after sigwait()", fn);
@@ -321,6 +330,8 @@ exprivate void * signal_process(void *arg)
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
     
+    pthread_cleanup_pop(0);
+
 out:
     return NULL;
 }
