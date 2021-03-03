@@ -305,6 +305,8 @@ exprivate void * signal_process(void *arg)
     int ret = EXSUCCEED;
     int sig;
     
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
     /* issue with asan... */
     pthread_cleanup_push(cleanup_handler, NULL);
 
@@ -317,17 +319,20 @@ exprivate void * signal_process(void *arg)
     while (!M_shutdown)
     {
         NDRX_LOG(log_debug, "%s - before sigwait()", fn);
-        if (EXSUCCEED!=sigwait(&blockMask, &sig))         /* Wait for notification signal */
+
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+        /* Wait for notification signal */
+        ret=sigwait(&blockMask, &sig);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
+        if (EXSUCCEED!=ret)
         {
             NDRX_LOG(log_warn, "sigwait failed:(%s)", strerror(errno));
         }
         
         NDRX_LOG(log_debug, "%s - after sigwait()", fn);
         
-        /* check all queues and pipe down the event... */
-        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         signal_handle_event();
-        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
     
     pthread_cleanup_pop(0);

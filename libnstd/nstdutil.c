@@ -255,7 +255,6 @@ expublic unsigned long long ndrx_get_micro_resolution_for_sec(void)
 expublic void ndrx_get_dt_local(long *p_date, long *p_time, long *p_usec)
 {
     struct tm       stm;
-    long            lret;
     struct timeval  timeval;
     struct timezone timezone_val;
 
