@@ -790,7 +790,18 @@ defined for *STRING* type, values are compared by *strcmp()* function.
 
 --------------------------------------------------------------------------------
 
-<routing>
+<?xml version="1.0" ?>
+<endurox>
+...
+
+    <services>
+            <defaults routing="RT1"/>
+            <service svcnm="DEBITSVC" />
+            <service svcnm="CREDIT" routing="RT2" />
+            <defaults routing="RT3" />
+            <service svcnm="TXHANDLER" />
+    </services>
+    <routing>
 
         <route routing="RT1">
             <field>T_LONG_FLD</field>
@@ -821,8 +832,9 @@ defined for *STRING* type, values are compared by *strcmp()* function.
             <buftype>UBF</buftype>
             <fieldtype>DOUBLE</fieldtype>
         </route>
-
-<routing>
+    <routing>
+...
+</endurox>
 
 
 Note that *DDR* settings can be changed on they fly with *xadmin reload*, but
@@ -1013,7 +1025,6 @@ Sample configuration:
             <exec tag="TESTENV" autostart="Y"/>
         </client>
     </clients>
-
     <services>
             <defaults trantime="600" />
             <service svcnm="SERVICE1" prio="50" routing="RT1"     autotran="Y"  />
