@@ -88,6 +88,22 @@
             ndrx_mq_getattr(X, &__attr);\
             NDRX_LOG(log_error, "mq_flags=%ld mq_maxmsg=%ld mq_msgsize=%ld mq_curmsgs=%ld",\
                     __attr.mq_flags, __attr.mq_maxmsg, __attr.mq_msgsize, __attr.mq_curmsgs);}
+
+/**
+ * On freebsd we get <32 prios only.
+ */
+#ifdef MQ_PRIO_MAX
+
+#define NDRX_PRIO_DOWNSCALE(PRIO)\
+    if (PRIO>=MQ_PRIO_MAX)\
+    {\
+        PRIO=(((float)PRIO) * (float)MQ_PRIO_MAX / 100.0f);\
+    }
+
+#else
+/* no scaling... */
+#define NDRX_PRIO_DOWNSCALE(PRIO)
+#endif
 /*---------------------------Enums--------------------------------------*/
 /*---------------------------Typedefs-----------------------------------*/
 /*---------------------------Globals------------------------------------*/
@@ -261,15 +277,20 @@ expublic int ndrx_generic_qfd_send(mqd_t q_descr, char *data, long len, long fla
     int ret=EXSUCCEED;
     int use_tout;
     struct timespec abs_timeout;
+    int snd_prio;
     SET_TOUT_CONF;
+    
+    snd_prio = NDRX_MSGPRIO_DEFAULT;
+    
+    NDRX_PRIO_DOWNSCALE(snd_prio);
     
 restart:
 
     SET_TOUT_VALUE;
 
     /* Internal message including tpsend() will use default priority. */
-    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, NDRX_MSGPRIO_DEFAULT)) ||
-         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, NDRX_MSGPRIO_DEFAULT, &abs_timeout)))
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {
         if (EINTR==errno && flags & TPSIGRSTRT)
         {
@@ -321,6 +342,7 @@ expublic int ndrx_generic_q_send_2(char *queue, char *data, long len, long flags
     int use_tout;
     struct timespec abs_timeout;
     long add_flags = 0;
+    int snd_prio;
     SET_TOUT_CONF;
 
     NDRX_LOG(log_debug, "ndrx_generic_q_send_2: %ld msg_prio: %d", len, msg_prio);
@@ -402,10 +424,14 @@ restart_send:
         msg_prio = NDRX_MSGPRIO_MAX;
     }
 
-    NDRX_LOG(6, "use timeout: %d config: %d prio: %d", 
-                use_tout, G_atmi_env.time_out, msg_prio);
-    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, msg_prio)) ||
-         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, msg_prio, &abs_timeout)))
+    snd_prio=msg_prio;
+    /* freebsd needs downscale on some version limited to 32 priorities */
+    NDRX_PRIO_DOWNSCALE(snd_prio);
+            
+    NDRX_LOG(6, "use timeout: %d config: %d prio: %d snd_prio: %d", 
+                use_tout, G_atmi_env.time_out, msg_prio, snd_prio);
+    if ((!use_tout && EXFAIL==ndrx_mq_send(q_descr, data, len, snd_prio)) ||
+         (use_tout && EXFAIL==ndrx_mq_timedsend(q_descr, data, len, snd_prio, &abs_timeout)))
     {
         ret=errno;
         if (EINTR==errno && flags & TPSIGRSTRT)
